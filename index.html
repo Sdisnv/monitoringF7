@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Monitoring F7 v61</title>
+<link href="assets/css/base.css" rel="stylesheet"/>
+<link href="assets/css/layout.css" rel="stylesheet"/>
+<link href="assets/css/components.css" rel="stylesheet"/>
+<link href="assets/css/tables.css" rel="stylesheet"/>
+<link href="assets/css/charts.css" rel="stylesheet"/>
+<link href="assets/css/print.css" rel="stylesheet"/>
+<link href="assets/css/responsive.css" rel="stylesheet"/>
+<link href="assets/css/monitoring-f7-evolution.css" rel="stylesheet"/>
+</head>
+<body>
+<div aria-modal="true" class="auth-overlay" id="authOverlay" role="dialog">
+<div class="auth-card">
+<div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Accès Monitoring</h2></div>
+<p class="auth-note">Mode Admin local : barrière UX stockée dans ce navigateur. Ne constitue pas une authentification institutionnelle forte. Mot de passe temporaire à remplacer à la première connexion.</p>
+<form class="auth-form" id="authForm">
+<label for="authNip">NIP ECA utilisateur</label>
+<input autocomplete="username" id="authNip" inputmode="numeric" name="nip" placeholder="NIP ECA" required=""/>
+<label for="authPassword">Mot de passe</label>
+<input autocomplete="current-password" id="authPassword" name="password" placeholder="Mot de passe" required="" type="password"/>
+<div class="auth-change-block" hidden="" id="authChangeBlock">
+<label for="authNewPassword">Nouveau mot de passe</label>
+<input autocomplete="new-password" id="authNewPassword" name="newPassword" placeholder="Nouveau mot de passe" type="password"/>
+<label for="authNewPasswordConfirm">Confirmer le nouveau mot de passe</label>
+<input autocomplete="new-password" id="authNewPasswordConfirm" name="newPasswordConfirm" placeholder="Confirmation" type="password"/>
+</div>
+<div class="auth-message" id="authMessage">Première connexion : mot de passe temporaire 1234, puis remplacement obligatoire.</div>
+<button class="primary auth-submit" type="submit">Accéder au monitoring</button>
+</form>
+</div>
+</div>
+<header class="app-header">
+<div class="header-left">
+<img alt="Logo SDIS Nord vaudois" class="header-logo" src="assets/img/LogoSDISblanc.png"/>
+<div class="header-text">
+<h1>SDIS régional du Nord vaudois</h1>
+<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v61</span></div>
+</div>
+</div>
+<div class="user-zone" id="userZone">
+<button class="user-zone-button" id="userMenuButton" type="button" aria-haspopup="true" aria-expanded="false">
+<span class="user-avatar" aria-hidden="true">
+<svg viewBox="0 0 24 24"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
+</span>
+<span class="user-zone-text"><strong id="userDisplayName">Utilisateur SDIS</strong><small id="userSessionStatus">Session locale active — navigateur uniquement</small></span>
+<span class="user-chevron" aria-hidden="true">▾</span>
+</button>
+<div class="user-menu" id="userMenu" hidden>
+<div class="user-menu-head"><strong id="userMenuName">Profil utilisateur</strong><span id="userMenuNip">NIP —</span></div>
+<button type="button" data-user-action="profile">Profil</button>
+<button type="button" data-user-action="settings">Paramètres utilisateur</button>
+<button type="button" data-user-action="session">Informations session</button>
+<button type="button" data-user-action="backup">Sauvegarde/export rapide</button>
+<hr/>
+<button class="danger-link" type="button" id="userLogoutBtn">Déconnexion</button>
+</div>
+</div>
+</header>
+<section class="reference-wrap effectifs-ref-wrap">
+<div class="reference-card effectifs-ref-card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm8 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C23 14.17 18.33 13 16 13zM8 13c-2.33 0-7 1.17-7 3.5V19h10v-2.5C11 14.17 10.33 13 8 13zM12 12c1.93 0 3.5-1.57 3.5-3.5S13.93 5 12 5 8.5 6.57 8.5 8.5 10.07 12 12 12z"></path>
+</svg>
+</span>
+<span>Effectifs de référence</span>
+</h2>
+<div class="reference-top-row">
+<div class="reference-inline-block">
+<div class="reference-inline-header">
+<div class="reference-inline-title ref-title-with-icon">
+<span aria-hidden="true" class="ref-title-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+</svg>
+</span>
+<span>FOBA</span>
+</div>
+<div class="compact-field compact-global-field compact-global-inline">
+<label>Global</label>
+<input id="effectifFobaGlobal" max="999" min="0" readonly="" type="number" value="0">
+</input></div>
+</div>
+<div class="reference-inline-values">
+<div class="compact-field">
+<label>FOBA 1</label>
+<input id="effectifFoba1" max="999" min="0" type="number" value="0">
+</input></div>
+<div class="compact-field">
+<label>FOBA 2</label>
+<input id="effectifFoba2" max="999" min="0" type="number" value="0">
+</input></div>
+<div class="compact-field">
+<label>FOBA 3</label>
+<input id="effectifFoba3" max="999" min="0" type="number" value="0">
+</input></div>
+</div>
+</div>
+<div class="reference-inline-block">
+<div class="reference-inline-header">
+<div class="reference-inline-title ref-title-with-icon">
+<span aria-hidden="true" class="ref-title-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+</svg>
+</span>
+<span>Domaines</span>
+</div>
+<div class="compact-field compact-global-field compact-global-inline">
+<label>Global</label>
+<input id="effectifAutoGlobal" max="999" min="0" readonly="" type="number" value="0"/>
+</div>
+</div>
+<div class="reference-inline-values domain-values">
+<div class="compact-field domain-pr-field">
+<div class="papr-group-label">PAPR <span class="papr-total-badge">= <span class="papr-total-value" id="effectifPrGlobal">0</span></span></div>
+<div class="papr-subfields">
+<div class="compact-field compact-field-sub">
+<label>G1</label>
+<input id="effectifPrG1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field compact-field-sub">
+<label>C1</label>
+<input id="effectifPrC1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field compact-field-sub">
+<label>B1</label>
+<input id="effectifPrB1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field compact-field-sub">
+<label>B2</label>
+<input id="effectifPrB2" max="999" min="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+<div class="compact-field">
+<label>Cond VL (DPS)</label>
+<input id="effectifAutoVl" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>Cond PL</label>
+<input id="effectifAutoPl" max="999" min="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+<div class="reference-inline-block reference-inline-block-wide">
+<div class="reference-inline-header">
+<div class="reference-inline-title ref-title-with-icon">
+<span aria-hidden="true" class="ref-title-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+</svg>
+</span>
+<span>Organes d’intervention</span>
+</div>
+</div>
+<div class="oi-columns">
+<div class="oi-column">
+<div class="oi-column-head">
+<div class="oi-column-title">DPS</div>
+<div class="compact-field compact-global-field compact-global-inline">
+<label>Global</label>
+<input id="effectifDpsGlobal" max="999" min="0" readonly="" type="number" value="0"/>
+</div>
+</div>
+<div class="oi-column-values">
+<div class="compact-field">
+<label>G1</label>
+<input id="effectifDpsG1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>C1</label>
+<input id="effectifDpsC1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>B1</label>
+<input id="effectifDpsB1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>B2</label>
+<input id="effectifDpsB2" max="999" min="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+<div class="oi-column">
+<div class="oi-column-head">
+<div class="oi-column-title">DAP</div>
+<div class="compact-field compact-global-field compact-global-inline">
+<label>Global</label>
+<input id="effectifDapGlobal" max="999" min="0" readonly="" type="number" value="0"/>
+</div>
+</div>
+<div class="oi-column-values">
+<div class="compact-field">
+<label>Y1</label>
+<input id="effectifDapY1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>Y2</label>
+<input id="effectifDapY2" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>Y3</label>
+<input id="effectifDapY3" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>Y4</label>
+<input id="effectifDapY4" max="999" min="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+<div class="oi-column">
+<div class="oi-column-head">
+<div class="oi-column-title">JSP</div>
+<div class="compact-field compact-global-field compact-global-inline">
+<label>Global</label>
+<input id="effectifJspGlobal" max="999" min="0" readonly="" type="number" value="0"/>
+</div>
+</div>
+<div class="oi-column-values">
+<div class="compact-field">
+<label>G1</label>
+<input id="effectifJspG1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>C1</label>
+<input id="effectifJspC1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>B1</label>
+<input id="effectifJspB1" max="999" min="0" type="number" value="0"/>
+</div>
+<div class="compact-field">
+<label>Cadets</label>
+<input id="effectifJspCadets" max="999" min="0" type="number" value="0"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="reference-bottom-row">
+<div class="reference-block">
+<h3 class="reference-subtitle">Suivi</h3>
+<div class="reference-followup-grid reference-followup-grid-compact">
+<div class="compact-field compact-field-period">
+<label>Période d’effectif</label>
+<select id="referencePeriodSelect">
+<option value="">Sélectionner…</option>
+</select>
+</div>
+<div class="compact-field compact-field-date">
+<label>Effectif au</label>
+<input id="effectifUpdatedAt" inputmode="numeric" maxlength="10" placeholder="JJ.MM.AAAA" type="text"/>
+</div>
+<div class="compact-field compact-field-responsable">
+<label>Responsable</label>
+<input id="effectifUpdatedBy" placeholder="Grade, Prénom et Nom" type="text"/>
+</div>
+<div class="compact-field compact-field-generated">
+<label>Généré par</label>
+<input id="effectifGeneratedBy" placeholder="Nom générateur (Grade, Prénom et Nom)" type="text"/>
+</div>
+</div>
+<div class="reference-followup-actions">
+<div class="compact-field compact-field-commentaire">
+<label>Commentaire</label>
+<input id="effectifCommentaire" placeholder="Commentaire global" type="text"/>
+</div>
+<button class="compact-btn primary" id="createReferencePeriodBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path>
+</svg>
+</span>
+<span>Nouvelle période</span>
+</button>
+<button class="compact-btn" id="duplicateReferencePeriodBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
+</svg>
+</span>
+<span>Dupliquer</span>
+</button>
+<button class="compact-btn reference-danger-btn" id="deleteReferencePeriodBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1z"></path>
+</svg>
+</span>
+<span>Supprimer</span>
+</button>
+</div>
+<div class="small muted" id="referenceSaveStatus" style="margin-top:8px;">
+          Aucune modification récente.
+        </div>
+</div>
+</div>
+</div>
+</section>
+<div class="top-tabs-wrap">
+<div class="top-tabs monitoring-f7-tabs"><button class="tab-btn active" data-tab-target="dashboard" type="button">Situation COD</button><button class="tab-btn" data-tab-target="events" type="button">Événements</button><button class="tab-btn" data-tab-target="effectifs" type="button">Effectifs</button><button class="tab-btn" data-tab-target="analyses" type="button">Analyses</button><button class="tab-btn" data-tab-target="graphs" type="button">Graphiques</button><button class="tab-btn" data-tab-target="monitoring" type="button">Administration</button></div>
+</div>
+<div class="f7-message-bar" id="f7OperationalMessage" role="status" aria-live="polite" hidden></div>
+<section class="tab-panel active" id="tab-dashboard">
+<div class="wrap grid">
+<section class="card command-dashboard-hero" aria-labelledby="commandDashboardTitle">
+<div class="command-dashboard-heading">
+<div>
+<h2 class="section-title" id="commandDashboardTitle">
+<span aria-hidden="true" class="section-icon"><svg viewBox="0 0 24 24"><path d="M4 19h16v2H4zm2-2h3V8H6zm5 0h3V3h-3zm5 0h3v-7h-3z"></path></svg></span>
+<span>Situation COD</span>
+</h2>
+<p class="command-dashboard-lead">Vue de décision rapide : état du dispositif formation, vigilance du jour et actions utiles pour la conduite.</p>
+</div>
+<div class="command-dashboard-actions"><div class="command-dashboard-badge">Lecture cible : 20 secondes</div><button class="compact-btn" id="f7ProjectionToggle" type="button" aria-pressed="false">Mode projection</button></div>
+</div>
+</section>
+<section class="f7-cod-brief" aria-label="Synthèse professionnelle COD">
+<div class="f7-cod-brief-cell f7-cod-brief-main"><span>Situation actuelle</span><strong id="f7CodSituation">Données locales en attente</strong><small id="f7CodPresence">Présence non calculée</small></div>
+<div class="f7-cod-brief-cell"><span>Point de vigilance</span><strong id="f7CodRisk">Aucune alerte majeure</strong><small>Lecture commandement</small></div>
+<div class="f7-cod-brief-cell"><span>Action attendue</span><strong id="f7CodDecision">Contrôler les événements à traiter</strong><small id="f7CodReference">Référence locale</small></div>
+<div class="f7-cod-brief-cell f7-cod-brief-status"><span>Mode</span><strong>Local/offline-first</strong><small>Backend préparé, non actif</small></div>
+</section>
+<section class="f7-projection-strip" aria-label="Synthèse projection COD">
+<div><span>Situation</span><strong id="f7ProjectionSituation">Aucune donnée active</strong></div>
+<div><span>Priorité</span><strong id="f7ProjectionPriority">Surveiller les domaines faibles</strong></div>
+<div><span>Lecture</span><strong id="f7ProjectionDate">Données locales navigateur</strong></div>
+</section>
+<section class="executive-kpi-grid executive-kpi-grid-v55">
+<div class="executive-kpi-card">
+<div class="executive-kpi-stack">
+<div class="executive-kpi-item executive-kpi-priority">
+<div class="executive-kpi-value" id="kpiExercices">0</div>
+<div class="executive-kpi-caption">Exercices comptabilisés</div>
+</div>
+<div class="executive-kpi-item command-secondary-kpi">
+<div class="executive-kpi-value" id="kpiNonComptabilises">0</div>
+<div class="executive-kpi-caption">Non comptabilisés</div>
+</div>
+</div>
+</div>
+<div class="executive-kpi-card">
+<div class="executive-kpi-stack">
+<div class="executive-kpi-item executive-kpi-priority">
+<div class="executive-kpi-value" id="kpiConvoques">0</div>
+<div class="executive-kpi-caption">Convoqués</div>
+</div>
+<div class="executive-kpi-item executive-kpi-priority">
+<div class="executive-kpi-value" id="kpiPresents">0</div>
+<div class="executive-kpi-caption">Présents</div>
+</div>
+</div>
+</div>
+<div class="executive-kpi-card">
+<div class="executive-kpi-stack">
+<div class="executive-kpi-item executive-kpi-priority">
+<div class="executive-kpi-value" id="kpiExcuses">0</div>
+<div class="executive-kpi-caption">Excusés</div>
+</div>
+<div class="executive-kpi-item executive-kpi-priority">
+<div class="executive-kpi-value" id="kpiAbsents">0</div>
+<div class="executive-kpi-caption">Absents non excusés</div>
+</div>
+</div>
+</div>
+<div class="executive-kpi-card">
+<div class="executive-kpi-stack">
+<div class="executive-kpi-item executive-kpi-priority">
+<div class="executive-kpi-value" id="kpiTaux">0.0%</div>
+<div class="executive-kpi-caption" title="Présents / Convoqués (cible nette) × 100 — tous exercices comptabilisés du filtre actif">Taux de présence brut ⓘ</div>
+</div>
+<div class="executive-kpi-item command-secondary-kpi">
+<div class="executive-kpi-value" id="kpiTauxAjuste">0.0%</div>
+<div class="executive-kpi-caption" title="Présents / (Convoqués − Excusés) × 100 — retire les absences excusées du dénominateur">Taux net ajusté ⓘ</div>
+</div>
+</div>
+</div>
+</section>
+<section class="card command-dashboard-panel">
+<div class="command-panel-head">
+<h3 class="reference-subtitle">Comparaison commandement par domaine</h3>
+<div class="small muted">Ordre métier : FOBA, PR, DPS, DAP, AUTO, JSP</div>
+</div>
+<div class="command-dashboard-grid">
+<div class="table-wrap command-domain-table-wrap">
+<table class="command-domain-table" id="commandDomainTable">
+<thead>
+<tr>
+<th>Domaine</th>
+<th class="right">Convoqués</th>
+<th class="right">Présents</th>
+<th class="right">Excusés</th>
+<th class="right">Absents non excusés</th>
+<th class="right">Taux présence</th>
+<th>Lecture</th>
+</tr>
+</thead>
+<tbody id="commandDomainTableBody"></tbody>
+</table>
+</div>
+<div class="chart-card command-chart-card">
+<h3 class="reference-subtitle">Graphique commandement simplifié</h3>
+<div class="chart-subtitle">Taux de présence brut par domaine, sur la sélection active</div>
+<canvas height="300" id="commandPresenceChart" width="720"></canvas>
+</div>
+</div>
+</section>
+<section class="card kpi-alert-card" aria-live="polite">
+<h3 class="reference-subtitle">Points de vigilance</h3>
+<div class="kpi-alert-list" id="kpiBusinessAlerts">Aucune alerte sur la sélection actuelle.</div>
+</section>
+<section class="card command-section">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M5 9.2h3V19H5zm5.5-4.2h3V19h-3zm5.5 7h3V19h-3z"></path></svg>
+</span>
+<span>Pilotage commandement et objectifs</span>
+</h2>
+<div class="command-grid">
+<div class="stack">
+<div class="command-kpi-grid">
+<div class="command-kpi">
+<div class="command-kpi-value" id="kpiCoverageCommand">0.0%</div>
+<div class="command-kpi-label">Couverture globale</div>
+<div class="command-kpi-note">Participation utile comparée à l’effectif de référence cumulé.</div>
+</div>
+<div class="command-kpi">
+<div class="command-kpi-value" id="kpiObjectiveCompliance">0%</div>
+<div class="command-kpi-label">Objectifs atteints</div>
+<div class="command-kpi-note">Part des OI et spécialisations conformes à leur objectif.</div>
+</div>
+<div class="command-kpi">
+<div class="command-kpi-value" id="kpiAbsenceDiscipline">0.0%</div>
+<div class="command-kpi-label">Absences non excusées</div>
+<div class="command-kpi-note">Indicateur disciplinaire direct sur la sélection affichée.</div>
+</div>
+<div class="command-kpi">
+<div class="command-kpi-value" id="kpiJspCostEstimate">~CHF 0 (est.)</div>
+<div class="command-kpi-label">Impact JSP estimé <span style="cursor:help;opacity:0.6;font-size:11px;" title="Estimation d'ordre de grandeur : effectif JSP × (1 − taux présence) × (coût − cotisation)">ⓘ</span></div>
+<div class="command-kpi-note">Estimation du coût annuel non couvert selon la participation JSP.</div>
+</div>
+</div>
+<div class="table-wrap command-objective-table-wrap">
+<table id="objectiveTable">
+<thead>
+<tr>
+<th>Indicateur</th>
+<th class="right">Objectif</th>
+<th class="right">Réel</th>
+<th class="right">Écart</th>
+<th>Lecture</th>
+</tr>
+</thead>
+<tbody id="objectiveTableBody"></tbody>
+</table>
+</div>
+<div class="objective-meta">Cette synthèse est pensée pour une lecture immédiate par le commandement: objectif fixé, résultat observé, écart et statut.</div>
+</div>
+<div class="objective-box">
+<h3>Objectifs de participation</h3>
+<div class="objective-boxes-main">
+<div class="objective-box">
+<h3>DPS</h3>
+<div class="compact-field"><label>G1</label><input id="objDpsG1" max="100" min="0" type="number" value="75"/></div>
+<div class="compact-field"><label>C1</label><input id="objDpsC1" max="100" min="0" type="number" value="75"/></div>
+<div class="compact-field"><label>B1</label><input id="objDpsB1" max="100" min="0" type="number" value="75"/></div>
+<div class="compact-field"><label>B2</label><input id="objDpsB2" max="100" min="0" type="number" value="75"/></div>
+</div>
+<div class="objective-box objective-box-dap">
+<h3>DAP</h3>
+<div class="compact-field"><label>Y1</label><input id="objDapY1" max="100" min="0" type="number" value="75"/></div>
+<div class="compact-field"><label>Y2</label><input id="objDapY2" max="100" min="0" type="number" value="75"/></div>
+<div class="compact-field"><label>Y3</label><input id="objDapY3" max="100" min="0" type="number" value="75"/></div>
+<div class="compact-field"><label>Y4</label><input id="objDapY4" max="100" min="0" type="number" value="75"/></div>
+</div>
+<div class="objective-box">
+<h3>Spécialisations</h3>
+<div class="compact-field"><label>FOBA</label><input id="objFOBA" max="100" min="0" type="number" value="80"/></div>
+<div class="compact-field"><label>PR</label><input id="objPR" max="100" min="0" type="number" value="80"/></div>
+<div class="compact-field"><label>AUTO</label><input id="objAUTO" max="100" min="0" type="number" value="80"/></div>
+<div class="compact-field"><label>JSP</label><input id="objJSP" max="100" min="0" type="number" value="85"/></div>
+</div>
+</div>
+<div class="objective-box objective-box-separator">
+<h3>Paramètres JSP</h3>
+<div class="small muted jsp-budget-note">Le coût annuel JSP est basé sur le budget total JSP réparti sur le nombre de JSP incorporés au 01.01</div>
+<div class="objective-grid objective-grid-jsp">
+<div class="compact-field"><label>Seuil d’alerte</label><input id="objJspSanction" max="100" min="0" type="number" value="60"/></div>
+<div class="compact-field"><label>Objectif couverture</label><input id="objCoverageGlobal" max="100" min="0" type="number" value="85"/></div>
+<div class="compact-field"><label>Coût annuel JSP</label><input id="objJspCost" max="10000" min="0" type="number" value="1500"/></div>
+<div class="compact-field"><label>Cotisation annuelle</label><input id="objJspCotisation" max="5000" min="0" type="number" value="150"/></div>
+</div>
+<div class="objective-meta objective-note-below-jsp">Les objectifs sont sauvegardés localement. Ils servent aux KPI commandement, au tableau des écarts et aux graphiques d’aide à la décision.</div>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-2">
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm14.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-1.79z"></path>
+</svg>
+</span>
+<span>Saisie d’un événement</span>
+</h2>
+<div class="stack">
+<div class="row-3">
+<div style="grid-column:span 2;">
+<label>Événement importé</label>
+<select id="eventSelect">
+<option value="">Sélectionner un événement importé…</option>
+</select>
+</div>
+<div>
+<label>Action</label>
+<button class="compact-btn primary" id="newManualEventBtn" style="width:100%;justify-content:center;" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path>
+</svg>
+</span>
+<span>Nouvel événement (saisie manuelle)</span>
+</button>
+</div>
+</div>
+<div class="form-top-row">
+<div>
+<label>Domaine</label>
+<select id="domain">
+<option value="">Sélectionner…</option>
+</select>
+</div>
+<div>
+<label>Public cible</label>
+<select id="subStructure">
+<option value="">Sélectionner…</option>
+</select>
+</div>
+<div>
+<label>Événement</label>
+<input id="template" list="templateSuggestions" placeholder="Nom de l’événement" type="text"/>
+<datalist id="templateSuggestions"></datalist>
+</div>
+<div class="form-field-compact">
+<label>Date</label>
+<input id="dateExercice" inputmode="numeric" maxlength="10" placeholder="JJ.MM.AAAA" type="text"/>
+</div>
+<div class="form-field-compact">
+<label>Stat.Com</label>
+<input id="statCom" maxlength="6" placeholder="Stat.Com" type="text"/>
+</div>
+<div class="form-field-compact">
+<label>Statuts</label>
+<select id="eventStatus">
+<option value="Planifié">Planifié</option>
+<option value="Effectué">Effectué</option>
+<option value="Reporté">Reporté</option>
+<option value="Annulé">Annulé</option>
+</select>
+</div>
+</div>
+<div class="footer-note" id="importedEventInfo">
+            Sélectionne un événement importé ou active la saisie manuelle.
+          </div>
+<div class="stack" id="dapPermutationBlock" style="display:none;">
+<div class="row-5">
+<div>
+<label>Convoqués extérieurs Y1</label>
+<input id="nbExtDapY1" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Convoqués extérieurs Y2</label>
+<input id="nbExtDapY2" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Convoqués extérieurs Y3</label>
+<input id="nbExtDapY3" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Convoqués extérieurs Y4</label>
+<input id="nbExtDapY4" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Total personnel autre section DAP</label>
+<input id="nbExtDapTotal" readonly="" type="text"/>
+</div>
+</div>
+</div>
+<div class="group-exercise-wrap" id="groupExerciseBlock">
+<div class="group-exercise-head">
+<div>
+<div class="group-exercise-title">Saisie détaillée par organe</div>
+<div class="group-muted">
+                  Pour les formations groupées DPS / DAP, la saisie se fait par site ou section. Aucune permutation n’est admise.
+                </div>
+</div>
+<div class="group-exercise-kpi">
+<div class="group-kpi-pill">Convoqués total: <span id="groupGlobalConvoques">0</span></div>
+<div class="group-kpi-pill">Présents total: <span id="groupGlobalPresents">0</span></div>
+<div class="group-kpi-pill">Taux global: <span id="groupGlobalRate">0.0%</span></div>
+</div>
+</div>
+<div class="group-table-wrap">
+<table class="group-table" id="groupExerciseTable">
+<thead>
+<tr>
+<th>Organe</th>
+<th class="right">Convoqués</th>
+<th class="right">Présents</th>
+<th class="right">Maladie/accident</th>
+<th class="right"> </th>
+<th class="right">Armée</th>
+<th class="right">Professionnel</th>
+<th class="right">Privé</th>
+<th class="right">Absents</th>
+<th class="right">Total</th>
+<th class="right">Taux</th>
+</tr>
+</thead>
+<tbody id="groupExerciseTableBody"></tbody>
+</table>
+</div>
+</div>
+<div class="form-counts-grid">
+<div>
+<label>Convoqués</label>
+<input class="small-count-input" id="nbConvoques" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Présents</label>
+<input class="small-count-input" id="nbPresents" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Absents</label>
+<input class="small-count-input" id="nbAbsents" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Permutation</label>
+<input class="small-count-input" id="nbPermutation" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Total</label>
+<input class="small-count-input total-highlight" id="detailTotal" readonly="" type="text"/>
+</div>
+<div class="form-field-compact">
+<label>À comptabiliser</label>
+<select id="aComptabiliser">
+<option selected="" value="false">Non</option>
+<option value="true">Oui</option>
+</select>
+</div>
+</div>
+<div class="form-counts-grid-bottom">
+<div>
+<label>Maladie/accident</label>
+<input class="small-count-input" id="nbMaladie" max="999" min="0" type="number" value="0"/>
+</div>
+<div style="display:none;">
+<label>Accident</label>
+<input class="small-count-input" id="nbAccident" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Armée</label>
+<input class="small-count-input" id="nbArmee" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Professionnel</label>
+<input class="small-count-input" id="nbProfessionnel" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Privé</label>
+<input class="small-count-input" id="nbPrive" max="999" min="0" type="number" value="0"/>
+</div>
+<div>
+<label>Total excusé</label>
+<input class="small-count-input total-highlight" id="totalExcuses" readonly="" type="text"/>
+</div>
+</div>
+<div class="target-visibility-card" id="targetVisibilityCard">
+<div class="target-visibility-head">
+<div>
+<div class="target-visibility-title">Lecture cible nette de participation</div>
+<div class="target-visibility-note">La cible nette retire les formateurs et le personnel dispensé de l’effectif attendu afin de lire la couverture réelle des participants métier sur la séance ou la série.</div>
+</div>
+</div>
+<div class="target-visibility-grid">
+<div class="target-visibility-item">
+<div class="target-visibility-label">Cible brute</div>
+<div class="target-visibility-value" id="targetBruteValue">0</div>
+</div>
+<div class="target-visibility-item">
+<div class="target-visibility-label">Retraits cible</div>
+<div class="target-visibility-value" id="targetFormateursValue">0</div>
+</div>
+<div class="target-visibility-item net">
+<div class="target-visibility-label">Cible nette</div>
+<div class="target-visibility-value" id="targetNetteValue">0</div>
+</div>
+</div>
+<div class="target-visibility-foot" id="targetVisibilityFoot">Aucun retrait de cible actif sur la sélection en cours.</div>
+</div>
+<div class="mutual-roles-wrap" id="mutualRolesBlock">
+<div class="mutual-roles-head">
+<div>
+<div class="mutual-roles-title">Encadrement et soutien mutualisés sur série</div>
+<div class="mutual-roles-note">
+                  Pour certaines séries d’exercices, les formateurs, surveillants ou auxiliaires peuvent être comptabilisés une seule fois sur l’ensemble des sessions.
+                </div>
+<div class="mutual-role-status" id="mutualRolesStatus">
+<span class="mutual-role-badge series hidden" id="mutualRolesSeriesBadge"></span>
+<span class="mutual-role-badge neutral" id="mutualRolesVisualFormateurs">Formateurs non mutualisés</span>
+<span class="mutual-role-badge neutral" id="mutualRolesVisualSurveillants">Surveillants non mutualisés</span>
+<span class="mutual-role-badge neutral" id="mutualRolesVisualAuxiliaires">Auxiliaires non mutualisés</span>
+</div>
+</div>
+</div>
+<div class="mutual-roles-table-wrap">
+<table class="mutual-roles-table">
+<thead>
+<tr>
+<th>Rôle</th>
+<th class="right">Nombre</th>
+<th>Comptabiliser</th>
+<th>Mutualiser sur la série</th>
+</tr>
+</thead>
+<tbody>
+<tr id="mutualRoleRowFormateurs">
+<td><span class="mutual-role-name">Formateurs</span></td>
+<td><input id="roleFormateursCount" max="99" min="0" type="number" value="0"/></td>
+<td><input id="roleFormateursCompta" type="checkbox"/></td>
+<td><input checked="" id="roleFormateursMutualise" type="checkbox"/></td>
+</tr>
+<tr id="mutualRoleRowSurveillants">
+<td><span class="mutual-role-name">Surveillants</span><div class="group-muted">Particulièrement utile pour les exercices PR</div></td>
+<td><input id="roleSurveillantsCount" max="99" min="0" type="number" value="0"/></td>
+<td><input id="roleSurveillantsCompta" type="checkbox"/></td>
+<td><input checked="" id="roleSurveillantsMutualise" type="checkbox"/></td>
+</tr>
+<tr id="mutualRoleRowAuxiliaires">
+<td><span class="mutual-role-name">Personnel auxiliaire</span></td>
+<td><input id="roleAuxiliairesCount" max="99" min="0" type="number" value="0"/></td>
+<td><input id="roleAuxiliairesCompta" type="checkbox"/></td>
+<td><input checked="" id="roleAuxiliairesMutualise" type="checkbox"/></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="target-exclusions-wrap" id="targetExclusionsBlock">
+<div class="target-exclusions-head">
+<div>
+<div class="target-exclusions-title">Personnels retirés de la cible nette</div>
+<div class="target-exclusions-note">À utiliser pour les personnels dispensés de participation sur la séance ou sur toute la série. Ces effectifs réduisent la cible nette sans être ajoutés aux présents.</div>
+</div>
+</div>
+<div class="target-exclusions-table-wrap">
+<table class="target-exclusions-table">
+<thead>
+<tr>
+<th>Type</th>
+<th class="right">Nombre</th>
+<th>Retirer de la cible</th>
+<th>Mutualiser sur la série</th>
+</tr>
+</thead>
+<tbody>
+<tr id="targetExclusionRowDispenses">
+<td><span class="mutual-role-name">Personnel dispensé</span><div class="group-muted">Réduit la cible nette sans être compté comme présent.</div></td>
+<td><input id="roleDispensesCount" max="99" min="0" type="number" value="0"/></td>
+<td><input checked="" id="roleDispensesDeduct" type="checkbox"/></td>
+<td><input checked="" id="roleDispensesMutualise" type="checkbox"/></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div>
+<label>Informations complémentaires</label>
+<textarea id="remarque" placeholder="Informations complémentaires éventuelles"></textarea>
+</div>
+<div class="small muted" id="validationMessage">Prêt à enregistrer.</div>
+<div class="actions form-actions">
+<button class="primary action-btn" id="saveBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6M6 8V5h8v3z"></path>
+</svg>
+</span>
+<span>Enregistrer la saisie</span>
+</button>
+<button class="action-btn" id="resetBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6a6 6 0 0 1-6 6 6 6 0 0 1-5.65-4H4.26A8 8 0 0 0 12 21a8 8 0 0 0 0-16z"></path>
+</svg>
+</span>
+<span>Réinitialiser la saisie</span>
+</button>
+<button class="action-btn" id="duplicateBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
+</svg>
+</span>
+<span>Dupliquer la sélection</span>
+</button>
+</div>
+</div>
+</section>
+<section class="card">
+<div class="toolbar">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M19.14 12.94a7.43 7.43 0 0 0 .05-.94 7.43 7.43 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.28 7.28 0 0 0-1.63-.94L14.5 2.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5l-.36 2.82a7.28 7.28 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.6 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.43 7.43 0 0 0-.05.94 7.43 7.43 0 0 0 .05.94L2.72 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.39 1.05.71 1.63.94l.36 2.82a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5l.36-2.82c.58-.23 1.13-.55 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"></path>
+</svg>
+</span>
+<span>Filtres et outils</span>
+</h2>
+<span class="badge">Stockage local activé</span>
+</div>
+<div class="stack">
+<div class="row-3">
+<div>
+<label>Domaine</label>
+<select id="filterDomain">
+<option value="">Tous</option>
+</select>
+</div>
+<div>
+<label>Public cible</label>
+<select id="filterSub">
+<option value="">Tous</option>
+</select>
+</div>
+<div>
+<label>Compta</label>
+<select id="filterCompta">
+<option value="">Tous</option>
+<option value="true">Oui</option>
+<option value="false">Non</option>
+</select>
+</div>
+</div>
+<div class="footer-note">
+            Les filtres servent à limiter l’affichage des tableaux et de la liste selon le domaine, le public cible et le statut comptabilisé.
+          </div>
+<div class="small muted" id="importStatus" style="margin-top:2px; white-space:pre-wrap;">Aucun import récent.</div>
+<div class="filters-actions-topline"></div>
+<div class="filters-actions-grid">
+<div class="filters-actions-col filters-actions-col-left">
+<button class="secondary compact-btn uniform-btn" id="applyFiltersBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M3 5h18l-7 8v5l-4 2v-7z"></path>
+</svg>
+</span>
+<span>Appliquer les filtres</span>
+</button>
+<button class="compact-btn uniform-btn" id="clearFiltersBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6a6 6 0 0 1-6 6 6 6 0 0 1-5.65-4H4.26A8 8 0 0 0 12 21a8 8 0 0 0 0-16z"></path>
+</svg>
+</span>
+<span>Réinitialiser les filtres</span>
+</button>
+<button class="compact-btn uniform-btn" id="seedBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2M8 7h8v2H8zm0 4h8v2H8zm0 4h5v2H8z"></path>
+</svg>
+</span>
+<span>Générer événements annuels</span>
+</button>
+<button class="compact-btn uniform-btn danger-btn" id="clearDataBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1z"></path>
+</svg>
+</span>
+<span>Effacer toutes les données</span>
+</button>
+<button class="compact-btn uniform-btn danger-btn" id="deleteFilteredEventsBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1z"></path>
+</svg>
+</span>
+<span>Supprimer les événements visibles</span>
+</button>
+</div>
+<div class="filters-actions-col filters-actions-col-right">
+<button class="compact-btn uniform-btn" id="exportJsonBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M5 20h14v-2H5zm7-18-5.5 5.5h3.5V16h4V7.5H17.5z"></path>
+</svg>
+</span>
+<span>Exporter JSON</span>
+</button>
+<button class="compact-btn uniform-btn" id="importJsonBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M19 15v4H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4zM11 16h2V7.5h3.5L12 3 7.5 7.5H11z"></path>
+</svg>
+</span>
+<span>Importer JSON</span>
+</button>
+<button class="compact-btn uniform-btn" id="importEventsBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M19 15v4H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4zM11 16h2V7.5h3.5L12 3 7.5 7.5H11z"></path>
+</svg>
+</span>
+<span>Importer les événements annuels</span>
+</button>
+<button class="compact-btn uniform-btn" id="exportCsvBtn" type="button">
+<span aria-hidden="true" class="btn-icon">
+<svg viewbox="0 0 24 24">
+<path d="M5 20h14v-2H5zm7-18-5.5 5.5h3.5V16h4V7.5H17.5z"></path>
+</svg>
+</span>
+<span>Exporter CSV</span>
+</button>
+<div class="filters-actions-spacer"></div>
+<input accept=".json,application/json" id="jsonFileInput" style="display:none" type="file"/>
+<input accept=".csv,text/csv,.txt" id="eventsFileInput" style="display:none" type="file"/>
+</div>
+</div>
+<div class="footer-note">
+            Les globaux FOBA, AUTO, DPS, DAP et JSP sont calculés automatiquement à partir des lignes de détail des effectifs de référence. Aucune saisie manuelle de ces globaux.
+          </div>
+</div>
+</section>
+</div>
+<div class="grid grid-2">
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M5 9.2h3V19H5zm5.5-4.2h3V19h-3zm5.5 7h3V19h-3z"></path>
+</svg>
+</span>
+<span>Synthèse par domaine</span>
+</h2>
+<div class="table-wrap domain-table-wrap">
+<table id="domainTable">
+<thead>
+<tr>
+<th>Domaine</th>
+<th class="right" title="Nombre d'exercices comptabilisés">Exercices</th>
+<th class="right" title="Effectif convoqué net (cible brute − formateurs retirés)">Convoqués</th>
+<th class="right" title="Présents effectifs = nbPresents + rôles comptabilisés">Présents</th>
+<th class="right" title="Total des excusés (maladie, accident, armée, professionnel, privé)">Excusés</th>
+<th class="right" title="Absents non excusés">Absents</th>
+<th class="right" title="Présents / Convoqués × 100 — inclut les excusés au dénominateur">Taux brut</th>
+<th class="right" title="Présents / (Convoqués − Excusés) × 100 — mesure la mobilisation réelle">Taux ajusté</th>
+<th class="right" title="Absents non excusés / Convoqués × 100">Taux abs. non exc.</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+</svg>
+</span>
+<span>Synthèse par public cible</span>
+</h2>
+<div class="table-wrap domain-table-wrap sub-table-wrap-tall">
+<table id="subTable">
+<thead>
+<tr>
+<th>Public cible</th>
+<th class="right">Exercices</th>
+<th class="right">Convoqués</th>
+<th class="right">Présents</th>
+<th class="right">Excusés</th>
+<th class="right">Absents</th>
+<th class="right">Taux brut</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+</div>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M5 9.2h3V19H5zm5.5-4.2h3V19h-3zm5.5 7h3V19h-3z"></path>
+</svg>
+</span>
+<span>Synthèse de couverture par domaine</span>
+</h2>
+<div class="table-wrap">
+<table id="coverageDomainTable">
+<thead>
+<tr>
+<th>Domaine</th>
+<th class="right">Exercices</th>
+<th class="right">Effectif réf cumulé</th>
+<th class="right">Participation utile</th>
+<th class="right">Excusés</th>
+<th class="right">Absents</th>
+<th class="right">Couverture</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="footer-note">
+        La couverture compare la participation utile à l’effectif de référence valable à la date de chaque exercice. Pour le DAP, la participation utile inclut les permutations -. Les KPI du haut privilégient désormais le pilotage et évitent les doublons avec les tableaux détaillés.
+      </div>
+</section>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+</svg>
+</span>
+<span>Taux par Organe d’intervention (OI)</span>
+</h2>
+<div class="table-wrap">
+<table id="organeRateTable">
+<thead>
+<tr>
+<th>Organe</th>
+<th class="right">Exercices</th>
+<th class="right">Convoqués</th>
+<th class="right">Présents</th>
+<th class="right">Excusés</th>
+<th class="right">Absents</th>
+<th class="right">Taux brut %</th>
+<th class="right">Taux ajusté %</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="footer-note">
+        Pour les formations groupées DPS ou DAP, chaque Organe d’intervention est ventilé individuellement dans cette synthèse.
+      </div>
+</section>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+</svg>
+</span>
+<span>Synthèse par section DAP</span>
+</h2>
+<div class="table-wrap">
+<table id="dapBusinessTable">
+<thead>
+<tr>
+<th>Section</th>
+<th class="right">Effectif réf moyen</th>
+<th class="right">Exercices</th>
+<th class="right">Présents section</th>
+<th class="right">Permutation -</th>
+<th class="right">Permutation +</th>
+<th class="right">Excusés</th>
+<th class="right">Absents</th>
+<th class="right">Suivi cumulé</th>
+<th class="right">Recours permut. -</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="footer-note">
+    L’effectif réf moyen correspond à la moyenne des effectifs de référence valables à la date des exercices filtrés. Le suivi cumulé représente le volume total de participation (présence + permutation -). Le recours permutations - montre la part des présences couvertes via permutation sortante.
+  </div>
+</section>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M5 9.2h3V19H5zm5.5-4.2h3V19h-3zm5.5 7h3V19h-3z"></path></svg>
+</span>
+<span>Lecture rapide commandement</span>
+</h2>
+<div class="command-heatmap-wrap">
+<table class="command-heatmap">
+<thead>
+<tr><th>Domaine</th><th>Objectif</th><th>Réel</th><th>Écart</th><th>Statut</th></tr>
+</thead>
+<tbody id="commandHeatmapBody"></tbody>
+</table>
+</div>
+<div class="footer-note">Bleu = objectif atteint, orange = légère dérive, rouge = écart significatif nécessitant un suivi ou une mesure.</div>
+</section>
+
+</div>
+</section>
+<section class="tab-panel" id="tab-events">
+<div class="wrap grid">
+<div class="f7-view-heading"><h1>Gestion événements</h1><p>Centre opérationnel : toute modification, correction, validation ou traitement transite par la saisie événements.</p></div>
+<section class="card f7-info-card" id="f7SaisieEventsMount">
+<h2 class="section-title"><span>Saisie événements</span></h2>
+<p class="footer-note">Point central obligatoire pour créer, modifier, traiter, corriger et valider un événement. Les listes ouvrent cette saisie avec les données préchargées.</p>
+</section>
+<section class="card">
+<div class="attention-banner">
+<div>
+<div class="attention-title">Événements à traiter</div>
+<div class="attention-text">Seuls les événements non traités dont la date est inférieure ou égale à la date locale du jour de connexion sont affichés. Les événements futurs restent dans la liste générale, mais ne sont pas à traiter aujourd’hui.</div>
+</div>
+<span class="badge" id="overdueCount">0 à traiter</span>
+</div>
+<div class="table-wrap domain-table-wrap">
+<table id="overdueTable">
+<thead>
+<tr>
+<th>Date</th>
+<th>Domaine</th>
+<th>Public cible</th>
+<th>Événement</th>
+<th>Stat.Com</th>
+<th>Statut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section class="card">
+<div class="toolbar">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24">
+<path d="M4 6h2v2H4zm4 0h12v2H8zm-4 5h2v2H4zm4 0h12v2H8zm-4 5h2v2H4zm4 0h12v2H8z"></path>
+</svg>
+</span>
+<span>Liste des événements</span>
+</h2>
+<div class="records-toolbar-actions">
+<button class="compact-btn active primary" id="recordsSummaryViewBtn" type="button" aria-pressed="true">Vue synthèse</button>
+<button class="compact-btn" id="recordsFullViewBtn" type="button" aria-pressed="false">Détails</button>
+<button class="compact-btn" id="selectAllVisibleBtn" type="button">Tout sélectionner</button>
+<button class="compact-btn" id="clearSelectionBtn" type="button">Désélectionner</button>
+<button class="compact-btn secondary" id="markSelectedDoneBtn" type="button">Marquer sélection comme effectué</button>
+<button class="compact-btn" id="exportSelectedCsvBtn" type="button">Exporter sélection CSV</button>
+<button class="compact-btn" id="exportPdfBtn" type="button">Exporter PDF filtré</button>
+<button class="compact-btn danger-btn" id="deleteSelectedBtn" type="button">Supprimer sélection</button>
+<span class="pill" id="recordCount">0 ligne</span>
+</div>
+</div>
+<div class="records-search-wrap">
+<input class="records-search-input" id="recordsSearch" placeholder="Recherche rapide : événement, domaine, public cible, statut, infos…" type="text"/>
+<span class="records-search-meta">Recherche en direct sur la liste affichée</span>
+</div>
+<div class="table-wrap records-table-wrap records-view-summary" style="max-height:540px">
+<table id="recordsTable">
+<colgroup>
+<col style="width:42px"/>
+<col style="width:88px"/>
+<col style="width:88px"/>
+<col style="width:105px"/>
+<col style="width:220px"/>
+<col style="width:88px"/>
+<col style="width:98px"/>
+<col style="width:78px"/>
+<col style="width:78px"/>
+<col style="width:78px"/>
+<col style="width:78px"/>
+<col style="width:78px"/>
+<col style="width:78px"/>
+<col style="width:72px"/>
+<col style="width:72px"/>
+<col style="width:78px"/>
+<col style="width:150px"/>
+</colgroup>
+<thead>
+<tr>
+<th class="records-selection-head"><input aria-label="Tout sélectionner" class="records-selection-checkbox" id="selectAllRecordsCheckbox" type="checkbox"/></th>
+<th class="sortable-header" data-sort="dateExercice">Date</th>
+<th class="sortable-header" data-sort="domain">Domaine</th>
+<th class="sortable-header" data-sort="subStructure">Public cible</th>
+<th class="sortable-header" data-sort="template">Événement</th>
+<th class="sortable-header" data-sort="statCom">Stat.Com</th>
+<th class="sortable-header" data-sort="status">Statuts</th>
+<th class="sortable-header" data-sort="aComptabiliser">Compta</th>
+<th class="right">Cible nette</th><th class="right">Présents comptés</th><th class="right">Présents métier</th><th class="right">Dispensés</th><th class="right">Excusés</th><th class="right">Absents</th><th class="right">Taux métier</th>
+<th>Infos</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="footer-note">
+        Stockage interne du navigateur. Pense à exporter un JSON pour sauvegarder ou transférer les données.
+      </div>
+</section></div>
+</section>
+
+<section class="tab-panel" id="tab-effectifs">
+<div class="wrap grid">
+<div class="f7-view-heading"><h1>Gestion effectif</h1><p>Consultation, chargement, modification, sauvegarde et suppression confirmée des effectifs de référence. Conservation locale permanente.</p></div>
+<section class="card f7-info-card" id="f7EffectifsMount">
+<h2 class="section-title"><span>Effectif de référence</span></h2>
+<p class="footer-note">Les champs ci-dessous sont sauvegardés localement et utilisés par les KPI, analyses, graphiques et calculs de couverture.</p>
+</section>
+<section class="card">
+<div class="toolbar"><h2 class="section-title"><span>Historique simple des effectifs</span></h2><span class="badge" id="f7EffectifsLibraryCount">0 effectif</span></div>
+<div class="f7-status-box" id="f7EffectifsPreview" hidden></div>
+<div class="table-wrap f7-effectifs-library-wrap">
+<table class="f7-effectifs-library-table">
+<thead><tr><th>Nom / commentaire</th><th>Début</th><th>Fin</th><th>Créé le</th><th>Mis à jour</th><th>Aperçu</th><th>Actions</th></tr></thead>
+<tbody id="f7EffectifsLibraryBody"></tbody>
+</table>
+</div>
+</section>
+</div>
+</section><section class="tab-panel" id="tab-monitoring"><div class="wrap f7-management-layout"><div class="f7-view-heading"><h1>Gestion Monitoring</h1><p>Espace séparé pour les imports, sauvegardes, outils techniques et maintenance locale.</p></div><div aria-label="Navigation Gestion Monitoring" class="f7-management-nav" role="tablist"><button class="f7-management-tab active" data-management-target="import" type="button">Import événements</button><button class="f7-management-tab" data-management-target="backup" type="button">Paramètre sauvegarde</button><button class="f7-management-tab" data-management-target="admin" type="button">Outils Admin</button><button class="f7-management-tab" data-management-target="diagnostic" type="button">Diagnostic local</button></div><div class="f7-management-content"><section class="f7-management-pane active" data-management-pane="import" id="f7-pane-import">
+<section class="card f7-drop-zone" id="f7ImportPanel">
+<h2 class="section-title"><span>Import événements</span></h2>
+<p class="footer-note">Import non destructif : les événements existants, statuts et modifications manuelles sont conservés par défaut.</p>
+<div class="row-3">
+<div style="grid-column:span 2;">
+<label>Fichier CSV ou JSON</label>
+<input accept=".csv,.txt,.json,application/json,text/csv" id="f7ImportFile" type="file"/>
+</div>
+<div>
+<label>Action</label>
+<button class="compact-btn primary" id="f7PreviewImportBtn" style="width:100%;justify-content:center;" type="button">Prévisualiser l’import</button>
+</div>
+</div>
+<div class="f7-status-box" id="f7ImportSummary">Aucun fichier prévisualisé.</div>
+<div class="table-wrap f7-preview-wrap" hidden="">
+<table class="f7-preview-table">
+<thead><tr><th>Date</th><th>Domaine</th><th>Public cible</th><th>Événement</th><th>Stat.Com</th><th>Décision</th></tr></thead>
+<tbody id="f7ImportPreviewBody"></tbody>
+</table>
+</div>
+<div class="f7-action-row">
+<button class="compact-btn primary" disabled="" id="f7CommitImportBtn" type="button">Intégrer uniquement les nouveaux / mises à jour non destructives</button>
+</div>
+<div class="f7-legacy-mount" id="f7LegacyImportMount"></div>
+</section>
+</section><section class="f7-management-pane" data-management-pane="backup" id="f7-pane-backup">
+<section class="card">
+<h2 class="section-title"><span>Paramètre sauvegarde</span></h2>
+<p class="footer-note">Les données utilisateur restent dans le navigateur. Avant une grosse mise à jour, exporter une sauvegarde complète.</p>
+<div class="f7-action-row">
+<button class="compact-btn primary" id="f7FullBackupBtn" type="button">Exporter sauvegarde complète</button>
+<label class="compact-btn" for="f7RestoreFile" style="cursor:pointer;">Restaurer sauvegarde complète</label>
+<input accept=".json,application/json" hidden="" id="f7RestoreFile" type="file"/>
+</div>
+<div class="f7-status-box" id="f7BackupStatus">Aucune opération récente.</div>
+<div class="f7-legacy-mount" id="f7BackupLegacyMount"></div>
+</section>
+</section><section class="f7-management-pane" data-management-pane="admin" id="f7-pane-admin">
+<section class="card">
+<h2 class="section-title"><span>Outils Admin</span></h2>
+<div class="f7-admin-lock" id="f7AdminLocked">
+<p class="footer-note">Fonctions sensibles protégées par un code Admin local. Sécurité adaptée au mode Netlify/offline, sans équivalence avec une authentification serveur.</p>
+<div class="row-3">
+<div><label>Code Admin</label><input autocomplete="current-password" id="f7AdminCode" placeholder="Code Admin" type="password"/></div>
+<div><label>Action</label><button class="compact-btn primary" id="f7AdminUnlockBtn" type="button">Déverrouiller</button></div>
+<div><label>Configuration</label><button class="compact-btn" id="f7AdminSetCodeBtn" type="button">Définir / changer le code</button></div>
+</div>
+<div class="f7-status-box" id="f7AdminMessage">Code initial local : 1234. À remplacer lors de la première utilisation.</div>
+</div>
+<div hidden="" id="f7AdminContent">
+<div class="f7-admin-grid" id="f7AdminStats"></div>
+<div class="f7-action-row" id="f7AdminActionsMount"></div>
+</div>
+</section>
+</section><section class="f7-management-pane" data-management-pane="diagnostic" id="f7-pane-diagnostic">
+<section class="card f7-diagnostic-card">
+<h2 class="section-title"><span>Diagnostic local</span></h2>
+<p class="footer-note">Journal local de support : utile au diagnostic pilote, exportable par l’utilisateur, non sécurisé contre modification locale et non équivalent à un audit serveur.</p>
+<div class="f7-admin-grid" id="f7DiagnosticStats"></div>
+<div class="f7-action-row">
+<button class="compact-btn primary" id="f7RefreshLogsBtn" type="button">Actualiser</button>
+<button class="compact-btn" id="f7ExportLogsBtn" type="button">Exporter journal support</button>
+<button class="compact-btn danger-btn" id="f7ClearLogsBtn" type="button">Vider le journal</button>
+</div>
+<div class="table-wrap f7-diagnostic-log-wrap">
+<table class="f7-diagnostic-log-table">
+<thead><tr><th>Date</th><th>Niveau</th><th>Événement</th><th>Message</th></tr></thead>
+<tbody id="f7DiagnosticLogBody"><tr><td colspan="4" class="muted">Journal non chargé.</td></tr></tbody>
+</table>
+</div>
+</section>
+</section></div></div></section>
+
+<section class="tab-panel" id="tab-graphs">
+<div class="wrap grid">
+<section class="card">
+<div class="toolbar">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M5 9.2h3V19H5zm5.5-4.2h3V19h-3zm5.5 7h3V19h-3z"></path></svg>
+</span>
+<span>Vues graphiques</span>
+</h2>
+<span class="badge">Comparaisons annuelles et synthèses opérationnelles</span>
+</div>
+<div class="graphs-filters">
+<div class="graphs-filter-block">
+<label>Année</label>
+<select id="graphYearFilter">
+<option value="">Toutes</option>
+</select>
+</div>
+<div class="graphs-filter-block" style="flex:2 1 420px;">
+<label>Domaines</label>
+<div class="graphs-domain-checkboxes" id="graphDomainFilters"></div>
+</div>
+</div>
+<div class="charts-grid">
+<div class="chart-card">
+<h3 class="reference-subtitle">Comparaison annuelle</h3>
+<div class="chart-subtitle">Événements comptabilisés par année</div>
+<canvas height="320" id="annualChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Résumé par domaine</h3>
+<div class="chart-subtitle">Répartition des événements comptabilisés par domaine</div>
+<canvas height="320" id="domainPieChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Synthèse par OI</h3>
+<div class="chart-subtitle">Présents cumulés par organe d’intervention</div>
+<canvas height="320" id="oiChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Par semestre et par an</h3>
+<div class="chart-subtitle">Événements comptabilisés par semestre</div>
+<canvas height="320" id="semesterChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Présences par année</h3>
+<div class="chart-subtitle">Volume annuel des présents comptabilisés</div>
+<canvas height="320" id="presenceYearChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Absences par année</h3>
+<div class="chart-subtitle">Volume annuel des absents non excusés</div>
+<canvas height="320" id="absenceYearChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Excuses par domaine</h3>
+<div class="chart-subtitle">Répartition des absences excusées par domaine</div>
+<canvas height="320" id="excusesDomainChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Présences par domaine</h3>
+<div class="chart-subtitle">Présents cumulés par domaine</div>
+<canvas height="320" id="presenceDomainChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Taux de présence ajusté par domaine</h3>
+<div class="chart-subtitle">Présence ajustée par domaine sur la sélection graphique</div>
+<canvas height="320" id="adjustedRateDomainChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Top 10 absences</h3>
+<div class="chart-subtitle">Événements avec le plus d’absences non excusées</div>
+<canvas height="360" id="topAbsenceChart" width="980"></canvas>
+</div>
+<div class="chart-card objective-gap-card">
+<h3 class="reference-subtitle">Objectif vs réel</h3>
+<div class="chart-subtitle">Comparaison directe des objectifs de participation et du réalisé par domaine</div>
+<canvas height="420" id="objectiveGapChart" width="980"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Conformité des objectifs</h3>
+<div class="chart-subtitle">Répartition des objectifs atteints, à surveiller ou non atteints</div>
+<canvas height="320" id="objectiveComplianceChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Impact financier JSP</h3>
+<div class="chart-subtitle">Vision instantanée entre coût annuel JSP, cotisations annuelles et part non couverte</div>
+<canvas height="320" id="jspCostChart" width="720"></canvas>
+</div>
+<div class="chart-card">
+<h3 class="reference-subtitle">Écarts aux objectifs</h3>
+<div class="chart-subtitle">Écart en points entre l’objectif fixé et le résultat observé</div>
+<canvas height="320" id="commandGapChart" width="720"></canvas>
+</div>
+<div class="chart-card chart-card-wide absence-domain-card">
+<h3 class="reference-subtitle">Absences par domaine</h3>
+<div class="chart-subtitle">Absents non excusés par domaine</div>
+<canvas height="320" id="absenceDomainChart" width="1440"></canvas>
+</div>
+</div>
+</section>
+</div>
+</section>
+<!-- ===== ONGLET ANALYSES AVANCÉES ===== -->
+<section class="tab-panel" id="tab-analyses">
+<div class="wrap grid">
+<!-- Évolution mensuelle du taux de présence -->
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M3.5 18.5l6-6 4 4L22 6.92"></path><path d="M3.5 18.5l6-6 4 4L22 6.92" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</span>
+<span>Évolution mensuelle du taux de présence</span>
+</h2>
+<div class="chart-subtitle" style="margin-bottom:10px;">Taux brut moyen par mois sur tous les exercices comptabilisés — repère les creux saisonniers</div>
+<canvas height="320" id="monthlyTrendChart" width="1400"></canvas>
+<div class="footer-note">Seuls les mois ayant au moins un exercice comptabilisé sont affichés.</div>
+</section>
+<!-- Répartition des motifs d'absence -->
+<div class="grid grid-2">
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"></path></svg>
+</span>
+<span>Répartition des motifs d'excuse</span>
+</h2>
+<div class="chart-subtitle" style="margin-bottom:10px;">Part de chaque motif dans le total des excusés (exercices comptabilisés)</div>
+<canvas height="320" id="excuseMotifChart" width="600"></canvas>
+</section>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M5 9.2h3V19H5zm5.5-4.2h3V19h-3zm5.5 7h3V19h-3z"></path></svg>
+</span>
+<span>Motifs d'excuse par domaine</span>
+</h2>
+<div class="chart-subtitle" style="margin-bottom:10px;">Ventilation des absences excusées par domaine et catégorie</div>
+<div class="table-wrap" style="max-height:340px;">
+<table id="excuseByDomainTable">
+<thead>
+<tr>
+<th>Domaine</th>
+<th class="right">Maladie</th>
+<th class="right">Accident</th>
+<th class="right">Armée</th>
+<th class="right">Professionnel</th>
+<th class="right">Privé</th>
+<th class="right">Total excusés</th>
+<th class="right">% excusés / conv.</th>
+</tr>
+</thead>
+<tbody id="excuseByDomainTableBody"></tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Exercices critiques et taux de réalisation -->
+<div class="grid grid-2">
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
+</span>
+<span>Exercices sous le seuil d'alerte</span>
+</h2>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+<label style="margin:0;font-size:13px;">Seuil d'alerte (%)</label>
+<input id="alertThresholdInput" max="100" min="0" style="width:80px;height:36px;padding:4px 8px;font-size:13px;" type="number" value="60"/>
+<button class="compact-btn primary" id="applyAlertBtn" style="height:36px;padding:0 12px;font-size:13px;">Appliquer</button>
+</div>
+<div class="table-wrap" style="max-height:340px;">
+<table id="criticalEventsTable">
+<thead>
+<tr>
+<th>Date</th>
+<th>Domaine</th>
+<th>Événement</th>
+<th class="right">Convoqués</th>
+<th class="right">Présents</th>
+<th class="right">Taux brut</th>
+</tr>
+</thead>
+<tbody id="criticalEventsTableBody"></tbody>
+</table>
+</div>
+<div class="footer-note" id="criticalEventsNote"></div>
+</section>
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+</span>
+<span>Taux de réalisation du plan annuel</span>
+</h2>
+<div class="chart-subtitle" style="margin-bottom:10px;">Exercices effectués vs planifiés, par domaine</div>
+<div class="table-wrap" style="max-height:340px;">
+<table id="realisationTable">
+<thead>
+<tr>
+<th>Domaine</th>
+<th class="right">Planifiés</th>
+<th class="right">Effectués</th>
+<th class="right">Reportés</th>
+<th class="right">Annulés</th>
+<th class="right">Taux réalisation</th>
+</tr>
+</thead>
+<tbody id="realisationTableBody"></tbody>
+</table>
+</div>
+<div class="footer-note">Taux réalisation = Effectués / (Planifiés + Effectués + Reportés + Annulés) × 100</div>
+</section>
+</div>
+<!-- Indice de régularité -->
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M5 19h14v2H5zM7 16h2V8H7zm4 0h2V5h-2zm4 0h2V11h-2z"></path></svg>
+</span>
+<span>Indice de régularité par domaine</span>
+</h2>
+<div class="chart-subtitle" style="margin-bottom:10px;">Écart-type des taux de présence métier par séance d’exercice — un écart élevé signale une forte variabilité (instabilité)</div>
+<div class="table-wrap">
+<table id="regularityTable">
+<thead>
+<tr>
+<th>Domaine</th>
+<th class="right">Nb sessions exercices</th>
+<th class="right">Taux moyen %</th>
+<th class="right">Taux min %</th>
+<th class="right">Taux max %</th>
+<th class="right">Écart-type</th>
+<th class="right">Régularité</th>
+</tr>
+</thead>
+<tbody id="regularityTableBody"></tbody>
+</table>
+</div>
+<div class="footer-note">Régularité : Élevée (σ &lt; 10) | Moyenne (σ 10–20) | Faible (σ &gt; 20)</div>
+</section>
+<!-- ===== ANALYSE MULTI-SESSIONS v39 ===== -->
+<section class="card">
+<h2 class="section-title">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"></path></svg>
+</span>
+<span>Analyse des exercices multi-sessions (séries)</span>
+</h2>
+<div class="chart-subtitle" style="margin-bottom:10px;">Synthèse par série d’exercices — taux sur cible nette cumulée des sessions — v47
+<div class="table-wrap" style="max-height:none; overflow:visible;">
+<table id="seriesAnalysisTable">
+<thead>
+<tr>
+<th>Série / Session</th>
+<th class="right" title="Nombre de sessions dans cette série">Sessions</th>
+<th class="right" title="Effectif de référence (max des sessions de la série)">Réf série</th>
+<th class="right" title="Cible nette cumulée des sessions (= dénominateur des taux de série)">Cible série nette</th>
+<th class="right" title="Présents comptés cumulés (incl. rôles comptabilisés)">Présents comptés</th>
+<th class="right" title="Présents métier cumulés (hors encadrement)">Présents métier</th>
+<th class="right" title="Taux métier = min(présents métier cumulés, cible nette cumulée) / cible nette cumulée × 100">Taux métier</th>
+<th class="right" title="Taux compté = présents comptés cumulés / cible nette cumulée × 100, plafonné à 100 % pour DAP et PR">Taux compté</th>
+</tr>
+</thead>
+<tbody id="seriesAnalysisTableBody">
+<tr><td colspan="8" style="text-align:center;color:#6b7280;">Aucune série détectée.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="footer-note" id="seriesAnalysisNote">
+  Les séries sont des groupes de sessions liées par un même exercice en plusieurs passages (ex. Formation groupée DPS 1.x). Les formateurs mutualisés sont comptés une seule fois (sur la 1ère session). Chaque session contribue individuellement à la cible nette et au taux global de la série.
+</div>
+</div></section>
+</div>
+</section>
+<section class="tab-panel" id="tab-appendices">
+<div class="wrap">
+<div style="max-width:1100px;margin:0 auto;">
+<h2 class="section-title" style="font-size:22px;margin-bottom:24px;">
+<span aria-hidden="true" class="section-icon">
+<svg viewbox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9H13zm-2 6H7v-2h4zm2-4H7v-2h6zm2-4H7V9h8v2z"></path></svg>
+</span>
+<span>Appendices — Explication des calculs et synthèses</span>
+</h2>
+<div class="card appendix-section">
+<div class="appendix-section-title">1. Vue d'ensemble du modèle de données</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    Chaque événement enregistré dans le monitoring correspond à une <strong>séance</strong> d'exercice ou de formation. Une séance appartient à un <strong>domaine</strong> (DPS, DAP, FOBA, PR, AUTO, JSP), un <strong>public cible</strong> (sous-structure) et un <strong>modèle d'événement</strong>. Les séances peuvent être regroupées en <strong>séries</strong> lorsqu'un même exercice se déroule en plusieurs sessions successives.
+  </p>
+<table class="appendix-table">
+<thead><tr><th>Concept</th><th>Définition</th><th>Exemple</th></tr></thead>
+<tbody>
+<tr><td><strong>Domaine</strong></td><td>Grande famille de formation</td><td>DPS, DAP, FOBA, PR, AUTO, JSP</td></tr>
+<tr><td><strong>Public cible (sous-structure)</strong></td><td>Groupe d'appartenance du personnel convoqué</td><td>DPS G1, DAP Y2, FOBA 1, PAPR…</td></tr>
+<tr><td><strong>Événement</strong></td><td>Intitulé de l'exercice ou de la formation</td><td>Exercice DPS 1, Formation groupée DPS 1.2…</td></tr>
+<tr><td><strong>Série</strong></td><td>Ensemble de sessions liées par le même exercice en plusieurs passages</td><td>Formation groupée DPS 1.x → Série DPS-1</td></tr>
+<tr><td><strong>Session</strong></td><td>Une occurrence individuelle dans une série</td><td>Formation groupée DPS 1.2 du 15/03/2025</td></tr>
+<tr><td><strong>Comptabilisé</strong></td><td>Indique si l'événement est pris en compte dans les statistiques</td><td>Oui / Non</td></tr>
+</tbody>
+</table>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">2. Effectif de référence et périodes</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    L'effectif de référence représente le <strong>nombre de personnes théoriquement concernées</strong> par chaque domaine de formation, à une date donnée. Il peut évoluer dans l'année (engagements, départs, mutations). Le système gère plusieurs <strong>périodes de référence</strong> datées : l'effectif applicable à un exercice est celui de la période active à la date de l'exercice.
+  </p>
+<div class="appendix-info-box">
+    💡 La période de référence est sélectionnée automatiquement : le système cherche la période dont la date effective est antérieure ou égale à la date de l'exercice. Si aucune période ne précède l'exercice, la période la plus ancienne est utilisée par défaut.
+  </div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    L'effectif de référence est utilisé pour <strong>pré-remplir le champ "Convoqués"</strong> dans le formulaire de saisie et comme base de calcul dans les synthèses de couverture.
+  </p>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">3. Définitions des taux et métriques de présence</div>
+<details class="appendix-accordion" open="">
+<summary>Taux brut de présence</summary>
+<div class="appendix-content">
+<div class="appendix-formula-box">Taux brut = Présents comptés / Convoqués (cible nette) × 100</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+        C'est le taux de présence de base. Il mesure le ratio entre les personnes effectivement présentes et l'effectif convoqué (cible nette après déduction des formateurs). Il inclut les absences excusées dans le dénominateur.
+      </p>
+<div class="appendix-warn-box">
+        ⚠️ Le taux brut peut paraître faible si beaucoup d'excusés légitimes sont présents dans les convoqués. Pour juger de la mobilisation réelle, préférer le taux ajusté.
+      </div>
+</div>
+</details>
+<details class="appendix-accordion">
+<summary>Taux ajusté de présence</summary>
+<div class="appendix-content">
+<div class="appendix-formula-box">Taux ajusté = Présents / (Convoqués cible nette − Excusés) × 100</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+        Le taux ajusté retire les absences excusées (maladie, accident, armée, professionnel, privé) du dénominateur. Il mesure le taux de présence parmi les personnes qui auraient pu se présenter. C'est l'indicateur le plus représentatif de la mobilisation réelle.
+      </p>
+</div>
+</details>
+<details class="appendix-accordion">
+<summary>Taux d'absence non excusée</summary>
+<div class="appendix-content">
+<div class="appendix-formula-box">Taux abs. non excusée = Absents non excusés / Convoqués cible nette × 100</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+        Mesure la part d'absences injustifiées. Un taux élevé peut indiquer un problème de discipline ou d'engagement. Les absents non excusés sont distincts des excusés (motif reconnu).
+      </p>
+</div>
+</details>
+<details class="appendix-accordion">
+<summary>Taux de couverture</summary>
+<div class="appendix-content">
+<div class="appendix-formula-box">Taux de couverture = Participation utile cumulée / Effectif de référence cumulé × 100</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+        La couverture représente le volume de participation rapporté à l'effectif de référence, <strong>cumulé sur tous les exercices comptabilisés</strong>. Contrairement au taux de présence (séance par séance), la couverture donne une vision globale de l'effort de formation. Pour le DAP, la participation utile inclut les permutations sortantes (−).
+      </p>
+<div class="appendix-info-box">
+        💡 Un taux de couverture supérieur à 100 % est possible : il signifie que le volume de présences dépasse l'effectif de référence total, ce qui peut indiquer plusieurs exercices distincts couvrant les mêmes personnes. C'est normal et attendu dans un plan annuel complet.
+      </div>
+</div>
+</details>
+<table class="appendix-table" style="margin-top:12px;">
+<thead><tr><th>Indicateur</th><th>Numérateur</th><th>Dénominateur</th><th>Usage</th></tr></thead>
+<tbody>
+<tr><td>Taux brut</th><td>Présents comptés</td><td>Cible nette</td><td>Vue globale de présence</td>
+</tr>
+<tr>
+<th>Taux ajusté</th><td>Présents comptés</td><td>Cible nette − Excusés</td><td>Mobilisation réelle</td>
+</tr>
+<tr>
+<th>Taux abs. non excusée</th><td>Absents</td><td>Cible nette</td><td>Discipline / suivi RH</td>
+</tr>
+<tr>
+<th>Taux de couverture</th><td>Participation utile cumulée</td><td>Effectif réf. cumulé</td><td>Vision plan annuel</td>
+</tr>
+<tr>
+<th>Taux de réalisation</th><td>Exercices effectués</td><td>Total événements du plan</td><td>Avancement du plan</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">4. Cible brute, formateurs retirés, cible nette</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    Lorsqu'un exercice en série implique des <strong>formateurs internes</strong>, ces personnes sont convoquées comme formateurs (et non comme apprenants). Les retirer de la cible évite de fausser les taux de présence.
+  </p>
+<div class="appendix-formula-box">
+Cible brute  = Convoqués saisis (+ extérieurs DAP si applicable)
+Formateurs retirés = Nombre de formateurs et de personnels dispensés saisis dans les blocs dédiés
+Cible nette  = max(0, Cible brute − Formateurs retirés)
+
+Taux de présence = Présents / Cible nette × 100
+  </div>
+<table class="appendix-table">
+<thead><tr><th>Notion</th><th>Définition</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>Cible brute</strong></td>
+<td>Effectif total convoqué, avant toute déduction. Pour le DAP, inclut les participants extérieurs à la section convoquante.</td>
+</tr>
+<tr>
+<td><strong>Formateurs retirés</strong></td>
+<td>Nombre de formateurs internes saisis dans le bloc "Rôles mutualisés". Ces personnes sont soustraites de la cible car elles ne sont pas soumises à l'obligation de présence comme apprenants.</td>
+</tr>
+<tr>
+<td><strong>Cible nette</strong></td>
+<td>Effectif réellement attendu comme apprenants. C'est la base de calcul de tous les taux. Elle ne peut pas être négative (plancher à 0).</td>
+</tr>
+</tbody>
+</table>
+<div class="appendix-warn-box">
+    ⚠️ En v41, un formateur renseigné peut être retiré de la cible même s’il n’est pas comptabilisé dans les présents. La comptabilisation joue sur les présents, pas sur le retrait de cible.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">5. Rôles mutualisés et exercices multi-sessions (séries)</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    Certains exercices se déroulent en <strong>plusieurs sessions successives</strong> (série). Par exemple, une "Formation groupée DPS 1" comprend plusieurs passages numérotés DPS 1.1, DPS 1.2, DPS 1.3, etc., tous appartenant à la <strong>série DPS-1</strong>. Dans ce contexte, les formateurs, surveillants ou personnels auxiliaires ne sont présents physiquement qu'à une ou quelques sessions, mais leur rôle porte sur l'ensemble de la série.
+  </p>
+<div class="appendix-info-box">
+    💡 <strong>Principe de la mutualization :</strong> lorsqu'un rôle (formateur, surveillant, auxiliaire) est configuré comme "mutualisé sur la série", sa présence n'est comptabilisée qu'une seule fois dans la première session de la série. Les sessions suivantes ne comptent pas ce rôle une deuxième fois, évitant ainsi les doubles comptes.
+  </div>
+<table class="appendix-table">
+<thead><tr><th>Paramètre</th><th>Effet</th></tr></thead>
+<tbody>
+<tr>
+<td>À comptabiliser : <strong>Non</strong></td>
+<td>Le rôle existe dans le système mais n'est pas inclus dans les présents ni dans les calculs. Utilité : traçabilité uniquement.</td>
+</tr>
+<tr>
+<td>À comptabiliser : <strong>Oui</strong> — Mutualisé : <strong>Non</strong></td>
+<td>Le rôle est ajouté aux présents comptés pour chaque session où il est saisi. Utile si le formateur change à chaque session.</td>
+</tr>
+<tr>
+<td>À comptabiliser : <strong>Oui</strong> — Mutualisé : <strong>Oui</strong></td>
+<td>Le rôle est alloué à la première session de la série uniquement. Les sessions suivantes ne cumulent pas ce rôle. C'est le mode recommandé pour les formateurs permanents sur toute la série.</td>
+</tr>
+</tbody>
+</table>
+<div class="appendix-section-title" style="margin-top:20px;font-size:14px;">Séries reconnues par le système</div>
+<table class="appendix-table">
+<thead><tr><th>Domaine</th><th>Modèle de nom</th><th>Clé de série</th></tr></thead>
+<tbody>
+<tr>
+<td>DPS</td>
+<td>Formation groupée DPS X.Y</td>
+<td>DPS-X</td>
+</tr>
+<tr>
+<td>DAP</td>
+<td>Formation groupée DAP X.Y</td>
+<td>DAP-X</td>
+</tr>
+<tr>
+<td>PR</td>
+<td>Exercice PR S.Y (S = 1 à 4)</td>
+<td>PR-S</td>
+</tr>
+<tr>
+<td>AUTO (VL)</td>
+<td>Exercice Car 1.Y</td>
+<td>CAR-1</td>
+</tr>
+<tr>
+<td>AUTO (PL)</td>
+<td>Exercice Truck 1.Y</td>
+<td>TRUCK-1</td>
+</tr>
+</tbody>
+</table>
+<div class="appendix-warn-box">
+    ⚠️ Les exercices hors série (ex. Exercice DPS 1, Exercice JSP 3) ne disposent pas de clé de série. Les rôles mutualisés ne s'appliquent pas à ces exercices : chaque session est traitée de manière indépendante.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">6. Logique de déduplication sur les séries</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    Pour les exercices en série, le système applique une <strong>logique de "winner takes all"</strong> par groupe (série + type de rôle) :
+  </p>
+<ol style="font-size:13px;line-height:1.8;color:#334155;padding-left:20px;">
+<li>Toutes les sessions comptabilisées d'une même série sont regroupées.</li>
+<li>La session la plus ancienne (date la plus basse, puis ordre de création) est désignée <strong>session principale</strong>.</li>
+<li>Le nombre maximum de rôles saisi dans l'ensemble des sessions de la série est retenu comme compte unique.</li>
+<li>Ce compte est alloué exclusivement à la session principale.</li>
+<li>Toutes les autres sessions de la série reçoivent une allocation de 0 pour ce rôle.</li>
+</ol>
+<div class="appendix-info-box">
+    💡 Conséquence : si vous saisissez 2 formateurs sur la session 1.1 et 2 formateurs sur la session 1.2, le système alloue 2 formateurs à la session 1.1 et 0 à la session 1.2 — évitant de compter 4 formateurs alors qu'il n'y en a que 2 dans la réalité.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">7. Gestion spécifique du domaine DAP</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    Le DAP (Détachement d'Appui Polyvalent) présente une logique particulière liée aux <strong>permutations inter-sections</strong> :
+  </p>
+<table class="appendix-table">
+<thead><tr><th>Champ</th><th>Signification</th></tr></thead>
+<tbody>
+<tr>
+<td>Convoqués section</td>
+<td>Personnel appartenant à la section hôte de l'exercice (ex. DAP Y2)</td>
+</tr>
+<tr>
+<td>Extérieurs Y1/Y2/Y3/Y4</td>
+<td>Personnel des autres sections participant en permutation entrante (+)</td>
+</tr>
+<tr>
+<td>Permutation (−)</td>
+<td>Personnel de la section hôte participant à un exercice d'une autre section (permutation sortante)</td>
+</tr>
+<tr>
+<td>Cible brute DAP</td>
+<td>Convoqués section + Extérieurs Y1 + Y2 + Y3 + Y4</td>
+</tr>
+<tr>
+<td>Participation utile DAP</td>
+<td>Présents comptés + Permutations sortantes (−) [pour la couverture]</td>
+</tr>
+</tbody>
+</table>
+<div class="appendix-info-box">
+    💡 Les permutations sortantes (−) sont incluses dans la participation utile pour le calcul de la couverture annuelle DAP, car ces personnes ont bien participé à une formation, même si c'était dans une autre section.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">8. KPI et logique de pilotage commandement</div>
+<table class="appendix-table">
+<thead><tr><th>KPI</th><th>Calcul</th><th>Source</th></tr></thead>
+<tbody>
+<tr>
+<td>Événements comptabilisés</td>
+<td>Nombre de lignes avec "À comptabiliser = Oui"</td>
+<td>Filtre actif</td>
+</tr>
+<tr>
+<td>Événements non compta.</td>
+<td>Lignes "À comptabiliser = Non" (planifiés, annulés, etc.)</td>
+<td>Filtre actif</td>
+</tr>
+<tr>
+<td>Convoqués totaux</td>
+<td>Somme des cibles nettes de tous les exercices comptabilisés</td>
+<td>getEffectiveConvoques()</td>
+</tr>
+<tr>
+<td>Présents totaux</td>
+<td>Somme des présents effectifs (incl. rôles mutualisés)</td>
+<td>getEffectivePresents()</td>
+</tr>
+<tr>
+<td>Taux brut global</td>
+<td>Présents totaux / Convoqués totaux × 100</td>
+<td>summarizeRecords()</td>
+</tr>
+<tr>
+<td>Taux ajusté global</td>
+<td>Présents / (Convoqués − Excusés totaux) × 100</td>
+<td>summarizeRecords()</td>
+</tr>
+<tr>
+<td>Couverture globale (objectif)</td>
+<td>Participation utile cumulée / Effectif réf. cumulé × 100</td>
+<td>summarizeCoverageByDomain()</td>
+</tr>
+</tbody>
+</table>
+<div class="appendix-warn-box">
+    ⚠️ Les KPI s'appliquent aux données visibles selon les filtres actifs (domaine, public cible, comptabilisation, recherche). Un filtre actif ne modifie que la vue — il ne supprime pas les données.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">9. Objectifs et conformité</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    Les objectifs de participation sont définis pour chaque domaine et organe d'intervention (OI) dans l'onglet de configuration. Le système calcule l'écart entre l'objectif et le réalisé, et attribue un statut de conformité :
+  </p>
+<table class="appendix-table">
+<thead><tr><th>Statut</th><th>Critère</th><th>Couleur</th></tr></thead>
+<tbody>
+<tr>
+<td>Atteint</td>
+<td>Taux réel ≥ Objectif</td>
+<td style="color:#1f5fbf;font-weight:700;">Bleu</td>
+</tr>
+<tr>
+<td>À surveiller</td>
+<td>Objectif − 10 pts ≤ Taux réel &lt; Objectif</td>
+<td style="color:#b26a00;font-weight:700;">Orange</td>
+</tr>
+<tr>
+<td>Non atteint</td>
+<td>Taux réel &lt; Objectif − 10 pts</td>
+<td style="color:#c1121f;font-weight:700;">Rouge</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">10. Indice de régularité</div>
+<p style="font-size:13px;line-height:1.65;color:#334155;">
+    L'indice de régularité mesure la <strong>stabilité des taux de présence</strong> dans le temps pour chaque domaine, via l'<strong>écart-type (σ)</strong> des taux de présence de chaque exercice comptabilisé effectué.
+  </p>
+<div class="appendix-formula-box">σ = √( Σ(taux_i − taux_moyen)² / n )
+
+Régularité élevée  : σ &lt; 10  (les taux varient peu d'une séance à l'autre)
+Régularité moyenne : σ 10–20 (variabilité modérée)
+Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</div>
+<div class="appendix-info-box">
+    💡 Un domaine avec un taux moyen correct mais une régularité faible peut indiquer des problèmes ponctuels (exercices sous-couverts isolés). La régularité est un indicateur de pilotage complémentaire au taux moyen.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">11. Différences entre présence brute, présence effective et couverture</div>
+<table class="appendix-table">
+<thead><tr><th>Notion</th><th>Définition précise</th><th>Usage</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>Présence brute</strong></td>
+<td>nbPresents saisi dans le formulaire, sans aucun ajout</td>
+<td>Saisie brute opérateur</td>
+</tr>
+<tr>
+<td><strong>Présents effectifs</strong></td>
+<td>nbPresents + rôles non-mutualisés comptabilisés + allocation mutualisée (1× par série)</td>
+<td>Tous les affichages de taux</td>
+</tr>
+<tr>
+<td><strong>Participation utile</strong></td>
+<td>Présents effectifs [+ permutation − pour le DAP]</td>
+<td>Calcul de couverture uniquement</td>
+</tr>
+<tr>
+<td><strong>Couverture unique réelle</strong></td>
+<td>Non calculée directement : le système mesure la participation cumulée, pas les individus uniques. La déduplication individuelle nécessiterait un registre nominatif non disponible.</td>
+<td>Lecture à interpréter sur plan annuel</td>
+</tr>
+</tbody>
+</table>
+<div class="appendix-warn-box">
+    ⚠️ Le système ne dispose pas d'une liste nominative de personnes. Il est donc impossible de savoir si une même personne a participé à plusieurs exercices. La couverture mesure un <em>volume de participation</em> rapporté à l'effectif de référence, et non un taux de personnes uniques ayant été formées.
+  </div>
+</div>
+<div class="card appendix-section">
+<div class="appendix-section-title">12. Synthèse des fonctions de calcul clés (référence technique)</div>
+<table class="appendix-table">
+<thead><tr><th>Fonction</th><th>Rôle</th></tr></thead>
+<tbody>
+<tr>
+<td><code>getEffectiveConvoques(record, map)</code></td>
+<td>Retourne la cible nette = cible brute − retraits de cible (formateurs + dispensés)</td>
+</tr>
+<tr>
+<td><code>getEffectivePresents(record, map)</code></td>
+<td>Retourne les présents effectifs = nbPresents + rôles non-mutualisés + allocation mutualisée</td>
+</tr>
+<tr>
+<td><code>buildMutualizedRoleAllocation()</code></td>
+<td>Construit la Map d'allocation des rôles mutualisés par série (1× sur session principale)</td>
+</tr>
+<tr>
+<td><code>buildTrainerTargetDeductionAllocationMap()</code></td>
+<td>Construit la Map de déduction formateur sur la cible (par série, 1× sur session principale)</td>
+</tr>
+<tr>
+<td><code>getMutualizedSeriesKey(domain, template)</code></td>
+<td>Retourne la clé de série (ex. "DPS-1") ou "" si hors-série</td>
+</tr>
+<tr>
+<td><code>summarizeRecords(rows)</code></td>
+<td>Agrège exercices, convoqués, présents, excusés, taux brut, taux ajusté</td>
+</tr>
+<tr>
+<td><code>summarizeCoverageByDomain(rows)</code></td>
+<td>Calcule la couverture cumulée par domaine</td>
+</tr>
+<tr>
+<td><code>getSeriesAnalysis(seriesKey)</code></td>
+<td>Analyse complète d'une série multi-sessions avec taux corrigés sur cible nette cumulée (v47)</td>
+</tr>
+</tbody>
+</table>
+<div class="footer-note" style="margin-top:12px;">Version du fichier : v61 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
+</div>
+</div>
+</div>
+</section>
+<div id="printArea" style="display:none"></div>
+<div class="preview-modal" id="previewModal">
+<div class="preview-card">
+<div class="preview-head">
+<h3 class="preview-title">Aperçu de l’exercice</h3>
+<button id="closePreviewBtn" type="button">Fermer</button>
+</div>
+<div class="preview-body" id="previewBody"></div>
+</div>
+</div>
+<script src="env.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data-schema.js"></script>
+<script src="assets/js/backend-config.js"></script>
+<script src="assets/js/api-contracts.js"></script>
+<script src="assets/js/api-client.js"></script>
+<script src="assets/js/sync-service.js"></script>
+<script src="assets/js/audit-log.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/security.js"></script>
+<script src="assets/js/storage.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/utils/dates.js"></script>
+<script src="assets/js/utils/numbers.js"></script>
+<script src="assets/js/utils/dom.js"></script>
+<script src="assets/js/utils/formatters.js"></script>
+<script src="assets/js/data/import-json.js"></script>
+<script src="assets/js/data/export-json.js"></script>
+<script src="assets/js/data/export-csv.js"></script>
+<script src="assets/js/data/seed-data.js"></script>
+<script src="assets/js/calculations/summary.js"></script>
+<script src="assets/js/calculations/series.js"></script>
+<script src="assets/js/calculations/dap.js"></script>
+<script src="assets/js/calculations/pr-papr.js"></script>
+<script src="assets/js/calculations/objectives.js"></script>
+<script src="assets/js/calculations/references.js"></script>
+<script src="assets/js/render/render-main.js"></script>
+<script src="assets/js/render/render-records.js"></script>
+<script src="assets/js/render/render-kpis.js"></script>
+<script src="assets/js/render/render-series.js"></script>
+<script src="assets/js/render/render-charts.js"></script>
+<script src="assets/js/render/render-appendices.js"></script>
+<script src="assets/js/render/render-pdf.js"></script>
+<script src="assets/js/ui/forms.js"></script>
+<script src="assets/js/ui/filters.js"></script>
+<script src="assets/js/ui/tabs.js"></script>
+<script src="assets/js/ui/modals.js"></script>
+<script src="assets/js/ui/events.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/monitoring-f7-evolution.js"></script>
+</body>
+</html>
