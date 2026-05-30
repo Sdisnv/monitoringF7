@@ -1,4 +1,4 @@
-# Monitoring F7 v61 - ergonomie professionnelle COD
+# Monitoring F7 v65 - synchronisation maîtrisée optionnelle
 
 Cette livraison découpe le fichier HTML monolithique v47 en une arborescence exploitable localement.
 
@@ -74,7 +74,7 @@ Base de travail : Monitoring F7 v48. La v50 conserve le fonctionnement statique/
 
 ### Publication GitHub → Netlify
 
-1. Décompresser `Monitoring_F7_v61.zip`.
+1. Décompresser `Monitoring_F7_v65.zip`.
 2. Committer les fichiers applicatifs dans le dépôt GitHub, sans ajouter de données utilisateur exportées ni fichiers temporaires.
 3. Laisser Netlify publier le dossier statique contenant `index.html`. Aucun backend ni build obligatoire n’est requis.
 4. Après publication, ouvrir l’URL Netlify et contrôler le login, le logo, les onglets, les imports/export et les graphiques.
@@ -376,3 +376,129 @@ Documentation v61 :
 
 - `docs/FICHIERS_MODIFIES_V61.md` ;
 - `docs/RAPPORT_ERGONOMIE_PROFESSIONNELLE_V61.md`.
+
+## Évolution v62 — Vérification locale des contrats backend
+
+Livrable : `Monitoring_F7_v62.zip`.
+
+Objectif : préparer la prochaine phase backend avec un vérificateur local des contrats API et du schéma de données, sans serveur réel, sans appel réseau et sans synchronisation.
+
+Corrections principales :
+
+- ajout de `assets/js/backend-contract-check.js` ;
+- bouton `Vérifier contrats backend` dans le diagnostic local ;
+- contrôle local des méthodes HTTP, chemins API, modes d'authentification et réponses documentées ;
+- contrôle local de la présence des entités du schéma de données ;
+- diagnostic enrichi avec nombre de contrats vérifiés et mock backend désactivé ;
+- configuration enrichie avec `contractCheckEnabled` et `mockBackendEnabled`, toujours sans activation backend.
+
+Maintiens explicites :
+
+- `backendEnabled = false` ;
+- `syncEnabled = false` ;
+- `serverAuthEnabled = false` ;
+- `mockBackendEnabled = false` ;
+- `SyncService` inactif ;
+- aucun appel réseau effectué par le vérificateur ;
+- aucun backend, aucune fonction serveur, aucune base de données ajoutés ;
+- ergonomie v61, KPI, calculs métier et règles événements conservés.
+
+Documentation v62 :
+
+- `docs/FICHIERS_MODIFIES_V62.md` ;
+- `docs/RAPPORT_VERIFICATION_CONTRATS_BACKEND_V62.md`.
+
+## Évolution v63 — Auth serveur optionnelle Netlify
+
+Livrable : `Monitoring_F7_v63.zip`.
+
+Objectif : ajouter une authentification serveur réelle et optionnelle via Netlify Functions, sans l'activer côté client par défaut et sans synchronisation.
+
+Ajouts principaux :
+
+- fonctions Netlify `auth-login`, `auth-me`, `auth-refresh`, `auth-logout` ;
+- vérification serveur d'un utilisateur configuré par variables d'environnement ;
+- jetons HMAC courts côté serveur, sans dépendance externe ;
+- redirects Netlify `/auth/login`, `/auth/me`, `/auth/refresh`, `/auth/logout` ;
+- conservation de l'auth locale navigateur tant que `backendEnabled` et `serverAuthEnabled` restent désactivés ;
+- documentation des variables d'environnement nécessaires.
+
+Maintiens explicites :
+
+- `backendEnabled = false` par défaut ;
+- `syncEnabled = false` ;
+- `serverAuthEnabled = false` par défaut ;
+- `mockBackendEnabled = false` ;
+- `SyncService` inactif ;
+- aucun stockage central et aucune synchronisation multi-postes ;
+- KPI, calculs métier, ergonomie v61 et règles événements conservés.
+
+Documentation v63 :
+
+- `docs/FICHIERS_MODIFIES_V63.md` ;
+- `docs/AUTH_SERVEUR_NETLIFY_V63.md` ;
+- `docs/RAPPORT_AUTH_SERVEUR_OPTIONNELLE_V63.md`.
+
+## Évolution v64 — Stockage central optionnel
+
+Livrable : `Monitoring_F7_v64.zip`.
+
+Objectif : préparer un stockage serveur optionnel pour les données métier, sans remplacer le stockage local et sans activer la synchronisation.
+
+Ajouts principaux :
+
+- routes Netlify `/records`, `/imported-events`, `/reference-periods` ;
+- fonctions `data-records`, `data-imported-events`, `data-reference-periods` ;
+- adaptateur serveur `netlify/functions/_data-store.js` basé sur Netlify Blobs si disponible ;
+- protection des routes données par bearer token issu de l'auth serveur v63 ;
+- diagnostic local enrichi avec le statut `Stockage central` ;
+- client API enrichi avec `listRecords`, `replaceRecords`, `replaceImportedEvents`, `replaceReferencePeriods`.
+
+Maintiens explicites :
+
+- `backendEnabled = false` par défaut ;
+- `storageMode = local` par défaut ;
+- `centralStorageEnabled = false` par défaut ;
+- `syncEnabled = false` ;
+- `serverAuthEnabled = false` par défaut ;
+- `SyncService` inactif ;
+- aucune migration automatique vers serveur ;
+- aucune synchronisation multi-postes ;
+- KPI, calculs métier, ergonomie v61 et règles événements conservés.
+
+Documentation v64 :
+
+- `docs/FICHIERS_MODIFIES_V64.md` ;
+- `docs/STOCKAGE_CENTRAL_OPTIONNEL_V64.md` ;
+- `docs/RAPPORT_STOCKAGE_CENTRAL_OPTIONNEL_V64.md`.
+
+## Évolution v65 — Synchronisation maîtrisée optionnelle
+
+Livrable : `Monitoring_F7_v65.zip`.
+
+Objectif : préparer une synchronisation contrôlée sans l'exécuter automatiquement, avec contrôle explicite des prérequis et file locale lisible.
+
+Ajouts principaux :
+
+- file de synchronisation v65 avec compatibilité des anciennes files ;
+- contrôle `checkReadiness` des prérequis backend, auth serveur, stockage central, sync et jeton d'accès ;
+- plan de synchronisation local via `planSync` ;
+- bouton `Tester prérequis sync` dans le diagnostic local ;
+- diagnostic enrichi avec `Prérequis sync` et `File sync` ;
+- aucune exécution automatique même si les prérequis sont réunis.
+
+Maintiens explicites :
+
+- `backendEnabled = false` par défaut ;
+- `storageMode = local` par défaut ;
+- `centralStorageEnabled = false` par défaut ;
+- `syncEnabled = false` par défaut ;
+- `serverAuthEnabled = false` par défaut ;
+- aucune écriture serveur automatique ;
+- aucune résolution de conflit masquée ;
+- KPI, calculs métier, ergonomie v61 et règles événements conservés.
+
+Documentation v65 :
+
+- `docs/FICHIERS_MODIFIES_V65.md` ;
+- `docs/RAPPORT_SYNCHRONISATION_MAITRISEE_V65.md`.

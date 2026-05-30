@@ -1,17 +1,8 @@
 /* Configuration externe future. La logique historique reste chargée par app.js. */
-
-// Get hash from window.ENV (set by env.js) - NO HARDCODED VALUE
-const temporaryPasswordHashHex = (window.ENV && window.ENV.temporaryPasswordHashHex) || null;
-
-// Validate that the hash exists - prevent silent failures
-if (!temporaryPasswordHashHex && typeof console !== 'undefined') {
-  console.error('[Config] Missing temporaryPasswordHashHex in window.ENV. Please check env.js configuration.');
-}
-
 window.MonitoringConfig = Object.freeze({
   appName: 'Monitoring F7',
-  version: 'v61',
-  temporaryPasswordHashHex: temporaryPasswordHashHex
+  version: 'v65',
+  temporaryPasswordHashHex: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'
 });
 
 (function(){

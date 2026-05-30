@@ -1,9 +1,9 @@
-/* Monitoring F7 v61 — journalisation locale légère pour diagnostic pilote SDIS.
+/* Monitoring F7 v65 — journalisation locale légère pour diagnostic pilote SDIS.
    Journal client-only modifiable localement : ne constitue pas un audit trail sécurisé ou infalsifiable. */
 (function(){
   'use strict';
 
-  const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || 'v61';
+  const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || 'v65';
   const LOG_KEY = 'monitoring_f7_audit_log_v56'; // clé conservée pour préserver le journal local existant
   const MAX_ENTRIES = 1000;
   const EVENT_TYPES = new Set(['info','warning','error','action']);

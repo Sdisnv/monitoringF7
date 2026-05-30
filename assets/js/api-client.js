@@ -1,4 +1,4 @@
-/* Monitoring F7 v61 — façade API préparatoire, inactive par défaut. */
+/* Monitoring F7 v65 — façade API préparatoire, inactive par défaut. */
 (function(){
   'use strict';
 
@@ -10,7 +10,7 @@
 
   function isBackendEnabled(){
     const cfg = getConfig();
-    return cfg.backendEnabled === true && !!cfg.apiBaseUrl;
+    return cfg.backendEnabled === true;
   }
 
   function getBackendStatus(){
@@ -29,14 +29,15 @@
       localMode: true,
       method,
       path: String(path || ''),
-      message: 'Backend désactivé en v61 : aucune requête distante effectuée.'
+      message: 'Backend désactivé en v65 : aucune requête distante effectuée.'
     }));
   }
 
   async function request(method, path, body, options){
     if(!isBackendEnabled()) return disabledResponse(method, path);
     const cfg = getConfig();
-    const endpoint = `${cfg.apiBaseUrl}/${String(path || '').replace(/^\/+/, '')}`;
+    const base = String(cfg.apiBaseUrl || '').replace(/\/+$/, '');
+    const endpoint = `${base}/${String(path || '').replace(/^\/+/, '')}`;
     const fetchOptions = Object.assign({
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -82,6 +83,10 @@
     logoutServer,
     getCurrentUser(options){ return request('GET', '/auth/me', null, options); },
     refreshSession,
+    listRecords(options){ return request('GET', '/records', null, options); },
+    replaceRecords(records, options){ return request('PUT', '/records', { records, schemaVersion: window.MonitoringDataSchema?.schemaVersion || 4 }, options); },
+    replaceImportedEvents(importedEvents, options){ return request('PUT', '/imported-events', { importedEvents }, options); },
+    replaceReferencePeriods(referencePeriods, options){ return request('PUT', '/reference-periods', { referencePeriods }, options); },
     setAccessToken(token){ accessToken = token ? String(token) : null; },
     clearAccessToken(){ accessToken = null; },
     getAccessToken(){ return accessToken; },

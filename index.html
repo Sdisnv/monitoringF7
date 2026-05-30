@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Monitoring F7 v61</title>
+<title>Monitoring F7 v65</title>
 <link href="assets/css/base.css" rel="stylesheet"/>
 <link href="assets/css/layout.css" rel="stylesheet"/>
 <link href="assets/css/components.css" rel="stylesheet"/>
@@ -40,7 +40,7 @@
 <img alt="Logo SDIS Nord vaudois" class="header-logo" src="assets/img/LogoSDISblanc.png"/>
 <div class="header-text">
 <h1>SDIS régional du Nord vaudois</h1>
-<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v61</span></div>
+<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v65</span></div>
 </div>
 </div>
 <div class="user-zone" id="userZone">
@@ -619,7 +619,7 @@
 <th class="right">Convoqués</th>
 <th class="right">Présents</th>
 <th class="right">Maladie/accident</th>
-<th class="right"> </th>
+<th class="right"> </th>
 <th class="right">Armée</th>
 <th class="right">Professionnel</th>
 <th class="right">Privé</th>
@@ -1296,9 +1296,13 @@
 <div class="f7-admin-grid" id="f7DiagnosticStats"></div>
 <div class="f7-action-row">
 <button class="compact-btn primary" id="f7RefreshLogsBtn" type="button">Actualiser</button>
+<button class="compact-btn" id="f7CheckBackendContractsBtn" type="button">Vérifier contrats backend</button>
+<button class="compact-btn" id="f7CheckSyncReadinessBtn" type="button">Tester prérequis sync</button>
 <button class="compact-btn" id="f7ExportLogsBtn" type="button">Exporter journal support</button>
 <button class="compact-btn danger-btn" id="f7ClearLogsBtn" type="button">Vider le journal</button>
 </div>
+<div class="f7-status-box" id="f7BackendContractStatus">Contrats backend préparés, vérification locale non exécutée.</div>
+<div class="f7-status-box" id="f7SyncReadinessStatus">Synchronisation désactivée par défaut, prérequis non testés.</div>
 <div class="table-wrap f7-diagnostic-log-wrap">
 <table class="f7-diagnostic-log-table">
 <thead><tr><th>Date</th><th>Niveau</th><th>Événement</th><th>Message</th></tr></thead>
@@ -1307,6 +1311,8 @@
 </div>
 </section>
 </section></div></div></section>
+
+
 
 <section class="tab-panel" id="tab-graphs">
 <div class="wrap grid">
@@ -1669,20 +1675,11 @@
 <table class="appendix-table" style="margin-top:12px;">
 <thead><tr><th>Indicateur</th><th>Numérateur</th><th>Dénominateur</th><th>Usage</th></tr></thead>
 <tbody>
-<tr><td>Taux brut</th><td>Présents comptés</td><td>Cible nette</td><td>Vue globale de présence</td>
-</tr>
-<tr>
-<th>Taux ajusté</th><td>Présents comptés</td><td>Cible nette − Excusés</td><td>Mobilisation réelle</td>
-</tr>
-<tr>
-<th>Taux abs. non excusée</th><td>Absents</td><td>Cible nette</td><td>Discipline / suivi RH</td>
-</tr>
-<tr>
-<th>Taux de couverture</th><td>Participation utile cumulée</td><td>Effectif réf. cumulé</td><td>Vision plan annuel</td>
-</tr>
-<tr>
-<th>Taux de réalisation</th><td>Exercices effectués</td><td>Total événements du plan</td><td>Avancement du plan</td>
-</tr>
+<tr><td>Taux brut</td><td>Présents comptés</td><td>Cible nette</td><td>Vue globale de présence</td></tr>
+<tr><td>Taux ajusté</td><td>Présents comptés</td><td>Cible nette − Excusés</td><td>Mobilisation réelle</td></tr>
+<tr><td>Taux abs. non excusée</td><td>Absents</td><td>Cible nette</td><td>Discipline / suivi RH</td></tr>
+<tr><td>Taux de couverture</td><td>Participation utile cumulée</td><td>Effectif réf. cumulé</td><td>Vision plan annuel</td></tr>
+<tr><td>Taux de réalisation</td><td>Exercices effectués</td><td>Total événements du plan</td><td>Avancement du plan</td></tr>
 </tbody>
 </table>
 </div>
@@ -1701,18 +1698,9 @@ Taux de présence = Présents / Cible nette × 100
 <table class="appendix-table">
 <thead><tr><th>Notion</th><th>Définition</th></tr></thead>
 <tbody>
-<tr>
-<td><strong>Cible brute</strong></td>
-<td>Effectif total convoqué, avant toute déduction. Pour le DAP, inclut les participants extérieurs à la section convoquante.</td>
-</tr>
-<tr>
-<td><strong>Formateurs retirés</strong></td>
-<td>Nombre de formateurs internes saisis dans le bloc "Rôles mutualisés". Ces personnes sont soustraites de la cible car elles ne sont pas soumises à l'obligation de présence comme apprenants.</td>
-</tr>
-<tr>
-<td><strong>Cible nette</strong></td>
-<td>Effectif réellement attendu comme apprenants. C'est la base de calcul de tous les taux. Elle ne peut pas être négative (plancher à 0).</td>
-</tr>
+<tr><td><strong>Cible brute</strong></td><td>Effectif total convoqué, avant toute déduction. Pour le DAP, inclut les participants extérieurs à la section convoquante.</td></tr>
+<tr><td><strong>Formateurs retirés</strong></td><td>Nombre de formateurs internes saisis dans le bloc "Rôles mutualisés". Ces personnes sont soustraites de la cible car elles ne sont pas soumises à l'obligation de présence comme apprenants.</td></tr>
+<tr><td><strong>Cible nette</strong></td><td>Effectif réellement attendu comme apprenants. C'est la base de calcul de tous les taux. Elle ne peut pas être négative (plancher à 0).</td></tr>
 </tbody>
 </table>
 <div class="appendix-warn-box">
@@ -1730,49 +1718,20 @@ Taux de présence = Présents / Cible nette × 100
 <table class="appendix-table">
 <thead><tr><th>Paramètre</th><th>Effet</th></tr></thead>
 <tbody>
-<tr>
-<td>À comptabiliser : <strong>Non</strong></td>
-<td>Le rôle existe dans le système mais n'est pas inclus dans les présents ni dans les calculs. Utilité : traçabilité uniquement.</td>
-</tr>
-<tr>
-<td>À comptabiliser : <strong>Oui</strong> — Mutualisé : <strong>Non</strong></td>
-<td>Le rôle est ajouté aux présents comptés pour chaque session où il est saisi. Utile si le formateur change à chaque session.</td>
-</tr>
-<tr>
-<td>À comptabiliser : <strong>Oui</strong> — Mutualisé : <strong>Oui</strong></td>
-<td>Le rôle est alloué à la première session de la série uniquement. Les sessions suivantes ne cumulent pas ce rôle. C'est le mode recommandé pour les formateurs permanents sur toute la série.</td>
-</tr>
+<tr><td>À comptabiliser : <strong>Non</strong></td><td>Le rôle existe dans le système mais n'est pas inclus dans les présents ni dans les calculs. Utilité : traçabilité uniquement.</td></tr>
+<tr><td>À comptabiliser : <strong>Oui</strong> — Mutualisé : <strong>Non</strong></td><td>Le rôle est ajouté aux présents comptés pour chaque session où il est saisi. Utile si le formateur change à chaque session.</td></tr>
+<tr><td>À comptabiliser : <strong>Oui</strong> — Mutualisé : <strong>Oui</strong></td><td>Le rôle est alloué à la première session de la série uniquement. Les sessions suivantes ne cumulent pas ce rôle. C'est le mode recommandé pour les formateurs permanents sur toute la série.</td></tr>
 </tbody>
 </table>
 <div class="appendix-section-title" style="margin-top:20px;font-size:14px;">Séries reconnues par le système</div>
 <table class="appendix-table">
 <thead><tr><th>Domaine</th><th>Modèle de nom</th><th>Clé de série</th></tr></thead>
 <tbody>
-<tr>
-<td>DPS</td>
-<td>Formation groupée DPS X.Y</td>
-<td>DPS-X</td>
-</tr>
-<tr>
-<td>DAP</td>
-<td>Formation groupée DAP X.Y</td>
-<td>DAP-X</td>
-</tr>
-<tr>
-<td>PR</td>
-<td>Exercice PR S.Y (S = 1 à 4)</td>
-<td>PR-S</td>
-</tr>
-<tr>
-<td>AUTO (VL)</td>
-<td>Exercice Car 1.Y</td>
-<td>CAR-1</td>
-</tr>
-<tr>
-<td>AUTO (PL)</td>
-<td>Exercice Truck 1.Y</td>
-<td>TRUCK-1</td>
-</tr>
+<tr><td>DPS</td><td>Formation groupée DPS X.Y</td><td>DPS-X</td></tr>
+<tr><td>DAP</td><td>Formation groupée DAP X.Y</td><td>DAP-X</td></tr>
+<tr><td>PR</td><td>Exercice PR S.Y (S = 1 à 4)</td><td>PR-S</td></tr>
+<tr><td>AUTO (VL)</td><td>Exercice Car 1.Y</td><td>CAR-1</td></tr>
+<tr><td>AUTO (PL)</td><td>Exercice Truck 1.Y</td><td>TRUCK-1</td></tr>
 </tbody>
 </table>
 <div class="appendix-warn-box">
@@ -1803,26 +1762,11 @@ Taux de présence = Présents / Cible nette × 100
 <table class="appendix-table">
 <thead><tr><th>Champ</th><th>Signification</th></tr></thead>
 <tbody>
-<tr>
-<td>Convoqués section</td>
-<td>Personnel appartenant à la section hôte de l'exercice (ex. DAP Y2)</td>
-</tr>
-<tr>
-<td>Extérieurs Y1/Y2/Y3/Y4</td>
-<td>Personnel des autres sections participant en permutation entrante (+)</td>
-</tr>
-<tr>
-<td>Permutation (−)</td>
-<td>Personnel de la section hôte participant à un exercice d'une autre section (permutation sortante)</td>
-</tr>
-<tr>
-<td>Cible brute DAP</td>
-<td>Convoqués section + Extérieurs Y1 + Y2 + Y3 + Y4</td>
-</tr>
-<tr>
-<td>Participation utile DAP</td>
-<td>Présents comptés + Permutations sortantes (−) [pour la couverture]</td>
-</tr>
+<tr><td>Convoqués section</td><td>Personnel appartenant à la section hôte de l'exercice (ex. DAP Y2)</td></tr>
+<tr><td>Extérieurs Y1/Y2/Y3/Y4</td><td>Personnel des autres sections participant en permutation entrante (+)</td></tr>
+<tr><td>Permutation (−)</td><td>Personnel de la section hôte participant à un exercice d'une autre section (permutation sortante)</td></tr>
+<tr><td>Cible brute DAP</td><td>Convoqués section + Extérieurs Y1 + Y2 + Y3 + Y4</td></tr>
+<tr><td>Participation utile DAP</td><td>Présents comptés + Permutations sortantes (−) [pour la couverture]</td></tr>
 </tbody>
 </table>
 <div class="appendix-info-box">
@@ -1834,41 +1778,13 @@ Taux de présence = Présents / Cible nette × 100
 <table class="appendix-table">
 <thead><tr><th>KPI</th><th>Calcul</th><th>Source</th></tr></thead>
 <tbody>
-<tr>
-<td>Événements comptabilisés</td>
-<td>Nombre de lignes avec "À comptabiliser = Oui"</td>
-<td>Filtre actif</td>
-</tr>
-<tr>
-<td>Événements non compta.</td>
-<td>Lignes "À comptabiliser = Non" (planifiés, annulés, etc.)</td>
-<td>Filtre actif</td>
-</tr>
-<tr>
-<td>Convoqués totaux</td>
-<td>Somme des cibles nettes de tous les exercices comptabilisés</td>
-<td>getEffectiveConvoques()</td>
-</tr>
-<tr>
-<td>Présents totaux</td>
-<td>Somme des présents effectifs (incl. rôles mutualisés)</td>
-<td>getEffectivePresents()</td>
-</tr>
-<tr>
-<td>Taux brut global</td>
-<td>Présents totaux / Convoqués totaux × 100</td>
-<td>summarizeRecords()</td>
-</tr>
-<tr>
-<td>Taux ajusté global</td>
-<td>Présents / (Convoqués − Excusés totaux) × 100</td>
-<td>summarizeRecords()</td>
-</tr>
-<tr>
-<td>Couverture globale (objectif)</td>
-<td>Participation utile cumulée / Effectif réf. cumulé × 100</td>
-<td>summarizeCoverageByDomain()</td>
-</tr>
+<tr><td>Événements comptabilisés</td><td>Nombre de lignes avec "À comptabiliser = Oui"</td><td>Filtre actif</td></tr>
+<tr><td>Événements non compta.</td><td>Lignes "À comptabiliser = Non" (planifiés, annulés, etc.)</td><td>Filtre actif</td></tr>
+<tr><td>Convoqués totaux</td><td>Somme des cibles nettes de tous les exercices comptabilisés</td><td>getEffectiveConvoques()</td></tr>
+<tr><td>Présents totaux</td><td>Somme des présents effectifs (incl. rôles mutualisés)</td><td>getEffectivePresents()</td></tr>
+<tr><td>Taux brut global</td><td>Présents totaux / Convoqués totaux × 100</td><td>summarizeRecords()</td></tr>
+<tr><td>Taux ajusté global</td><td>Présents / (Convoqués − Excusés totaux) × 100</td><td>summarizeRecords()</td></tr>
+<tr><td>Couverture globale (objectif)</td><td>Participation utile cumulée / Effectif réf. cumulé × 100</td><td>summarizeCoverageByDomain()</td></tr>
 </tbody>
 </table>
 <div class="appendix-warn-box">
@@ -1883,21 +1799,9 @@ Taux de présence = Présents / Cible nette × 100
 <table class="appendix-table">
 <thead><tr><th>Statut</th><th>Critère</th><th>Couleur</th></tr></thead>
 <tbody>
-<tr>
-<td>Atteint</td>
-<td>Taux réel ≥ Objectif</td>
-<td style="color:#1f5fbf;font-weight:700;">Bleu</td>
-</tr>
-<tr>
-<td>À surveiller</td>
-<td>Objectif − 10 pts ≤ Taux réel &lt; Objectif</td>
-<td style="color:#b26a00;font-weight:700;">Orange</td>
-</tr>
-<tr>
-<td>Non atteint</td>
-<td>Taux réel &lt; Objectif − 10 pts</td>
-<td style="color:#c1121f;font-weight:700;">Rouge</td>
-</tr>
+<tr><td>Atteint</td><td>Taux réel ≥ Objectif</td><td style="color:#1f5fbf;font-weight:700;">Bleu</td></tr>
+<tr><td>À surveiller</td><td>Objectif − 10 pts ≤ Taux réel &lt; Objectif</td><td style="color:#b26a00;font-weight:700;">Orange</td></tr>
+<tr><td>Non atteint</td><td>Taux réel &lt; Objectif − 10 pts</td><td style="color:#c1121f;font-weight:700;">Rouge</td></tr>
 </tbody>
 </table>
 </div>
@@ -1920,26 +1824,10 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <table class="appendix-table">
 <thead><tr><th>Notion</th><th>Définition précise</th><th>Usage</th></tr></thead>
 <tbody>
-<tr>
-<td><strong>Présence brute</strong></td>
-<td>nbPresents saisi dans le formulaire, sans aucun ajout</td>
-<td>Saisie brute opérateur</td>
-</tr>
-<tr>
-<td><strong>Présents effectifs</strong></td>
-<td>nbPresents + rôles non-mutualisés comptabilisés + allocation mutualisée (1× par série)</td>
-<td>Tous les affichages de taux</td>
-</tr>
-<tr>
-<td><strong>Participation utile</strong></td>
-<td>Présents effectifs [+ permutation − pour le DAP]</td>
-<td>Calcul de couverture uniquement</td>
-</tr>
-<tr>
-<td><strong>Couverture unique réelle</strong></td>
-<td>Non calculée directement : le système mesure la participation cumulée, pas les individus uniques. La déduplication individuelle nécessiterait un registre nominatif non disponible.</td>
-<td>Lecture à interpréter sur plan annuel</td>
-</tr>
+<tr><td><strong>Présence brute</strong></td><td>nbPresents saisi dans le formulaire, sans aucun ajout</td><td>Saisie brute opérateur</td></tr>
+<tr><td><strong>Présents effectifs</strong></td><td>nbPresents + rôles non-mutualisés comptabilisés + allocation mutualisée (1× par série)</td><td>Tous les affichages de taux</td></tr>
+<tr><td><strong>Participation utile</strong></td><td>Présents effectifs [+ permutation − pour le DAP]</td><td>Calcul de couverture uniquement</td></tr>
+<tr><td><strong>Couverture unique réelle</strong></td><td>Non calculée directement : le système mesure la participation cumulée, pas les individus uniques. La déduplication individuelle nécessiterait un registre nominatif non disponible.</td><td>Lecture à interpréter sur plan annuel</td></tr>
 </tbody>
 </table>
 <div class="appendix-warn-box">
@@ -1951,41 +1839,17 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <table class="appendix-table">
 <thead><tr><th>Fonction</th><th>Rôle</th></tr></thead>
 <tbody>
-<tr>
-<td><code>getEffectiveConvoques(record, map)</code></td>
-<td>Retourne la cible nette = cible brute − retraits de cible (formateurs + dispensés)</td>
-</tr>
-<tr>
-<td><code>getEffectivePresents(record, map)</code></td>
-<td>Retourne les présents effectifs = nbPresents + rôles non-mutualisés + allocation mutualisée</td>
-</tr>
-<tr>
-<td><code>buildMutualizedRoleAllocation()</code></td>
-<td>Construit la Map d'allocation des rôles mutualisés par série (1× sur session principale)</td>
-</tr>
-<tr>
-<td><code>buildTrainerTargetDeductionAllocationMap()</code></td>
-<td>Construit la Map de déduction formateur sur la cible (par série, 1× sur session principale)</td>
-</tr>
-<tr>
-<td><code>getMutualizedSeriesKey(domain, template)</code></td>
-<td>Retourne la clé de série (ex. "DPS-1") ou "" si hors-série</td>
-</tr>
-<tr>
-<td><code>summarizeRecords(rows)</code></td>
-<td>Agrège exercices, convoqués, présents, excusés, taux brut, taux ajusté</td>
-</tr>
-<tr>
-<td><code>summarizeCoverageByDomain(rows)</code></td>
-<td>Calcule la couverture cumulée par domaine</td>
-</tr>
-<tr>
-<td><code>getSeriesAnalysis(seriesKey)</code></td>
-<td>Analyse complète d'une série multi-sessions avec taux corrigés sur cible nette cumulée (v47)</td>
-</tr>
+<tr><td><code>getEffectiveConvoques(record, map)</code></td><td>Retourne la cible nette = cible brute − retraits de cible (formateurs + dispensés)</td></tr>
+<tr><td><code>getEffectivePresents(record, map)</code></td><td>Retourne les présents effectifs = nbPresents + rôles non-mutualisés + allocation mutualisée</td></tr>
+<tr><td><code>buildMutualizedRoleAllocation()</code></td><td>Construit la Map d'allocation des rôles mutualisés par série (1× sur session principale)</td></tr>
+<tr><td><code>buildTrainerTargetDeductionAllocationMap()</code></td><td>Construit la Map de déduction formateur sur la cible (par série, 1× sur session principale)</td></tr>
+<tr><td><code>getMutualizedSeriesKey(domain, template)</code></td><td>Retourne la clé de série (ex. "DPS-1") ou "" si hors-série</td></tr>
+<tr><td><code>summarizeRecords(rows)</code></td><td>Agrège exercices, convoqués, présents, excusés, taux brut, taux ajusté</td></tr>
+<tr><td><code>summarizeCoverageByDomain(rows)</code></td><td>Calcule la couverture cumulée par domaine</td></tr>
+<tr><td><code>getSeriesAnalysis(seriesKey)</code></td><td>Analyse complète d'une série multi-sessions avec taux corrigés sur cible nette cumulée (v47)</td></tr>
 </tbody>
 </table>
-<div class="footer-note" style="margin-top:12px;">Version du fichier : v61 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
+<div class="footer-note" style="margin-top:12px;">Version du fichier : v65 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
 </div>
 </div>
 </div>
@@ -2000,11 +1864,11 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <div class="preview-body" id="previewBody"></div>
 </div>
 </div>
-<script src="env.js"></script>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/data-schema.js"></script>
 <script src="assets/js/backend-config.js"></script>
 <script src="assets/js/api-contracts.js"></script>
+<script src="assets/js/backend-contract-check.js"></script>
 <script src="assets/js/api-client.js"></script>
 <script src="assets/js/sync-service.js"></script>
 <script src="assets/js/audit-log.js"></script>

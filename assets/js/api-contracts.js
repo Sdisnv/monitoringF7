@@ -1,4 +1,4 @@
-/* Monitoring F7 v61 — contrats API documentés côté client, inactifs tant que backendEnabled=false. */
+/* Monitoring F7 v65 — contrats API documentés côté client, inactifs tant que backendEnabled=false. */
 (function(){
   'use strict';
 
@@ -73,7 +73,7 @@
   });
 
   window.MonitoringApiContracts = Object.freeze({
-    version: window.MonitoringConfig?.version || 'v61',
+    version: window.MonitoringConfig?.version || 'v65',
     contentType: json,
     auth: Object.freeze({
       requiredForBackend: true,

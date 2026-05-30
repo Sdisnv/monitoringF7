@@ -1,8 +1,44 @@
-# Monitoring F7 v61 — configuration Netlify statique client-only réaliste.
-# Aucune authentification serveur n'est fournie : la sécurité forte nécessite un backend.
+# Monitoring F7 v65 — configuration Netlify statique avec auth et stockage serveur optionnels.
+# L'application reste locale par défaut ; les fonctions serveur ne sont utilisées que si le backend est activé.
 
 [build]
   publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/auth/login"
+  to = "/.netlify/functions/auth-login"
+  status = 200
+
+[[redirects]]
+  from = "/auth/me"
+  to = "/.netlify/functions/auth-me"
+  status = 200
+
+[[redirects]]
+  from = "/auth/refresh"
+  to = "/.netlify/functions/auth-refresh"
+  status = 200
+
+[[redirects]]
+  from = "/auth/logout"
+  to = "/.netlify/functions/auth-logout"
+  status = 200
+
+[[redirects]]
+  from = "/records"
+  to = "/.netlify/functions/data-records"
+  status = 200
+
+[[redirects]]
+  from = "/imported-events"
+  to = "/.netlify/functions/data-imported-events"
+  status = 200
+
+[[redirects]]
+  from = "/reference-periods"
+  to = "/.netlify/functions/data-reference-periods"
+  status = 200
 
 [[headers]]
   for = "/*"

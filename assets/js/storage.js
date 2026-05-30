@@ -1,8 +1,8 @@
-/* Monitoring F7 v61 — StorageService central IndexedDB + localStorage fallback non destructif. */
+/* Monitoring F7 v65 — StorageService central IndexedDB + localStorage fallback non destructif. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v61';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v65';
   const STORAGE_SCHEMA_VERSION = 1;
   const DB_NAME = 'MonitoringF7Storage';
   const DB_VERSION = 1;

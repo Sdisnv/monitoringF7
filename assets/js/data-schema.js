@@ -1,4 +1,4 @@
-/* Monitoring F7 v61 — schéma de données explicite, client-only et backend-ready. */
+/* Monitoring F7 v65 — schéma de données explicite, client-only et backend-ready. */
 (function(){
   'use strict';
 
@@ -42,7 +42,7 @@
 
   window.MonitoringDataSchema = Object.freeze({
     app: 'Monitoring F7',
-    version: window.MonitoringConfig?.version || 'v61',
+    version: window.MonitoringConfig?.version || 'v65',
     schemaVersion: SCHEMA_VERSION,
     fields,
     required,
@@ -50,7 +50,7 @@
     exportEnvelope: Object.freeze({
       type: 'MonitoringF7Export',
       schemaVersion: SCHEMA_VERSION,
-      appVersion: window.MonitoringConfig?.version || 'v61',
+      appVersion: window.MonitoringConfig?.version || 'v65',
       entities: ['records','importedEvents','referencePeriods','objectives']
     })
   });

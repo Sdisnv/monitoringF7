@@ -1,4 +1,4 @@
-/* Monitoring F7 v61 — configuration backend optionnel futur.
+/* Monitoring F7 v65 — configuration backend optionnel futur.
    Par défaut, toute l'application reste locale/offline-first. */
 (function(){
   'use strict';
@@ -9,8 +9,11 @@
     syncEnabled: false,
     authMode: 'local',
     storageMode: 'local',
+    centralStorageEnabled: false,
     auditMode: 'local',
     serverAuthEnabled: false,
+    contractCheckEnabled: true,
+    mockBackendEnabled: false,
     tokenStorage: 'memory',
     requiredRole: 'sdis-user'
   });
@@ -23,8 +26,11 @@
       syncEnabled: cfg.backendEnabled === true && cfg.syncEnabled === true,
       authMode: cfg.authMode === 'backend' && cfg.backendEnabled === true ? 'backend' : 'local',
       storageMode: cfg.storageMode === 'backend' && cfg.backendEnabled === true ? 'backend' : 'local',
+      centralStorageEnabled: cfg.backendEnabled === true && cfg.storageMode === 'backend' && cfg.centralStorageEnabled === true,
       auditMode: cfg.auditMode === 'backend' && cfg.backendEnabled === true ? 'backend' : 'local',
       serverAuthEnabled: cfg.backendEnabled === true && cfg.authMode === 'backend' && cfg.serverAuthEnabled === true,
+      contractCheckEnabled: cfg.contractCheckEnabled !== false,
+      mockBackendEnabled: false,
       tokenStorage: cfg.tokenStorage === 'localStorage' ? 'localStorage' : 'memory',
       requiredRole: String(cfg.requiredRole || DEFAULT_BACKEND_CONFIG.requiredRole)
     });
@@ -45,8 +51,11 @@
         syncEnabled: activeConfig.syncEnabled,
         authMode: activeConfig.authMode,
         storageMode: activeConfig.storageMode,
+        centralStorageEnabled: activeConfig.centralStorageEnabled,
         auditMode: activeConfig.auditMode,
         serverAuthEnabled: activeConfig.serverAuthEnabled,
+        contractCheckEnabled: activeConfig.contractCheckEnabled,
+        mockBackendEnabled: activeConfig.mockBackendEnabled,
         tokenStorage: activeConfig.tokenStorage,
         requiredRole: activeConfig.requiredRole,
         localFirst: true,

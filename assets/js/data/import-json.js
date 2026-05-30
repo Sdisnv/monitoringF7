@@ -1,4 +1,4 @@
-/* Monitoring F7 v61 — helpers import JSON centralisés.
+/* Monitoring F7 v65 — helpers import JSON centralisés.
    La logique complète reste appelée par app.js, mais les contrôles génériques sont maintenant factorisés. */
 (function(){
   'use strict';

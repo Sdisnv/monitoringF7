@@ -1,4 +1,4 @@
-/* Application métier v61 — cœur historique v47, préparation backend optionnel sans activation. */
+/* Application métier v65 — cœur historique v47, préparation backend optionnel sans activation. */
 
     /* ========================================================= */
     /* TABLE DES MATIÈRES SCRIPT                                 */
@@ -28,7 +28,7 @@
     const STORAGE_KEY_IMPORTED_EVENTS = "monitoring_exercices_sdis_imported_events_v1";
     const STORAGE_KEY_OBJECTIVES = "monitoring_exercices_sdis_objectifs_v1";
 
-    const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || "v61";
+    const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || "v65";
     const MAX_IMPORT_JSON_BYTES = 8 * 1024 * 1024;
     const MAX_IMPORT_CSV_BYTES = 5 * 1024 * 1024;
 
@@ -6684,7 +6684,7 @@ a.sessions.forEach((s, i) => {
         if (window.MonitoringStorage?.initStorage) {
           try {
             const diagnostics = await window.MonitoringStorage.initStorage();
-            console.info("Monitoring F7 stockage v61", diagnostics);
+            console.info("Monitoring F7 stockage v65", diagnostics);
             window.MonitoringAuditLog?.logInfo('storage-init', 'StorageService initialisé.', diagnostics || {});
             referencePeriods = loadReferencePeriods();
             selectedReferencePeriodId = referencePeriods[0]?.id || null;

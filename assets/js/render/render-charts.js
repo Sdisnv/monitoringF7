@@ -1,4 +1,4 @@
-/* Monitoring F7 v61 — rendu graphiques centralisé robuste.
+/* Monitoring F7 v65 — rendu graphiques centralisé robuste.
    Phase 5: rationalisation KPI/graphiques, protections Chart.js, canvas vide/absent, NaN/Infinity. */
 (function(){
   'use strict';
@@ -7,7 +7,7 @@
   const DOMAIN_COLOR_MAP = { DPS: '#2A2D73', DAP: '#DE9043', FOBA: '#CB4B40', PR: '#575756', AUTO: '#B3B6BE', JSP: '#7A7DA8' };
 
   function warn(message, detail){
-    try { console.warn(`[Monitoring F7 v61] ${message}`, detail || ''); } catch (_) {}
+    try { console.warn(`[Monitoring F7 v65] ${message}`, detail || ''); } catch (_) {}
     try { window.MonitoringAuditLog?.logWarning('chart-warning', message, { detail }); } catch (_) {}
   }
   function safeNumber(value, fallback = 0){
