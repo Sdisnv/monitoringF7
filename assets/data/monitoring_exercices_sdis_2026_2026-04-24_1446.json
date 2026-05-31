@@ -1,0 +1,3078 @@
+{
+  "version": 3,
+  "exportedAt": "2026-04-24T12:46:11.637Z",
+  "records": [
+    {
+      "id": "9d85bd1a-6aa6-42bb-a87c-abbcd482ebbe",
+      "importedEventId": "c70530e2-44b0-433a-94e7-b6073f39514d",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.1 | Base",
+      "dateExercice": "2027-03-02",
+      "statCom": "011PR",
+      "status": "Planifié",
+      "nbConvoques": 76,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 0,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": false,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T14:53:20.651Z"
+    },
+    {
+      "id": "625df775-2757-4d99-bd30-916a9946181e",
+      "importedEventId": "f9df718a-0eb3-4dd2-937b-30fb33ba49bf",
+      "domain": "JSP",
+      "subStructure": "JSP C1",
+      "template": "Exercice JSP 1",
+      "dateExercice": "2026-01-12",
+      "statCom": "010JC1",
+      "status": "Effectué",
+      "nbConvoques": 14,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 14,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T13:50:56.251Z",
+      "updatedAt": "2026-04-20T13:50:56.251Z"
+    },
+    {
+      "id": "7c10aec7-0019-494b-9824-bc67bcaa19e3",
+      "importedEventId": "f4c0c7ec-0f04-49fb-bf96-07f9c1cf359f",
+      "domain": "JSP",
+      "subStructure": "JSP B1",
+      "template": "Exercice JSP 1",
+      "dateExercice": "2026-01-13",
+      "statCom": "010JB1",
+      "status": "Effectué",
+      "nbConvoques": 23,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 18,
+      "nbMaladie": 2,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 3,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:18:23.414Z"
+    },
+    {
+      "id": "b38207b2-181e-4209-bc31-7413baa71cf6",
+      "importedEventId": "cd9c1cad-d69a-44f9-9d59-2d7a44cc4523",
+      "domain": "JSP",
+      "subStructure": "JSP C1",
+      "template": "Exercice JSP 2",
+      "dateExercice": "2026-02-02",
+      "statCom": "010JC1",
+      "status": "Effectué",
+      "nbConvoques": 14,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 12,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 2,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:03:05.983Z"
+    },
+    {
+      "id": "e5d4130c-ae6f-4a88-b931-c0005c2fe65c",
+      "importedEventId": "a61241db-df96-4d12-8cab-da02e5c4c809",
+      "domain": "JSP",
+      "subStructure": "JSP B1",
+      "template": "Exercice JSP 2",
+      "dateExercice": "2026-02-04",
+      "statCom": "010JB1",
+      "status": "Effectué",
+      "nbConvoques": 23,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 18,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 5,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:03:17.925Z"
+    },
+    {
+      "id": "97cc7836-73f1-4d51-9ac2-4bfc8c05c6ab",
+      "importedEventId": "858bf884-1abe-4e7c-aa70-ac880b3908d8",
+      "domain": "JSP",
+      "subStructure": "JSP G1",
+      "template": "Exercice JSP 1",
+      "dateExercice": "2026-02-07",
+      "statCom": "010JG1",
+      "status": "Effectué",
+      "nbConvoques": 27,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 24,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 3,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:03:29.519Z"
+    },
+    {
+      "id": "68e53c2c-009c-4baa-82b5-4a9f6f8cd602",
+      "importedEventId": "fc24bb2f-97be-458e-8cf6-74df574bf923",
+      "domain": "JSP",
+      "subStructure": "JSP C1",
+      "template": "Exercice JSP 3",
+      "dateExercice": "2026-03-02",
+      "statCom": "010JC1",
+      "status": "Effectué",
+      "nbConvoques": 14,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 9,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 5,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:19:30.797Z"
+    },
+    {
+      "id": "ff3938ca-56ad-410d-aef2-b2128c9fe678",
+      "importedEventId": "a01f2cf4-bbc7-4eff-abdc-7db0f0a3cef6",
+      "domain": "JSP",
+      "subStructure": "JSP B1",
+      "template": "Exercice JSP 3",
+      "dateExercice": "2026-03-23",
+      "statCom": "010JB1",
+      "status": "Effectué",
+      "nbConvoques": 24,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 17,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 7,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:19:01.292Z"
+    },
+    {
+      "id": "afd72582-2e0c-4afc-a247-299efa9a8ad2",
+      "importedEventId": "18b73bfc-50c6-48da-8162-f723f310b77a",
+      "domain": "JSP",
+      "subStructure": "JSP C1",
+      "template": "Exercice JSP 4",
+      "dateExercice": "2026-03-30",
+      "statCom": "010JC1",
+      "status": "Effectué",
+      "nbConvoques": 14,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 11,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 3,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:19:55.350Z"
+    },
+    {
+      "id": "32a1fdad-4bec-4740-8cf8-b54bccbc0d3d",
+      "importedEventId": "3689d649-e592-446b-b8e8-6e085cca6d15",
+      "domain": "JSP",
+      "subStructure": "JSP G1",
+      "template": "Exercice JSP 3",
+      "dateExercice": "2026-03-28",
+      "statCom": "010JG1",
+      "status": "Effectué",
+      "nbConvoques": 27,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 21,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 4,
+      "nbAbsents": 2,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T15:20:57.874Z"
+    },
+    {
+      "id": "b1eefd10-7cdd-4fdb-becd-ab382c2995fe",
+      "importedEventId": "182fc552-e25e-4dd4-9056-7f0f484f9605",
+      "domain": "JSP",
+      "subStructure": "JSP G1",
+      "template": "Exercice JSP 2",
+      "dateExercice": "2026-03-07",
+      "statCom": "010JG1",
+      "status": "Effectué",
+      "nbConvoques": 27,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 21,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 5,
+      "nbAbsents": 1,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T15:16:31.478Z",
+      "updatedAt": "2026-04-20T15:16:31.478Z"
+    },
+    {
+      "id": "18ad1fdb-2683-4d3f-bed4-cdfb958ec733",
+      "importedEventId": "de3a2d1d-b63b-4b09-a1b7-f93bc99b51c0",
+      "domain": "FOBA",
+      "subStructure": "FOBA 1",
+      "template": "Exercice FOBA 1 | Cérémonie de remise des casques",
+      "dateExercice": "2026-02-25",
+      "statCom": "010FOBA",
+      "status": "Effectué",
+      "nbConvoques": 17,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 17,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T15:23:34.120Z",
+      "updatedAt": "2026-04-20T15:23:34.120Z"
+    },
+    {
+      "id": "186f3028-d7ce-4d8c-974f-dc93672b6ca5",
+      "importedEventId": "53034e1f-c710-4083-a511-7a58a239d3aa",
+      "domain": "FOBA",
+      "subStructure": "FOBA 1",
+      "template": "Exercice FOBA 2",
+      "dateExercice": "2026-03-25",
+      "statCom": "010FOBA",
+      "status": "Effectué",
+      "nbConvoques": 17,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 15,
+      "nbMaladie": 1,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 1,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T15:24:13.153Z",
+      "updatedAt": "2026-04-20T15:24:13.153Z"
+    },
+    {
+      "id": "fb33cbb4-e376-4860-81e0-c75eae57c62c",
+      "importedEventId": "b4815b5d-9087-4ae0-9e69-f8e92fe20e44",
+      "domain": "FOBA",
+      "subStructure": "FOBA 2",
+      "template": "Exercice FOBA 1 | Cérémonie de remise des casques",
+      "dateExercice": "2026-02-25",
+      "statCom": "010FOBA",
+      "status": "Effectué",
+      "nbConvoques": 10,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 10,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T15:24:43.859Z",
+      "updatedAt": "2026-04-20T15:24:43.859Z"
+    },
+    {
+      "id": "f2516596-fdab-445b-a47b-1d88db9a8b0c",
+      "importedEventId": "96b95f57-2652-4974-aaa0-6879e8b3b59b",
+      "domain": "FOBA",
+      "subStructure": "FOBA 2",
+      "template": "Exercice FOBA 2",
+      "dateExercice": "2026-03-25",
+      "statCom": "010FOBA",
+      "status": "Effectué",
+      "nbConvoques": 10,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 10,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T15:25:01.157Z",
+      "updatedAt": "2026-04-20T15:25:01.157Z"
+    },
+    {
+      "id": "a480bf8b-8c50-464d-9d50-2f962e440db2",
+      "importedEventId": "a7be6b16-688b-4600-98ce-33eee4fb4273",
+      "domain": "FOBA",
+      "subStructure": "FOBA 3",
+      "template": "Exercice FOBA | Consolidation 1",
+      "dateExercice": "2026-04-01",
+      "statCom": "010FOBA",
+      "status": "Effectué",
+      "nbConvoques": 10,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 10,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T15:25:27.711Z",
+      "updatedAt": "2026-04-20T15:25:27.711Z"
+    },
+    {
+      "id": "11d53977-020e-4ecd-8ee7-30e36c214670",
+      "importedEventId": "a3d9cfff-6333-4b8d-ba25-e8340735721a",
+      "domain": "DAP",
+      "subStructure": "Y1",
+      "template": "Exercice DAP 1",
+      "dateExercice": "2026-03-12",
+      "statCom": "013Y1",
+      "status": "Effectué",
+      "nbConvoques": 18,
+      "nbPermutation": 1,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 16,
+      "nbMaladie": 1,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:25:28.431Z",
+      "updatedAt": "2026-04-20T16:25:28.431Z"
+    },
+    {
+      "id": "ddcabbe9-5c0e-4c4d-8232-fb414f774130",
+      "importedEventId": "8ef7d354-14c5-44c4-8f73-e9816bb416bb",
+      "domain": "DAP",
+      "subStructure": "Y2",
+      "template": "Exercice DAP 1",
+      "dateExercice": "2026-03-17",
+      "statCom": "013Y2",
+      "status": "Effectué",
+      "nbConvoques": 18,
+      "nbPermutation": 1,
+      "nbExtDapY1": 1,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 16,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 1,
+      "nbPrive": 1,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:26:12.062Z",
+      "updatedAt": "2026-04-20T16:26:12.062Z"
+    },
+    {
+      "id": "d1c4ac01-bfef-4366-94c2-663f45b7cfbd",
+      "importedEventId": "4bc3b852-d162-4593-9869-189b6dbf1abd",
+      "domain": "DAP",
+      "subStructure": "Y3",
+      "template": "Exercice DAP 1",
+      "dateExercice": "2026-03-19",
+      "statCom": "013Y3",
+      "status": "Effectué",
+      "nbConvoques": 15,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 15,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:26:40.637Z",
+      "updatedAt": "2026-04-20T16:26:40.637Z"
+    },
+    {
+      "id": "dce8af17-c840-49d4-b92d-fd6ac8483c88",
+      "importedEventId": "4fa8509e-2c4e-4e9b-af9c-8ad3cb8e95d0",
+      "domain": "DPS",
+      "subStructure": "B1",
+      "template": "Exercice DPS 1",
+      "dateExercice": "2026-03-24",
+      "statCom": "012B1",
+      "status": "Effectué",
+      "nbConvoques": 25,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 24,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 1,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "Les recrues (FOBA 1) ne sont pas prises en considération dans l'effectif.",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:28:11.992Z",
+      "updatedAt": "2026-04-20T16:28:11.992Z"
+    },
+    {
+      "id": "e682b038-ad31-48b1-86a9-482f97f9f23b",
+      "importedEventId": "35fbc608-692d-4ea1-b616-fa08fe763e79",
+      "domain": "DPS",
+      "subStructure": "C1",
+      "template": "Exercice DPS 1",
+      "dateExercice": "2026-03-24",
+      "statCom": "012C1",
+      "status": "Effectué",
+      "nbConvoques": 27,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 25,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 2,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "Les recrues (FOBA 1) ne sont pas prises en considération dans l'effectif.",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:28:51.820Z",
+      "updatedAt": "2026-04-20T16:28:51.820Z"
+    },
+    {
+      "id": "4f07c342-863b-48fe-805d-ad548a463528",
+      "importedEventId": "679549a3-362b-4c93-8c6c-046543a1d1f9",
+      "domain": "DPS",
+      "subStructure": "B2",
+      "template": "Exercice DPS 1",
+      "dateExercice": "2026-03-24",
+      "statCom": "012B2",
+      "status": "Effectué",
+      "nbConvoques": 13,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 13,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "Les recrues (FOBA 1) ne sont pas prises en considération dans l'effectif.",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-20T16:37:24.953Z"
+    },
+    {
+      "id": "a9c167c8-7b57-44de-814f-4384f9d56292",
+      "importedEventId": "e61d8174-ec84-4a88-b6a6-44d120048c53",
+      "domain": "DAP",
+      "subStructure": "Y4",
+      "template": "Exercice DAP 1",
+      "dateExercice": "2026-03-31",
+      "statCom": "013Y4",
+      "status": "Effectué",
+      "nbConvoques": 16,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 1,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 17,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:30:01.991Z",
+      "updatedAt": "2026-04-20T16:30:01.991Z"
+    },
+    {
+      "id": "20af80a3-4e2f-45cb-85df-891e716c5e94",
+      "importedEventId": null,
+      "domain": "JSP",
+      "subStructure": "Cadets",
+      "template": "Exercice JSP Cadets 1",
+      "dateExercice": "2026-03-21",
+      "statCom": "010JSP",
+      "status": "Annulé",
+      "nbConvoques": 7,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 0,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": false,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-20T16:59:37.993Z",
+      "updatedAt": "2026-04-20T16:59:37.993Z"
+    },
+    {
+      "id": "6c773086-7dfe-4bab-ab1f-4660148f66a3",
+      "importedEventId": "f4ed8a47-34d8-4da4-842d-cb8e31d3d48a",
+      "domain": "AUTO",
+      "subStructure": "Cond PL",
+      "template": "Exercice TRUCK 1.1",
+      "dateExercice": "2026-04-21",
+      "statCom": "01521F7",
+      "status": "Effectué",
+      "nbConvoques": 14,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 14,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": false,
+      "remarque": "Exercice comptabilisé sur l'ensemble des sites DPS G1, C1, B1 et B2.",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 7,
+          "aComptabiliser": true,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "TRUCK-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-22T12:25:54.428Z",
+      "updatedAt": "2026-04-22T12:25:54.428Z"
+    },
+    {
+      "id": "4717db95-e5a0-48ac-a780-df534bf78839",
+      "importedEventId": "a5140774-931a-482f-9690-be529efb7fd6",
+      "domain": "DAP",
+      "subStructure": "Y2",
+      "template": "Exercice DAP 2",
+      "dateExercice": "2026-04-08",
+      "statCom": "013Y2",
+      "status": "Effectué",
+      "nbConvoques": 18,
+      "nbPermutation": 4,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 11,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 3,
+      "nbAbsents": 0,
+      "aComptabiliser": false,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "createdAt": "2026-04-22T15:14:59.107Z",
+      "updatedAt": "2026-04-22T15:14:59.108Z"
+    },
+    {
+      "id": "fc576ae5-1817-42e9-aeb6-c6169c1d92ec",
+      "importedEventId": "012dfede-b6f0-46de-9548-6029cbf2b7cd",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.1 | Base",
+      "dateExercice": "2026-03-03",
+      "statCom": "011PR",
+      "status": "Effectué",
+      "nbConvoques": 14,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 14,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "Un PAPR dispensé à la suite de sa demande de retrait de la fonction PAPR et 7 formateurs également dispensés.",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 4,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 7,
+          "retirerCible": false,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-23T07:14:58.415Z"
+    },
+    {
+      "id": "796d3061-941c-4305-ab81-06f909bdde51",
+      "importedEventId": "d660eb94-2682-49a9-bb56-295ea11a5a2a",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.3 | Base",
+      "dateExercice": "2026-03-10",
+      "statCom": "011PR",
+      "status": "Effectué",
+      "nbConvoques": 15,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 14,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 1,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 3,
+          "aComptabiliser": false,
+          "mutualiser": false
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-22T17:25:08.783Z"
+    },
+    {
+      "id": "3ee24f88-c589-40c7-8169-59ea0b4b90b7",
+      "importedEventId": "4a8b6ec6-7650-4f18-bd30-ee15a73a5713",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.4 | Base",
+      "dateExercice": "2026-03-12",
+      "statCom": "011PR",
+      "status": "Effectué",
+      "nbConvoques": 13,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 13,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 3,
+          "aComptabiliser": false,
+          "mutualiser": false
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-22T17:29:34.269Z"
+    },
+    {
+      "id": "d2079f8e-8eed-4181-b7f9-97adec739e96",
+      "importedEventId": "579fd228-65c5-4117-ba9a-bf373b8391c8",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.5 | Base",
+      "dateExercice": "2026-03-17",
+      "statCom": "011PR",
+      "status": "Effectué",
+      "nbConvoques": 13,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 13,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 3,
+          "aComptabiliser": false,
+          "mutualiser": false
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-22T17:25:32.244Z"
+    },
+    {
+      "id": "e618123a-98a1-4ba7-9329-1590d8f5bc90",
+      "importedEventId": "48e10e8a-9b9b-46da-9818-c24a7f582bc0",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.6 | Base",
+      "dateExercice": "2026-03-19",
+      "statCom": "011PR",
+      "status": "Effectué",
+      "nbConvoques": 13,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 13,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 0,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 3,
+          "aComptabiliser": false,
+          "mutualiser": false
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-22T17:25:43.979Z"
+    },
+    {
+      "id": "04e80e51-de1f-43c9-99f6-8de5b57a28bc",
+      "importedEventId": "c018e8df-e053-422a-aa9b-6c27f7dd6140",
+      "domain": "PR",
+      "subStructure": "PR global",
+      "template": "Exercice PR 1.2 | Base",
+      "dateExercice": "2026-03-04",
+      "statCom": "011PR",
+      "status": "Effectué",
+      "nbConvoques": 13,
+      "nbPermutation": 0,
+      "nbExtDapY1": 0,
+      "nbExtDapY2": 0,
+      "nbExtDapY3": 0,
+      "nbExtDapY4": 0,
+      "nbPresents": 12,
+      "nbMaladie": 0,
+      "nbAccident": 0,
+      "nbArmee": 0,
+      "nbProfessionnel": 1,
+      "nbPrive": 0,
+      "nbAbsents": 0,
+      "aComptabiliser": true,
+      "remarque": "",
+      "mutualRoles": {
+        "formateurs": {
+          "count": 1,
+          "aComptabiliser": false,
+          "mutualiser": false
+        },
+        "surveillants": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        },
+        "auxiliaires": {
+          "count": 0,
+          "aComptabiliser": false,
+          "mutualiser": true
+        }
+      },
+      "targetExclusions": {
+        "dispenses": {
+          "count": 0,
+          "retirerCible": true,
+          "mutualiser": true
+        }
+      },
+      "mutualRolesSeriesKey": "PR-1",
+      "isGroupedOrganExercise": false,
+      "groupExerciseDetails": [],
+      "updatedAt": "2026-04-23T07:09:44.863Z"
+    }
+  ],
+  "importedEvents": [
+    {
+      "id": "c70530e2-44b0-433a-94e7-b6073f39514d",
+      "dateExercice": "2027-03-02",
+      "template": "Exercice PR 1.1 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "e359c6b0-6d86-4c67-9574-3bdc7cd5cee9",
+      "dateExercice": "2027-03-01",
+      "template": "Exercice JSP 3",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "5a69a205-cc39-44b7-837b-a71ff93c11bb",
+      "dateExercice": "2027-02-25",
+      "template": "Exercice FOBA 1 | Cérémonie de remise des casques",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "2d2a0c2d-0fc4-427f-90b9-cf5248bdcd43",
+      "dateExercice": "2027-02-25",
+      "template": "Exercice FOBA 1 | Cérémonie de remise des casques",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "fcf90083-2b72-4cc1-be45-f9d31cec2008",
+      "dateExercice": "2026-12-10",
+      "template": "Exercice JSP 10",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "de28c44d-9df3-4dec-bd17-c6d0e8bd5def",
+      "dateExercice": "2026-12-09",
+      "template": "Exercice FOBA 10 | Cérémonie de promotion",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "298773ee-fae2-44e7-9a64-22ad0b1131e2",
+      "dateExercice": "2026-12-09",
+      "template": "Exercice FOBA 10 | Cérémonie de promotion",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "8476a888-fa70-46d9-b170-93bb5e00c1fb",
+      "dateExercice": "2026-11-30",
+      "template": "Exercice JSP 10",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "7ed02185-d5ac-4d48-95f2-cad8edd1ceff",
+      "dateExercice": "2026-11-28",
+      "template": "Exercice JSP 8",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "aff7512a-5d1e-4b3c-8498-d10f75085437",
+      "dateExercice": "2026-11-26",
+      "template": "Exercice PR 4.6 | On fire",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "58adb07e-3779-4859-bc5e-8b1ad29bacca",
+      "dateExercice": "2026-11-24",
+      "template": "Exercice PR 4.5 | On fire",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "4fbededd-0f5c-4b9e-a300-ebdffa744221",
+      "dateExercice": "2026-11-19",
+      "template": "Exercice PR 4.4 | On fire",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "1f8d4151-4b03-4c65-8bea-b7e230a4454a",
+      "dateExercice": "2026-11-18",
+      "template": "Exercice DPS 2",
+      "domain": "DPS",
+      "statCom": "012G1",
+      "subStructure": "G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f58fb258-5aa0-4687-ba04-92625a835715",
+      "dateExercice": "2026-11-14",
+      "template": "Exercice JSP 7",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "aca441f7-8bbc-48bc-9cad-87bf08367f7c",
+      "dateExercice": "2026-11-13",
+      "template": "Exercice DAP 4",
+      "domain": "DAP",
+      "statCom": "013Y3",
+      "subStructure": "Y3",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "cb6242eb-639e-495a-9798-72b5e7bebdd8",
+      "dateExercice": "2026-11-12",
+      "template": "Exercice PR 4.3 | On fire",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "7a0e86e4-1925-47df-950f-7af0a2b7ecae",
+      "dateExercice": "2026-11-11",
+      "template": "Test annuel FOBA",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d8256bc2-1282-4db9-b357-60547308dbbc",
+      "dateExercice": "2026-11-11",
+      "template": "Test annuel FOBA",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "4e9e35ca-096d-4fa1-b5af-ce7e8f23a811",
+      "dateExercice": "2026-11-10",
+      "template": "Exercice PR 4.2 | On fire",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "ca63ecc3-9d6c-4884-b801-04525601a8a9",
+      "dateExercice": "2026-11-07",
+      "template": "Exercice DAP 4",
+      "domain": "DAP",
+      "statCom": "013Y1",
+      "subStructure": "Y1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a0f05359-aedd-4fca-a2d4-6972d6ded11a",
+      "dateExercice": "2026-11-06",
+      "template": "Exercice DAP 4",
+      "domain": "DAP",
+      "statCom": "013Y4",
+      "subStructure": "Y4",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "1c703d44-0d92-4caa-b8e6-92c5dcbc844e",
+      "dateExercice": "2026-11-04",
+      "template": "Exercice JSP 9",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "7a97ad79-9ad0-4d59-9ed1-11a39358a7c4",
+      "dateExercice": "2026-11-03",
+      "template": "Exercice PR 4.1 | On fire",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f180906a-f22b-4a4e-8a58-f2826b4489af",
+      "dateExercice": "2026-11-02",
+      "template": "Exercice JSP 9",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "78a17e8c-4fd6-4d12-ba37-764e4003cecd",
+      "dateExercice": "2026-10-28",
+      "template": "Exercice FOBA 9",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "748f5fc7-5462-467e-ba98-520ec469dcb9",
+      "dateExercice": "2026-10-28",
+      "template": "Exercice FOBA 9",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d4e8ef28-ab49-406f-8ee5-13beaa7f0db2",
+      "dateExercice": "2026-10-27",
+      "template": "Exercice DPS 3",
+      "domain": "DPS",
+      "statCom": "012C1",
+      "subStructure": "C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "41282ffe-6212-4a04-b53a-78ae78926e33",
+      "dateExercice": "2026-10-27",
+      "template": "Exercice DPS 3",
+      "domain": "DPS",
+      "statCom": "012B1",
+      "subStructure": "B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c44829bf-b7f6-44f2-9095-facfc1f7ffaf",
+      "dateExercice": "2026-10-27",
+      "template": "Exercice DPS 3",
+      "domain": "DPS",
+      "statCom": "012B2",
+      "subStructure": "B2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "15dde3c3-962f-4f9a-a65e-bf87c3715d58",
+      "dateExercice": "2026-10-17",
+      "template": "Exercice DAP 4",
+      "domain": "DAP",
+      "statCom": "013Y2",
+      "subStructure": "Y2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "39c6f7f5-ee70-4a4f-8b5c-4d1f2293779d",
+      "dateExercice": "2026-10-08",
+      "template": "Exercice CAR 1.5",
+      "domain": "AUTO",
+      "statCom": "01522F7",
+      "subStructure": "Cond VL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "6f66f4bd-d07f-4cd6-889d-c98235d0ac22",
+      "dateExercice": "2026-10-08",
+      "template": "Exercice DAP 3",
+      "domain": "DAP",
+      "statCom": "013Y3",
+      "subStructure": "Y3",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "296d5cb2-cf6e-4d02-8d57-c0a4b8099c21",
+      "dateExercice": "2026-10-06",
+      "template": "Exercice CAR 1.4",
+      "domain": "AUTO",
+      "statCom": "01522F7",
+      "subStructure": "Cond VL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a2d5a3c8-70f2-4c4d-abe5-7b82af76ec59",
+      "dateExercice": "2026-10-06",
+      "template": "Exercice JSP 8",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "9c6a4924-fd8b-46cc-8d50-192ee32161c0",
+      "dateExercice": "2026-10-06",
+      "template": "Exercice PR-ABC | Refresh",
+      "domain": "PR",
+      "statCom": "0164F7",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c64c24a8-faa8-4890-bcd0-39ae779524cd",
+      "dateExercice": "2026-10-05",
+      "template": "Exercice DAP 3",
+      "domain": "DAP",
+      "statCom": "013Y4",
+      "subStructure": "Y4",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "2ea650f1-aabb-4ecc-8696-ba798047b3c7",
+      "dateExercice": "2026-10-05",
+      "template": "Exercice JSP 8",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "fc942833-a865-4fec-a385-98a357b2d8a1",
+      "dateExercice": "2026-10-03",
+      "template": "Exercice FOBA 8",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f9aeaf3c-c219-49d0-9f11-ad611cdb37d8",
+      "dateExercice": "2026-10-03",
+      "template": "Exercice FOBA 8",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "949cbad8-c5c6-4ef7-b917-18e97172699b",
+      "dateExercice": "2026-09-29",
+      "template": "Exercice CAR 1.3",
+      "domain": "AUTO",
+      "statCom": "01522F7",
+      "subStructure": "Cond VL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "91fc1463-7e67-406c-90c8-7df23d23a143",
+      "dateExercice": "2026-09-22",
+      "template": "Exercice CAR 1.2",
+      "domain": "AUTO",
+      "statCom": "01522F7",
+      "subStructure": "Cond VL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "e2d076eb-eda7-47c6-a032-44e116ed3fc8",
+      "dateExercice": "2026-09-22",
+      "template": "Exercice DAP 2",
+      "domain": "DAP",
+      "statCom": "013Y4",
+      "subStructure": "Y4",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a503ae55-b2ad-42b6-83bd-2ae5f67008d9",
+      "dateExercice": "2026-09-17",
+      "template": "Exercice DPS 2",
+      "domain": "DPS",
+      "statCom": "012C1",
+      "subStructure": "C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "e8f67eb9-e886-436a-af23-574f76f33ad5",
+      "dateExercice": "2026-09-17",
+      "template": "Exercice DPS 2",
+      "domain": "DPS",
+      "statCom": "012B1",
+      "subStructure": "B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d09b336f-fb18-40aa-95ee-263b787ff4fe",
+      "dateExercice": "2026-09-17",
+      "template": "Exercice DPS 2",
+      "domain": "DPS",
+      "statCom": "012B2",
+      "subStructure": "B2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "61cd58d4-b91c-469a-b749-22a1b45e0ae7",
+      "dateExercice": "2026-09-16",
+      "template": "Exercice FOBA 7",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "e9c1e9a6-b89e-4017-a917-1a8629371a4e",
+      "dateExercice": "2026-09-16",
+      "template": "Exercice FOBA 7",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f4c6da2e-25f0-412b-b90b-716873052eb7",
+      "dateExercice": "2026-09-12",
+      "template": "Exercice JSP 6",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "64ef14ba-fb8f-42d1-9c04-ee9366c272aa",
+      "dateExercice": "2026-09-10",
+      "template": "Exercice PR 3.6 | Highway to hell",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "bde986a7-8527-4016-8590-aeb61b1d5cb1",
+      "dateExercice": "2026-09-09",
+      "template": "Exercice FOBA | Consolidation 3",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 3",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a0610ae8-f041-4e0e-8e77-746cb699425e",
+      "dateExercice": "2026-09-09",
+      "template": "Exercice JSP 7",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "31d56aa9-dda6-42d8-b36a-76bc1b187155",
+      "dateExercice": "2026-09-08",
+      "template": "Exercice CAR 1.1",
+      "domain": "AUTO",
+      "statCom": "01522F7",
+      "subStructure": "Cond VL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "5a946b53-f68b-4cf5-bf38-4dd7baafb403",
+      "dateExercice": "2026-09-08",
+      "template": "Exercice DAP 3",
+      "domain": "DAP",
+      "statCom": "013Y2",
+      "subStructure": "Y2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "4e6b4d05-6240-4975-828b-a57992688982",
+      "dateExercice": "2026-09-07",
+      "template": "Exercice JSP 7",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "0c054a80-ffe8-4c84-a35d-a40aad1636af",
+      "dateExercice": "2026-09-03",
+      "template": "Exercice DAP 3",
+      "domain": "DAP",
+      "statCom": "013Y1",
+      "subStructure": "Y1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "8ee6c33d-add6-4612-9d89-b814bd87ec21",
+      "dateExercice": "2026-09-03",
+      "template": "Exercice PR 3.5 | Highway to hell",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "01cad298-7dfe-4641-9e03-9f38a93bdefd",
+      "dateExercice": "2026-09-01",
+      "template": "Exercice PR 3.4 | Highway to hell",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "3f0abe22-ca44-4573-a3fb-a29692742572",
+      "dateExercice": "2026-08-29",
+      "template": "Exercice JSP 5",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "b1274995-58b8-4558-a9ca-395660b31c41",
+      "dateExercice": "2026-08-26",
+      "template": "Exercice FOBA 6",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c70f903c-3682-4127-9f49-d5d8cb5a54f6",
+      "dateExercice": "2026-08-26",
+      "template": "Exercice FOBA 6",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "beb37c4e-0552-4e8b-a054-08df06b1ee00",
+      "dateExercice": "2026-08-26",
+      "template": "Exercice PR 3.3 | Highway to hell",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "ec79e8b5-dc8d-48d9-87ee-3d9129a0c225",
+      "dateExercice": "2026-08-25",
+      "template": "Exercice PR 3.2 | Highway to hell",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "51345345-d5ca-43d6-ac05-5f61e808e3c2",
+      "dateExercice": "2026-08-20",
+      "template": "Exercice PR 3.1 | Highway to hell",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "56894827-6cd0-4893-a7e4-fa4f9643ed68",
+      "dateExercice": "2026-06-24",
+      "template": "Exercice FOBA 5",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "be006792-5ec0-4356-ba71-43db24168303",
+      "dateExercice": "2026-06-24",
+      "template": "Exercice FOBA 5",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "dcddccbc-a63d-4040-a5ba-edb36c45bb72",
+      "dateExercice": "2026-06-18",
+      "template": "Exercice DAP 2",
+      "domain": "DAP",
+      "statCom": "013Y1",
+      "subStructure": "Y1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "0396d5f6-2113-4878-a288-f3b4dcc04ac8",
+      "dateExercice": "2026-06-18",
+      "template": "Exercice JSP 6",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "bcacb00d-6a0b-44f3-a168-187186651bcc",
+      "dateExercice": "2026-06-18",
+      "template": "Formation groupée 1.6 | DPS | OFSI | ABC",
+      "domain": "DPS",
+      "statCom": "0120F7",
+      "subStructure": "DPS",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "b198800c-4254-4f26-8a14-e36153cf2b44",
+      "dateExercice": "2026-06-16",
+      "template": "Formation groupée 1.5 | DPS | OFSI | ABC",
+      "domain": "DPS",
+      "statCom": "0120F7",
+      "subStructure": "DPS",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "e043d551-8590-48b7-bc89-812fb757cb92",
+      "dateExercice": "2026-06-13",
+      "template": "Exercice FOBA 4",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "b23076f4-9a02-4aff-8f1a-df421c474983",
+      "dateExercice": "2026-06-13",
+      "template": "Exercice FOBA 4",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "1caf72ab-329a-4c28-b6d4-1971fc39a3a2",
+      "dateExercice": "2026-06-13",
+      "template": "Exercice JSP Cadets | FOBA 1",
+      "domain": "JSP",
+      "statCom": "010JSP",
+      "subStructure": "JSP",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "2dfa5a15-6af7-4a9c-8ea1-e1af5854f6ad",
+      "dateExercice": "2026-06-10",
+      "template": "Exercice PR-ABC | Refresh",
+      "domain": "PR",
+      "statCom": "0164F7",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "bbb0589f-e1dc-4bcd-8878-7a9d9539cdf2",
+      "dateExercice": "2026-06-09",
+      "template": "Formation groupée 1.4 | DPS | OFSI | ABC",
+      "domain": "DPS",
+      "statCom": "0120F7",
+      "subStructure": "DPS",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "385a438d-255d-4c97-b4a5-93c3f17ab045",
+      "dateExercice": "2026-06-02",
+      "template": "Exercice PR 2.6 | Practice",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "fcb97e4c-1921-43f9-b48f-bf7b004c1c77",
+      "dateExercice": "2026-06-01",
+      "template": "Exercice JSP 6",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "83818bae-709b-49fa-9e45-3edb237adb6e",
+      "dateExercice": "2026-05-30",
+      "template": "Formation groupée JSP | Simulateur",
+      "domain": "JSP",
+      "statCom": "010JSP",
+      "subStructure": "JSP",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f57ee12a-2198-4cf6-b202-a4c9b026ff20",
+      "dateExercice": "2026-05-28",
+      "template": "Exercice PR 2.5 | Practice",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d59907ea-7360-40fd-8dae-6823f8482f6d",
+      "dateExercice": "2026-05-28",
+      "template": "Formation groupée 1.3 | DPS | OFSI | ABC",
+      "domain": "DPS",
+      "statCom": "0120F7",
+      "subStructure": "DPS",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "54744a26-8031-4e7a-aeb7-9dfeaf2ecf24",
+      "dateExercice": "2026-05-27",
+      "template": "Formation groupée 1.2 | DPS | OFSI | ABC",
+      "domain": "DPS",
+      "statCom": "0120F7",
+      "subStructure": "DPS",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "147849e4-1b3e-49f6-89c1-1cb5ec904e50",
+      "dateExercice": "2026-05-26",
+      "template": "Exercice FOBA | Consolidation 2",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 3",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "81f8fa5b-94c3-4e58-9b60-44e03fd209e7",
+      "dateExercice": "2026-05-26",
+      "template": "Exercice PR 2.4 | Practice",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d98b858d-42a7-4411-944c-237753caca82",
+      "dateExercice": "2026-05-26",
+      "template": "Exercice TRUCK 1.4",
+      "domain": "AUTO",
+      "statCom": "01521F7",
+      "subStructure": "Cond PL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "6d498dfd-15e2-4658-b4f8-955f995629f6",
+      "dateExercice": "2026-05-21",
+      "template": "Exercice DAP 2",
+      "domain": "DAP",
+      "statCom": "013Y3",
+      "subStructure": "Y3",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "8d1ff95f-579b-443b-a060-c5605891c637",
+      "dateExercice": "2026-05-21",
+      "template": "Exercice PR 2.3 | Practice",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c9c66109-a3d1-4ec7-a11b-2f4a44a93e3c",
+      "dateExercice": "2026-05-21",
+      "template": "Exercice TRUCK 1.3",
+      "domain": "AUTO",
+      "statCom": "01521F7",
+      "subStructure": "Cond PL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c4fc6336-d5bd-457d-a8af-334bb6f68baa",
+      "dateExercice": "2026-05-20",
+      "template": "Exercice PR 2.2 | Practice",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f61e6ea6-928d-48e2-a246-f79b49703091",
+      "dateExercice": "2026-05-19",
+      "template": "Exercice JSP 5",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "56ee641f-4553-410c-92af-083f26bd10ca",
+      "dateExercice": "2026-05-19",
+      "template": "Exercice PR 2.1 | Practice",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "9757f7e6-3fe3-4fbc-9aff-8d956f7e3c6c",
+      "dateExercice": "2026-05-12",
+      "template": "Formation groupée 1.1 | DPS | OFSI | ABC",
+      "domain": "DPS",
+      "statCom": "0120F7",
+      "subStructure": "DPS",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c096f77a-0dd6-4745-a154-b6e4c3e5c6e4",
+      "dateExercice": "2026-05-07",
+      "template": "Formation groupée DAP 1.2",
+      "domain": "DAP",
+      "statCom": "0130F7",
+      "subStructure": "DAP",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d52ad878-b0ac-4361-ab16-3392c0f6fbfb",
+      "dateExercice": "2026-05-05",
+      "template": "Exercice FOBA 3",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "13c65b45-1e5a-4736-9f2f-ef08d736b6c0",
+      "dateExercice": "2026-05-05",
+      "template": "Exercice FOBA 3",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d97731e1-c523-4099-af56-bd51686908a7",
+      "dateExercice": "2026-05-04",
+      "template": "Exercice JSP 5",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "70d8389b-7289-455f-b024-24e98b47c68a",
+      "dateExercice": "2026-05-02",
+      "template": "Exercice JSP 4",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c7a9abdb-eb70-4076-9fc2-beae4d717380",
+      "dateExercice": "2026-04-30",
+      "template": "Exercice TRUCK 1.2",
+      "domain": "AUTO",
+      "statCom": "01521F7",
+      "subStructure": "Cond PL",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "9ab566ae-67f4-4fe7-ba05-e809d77d7955",
+      "dateExercice": "2026-04-23",
+      "template": "Formation groupée DAP 1.1",
+      "domain": "DAP",
+      "statCom": "0130F7",
+      "subStructure": "DAP",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "bcd2822b-cc55-4504-ba14-cc81054b7229",
+      "dateExercice": "2026-04-22",
+      "template": "Exercice DPS 1",
+      "domain": "DPS",
+      "statCom": "012G1",
+      "subStructure": "G1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "87470d01-04cc-44f5-84cc-0cd388073692",
+      "dateExercice": "2026-04-22",
+      "template": "Exercice JSP 4",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "ae00492a-ea42-460e-a704-6048a2a6f535",
+      "dateExercice": "2026-04-21",
+      "template": "Exercice PR-ABC | Refresh",
+      "domain": "PR",
+      "statCom": "0164F7",
+      "subStructure": "PR global",
+      "status": "Planifié",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f4ed8a47-34d8-4da4-842d-cb8e31d3d48a",
+      "dateExercice": "2026-04-21",
+      "template": "Exercice TRUCK 1.1",
+      "domain": "AUTO",
+      "statCom": "01521F7",
+      "subStructure": "Cond PL",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a5140774-931a-482f-9690-be529efb7fd6",
+      "dateExercice": "2026-04-08",
+      "template": "Exercice DAP 2",
+      "domain": "DAP",
+      "statCom": "013Y2",
+      "subStructure": "Y2",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a7be6b16-688b-4600-98ce-33eee4fb4273",
+      "dateExercice": "2026-04-01",
+      "template": "Exercice FOBA | Consolidation 1",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 3",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "e61d8174-ec84-4a88-b6a6-44d120048c53",
+      "dateExercice": "2026-03-31",
+      "template": "Exercice DAP 1",
+      "domain": "DAP",
+      "statCom": "013Y4",
+      "subStructure": "Y4",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "18b73bfc-50c6-48da-8162-f723f310b77a",
+      "dateExercice": "2026-03-30",
+      "template": "Exercice JSP 4",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "3689d649-e592-446b-b8e8-6e085cca6d15",
+      "dateExercice": "2026-03-28",
+      "template": "Exercice JSP 3",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "53034e1f-c710-4083-a511-7a58a239d3aa",
+      "dateExercice": "2026-03-25",
+      "template": "Exercice FOBA 2",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "96b95f57-2652-4974-aaa0-6879e8b3b59b",
+      "dateExercice": "2026-03-25",
+      "template": "Exercice FOBA 2",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "35fbc608-692d-4ea1-b616-fa08fe763e79",
+      "dateExercice": "2026-03-24",
+      "template": "Exercice DPS 1",
+      "domain": "DPS",
+      "statCom": "012C1",
+      "subStructure": "C1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "4fa8509e-2c4e-4e9b-af9c-8ad3cb8e95d0",
+      "dateExercice": "2026-03-24",
+      "template": "Exercice DPS 1",
+      "domain": "DPS",
+      "statCom": "012B1",
+      "subStructure": "B1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "679549a3-362b-4c93-8c6c-046543a1d1f9",
+      "dateExercice": "2026-03-24",
+      "template": "Exercice DPS 1",
+      "domain": "DPS",
+      "statCom": "012B2",
+      "subStructure": "B2",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a01f2cf4-bbc7-4eff-abdc-7db0f0a3cef6",
+      "dateExercice": "2026-03-23",
+      "template": "Exercice JSP 3",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "4bc3b852-d162-4593-9869-189b6dbf1abd",
+      "dateExercice": "2026-03-19",
+      "template": "Exercice DAP 1",
+      "domain": "DAP",
+      "statCom": "013Y3",
+      "subStructure": "Y3",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "48e10e8a-9b9b-46da-9818-c24a7f582bc0",
+      "dateExercice": "2026-03-19",
+      "template": "Exercice PR 1.6 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "8ef7d354-14c5-44c4-8f73-e9816bb416bb",
+      "dateExercice": "2026-03-17",
+      "template": "Exercice DAP 1",
+      "domain": "DAP",
+      "statCom": "013Y2",
+      "subStructure": "Y2",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "579fd228-65c5-4117-ba9a-bf373b8391c8",
+      "dateExercice": "2026-03-17",
+      "template": "Exercice PR 1.5 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a3d9cfff-6333-4b8d-ba25-e8340735721a",
+      "dateExercice": "2026-03-12",
+      "template": "Exercice DAP 1",
+      "domain": "DAP",
+      "statCom": "013Y1",
+      "subStructure": "Y1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "4a8b6ec6-7650-4f18-bd30-ee15a73a5713",
+      "dateExercice": "2026-03-12",
+      "template": "Exercice PR 1.4 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "d660eb94-2682-49a9-bb56-295ea11a5a2a",
+      "dateExercice": "2026-03-10",
+      "template": "Exercice PR 1.3 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "182fc552-e25e-4dd4-9056-7f0f484f9605",
+      "dateExercice": "2026-03-07",
+      "template": "Exercice JSP 2",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "c018e8df-e053-422a-aa9b-6c27f7dd6140",
+      "dateExercice": "2026-03-04",
+      "template": "Exercice PR 1.2 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "012dfede-b6f0-46de-9548-6029cbf2b7cd",
+      "dateExercice": "2026-03-03",
+      "template": "Exercice PR 1.1 | Base",
+      "domain": "PR",
+      "statCom": "011PR",
+      "subStructure": "PR global",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "fc24bb2f-97be-458e-8cf6-74df574bf923",
+      "dateExercice": "2026-03-02",
+      "template": "Exercice JSP 3",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "de3a2d1d-b63b-4b09-a1b7-f93bc99b51c0",
+      "dateExercice": "2026-02-25",
+      "template": "Exercice FOBA 1 | Cérémonie de remise des casques",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "b4815b5d-9087-4ae0-9e69-f8e92fe20e44",
+      "dateExercice": "2026-02-25",
+      "template": "Exercice FOBA 1 | Cérémonie de remise des casques",
+      "domain": "FOBA",
+      "statCom": "010FOBA",
+      "subStructure": "FOBA 2",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "858bf884-1abe-4e7c-aa70-ac880b3908d8",
+      "dateExercice": "2026-02-07",
+      "template": "Exercice JSP 1",
+      "domain": "JSP",
+      "statCom": "010JG1",
+      "subStructure": "JSP G1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "a61241db-df96-4d12-8cab-da02e5c4c809",
+      "dateExercice": "2026-02-04",
+      "template": "Exercice JSP 2",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "cd9c1cad-d69a-44f9-9d59-2d7a44cc4523",
+      "dateExercice": "2026-02-02",
+      "template": "Exercice JSP 2",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f4c0c7ec-0f04-49fb-bf96-07f9c1cf359f",
+      "dateExercice": "2026-01-13",
+      "template": "Exercice JSP 1",
+      "domain": "JSP",
+      "statCom": "010JB1",
+      "subStructure": "JSP B1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    },
+    {
+      "id": "f9df718a-0eb3-4dd2-937b-30fb33ba49bf",
+      "dateExercice": "2026-01-12",
+      "template": "Exercice JSP 1",
+      "domain": "JSP",
+      "statCom": "010JC1",
+      "subStructure": "JSP C1",
+      "status": "Effectué",
+      "createdAt": "2026-04-20T12:39:40.441Z"
+    }
+  ],
+  "referencePeriods": [
+    {
+      "id": "a8a132e8-45ca-452c-af2f-870d98ce260b",
+      "dateEffective": "2026-04-22",
+      "foba": {
+        "foba1": 17,
+        "foba2": 10,
+        "foba3": 10
+      },
+      "domaines": {
+        "pr": 78,
+        "prG1": 50,
+        "prC1": 11,
+        "prB1": 13,
+        "prB2": 4,
+        "autoVl": 47,
+        "autoPl": 96
+      },
+      "organes": {
+        "dpsG1": 83,
+        "dpsC1": 27,
+        "dpsB1": 25,
+        "dpsB2": 13,
+        "dapY1": 18,
+        "dapY2": 18,
+        "dapY3": 15,
+        "dapY4": 16,
+        "jspG1": 27,
+        "jspC1": 14,
+        "jspB1": 24,
+        "jspCadets": 7
+      },
+      "suivi": {
+        "updatedBy": "Cap Thierry Grünig",
+        "generatedBy": "Cap Thierry Grünig",
+        "commentaire": "État initial"
+      }
+    }
+  ],
+  "selectedReferencePeriodId": "a8a132e8-45ca-452c-af2f-870d98ce260b",
+  "objectives": {
+    "objDpsG1": 80,
+    "objDpsC1": 80,
+    "objDpsB1": 80,
+    "objDpsB2": 80,
+    "objDapY1": 80,
+    "objDapY2": 80,
+    "objDapY3": 80,
+    "objDapY4": 80,
+    "objFOBA": 90,
+    "objPR": 90,
+    "objAUTO": 90,
+    "objJSP": 85,
+    "objJspSanction": 60,
+    "objJspCost": 850,
+    "objJspCotisation": 150,
+    "objCoverageGlobal": 85
+  }
+}

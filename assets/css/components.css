@@ -1,0 +1,21 @@
+
+/* Composants additionnels : barrière de login locale */
+.auth-overlay{
+  position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center;
+  padding:20px; background:linear-gradient(135deg,rgba(17,24,39,.94),rgba(47,62,70,.94));
+}
+.auth-overlay.auth-hidden{display:none;}
+.auth-card{width:min(440px,100%); background:#fff; border-radius:22px; padding:24px; box-shadow:0 24px 70px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.12);}
+.auth-badge{display:inline-flex; align-items:center; justify-content:center; min-width:54px; height:30px; border-radius:999px; background:#c1121f; color:#fff; font-weight:800; letter-spacing:.6px; margin-bottom:12px;}
+.auth-card h2{margin:0 0 8px 0; font-size:24px; color:#1c1f24;}
+.auth-note{margin:0 0 18px 0; font-size:13px; color:#6b7280; line-height:1.45;}
+.auth-form{display:flex; flex-direction:column; gap:8px;}
+.auth-form input{height:44px;}
+.auth-change-block{display:flex; flex-direction:column; gap:8px; margin-top:8px; padding-top:12px; border-top:1px solid #e5e7eb;}
+.auth-message{min-height:18px; font-size:12px; color:#6b7280; line-height:1.35; margin-top:4px;}
+.auth-message.error{color:#a50f1a; font-weight:700;}
+.auth-message.ok{color:#1f5fbf; font-weight:700;}
+.auth-submit{width:100%; margin-top:8px;}
+body.auth-locked > header,
+body.auth-locked > section:not(#authOverlay),
+body.auth-locked > div:not(#authOverlay){filter:blur(2px); pointer-events:none; user-select:none;}
