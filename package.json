@@ -1,0 +1,16 @@
+{
+  "name": "monitoring-f7",
+  "version": "65.4.0",
+  "private": true,
+  "description": "Monitoring F7 offline-first avec backend Netlify optionnel.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "check": "./scripts/check-local.sh"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

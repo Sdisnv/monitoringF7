@@ -4,33 +4,27 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Monitoring F7 v65</title>
+<title>Monitoring F7 v65.4</title>
 <link href="assets/css/base.css" rel="stylesheet"/>
 <link href="assets/css/layout.css" rel="stylesheet"/>
 <link href="assets/css/components.css" rel="stylesheet"/>
 <link href="assets/css/tables.css" rel="stylesheet"/>
 <link href="assets/css/charts.css" rel="stylesheet"/>
 <link href="assets/css/print.css" rel="stylesheet"/>
-<link href="assets/css/responsive.css" rel="stylesheet"/>
 <link href="assets/css/monitoring-f7-evolution.css" rel="stylesheet"/>
+<link href="assets/css/responsive.css?v=65.4" rel="stylesheet"/>
 </head>
 <body>
 <div aria-modal="true" class="auth-overlay" id="authOverlay" role="dialog">
 <div class="auth-card">
 <div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Accès Monitoring</h2></div>
-<p class="auth-note">Mode Admin local : barrière UX stockée dans ce navigateur. Ne constitue pas une authentification institutionnelle forte. Mot de passe temporaire à remplacer à la première connexion.</p>
+<p class="auth-note">Accès local offline-first : utilise le NIP ECA et le code d’accès fourni par l’administrateur. Cette barrière navigateur ne remplace pas une authentification serveur institutionnelle.</p>
 <form class="auth-form" id="authForm">
 <label for="authNip">NIP ECA utilisateur</label>
 <input autocomplete="username" id="authNip" inputmode="numeric" name="nip" placeholder="NIP ECA" required=""/>
-<label for="authPassword">Mot de passe</label>
-<input autocomplete="current-password" id="authPassword" name="password" placeholder="Mot de passe" required="" type="password"/>
-<div class="auth-change-block" hidden="" id="authChangeBlock">
-<label for="authNewPassword">Nouveau mot de passe</label>
-<input autocomplete="new-password" id="authNewPassword" name="newPassword" placeholder="Nouveau mot de passe" type="password"/>
-<label for="authNewPasswordConfirm">Confirmer le nouveau mot de passe</label>
-<input autocomplete="new-password" id="authNewPasswordConfirm" name="newPasswordConfirm" placeholder="Confirmation" type="password"/>
-</div>
-<div class="auth-message" id="authMessage">Première connexion : mot de passe temporaire 1234, puis remplacement obligatoire.</div>
+<label for="authPassword">Code d’accès local</label>
+<input autocomplete="current-password" id="authPassword" name="password" placeholder="Code d’accès local" required="" type="password"/>
+<div class="auth-message" id="authMessage">Connexion locale stable. Aucun compte ne peut être créé depuis cet écran.</div>
 <button class="primary auth-submit" type="submit">Accéder au monitoring</button>
 </form>
 </div>
@@ -40,7 +34,7 @@
 <img alt="Logo SDIS Nord vaudois" class="header-logo" src="assets/img/LogoSDISblanc.png"/>
 <div class="header-text">
 <h1>SDIS régional du Nord vaudois</h1>
-<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v65</span></div>
+<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v65.4</span></div>
 </div>
 </div>
 <div class="user-zone" id="userZone">
@@ -53,10 +47,10 @@
 </button>
 <div class="user-menu" id="userMenu" hidden>
 <div class="user-menu-head"><strong id="userMenuName">Profil utilisateur</strong><span id="userMenuNip">NIP —</span></div>
-<button type="button" data-user-action="profile">Profil</button>
-<button type="button" data-user-action="settings">Paramètres utilisateur</button>
-<button type="button" data-user-action="session">Informations session</button>
-<button type="button" data-user-action="backup">Sauvegarde/export rapide</button>
+<button type="button" data-user-action="profile">Profil local</button>
+<button type="button" data-user-action="settings">Préférences locales</button>
+<button type="button" data-user-action="session">Session locale</button>
+<button type="button" data-user-action="backup">Export rapide</button>
 <hr/>
 <button class="danger-link" type="button" id="userLogoutBtn">Déconnexion</button>
 </div>
@@ -307,7 +301,7 @@
 </div>
 </section>
 <div class="top-tabs-wrap">
-<div class="top-tabs monitoring-f7-tabs"><button class="tab-btn active" data-tab-target="dashboard" type="button">Situation COD</button><button class="tab-btn" data-tab-target="events" type="button">Événements</button><button class="tab-btn" data-tab-target="effectifs" type="button">Effectifs</button><button class="tab-btn" data-tab-target="analyses" type="button">Analyses</button><button class="tab-btn" data-tab-target="graphs" type="button">Graphiques</button><button class="tab-btn" data-tab-target="monitoring" type="button">Administration</button></div>
+<div class="top-tabs monitoring-f7-tabs"><button class="tab-btn active" data-tab-target="dashboard" type="button">Situation COD</button><button class="tab-btn" data-tab-target="events" type="button">Événements</button><button class="tab-btn" data-tab-target="effectifs" type="button">Effectifs</button><button class="tab-btn" data-tab-target="analyses" type="button">Analyses</button><button class="tab-btn" data-tab-target="graphs" type="button">Graphiques</button><button class="tab-btn" data-tab-target="monitoring" type="button">Gestion</button></div>
 </div>
 <div class="f7-message-bar" id="f7OperationalMessage" role="status" aria-live="polite" hidden></div>
 <section class="tab-panel active" id="tab-dashboard">
@@ -1234,7 +1228,7 @@
 </div>
 </section>
 </div>
-</section><section class="tab-panel" id="tab-monitoring"><div class="wrap f7-management-layout"><div class="f7-view-heading"><h1>Gestion Monitoring</h1><p>Espace séparé pour les imports, sauvegardes, outils techniques et maintenance locale.</p></div><div aria-label="Navigation Gestion Monitoring" class="f7-management-nav" role="tablist"><button class="f7-management-tab active" data-management-target="import" type="button">Import événements</button><button class="f7-management-tab" data-management-target="backup" type="button">Paramètre sauvegarde</button><button class="f7-management-tab" data-management-target="admin" type="button">Outils Admin</button><button class="f7-management-tab" data-management-target="diagnostic" type="button">Diagnostic local</button></div><div class="f7-management-content"><section class="f7-management-pane active" data-management-pane="import" id="f7-pane-import">
+</section><section class="tab-panel" id="tab-monitoring"><div class="wrap f7-management-layout"><div class="f7-view-heading"><h1>Gestion Monitoring</h1><p>Imports, sauvegardes, administration locale et diagnostic support.</p></div><div aria-label="Navigation Gestion Monitoring" class="f7-management-nav" role="tablist"><button class="f7-management-tab active" data-management-target="import" type="button">Importer</button><button class="f7-management-tab" data-management-target="backup" type="button">Sauvegarder</button><button class="f7-management-tab" data-management-target="admin" type="button">Admin local</button><button class="f7-management-tab" data-management-target="diagnostic" type="button">Diagnostic</button></div><div class="f7-management-content"><section class="f7-management-pane active" data-management-pane="import" id="f7-pane-import">
 <section class="card f7-drop-zone" id="f7ImportPanel">
 <h2 class="section-title"><span>Import événements</span></h2>
 <p class="footer-note">Import non destructif : les événements existants, statuts et modifications manuelles sont conservés par défaut.</p>
@@ -1262,7 +1256,7 @@
 </section>
 </section><section class="f7-management-pane" data-management-pane="backup" id="f7-pane-backup">
 <section class="card">
-<h2 class="section-title"><span>Paramètre sauvegarde</span></h2>
+<h2 class="section-title"><span>Sauvegardes locales</span></h2>
 <p class="footer-note">Les données utilisateur restent dans le navigateur. Avant une grosse mise à jour, exporter une sauvegarde complète.</p>
 <div class="f7-action-row">
 <button class="compact-btn primary" id="f7FullBackupBtn" type="button">Exporter sauvegarde complète</button>
@@ -1274,15 +1268,15 @@
 </section>
 </section><section class="f7-management-pane" data-management-pane="admin" id="f7-pane-admin">
 <section class="card">
-<h2 class="section-title"><span>Outils Admin</span></h2>
+<h2 class="section-title"><span>Administration locale</span></h2>
 <div class="f7-admin-lock" id="f7AdminLocked">
 <p class="footer-note">Fonctions sensibles protégées par un code Admin local. Sécurité adaptée au mode Netlify/offline, sans équivalence avec une authentification serveur.</p>
 <div class="row-3">
 <div><label>Code Admin</label><input autocomplete="current-password" id="f7AdminCode" placeholder="Code Admin" type="password"/></div>
 <div><label>Action</label><button class="compact-btn primary" id="f7AdminUnlockBtn" type="button">Déverrouiller</button></div>
-<div><label>Configuration</label><button class="compact-btn" id="f7AdminSetCodeBtn" type="button">Définir / changer le code</button></div>
+<div><label>Configuration</label><button class="compact-btn" id="f7AdminSetCodeBtn" type="button">Changer le code admin</button></div>
 </div>
-<div class="f7-status-box" id="f7AdminMessage">Code initial local : 1234. À remplacer lors de la première utilisation.</div>
+<div class="f7-status-box" id="f7AdminMessage">Code admin local configurable. Si aucun code n’a été défini, le code initial local reste 1234.</div>
 </div>
 <div hidden="" id="f7AdminContent">
 <div class="f7-admin-grid" id="f7AdminStats"></div>
@@ -1849,7 +1843,7 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <tr><td><code>getSeriesAnalysis(seriesKey)</code></td><td>Analyse complète d'une série multi-sessions avec taux corrigés sur cible nette cumulée (v47)</td></tr>
 </tbody>
 </table>
-<div class="footer-note" style="margin-top:12px;">Version du fichier : v65 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
+<div class="footer-note" style="margin-top:12px;">Version du fichier : v65.4 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
 </div>
 </div>
 </div>
@@ -1875,6 +1869,7 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <script src="assets/js/state.js"></script>
 <script src="assets/js/security.js"></script>
 <script src="assets/js/storage.js"></script>
+<script src="assets/js/session-service.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/utils/dates.js"></script>
 <script src="assets/js/utils/numbers.js"></script>
@@ -1902,6 +1897,7 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <script src="assets/js/ui/tabs.js"></script>
 <script src="assets/js/ui/modals.js"></script>
 <script src="assets/js/ui/events.js"></script>
+<script src="assets/js/ui/user-modal.js"></script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/monitoring-f7-evolution.js"></script>
 </body>

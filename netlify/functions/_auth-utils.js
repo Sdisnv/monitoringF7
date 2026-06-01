@@ -71,7 +71,14 @@ function verifyToken(token, expectedType){
 function bearerToken(event){
   const header = event.headers.authorization || event.headers.Authorization || '';
   const match = String(header).match(/^Bearer\s+(.+)$/i);
-  return match ? match[1] : '';
+  if(match) return match[1];
+  const rawCookie = event.headers.cookie || event.headers.Cookie || '';
+  const cookies = String(rawCookie).split(';').reduce((acc, part) => {
+    const index = part.indexOf('=');
+    if(index > -1) acc[part.slice(0, index).trim()] = decodeURIComponent(part.slice(index + 1).trim());
+    return acc;
+  }, {});
+  return cookies.monitoring_f7_access || '';
 }
 
 function publicUser(user){

@@ -1,8 +1,15 @@
 /* Configuration externe future. La logique historique reste chargée par app.js. */
 window.MonitoringConfig = Object.freeze({
   appName: 'Monitoring F7',
-  version: 'v65',
-  temporaryPasswordHashHex: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'
+  version: 'v65.4',
+  localAuth: Object.freeze({
+    mode: 'local-browser-only',
+    notice: 'Barriere applicative locale. Les comptes serveur ne sont pas actifs en v65.4.',
+    requireKnownNip: false,
+    sharedAccessEnabled: true,
+    sharedAccessPasswordHashHex: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4',
+    users: Object.freeze([])
+  })
 });
 
 (function(){

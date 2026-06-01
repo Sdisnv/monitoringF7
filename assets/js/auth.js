@@ -1,12 +1,18 @@
 /* Barrière de login locale - usage interne, non équivalent à une authentification serveur. */
 (function(){
-  const AUTH_SESSION_KEY = 'monitoring_sdis_auth_session_v1';
-  const AUTH_PROFILE_KEY = 'monitoring_sdis_auth_profile_v1';
-  const AUTH_SESSION_BACKUP_KEY = 'monitoring_sdis_auth_session_backup_v1';
-  const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
-  const TEMP_HASH_HEX = (window.MonitoringConfig && window.MonitoringConfig.temporaryPasswordHashHex) || '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
+  const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();
+  const sessionManager = window.MonitoringSessionManager;
 
+  function getLocalAuthConfig(){
+    const cfg = window.MonitoringConfig?.localAuth || {};
+    return {
+      requireKnownNip: cfg.requireKnownNip === true,
+      sharedAccessEnabled: cfg.sharedAccessEnabled !== false,
+      sharedAccessPasswordHashHex: String(cfg.sharedAccessPasswordHashHex || DEFAULT_ACCESS_HASH_HEX),
+      users: Array.isArray(cfg.users) ? cfg.users : []
+    };
+  }
   function toHex(buffer){
     return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
@@ -15,10 +21,29 @@
     return toHex(digest);
   }
   function getProfile(){
-    try { return JSON.parse(localStorage.getItem(AUTH_PROFILE_KEY) || 'null'); } catch { return null; }
+    return sessionManager?.getProfile?.() || null;
   }
   function setProfile(profile){
-    localStorage.setItem(AUTH_PROFILE_KEY, JSON.stringify(profile));
+    return sessionManager?.setProfile?.(profile) || profile;
+  }
+  function buildProfile(nip, source, existing, configuredUser){
+    const now = new Date().toISOString();
+    const previous = existing && typeof existing === 'object' ? existing : {};
+    const next = Object.assign({}, previous, {
+      nip,
+      displayName: configuredUser?.displayName || configuredUser?.name || previous.displayName || previous.name || `NIP ${nip}`,
+      role: configuredUser?.role || previous.role || 'sdis-user',
+      authSource: source,
+      passwordManagedBy: source === 'legacy-profile' ? 'legacy-local-profile' : 'local-configuration',
+      updatedAt: now,
+      lastLoginAt: now
+    });
+    if(!next.createdAt) next.createdAt = now;
+    if(source !== 'legacy-profile'){
+      delete next.passwordHash;
+      delete next.temporaryPasswordReplaced;
+    }
+    return next;
   }
   function setMessage(text, type){
     const el = document.getElementById('authMessage');
@@ -27,55 +52,18 @@
     el.classList.remove('error','ok');
     if(type) el.classList.add(type);
   }
-  function parseSession(raw){
-    if(!raw) return null;
-    if(raw === '1' || raw === 'true') return { active: true, legacy: true };
-    try {
-      const parsed = JSON.parse(raw);
-      if(!(parsed && typeof parsed === 'object')) return null;
-      if(parsed.startedAt && Date.now() - Date.parse(parsed.startedAt) > SESSION_MAX_AGE_MS){
-        clearSession();
-        return null;
-      }
-      return parsed;
-    } catch { return null; }
-  }
   function readSession(){
-    const sessionRaw = sessionStorage.getItem(AUTH_SESSION_KEY);
-    const localRaw = localStorage.getItem(AUTH_SESSION_BACKUP_KEY);
-    let parsed = parseSession(sessionRaw) || parseSession(localRaw);
-    if(!parsed){
-      sessionStorage.removeItem(AUTH_SESSION_KEY);
-      localStorage.removeItem(AUTH_SESSION_BACKUP_KEY);
-      return null;
-    }
-    if(!sessionRaw && parsed.active === true){
-      try { sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(parsed)); } catch {}
-    }
-    return parsed;
+    return sessionManager?.read?.() || null;
   }
   function writeSession(profile){
-    const sessionPayload = {
-      active: true,
-      mode: 'local-browser-only',
-      nip: profile?.nip || '',
-      startedAt: new Date().toISOString(),
-      referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
-      source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: (window.MonitoringConfig && window.MonitoringConfig.version) || 'v65'
-    };
-    const raw = JSON.stringify(sessionPayload);
-    sessionStorage.setItem(AUTH_SESSION_KEY, raw);
-    try { localStorage.setItem(AUTH_SESSION_BACKUP_KEY, raw); } catch {}
-    return sessionPayload;
+    return sessionManager?.write?.(profile) || null;
   }
   function notifySessionChanged(session){
-    document.dispatchEvent(new CustomEvent('monitoring-f7-auth-session-changed', { detail: { session: session || readSession() } }));
+    if(sessionManager?.notify) sessionManager.notify(session || readSession());
+    else document.dispatchEvent(new CustomEvent('monitoring-f7-auth-session-changed', { detail: { session: session || readSession() } }));
   }
   function clearSession(){
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
-    sessionStorage.removeItem('monitoring_f7_admin_lock_v1');
-    try { localStorage.removeItem(AUTH_SESSION_BACKUP_KEY); } catch {}
+    sessionManager?.clear?.();
     document.body?.classList.add('auth-locked');
   }
   function syncAuthUI(active){
@@ -88,54 +76,47 @@
     if(overlay) overlay.classList.add('auth-hidden');
     notifySessionChanged(writeSession(profile || getProfile() || {}));
   }
-  function showChangeBlock(){
-    const block = document.getElementById('authChangeBlock');
-    if(block) block.hidden = false;
+  function findConfiguredUser(nip){
+    return getLocalAuthConfig().users.find(user => String(user?.nip || '') === String(nip || '') && user.active !== false) || null;
+  }
+  function credentialsError(reason){
+    window.MonitoringAuditLog?.logWarning('login-local-failed', 'Échec login local.', { reason });
+    setMessage('NIP ECA ou mot de passe incorrect.', 'error');
+  }
+  async function resolveLocalProfile(nip, passwordHash, currentProfile){
+    const cfg = getLocalAuthConfig();
+    const configuredUser = findConfiguredUser(nip);
+    if(configuredUser){
+      const userHash = String(configuredUser.passwordHashHex || cfg.sharedAccessPasswordHashHex || '');
+      if(userHash && userHash === passwordHash) return buildProfile(nip, 'configured-user', currentProfile, configuredUser);
+      return null;
+    }
+
+    if(currentProfile?.nip === nip && currentProfile?.passwordHash === passwordHash){
+      return buildProfile(nip, 'legacy-profile', currentProfile, null);
+    }
+
+    if(cfg.requireKnownNip) return null;
+    if(cfg.sharedAccessEnabled && cfg.sharedAccessPasswordHashHex === passwordHash){
+      return buildProfile(nip, 'shared-local-access', currentProfile, null);
+    }
+    return null;
   }
   async function onSubmit(e){
     e.preventDefault();
     const nip = (document.getElementById('authNip')?.value || '').trim();
     const password = document.getElementById('authPassword')?.value || '';
-    const newPassword = document.getElementById('authNewPassword')?.value || '';
-    const confirm = document.getElementById('authNewPasswordConfirm')?.value || '';
     if(!nip){ setMessage('NIP ECA obligatoire.', 'error'); return; }
+    if(!password){ setMessage('Mot de passe obligatoire.', 'error'); return; }
 
     const profile = getProfile();
     const hash = await sha256Hex(password);
-
-    if(!profile){
-      if(hash !== TEMP_HASH_HEX){
-        window.MonitoringAuditLog?.logWarning('login-local-failed', 'Échec login local.', { reason:'temporary-password' });
-        setMessage('Mot de passe temporaire incorrect.', 'error');
-        return;
-      }
-      showChangeBlock();
-      if(!newPassword || !confirm){
-        setMessage('Première connexion : remplace le mot de passe temporaire.', 'error');
-        return;
-      }
-      if(newPassword !== confirm){
-        setMessage('La confirmation du nouveau mot de passe ne correspond pas.', 'error');
-        return;
-      }
-      if(newPassword === '1234' || newPassword.length < 6){
-        setMessage('Choisis un mot de passe différent de 1234, au minimum 6 caractères.', 'error');
-        return;
-      }
-      setProfile({ nip, passwordHash: await sha256Hex(newPassword), createdAt: new Date().toISOString(), temporaryPasswordReplaced: true });
-      window.MonitoringAuditLog?.logAction('login-local', 'Première connexion locale validée et mot de passe remplacé.', {});
-      setMessage('Mot de passe remplacé. Accès autorisé.', 'ok');
-      unlock({ nip });
-      return;
-    }
-
-    if(!profile || typeof profile !== 'object' || !profile.nip || !profile.passwordHash || profile.nip !== nip || profile.passwordHash !== hash){
-      window.MonitoringAuditLog?.logWarning('login-local-failed', 'Échec login local.', { reason:'credentials' });
-      setMessage('NIP ECA ou mot de passe incorrect.', 'error');
-      return;
-    }
-    window.MonitoringAuditLog?.logAction('login-local', 'Login local validé.', {});
-    unlock(profile);
+    const resolvedProfile = await resolveLocalProfile(nip, hash, profile);
+    if(!resolvedProfile){ credentialsError('credentials'); return; }
+    setProfile(resolvedProfile);
+    window.MonitoringAuditLog?.logAction('login-local', 'Login local validé.', { source: resolvedProfile.authSource || 'local' });
+    setMessage('Accès local autorisé.', 'ok');
+    unlock(resolvedProfile);
   }
   document.addEventListener('DOMContentLoaded', function(){
     syncAuthUI(false);
@@ -149,16 +130,14 @@
         return;
       }
     }catch{ clearSession(); }
-    const profile = getProfile();
-    if(!profile) showChangeBlock();
     const form = document.getElementById('authForm');
     if(form) form.addEventListener('submit', onSubmit);
   });
 })();
 
 window.MonitoringAuthService = Object.freeze({
-  getProfile(){ try { return JSON.parse(localStorage.getItem('monitoring_sdis_auth_profile_v1') || 'null'); } catch { return null; } },
-  saveProfilePatch(patch){ const current = this.getProfile() || {}; const next = Object.assign({}, current, patch || {}, { updatedAt:new Date().toISOString() }); localStorage.setItem('monitoring_sdis_auth_profile_v1', JSON.stringify(next)); return next; },
+  getProfile(){ return window.MonitoringSessionManager?.getProfile?.() || null; },
+  saveProfilePatch(patch){ return window.MonitoringSessionManager?.saveProfilePatch?.(patch) || null; },
   getMode(){ return window.MonitoringBackendConfig?.current?.authMode || 'local'; },
   isBackendAuthPrepared(){
     const cfg = window.MonitoringBackendConfig?.current || {};
@@ -172,21 +151,13 @@ window.MonitoringAuthService = Object.freeze({
       backendAuthPrepared: prepared,
       backendAuthActive: false,
       authContract: window.MonitoringApiContracts?.get?.('authLogin') || null,
-      message: prepared ? 'Contrat auth serveur prêt, non activé par défaut en v65.' : 'Session locale navigateur conservée.'
+      localAuthConfigured: true,
+      localAuthUsers: Array.isArray(window.MonitoringConfig?.localAuth?.users) ? window.MonitoringConfig.localAuth.users.length : 0,
+      message: prepared ? 'Contrat auth serveur prêt, non activé par défaut en v65.4.' : 'Session locale navigateur conservée.'
     });
   },
   readSession(){
-    const parse = raw => {
-      if(!raw) return null;
-      if(raw === '1' || raw === 'true') return { active:true, legacy:true };
-      try { const parsed = JSON.parse(raw); return parsed && typeof parsed === 'object' ? parsed : null; } catch { return null; }
-    };
-    return parse(sessionStorage.getItem('monitoring_sdis_auth_session_v1')) || parse(localStorage.getItem('monitoring_sdis_auth_session_backup_v1'));
+    return window.MonitoringSessionManager?.read?.() || null;
   },
-  logout(){ window.MonitoringAuditLog?.logAction('logout-local', 'Déconnexion locale demandée.', {}); sessionStorage.removeItem('monitoring_sdis_auth_session_v1'); sessionStorage.removeItem('monitoring_f7_admin_lock_v1'); try { localStorage.removeItem('monitoring_sdis_auth_session_backup_v1'); } catch {} location.reload(); }
-});
-
-window.MonitoringSessionManager = Object.freeze({
-  read(){ return window.MonitoringAuthService.readSession(); },
-  logout(){ return window.MonitoringAuthService.logout(); }
+  logout(){ window.MonitoringSessionManager?.logout?.({ message:'Déconnexion locale demandée.' }); }
 });

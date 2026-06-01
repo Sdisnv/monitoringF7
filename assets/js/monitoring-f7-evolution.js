@@ -1,9 +1,9 @@
-/* Monitoring F7 v65 — couche d'évolution non destructive.
+/* Monitoring F7 v65.4 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = 'v65';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v65.4';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -86,6 +86,10 @@
     clearTimeout(showOperationalMessage._timer);
     showOperationalMessage._timer=setTimeout(()=>{ bar.hidden=true; }, level==='error' ? 9000 : 5200);
   }
+  function formatOperationalError(prefix, err){
+    const detail = err?.message ? String(err.message) : String(err || '');
+    return detail ? `${prefix} ${detail}` : prefix;
+  }
   window.MonitoringUiMessage = Object.freeze({
     info: message => showOperationalMessage(message, 'info'),
     ok: message => showOperationalMessage(message, 'ok'),
@@ -137,7 +141,7 @@
       destructiveImportsDefault: false
     };
     writeJSON(KEYS.meta, next);
-    if(meta.dataSchemaVersion !== DATA_SCHEMA_VERSION) window.MonitoringAuditLog?.logAction('storage-migration', 'Métadonnées stockage v65 contrôlées.', { dataSchemaVersion: DATA_SCHEMA_VERSION });
+    if(meta.dataSchemaVersion !== DATA_SCHEMA_VERSION) window.MonitoringAuditLog?.logAction('storage-migration', 'Métadonnées stockage contrôlées.', { dataSchemaVersion: DATA_SCHEMA_VERSION, appVersion: APP_VERSION });
   }
 
   function moveExistingUi(){
@@ -308,7 +312,7 @@
     $('recordsFullViewBtn')?.classList.toggle('active', !summary);
     $('recordsSummaryViewBtn')?.setAttribute('aria-pressed', String(summary));
     $('recordsFullViewBtn')?.setAttribute('aria-pressed', String(!summary));
-    try{ localStorage.setItem('monitoring_f7_records_density_v65', summary ? 'summary' : 'full'); }catch{}
+    try{ localStorage.setItem('monitoring_f7_records_density_v65_4', summary ? 'summary' : 'full'); }catch{}
     if(!silent) showOperationalMessage(summary ? 'Vue synthèse activée : lecture courte des événements.' : 'Vue détails activée : toutes les colonnes sont affichées.', 'info');
   }
   function toggleProjectionMode(){
@@ -453,24 +457,36 @@
     const expected=profile?.hash || TEMP_ADMIN_HASH;
     if(await sha256Hex(code) !== expected){
       const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box error'; msg.textContent='Code Admin incorrect.'; }
+      showOperationalMessage('Code Admin incorrect.', 'error');
       return;
     }
     $('f7AdminLocked').hidden=true; $('f7AdminContent').hidden=false; renderAdminStats();
+    showOperationalMessage('Administration locale déverrouillée.', 'ok');
   }
   async function setAdminCode(){
-    const current=prompt('Nouveau code Admin local (minimum 6 caractères recommandé) :');
+    const profile=readJSON(KEYS.admin, null);
+    const expected=profile?.hash || TEMP_ADMIN_HASH;
+    const current=prompt('Code Admin actuel :');
     if(!current) return;
-    if(current.length<4){ alert('Code trop court.'); return; }
-    writeJSON(KEYS.admin, {hash:await sha256Hex(current), updatedAt:nowIso()});
+    if(await sha256Hex(current) !== expected){
+      const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box error'; msg.textContent='Code Admin actuel incorrect. Modification refusée.'; }
+      showOperationalMessage('Modification du code Admin refusée.', 'error');
+      return;
+    }
+    const next=prompt('Nouveau code Admin local (minimum 6 caractères) :');
+    if(!next) return;
+    if(next.length<6){ alert('Code trop court. Minimum 6 caractères.'); return; }
+    writeJSON(KEYS.admin, {hash:await sha256Hex(next), updatedAt:nowIso()});
     const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box ok'; msg.textContent='Code Admin local mis à jour.'; }
+    showOperationalMessage('Code Admin local mis à jour.', 'ok');
   }
 
-  function getAuthProfile(){ return readJSON('monitoring_sdis_auth_profile_v1', null) || {}; }
+  function getAuthProfile(){ return window.MonitoringSessionManager?.getProfile?.() || {}; }
   function updateUserZone(){
     const profile=getAuthProfile();
     const nip=profile.nip || '—';
     const label=profile.displayName || profile.name || (nip !== '—' ? `NIP ${nip}` : 'Utilisateur SDIS');
-    const sessionForStatus = window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI?.();
+    const sessionForStatus = window.MonitoringSessionManager?.read?.() || window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI?.();
     const sessionActive = !!(sessionForStatus && sessionForStatus.active === true);
     const display=$('userDisplayName'); if(display) display.textContent=label;
     const status=$('userSessionStatus'); if(status) status.textContent=sessionActive ? 'Session locale active — navigateur uniquement' : 'Connexion locale requise';
@@ -478,62 +494,57 @@
     const nipEl=$('userMenuNip'); if(nipEl) nipEl.textContent=`NIP ${nip}`;
   }
   function readAuthSessionForUI(){
-    const parse=raw=>{ if(!raw) return null; if(raw==='1'||raw==='true') return {active:true, legacy:true}; try{ const parsed=JSON.parse(raw); return parsed && typeof parsed==='object' ? parsed : null; }catch{ return null; } };
-    return parse(sessionStorage.getItem('monitoring_sdis_auth_session_v1')) || parse(localStorage.getItem('monitoring_sdis_auth_session_backup_v1'));
+    return window.MonitoringSessionManager?.read?.() || null;
   }
   function formatSessionDate(value){
     if(!value) return '—';
     try{ return new Date(value).toLocaleString('fr-CH'); }catch{ return '—'; }
   }
   function ensureUserModal(){
-    let modal=document.getElementById('f7UserLocalModal');
-    if(modal) return modal;
-    modal=document.createElement('div');
-    modal.id='f7UserLocalModal';
-    modal.setAttribute('role','dialog');
-    modal.setAttribute('aria-modal','true');
-    modal.style.cssText='position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.42);padding:18px;';
-    modal.innerHTML='<div style="width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 24px 80px rgba(15,23,42,.35);border:1px solid rgba(15,23,42,.12);"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid rgba(15,23,42,.08);"><h3 id="f7UserLocalModalTitle" style="margin:0;font-size:18px;color:#111827;">Profil local Monitoring F7</h3><button type="button" id="f7UserLocalModalClose" style="border:0;background:#f3f4f6;border-radius:999px;padding:8px 11px;cursor:pointer;">✕</button></div><div id="f7UserLocalModalBody" style="padding:18px 20px;color:#1f2937;font-size:14px;line-height:1.55;"></div></div>';
-    document.body.appendChild(modal);
-    modal.addEventListener('click', e=>{ if(e.target===modal) closeUserModal(); });
-    modal.querySelector('#f7UserLocalModalClose')?.addEventListener('click', closeUserModal);
-    return modal;
+    return window.MonitoringUserModal?.ensure?.() || document.getElementById('f7UserLocalModal');
   }
-  function closeUserModal(){ const modal=document.getElementById('f7UserLocalModal'); if(modal) modal.style.display='none'; }
+  function closeUserModal(){ if(window.MonitoringUserModal?.close) window.MonitoringUserModal.close(); else { const modal=document.getElementById('f7UserLocalModal'); if(modal) modal.style.display='none'; } }
   function openUserModal(title, html){
-    const modal=ensureUserModal();
+    if(window.MonitoringUserModal?.open) return window.MonitoringUserModal.open(title, html);
+    const modal=ensureUserModal(); if(!modal) return null;
     const titleEl=modal.querySelector('#f7UserLocalModalTitle'); if(titleEl) titleEl.textContent=title;
     const body=modal.querySelector('#f7UserLocalModalBody'); if(body) body.innerHTML=html;
     modal.style.display='flex';
+    return modal;
   }
   function showLocalProfilePanel(){
-    const profile=window.MonitoringAuthService?.getProfile?.() || getAuthProfile();
-    const session=window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI();
+    const profile=window.MonitoringSessionManager?.getProfile?.() || window.MonitoringAuthService?.getProfile?.() || getAuthProfile();
+    const session=window.MonitoringSessionManager?.read?.() || window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI();
     const nip=profile.nip || session?.nip || '—';
     const displayName=profile.displayName || profile.name || 'Utilisateur SDIS';
+    const authSource=profile.authSource || 'local';
     window.MonitoringAuditLog?.logAction('profile-local-open', 'Accès au profil local.', { mode:'local-browser-only' });
-    openUserModal('Profil local Monitoring F7', `<div style="background:#f8fafc;border:1px solid rgba(15,23,42,.08);border-radius:12px;padding:14px;margin-bottom:14px;"><strong>${escapeHtml(displayName)}</strong><br><span style="color:#64748b;">NIP local : ${escapeHtml(nip)}</span></div><p>Ce profil est enregistré uniquement dans ce navigateur. Le NIP protège l’accès local à l’interface, mais ne constitue pas une authentification institutionnelle serveur. Les données restent stockées localement via localStorage / IndexedDB.</p><div style="display:grid;grid-template-columns:150px 1fr;gap:8px 12px;margin-top:14px;"><strong>Session</strong><span>${session?.active ? 'active' : 'non active'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Origine</strong><span>${escapeHtml(session?.source || (location.protocol==='file:'?'local-file':'served-origin'))}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p style="margin-top:14px;color:#64748b;font-size:13px;">Une persistance centralisée multi-postes nécessitera une phase backend ultérieure avec authentification réelle.</p>`);
+    openUserModal('Profil local Monitoring F7', `<div class="f7-user-summary"><strong>${escapeHtml(displayName)}</strong><br><span>NIP local : ${escapeHtml(nip)}</span></div><p>Ce profil sert uniquement à personnaliser l’interface sur ce navigateur. Il ne crée pas de compte serveur et ne synchronise pas l’utilisateur entre postes.</p><div class="f7-user-info-grid"><strong>Session</strong><span>${session?.active ? 'active' : 'non active'}</span><strong>Accès</strong><span>${escapeHtml(authSource)}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Origine</strong><span>${escapeHtml(session?.source || (location.protocol==='file:'?'local-file':'served-origin'))}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p class="f7-user-note">Une persistance centralisée multi-postes nécessitera une phase backend ultérieure avec authentification réelle.</p>`);
   }
   function showLocalSettingsPanel(){
-    const profile=window.MonitoringAuthService?.getProfile?.() || getAuthProfile();
+    const profile=window.MonitoringSessionManager?.getProfile?.() || window.MonitoringAuthService?.getProfile?.() || getAuthProfile();
     const displayName=profile.displayName || profile.name || '';
     window.MonitoringAuditLog?.logAction('settings-local-open', 'Accès aux paramètres utilisateur locaux.', { mode:'local-browser-only' });
-    openUserModal('Paramètres utilisateur locaux', `<p>Ces paramètres sont conservés uniquement dans ce navigateur. Ils ne sont pas synchronisés entre postes et ne remplacent pas un compte serveur.</p><label style="display:block;font-weight:700;margin-top:12px;margin-bottom:6px;">Nom affiché dans l’interface</label><input id="f7LocalDisplayNameInput" type="text" value="${escapeHtml(displayName)}" placeholder="Utilisateur SDIS" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;font-size:14px;"><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;"><button type="button" id="f7LocalSettingsCancel" style="border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:9px 12px;cursor:pointer;">Annuler</button><button type="button" id="f7LocalSettingsSave" style="border:0;background:#b91c1c;color:#fff;border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:700;">Enregistrer localement</button></div><p style="margin-top:14px;color:#64748b;font-size:13px;">Le NIP et le mot de passe local restent gérés par la barrière d’accès locale. Aucun backend réel n’est activé en ${escapeHtml(APP_VERSION)}.</p>`);
+    openUserModal('Préférences locales', `<p>Ces préférences sont conservées uniquement dans ce navigateur. Elles ne créent pas de compte serveur.</p><label class="f7-user-field-label">Nom affiché dans l’interface</label><input id="f7LocalDisplayNameInput" type="text" value="${escapeHtml(displayName)}" placeholder="Utilisateur SDIS" class="f7-user-input"><div class="f7-user-actions"><button type="button" id="f7LocalSettingsCancel" class="f7-user-secondary-btn">Annuler</button><button type="button" id="f7LocalSettingsSave" class="f7-user-primary-btn">Enregistrer localement</button></div><p class="f7-user-note">Le NIP et le code d’accès local restent gérés par la configuration administrateur. Aucun backend réel n’est activé en ${escapeHtml(APP_VERSION)}.</p>`);
     setTimeout(()=>{
       document.getElementById('f7LocalSettingsCancel')?.addEventListener('click', closeUserModal);
       document.getElementById('f7LocalSettingsSave')?.addEventListener('click', ()=>{
         const value=(document.getElementById('f7LocalDisplayNameInput')?.value || '').trim();
-        window.MonitoringAuthService?.saveProfilePatch?.({ displayName:value });
-        window.MonitoringAuditLog?.logAction('settings-local-save', 'Paramètres utilisateur locaux enregistrés.', { fields:['displayName'] });
+        if(window.MonitoringSessionManager?.saveProfilePatch) window.MonitoringSessionManager.saveProfilePatch({ displayName:value });
+        else window.MonitoringAuthService?.saveProfilePatch?.({ displayName:value });
+        window.MonitoringAuditLog?.logAction('settings-local-save', 'Préférences locales enregistrées.', { fields:['displayName'] });
         updateUserZone();
+        showOperationalMessage('Préférences locales enregistrées.', 'ok');
         closeUserModal();
       });
     },0);
   }
   function showSessionInformationPanel(){
-    const session=window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI();
+    const session=window.MonitoringSessionManager?.read?.() || window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI();
+    const authStatus=window.MonitoringAuthService?.getStatus?.() || {};
+    const backendStatus=window.MonitoringBackendConfig?.getStatus?.() || {};
     window.MonitoringAuditLog?.logAction('session-info-open', 'Information session locale consultée.', { mode:'local-browser-only' });
-    openUserModal('Information session Monitoring F7', `<div style="display:grid;grid-template-columns:150px 1fr;gap:8px 12px;"><strong>Mode</strong><span>offline-first / navigateur local uniquement</span><strong>Sécurité</strong><span>barrière UX locale, pas une authentification institutionnelle serveur</span><strong>Stockage</strong><span>localStorage / IndexedDB conservés</span><strong>Session active</strong><span>${session?.active ? 'oui' : 'non'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p style="margin-top:14px;">Cette version est adaptée à un pilote local/offline-first. Une persistance centralisée nécessitera une phase backend ultérieure.</p>`);
+    openUserModal('Session locale Monitoring F7', `<div class="f7-user-info-grid"><strong>Mode</strong><span>offline-first / navigateur local</span><strong>Auth serveur</strong><span>${backendStatus.serverAuthEnabled ? 'préparée' : 'désactivée'}</span><strong>Backend</strong><span>${backendStatus.backendEnabled ? 'activé' : 'désactivé'}</span><strong>Stockage</strong><span>localStorage / IndexedDB</span><strong>Session active</strong><span>${session?.active ? 'oui' : 'non'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p class="f7-user-note">${escapeHtml(authStatus.message || 'Session locale navigateur conservée.')}</p>`);
   }
   function bindUserMenu(){
     const btn=$('userMenuButton'); const menu=$('userMenu');
@@ -541,13 +552,13 @@
       btn.addEventListener('click', ()=>{ const hidden=menu.hidden; menu.hidden=!hidden; btn.setAttribute('aria-expanded', String(hidden)); });
       document.addEventListener('click', e=>{ if(!btn.contains(e.target) && !menu.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
     }
-    $('userLogoutBtn')?.addEventListener('click', ()=>{ if(confirm('Déconnecter la session locale Monitoring F7 ?')){ window.MonitoringAuditLog?.logAction('logout-local', 'Déconnexion locale depuis le menu utilisateur.', {}); sessionStorage.removeItem('monitoring_sdis_auth_session_v1'); sessionStorage.removeItem('monitoring_f7_admin_lock_v1'); try{ localStorage.removeItem('monitoring_sdis_auth_session_backup_v1'); }catch{} location.reload(); } });
+    $('userLogoutBtn')?.addEventListener('click', ()=>{ if(confirm('Déconnecter la session locale Monitoring F7 ?')){ showOperationalMessage('Déconnexion locale en cours.', 'info'); window.MonitoringSessionManager?.logout?.({ message:'Déconnexion locale depuis le menu utilisateur.' }); } });
     document.querySelectorAll('[data-user-action]').forEach(item=>item.addEventListener('click', (event)=>{
       event.preventDefault();
       event.stopPropagation();
       const action=item.dataset.userAction;
       if(menu){ menu.hidden=true; btn?.setAttribute('aria-expanded','false'); }
-      if(action==='backup'){ $('f7FullBackupBtn')?.click(); return; }
+      if(action==='backup'){ showOperationalMessage('Export rapide de la sauvegarde locale.', 'info'); $('f7FullBackupBtn')?.click(); return; }
       if(action==='session'){ showSessionInformationPanel(); return; }
       if(action==='profile'){ showLocalProfilePanel(); return; }
       if(action==='settings'){ showLocalSettingsPanel(); return; }
@@ -641,11 +652,11 @@
       const summary=$('f7ImportSummary');
       if(!file){ if(summary){summary.className='f7-status-box error';summary.textContent='Sélectionne d’abord un fichier CSV ou JSON.';} return; }
       try{ renderPreview(await parseImportFile(file)); }
-      catch(err){ window.MonitoringAuditLog?.logError('import-error', 'Prévisualisation import locale impossible.', { error:err }); if(summary){summary.className='f7-status-box error';summary.textContent=`Import impossible : ${err.message}`;} }
+      catch(err){ window.MonitoringAuditLog?.logError('import-error', 'Prévisualisation import locale impossible.', { error:err }); const message=formatOperationalError('Import impossible.', err); if(summary){summary.className='f7-status-box error';summary.textContent=message;} showOperationalMessage(message, 'error'); }
     });
     $('f7CommitImportBtn')?.addEventListener('click', commitPreview);
     $('f7FullBackupBtn')?.addEventListener('click', ()=>{ window.MonitoringAuditLog?.logAction('export-json', 'Sauvegarde complète locale exportée.', {}); downloadJSON(`monitoring-f7-sauvegarde-complete-${new Date().toISOString().slice(0,10)}.json`, storageSnapshot()); });
-    $('f7RestoreFile')?.addEventListener('change', async e=>{ const f=e.target.files?.[0]; if(f) try{ await restoreBackup(f); }catch(err){ window.MonitoringAuditLog?.logError('rollback-import-error', 'Restauration sauvegarde complète impossible.', { error:err }); const st=$('f7BackupStatus'); if(st){ st.className='f7-status-box error'; st.textContent=err.message; } } });
+    $('f7RestoreFile')?.addEventListener('change', async e=>{ const f=e.target.files?.[0]; if(f) try{ await restoreBackup(f); showOperationalMessage('Sauvegarde restaurée. Recharge conseillée.', 'ok'); }catch(err){ window.MonitoringAuditLog?.logError('rollback-import-error', 'Restauration sauvegarde complète impossible.', { error:err }); const message=formatOperationalError('Restauration impossible.', err); const st=$('f7BackupStatus'); if(st){ st.className='f7-status-box error'; st.textContent=message; } showOperationalMessage(message, 'error'); } });
     $('f7AdminUnlockBtn')?.addEventListener('click', unlockAdmin);
     $('f7AdminSetCodeBtn')?.addEventListener('click', setAdminCode);
     document.querySelectorAll('[data-management-target]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -654,6 +665,8 @@
       document.querySelectorAll('[data-management-pane]').forEach(pane=>pane.classList.toggle('active', pane.dataset.managementPane===target));
       if(target==='effectifs') renderEffectifsLibrary();
       if(target==='diagnostic') renderDiagnosticLocal();
+      const label=btn.textContent?.trim() || 'Gestion';
+      showOperationalMessage(`Section ${label} ouverte.`, 'info');
     }));
     document.querySelectorAll('.tab-btn[data-tab-target="events"]').forEach(btn=>btn.addEventListener('click',()=>setTimeout(renderEventManagementTable, 0)));
     document.querySelectorAll('.tab-btn[data-tab-target="effectifs"]').forEach(btn=>btn.addEventListener('click',()=>setTimeout(renderEffectifsLibrary, 0)));
@@ -676,6 +689,6 @@
     bindDiagnosticEvents();
     renderAdminStats();
     renderDiagnosticLocal();
-    try{ setRecordsDensity(localStorage.getItem('monitoring_f7_records_density_v65') || localStorage.getItem('monitoring_f7_records_density_v64') || localStorage.getItem('monitoring_f7_records_density_v62') || localStorage.getItem('monitoring_f7_records_density_v61') || localStorage.getItem('monitoring_f7_records_density_v60') || localStorage.getItem('monitoring_f7_records_density_v59') || 'summary', true); }catch{ setRecordsDensity('summary', true); }
+    try{ setRecordsDensity(localStorage.getItem('monitoring_f7_records_density_v65_4') || localStorage.getItem('monitoring_f7_records_density_v65_3') || localStorage.getItem('monitoring_f7_records_density_v65_2') || localStorage.getItem('monitoring_f7_records_density_v65') || localStorage.getItem('monitoring_f7_records_density_v64') || localStorage.getItem('monitoring_f7_records_density_v62') || localStorage.getItem('monitoring_f7_records_density_v61') || localStorage.getItem('monitoring_f7_records_density_v60') || localStorage.getItem('monitoring_f7_records_density_v59') || 'summary', true); }catch{ setRecordsDensity('summary', true); }
   });
 })();

@@ -1,6 +1,13 @@
 const { response, verifyToken, bearerToken } = require('./_auth-utils');
+const postgresStore = require('./_data-store-postgres');
 
 const STORE_NAME = process.env.MONITORING_F7_BLOBS_STORE || 'monitoring-f7';
+
+function storageDriver(){
+  const driver = String(process.env.MONITORING_F7_STORAGE_DRIVER || '').trim().toLowerCase();
+  if(driver === 'postgres' || driver === 'postgresql') return 'postgres';
+  return 'blobs';
+}
 
 function getBlobsStore(){
   try{
@@ -28,6 +35,7 @@ function validateArrayPayload(body, key){
 }
 
 async function readCollection(collection){
+  if(storageDriver() === 'postgres') return postgresStore.readCollection(collection);
   const store = getBlobsStore();
   if(!store) return { ok:false, statusCode:503, error:'central_storage_not_configured' };
   const raw = await store.get(`${collection}.json`, { type:'json' });
@@ -35,6 +43,7 @@ async function readCollection(collection){
 }
 
 async function writeCollection(collection, items, schemaVersion){
+  if(storageDriver() === 'postgres') return postgresStore.writeCollection(collection, items, schemaVersion);
   const store = getBlobsStore();
   if(!store) return { ok:false, statusCode:503, error:'central_storage_not_configured' };
   const payload = {
@@ -47,10 +56,14 @@ async function writeCollection(collection, items, schemaVersion){
 }
 
 function storageUnavailablePayload(){
+  const driver = storageDriver();
   return {
     ok:false,
     error:'central_storage_not_configured',
-    message:'Stockage central optionnel non configuré. Installer/activer Netlify Blobs avant usage serveur.'
+    storageDriver: driver,
+    message: driver === 'postgres'
+      ? 'Stockage PostgreSQL optionnel non configuré. Renseigner DATABASE_URL et executer database/schema.sql avant usage serveur.'
+      : 'Stockage central optionnel non configuré. Installer/activer Netlify Blobs avant usage serveur.'
   };
 }
 

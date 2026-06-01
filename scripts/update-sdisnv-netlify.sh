@@ -43,7 +43,7 @@ echo "-- Etat avant commit"
 git status --short
 
 echo "-- Ajout fichiers applicatifs"
-git add .gitignore index.html README.md netlify.toml assets docs netlify scripts
+git add .gitignore index.html README.md package.json netlify.toml database assets docs netlify scripts
 
 if git diff --cached --quiet; then
   echo "Aucun changement a committer."

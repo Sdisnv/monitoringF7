@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="/Users/thierrygrunig/Projects/Monitoring F7"
 cd "$ROOT_DIR"
 
-VERSION="${1:-v65}"
+VERSION="${1:-v65.4}"
 ZIP_NAME="Monitoring_F7_${VERSION}.zip"
 OUT_DIR="releases"
 OUT_FILE="${OUT_DIR}/${ZIP_NAME}"
@@ -19,7 +19,7 @@ if [[ -e "$OUT_FILE" ]]; then
   exit 1
 fi
 
-zip -r "$OUT_FILE" index.html README.md netlify.toml assets docs netlify scripts >/dev/null
+zip -r "$OUT_FILE" index.html README.md package.json netlify.toml database assets docs netlify scripts >/dev/null
 
 echo "OK: archive creee: ${OUT_FILE}"
 ls -lh "$OUT_FILE"

@@ -1,1 +1,187 @@
-/* Responsive : media queries v47 conservées dans base.css. */
+/* Monitoring F7 v65.4 — responsive progressif smartphone/tablette.
+   Desktop conserve les règles historiques de base.css et monitoring-f7-evolution.css. */
+
+@media (max-width: 980px){
+  html,body{max-width:100%;overflow-x:hidden;}
+  .wrap,.reference-wrap,.top-tabs-wrap,.f7-cod-brief,.f7-projection-strip{padding-left:12px;padding-right:12px;}
+  .reference-top-row,.main-top-grid,.grid-2,.row,.row-3,.row-5,.row-6,.form-top-row,.form-counts-grid,.form-counts-grid-bottom,.filters-actions-grid{grid-template-columns:1fr!important;}
+  .reference-inline-header,.toolbar,.command-dashboard-heading,.command-panel-head{align-items:flex-start;}
+  .form-actions,.records-toolbar-actions,.command-dashboard-actions{width:100%;gap:8px;}
+  .form-actions button,.records-toolbar-actions .compact-btn,.command-dashboard-actions .compact-btn{flex:1 1 180px;justify-content:center;}
+  .command-dashboard-grid,.command-grid{grid-template-columns:1fr!important;min-width:0!important;}
+  .grid > *,.command-dashboard-grid > *,.command-grid > *,.executive-kpi-grid > *,.card,.table-wrap{min-width:0!important;}
+  .command-chart-card{min-height:280px;}
+  .command-chart-card canvas{min-height:240px;}
+}
+
+@media (max-width: 760px){
+  .app-header{position:sticky;top:0;z-index:20;}
+  .header-left{gap:10px;}
+  .header-logo{width:58px;max-width:58px;}
+  .header-text h1{font-size:16px;line-height:1.15;}
+  .sub{font-size:12px;}
+  .user-zone-button{min-height:48px;}
+  .top-tabs.monitoring-f7-tabs,.f7-management-nav{grid-template-columns:1fr!important;}
+  .tab-btn,.f7-management-tab{min-height:46px;text-align:left;justify-content:flex-start;}
+  .executive-kpi-grid,.executive-kpi-grid-v55,.command-kpi-grid,.objective-grid,.objective-grid-jsp,.target-visibility-grid{grid-template-columns:1fr!important;}
+  .executive-kpi-card,.command-kpi,.f7-cod-brief-cell{border-radius:8px;}
+  .executive-kpi-value{font-size:32px;}
+  .executive-kpi-caption{font-size:11px;letter-spacing:0;text-transform:none;}
+  .card,.reference-card{border-radius:8px;padding:12px;}
+  .section-title{font-size:16px;gap:8px;}
+  input,select,textarea,button{font-size:16px;}
+  button,.compact-btn{min-height:44px;}
+  .filters-actions-spacer{display:none;}
+  .table-wrap{max-width:100%;max-height:none;}
+  .auth-card{border-radius:14px;padding:18px;}
+}
+
+@media (max-width: 700px){
+  .records-table-wrap,
+  .domain-table-wrap:has(#overdueTable),
+  .command-domain-table-wrap,
+  .command-objective-table-wrap{
+    border:0;
+    border-radius:0;
+    background:transparent;
+    overflow:visible;
+    max-height:none!important;
+  }
+
+  #recordsTable,
+  #overdueTable,
+  #commandDomainTable,
+  .command-domain-table,
+  #objectiveTable{
+    min-width:0!important;
+    width:100%!important;
+    border-collapse:separate;
+    border-spacing:0;
+  }
+
+  #recordsTable colgroup,
+  #recordsTable thead,
+  #overdueTable thead,
+  #commandDomainTable thead,
+  #objectiveTable thead{display:none;}
+
+  #recordsTable tbody,
+  #overdueTable tbody,
+  #commandDomainTable tbody,
+  #objectiveTable tbody{display:grid;gap:10px;}
+
+  #recordsTable tbody tr,
+  #overdueTable tbody tr,
+  #commandDomainTable tbody tr,
+  #objectiveTable tbody tr{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:0;
+    padding:10px;
+    background:#fff;
+    border:1px solid rgba(15,23,42,.12);
+    border-radius:8px;
+    box-shadow:0 6px 16px rgba(15,23,42,.06);
+  }
+
+  #recordsTable tbody td,
+  #overdueTable tbody td,
+  #commandDomainTable tbody td,
+  #objectiveTable tbody td{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    padding:8px 2px;
+    border-bottom:1px solid rgba(15,23,42,.08);
+    text-align:right;
+    font-size:13px;
+    white-space:normal!important;
+    overflow-wrap:anywhere;
+  }
+
+  #recordsTable tbody td:last-child,
+  #overdueTable tbody td:last-child,
+  #commandDomainTable tbody td:last-child,
+  #objectiveTable tbody td:last-child{border-bottom:0;}
+
+  #recordsTable tbody td::before,
+  #overdueTable tbody td::before,
+  #commandDomainTable tbody td::before,
+  #objectiveTable tbody td::before{
+    content:"";
+    flex:0 0 112px;
+    text-align:left;
+    color:#64748b;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0;
+  }
+
+  #recordsTable tbody td:nth-child(1)::before{content:"Sélection";}
+  #recordsTable tbody td:nth-child(2)::before{content:"Date";}
+  #recordsTable tbody td:nth-child(3)::before{content:"Domaine";}
+  #recordsTable tbody td:nth-child(4)::before{content:"Public";}
+  #recordsTable tbody td:nth-child(5)::before{content:"Événement";}
+  #recordsTable tbody td:nth-child(6)::before{content:"Stat.Com";}
+  #recordsTable tbody td:nth-child(7)::before{content:"Statut";}
+  #recordsTable tbody td:nth-child(8)::before{content:"Compta";}
+  #recordsTable tbody td:nth-child(9)::before{content:"Cible";}
+  #recordsTable tbody td:nth-child(10)::before{content:"Prés. comptés";}
+  #recordsTable tbody td:nth-child(11)::before{content:"Prés. métier";}
+  #recordsTable tbody td:nth-child(12)::before{content:"Dispensés";}
+  #recordsTable tbody td:nth-child(13)::before{content:"Excusés";}
+  #recordsTable tbody td:nth-child(14)::before{content:"Absents";}
+  #recordsTable tbody td:nth-child(15)::before{content:"Taux";}
+  #recordsTable tbody td:nth-child(16)::before{content:"Infos";}
+  #recordsTable tbody td:nth-child(17)::before{content:"Action";}
+
+  #overdueTable tbody td:nth-child(1)::before{content:"Date";}
+  #overdueTable tbody td:nth-child(2)::before{content:"Domaine";}
+  #overdueTable tbody td:nth-child(3)::before{content:"Public";}
+  #overdueTable tbody td:nth-child(4)::before{content:"Événement";}
+  #overdueTable tbody td:nth-child(5)::before{content:"Stat.Com";}
+  #overdueTable tbody td:nth-child(6)::before{content:"Statut";}
+  #overdueTable tbody td:nth-child(7)::before{content:"Action";}
+
+  #commandDomainTable tbody td:nth-child(1)::before{content:"Domaine";}
+  #commandDomainTable tbody td:nth-child(2)::before{content:"Convoqués";}
+  #commandDomainTable tbody td:nth-child(3)::before{content:"Présents";}
+  #commandDomainTable tbody td:nth-child(4)::before{content:"Excusés";}
+  #commandDomainTable tbody td:nth-child(5)::before{content:"Absents";}
+  #commandDomainTable tbody td:nth-child(6)::before{content:"Taux";}
+  #commandDomainTable tbody td:nth-child(7)::before{content:"Lecture";}
+
+  #objectiveTable tbody td:nth-child(1)::before{content:"Indicateur";}
+  #objectiveTable tbody td:nth-child(2)::before{content:"Objectif";}
+  #objectiveTable tbody td:nth-child(3)::before{content:"Réel";}
+  #objectiveTable tbody td:nth-child(4)::before{content:"Écart";}
+  #objectiveTable tbody td:nth-child(5)::before{content:"Lecture";}
+
+  #recordsTable .icon-actions,
+  #overdueTable .f7-row-actions{flex-wrap:wrap;justify-content:flex-end;}
+  #recordsTable .icon-btn{width:38px;height:38px;min-width:38px;}
+  #recordsTable .records-selection-cell{justify-content:flex-end;}
+  #recordsTable .records-selection-checkbox{width:22px;height:22px;}
+}
+
+@media (max-width: 520px){
+  .wrap,.reference-wrap,.top-tabs-wrap,.f7-cod-brief,.f7-projection-strip{padding-left:10px;padding-right:10px;}
+  .reference-card,.card{box-shadow:none;}
+  .command-dashboard-lead,.footer-note,.small{line-height:1.35;}
+  .command-dashboard-badge{width:100%;text-align:center;border-radius:6px;}
+  .f7-message-bar{margin-left:10px;margin-right:10px;}
+  .user-menu{position:fixed;left:10px!important;right:10px!important;top:86px;width:auto!important;}
+  #recordsTable tbody td,
+  #overdueTable tbody td,
+  #commandDomainTable tbody td,
+  #objectiveTable tbody td{display:grid;grid-template-columns:104px minmax(0,1fr);text-align:left;}
+  #recordsTable tbody td::before,
+  #overdueTable tbody td::before,
+  #commandDomainTable tbody td::before,
+  #objectiveTable tbody td::before{flex:auto;}
+}

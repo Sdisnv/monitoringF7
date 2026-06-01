@@ -1,4 +1,4 @@
-# Monitoring F7 v65 — configuration Netlify statique avec auth et stockage serveur optionnels.
+# Monitoring F7 v65.4 — configuration Netlify statique avec auth et stockage serveur optionnels.
 # L'application reste locale par défaut ; les fonctions serveur ne sont utilisées que si le backend est activé.
 
 [build]
@@ -23,6 +23,16 @@
 [[redirects]]
   from = "/auth/logout"
   to = "/.netlify/functions/auth-logout"
+  status = 200
+
+[[redirects]]
+  from = "/auth/oidc/start"
+  to = "/.netlify/functions/auth-oidc-start"
+  status = 200
+
+[[redirects]]
+  from = "/auth/oidc/callback"
+  to = "/.netlify/functions/auth-oidc-callback"
   status = 200
 
 [[redirects]]

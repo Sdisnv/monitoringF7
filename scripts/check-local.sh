@@ -17,19 +17,28 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v65" index.html
-grep -q "version: 'v65'" assets/js/config.js
-grep -q "Version du fichier : v65" index.html
+grep -q "Monitoring F7 v65.4" index.html
+grep -q "version: 'v65.4'" assets/js/config.js
+grep -q "Version du fichier : v65.4" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
 grep -q 'to = "/.netlify/functions/auth-login"' netlify.toml
+grep -q 'to = "/.netlify/functions/auth-oidc-start"' netlify.toml
+grep -q 'to = "/.netlify/functions/auth-oidc-callback"' netlify.toml
 grep -q 'to = "/.netlify/functions/data-records"' netlify.toml
+
+echo "-- Controle backend optionnel"
+grep -q 'DATABASE_URL' netlify/functions/_postgres.js
+grep -q 'OKTA_ISSUER' netlify/functions/_oidc-utils.js
+grep -q 'monitoring_f7_records' database/schema.sql
+grep -q '"pg"' package.json
 
 echo "-- Controle defaults offline-first"
 grep -q "backendEnabled: false" assets/js/backend-config.js
 grep -q "syncEnabled: false" assets/js/backend-config.js
 grep -q "centralStorageEnabled: false" assets/js/backend-config.js
 grep -q "serverAuthEnabled: false" assets/js/backend-config.js
+grep -q "oidcEnabled: false" assets/js/backend-config.js
 
 echo "OK: controles locaux termines."
