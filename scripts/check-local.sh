@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.13" index.html
-grep -q "version: 'v66.13'" assets/js/config.js
-grep -q "Version du fichier : v66.13" index.html
+grep -q "Monitoring F7 v66.14" index.html
+grep -q "version: 'v66.14'" assets/js/config.js
+grep -q "Version du fichier : v66.14" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -49,6 +49,8 @@ grep -q "getDataStatus" assets/js/api-client.js
 grep -q "scheduleOnlineCollectionWrite" assets/js/app.js
 grep -q "updateAdminCode" assets/js/api-client.js
 grep -q "event.httpMethod === 'GET'" netlify/functions/auth-logout.js
+grep -q "DATABASE_URL || process.env.NETLIFY_DATABASE_URL" netlify/functions/_data-store.js
+grep -q "data:import" netlify/functions/_rbac.js
 if grep -q 'delete from' netlify/functions/_data-store-postgres.js; then
   echo "ERREUR: remplacement destructif detecte dans _data-store-postgres.js"
   exit 1

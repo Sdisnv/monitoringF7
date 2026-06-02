@@ -8,6 +8,7 @@ const STORE_NAME = process.env.MONITORING_F7_BLOBS_STORE || 'monitoring-f7';
 function storageDriver(){
   const driver = String(process.env.MONITORING_F7_STORAGE_DRIVER || '').trim().toLowerCase();
   if(driver === 'postgres' || driver === 'postgresql') return 'postgres';
+  if(process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL) return 'postgres';
   return 'blobs';
 }
 
@@ -111,5 +112,6 @@ async function handleCollection(event, options){
 }
 
 module.exports = {
-  handleCollection
+  handleCollection,
+  storageDriver
 };

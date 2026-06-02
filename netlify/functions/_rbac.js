@@ -7,7 +7,7 @@ const ROLE_PERMISSIONS = Object.freeze({
   'sdis-readonly': ['dashboard:read','data:export']
 });
 const KNOWN_ROLES = Object.freeze(Object.keys(ROLE_PERMISSIONS));
-const WRITE_PERMISSIONS = new Set(['events:create','events:update']);
+const WRITE_PERMISSIONS = new Set(['events:create','events:update','data:import','effectifs:manage','references:manage','settings:manage']);
 function normalizeRoles(roles){
   const input = Array.isArray(roles) ? roles : [];
   const valid = input.map(String).filter(role => ROLE_PERMISSIONS[role]);
