@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5.1 — hotfix frontend Okta/OIDC prioritaire, secours local conservé. */
+/* Monitoring F7 v65.5.2 — durcissement état global Okta/OIDC prioritaire, secours local conservé. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();
@@ -66,6 +66,26 @@
       oidcUser: user
     };
   }
+  function exposeMonitoringAuth(user, roles, permissions){
+    const authState = {
+      isAuthenticated: true,
+      mode: 'okta',
+      user: user || window.CurrentUser || null,
+      roles: Array.isArray(roles) ? roles.slice() : (Array.isArray(window.CurrentRoles) ? Array.from(window.CurrentRoles) : []),
+      permissions: Array.isArray(permissions) ? permissions.slice() : (Array.isArray(window.CurrentPermissions) ? Array.from(window.CurrentPermissions) : [])
+    };
+    try {
+      Object.defineProperty(window, 'MonitoringAuth', {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: authState
+      });
+    } catch {
+      window.MonitoringAuth = authState;
+    }
+    return authState;
+  }
   function hydrateCurrentUser(payload, profile){
     const user = payload?.user || profile || {};
     const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(user?.roles) ? user.roles : (Array.isArray(profile?.roles) ? profile.roles : []));
@@ -77,13 +97,26 @@
     }));
     window.CurrentRoles = Object.freeze(roles.slice());
     window.CurrentPermissions = Object.freeze(permissions.slice());
-    window.MonitoringAuth = Object.assign(window.MonitoringAuth || {}, {
-      isAuthenticated: true,
-      mode: 'okta',
-      user: window.CurrentUser,
-      roles: window.CurrentRoles,
-      permissions: window.CurrentPermissions
+    exposeMonitoringAuth(window.CurrentUser, roles, permissions);
+  }
+  function rehydrateMonitoringAuthFromSession(){
+    const profile = getProfile() || {};
+    const session = readSession() || {};
+    const source = profile.authSource || session.authSource || '';
+    if(source !== 'okta-oidc' && session.mode !== 'institutional-oidc' && window.CurrentUser?.authSource !== 'okta-oidc') return null;
+    const user = window.CurrentUser || Object.freeze({
+      nip: profile.nip || session.nip || '',
+      displayName: profile.displayName || profile.name || session.displayName || 'Utilisateur SDIS',
+      roles: Array.isArray(profile.roles) ? profile.roles : (Array.isArray(session.roles) ? session.roles : []),
+      permissions: Array.isArray(profile.permissions) ? profile.permissions : (Array.isArray(session.permissions) ? session.permissions : []),
+      authSource: 'okta-oidc'
     });
+    const roles = Array.isArray(window.CurrentRoles) && window.CurrentRoles.length ? Array.from(window.CurrentRoles) : (Array.isArray(profile.roles) ? profile.roles : (Array.isArray(session.roles) ? session.roles : []));
+    const permissions = Array.isArray(window.CurrentPermissions) ? Array.from(window.CurrentPermissions) : (Array.isArray(profile.permissions) ? profile.permissions : (Array.isArray(session.permissions) ? session.permissions : []));
+    if(!window.CurrentUser) window.CurrentUser = Object.freeze(Object.assign({}, user));
+    if(!window.CurrentRoles) window.CurrentRoles = Object.freeze(roles.slice());
+    if(!window.CurrentPermissions) window.CurrentPermissions = Object.freeze(permissions.slice());
+    return exposeMonitoringAuth(window.CurrentUser, roles, permissions);
   }
   function setMessage(text, type){
     const el = document.getElementById('authMessage');
@@ -118,6 +151,7 @@
     document.body?.classList.add('auth-active');
   }
   function isOktaAuthenticated(){
+    if(!(window.MonitoringAuth?.isAuthenticated === true && window.MonitoringAuth?.mode === 'okta')) rehydrateMonitoringAuthFromSession();
     return window.MonitoringAuth?.isAuthenticated === true && window.MonitoringAuth?.mode === 'okta';
   }
   function hideOverlay(){
@@ -135,6 +169,7 @@
     syncAuthUI(true);
     hideOverlay();
     const session = writeSession(profile);
+    rehydrateMonitoringAuthFromSession();
     window.MonitoringAuditLog?.logAction('login-okta-oidc', 'Session institutionnelle Okta validée.', { roles: window.CurrentRoles || [] });
     notifySessionChanged(session);
     return session;
@@ -260,10 +295,13 @@
     checkServerAuthentication,
     showInstitutionalLogin,
     unlockOidc,
-    hydrateCurrentUser
+    hydrateCurrentUser,
+    rehydrateMonitoringAuthFromSession
   });
 })();
 
+rehydrateMonitoringAuthFromSession();
+document.addEventListener('monitoring-f7-auth-session-changed', () => rehydrateMonitoringAuthFromSession());
 window.MonitoringAuthService = Object.freeze({
   getProfile(){ return window.MonitoringSessionManager?.getProfile?.() || null; },
   saveProfilePatch(patch){ return window.MonitoringSessionManager?.saveProfilePatch?.(patch) || null; },

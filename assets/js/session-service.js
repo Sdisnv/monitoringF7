@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5.1 — service session/profil, OIDC prioritaire avec secours local. */
+/* Monitoring F7 v65.5.2 — service session/profil, OIDC prioritaire avec secours local. */
 (function(){
   'use strict';
 
@@ -30,6 +30,7 @@
     const current = getProfile() || {};
     const next = Object.assign({}, current, patch || {}, { updatedAt:new Date().toISOString() });
     setProfile(next);
+    exposeMonitoringAuthFromProfile(next);
     return next;
   }
 
@@ -55,7 +56,39 @@
     if(!sessionRaw && parsed.active === true){
       try { sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(parsed)); } catch {}
     }
+    exposeMonitoringAuthFromProfile(getProfile(), parsed);
     return parsed;
+  }
+
+  function exposeMonitoringAuthFromProfile(profile, session){
+    const p = profile || getProfile() || {};
+    const s = session || null;
+    if(p.authSource !== 'okta-oidc' && s?.authSource !== 'okta-oidc' && s?.mode !== 'institutional-oidc') return null;
+    const roles = Array.isArray(p.roles) ? p.roles : (Array.isArray(s?.roles) ? s.roles : []);
+    const permissions = Array.isArray(p.permissions) ? p.permissions : (Array.isArray(s?.permissions) ? s.permissions : []);
+    const user = Object.freeze(Object.assign({}, window.CurrentUser || {}, {
+      nip: p.nip || s?.nip || window.CurrentUser?.nip || '',
+      displayName: p.displayName || p.name || s?.displayName || window.CurrentUser?.displayName || 'Utilisateur SDIS',
+      roles,
+      permissions,
+      authSource: 'okta-oidc'
+    }));
+    window.CurrentUser = user;
+    window.CurrentRoles = Object.freeze(roles.slice());
+    window.CurrentPermissions = Object.freeze(permissions.slice());
+    const authState = {
+      isAuthenticated: true,
+      mode: 'okta',
+      user,
+      roles: window.CurrentRoles,
+      permissions: window.CurrentPermissions
+    };
+    try {
+      Object.defineProperty(window, 'MonitoringAuth', { configurable:true, enumerable:true, writable:true, value:authState });
+    } catch {
+      window.MonitoringAuth = authState;
+    }
+    return authState;
   }
 
   function buildSessionPayload(profile){
@@ -70,7 +103,7 @@
       startedAt: new Date().toISOString(),
       referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
       source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: window.MonitoringConfig?.version || 'v65.5.1'
+      version: window.MonitoringConfig?.version || 'v65.5.2'
     };
   }
 
@@ -79,6 +112,7 @@
     const raw = JSON.stringify(sessionPayload);
     sessionStorage.setItem(AUTH_SESSION_KEY, raw);
     try { localStorage.setItem(AUTH_SESSION_BACKUP_KEY, raw); } catch {}
+    exposeMonitoringAuthFromProfile(profile || getProfile() || {}, sessionPayload);
     return sessionPayload;
   }
 
@@ -90,12 +124,15 @@
     const profile = getProfile() || {};
     window.MonitoringAuditLog?.logAction(profile.authSource === 'okta-oidc' ? 'logout-okta-oidc' : 'logout-local', options?.message || 'Déconnexion demandée.', {});
     clearSession({ lockUi:false });
+    try { delete window.MonitoringAuth; } catch { window.MonitoringAuth = undefined; }
     if(profile.authSource === 'okta-oidc' && options?.serverLogout !== false){
       location.href = '/.netlify/functions/auth-logout';
       return;
     }
     if(options?.reload !== false) location.reload();
   }
+
+  exposeMonitoringAuthFromProfile(getProfile(), readSession({ cleanup:false }));
 
   window.MonitoringSessionManager = Object.freeze({
     keys: Object.freeze({ AUTH_SESSION_KEY, AUTH_PROFILE_KEY, AUTH_SESSION_BACKUP_KEY, ADMIN_LOCK_KEY }),
