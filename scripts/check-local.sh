@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.20" index.html
-grep -q "version: 'v66.20'" assets/js/config.js
-grep -q "Version du fichier : v66.20" index.html
+grep -q "Monitoring F7 v66.21" index.html
+grep -q "version: 'v66.21'" assets/js/config.js
+grep -q "Version du fichier : v66.21" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -55,6 +55,9 @@ grep -q "data:import" netlify/functions/_rbac.js
 grep -q "sdis-chef-formation" netlify/functions/_rbac.js
 grep -q "sdis-chef-formation" assets/js/rbac.js
 grep -q "PersonnelSDIS" assets/js/admin-users.js
+grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin-users.js
+grep -q "applyPersonnelFromNip" assets/js/admin-users.js
+grep -q "getUserByIdentity" netlify/functions/_user-store.js
 grep -q "ensureCoreSchema" netlify/functions/_postgres.js
 grep -q "await db.ensureCoreSchema" netlify/functions/_data-store-postgres.js
 if grep -q 'delete from' netlify/functions/_data-store-postgres.js; then

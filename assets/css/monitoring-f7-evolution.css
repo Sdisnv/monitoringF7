@@ -17,6 +17,11 @@ input[type="checkbox"]{accent-color:var(--sdis-primary-red);}
 .f7-status-box.ok{border-color:#8fb3ff;background:#f5f8ff;}
 .f7-status-box.warn{border-color:#f2c879;background:#fff8e8;}
 .f7-status-box.error{border-color:#f1a0a8;background:#fff5f6;color:var(--sdis-primary-red);}
+.f7-users-table th:nth-child(1){min-width:180px;}
+.f7-users-table th:nth-child(2){min-width:150px;}
+.f7-users-table th:nth-child(3){min-width:220px;}
+.f7-rights-cell{white-space:normal;line-height:1.8;}
+.f7-role-badge{display:inline-flex;align-items:center;margin:2px 4px 2px 0;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:#f7f9fc;color:var(--text);font-weight:700;font-size:12px;white-space:nowrap;}
 .f7-message-bar{max-width:1540px;margin:10px auto 0;padding:10px 14px;border:1px solid rgba(15,23,42,.12);border-left:4px solid #64748b;border-radius:4px;background:#fff;color:#263445;font-size:13px;font-weight:700;box-sizing:border-box;}
 .f7-message-bar.ok{border-left-color:#1f5f3d;background:#f3faf6;color:#17452d;}
 .f7-message-bar.warn{border-left-color:#b26a00;background:#fff8e8;color:#6f4200;}

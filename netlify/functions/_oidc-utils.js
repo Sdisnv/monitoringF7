@@ -212,7 +212,8 @@ async function oidcCallbackResponse(event){
   const user = publicUserFromClaims(claims, roles);
   let effectiveUser = user;
   try {
-    const storedUser = await require('./_user-store').ensureUser(Object.assign({}, user, { provider:'oidc' }));
+    const userStore = require('./_user-store');
+    const storedUser = await userStore.getUserByIdentity([user.subject, user.email, user.nip]) || await userStore.ensureUser(Object.assign({}, user, { provider:'oidc' }));
     if(storedUser && storedUser.active === false) throw new Error('Utilisateur désactivé.');
     if(storedUser) effectiveUser = storedUser;
   } catch(error) {

@@ -20,6 +20,18 @@ async function ensureUser(user){
 }
 async function listUsers(){ await db.ensureCoreSchema(); const r = await db.query('select * from monitoring_f7_user_profiles order by active desc, display_name asc, email asc'); return (r.rows || []).map(publicUser); }
 async function getUser(subject){ await db.ensureCoreSchema(); const r = await db.query('select * from monitoring_f7_user_profiles where subject=$1', [String(subject || '').toLowerCase()]); return r.rows[0] ? publicUser(r.rows[0]) : null; }
+async function getUserByIdentity(values){
+  await db.ensureCoreSchema();
+  const identities = Array.from(new Set((Array.isArray(values) ? values : [values]).map(value => String(value || '').trim().toLowerCase()).filter(Boolean)));
+  if(!identities.length) return null;
+  const r = await db.query(`select * from monitoring_f7_user_profiles
+    where lower(subject) = any($1::text[])
+       or lower(coalesce(email,'')) = any($1::text[])
+       or lower(coalesce(nip,'')) = any($1::text[])
+    order by active desc, updated_at desc
+    limit 1`, [identities]);
+  return r.rows[0] ? publicUser(r.rows[0]) : null;
+}
 async function upsertUser(input){
   await db.ensureCoreSchema();
   const subject = subjectFor(input); if(!subject) throw new Error('subject_required');
@@ -31,4 +43,4 @@ async function upsertUser(input){
     returning *`, [subject, input.email || null, input.displayName || null, input.nip || null, roles, permissions, input.active !== false]);
   return publicUser(r.rows[0]);
 }
-module.exports = { ensureUser, listUsers, getUser, upsertUser, publicUser };
+module.exports = { ensureUser, listUsers, getUser, getUserByIdentity, upsertUser, publicUser };

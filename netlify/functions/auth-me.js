@@ -12,7 +12,7 @@ exports.handler = async function(event){
     let safeUser = localUser ? publicUser(localUser) : null;
     if(!safeUser){
       try{
-        const stored = await require('./_user-store').getUser(claims.sub);
+        const stored = await require('./_user-store').getUserByIdentity([claims.sub, claims.email, claims.nip]);
         if(stored && stored.active === false) return response(403, { ok:false, error:'user_disabled' });
         if(stored) safeUser = stored;
       }catch(error){ /* base indisponible: l'OIDC signé reste utilisable */ }
