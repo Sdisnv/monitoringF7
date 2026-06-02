@@ -27,6 +27,8 @@
     const STORAGE_KEY_REFERENCES = "monitoring_exercices_sdis_references_v1";
     const STORAGE_KEY_IMPORTED_EVENTS = "monitoring_exercices_sdis_imported_events_v1";
     const STORAGE_KEY_OBJECTIVES = "monitoring_exercices_sdis_objectifs_v1";
+    const PERSONNEL_SDIS_CSV_URL = "assets/data/PersonnelSDIS.csv";
+    const PERSONNEL_SDIS_STORAGE_KEY = "monitoring_f7_personnel_sdis_csv_v1";
 
     const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || "v65";
     const MAX_IMPORT_JSON_BYTES = 8 * 1024 * 1024;
@@ -38,6 +40,7 @@
       objectives: { storageKey: STORAGE_KEY_OBJECTIVES, list: "listObjectives", replace: "replaceObjectives", responseKey: "objectives", array: false }
     });
     const onlineWriteTimers = Object.create(null);
+    let personnelSdisDirectory = [];
 
     function centralStorageReady() {
       const cfg = window.MonitoringBackendConfig?.current || {};
@@ -59,6 +62,84 @@
         if (window.MonitoringStorage?.setJSON) window.MonitoringStorage.setJSON(key, value);
         else localStorage.setItem(key, JSON.stringify(value));
       } catch {}
+    }
+
+    function normalizePersonnelHeader(value) {
+      return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+    }
+
+    function normalizePersonnelNip(value) {
+      return String(value || "").replace(/\D+/g, "").trim();
+    }
+
+    function parsePersonnelCsvLine(line, sep) {
+      const out = [];
+      let cur = "";
+      let quoted = false;
+      for (let i = 0; i < String(line).length; i++) {
+        const ch = line[i];
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; continue; }
+        if (ch === '"') { quoted = !quoted; continue; }
+        if (ch === sep && !quoted) { out.push(cur.trim()); cur = ""; continue; }
+        cur += ch;
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    function parsePersonnelSdisCsv(text) {
+      const lines = String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/).filter(line => line.trim());
+      if (lines.length < 2) return [];
+      const sep = (lines[0].match(/;/g) || []).length >= (lines[0].match(/,/g) || []).length ? ";" : ",";
+      const headers = parsePersonnelCsvLine(lines[0], sep).map(normalizePersonnelHeader);
+      const indexOf = names => headers.findIndex(header => names.includes(header));
+      const idx = {
+        nip: indexOf(["nip", "eca", "identifiant", "matricule"]),
+        grade: indexOf(["grade", "rang"]),
+        nom: indexOf(["nom", "name"]),
+        prenom: indexOf(["prenom"]),
+        oi: indexOf(["oi", "organe", "organisation", "affectation"])
+      };
+      return lines.slice(1).map(line => {
+        const values = parsePersonnelCsvLine(line, sep);
+        const nip = idx.nip >= 0 ? values[idx.nip] : "";
+        const grade = idx.grade >= 0 ? values[idx.grade] : "";
+        const nom = idx.nom >= 0 ? values[idx.nom] : "";
+        const prenom = idx.prenom >= 0 ? values[idx.prenom] : "";
+        const oi = idx.oi >= 0 ? values[idx.oi] : "";
+        const displayName = [grade, prenom, nom].map(v => String(v || "").trim()).filter(Boolean).join(" ") || nip;
+        return { nip, grade, nom, prenom, oi, displayName };
+      }).filter(person => normalizePersonnelNip(person.nip) && person.displayName);
+    }
+
+    async function loadPersonnelSdisDirectory() {
+      try {
+        const saved = localStorage.getItem(PERSONNEL_SDIS_STORAGE_KEY);
+        if (saved) {
+          personnelSdisDirectory = parsePersonnelSdisCsv(saved);
+          return personnelSdisDirectory;
+        }
+      } catch {}
+      try {
+        const response = await fetch(PERSONNEL_SDIS_CSV_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        personnelSdisDirectory = parsePersonnelSdisCsv(await response.text());
+      } catch {
+        personnelSdisDirectory = [];
+      }
+      return personnelSdisDirectory;
+    }
+
+    function findPersonnelSdisByNip(nip) {
+      const normalized = normalizePersonnelNip(nip);
+      if (!normalized) return null;
+      return personnelSdisDirectory.find(person => normalizePersonnelNip(person.nip) === normalized) || null;
+    }
+
+    function connectedUserDisplayName() {
+      const user = window.CurrentUser || window.MonitoringAuth?.user || {};
+      const profile = window.MonitoringSessionManager?.getProfile?.() || {};
+      return String(user.displayName || user.name || profile.displayName || profile.name || user.email || "").trim();
     }
 
     function mergeServerAndLocalArrays(serverItems, localItems) {
@@ -498,8 +579,12 @@ const DEFAULT_REFERENCE_PERIOD = {
   },
 
   suivi: {
+    updatedByNip: "",
     updatedBy: "",
+    generatedByNip: "",
     generatedBy: "",
+    updateScope: "all",
+    updateDomains: ["foba", "pr", "auto", "dps", "dap", "jsp"],
     commentaire: ""
   }
 };
@@ -541,8 +626,12 @@ function createEmptyReferencePeriod() {
     },
 
     suivi: {
+      updatedByNip: "",
       updatedBy: "",
+      generatedByNip: "",
       generatedBy: "",
+      updateScope: "all",
+      updateDomains: ["foba", "pr", "auto", "dps", "dap", "jsp"],
       commentaire: ""
     }
   };
@@ -587,8 +676,12 @@ function normalizeReferencePeriod(raw) {
     },
 
     suivi: {
+      updatedByNip: String(safe.suivi?.updatedByNip || "").trim(),
       updatedBy: String(safe.suivi?.updatedBy || "").trim(),
+      generatedByNip: String(safe.suivi?.generatedByNip || "").trim(),
       generatedBy: String(safe.suivi?.generatedBy || "").trim(),
+      updateScope: safe.suivi?.updateScope === "domains" ? "domains" : "all",
+      updateDomains: Array.isArray(safe.suivi?.updateDomains) && safe.suivi.updateDomains.length ? safe.suivi.updateDomains.map(String) : ["foba", "pr", "auto", "dps", "dap", "jsp"],
       commentaire: String(safe.suivi?.commentaire || "").trim()
     }
   };
@@ -982,8 +1075,11 @@ function getReferencePeriodGlobals(period) {
       effectifJspCadets: document.getElementById("effectifJspCadets"),
 
       effectifUpdatedAt: document.getElementById("effectifUpdatedAt"),
+      effectifUpdatedByNip: document.getElementById("effectifUpdatedByNip"),
       effectifUpdatedBy: document.getElementById("effectifUpdatedBy"),
       effectifGeneratedBy: document.getElementById("effectifGeneratedBy"),
+      effectifUpdateScope: document.getElementById("effectifUpdateScope"),
+      effectifUpdateDomains: document.getElementById("effectifUpdateDomains"),
       effectifCommentaire: document.getElementById("effectifCommentaire"),
 
       groupExerciseBlock: document.getElementById("groupExerciseBlock"),
@@ -2840,6 +2936,79 @@ function openExercisePreview(record) {
       }
     }
 
+    const REFERENCE_UPDATE_DOMAINS = ["foba", "pr", "auto", "dps", "dap", "jsp"];
+    const REFERENCE_DOMAIN_INPUT_IDS = {
+      foba: ["effectifFoba1", "effectifFoba2", "effectifFoba3"],
+      pr: ["effectifPrG1", "effectifPrC1", "effectifPrB1", "effectifPrB2"],
+      auto: ["effectifAutoVl", "effectifAutoPl"],
+      dps: ["effectifDpsG1", "effectifDpsC1", "effectifDpsB1", "effectifDpsB2"],
+      dap: ["effectifDapY1", "effectifDapY2", "effectifDapY3", "effectifDapY4"],
+      jsp: ["effectifJspG1", "effectifJspC1", "effectifJspB1", "effectifJspCadets"]
+    };
+
+    function getSelectedReferenceUpdateDomains() {
+      const checked = Array.from(els.effectifUpdateDomains?.querySelectorAll("input[data-reference-domain]:checked") || [])
+        .map(input => String(input.dataset.referenceDomain || "").trim())
+        .filter(domain => REFERENCE_UPDATE_DOMAINS.includes(domain));
+      return checked.length ? checked : [...REFERENCE_UPDATE_DOMAINS];
+    }
+
+    function setReferenceUpdateDomainsSelection(domains) {
+      const selected = new Set(
+        (Array.isArray(domains) && domains.length ? domains : REFERENCE_UPDATE_DOMAINS)
+          .map(String)
+          .filter(domain => REFERENCE_UPDATE_DOMAINS.includes(domain))
+      );
+      Array.from(els.effectifUpdateDomains?.querySelectorAll("input[data-reference-domain]") || []).forEach(input => {
+        input.checked = selected.has(input.dataset.referenceDomain);
+      });
+    }
+
+    function setReferenceDomainInputsEnabled() {
+      const scoped = els.effectifUpdateScope?.value === "domains";
+      const selected = new Set(getSelectedReferenceUpdateDomains());
+
+      Object.entries(REFERENCE_DOMAIN_INPUT_IDS).forEach(([domain, ids]) => {
+        const enabled = !scoped || selected.has(domain);
+        ids.forEach(id => {
+          if (!els[id]) return;
+          els[id].disabled = !enabled;
+          els[id].closest(".compact-field")?.classList.toggle("reference-field-disabled", !enabled);
+        });
+      });
+    }
+
+    function applyResponsibleFromNip() {
+      const person = findPersonnelSdisByNip(els.effectifUpdatedByNip?.value || "");
+      if (!person || !els.effectifUpdatedBy) return false;
+      els.effectifUpdatedBy.value = person.displayName;
+      return true;
+    }
+
+    function escapeReferenceAttribute(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function populatePersonnelSdisNipOptions() {
+      const list = document.getElementById("personnelSdisNipOptions");
+      if (!list) return;
+      list.innerHTML = personnelSdisDirectory
+        .map(person => `<option value="${escapeReferenceAttribute(person.nip)}" label="${escapeReferenceAttribute(person.displayName)}"></option>`)
+        .join("");
+    }
+
+    function autofillGeneratedBy(force = false) {
+      if (!els.effectifGeneratedBy) return;
+      const current = String(els.effectifGeneratedBy.value || "").trim();
+      if (current && !force) return;
+      const displayName = connectedUserDisplayName();
+      if (displayName) els.effectifGeneratedBy.value = displayName;
+    }
+
     function getReferenceDataFromForm() {
       return {
         dateEffective: parseFlexibleDateToIso(els.effectifUpdatedAt?.value || ""),
@@ -2876,8 +3045,12 @@ function openExercisePreview(record) {
         },
 
         suivi: {
+          updatedByNip: (els.effectifUpdatedByNip?.value || "").trim(),
           updatedBy: (els.effectifUpdatedBy?.value || "").trim(),
+          generatedByNip: "",
           generatedBy: (els.effectifGeneratedBy?.value || "").trim(),
+          updateScope: els.effectifUpdateScope?.value === "domains" ? "domains" : "all",
+          updateDomains: getSelectedReferenceUpdateDomains(),
           commentaire: (els.effectifCommentaire?.value || "").trim()
         }
       };
@@ -2920,8 +3093,13 @@ function openExercisePreview(record) {
       els.effectifJspCadets.value = toInt(safe.organes?.jspCadets);
 
       els.effectifUpdatedAt.value = fmtDateInputValue(safe.dateEffective || "");
+      if (els.effectifUpdatedByNip) els.effectifUpdatedByNip.value = safe.suivi?.updatedByNip || "";
       els.effectifUpdatedBy.value = safe.suivi?.updatedBy || "";
       els.effectifGeneratedBy.value = safe.suivi?.generatedBy || "";
+      if (els.effectifUpdateScope) els.effectifUpdateScope.value = safe.suivi?.updateScope === "domains" ? "domains" : "all";
+      setReferenceUpdateDomainsSelection(safe.suivi?.updateDomains);
+      setReferenceDomainInputsEnabled();
+      autofillGeneratedBy();
       els.effectifCommentaire.value = safe.suivi?.commentaire || "";
     }
 
@@ -3027,8 +3205,12 @@ function openExercisePreview(record) {
           jspCadets: toInt(legacy.effectifJspCadets)
         },
         suivi: {
+          updatedByNip: "",
           updatedBy: legacy.effectifUpdatedBy || "",
-          generatedBy: "",
+          generatedByNip: "",
+          generatedBy: connectedUserDisplayName(),
+          updateScope: "all",
+          updateDomains: [...REFERENCE_UPDATE_DOMAINS],
           commentaire: legacy.effectifCommentaire || "Migration ancienne structure"
         }
       });
@@ -3067,6 +3249,10 @@ function openExercisePreview(record) {
     }
 
     function initializeReferenceData() {
+      loadPersonnelSdisDirectory().then(() => {
+        populatePersonnelSdisNipOptions();
+        if (applyResponsibleFromNip()) refreshReferenceData();
+      });
       migrateLegacyReferenceDataIfNeeded();
       ensureAtLeastOneReferencePeriod();
       populateReferencePeriodOptions();
@@ -3077,6 +3263,7 @@ function openExercisePreview(record) {
       }
 
       applyReferenceDataToForm(selected);
+      autofillGeneratedBy();
       calculateReferenceGlobals();
     }
 
@@ -3089,8 +3276,12 @@ function openExercisePreview(record) {
         domaines: source?.domaines || {},
         organes: source?.organes || {},
         suivi: {
+          updatedByNip: source?.suivi?.updatedByNip || "",
           updatedBy: source?.suivi?.updatedBy || "",
-          generatedBy: source?.suivi?.generatedBy || "",
+          generatedByNip: "",
+          generatedBy: connectedUserDisplayName() || source?.suivi?.generatedBy || "",
+          updateScope: source?.suivi?.updateScope || "domains",
+          updateDomains: source?.suivi?.updateDomains || [...REFERENCE_UPDATE_DOMAINS],
           commentaire: ""
         }
       });
@@ -3111,8 +3302,12 @@ function openExercisePreview(record) {
       const duplicated = duplicateReferencePeriod(selected.id, {
         dateEffective: "",
         suivi: {
+          updatedByNip: selected.suivi?.updatedByNip || "",
           updatedBy: selected.suivi?.updatedBy || "",
-          generatedBy: selected.suivi?.generatedBy || "",
+          generatedByNip: "",
+          generatedBy: connectedUserDisplayName() || selected.suivi?.generatedBy || "",
+          updateScope: selected.suivi?.updateScope || "domains",
+          updateDomains: selected.suivi?.updateDomains || [...REFERENCE_UPDATE_DOMAINS],
           commentaire: selected.suivi?.commentaire || ""
         }
       });
@@ -3175,15 +3370,34 @@ function openExercisePreview(record) {
         "effectifJspB1",
         "effectifJspCadets",
         "effectifUpdatedAt",
+        "effectifUpdatedByNip",
         "effectifUpdatedBy",
         "effectifGeneratedBy",
+        "effectifUpdateScope",
         "effectifCommentaire"
       ];
 
       ids.forEach(id => {
         if (!els[id]) return;
-        els[id].addEventListener("input", refreshReferenceData);
-        els[id].addEventListener("change", refreshReferenceData);
+        const handler = () => {
+          if (id === "effectifUpdatedByNip") applyResponsibleFromNip();
+          if (id === "effectifUpdateScope") setReferenceDomainInputsEnabled();
+          refreshReferenceData();
+        };
+        els[id].addEventListener("input", handler);
+        els[id].addEventListener("change", handler);
+      });
+
+      Array.from(els.effectifUpdateDomains?.querySelectorAll("input[data-reference-domain]") || []).forEach(input => {
+        input.addEventListener("change", () => {
+          setReferenceDomainInputsEnabled();
+          refreshReferenceData();
+        });
+      });
+
+      document.addEventListener("monitoring-f7-auth-session-changed", () => {
+        autofillGeneratedBy();
+        refreshReferenceData();
       });
 
       if (els.referencePeriodSelect) {
@@ -5842,7 +6056,15 @@ function getDisplayRows() {
                   dapY1: toInt(legacy.organes?.dapY1 ?? legacy.effectifDapY1), dapY2: toInt(legacy.organes?.dapY2 ?? legacy.effectifDapY2), dapY3: toInt(legacy.organes?.dapY3 ?? legacy.effectifDapY3), dapY4: toInt(legacy.organes?.dapY4 ?? legacy.effectifDapY4),
                   jspG1: toInt(legacy.organes?.jspG1 ?? legacy.effectifJspG1), jspC1: toInt(legacy.organes?.jspC1 ?? legacy.effectifJspC1), jspB1: toInt(legacy.organes?.jspB1 ?? legacy.effectifJspB1), jspCadets: toInt(legacy.organes?.jspCadets ?? legacy.effectifJspCadets)
                 },
-                suivi: { updatedBy: legacy.suivi?.updatedBy || legacy.effectifUpdatedBy || "", generatedBy: legacy.suivi?.generatedBy || "", commentaire: legacy.suivi?.commentaire || legacy.effectifCommentaire || "" }
+                suivi: {
+                  updatedByNip: legacy.suivi?.updatedByNip || "",
+                  updatedBy: legacy.suivi?.updatedBy || legacy.effectifUpdatedBy || "",
+                  generatedByNip: legacy.suivi?.generatedByNip || "",
+                  generatedBy: legacy.suivi?.generatedBy || connectedUserDisplayName(),
+                  updateScope: legacy.suivi?.updateScope === "domains" ? "domains" : "all",
+                  updateDomains: Array.isArray(legacy.suivi?.updateDomains) ? legacy.suivi.updateDomains : [...REFERENCE_UPDATE_DOMAINS],
+                  commentaire: legacy.suivi?.commentaire || legacy.effectifCommentaire || ""
+                }
               })
             ]);
             selectedReferencePeriodId = referencePeriods[0]?.id || null;

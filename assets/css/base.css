@@ -588,7 +588,7 @@
       display:grid;
       grid-template-columns:0.9fr 1.1fr 1.9fr;
       gap:12px;
-      align-items:start;
+      align-items:stretch;
     }
 
     .reference-bottom-row{
@@ -601,6 +601,13 @@
       border:1px solid var(--line);
       border-radius:12px;
       background:#fbfcfd;
+      box-sizing:border-box;
+      height:100%;
+    }
+
+    .reference-inline-block{
+      display:flex;
+      flex-direction:column;
     }
 
     .reference-inline-block-wide{
@@ -753,9 +760,70 @@
     }
 
     .reference-followup-grid-compact{
-      grid-template-columns:1.25fr 160px 0.9fr 0.9fr;
+      grid-template-columns:minmax(220px,1.1fr) 150px 130px minmax(220px,0.9fr) minmax(220px,0.9fr);
       gap:10px;
       align-items:end;
+    }
+
+    .reference-scope-row{
+      display:grid;
+      grid-template-columns:minmax(240px,0.7fr) minmax(0,1.5fr);
+      gap:10px;
+      align-items:end;
+      margin-top:10px;
+    }
+
+    .compact-field-scope select{
+      height:34px;
+      padding:6px 8px;
+      font-size:13px;
+    }
+
+    .reference-domain-scope{
+      min-width:0;
+      min-height:34px;
+      margin:0;
+      padding:6px 8px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px 14px;
+    }
+
+    .reference-domain-scope legend{
+      padding:0 6px;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .reference-domain-scope label{
+      margin:0;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:var(--text);
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .reference-domain-scope input{
+      width:16px;
+      height:16px;
+      accent-color:var(--accent);
+    }
+
+    .reference-field-disabled{
+      opacity:.42;
+    }
+
+    .compact-field input:disabled{
+      background:#f3f4f6;
+      cursor:not-allowed;
     }
 
     .reference-followup-actions{
@@ -824,6 +892,10 @@
       }
 
       .reference-followup-grid-compact{
+        grid-template-columns:1fr;
+      }
+
+      .reference-scope-row{
         grid-template-columns:1fr;
       }
 

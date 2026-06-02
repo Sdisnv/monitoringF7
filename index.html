@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Monitoring F7 v66.22</title>
+<title>Monitoring F7 v66.23</title>
 <link href="assets/css/base.css" rel="stylesheet"/>
 <link href="assets/css/layout.css" rel="stylesheet"/>
 <link href="assets/css/components.css" rel="stylesheet"/>
@@ -28,7 +28,7 @@
 <img alt="Logo SDIS Nord vaudois" class="header-logo" src="assets/img/LogoSDISblanc.png"/>
 <div class="header-text">
 <h1>SDIS régional du Nord vaudois</h1>
-<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v66.22</span></div>
+<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v66.23</span></div>
 </div>
 </div>
 <div class="user-zone" id="userZone">
@@ -248,6 +248,11 @@
 <label>Effectif au</label>
 <input id="effectifUpdatedAt" inputmode="numeric" maxlength="10" placeholder="JJ.MM.AAAA" type="text"/>
 </div>
+<div class="compact-field compact-field-responsable-nip">
+<label>Responsable NIP</label>
+<input id="effectifUpdatedByNip" inputmode="numeric" list="personnelSdisNipOptions" placeholder="48364" type="text"/>
+<datalist id="personnelSdisNipOptions"></datalist>
+</div>
 <div class="compact-field compact-field-responsable">
 <label>Responsable</label>
 <input id="effectifUpdatedBy" placeholder="Grade, Prénom et Nom" type="text"/>
@@ -256,6 +261,24 @@
 <label>Généré par</label>
 <input id="effectifGeneratedBy" placeholder="Nom générateur (Grade, Prénom et Nom)" type="text"/>
 </div>
+</div>
+<div class="reference-scope-row">
+<div class="compact-field compact-field-scope">
+<label>Effectif concerné par la mise à jour</label>
+<select id="effectifUpdateScope">
+<option value="all">Tout l’effectif</option>
+<option value="domains">Uniquement les domaines cochés</option>
+</select>
+</div>
+<fieldset class="reference-domain-scope" id="effectifUpdateDomains">
+<legend>Domaines concernés</legend>
+<label><input checked="" data-reference-domain="foba" type="checkbox"/> FOBA</label>
+<label><input checked="" data-reference-domain="pr" type="checkbox"/> PR / PAPR</label>
+<label><input checked="" data-reference-domain="auto" type="checkbox"/> AUTO</label>
+<label><input checked="" data-reference-domain="dps" type="checkbox"/> DPS</label>
+<label><input checked="" data-reference-domain="dap" type="checkbox"/> DAP</label>
+<label><input checked="" data-reference-domain="jsp" type="checkbox"/> JSP</label>
+</fieldset>
 </div>
 <div class="reference-followup-actions">
 <div class="compact-field compact-field-commentaire">
@@ -1837,7 +1860,7 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <tr><td><code>getSeriesAnalysis(seriesKey)</code></td><td>Analyse complète d'une série multi-sessions avec taux corrigés sur cible nette cumulée (v47)</td></tr>
 </tbody>
 </table>
-<div class="footer-note" style="margin-top:12px;">Version du fichier : v66.22 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
+<div class="footer-note" style="margin-top:12px;">Version du fichier : v66.23 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
 </div>
 </div>
 </div>

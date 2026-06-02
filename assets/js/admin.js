@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.22 — administration utilisateurs et audit trail. */
+/* Monitoring F7 v66.23 — administration utilisateurs et audit trail. */
 (function(){
   'use strict';
 
