@@ -108,7 +108,7 @@ async function ensureCoreSchema(){
   await query(`create index if not exists idx_monitoring_f7_reference_periods_updated_at on monitoring_f7_reference_periods (updated_at desc)`);
   await query(`create index if not exists idx_monitoring_f7_objectives_updated_at on monitoring_f7_objectives (updated_at desc)`);
   await query(`create index if not exists idx_monitoring_f7_audit_entries_created_at on monitoring_f7_audit_entries (created_at desc)`);
-  await query(`insert into monitoring_f7_schema_migrations(version) values ('v66.21-auto-core-schema') on conflict (version) do nothing`);
+  await query(`insert into monitoring_f7_schema_migrations(version) values ('v66.22-auto-core-schema') on conflict (version) do nothing`);
   schemaReady = true;
   return true;
 }

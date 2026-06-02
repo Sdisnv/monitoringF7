@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.21" index.html
-grep -q "version: 'v66.21'" assets/js/config.js
-grep -q "Version du fichier : v66.21" index.html
+grep -q "Monitoring F7 v66.22" index.html
+grep -q "version: 'v66.22'" assets/js/config.js
+grep -q "Version du fichier : v66.22" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -57,6 +57,13 @@ grep -q "sdis-chef-formation" assets/js/rbac.js
 grep -q "PersonnelSDIS" assets/js/admin-users.js
 grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin-users.js
 grep -q "applyPersonnelFromNip" assets/js/admin-users.js
+grep -q "NIP / identifiant" assets/js/admin.js
+grep -q "f7-role-choice" assets/js/admin.js
+grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin.js
+if grep -q "E-mail / sujet Okta" assets/js/admin.js; then
+  echo "ERREUR: ancien formulaire utilisateurs detecte dans admin.js"
+  exit 1
+fi
 grep -q "getUserByIdentity" netlify/functions/_user-store.js
 grep -q "ensureCoreSchema" netlify/functions/_postgres.js
 grep -q "await db.ensureCoreSchema" netlify/functions/_data-store-postgres.js
