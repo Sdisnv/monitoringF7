@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.15 — couche d'évolution non destructive.
+/* Monitoring F7 v66.16 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.15';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v66.16';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',

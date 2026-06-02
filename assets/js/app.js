@@ -111,6 +111,10 @@
 
     async function publishLocalCacheToServer() {
       if (!centralStorageReady()) return { ok:false, reason:"central_storage_not_ready", published:[] };
+      const knownServer = readLocalJSON("monitoring_f7_server_status_v1", null);
+      const lastPublish = readLocalJSON("monitoring_f7_online_publish_status_v1", null);
+      const serverHasData = knownServer && knownServer.collections && Object.values(knownServer.collections).some(value => Number(value || 0) > 0);
+      if (serverHasData && lastPublish?.ok === true) return Object.assign({}, lastPublish, { skipped:true, reason:"server_already_seeded" });
       const status = { ok:true, published:[], failed:[], checkedAt:new Date().toISOString() };
       for (const [name, config] of Object.entries(ONLINE_COLLECTIONS)) {
         const localValue = readLocalJSON(config.storageKey, config.array ? [] : {});
