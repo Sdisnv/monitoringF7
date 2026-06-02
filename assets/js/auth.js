@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5.3 — durcissement état global Okta/OIDC prioritaire, secours local conservé. */
+/* Monitoring F7 v65.5.4 — hotfix démarrage Okta Safari privé + état global robuste. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();
@@ -193,6 +193,20 @@
       return false;
     }
   }
+  function startOktaLogin(){
+    const target = '/.netlify/functions/auth-oidc-start';
+    try{
+      window.location.assign(target);
+    }catch{
+      window.location.href = target;
+    }
+  }
+  document.addEventListener('click', function(event){
+    const trigger = event.target?.closest?.('#oktaLoginButton, [data-okta-login]');
+    if(!trigger) return;
+    event.preventDefault();
+    startOktaLogin();
+  }, true);
   function showInstitutionalLogin(){
     if(isOktaAuthenticated()){ removeAuthLocks(); return; }
     syncAuthUI(false);
@@ -202,10 +216,10 @@
       <div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Connexion institutionnelle requise</h2></div>
       <p class="auth-note">Monitoring F7 utilise désormais l’authentification institutionnelle Okta/OIDC. La connexion locale NIP reste uniquement un secours technique.</p>
       <div class="auth-message" id="authMessage">Session Okta non détectée ou expirée.</div>
-      <button class="primary auth-submit" type="button" id="oktaLoginButton">Connexion Okta</button>
+      <a class="primary auth-submit" id="oktaLoginButton" data-okta-login="true" href="/.netlify/functions/auth-oidc-start" role="button">Connexion Okta</a>
       <button class="secondary auth-submit" type="button" id="localFallbackButton">Secours local technique</button>`;
     const oktaBtn = document.getElementById('oktaLoginButton');
-    if(oktaBtn) oktaBtn.addEventListener('click', () => { window.location.href = '/.netlify/functions/auth-oidc-start'; });
+    if(oktaBtn) oktaBtn.addEventListener('click', (event) => { event.preventDefault(); startOktaLogin(); });
     const fallbackBtn = document.getElementById('localFallbackButton');
     if(fallbackBtn) fallbackBtn.addEventListener('click', restoreLocalFallbackForm);
   }
@@ -300,8 +314,8 @@
   });
 })();
 
-rehydrateMonitoringAuthFromSession();
-document.addEventListener('monitoring-f7-auth-session-changed', () => rehydrateMonitoringAuthFromSession());
+window.MonitoringInstitutionalAuth?.rehydrateMonitoringAuthFromSession?.();
+document.addEventListener('monitoring-f7-auth-session-changed', () => window.MonitoringInstitutionalAuth?.rehydrateMonitoringAuthFromSession?.());
 window.MonitoringAuthService = Object.freeze({
   getProfile(){ return window.MonitoringSessionManager?.getProfile?.() || null; },
   saveProfilePatch(patch){ return window.MonitoringSessionManager?.saveProfilePatch?.(patch) || null; },
