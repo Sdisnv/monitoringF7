@@ -3,7 +3,7 @@ const { permissionsForRoles, requirePermission } = require('./_rbac');
 const { auditEntry } = require('./_audit-server');
 const db = require('./_postgres');
 
-const ALLOWED_ROLES = ['sdis-admin','sdis-commandement','sdis-formation','sdis-instructeur','sdis-user','sdis-readonly'];
+const ALLOWED_ROLES = ['sdis-admin','sdis-commandement','sdis-chef-formation','sdis-formation','sdis-instructeur','sdis-user','sdis-readonly'];
 function sanitizeRoles(input){
   const roles = Array.isArray(input) ? input.filter(r => ALLOWED_ROLES.includes(String(r))) : ['sdis-user'];
   return roles.length ? Array.from(new Set(roles)) : ['sdis-user'];

@@ -31,6 +31,7 @@ function oidcConfig(){
     clientSecret: requiredEnv('OKTA_CLIENT_SECRET'),
     redirectUri: requiredEnv('OIDC_REDIRECT_URI'),
     scopes: process.env.OIDC_SCOPES || 'openid profile email groups',
+    forceLoginPrompt: process.env.OIDC_FORCE_LOGIN_PROMPT !== 'false',
     allowedGroups: String(process.env.OKTA_ALLOWED_GROUPS || '').split(',').map(v => v.trim()).filter(Boolean),
     adminGroups: String(process.env.OKTA_ADMIN_GROUPS || '').split(',').map(v => v.trim()).filter(Boolean)
   };
@@ -190,6 +191,10 @@ function oidcStartResponse(event){
   authorize.searchParams.set('redirect_uri', config.redirectUri);
   authorize.searchParams.set('state', state);
   authorize.searchParams.set('nonce', nonce);
+  if(config.forceLoginPrompt){
+    authorize.searchParams.set('prompt', 'login');
+    authorize.searchParams.set('max_age', '0');
+  }
   return redirect(302, authorize.toString(), [secureCookie(COOKIE_NAME, cookie, 600)]);
 }
 
@@ -205,9 +210,17 @@ async function oidcCallbackResponse(event){
   const claims = await verifyIdToken(config, metadata, payload.id_token, statePayload.nonce);
   const roles = rolesFromClaims(config, claims);
   const user = publicUserFromClaims(claims, roles);
-  try { await require('./_user-store').ensureUser(Object.assign({}, user, { provider:'oidc' })); } catch(error) { /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */ }
-  try { await require('./_audit-store').addAudit({ eventType:'login-okta-oidc', message:'Connexion Okta validée.', actorSubject:user.subject || user.nip, context:{ roles:user.roles } }); } catch(error) {}
-  const accessToken = signToken({ typ:'access', sub:user.subject || user.nip, email:user.email, nip:user.nip, roles:user.roles, permissions:user.permissions, provider:'oidc', displayName:user.displayName }, 3600);
+  let effectiveUser = user;
+  try {
+    const storedUser = await require('./_user-store').ensureUser(Object.assign({}, user, { provider:'oidc' }));
+    if(storedUser && storedUser.active === false) throw new Error('Utilisateur désactivé.');
+    if(storedUser) effectiveUser = storedUser;
+  } catch(error) {
+    if(String(error.message || error).includes('désactivé')) throw error;
+    /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */
+  }
+  try { await require('./_audit-store').addAudit({ eventType:'login-okta-oidc', message:'Connexion Okta validée.', actorSubject:effectiveUser.subject || effectiveUser.nip, context:{ roles:effectiveUser.roles } }); } catch(error) {}
+  const accessToken = signToken({ typ:'access', sub:effectiveUser.subject || effectiveUser.nip, email:effectiveUser.email, nip:effectiveUser.nip, roles:effectiveUser.roles, permissions:effectiveUser.permissions, provider:'oidc', displayName:effectiveUser.displayName }, 3600);
   const returnTo = sanitizeReturnTo(statePayload.returnTo || '/');
   return redirect(302, returnTo, [
     clearCookie(COOKIE_NAME),
