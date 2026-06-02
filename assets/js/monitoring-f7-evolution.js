@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.25 — couche d'évolution non destructive.
+/* Monitoring F7 v67.0 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.25';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v67.0';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -381,16 +381,31 @@
     if(suivi.updateScope !== 'domains' || unique.length===0 || unique.length===EFFECTIF_ALL_SCOPES.length) return 'Tous';
     return unique.map(domain=>EFFECTIF_SCOPE_LABELS[domain]).join(', ');
   }
+  function summarizeEffectifEnd(period){
+    if(period?.dateEnd) return fmtLocalDate(period.dateEnd);
+    const endByDomain=period?.suivi?.dateEndByDomain && typeof period.suivi.dateEndByDomain === 'object' ? period.suivi.dateEndByDomain : {};
+    const domains=Object.keys(endByDomain).filter(domain=>EFFECTIF_SCOPE_LABELS[domain]);
+    const closed=domains.filter(domain=>endByDomain[domain]);
+    if(!closed.length) return 'Ouverte';
+    const values=[...new Set(closed.map(domain=>endByDomain[domain]))];
+    if(values.length===1 && closed.length===domains.length) return fmtLocalDate(values[0]);
+    return closed.map(domain=>`${EFFECTIF_SCOPE_LABELS[domain]} ${fmtLocalDate(endByDomain[domain])}`).join(' • ');
+  }
+  function summarizeEffectifChanges(period){
+    const changes=Array.isArray(period?.suivi?.changes) ? period.suivi.changes : [];
+    if(!changes.length) return 'Aucune variation détectée.';
+    return changes.map(change=>`${change.domain || 'Domaine'} — ${change.field || 'Effectif'} : ${Number(change.before)||0} → ${Number(change.after)||0}`).join('\n');
+  }
   function renderEffectifsLibrary(){
     const tbody=$('f7EffectifsLibraryBody'); if(!tbody) return;
     const periods=toArray(readJSON(KEYS.periods, []));
     const count=$('f7EffectifsLibraryCount'); if(count) count.textContent=`${periods.length} effectif${periods.length>1?'s':''}`;
     tbody.innerHTML='';
     if(!periods.length){ tbody.innerHTML='<tr><td colspan="8" class="muted">Aucun effectif enregistré.</td></tr>'; return; }
-    periods.sort((a,b)=>String(b.dateEffective||'').localeCompare(String(a.dateEffective||''))).forEach(period=>{
+    periods.sort((a,b)=>String(a.dateEffective||'').localeCompare(String(b.dateEffective||''))).forEach(period=>{
       const tr=document.createElement('tr');
       const name=period?.suivi?.commentaire || period?.suivi?.updatedBy || `Effectif du ${fmtLocalDate(period.dateEffective)}`;
-      tr.innerHTML=`<td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(fmtLocalDate(period.dateEffective))}</td><td>${escapeHtml(fmtLocalDate(period.dateEnd))}</td><td>${escapeHtml(fmtLocalDate(period.createdAt))}</td><td>${escapeHtml(fmtLocalDate(period.updatedAt || period?.suivi?.updatedAt))}</td><td>${escapeHtml(summarizeEffectifScope(period))}</td><td>${escapeHtml(summarizePeriod(period))}</td><td><div class="f7-row-actions"><button class="compact-btn" data-f7-preview-effectif="${escapeHtml(period.id)}" type="button">Aperçu</button><button class="compact-btn primary" data-f7-load-effectif="${escapeHtml(period.id)}" type="button">Charger</button><button class="compact-btn danger-btn" data-f7-delete-effectif="${escapeHtml(period.id)}" type="button">Supprimer</button></div></td>`;
+      tr.innerHTML=`<td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(fmtLocalDate(period.dateEffective))}</td><td>${escapeHtml(summarizeEffectifEnd(period))}</td><td>${escapeHtml(fmtLocalDate(period.createdAt))}</td><td>${escapeHtml(fmtLocalDate(period.updatedAt || period?.suivi?.updatedAt))}</td><td>${escapeHtml(summarizeEffectifScope(period))}</td><td>${escapeHtml(summarizePeriod(period))}</td><td><div class="f7-row-actions"><button class="compact-btn" data-f7-preview-effectif="${escapeHtml(period.id)}" type="button">Aperçu</button><button class="compact-btn primary" data-f7-load-effectif="${escapeHtml(period.id)}" type="button">Charger</button><button class="compact-btn danger-btn" data-f7-delete-effectif="${escapeHtml(period.id)}" type="button">Supprimer</button></div></td>`;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('[data-f7-preview-effectif]').forEach(btn=>btn.addEventListener('click',()=>previewEffectif(btn.dataset.f7PreviewEffectif)));
@@ -401,7 +416,7 @@
   function previewEffectif(id){
     const p=findEffectif(id); const box=$('f7EffectifsPreview'); if(!p||!box) return;
     box.hidden=false; box.className='f7-status-box ok';
-    box.textContent=`Aperçu effectif\nNom : ${p?.suivi?.commentaire || '—'}\nDate : ${fmtLocalDate(p.dateEffective)}\nRésumé : ${summarizePeriod(p)}\n\nAucune donnée n’a été chargée dans le formulaire.`;
+    box.textContent=`Aperçu effectif\nNom : ${p?.suivi?.commentaire || '—'}\nDébut : ${fmtLocalDate(p.dateEffective)}\nFin : ${summarizeEffectifEnd(p)}\nEffectif concerné : ${summarizeEffectifScope(p)}\nRésumé : ${summarizePeriod(p)}\n\nVariations enregistrées :\n${summarizeEffectifChanges(p)}\n\nAucune donnée n’a été chargée dans le formulaire.`;
   }
   function loadEffectif(id){
     const p=findEffectif(id); if(!p) return;

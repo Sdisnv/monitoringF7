@@ -566,10 +566,58 @@
 /* ========================================================= */
 
 const REFERENCE_PERIODS_STORAGE_KEY = "monitoring_exercices_sdis_reference_periods_v1";
+const REFERENCE_UPDATE_DOMAINS = ["foba", "pr", "auto", "dps", "dap", "jsp"];
+const REFERENCE_DOMAIN_LABELS = Object.freeze({
+  foba: "FOBA",
+  pr: "PR / PAPR",
+  auto: "AUTO",
+  dps: "DPS",
+  dap: "DAP",
+  jsp: "JSP"
+});
+const REFERENCE_DOMAIN_FIELDS = Object.freeze({
+  foba: [
+    { path: ["foba", "foba1"], label: "FOBA 1" },
+    { path: ["foba", "foba2"], label: "FOBA 2" },
+    { path: ["foba", "foba3"], label: "FOBA 3" }
+  ],
+  pr: [
+    { path: ["domaines", "prG1"], label: "PAPR G1" },
+    { path: ["domaines", "prC1"], label: "PAPR C1" },
+    { path: ["domaines", "prB1"], label: "PAPR B1" },
+    { path: ["domaines", "prB2"], label: "PAPR B2" },
+    { path: ["domaines", "pr"], label: "PAPR global" }
+  ],
+  auto: [
+    { path: ["domaines", "autoVl"], label: "Cond VL (DPS)" },
+    { path: ["domaines", "autoPl"], label: "Cond PL" }
+  ],
+  dps: [
+    { path: ["organes", "dpsG1"], label: "DPS G1" },
+    { path: ["organes", "dpsC1"], label: "DPS C1" },
+    { path: ["organes", "dpsB1"], label: "DPS B1" },
+    { path: ["organes", "dpsB2"], label: "DPS B2" }
+  ],
+  dap: [
+    { path: ["organes", "dapY1"], label: "DAP Y1" },
+    { path: ["organes", "dapY2"], label: "DAP Y2" },
+    { path: ["organes", "dapY3"], label: "DAP Y3" },
+    { path: ["organes", "dapY4"], label: "DAP Y4" }
+  ],
+  jsp: [
+    { path: ["organes", "jspG1"], label: "JSP G1" },
+    { path: ["organes", "jspC1"], label: "JSP C1" },
+    { path: ["organes", "jspB1"], label: "JSP B1" },
+    { path: ["organes", "jspCadets"], label: "Cadets" }
+  ]
+});
 
 const DEFAULT_REFERENCE_PERIOD = {
   id: "",
   dateEffective: "",
+  dateEnd: "",
+  createdAt: "",
+  updatedAt: "",
 
   foba: {
     foba1: 0,
@@ -605,6 +653,8 @@ const DEFAULT_REFERENCE_PERIOD = {
     generatedBy: "",
     updateScope: "all",
     updateDomains: ["foba", "pr", "auto", "dps", "dap", "jsp"],
+    dateEndByDomain: {},
+    changes: [],
     commentaire: ""
   }
 };
@@ -613,6 +663,9 @@ function createEmptyReferencePeriod() {
   return {
     id: uid(),
     dateEffective: "",
+    dateEnd: "",
+    createdAt: "",
+    updatedAt: "",
 
     foba: {
       foba1: 0,
@@ -652,6 +705,8 @@ function createEmptyReferencePeriod() {
       generatedBy: "",
       updateScope: "all",
       updateDomains: ["foba", "pr", "auto", "dps", "dap", "jsp"],
+      dateEndByDomain: {},
+      changes: [],
       commentaire: ""
     }
   };
@@ -663,6 +718,9 @@ function normalizeReferencePeriod(raw) {
   return {
     id: String(safe.id || uid()),
     dateEffective: String(safe.dateEffective || ""),
+    dateEnd: String(safe.dateEnd || ""),
+    createdAt: String(safe.createdAt || ""),
+    updatedAt: String(safe.updatedAt || ""),
 
     foba: {
       foba1: toInt(safe.foba?.foba1),
@@ -702,6 +760,13 @@ function normalizeReferencePeriod(raw) {
       generatedBy: String(safe.suivi?.generatedBy || "").trim(),
       updateScope: safe.suivi?.updateScope === "domains" ? "domains" : "all",
       updateDomains: Array.isArray(safe.suivi?.updateDomains) && safe.suivi.updateDomains.length ? safe.suivi.updateDomains.map(String) : ["foba", "pr", "auto", "dps", "dap", "jsp"],
+      dateEndByDomain: safe.suivi?.dateEndByDomain && typeof safe.suivi.dateEndByDomain === "object" ? { ...safe.suivi.dateEndByDomain } : {},
+      changes: Array.isArray(safe.suivi?.changes) ? safe.suivi.changes.map(change => ({
+        domain: String(change?.domain || ""),
+        field: String(change?.field || ""),
+        before: toInt(change?.before),
+        after: toInt(change?.after)
+      })) : [],
       commentaire: String(safe.suivi?.commentaire || "").trim()
     }
   };
@@ -713,13 +778,126 @@ function sortReferencePeriods(periods) {
     const db = b.dateEffective || "";
 
     if (da && db) {
-      return db.localeCompare(da);
+      return da.localeCompare(db);
     }
 
-    if (da) return -1;
-    if (db) return 1;
+    if (da) return 1;
+    if (db) return -1;
 
-    return String(b.id || "").localeCompare(String(a.id || ""));
+    return String(a.id || "").localeCompare(String(b.id || ""));
+  });
+}
+
+function previousIsoDate(isoDate) {
+  const normalized = String(isoDate || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return "";
+  const date = new Date(`${normalized}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function referencePeriodDomains(period) {
+  const suivi = period?.suivi || {};
+  const domains = suivi.updateScope === "domains"
+    ? (Array.isArray(suivi.updateDomains) ? suivi.updateDomains : [])
+    : REFERENCE_UPDATE_DOMAINS;
+  const filtered = domains.map(domain => String(domain || "").toLowerCase()).filter(domain => REFERENCE_UPDATE_DOMAINS.includes(domain));
+  return filtered.length ? [...new Set(filtered)] : [...REFERENCE_UPDATE_DOMAINS];
+}
+
+function getReferenceFieldValue(period, descriptor) {
+  const [section, key] = descriptor.path;
+  return toInt(period?.[section]?.[key]);
+}
+
+function setReferenceFieldValue(target, descriptor, value) {
+  const [section, key] = descriptor.path;
+  if (!target[section]) target[section] = {};
+  target[section][key] = toInt(value);
+}
+
+function createReferenceZeroSnapshot() {
+  return {
+    foba: { foba1: 0, foba2: 0, foba3: 0 },
+    domaines: { pr: 0, prG1: 0, prC1: 0, prB1: 0, prB2: 0, autoVl: 0, autoPl: 0 },
+    organes: {
+      dpsG1: 0, dpsC1: 0, dpsB1: 0, dpsB2: 0,
+      dapY1: 0, dapY2: 0, dapY3: 0, dapY4: 0,
+      jspG1: 0, jspC1: 0, jspB1: 0, jspCadets: 0
+    }
+  };
+}
+
+function applyReferencePeriodDomainsToSnapshot(snapshot, period) {
+  referencePeriodDomains(period).forEach(domain => {
+    (REFERENCE_DOMAIN_FIELDS[domain] || []).forEach(descriptor => {
+      setReferenceFieldValue(snapshot, descriptor, getReferenceFieldValue(period, descriptor));
+    });
+  });
+  const prSum = toInt(snapshot.domaines.prG1) + toInt(snapshot.domaines.prC1) + toInt(snapshot.domaines.prB1) + toInt(snapshot.domaines.prB2);
+  if (prSum > 0) snapshot.domaines.pr = prSum;
+  return snapshot;
+}
+
+function buildReferenceSnapshotUpToDate(periods, isoDate, options = {}) {
+  const snapshot = createReferenceZeroSnapshot();
+  const target = String(isoDate || "").slice(0, 10);
+  sortReferencePeriods(periods)
+    .filter(period => period?.dateEffective && (!target || period.dateEffective <= target))
+    .forEach(period => {
+      if (options.excludeId && period.id === options.excludeId) return;
+      applyReferencePeriodDomainsToSnapshot(snapshot, period);
+    });
+  return snapshot;
+}
+
+function summarizeReferenceChangesForPeriod(period, previousSnapshot) {
+  const changes = [];
+  referencePeriodDomains(period).forEach(domain => {
+    (REFERENCE_DOMAIN_FIELDS[domain] || []).forEach(descriptor => {
+      if (domain === "pr" && descriptor.path[1] === "pr") return;
+      const before = getReferenceFieldValue(previousSnapshot, descriptor);
+      const after = getReferenceFieldValue(period, descriptor);
+      if (before !== after) {
+        changes.push({
+          domain: REFERENCE_DOMAIN_LABELS[domain] || domain.toUpperCase(),
+          field: descriptor.label,
+          before,
+          after
+        });
+      }
+    });
+  });
+  return changes;
+}
+
+function recalculateReferencePeriodLifecycle(periods) {
+  const sorted = sortReferencePeriods(periods).map(period => normalizeReferencePeriod(period));
+  const now = new Date().toISOString();
+
+  return sorted.map((period, index) => {
+    const domains = referencePeriodDomains(period);
+    const nextByDomain = {};
+    domains.forEach(domain => {
+      const next = sorted.slice(index + 1).find(candidate => candidate.dateEffective && candidate.dateEffective > period.dateEffective && referencePeriodDomains(candidate).includes(domain));
+      nextByDomain[domain] = next ? previousIsoDate(next.dateEffective) : "";
+    });
+    const finiteEnds = Object.values(nextByDomain).filter(Boolean);
+    const uniqueEnds = [...new Set(finiteEnds)];
+    const previousDate = previousIsoDate(period.dateEffective);
+    const previousSnapshot = buildReferenceSnapshotUpToDate(sorted.slice(0, index), previousDate);
+    const changes = summarizeReferenceChangesForPeriod(period, previousSnapshot);
+    return normalizeReferencePeriod({
+      ...period,
+      dateEnd: uniqueEnds.length === 1 && finiteEnds.length === domains.length ? uniqueEnds[0] : "",
+      createdAt: period.createdAt || now,
+      updatedAt: period.updatedAt || period.createdAt || now,
+      suivi: {
+        ...period.suivi,
+        dateEndByDomain: nextByDomain,
+        changes
+      }
+    });
   });
 }
 
@@ -739,7 +917,7 @@ function loadReferencePeriods() {
 }
 
 function saveReferencePeriods(periods) {
-  const normalized = sortReferencePeriods(
+  const normalized = recalculateReferencePeriodLifecycle(
     (Array.isArray(periods) ? periods : []).map(normalizeReferencePeriod)
   );
 
@@ -776,10 +954,13 @@ function setSelectedReferencePeriod(periodId) {
 
 function createReferencePeriod(initialData = {}) {
   const base = createEmptyReferencePeriod();
+  const now = new Date().toISOString();
 
   const merged = normalizeReferencePeriod({
     ...base,
     ...initialData,
+    createdAt: initialData.createdAt || now,
+    updatedAt: initialData.updatedAt || now,
     foba: {
       ...base.foba,
       ...(initialData.foba || {})
@@ -812,10 +993,13 @@ function duplicateReferencePeriod(sourceId, overrides = {}) {
     return null;
   }
 
+  const now = new Date().toISOString();
   const duplicate = normalizeReferencePeriod({
     ...source,
     id: uid(),
     dateEffective: overrides.dateEffective || "",
+    createdAt: now,
+    updatedAt: now,
     foba: {
       ...source.foba,
       ...(overrides.foba || {})
@@ -853,6 +1037,8 @@ function updateReferencePeriod(periodId, patch = {}) {
   const updated = normalizeReferencePeriod({
     ...current,
     ...patch,
+    createdAt: current.createdAt || patch.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     foba: {
       ...current.foba,
       ...(patch.foba || {})
@@ -2969,7 +3155,6 @@ function openExercisePreview(record) {
       else element.textContent = next;
     }
 
-    const REFERENCE_UPDATE_DOMAINS = ["foba", "pr", "auto", "dps", "dap", "jsp"];
     const REFERENCE_DOMAIN_INPUT_IDS = {
       foba: ["effectifFoba1", "effectifFoba2", "effectifFoba3"],
       pr: ["effectifPrG1", "effectifPrC1", "effectifPrB1", "effectifPrB2"],
@@ -3320,6 +3505,7 @@ function openExercisePreview(record) {
       });
       migrateLegacyReferenceDataIfNeeded();
       ensureAtLeastOneReferencePeriod();
+      referencePeriods = saveReferencePeriods(referencePeriods);
       populateReferencePeriodOptions();
 
       const selected = getSelectedReferencePeriod() || referencePeriods[0] || null;
@@ -3929,46 +4115,10 @@ function openExercisePreview(record) {
     }
 
     function getReferenceSnapshotForDate(dateValue) {
-      const period = getReferencePeriodForDate(dateValue);
-
-      if (!period) {
-        return {
-          foba: { foba1: 0, foba2: 0, foba3: 0 },
-          domaines: { pr: 0, autoVl: 0, autoPl: 0 },
-          organes: {
-            dpsG1: 0, dpsC1: 0, dpsB1: 0, dpsB2: 0,
-            dapY1: 0, dapY2: 0, dapY3: 0, dapY4: 0,
-            jspG1: 0, jspC1: 0, jspB1: 0, jspCadets: 0
-          }
-        };
-      }
-
-      return {
-        foba: {
-          foba1: toInt(period.foba?.foba1),
-          foba2: toInt(period.foba?.foba2),
-          foba3: toInt(period.foba?.foba3)
-        },
-        domaines: {
-          pr: toInt(period.domaines?.pr),
-          autoVl: toInt(period.domaines?.autoVl),
-          autoPl: toInt(period.domaines?.autoPl)
-        },
-        organes: {
-          dpsG1: toInt(period.organes?.dpsG1),
-          dpsC1: toInt(period.organes?.dpsC1),
-          dpsB1: toInt(period.organes?.dpsB1),
-          dpsB2: toInt(period.organes?.dpsB2),
-          dapY1: toInt(period.organes?.dapY1),
-          dapY2: toInt(period.organes?.dapY2),
-          dapY3: toInt(period.organes?.dapY3),
-          dapY4: toInt(period.organes?.dapY4),
-          jspG1: toInt(period.organes?.jspG1),
-          jspC1: toInt(period.organes?.jspC1),
-          jspB1: toInt(period.organes?.jspB1),
-          jspCadets: toInt(period.organes?.jspCadets)
-        }
-      };
+      const targetDate = normalizeIsoDate(dateValue);
+      const periods = getSafeReferencePeriods();
+      if (!targetDate || !periods.length) return createReferenceZeroSnapshot();
+      return buildReferenceSnapshotUpToDate(periods, targetDate);
     }
 
     function getReferenceLabelForRecord(record) {

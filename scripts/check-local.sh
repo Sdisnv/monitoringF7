@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.25" index.html
-grep -q "version: 'v66.25'" assets/js/config.js
-grep -q "Version du fichier : v66.25" index.html
+grep -q "Monitoring F7 v67.0" index.html
+grep -q "version: 'v67.0'" assets/js/config.js
+grep -q "Version du fichier : v67.0" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -74,6 +74,12 @@ grep -q "REFERENCE_UPDATE_DOMAINS" assets/js/app.js
 grep -q "reference-scope-row" assets/css/base.css
 grep -q "reference-domain-scope input\\[type=\"checkbox\"\\]" assets/css/base.css
 grep -q "summarizeEffectifScope" assets/js/monitoring-f7-evolution.js
+grep -q "summarizeEffectifChanges" assets/js/monitoring-f7-evolution.js
+grep -q "buildReferenceSnapshotUpToDate" assets/js/app.js
+grep -q "recalculateReferencePeriodLifecycle" assets/js/app.js
+grep -q "previousIsoDate" assets/js/app.js
+grep -q "dateEndByDomain" assets/js/app.js
+grep -q "periods.sort((a,b)=>String(a.dateEffective" assets/js/monitoring-f7-evolution.js
 grep -q "#de000a" assets/js/render/render-charts.js
 grep -q "#171c8f" assets/js/render/render-charts.js
 grep -q "#ffa300" assets/js/render/render-charts.js
