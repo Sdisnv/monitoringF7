@@ -147,6 +147,14 @@
       schedule: scheduleOnlineCollectionWrite,
       isReady: centralStorageReady
     });
+    document.addEventListener("monitoring-f7-auth-session-changed", async () => {
+      try {
+        if (sessionStorage.getItem("monitoring_f7_online_hydrated_v1") === "1") return;
+        sessionStorage.setItem("monitoring_f7_online_hydrated_v1", "1");
+      } catch {}
+      const result = await hydrateOnlineDataCache();
+      if (result?.hydrated?.length) setTimeout(() => location.reload(), 250);
+    });
 
     function safeText(value) {
       return window.MonitoringDomUtils?.safeText

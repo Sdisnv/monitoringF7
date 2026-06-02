@@ -28,7 +28,7 @@ async function currentAdminHash(){
   await ensureSettingsTable();
   const result = await db.query('select value from monitoring_f7_settings where key=$1', [ADMIN_CODE_KEY]);
   const value = result.rows?.[0]?.value;
-  return String(value?.hash || DEFAULT_ADMIN_HASH);
+  return { hash:String(value?.hash || DEFAULT_ADMIN_HASH), exists:!!result.rows?.[0] };
 }
 
 async function saveAdminHash(hash, actor){
@@ -48,7 +48,8 @@ exports.handler = async function(event){
     if(event.httpMethod === 'POST'){
       const body = parseBody(event);
       if(!body || !validHash(body.hash)) return response(400, { ok:false, error:'invalid_hash' });
-      const ok = String(body.hash).toLowerCase() === (await currentAdminHash()).toLowerCase();
+      const current = await currentAdminHash();
+      const ok = String(body.hash).toLowerCase() === current.hash.toLowerCase();
       await audit.addAudit({ eventType:'admin-code-verify', status:ok ? 'success' : 'failure', message:ok ? 'Code admin vérifié.' : 'Code admin refusé.', actorSubject:claims.sub });
       return response(200, { ok:true, valid:ok });
     }
@@ -57,7 +58,10 @@ exports.handler = async function(event){
       requirePermission(claims, 'settings:manage');
       const body = parseBody(event);
       if(!body || !validHash(body.currentHash) || !validHash(body.nextHash)) return response(400, { ok:false, error:'invalid_hash' });
-      if(String(body.currentHash).toLowerCase() !== (await currentAdminHash()).toLowerCase()) return response(409, { ok:false, error:'current_admin_code_invalid' });
+      const current = await currentAdminHash();
+      const matchesCurrent = String(body.currentHash).toLowerCase() === current.hash.toLowerCase();
+      const initializeEmptyDatabase = current.exists === false && body.initializeIfMissing === true;
+      if(!matchesCurrent && !initializeEmptyDatabase) return response(409, { ok:false, error:'current_admin_code_invalid' });
       await saveAdminHash(String(body.nextHash).toLowerCase(), claims.sub);
       await audit.addAudit({ eventType:'admin-code-update', message:'Code admin central mis à jour.', actorSubject:claims.sub });
       return response(200, { ok:true, updatedAt:new Date().toISOString() });

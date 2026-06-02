@@ -94,5 +94,5 @@ alter table monitoring_f7_user_profiles add column if not exists permissions tex
 create index if not exists idx_monitoring_f7_user_profiles_email on monitoring_f7_user_profiles (lower(email));
 
 insert into monitoring_f7_schema_migrations(version)
-values ('v66.11-online-first')
+values ('v66.12-online-first-fixed')
 on conflict (version) do nothing;

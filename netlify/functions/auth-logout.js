@@ -3,9 +3,12 @@ const { ACCESS_COOKIE, clearCookie } = require('./_oidc-utils');
 
 exports.handler = async function(event){
   if(event.httpMethod === 'GET'){
+    const params = new URLSearchParams(event.rawQuery || '');
+    const requested = params.get('returnTo') || '/?loggedOut=1';
+    const location = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/?loggedOut=1';
     return {
       statusCode:302,
-      headers:{ Location:'/', 'Cache-Control':'no-store' },
+      headers:{ Location:location, 'Cache-Control':'no-store' },
       multiValueHeaders:{ 'Set-Cookie':[clearCookie(ACCESS_COOKIE)] },
       body:''
     };

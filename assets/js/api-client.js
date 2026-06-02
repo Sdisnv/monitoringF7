@@ -16,7 +16,7 @@
   function getBackendStatus(){
     const status = window.MonitoringBackendConfig?.getStatus ? window.MonitoringBackendConfig.getStatus() : getConfig();
     return Object.freeze(Object.assign({}, status, {
-      statusLabel: isBackendEnabled() ? 'backend préparé' : 'local uniquement',
+      statusLabel: isBackendEnabled() ? 'backend online actif' : 'local uniquement',
       lastCheckedAt: new Date().toISOString()
     }));
   }
@@ -97,7 +97,7 @@
     getAdminSettings(options){ return request('GET', '/admin/settings', null, options); },
     saveAdminSettings(settings, options){ return request('PUT', '/admin/settings', settings, options); },
     verifyAdminCode(hash, options){ return request('POST', '/admin/settings', { hash }, options); },
-    updateAdminCode(currentHash, nextHash, options){ return request('PUT', '/admin/settings', { currentHash, nextHash }, options); },
+    updateAdminCode(currentHash, nextHash, options){ return request('PUT', '/admin/settings', Object.assign({ currentHash, nextHash }, options?.body || {}), options); },
     setAccessToken(token){ accessToken = token ? String(token) : null; },
     clearAccessToken(){ accessToken = null; },
     getAccessToken(){ return accessToken; },

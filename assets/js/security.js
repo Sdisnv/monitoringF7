@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.11 — sécurité client, journalisation et alerte runtime critique uniquement. */
+/* Monitoring F7 v66.12 — sécurité client, journalisation et alerte runtime critique uniquement. */
 (function(){
   'use strict';
 
@@ -70,7 +70,7 @@
   }
 
   function logSecurity(type, detail, data){
-    const payload = { version: window.MonitoringConfig?.version || 'v66.11', type, detail, at: new Date().toISOString(), data };
+    const payload = { version: window.MonitoringConfig?.version || 'v66.12', type, detail, at: new Date().toISOString(), data };
     console.warn('[Monitoring F7 sécurité]', payload);
     if(type === 'js-error' || type === 'promise-rejection') window.MonitoringAuditLog?.logError(type, detail, data || {});
     else window.MonitoringAuditLog?.logWarning(type, detail, data || {});

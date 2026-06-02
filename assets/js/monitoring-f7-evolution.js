@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.11 — couche d'évolution non destructive.
+/* Monitoring F7 v66.12 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.11';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v66.12';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -137,7 +137,7 @@
       appVersion: APP_VERSION,
       dataSchemaVersion: Math.max(Number(meta.dataSchemaVersion||0), DATA_SCHEMA_VERSION),
       lastMigrationAt: meta.dataSchemaVersion === DATA_SCHEMA_VERSION ? meta.lastMigrationAt || nowIso() : nowIso(),
-      storageMode: 'localStorage/offline-first',
+      storageMode: window.MonitoringOnlineDataService?.isReady?.() ? 'postgres-online-first' : 'local-cache-fallback',
       destructiveImportsDefault: false
     };
     writeJSON(KEYS.meta, next);
@@ -458,6 +458,11 @@
     if(window.MonitoringOnlineDataService?.isReady?.() && window.MonitoringApiClient?.verifyAdminCode){
       const res = await window.MonitoringApiClient.verifyAdminCode(hash);
       valid = res?.ok === true && res.data?.ok === true && res.data?.valid === true;
+      if(!valid){
+        const profile=readJSON(KEYS.admin, null);
+        const expected=profile?.hash || TEMP_ADMIN_HASH;
+        valid = hash === expected;
+      }
     }else{
       const profile=readJSON(KEYS.admin, null);
       const expected=profile?.hash || TEMP_ADMIN_HASH;
@@ -483,12 +488,12 @@
       showOperationalMessage('Modification du code Admin refusée.', 'error');
       return;
     }
-    const next=prompt('Nouveau code Admin local (minimum 6 caractères) :');
+    const next=prompt('Nouveau code Admin central (minimum 6 caractères) :');
     if(!next) return;
     if(next.length<6){ alert('Code trop court. Minimum 6 caractères.'); return; }
     const nextHash = await sha256Hex(next);
     if(centralReady){
-      const res = await window.MonitoringApiClient.updateAdminCode(currentHash, nextHash);
+      const res = await window.MonitoringApiClient.updateAdminCode(currentHash, nextHash, { body:{ initializeIfMissing:true } });
       if(!res?.ok || res.data?.ok !== true){
         const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box error'; msg.textContent=res?.data?.error === 'current_admin_code_invalid' ? 'Code Admin actuel incorrect. Modification refusée.' : 'Modification serveur refusée.'; }
         showOperationalMessage('Modification du code Admin refusée.', 'error');
@@ -568,7 +573,19 @@
     const backendStatus=window.MonitoringBackendConfig?.getStatus?.() || {};
     const profile=window.MonitoringSessionManager?.getProfile?.() || {};
     window.MonitoringAuditLog?.logAction('session-info-open', 'Information session consultée.', { mode: profile.authSource === 'okta-oidc' ? 'institutional-oidc' : 'local-browser-only' });
-    openUserModal('Session Monitoring F7', `<div class="f7-user-info-grid"><strong>Mode</strong><span>${profile.authSource === 'okta-oidc' ? 'authentification institutionnelle Okta/OIDC' : 'secours local navigateur'}</span><strong>Auth serveur</strong><span>${profile.authSource === 'okta-oidc' ? 'active' : (backendStatus.serverAuthEnabled ? 'préparée' : 'désactivée')}</span><strong>Backend</strong><span>${backendStatus.backendEnabled ? 'activé' : 'désactivé'}</span><strong>Stockage</strong><span>localStorage / IndexedDB</span><strong>Session active</strong><span>${session?.active ? 'oui' : 'non'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p class="f7-user-note">${escapeHtml(authStatus.message || 'Authentification institutionnelle prioritaire.')}</p>`);
+    openUserModal('Session Monitoring F7', `<div class="f7-user-info-grid"><strong>Mode</strong><span>${profile.authSource === 'okta-oidc' ? 'authentification institutionnelle Okta/OIDC' : 'secours local navigateur'}</span><strong>Auth serveur</strong><span>${profile.authSource === 'okta-oidc' ? 'active' : (backendStatus.serverAuthEnabled ? 'préparée' : 'désactivée')}</span><strong>Backend</strong><span>${backendStatus.backendEnabled ? 'activé' : 'désactivé'}</span><strong>Stockage</strong><span>${backendStatus.centralStorageEnabled ? 'PostgreSQL central online-first' : 'cache navigateur local'}</span><strong>Session active</strong><span>${session?.active ? 'oui' : 'non'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p class="f7-user-note">${escapeHtml(authStatus.message || 'Authentification institutionnelle prioritaire.')}</p>`);
+  }
+  async function refreshOnlineDataAfterAuth(){
+    if(!window.MonitoringOnlineDataService?.hydrate) return;
+    try{
+      if(sessionStorage.getItem('monitoring_f7_online_hydrated_v1') === '1') return;
+      sessionStorage.setItem('monitoring_f7_online_hydrated_v1', '1');
+    }catch{}
+    const result = await window.MonitoringOnlineDataService.hydrate();
+    if(result?.hydrated?.length){
+      showOperationalMessage('Données serveur synchronisées.', 'ok');
+      setTimeout(() => location.reload(), 250);
+    }
   }
   function bindUserMenu(){
     const btn=$('userMenuButton'); const menu=$('userMenu');
@@ -611,7 +628,7 @@
       ['Dernière migration', diagnostics.lastMigrationAt ? fmtLocalDate(diagnostics.lastMigrationAt) : '—'],
       ['Mode backend', backendStatus.backendEnabled ? 'Préparé' : 'Désactivé'],
       ['Mode stockage', backendStatus.storageMode || 'local'],
-      ['Stockage central', backendStatus.centralStorageEnabled ? 'Activable' : 'Inactif par défaut'],
+      ['Stockage central', backendStatus.centralStorageEnabled ? 'Actif' : 'Inactif'],
       ['Mode auth', backendStatus.authMode || 'local'],
       ['Auth serveur', backendStatus.serverAuthEnabled ? 'Contrat actif' : 'Inactif par défaut'],
       ['Schéma données', window.MonitoringDataSchema ? `v${window.MonitoringDataSchema.schemaVersion}` : 'Non chargé'],
@@ -695,6 +712,7 @@
     document.querySelectorAll('.tab-btn[data-tab-target="events"]').forEach(btn=>btn.addEventListener('click',()=>setTimeout(renderEventManagementTable, 0)));
     document.querySelectorAll('.tab-btn[data-tab-target="effectifs"]').forEach(btn=>btn.addEventListener('click',()=>setTimeout(renderEffectifsLibrary, 0)));
     document.addEventListener('monitoring-f7-auth-session-changed', updateUserZone);
+    document.addEventListener('monitoring-f7-auth-session-changed', refreshOnlineDataAfterAuth, { once:true });
     $('recordsSummaryViewBtn')?.addEventListener('click', ()=>setRecordsDensity('summary'));
     $('recordsFullViewBtn')?.addEventListener('click', ()=>setRecordsDensity('full'));
     $('f7ProjectionToggle')?.addEventListener('click', toggleProjectionMode);

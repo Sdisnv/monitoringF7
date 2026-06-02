@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.11 — auth Okta production avec login institutionnel à lien unique. */
+/* Monitoring F7 v66.12 — auth Okta production avec login institutionnel à lien unique. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
   const enc = new TextEncoder();
@@ -305,8 +305,20 @@
   }
   document.addEventListener('DOMContentLoaded', async function(){
     syncAuthUI(false);
-    const hadAuthError = new URLSearchParams(window.location.search || '').has('authError');
-    const oktaActive = await checkServerAuthentication();
+    const params = new URLSearchParams(window.location.search || '');
+    const hadAuthError = params.has('authError');
+    const hadLogout = params.has('loggedOut');
+    if(hadLogout){
+      clearSession();
+      setProfile({ authSource:'logged-out', displayName:'', updatedAt:new Date().toISOString() });
+      try { delete window.MonitoringAuth; delete window.CurrentUser; delete window.CurrentRoles; delete window.CurrentPermissions; } catch {
+        window.MonitoringAuth = undefined;
+        window.CurrentUser = undefined;
+        window.CurrentRoles = undefined;
+        window.CurrentPermissions = undefined;
+      }
+    }
+    const oktaActive = hadLogout ? false : await checkServerAuthentication();
     if(oktaActive) return;
 
     try{
@@ -319,6 +331,7 @@
 
     showInstitutionalLogin();
     if(hadAuthError) setMessage('Connexion impossible. Veuillez réessayer ou contacter l’administrateur.', 'error');
+    if(hadLogout) setMessage('Déconnexion effectuée. Utilisez le bouton Okta pour vous reconnecter.', 'ok');
   });
 
   window.MonitoringInstitutionalAuth = Object.freeze({

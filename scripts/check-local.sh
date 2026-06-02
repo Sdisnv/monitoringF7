@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.11" index.html
-grep -q "version: 'v66.11'" assets/js/config.js
-grep -q "Version du fichier : v66.11" index.html
+grep -q "Monitoring F7 v66.12" index.html
+grep -q "version: 'v66.12'" assets/js/config.js
+grep -q "Version du fichier : v66.12" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
