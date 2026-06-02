@@ -1,6 +1,6 @@
-/* Monitoring F7 v66.0 — auth Okta production avec secours local désactivé par défaut. */
+/* Monitoring F7 v66.10 — auth Okta production avec login institutionnel à lien unique. */
 (function(){
-  const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
+  const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
   const enc = new TextEncoder();
   const sessionManager = window.MonitoringSessionManager;
 
@@ -139,9 +139,13 @@
   function clearSession(){
     sessionManager?.clear?.();
     document.body?.classList.add('auth-locked');
+    document.body?.classList.add('login-locked');
+    document.body?.classList.add('security-locked');
   }
   function syncAuthUI(active){
     document.body?.classList.toggle('auth-locked', !active);
+    document.body?.classList.toggle('login-locked', !active);
+    document.body?.classList.toggle('security-locked', !active);
     document.body?.classList.toggle('auth-active', !!active);
   }
   function removeAuthLocks(){
@@ -149,6 +153,8 @@
     document.querySelector('#loginOverlay')?.remove();
     document.querySelector('#securityModal')?.remove();
     document.body?.classList.remove('auth-locked');
+    document.body?.classList.remove('login-locked');
+    document.body?.classList.remove('security-locked');
     document.body?.classList.add('auth-active');
   }
   function isOktaAuthenticated(){
@@ -194,8 +200,17 @@
       return false;
     }
   }
+  function safeCurrentReturnTo(){
+    const fallback = '/';
+    try{
+      const path = `${window.location.pathname || '/'}${window.location.search || ''}${window.location.hash || ''}`;
+      if(!path.startsWith('/') || path.startsWith('//') || /^\s*javascript:/i.test(path)) return fallback;
+      return path || fallback;
+    }catch{ return fallback; }
+  }
   function startOktaLogin(){
-    const target = '/.netlify/functions/auth-oidc-start';
+    const returnTo = encodeURIComponent(safeCurrentReturnTo());
+    const target = `/.netlify/functions/auth-oidc-start?returnTo=${returnTo}`;
     try{
       window.location.assign(target);
     }catch{
@@ -215,18 +230,15 @@
     if(!card) return;
     card.innerHTML = `
       <div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Connexion institutionnelle requise</h2></div>
-      <p class="auth-note">Monitoring F7 utilise désormais l’authentification institutionnelle Okta/OIDC. La connexion locale NIP reste uniquement un secours technique.</p>
-      <div class="auth-message" id="authMessage">Session Okta non détectée ou expirée.</div>
-      <a class="primary auth-submit" id="oktaLoginButton" data-okta-login="true" href="/.netlify/functions/auth-oidc-start" role="button">Connexion Okta</a>
-      ${getLocalAuthConfig().allowLocalFallback ? '<button class="secondary auth-submit" type="button" id="localFallbackButton">Secours local technique</button>' : '<p class="auth-note">Le secours local est désactivé en production.</p>'}`;
+      <p class="auth-note">Connectez-vous avec votre compte institutionnel pour accéder au Monitoring F7.</p>
+      <div class="auth-message" id="authMessage">Contrôle de la session en cours…</div>
+      <a class="primary auth-submit" id="oktaLoginButton" data-okta-login="true" href="/.netlify/functions/auth-oidc-start" role="button">Se connecter avec Okta</a>`;
     const oktaBtn = document.getElementById('oktaLoginButton');
     if(oktaBtn) oktaBtn.addEventListener('click', (event) => { event.preventDefault(); startOktaLogin(); });
-    const fallbackBtn = document.getElementById('localFallbackButton');
-    if(fallbackBtn) fallbackBtn.addEventListener('click', restoreLocalFallbackForm);
   }
   function restoreLocalFallbackForm(){
     if(isOktaAuthenticated()){ removeAuthLocks(); return; }
-    if(!getLocalAuthConfig().allowLocalFallback){ setMessage('Secours local désactivé en production.', 'error'); return; }
+    if(!getLocalAuthConfig().allowLocalFallback){ setMessage('Connexion impossible. Veuillez réessayer ou contacter l’administrateur.', 'error'); return; }
     const card = document.querySelector('#authOverlay .auth-card');
     if(!card) return;
     card.innerHTML = `
@@ -287,12 +299,13 @@
     window.CurrentUser = Object.freeze(Object.assign({}, resolvedProfile));
     window.CurrentRoles = Object.freeze([resolvedProfile.role || 'sdis-user']);
     window.CurrentPermissions = Object.freeze([]);
-    window.MonitoringAuditLog?.logAction('login-local', 'Login local de secours validé.', { source: resolvedProfile.authSource || 'local' });
+    window.MonitoringAuditLog?.logWarning?.('login-local-fallback-used', 'Fallback local de secours utilisé.', { source: resolvedProfile.authSource || 'local' });
     setMessage('Accès local de secours autorisé.', 'ok');
     unlock(resolvedProfile);
   }
   document.addEventListener('DOMContentLoaded', async function(){
     syncAuthUI(false);
+    const hadAuthError = new URLSearchParams(window.location.search || '').has('authError');
     const oktaActive = await checkServerAuthentication();
     if(oktaActive) return;
 
@@ -305,6 +318,7 @@
     }catch{ clearSession(); }
 
     showInstitutionalLogin();
+    if(hadAuthError) setMessage('Connexion impossible. Veuillez réessayer ou contacter l’administrateur.', 'error');
   });
 
   window.MonitoringInstitutionalAuth = Object.freeze({
@@ -337,7 +351,7 @@ window.MonitoringAuthService = Object.freeze({
       authContract: window.MonitoringApiContracts?.get?.('authLogin') || null,
       localAuthConfigured: window.MonitoringConfig?.localAuth?.allowLocalFallback === true,
       localAuthUsers: Array.isArray(window.MonitoringConfig?.localAuth?.users) ? window.MonitoringConfig.localAuth.users.length : 0,
-      message: oktaActive ? 'Authentification institutionnelle Okta/OIDC active.' : 'Connexion institutionnelle requise. Secours local disponible uniquement pour diagnostic.'
+      message: oktaActive ? 'Session institutionnelle active.' : 'Connexion institutionnelle requise.'
     });
   },
   readSession(){

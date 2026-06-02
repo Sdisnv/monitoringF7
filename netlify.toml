@@ -1,4 +1,4 @@
-# Monitoring F7 v66.0 — configuration Netlify statique avec auth et stockage serveur optionnels.
+# Monitoring F7 v66.10 — configuration Netlify statique avec auth et stockage serveur optionnels.
 # L'application reste locale par défaut ; les fonctions serveur ne sont utilisées que si le backend est activé.
 
 [build]

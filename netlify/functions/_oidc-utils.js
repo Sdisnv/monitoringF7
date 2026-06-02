@@ -150,6 +150,23 @@ function publicUserFromClaims(claims, roles){
   };
 }
 
+function sanitizeReturnTo(value){
+  const fallback = '/';
+  const raw = String(value || '').trim();
+  if(!raw) return fallback;
+  if(/^javascript:/i.test(raw)) return fallback;
+  if(raw.startsWith('//')) return fallback;
+  if(/^https?:\/\//i.test(raw)) return fallback;
+  if(!raw.startsWith('/')) return fallback;
+  try{
+    const parsed = new URL(raw, 'https://monitoring-f7.local');
+    if(parsed.origin !== 'https://monitoring-f7.local') return fallback;
+    return `${parsed.pathname || '/'}${parsed.search || ''}${parsed.hash || ''}` || fallback;
+  }catch{
+    return fallback;
+  }
+}
+
 function redirect(statusCode, location, cookies){
   return {
     statusCode,
@@ -159,11 +176,13 @@ function redirect(statusCode, location, cookies){
   };
 }
 
-function oidcStartResponse(){
+function oidcStartResponse(event){
   const config = oidcConfig();
+  const params = new URLSearchParams(event?.rawQuery || '');
+  const returnTo = sanitizeReturnTo(params.get('returnTo') || '/');
   const state = crypto.randomBytes(24).toString('base64url');
   const nonce = crypto.randomBytes(24).toString('base64url');
-  const cookie = signedStateCookie({ state, nonce, createdAt:Date.now() });
+  const cookie = signedStateCookie({ state, nonce, returnTo, createdAt:Date.now() });
   const authorize = new URL(`${config.issuer}/v1/authorize`);
   authorize.searchParams.set('client_id', config.clientId);
   authorize.searchParams.set('response_type', 'code');
@@ -189,7 +208,8 @@ async function oidcCallbackResponse(event){
   try { await require('./_user-store').ensureUser(Object.assign({}, user, { provider:'oidc' })); } catch(error) { /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */ }
   try { await require('./_audit-store').addAudit({ eventType:'login-okta-oidc', message:'Connexion Okta validée.', actorSubject:user.subject || user.nip, context:{ roles:user.roles } }); } catch(error) {}
   const accessToken = signToken({ typ:'access', sub:user.subject || user.nip, email:user.email, nip:user.nip, roles:user.roles, permissions:user.permissions, provider:'oidc', displayName:user.displayName }, 3600);
-  return redirect(302, '/', [
+  const returnTo = sanitizeReturnTo(statePayload.returnTo || '/');
+  return redirect(302, returnTo, [
     clearCookie(COOKIE_NAME),
     secureCookie(ACCESS_COOKIE, accessToken, 3600)
   ]);
@@ -199,5 +219,6 @@ module.exports = {
   ACCESS_COOKIE,
   clearCookie,
   oidcStartResponse,
-  oidcCallbackResponse
+  oidcCallbackResponse,
+  sanitizeReturnTo
 };

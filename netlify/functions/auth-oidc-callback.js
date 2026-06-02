@@ -6,6 +6,6 @@ exports.handler = async function(event){
   try{
     return await oidcCallbackResponse(event);
   }catch(error){
-    return response(401, { ok:false, error:'oidc_callback_failed', message:String(error.message || error) });
+    return { statusCode:302, headers:{ Location:'/?authError=1', 'Cache-Control':'no-store' }, body:'' };
   }
 };
