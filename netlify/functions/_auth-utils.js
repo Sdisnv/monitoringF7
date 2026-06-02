@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { normalizeRoles, permissionsForRoles } = require('./_rbac');
 
 const jsonHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -85,8 +86,8 @@ function publicUser(user){
   return {
     nip: String(user.nip || ''),
     displayName: String(user.displayName || user.name || `Utilisateur ${user.nip || ''}`).trim(),
-    roles: Array.isArray(user.roles) ? user.roles : ['sdis-user'],
-    permissions: Array.isArray(user.permissions) ? user.permissions : []
+    roles: normalizeRoles(user.roles),
+    permissions: permissionsForRoles(user.roles, user.permissions)
   };
 }
 

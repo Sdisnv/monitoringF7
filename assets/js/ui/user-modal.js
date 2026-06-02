@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5 — helper UI pour modales utilisateur locales. */
+/* Monitoring F7 v66.0 — helper UI pour modales utilisateur locales. */
 (function(){
   'use strict';
 

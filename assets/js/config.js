@@ -1,13 +1,14 @@
 /* Configuration externe future. La logique historique reste chargée par app.js. */
 window.MonitoringConfig = Object.freeze({
   appName: 'Monitoring F7',
-  version: 'v65.5.4',
+  version: 'v66.0',
   localAuth: Object.freeze({
     mode: 'local-browser-only',
     notice: 'Authentification institutionnelle Okta/OIDC prioritaire. Secours local technique uniquement.',
     requireKnownNip: false,
-    sharedAccessEnabled: true,
-    sharedAccessPasswordHashHex: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4',
+    sharedAccessEnabled: false,
+    allowLocalFallback: false,
+    sharedAccessPasswordHashHex: '',
     users: Object.freeze([])
   })
 });
@@ -19,7 +20,7 @@ window.MonitoringBackendConfigOverrides = Object.freeze({
   authMode: 'backend',
   storageMode: 'backend',
   centralStorageEnabled: true,
-  auditMode: 'local',
+  auditMode: 'backend',
   serverAuthEnabled: true,
   oidcEnabled: true,
   storageDriver: 'postgres',

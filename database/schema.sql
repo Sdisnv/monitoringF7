@@ -11,7 +11,9 @@ create table if not exists monitoring_f7_user_profiles (
   subject text primary key,
   email text,
   display_name text,
+  nip text,
   roles text[] not null default array['sdis-user'],
+  permissions text[] not null default array[]::text[],
   provider text not null default 'oidc',
   active boolean not null default true,
   last_login_at timestamptz,
@@ -79,6 +81,10 @@ create index if not exists idx_monitoring_f7_objectives_updated_at on monitoring
 create index if not exists idx_monitoring_f7_audit_entries_created_at on monitoring_f7_audit_entries (created_at desc);
 create index if not exists idx_monitoring_f7_sync_changes_entity on monitoring_f7_sync_changes (entity_type, entity_id, created_at desc);
 
+alter table monitoring_f7_user_profiles add column if not exists nip text;
+alter table monitoring_f7_user_profiles add column if not exists permissions text[] not null default array[]::text[];
+create index if not exists idx_monitoring_f7_user_profiles_email on monitoring_f7_user_profiles (lower(email));
+
 insert into monitoring_f7_schema_migrations(version)
-values ('v66-postgres-foundation')
+values ('v66.0-production-institutionnelle')
 on conflict (version) do nothing;

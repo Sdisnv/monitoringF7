@@ -1,4 +1,4 @@
-/* Monitoring F7 v65 — façade API préparatoire, inactive par défaut. */
+/* Monitoring F7 v66.0 — façade API online-first PostgreSQL/Okta. */
 (function(){
   'use strict';
 
@@ -87,6 +87,10 @@
     replaceRecords(records, options){ return request('PUT', '/records', { records, schemaVersion: window.MonitoringDataSchema?.schemaVersion || 4 }, options); },
     replaceImportedEvents(importedEvents, options){ return request('PUT', '/imported-events', { importedEvents }, options); },
     replaceReferencePeriods(referencePeriods, options){ return request('PUT', '/reference-periods', { referencePeriods }, options); },
+    listUsers(options){ return request('GET', '/admin/users', null, options); },
+    saveUser(user, options){ return request('POST', '/admin/users', user, options); },
+    listAudit(options){ return request('GET', '/audit-log', null, options); },
+    appendAudit(entry, options){ return request('POST', '/audit-log', entry, options); },
     setAccessToken(token){ accessToken = token ? String(token) : null; },
     clearAccessToken(){ accessToken = null; },
     getAccessToken(){ return accessToken; },

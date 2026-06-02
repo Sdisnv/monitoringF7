@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { signToken } = require('./_auth-utils');
+const { normalizeRoles, permissionsForRoles } = require('./_rbac');
 
 const COOKIE_NAME = 'monitoring_f7_oidc_state';
 const ACCESS_COOKIE = 'monitoring_f7_access';
@@ -137,11 +138,15 @@ function rolesFromClaims(config, claims){
 }
 
 function publicUserFromClaims(claims, roles){
+  const subject = String(claims.sub || claims.email || claims.preferred_username || '');
+  const normalizedRoles = normalizeRoles(roles);
   return {
+    subject,
     nip: String(claims.preferred_username || claims.email || claims.sub || ''),
+    email: String(claims.email || claims.preferred_username || ''),
     displayName: String(claims.name || claims.email || claims.preferred_username || 'Utilisateur SDIS'),
-    roles,
-    permissions: []
+    roles: normalizedRoles,
+    permissions: permissionsForRoles(normalizedRoles)
   };
 }
 
@@ -181,7 +186,9 @@ async function oidcCallbackResponse(event){
   const claims = await verifyIdToken(config, metadata, payload.id_token, statePayload.nonce);
   const roles = rolesFromClaims(config, claims);
   const user = publicUserFromClaims(claims, roles);
-  const accessToken = signToken({ typ:'access', sub:user.nip, roles:user.roles, provider:'oidc', displayName:user.displayName }, 3600);
+  try { await require('./_user-store').ensureUser(Object.assign({}, user, { provider:'oidc' })); } catch(error) { /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */ }
+  try { await require('./_audit-store').addAudit({ eventType:'login-okta-oidc', message:'Connexion Okta validée.', actorSubject:user.subject || user.nip, context:{ roles:user.roles } }); } catch(error) {}
+  const accessToken = signToken({ typ:'access', sub:user.subject || user.nip, email:user.email, nip:user.nip, roles:user.roles, permissions:user.permissions, provider:'oidc', displayName:user.displayName }, 3600);
   return redirect(302, '/', [
     clearCookie(COOKIE_NAME),
     secureCookie(ACCESS_COOKIE, accessToken, 3600)

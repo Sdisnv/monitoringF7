@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5.4 — hotfix démarrage Okta Safari privé + état global robuste. */
+/* Monitoring F7 v66.0 — auth Okta production avec secours local désactivé par défaut. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();
@@ -8,8 +8,9 @@
     const cfg = window.MonitoringConfig?.localAuth || {};
     return {
       requireKnownNip: cfg.requireKnownNip === true,
-      sharedAccessEnabled: cfg.sharedAccessEnabled !== false,
-      sharedAccessPasswordHashHex: String(cfg.sharedAccessPasswordHashHex || DEFAULT_ACCESS_HASH_HEX),
+      sharedAccessEnabled: cfg.sharedAccessEnabled === true && cfg.allowLocalFallback === true,
+      allowLocalFallback: cfg.allowLocalFallback === true,
+      sharedAccessPasswordHashHex: String(cfg.sharedAccessPasswordHashHex || ''),
       users: Array.isArray(cfg.users) ? cfg.users : []
     };
   }
@@ -217,7 +218,7 @@
       <p class="auth-note">Monitoring F7 utilise désormais l’authentification institutionnelle Okta/OIDC. La connexion locale NIP reste uniquement un secours technique.</p>
       <div class="auth-message" id="authMessage">Session Okta non détectée ou expirée.</div>
       <a class="primary auth-submit" id="oktaLoginButton" data-okta-login="true" href="/.netlify/functions/auth-oidc-start" role="button">Connexion Okta</a>
-      <button class="secondary auth-submit" type="button" id="localFallbackButton">Secours local technique</button>`;
+      ${getLocalAuthConfig().allowLocalFallback ? '<button class="secondary auth-submit" type="button" id="localFallbackButton">Secours local technique</button>' : '<p class="auth-note">Le secours local est désactivé en production.</p>'}`;
     const oktaBtn = document.getElementById('oktaLoginButton');
     if(oktaBtn) oktaBtn.addEventListener('click', (event) => { event.preventDefault(); startOktaLogin(); });
     const fallbackBtn = document.getElementById('localFallbackButton');
@@ -225,6 +226,7 @@
   }
   function restoreLocalFallbackForm(){
     if(isOktaAuthenticated()){ removeAuthLocks(); return; }
+    if(!getLocalAuthConfig().allowLocalFallback){ setMessage('Secours local désactivé en production.', 'error'); return; }
     const card = document.querySelector('#authOverlay .auth-card');
     if(!card) return;
     card.innerHTML = `
@@ -328,12 +330,12 @@ window.MonitoringAuthService = Object.freeze({
     const profile = this.getProfile();
     const oktaActive = session?.active === true && profile?.authSource === 'okta-oidc';
     return Object.freeze({
-      authMode: oktaActive ? 'oidc' : 'local-fallback',
+      authMode: oktaActive ? 'oidc' : 'oidc-required',
       localSessionActive: !!session,
       backendAuthPrepared: true,
       backendAuthActive: oktaActive,
       authContract: window.MonitoringApiContracts?.get?.('authLogin') || null,
-      localAuthConfigured: true,
+      localAuthConfigured: window.MonitoringConfig?.localAuth?.allowLocalFallback === true,
       localAuthUsers: Array.isArray(window.MonitoringConfig?.localAuth?.users) ? window.MonitoringConfig.localAuth.users.length : 0,
       message: oktaActive ? 'Authentification institutionnelle Okta/OIDC active.' : 'Connexion institutionnelle requise. Secours local disponible uniquement pour diagnostic.'
     });

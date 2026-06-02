@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5 — configuration backend.
+/* Monitoring F7 v66.0 — configuration backend.
    La configuration effective est activée par MonitoringBackendConfigOverrides dans config.js. */
 (function(){
   'use strict';

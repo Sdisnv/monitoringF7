@@ -1,5 +1,4 @@
-/* Monitoring F7 v65 — sécurité client-only réaliste.
-   Ces helpers réduisent les erreurs XSS/injections côté navigateur, sans prétendre fournir une sécurité institutionnelle forte. */
+/* Monitoring F7 v66.0 — sécurité client, journalisation et alerte runtime critique uniquement. */
 (function(){
   'use strict';
 
@@ -71,7 +70,7 @@
   }
 
   function logSecurity(type, detail, data){
-    const payload = { version: window.MonitoringConfig?.version || 'v65', type, detail, at: new Date().toISOString(), data };
+    const payload = { version: window.MonitoringConfig?.version || 'v66.0', type, detail, at: new Date().toISOString(), data };
     console.warn('[Monitoring F7 sécurité]', payload);
     if(type === 'js-error' || type === 'promise-rejection') window.MonitoringAuditLog?.logError(type, detail, data || {});
     else window.MonitoringAuditLog?.logWarning(type, detail, data || {});
@@ -84,16 +83,17 @@
   function shouldShowRuntimeWarning(event){
     const source = String(event?.filename || '');
     const message = String(event?.message || event?.reason?.message || event?.reason || '');
-    // Ne pas afficher l’avertissement utilisateur pour les erreurs saisies dans la console DevTools
-    // ou les extensions navigateur. Le log technique reste conservé côté console/audit.
+    // Production v66: l'utilisateur ne voit une alerte rouge que si l'erreur bloque réellement
+    // l'authentification, le chargement applicatif, le stockage ou les modules critiques.
     if(!source && /SyntaxError|Unexpected token|Expected/.test(message)) return false;
     if(source && !source.includes(location.origin) && !source.startsWith(location.pathname) && !source.includes('/assets/')) return false;
-    return true;
+    const critical = /auth|oidc|session|storage|indexeddb|database|api-client|render-main|app\.js|security/i.test(source + ' ' + message);
+    return critical === true;
   }
 
   function markRuntimeWarning(event){
     if(!shouldShowRuntimeWarning(event)) return;
-    document.body?.classList.add('monitoring-runtime-warning');
+    document.body?.classList.add('monitoring-runtime-critical');
   }
 
   window.addEventListener('error', event => {

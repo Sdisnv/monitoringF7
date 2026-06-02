@@ -1,4 +1,6 @@
 const { response, verifyToken, bearerToken } = require('./_auth-utils');
+const { canWriteRecords } = require('./_rbac');
+const audit = require('./_audit-store');
 const postgresStore = require('./_data-store-postgres');
 
 const STORE_NAME = process.env.MONITORING_F7_BLOBS_STORE || 'monitoring-f7';
@@ -24,8 +26,7 @@ function requireAccess(event){
 }
 
 function forbiddenIfNoWrite(claims){
-  const roles = Array.isArray(claims.roles) ? claims.roles : [];
-  return !(roles.includes('sdis-admin') || roles.includes('sdis-user'));
+  return !canWriteRecords(claims);
 }
 
 function validateArrayPayload(body, key){
@@ -93,6 +94,7 @@ async function handleCollection(event, options){
     try{
       const result = await writeCollection(options.collection, validation.data, body.schemaVersion || 4);
       if(!result.ok) return response(result.statusCode || 503, storageUnavailablePayload());
+      await audit.addAudit({ eventType:`${options.collection}-replace`, message:'Collection serveur remplacée.', actorSubject:claims.sub, context:{ collection:options.collection, count:validation.data.length, schemaVersion:body.schemaVersion || 4 } });
       return response(200, { ok:true, updatedAt:result.updatedAt });
     }catch(error){
       return response(500, { ok:false, error:'central_storage_write_failed', message:String(error.message || error) });

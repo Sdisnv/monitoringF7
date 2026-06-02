@@ -305,8 +305,8 @@ input[type="checkbox"]{accent-color:var(--sdis-primary-red);}
 }
 
 /* v51 — indicateur discret en cas d'erreur runtime captée côté client. */
-body.monitoring-runtime-warning::after {
-  content: "Avertissement technique local — consulter la console si un comportement est anormal";
+body.monitoring-runtime-critical::after {
+  content: "Erreur critique Monitoring F7 — contacter l’administrateur";
   position: fixed;
   right: 12px;
   bottom: 12px;
