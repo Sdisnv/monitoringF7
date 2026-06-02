@@ -1,9 +1,9 @@
-/* Monitoring F7 v65.5 — couche d'évolution non destructive.
+/* Monitoring F7 v65.5.1 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v65.5';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v65.5.1';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -483,14 +483,17 @@
 
   function getAuthProfile(){ return window.MonitoringSessionManager?.getProfile?.() || {}; }
   function updateUserZone(){
+    const auth=window.MonitoringAuth || {};
     const profile=getAuthProfile();
-    const nip=profile.nip || '—';
-    const label=profile.displayName || profile.name || window.CurrentUser?.displayName || (nip !== '—' ? `NIP ${nip}` : 'Utilisateur SDIS');
+    const oidcUser=auth.mode === 'okta' && auth.isAuthenticated === true ? (auth.user || window.CurrentUser || {}) : null;
+    const source=oidcUser || profile || {};
+    const nip=source.nip || source.email || profile.nip || '—';
+    const label=source.displayName || source.name || source.email || (nip !== '—' && !oidcUser ? `NIP ${nip}` : 'Utilisateur SDIS');
     const sessionForStatus = window.MonitoringSessionManager?.read?.() || window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI?.();
     const sessionActive = !!(sessionForStatus && sessionForStatus.active === true);
-    const isOidc = profile.authSource === 'okta-oidc' || sessionForStatus?.mode === 'institutional-oidc';
+    const isOidc = !!oidcUser || profile.authSource === 'okta-oidc' || sessionForStatus?.mode === 'institutional-oidc';
     const display=$('userDisplayName'); if(display) display.textContent=label;
-    const status=$('userSessionStatus'); if(status) status.textContent=sessionActive ? (isOidc ? 'Connecté via Okta' : 'Session locale de secours') : 'Connexion institutionnelle requise';
+    const status=$('userSessionStatus'); if(status) status.textContent=isOidc ? 'Connecté via Okta' : (sessionActive ? 'Session locale de secours' : 'Connexion institutionnelle requise');
     const name=$('userMenuName'); if(name) name.textContent=label;
     const nipEl=$('userMenuNip'); if(nipEl) nipEl.textContent=isOidc ? 'Okta/OIDC' : `NIP ${nip}`;
   }

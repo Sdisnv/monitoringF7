@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5 — authentification institutionnelle OIDC prioritaire, secours local conservé. */
+/* Monitoring F7 v65.5.1 — hotfix frontend Okta/OIDC prioritaire, secours local conservé. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();
@@ -68,14 +68,22 @@
   }
   function hydrateCurrentUser(payload, profile){
     const user = payload?.user || profile || {};
-    const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(profile?.roles) ? profile.roles : []);
-    const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(profile?.permissions) ? profile.permissions : []);
+    const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(user?.roles) ? user.roles : (Array.isArray(profile?.roles) ? profile.roles : []));
+    const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(user?.permissions) ? user.permissions : (Array.isArray(profile?.permissions) ? profile.permissions : []));
     window.CurrentUser = Object.freeze(Object.assign({}, user, {
-      displayName: profile?.displayName || user.displayName || user.name || 'Utilisateur SDIS',
+      nip: user.nip || profile?.nip || user.email || '',
+      displayName: profile?.displayName || user.displayName || user.name || user.email || 'Utilisateur SDIS',
       authSource: 'okta-oidc'
     }));
     window.CurrentRoles = Object.freeze(roles.slice());
     window.CurrentPermissions = Object.freeze(permissions.slice());
+    window.MonitoringAuth = Object.assign(window.MonitoringAuth || {}, {
+      isAuthenticated: true,
+      mode: 'okta',
+      user: window.CurrentUser,
+      roles: window.CurrentRoles,
+      permissions: window.CurrentPermissions
+    });
   }
   function setMessage(text, type){
     const el = document.getElementById('authMessage');
@@ -102,9 +110,18 @@
     document.body?.classList.toggle('auth-locked', !active);
     document.body?.classList.toggle('auth-active', !!active);
   }
+  function removeAuthLocks(){
+    document.querySelector('#authOverlay')?.remove();
+    document.querySelector('#loginOverlay')?.remove();
+    document.querySelector('#securityModal')?.remove();
+    document.body?.classList.remove('auth-locked');
+    document.body?.classList.add('auth-active');
+  }
+  function isOktaAuthenticated(){
+    return window.MonitoringAuth?.isAuthenticated === true && window.MonitoringAuth?.mode === 'okta';
+  }
   function hideOverlay(){
-    const overlay = document.getElementById('authOverlay');
-    if(overlay) overlay.classList.add('auth-hidden');
+    removeAuthLocks();
   }
   function unlock(profile){
     syncAuthUI(true);
@@ -126,7 +143,7 @@
     try{
       const response = await fetch('/.netlify/functions/auth-me', {
         method: 'GET',
-        credentials: 'same-origin',
+        credentials: 'include',
         headers: { 'Accept': 'application/json' },
         cache: 'no-store'
       });
@@ -142,6 +159,7 @@
     }
   }
   function showInstitutionalLogin(){
+    if(isOktaAuthenticated()){ removeAuthLocks(); return; }
     syncAuthUI(false);
     const card = document.querySelector('#authOverlay .auth-card');
     if(!card) return;
@@ -157,6 +175,7 @@
     if(fallbackBtn) fallbackBtn.addEventListener('click', restoreLocalFallbackForm);
   }
   function restoreLocalFallbackForm(){
+    if(isOktaAuthenticated()){ removeAuthLocks(); return; }
     const card = document.querySelector('#authOverlay .auth-card');
     if(!card) return;
     card.innerHTML = `
