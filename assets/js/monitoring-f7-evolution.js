@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.24 — couche d'évolution non destructive.
+/* Monitoring F7 v66.25 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.24';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v66.25';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -372,16 +372,25 @@
     const totalSpec=['pr','autoVl','autoPl'].reduce((n,k)=>n+(Number(dom[k])||0),0)+['foba1','foba2','foba3'].reduce((n,k)=>n+(Number(foba[k])||0),0);
     return `OI ${totalOI} • Spécialisations ${totalSpec}`;
   }
+  const EFFECTIF_SCOPE_LABELS={ foba:'FOBA', pr:'PR / PAPR', auto:'AUTO', dps:'DPS', dap:'DAP', jsp:'JSP' };
+  const EFFECTIF_ALL_SCOPES=Object.keys(EFFECTIF_SCOPE_LABELS);
+  function summarizeEffectifScope(period){
+    const suivi=period?.suivi||{};
+    const domains=Array.isArray(suivi.updateDomains) ? suivi.updateDomains.map(v=>String(v||'').toLowerCase()).filter(Boolean) : [];
+    const unique=[...new Set(domains)].filter(domain=>EFFECTIF_SCOPE_LABELS[domain]);
+    if(suivi.updateScope !== 'domains' || unique.length===0 || unique.length===EFFECTIF_ALL_SCOPES.length) return 'Tous';
+    return unique.map(domain=>EFFECTIF_SCOPE_LABELS[domain]).join(', ');
+  }
   function renderEffectifsLibrary(){
     const tbody=$('f7EffectifsLibraryBody'); if(!tbody) return;
     const periods=toArray(readJSON(KEYS.periods, []));
     const count=$('f7EffectifsLibraryCount'); if(count) count.textContent=`${periods.length} effectif${periods.length>1?'s':''}`;
     tbody.innerHTML='';
-    if(!periods.length){ tbody.innerHTML='<tr><td colspan="7" class="muted">Aucun effectif enregistré.</td></tr>'; return; }
+    if(!periods.length){ tbody.innerHTML='<tr><td colspan="8" class="muted">Aucun effectif enregistré.</td></tr>'; return; }
     periods.sort((a,b)=>String(b.dateEffective||'').localeCompare(String(a.dateEffective||''))).forEach(period=>{
       const tr=document.createElement('tr');
       const name=period?.suivi?.commentaire || period?.suivi?.updatedBy || `Effectif du ${fmtLocalDate(period.dateEffective)}`;
-      tr.innerHTML=`<td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(fmtLocalDate(period.dateEffective))}</td><td>${escapeHtml(fmtLocalDate(period.dateEnd))}</td><td>${escapeHtml(fmtLocalDate(period.createdAt))}</td><td>${escapeHtml(fmtLocalDate(period.updatedAt || period?.suivi?.updatedAt))}</td><td>${escapeHtml(summarizePeriod(period))}</td><td><div class="f7-row-actions"><button class="compact-btn" data-f7-preview-effectif="${escapeHtml(period.id)}" type="button">Aperçu</button><button class="compact-btn primary" data-f7-load-effectif="${escapeHtml(period.id)}" type="button">Charger</button><button class="compact-btn danger-btn" data-f7-delete-effectif="${escapeHtml(period.id)}" type="button">Supprimer</button></div></td>`;
+      tr.innerHTML=`<td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(fmtLocalDate(period.dateEffective))}</td><td>${escapeHtml(fmtLocalDate(period.dateEnd))}</td><td>${escapeHtml(fmtLocalDate(period.createdAt))}</td><td>${escapeHtml(fmtLocalDate(period.updatedAt || period?.suivi?.updatedAt))}</td><td>${escapeHtml(summarizeEffectifScope(period))}</td><td>${escapeHtml(summarizePeriod(period))}</td><td><div class="f7-row-actions"><button class="compact-btn" data-f7-preview-effectif="${escapeHtml(period.id)}" type="button">Aperçu</button><button class="compact-btn primary" data-f7-load-effectif="${escapeHtml(period.id)}" type="button">Charger</button><button class="compact-btn danger-btn" data-f7-delete-effectif="${escapeHtml(period.id)}" type="button">Supprimer</button></div></td>`;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('[data-f7-preview-effectif]').forEach(btn=>btn.addEventListener('click',()=>previewEffectif(btn.dataset.f7PreviewEffectif)));

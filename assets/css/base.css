@@ -13,11 +13,11 @@
       --ok:#1f5fbf;
       --warn:#b26a00;
       --tableHead:#f8f9fb;
-      --chart-red:#CB4B40;
-      --chart-blue:#2A2D73;
-      --chart-orange:#DE9043;
-      --chart-gray-dark:#575756;
-      --chart-gray-light:#B3B6BE;
+      --chart-red:#de000a;
+      --chart-blue:#171c8f;
+      --chart-orange:#ffa300;
+      --chart-gray-dark:#54585a;
+      --chart-gray-light:#76797b;
     }
 
     *{box-sizing:border-box}
@@ -666,6 +666,21 @@
       flex:1;
     }
 
+    .reference-top-row > .reference-inline-block:first-child .reference-inline-values{
+      grid-auto-flow:row;
+      grid-auto-rows:max-content;
+      align-content:start;
+      align-items:stretch;
+      padding-top:2px;
+    }
+
+    .reference-top-row > .reference-inline-block:first-child .compact-field:not(.compact-global-field){
+      display:grid;
+      grid-template-columns:64px 76px;
+      align-items:center;
+      gap:10px;
+    }
+
     .compact-field{
       display:flex;
       flex-direction:column;
@@ -1291,8 +1306,11 @@
       align-items:end;
     }
     .domain-row-drivers{
-      grid-template-columns:repeat(2, max-content) max-content;
+      grid-template-columns:repeat(3, max-content);
       justify-content:start;
+    }
+    .domain-group-title-auto{
+      grid-column:1 / -1;
     }
     .domain-group{
       min-width:0;
@@ -2426,7 +2444,7 @@
 .kpi-alert-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
 .kpi-alert{border:1px solid rgba(15,23,42,0.10);border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.35;background:#f8fafc;color:#334155;}
 .kpi-alert-ok{border-color:rgba(34,101,65,0.20);background:rgba(34,101,65,0.07);color:#1f5f3d;}
-.kpi-alert-info{border-color:rgba(42,45,115,0.20);background:rgba(42,45,115,0.06);color:#2A2D73;}
+.kpi-alert-info{border-color:rgba(23,28,143,0.20);background:rgba(23,28,143,0.06);color:#171c8f;}
 .kpi-alert-warn{border-color:rgba(222,144,67,0.30);background:rgba(222,144,67,0.10);color:#7a460f;}
 @media (max-width:1100px){.executive-kpi-grid-v55{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media (max-width:640px){.executive-kpi-grid-v55{grid-template-columns:1fr;}}

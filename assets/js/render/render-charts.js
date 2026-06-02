@@ -1,13 +1,19 @@
-/* Monitoring F7 v65 — rendu graphiques centralisé robuste.
+/* Monitoring F7 v66.25 — rendu graphiques centralisé robuste.
    Phase 5: rationalisation KPI/graphiques, protections Chart.js, canvas vide/absent, NaN/Infinity. */
 (function(){
   'use strict';
   const CHART_FONT_FAMILY = 'Arial, Helvetica, sans-serif';
-  const CHART_COLORS = ['#CB4B40','#2A2D73','#DE9043','#575756','#B3B6BE','#7A7DA8','#D06A5F','#5A5D9A','#F0C48A','#8C8FAF'];
-  const DOMAIN_COLOR_MAP = { DPS: '#2A2D73', DAP: '#DE9043', FOBA: '#CB4B40', PR: '#575756', AUTO: '#B3B6BE', JSP: '#7A7DA8' };
+  const CHART_BASE_COLORS = ['#de000a', '#171c8f', '#ffa300', '#54585a'];
+  const CHART_COLORS = [
+    '#de000a', '#171c8f', '#ffa300', '#54585a',
+    '#e5333b', '#4549a5', '#ffb733', '#76797b',
+    '#b20008', '#121672', '#cc8200', '#3f4244',
+    '#f0666d', '#7477bc', '#ffc966', '#989b9c'
+  ];
+  const DOMAIN_COLOR_MAP = { FOBA: '#de000a', DPS: '#171c8f', PR: '#ffa300', PAPR: '#ffa300', AUTO: '#54585a', DAP: '#e5333b', JSP: '#4549a5' };
 
   function warn(message, detail){
-    try { console.warn(`[Monitoring F7 v65] ${message}`, detail || ''); } catch (_) {}
+    try { console.warn(`[Monitoring F7 v66.25] ${message}`, detail || ''); } catch (_) {}
     try { window.MonitoringAuditLog?.logWarning('chart-warning', message, { detail }); } catch (_) {}
   }
   function safeNumber(value, fallback = 0){
@@ -177,10 +183,10 @@
     if(!labels.length || !hasUsefulData(data)) return drawEmptyChart(canvas, 'Aucune évolution exploitable');
     if(!isChartJsAvailable()) return drawBarChart(canvas, labels, data, label);
     destroyChart(canvas);
-    try { canvas._chartInstance = new Chart(canvas.getContext('2d'), { type:'line', data:{ labels, datasets:[{ label: label || 'Taux', data, borderColor:'#c1121f', backgroundColor:'rgba(193,18,31,0.08)', fill:true, tension:0.35, pointRadius:4, pointBackgroundColor:'#c1121f' }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => `${safeNumber(ctx.parsed.y).toFixed(1)} %` } } }, scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } } }); }
+    try { canvas._chartInstance = new Chart(canvas.getContext('2d'), { type:'line', data:{ labels, datasets:[{ label: label || 'Taux', data, borderColor:CHART_BASE_COLORS[0], backgroundColor:'rgba(222,0,10,0.08)', fill:true, tension:0.35, pointRadius:4, pointBackgroundColor:CHART_BASE_COLORS[0] }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => `${safeNumber(ctx.parsed.y).toFixed(1)} %` } } }, scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } } }); }
     catch(err){ warn('Graphique ligne Chart.js indisponible, rendu canvas simple.', err); drawBarChart(canvas, labels, data, label); }
   }
-  function drawDoughnutChart(canvas, labels, data, title, colors = ['#CB4B40','#DE9043','#2A2D73','#575756','#B3B6BE']){
+  function drawDoughnutChart(canvas, labels, data, title, colors = CHART_COLORS){
     if(!canvas) return warn(`Graphique absent: ${title || 'anneau'}`);
     labels = Array.isArray(labels) ? labels.map(v => String(v ?? '')) : []; data = normalizeData(data);
     if(!labels.length || !hasUsefulData(data)) return drawEmptyChart(canvas, 'Aucune valeur significative à afficher');
@@ -190,7 +196,12 @@
     catch(err){ warn('Graphique anneau Chart.js indisponible, rendu canvas simple.', err); drawPieChart(canvas, labels, data, title, colors); }
   }
 
-  const api = Object.freeze({ setupHiDPICanvas, destroyChart, drawEmptyChart, getChartColor, getDomainColor, getDomainColorFromLabel, wrapCanvasLabel, drawBarChart, drawHorizontalBarChart, drawHorizontalDualBarChart, drawPieChart, drawLineChart, drawDoughnutChart, normalizeData, safeNumber, safePercent });
+  function getChartColors(count){
+    const length = Math.max(0, Number(count) || 0);
+    return Array.from({ length }, (_, index) => getChartColor(index));
+  }
+
+  const api = Object.freeze({ setupHiDPICanvas, destroyChart, drawEmptyChart, getChartColor, getChartColors, getDomainColor, getDomainColorFromLabel, wrapCanvasLabel, drawBarChart, drawHorizontalBarChart, drawHorizontalDualBarChart, drawPieChart, drawLineChart, drawDoughnutChart, normalizeData, safeNumber, safePercent });
   window.MonitoringRenderCharts = api;
   window.MonitoringF7 = window.MonitoringF7 || {};
   window.MonitoringF7.charts = api;

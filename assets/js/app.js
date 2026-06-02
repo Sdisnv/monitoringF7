@@ -435,7 +435,7 @@
     const COMMAND_DOMAIN_ORDER = ["FOBA", "PR", "DPS", "DAP", "AUTO", "JSP"];
     const OI_ORDER = ["DPS G1", "DPS C1", "DPS B1", "DPS B2", "DAP Y1", "DAP Y2", "DAP Y3", "DAP Y4"];
     const SUB_STRUCTURE_ORDER = ["DPS", "DPS G1", "DPS C1", "DPS B1", "DPS B2", "DAP", "DAP Y1", "DAP Y2", "DAP Y3", "DAP Y4", "FOBA 1", "FOBA 2", "FOBA 3", "PAPR", "Cond PL", "Cond VL DPS", "JSP", "Cadets", "JSP G1", "JSP C1", "JSP B1"];
-    const DOMAIN_COLOR_MAP = { DPS: "#2A2D73", DAP: "#DE9043", FOBA: "#CB4B40", PR: "#575756", AUTO: "#B3B6BE", JSP: "#7A7DA8" };
+    const DOMAIN_COLOR_MAP = { FOBA: "#de000a", DPS: "#171c8f", PR: "#ffa300", PAPR: "#ffa300", AUTO: "#54585a", DAP: "#e5333b", JSP: "#4549a5" };
 
     const DOMAIN_CONFIG = {
       DPS: {
@@ -3333,20 +3333,18 @@ function openExercisePreview(record) {
     }
 
    function handleCreateReferencePeriod() {
-      const source = getSelectedReferencePeriod();
-
       const created = createReferencePeriod({
-        dateEffective: parseFlexibleDateToIso(getReferenceDateForNewPeriod()),
-        foba: source?.foba || {},
-        domaines: source?.domaines || {},
-        organes: source?.organes || {},
+        dateEffective: "",
+        foba: {},
+        domaines: {},
+        organes: {},
         suivi: {
-          updatedByNip: source?.suivi?.updatedByNip || "",
-          updatedBy: source?.suivi?.updatedBy || "",
+          updatedByNip: "",
+          updatedBy: "",
           generatedByNip: "",
-          generatedBy: connectedUserDisplayName() || source?.suivi?.generatedBy || "",
-          updateScope: source?.suivi?.updateScope || "domains",
-          updateDomains: source?.suivi?.updateDomains || [...REFERENCE_UPDATE_DOMAINS],
+          generatedBy: connectedUserDisplayName() || "",
+          updateScope: "all",
+          updateDomains: [...REFERENCE_UPDATE_DOMAINS],
           commentaire: ""
         }
       });
@@ -4804,7 +4802,7 @@ function getSeriesAnalysis(seriesKey) {
         : undefined;
     }
 
-    const CHART_COLORS = ['#CB4B40','#2A2D73','#DE9043','#575756','#B3B6BE','#7A7DA8','#D06A5F','#5A5D9A','#F0C48A','#8C8FAF'];
+    const CHART_COLORS = ['#de000a', '#171c8f', '#ffa300', '#54585a', '#e5333b', '#4549a5', '#ffb733', '#76797b', '#b20008', '#121672', '#cc8200', '#3f4244', '#f0666d', '#7477bc', '#ffc966', '#989b9c'];
 
     function getChartColor(index) {
       return window.MonitoringRenderCharts?.getChartColor
@@ -5071,7 +5069,7 @@ function getSeriesAnalysis(seriesKey) {
         paddedTopAbsRows.map((r, index) => r.isPlaceholder ? `Position ${index + 1}` : `${fmtDate(r.dateExercice)} • ${r.template || ''}`.trim()),
         paddedTopAbsRows.map(r => toInt(r.nbAbsents)),
         'Top 10 des événements avec le plus d’absences',
-        paddedTopAbsRows.map(r => r.isPlaceholder ? 'rgba(179,182,190,0.65)' : '#CB4B40')
+        paddedTopAbsRows.map(r => r.isPlaceholder ? 'rgba(84,88,90,0.45)' : getChartColor(0))
       );
 
       const objectiveData = summarizeObjectivePerformance(all);
@@ -5083,7 +5081,7 @@ function getSeriesAnalysis(seriesKey) {
         metrics.map(item => item.target),
         metrics.map(item => Number(item.actual.toFixed(1))),
         'Objectif vs réel',
-        ['#575756', '#CB4B40']
+        [getChartColor(3), getChartColor(0)]
       );
       const complianceCounts = { good: 0, warn: 0, bad: 0 };
       metrics.forEach(item => { complianceCounts[item.status] = (complianceCounts[item.status] || 0) + 1; });
@@ -5092,21 +5090,21 @@ function getSeriesAnalysis(seriesKey) {
         ['Atteint', 'À surveiller', 'Non atteint'],
         [complianceCounts.good, complianceCounts.warn, complianceCounts.bad],
         'Conformité des objectifs',
-        ['#1f5fbf', '#DE9043', '#CB4B40']
+        [getChartColor(1), getChartColor(2), getChartColor(0)]
       );
       drawBarChart(
         els.commandGapChart,
         metricLabels,
         metrics.map(item => Number(item.gap.toFixed(1))),
         'Écart aux objectifs (points)',
-        metrics.map(item => item.gap >= 0 ? '#1f5fbf' : item.gap >= -5 ? '#DE9043' : '#CB4B40')
+        metrics.map(item => item.gap >= 0 ? getChartColor(1) : item.gap >= -5 ? getChartColor(2) : getChartColor(0))
       );
       drawPieChart(
         els.jspCostChart,
         ['Coût couvert', 'Part non couverte'],
         [Math.max(0, Math.round(objectives.objJspCotisation * Math.max(0, objectiveData.jspSummary?.presents || 0))), objectiveData.jspCostEstimate],
         'Impact financier JSP',
-        ['#1f5fbf', '#CB4B40']
+        [getChartColor(1), getChartColor(0)]
       );
     }
 
@@ -6980,7 +6978,7 @@ a.sessions.forEach((s, i) => {
           labels,
           datasets: [{
             data,
-            backgroundColor: ['#CB4B40','#DE9043','#2A2D73','#575756','#B3B6BE']
+            backgroundColor: data.map((_, index) => getChartColor(index))
           }]
         },
         options: {

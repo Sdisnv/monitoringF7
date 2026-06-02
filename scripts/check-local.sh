@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.24" index.html
-grep -q "version: 'v66.24'" assets/js/config.js
-grep -q "Version du fichier : v66.24" index.html
+grep -q "Monitoring F7 v66.25" index.html
+grep -q "version: 'v66.25'" assets/js/config.js
+grep -q "Version du fichier : v66.25" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -64,6 +64,8 @@ grep -q "effectifUpdatedByNip" index.html
 grep -q "personnelSdisNipOptions" index.html
 grep -q "effectifUpdateScope" index.html
 grep -q "saveReferencePeriodBtn" index.html
+grep -q "Effectif concerné" index.html
+grep -q "domain-group-title-auto" index.html
 grep -q "PERSONNEL_SDIS_CSV_URL" assets/js/app.js
 grep -q "applyResponsibleFromNip" assets/js/app.js
 grep -q "findPersonnelSdisByDisplayName" assets/js/app.js
@@ -71,6 +73,15 @@ grep -q "connectedUserDisplayName" assets/js/app.js
 grep -q "REFERENCE_UPDATE_DOMAINS" assets/js/app.js
 grep -q "reference-scope-row" assets/css/base.css
 grep -q "reference-domain-scope input\\[type=\"checkbox\"\\]" assets/css/base.css
+grep -q "summarizeEffectifScope" assets/js/monitoring-f7-evolution.js
+grep -q "#de000a" assets/js/render/render-charts.js
+grep -q "#171c8f" assets/js/render/render-charts.js
+grep -q "#ffa300" assets/js/render/render-charts.js
+grep -q "#54585a" assets/js/render/render-charts.js
+if grep -q "CB4B40\\|2A2D73\\|DE9043\\|B3B6BE\\|7A7DA8\\|F0C48A" assets/js/render/render-charts.js assets/js/app.js; then
+  echo "ERREUR: ancienne palette graphique detectee"
+  exit 1
+fi
 if grep -q "E-mail / sujet Okta" assets/js/admin.js; then
   echo "ERREUR: ancien formulaire utilisateurs detecte dans admin.js"
   exit 1
