@@ -5,6 +5,7 @@
   const QUEUE_KEY = 'monitoring_f7_sync_queue_v65';
   const LEGACY_QUEUE_KEY = 'monitoring_f7_sync_queue_v57';
   const STATUS_KEY = 'monitoring_f7_sync_status_v65';
+  const SERVER_STATUS_KEY = 'monitoring_f7_server_status_v1';
 
   function readJson(key, fallback){
     try{ return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }catch{ return fallback; }
@@ -82,7 +83,15 @@
       writeJson(STATUS_KEY, status);
       return Object.freeze(status);
     }
+    if(window.MonitoringOnlineDataService?.publishLocal) await window.MonitoringOnlineDataService.publishLocal();
     if(window.MonitoringOnlineDataService?.hydrate) await window.MonitoringOnlineDataService.hydrate();
+    if(window.MonitoringApiClient?.getDataStatus){
+      const server = await window.MonitoringApiClient.getDataStatus();
+      if(server?.ok && server.data?.ok) {
+        status.server = server.data;
+        writeJson(SERVER_STATUS_KEY, server.data);
+      }
+    }
     status.status = 'synced';
     status.readiness = readiness;
     status.lastSyncSuccessAt = new Date().toISOString();
@@ -90,7 +99,8 @@
     writeJson(STATUS_KEY, status);
     return Object.freeze(status);
   }
+  function getServerStatus(){ return readJson(SERVER_STATUS_KEY, null); }
   function clearQueue(){ writeJson(QUEUE_KEY, []); return getStatus(); }
 
-  window.MonitoringSyncService = Object.freeze({ isSyncEnabled, checkReadiness, getStatus, getQueue, enqueue, planSync, syncNow, clearQueue });
+  window.MonitoringSyncService = Object.freeze({ isSyncEnabled, checkReadiness, getStatus, getServerStatus, getQueue, enqueue, planSync, syncNow, clearQueue });
 })();

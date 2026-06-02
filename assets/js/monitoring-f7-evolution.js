@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.12 — couche d'évolution non destructive.
+/* Monitoring F7 v66.13 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.12';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v66.13';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -618,6 +618,7 @@
     const logs = logApi.getLogs().slice(-80).reverse();
     const backendStatus = window.MonitoringApiClient?.getBackendStatus ? window.MonitoringApiClient.getBackendStatus() : { backendEnabled:false, storageMode:'local', authMode:'local', syncEnabled:false };
     const syncStatus = window.MonitoringSyncService?.getStatus ? window.MonitoringSyncService.getStatus() : { status:'inactive', lastSyncAttemptAt:null };
+    const serverStatus = window.MonitoringSyncService?.getServerStatus ? window.MonitoringSyncService.getServerStatus() : null;
     const contractStatus = window.MonitoringBackendContractCheck?.run ? window.MonitoringBackendContractCheck.run() : null;
     statsEl.innerHTML = [
       ['Version application', diagnostics.appVersion || APP_VERSION],
@@ -626,7 +627,7 @@
       ['localStorage', diagnostics.localStorageAvailable ? 'Disponible' : 'Indisponible'],
       ['Stockage approx.', `${diagnostics.storageApproxKo || 0} Ko`],
       ['Dernière migration', diagnostics.lastMigrationAt ? fmtLocalDate(diagnostics.lastMigrationAt) : '—'],
-      ['Mode backend', backendStatus.backendEnabled ? 'Préparé' : 'Désactivé'],
+      ['Mode backend', backendStatus.backendEnabled ? 'Actif' : 'Désactivé'],
       ['Mode stockage', backendStatus.storageMode || 'local'],
       ['Stockage central', backendStatus.centralStorageEnabled ? 'Actif' : 'Inactif'],
       ['Mode auth', backendStatus.authMode || 'local'],
@@ -634,10 +635,13 @@
       ['Schéma données', window.MonitoringDataSchema ? `v${window.MonitoringDataSchema.schemaVersion}` : 'Non chargé'],
       ['Contrats API', contractStatus ? `${contractStatus.contractCount} vérifiés` : (window.MonitoringApiContracts ? 'Documentés' : 'Non chargés')],
       ['Mock backend', backendStatus.mockBackendEnabled ? 'Actif' : 'Désactivé'],
-      ['Synchronisation', syncStatus.syncEnabled ? 'Préparée' : 'Inactive'],
+      ['Synchronisation', syncStatus.syncEnabled ? 'Active' : 'Inactive'],
       ['Prérequis sync', syncStatus.readiness?.ready ? 'Réunis' : 'Incomplets'],
       ['File sync', `${syncStatus.queueLength || 0} opération${(syncStatus.queueLength || 0)>1?'s':''}`],
-      ['Dernière tentative sync', syncStatus.lastSyncAttemptAt ? fmtLocalDate(syncStatus.lastSyncAttemptAt) : 'Aucune']
+      ['Dernière tentative sync', syncStatus.lastSyncAttemptAt ? fmtLocalDate(syncStatus.lastSyncAttemptAt) : 'Aucune'],
+      ['Serveur records', serverStatus?.collections ? String(serverStatus.collections.records || 0) : 'Non testé'],
+      ['Serveur événements', serverStatus?.collections ? String(serverStatus.collections.importedEvents || 0) : 'Non testé'],
+      ['Serveur effectifs', serverStatus?.collections ? String(serverStatus.collections.referencePeriods || 0) : 'Non testé']
     ].map(([label,val])=>`<div class="f7-admin-stat"><strong>${escapeHtml(val)}</strong><span>${escapeHtml(label)}</span></div>`).join('');
     if(!logs.length){ body.innerHTML='<tr><td colspan="4" class="muted">Aucun événement journalisé.</td></tr>'; return; }
     body.innerHTML = logs.map(entry => `<tr><td>${escapeHtml(fmtLocalDate(entry.at))}</td><td><strong>${escapeHtml(entry.level || 'info')}</strong></td><td>${escapeHtml(entry.eventType || '—')}</td><td>${escapeHtml(entry.message || '')}</td></tr>`).join('');
@@ -673,7 +677,7 @@
         : `${result.message} File locale : ${result.queueLength || 0} opération.`;
       if(box) box.textContent = message;
       window.MonitoringAuditLog?.logInfo('sync-readiness-check', 'Contrôle local des prérequis de synchronisation exécuté.', result);
-      showOperationalMessage(missing.length ? 'Synchronisation non prête : prérequis manquants.' : 'Prérequis sync réunis, exécution automatique non activée.', missing.length ? 'warn' : 'ok');
+      showOperationalMessage(missing.length ? 'Synchronisation non prête : prérequis manquants.' : 'Synchronisation serveur exécutée.', missing.length ? 'warn' : 'ok');
       renderDiagnosticLocal();
     });
     $('f7ExportLogsBtn')?.addEventListener('click', ()=>{ window.MonitoringAuditLog?.exportLogs(); renderDiagnosticLocal(); });

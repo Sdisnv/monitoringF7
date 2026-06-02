@@ -89,6 +89,7 @@
     replaceReferencePeriods(referencePeriods, options){ return request('PUT', '/reference-periods', { referencePeriods }, options); },
     listObjectives(options){ return request('GET', '/objectives', null, options); },
     replaceObjectives(objectives, options){ return request('PUT', '/objectives', { objectives, schemaVersion: window.MonitoringDataSchema?.schemaVersion || 4 }, options); },
+    getDataStatus(options){ return request('GET', '/data/status', null, options); },
     listUsers(options){ return request('GET', '/admin/users', null, options); },
     saveUser(user, options){ return request('POST', '/admin/users', user, options); },
     listAudit(options){ return request('GET', '/audit-log', null, options); },

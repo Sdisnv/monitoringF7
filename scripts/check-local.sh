@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.12" index.html
-grep -q "version: 'v66.12'" assets/js/config.js
-grep -q "Version du fichier : v66.12" index.html
+grep -q "Monitoring F7 v66.13" index.html
+grep -q "version: 'v66.13'" assets/js/config.js
+grep -q "Version du fichier : v66.13" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -28,6 +28,7 @@ grep -q 'to = "/.netlify/functions/auth-oidc-start"' netlify.toml
 grep -q 'to = "/.netlify/functions/auth-oidc-callback"' netlify.toml
 grep -q 'to = "/.netlify/functions/data-records"' netlify.toml
 grep -q 'to = "/.netlify/functions/data-objectives"' netlify.toml
+grep -q 'to = "/.netlify/functions/data-status"' netlify.toml
 grep -q 'to = "/.netlify/functions/admin-settings"' netlify.toml
 
 echo "-- Controle backend optionnel"
@@ -43,6 +44,8 @@ grep -q "centralStorageEnabled: true" assets/js/config.js
 grep -q "serverAuthEnabled: true" assets/js/config.js
 grep -q "oidcEnabled: true" assets/js/config.js
 grep -q "hydrateOnlineDataCache" assets/js/app.js
+grep -q "publishLocalCacheToServer" assets/js/app.js
+grep -q "getDataStatus" assets/js/api-client.js
 grep -q "scheduleOnlineCollectionWrite" assets/js/app.js
 grep -q "updateAdminCode" assets/js/api-client.js
 grep -q "event.httpMethod === 'GET'" netlify/functions/auth-logout.js
