@@ -8,6 +8,7 @@
     "check": "./scripts/check-local.sh"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.9",
     "pg": "^8.13.1"
   },
   "engines": {
