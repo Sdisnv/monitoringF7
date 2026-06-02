@@ -19,6 +19,7 @@
   const ROLE_LABELS = Object.freeze(ROLES.reduce((acc, role) => Object.assign(acc, { [role.value]: role.label }), {}));
   function $(id){ return document.getElementById(id); }
   function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function normalizeHeader(value){ return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function canAdmin(){ return window.MonitoringRBAC?.has?.('users:admin') === true; }
   function roleLabel(role){ return ROLE_LABELS[role] || role; }
   function mount(){
@@ -32,12 +33,18 @@
       <div class="grid-3">
         <div><label>E-mail / NIP Okta</label><input id="f7UserSubject" placeholder="prenom.nom@sdisnv.ch"></div>
         <div><label>Nom affiché</label><input id="f7UserDisplayName" placeholder="Prénom NOM"></div>
-        <div><label>Profil rapide</label><select id="f7QuickProfile">${QUICK_PROFILES.map(p=>`<option value="${p.value}">${p.label}</option>`).join('')}</select></div>
+        <div><label>NIP / identifiant</label><input id="f7UserNip" placeholder="Optionnel"></div>
       </div>
       <div class="grid-3">
+        <div><label>Profil rapide</label><select id="f7QuickProfile">${QUICK_PROFILES.map(p=>`<option value="${p.value}">${p.label}</option>`).join('')}</select></div>
         <div><label>Rôles détaillés</label><select id="f7UserRoles" multiple size="7">${ROLES.map(r=>`<option value="${r.value}">${r.label}</option>`).join('')}</select></div>
         <div><label>État</label><select id="f7UserActive"><option value="true">Actif</option><option value="false">Désactivé</option></select></div>
-        <div><label>Lecture pratique</label><div class="f7-status-box">Lecture seule = consultation. Lecture + écriture = saisie. Chef formation = pilotage formation. Admin = droits complets.</div></div>
+      </div>
+      <div class="f7-status-box">Lecture seule = consultation. Lecture + écriture = saisie. Chef formation = pilotage formation. Admin = droits complets.</div>
+      <div class="grid-3">
+        <div><label>Importer PersonnelSDIS.csv</label><input id="f7PersonnelCsvFile" type="file" accept=".csv,text/csv"></div>
+        <div><label>Profil importé</label><select id="f7CsvQuickProfile">${QUICK_PROFILES.map(p=>`<option value="${p.value}">${p.label}</option>`).join('')}</select></div>
+        <div><label>&nbsp;</label><button class="compact-btn" id="f7ImportPersonnelCsvBtn" type="button">Importer utilisateurs CSV</button></div>
       </div>
       <div class="f7-action-row"><button class="compact-btn primary" id="f7CreateUserBtn" type="button">Créer / modifier utilisateur</button><button class="compact-btn" id="f7RefreshUsersBtn" type="button">Actualiser</button><button class="compact-btn" id="f7LoadAuditBtn" type="button">Charger audit trail</button></div>
       <div class="f7-status-box" id="f7UsersStatus">Réservé aux administrateurs.</div>
@@ -46,6 +53,7 @@
     pane.appendChild(box);
     $('f7QuickProfile')?.addEventListener('change', applyQuickProfile);
     $('f7CreateUserBtn')?.addEventListener('click', saveUser);
+    $('f7ImportPersonnelCsvBtn')?.addEventListener('click', importPersonnelCsv);
     $('f7RefreshUsersBtn')?.addEventListener('click', loadUsers);
     $('f7LoadAuditBtn')?.addEventListener('click', loadAudit);
     window.MonitoringRBAC?.applyUIRestrictions?.();
@@ -67,6 +75,7 @@
     tbody.querySelectorAll('[data-edit-user]').forEach(btn => btn.addEventListener('click', () => {
       const u=(res.data.users||[]).find(x=>x.subject===btn.getAttribute('data-edit-user')); if(!u) return;
       $('f7UserSubject').value=u.subject||u.email||''; $('f7UserDisplayName').value=u.displayName||'';
+      $('f7UserNip').value=u.nip||'';
       $('f7UserActive').value = u.active === false ? 'false' : 'true';
       Array.from($('f7UserRoles').options).forEach(o => o.selected=(u.roles||[]).includes(o.value));
     }));
@@ -76,10 +85,66 @@
     const subject=$('f7UserSubject')?.value.trim().toLowerCase(); if(!subject){ setStatus('E-mail / NIP obligatoire.', 'error'); return; }
     const roles = selectedRoles();
     if(!roles.length){ setStatus('Sélectionne au moins un rôle.', 'error'); return; }
-    const user={ subject, email:subject.includes('@')?subject:'', displayName:$('f7UserDisplayName')?.value.trim()||subject, roles, active:$('f7UserActive')?.value !== 'false' };
+    const user={ subject, email:subject.includes('@')?subject:'', displayName:$('f7UserDisplayName')?.value.trim()||subject, nip:$('f7UserNip')?.value.trim()||'', roles, active:$('f7UserActive')?.value !== 'false' };
     const res = await window.MonitoringApiClient.saveUser(user);
     if(!res.ok || !res.data?.ok){ setStatus(res.data?.error || 'Enregistrement refusé.', 'error'); return; }
     setStatus('Utilisateur enregistré.', 'ok'); loadUsers();
+  }
+  function parseCsvLine(line, sep){
+    const out=[]; let cur=''; let quoted=false;
+    for(let i=0;i<String(line).length;i++){
+      const ch=line[i];
+      if(ch === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
+      if(ch === '"'){ quoted = !quoted; continue; }
+      if(ch === sep && !quoted){ out.push(cur.trim()); cur=''; continue; }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  }
+  function parsePersonnelCsv(text){
+    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim());
+    if(lines.length < 2) throw new Error('CSV vide ou sans données.');
+    const sep = (lines[0].match(/;/g) || []).length >= (lines[0].match(/,/g) || []).length ? ';' : ',';
+    const headers = parseCsvLine(lines[0], sep).map(normalizeHeader);
+    const indexOf = names => headers.findIndex(header => names.includes(header));
+    const idx = {
+      grade: indexOf(['grade', 'rang']),
+      prenom: indexOf(['prenom', 'prénom']),
+      nom: indexOf(['nom', 'name']),
+      email: indexOf(['email', 'e mail', 'mail', 'adresse email', 'adresse mail']),
+      nip: indexOf(['nip', 'eca', 'identifiant', 'matricule'])
+    };
+    return lines.slice(1).map(line => {
+      const values = parseCsvLine(line, sep);
+      const grade = idx.grade >= 0 ? values[idx.grade] : '';
+      const prenom = idx.prenom >= 0 ? values[idx.prenom] : '';
+      const nom = idx.nom >= 0 ? values[idx.nom] : '';
+      const email = idx.email >= 0 ? values[idx.email] : '';
+      const nip = idx.nip >= 0 ? values[idx.nip] : '';
+      const displayName = [grade, prenom, nom].map(v => String(v || '').trim()).filter(Boolean).join(' ') || email || nip;
+      const subject = String(email || nip || '').trim().toLowerCase();
+      return { subject, email, nip, displayName };
+    }).filter(user => user.subject && user.displayName);
+  }
+  async function importPersonnelCsv(){
+    if(!canAdmin()){ setStatus('Accès refusé : rôle admin requis.', 'error'); return; }
+    const file = $('f7PersonnelCsvFile')?.files?.[0];
+    if(!file){ setStatus('Sélectionne PersonnelSDIS.csv.', 'error'); return; }
+    const profile = QUICK_PROFILES.find(item => item.value === $('f7CsvQuickProfile')?.value) || QUICK_PROFILES[1];
+    try{
+      const users = parsePersonnelCsv(await file.text());
+      if(!users.length){ setStatus('Aucun utilisateur exploitable dans le CSV.', 'error'); return; }
+      let ok = 0; let failed = 0;
+      for(const user of users){
+        const res = await window.MonitoringApiClient.saveUser(Object.assign({}, user, { roles:profile.roles, active:true }));
+        if(res.ok && res.data?.ok) ok++; else failed++;
+      }
+      setStatus(`Import PersonnelSDIS terminé : ${ok} utilisateur(s) créé(s)/mis à jour, ${failed} échec(s).`, failed ? 'warn' : 'ok');
+      loadUsers();
+    }catch(error){
+      setStatus(`Import CSV impossible : ${error?.message || error}`, 'error');
+    }
   }
   async function loadAudit(){
     if(window.MonitoringRBAC?.has?.('audit:read') !== true){ setStatus('Accès audit refusé.', 'error'); return; }

@@ -4,6 +4,7 @@
   const ROLE_PERMISSIONS = Object.freeze({
     'sdis-admin': ['dashboard:read','events:create','events:update','events:delete','effectifs:manage','references:manage','data:import','data:export','users:admin','audit:read','settings:manage'],
     'sdis-commandement': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','audit:read'],
+    'sdis-chef-formation': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','audit:read'],
     'sdis-formation': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export'],
     'sdis-instructeur': ['dashboard:read','events:create','events:update','data:export'],
     'sdis-user': ['dashboard:read','events:create','events:update','data:export'],

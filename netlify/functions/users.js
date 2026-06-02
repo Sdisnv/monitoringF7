@@ -13,7 +13,7 @@ function publicRow(row){
   return {
     subject: row.subject,
     email: row.email || '',
-    nip: row.email || row.subject,
+    nip: row.nip || row.email || row.subject,
     displayName: row.display_name || row.email || row.subject,
     roles,
     permissions: permissionsForRoles(roles, row.permissions || []),
@@ -25,7 +25,7 @@ function publicRow(row){
 }
 async function listUsers(){
   await db.ensureCoreSchema();
-  const r = await db.query('select subject,email,display_name,roles,permissions,active,last_login_at,created_at,updated_at from monitoring_f7_user_profiles order by lower(coalesce(display_name,email,subject)) asc');
+  const r = await db.query('select subject,email,display_name,nip,roles,permissions,active,last_login_at,created_at,updated_at from monitoring_f7_user_profiles order by lower(coalesce(display_name,email,subject)) asc');
   return (r.rows || []).map(publicRow);
 }
 exports.handler = async function(event){
@@ -41,10 +41,10 @@ exports.handler = async function(event){
       const subject = String(body.subject || body.email || '').trim().toLowerCase();
       if(!subject) return response(400, { ok:false, error:'missing_subject' });
       const roles = sanitizeRoles(body.roles);
-      await db.query(`insert into monitoring_f7_user_profiles(subject,email,display_name,roles,permissions,provider,active,updated_at)
-        values($1,$2,$3,$4,$5,'oidc',$6,now())
-        on conflict(subject) do update set email=excluded.email, display_name=excluded.display_name, roles=excluded.roles, permissions=excluded.permissions, active=excluded.active, updated_at=now()`,
-        [subject, body.email || subject, body.displayName || subject, roles, body.permissions || [], body.active !== false]);
+      await db.query(`insert into monitoring_f7_user_profiles(subject,email,display_name,nip,roles,permissions,provider,active,updated_at)
+        values($1,$2,$3,$4,$5,$6,'oidc',$7,now())
+        on conflict(subject) do update set email=excluded.email, display_name=excluded.display_name, nip=excluded.nip, roles=excluded.roles, permissions=excluded.permissions, active=excluded.active, updated_at=now()`,
+        [subject, body.email || subject, body.displayName || subject, body.nip || null, roles, body.permissions || [], body.active !== false]);
       await auditEntry({ eventType:'user-upsert', actor:claims.sub, message:'Création ou modification utilisateur', context:{ subject, roles, active:body.active !== false }});
       return response(200, { ok:true, users: await listUsers() });
     }
@@ -57,8 +57,8 @@ exports.handler = async function(event){
         return response(409, { ok:false, error:'self_admin_removal_requires_confirmation' });
       }
       const roles = sanitizeRoles(body.roles);
-      await db.query(`update monitoring_f7_user_profiles set email=$2, display_name=$3, roles=$4, permissions=$5, active=$6, updated_at=now() where subject=$1`,
-        [subject, body.email || subject, body.displayName || subject, roles, body.permissions || [], body.active !== false]);
+      await db.query(`update monitoring_f7_user_profiles set email=$2, display_name=$3, nip=$4, roles=$5, permissions=$6, active=$7, updated_at=now() where subject=$1`,
+        [subject, body.email || subject, body.displayName || subject, body.nip || null, roles, body.permissions || [], body.active !== false]);
       await auditEntry({ eventType:'user-update', actor:claims.sub, message:'Modification utilisateur', context:{ subject, roles, active:body.active !== false }});
       return response(200, { ok:true, users: await listUsers() });
     }
