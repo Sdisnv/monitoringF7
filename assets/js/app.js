@@ -89,7 +89,7 @@
       if (!config || !api?.[config.replace]) return null;
       try {
         const result = await api[config.replace](data);
-        if (!result?.ok) window.MonitoringAuditLog?.logWarning?.("online-save-failed", "Sauvegarde serveur non confirmée.", { collection: name, status: result?.status, error: result?.data?.error || result?.error });
+        if (!result?.ok) window.MonitoringAuditLog?.logWarning?.("online-save-failed", "Sauvegarde serveur non confirmée.", { collection: name, status: result?.status, error: result?.data?.error || result?.error, message: result?.data?.message || result?.message || "" });
         return result;
       } catch (error) {
         window.MonitoringAuditLog?.logWarning?.("online-save-failed", "Sauvegarde serveur impossible.", { collection: name, message: String(error?.message || error) });

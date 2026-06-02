@@ -22,6 +22,7 @@ function itemId(item, fallbackPrefix, index){
 }
 
 async function readCollection(collection){
+  await db.ensureCoreSchema();
   const config = getCollectionConfig(collection);
   const result = await db.query(
     `select payload, schema_version, updated_at from ${config.table} order by updated_at desc, id asc`
@@ -40,6 +41,7 @@ async function readCollection(collection){
 }
 
 async function writeCollection(collection, items, schemaVersion){
+  await db.ensureCoreSchema();
   const config = getCollectionConfig(collection);
   const now = new Date().toISOString();
   await db.transaction(async client => {

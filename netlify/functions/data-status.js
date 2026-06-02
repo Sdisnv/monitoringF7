@@ -13,6 +13,7 @@ exports.handler = async function(event){
   catch(error){ return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) }); }
 
   try{
+    await db.ensureCoreSchema();
     const collections = {
       records: await count('monitoring_f7_records'),
       importedEvents: await count('monitoring_f7_imported_events'),

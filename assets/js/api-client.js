@@ -98,7 +98,10 @@
     getAdminSettings(options){ return request('GET', '/admin/settings', null, options); },
     saveAdminSettings(settings, options){ return request('PUT', '/admin/settings', settings, options); },
     verifyAdminCode(hash, options){ return request('POST', '/admin/settings', { hash }, options); },
-    updateAdminCode(currentHash, nextHash, options){ return request('PUT', '/admin/settings', Object.assign({ currentHash, nextHash }, options?.body || {}), options); },
+    updateAdminCode(currentHash, nextHash, options){
+      const extra = options && options.body ? options.body : {};
+      return request('PUT', '/admin/settings', Object.assign({ currentHash, nextHash }, extra), options);
+    },
     setAccessToken(token){ accessToken = token ? String(token) : null; },
     clearAccessToken(){ accessToken = null; },
     getAccessToken(){ return accessToken; },
