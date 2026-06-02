@@ -136,6 +136,26 @@
       return personnelSdisDirectory.find(person => normalizePersonnelNip(person.nip) === normalized) || null;
     }
 
+    function normalizePersonnelName(value) {
+      return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function findPersonnelSdisByDisplayName(name) {
+      const normalized = normalizePersonnelName(name);
+      if (!normalized) return null;
+      return personnelSdisDirectory.find(person => {
+        const full = normalizePersonnelName(person.displayName);
+        const short = normalizePersonnelName(`${person.prenom} ${person.nom}`);
+        const inverted = normalizePersonnelName(`${person.nom} ${person.prenom}`);
+        return full === normalized || short === normalized || inverted === normalized || full.endsWith(` ${normalized}`);
+      }) || null;
+    }
+
     function connectedUserDisplayName() {
       const user = window.CurrentUser || window.MonitoringAuth?.user || {};
       const profile = window.MonitoringSessionManager?.getProfile?.() || {};
@@ -990,6 +1010,7 @@ function getReferencePeriodGlobals(period) {
       resetBtn: document.getElementById("resetBtn"),
       duplicateBtn: document.getElementById("duplicateBtn"),
       referencePeriodSelect: document.getElementById("referencePeriodSelect"),
+      saveReferencePeriodBtn: document.getElementById("saveReferencePeriodBtn"),
       createReferencePeriodBtn: document.getElementById("createReferencePeriodBtn"),
       duplicateReferencePeriodBtn: document.getElementById("duplicateReferencePeriodBtn"),
       applyFiltersBtn: document.getElementById("applyFiltersBtn"),
@@ -2936,6 +2957,18 @@ function openExercisePreview(record) {
       }
     }
 
+    function readElementNumber(element) {
+      if (!element) return 0;
+      return toInt(element.tagName === "INPUT" ? element.value : element.textContent);
+    }
+
+    function writeElementNumber(element, value) {
+      if (!element) return;
+      const next = String(toInt(value));
+      if (element.tagName === "INPUT") element.value = next;
+      else element.textContent = next;
+    }
+
     const REFERENCE_UPDATE_DOMAINS = ["foba", "pr", "auto", "dps", "dap", "jsp"];
     const REFERENCE_DOMAIN_INPUT_IDS = {
       foba: ["effectifFoba1", "effectifFoba2", "effectifFoba3"],
@@ -2978,11 +3011,23 @@ function openExercisePreview(record) {
       });
     }
 
-    function applyResponsibleFromNip() {
+    async function ensurePersonnelSdisDirectoryLoaded() {
+      if (personnelSdisDirectory.length) return personnelSdisDirectory;
+      return loadPersonnelSdisDirectory();
+    }
+
+    async function applyResponsibleFromNip() {
+      await ensurePersonnelSdisDirectoryLoaded();
       const person = findPersonnelSdisByNip(els.effectifUpdatedByNip?.value || "");
       if (!person || !els.effectifUpdatedBy) return false;
       els.effectifUpdatedBy.value = person.displayName;
       return true;
+    }
+
+    function currentUserNip() {
+      const user = window.CurrentUser || window.MonitoringAuth?.user || {};
+      const profile = window.MonitoringSessionManager?.getProfile?.() || {};
+      return normalizePersonnelNip(user.nip || profile.nip || user.sub || profile.sub || "");
     }
 
     function escapeReferenceAttribute(value) {
@@ -3001,12 +3046,29 @@ function openExercisePreview(record) {
         .join("");
     }
 
-    function autofillGeneratedBy(force = false) {
+    async function autofillGeneratedBy(force = false) {
       if (!els.effectifGeneratedBy) return;
       const current = String(els.effectifGeneratedBy.value || "").trim();
-      if (current && !force) return;
-      const displayName = connectedUserDisplayName();
+      await ensurePersonnelSdisDirectoryLoaded();
+      const authDisplayName = connectedUserDisplayName();
+      const person = findPersonnelSdisByNip(currentUserNip()) || findPersonnelSdisByDisplayName(authDisplayName);
+      const displayName = person?.displayName || authDisplayName;
+      const shouldReplace =
+        force ||
+        !current ||
+        (displayName && current === connectedUserDisplayName() && current !== displayName);
+      if (!shouldReplace) return;
       if (displayName) els.effectifGeneratedBy.value = displayName;
+    }
+
+    function scheduleGeneratedByAutofill() {
+      [0, 250, 800, 1600, 3000].forEach(delay => {
+        setTimeout(() => {
+          autofillGeneratedBy().then(() => {
+            if (String(els.effectifGeneratedBy?.value || "").trim()) persistReferenceData();
+          });
+        }, delay);
+      });
     }
 
     function getReferenceDataFromForm() {
@@ -3020,7 +3082,7 @@ function openExercisePreview(record) {
         },
 
         domaines: {
-          pr: (toInt(els.effectifPrG1?.value) + toInt(els.effectifPrC1?.value) + toInt(els.effectifPrB1?.value) + toInt(els.effectifPrB2?.value)) || toInt(els.effectifPrGlobal?.textContent),
+          pr: (toInt(els.effectifPrG1?.value) + toInt(els.effectifPrC1?.value) + toInt(els.effectifPrB1?.value) + toInt(els.effectifPrB2?.value)) || readElementNumber(els.effectifPrGlobal),
           prG1: toInt(els.effectifPrG1?.value),
           prC1: toInt(els.effectifPrC1?.value),
           prB1: toInt(els.effectifPrB1?.value),
@@ -3063,7 +3125,7 @@ function openExercisePreview(record) {
       els.effectifFoba2.value = toInt(safe.foba?.foba2);
       els.effectifFoba3.value = toInt(safe.foba?.foba3);
 
-      if (els.effectifPrGlobal) els.effectifPrGlobal.textContent = toInt(safe.domaines?.pr);
+      writeElementNumber(els.effectifPrGlobal, safe.domaines?.pr);
       els.effectifPrG1.value = toInt(safe.domaines?.prG1);
       els.effectifPrC1.value = toInt(safe.domaines?.prC1);
       els.effectifPrB1.value = toInt(safe.domaines?.prB1);
@@ -3072,7 +3134,7 @@ function openExercisePreview(record) {
       {
         const subSum = toInt(safe.domaines?.prG1) + toInt(safe.domaines?.prC1) + toInt(safe.domaines?.prB1) + toInt(safe.domaines?.prB2);
         const prTotal = subSum > 0 ? subSum : toInt(safe.domaines?.pr);
-        if (els.effectifPrGlobal) { if (els.effectifPrGlobal.tagName === "INPUT") els.effectifPrGlobal.value = String(prTotal); else els.effectifPrGlobal.textContent = String(prTotal); }
+        writeElementNumber(els.effectifPrGlobal, prTotal);
       }
       els.effectifAutoVl.value = toInt(safe.domaines?.autoVl);
       els.effectifAutoPl.value = toInt(safe.domaines?.autoPl);
@@ -3137,7 +3199,7 @@ function openExercisePreview(record) {
       const paprSubSum = data.domaines.prG1 + data.domaines.prC1 + data.domaines.prB1 + data.domaines.prB2;
       // Si au moins un sous-champ est renseigné, utiliser la somme; sinon conserver pr existant (legacy)
       const paprGlobal = paprSubSum > 0 ? paprSubSum : data.domaines.pr;
-      if (els.effectifPrGlobal) { if (els.effectifPrGlobal.tagName === "INPUT") { els.effectifPrGlobal.value = String(paprGlobal); } else { els.effectifPrGlobal.textContent = String(paprGlobal); } }
+      writeElementNumber(els.effectifPrGlobal, paprGlobal);
 
       els.effectifFobaGlobal.value = String(fobaGlobal);
       els.effectifAutoGlobal.value = String(autoGlobal);
@@ -3251,7 +3313,10 @@ function openExercisePreview(record) {
     function initializeReferenceData() {
       loadPersonnelSdisDirectory().then(() => {
         populatePersonnelSdisNipOptions();
-        if (applyResponsibleFromNip()) refreshReferenceData();
+        applyResponsibleFromNip().then(applied => {
+          autofillGeneratedBy();
+          if (applied) refreshReferenceData();
+        });
       });
       migrateLegacyReferenceDataIfNeeded();
       ensureAtLeastOneReferencePeriod();
@@ -3263,7 +3328,7 @@ function openExercisePreview(record) {
       }
 
       applyReferenceDataToForm(selected);
-      autofillGeneratedBy();
+      scheduleGeneratedByAutofill();
       calculateReferenceGlobals();
     }
 
@@ -3380,7 +3445,7 @@ function openExercisePreview(record) {
       ids.forEach(id => {
         if (!els[id]) return;
         const handler = () => {
-          if (id === "effectifUpdatedByNip") applyResponsibleFromNip();
+          if (id === "effectifUpdatedByNip") applyResponsibleFromNip().then(applied => { if (applied) refreshReferenceData(); });
           if (id === "effectifUpdateScope") setReferenceDomainInputsEnabled();
           refreshReferenceData();
         };
@@ -3396,9 +3461,18 @@ function openExercisePreview(record) {
       });
 
       document.addEventListener("monitoring-f7-auth-session-changed", () => {
-        autofillGeneratedBy();
+        autofillGeneratedBy(true);
         refreshReferenceData();
       });
+
+      if (els.saveReferencePeriodBtn) {
+        els.saveReferencePeriodBtn.addEventListener("click", () => {
+          refreshReferenceData();
+          if (els.referenceSaveStatus) {
+            els.referenceSaveStatus.innerHTML = `<span class="ok">Période enregistrée.</span>`;
+          }
+        });
+      }
 
       if (els.referencePeriodSelect) {
         els.referencePeriodSelect.addEventListener("change", () => {

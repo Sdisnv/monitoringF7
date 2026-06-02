@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.23 — service session/profil, OIDC prioritaire avec secours local. */
+/* Monitoring F7 v66.24 — service session/profil, OIDC prioritaire avec secours local. */
 (function(){
   'use strict';
 
@@ -129,7 +129,7 @@
       startedAt: new Date().toISOString(),
       referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
       source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: window.MonitoringConfig?.version || 'v66.23'
+      version: window.MonitoringConfig?.version || 'v66.24'
     };
   }
 

@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v66.23" index.html
-grep -q "version: 'v66.23'" assets/js/config.js
-grep -q "Version du fichier : v66.23" index.html
+grep -q "Monitoring F7 v66.24" index.html
+grep -q "version: 'v66.24'" assets/js/config.js
+grep -q "Version du fichier : v66.24" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -63,11 +63,14 @@ grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin.js
 grep -q "effectifUpdatedByNip" index.html
 grep -q "personnelSdisNipOptions" index.html
 grep -q "effectifUpdateScope" index.html
+grep -q "saveReferencePeriodBtn" index.html
 grep -q "PERSONNEL_SDIS_CSV_URL" assets/js/app.js
 grep -q "applyResponsibleFromNip" assets/js/app.js
+grep -q "findPersonnelSdisByDisplayName" assets/js/app.js
 grep -q "connectedUserDisplayName" assets/js/app.js
 grep -q "REFERENCE_UPDATE_DOMAINS" assets/js/app.js
 grep -q "reference-scope-row" assets/css/base.css
+grep -q "reference-domain-scope input\\[type=\"checkbox\"\\]" assets/css/base.css
 if grep -q "E-mail / sujet Okta" assets/js/admin.js; then
   echo "ERREUR: ancien formulaire utilisateurs detecte dans admin.js"
   exit 1
