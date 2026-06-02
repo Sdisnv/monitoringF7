@@ -1,9 +1,9 @@
-/* Monitoring F7 v65.4 — couche d'évolution non destructive.
+/* Monitoring F7 v65.5 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v65.4';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v65.5';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -485,13 +485,14 @@
   function updateUserZone(){
     const profile=getAuthProfile();
     const nip=profile.nip || '—';
-    const label=profile.displayName || profile.name || (nip !== '—' ? `NIP ${nip}` : 'Utilisateur SDIS');
+    const label=profile.displayName || profile.name || window.CurrentUser?.displayName || (nip !== '—' ? `NIP ${nip}` : 'Utilisateur SDIS');
     const sessionForStatus = window.MonitoringSessionManager?.read?.() || window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI?.();
     const sessionActive = !!(sessionForStatus && sessionForStatus.active === true);
+    const isOidc = profile.authSource === 'okta-oidc' || sessionForStatus?.mode === 'institutional-oidc';
     const display=$('userDisplayName'); if(display) display.textContent=label;
-    const status=$('userSessionStatus'); if(status) status.textContent=sessionActive ? 'Session locale active — navigateur uniquement' : 'Connexion locale requise';
+    const status=$('userSessionStatus'); if(status) status.textContent=sessionActive ? (isOidc ? 'Connecté via Okta' : 'Session locale de secours') : 'Connexion institutionnelle requise';
     const name=$('userMenuName'); if(name) name.textContent=label;
-    const nipEl=$('userMenuNip'); if(nipEl) nipEl.textContent=`NIP ${nip}`;
+    const nipEl=$('userMenuNip'); if(nipEl) nipEl.textContent=isOidc ? 'Okta/OIDC' : `NIP ${nip}`;
   }
   function readAuthSessionForUI(){
     return window.MonitoringSessionManager?.read?.() || null;
@@ -543,8 +544,9 @@
     const session=window.MonitoringSessionManager?.read?.() || window.MonitoringAuthService?.readSession?.() || readAuthSessionForUI();
     const authStatus=window.MonitoringAuthService?.getStatus?.() || {};
     const backendStatus=window.MonitoringBackendConfig?.getStatus?.() || {};
-    window.MonitoringAuditLog?.logAction('session-info-open', 'Information session locale consultée.', { mode:'local-browser-only' });
-    openUserModal('Session locale Monitoring F7', `<div class="f7-user-info-grid"><strong>Mode</strong><span>offline-first / navigateur local</span><strong>Auth serveur</strong><span>${backendStatus.serverAuthEnabled ? 'préparée' : 'désactivée'}</span><strong>Backend</strong><span>${backendStatus.backendEnabled ? 'activé' : 'désactivé'}</span><strong>Stockage</strong><span>${backendStatus.storageDriver === 'postgres' ? 'PostgreSQL / Supabase' : 'localStorage / IndexedDB'}</span><strong>Session active</strong><span>${session?.active ? 'oui' : 'non'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p class="f7-user-note">${escapeHtml(authStatus.message || 'Session locale navigateur conservée.')}</p>`);
+    const profile=window.MonitoringSessionManager?.getProfile?.() || {};
+    window.MonitoringAuditLog?.logAction('session-info-open', 'Information session consultée.', { mode: profile.authSource === 'okta-oidc' ? 'institutional-oidc' : 'local-browser-only' });
+    openUserModal('Session Monitoring F7', `<div class="f7-user-info-grid"><strong>Mode</strong><span>${profile.authSource === 'okta-oidc' ? 'authentification institutionnelle Okta/OIDC' : 'secours local navigateur'}</span><strong>Auth serveur</strong><span>${profile.authSource === 'okta-oidc' ? 'active' : (backendStatus.serverAuthEnabled ? 'préparée' : 'désactivée')}</span><strong>Backend</strong><span>${backendStatus.backendEnabled ? 'activé' : 'désactivé'}</span><strong>Stockage</strong><span>localStorage / IndexedDB</span><strong>Session active</strong><span>${session?.active ? 'oui' : 'non'}</span><strong>Début session</strong><span>${escapeHtml(formatSessionDate(session?.startedAt))}</span><strong>Date référence</strong><span>${escapeHtml(session?.referenceDate || window.MONITORING_F7_SESSION_REFERENCE_DATE || '—')}</span><strong>Version</strong><span>${escapeHtml(APP_VERSION)}</span></div><p class="f7-user-note">${escapeHtml(authStatus.message || 'Authentification institutionnelle prioritaire.')}</p>`);
   }
   function bindUserMenu(){
     const btn=$('userMenuButton'); const menu=$('userMenu');
@@ -552,7 +554,7 @@
       btn.addEventListener('click', ()=>{ const hidden=menu.hidden; menu.hidden=!hidden; btn.setAttribute('aria-expanded', String(hidden)); });
       document.addEventListener('click', e=>{ if(!btn.contains(e.target) && !menu.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
     }
-    $('userLogoutBtn')?.addEventListener('click', ()=>{ if(confirm('Déconnecter la session locale Monitoring F7 ?')){ showOperationalMessage('Déconnexion locale en cours.', 'info'); window.MonitoringSessionManager?.logout?.({ message:'Déconnexion locale depuis le menu utilisateur.' }); } });
+    $('userLogoutBtn')?.addEventListener('click', ()=>{ if(confirm('Déconnecter la session Monitoring F7 ?')){ showOperationalMessage('Déconnexion en cours.', 'info'); window.MonitoringAuthService?.logout?.(); } });
     document.querySelectorAll('[data-user-action]').forEach(item=>item.addEventListener('click', (event)=>{
       event.preventDefault();
       event.stopPropagation();
@@ -674,7 +676,7 @@
     $('recordsSummaryViewBtn')?.addEventListener('click', ()=>setRecordsDensity('summary'));
     $('recordsFullViewBtn')?.addEventListener('click', ()=>setRecordsDensity('full'));
     $('f7ProjectionToggle')?.addEventListener('click', toggleProjectionMode);
-    document.addEventListener('monitoring-f7-auth-session-changed', ()=>showOperationalMessage('Session locale active. Profil utilisateur mis à jour.', 'ok'));
+    document.addEventListener('monitoring-f7-auth-session-changed', ()=>{ const p=window.MonitoringSessionManager?.getProfile?.() || {}; showOperationalMessage(p.authSource === 'okta-oidc' ? 'Connexion Okta active. Profil utilisateur mis à jour.' : 'Session locale de secours active. Profil utilisateur mis à jour.', 'ok'); });
   }
 
   window.addEventListener('load', ()=>{

@@ -1,5 +1,5 @@
-/* Monitoring F7 v65 — configuration backend optionnel futur.
-   Par défaut, toute l'application reste locale/offline-first. */
+/* Monitoring F7 v65.5 — configuration backend.
+   La configuration effective est activée par MonitoringBackendConfigOverrides dans config.js. */
 (function(){
   'use strict';
 

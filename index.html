@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Monitoring F7 v65.4</title>
+<title>Monitoring F7 v65.5</title>
 <link href="assets/css/base.css" rel="stylesheet"/>
 <link href="assets/css/layout.css" rel="stylesheet"/>
 <link href="assets/css/components.css" rel="stylesheet"/>
@@ -12,21 +12,15 @@
 <link href="assets/css/charts.css" rel="stylesheet"/>
 <link href="assets/css/print.css" rel="stylesheet"/>
 <link href="assets/css/monitoring-f7-evolution.css" rel="stylesheet"/>
-<link href="assets/css/responsive.css?v=65.4" rel="stylesheet"/>
+<link href="assets/css/responsive.css?v=65.5" rel="stylesheet"/>
 </head>
 <body>
 <div aria-modal="true" class="auth-overlay" id="authOverlay" role="dialog">
 <div class="auth-card">
-<div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Accès Monitoring</h2></div>
-<p class="auth-note">Accès local offline-first : utilise le NIP ECA et le code d’accès fourni par l’administrateur. Cette barrière navigateur ne remplace pas une authentification serveur institutionnelle.</p>
-<form class="auth-form" id="authForm">
-<label for="authNip">NIP ECA utilisateur</label>
-<input autocomplete="username" id="authNip" inputmode="numeric" name="nip" placeholder="NIP ECA" required=""/>
-<label for="authPassword">Code d’accès local</label>
-<input autocomplete="current-password" id="authPassword" name="password" placeholder="Code d’accès local" required="" type="password"/>
-<div class="auth-message" id="authMessage">Connexion locale stable. Aucun compte ne peut être créé depuis cet écran.</div>
-<button class="primary auth-submit" type="submit">Accéder au monitoring</button>
-</form>
+<div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Connexion institutionnelle requise</h2></div>
+<p class="auth-note">Monitoring F7 utilise l’authentification institutionnelle Okta/OIDC. Si une session Okta valide existe, l’accès s’ouvre automatiquement.</p>
+<div class="auth-message" id="authMessage">Contrôle de la session Okta en cours…</div>
+<button class="primary auth-submit" type="button" id="oktaLoginButton">Connexion Okta</button>
 </div>
 </div>
 <header class="app-header">
@@ -34,7 +28,7 @@
 <img alt="Logo SDIS Nord vaudois" class="header-logo" src="assets/img/LogoSDISblanc.png"/>
 <div class="header-text">
 <h1>SDIS régional du Nord vaudois</h1>
-<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v65.4</span></div>
+<div class="sub">Monitoring de formations spécifiques <span style="opacity:0.7;font-size:11px;margin-left:8px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:999px;">v65.5</span></div>
 </div>
 </div>
 <div class="user-zone" id="userZone">
@@ -42,14 +36,14 @@
 <span class="user-avatar" aria-hidden="true">
 <svg viewBox="0 0 24 24"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
 </span>
-<span class="user-zone-text"><strong id="userDisplayName">Utilisateur SDIS</strong><small id="userSessionStatus">Session locale active — navigateur uniquement</small></span>
+<span class="user-zone-text"><strong id="userDisplayName">Utilisateur SDIS</strong><small id="userSessionStatus">Connexion institutionnelle requise</small></span>
 <span class="user-chevron" aria-hidden="true">▾</span>
 </button>
 <div class="user-menu" id="userMenu" hidden>
 <div class="user-menu-head"><strong id="userMenuName">Profil utilisateur</strong><span id="userMenuNip">NIP —</span></div>
-<button type="button" data-user-action="profile">Profil local</button>
-<button type="button" data-user-action="settings">Préférences locales</button>
-<button type="button" data-user-action="session">Session locale</button>
+<button type="button" data-user-action="profile">Profil utilisateur</button>
+<button type="button" data-user-action="settings">Préférences utilisateur</button>
+<button type="button" data-user-action="session">Session</button>
 <button type="button" data-user-action="backup">Export rapide</button>
 <hr/>
 <button class="danger-link" type="button" id="userLogoutBtn">Déconnexion</button>
@@ -1843,7 +1837,7 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <tr><td><code>getSeriesAnalysis(seriesKey)</code></td><td>Analyse complète d'une série multi-sessions avec taux corrigés sur cible nette cumulée (v47)</td></tr>
 </tbody>
 </table>
-<div class="footer-note" style="margin-top:12px;">Version du fichier : v65.4 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
+<div class="footer-note" style="margin-top:12px;">Version du fichier : v65.5 — Toute modification de la logique de calcul doit être répercutée dans les fonctions centralisées ci-dessus et dans cet onglet Appendices.</div>
 </div>
 </div>
 </div>
@@ -1860,7 +1854,6 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 </div>
 <script src="assets/js/config.js"></script>
 <script src="assets/js/data-schema.js"></script>
-<script src="assets/js/backend-production-config.js"></script>
 <script src="assets/js/backend-config.js"></script>
 <script src="assets/js/api-contracts.js"></script>
 <script src="assets/js/backend-contract-check.js"></script>

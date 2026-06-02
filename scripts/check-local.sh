@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="/Users/thierrygrunig/Projects/Monitoring F7"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "== Monitoring F7: controles locaux =="
@@ -17,9 +17,9 @@ while IFS= read -r file; do
 done < <(find assets/js netlify/functions -type f -name '*.js' | sort)
 
 echo "-- Controle version active"
-grep -q "Monitoring F7 v65.4" index.html
-grep -q "version: 'v65.4'" assets/js/config.js
-grep -q "Version du fichier : v65.4" index.html
+grep -q "Monitoring F7 v65.5" index.html
+grep -q "version: 'v65.5'" assets/js/config.js
+grep -q "Version du fichier : v65.5" index.html
 
 echo "-- Controle Netlify"
 grep -q 'functions = "netlify/functions"' netlify.toml
@@ -34,8 +34,8 @@ grep -q 'OKTA_ISSUER' netlify/functions/_oidc-utils.js
 grep -q 'monitoring_f7_records' database/schema.sql
 grep -q '"pg"' package.json
 
-echo "-- Controle defaults offline-first"
-grep -q "backendEnabled: false" assets/js/backend-config.js
+echo "-- Controle backend actif avec synchronisation non automatique"
+grep -q "backendEnabled: true" assets/js/config.js
 grep -q "syncEnabled: false" assets/js/backend-config.js
 grep -q "centralStorageEnabled: false" assets/js/backend-config.js
 grep -q "serverAuthEnabled: false" assets/js/backend-config.js

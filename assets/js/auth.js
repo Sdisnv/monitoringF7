@@ -1,4 +1,4 @@
-/* Barrière de login locale - usage interne, non équivalent à une authentification serveur. */
+/* Monitoring F7 v65.5 — authentification institutionnelle OIDC prioritaire, secours local conservé. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();
@@ -45,6 +45,38 @@
     }
     return next;
   }
+  function normalizeOidcProfile(payload){
+    const now = new Date().toISOString();
+    const user = payload?.user || {};
+    const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(user.roles) ? user.roles : []);
+    const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(user.permissions) ? user.permissions : []);
+    const displayName = String(user.displayName || user.name || user.email || user.nip || 'Utilisateur SDIS').trim();
+    return {
+      nip: String(user.nip || user.sub || user.email || ''),
+      displayName,
+      name: displayName,
+      email: user.email || '',
+      role: roles[0] || 'sdis-user',
+      roles,
+      permissions,
+      authSource: 'okta-oidc',
+      passwordManagedBy: 'institutional-oidc',
+      updatedAt: now,
+      lastLoginAt: now,
+      oidcUser: user
+    };
+  }
+  function hydrateCurrentUser(payload, profile){
+    const user = payload?.user || profile || {};
+    const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(profile?.roles) ? profile.roles : []);
+    const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(profile?.permissions) ? profile.permissions : []);
+    window.CurrentUser = Object.freeze(Object.assign({}, user, {
+      displayName: profile?.displayName || user.displayName || user.name || 'Utilisateur SDIS',
+      authSource: 'okta-oidc'
+    }));
+    window.CurrentRoles = Object.freeze(roles.slice());
+    window.CurrentPermissions = Object.freeze(permissions.slice());
+  }
   function setMessage(text, type){
     const el = document.getElementById('authMessage');
     if(!el) return;
@@ -70,11 +102,79 @@
     document.body?.classList.toggle('auth-locked', !active);
     document.body?.classList.toggle('auth-active', !!active);
   }
-  function unlock(profile){
-    syncAuthUI(true);
+  function hideOverlay(){
     const overlay = document.getElementById('authOverlay');
     if(overlay) overlay.classList.add('auth-hidden');
+  }
+  function unlock(profile){
+    syncAuthUI(true);
+    hideOverlay();
     notifySessionChanged(writeSession(profile || getProfile() || {}));
+  }
+  function unlockOidc(payload){
+    const profile = normalizeOidcProfile(payload);
+    hydrateCurrentUser(payload, profile);
+    setProfile(profile);
+    syncAuthUI(true);
+    hideOverlay();
+    const session = writeSession(profile);
+    window.MonitoringAuditLog?.logAction('login-okta-oidc', 'Session institutionnelle Okta validée.', { roles: window.CurrentRoles || [] });
+    notifySessionChanged(session);
+    return session;
+  }
+  async function checkServerAuthentication(){
+    try{
+      const response = await fetch('/.netlify/functions/auth-me', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+      const payload = await response.json().catch(() => null);
+      if(response.ok && payload?.ok === true){
+        unlockOidc(payload);
+        return true;
+      }
+      return false;
+    }catch(error){
+      window.MonitoringAuditLog?.logWarning?.('auth-okta-check-failed', 'Contrôle auth-me indisponible.', { message:String(error?.message || error) });
+      return false;
+    }
+  }
+  function showInstitutionalLogin(){
+    syncAuthUI(false);
+    const card = document.querySelector('#authOverlay .auth-card');
+    if(!card) return;
+    card.innerHTML = `
+      <div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Connexion institutionnelle requise</h2></div>
+      <p class="auth-note">Monitoring F7 utilise désormais l’authentification institutionnelle Okta/OIDC. La connexion locale NIP reste uniquement un secours technique.</p>
+      <div class="auth-message" id="authMessage">Session Okta non détectée ou expirée.</div>
+      <button class="primary auth-submit" type="button" id="oktaLoginButton">Connexion Okta</button>
+      <button class="secondary auth-submit" type="button" id="localFallbackButton">Secours local technique</button>`;
+    const oktaBtn = document.getElementById('oktaLoginButton');
+    if(oktaBtn) oktaBtn.addEventListener('click', () => { window.location.href = '/.netlify/functions/auth-oidc-start'; });
+    const fallbackBtn = document.getElementById('localFallbackButton');
+    if(fallbackBtn) fallbackBtn.addEventListener('click', restoreLocalFallbackForm);
+  }
+  function restoreLocalFallbackForm(){
+    const card = document.querySelector('#authOverlay .auth-card');
+    if(!card) return;
+    card.innerHTML = `
+      <div class="auth-brand-row"><img class="auth-logo" src="assets/img/logo-monitoring-f7.jpeg" alt="Logo Monitoring F7"><h2>Secours local technique</h2></div>
+      <p class="auth-note">Mode de secours local réservé au diagnostic lorsque l’authentification institutionnelle est indisponible.</p>
+      <form class="auth-form" id="authForm">
+        <label for="authNip">Identifiant secours local</label>
+        <input autocomplete="username" id="authNip" inputmode="numeric" name="nip" placeholder="Identifiant" required=""/>
+        <label for="authPassword">Code secours local</label>
+        <input autocomplete="current-password" id="authPassword" name="password" placeholder="Code secours" required="" type="password"/>
+        <div class="auth-message" id="authMessage">Secours local navigateur uniquement.</div>
+        <button class="primary auth-submit" type="submit">Accéder en secours</button>
+        <button class="secondary auth-submit" type="button" id="backToOktaButton">Retour connexion Okta</button>
+      </form>`;
+    const form = document.getElementById('authForm');
+    if(form) form.addEventListener('submit', onSubmit);
+    const back = document.getElementById('backToOktaButton');
+    if(back) back.addEventListener('click', showInstitutionalLogin);
   }
   function findConfiguredUser(nip){
     return getLocalAuthConfig().users.find(user => String(user?.nip || '') === String(nip || '') && user.active !== false) || null;
@@ -114,50 +214,64 @@
     const resolvedProfile = await resolveLocalProfile(nip, hash, profile);
     if(!resolvedProfile){ credentialsError('credentials'); return; }
     setProfile(resolvedProfile);
-    window.MonitoringAuditLog?.logAction('login-local', 'Login local validé.', { source: resolvedProfile.authSource || 'local' });
-    setMessage('Accès local autorisé.', 'ok');
+    window.CurrentUser = Object.freeze(Object.assign({}, resolvedProfile));
+    window.CurrentRoles = Object.freeze([resolvedProfile.role || 'sdis-user']);
+    window.CurrentPermissions = Object.freeze([]);
+    window.MonitoringAuditLog?.logAction('login-local', 'Login local de secours validé.', { source: resolvedProfile.authSource || 'local' });
+    setMessage('Accès local de secours autorisé.', 'ok');
     unlock(resolvedProfile);
   }
-  document.addEventListener('DOMContentLoaded', function(){
+  document.addEventListener('DOMContentLoaded', async function(){
     syncAuthUI(false);
-    const overlay = document.getElementById('authOverlay');
+    const oktaActive = await checkServerAuthentication();
+    if(oktaActive) return;
+
     try{
       const session = readSession();
-      if(session && session.active === true){
-        if(session.legacy) writeSession(getProfile() || {});
-        if(overlay) overlay.classList.add('auth-hidden');
-        syncAuthUI(true);
-        return;
+      const profile = getProfile();
+      if(session && session.active === true && profile?.authSource === 'okta-oidc'){
+        clearSession();
       }
     }catch{ clearSession(); }
-    const form = document.getElementById('authForm');
-    if(form) form.addEventListener('submit', onSubmit);
+
+    showInstitutionalLogin();
+  });
+
+  window.MonitoringInstitutionalAuth = Object.freeze({
+    checkServerAuthentication,
+    showInstitutionalLogin,
+    unlockOidc,
+    hydrateCurrentUser
   });
 })();
 
 window.MonitoringAuthService = Object.freeze({
   getProfile(){ return window.MonitoringSessionManager?.getProfile?.() || null; },
   saveProfilePatch(patch){ return window.MonitoringSessionManager?.saveProfilePatch?.(patch) || null; },
-  getMode(){ return window.MonitoringBackendConfig?.current?.authMode || 'local'; },
+  getMode(){ return window.MonitoringBackendConfig?.current?.authMode || 'backend'; },
   isBackendAuthPrepared(){
-    const cfg = window.MonitoringBackendConfig?.current || {};
-    return cfg.backendEnabled === true && cfg.authMode === 'backend' && cfg.serverAuthEnabled === true && window.MonitoringApiClient?.isBackendEnabled?.() === true;
+    return true;
   },
   getStatus(){
-    const prepared = this.isBackendAuthPrepared();
+    const session = this.readSession();
+    const profile = this.getProfile();
+    const oktaActive = session?.active === true && profile?.authSource === 'okta-oidc';
     return Object.freeze({
-      authMode: this.getMode(),
-      localSessionActive: !!this.readSession(),
-      backendAuthPrepared: prepared,
-      backendAuthActive: false,
+      authMode: oktaActive ? 'oidc' : 'local-fallback',
+      localSessionActive: !!session,
+      backendAuthPrepared: true,
+      backendAuthActive: oktaActive,
       authContract: window.MonitoringApiContracts?.get?.('authLogin') || null,
       localAuthConfigured: true,
       localAuthUsers: Array.isArray(window.MonitoringConfig?.localAuth?.users) ? window.MonitoringConfig.localAuth.users.length : 0,
-      message: prepared ? 'Contrat auth serveur prêt, non activé par défaut en v65.4.' : 'Session locale navigateur conservée.'
+      message: oktaActive ? 'Authentification institutionnelle Okta/OIDC active.' : 'Connexion institutionnelle requise. Secours local disponible uniquement pour diagnostic.'
     });
   },
   readSession(){
     return window.MonitoringSessionManager?.read?.() || null;
   },
-  logout(){ window.MonitoringSessionManager?.logout?.({ message:'Déconnexion locale demandée.' }); }
+  logout(){
+    if((this.getProfile()?.authSource || '') === 'okta-oidc') window.location.href = '/.netlify/functions/auth-logout';
+    else window.MonitoringSessionManager?.logout?.({ message:'Déconnexion locale demandée.' });
+  }
 });

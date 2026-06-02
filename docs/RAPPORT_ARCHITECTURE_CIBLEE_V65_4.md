@@ -1,8 +1,8 @@
-# Rapport architecture ciblee — Monitoring F7 v65.4
+# Rapport architecture ciblee — Monitoring F7 v65.5
 
 ## Objectif
 
-La v65.4 amorce l'extraction progressive auth/session/UI sans reecrire l'application. Le mode offline-first reste prioritaire et aucun backend reel n'est active.
+La v65.5 amorce l'extraction progressive auth/session/UI sans reecrire l'application. Le mode offline-first reste prioritaire et aucun backend reel n'est active.
 
 ## Corrections appliquees
 
@@ -14,7 +14,7 @@ La v65.4 amorce l'extraction progressive auth/session/UI sans reecrire l'applica
 - La modale utilisateur locale est extraite dans `MonitoringUserModal`.
 - `monitoring-f7-evolution.js` utilise progressivement `MonitoringSessionManager` et `MonitoringUserModal`.
 - Suppression de plusieurs acces directs aux cles `monitoring_sdis_auth_session_*` dans la couche UI.
-- Version applicative alignee en `v65.4`.
+- Version applicative alignee en `v65.5`.
 - Cache-busting CSS responsive aligne en `?v=65.4`.
 
 ## Ce qui reste volontairement inchange

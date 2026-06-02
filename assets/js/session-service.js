@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.4 — service session/profil local, sans backend actif. */
+/* Monitoring F7 v65.5 — service session/profil, OIDC prioritaire avec secours local. */
 (function(){
   'use strict';
 
@@ -61,12 +61,16 @@
   function buildSessionPayload(profile){
     return {
       active: true,
-      mode: 'local-browser-only',
+      mode: profile?.authSource === 'okta-oidc' ? 'institutional-oidc' : 'local-browser-only',
+      authSource: profile?.authSource || 'local',
+      displayName: profile?.displayName || profile?.name || '',
+      roles: Array.isArray(profile?.roles) ? profile.roles : [],
+      permissions: Array.isArray(profile?.permissions) ? profile.permissions : [],
       nip: profile?.nip || '',
       startedAt: new Date().toISOString(),
       referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
       source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: window.MonitoringConfig?.version || 'v65.4'
+      version: window.MonitoringConfig?.version || 'v65.5'
     };
   }
 
@@ -83,8 +87,13 @@
   }
 
   function logout(options){
-    window.MonitoringAuditLog?.logAction('logout-local', options?.message || 'Déconnexion locale demandée.', {});
+    const profile = getProfile() || {};
+    window.MonitoringAuditLog?.logAction(profile.authSource === 'okta-oidc' ? 'logout-okta-oidc' : 'logout-local', options?.message || 'Déconnexion demandée.', {});
     clearSession({ lockUi:false });
+    if(profile.authSource === 'okta-oidc' && options?.serverLogout !== false){
+      location.href = '/.netlify/functions/auth-logout';
+      return;
+    }
     if(options?.reload !== false) location.reload();
   }
 

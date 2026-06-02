@@ -1,8 +1,8 @@
-# Architecture auth/backend futur — Monitoring F7 v65.4
+# Architecture auth/backend futur — Monitoring F7 v65.5
 
 ## Position actuelle
 
-La v65.4 fonctionne en mode local/offline-first. Les Netlify Functions d'authentification existent, mais l'application ne les utilise pas tant que la configuration reste :
+La v65.5 fonctionne en mode local/offline-first. Les Netlify Functions d'authentification existent, mais l'application ne les utilise pas tant que la configuration reste :
 
 ```js
 backendEnabled: false
@@ -55,7 +55,7 @@ Le futur backend doit respecter le stockage local existant. L'activation serveur
 
 ## Chemin propose
 
-1. Recette locale v65.4 stable.
+1. Recette locale v65.5 stable.
 2. Activation d'un environnement test backend separe.
 3. Login serveur optionnel derriere configuration.
 4. Tests auth serveur sans sync.

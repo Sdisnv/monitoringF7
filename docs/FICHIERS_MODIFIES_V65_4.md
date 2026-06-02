@@ -1,15 +1,15 @@
-# Fichiers modifies — Monitoring F7 v65.4
+# Fichiers modifies — Monitoring F7 v65.5
 
 ## `index.html`
 
-- Version visible alignee en `v65.4`.
+- Version visible alignee en `v65.5`.
 - Ajout de `assets/js/session-service.js` avant `auth.js`.
 - Ajout de `assets/js/ui/user-modal.js` avant `monitoring-f7-evolution.js`.
 - Cache-busting responsive aligne en `?v=65.4`.
 
 ## `assets/js/config.js`
 
-- Version centrale alignee en `v65.4`.
+- Version centrale alignee en `v65.5`.
 - Notice `localAuth` alignee sur la version.
 
 ## `assets/js/session-service.js`
@@ -22,7 +22,7 @@
 
 - Delegue session/profil a `MonitoringSessionManager`.
 - Conserve `MonitoringAuthService` comme facade compatible.
-- Message backend prepare aligne en `v65.4`.
+- Message backend prepare aligne en `v65.5`.
 
 ## `assets/js/ui/user-modal.js`
 
@@ -34,7 +34,7 @@
 - Utilise progressivement `MonitoringSessionManager`.
 - Utilise progressivement `MonitoringUserModal`.
 - Deconnexion locale centralisee.
-- Cle de preference vue synthese/detail alignee en v65.4 avec compatibilite des anciennes cles.
+- Cle de preference vue synthese/detail alignee en v65.5 avec compatibilite des anciennes cles.
 
 ## `assets/css/monitoring-f7-evolution.css`
 
