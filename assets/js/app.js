@@ -144,11 +144,11 @@
     async function hydrateOnlineDataCache() {
       if (!centralStorageReady()) return { ok: false, reason: "central_storage_not_ready" };
       const status = { ok: true, hydrated: [], pushedLocal: [] };
-      for (const [name, config] of Object.entries(ONLINE_COLLECTIONS)) {
+      await Promise.all(Object.entries(ONLINE_COLLECTIONS).map(async ([name, config]) => {
         try {
           const localValue = readLocalJSON(config.storageKey, config.array ? [] : {});
           const serverValue = await fetchOnlineCollection(name, config);
-          if (serverValue == null) continue;
+          if (serverValue == null) return;
           if (config.array) {
             const merged = mergeServerAndLocalArrays(serverValue, localValue);
             writeLocalJSON(config.storageKey, merged);
@@ -173,7 +173,7 @@
           status.ok = false;
           window.MonitoringAuditLog?.logWarning?.("online-cache-hydrate-failed", "Hydratation serveur partielle impossible.", { collection: name, message: String(error?.message || error) });
         }
-      }
+      }));
       await refreshOnlineServerStatus();
       window.MonitoringAuditLog?.logInfo?.("online-cache-hydrated", "Cache local hydraté depuis le stockage central.", status);
       return status;
@@ -187,14 +187,49 @@
       schedule: scheduleOnlineCollectionWrite,
       isReady: centralStorageReady
     });
+
+    let onlineRefreshInFlight = null;
+
+    function loadApplicationDataFromLocalCache() {
+      referencePeriods = loadReferencePeriods();
+      selectedReferencePeriodId = referencePeriods[0]?.id || null;
+      records = loadRecords();
+      importedEvents = loadImportedEvents();
+      objectives = loadObjectives();
+    }
+
+    function refreshApplicationAfterOnlineHydration(result) {
+      if (!result?.hydrated?.length) return;
+      loadApplicationDataFromLocalCache();
+      ensureAtLeastOneReferencePeriod();
+      initializeReferenceData();
+      applyObjectivesToForm();
+      renderImportedEventOptions();
+      renderTemplateSuggestions();
+      renderMonitoring();
+    }
+
+    function startOnlineRefreshAfterInitialRender() {
+      if (!centralStorageReady()) return Promise.resolve(null);
+      if (onlineRefreshInFlight) return onlineRefreshInFlight;
+      onlineRefreshInFlight = (async () => {
+        await publishLocalCacheToServer();
+        const result = await hydrateOnlineDataCache();
+        refreshApplicationAfterOnlineHydration(result);
+        return result;
+      })().catch(error => {
+        window.MonitoringAuditLog?.logWarning?.("online-refresh-background-failed", "Rafraîchissement serveur en arrière-plan impossible.", { message: String(error?.message || error) });
+        return null;
+      }).finally(() => { onlineRefreshInFlight = null; });
+      return onlineRefreshInFlight;
+    }
+
     document.addEventListener("monitoring-f7-auth-session-changed", async () => {
       try {
         if (sessionStorage.getItem("monitoring_f7_online_hydrated_v1") === "1") return;
         sessionStorage.setItem("monitoring_f7_online_hydrated_v1", "1");
       } catch {}
-      await publishLocalCacheToServer();
-      const result = await hydrateOnlineDataCache();
-      if (result?.hydrated?.length) setTimeout(() => location.reload(), 250);
+      if (window.__monitoringF7AppReady) startOnlineRefreshAfterInitialRender();
     });
 
     function safeText(value) {
@@ -6855,33 +6890,15 @@ a.sessions.forEach((s, i) => {
             const diagnostics = await window.MonitoringStorage.initStorage();
             console.info("Monitoring F7 stockage v65", diagnostics);
             window.MonitoringAuditLog?.logInfo('storage-init', 'StorageService initialisé.', diagnostics || {});
-            await publishLocalCacheToServer();
-            await hydrateOnlineDataCache();
-            referencePeriods = loadReferencePeriods();
-            selectedReferencePeriodId = referencePeriods[0]?.id || null;
-            records = loadRecords();
-            importedEvents = loadImportedEvents();
-            objectives = loadObjectives();
+            loadApplicationDataFromLocalCache();
           } catch (storageError) {
             console.warn("Monitoring F7 : stockage IndexedDB non disponible, fallback localStorage actif.", storageError);
             window.MonitoringAuditLog?.logError('indexeddb-error', 'StorageService indisponible, fallback localStorage actif.', { error: storageError });
-            await publishLocalCacheToServer();
-            await hydrateOnlineDataCache();
-            referencePeriods = loadReferencePeriods();
-            selectedReferencePeriodId = referencePeriods[0]?.id || null;
-            records = loadRecords();
-            importedEvents = loadImportedEvents();
-            objectives = loadObjectives();
+            loadApplicationDataFromLocalCache();
           }
         }
         if (!records.length && !referencePeriods.length && window.MonitoringStorage?.initStorage == null) {
-          await publishLocalCacheToServer();
-          await hydrateOnlineDataCache();
-          referencePeriods = loadReferencePeriods();
-          selectedReferencePeriodId = referencePeriods[0]?.id || null;
-          records = loadRecords();
-          importedEvents = loadImportedEvents();
-          objectives = loadObjectives();
+          loadApplicationDataFromLocalCache();
         }
         populateDomainOptions();
         ensureAtLeastOneReferencePeriod();
@@ -6906,6 +6923,8 @@ a.sessions.forEach((s, i) => {
         updateTargetVisibilitySummary();
 
         renderMonitoring();
+        window.__monitoringF7AppReady = true;
+        startOnlineRefreshAfterInitialRender();
       } catch (error) {
         console.error("Erreur d'initialisation :", error);
         window.MonitoringAuditLog?.logError('application-init-error', 'Erreur d’initialisation application.', { error });

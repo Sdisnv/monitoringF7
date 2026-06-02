@@ -24,6 +24,7 @@ function publicRow(row){
   };
 }
 async function listUsers(){
+  await db.ensureCoreSchema();
   const r = await db.query('select subject,email,display_name,roles,permissions,active,last_login_at,created_at,updated_at from monitoring_f7_user_profiles order by lower(coalesce(display_name,email,subject)) asc');
   return (r.rows || []).map(publicRow);
 }
@@ -36,6 +37,7 @@ exports.handler = async function(event){
     const body = parseBody(event);
     if(!body) return response(400, { ok:false, error:'invalid_json' });
     if(event.httpMethod === 'POST'){
+      await db.ensureCoreSchema();
       const subject = String(body.subject || body.email || '').trim().toLowerCase();
       if(!subject) return response(400, { ok:false, error:'missing_subject' });
       const roles = sanitizeRoles(body.roles);
@@ -47,6 +49,7 @@ exports.handler = async function(event){
       return response(200, { ok:true, users: await listUsers() });
     }
     if(event.httpMethod === 'PUT'){
+      await db.ensureCoreSchema();
       const subject = String(body.subject || '').trim().toLowerCase();
       if(!subject) return response(400, { ok:false, error:'missing_subject' });
       const current = await db.query('select roles from monitoring_f7_user_profiles where subject=$1', [subject]);
