@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.17 — couche d'évolution non destructive.
+/* Monitoring F7 v66.18 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.17';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v66.18';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -622,11 +622,11 @@
     const contractStatus = window.MonitoringBackendContractCheck?.run ? window.MonitoringBackendContractCheck.run() : null;
     statsEl.innerHTML = [
       ['Version application', diagnostics.appVersion || APP_VERSION],
-      ['Entrées journal', `${diagnostics.logEntries}/${diagnostics.maxEntries}`],
-      ['IndexedDB', diagnostics.indexedDBAvailable ? 'Disponible' : 'Indisponible'],
-      ['localStorage', diagnostics.localStorageAvailable ? 'Disponible' : 'Indisponible'],
-      ['Stockage approx.', `${diagnostics.storageApproxKo || 0} Ko`],
-      ['Dernière migration', diagnostics.lastMigrationAt ? fmtLocalDate(diagnostics.lastMigrationAt) : '—'],
+      ['Journal local navigateur', `${diagnostics.logEntries}/${diagnostics.maxEntries}`],
+      ['IndexedDB navigateur', diagnostics.indexedDBAvailable ? 'Disponible' : 'Indisponible'],
+      ['localStorage navigateur', diagnostics.localStorageAvailable ? 'Disponible' : 'Indisponible'],
+      ['Cache local navigateur', `${diagnostics.storageApproxKo || 0} Ko`],
+      ['Migration cache local', diagnostics.lastMigrationAt ? fmtLocalDate(diagnostics.lastMigrationAt) : '—'],
       ['Mode backend', backendStatus.backendEnabled ? 'Actif' : 'Désactivé'],
       ['Mode stockage', backendStatus.storageMode || 'local'],
       ['Stockage central', backendStatus.centralStorageEnabled ? 'Actif' : 'Inactif'],
@@ -638,10 +638,10 @@
       ['Synchronisation', syncStatus.syncEnabled ? 'Active' : 'Inactive'],
       ['Prérequis sync', syncStatus.readiness?.ready ? 'Réunis' : 'Incomplets'],
       ['File sync', `${syncStatus.queueLength || 0} opération${(syncStatus.queueLength || 0)>1?'s':''}`],
-      ['Dernière tentative sync', syncStatus.lastSyncAttemptAt ? fmtLocalDate(syncStatus.lastSyncAttemptAt) : 'Aucune'],
-      ['Serveur records', serverStatus?.collections ? String(serverStatus.collections.records || 0) : 'Non testé'],
-      ['Serveur événements', serverStatus?.collections ? String(serverStatus.collections.importedEvents || 0) : 'Non testé'],
-      ['Serveur effectifs', serverStatus?.collections ? String(serverStatus.collections.referencePeriods || 0) : 'Non testé']
+      ['Dernière sync locale', syncStatus.lastSyncAttemptAt ? fmtLocalDate(syncStatus.lastSyncAttemptAt) : 'Aucune'],
+      ['Serveur partagé records', serverStatus?.collections ? String(serverStatus.collections.records || 0) : 'Non testé'],
+      ['Serveur partagé événements', serverStatus?.collections ? String(serverStatus.collections.importedEvents || 0) : 'Non testé'],
+      ['Serveur partagé effectifs', serverStatus?.collections ? String(serverStatus.collections.referencePeriods || 0) : 'Non testé']
     ].map(([label,val])=>`<div class="f7-admin-stat"><strong>${escapeHtml(val)}</strong><span>${escapeHtml(label)}</span></div>`).join('');
     if(!logs.length){ body.innerHTML='<tr><td colspan="4" class="muted">Aucun événement journalisé.</td></tr>'; return; }
     body.innerHTML = logs.map(entry => `<tr><td>${escapeHtml(fmtLocalDate(entry.at))}</td><td><strong>${escapeHtml(entry.level || 'info')}</strong></td><td>${escapeHtml(entry.eventType || '—')}</td><td>${escapeHtml(entry.message || '')}</td></tr>`).join('');

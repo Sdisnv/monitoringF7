@@ -216,6 +216,7 @@ async function oidcCallbackResponse(event){
 }
 
 module.exports = {
+  COOKIE_NAME,
   ACCESS_COOKIE,
   clearCookie,
   oidcStartResponse,

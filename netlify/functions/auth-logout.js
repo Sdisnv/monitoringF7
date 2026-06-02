@@ -1,5 +1,5 @@
 const { response } = require('./_auth-utils');
-const { ACCESS_COOKIE, clearCookie } = require('./_oidc-utils');
+const { ACCESS_COOKIE, COOKIE_NAME, clearCookie } = require('./_oidc-utils');
 
 exports.handler = async function(event){
   if(event.httpMethod === 'GET'){
@@ -9,7 +9,7 @@ exports.handler = async function(event){
     return {
       statusCode:302,
       headers:{ Location:location, 'Cache-Control':'no-store' },
-      multiValueHeaders:{ 'Set-Cookie':[clearCookie(ACCESS_COOKIE)] },
+      multiValueHeaders:{ 'Set-Cookie':[clearCookie(ACCESS_COOKIE), clearCookie(COOKIE_NAME)] },
       body:''
     };
   }
@@ -18,6 +18,6 @@ exports.handler = async function(event){
     ok:true,
     message:'Déconnexion serveur acceptée. Révocation centralisée à ajouter avec un stockage de sessions.'
   });
-  result.multiValueHeaders = { 'Set-Cookie': [clearCookie(ACCESS_COOKIE)] };
+  result.multiValueHeaders = { 'Set-Cookie': [clearCookie(ACCESS_COOKIE), clearCookie(COOKIE_NAME)] };
   return result;
 };

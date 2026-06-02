@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.17 — auth Okta production avec login institutionnel à lien unique. */
+/* Monitoring F7 v66.18 — auth Okta production avec login institutionnel à lien unique. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
   const enc = new TextEncoder();
@@ -101,10 +101,12 @@
     exposeMonitoringAuth(window.CurrentUser, roles, permissions);
   }
   function rehydrateMonitoringAuthFromSession(){
+    if(sessionManager?.isLoggedOut?.()) return null;
     const profile = getProfile() || {};
     const session = readSession() || {};
     const source = profile.authSource || session.authSource || '';
-    if(source !== 'okta-oidc' && session.mode !== 'institutional-oidc' && window.CurrentUser?.authSource !== 'okta-oidc') return null;
+    const activeOidcSession = session.active === true && (source === 'okta-oidc' || session.mode === 'institutional-oidc');
+    if(!activeOidcSession) return null;
     const user = window.CurrentUser || Object.freeze({
       nip: profile.nip || session.nip || '',
       displayName: profile.displayName || profile.name || session.displayName || 'Utilisateur SDIS',
@@ -182,6 +184,7 @@
     return session;
   }
   async function checkServerAuthentication(){
+    if(sessionManager?.isLoggedOut?.()) return false;
     try{
       const response = await fetch('/.netlify/functions/auth-me', {
         method: 'GET',
@@ -203,12 +206,16 @@
   function safeCurrentReturnTo(){
     const fallback = '/';
     try{
-      const path = `${window.location.pathname || '/'}${window.location.search || ''}${window.location.hash || ''}`;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('loggedOut');
+      url.searchParams.delete('authError');
+      const path = `${url.pathname || '/'}${url.search || ''}${url.hash || ''}`;
       if(!path.startsWith('/') || path.startsWith('//') || /^\s*javascript:/i.test(path)) return fallback;
-      return path || fallback;
+      return path === '/auth/oidc/callback' ? fallback : (path || fallback);
     }catch{ return fallback; }
   }
   function startOktaLogin(){
+    sessionManager?.setLoggedOutFlag?.(false);
     const returnTo = encodeURIComponent(safeCurrentReturnTo());
     const target = `/.netlify/functions/auth-oidc-start?returnTo=${returnTo}`;
     try{
@@ -309,6 +316,8 @@
     const hadAuthError = params.has('authError');
     const hadLogout = params.has('loggedOut');
     if(hadLogout){
+      sessionManager?.setLoggedOutFlag?.(true);
+      sessionManager?.clear?.({ clearProfile:true });
       clearSession();
       setProfile({ authSource:'logged-out', displayName:'', updatedAt:new Date().toISOString() });
       try { delete window.MonitoringAuth; delete window.CurrentUser; delete window.CurrentRoles; delete window.CurrentPermissions; } catch {

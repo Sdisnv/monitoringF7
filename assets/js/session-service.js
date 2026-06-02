@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.17 — service session/profil, OIDC prioritaire avec secours local. */
+/* Monitoring F7 v66.18 — service session/profil, OIDC prioritaire avec secours local. */
 (function(){
   'use strict';
 
@@ -6,6 +6,7 @@
   const AUTH_PROFILE_KEY = 'monitoring_sdis_auth_profile_v1';
   const AUTH_SESSION_BACKUP_KEY = 'monitoring_sdis_auth_session_backup_v1';
   const ADMIN_LOCK_KEY = 'monitoring_f7_admin_lock_v1';
+  const LOGGED_OUT_KEY = 'monitoring_f7_logged_out_v1';
   const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
   function parseJson(raw){
@@ -26,6 +27,26 @@
     return profile || {};
   }
 
+  function setLoggedOutFlag(active){
+    try {
+      if(active) {
+        localStorage.setItem(LOGGED_OUT_KEY, JSON.stringify({ active:true, at:new Date().toISOString() }));
+        sessionStorage.setItem(LOGGED_OUT_KEY, '1');
+      } else {
+        localStorage.removeItem(LOGGED_OUT_KEY);
+        sessionStorage.removeItem(LOGGED_OUT_KEY);
+      }
+    } catch {}
+  }
+
+  function isLoggedOut(){
+    try {
+      if(sessionStorage.getItem(LOGGED_OUT_KEY) === '1') return true;
+      const saved = JSON.parse(localStorage.getItem(LOGGED_OUT_KEY) || 'null');
+      return saved?.active === true;
+    } catch { return false; }
+  }
+
   function saveProfilePatch(patch){
     const current = getProfile() || {};
     const next = Object.assign({}, current, patch || {}, { updatedAt:new Date().toISOString() });
@@ -38,6 +59,9 @@
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(ADMIN_LOCK_KEY);
     try { localStorage.removeItem(AUTH_SESSION_BACKUP_KEY); } catch {}
+    if(options?.clearProfile === true) {
+      try { localStorage.removeItem(AUTH_PROFILE_KEY); } catch {}
+    }
     if(options?.lockUi !== false) document.body?.classList.add('auth-locked');
   }
 
@@ -61,9 +85,11 @@
   }
 
   function exposeMonitoringAuthFromProfile(profile, session){
+    if(isLoggedOut()) return null;
     const p = profile || getProfile() || {};
     const s = session || null;
-    if(p.authSource !== 'okta-oidc' && s?.authSource !== 'okta-oidc' && s?.mode !== 'institutional-oidc') return null;
+    const activeOidcSession = s?.active === true && (s?.authSource === 'okta-oidc' || s?.mode === 'institutional-oidc');
+    if(!activeOidcSession) return null;
     const roles = Array.isArray(p.roles) ? p.roles : (Array.isArray(s?.roles) ? s.roles : []);
     const permissions = Array.isArray(p.permissions) ? p.permissions : (Array.isArray(s?.permissions) ? s.permissions : []);
     const user = Object.freeze(Object.assign({}, window.CurrentUser || {}, {
@@ -103,11 +129,12 @@
       startedAt: new Date().toISOString(),
       referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
       source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: window.MonitoringConfig?.version || 'v66.17'
+      version: window.MonitoringConfig?.version || 'v66.18'
     };
   }
 
   function writeSession(profile){
+    setLoggedOutFlag(false);
     const sessionPayload = buildSessionPayload(profile || getProfile() || {});
     const raw = JSON.stringify(sessionPayload);
     sessionStorage.setItem(AUTH_SESSION_KEY, raw);
@@ -123,8 +150,14 @@
   function logout(options){
     const profile = getProfile() || {};
     window.MonitoringAuditLog?.logAction(profile.authSource === 'okta-oidc' ? 'logout-okta-oidc' : 'logout-local', options?.message || 'Déconnexion demandée.', {});
-    clearSession({ lockUi:false });
-    try { delete window.MonitoringAuth; } catch { window.MonitoringAuth = undefined; }
+    setLoggedOutFlag(true);
+    clearSession({ lockUi:false, clearProfile:true });
+    try { delete window.MonitoringAuth; delete window.CurrentUser; delete window.CurrentRoles; delete window.CurrentPermissions; } catch {
+      window.MonitoringAuth = undefined;
+      window.CurrentUser = undefined;
+      window.CurrentRoles = undefined;
+      window.CurrentPermissions = undefined;
+    }
     if(profile.authSource === 'okta-oidc' && options?.serverLogout !== false){
       try { sessionStorage.removeItem('monitoring_f7_online_hydrated_v1'); } catch {}
       location.assign('/.netlify/functions/auth-logout?returnTo=/%3FloggedOut%3D1');
@@ -140,6 +173,8 @@
     maxAgeMs: SESSION_MAX_AGE_MS,
     getProfile,
     setProfile,
+    setLoggedOutFlag,
+    isLoggedOut,
     saveProfilePatch,
     read: readSession,
     write: writeSession,
