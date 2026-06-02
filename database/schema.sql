@@ -64,6 +64,14 @@ create table if not exists monitoring_f7_audit_entries (
   created_at timestamptz not null default now()
 );
 
+create table if not exists monitoring_f7_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_by text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists monitoring_f7_sync_changes (
   id uuid primary key default gen_random_uuid(),
   entity_type text not null,
@@ -86,5 +94,5 @@ alter table monitoring_f7_user_profiles add column if not exists permissions tex
 create index if not exists idx_monitoring_f7_user_profiles_email on monitoring_f7_user_profiles (lower(email));
 
 insert into monitoring_f7_schema_migrations(version)
-values ('v66.0-production-institutionnelle')
+values ('v66.11-online-first')
 on conflict (version) do nothing;

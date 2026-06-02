@@ -1,9 +1,9 @@
-/* Monitoring F7 v66.10 — couche d'évolution non destructive.
+/* Monitoring F7 v66.11 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v66.10';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v66.11';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',
@@ -453,9 +453,17 @@
   }
   async function unlockAdmin(){
     const code=$('f7AdminCode')?.value || '';
-    const profile=readJSON(KEYS.admin, null);
-    const expected=profile?.hash || TEMP_ADMIN_HASH;
-    if(await sha256Hex(code) !== expected){
+    const hash = await sha256Hex(code);
+    let valid = false;
+    if(window.MonitoringOnlineDataService?.isReady?.() && window.MonitoringApiClient?.verifyAdminCode){
+      const res = await window.MonitoringApiClient.verifyAdminCode(hash);
+      valid = res?.ok === true && res.data?.ok === true && res.data?.valid === true;
+    }else{
+      const profile=readJSON(KEYS.admin, null);
+      const expected=profile?.hash || TEMP_ADMIN_HASH;
+      valid = hash === expected;
+    }
+    if(!valid){
       const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box error'; msg.textContent='Code Admin incorrect.'; }
       showOperationalMessage('Code Admin incorrect.', 'error');
       return;
@@ -468,7 +476,9 @@
     const expected=profile?.hash || TEMP_ADMIN_HASH;
     const current=prompt('Code Admin actuel :');
     if(!current) return;
-    if(await sha256Hex(current) !== expected){
+    const currentHash = await sha256Hex(current);
+    const centralReady = window.MonitoringOnlineDataService?.isReady?.() && window.MonitoringApiClient?.updateAdminCode;
+    if(!centralReady && currentHash !== expected){
       const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box error'; msg.textContent='Code Admin actuel incorrect. Modification refusée.'; }
       showOperationalMessage('Modification du code Admin refusée.', 'error');
       return;
@@ -476,9 +486,18 @@
     const next=prompt('Nouveau code Admin local (minimum 6 caractères) :');
     if(!next) return;
     if(next.length<6){ alert('Code trop court. Minimum 6 caractères.'); return; }
-    writeJSON(KEYS.admin, {hash:await sha256Hex(next), updatedAt:nowIso()});
-    const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box ok'; msg.textContent='Code Admin local mis à jour.'; }
-    showOperationalMessage('Code Admin local mis à jour.', 'ok');
+    const nextHash = await sha256Hex(next);
+    if(centralReady){
+      const res = await window.MonitoringApiClient.updateAdminCode(currentHash, nextHash);
+      if(!res?.ok || res.data?.ok !== true){
+        const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box error'; msg.textContent=res?.data?.error === 'current_admin_code_invalid' ? 'Code Admin actuel incorrect. Modification refusée.' : 'Modification serveur refusée.'; }
+        showOperationalMessage('Modification du code Admin refusée.', 'error');
+        return;
+      }
+    }
+    writeJSON(KEYS.admin, {hash:nextHash, updatedAt:nowIso(), scope:centralReady ? 'server-cache' : 'local'});
+    const msg=$('f7AdminMessage'); if(msg){ msg.className='f7-status-box ok'; msg.textContent=centralReady ? 'Code Admin central mis à jour.' : 'Code Admin local mis à jour.'; }
+    showOperationalMessage(centralReady ? 'Code Admin central mis à jour.' : 'Code Admin local mis à jour.', 'ok');
   }
 
   function getAuthProfile(){ return window.MonitoringSessionManager?.getProfile?.() || {}; }

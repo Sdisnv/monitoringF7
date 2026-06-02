@@ -1,7 +1,7 @@
 /* Configuration externe future. La logique historique reste chargée par app.js. */
 window.MonitoringConfig = Object.freeze({
   appName: 'Monitoring F7',
-  version: 'v66.10',
+  version: 'v66.11',
   localAuth: Object.freeze({
     mode: 'local-browser-only',
     notice: 'Authentification institutionnelle Okta/OIDC prioritaire. Secours local technique uniquement.',
@@ -16,7 +16,7 @@ window.MonitoringConfig = Object.freeze({
 window.MonitoringBackendConfigOverrides = Object.freeze({
   backendEnabled: true,
   apiBaseUrl: '',
-  syncEnabled: false,
+  syncEnabled: true,
   authMode: 'backend',
   storageMode: 'backend',
   centralStorageEnabled: true,

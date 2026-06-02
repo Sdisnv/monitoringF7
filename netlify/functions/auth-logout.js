@@ -2,6 +2,14 @@ const { response } = require('./_auth-utils');
 const { ACCESS_COOKIE, clearCookie } = require('./_oidc-utils');
 
 exports.handler = async function(event){
+  if(event.httpMethod === 'GET'){
+    return {
+      statusCode:302,
+      headers:{ Location:'/', 'Cache-Control':'no-store' },
+      multiValueHeaders:{ 'Set-Cookie':[clearCookie(ACCESS_COOKIE)] },
+      body:''
+    };
+  }
   if(event.httpMethod !== 'POST') return response(405, { ok:false, error:'method_not_allowed' });
   const result = response(200, {
     ok:true,

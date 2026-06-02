@@ -31,6 +31,122 @@
     const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || "v65";
     const MAX_IMPORT_JSON_BYTES = 8 * 1024 * 1024;
     const MAX_IMPORT_CSV_BYTES = 5 * 1024 * 1024;
+    const ONLINE_COLLECTIONS = Object.freeze({
+      records: { storageKey: STORAGE_KEY, list: "listRecords", replace: "replaceRecords", responseKey: "records", array: true },
+      importedEvents: { storageKey: STORAGE_KEY_IMPORTED_EVENTS, list: "apiGet", listPath: "/imported-events", replace: "replaceImportedEvents", responseKey: "importedEvents", array: true },
+      referencePeriods: { storageKey: "monitoring_exercices_sdis_reference_periods_v1", list: "apiGet", listPath: "/reference-periods", replace: "replaceReferencePeriods", responseKey: "referencePeriods", array: true },
+      objectives: { storageKey: STORAGE_KEY_OBJECTIVES, list: "listObjectives", replace: "replaceObjectives", responseKey: "objectives", array: false }
+    });
+    const onlineWriteTimers = Object.create(null);
+
+    function centralStorageReady() {
+      const cfg = window.MonitoringBackendConfig?.current || {};
+      return cfg.backendEnabled === true && cfg.storageMode === "backend" && cfg.centralStorageEnabled === true && !!window.MonitoringApiClient;
+    }
+
+    function readLocalJSON(key, fallback) {
+      try {
+        if (window.MonitoringStorage?.getJSON) return window.MonitoringStorage.getJSON(key, fallback);
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeLocalJSON(key, value) {
+      try {
+        if (window.MonitoringStorage?.setJSON) window.MonitoringStorage.setJSON(key, value);
+        else localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
+    }
+
+    function mergeServerAndLocalArrays(serverItems, localItems) {
+      const merged = new Map();
+      (Array.isArray(serverItems) ? serverItems : []).forEach((item, index) => {
+        const id = String(item?.id || item?.key || `server-${index}`);
+        merged.set(id, item);
+      });
+      (Array.isArray(localItems) ? localItems : []).forEach((item, index) => {
+        const id = String(item?.id || item?.key || `local-${index}`);
+        if (!merged.has(id)) merged.set(id, item);
+      });
+      return Array.from(merged.values());
+    }
+
+    async function fetchOnlineCollection(name, config) {
+      const api = window.MonitoringApiClient;
+      if (!api) return null;
+      const result = config.listPath ? await api[config.list](config.listPath) : await api[config.list]();
+      if (!result?.ok || !result.data?.ok) return null;
+      return result.data[config.responseKey];
+    }
+
+    async function pushOnlineCollection(name, data) {
+      if (!centralStorageReady()) return null;
+      const config = ONLINE_COLLECTIONS[name];
+      const api = window.MonitoringApiClient;
+      if (!config || !api?.[config.replace]) return null;
+      try {
+        const result = await api[config.replace](data);
+        if (!result?.ok) window.MonitoringAuditLog?.logWarning?.("online-save-failed", "Sauvegarde serveur non confirmée.", { collection: name, status: result?.status, error: result?.data?.error || result?.error });
+        return result;
+      } catch (error) {
+        window.MonitoringAuditLog?.logWarning?.("online-save-failed", "Sauvegarde serveur impossible.", { collection: name, message: String(error?.message || error) });
+        return null;
+      }
+    }
+
+    function scheduleOnlineCollectionWrite(name, data) {
+      if (!centralStorageReady()) return;
+      clearTimeout(onlineWriteTimers[name]);
+      const snapshot = Array.isArray(data) ? data.map(item => ({ ...(item || {}) })) : { ...(data || {}) };
+      onlineWriteTimers[name] = setTimeout(() => { pushOnlineCollection(name, snapshot); }, 350);
+    }
+
+    async function hydrateOnlineDataCache() {
+      if (!centralStorageReady()) return { ok: false, reason: "central_storage_not_ready" };
+      const status = { ok: true, hydrated: [], pushedLocal: [] };
+      for (const [name, config] of Object.entries(ONLINE_COLLECTIONS)) {
+        try {
+          const localValue = readLocalJSON(config.storageKey, config.array ? [] : {});
+          const serverValue = await fetchOnlineCollection(name, config);
+          if (serverValue == null) continue;
+          if (config.array) {
+            const merged = mergeServerAndLocalArrays(serverValue, localValue);
+            writeLocalJSON(config.storageKey, merged);
+            status.hydrated.push(name);
+            if (merged.length > (Array.isArray(serverValue) ? serverValue.length : 0)) {
+              await pushOnlineCollection(name, merged);
+              status.pushedLocal.push(name);
+            }
+          } else {
+            const serverObject = serverValue && typeof serverValue === "object" && !Array.isArray(serverValue) ? serverValue : {};
+            const localObject = localValue && typeof localValue === "object" && !Array.isArray(localValue) ? localValue : {};
+            const hasServer = Object.keys(serverObject).length > 0;
+            const next = hasServer ? { ...localObject, ...serverObject } : localObject;
+            writeLocalJSON(config.storageKey, next);
+            status.hydrated.push(name);
+            if (!hasServer && Object.keys(localObject).length > 0) {
+              await pushOnlineCollection(name, localObject);
+              status.pushedLocal.push(name);
+            }
+          }
+        } catch (error) {
+          status.ok = false;
+          window.MonitoringAuditLog?.logWarning?.("online-cache-hydrate-failed", "Hydratation serveur partielle impossible.", { collection: name, message: String(error?.message || error) });
+        }
+      }
+      window.MonitoringAuditLog?.logInfo?.("online-cache-hydrated", "Cache local hydraté depuis le stockage central.", status);
+      return status;
+    }
+
+    window.MonitoringOnlineDataService = Object.freeze({
+      hydrate: hydrateOnlineDataCache,
+      push: pushOnlineCollection,
+      schedule: scheduleOnlineCollectionWrite,
+      isReady: centralStorageReady
+    });
 
     function safeText(value) {
       return window.MonitoringDomUtils?.safeText
@@ -432,6 +548,7 @@ function saveReferencePeriods(periods) {
 
   if (window.MonitoringStorage?.setJSON) window.MonitoringStorage.setJSON(REFERENCE_PERIODS_STORAGE_KEY, normalized);
   else localStorage.setItem(REFERENCE_PERIODS_STORAGE_KEY, JSON.stringify(normalized));
+  scheduleOnlineCollectionWrite("referencePeriods", normalized);
 
   return normalized;
 }
@@ -2126,6 +2243,7 @@ function openExercisePreview(record) {
 
     function saveRecords() {
       if (window.MonitoringStorage?.setJSON) window.MonitoringStorage.setJSON(STORAGE_KEY, records); else localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      scheduleOnlineCollectionWrite("records", records);
     }
 
     function normalizeDomainValue(value) {
@@ -2261,6 +2379,7 @@ function openExercisePreview(record) {
       });
 
       if (window.MonitoringStorage?.setJSON) window.MonitoringStorage.setJSON(STORAGE_KEY_IMPORTED_EVENTS, importedEvents); else localStorage.setItem(STORAGE_KEY_IMPORTED_EVENTS, JSON.stringify(importedEvents));
+      scheduleOnlineCollectionWrite("importedEvents", importedEvents);
     }
 
     function loadObjectives() {
@@ -2275,6 +2394,7 @@ function openExercisePreview(record) {
     function saveObjectives(data = objectives) {
       objectives = { ...DEFAULT_OBJECTIVES, ...(data || {}) };
       if (window.MonitoringStorage?.setJSON) window.MonitoringStorage.setJSON(STORAGE_KEY_OBJECTIVES, objectives); else localStorage.setItem(STORAGE_KEY_OBJECTIVES, JSON.stringify(objectives));
+      scheduleOnlineCollectionWrite("objectives", objectives);
       return objectives;
     }
 
@@ -6686,6 +6806,7 @@ a.sessions.forEach((s, i) => {
             const diagnostics = await window.MonitoringStorage.initStorage();
             console.info("Monitoring F7 stockage v65", diagnostics);
             window.MonitoringAuditLog?.logInfo('storage-init', 'StorageService initialisé.', diagnostics || {});
+            await hydrateOnlineDataCache();
             referencePeriods = loadReferencePeriods();
             selectedReferencePeriodId = referencePeriods[0]?.id || null;
             records = loadRecords();
@@ -6694,6 +6815,7 @@ a.sessions.forEach((s, i) => {
           } catch (storageError) {
             console.warn("Monitoring F7 : stockage IndexedDB non disponible, fallback localStorage actif.", storageError);
             window.MonitoringAuditLog?.logError('indexeddb-error', 'StorageService indisponible, fallback localStorage actif.', { error: storageError });
+            await hydrateOnlineDataCache();
             referencePeriods = loadReferencePeriods();
             selectedReferencePeriodId = referencePeriods[0]?.id || null;
             records = loadRecords();
@@ -6702,6 +6824,7 @@ a.sessions.forEach((s, i) => {
           }
         }
         if (!records.length && !referencePeriods.length && window.MonitoringStorage?.initStorage == null) {
+          await hydrateOnlineDataCache();
           referencePeriods = loadReferencePeriods();
           selectedReferencePeriodId = referencePeriods[0]?.id || null;
           records = loadRecords();

@@ -4,7 +4,7 @@
   const ROLES = ['sdis-admin','sdis-commandement','sdis-formation','sdis-instructeur','sdis-user','sdis-readonly'];
   function $(id){ return document.getElementById(id); }
   function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function canAdmin(){ return window.MonitoringRBAC?.hasPermission?.('users:admin') === true; }
+  function canAdmin(){ return window.MonitoringRBAC?.has?.('users:admin') === true; }
   function mount(){
     const pane = $('f7-pane-admin'); if(!pane || $('f7InstitutionalAdmin')) return;
     const box = document.createElement('section');
@@ -26,7 +26,7 @@
     $('f7CreateUserBtn')?.addEventListener('click', saveUser);
     $('f7RefreshUsersBtn')?.addEventListener('click', loadUsers);
     $('f7LoadAuditBtn')?.addEventListener('click', loadAudit);
-    window.MonitoringRBAC?.applyUiGuards?.();
+    window.MonitoringRBAC?.applyUIRestrictions?.();
     if(canAdmin()) loadUsers();
   }
   function selectedRoles(){ return Array.from($('f7UserRoles')?.selectedOptions || []).map(o=>o.value); }
@@ -47,12 +47,12 @@
   async function saveUser(){
     const subject=$('f7UserSubject')?.value.trim().toLowerCase(); if(!subject){ setStatus('E-mail / NIP obligatoire.', 'error'); return; }
     const user={ subject, email:subject.includes('@')?subject:'', displayName:$('f7UserDisplayName')?.value.trim()||subject, roles:selectedRoles(), active:true };
-    const res = await window.MonitoringApiClient.apiPost('/users', user);
+    const res = await window.MonitoringApiClient.saveUser(user);
     if(!res.ok || !res.data?.ok){ setStatus(res.data?.error || 'Enregistrement refusé.', 'error'); return; }
     setStatus('Utilisateur enregistré.', 'ok'); loadUsers();
   }
   async function loadAudit(){
-    if(window.MonitoringRBAC?.hasPermission?.('audit:read') !== true){ setStatus('Accès audit refusé.', 'error'); return; }
+    if(window.MonitoringRBAC?.has?.('audit:read') !== true){ setStatus('Accès audit refusé.', 'error'); return; }
     const res = await window.MonitoringApiClient.listAuditLog(100);
     const tbody=$('f7AuditTable');
     if(!res.ok || !res.data?.ok){ tbody.innerHTML='<tr><td colspan="5">Audit indisponible.</td></tr>'; return; }

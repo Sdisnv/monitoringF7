@@ -29,8 +29,12 @@ function forbiddenIfNoWrite(claims){
   return !canWriteRecords(claims);
 }
 
-function validateArrayPayload(body, key){
+function validatePayload(body, key, options){
   if(!body || typeof body !== 'object') return { ok:false, error:'invalid_json' };
+  if(options?.objectPayload === true){
+    if(!body[key] || typeof body[key] !== 'object' || Array.isArray(body[key])) return { ok:false, error:`missing_${key}` };
+    return { ok:true, data:body[key] };
+  }
   if(!Array.isArray(body[key])) return { ok:false, error:`missing_${key}` };
   return { ok:true, data:body[key] };
 }
@@ -78,7 +82,8 @@ async function handleCollection(event, options){
       const result = await readCollection(options.collection);
       if(!result.ok) return response(result.statusCode || 503, storageUnavailablePayload());
       const stored = result.data && typeof result.data === 'object' && Array.isArray(result.data.items) ? result.data.items : result.data;
-      return response(200, { ok:true, [options.responseKey]: Array.isArray(stored) ? stored : [], schemaVersion: result.data?.schemaVersion || 4, updatedAt: result.data?.updatedAt || null });
+      const payload = options.objectPayload === true ? (Array.isArray(stored) ? (stored[0] || {}) : (stored || {})) : (Array.isArray(stored) ? stored : []);
+      return response(200, { ok:true, [options.responseKey]: payload, schemaVersion: result.data?.schemaVersion || 4, updatedAt: result.data?.updatedAt || null });
     }catch(error){
       return response(500, { ok:false, error:'central_storage_read_failed', message:String(error.message || error) });
     }
@@ -89,12 +94,13 @@ async function handleCollection(event, options){
     let body;
     try{ body = JSON.parse(event.body || '{}'); }
     catch{ return response(400, { ok:false, error:'invalid_json' }); }
-    const validation = validateArrayPayload(body, options.requestKey);
+    const validation = validatePayload(body, options.requestKey, options);
     if(!validation.ok) return response(400, { ok:false, error:validation.error });
     try{
-      const result = await writeCollection(options.collection, validation.data, body.schemaVersion || 4);
+      const items = options.objectPayload === true ? [validation.data] : validation.data;
+      const result = await writeCollection(options.collection, items, body.schemaVersion || 4);
       if(!result.ok) return response(result.statusCode || 503, storageUnavailablePayload());
-      await audit.addAudit({ eventType:`${options.collection}-replace`, message:'Collection serveur remplacée.', actorSubject:claims.sub, context:{ collection:options.collection, count:validation.data.length, schemaVersion:body.schemaVersion || 4 } });
+      await audit.addAudit({ eventType:`${options.collection}-upsert`, message:'Collection serveur mise à jour.', actorSubject:claims.sub, context:{ collection:options.collection, count:items.length, schemaVersion:body.schemaVersion || 4 } });
       return response(200, { ok:true, updatedAt:result.updatedAt });
     }catch(error){
       return response(500, { ok:false, error:'central_storage_write_failed', message:String(error.message || error) });

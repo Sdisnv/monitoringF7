@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.10 — auth Okta production avec login institutionnel à lien unique. */
+/* Monitoring F7 v66.11 — auth Okta production avec login institutionnel à lien unique. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
   const enc = new TextEncoder();
@@ -358,7 +358,7 @@ window.MonitoringAuthService = Object.freeze({
     return window.MonitoringSessionManager?.read?.() || null;
   },
   logout(){
-    if((this.getProfile()?.authSource || '') === 'okta-oidc') window.location.href = '/.netlify/functions/auth-logout';
+    if((this.getProfile()?.authSource || '') === 'okta-oidc') window.MonitoringSessionManager?.logout?.({ message:'Déconnexion Okta demandée.' });
     else window.MonitoringSessionManager?.logout?.({ message:'Déconnexion locale demandée.' });
   }
 });

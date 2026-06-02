@@ -64,8 +64,8 @@
         mockBackendEnabled: activeConfig.mockBackendEnabled,
         tokenStorage: activeConfig.tokenStorage,
         requiredRole: activeConfig.requiredRole,
-        localFirst: true,
-        mandatoryBackend: false
+        localFirst: false,
+        mandatoryBackend: activeConfig.backendEnabled === true
       });
     }
   });

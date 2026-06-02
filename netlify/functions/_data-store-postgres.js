@@ -43,7 +43,6 @@ async function writeCollection(collection, items, schemaVersion){
   const config = getCollectionConfig(collection);
   const now = new Date().toISOString();
   await db.transaction(async client => {
-    await client.query(`delete from ${config.table}`);
     for(const [index, item] of items.entries()){
       await client.query(
         `insert into ${config.table}(id, payload, schema_version, updated_at)

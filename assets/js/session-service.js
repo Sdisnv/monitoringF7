@@ -1,4 +1,4 @@
-/* Monitoring F7 v66.10 — service session/profil, OIDC prioritaire avec secours local. */
+/* Monitoring F7 v66.11 — service session/profil, OIDC prioritaire avec secours local. */
 (function(){
   'use strict';
 
@@ -103,7 +103,7 @@
       startedAt: new Date().toISOString(),
       referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
       source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: window.MonitoringConfig?.version || 'v66.10'
+      version: window.MonitoringConfig?.version || 'v66.11'
     };
   }
 
@@ -126,7 +126,14 @@
     clearSession({ lockUi:false });
     try { delete window.MonitoringAuth; } catch { window.MonitoringAuth = undefined; }
     if(profile.authSource === 'okta-oidc' && options?.serverLogout !== false){
-      location.href = '/.netlify/functions/auth-logout';
+      fetch('/.netlify/functions/auth-logout', {
+        method:'POST',
+        credentials:'include',
+        headers:{ 'Accept':'application/json' },
+        cache:'no-store'
+      }).finally(() => {
+        if(options?.reload !== false) location.assign('/');
+      });
       return;
     }
     if(options?.reload !== false) location.reload();
@@ -147,4 +154,3 @@
     logout
   });
 })();
-

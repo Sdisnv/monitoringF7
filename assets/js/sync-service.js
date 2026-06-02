@@ -29,7 +29,7 @@
     if(cfg.authMode !== 'backend' || cfg.serverAuthEnabled !== true) missing.push('serverAuthEnabled');
     if(cfg.storageMode !== 'backend' || cfg.centralStorageEnabled !== true) missing.push('centralStorageEnabled');
     if(cfg.syncEnabled !== true) missing.push('syncEnabled');
-    if(!window.MonitoringApiClient?.getAccessToken?.()) missing.push('accessToken');
+    if(!window.MonitoringApiClient) missing.push('apiClient');
     return Object.freeze({
       ready: missing.length === 0,
       missing,
@@ -52,7 +52,7 @@
       lastSyncSuccessAt: null,
       lastConflictAt: null,
       readiness,
-      message: 'Synchronisation inactive en v65.'
+      message: readiness.ready ? 'Synchronisation online-first active.' : 'Synchronisation inactive.'
     }, saved, { syncEnabled: isSyncEnabled(), queueLength: getQueue().length, readiness }));
   }
   function enqueue(type, payload){
@@ -82,9 +82,11 @@
       writeJson(STATUS_KEY, status);
       return Object.freeze(status);
     }
-    status.status = 'ready-not-executed';
+    if(window.MonitoringOnlineDataService?.hydrate) await window.MonitoringOnlineDataService.hydrate();
+    status.status = 'synced';
     status.readiness = readiness;
-    status.message = 'Prérequis réunis, mais exécution automatique volontairement non activée en v65.';
+    status.lastSyncSuccessAt = new Date().toISOString();
+    status.message = 'Synchronisation serveur exécutée.';
     writeJson(STATUS_KEY, status);
     return Object.freeze(status);
   }

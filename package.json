@@ -1,12 +1,12 @@
 {
   "name": "monitoring-f7",
-  "version": "66.10.0",
+  "version": "66.11.0",
   "private": true,
   "description": "Monitoring F7 offline-first avec backend Netlify/PostgreSQL et auth Okta/OIDC.",
   "license": "UNLICENSED",
   "scripts": {
     "check": "./scripts/check-local.sh",
-    "deploy": "git status && git add . && git commit -m \"release: Monitoring F7 v66.10 oidc login flow\" && git push"
+    "deploy": "git status && git add . && git commit -m \"release: Monitoring F7 v66.11 oidc login flow\" && git push"
   },
   "dependencies": {
     "pg": "^8.13.1",
