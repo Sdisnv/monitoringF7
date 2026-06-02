@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5.2 — durcissement état global Okta/OIDC prioritaire, secours local conservé. */
+/* Monitoring F7 v65.5.3 — durcissement état global Okta/OIDC prioritaire, secours local conservé. */
 (function(){
   const DEFAULT_ACCESS_HASH_HEX = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // 1234
   const enc = new TextEncoder();

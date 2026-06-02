@@ -81,14 +81,29 @@
   window.safeText = window.safeText || safeText;
   window.safeSetHTML = window.safeSetHTML || safeSetHTML;
 
+  function shouldShowRuntimeWarning(event){
+    const source = String(event?.filename || '');
+    const message = String(event?.message || event?.reason?.message || event?.reason || '');
+    // Ne pas afficher l’avertissement utilisateur pour les erreurs saisies dans la console DevTools
+    // ou les extensions navigateur. Le log technique reste conservé côté console/audit.
+    if(!source && /SyntaxError|Unexpected token|Expected/.test(message)) return false;
+    if(source && !source.includes(location.origin) && !source.startsWith(location.pathname) && !source.includes('/assets/')) return false;
+    return true;
+  }
+
+  function markRuntimeWarning(event){
+    if(!shouldShowRuntimeWarning(event)) return;
+    document.body?.classList.add('monitoring-runtime-warning');
+  }
+
   window.addEventListener('error', event => {
     logSecurity('js-error', event.message || 'Erreur JavaScript', { source: event.filename, line: event.lineno, col: event.colno });
-    document.body?.classList.add('monitoring-runtime-warning');
+    markRuntimeWarning(event);
   });
 
   window.addEventListener('unhandledrejection', event => {
     logSecurity('promise-rejection', event.reason?.message || String(event.reason || 'Promesse rejetée'));
-    document.body?.classList.add('monitoring-runtime-warning');
+    markRuntimeWarning(event);
   });
 
   document.addEventListener('DOMContentLoaded', () => {

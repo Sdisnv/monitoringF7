@@ -1,9 +1,9 @@
-/* Monitoring F7 v65.5.2 — couche d'évolution non destructive.
+/* Monitoring F7 v65.5.3 — couche d'évolution non destructive.
    Objectifs: professionnaliser la lecture COD, préserver localStorage, préparer Netlify + GitHub. */
 (function(){
   'use strict';
 
-  const APP_VERSION = window.MonitoringConfig?.version || 'v65.5.2';
+  const APP_VERSION = window.MonitoringConfig?.version || 'v65.5.3';
   const DATA_SCHEMA_VERSION = 3;
   const KEYS = {
     records: 'monitoring_exercices_sdis_v2',

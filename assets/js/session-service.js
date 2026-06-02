@@ -1,4 +1,4 @@
-/* Monitoring F7 v65.5.2 — service session/profil, OIDC prioritaire avec secours local. */
+/* Monitoring F7 v65.5.3 — service session/profil, OIDC prioritaire avec secours local. */
 (function(){
   'use strict';
 
@@ -103,7 +103,7 @@
       startedAt: new Date().toISOString(),
       referenceDate: window.MonitoringEventRules?.sessionReferenceDateIso || new Date().toISOString().slice(0,10),
       source: location.protocol === 'file:' ? 'local-file' : 'served-origin',
-      version: window.MonitoringConfig?.version || 'v65.5.2'
+      version: window.MonitoringConfig?.version || 'v65.5.3'
     };
   }
 
