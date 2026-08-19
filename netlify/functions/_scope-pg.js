@@ -312,7 +312,7 @@ function createPgRepo(client){
     },
     async listReglesBascule(){
       const result = await q('select * from scope_regles_bascule');
-      return result.rows;
+      return result.rows.map((row) => Object.assign({}, row, { date_bascule: dateOnly(row.date_bascule) }));
     },
     async upsertRegleBascule(row){
       const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();

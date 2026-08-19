@@ -220,6 +220,16 @@
 
   const IMPORT_PROFIL = 'monitoring_exercices_sdis_22cols';
 
+  function toIsoDate(value) {
+    if (value == null || value === '') return '';
+    if (Object.prototype.toString.call(value) === '[object Date]' && !Number.isNaN(value.getTime())) {
+      return value.toISOString().slice(0, 10);
+    }
+    const text = String(value);
+    const match = text.match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : '';
+  }
+
   function normalizeRegle(row) {
     if (!row) return null;
     const portee = String(row.portee || '').toUpperCase();
@@ -228,7 +238,7 @@
       portee,
       cible_id: row.cible_id || row.cibleId || null,
       domaine_code: row.domaine_code || row.domaineCode || null,
-      date_bascule: String(row.date_bascule || row.dateBascule || '').slice(0, 10)
+      date_bascule: toIsoDate(row.date_bascule || row.dateBascule)
     };
   }
 

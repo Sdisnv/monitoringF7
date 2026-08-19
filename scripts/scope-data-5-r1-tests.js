@@ -136,6 +136,26 @@ async function seedY4(repo){
     );
   });
 
+  await record('Date PostgreSQL (objet Date) → horizon + 8 LEGACY', async () => {
+    const repo = createMemoryRepo();
+    await seedY4(repo);
+    const orig = repo.listReglesBascule.bind(repo);
+    repo.listReglesBascule = async () => {
+      const rows = await orig();
+      return rows.map((row) => Object.assign({}, row, {
+        date_bascule: new Date(`${row.date_bascule}T00:00:00.000Z`)
+      }));
+    };
+    const rules = await repo.listReglesBascule();
+    assert.strictEqual(csv.earliestNominativeHorizon(rules), '2026-08-19');
+    const preview = await createScopeService(repo).previewImportEvenements({ csvText });
+    assert.strictEqual(preview.lignes.length, 8);
+    assert.ok(preview.lignes.every((l) => l.typePropose === 'LEGACY'));
+    assert.ok(!preview.lignes.some((l) => l.code === 'bascule_non_definie'));
+    const y2 = preview.lignes.find((l) => l.niveauCode === 'Y2');
+    assert.strictEqual(y2.code, 'legacy_avant_horizon_nominatif');
+  });
+
   await record('8 lignes preview = LEGACY avec seule règle DAP/Y4', async () => {
     const repo = createMemoryRepo();
     await seedY4(repo);
