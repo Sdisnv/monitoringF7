@@ -52,6 +52,8 @@ grep -q "ensureScopeSchema" netlify/functions/_scope-schema.js
 grep -q "createScopeService" netlify/functions/_scope-service.js
 grep -q "listEvenements" netlify/functions/_scope-service.js
 grep -q "SCOPE-IMPL-1B" assets/js/scope-ui.js
+grep -q "scope-confirm-live" assets/js/scope-ui.js
+grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
 grep -q "scope-root" scope.html
 grep -q "Vue d’ensemble" assets/js/scope-ui.js
 if grep -q "min-width: *980px" assets/css/scope.css; then

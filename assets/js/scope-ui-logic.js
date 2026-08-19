@@ -183,6 +183,14 @@
     return map[kind] || 'Aucun élément.';
   }
 
+  function resolveClientMode({ search, sessionLive } = {}) {
+    const params = new URLSearchParams(String(search || '').replace(/^\?/, ''));
+    if (params.get('mode') === 'demo') return 'demo';
+    if (params.get('mode') === 'live' && sessionLive) return 'live';
+    if (params.get('mode') === 'live') return 'gate';
+    return 'demo';
+  }
+
   return {
     MOTIFS,
     STATUT_LABELS,
@@ -202,6 +210,7 @@
     friendlyError,
     ciblesLabel,
     displayTauxForList,
-    emptyMessage
+    emptyMessage,
+    resolveClientMode
   };
 });

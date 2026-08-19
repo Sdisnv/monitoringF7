@@ -189,6 +189,8 @@ html, body {
 }
 
 .scope-banner.demo { background: #eef2ff; color: #1e3a8a; }
+.scope-banner.live { background: #fef3f2; color: #b42318; border: 1px solid #f5c2c0; font-weight: 700; }
+.scope-header.live-mode { box-shadow: inset 0 -3px 0 #7f1d1d; }
 .scope-banner.success { background: #ecfdf3; color: var(--scope-ok); }
 .scope-banner.warning { background: #fff7ed; color: var(--scope-warn); }
 .scope-banner.error { background: #fef3f2; color: var(--scope-error); }

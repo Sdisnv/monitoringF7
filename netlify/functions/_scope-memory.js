@@ -57,6 +57,20 @@ function createMemoryRepo(){
       return item;
     },
     async getPersonne(id){ return personnes.get(id) || null; },
+    async getPersonneByNip(nip){
+      return [...personnes.values()].find((p) => p.nip === String(nip)) || null;
+    },
+    async upsertPersonne(row){
+      const existing = await api.getPersonneByNip(row.nip);
+      if(existing){
+        Object.assign(existing, {
+          nom: row.nom, prenom: row.prenom, grade: row.grade || existing.grade,
+          source: row.source || existing.source, updated_at: now()
+        });
+        return existing;
+      }
+      return api.insertPersonne(row);
+    },
     async listPersonnes({ q } = {}){
       const query = String(q || '').trim().toLowerCase();
       return [...personnes.values()].filter(p => {

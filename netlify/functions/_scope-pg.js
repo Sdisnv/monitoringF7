@@ -67,6 +67,23 @@ function createPgRepo(client){
       );
       return result.rows[0];
     },
+    async getPersonneByNip(nip){
+      const result = await q('select * from scope_personnes where nip = $1', [String(nip)]);
+      return result.rows[0] || null;
+    },
+    async upsertPersonne(row){
+      const existing = row.nip ? await api.getPersonneByNip(row.nip) : null;
+      if(existing){
+        const result = await q(
+          `update scope_personnes
+           set nom = $2, prenom = $3, grade = $4, source = $5, updated_at = now()
+           where personne_id = $1 returning *`,
+          [existing.personne_id, row.nom, row.prenom, row.grade || existing.grade, row.source || existing.source]
+        );
+        return result.rows[0];
+      }
+      return api.insertPersonne(row);
+    },
     async getPersonne(id){
       const result = await q('select * from scope_personnes where personne_id = $1', [id]);
       return result.rows[0] || null;

@@ -5,12 +5,28 @@
   const root = document.getElementById('scope-root');
   if (!root || !L) return;
 
-  const params = new URLSearchParams(location.search);
-  const requestedLive = params.get('mode') === 'live';
-  const client = requestedLive && window.ScopeApi
-    ? window.ScopeApi.createHttpClient({})
-    : window.ScopeDemo.createDemoClient({});
-  const mode = client.kind === 'http' ? 'live' : 'demo';
+  const LIVE_KEY = 'scope-live-confirmed';
+
+  function liveConfirmed() {
+    try { return sessionStorage.getItem(LIVE_KEY) === '1'; } catch { return false; }
+  }
+
+  function resolveMode() {
+    const decision = L.resolveClientMode({ search: location.search, sessionLive: liveConfirmed() });
+    if (decision === 'live' && window.ScopeApi) {
+      return { mode: 'live', client: window.ScopeApi.createHttpClient({}), gate: false };
+    }
+    return {
+      mode: 'demo',
+      client: window.ScopeDemo.createDemoClient({}),
+      gate: decision === 'gate'
+    };
+  }
+
+  const resolved = resolveMode();
+  let client = resolved.client;
+  let mode = resolved.mode;
+  let liveGate = resolved.gate;
 
   const state = {
     year: L.currentYear('2026-08-19'),
@@ -150,7 +166,7 @@
     const years = [String(Number(state.year) - 1), state.year, String(Number(state.year) + 1)]
       .filter((v, i, a) => a.indexOf(v) === i);
     return `
-      <header class="scope-header">
+      <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
         <img src="assets/img/LogoSDISblanc.png" alt="Logo SDIS">
         <div>
           <h1>SCOPE</h1>
@@ -161,7 +177,7 @@
           <span class="visually-hidden">Période</span>
           <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>Année ${y}</option>`).join('')}</select>
         </label>
-        <div class="scope-user">${mode === 'demo' ? 'Démonstration' : 'Session'}</div>
+        <div class="scope-user">${mode === 'live' ? 'LIVE Monitoring' : 'Démonstration'}</div>
       </header>
       <nav class="scope-nav" aria-label="Navigation principale">
         <button type="button" data-nav="vue" aria-current="${nav === 'vue' ? 'page' : 'false'}">Vue d’ensemble</button>
@@ -173,7 +189,18 @@
 
   function bannerHtml() {
     const bits = [];
-    if (mode === 'demo') {
+    if (liveGate) {
+      bits.push(`<div class="scope-banner warning" role="alertdialog">
+        <strong>Connexion live demandée</strong>
+        <div>Le paramètre URL ne suffit pas. Confirmez pour écrire dans PostgreSQL Monitoring. Les données de démonstration ne doivent pas être envoyées en production.</div>
+        <div class="scope-actions">
+          <button type="button" class="scope-btn scope-btn-primary" id="scope-confirm-live">Confirmer le mode live</button>
+          <button type="button" class="scope-btn" id="scope-stay-demo">Rester en démonstration</button>
+        </div>
+      </div>`);
+    } else if (mode === 'live') {
+      bits.push(`<div class="scope-banner live">Mode LIVE — base PostgreSQL Monitoring. Toute saisie est réelle. Pas de données fictives.</div>`);
+    } else {
       bits.push(`<div class="scope-banner demo">Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>`);
     }
     if (state.loading) bits.push(`<div class="scope-banner info">Chargement…</div>`);
@@ -532,6 +559,15 @@
   }
 
   function bind() {
+    document.getElementById('scope-confirm-live')?.addEventListener('click', () => {
+      try { sessionStorage.setItem('scope-live-confirmed', '1'); } catch {}
+      location.search = '?mode=live';
+    });
+    document.getElementById('scope-stay-demo')?.addEventListener('click', () => {
+      try { sessionStorage.removeItem('scope-live-confirmed'); } catch {}
+      location.search = '';
+      location.hash = '#/exercices';
+    });
     document.getElementById('scope-year')?.addEventListener('change', (e) => {
       state.year = e.target.value;
       withLoading(async () => { await loadList(); });
