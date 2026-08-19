@@ -131,6 +131,9 @@ function record(name, fn){
     assert.ok(/overflow-x:\s*hidden/.test(css));
     assert.ok(/@media \(max-width: 800px\)/.test(css));
     assert.ok(/min-height:\s*44px/.test(css));
+    assert.ok(css.includes('--scope-red: #DE000A'));
+    assert.ok(css.includes('--scope-fs-body: 15px'));
+    assert.ok(css.includes('object-fit: contain'));
     assert.ok(/grid-template-columns:\s*1fr 1fr/.test(css));
     const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
     assert.ok(!/min-width:\s*980px/.test(html));
@@ -155,6 +158,10 @@ function record(name, fn){
     assert.ok(ui.includes('Vue d’ensemble'));
     assert.ok(ui.includes('Exercices'));
     assert.ok(ui.includes('Personnel'));
+    assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
+    assert.ok(!ui.includes('LogoSDISblanc.png'));
+    assert.ok(!ui.includes('<h1>SCOPE</h1>'));
+    assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/logo-scope-blanc.png')));
     assert.ok(!html.includes('Monitoring F7 v67.0'));
     assert.ok(logic.parseHash('#/exercices').screen === 'liste');
     const ctaCount = logic.principalCta({ statut: 'PLANIFIE', populationFigee: true });

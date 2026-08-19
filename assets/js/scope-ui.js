@@ -166,31 +166,58 @@
 
   function counters() { return L.liveCounters(state.saisie); }
 
+  function roleLabel() {
+    const roles = (state.session && (state.session.roles || [])) || [];
+    if (mode !== 'live') return 'Démonstration';
+    if (roles.includes('sdis-admin')) return 'Administration';
+    if (roles.includes('sdis-user')) return 'Utilisateur SDIS';
+    if (roles[0]) return String(roles[0]);
+    return state.session ? 'Session live' : 'Session requise';
+  }
+
+  function userLabel() {
+    if (mode !== 'live') return 'Démonstration';
+    if (state.session && state.session.displayName) return state.session.displayName;
+    return 'LIVE Monitoring';
+  }
+
   function headerHtml(nav) {
     const years = [String(Number(state.year) - 1), state.year, String(Number(state.year) + 1)]
       .filter((v, i, a) => a.indexOf(v) === i);
-    return `
-      <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
-        <img src="assets/img/LogoSDISblanc.png" alt="Logo SDIS">
-        <div>
-          <h1>SCOPE</h1>
-          <p class="sub">Suivi et analyse de l’activité</p>
-        </div>
-        <div class="scope-header-spacer"></div>
-        <label class="scope-field" style="margin:0">
-          <span class="visually-hidden">Période</span>
-          <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>Année ${y}</option>`).join('')}</select>
-        </label>
-        <div class="scope-user">${mode === 'live'
-          ? (state.session && state.session.displayName
-            ? `LIVE · ${escapeHtml(state.session.displayName)}`
-            : 'LIVE Monitoring')
-          : 'Démonstration'}</div>
-      </header>
-      <nav class="scope-nav" aria-label="Navigation principale">
+    const logout = mode === 'live'
+      ? `<a class="scope-btn scope-btn-ghost" href="/auth/logout?returnTo=/">Déconnexion</a>`
+      : '';
+    const navButtons = `
         <button type="button" data-nav="vue" aria-current="${nav === 'vue' ? 'page' : 'false'}">Vue d’ensemble</button>
         <button type="button" data-nav="exercices" aria-current="${nav === 'exercices' ? 'page' : 'false'}">Exercices</button>
-        <button type="button" data-nav="personnel" aria-current="${nav === 'personnel' ? 'page' : 'false'}">Personnel</button>
+        <button type="button" data-nav="personnel" aria-current="${nav === 'personnel' ? 'page' : 'false'}">Personnel</button>`;
+    return `
+      <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
+        <div class="scope-header-inner">
+          <div class="scope-brand">
+            <img class="scope-logo" src="assets/img/logo-scope-blanc.png" alt="SCOPE" width="300" height="100">
+            <p class="scope-tagline">Suivi et analyse de l’activité</p>
+          </div>
+          <div class="scope-header-spacer"></div>
+          <div class="scope-header-tools">
+            <label class="scope-field" style="margin:0">
+              <span class="visually-hidden">Période</span>
+              <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>Année ${y}</option>`).join('')}</select>
+            </label>
+            <div class="scope-user-block">
+              <div class="scope-user-text">
+                <strong class="scope-user">${escapeHtml(userLabel())}</strong>
+                ${mode === 'live' ? `<small>${escapeHtml(roleLabel())}</small>` : ''}
+              </div>
+            </div>
+            <button type="button" class="scope-btn scope-btn-ghost" id="scope-header-menu" aria-expanded="false" aria-controls="scope-header-menu-panel">Menu</button>
+            ${logout}
+          </div>
+        </div>
+        <div class="scope-header-menu-panel" id="scope-header-menu-panel" hidden>${navButtons}</div>
+      </header>
+      <nav class="scope-nav" aria-label="Navigation principale">
+        <div class="scope-nav-inner">${navButtons}</div>
       </nav>
     `;
   }
@@ -621,6 +648,14 @@
     document.getElementById('scope-year')?.addEventListener('change', (e) => {
       state.year = e.target.value;
       withLoading(async () => { await loadList(); });
+    });
+    document.getElementById('scope-header-menu')?.addEventListener('click', () => {
+      const panel = document.getElementById('scope-header-menu-panel');
+      const btn = document.getElementById('scope-header-menu');
+      if (!panel || !btn) return;
+      const open = panel.classList.toggle('open');
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
     root.querySelectorAll('[data-nav]').forEach((btn) => {
       btn.addEventListener('click', () => {
