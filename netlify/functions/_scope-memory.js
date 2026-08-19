@@ -177,6 +177,7 @@ function createMemoryRepo(){
         libelle: String(row.libelle).trim(),
         statut: row.statut || 'PLANIFIE',
         origine: row.origine || 'NOMINATIF',
+        mode_suivi: require('./_scope-analytics').inferModeSuivi(row),
         population_figee: false,
         population_version: 0,
         figee_at: null,
@@ -369,6 +370,39 @@ function createMemoryRepo(){
       };
       journal.push(item);
       return item;
+    },
+    async getQuantitatifSaisie(){ return null; },
+    async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
+      const { inferModeSuivi } = require('./_scope-analytics');
+      const { inPeriod } = require('./_scope-period');
+      const bundle = {
+        events: [],
+        attendusByEvent: {},
+        participationsByEvent: {},
+        cibleIdsByEvent: {},
+        legacyByEvent: {},
+        quantitatifByEvent: {},
+        personneId: personneId || null
+      };
+      for(const event of evenements.values()){
+        const mapped = { ...event, date: dateOnly(event.date), mode_suivi: inferModeSuivi(event) };
+        if(from && to && !inPeriod(mapped.date, { from, to })) continue;
+        if(domaineCode && mapped.domaine_code !== domaineCode) continue;
+        if(evenementId && mapped.evenement_id !== evenementId) continue;
+        const cibleIds = evenementCibles.get(mapped.evenement_id) || [];
+        if(cibleId && !cibleIds.includes(cibleId)) continue;
+        if(personneId){
+          const att = [...attendus.values()].filter((a) => a.evenement_id === mapped.evenement_id && String(a.personne_id) === String(personneId) && a.inclus !== false);
+          if(!att.length || inferModeSuivi(mapped) !== 'NOMINATIF') continue;
+        }
+        bundle.events.push({ ...mapped, cible_ids: cibleIds });
+        bundle.cibleIdsByEvent[mapped.evenement_id] = cibleIds;
+        bundle.attendusByEvent[mapped.evenement_id] = [...attendus.values()].filter((a) => a.evenement_id === mapped.evenement_id);
+        bundle.participationsByEvent[mapped.evenement_id] = [...participations.values()].filter((p) => p.evenement_id === mapped.evenement_id);
+        bundle.legacyByEvent[mapped.evenement_id] = [...legacy.values()].find((item) => item.evenement_id === mapped.evenement_id) || null;
+        bundle.quantitatifByEvent[mapped.evenement_id] = null;
+      }
+      return bundle;
     },
     async listJournal(entite, entiteId){
       return journal.filter(j => j.entite === entite && j.entite_id === String(entiteId));

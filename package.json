@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "check": "./scripts/check-local.sh",
-    "test:scope": "node scripts/scope-impl-1a-tests.js && node scripts/scope-impl-1b-tests.js && node scripts/scope-qual-1-tests.js && node scripts/scope-data-5-tests.js && node scripts/scope-data-5-r1-tests.js",
+    "test:scope": "node scripts/scope-impl-1a-tests.js && node scripts/scope-impl-1b-tests.js && node scripts/scope-qual-1-tests.js && node scripts/scope-data-5-tests.js && node scripts/scope-data-5-r1-tests.js && node scripts/scope-analytics-1-tests.js",
     "deploy": "git status && git add . && git commit -m \"release: Monitoring F7 v66.15 oidc login flow\" && git push"
   },
   "dependencies": {

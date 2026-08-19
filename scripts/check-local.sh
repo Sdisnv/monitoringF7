@@ -60,6 +60,12 @@ grep -qF "require('../../assets/js/scope-csv-import.js')" netlify/functions/_sco
 grep -qF 'included_files = ["assets/js/scope-csv-import.js"]' netlify.scope.toml
 grep -q "scope-data-5" netlify/functions/_scope-schema.js
 grep -q "scope-data-5-r1" netlify/functions/_scope-schema.js
+grep -q "scope-analytics-1" netlify/functions/_scope-schema.js
+grep -q "createScopeAnalyticsService" netlify/functions/_scope-analytics-service.js
+grep -q "/analytics/summary" netlify/functions/scope.js
+grep -q "/analytics/explain" netlify/functions/scope.js
+grep -q "/analytics/timeseries" netlify/functions/scope.js
+grep -q "mode_suivi" netlify/functions/_scope-schema.js
 grep -q "portee" netlify/functions/_scope-schema.js
 grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
 grep -q "scope-root" scope.html

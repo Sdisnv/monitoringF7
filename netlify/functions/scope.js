@@ -2,6 +2,7 @@ const { response, parseBody, verifyToken, bearerToken } = require('./_auth-utils
 const { canWriteRecords } = require('./_rbac');
 const { HttpError } = require('./_scope-rules');
 const { createScopeService } = require('./_scope-service');
+const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { getPgRepo } = require('./_scope-pg');
 
 function requireAccess(event){
@@ -56,6 +57,7 @@ exports.handler = async function(event){
   try{
     const repo = await getPgRepo();
     const service = createScopeService(repo);
+    const analytics = createScopeAnalyticsService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
     const body = parsed || {};
@@ -139,6 +141,16 @@ exports.handler = async function(event){
     }
     if(method === 'PATCH' && params){
       return response(200, { ok:true, ...(await service.patchEvenement(params.id, body, claims)) });
+    }
+
+    if(method === 'GET' && path === '/analytics/summary'){
+      return response(200, { ok:true, ...(await analytics.summary(queryOf(event))) });
+    }
+    if(method === 'GET' && path === '/analytics/explain'){
+      return response(200, { ok:true, ...(await analytics.explain(queryOf(event))) });
+    }
+    if(method === 'GET' && path === '/analytics/timeseries'){
+      return response(200, { ok:true, ...(await analytics.timeseries(queryOf(event))) });
     }
 
     if(method === 'POST' && path === '/imports/evenements/preview'){

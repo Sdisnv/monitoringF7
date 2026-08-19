@@ -18,6 +18,7 @@ function mapEvent(row){
     libelle: row.libelle,
     statut: row.statut,
     origine: row.origine,
+    mode_suivi: row.mode_suivi || (row.origine === 'LEGACY_AGGREGATED' ? 'LEGACY' : 'NOMINATIF'),
     population_figee: row.population_figee,
     population_version: row.population_version,
     figee_at: row.figee_at,
@@ -144,11 +145,13 @@ function createPgRepo(client){
     },
     async insertEvenement(row){
       const id = row.evenement_id || randomUUID();
+      const { inferModeSuivi } = require('./_scope-analytics');
+      const modeSuivi = inferModeSuivi(row);
       const result = await q(
         `insert into scope_evenements(
-           evenement_id, date, domaine_code, libelle, statut, origine, version
-         ) values ($1,$2,$3,$4,$5,$6,1) returning *`,
-        [id, isoDate(row.date), row.domaine_code, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF']
+           evenement_id, date, domaine_code, libelle, statut, origine, mode_suivi, version
+         ) values ($1,$2,$3,$4,$5,$6,$7,1) returning *`,
+        [id, isoDate(row.date), row.domaine_code, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF', modeSuivi]
       );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){
@@ -400,6 +403,86 @@ function createPgRepo(client){
         ]
       );
       return result.rows[0];
+    },
+    async getQuantitatifSaisie(){ return null; },
+    async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
+      const clauses = ['e.date >= $1::date', 'e.date <= $2::date'];
+      const params = [from, to];
+      let i = 3;
+      if(domaineCode){
+        clauses.push(`e.domaine_code = $${i}`);
+        params.push(domaineCode);
+        i += 1;
+      }
+      if(evenementId){
+        clauses.push(`e.evenement_id = $${i}`);
+        params.push(evenementId);
+        i += 1;
+      }
+      if(cibleId){
+        clauses.push(`exists (select 1 from scope_evenement_cibles x where x.evenement_id = e.evenement_id and x.cible_id = $${i})`);
+        params.push(cibleId);
+        i += 1;
+      }
+      if(personneId){
+        clauses.push(`coalesce(e.mode_suivi, case when e.origine = 'LEGACY_AGGREGATED' then 'LEGACY' else 'NOMINATIF' end) = 'NOMINATIF'`);
+        clauses.push(`exists (select 1 from scope_attendus a where a.evenement_id = e.evenement_id and a.personne_id = $${i}::uuid and a.inclus is not false)`);
+        params.push(personneId);
+        i += 1;
+      }
+      const eventsRes = await q(
+        `select e.* from scope_evenements e where ${clauses.join(' and ')} order by e.date, e.libelle`,
+        params
+      );
+      const events = eventsRes.rows.map(mapEvent);
+      const ids = events.map((event) => event.evenement_id);
+      const bundle = {
+        events: [],
+        attendusByEvent: {},
+        participationsByEvent: {},
+        cibleIdsByEvent: {},
+        legacyByEvent: {},
+        quantitatifByEvent: {},
+        personneId: personneId || null
+      };
+      if(!ids.length) return bundle;
+      const [ciblesRes, attendusRes, partsRes, legacyRes] = await Promise.all([
+        q('select evenement_id, cible_id from scope_evenement_cibles where evenement_id = any($1::uuid[])', [ids]),
+        q('select * from scope_attendus where evenement_id = any($1::uuid[])', [ids]),
+        q('select * from scope_participations where evenement_id = any($1::uuid[])', [ids]),
+        q('select * from scope_legacy_aggregates where evenement_id = any($1::uuid[])', [ids])
+      ]);
+      for(const row of ciblesRes.rows){
+        if(!bundle.cibleIdsByEvent[row.evenement_id]) bundle.cibleIdsByEvent[row.evenement_id] = [];
+        bundle.cibleIdsByEvent[row.evenement_id].push(row.cible_id);
+      }
+      for(const row of attendusRes.rows){
+        if(!bundle.attendusByEvent[row.evenement_id]) bundle.attendusByEvent[row.evenement_id] = [];
+        bundle.attendusByEvent[row.evenement_id].push(row);
+      }
+      for(const row of partsRes.rows){
+        if(!bundle.participationsByEvent[row.evenement_id]) bundle.participationsByEvent[row.evenement_id] = [];
+        bundle.participationsByEvent[row.evenement_id].push(row);
+      }
+      for(const row of legacyRes.rows){
+        let payload = row.payload_v67;
+        if(typeof payload === 'string'){
+          try { payload = JSON.parse(payload); } catch { payload = {}; }
+        }
+        bundle.legacyByEvent[row.evenement_id] = {
+          ...row,
+          date: dateOnly(row.date),
+          payload_v67: payload || {}
+        };
+      }
+      for(const event of events){
+        bundle.events.push({ ...event, cible_ids: bundle.cibleIdsByEvent[event.evenement_id] || [] });
+        bundle.attendusByEvent[event.evenement_id] = bundle.attendusByEvent[event.evenement_id] || [];
+        bundle.participationsByEvent[event.evenement_id] = bundle.participationsByEvent[event.evenement_id] || [];
+        bundle.legacyByEvent[event.evenement_id] = bundle.legacyByEvent[event.evenement_id] || null;
+        bundle.quantitatifByEvent[event.evenement_id] = null;
+      }
+      return bundle;
     },
     async listJournal(entite, entiteId){
       const result = await q(

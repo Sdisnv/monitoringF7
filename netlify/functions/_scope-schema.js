@@ -273,6 +273,10 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-data-5-r1') on conflict (version) do nothing`
   );
+  await migrateModeSuiviAnalytics1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-analytics-1') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
 }
@@ -309,6 +313,37 @@ async function migrateReglesBasculeR1(){
   await db.query(`
     create unique index if not exists scope_regles_bascule_global_uidx
       on scope_regles_bascule ((true)) where portee = 'GLOBAL'
+  `);
+}
+
+async function migrateModeSuiviAnalytics1(){
+  await db.query('alter table scope_evenements add column if not exists mode_suivi text');
+  await db.query(`
+    update scope_evenements
+    set mode_suivi = 'LEGACY'
+    where origine = 'LEGACY_AGGREGATED'
+      and (mode_suivi is null or mode_suivi not in ('NOMINATIF','QUANTITATIF','LEGACY'))
+  `);
+  await db.query(`
+    update scope_evenements
+    set mode_suivi = 'NOMINATIF'
+    where mode_suivi is null
+       or mode_suivi not in ('NOMINATIF','QUANTITATIF','LEGACY')
+  `);
+  await db.query('alter table scope_evenements drop constraint if exists scope_evenements_mode_suivi_chk');
+  await db.query(`
+    alter table scope_evenements add constraint scope_evenements_mode_suivi_chk
+      check (mode_suivi in ('NOMINATIF','QUANTITATIF','LEGACY'))
+  `);
+  await db.query("alter table scope_evenements alter column mode_suivi set default 'NOMINATIF'");
+  await db.query('alter table scope_evenements alter column mode_suivi set not null');
+  await db.query(`
+    create index if not exists scope_evenements_analytics_idx
+      on scope_evenements (date, statut, mode_suivi, domaine_code)
+  `);
+  await db.query(`
+    create index if not exists scope_evenement_cibles_cible_evt
+      on scope_evenement_cibles (cible_id, evenement_id)
   `);
 }
 

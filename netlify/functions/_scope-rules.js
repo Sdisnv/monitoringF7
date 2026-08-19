@@ -146,6 +146,7 @@ module.exports = {
   isAffectationValide,
   personneActiveA,
   computeTaux,
+  round1,
   validateParticipationPatch,
   validateCloture,
   rangesOverlap,

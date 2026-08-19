@@ -110,7 +110,10 @@
       annuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/annuler`, withBaseVersion({ motif }, baseVersion)); },
       taux(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/taux`); },
       previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
-      commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); }
+      commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
+      analyticsSummary(params) { return request('GET', `/analytics/summary${queryString(params || {})}`); },
+      analyticsExplain(params) { return request('GET', `/analytics/explain${queryString(params || {})}`); },
+      analyticsTimeseries(params) { return request('GET', `/analytics/timeseries${queryString(params || {})}`); }
     };
   }
 

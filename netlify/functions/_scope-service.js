@@ -101,12 +101,17 @@ function createScopeService(repo){
       }
     }
     const origine = body.origine === 'LEGACY_AGGREGATED' ? 'LEGACY_AGGREGATED' : 'NOMINATIF';
+    const { inferModeSuivi, MODES } = require('./_scope-analytics');
+    let modeSuivi = inferModeSuivi({ origine, mode_suivi: body.modeSuivi || body.mode_suivi });
+    if(origine === 'LEGACY_AGGREGATED') modeSuivi = MODES.LEGACY;
+    else if(modeSuivi === MODES.LEGACY) modeSuivi = MODES.NOMINATIF;
     const evenement = await repo.insertEvenement({
       date,
       domaine_code: domaine,
       libelle,
       statut: 'PLANIFIE',
       origine,
+      mode_suivi: modeSuivi,
       cible_ids: cibleIds
     });
     await repo.appendJournal({
@@ -669,6 +674,7 @@ function createScopeService(repo){
           libelle: line.libelle,
           statut: 'PLANIFIE',
           origine,
+          mode_suivi: origine === 'LEGACY_AGGREGATED' ? 'LEGACY' : 'NOMINATIF',
           cible_ids: line.cibleId ? [line.cibleId] : []
         });
         let legacy = null;
