@@ -30,6 +30,11 @@
 
   const state = {
     year: L.currentYear('2026-08-19'),
+    preset: 'YEAR',
+    month: '8',
+    quarter: '3',
+    from: '2026-01-01',
+    to: '2026-12-31',
     statut: 'tous',
     domaine: 'tous',
     referentiels: { domaines: [], cibles: [] },
@@ -76,7 +81,10 @@
       commentaire: ''
     },
     objectifAction: null,
-    objectifFocusId: null
+    objectifFocusId: null,
+    dashboard: null,
+    explainOpen: false,
+    absencesOpen: false
   };
 
   function toast(tone, title, message, extra) {
@@ -153,6 +161,33 @@
     }
     const data = await client.listObjectifs();
     state.objectifs = data.objectifs || [];
+  }
+
+  async function loadDashboard() {
+    const r = route();
+    if (typeof client.dashboard !== 'function') {
+      state.dashboard = null;
+      return;
+    }
+    const params = L.periodParams({
+      preset: state.preset,
+      year: state.year,
+      month: state.month,
+      quarter: state.quarter,
+      from: state.from,
+      to: state.to,
+      domaine: r.domaine,
+      cible: r.cible
+    });
+    state.dashboard = await client.dashboard(params);
+  }
+
+  function reloadPeriod() {
+    withLoading(async () => {
+      const r = route();
+      if (r.screen === 'vue') await loadDashboard();
+      else if (r.screen === 'liste') await loadList();
+    });
   }
 
   async function loadFiche(id) {
@@ -280,10 +315,30 @@
           </div>
           <div class="scope-header-spacer"></div>
           <div class="scope-header-tools">
-            <label class="scope-field" style="margin:0">
-              <span class="visually-hidden">Période</span>
-              <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>Année ${y}</option>`).join('')}</select>
-            </label>
+            <div class="scope-period">
+              <label class="scope-field" style="margin:0">
+                <span class="visually-hidden">Type de période</span>
+                <select id="scope-preset">
+                  <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
+                  <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
+                  <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
+                  <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Plage</option>
+                </select>
+              </label>
+              <label class="scope-field" style="margin:0">
+                <span class="visually-hidden">Année</span>
+                <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join('')}</select>
+              </label>
+              ${state.preset === 'QUARTER' ? `<label class="scope-field" style="margin:0">
+                <span class="visually-hidden">Trimestre</span>
+                <select id="scope-quarter">${[1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')}</select>
+              </label>` : ''}
+              ${state.preset === 'MONTH' ? `<label class="scope-field" style="margin:0">
+                <span class="visually-hidden">Mois</span>
+                <select id="scope-month">${['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')}</select>
+              </label>` : ''}
+              ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
+            </div>
             <div class="scope-user-block">
               <div class="scope-user-text">
                 <strong class="scope-user">${escapeHtml(userLabel())}</strong>
@@ -430,6 +485,189 @@
             <tbody>${body}</tbody>
           </table>
         </div>
+      </div>
+    `;
+  }
+
+  function periodLabel(period) {
+    if (!period) return state.year;
+    if (period.preset === 'MONTH') return `${period.from.slice(5, 7)}.${period.from.slice(0, 4)}`;
+    if (period.preset === 'QUARTER') return `${period.from.slice(0, 10)} → ${period.to.slice(0, 10)}`;
+    if (period.preset === 'CUSTOM') return `${L.formatDate(period.from)} – ${L.formatDate(period.to)}`;
+    return period.from ? period.from.slice(0, 4) : state.year;
+  }
+
+  function renderVue() {
+    const r = route();
+    const dash = state.dashboard;
+    const crumbs = ['<a href="#/vue">Vue d’ensemble</a>'];
+    if (r.domaine) crumbs.push(`<a href="#/vue/${encodeURIComponent(r.domaine)}">${escapeHtml(domaineLabel(r.domaine))}</a>`);
+    if (r.cible) crumbs.push(`<span>${escapeHtml(r.cible)}</span>`);
+    if (!dash) {
+      return `<div class="scope-crumb">${crumbs.join(' · ')}</div>
+        <div class="scope-main"><div class="scope-card scope-placeholder"><p>Chargement de la vue d’ensemble…</p></div></div>`;
+    }
+    const o = dash.officiel || {};
+    const obj = L.objectiveKpiLabel(o);
+    const gapText = L.formatGap(o.gapPct);
+    const status = o.analyticStatus || 'NON_EVALUABLE';
+    const tauxText = status === 'NON_EVALUABLE' && o.percentage == null
+      ? 'Non évaluable'
+      : L.formatTaux(o.percentage);
+    const numDen = o.denominator
+      ? `${o.numerator ?? 0} / ${o.denominator}`
+      : 'Aucun événement officiel réalisé';
+    const legacyHint = dash.legacy && dash.legacy.eventCount
+      ? `+ ${dash.legacy.eventCount} historique${dash.legacy.eventCount > 1 ? 's' : ''}`
+      : '';
+    const abs = dash.absencesNonExcusees || { count: 0, events: [] };
+    const inbox = dash.inbox || [];
+    const explain = dash.explain || {};
+    const exclusions = explain.exclusions || {};
+    const chart = L.participationChartSvg(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points);
+
+    const kpi = `
+      <div class="scope-kpis">
+        <article class="scope-kpi scope-kpi-main">
+          <strong>${escapeHtml(tauxText)}</strong>
+          <span>Taux de participation</span>
+          <em>${escapeHtml(numDen)}</em>
+          <small>${escapeHtml(periodLabel(dash.period))} · officiel · LEGACY exclu</small>
+          <span class="scope-status-pill ${escapeHtml(status)}">${escapeHtml(L.analyticStatusLabel(status))}</span>
+          <button type="button" class="linkish" id="scope-explain-toggle">Comprendre ce chiffre</button>
+        </article>
+        <article class="scope-kpi">
+          <strong>${escapeHtml(obj.title)}</strong>
+          <span>Objectif</span>
+          ${obj.subtitle ? `<em>${escapeHtml(obj.subtitle)}</em>` : ''}
+        </article>
+        <article class="scope-kpi">
+          <strong>${gapText ? escapeHtml(gapText) : '—'}</strong>
+          <span>Écart à l’objectif</span>
+          ${!gapText ? '<small>Non évaluable sans objectif unique</small>' : ''}
+        </article>
+        <article class="scope-kpi">
+          <strong>${escapeHtml(String(o.eventCount || 0))}</strong>
+          <span>Événements réalisés</span>
+          <em>Nominatif et quantitatif</em>
+          ${legacyHint ? `<small>${escapeHtml(legacyHint)}</small>` : '<small>LEGACY non additionné</small>'}
+        </article>
+        <article class="scope-kpi">
+          <strong>${escapeHtml(String(abs.count || 0))}</strong>
+          <span>Absences non excusées</span>
+          ${abs.count ? '<button type="button" class="linkish" id="scope-absences-toggle">Voir les événements</button>' : '<small>Volume officiel de la période</small>'}
+        </article>
+      </div>`;
+
+    const explainHtml = state.explainOpen ? `
+      <div class="scope-card scope-explain" id="scope-explain">
+        <h2>Comprendre ce chiffre</h2>
+        <dl>
+          <dt>Période</dt><dd>${escapeHtml(dash.period.from)} → ${escapeHtml(dash.period.to)} (${escapeHtml(dash.period.preset || 'YEAR')})</dd>
+          <dt>Périmètre</dt><dd>${escapeHtml([r.domaine || 'SDIS', r.cible].filter(Boolean).join(' / '))}</dd>
+          <dt>Modes inclus</dt><dd>NOMINATIF et QUANTITATIF. LEGACY exclu du taux officiel.</dd>
+          <dt>Événements inclus</dt><dd>${escapeHtml(String((explain.includedEvents || []).length))} réalisé(s) officiel(s)</dd>
+          <dt>Numérateur</dt><dd>${escapeHtml(String((explain.totals && explain.totals.numerator) ?? o.numerator ?? 0))}</dd>
+          <dt>Dénominateur</dt><dd>${escapeHtml(String((explain.totals && explain.totals.denominator) ?? o.denominator ?? 0))}</dd>
+          <dt>Dispensés exclus</dt><dd>${escapeHtml(String(exclusions.dispenses || 0))}</dd>
+          <dt>Annulés exclus</dt><dd>${escapeHtml(String(exclusions.annules || 0))}</dd>
+          <dt>Reportés exclus</dt><dd>${escapeHtml(String(exclusions.reportes || 0))}</dd>
+          <dt>Legacy exclu</dt><dd>${escapeHtml(String(exclusions.legacy || (dash.legacy && dash.legacy.eventCount) || 0))} agrégat(s) historique(s)</dd>
+          <dt>Objectif utilisé</dt><dd>${explain.objective && explain.objective.thresholdPct != null ? `${escapeHtml(String(explain.objective.thresholdPct))} %` : 'Aucun'}</dd>
+          <dt>Origine de l’objectif</dt><dd>${escapeHtml((explain.objective && explain.objective.scope) || (explain.objectiveContext && explain.objectiveContext.reason) || 'OBJECTIVE_NOT_FOUND')}</dd>
+          <dt>Statut analytique</dt><dd>${escapeHtml(explain.analyticStatus || status)}${explain.analyticStatusReason ? ` · ${escapeHtml(explain.analyticStatusReason)}` : ''}</dd>
+        </dl>
+      </div>` : '';
+
+    const absHtml = state.absencesOpen && abs.events && abs.events.length ? `
+      <div class="scope-card scope-panel">
+        <h2>Absences non excusées</h2>
+        <ul>${abs.events.map((ev) => `<li><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine))} · ${escapeHtml(ev.libelle)}</a> — ${escapeHtml(String(ev.nonExcuses))}</li>`).join('')}</ul>
+      </div>` : '';
+
+    const inboxRows = inbox.length
+      ? inbox.map((item) => `<tr>
+          <td data-label="Date">${escapeHtml(L.formatDate(item.date))}</td>
+          <td data-label="Domaine">${escapeHtml(domaineLabel(item.domaine))}</td>
+          <td data-label="Cible">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
+          <td data-label="Libellé">${escapeHtml(item.libelle)}</td>
+          <td data-label="Mode">${escapeHtml(L.modeLabel(item.modeSuivi))}</td>
+          <td data-label="Raison"><span class="scope-inbox-reason">${escapeHtml(item.reason)}</span></td>
+          <td data-label="Action"><a class="scope-btn scope-btn-primary" href="${escapeHtml(item.cta && item.cta.href)}">${escapeHtml((item.cta && item.cta.label) || 'Ouvrir')}</a></td>
+        </tr>`).join('')
+      : `<tr><td colspan="7"><div class="scope-empty">Aucun exercice à traiter sur cette période.</div></td></tr>`;
+
+    const domainCards = (dash.domaines || []).map((d) => {
+      const off = d.officiel || {};
+      const dGap = L.formatGap(off.gapPct);
+      const dObj = L.objectiveKpiLabel(off);
+      return `<a class="scope-domain-card" href="#/vue/${encodeURIComponent(d.code)}">
+        <strong>${escapeHtml(d.libelleAffiche || d.code)}</strong>
+        <span>${escapeHtml(L.formatTaux(off.percentage))}</span>
+        <small>${escapeHtml(dObj.title)}${dGap ? ` · ${escapeHtml(dGap)}` : ''}</small>
+        <small>${escapeHtml(String(off.eventCount || 0))} événement(s) · ${escapeHtml(L.analyticStatusLabel(off.analyticStatus))}</small>
+      </a>`;
+    }).join('');
+
+    const cibleCards = (dash.cibles || []).map((c) => {
+      const off = c.officiel || {};
+      return `<a class="scope-cible-card" href="#/vue/${encodeURIComponent(r.domaine)}/${encodeURIComponent(c.niveauCode)}">
+        <strong>${escapeHtml(c.niveauCode)}</strong>
+        <span>${escapeHtml(L.formatTaux(off.percentage))}</span>
+        <small>${escapeHtml(String(off.eventCount || 0))} événement(s) · ${escapeHtml(L.analyticStatusLabel(off.analyticStatus))}</small>
+      </a>`;
+    }).join('');
+
+    const eventRows = r.cible && (dash.evenements || []).length
+      ? `<div class="scope-card scope-table-wrap scope-panel">
+          <h2>Événements officiels</h2>
+          <table class="scope-table">
+            <thead><tr><th>Date</th><th>Libellé</th><th>Mode</th><th>Taux</th><th></th></tr></thead>
+            <tbody>${dash.evenements.map((ev) => `<tr>
+              <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
+              <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
+              <td data-label="Mode">${escapeHtml(L.modeLabel(ev.modeSuivi))}</td>
+              <td data-label="Taux">${escapeHtml(L.formatTaux(ev.percentage))}</td>
+              <td data-label="Action"><a class="scope-btn" href="#/exercices/${escapeHtml(ev.evenementId)}">${ev.modeSuivi === 'NOMINATIF' ? 'Ouvrir' : 'Agrégats'}</a></td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>`
+      : '';
+
+    const legacyNote = dash.legacy && dash.legacy.eventCount
+      ? `<p class="scope-inbox-reason">Les ${dash.legacy.eventCount} agrégats LEGACY apparaissent uniquement comme série historique distincte. Ils n’entrent pas dans le taux officiel.</p>`
+      : '';
+
+    return `
+      <div class="scope-crumb">${crumbs.join(' · ')}</div>
+      <div class="scope-main">
+        ${kpi}
+        ${explainHtml}
+        ${absHtml}
+        <div class="scope-card scope-inbox">
+          <h2>Exercices à traiter</h2>
+          <div class="scope-table-wrap">
+            <table class="scope-table">
+              <thead>
+                <tr><th>Date</th><th>Domaine</th><th>Cible</th><th>Libellé</th><th>Mode</th><th>Raison</th><th>Action</th></tr>
+              </thead>
+              <tbody>${inboxRows}</tbody>
+            </table>
+          </div>
+        </div>
+        <div class="scope-card scope-panel">
+          <h2>Évolution du taux de participation</h2>
+          ${chart}
+          <p class="scope-chart-legend">
+            <span><i></i>Taux officiel (mensuel, somme / somme)</span>
+            <span><i class="obj"></i>Objectif lorsqu’il est unique</span>
+            <span><i class="legacy"></i>LEGACY historique, hors KPI</span>
+          </p>
+          ${legacyNote}
+        </div>
+        ${domainCards ? `<div class="scope-panel"><h2 class="scope-card" style="box-shadow:none;border:0;padding:0 0 8px;background:transparent">Participation par domaine</h2><div class="scope-domain-grid">${domainCards}</div></div>` : ''}
+        ${cibleCards ? `<div class="scope-panel"><h2 class="scope-card" style="box-shadow:none;border:0;padding:0 0 8px;background:transparent">Cibles</h2><div class="scope-domain-grid">${cibleCards}</div></div>` : ''}
+        ${eventRows}
       </div>
     `;
   }
@@ -1112,7 +1350,7 @@
 
   function render() {
     const r = route();
-    const body = r.screen === 'vue' ? renderPlaceholder('Vue d’ensemble', 'Vue d’ensemble')
+    const body = r.screen === 'vue' ? renderVue()
       : r.screen === 'personnel' ? renderPlaceholder('Personnel', 'Personnel')
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'nouveau' ? renderNouveau()
@@ -1142,7 +1380,40 @@
     });
     document.getElementById('scope-year')?.addEventListener('change', (e) => {
       state.year = e.target.value;
-      withLoading(async () => { await loadList(); });
+      if (state.preset === 'YEAR') {
+        state.from = `${state.year}-01-01`;
+        state.to = `${state.year}-12-31`;
+      }
+      reloadPeriod();
+    });
+    document.getElementById('scope-preset')?.addEventListener('change', (e) => {
+      state.preset = e.target.value;
+      render();
+      reloadPeriod();
+    });
+    document.getElementById('scope-month')?.addEventListener('change', (e) => {
+      state.month = e.target.value;
+      reloadPeriod();
+    });
+    document.getElementById('scope-quarter')?.addEventListener('change', (e) => {
+      state.quarter = e.target.value;
+      reloadPeriod();
+    });
+    document.getElementById('scope-from')?.addEventListener('change', (e) => {
+      state.from = e.target.value;
+      reloadPeriod();
+    });
+    document.getElementById('scope-to')?.addEventListener('change', (e) => {
+      state.to = e.target.value;
+      reloadPeriod();
+    });
+    document.getElementById('scope-explain-toggle')?.addEventListener('click', () => {
+      state.explainOpen = !state.explainOpen;
+      render();
+    });
+    document.getElementById('scope-absences-toggle')?.addEventListener('click', () => {
+      state.absencesOpen = !state.absencesOpen;
+      render();
     });
     document.getElementById('scope-header-menu')?.addEventListener('click', () => {
       const panel = document.getElementById('scope-header-menu-panel');
@@ -1163,6 +1434,7 @@
       withLoading(async () => {
         clearToast();
         if (r.id) await loadFiche(r.id);
+        else if (r.screen === 'vue') await loadDashboard();
         else await loadList();
       });
     });
@@ -1612,6 +1884,7 @@
         state.personCount = (people.personnes || []).length;
       }
       if (r.screen === 'liste') await loadList();
+      if (r.screen === 'vue') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
       if (r.screen === 'personnel' && client.listPersonnes) {
         const people = await client.listPersonnes();
@@ -1628,7 +1901,7 @@
       render();
       if (!ok) return;
     }
-    if (!location.hash) location.hash = '#/exercices';
+    if (!location.hash) location.hash = '#/vue';
     else await onRoute();
   })();
 })();

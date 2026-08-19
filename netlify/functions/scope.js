@@ -4,6 +4,7 @@ const { HttpError } = require('./_scope-rules');
 const { createScopeService } = require('./_scope-service');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeObjectivesService } = require('./_scope-objectives-service');
+const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { getPgRepo } = require('./_scope-pg');
 
 function requireAccess(event){
@@ -60,6 +61,7 @@ exports.handler = async function(event){
     const service = createScopeService(repo);
     const analytics = createScopeAnalyticsService(repo);
     const objectives = createScopeObjectivesService(repo);
+    const dashboard = createScopeDashboardService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
     const body = parsed || {};
@@ -172,6 +174,9 @@ exports.handler = async function(event){
     }
     if(method === 'GET' && path === '/analytics/timeseries'){
       return response(200, { ok:true, ...(await analytics.timeseries(queryOf(event))) });
+    }
+    if(method === 'GET' && path === '/dashboard'){
+      return response(200, { ok:true, ...(await dashboard.dashboard(queryOf(event))) });
     }
 
     if(method === 'GET' && path === '/objectifs'){

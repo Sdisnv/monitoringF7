@@ -477,6 +477,90 @@
       async convertirQuantitatif() {
         throw new ScopeApiError(422, { error: 'conversion_interdite', message: 'La conversion nominatif → quantitatif est interdite.' });
       },
+      async dashboard(params) {
+        const year = String((params && (params.year || params.annee)) || '2026');
+        const preset = String((params && params.preset) || 'YEAR').toUpperCase();
+        const empty = {
+          percentage: null,
+          numerator: 0,
+          denominator: 0,
+          eventCount: 0,
+          kind: 'OFFICIEL',
+          volumes: { presents: 0, excuses: 0, nonExcuses: 0, dispenses: 0 },
+          objective: null,
+          gapPct: null,
+          analyticStatus: 'NON_EVALUABLE',
+          analyticStatusReason: 'denominator_zero',
+          objectiveContext: { homogeneous: true, distinctObjectives: [], reason: 'OBJECTIVE_NOT_FOUND' }
+        };
+        const today = new Date().toISOString().slice(0, 10);
+        const inbox = [...evenements.values()]
+          .filter((ev) => ev.statut === 'PLANIFIE' && String(ev.date).slice(0, 4) === year)
+          .map((ev) => {
+            const echu = ev.date < today;
+            const mode = ev.mode_suivi || 'NOMINATIF';
+            let reasonCode = 'ECHU_PLANIFIE';
+            let reason = 'Date passée, exercice encore planifié.';
+            let label = 'Ouvrir';
+            let href = `#/exercices/${ev.evenement_id}`;
+            if (mode === 'QUANTITATIF') {
+              reasonCode = 'QUANTITATIF_INCOMPLET';
+              reason = 'Saisie quantitative incomplète ou absente.';
+              label = 'Saisir les présences';
+              href = `#/exercices/${ev.evenement_id}/saisie`;
+            } else if (!ev.population_figee && echu) {
+              reasonCode = 'NOMINATIF_NON_FIGE';
+              reason = 'Date échue, population non figée.';
+              label = 'Figer la population';
+            }
+            if (!echu && mode !== 'QUANTITATIF' && ev.population_figee) return null;
+            if (!echu && mode !== 'QUANTITATIF' && !ev.population_figee) return null;
+            return {
+              evenementId: ev.evenement_id,
+              date: ev.date,
+              domaine: ev.domaine_code,
+              libelle: ev.libelle,
+              modeSuivi: mode,
+              cibles: [],
+              reasonCode,
+              reason,
+              cta: { action: 'ouvrir', label, href }
+            };
+          })
+          .filter(Boolean);
+        return {
+          ok: true,
+          period: { from: `${year}-01-01`, to: `${year}-12-31`, preset },
+          analysisGrain: 'SDIS',
+          officiel: empty,
+          legacy: { kind: 'LEGACY', eventCount: 0, points: [], globalKpi: null },
+          absencesNonExcusees: { count: 0, events: [] },
+          domaines: DOMAINES.map((d) => ({
+            code: d.code,
+            libelle: d.libelle,
+            libelleAffiche: d.code === 'PR' ? 'PAPR' : d.code,
+            officiel: Object.assign({}, empty)
+          })),
+          cibles: [],
+          evenements: [],
+          timeseries: { officiel: [], legacy: [] },
+          inbox,
+          explain: {
+            period: { from: `${year}-01-01`, to: `${year}-12-31`, preset },
+            perimeter: { domaine: null, cible: null },
+            kind: 'OFFICIEL',
+            totals: { numerator: 0, denominator: 0, percentage: null, eventCount: 0 },
+            exclusions: { legacy: 0, annules: 0, reportes: 0, dispenses: 0 },
+            includedEvents: [],
+            excludedEvents: [],
+            objective: null,
+            analyticStatus: 'NON_EVALUABLE',
+            analyticStatusReason: 'denominator_zero',
+            gapPct: null
+          },
+          vigilanceMarginPct: null
+        };
+      },
       async listObjectifs() {
         return { ok: true, objectifs: [...objectifs.values()] };
       },

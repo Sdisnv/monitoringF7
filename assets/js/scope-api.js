@@ -125,6 +125,7 @@
       analyticsSummary(params) { return request('GET', `/analytics/summary${queryString(params || {})}`); },
       analyticsExplain(params) { return request('GET', `/analytics/explain${queryString(params || {})}`); },
       analyticsTimeseries(params) { return request('GET', `/analytics/timeseries${queryString(params || {})}`); },
+      dashboard(params) { return request('GET', `/dashboard${queryString(params || {})}`); },
       listObjectifs(params) { return request('GET', `/objectifs${queryString(params || {})}`); },
       createObjectif(body) { return request('POST', '/objectifs', body); },
       patchObjectif(id, body) { return request('PATCH', `/objectifs/${encodeURIComponent(id)}`, body); },

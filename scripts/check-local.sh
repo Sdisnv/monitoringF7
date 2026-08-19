@@ -85,6 +85,16 @@ grep -q "portee" netlify/functions/_scope-schema.js
 grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
 grep -q "scope-root" scope.html
 grep -q "Vue d’ensemble" assets/js/scope-ui.js
+grep -q "/dashboard" netlify/functions/scope.js
+grep -q "createScopeDashboardService" netlify/functions/_scope-dashboard-service.js
+grep -q "classifyInboxItem" netlify/functions/_scope-inbox.js
+grep -q "Exercices à traiter" assets/js/scope-ui.js
+grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
+grep -q "height: 68px" assets/css/scope.css
+if grep -q "officialFromQuantitatif" assets/js/scope-ui.js; then
+  echo "ERREUR: calcul officiel dans scope-ui.js"
+  exit 1
+fi
 if grep -q "min-width: *980px" assets/css/scope.css; then
   echo "ERREUR: min-width 980px dans scope.css"
   exit 1

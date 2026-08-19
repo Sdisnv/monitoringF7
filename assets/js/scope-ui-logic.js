@@ -54,9 +54,110 @@
     return `${n.toFixed(1).replace('.', ',')} %`;
   }
 
+  function formatGap(gapPct) {
+    if (gapPct === null || gapPct === undefined || gapPct === '') return null;
+    const n = Number(gapPct);
+    if (!Number.isFinite(n)) return null;
+    const sign = n > 0 ? '+' : '';
+    return `${sign}${n.toFixed(1).replace('.', ',')} pts`;
+  }
+
+  function analyticStatusLabel(code) {
+    if (code === 'ATTEINT') return 'Atteint';
+    if (code === 'ATTENTION') return 'Attention';
+    if (code === 'VIGILANCE') return 'Vigilance';
+    return 'Non évaluable';
+  }
+
+  function participationChartSvg(officiel, legacyPoints, size) {
+    const width = (size && size.width) || 640;
+    const height = (size && size.height) || 220;
+    const pad = { l: 36, r: 12, t: 16, b: 28 };
+    const buckets = (officiel || []).filter((b) => b && b.month);
+    const legacy = (legacyPoints || []).filter((p) => p && p.date && p.tauxLegacy != null);
+    if (!buckets.length && !legacy.length) {
+      return `<p class="scope-empty">Aucune série officielle sur cette période.</p>`;
+    }
+    const months = [...new Set([
+      ...buckets.map((b) => b.month),
+      ...legacy.map((p) => String(p.date).slice(0, 7))
+    ])].sort();
+    const innerW = width - pad.l - pad.r;
+    const innerH = height - pad.t - pad.b;
+    const xOf = (month) => {
+      if (months.length === 1) return pad.l + innerW / 2;
+      const i = months.indexOf(month);
+      return pad.l + (i / (months.length - 1)) * innerW;
+    };
+    const yOf = (pct) => pad.t + innerH * (1 - (Number(pct) / 100));
+    const officialPts = buckets
+      .filter((b) => b.percentage != null)
+      .map((b) => `${xOf(b.month).toFixed(1)},${yOf(b.percentage).toFixed(1)}`);
+    const uniqueThresholds = [...new Set(buckets.map((b) => b.thresholdPct).filter((t) => t != null && t !== ''))];
+    let objectiveMark = '';
+    if (uniqueThresholds.length === 1) {
+      const y = yOf(uniqueThresholds[0]);
+      objectiveMark = `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#b26a00" stroke-dasharray="5 4" stroke-width="2" />`;
+    } else if (uniqueThresholds.length > 1) {
+      objectiveMark = '';
+    }
+    const ticks = [0, 50, 100].map((v) => {
+      const y = yOf(v);
+      return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="4" y="${y + 4}" font-size="11" fill="#6b7785">${v}</text>`;
+    }).join('');
+    const monthLabels = months.map((m) => `<text x="${xOf(m)}" y="${height - 8}" font-size="11" text-anchor="middle" fill="#6b7785">${m.slice(5)}</text>`).join('');
+    const legacyDots = legacy.map((p) => {
+      const month = String(p.date).slice(0, 7);
+      return `<circle cx="${xOf(month)}" cy="${yOf(p.tauxLegacy)}" r="3.5" fill="#6b7785" />`;
+    }).join('');
+    return `<svg class="scope-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Évolution du taux de participation">
+      ${ticks}
+      ${objectiveMark}
+      ${officialPts.length > 1 ? `<polyline fill="none" stroke="#1f2730" stroke-width="2.4" points="${officialPts.join(' ')}" />` : ''}
+      ${officialPts.length === 1 ? `<circle cx="${officialPts[0].split(',')[0]}" cy="${officialPts[0].split(',')[1]}" r="4" fill="#1f2730" />` : ''}
+      ${legacyDots}
+      ${monthLabels}
+    </svg>`;
+  }
+
   function currentYear(now) {
     const d = now ? new Date(now) : new Date();
     return String(d.getFullYear());
+  }
+
+  function periodParams(state) {
+    const preset = String((state && state.preset) || 'YEAR').toUpperCase();
+    const year = String((state && state.year) || currentYear());
+    const params = { preset, year };
+    if (preset === 'MONTH') params.month = String((state && state.month) || '1');
+    if (preset === 'QUARTER') params.quarter = String((state && state.quarter) || '1');
+    if (preset === 'CUSTOM') {
+      params.from = (state && state.from) || `${year}-01-01`;
+      params.to = (state && state.to) || `${year}-12-31`;
+    }
+    if (state && state.domaine) params.domaine = state.domaine;
+    if (state && state.cible) params.cible = state.cible;
+    return params;
+  }
+
+  function objectiveKpiLabel(officiel) {
+    const ctx = (officiel && officiel.objectiveContext) || {};
+    const distinct = ctx.distinctObjectives || [];
+    if (ctx.homogeneous === false && distinct.length > 1) {
+      return { title: 'Période non homogène', subtitle: 'Plusieurs objectifs temporels — aucun seuil unique.' };
+    }
+    if (!officiel || !officiel.objective) {
+      return { title: 'Aucun objectif défini', subtitle: '' };
+    }
+    const o = officiel.objective;
+    const pct = Number(o.thresholdPct);
+    const title = Number.isFinite(pct) ? `${String(pct).replace('.', ',')} %` : '—';
+    const subtitle = o.scope === 'GLOBAL'
+      ? 'Global'
+      : o.scope === 'DOMAINE'
+        ? `Domaine ${o.domaineCode || o.domaine_code || ''}`.trim()
+        : 'Cible';
+    return { title, subtitle };
   }
 
   function parseHash(hash) {
@@ -70,7 +171,11 @@
       if (parts[1]) return { screen: 'fiche', nav: 'exercices', id: parts[1] };
       return { screen: 'liste', nav: 'exercices' };
     }
-    if (parts[0] === 'vue') return { screen: 'vue', nav: 'vue' };
+    if (parts[0] === 'vue') {
+      if (parts[1] && parts[2]) return { screen: 'vue', nav: 'vue', domaine: parts[1], cible: parts[2] };
+      if (parts[1]) return { screen: 'vue', nav: 'vue', domaine: parts[1] };
+      return { screen: 'vue', nav: 'vue' };
+    }
     if (parts[0] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
     if (parts[0] === 'reglages' && (!parts[1] || parts[1] === 'objectifs')) {
       return { screen: 'objectifs', nav: 'reglages' };
@@ -257,7 +362,12 @@
     statutLabel,
     formatDate,
     formatTaux,
+    formatGap,
+    analyticStatusLabel,
+    participationChartSvg,
     currentYear,
+    periodParams,
+    objectiveKpiLabel,
     parseHash,
     principalCta,
     modeSuiviOf,
