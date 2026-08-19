@@ -96,3 +96,9 @@ create index if not exists idx_monitoring_f7_user_profiles_email on monitoring_f
 insert into monitoring_f7_schema_migrations(version)
 values ('v67.0-auto-core-schema')
 on conflict (version) do nothing;
+
+-- SCOPE-IMPL-1A : tables nominatives additifives.
+-- Source de vérité SQL : database/migrations/20260819_scope_impl_1a.sql
+-- Appliqué au runtime par netlify/functions/_scope-schema.js (ensureScopeSchema).
+-- Ne pas DROP les tables monitoring_f7_*.
+

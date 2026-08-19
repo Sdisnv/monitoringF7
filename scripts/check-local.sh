@@ -45,6 +45,11 @@ grep -q "serverAuthEnabled: true" assets/js/config.js
 grep -q "oidcEnabled: true" assets/js/config.js
 grep -q "hydrateOnlineDataCache" assets/js/app.js
 grep -q "publishLocalCacheToServer" assets/js/app.js
+grep -q "SCOPE-IMPL-1A" assets/js/app.js
+grep -q "AUTO_PUBLISH_LOCAL: false" assets/js/online-cache-policy.js
+grep -q 'from = "/api/scope/*"' netlify.toml
+grep -q "ensureScopeSchema" netlify/functions/_scope-schema.js
+grep -q "createScopeService" netlify/functions/_scope-service.js
 grep -q "getDataStatus" assets/js/api-client.js
 grep -q "scheduleOnlineCollectionWrite" assets/js/app.js
 grep -q "updateAdminCode" assets/js/api-client.js
