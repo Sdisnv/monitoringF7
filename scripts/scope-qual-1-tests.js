@@ -91,6 +91,7 @@ function record(name, fn){
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('scope-confirm-live'));
     assert.ok(ui.includes('scope-live-confirmed'));
+    assert.ok(ui.includes("params.get('mode') === 'live'") && ui.includes('location.reload()'));
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
     assert.ok(css.includes('.scope-banner.live'));
   });
@@ -108,7 +109,15 @@ function record(name, fn){
     assert.ok(!api.includes('setAccessToken('));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('scope-okta-login'));
+    assert.ok(ui.includes('/auth/logout?returnTo=/'));
+    assert.ok(ui.includes('authError'));
     assert.ok(ui.includes('sessionMe'));
+    const oidc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_oidc-utils.js'), 'utf8');
+    assert.ok(oidc.includes('function queryParams'));
+    assert.ok(oidc.includes('function oidcErrorReason'));
+    const cb = fs.readFileSync(path.join(ROOT, 'netlify/functions/auth-oidc-callback.js'), 'utf8');
+    assert.ok(cb.includes('oidc_callback_failed'));
+    assert.ok(cb.includes('reason='));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

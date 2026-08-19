@@ -197,6 +197,14 @@
 
   function bannerHtml() {
     const bits = [];
+    const params = new URLSearchParams(location.search.replace(/^\?/, ''));
+    if (params.get('authError') === '1') {
+      const reason = params.get('reason') || 'callback';
+      bits.push(`<div class="scope-banner warning" role="alert">
+        <strong>Connexion Okta interrompue</strong>
+        <div>Le callback SCOPE n’a pas pu créer la session (raison : ${escapeHtml(reason)}). Réessayez « Se connecter avec Okta ». Aucun jeton n’est injecté.</div>
+      </div>`);
+    }
     if (liveGate) {
       bits.push(`<div class="scope-banner warning" role="alertdialog">
         <strong>Connexion live demandée</strong>
@@ -215,7 +223,7 @@
         </div>
       </div>`);
     } else if (mode === 'live') {
-      bits.push(`<div class="scope-banner live">Mode LIVE — base PostgreSQL Monitoring. Session Okta. Toute saisie est réelle. Pas de données fictives.</div>`);
+      bits.push(`<div class="scope-banner live">Mode LIVE — base PostgreSQL Monitoring. Session Okta. Toute saisie est réelle. Pas de données fictives. <a class="scope-btn" href="/auth/logout?returnTo=/">Se déconnecter</a></div>`);
     } else {
       bits.push(`<div class="scope-banner demo">Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>`);
     }
@@ -601,7 +609,9 @@
   function bind() {
     document.getElementById('scope-confirm-live')?.addEventListener('click', () => {
       try { sessionStorage.setItem('scope-live-confirmed', '1'); } catch {}
-      location.search = '?mode=live';
+      const params = new URLSearchParams(location.search.replace(/^\?/, ''));
+      if (params.get('mode') === 'live') location.reload();
+      else location.search = '?mode=live';
     });
     document.getElementById('scope-stay-demo')?.addEventListener('click', () => {
       try { sessionStorage.removeItem('scope-live-confirmed'); } catch {}

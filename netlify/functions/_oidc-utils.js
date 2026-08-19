@@ -63,6 +63,31 @@ function parseCookies(event){
   }, {});
 }
 
+function queryParams(event){
+  if(event && event.rawQuery) return new URLSearchParams(event.rawQuery);
+  try{
+    if(event && event.rawUrl) return new URL(event.rawUrl).searchParams;
+  }catch{}
+  const params = new URLSearchParams();
+  const source = (event && event.queryStringParameters) || {};
+  Object.keys(source).forEach((key) => {
+    if(source[key] != null) params.set(key, String(source[key]));
+  });
+  return params;
+}
+
+function oidcErrorReason(error){
+  const message = String((error && error.message) || error || '');
+  if(/incomplet/i.test(message)) return 'incomplete';
+  if(/Etat OIDC|State OIDC/i.test(message)) return 'state';
+  if(/Token OIDC|invalid_grant|redirect_uri|client secret|confidential client/i.test(message)) return 'token';
+  if(/Issuer|Audience|Nonce|Signature|ID token|Cle publique|Algorithme|JWKS/i.test(message)) return 'id_token';
+  if(/Groupe Okta/i.test(message)) return 'group';
+  if(/désactivé/i.test(message)) return 'disabled';
+  if(/manquant/i.test(message)) return 'config';
+  return 'callback';
+}
+
 function secureCookie(name, value, maxAgeSeconds){
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAgeSeconds}`;
 }
@@ -179,7 +204,7 @@ function redirect(statusCode, location, cookies){
 
 function oidcStartResponse(event){
   const config = oidcConfig();
-  const params = new URLSearchParams(event?.rawQuery || '');
+  const params = queryParams(event);
   const returnTo = sanitizeReturnTo(params.get('returnTo') || '/');
   const state = crypto.randomBytes(24).toString('base64url');
   const nonce = crypto.randomBytes(24).toString('base64url');
@@ -200,7 +225,7 @@ function oidcStartResponse(event){
 
 async function oidcCallbackResponse(event){
   const config = oidcConfig();
-  const params = new URLSearchParams(event.rawQuery || '');
+  const params = queryParams(event);
   const code = params.get('code');
   const state = params.get('state');
   if(!code || !state) throw new Error('Callback OIDC incomplet.');
@@ -235,5 +260,6 @@ module.exports = {
   clearCookie,
   oidcStartResponse,
   oidcCallbackResponse,
+  oidcErrorReason,
   sanitizeReturnTo
 };
