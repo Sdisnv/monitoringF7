@@ -113,6 +113,7 @@
     const eventCibles = new Map();
     const attendus = new Map();
     const participations = new Map();
+    const quantitatives = new Map();
     const journal = [];
     const key = (e, p) => `${e}::${p}`;
 
@@ -179,11 +180,21 @@
       const evCibles = cibles.filter((c) => ids.includes(c.cible_id));
       const att = [...attendus.values()].filter((a) => a.evenement_id === evenement.evenement_id);
       const parts = [...participations.values()].filter((p) => p.evenement_id === evenement.evenement_id);
+      const saisie = quantitatives.get(evenement.evenement_id) || null;
+      const mode = evenement.mode_suivi || 'NOMINATIF';
+      let compteurs = computeTaux(parts, att);
+      let attendusInclus = att.filter((a) => a.inclus !== false).length;
+      if (mode === 'QUANTITATIF' && saisie) {
+        attendusInclus = saisie.nb_attendus;
+        compteurs = { numerator: saisie.nb_presents, denominator: saisie.nb_presents + saisie.nb_excuses + saisie.nb_non_excuses, percentage: null, presents: saisie.nb_presents };
+      }
       return {
         evenement: Object.assign({}, evenement),
         cibles: evCibles,
-        compteurs: computeTaux(parts, att),
-        attendusInclus: att.filter((a) => a.inclus !== false).length
+        compteurs,
+        attendusInclus,
+        saisieQuantitative: saisie,
+        modeSuivi: mode
       };
     }
 
@@ -206,7 +217,11 @@
         encadrement: parts.filter((p) => ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(p.role)),
         personnes: personnesMap,
         journal: journal.filter((j) => j.entite_id === id),
-        compteurs: computeTaux(parts, att),
+        compteurs: evenement.mode_suivi === 'QUANTITATIF' && quantitatives.get(id)
+          ? { numerator: quantitatives.get(id).nb_presents, denominator: quantitatives.get(id).nb_presents + quantitatives.get(id).nb_excuses + quantitatives.get(id).nb_non_excuses, percentage: null, presents: quantitatives.get(id).nb_presents }
+          : computeTaux(parts, att),
+        saisieQuantitative: quantitatives.get(id) || null,
+        modeSuivi: evenement.mode_suivi || 'NOMINATIF',
         version: evenement.version
       };
     }
@@ -247,6 +262,7 @@
           libelle: String(body.libelle || '').trim(),
           statut: 'PLANIFIE',
           origine: 'NOMINATIF',
+          mode_suivi: String(body.modeSuivi || body.mode_suivi || 'NOMINATIF').toUpperCase() === 'QUANTITATIF' ? 'QUANTITATIF' : 'NOMINATIF',
           population_figee: false,
           population_version: 0,
           version: 1
@@ -353,6 +369,14 @@
       async cloturer(id, baseVersion) {
         const evenement = getEvent(id);
         requireVersion(evenement, baseVersion);
+        if (evenement.mode_suivi === 'QUANTITATIF') {
+          const saisie = quantitatives.get(id);
+          if (!saisie) throw new ScopeApiError(422, { error: 'saisie_manquante', message: 'Saisissez les volumes avant de clôturer.' });
+          evenement.statut = 'REALISE';
+          bump(evenement);
+          journal.push({ entite: 'evenement', entite_id: id, action: 'CLOTURER', at: new Date().toISOString() });
+          return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version, taux: { numerator: saisie.nb_presents, denominator: saisie.nb_presents + saisie.nb_excuses + saisie.nb_non_excuses, percentage: null } };
+        }
         const att = [...attendus.values()].filter((a) => a.evenement_id === id && a.inclus !== false);
         const errors = [];
         att.forEach((a) => {
@@ -391,6 +415,66 @@
         const ficheData = fiche(id);
         const officiel = ficheData.evenement.statut === 'REALISE';
         return { ok: true, taux: Object.assign({}, ficheData.compteurs, { officiel }) };
+      },
+      async suggestModeSuivi() {
+        return {
+          ok: true,
+          suggested: 'QUANTITATIF',
+          requireExplicit: false,
+          message: 'Mode proposé : Quantitatif.'
+        };
+      },
+      async previewTauxQuantitatif(id, body) {
+        getEvent(id);
+        const attendusN = Number(body.attendus);
+        const presents = Number(body.presents);
+        const excuses = Number(body.excuses);
+        const nonExcuses = Number(body.nonExcuses);
+        const dispenses = body.dispenses === undefined || body.dispenses === '' ? 0 : Number(body.dispenses);
+        const equal = attendusN === presents + excuses + nonExcuses + dispenses;
+        return {
+          ok: true,
+          valide: equal,
+          officiel: false,
+          taux: equal ? { numerator: presents, denominator: presents + excuses + nonExcuses, percentage: null, source: 'PREVIEW' } : null,
+          message: equal
+            ? 'Aperçu. Ce n’est pas encore un taux officiel réalisé.'
+            : 'Présents + excusés + non excusés + dispensés doit être égal aux attendus.'
+        };
+      },
+      async enregistrerSaisieQuantitative(id, body, baseVersion) {
+        const evenement = getEvent(id);
+        requireVersion(evenement, baseVersion);
+        if (evenement.mode_suivi !== 'QUANTITATIF') {
+          throw new ScopeApiError(422, { error: 'mode_non_quantitatif', message: 'Cette action concerne uniquement le suivi quantitatif.' });
+        }
+        const row = {
+          evenement_id: id,
+          nb_attendus: Number(body.attendus),
+          nb_presents: Number(body.presents),
+          nb_excuses: Number(body.excuses),
+          nb_non_excuses: Number(body.nonExcuses),
+          nb_dispenses: body.dispenses === undefined || body.dispenses === '' ? 0 : Number(body.dispenses)
+        };
+        quantitatives.set(id, row);
+        bump(evenement);
+        journal.push({ entite: 'evenement', entite_id: id, action: 'SAISIE_QUANTITATIVE', at: new Date().toISOString() });
+        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version, saisie: row };
+      },
+      async convertirNominatif(id, body, baseVersion) {
+        const evenement = getEvent(id);
+        requireVersion(evenement, baseVersion);
+        if (!body || body.confirmation !== true) {
+          throw new ScopeApiError(400, { error: 'confirmation_requise', message: 'Confirmez la conversion : les volumes quantitatifs seront supprimés.' });
+        }
+        quantitatives.delete(id);
+        evenement.mode_suivi = 'NOMINATIF';
+        bump(evenement);
+        journal.push({ entite: 'evenement', entite_id: id, action: 'CONVERTIR_NOMINATIF', at: new Date().toISOString() });
+        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
+      },
+      async convertirQuantitatif() {
+        throw new ScopeApiError(422, { error: 'conversion_interdite', message: 'La conversion nominatif → quantitatif est interdite.' });
       }
     };
   }

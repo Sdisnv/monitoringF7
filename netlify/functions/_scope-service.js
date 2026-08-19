@@ -11,6 +11,12 @@ const {
   ROLES_ENCADREMENT
 } = require('./_scope-rules');
 const csvImport = require('./_scope-csv-import');
+const {
+  inferModeSuivi,
+  MODES,
+  officialFromQuantitatif,
+  parseQuantitatifInput
+} = require('./_scope-analytics');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -24,6 +30,42 @@ function requireBaseVersion(body){
 
 function actorId(actor){
   return String(actor?.sub || actor?.email || actor?.nip || actor || 'systeme');
+}
+
+function isQuantitatif(evenement){
+  return inferModeSuivi(evenement) === MODES.QUANTITATIF;
+}
+
+function requireQuantitatif(evenement){
+  if(!isQuantitatif(evenement)){
+    throw new HttpError(422, 'mode_non_quantitatif', 'Cette action concerne uniquement le suivi quantitatif.');
+  }
+}
+
+function volumesOrThrow(body){
+  const parsed = parseQuantitatifInput(body || {});
+  if(parsed.error === 'missing'){
+    throw new HttpError(400, 'volumes_incomplets', 'Attendus, présents, excusés et non excusés sont obligatoires.');
+  }
+  if(parsed.error === 'negative'){
+    throw new HttpError(422, 'volume_negatif', 'Les volumes ne peuvent pas être négatifs.');
+  }
+  if(parsed.error === 'not_integer'){
+    throw new HttpError(422, 'volume_invalide', 'Les volumes doivent être des entiers.');
+  }
+  return parsed.row;
+}
+
+function officialQuantitatifOrThrow(row){
+  const official = officialFromQuantitatif(row);
+  if(!official){
+    throw new HttpError(
+      422,
+      'volumes_incoherents',
+      'Présents + excusés + non excusés + dispensés doit être égal aux attendus. Aucune correction automatique n’est appliquée.'
+    );
+  }
+  return official;
 }
 
 async function bumpOrConflict(repo, eventId, baseVersion, patch){
@@ -101,10 +143,17 @@ function createScopeService(repo){
       }
     }
     const origine = body.origine === 'LEGACY_AGGREGATED' ? 'LEGACY_AGGREGATED' : 'NOMINATIF';
-    const { inferModeSuivi, MODES } = require('./_scope-analytics');
     let modeSuivi = inferModeSuivi({ origine, mode_suivi: body.modeSuivi || body.mode_suivi });
     if(origine === 'LEGACY_AGGREGATED') modeSuivi = MODES.LEGACY;
-    else if(modeSuivi === MODES.LEGACY) modeSuivi = MODES.NOMINATIF;
+    else {
+      const requested = String(body.modeSuivi || body.mode_suivi || '').toUpperCase();
+      if(requested === MODES.LEGACY){
+        throw new HttpError(400, 'mode_legacy_interdit', 'Le mode historique agrégé ne peut pas être choisi à la création manuelle.');
+      }
+      if(requested === MODES.QUANTITATIF) modeSuivi = MODES.QUANTITATIF;
+      else if(requested === MODES.NOMINATIF) modeSuivi = MODES.NOMINATIF;
+      else modeSuivi = MODES.NOMINATIF;
+    }
     const evenement = await repo.insertEvenement({
       date,
       domaine_code: domaine,
@@ -119,7 +168,7 @@ function createScopeService(repo){
       entite: 'evenement',
       entite_id: evenement.evenement_id,
       action: 'CREER',
-      apres: { date, domaine, libelle, cibleIds, origine }
+      apres: { date, domaine, libelle, cibleIds, origine, modeSuivi }
     });
     return { evenement, version: evenement.version };
   }
@@ -176,6 +225,9 @@ function createScopeService(repo){
     if(evenement.origine === 'LEGACY_AGGREGATED'){
       return { count: 0, personnes: [], note: 'Legacy agrégé : aucune population nominative.' };
     }
+    if(isQuantitatif(evenement)){
+      throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population nominative.');
+    }
     const cibleIds = await repo.listEventCibleIds(eventId);
     const affectations = await repo.listAffectationsForCibles(cibleIds, evenement.date);
     const byPersonne = new Map();
@@ -211,6 +263,9 @@ function createScopeService(repo){
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
       if(evenement.origine === 'LEGACY_AGGREGATED'){
         throw new HttpError(422, 'legacy', 'Impossible de figer une population nominative sur un agrégat legacy.');
+      }
+      if(isQuantitatif(evenement)){
+        throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population à figer.');
       }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Le gel n’est possible que sur un événement PLANIFIE.');
       if(evenement.population_figee) throw new HttpError(422, 'deja_figee', 'La population est déjà figée.');
@@ -260,6 +315,9 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(isQuantitatif(evenement)){
+        throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas d’exceptions nominatives.');
+      }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Exception possible uniquement sur PLANIFIE.');
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Figer la population avant d’ajouter une exception.');
       const personne = await tx.getPersonne(personneId);
@@ -334,6 +392,9 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(isQuantitatif(evenement)){
+        throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de participations nominatives.');
+      }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
       for(const item of items){
@@ -409,6 +470,31 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(isQuantitatif(evenement)){
+        if(evenement.statut !== 'PLANIFIE'){
+          throw new HttpError(422, 'statut_invalide', 'La clôture n’est possible que depuis PLANIFIE.');
+        }
+        const saisie = await tx.getQuantitatifSaisie(eventId);
+        if(!saisie){
+          throw new HttpError(422, 'saisie_manquante', 'Saisissez les volumes avant de clôturer.');
+        }
+        const official = officialQuantitatifOrThrow(saisie);
+        const next = await bumpOrConflict(tx, eventId, baseVersion, {
+          statut: 'REALISE',
+          cloture_at: new Date().toISOString(),
+          cloture_par: actorId(actor)
+        });
+        const taux = { ...official, officiel: true, kind: 'OFFICIEL' };
+        await tx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'evenement',
+          entite_id: eventId,
+          action: 'CLOTURER',
+          avant: { statut: evenement.statut },
+          apres: { statut: 'REALISE', version: next.version, taux }
+        });
+        return { evenement: next, version: next.version, taux };
+      }
       const attendus = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
       validateCloture(evenement, attendus, participations);
@@ -484,13 +570,30 @@ function createScopeService(repo){
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
     const attendus = await repo.listAttendus(evenement.evenement_id);
     const participations = await repo.listParticipations(evenement.evenement_id);
-    const compteurs = computeTaux(participations, attendus);
-    const attendusInclus = attendus.filter(a => a.inclus !== false).length;
+    const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(evenement.evenement_id) : null;
+    const modeSuivi = inferModeSuivi(evenement);
+    let compteurs = computeTaux(participations, attendus);
+    let attendusInclus = attendus.filter(a => a.inclus !== false).length;
+    if(modeSuivi === MODES.QUANTITATIF){
+      const official = saisie ? officialFromQuantitatif(saisie) : null;
+      attendusInclus = saisie ? Number(saisie.nb_attendus) : 0;
+      compteurs = official
+        ? { ...official, presents: official.volumes.presents }
+        : { numerator: 0, denominator: 0, percentage: null, presents: saisie ? saisie.nb_presents : 0 };
+    }
     let legacy = null;
     if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
       legacy = await repo.getLegacyByEvenementId(evenement.evenement_id);
     }
-    return { evenement, cibles, compteurs, attendusInclus, legacy };
+    return {
+      evenement: { ...evenement, mode_suivi: modeSuivi },
+      cibles,
+      compteurs,
+      attendusInclus,
+      legacy,
+      saisieQuantitative: saisie,
+      modeSuivi
+    };
   }
 
   async function listEvenements(query){
@@ -534,19 +637,30 @@ function createScopeService(repo){
       ...participations.map(p => p.personne_id)
     ]);
     const journal = await repo.listJournal('evenement', eventId);
+    const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(eventId) : null;
+    const modeSuivi = inferModeSuivi(evenement);
+    let compteurs = taux;
+    if(modeSuivi === MODES.QUANTITATIF){
+      const official = saisie ? officialFromQuantitatif(saisie) : null;
+      compteurs = official
+        ? { ...official, presents: official.volumes.presents, excuses: official.volumes.excuses, nonExcuses: official.volumes.nonExcuses, dispenses: official.volumes.dispenses }
+        : { numerator: 0, denominator: 0, percentage: null, presents: 0, excuses: 0, nonExcuses: 0, dispenses: 0 };
+    }
     let legacy = null;
     if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
       legacy = await repo.getLegacyByEvenementId(eventId);
     }
     return {
-      evenement,
+      evenement: { ...evenement, mode_suivi: modeSuivi },
       cibles,
       attendus,
       participations,
       encadrement,
       personnes,
       journal,
-      compteurs: taux,
+      compteurs,
+      saisieQuantitative: saisie,
+      modeSuivi,
       legacy,
       version: evenement.version
     };
@@ -574,6 +688,28 @@ function createScopeService(repo){
         officiel: false,
         kind: 'LEGACY',
         exclus: { nonRealise: true, legacy: true }
+      };
+    }
+    if(isQuantitatif(evenement)){
+      const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(eventId) : null;
+      const official = saisie ? officialFromQuantitatif(saisie) : null;
+      const realise = evenement.statut === 'REALISE';
+      if(!official){
+        return {
+          numerator: 0,
+          denominator: 0,
+          percentage: null,
+          officiel: false,
+          kind: realise ? 'OFFICIEL' : 'PREVIEW',
+          mode: MODES.QUANTITATIF,
+          volumes: saisie || null
+        };
+      }
+      return {
+        ...official,
+        officiel: realise,
+        kind: realise ? 'OFFICIEL' : 'PREVIEW',
+        mode: MODES.QUANTITATIF
       };
     }
     if(evenement.statut !== 'REALISE'){
@@ -797,6 +933,177 @@ function createScopeService(repo){
     });
   }
 
+  async function suggestModeSuivi(query = {}){
+    const cibleIds = []
+      .concat(query.cibleIds || query.cible_ids || [])
+      .concat(String(query.cibles || '').split(','))
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+    const date = isoDate(query.date) || String(query.date || '').trim();
+    if(!cibleIds.length || !date){
+      return {
+        suggested: null,
+        requireExplicit: true,
+        reason: 'date_et_cibles_requises',
+        message: 'Indiquez la date et la cible pour proposer un mode de suivi.'
+      };
+    }
+    const rules = repo.listReglesBascule ? await repo.listReglesBascule() : [];
+    const details = [];
+    for(const cibleId of cibleIds){
+      const cible = await repo.getCible(cibleId);
+      if(!cible){
+        throw new HttpError(404, 'cible_introuvable', 'Cible introuvable.', { cibleId });
+      }
+      const rule = csvImport.resolveBasculeRule(cible.cible_id, cible.domaine_code, rules);
+      const nominatif = Boolean(rule && date >= rule.date_bascule);
+      details.push({
+        cibleId,
+        suggested: nominatif ? MODES.NOMINATIF : MODES.QUANTITATIF,
+        rule: rule || null
+      });
+    }
+    const unique = [...new Set(details.map((item) => item.suggested))];
+    if(unique.length !== 1){
+      return {
+        suggested: null,
+        requireExplicit: true,
+        reason: 'cibles_divergentes',
+        message: 'Les cibles n’ont pas la même règle de suivi. Choisissez Nominatif ou Quantitatif.',
+        details
+      };
+    }
+    return {
+      suggested: unique[0],
+      requireExplicit: false,
+      reason: unique[0] === MODES.NOMINATIF ? 'bascule_nominative' : 'defaut_quantitatif',
+      message: unique[0] === MODES.NOMINATIF
+        ? 'Une règle de bascule nominative s’applique à cette date. Mode proposé : Nominatif.'
+        : 'Aucune bascule nominative à cette date. Mode proposé : Quantitatif.',
+      details
+    };
+  }
+
+  function summarizeLite(evenement){
+    return {
+      id: evenement.evenement_id,
+      date: evenement.date,
+      domaine: evenement.domaine_code,
+      libelle: evenement.libelle,
+      statut: evenement.statut,
+      version: evenement.version,
+      modeSuivi: inferModeSuivi(evenement)
+    };
+  }
+
+  async function previewTauxQuantitatif(eventId, body = {}){
+    const evenement = await repo.getEvent(eventId);
+    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    requireQuantitatif(evenement);
+    const row = volumesOrThrow(body);
+    const official = officialFromQuantitatif(row);
+    if(!official){
+      return {
+        evenement: summarizeLite(evenement),
+        valide: false,
+        officiel: false,
+        volumes: row,
+        taux: null,
+        message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus.'
+      };
+    }
+    const realise = evenement.statut === 'REALISE';
+    return {
+      evenement: summarizeLite(evenement),
+      valide: true,
+      officiel: realise,
+      volumes: row,
+      taux: {
+        ...official,
+        source: realise ? 'OFFICIEL' : 'PREVIEW'
+      },
+      message: realise
+        ? 'Taux officiel SCOPE'
+        : 'Aperçu calculé par le serveur. Ce n’est pas encore un taux officiel réalisé.'
+    };
+  }
+
+  async function enregistrerSaisieQuantitative(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    const row = volumesOrThrow(body);
+    officialQuantitatifOrThrow(row);
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      requireQuantitatif(evenement);
+      if(evenement.statut !== 'PLANIFIE'){
+        throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
+      }
+      const saved = await tx.upsertQuantitatifSaisie({
+        evenement_id: eventId,
+        ...row,
+        auteur_id: actorId(actor)
+      });
+      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'SAISIE_QUANTITATIVE',
+        apres: saved
+      });
+      return { evenement: next, version: next.version, saisie: saved };
+    });
+  }
+
+  async function convertirNominatif(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    if(body.confirmation !== true && String(body.confirmation || '').toLowerCase() !== 'true'){
+      throw new HttpError(400, 'confirmation_requise', 'Confirmez la conversion : les volumes quantitatifs seront supprimés.');
+    }
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      const mode = inferModeSuivi(evenement);
+      if(mode === MODES.NOMINATIF){
+        throw new HttpError(422, 'deja_nominatif', 'Cet événement est déjà nominatif.');
+      }
+      if(mode === MODES.LEGACY){
+        throw new HttpError(422, 'legacy', 'Un agrégat historique ne peut pas être converti.');
+      }
+      if(mode !== MODES.QUANTITATIF){
+        throw new HttpError(422, 'conversion_interdite', 'La conversion nominatif → quantitatif est interdite.');
+      }
+      if(evenement.statut === 'REALISE'){
+        throw new HttpError(422, 'statut_invalide', 'Réouvrez d’abord la séance avant de passer en nominatif.');
+      }
+      if(evenement.statut !== 'PLANIFIE'){
+        throw new HttpError(422, 'statut_invalide', 'Conversion possible uniquement avant clôture.');
+      }
+      await tx.deleteQuantitatifSaisie(eventId);
+      const next = await bumpOrConflict(tx, eventId, baseVersion, { mode_suivi: MODES.NOMINATIF });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'CONVERTIR_NOMINATIF',
+        avant: { modeSuivi: MODES.QUANTITATIF },
+        apres: { modeSuivi: MODES.NOMINATIF }
+      });
+      return { evenement: next, version: next.version };
+    });
+  }
+
+  async function convertirQuantitatif(eventId){
+    const evenement = await repo.getEvent(eventId);
+    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    throw new HttpError(
+      422,
+      'conversion_interdite',
+      'La conversion nominatif → quantitatif est interdite : elle masquerait une traçabilité nominative déjà constituée.'
+    );
+  }
+
   async function assertNoAffectationOverlap(personneId, cibleId, dateDebut, dateFin, ignoreId){
     const existing = await repo.listAffectations({ personneId });
     for(const a of existing){
@@ -826,6 +1133,11 @@ function createScopeService(repo){
     annulerEvenement,
     lireEvenement,
     tauxEvenement,
+    suggestModeSuivi,
+    previewTauxQuantitatif,
+    enregistrerSaisieQuantitative,
+    convertirNominatif,
+    convertirQuantitatif,
     previewImportEvenements,
     commitImportEvenements,
     assertNoAffectationOverlap,

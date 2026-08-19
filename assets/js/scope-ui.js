@@ -55,7 +55,16 @@
     importFile: { filename: '', csvText: '', drag: false },
     importPreview: null,
     importExcluded: {},
-    importRapport: null
+    importRapport: null,
+    domaineForm: 'DPS',
+    dateForm: '2026-03-12',
+    libelleForm: '',
+    cibleForm: [],
+    modeChoice: '',
+    modeTouched: false,
+    modeSuggestion: null,
+    volumes: { attendus: '', presents: '', excuses: '', nonExcuses: '', dispenses: '0' },
+    qtyPreview: null
   };
 
   function toast(tone, title, message, extra) {
@@ -130,6 +139,24 @@
     state.fiche = data;
     state.conflict = false;
     buildSaisieFromFiche();
+    state.volumes = volumesFromFiche();
+    state.qtyPreview = null;
+  }
+
+  function volumesFromFiche() {
+    const s = state.fiche && (state.fiche.saisieQuantitative || state.fiche.saisie_quantitative);
+    if (!s) return { attendus: '', presents: '', excuses: '', nonExcuses: '', dispenses: '0' };
+    return {
+      attendus: s.nb_attendus == null ? '' : String(s.nb_attendus),
+      presents: s.nb_presents == null ? '' : String(s.nb_presents),
+      excuses: s.nb_excuses == null ? '' : String(s.nb_excuses),
+      nonExcuses: s.nb_non_excuses == null ? '' : String(s.nb_non_excuses),
+      dispenses: String(s.nb_dispenses == null ? 0 : s.nb_dispenses)
+    };
+  }
+
+  function eventMode(ev) {
+    return L.modeSuiviOf(ev || (state.fiche && state.fiche.evenement) || {});
   }
 
   function cibleForPersonne(personneId) {
@@ -169,6 +196,32 @@
   }
 
   function counters() { return L.liveCounters(state.saisie); }
+
+  async function refreshModeSuggestion() {
+    if (typeof client.suggestModeSuivi !== 'function') {
+      if (!state.modeTouched) state.modeChoice = state.modeChoice || 'QUANTITATIF';
+      return;
+    }
+    const date = state.dateForm;
+    const cibleIds = state.cibleForm;
+    if (!date || !cibleIds.length) {
+      state.modeSuggestion = {
+        suggested: null,
+        requireExplicit: true,
+        message: 'Indiquez la date et la cible pour proposer un mode de suivi.'
+      };
+      return;
+    }
+    try {
+      const data = await client.suggestModeSuivi({ date, cibles: cibleIds.join(',') });
+      state.modeSuggestion = data;
+      if (!state.modeTouched) {
+        state.modeChoice = data.suggested || '';
+      }
+    } catch (error) {
+      state.modeSuggestion = { message: 'Le mode proposé n’a pas pu être chargé. Choisissez Nominatif ou Quantitatif.' };
+    }
+  }
 
   function roleLabel() {
     const roles = (state.session && (state.session.roles || [])) || [];
@@ -286,6 +339,7 @@
     const body = rows.length ? rows.map((item) => {
       const ev = item.evenement;
       const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
+      const mode = L.modeSuiviOf(ev);
       const legacyPct = isLegacy ? L.legacyTauxFromRow(item.legacy) : null;
       const taux = L.displayTauxForList(
         ev.statut,
@@ -293,22 +347,25 @@
         isLegacy ? legacyPct : (item.compteurs && item.compteurs.percentage),
         { origine: ev.origine }
       );
-      const action = ev.statut === 'PLANIFIE' && ev.population_figee && !isLegacy ? 'Saisir' : 'Ouvrir';
-      const href = ev.statut === 'PLANIFIE' && ev.population_figee && !isLegacy ? `#/exercices/${ev.evenement_id}/saisie` : `#/exercices/${ev.evenement_id}`;
+      const action = ev.statut === 'PLANIFIE' && !isLegacy && (ev.population_figee || mode === 'QUANTITATIF') ? 'Saisir' : 'Ouvrir';
+      const href = ev.statut === 'PLANIFIE' && !isLegacy && (ev.population_figee || mode === 'QUANTITATIF')
+        ? `#/exercices/${ev.evenement_id}/saisie`
+        : `#/exercices/${ev.evenement_id}`;
       const statutHtml = isLegacy
         ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
-        : statutBadge(ev.statut);
+        : `${statutBadge(ev.statut)}<span class="scope-mode-hint">${escapeHtml(L.modeLabel(mode))}</span>`;
       const attenduLegacy = item.legacy && ((item.legacy.payload_v67 && item.legacy.payload_v67.total_attendu) || item.legacy.nb_convoques);
       const presents = isLegacy && item.legacy
         ? `${item.legacy.nb_presents} / ${attenduLegacy}`
         : (ev.statut === 'REALISE' ? (item.compteurs.presents ?? '—') : '—');
+      const attendusCell = isLegacy ? '—' : (mode === 'QUANTITATIF' ? (item.attendusInclus || '—') : (ev.population_figee ? item.attendusInclus : '—'));
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
         <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine_code))}</td>
         <td data-label="Cible(s)">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
         <td data-label="Statut">${statutHtml}</td>
-        <td data-label="Attendus">${isLegacy ? '—' : (ev.population_figee ? item.attendusInclus : '—')}</td>
+        <td data-label="Attendus">${attendusCell}</td>
         <td data-label="Présents">${presents}</td>
         <td data-label="Taux">${escapeHtml(taux)}</td>
         <td data-label="Action"><a class="scope-btn" href="${href}">${action}</a></td>
@@ -370,23 +427,33 @@
   function renderNouveau() {
     const domaine = state.domaineForm || 'DPS';
     const cibles = state.referentiels.cibles.filter((c) => c.domaineCode === domaine);
+    const suggestion = state.modeSuggestion;
+    const chosen = state.modeChoice;
+    const requireExplicit = Boolean(suggestion && suggestion.requireExplicit);
     return `
       <div class="scope-crumb">Exercices / Nouvel exercice</div>
       <div class="scope-main">
         <div class="scope-card" style="max-width:640px">
           <h2 style="margin-top:0">Créer un exercice</h2>
-          <div class="scope-field"><label>Date</label><input id="new-date" type="date" value="${state.year}-03-12"></div>
+          <div class="scope-field"><label>Date</label><input id="new-date" type="date" value="${escapeHtml(state.dateForm || `${state.year}-03-12`)}"></div>
           <div class="scope-field" style="margin-top:8px"><label>Domaine</label>
             <select id="new-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === domaine ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
           </div>
           <div class="scope-field" style="margin-top:8px"><label>Cible(s)</label>
             <div id="new-cibles" class="scope-chips">
               ${cibles.map((c) => `<label style="display:inline-flex;gap:6px;align-items:center;font-size:13px">
-                <input type="checkbox" value="${c.cibleId}"> ${escapeHtml(c.niveauCode)}
+                <input type="checkbox" value="${c.cibleId}" ${state.cibleForm.includes(c.cibleId) ? 'checked' : ''}> ${escapeHtml(c.niveauCode)}
               </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
             </div>
           </div>
-          <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie"></div>
+          <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
+          <fieldset class="scope-field scope-mode-choice" style="margin-top:12px">
+            <legend>Mode de suivi</legend>
+            <p class="scope-mode-hint" style="margin:0 0 8px">${escapeHtml((suggestion && suggestion.message) || 'Choisissez Nominatif ou Quantitatif. Le mode n’est jamais changé sans votre accord.')}</p>
+            ${requireExplicit ? '<p class="scope-mode-hint">Les cibles n’ont pas la même règle : le choix est obligatoire.</p>' : ''}
+            <label class="scope-radio"><input type="radio" name="new-mode" value="NOMINATIF" ${chosen === 'NOMINATIF' ? 'checked' : ''}> Nominatif</label>
+            <label class="scope-radio"><input type="radio" name="new-mode" value="QUANTITATIF" ${chosen === 'QUANTITATIF' ? 'checked' : ''}> Quantitatif</label>
+          </fieldset>
           <div class="scope-actions">
             <button type="button" class="scope-btn scope-btn-primary" id="new-save">Créer</button>
             <a class="scope-btn" href="#/exercices">Annuler</a>
@@ -396,18 +463,43 @@
     `;
   }
 
+  function volumesBlock(saisie, opts) {
+    const s = saisie || {};
+    const t = (opts && opts.taux) || {};
+    const officiel = Boolean(opts && opts.officiel);
+    return `
+      <div class="scope-card" style="margin-top:12px">
+        <h3 style="margin-top:0">Présences</h3>
+        <dl class="scope-meta">
+          <div><dt>Attendus</dt><dd>${escapeHtml(String(s.nb_attendus ?? '—'))}</dd></div>
+          <div><dt>Présents</dt><dd>${escapeHtml(String(s.nb_presents ?? '—'))}</dd></div>
+          <div><dt>Excusés</dt><dd>${escapeHtml(String(s.nb_excuses ?? '—'))}</dd></div>
+          <div><dt>Non excusés</dt><dd>${escapeHtml(String(s.nb_non_excuses ?? '—'))}</dd></div>
+          <div><dt>Dispensés</dt><dd>${escapeHtml(String(s.nb_dispenses ?? '—'))}</dd></div>
+        </dl>
+      </div>
+      <div class="scope-card" style="margin-top:12px">
+        <h3 style="margin-top:0">${officiel ? 'Taux officiel SCOPE' : 'Aperçu du taux'}</h3>
+        ${officiel ? '' : '<p style="color:var(--scope-muted);margin-top:0">Ce n’est pas un KPI officiel réalisé. L’événement n’est pas encore clôturé.</p>'}
+        <p style="font-size:28px;margin:8px 0 0">${escapeHtml(L.formatTaux(t.percentage))}</p>
+        <p style="color:var(--scope-muted);margin-top:4px">${escapeHtml(String(t.numerator ?? '—'))} / ${escapeHtml(String(t.denominator ?? '—'))}</p>
+      </div>`;
+  }
+
   function renderFiche() {
     const fiche = state.fiche;
     if (!fiche) return `<div class="scope-main"><div class="scope-empty">Exercice introuvable.</div></div>`;
     const ev = fiche.evenement;
+    const mode = eventMode(ev);
     if (ev.statut === 'REALISE') return renderRealise();
     const cta = L.principalCta({
       statut: ev.statut,
       populationFigee: ev.population_figee,
       previewReady: Boolean(state.preview),
-      origine: ev.origine
+      origine: ev.origine,
+      modeSuivi: mode
     });
-    const previewBlock = state.preview ? renderPreviewList() : '';
+    const previewBlock = mode === 'QUANTITATIF' ? '' : (state.preview ? renderPreviewList() : '');
     const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
     const legacy = fiche.legacy;
     const legacyPct = L.legacyTauxFromRow(legacy);
@@ -422,6 +514,11 @@
             <div><dt>Permutation</dt><dd>${escapeHtml(String((legacy.payload_v67 && legacy.payload_v67.nb_permutation) ?? '—'))}</dd></div>
           </dl>
         </div>` : '';
+    const qty = mode === 'QUANTITATIF';
+    const saisie = fiche.saisieQuantitative;
+    const extraActions = qty && ev.statut === 'PLANIFIE'
+      ? '<button type="button" class="scope-btn" id="convert-nominatif">Passer en nominatif</button>'
+      : '';
     return `
       <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main">
@@ -430,16 +527,26 @@
           <dl class="scope-meta">
             <div><dt>Date</dt><dd>${escapeHtml(L.formatDate(ev.date))}</dd></div>
             <div><dt>Domaine</dt><dd>${escapeHtml(domaineLabel(ev.domaine_code))}</dd></div>
-            <div><dt>Cibles</dt><dd>${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</dd></div>
+            <div><dt>Cible(s)</dt><dd>${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</dd></div>
             <div><dt>Statut</dt><dd>${isLegacy ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>' : statutBadge(ev.statut)}</dd></div>
+            <div><dt>Mode</dt><dd>${escapeHtml(L.modeLabel(mode))}</dd></div>
             <div><dt>Version</dt><dd>${escapeHtml(String(ev.version))}</dd></div>
-            <div><dt>Population</dt><dd>${isLegacy ? 'Aucune (legacy)' : (ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée'))}</dd></div>
+            ${qty ? '' : `<div><dt>Population</dt><dd>${isLegacy ? 'Aucune (legacy)' : (ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée'))}</dd></div>`}
           </dl>
-          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}</div>` : (!isLegacy && ev.statut !== 'ANNULE' ? `<div class="scope-actions"><button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button></div>` : '')}
+          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}</div>` : (!isLegacy && ev.statut !== 'ANNULE' ? `<div class="scope-actions">${extraActions}<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button></div>` : '')}
         </div>
+        ${qty && saisie ? volumesBlock(saisie, { taux: fiche.compteurs, officiel: false }) : ''}
         ${legacyBlock}
         ${previewBlock}
       </div>
+      ${state.modal === 'convert-nominatif' ? `<div class="scope-modal"><div class="scope-card">
+        <h3>Passer en nominatif</h3>
+        <p>Les volumes quantitatifs de cet exercice seront supprimés. Cette action n’est possible qu’avant clôture.</p>
+        <div class="scope-actions">
+          <button type="button" class="scope-btn scope-btn-primary" id="convert-ok">Confirmer</button>
+          <button type="button" class="scope-btn" id="convert-cancel">Annuler</button>
+        </div>
+      </div></div>` : ''}
     `;
   }
 
@@ -485,6 +592,7 @@
     const fiche = state.fiche;
     if (!fiche) return `<div class="scope-main"><div class="scope-empty">Exercice introuvable.</div></div>`;
     const ev = fiche.evenement;
+    if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
     const c = counters();
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
     const filtered = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
@@ -541,6 +649,43 @@
     `;
   }
 
+  function renderSaisieQuantitative() {
+    const fiche = state.fiche;
+    const ev = fiche.evenement;
+    const v = state.volumes;
+    const equal = L.volumesEquality(v);
+    const preview = state.qtyPreview;
+    const previewTaux = preview && preview.taux;
+    return `
+      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Présences</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">Saisir les présences</h2>
+          <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(ev.libelle)} · ${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))} · Quantitatif</p>
+          <form class="scope-qty-form" id="qty-form" autocomplete="off">
+            <div class="scope-field scope-qty-field"><label for="qty-attendus">Attendus</label><input id="qty-attendus" name="attendus" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.attendus)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-presents">Présents</label><input id="qty-presents" name="presents" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.presents)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-excuses">Excusés</label><input id="qty-excuses" name="excuses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excuses)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-non-excuses">Non excusés</label><input id="qty-non-excuses" name="nonExcuses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.nonExcuses)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-dispenses">Dispensés</label><input id="qty-dispenses" name="dispenses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.dispenses)}"></div>
+          </form>
+          <p class="scope-qty-error" ${equal ? 'hidden' : ''}>Présents + excusés + non excusés + dispensés doit être égal aux attendus. Aucune correction automatique.</p>
+          <div class="scope-card scope-qty-preview">
+            <h3 style="margin-top:0">Aperçu du taux</h3>
+            <p style="color:var(--scope-muted);margin-top:0">${escapeHtml((preview && preview.message) || 'Aperçu calculé par le serveur. Ce n’est pas encore un taux officiel réalisé.')}</p>
+            <p style="font-size:28px;margin:8px 0 0">${escapeHtml(L.formatTaux(previewTaux && previewTaux.percentage))}</p>
+            <p style="color:var(--scope-muted);margin-top:4px">${escapeHtml(String((previewTaux && previewTaux.numerator) ?? '—'))} / ${escapeHtml(String((previewTaux && previewTaux.denominator) ?? '—'))}</p>
+          </div>
+          <div class="scope-actions scope-qty-actions">
+            <button type="button" class="scope-btn" id="qty-save">Enregistrer</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="qty-cloturer" ${equal ? '' : 'disabled'}>Clôturer</button>
+            <a class="scope-btn" href="#/exercices/${escapeHtml(ev.evenement_id)}">Retour</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderSaisieRows(rows) {
     return `
       <div class="scope-table-wrap scope-saisie-desktop">
@@ -573,8 +718,55 @@
   function renderRealise() {
     const fiche = state.fiche;
     const ev = fiche.evenement;
+    const mode = eventMode(ev);
     const t = fiche.compteurs || {};
     const rows = state.saisie;
+    if (mode === 'QUANTITATIF') {
+      const saisie = fiche.saisieQuantitative || {};
+      return `
+      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Réalisé</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
+          <dl class="scope-meta">
+            <div><dt>Date</dt><dd>${escapeHtml(L.formatDate(ev.date))}</dd></div>
+            <div><dt>Domaine</dt><dd>${escapeHtml(domaineLabel(ev.domaine_code))}</dd></div>
+            <div><dt>Cible(s)</dt><dd>${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</dd></div>
+            <div><dt>Statut</dt><dd>${statutBadge(ev.statut)}</dd></div>
+            <div><dt>Mode</dt><dd>Quantitatif</dd></div>
+          </dl>
+          <p style="font-size:28px;margin:16px 0 0">${escapeHtml(L.formatTaux(t.percentage))}</p>
+          <p style="color:var(--scope-muted);margin-top:4px">Taux officiel SCOPE</p>
+          <p style="color:var(--scope-muted);margin-top:4px">${escapeHtml(String(t.numerator ?? '—'))} / ${escapeHtml(String(t.denominator ?? '—'))}</p>
+          <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
+          <button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>
+        </div>
+        ${volumesBlock(saisie, { taux: t, officiel: true })}
+        <details class="scope-card scope-details" style="margin-top:12px">
+          <summary>Historique des corrections</summary>
+          ${(fiche.journal || []).length ? `<ul>${fiche.journal.map((j) => `<li>${escapeHtml(j.action)} · ${escapeHtml(j.commentaire || '')}</li>`).join('')}</ul>` : '<p>Aucune correction.</p>'}
+        </details>
+      </div>
+      ${state.modal === 'reopen' ? `<div class="scope-modal"><div class="scope-card">
+        <h3>Réouvrir l’exercice</h3>
+        <p>La séance redevient planifiée et sort du KPI tant qu’elle n’est pas reclôturée. Les volumes sont conservés.</p>
+        <div class="scope-field"><label>Motif</label><textarea id="reopen-motif"></textarea></div>
+        <div class="scope-actions">
+          <button type="button" class="scope-btn scope-btn-primary" id="reopen-ok">Confirmer</button>
+          <button type="button" class="scope-btn" id="reopen-cancel">Annuler</button>
+        </div>
+      </div></div>` : ''}
+      ${state.modal === 'cancel-event' ? `<div class="scope-modal"><div class="scope-card">
+        <h3>Annuler l’exercice</h3>
+        <p>L’exercice passera à Annulé. Il n’entre plus dans le taux officiel.</p>
+        <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
+        <div class="scope-actions">
+          <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
+          <button type="button" class="scope-btn" id="cancel-dismiss">Retour</button>
+        </div>
+      </div></div>` : ''}
+    `;
+    }
     return `
       <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main">
@@ -717,6 +909,88 @@
     `;
   }
 
+  function readQtyVolumes() {
+    const field = (id, fallback) => {
+      const el = document.getElementById(id);
+      return el ? el.value : fallback;
+    };
+    state.volumes = {
+      attendus: field('qty-attendus', state.volumes.attendus),
+      presents: field('qty-presents', state.volumes.presents),
+      excuses: field('qty-excuses', state.volumes.excuses),
+      nonExcuses: field('qty-non-excuses', state.volumes.nonExcuses),
+      dispenses: field('qty-dispenses', state.volumes.dispenses || '0')
+    };
+    return {
+      attendus: state.volumes.attendus === '' ? undefined : Number(state.volumes.attendus),
+      presents: state.volumes.presents === '' ? undefined : Number(state.volumes.presents),
+      excuses: state.volumes.excuses === '' ? undefined : Number(state.volumes.excuses),
+      nonExcuses: state.volumes.nonExcuses === '' ? undefined : Number(state.volumes.nonExcuses),
+      dispenses: state.volumes.dispenses === '' ? 0 : Number(state.volumes.dispenses)
+    };
+  }
+
+  function bindQuantitatifSaisie() {
+    const form = document.getElementById('qty-form');
+    if (!form) return;
+    const errorEl = document.querySelector('.scope-qty-error');
+    const clotureBtn = document.getElementById('qty-cloturer');
+    let timer = null;
+    const refreshLocal = () => {
+      readQtyVolumes();
+      const equal = L.volumesEquality(state.volumes);
+      if (clotureBtn) clotureBtn.disabled = !equal;
+      if (errorEl) errorEl.hidden = equal;
+    };
+    const requestPreview = () => {
+      const id = route().id;
+      if (typeof client.previewTauxQuantitatif !== 'function') return;
+      const body = readQtyVolumes();
+      client.previewTauxQuantitatif(id, body).then((data) => {
+        state.qtyPreview = data;
+        const box = document.querySelector('.scope-qty-preview');
+        if (!box || !data) return;
+        const t = data.taux || {};
+        box.innerHTML = `<h3 style="margin-top:0">Aperçu du taux</h3>
+          <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(data.message || '')}</p>
+          <p style="font-size:28px;margin:8px 0 0">${escapeHtml(L.formatTaux(t.percentage))}</p>
+          <p style="color:var(--scope-muted);margin-top:4px">${escapeHtml(String(t.numerator ?? '—'))} / ${escapeHtml(String(t.denominator ?? '—'))}</p>`;
+      }).catch(() => {});
+    };
+    form.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('input', () => {
+        refreshLocal();
+        clearTimeout(timer);
+        timer = setTimeout(requestPreview, 280);
+      });
+    });
+    requestPreview();
+    document.getElementById('qty-save')?.addEventListener('click', () => {
+      const id = route().id;
+      const body = readQtyVolumes();
+      withLoading(async () => {
+        const res = await client.enregistrerSaisieQuantitative(id, body, state.fiche.evenement.version);
+        await loadFiche(id);
+        toast('success', 'Enregistré', 'Les présences ont été enregistrées.');
+        state.fiche.evenement.version = res.version;
+      });
+    });
+    document.getElementById('qty-cloturer')?.addEventListener('click', () => {
+      const id = route().id;
+      const body = readQtyVolumes();
+      withLoading(async () => {
+        if (!L.volumesEquality(state.volumes)) {
+          throw { status: 422, error: 'volumes_incoherents', message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus.' };
+        }
+        await client.enregistrerSaisieQuantitative(id, body, state.fiche.evenement.version);
+        await loadFiche(id);
+        await client.cloturer(id, state.fiche.evenement.version);
+        await loadFiche(id);
+        go(`#/exercices/${id}`);
+      });
+    });
+  }
+
   function render() {
     const r = route();
     const body = r.screen === 'vue' ? renderPlaceholder('Vue d’ensemble', 'Vue d’ensemble')
@@ -827,18 +1101,49 @@
     });
     document.getElementById('new-domaine')?.addEventListener('change', (e) => {
       state.domaineForm = e.target.value;
-      render();
+      state.cibleForm = [];
+      state.modeTouched = false;
+      withLoading(async () => { await refreshModeSuggestion(); });
+    });
+    document.getElementById('new-date')?.addEventListener('change', (e) => {
+      state.dateForm = e.target.value;
+      state.modeTouched = false;
+      withLoading(async () => { await refreshModeSuggestion(); });
+    });
+    document.getElementById('new-libelle')?.addEventListener('input', (e) => {
+      state.libelleForm = e.target.value;
+    });
+    document.querySelectorAll('#new-cibles input[type="checkbox"]').forEach((box) => {
+      box.addEventListener('change', () => {
+        state.cibleForm = [...document.querySelectorAll('#new-cibles input:checked')].map((n) => n.value);
+        state.modeTouched = false;
+        withLoading(async () => { await refreshModeSuggestion(); });
+      });
+    });
+    document.querySelectorAll('input[name="new-mode"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        state.modeTouched = true;
+        state.modeChoice = radio.value;
+      });
     });
     document.getElementById('new-save')?.addEventListener('click', () => {
       const date = document.getElementById('new-date').value;
       const domaineCode = document.getElementById('new-domaine').value;
       const libelle = document.getElementById('new-libelle').value;
       const cibleIds = [...document.querySelectorAll('#new-cibles input:checked')].map((n) => n.value);
+      const modeSuivi = (document.querySelector('input[name="new-mode"]:checked') || {}).value;
       withLoading(async () => {
         if (!date || !libelle || !cibleIds.length) {
           throw { status: 422, error: 'incomplet', message: 'Date, domaine, au moins une cible et un libellé sont requis.' };
         }
-        const created = await client.createEvenement({ date, domaineCode, libelle, cibleIds });
+        if (!modeSuivi) {
+          throw { status: 422, error: 'mode_requis', message: 'Choisissez le mode de suivi : Nominatif ou Quantitatif.' };
+        }
+        const created = await client.createEvenement({ date, domaineCode, libelle, cibleIds, modeSuivi });
+        state.modeTouched = false;
+        state.modeChoice = '';
+        state.cibleForm = [];
+        state.libelleForm = '';
         go(`#/exercices/${created.evenement.evenement_id}`);
       });
     });
@@ -870,6 +1175,19 @@
       });
     });
     root.querySelector('[data-cta="saisir"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
+    root.querySelector('[data-cta="saisir-volumes"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
+    document.getElementById('convert-nominatif')?.addEventListener('click', () => { state.modal = 'convert-nominatif'; render(); });
+    document.getElementById('convert-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('convert-ok')?.addEventListener('click', () => {
+      const id = route().id;
+      withLoading(async () => {
+        await client.convertirNominatif(id, { confirmation: true }, state.fiche.evenement.version);
+        state.modal = null;
+        await loadFiche(id);
+        toast('success', 'Mode nominatif', 'Les volumes ont été supprimés. Vous pouvez générer la population.');
+      });
+    });
+    bindQuantitatifSaisie();
     document.getElementById('preview-q')?.addEventListener('input', (e) => {
       state.personQuery = e.target.value;
       const q = state.personQuery.trim();

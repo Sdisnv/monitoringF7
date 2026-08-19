@@ -30,6 +30,7 @@ function createMemoryRepo(){
   const reglesBascule = new Map();
   const imports = new Map();
   const importLignes = new Map();
+  const quantitatives = new Map();
   let txLevel = 0;
 
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
@@ -51,7 +52,8 @@ function createMemoryRepo(){
       journal: JSON.parse(JSON.stringify(journal)),
       reglesBascule: cloneMap(reglesBascule),
       imports: cloneMap(imports),
-      importLignes: cloneMap(importLignes)
+      importLignes: cloneMap(importLignes),
+      quantitatives: cloneMap(quantitatives)
     };
   }
 
@@ -67,6 +69,7 @@ function createMemoryRepo(){
     reglesBascule.clear(); snap.reglesBascule.forEach((v, k) => reglesBascule.set(k, v));
     imports.clear(); snap.imports.forEach((v, k) => imports.set(k, v));
     importLignes.clear(); snap.importLignes.forEach((v, k) => importLignes.set(k, v));
+    quantitatives.clear(); (snap.quantitatives || new Map()).forEach((v, k) => quantitatives.set(k, v));
   }
 
   const api = {
@@ -352,7 +355,8 @@ function createMemoryRepo(){
         scope_participations: participations.size,
         scope_legacy_aggregates: legacy.size,
         scope_imports: imports.size,
-        scope_import_lignes: importLignes.size
+        scope_import_lignes: importLignes.size,
+        scope_saisies_quantitatives: quantitatives.size
       };
       return map[name] ?? 0;
     },
@@ -371,7 +375,28 @@ function createMemoryRepo(){
       journal.push(item);
       return item;
     },
-    async getQuantitatifSaisie(){ return null; },
+    async getQuantitatifSaisie(eventId){
+      const item = quantitatives.get(eventId);
+      return item ? { ...item } : null;
+    },
+    async upsertQuantitatifSaisie(row){
+      const item = {
+        evenement_id: row.evenement_id,
+        nb_attendus: row.nb_attendus,
+        nb_presents: row.nb_presents,
+        nb_excuses: row.nb_excuses,
+        nb_non_excuses: row.nb_non_excuses,
+        nb_dispenses: row.nb_dispenses,
+        auteur_id: row.auteur_id || null,
+        created_at: (quantitatives.get(row.evenement_id) || {}).created_at || now(),
+        updated_at: now()
+      };
+      quantitatives.set(row.evenement_id, item);
+      return { ...item };
+    },
+    async deleteQuantitatifSaisie(eventId){
+      quantitatives.delete(eventId);
+    },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const { inferModeSuivi } = require('./_scope-analytics');
       const { inPeriod } = require('./_scope-period');
@@ -400,7 +425,7 @@ function createMemoryRepo(){
         bundle.attendusByEvent[mapped.evenement_id] = [...attendus.values()].filter((a) => a.evenement_id === mapped.evenement_id);
         bundle.participationsByEvent[mapped.evenement_id] = [...participations.values()].filter((p) => p.evenement_id === mapped.evenement_id);
         bundle.legacyByEvent[mapped.evenement_id] = [...legacy.values()].find((item) => item.evenement_id === mapped.evenement_id) || null;
-        bundle.quantitatifByEvent[mapped.evenement_id] = null;
+        bundle.quantitatifByEvent[mapped.evenement_id] = quantitatives.get(mapped.evenement_id) || null;
       }
       return bundle;
     },

@@ -66,6 +66,12 @@ grep -q "/analytics/summary" netlify/functions/scope.js
 grep -q "/analytics/explain" netlify/functions/scope.js
 grep -q "/analytics/timeseries" netlify/functions/scope.js
 grep -q "mode_suivi" netlify/functions/_scope-schema.js
+grep -q "scope-event-q1" netlify/functions/_scope-schema.js
+grep -q "scope_saisies_quantitatives" netlify/functions/_scope-schema.js
+grep -q "scope_saisies_quantitatives" database/migrations/20260819_scope_event_q1.sql
+grep -q "Saisir les présences" assets/js/scope-ui.js
+grep -q "saisie-quantitative" netlify/functions/scope.js
+grep -q "SAISIE_QUANTITATIVE" netlify/functions/_scope-service.js
 grep -q "portee" netlify/functions/_scope-schema.js
 grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
 grep -q "scope-root" scope.html

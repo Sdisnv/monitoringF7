@@ -638,10 +638,67 @@ html, body {
   font-size: var(--scope-fs-secondary);
 }
 
-.scope-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.scope-mode-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--scope-muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.scope-mode-choice legend {
+  font-size: var(--scope-fs-label);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--scope-muted);
+}
+
+.scope-radio {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  min-height: 40px;
+  font-size: 15px;
+  margin: 4px 0;
+}
+
+.scope-qty-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.scope-qty-error {
+  color: var(--scope-red);
+  margin: 0 0 12px;
+}
+
+.scope-qty-preview {
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .scope-qty-form {
+    grid-template-columns: 1fr;
+  }
+  .scope-qty-field input,
+  .scope-qty-actions .scope-btn,
+  .scope-radio {
+    min-height: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .scope-qty-field input,
+  .scope-qty-actions .scope-btn {
+    min-height: 44px;
+    height: 44px;
+  }
 }
 
 .scope-header { position: relative; }

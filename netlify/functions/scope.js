@@ -92,6 +92,9 @@ exports.handler = async function(event){
     if(method === 'GET' && path === '/evenements'){
       return response(200, { ok:true, ...(await service.listEvenements(queryOf(event))) });
     }
+    if(method === 'GET' && path === '/mode-suivi-suggere'){
+      return response(200, { ok:true, ...(await service.suggestModeSuivi(queryOf(event))) });
+    }
     if(method === 'POST' && path === '/evenements'){
       return response(201, { ok:true, ...(await service.createEvenement(body, claims)) });
     }
@@ -118,6 +121,22 @@ exports.handler = async function(event){
     params = match(path, '/evenements/:id/encadrement');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.ajouterEncadrement(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/saisie-quantitative');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.enregistrerSaisieQuantitative(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/preview-taux-quantitatif');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.previewTauxQuantitatif(params.id, body)) });
+    }
+    params = match(path, '/evenements/:id/convertir-nominatif');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.convertirNominatif(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/convertir-quantitatif');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.convertirQuantitatif(params.id, body, claims)) });
     }
     params = match(path, '/evenements/:id/cloturer');
     if(method === 'POST' && params){

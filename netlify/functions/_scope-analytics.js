@@ -80,6 +80,47 @@ function officialFromTaux(taux){
   };
 }
 
+function readIntegerField(body, names){
+  for(const name of names){
+    if(body && body[name] !== undefined && body[name] !== null && body[name] !== ''){
+      const raw = body[name];
+      if(typeof raw === 'number' && Number.isInteger(raw)) return { value: raw };
+      if(typeof raw === 'string' && /^-?\d+$/.test(raw.trim())) return { value: Number(raw.trim()) };
+      const n = Number(raw);
+      if(Number.isInteger(n)) return { value: n };
+      return { error: 'not_integer', field: name };
+    }
+  }
+  return { missing: true };
+}
+
+function parseQuantitatifInput(body){
+  const attendus = readIntegerField(body, ['attendus', 'nb_attendus', 'nbAttendus']);
+  const presents = readIntegerField(body, ['presents', 'nb_presents', 'nbPresents']);
+  const excuses = readIntegerField(body, ['excuses', 'nb_excuses', 'nbExcuses', 'absents_excuses', 'absentsExcuses']);
+  const nonExcuses = readIntegerField(body, ['nonExcuses', 'nb_non_excuses', 'nbNonExcuses', 'absents_non_excuses', 'absentsNonExcuses']);
+  let dispenses = readIntegerField(body, ['dispenses', 'nb_dispenses', 'nbDispenses']);
+  if(dispenses.missing) dispenses = { value: 0 };
+  for(const item of [attendus, presents, excuses, nonExcuses, dispenses]){
+    if(item.error) return item;
+  }
+  if(attendus.missing || presents.missing || excuses.missing || nonExcuses.missing){
+    return { error: 'missing' };
+  }
+  for(const item of [attendus, presents, excuses, nonExcuses, dispenses]){
+    if(item.value < 0) return { error: 'negative' };
+  }
+  return {
+    row: {
+      nb_attendus: attendus.value,
+      nb_presents: presents.value,
+      nb_excuses: excuses.value,
+      nb_non_excuses: nonExcuses.value,
+      nb_dispenses: dispenses.value
+    }
+  };
+}
+
 function officialFromQuantitatif(row){
   const presents = Number(row.nb_presents);
   const excuses = Number(row.nb_excuses);
@@ -104,6 +145,7 @@ function officialFromQuantitatif(row){
       excuses,
       nonExcuses,
       dispenses,
+      attendus: Number.isFinite(attendus) ? attendus : presents + excuses + nonExcuses + dispenses,
       nonRenseignes: 0,
       nonConcernes: 0
     }
@@ -179,6 +221,7 @@ module.exports = {
   emptyVolumes,
   addVolumes,
   officialFromTaux,
+  parseQuantitatifInput,
   officialFromQuantitatif,
   legacyPointFromAggregate,
   resolveObjective,

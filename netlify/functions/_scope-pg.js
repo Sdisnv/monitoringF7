@@ -205,7 +205,7 @@ function createPgRepo(client){
     },
     async updateEventIfVersion(id, baseVersion, patch){
       const allowed = [
-        'date','domaine_code','libelle','statut','origine','population_figee','population_version',
+        'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par'
       ];
       const sets = ['version = version + 1', 'updated_at = now()'];
@@ -387,7 +387,7 @@ function createPgRepo(client){
     async countTable(name){
       const allowed = new Set([
         'scope_personnes', 'scope_evenements', 'scope_attendus', 'scope_participations',
-        'scope_legacy_aggregates', 'scope_imports', 'scope_import_lignes'
+        'scope_legacy_aggregates', 'scope_imports', 'scope_import_lignes', 'scope_saisies_quantitatives'
       ]);
       if(!allowed.has(name)) return 0;
       const result = await q(`select count(*)::int as n from ${name}`);
@@ -404,7 +404,39 @@ function createPgRepo(client){
       );
       return result.rows[0];
     },
-    async getQuantitatifSaisie(){ return null; },
+    async getQuantitatifSaisie(eventId){
+      const result = await q('select * from scope_saisies_quantitatives where evenement_id = $1', [eventId]);
+      return result.rows[0] || null;
+    },
+    async upsertQuantitatifSaisie(row){
+      const result = await q(
+        `insert into scope_saisies_quantitatives(
+           evenement_id, nb_attendus, nb_presents, nb_excuses, nb_non_excuses, nb_dispenses, auteur_id
+         ) values ($1,$2,$3,$4,$5,$6,$7)
+         on conflict (evenement_id) do update set
+           nb_attendus = excluded.nb_attendus,
+           nb_presents = excluded.nb_presents,
+           nb_excuses = excluded.nb_excuses,
+           nb_non_excuses = excluded.nb_non_excuses,
+           nb_dispenses = excluded.nb_dispenses,
+           auteur_id = excluded.auteur_id,
+           updated_at = now()
+         returning *`,
+        [
+          row.evenement_id,
+          row.nb_attendus,
+          row.nb_presents,
+          row.nb_excuses,
+          row.nb_non_excuses,
+          row.nb_dispenses,
+          row.auteur_id || null
+        ]
+      );
+      return result.rows[0];
+    },
+    async deleteQuantitatifSaisie(eventId){
+      await q('delete from scope_saisies_quantitatives where evenement_id = $1', [eventId]);
+    },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const clauses = ['e.date >= $1::date', 'e.date <= $2::date'];
       const params = [from, to];
@@ -446,11 +478,12 @@ function createPgRepo(client){
         personneId: personneId || null
       };
       if(!ids.length) return bundle;
-      const [ciblesRes, attendusRes, partsRes, legacyRes] = await Promise.all([
+      const [ciblesRes, attendusRes, partsRes, legacyRes, qtyRes] = await Promise.all([
         q('select evenement_id, cible_id from scope_evenement_cibles where evenement_id = any($1::uuid[])', [ids]),
         q('select * from scope_attendus where evenement_id = any($1::uuid[])', [ids]),
         q('select * from scope_participations where evenement_id = any($1::uuid[])', [ids]),
-        q('select * from scope_legacy_aggregates where evenement_id = any($1::uuid[])', [ids])
+        q('select * from scope_legacy_aggregates where evenement_id = any($1::uuid[])', [ids]),
+        q('select * from scope_saisies_quantitatives where evenement_id = any($1::uuid[])', [ids])
       ]);
       for(const row of ciblesRes.rows){
         if(!bundle.cibleIdsByEvent[row.evenement_id]) bundle.cibleIdsByEvent[row.evenement_id] = [];
@@ -475,12 +508,15 @@ function createPgRepo(client){
           payload_v67: payload || {}
         };
       }
+      for(const row of qtyRes.rows){
+        bundle.quantitatifByEvent[row.evenement_id] = row;
+      }
       for(const event of events){
         bundle.events.push({ ...event, cible_ids: bundle.cibleIdsByEvent[event.evenement_id] || [] });
         bundle.attendusByEvent[event.evenement_id] = bundle.attendusByEvent[event.evenement_id] || [];
         bundle.participationsByEvent[event.evenement_id] = bundle.participationsByEvent[event.evenement_id] || [];
         bundle.legacyByEvent[event.evenement_id] = bundle.legacyByEvent[event.evenement_id] || null;
-        bundle.quantitatifByEvent[event.evenement_id] = null;
+        bundle.quantitatifByEvent[event.evenement_id] = bundle.quantitatifByEvent[event.evenement_id] || null;
       }
       return bundle;
     },

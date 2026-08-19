@@ -75,12 +75,38 @@
     return { screen: 'liste', nav: 'exercices' };
   }
 
-  function principalCta({ statut, populationFigee, previewReady, origine }) {
-    if (origine === 'LEGACY_AGGREGATED') return null;
+  function principalCta({ statut, populationFigee, previewReady, origine, modeSuivi }) {
+    if (origine === 'LEGACY_AGGREGATED' || modeSuivi === 'LEGACY') return null;
     if (statut && statut !== 'PLANIFIE') return null;
+    if (modeSuivi === 'QUANTITATIF') return { action: 'saisir-volumes', label: 'Saisir les présences' };
     if (populationFigee) return { action: 'saisir', label: 'Saisir les participations' };
     if (previewReady) return { action: 'figer', label: 'Figer la population' };
     return { action: 'generer', label: 'Générer les attendus' };
+  }
+
+  function modeSuiviOf(evenement) {
+    const explicit = String((evenement && (evenement.mode_suivi || evenement.modeSuivi)) || '').toUpperCase();
+    if (explicit === 'NOMINATIF' || explicit === 'QUANTITATIF' || explicit === 'LEGACY') return explicit;
+    if (evenement && evenement.origine === 'LEGACY_AGGREGATED') return 'LEGACY';
+    return 'NOMINATIF';
+  }
+
+  function modeLabel(mode) {
+    if (mode === 'QUANTITATIF') return 'Quantitatif';
+    if (mode === 'LEGACY') return 'Historique agrégé';
+    return 'Nominatif';
+  }
+
+  function volumesEquality(volumes) {
+    const attendus = Number(volumes && volumes.attendus);
+    const presents = Number(volumes && volumes.presents);
+    const excuses = Number(volumes && volumes.excuses);
+    const nonExcuses = Number(volumes && volumes.nonExcuses);
+    const dispenses = Number(volumes && volumes.dispenses);
+    if (![attendus, presents, excuses, nonExcuses, dispenses].every((n) => Number.isInteger(n) && n >= 0)) {
+      return false;
+    }
+    return attendus === presents + excuses + nonExcuses + dispenses;
   }
 
   function liveCounters(rows) {
@@ -230,6 +256,9 @@
     currentYear,
     parseHash,
     principalCta,
+    modeSuiviOf,
+    modeLabel,
+    volumesEquality,
     liveCounters,
     clotureDisabled,
     needsConfirmAllPresent,
