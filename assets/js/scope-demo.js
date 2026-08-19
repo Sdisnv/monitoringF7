@@ -378,6 +378,15 @@
         journal.push({ entite: 'evenement', entite_id: id, action: 'REOUVRIR', commentaire: String(motif), at: new Date().toISOString() });
         return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
       },
+      async annuler(id, motif, baseVersion) {
+        const evenement = getEvent(id);
+        requireVersion(evenement, baseVersion);
+        if (!String(motif || '').trim()) throw new ScopeApiError(400, { error: 'motif_obligatoire', message: 'L’annulation exige un motif.' });
+        evenement.statut = 'ANNULE';
+        bump(evenement);
+        journal.push({ entite: 'evenement', entite_id: id, action: 'ANNULER', commentaire: String(motif), at: new Date().toISOString() });
+        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
+      },
       async taux(id) {
         const ficheData = fiche(id);
         const officiel = ficheData.evenement.statut === 'REALISE';

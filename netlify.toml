@@ -5,6 +5,9 @@
   publish = "."
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/auth/login"
   to = "/.netlify/functions/auth-login"

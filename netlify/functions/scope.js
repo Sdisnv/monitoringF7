@@ -63,6 +63,20 @@ exports.handler = async function(event){
     if(method === 'GET' && (path === '/' || path === '')){
       return response(200, { ok:true, service:'scope', lot:'SCOPE-IMPL-1A' });
     }
+    if(method === 'POST' && path === '/pilot-import-dap-y4'){
+      const db = require('./_postgres');
+      const sql = require('./_scope-dap-y4-sql');
+      await db.query(sql);
+      const personnes = await db.query('select count(*)::int as n from scope_personnes');
+      const aff = await db.query('select count(*)::int as n from scope_affectations');
+      return response(200, {
+        ok:true,
+        personnes: personnes.rows[0].n,
+        affectations: aff.rows[0].n,
+        source: 'CSV_IMPORT',
+        oi: 'DAP Y4'
+      });
+    }
     if(method === 'GET' && path === '/referentiels'){
       return response(200, { ok:true, ...(await service.referentiels()) });
     }
@@ -110,6 +124,10 @@ exports.handler = async function(event){
     params = match(path, '/evenements/:id/reouvrir');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.reouvrir(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/annuler');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.annulerEvenement(params.id, body, claims)) });
     }
     params = match(path, '/evenements/:id/taux');
     if(method === 'GET' && params){

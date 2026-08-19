@@ -423,6 +423,30 @@ function createScopeService(repo){
     });
   }
 
+  async function annulerEvenement(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    const motif = String(body.motif || body.commentaire || '').trim();
+    if(!motif) throw new HttpError(400, 'motif_obligatoire', 'L’annulation exige un motif.');
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(!['PLANIFIE', 'REPORTE', 'REALISE'].includes(evenement.statut)){
+        throw new HttpError(422, 'statut_invalide', 'Annulation possible depuis PLANIFIE, REPORTE ou REALISE.');
+      }
+      const next = await bumpOrConflict(tx, eventId, baseVersion, { statut: 'ANNULE' });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'ANNULER',
+        commentaire: motif,
+        avant: { statut: evenement.statut, version: evenement.version },
+        apres: { statut: 'ANNULE', version: next.version }
+      });
+      return { evenement: next, version: next.version };
+    });
+  }
+
   async function reouvrir(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const motif = String(body.motif || body.commentaire || '').trim();
@@ -560,6 +584,7 @@ function createScopeService(repo){
     ajouterEncadrement,
     cloturer,
     reouvrir,
+    annulerEvenement,
     lireEvenement,
     tauxEvenement,
     assertNoAffectationOverlap,

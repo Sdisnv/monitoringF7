@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { spawnSync } = require('child_process');
+const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
+const { createScopeService } = require('../netlify/functions/_scope-service');
 const logic = require('../assets/js/scope-ui-logic.js');
 const map = require('../assets/js/scope-oi-map.js');
 
@@ -55,6 +57,30 @@ function record(name, fn){
     assert.strictEqual(json.dryRun, true);
     assert.strictEqual(json.personnesACreer, 16);
     assert.ok(run.stderr.includes('aucune écriture'));
+  });
+
+  await record('Annulation TEST exclut le taux officiel', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const g1 = await repo.findCible('DPS', 'G1');
+    const personne = await repo.insertPersonne({ nip: 'AN001', nom: 'Annul', prenom: 'Test' });
+    await repo.insertAffectation({ personne_id: personne.personne_id, cible_id: g1.cible_id, date_debut: '2026-08-19' });
+    const { evenement } = await service.createEvenement({
+      date: '2026-08-19', domaineCode: 'DPS', libelle: 'TEST SCOPE — qualification pilote', cibleIds: [g1.cible_id]
+    }, { sub: 'test' });
+    await service.figerPopulation(evenement.evenement_id, { baseVersion: 1 }, { sub: 'test' });
+    await service.enregistrerParticipations(evenement.evenement_id, {
+      baseVersion: 2,
+      participations: [{ personneId: personne.personne_id, statut: 'PRESENT' }]
+    }, { sub: 'test' });
+    await service.cloturer(evenement.evenement_id, { baseVersion: 3 }, { sub: 'test' });
+    const cancelled = await service.annulerEvenement(evenement.evenement_id, { baseVersion: 4, motif: 'Qualification SCOPE' }, { sub: 'test' });
+    assert.strictEqual(cancelled.evenement.statut, 'ANNULE');
+    const taux = await service.tauxEvenement(evenement.evenement_id);
+    assert.strictEqual(taux.officiel, false);
+    const fiche = await service.lireEvenement(evenement.evenement_id);
+    assert.strictEqual(fiche.attendus.length, 1);
+    assert.strictEqual(fiche.participations.length, 1);
   });
 
   await record('Mode live exige confirmation explicite', async () => {

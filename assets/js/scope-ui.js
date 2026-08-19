@@ -349,7 +349,7 @@
             <div><dt>Version</dt><dd>${escapeHtml(String(ev.version))}</dd></div>
             <div><dt>Population</dt><dd>${ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée')}</dd></div>
           </dl>
-          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button></div>` : ''}
+          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}</div>` : (ev.statut !== 'ANNULE' ? `<div class="scope-actions"><button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button></div>` : '')}
         </div>
         ${previewBlock}
       </div>
@@ -502,6 +502,7 @@
             <div class="scope-kpi"><strong>${t.dispenses ?? 0}</strong><span>Dispensés</span></div>
           </div>
           <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
+          <button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>
         </div>
         <div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Liste nominative</h3>
@@ -527,6 +528,15 @@
           <button type="button" class="scope-btn" id="reopen-cancel">Annuler</button>
         </div>
       </div></div>` : ''}
+      ${state.modal === 'cancel-event' ? `<div class="scope-modal"><div class="scope-card">
+        <h3>Annuler l’exercice</h3>
+        <p>L’exercice passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
+        <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
+        <div class="scope-actions">
+          <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
+          <button type="button" class="scope-btn" id="cancel-dismiss">Retour</button>
+        </div>
+      </div></div>` : ''}
     `;
   }
 
@@ -542,6 +552,19 @@
     </div></div>`;
   }
 
+  function renderModalCancel() {
+    if (state.modal !== 'cancel-event') return '';
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>Annuler l’exercice</h3>
+      <p>L’exercice passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
+      <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
+        <button type="button" class="scope-btn" id="cancel-dismiss">Retour</button>
+      </div>
+    </div></div>`;
+  }
+
   function render() {
     const r = route();
     const body = r.screen === 'vue' ? renderPlaceholder('Vue d’ensemble', 'Vue d’ensemble')
@@ -550,7 +573,7 @@
           : r.screen === 'saisie' ? renderSaisie()
             : r.screen === 'fiche' ? renderFiche()
               : renderListe();
-    root.innerHTML = headerHtml(r.nav) + bannerHtml() + body + renderModalAllPresent();
+    root.innerHTML = headerHtml(r.nav) + bannerHtml() + body + renderModalAllPresent() + renderModalCancel();
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -736,6 +759,17 @@
     });
     document.getElementById('reopen')?.addEventListener('click', () => { state.modal = 'reopen'; render(); });
     document.getElementById('reopen-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('cancel-event')?.addEventListener('click', () => { state.modal = 'cancel-event'; render(); });
+    document.getElementById('cancel-dismiss')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('cancel-ok')?.addEventListener('click', () => {
+      const motif = document.getElementById('cancel-motif').value;
+      const id = route().id;
+      withLoading(async () => {
+        await client.annuler(id, motif, state.fiche.evenement.version);
+        state.modal = null;
+        await loadFiche(id);
+      });
+    });
     document.getElementById('reopen-ok')?.addEventListener('click', () => {
       const motif = document.getElementById('reopen-motif').value;
       const id = route().id;
