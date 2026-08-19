@@ -1,6 +1,8 @@
 -- SCOPE-IMPL-1A — schéma nominatif pilote.
 -- Additif : ne modifie aucune table monitoring_f7_*.
--- Idempotent. Appliqué aussi par netlify/functions/_scope-schema.js.
+-- Idempotent. Seed domaines/cibles aligné sur netlify/functions/_scope-schema.js.
+-- UUID cibles : gen_random_uuid() + UNIQUE (domaine_code, niveau_code).
+-- Le runtime JS utilise randomUUID() + ON CONFLICT DO NOTHING : pas de doublon.
 
 insert into monitoring_f7_schema_migrations(version)
 values ('scope-impl-1a')
@@ -15,6 +17,17 @@ create table if not exists scope_domaines (
   constraint scope_domaines_code_chk check (code in ('FOBA','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP'))
 );
 
+insert into scope_domaines(code, libelle, actif) values
+  ('FOBA', 'Formation de base', true),
+  ('FOCA', 'Formation des cadres', true),
+  ('DPS', 'Défense incendie et protection contre les sinistres', true),
+  ('DAP', 'Détachement d’appui', true),
+  ('PR', 'Premiers secours', true),
+  ('AUTO', 'Automobile', true),
+  ('FOSPEC', 'Formations spéciales', true),
+  ('JSP', 'Jeunes sapeurs-pompiers', true)
+on conflict (code) do nothing;
+
 create table if not exists scope_cibles (
   cible_id uuid primary key,
   domaine_code text not null references scope_domaines(code),
@@ -25,6 +38,34 @@ create table if not exists scope_cibles (
   updated_at timestamptz not null default now(),
   constraint scope_cibles_unique unique (domaine_code, niveau_code)
 );
+
+insert into scope_cibles(cible_id, domaine_code, niveau_code, libelle, actif) values
+  (gen_random_uuid(), 'FOBA', '1', 'FOBA 1', true),
+  (gen_random_uuid(), 'FOBA', '2', 'FOBA 2', true),
+  (gen_random_uuid(), 'FOBA', '3', 'FOBA 3', true),
+  (gen_random_uuid(), 'FOCA', 'GEN', 'FOCA', true),
+  (gen_random_uuid(), 'DPS', 'G1', 'DPS G1', true),
+  (gen_random_uuid(), 'DPS', 'C1', 'DPS C1', true),
+  (gen_random_uuid(), 'DPS', 'B1', 'DPS B1', true),
+  (gen_random_uuid(), 'DPS', 'B2', 'DPS B2', true),
+  (gen_random_uuid(), 'DAP', 'Y1', 'DAP Y1', true),
+  (gen_random_uuid(), 'DAP', 'Y2', 'DAP Y2', true),
+  (gen_random_uuid(), 'DAP', 'Y3', 'DAP Y3', true),
+  (gen_random_uuid(), 'DAP', 'Y4', 'DAP Y4', true),
+  (gen_random_uuid(), 'PR', 'G1', 'PAPR G1', true),
+  (gen_random_uuid(), 'PR', 'C1', 'PAPR C1', true),
+  (gen_random_uuid(), 'PR', 'B1', 'PAPR B1', true),
+  (gen_random_uuid(), 'PR', 'B2', 'PAPR B2', true),
+  (gen_random_uuid(), 'PR', 'GEN', 'PAPR GEN', true),
+  (gen_random_uuid(), 'AUTO', 'VL', 'AUTO VL', true),
+  (gen_random_uuid(), 'AUTO', 'PL', 'AUTO PL', true),
+  (gen_random_uuid(), 'FOSPEC', 'GEN', 'FOSPEC', true),
+  (gen_random_uuid(), 'JSP', 'G1', 'JSP G1', true),
+  (gen_random_uuid(), 'JSP', 'C1', 'JSP C1', true),
+  (gen_random_uuid(), 'JSP', 'B1', 'JSP B1', true),
+  (gen_random_uuid(), 'JSP', 'CAD', 'JSP CAD', true),
+  (gen_random_uuid(), 'JSP', 'GEN', 'JSP GEN', true)
+on conflict (domaine_code, niveau_code) do nothing;
 
 create table if not exists scope_personnes (
   personne_id uuid primary key,

@@ -7,6 +7,7 @@ const assert = require('assert');
 const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
 const { createScopeService } = require('../netlify/functions/_scope-service');
 const { computeTaux, HttpError } = require('../netlify/functions/_scope-rules');
+const { DOMAINES, CIBLES } = require('../netlify/functions/_scope-schema');
 const cachePolicy = require('../assets/js/online-cache-policy.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -249,6 +250,58 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.ok(!/replaceCollection/.test(scopeJs));
     const pgStore = fs.readFileSync(path.join(ROOT, 'netlify/functions/_data-store-postgres.js'), 'utf8');
     assert.ok(!/scope_/.test(pgStore));
+  });
+
+  await record('Test 9 — référentiel SQL = 8 domaines / 25 cibles runtime', async () => {
+    assert.strictEqual(DOMAINES.length, 8);
+    assert.strictEqual(CIBLES.length, 25);
+    assert.deepStrictEqual(DOMAINES.map(d => d.code), ['FOBA','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP']);
+
+    const sql = fs.readFileSync(path.join(ROOT, 'database/migrations/20260819_scope_impl_1a.sql'), 'utf8');
+    assert.ok(!/\bdrop\b/i.test(sql));
+    assert.ok(!/\bdelete\b/i.test(sql));
+    assert.ok(!/\btruncate\b/i.test(sql));
+    assert.ok(!/\bupdate\b/i.test(sql));
+    assert.strictEqual((sql.match(/scope-impl-1a/g) || []).length, 1);
+    assert.ok(!/scope-impl-1a-r1/.test(sql));
+
+    const domaineBlock = sql.match(/insert into scope_domaines[\s\S]*?on conflict \(code\) do nothing;/i);
+    const cibleBlock = sql.match(/insert into scope_cibles[\s\S]*?on conflict \(domaine_code, niveau_code\) do nothing;/i);
+    assert.ok(domaineBlock, 'seed scope_domaines manquant');
+    assert.ok(cibleBlock, 'seed scope_cibles manquant');
+
+    const sqlDomaines = [...domaineBlock[0].matchAll(/\('([A-Z]+)', '([^']*)', true\)/g)]
+      .map((m) => ({ code: m[1], libelle: m[2] }));
+    const sqlCibles = [...cibleBlock[0].matchAll(/gen_random_uuid\(\), '([A-Z]+)', '([^']*)', '([^']*)', true/g)]
+      .map((m) => [m[1], m[2], m[3]]);
+
+    assert.strictEqual(sqlDomaines.length, 8);
+    assert.strictEqual(sqlCibles.length, 25);
+    assert.deepStrictEqual(sqlDomaines, DOMAINES);
+    assert.deepStrictEqual(sqlCibles, CIBLES);
+
+    function applyOnConflict(first, second){
+      const map = new Map();
+      for(const row of first) map.set(`${row[0]}:${row[1]}`, row[2]);
+      for(const row of second){
+        const key = `${row[0]}:${row[1]}`;
+        if(!map.has(key)) map.set(key, row[2]);
+      }
+      return [...map.entries()].map(([k, libelle]) => {
+        const [domaine, niveau] = k.split(':');
+        return [domaine, niveau, libelle];
+      });
+    }
+    const sqlFirst = sqlCibles.map((row, i) => [row[0], row[1], `sql-${i}`]);
+    const jsFirst = CIBLES.map((row, i) => [row[0], row[1], `js-${i}`]);
+    const casA = applyOnConflict(sqlFirst, jsFirst);
+    const casB = applyOnConflict(jsFirst, sqlFirst);
+    assert.strictEqual(casA.length, 25);
+    assert.strictEqual(casB.length, 25);
+    assert.deepStrictEqual(casA.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
+    assert.deepStrictEqual(casB.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
+    assert.ok(casA.every(r => r[2].startsWith('sql-')), 'Cas A doit conserver les UUID SQL');
+    assert.ok(casB.every(r => r[2].startsWith('js-')), 'Cas B doit conserver les UUID runtime');
   });
 
   await record('Formule unitaire encadrement hors taux', async () => {
