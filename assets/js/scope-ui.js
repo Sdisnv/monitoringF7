@@ -48,7 +48,10 @@
     personQuery: '',
     personHits: [],
     encRole: 'FORMATEUR',
-    reopenMotif: ''
+    reopenMotif: '',
+    session: null,
+    needOkta: false,
+    personCount: null
   };
 
   function toast(tone, title, message, extra) {
@@ -66,7 +69,8 @@
     } catch (error) {
       const info = L.friendlyError(error);
       state.conflict = Boolean(info.conflict);
-      toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors });
+      if (info.okta) state.needOkta = true;
+      toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors, okta: info.okta });
     } finally {
       state.loading = false;
       render();
@@ -177,7 +181,11 @@
           <span class="visually-hidden">Période</span>
           <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>Année ${y}</option>`).join('')}</select>
         </label>
-        <div class="scope-user">${mode === 'live' ? 'LIVE Monitoring' : 'Démonstration'}</div>
+        <div class="scope-user">${mode === 'live'
+          ? (state.session && state.session.displayName
+            ? `LIVE · ${escapeHtml(state.session.displayName)}`
+            : 'LIVE Monitoring')
+          : 'Démonstration'}</div>
       </header>
       <nav class="scope-nav" aria-label="Navigation principale">
         <button type="button" data-nav="vue" aria-current="${nav === 'vue' ? 'page' : 'false'}">Vue d’ensemble</button>
@@ -198,8 +206,16 @@
           <button type="button" class="scope-btn" id="scope-stay-demo">Rester en démonstration</button>
         </div>
       </div>`);
+    } else if (mode === 'live' && state.needOkta) {
+      bits.push(`<div class="scope-banner warning" role="alertdialog">
+        <strong>Session Okta requise</strong>
+        <div>Le mode LIVE s’appuie sur la session institutionnelle du navigateur (cookie HttpOnly). Aucun jeton technique n’est injecté.</div>
+        <div class="scope-actions">
+          <a class="scope-btn scope-btn-primary" id="scope-okta-login" href="${escapeHtml(L.oktaLoginHref('/scope.html?mode=live'))}">Se connecter avec Okta</a>
+        </div>
+      </div>`);
     } else if (mode === 'live') {
-      bits.push(`<div class="scope-banner live">Mode LIVE — base PostgreSQL Monitoring. Toute saisie est réelle. Pas de données fictives.</div>`);
+      bits.push(`<div class="scope-banner live">Mode LIVE — base PostgreSQL Monitoring. Session Okta. Toute saisie est réelle. Pas de données fictives.</div>`);
     } else {
       bits.push(`<div class="scope-banner demo">Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>`);
     }
@@ -291,6 +307,7 @@
         <div class="scope-card scope-placeholder">
           <h2 style="margin-top:0">${escapeHtml(title)}</h2>
           <p>Cet écran fera partie de SCOPE, mais il n’est pas construit dans le pilote P0. Utilisez Exercices pour la saisie nominative.</p>
+          ${mode === 'live' && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
         </div>
       </div>
     `;
@@ -830,16 +847,50 @@
     });
   }
 
+  async function ensureLiveSession() {
+    if (mode !== 'live' || typeof client.sessionMe !== 'function') return true;
+    try {
+      const data = await client.sessionMe();
+      state.session = data.user || null;
+      state.needOkta = false;
+      return true;
+    } catch (error) {
+      const info = L.friendlyError(error);
+      state.session = null;
+      state.needOkta = Boolean(info.okta) || Number(error && error.status) === 401;
+      return false;
+    }
+  }
+
   async function onRoute() {
+    if (mode === 'live' && state.needOkta) {
+      render();
+      return;
+    }
     const r = route();
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
+      if (mode === 'live' && client.listPersonnes && state.personCount == null) {
+        const people = await client.listPersonnes();
+        state.personCount = (people.personnes || []).length;
+      }
       if (r.screen === 'liste') await loadList();
+      if (r.screen === 'personnel' && client.listPersonnes) {
+        const people = await client.listPersonnes();
+        state.personCount = (people.personnes || []).length;
+      }
       if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) await loadFiche(r.id);
     });
   }
 
   window.addEventListener('hashchange', onRoute);
-  if (!location.hash) location.hash = '#/exercices';
-  else onRoute();
+  (async function boot() {
+    if (mode === 'live') {
+      const ok = await ensureLiveSession();
+      render();
+      if (!ok) return;
+    }
+    if (!location.hash) location.hash = '#/exercices';
+    else await onRoute();
+  })();
 })();

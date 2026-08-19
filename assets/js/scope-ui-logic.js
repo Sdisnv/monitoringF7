@@ -136,7 +136,12 @@
       return { tone: 'error', title: 'Connexion interrompue', message: 'Le serveur n’est pas joignable. Vérifiez le réseau puis réessayez.' };
     }
     if (status === 401) {
-      return { tone: 'error', title: 'Session expirée', message: 'Reconnectez-vous pour continuer.' };
+      return {
+        tone: 'error',
+        title: 'Session institutionnelle requise',
+        message: 'Connectez-vous avec Okta. SCOPE live n’utilise pas de jeton technique injecté.',
+        okta: true
+      };
     }
     if (status === 403) {
       return { tone: 'error', title: 'Action non autorisée', message: 'Votre profil ne permet pas cette modification.' };
@@ -191,6 +196,14 @@
     return 'demo';
   }
 
+  function oktaLoginHref(returnPath) {
+    const raw = String(returnPath || '/scope.html').trim();
+    const safe = raw.startsWith('/') && !raw.startsWith('//') && !/^javascript:/i.test(raw)
+      ? raw
+      : '/scope.html';
+    return `/auth/oidc/start?returnTo=${encodeURIComponent(safe)}`;
+  }
+
   return {
     MOTIFS,
     STATUT_LABELS,
@@ -211,6 +224,7 @@
     ciblesLabel,
     displayTauxForList,
     emptyMessage,
-    resolveClientMode
+    resolveClientMode,
+    oktaLoginHref
   };
 });

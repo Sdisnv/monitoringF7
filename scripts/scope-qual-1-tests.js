@@ -95,6 +95,22 @@ function record(name, fn){
     assert.ok(css.includes('.scope-banner.live'));
   });
 
+  await record('Live Okta : cookie navigateur, pas de JWT injecté', async () => {
+    const href = logic.oktaLoginHref('/scope.html?mode=live');
+    assert.ok(href.startsWith('/auth/oidc/start?returnTo='));
+    assert.ok(href.includes(encodeURIComponent('/scope.html?mode=live')));
+    assert.strictEqual(logic.oktaLoginHref('https://evil.example/'), '/auth/oidc/start?returnTo=%2Fscope.html');
+    const info = logic.friendlyError({ status: 401, error: 'unauthorized' });
+    assert.strictEqual(info.okta, true);
+    const api = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
+    assert.ok(api.includes("credentials: 'same-origin'"));
+    assert.ok(api.includes("fetch('/auth/me'"));
+    assert.ok(!api.includes('setAccessToken('));
+    const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    assert.ok(ui.includes('scope-okta-login'));
+    assert.ok(ui.includes('sessionMe'));
+  });
+
   const failed = results.filter((r) => r.status !== 'PASS');
   for (const row of results) {
     console.log(`${row.status}\t${row.name}`);

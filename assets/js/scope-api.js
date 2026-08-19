@@ -68,9 +68,29 @@
       return payload;
     }
 
+    async function sessionMe() {
+      let response;
+      try {
+        response = await fetch('/auth/me', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin'
+        });
+      } catch (error) {
+        throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
+      }
+      let payload = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) payload = await response.json();
+      else payload = { message: await response.text() };
+      if (!response.ok) throw new ScopeApiError(response.status, payload || {});
+      return payload;
+    }
+
     return {
       kind: 'http',
       ScopeApiError,
+      sessionMe,
       referentiels() { return request('GET', '/referentiels'); },
       listPersonnes(q) { return request('GET', `/personnes${queryString({ q })}`); },
       listEvenements(params) { return request('GET', `/evenements${queryString(params || {})}`); },
