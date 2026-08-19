@@ -287,13 +287,25 @@ function createMemoryRepo(){
       return [...reglesBascule.values()];
     },
     async upsertRegleBascule(row){
+      const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();
+      const existing = [...reglesBascule.values()].find((r) => {
+        if (portee === 'CIBLE') return r.portee === 'CIBLE' && r.cible_id === row.cible_id;
+        if (portee === 'DOMAINE') return r.portee === 'DOMAINE' && r.domaine_code === row.domaine_code;
+        return r.portee === 'GLOBAL';
+      });
       const item = {
-        domaine_code: row.domaine_code,
+        regle_id: (existing && existing.regle_id) || row.regle_id || randomUUID(),
+        portee,
+        cible_id: portee === 'CIBLE' ? row.cible_id : null,
+        domaine_code: portee === 'GLOBAL' ? null : (row.domaine_code || null),
         date_bascule: isoDate(row.date_bascule),
         commentaire: row.commentaire || null,
         updated_at: now()
       };
-      reglesBascule.set(item.domaine_code, item);
+      if (portee === 'DOMAINE') item.domaine_code = row.domaine_code;
+      if (portee === 'CIBLE' && item.domaine_code == null) item.domaine_code = row.domaine_code || null;
+      reglesBascule.set(item.regle_id, item);
+      if (existing && existing.regle_id !== item.regle_id) reglesBascule.delete(existing.regle_id);
       return item;
     },
     async insertImport(row){

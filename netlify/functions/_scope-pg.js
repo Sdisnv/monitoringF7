@@ -315,15 +315,36 @@ function createPgRepo(client){
       return result.rows;
     },
     async upsertRegleBascule(row){
+      const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();
+      const cibleId = portee === 'CIBLE' ? row.cible_id : null;
+      const domaineCode = portee === 'GLOBAL' ? null : (row.domaine_code || null);
+      let existing;
+      if(portee === 'CIBLE'){
+        existing = await q(
+          `select * from scope_regles_bascule where portee = 'CIBLE' and cible_id = $1`,
+          [cibleId]
+        );
+      }else if(portee === 'DOMAINE'){
+        existing = await q(
+          `select * from scope_regles_bascule where portee = 'DOMAINE' and domaine_code = $1`,
+          [row.domaine_code]
+        );
+      }else{
+        existing = await q(`select * from scope_regles_bascule where portee = 'GLOBAL'`);
+      }
+      if(existing.rows[0]){
+        const result = await q(
+          `update scope_regles_bascule
+           set date_bascule = $2, commentaire = $3, domaine_code = $4, updated_at = now()
+           where regle_id = $1 returning *`,
+          [existing.rows[0].regle_id, isoDate(row.date_bascule), row.commentaire || null, domaineCode]
+        );
+        return result.rows[0];
+      }
       const result = await q(
-        `insert into scope_regles_bascule(domaine_code, date_bascule, commentaire)
-         values ($1,$2,$3)
-         on conflict (domaine_code) do update set
-           date_bascule = excluded.date_bascule,
-           commentaire = excluded.commentaire,
-           updated_at = now()
-         returning *`,
-        [row.domaine_code, isoDate(row.date_bascule), row.commentaire || null]
+        `insert into scope_regles_bascule(portee, cible_id, domaine_code, date_bascule, commentaire)
+         values ($1,$2,$3,$4,$5) returning *`,
+        [portee, cibleId, domaineCode, isoDate(row.date_bascule), row.commentaire || null]
       );
       return result.rows[0];
     },

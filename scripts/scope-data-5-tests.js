@@ -24,13 +24,14 @@ function record(name, fn){
 }
 
 async function withBasculeTest(repo){
-  for (const domaine of ['DAP', 'DPS', 'FOBA']) {
-    await repo.upsertRegleBascule({
-      domaine_code: domaine,
-      date_bascule: '2026-08-19',
-      commentaire: 'Règle de TEST uniquement — pas une décision MOA de production.'
-    });
-  }
+  const y4 = await repo.findCible('DAP', 'Y4');
+  await repo.upsertRegleBascule({
+    portee: 'CIBLE',
+    cible_id: y4.cible_id,
+    domaine_code: 'DAP',
+    date_bascule: '2026-08-19',
+    commentaire: 'Pilote nominatif DAP/Y4 — seule cible qualifiée.'
+  });
 }
 
 (async () => {
@@ -220,10 +221,11 @@ async function withBasculeTest(repo){
     const preview = await service.previewImportEvenements({ csvText });
     const foba = preview.lignes.filter((l) => l.date === '2026-02-25');
     assert.strictEqual(foba.length, 2);
-    assert.ok(foba.every((l) => l.groupingAArbitrer));
-    assert.ok(foba.every((l) => l.statut === 'AVERTISSEMENT'));
+    assert.ok(foba.every((l) => l.groupingNonFusionne));
+    assert.ok(foba.every((l) => l.groupingAArbitrer === false));
     const dps = preview.lignes.filter((l) => l.date === '2026-03-24');
-    assert.ok(dps.every((l) => l.groupingAArbitrer));
+    assert.ok(dps.every((l) => l.groupingNonFusionne));
+    assert.strictEqual(dps.length, 2);
     const committed = await service.commitImportEvenements({ csvText }, { sub: 't' });
     const fobaCreated = committed.created.filter((c) => preview.lignes.find((l) => l.ligneNo === c.ligneNo && l.domaine === 'FOBA'));
     assert.strictEqual(fobaCreated.length, 2);
@@ -295,8 +297,14 @@ async function withBasculeTest(repo){
 
   await record('PLANIFIE n’utilise pas les agrégats comme nominatif', async () => {
     const repo = createMemoryRepo();
-    await repo.upsertRegleBascule({ domaine_code: 'DAP', date_bascule: '2026-08-19', commentaire: 'test' });
     const y4 = await repo.findCible('DAP', 'Y4');
+    await repo.upsertRegleBascule({
+      portee: 'CIBLE',
+      cible_id: y4.cible_id,
+      domaine_code: 'DAP',
+      date_bascule: '2026-08-19',
+      commentaire: 'test'
+    });
     const personne = await repo.insertPersonne({ nip: 'P1', nom: 'Test', prenom: 'Pilote' });
     await repo.insertAffectation({ personne_id: personne.personne_id, cible_id: y4.cible_id, date_debut: '2026-08-19' });
     const planCsv = [

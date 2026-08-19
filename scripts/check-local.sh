@@ -57,6 +57,8 @@ grep -q "Importer un programme CSV" assets/js/scope-ui.js
 grep -q "imports/evenements/preview" netlify/functions/scope.js
 grep -q "imports/evenements/commit" netlify/functions/scope.js
 grep -q "scope-data-5" netlify/functions/_scope-schema.js
+grep -q "scope-data-5-r1" netlify/functions/_scope-schema.js
+grep -q "portee" netlify/functions/_scope-schema.js
 grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
 grep -q "scope-root" scope.html
 grep -q "Vue d’ensemble" assets/js/scope-ui.js

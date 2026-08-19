@@ -127,6 +127,18 @@
       };
     }
     const header = splitSemicolon(headerLine).map((h) => h.trim());
+    const v67Markers = ['date_evenement', 'stat_com', 'nb_excuses_armee', 'formateurs_nb'];
+    if (v67Markers.some((col) => header.includes(col))) {
+      return {
+        ok: false,
+        error: 'profil_csv_non_supporte',
+        message: 'Format export Monitoring F7 v67 actuel non supporté par le profil monitoring_exercices_sdis_22cols. Un parser dédié sera requis plus tard. Aucun mélange silencieux.',
+        separator,
+        encoding: 'utf-8',
+        header,
+        rows: []
+      };
+    }
     const missing = REQUIRED_COLUMNS.filter((col) => !header.includes(col));
     const extra = header.filter((col) => col && !REQUIRED_COLUMNS.includes(col));
     const dataLines = nonempty.slice(1);
@@ -206,36 +218,91 @@
     return round1((100 * presents) / attendu);
   }
 
-  function classifyType(dateIso, domaine, rulesByDomaine) {
-    const rule = rulesByDomaine && (rulesByDomaine[domaine] || rulesByDomaine['*'] || null);
-    if (!rule) {
+  const IMPORT_PROFIL = 'monitoring_exercices_sdis_22cols';
+
+  function normalizeRegle(row) {
+    if (!row) return null;
+    const portee = String(row.portee || '').toUpperCase();
+    return {
+      regle_id: row.regle_id || row.regleId || null,
+      portee,
+      cible_id: row.cible_id || row.cibleId || null,
+      domaine_code: row.domaine_code || row.domaineCode || null,
+      date_bascule: String(row.date_bascule || row.dateBascule || '').slice(0, 10)
+    };
+  }
+
+  function resolveBasculeRule(cibleId, domaine, rules) {
+    const list = (rules || []).map(normalizeRegle).filter((r) => r && r.date_bascule);
+    const cible = list.find((r) => r.portee === 'CIBLE' && r.cible_id && r.cible_id === cibleId);
+    if (cible) return Object.assign({ source: 'CIBLE' }, cible);
+    const domaineRule = list.find((r) => r.portee === 'DOMAINE' && r.domaine_code === domaine);
+    if (domaineRule) return Object.assign({ source: 'DOMAINE' }, domaineRule);
+    const global = list.find((r) => r.portee === 'GLOBAL');
+    if (global) return Object.assign({ source: 'GLOBAL' }, global);
+    return null;
+  }
+
+  function earliestNominativeHorizon(rules) {
+    const dates = (rules || [])
+      .map(normalizeRegle)
+      .map((r) => r && r.date_bascule)
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+      .sort();
+    return dates[0] || null;
+  }
+
+  /* Classification explicite :
+     1) règle cible > domaine > globale → LEGACY si date < bascule, sinon PLANIFIE
+     2) sinon, si une bascule nominative existe ailleurs et date < min(règles)
+        → LEGACY historique (horizon dérivé des règles seedées, pas une règle inventée pour cette cible)
+     3) sinon → ERREUR bascule_non_definie
+     L’absence de règle ne transforme jamais à elle seule un événement en LEGACY. */
+  function classifyType(dateIso, domaine, cibleId, rules) {
+    const resolved = resolveBasculeRule(cibleId, domaine, rules);
+    const horizon = earliestNominativeHorizon(rules);
+    if (resolved) {
+      if (dateIso < resolved.date_bascule) {
+        return {
+          typePropose: 'LEGACY',
+          statut: 'VALIDE',
+          code: 'legacy',
+          raison: `Date ${dateIso} antérieure à la bascule nominative ${resolved.date_bascule} (règle ${resolved.source}).`,
+          bascule: { resolved, horizonNominatifConnu: horizon }
+        };
+      }
       return {
-        typePropose: null,
-        statut: 'ERREUR',
-        code: 'bascule_non_definie',
-        raison: `Règle de bascule nominative non définie pour ${domaine}. La date pilote DAP/Y4 2026-08-19 n’est pas appliquée silencieusement à tous les domaines.`
+        typePropose: 'PLANIFIE',
+        statut: 'VALIDE',
+        code: 'planifie',
+        raison: `Date ${dateIso} postérieure ou égale à la bascule nominative ${resolved.date_bascule} (règle ${resolved.source}). Agrégats CSV non utilisés comme vérité nominative.`,
+        bascule: { resolved, horizonNominatifConnu: horizon }
       };
     }
-    if (dateIso < rule) {
+    if (horizon && dateIso < horizon) {
       return {
         typePropose: 'LEGACY',
         statut: 'VALIDE',
-        code: 'legacy',
-        raison: `Date ${dateIso} antérieure à la bascule nominative ${rule} (${domaine}).`
+        code: 'legacy_avant_horizon_nominatif',
+        raison: `Cible non qualifiée nominativement (aucune règle cible/domaine/globale). Date ${dateIso} antérieure à l’horizon nominatif connu ${horizon} (minimum des règles seedées, pas une bascule inventée pour cette cible). Import LEGACY agrégé uniquement.`,
+        bascule: { resolved: null, horizonNominatifConnu: horizon }
       };
     }
     return {
-      typePropose: 'PLANIFIE',
-      statut: 'VALIDE',
-      code: 'planifie',
-      raison: `Date ${dateIso} postérieure ou égale à la bascule nominative ${rule} (${domaine}). Agrégats CSV non utilisés comme vérité nominative.`
+      typePropose: null,
+      statut: 'ERREUR',
+      code: 'bascule_non_definie',
+      raison: horizon
+        ? `Cible non qualifiée nominativement. Date ${dateIso} postérieure ou égale à l’horizon nominatif connu ${horizon}. Ni PLANIFIE ni LEGACY silencieux.`
+        : 'Aucune règle de bascule nominative n’est définie. Impossible de classer cette ligne.',
+      bascule: { resolved: null, horizonNominatifConnu: horizon }
     };
   }
 
   function buildPreviewRows(parsed, context) {
     const domaines = (context && context.domaines) || [];
     const cibles = (context && context.cibles) || [];
-    const rulesByDomaine = (context && context.rulesByDomaine) || {};
+    const rules = (context && context.rules) || (context && context.rulesByDomaine) || [];
     const existingEvents = (context && context.existingEvents) || [];
     const importedFingerprints = new Set((context && context.importedFingerprints) || []);
 
@@ -340,7 +407,7 @@
 
       let classification = { typePropose: null, statut: 'ERREUR', code: 'invalide', raison: 'Ligne invalide.' };
       if (!issues.some((i) => i.niveau === 'ERREUR')) {
-        classification = classifyType(dateIso, domaine, rulesByDomaine);
+        classification = classifyType(dateIso, domaine, cible ? cible.cible_id : null, Array.isArray(rules) ? rules : []);
       } else {
         classification = {
           typePropose: null,
@@ -393,8 +460,11 @@
         numbers,
         groupingKey: dateIso && domaine && libelle ? `${dateIso}|${domaine}|${libelle}` : null,
         groupingAArbitrer: false,
+        groupingNonFusionne: false,
         dejaImporte: importedFingerprints.has(fingerprint),
         evenementPotentiel: sameBusiness.map((ev) => ev.evenement_id),
+        bascule: classification.bascule || null,
+        profil: IMPORT_PROFIL,
         issues,
         warnings
       };
@@ -411,10 +481,11 @@
       const ciblesDistinctes = new Set(list.map((l) => l.niveauCode).filter(Boolean));
       if (list.length > 1 && ciblesDistinctes.size > 1) {
         list.forEach((line) => {
-          line.groupingAArbitrer = true;
-          line.warnings.push('Regroupement multi-cibles ambigu : mêmes date, domaine et modèle, cibles distinctes. Pas de fusion automatique — décision MOA.');
+          line.groupingAArbitrer = false;
+          line.groupingNonFusionne = true;
+          line.warnings.push('Mêmes date, domaine et modèle, cibles distinctes : lignes conservées comme événements distincts. Fusion automatique uniquement si un identifiant de groupe explicite est fourni par le fichier source. Jamais sur la seule base date + domaine + modèle.');
           if (line.statut !== 'ERREUR') line.statut = 'AVERTISSEMENT';
-          line.raison = `${line.raison} Regroupement multi-cibles à arbitrer.`.trim();
+          line.raison = `${line.raison} Événements distincts (pas de fusion automatique).`.trim();
           if (line.actionPrevue === 'CREER_LEGACY' || line.actionPrevue === 'CREER_PLANIFIE') {
             line.actionPrevue = `${line.actionPrevue}_DISTINCT`;
           }
@@ -439,12 +510,15 @@
     REQUIRED_COLUMNS,
     PUBLIC_CIBLE_MAP,
     DOMAINES_CONNUS,
+    IMPORT_PROFIL,
     MAX_CSV_CHARS,
     parseExercicesCsv,
     parseDateExercice,
     parseOuiNon,
     normalizePublicCible,
     fingerprintLine,
+    resolveBasculeRule,
+    earliestNominativeHorizon,
     classifyType,
     buildPreviewRows,
     summarizePreview,

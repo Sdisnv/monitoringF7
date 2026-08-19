@@ -191,10 +191,20 @@ const DDL = [
   `create index if not exists scope_journal_entite
     on scope_journal_metier (entite, entite_id, at desc)`,
   `create table if not exists scope_regles_bascule (
-    domaine_code text primary key references scope_domaines(code),
+    regle_id uuid primary key default gen_random_uuid(),
+    portee text not null,
+    cible_id uuid references scope_cibles(cible_id),
+    domaine_code text references scope_domaines(code),
     date_bascule date not null,
     commentaire text,
-    updated_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint scope_regles_bascule_portee_chk check (portee in ('CIBLE','DOMAINE','GLOBAL')),
+    constraint scope_regles_bascule_shape_chk check (
+      (portee = 'CIBLE' and cible_id is not null)
+      or (portee = 'DOMAINE' and domaine_code is not null and cible_id is null)
+      or (portee = 'GLOBAL' and cible_id is null and domaine_code is null)
+    )
   )`,
   `create table if not exists scope_imports (
     import_id uuid primary key,
@@ -258,8 +268,59 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-data-5') on conflict (version) do nothing`
   );
+  await migrateReglesBasculeR1();
+  await seedBasculeDapY4();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-data-5-r1') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
+}
+
+async function migrateReglesBasculeR1(){
+  const cols = await db.query(
+    `select column_name from information_schema.columns
+     where table_schema = 'public' and table_name = 'scope_regles_bascule'`
+  );
+  const names = new Set(cols.rows.map((r) => r.column_name));
+  if(!names.size) return;
+  if(!names.has('portee')){
+    await db.query('alter table scope_regles_bascule add column if not exists regle_id uuid');
+    await db.query('alter table scope_regles_bascule add column if not exists portee text');
+    await db.query('alter table scope_regles_bascule add column if not exists cible_id uuid references scope_cibles(cible_id)');
+    await db.query('alter table scope_regles_bascule add column if not exists created_at timestamptz default now()');
+    await db.query(`update scope_regles_bascule set portee = 'DOMAINE' where portee is null`);
+    await db.query('update scope_regles_bascule set regle_id = gen_random_uuid() where regle_id is null');
+    await db.query('alter table scope_regles_bascule drop constraint if exists scope_regles_bascule_pkey');
+    await db.query('alter table scope_regles_bascule alter column domaine_code drop not null');
+    await db.query('alter table scope_regles_bascule alter column regle_id set default gen_random_uuid()');
+    await db.query('alter table scope_regles_bascule alter column regle_id set not null');
+    await db.query('alter table scope_regles_bascule alter column portee set not null');
+    await db.query('alter table scope_regles_bascule add primary key (regle_id)');
+  }
+  await db.query(`
+    create unique index if not exists scope_regles_bascule_cible_uidx
+      on scope_regles_bascule (cible_id) where portee = 'CIBLE'
+  `);
+  await db.query(`
+    create unique index if not exists scope_regles_bascule_domaine_uidx
+      on scope_regles_bascule (domaine_code) where portee = 'DOMAINE'
+  `);
+  await db.query(`
+    create unique index if not exists scope_regles_bascule_global_uidx
+      on scope_regles_bascule ((true)) where portee = 'GLOBAL'
+  `);
+}
+
+async function seedBasculeDapY4(){
+  await db.query(
+    `insert into scope_regles_bascule (portee, cible_id, domaine_code, date_bascule, commentaire)
+     select 'CIBLE', cible_id, 'DAP', date '2026-08-19',
+            'Pilote nominatif DAP/Y4. Seule cible qualifiée. Pas une règle domaine DAP.'
+     from scope_cibles
+     where domaine_code = 'DAP' and niveau_code = 'Y4'
+     on conflict (cible_id) where portee = 'CIBLE' do nothing`
+  );
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES };

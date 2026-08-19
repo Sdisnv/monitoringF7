@@ -589,25 +589,20 @@ function createScopeService(repo){
     return { ...computeTaux(participations, attendus), officiel: true, kind: 'NOMINATIF' };
   }
 
-  async function rulesMap(){
-    if(!repo.listReglesBascule) return {};
-    const rows = await repo.listReglesBascule();
-    const map = {};
-    for(const row of rows){
-      map[row.domaine_code] = isoDate(row.date_bascule);
-    }
-    return map;
+  async function rulesList(){
+    if(!repo.listReglesBascule) return [];
+    return repo.listReglesBascule();
   }
 
   async function previewContext(){
-    const [domaines, cibles, rulesByDomaine, existingEvents, importedFingerprints] = await Promise.all([
+    const [domaines, cibles, rules, existingEvents, importedFingerprints] = await Promise.all([
       repo.listDomaines(),
       repo.listCibles(),
-      rulesMap(),
+      rulesList(),
       repo.listEvenements({}),
       repo.listImportedFingerprints ? repo.listImportedFingerprints() : []
     ]);
-    return { domaines, cibles, rulesByDomaine, existingEvents, importedFingerprints };
+    return { domaines, cibles, rules, existingEvents, importedFingerprints };
   }
 
   function previewFromCsv(csvText, context){
@@ -618,6 +613,8 @@ function createScopeService(repo){
     const lignes = csvImport.buildPreviewRows(parsed, context);
     const summary = csvImport.summarizePreview(lignes);
     return {
+      profil: csvImport.IMPORT_PROFIL,
+      horizonNominatifConnu: csvImport.earliestNominativeHorizon(context.rules || []),
       separator: parsed.separator,
       encoding: parsed.encoding,
       header: parsed.header,
@@ -689,10 +686,15 @@ function createScopeService(repo){
             fingerprint: line.fingerprint,
             payload_v67: {
               provenance: 'CSV_MONITORING_F7',
-              format: 'monitoring_exercices_sdis_22cols',
+              profil: csvImport.IMPORT_PROFIL,
+              format: csvImport.IMPORT_PROFIL,
               a_comptabiliser: line.aComptabiliser,
+              a_comptabiliser_scope: false,
+              legacy_inclus_stats: line.aComptabiliser,
               public_cible: line.publicCible,
-              modele: line.libelle,
+              modele: line.source.modele || line.libelle,
+              libelle: line.libelle,
+              nb_permutation: line.numbers.nb_permutation,
               nb_permutation: line.numbers.nb_permutation,
               nb_ext_dap_y1: line.numbers.nb_ext_dap_y1,
               nb_ext_dap_y2: line.numbers.nb_ext_dap_y2,
