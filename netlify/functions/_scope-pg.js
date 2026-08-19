@@ -31,6 +31,17 @@ function mapEvent(row){
   };
 }
 
+function mapObjectif(row){
+  if(!row) return null;
+  return {
+    ...row,
+    date_debut: dateOnly(row.date_debut),
+    date_fin: dateOnly(row.date_fin),
+    seuil_pct: row.seuil_pct == null ? null : Number(row.seuil_pct),
+    actif: row.actif !== false
+  };
+}
+
 function createPgRepo(client){
   const q = (text, params) => (client || db).query(text, params);
 
@@ -387,7 +398,8 @@ function createPgRepo(client){
     async countTable(name){
       const allowed = new Set([
         'scope_personnes', 'scope_evenements', 'scope_attendus', 'scope_participations',
-        'scope_legacy_aggregates', 'scope_imports', 'scope_import_lignes', 'scope_saisies_quantitatives'
+        'scope_legacy_aggregates', 'scope_imports', 'scope_import_lignes', 'scope_saisies_quantitatives',
+        'scope_objectifs'
       ]);
       if(!allowed.has(name)) return 0;
       const result = await q(`select count(*)::int as n from ${name}`);
@@ -436,6 +448,59 @@ function createPgRepo(client){
     },
     async deleteQuantitatifSaisie(eventId){
       await q('delete from scope_saisies_quantitatives where evenement_id = $1', [eventId]);
+    },
+    async listObjectifs({ actif } = {}){
+      const result = actif === undefined
+        ? await q('select * from scope_objectifs order by date_debut, portee')
+        : await q('select * from scope_objectifs where actif = $1 order by date_debut, portee', [Boolean(actif)]);
+      return result.rows.map(mapObjectif);
+    },
+    async getObjectif(id){
+      const result = await q('select * from scope_objectifs where objectif_id = $1', [id]);
+      return mapObjectif(result.rows[0] || null);
+    },
+    async insertObjectif(row){
+      const result = await q(
+        `insert into scope_objectifs(
+           objectif_id, portee, domaine_code, cible_id, date_debut, date_fin, seuil_pct, actif, commentaire, auteur_id
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
+        [
+          row.objectif_id,
+          row.portee,
+          row.domaine_code || null,
+          row.cible_id || null,
+          isoDate(row.date_debut),
+          isoDate(row.date_fin),
+          row.seuil_pct,
+          row.actif !== false,
+          row.commentaire || null,
+          row.auteur_id || null
+        ]
+      );
+      return mapObjectif(result.rows[0]);
+    },
+    async updateObjectif(id, patch){
+      const current = await api.getObjectif(id);
+      if(!current) return null;
+      const next = { ...current, ...patch };
+      const result = await q(
+        `update scope_objectifs set
+           date_fin = $2,
+           seuil_pct = $3,
+           actif = $4,
+           commentaire = $5,
+           updated_at = now()
+         where objectif_id = $1
+         returning *`,
+        [
+          id,
+          isoDate(next.date_fin),
+          next.seuil_pct,
+          next.actif !== false,
+          next.commentaire || null
+        ]
+      );
+      return mapObjectif(result.rows[0]);
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const clauses = ['e.date >= $1::date', 'e.date <= $2::date'];

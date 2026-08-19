@@ -9,12 +9,16 @@ const {
   officialFromTaux,
   officialFromQuantitatif,
   legacyPointFromAggregate,
-  resolveObjective,
   analyticStatus,
   gapPct,
   computeTaux,
   safePercentage
 } = require('./_scope-analytics');
+const {
+  inferAnalysisGrain,
+  resolveEventObjective,
+  collectObjectiveContext
+} = require('./_scope-objectives');
 
 function truthy(value){
   const text = String(value == null ? '' : value).toLowerCase();
@@ -62,18 +66,35 @@ function timeseriesFromOfficial(rows){
   for(const row of rows){
     const key = monthKey(row.date);
     if(!key) continue;
-    const current = buckets.get(key) || { month: key, numerator: 0, denominator: 0, eventCount: 0, kind: KINDS.OFFICIEL };
+    const current = buckets.get(key) || {
+      month: key, numerator: 0, denominator: 0, eventCount: 0, kind: KINDS.OFFICIEL, applied: []
+    };
     current.numerator += Number(row.numerator || 0);
     current.denominator += Number(row.denominator || 0);
     current.eventCount += 1;
+    current.applied.push(row.appliedObjective || null);
     buckets.set(key, current);
   }
   return [...buckets.values()]
     .sort((a, b) => a.month.localeCompare(b.month))
-    .map((bucket) => ({
-      ...bucket,
-      percentage: safePercentage(bucket.numerator, bucket.denominator)
-    }));
+    .map((bucket) => {
+      const context = collectObjectiveContext(bucket.applied);
+      return {
+        month: bucket.month,
+        numerator: bucket.numerator,
+        denominator: bucket.denominator,
+        eventCount: bucket.eventCount,
+        kind: bucket.kind,
+        percentage: safePercentage(bucket.numerator, bucket.denominator),
+        thresholdPct: context.objective ? context.objective.thresholdPct : null,
+        objective: context.objective,
+        objectiveContext: {
+          homogeneous: context.homogeneous,
+          distinctObjectives: context.distinctObjectives,
+          reason: context.reason
+        }
+      };
+    });
 }
 
 function timeseriesFromLegacy(points){
@@ -86,7 +107,12 @@ function timeseriesFromLegacy(points){
     current.points.push(point);
     buckets.set(key, current);
   }
-  return [...buckets.values()].sort((a, b) => a.month.localeCompare(b.month));
+  return [...buckets.values()].sort((a, b) => a.month.localeCompare(b.month)).map((bucket) => ({
+    ...bucket,
+    thresholdPct: null,
+    objective: null,
+    objectiveContext: { homogeneous: true, distinctObjectives: [], reason: 'LEGACY_HORS_OBJECTIF_OFFICIEL' }
+  }));
 }
 
 function looksLikeUuid(value){
@@ -206,6 +232,10 @@ function createScopeAnalyticsService(repo){
     const included = [];
     const excludedEvents = [];
     const legacyPoints = [];
+    const grain = inferAnalysisGrain(resolved);
+    const objectives = typeof repo.listObjectifs === 'function'
+      ? await repo.listObjectifs({ actif: true })
+      : [];
 
     for(const event of bundle.events){
       const mode = inferModeSuivi(event);
@@ -240,6 +270,14 @@ function createScopeAnalyticsService(repo){
       exclusions.dispenses += volumes.dispenses;
       exclusions.nonRenseignes += volumes.nonRenseignes;
       exclusions.encadrement += (classified.participations || []).filter((p) => p.role && p.role !== 'PARTICIPANT' && p.role !== 'RENFORT' && p.role !== 'REMPLACANT').length;
+      const appliedObjective = resolveEventObjective(
+        {
+          date: event.date,
+          domaine_code: event.domaine_code,
+          cible_ids: bundle.cibleIdsByEvent[event.evenement_id] || event.cible_ids || []
+        },
+        { objectives, grain, queryCibleId: cibleId }
+      );
       included.push({
         evenementId: event.evenement_id,
         date: event.date,
@@ -250,40 +288,48 @@ function createScopeAnalyticsService(repo){
         denominator: classified.official.denominator,
         percentage: classified.official.percentage,
         volumes,
-        kind: KINDS.OFFICIEL
+        kind: KINDS.OFFICIEL,
+        appliedObjective
       });
     }
 
     const officiel = officialTotals(included);
-    const objective = resolveObjective({
-      date: period.to,
-      domaine: domaineCode,
-      cible: cibleId
-    });
+    const objectiveContext = collectObjectiveContext(included.map((row) => row.appliedObjective));
+    const objective = objectiveContext.objective;
     const status = analyticStatus(officiel.percentage, objective, { vigilanceMarginPct: null });
     const perimeter = { domaine: domaineCode || null, cible: cibleId || null, evenementId: evenementId || null, personneId: personneId || null };
+    const gap = gapPct(officiel.percentage, objective);
 
     return {
       period,
       scope: perimeter,
+      analysisGrain: grain,
       officiel: {
         ...officiel,
         objective,
-        gapPct: gapPct(officiel.percentage, objective),
+        gapPct: gap,
         analyticStatus: status.status,
-        analyticStatusReason: status.reason
+        analyticStatusReason: status.reason,
+        objectiveContext: {
+          homogeneous: objectiveContext.homogeneous,
+          distinctObjectives: objectiveContext.distinctObjectives,
+          reason: objectiveContext.reason
+        }
       },
       legacy: includeLegacyVisual ? {
         kind: KINDS.LEGACY,
         eventCount: legacyPoints.length,
         points: legacyPoints,
         globalKpi: null,
-        globalKpiReason: 'contrat_legacy_non_homogene'
+        globalKpiReason: 'contrat_legacy_non_homogene',
+        objective: null,
+        gapPct: null
       } : undefined,
       exclusions,
       includedEvents: included,
       excludedEvents,
       objective,
+      objectiveContext,
       vigilanceMarginPct: null
     };
   }
@@ -312,6 +358,7 @@ function createScopeAnalyticsService(repo){
     return {
       period: evaluated.period,
       perimeter: evaluated.scope,
+      analysisGrain: evaluated.analysisGrain,
       kind: KINDS.OFFICIEL,
       includedEvents: evaluated.includedEvents,
       excludedEvents: evaluated.excludedEvents,
@@ -324,7 +371,16 @@ function createScopeAnalyticsService(repo){
       },
       exclusions: evaluated.exclusions,
       objective: evaluated.objective,
+      gapPct: evaluated.officiel.gapPct,
       analyticStatus: evaluated.officiel.analyticStatus,
+      analyticStatusReason: evaluated.officiel.analyticStatusReason,
+      objectiveContext: evaluated.officiel.objectiveContext,
+      objectiveSelection: {
+        hierarchy: 'CIBLE > DOMAINE > GLOBAL',
+        grain: evaluated.analysisGrain,
+        reason: (evaluated.objectiveContext && evaluated.objectiveContext.reason) || 'OBJECTIVE_NOT_FOUND'
+      },
+      vigilanceMarginPct: null,
       legacy: evaluated.legacy
     };
   }

@@ -1,6 +1,7 @@
 'use strict';
 const { computeTaux, round1 } = require('./_scope-rules');
 const csvImport = require('./_scope-csv-import');
+const { resolveObjective: resolveObjectiveFromRows } = require('./_scope-objectives');
 
 const KINDS = Object.freeze({ OFFICIEL: 'OFFICIEL', LEGACY: 'LEGACY' });
 const STATUTS = Object.freeze({
@@ -182,8 +183,8 @@ function legacyPointFromAggregate(event, legacy){
   };
 }
 
-function resolveObjective(/* { date, domaine, cible } */){
-  return null;
+function resolveObjective(query){
+  return resolveObjectiveFromRows(query || {});
 }
 
 function analyticStatus(percentage, objective, config){

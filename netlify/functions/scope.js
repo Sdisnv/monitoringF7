@@ -1,8 +1,9 @@
 const { response, parseBody, verifyToken, bearerToken } = require('./_auth-utils');
-const { canWriteRecords } = require('./_rbac');
+const { canWriteRecords, hasPermission } = require('./_rbac');
 const { HttpError } = require('./_scope-rules');
 const { createScopeService } = require('./_scope-service');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
+const { createScopeObjectivesService } = require('./_scope-objectives-service');
 const { getPgRepo } = require('./_scope-pg');
 
 function requireAccess(event){
@@ -58,6 +59,7 @@ exports.handler = async function(event){
     const repo = await getPgRepo();
     const service = createScopeService(repo);
     const analytics = createScopeAnalyticsService(repo);
+    const objectives = createScopeObjectivesService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
     const body = parsed || {};
@@ -170,6 +172,47 @@ exports.handler = async function(event){
     }
     if(method === 'GET' && path === '/analytics/timeseries'){
       return response(200, { ok:true, ...(await analytics.timeseries(queryOf(event))) });
+    }
+
+    if(method === 'GET' && path === '/objectifs'){
+      return response(200, { ok:true, ...(await objectives.listObjectifs(queryOf(event))) });
+    }
+    if(method === 'POST' && path === '/objectifs'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
+      }
+      return response(201, { ok:true, ...(await objectives.createObjectif(body, claims)) });
+    }
+    params = match(path, '/objectifs/:id');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, ...(await objectives.getObjectif(params.id)) });
+    }
+    if(method === 'PATCH' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
+      }
+      return response(200, { ok:true, ...(await objectives.patchObjectif(params.id, body, claims)) });
+    }
+    params = match(path, '/objectifs/:id/cloturer');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
+      }
+      return response(200, { ok:true, ...(await objectives.cloturerObjectif(params.id, body, claims)) });
+    }
+    params = match(path, '/objectifs/:id/nouvelle-periode');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
+      }
+      return response(200, { ok:true, ...(await objectives.nouvellePeriode(params.id, body, claims)) });
+    }
+    params = match(path, '/objectifs/:id/desactiver');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
+      }
+      return response(200, { ok:true, ...(await objectives.desactiverObjectif(params.id, body, claims)) });
     }
 
     if(method === 'POST' && path === '/imports/evenements/preview'){

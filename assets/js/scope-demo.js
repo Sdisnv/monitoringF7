@@ -114,6 +114,7 @@
     const attendus = new Map();
     const participations = new Map();
     const quantitatives = new Map();
+    const objectifs = new Map();
     const journal = [];
     const key = (e, p) => `${e}::${p}`;
 
@@ -475,6 +476,88 @@
       },
       async convertirQuantitatif() {
         throw new ScopeApiError(422, { error: 'conversion_interdite', message: 'La conversion nominatif → quantitatif est interdite.' });
+      },
+      async listObjectifs() {
+        return { ok: true, objectifs: [...objectifs.values()] };
+      },
+      async createObjectif(body) {
+        const portee = String(body.portee || '').toUpperCase();
+        const seuilPct = Number(body.seuilPct);
+        if (!['GLOBAL', 'DOMAINE', 'CIBLE'].includes(portee)) {
+          throw new ScopeApiError(400, { error: 'portee_invalide', message: 'La portée doit être GLOBAL, DOMAINE ou CIBLE.' });
+        }
+        if (!Number.isFinite(seuilPct) || seuilPct < 0 || seuilPct > 100) {
+          throw new ScopeApiError(422, { error: 'seuil_invalide', message: 'Le seuil doit être compris entre 0 et 100 %.' });
+        }
+        const dateDebut = String(body.dateDebut || '').slice(0, 10);
+        const dateFin = body.dateFin ? String(body.dateFin).slice(0, 10) : null;
+        if (!dateDebut) throw new ScopeApiError(400, { error: 'date_debut_obligatoire', message: 'La date de début est obligatoire.' });
+        if (dateFin && dateFin < dateDebut) {
+          throw new ScopeApiError(422, { error: 'dates_incoherentes', message: 'La date de fin ne peut pas être antérieure au début.' });
+        }
+        const row = {
+          objectifId: uid(),
+          scope: portee,
+          thresholdPct: seuilPct,
+          dateDebut,
+          dateFin,
+          domaineCode: portee === 'GLOBAL' ? null : (body.domaineCode || null),
+          cibleId: portee === 'CIBLE' ? (body.cibleId || null) : null,
+          actif: true,
+          commentaire: body.commentaire || null,
+          statut: dateFin ? 'CLOTURE' : 'OUVERT'
+        };
+        const key = portee === 'GLOBAL' ? 'GLOBAL' : portee === 'DOMAINE' ? `DOMAINE:${row.domaineCode}` : `CIBLE:${row.cibleId}`;
+        for (const existing of objectifs.values()) {
+          if (existing.actif === false) continue;
+          const existingKey = existing.scope === 'GLOBAL' ? 'GLOBAL' : existing.scope === 'DOMAINE' ? `DOMAINE:${existing.domaineCode}` : `CIBLE:${existing.cibleId}`;
+          if (existingKey !== key) continue;
+          const aEnd = existing.dateFin || '9999-12-31';
+          const bEnd = row.dateFin || '9999-12-31';
+          if (existing.dateDebut <= bEnd && dateDebut <= aEnd) {
+            throw new ScopeApiError(422, { error: 'chevauchement_objectif', message: 'Cette période chevauche un objectif déjà défini pour la même portée.' });
+          }
+        }
+        objectifs.set(row.objectifId, row);
+        return { ok: true, objectif: row };
+      },
+      async cloturerObjectif(id, body) {
+        const row = objectifs.get(id);
+        if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });
+        row.dateFin = String(body.dateFin || '').slice(0, 10);
+        row.statut = 'CLOTURE';
+        return { ok: true, objectif: row };
+      },
+      async nouvellePeriodeObjectif(id, body) {
+        const current = objectifs.get(id);
+        if (!current) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });
+        const dateDebut = String(body.dateDebut || '').slice(0, 10);
+        const prev = new Date(`${dateDebut}T00:00:00.000Z`);
+        prev.setUTCDate(prev.getUTCDate() - 1);
+        current.dateFin = prev.toISOString().slice(0, 10);
+        current.statut = 'CLOTURE';
+        return this.createObjectif({
+          portee: current.scope,
+          domaineCode: current.domaineCode,
+          cibleId: current.cibleId,
+          dateDebut,
+          dateFin: body.dateFin || null,
+          seuilPct: body.seuilPct,
+          commentaire: body.commentaire
+        });
+      },
+      async desactiverObjectif(id) {
+        const row = objectifs.get(id);
+        if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });
+        row.actif = false;
+        row.statut = 'NEUTRALISE';
+        return { ok: true, objectif: row };
+      },
+      async patchObjectif(id, body) {
+        const row = objectifs.get(id);
+        if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });
+        if (body.commentaire !== undefined) row.commentaire = String(body.commentaire);
+        return { ok: true, objectif: row };
       }
     };
   }

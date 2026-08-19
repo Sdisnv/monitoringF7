@@ -72,6 +72,15 @@ grep -q "scope_saisies_quantitatives" database/migrations/20260819_scope_event_q
 grep -q "Saisir les présences" assets/js/scope-ui.js
 grep -q "saisie-quantitative" netlify/functions/scope.js
 grep -q "SAISIE_QUANTITATIVE" netlify/functions/_scope-service.js
+grep -q "scope-objectives-1" netlify/functions/_scope-schema.js
+grep -q "scope_objectifs" netlify/functions/_scope-schema.js
+grep -q "scope_objectifs" database/migrations/20260819_scope_objectives_1.sql
+grep -q "resolveObjective" netlify/functions/_scope-objectives.js
+grep -q "/objectifs" netlify/functions/scope.js
+grep -q "Objectifs de participation" assets/js/scope-ui.js
+grep -q "screen: 'objectifs'" assets/js/scope-ui-logic.js
+grep -q "#/reglages/objectifs" assets/js/scope-ui.js
+grep -q "references:manage" netlify/functions/scope.js
 grep -q "portee" netlify/functions/_scope-schema.js
 grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
 grep -q "scope-root" scope.html

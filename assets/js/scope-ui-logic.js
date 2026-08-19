@@ -72,6 +72,9 @@
     }
     if (parts[0] === 'vue') return { screen: 'vue', nav: 'vue' };
     if (parts[0] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
+    if (parts[0] === 'reglages' && (!parts[1] || parts[1] === 'objectifs')) {
+      return { screen: 'objectifs', nav: 'reglages' };
+    }
     return { screen: 'liste', nav: 'exercices' };
   }
 
@@ -224,7 +227,8 @@
       exercices: 'Aucun exercice sur la période choisie.',
       attendus: 'Aucun attendu généré pour cet exercice.',
       resultats: 'Aucun résultat nominatif pour cet exercice.',
-      personnes: 'Aucune personne ne correspond à cette recherche.'
+      personnes: 'Aucune personne ne correspond à cette recherche.',
+      objectifs: 'Aucun objectif de participation défini.'
     };
     return map[kind] || 'Aucun élément.';
   }

@@ -124,7 +124,13 @@
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
       analyticsSummary(params) { return request('GET', `/analytics/summary${queryString(params || {})}`); },
       analyticsExplain(params) { return request('GET', `/analytics/explain${queryString(params || {})}`); },
-      analyticsTimeseries(params) { return request('GET', `/analytics/timeseries${queryString(params || {})}`); }
+      analyticsTimeseries(params) { return request('GET', `/analytics/timeseries${queryString(params || {})}`); },
+      listObjectifs(params) { return request('GET', `/objectifs${queryString(params || {})}`); },
+      createObjectif(body) { return request('POST', '/objectifs', body); },
+      patchObjectif(id, body) { return request('PATCH', `/objectifs/${encodeURIComponent(id)}`, body); },
+      cloturerObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/cloturer`, body); },
+      nouvellePeriodeObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/nouvelle-periode`, body); },
+      desactiverObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/desactiver`, body || {}); }
     };
   }
 

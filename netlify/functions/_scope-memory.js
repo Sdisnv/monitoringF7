@@ -31,6 +31,7 @@ function createMemoryRepo(){
   const imports = new Map();
   const importLignes = new Map();
   const quantitatives = new Map();
+  const objectifs = new Map();
   let txLevel = 0;
 
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
@@ -53,7 +54,8 @@ function createMemoryRepo(){
       reglesBascule: cloneMap(reglesBascule),
       imports: cloneMap(imports),
       importLignes: cloneMap(importLignes),
-      quantitatives: cloneMap(quantitatives)
+      quantitatives: cloneMap(quantitatives),
+      objectifs: cloneMap(objectifs)
     };
   }
 
@@ -70,6 +72,7 @@ function createMemoryRepo(){
     imports.clear(); snap.imports.forEach((v, k) => imports.set(k, v));
     importLignes.clear(); snap.importLignes.forEach((v, k) => importLignes.set(k, v));
     quantitatives.clear(); (snap.quantitatives || new Map()).forEach((v, k) => quantitatives.set(k, v));
+    objectifs.clear(); (snap.objectifs || new Map()).forEach((v, k) => objectifs.set(k, v));
   }
 
   const api = {
@@ -396,6 +399,46 @@ function createMemoryRepo(){
     },
     async deleteQuantitatifSaisie(eventId){
       quantitatives.delete(eventId);
+    },
+    async listObjectifs({ actif } = {}){
+      return [...objectifs.values()]
+        .filter((row) => actif === undefined ? true : Boolean(row.actif) === Boolean(actif))
+        .sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut)));
+    },
+    async getObjectif(id){
+      const item = objectifs.get(id);
+      return item ? { ...item } : null;
+    },
+    async insertObjectif(row){
+      const item = {
+        objectif_id: row.objectif_id,
+        portee: row.portee,
+        domaine_code: row.domaine_code || null,
+        cible_id: row.cible_id || null,
+        date_debut: dateOnly(row.date_debut),
+        date_fin: dateOnly(row.date_fin),
+        seuil_pct: Number(row.seuil_pct),
+        actif: row.actif !== false,
+        commentaire: row.commentaire || null,
+        auteur_id: row.auteur_id || null,
+        created_at: now(),
+        updated_at: now()
+      };
+      objectifs.set(item.objectif_id, item);
+      return { ...item };
+    },
+    async updateObjectif(id, patch){
+      const current = objectifs.get(id);
+      if(!current) return null;
+      const next = {
+        ...current,
+        ...patch,
+        date_debut: dateOnly(patch.date_debut !== undefined ? patch.date_debut : current.date_debut),
+        date_fin: patch.date_fin !== undefined ? dateOnly(patch.date_fin) : current.date_fin,
+        updated_at: now()
+      };
+      objectifs.set(id, next);
+      return { ...next };
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const { inferModeSuivi } = require('./_scope-analytics');

@@ -64,7 +64,19 @@
     modeTouched: false,
     modeSuggestion: null,
     volumes: { attendus: '', presents: '', excuses: '', nonExcuses: '', dispenses: '0' },
-    qtyPreview: null
+    qtyPreview: null,
+    objectifs: [],
+    objectifForm: {
+      portee: 'GLOBAL',
+      domaineCode: 'DPS',
+      cibleId: '',
+      seuilPct: '',
+      dateDebut: '2026-01-01',
+      dateFin: '',
+      commentaire: ''
+    },
+    objectifAction: null,
+    objectifFocusId: null
   };
 
   function toast(tone, title, message, extra) {
@@ -132,6 +144,15 @@
       domaineCode: state.domaine
     });
     state.list = data.evenements || [];
+  }
+
+  async function loadObjectifs() {
+    if (!client.listObjectifs) {
+      state.objectifs = [];
+      return;
+    }
+    const data = await client.listObjectifs();
+    state.objectifs = data.objectifs || [];
   }
 
   async function loadFiche(id) {
@@ -248,6 +269,8 @@
         <button type="button" data-nav="vue" aria-current="${nav === 'vue' ? 'page' : 'false'}">Vue d’ensemble</button>
         <button type="button" data-nav="exercices" aria-current="${nav === 'exercices' ? 'page' : 'false'}">Exercices</button>
         <button type="button" data-nav="personnel" aria-current="${nav === 'personnel' ? 'page' : 'false'}">Personnel</button>`;
+    const menuExtras = `
+        <a href="#/reglages/objectifs" ${nav === 'reglages' ? 'aria-current="page"' : ''}>Réglages · Objectifs</a>`;
     return `
       <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
         <div class="scope-header-inner">
@@ -271,7 +294,7 @@
             ${logout}
           </div>
         </div>
-        <div class="scope-header-menu-panel" id="scope-header-menu-panel" hidden>${navButtons}</div>
+        <div class="scope-header-menu-panel" id="scope-header-menu-panel" hidden>${navButtons}${menuExtras}</div>
       </header>
       <nav class="scope-nav" aria-label="Navigation principale">
         <div class="scope-nav-inner">${navButtons}</div>
@@ -420,6 +443,102 @@
           <p>Cet écran fera partie de SCOPE, mais il n’est pas construit dans le pilote P0. Utilisez Exercices pour la saisie nominative.</p>
           ${mode === 'live' && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
         </div>
+      </div>
+    `;
+  }
+
+  function objectifPorteeLabel(row) {
+    if (row.scope === 'GLOBAL') return 'Global';
+    if (row.scope === 'DOMAINE') return `Domaine ${domaineLabel(row.domaineCode)}`;
+    const cible = state.referentiels.cibles.find((c) => c.cibleId === row.cibleId);
+    if (cible) return `${domaineLabel(cible.domaineCode)} / ${cible.niveauCode}`;
+    return row.cibleId ? `Cible ${row.cibleId.slice(0, 8)}` : 'Cible';
+  }
+
+  function renderObjectifs() {
+    const form = state.objectifForm;
+    const cibles = state.referentiels.cibles.filter((c) => c.domaineCode === form.domaineCode);
+    const rows = state.objectifs || [];
+    const action = state.objectifAction;
+    const focus = rows.find((row) => row.objectifId === state.objectifFocusId);
+    return `
+      <div class="scope-crumb">Réglages / Objectifs</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">Objectifs de participation</h2>
+          <p class="scope-mode-hint">Référentiel temporel du KPI officiel SCOPE (nominatif + quantitatif réalisé). Un changement de seuil ouvre une nouvelle période : l’historique n’est pas réécrit. Aucun objectif réel du SDIS n’est proposé ici.</p>
+          <div class="scope-actions" style="margin:12px 0">
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-add">Ajouter</button>
+          </div>
+          <div class="scope-table-wrap">
+            <table class="scope-table">
+              <thead><tr><th>Portée</th><th>Seuil</th><th>Début</th><th>Fin</th><th>Statut</th><th></th></tr></thead>
+              <tbody>
+                ${rows.map((row) => `
+                  <tr>
+                    <td data-label="Portée">${escapeHtml(objectifPorteeLabel(row))}</td>
+                    <td data-label="Seuil">${escapeHtml(L.formatTaux(row.thresholdPct))}</td>
+                    <td data-label="Début">${escapeHtml(L.formatDate(row.dateDebut))}</td>
+                    <td data-label="Fin">${row.dateFin ? escapeHtml(L.formatDate(row.dateFin)) : 'Ouverte'}</td>
+                    <td data-label="Statut">${escapeHtml(row.statut === 'NEUTRALISE' ? 'Neutralisé' : row.statut === 'CLOTURE' ? 'Clôturé' : 'Ouvert')}</td>
+                    <td data-label="Actions">
+                      ${row.actif && !row.dateFin ? `<button type="button" class="scope-btn" data-obj-cloturer="${row.objectifId}">Clôturer</button>` : ''}
+                      ${row.actif ? `<button type="button" class="scope-btn" data-obj-periode="${row.objectifId}">Nouvelle période</button>` : ''}
+                      ${row.actif ? `<button type="button" class="scope-btn" data-obj-neutraliser="${row.objectifId}">Neutraliser</button>` : ''}
+                    </td>
+                  </tr>
+                `).join('') || `<tr><td colspan="6">${escapeHtml(L.emptyMessage('objectifs'))}</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        ${action === 'create' ? `
+        <div class="scope-card" style="margin-top:16px;max-width:640px">
+          <h3 style="margin-top:0">Ajouter un objectif</h3>
+          <div class="scope-field"><label>Portée</label>
+            <select id="obj-portee">
+              <option value="GLOBAL" ${form.portee === 'GLOBAL' ? 'selected' : ''}>Global</option>
+              <option value="DOMAINE" ${form.portee === 'DOMAINE' ? 'selected' : ''}>Domaine</option>
+              <option value="CIBLE" ${form.portee === 'CIBLE' ? 'selected' : ''}>Cible</option>
+            </select>
+          </div>
+          ${form.portee !== 'GLOBAL' ? `<div class="scope-field" style="margin-top:8px"><label>Domaine</label>
+            <select id="obj-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === form.domaineCode ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
+          </div>` : ''}
+          ${form.portee === 'CIBLE' ? `<div class="scope-field" style="margin-top:8px"><label>Cible</label>
+            <select id="obj-cible">${cibles.map((c) => `<option value="${c.cibleId}" ${c.cibleId === form.cibleId ? 'selected' : ''}>${escapeHtml(c.niveauCode)}</option>`).join('')}</select>
+          </div>` : ''}
+          <div class="scope-field" style="margin-top:8px"><label>Seuil %</label><input id="obj-seuil" type="number" min="0" max="100" step="0.1" value="${escapeHtml(form.seuilPct)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Date de début</label><input id="obj-debut" type="date" value="${escapeHtml(form.dateDebut)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Date de fin (facultative)</label><input id="obj-fin" type="date" value="${escapeHtml(form.dateFin)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Commentaire</label><textarea id="obj-commentaire">${escapeHtml(form.commentaire)}</textarea></div>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-save">Enregistrer</button>
+            <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
+          </div>
+        </div>` : ''}
+        ${action === 'cloturer' && focus ? `
+        <div class="scope-card" style="margin-top:16px;max-width:640px">
+          <h3 style="margin-top:0">Clôturer la période</h3>
+          <p>${escapeHtml(objectifPorteeLabel(focus))} · ${escapeHtml(L.formatTaux(focus.thresholdPct))}</p>
+          <div class="scope-field"><label>Date de fin</label><input id="obj-cloture-date" type="date" value="${escapeHtml(form.dateFin || form.dateDebut)}"></div>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-cloture-save">Clôturer</button>
+            <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
+          </div>
+        </div>` : ''}
+        ${action === 'periode' && focus ? `
+        <div class="scope-card" style="margin-top:16px;max-width:640px">
+          <h3 style="margin-top:0">Préparer une nouvelle période</h3>
+          <p>La période précédente sera clôturée la veille. L’historique conserve l’ancien seuil.</p>
+          <div class="scope-field"><label>Nouveau début</label><input id="obj-periode-debut" type="date" value="${escapeHtml(form.dateDebut)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Nouveau seuil %</label><input id="obj-periode-seuil" type="number" min="0" max="100" step="0.1" value="${escapeHtml(form.seuilPct)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Fin (facultative)</label><input id="obj-periode-fin" type="date" value="${escapeHtml(form.dateFin)}"></div>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-periode-save">Créer la période</button>
+            <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
+          </div>
+        </div>` : ''}
       </div>
     `;
   }
@@ -995,11 +1114,12 @@
     const r = route();
     const body = r.screen === 'vue' ? renderPlaceholder('Vue d’ensemble', 'Vue d’ensemble')
       : r.screen === 'personnel' ? renderPlaceholder('Personnel', 'Personnel')
-        : r.screen === 'nouveau' ? renderNouveau()
-          : r.screen === 'saisie' ? renderSaisie()
-            : r.screen === 'fiche' ? renderFiche()
-              : r.screen === 'import' ? renderImport()
-                : renderListe();
+        : r.screen === 'objectifs' ? renderObjectifs()
+          : r.screen === 'nouveau' ? renderNouveau()
+            : r.screen === 'saisie' ? renderSaisie()
+              : r.screen === 'fiche' ? renderFiche()
+                : r.screen === 'import' ? renderImport()
+                  : renderListe();
     root.innerHTML = headerHtml(r.nav) + bannerHtml() + body + renderModalAllPresent() + renderModalCancel();
     bind();
     const statutSel = document.getElementById('filter-statut');
@@ -1053,6 +1173,98 @@
     document.getElementById('filter-domaine')?.addEventListener('change', (e) => {
       state.domaine = e.target.value;
       withLoading(loadList);
+    });
+    document.getElementById('obj-add')?.addEventListener('click', () => {
+      state.objectifAction = 'create';
+      state.objectifFocusId = null;
+      render();
+    });
+    document.getElementById('obj-cancel')?.addEventListener('click', () => {
+      state.objectifAction = null;
+      state.objectifFocusId = null;
+      render();
+    });
+    document.getElementById('obj-portee')?.addEventListener('change', (e) => {
+      state.objectifForm.portee = e.target.value;
+      render();
+    });
+    document.getElementById('obj-domaine')?.addEventListener('change', (e) => {
+      state.objectifForm.domaineCode = e.target.value;
+      state.objectifForm.cibleId = '';
+      render();
+    });
+    root.querySelectorAll('[data-obj-cloturer]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.objectifAction = 'cloturer';
+        state.objectifFocusId = btn.getAttribute('data-obj-cloturer');
+        const row = state.objectifs.find((item) => item.objectifId === state.objectifFocusId);
+        state.objectifForm.dateFin = row && row.dateDebut ? row.dateDebut : '';
+        render();
+      });
+    });
+    root.querySelectorAll('[data-obj-periode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.objectifAction = 'periode';
+        state.objectifFocusId = btn.getAttribute('data-obj-periode');
+        const row = state.objectifs.find((item) => item.objectifId === state.objectifFocusId);
+        state.objectifForm.seuilPct = row ? String(row.thresholdPct) : '';
+        state.objectifForm.dateDebut = '';
+        state.objectifForm.dateFin = '';
+        render();
+      });
+    });
+    root.querySelectorAll('[data-obj-neutraliser]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-obj-neutraliser');
+        withLoading(async () => {
+          await client.desactiverObjectif(id, { motif: 'Neutralisation TEST / hors MOA' });
+          await loadObjectifs();
+          toast('success', 'Objectif neutralisé', 'Il ne s’applique plus, y compris à l’historique.');
+        });
+      });
+    });
+    document.getElementById('obj-save')?.addEventListener('click', () => {
+      const portee = (document.getElementById('obj-portee') || {}).value;
+      const domaineCode = (document.getElementById('obj-domaine') || {}).value;
+      const cibleId = (document.getElementById('obj-cible') || {}).value;
+      withLoading(async () => {
+        await client.createObjectif({
+          portee,
+          domaineCode: portee === 'GLOBAL' ? null : domaineCode,
+          cibleId: portee === 'CIBLE' ? cibleId : null,
+          seuilPct: document.getElementById('obj-seuil').value,
+          dateDebut: document.getElementById('obj-debut').value,
+          dateFin: document.getElementById('obj-fin').value || null,
+          commentaire: document.getElementById('obj-commentaire').value
+        });
+        state.objectifAction = null;
+        await loadObjectifs();
+        toast('success', 'Objectif enregistré', 'La nouvelle période est active pour le KPI officiel.');
+      });
+    });
+    document.getElementById('obj-cloture-save')?.addEventListener('click', () => {
+      const id = state.objectifFocusId;
+      withLoading(async () => {
+        await client.cloturerObjectif(id, { dateFin: document.getElementById('obj-cloture-date').value });
+        state.objectifAction = null;
+        state.objectifFocusId = null;
+        await loadObjectifs();
+        toast('success', 'Période clôturée', 'L’historique conserve ce seuil jusqu’à la date de fin.');
+      });
+    });
+    document.getElementById('obj-periode-save')?.addEventListener('click', () => {
+      const id = state.objectifFocusId;
+      withLoading(async () => {
+        await client.nouvellePeriodeObjectif(id, {
+          dateDebut: document.getElementById('obj-periode-debut').value,
+          seuilPct: document.getElementById('obj-periode-seuil').value,
+          dateFin: document.getElementById('obj-periode-fin').value || null
+        });
+        state.objectifAction = null;
+        state.objectifFocusId = null;
+        await loadObjectifs();
+        toast('success', 'Nouvelle période', 'L’ancien seuil reste applicable sur sa période.');
+      });
     });
     document.getElementById('scope-new')?.addEventListener('click', () => go('#/exercices/nouveau'));
     document.getElementById('scope-import-preview')?.addEventListener('click', () => {
@@ -1400,6 +1612,7 @@
         state.personCount = (people.personnes || []).length;
       }
       if (r.screen === 'liste') await loadList();
+      if (r.screen === 'objectifs') await loadObjectifs();
       if (r.screen === 'personnel' && client.listPersonnes) {
         const people = await client.listPersonnes();
         state.personCount = (people.personnes || []).length;

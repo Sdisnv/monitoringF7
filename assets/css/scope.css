@@ -183,7 +183,8 @@ html, body {
 
 .scope-header-menu-panel.open { display: block; }
 
-.scope-header-menu-panel button {
+.scope-header-menu-panel button,
+.scope-header-menu-panel a {
   display: flex;
   width: 100%;
   border: 0;
@@ -195,10 +196,14 @@ html, body {
   font-weight: 700;
   font-size: var(--scope-fs-secondary);
   cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .scope-header-menu-panel button:hover,
-.scope-header-menu-panel button[aria-current="page"] {
+.scope-header-menu-panel button[aria-current="page"],
+.scope-header-menu-panel a:hover,
+.scope-header-menu-panel a[aria-current="page"] {
   background: var(--scope-red-soft);
   color: var(--scope-red);
 }
