@@ -145,13 +145,18 @@ html, body {
 }
 
 .scope-header select {
-  background: rgba(0, 0, 0, 0.22);
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(0, 0, 0, 0.28);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='white' d='M1.2 1.2 L6 6 L10.8 1.2' stroke='white' stroke-width='1.4' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--scope-radius-sm);
   height: 40px;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0 28px 0 12px;
   font-size: var(--scope-fs-secondary);
   font-family: inherit;
   color-scheme: dark;
