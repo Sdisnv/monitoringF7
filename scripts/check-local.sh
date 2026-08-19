@@ -56,6 +56,8 @@ grep -q "scope-confirm-live" assets/js/scope-ui.js
 grep -q "Importer un programme CSV" assets/js/scope-ui.js
 grep -q "imports/evenements/preview" netlify/functions/scope.js
 grep -q "imports/evenements/commit" netlify/functions/scope.js
+grep -qF "require('../../assets/js/scope-csv-import.js')" netlify/functions/_scope-csv-import.js
+grep -qF 'included_files = ["assets/js/scope-csv-import.js"]' netlify.scope.toml
 grep -q "scope-data-5" netlify/functions/_scope-schema.js
 grep -q "scope-data-5-r1" netlify/functions/_scope-schema.js
 grep -q "portee" netlify/functions/_scope-schema.js

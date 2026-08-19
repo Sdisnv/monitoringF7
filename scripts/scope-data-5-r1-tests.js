@@ -211,6 +211,14 @@ async function seedY4(repo){
     assert.strictEqual(parsed.error, 'profil_csv_non_supporte');
   });
 
+  await record('Wrapper CSV bundlé (require statique, pas path.join)', async () => {
+    const wrapper = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-csv-import.js'), 'utf8');
+    assert.ok(wrapper.includes("require('../../assets/js/scope-csv-import.js')"));
+    assert.ok(!/path\.join/.test(wrapper));
+    const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
+    assert.ok(toml.includes('included_files = ["assets/js/scope-csv-import.js"]'));
+  });
+
   await record('Aucun impact Monitoring v67 / ORION', async () => {
     const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
     assert.ok(index.includes('Monitoring F7 v67.0'));

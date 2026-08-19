@@ -695,7 +695,6 @@ function createScopeService(repo){
               modele: line.source.modele || line.libelle,
               libelle: line.libelle,
               nb_permutation: line.numbers.nb_permutation,
-              nb_permutation: line.numbers.nb_permutation,
               nb_ext_dap_y1: line.numbers.nb_ext_dap_y1,
               nb_ext_dap_y2: line.numbers.nb_ext_dap_y2,
               nb_ext_dap_y3: line.numbers.nb_ext_dap_y3,
