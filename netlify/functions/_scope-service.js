@@ -10,6 +10,7 @@ const {
   rangesOverlap,
   ROLES_ENCADREMENT
 } = require('./_scope-rules');
+const csvImport = require('./_scope-csv-import');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -480,7 +481,11 @@ function createScopeService(repo){
     const participations = await repo.listParticipations(evenement.evenement_id);
     const compteurs = computeTaux(participations, attendus);
     const attendusInclus = attendus.filter(a => a.inclus !== false).length;
-    return { evenement, cibles, compteurs, attendusInclus };
+    let legacy = null;
+    if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
+      legacy = await repo.getLegacyByEvenementId(evenement.evenement_id);
+    }
+    return { evenement, cibles, compteurs, attendusInclus, legacy };
   }
 
   async function listEvenements(query){
@@ -524,6 +529,10 @@ function createScopeService(repo){
       ...participations.map(p => p.personne_id)
     ]);
     const journal = await repo.listJournal('evenement', eventId);
+    let legacy = null;
+    if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
+      legacy = await repo.getLegacyByEvenementId(eventId);
+    }
     return {
       evenement,
       cibles,
@@ -533,6 +542,7 @@ function createScopeService(repo){
       personnes,
       journal,
       compteurs: taux,
+      legacy,
       version: evenement.version
     };
   }
@@ -540,22 +550,244 @@ function createScopeService(repo){
   async function tauxEvenement(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-    if(evenement.origine === 'LEGACY_AGGREGATED' || evenement.statut !== 'REALISE'){
+    if(evenement.origine === 'LEGACY_AGGREGATED'){
+      const legacy = repo.getLegacyByEvenementId
+        ? await repo.getLegacyByEvenementId(eventId)
+        : null;
+      const payload = (legacy && legacy.payload_v67) || {};
+      const presents = legacy ? Number(legacy.nb_presents) : 0;
+      const attendu = Number(payload.total_attendu || legacy?.nb_convoques || 0);
+      return {
+        numerator: presents,
+        denominator: attendu,
+        percentage: csvImport.legacyTaux({
+          nb_presents: presents,
+          total_attendu: attendu,
+          nb_convoques: legacy?.nb_convoques
+        }),
+        presents,
+        officiel: false,
+        kind: 'LEGACY',
+        exclus: { nonRealise: true, legacy: true }
+      };
+    }
+    if(evenement.statut !== 'REALISE'){
       const attendus = await repo.listAttendus(eventId);
       const participations = await repo.listParticipations(eventId);
       const taux = computeTaux(participations, attendus);
       return {
         ...taux,
-        officiel: evenement.statut === 'REALISE' && evenement.origine !== 'LEGACY_AGGREGATED',
+        officiel: false,
         exclus: {
-          nonRealise: evenement.statut !== 'REALISE',
-          legacy: evenement.origine === 'LEGACY_AGGREGATED'
+          nonRealise: true,
+          legacy: false
         }
       };
     }
     const attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
-    return { ...computeTaux(participations, attendus), officiel: true };
+    return { ...computeTaux(participations, attendus), officiel: true, kind: 'NOMINATIF' };
+  }
+
+  async function rulesMap(){
+    if(!repo.listReglesBascule) return {};
+    const rows = await repo.listReglesBascule();
+    const map = {};
+    for(const row of rows){
+      map[row.domaine_code] = isoDate(row.date_bascule);
+    }
+    return map;
+  }
+
+  async function previewContext(){
+    const [domaines, cibles, rulesByDomaine, existingEvents, importedFingerprints] = await Promise.all([
+      repo.listDomaines(),
+      repo.listCibles(),
+      rulesMap(),
+      repo.listEvenements({}),
+      repo.listImportedFingerprints ? repo.listImportedFingerprints() : []
+    ]);
+    return { domaines, cibles, rulesByDomaine, existingEvents, importedFingerprints };
+  }
+
+  function previewFromCsv(csvText, context){
+    const parsed = csvImport.parseExercicesCsv(csvText);
+    if(!parsed.ok){
+      throw new HttpError(400, parsed.error, parsed.message, { header: parsed.header, missing: parsed.missing });
+    }
+    const lignes = csvImport.buildPreviewRows(parsed, context);
+    const summary = csvImport.summarizePreview(lignes);
+    return {
+      separator: parsed.separator,
+      encoding: parsed.encoding,
+      header: parsed.header,
+      extra: parsed.extra,
+      lignes,
+      summary
+    };
+  }
+
+  async function previewImportEvenements(body){
+    const csvText = String(body?.csvText || body?.csv || '');
+    const preview = previewFromCsv(csvText, await previewContext());
+    return { ...preview, ecriture: false };
+  }
+
+  async function commitImportEvenements(body, actor){
+    const csvText = String(body?.csvText || body?.csv || '');
+    const filename = String(body?.filename || body?.sourceFilename || '').slice(0, 240);
+    const excluded = new Set(
+      (Array.isArray(body?.excludedLineNos) ? body.excludedLineNos : [])
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n > 0)
+    );
+    const preview = previewFromCsv(csvText, await previewContext());
+    const included = preview.lignes.filter((l) => !excluded.has(l.ligneNo));
+    const erreurs = included.filter((l) => l.statut === 'ERREUR' && !l.dejaImporte);
+    if(erreurs.length){
+      throw new HttpError(422, 'import_refuse', 'Des lignes en erreur doivent être corrigées ou exclues avant commit.', {
+        erreurs: erreurs.map((l) => ({ ligneNo: l.ligneNo, code: l.code, raison: l.raison })),
+        summary: preview.summary
+      });
+    }
+    if(!included.length){
+      throw new HttpError(400, 'import_vide', 'Aucune ligne à importer.');
+    }
+
+    return repo.withTransaction(async (tx) => {
+      const sourceSha = csvImport.sha256Hex(csvText);
+      const created = [];
+      const skipped = [];
+      const imported = [];
+
+      for(const line of included){
+        if(line.dejaImporte || line.actionPrevue === 'IGNORER_DEJA_IMPORTE'){
+          skipped.push({ ligneNo: line.ligneNo, statut: 'DEJA_IMPORTE', fingerprint: line.fingerprint });
+          continue;
+        }
+        const origine = line.typePropose === 'LEGACY' ? 'LEGACY_AGGREGATED' : 'NOMINATIF';
+        const evenement = await tx.insertEvenement({
+          date: line.date,
+          domaine_code: line.domaine,
+          libelle: line.libelle,
+          statut: 'PLANIFIE',
+          origine,
+          cible_ids: line.cibleId ? [line.cibleId] : []
+        });
+        let legacy = null;
+        if(line.typePropose === 'LEGACY'){
+          legacy = await tx.insertLegacy({
+            source_record_id: line.fingerprint,
+            date: line.date,
+            domaine_code: line.domaine,
+            libelle: line.libelle,
+            nb_convoques: line.numbers.nb_convoques,
+            nb_presents: line.numbers.nb_presents,
+            nb_excuses: line.numbers.nb_excuses_total,
+            nb_absents: line.numbers.nb_absents_non_excuses,
+            evenement_id: evenement.evenement_id,
+            fingerprint: line.fingerprint,
+            payload_v67: {
+              provenance: 'CSV_MONITORING_F7',
+              format: 'monitoring_exercices_sdis_22cols',
+              a_comptabiliser: line.aComptabiliser,
+              public_cible: line.publicCible,
+              modele: line.libelle,
+              nb_permutation: line.numbers.nb_permutation,
+              nb_ext_dap_y1: line.numbers.nb_ext_dap_y1,
+              nb_ext_dap_y2: line.numbers.nb_ext_dap_y2,
+              nb_ext_dap_y3: line.numbers.nb_ext_dap_y3,
+              nb_ext_dap_y4: line.numbers.nb_ext_dap_y4,
+              nb_ext_dap_total: line.numbers.nb_ext_dap_total,
+              nb_excuses_maladie: line.numbers.nb_excuses_maladie,
+              nb_excuses_accident: line.numbers.nb_excuses_accident,
+              nb_excuses_professionnel: line.numbers.nb_excuses_professionnel,
+              nb_excuses_prive: line.numbers.nb_excuses_prive,
+              total_detail: line.numbers.total_detail,
+              total_attendu: line.numbers.total_attendu,
+              remarque: line.source.remarque,
+              source: line.source
+            }
+          });
+        }
+        created.push({
+          ligneNo: line.ligneNo,
+          evenementId: evenement.evenement_id,
+          legacyId: legacy ? legacy.legacy_id : null,
+          typePropose: line.typePropose
+        });
+        imported.push({ line, evenement, legacy });
+      }
+
+      const importRow = await tx.insertImport({
+        source_filename: filename || null,
+        source_sha256: sourceSha,
+        imported_par: actorId(actor),
+        statut: 'COMMITE',
+        nb_lignes: preview.lignes.length,
+        rapport: {
+          imported: created.length,
+          skipped: skipped.length,
+          excluded: [...excluded]
+        }
+      });
+
+      for(const line of preview.lignes){
+        if(excluded.has(line.ligneNo)){
+          await tx.insertImportLigne({
+            import_id: importRow.import_id,
+            ligne_no: line.ligneNo,
+            fingerprint: line.fingerprint,
+            statut: 'EXCLU',
+            type_propose: line.typePropose,
+            payload_source: line.source,
+            raison: line.raison,
+            action: 'EXCLU'
+          });
+          continue;
+        }
+        const done = imported.find((item) => item.line.ligneNo === line.ligneNo);
+        const skip = skipped.find((item) => item.ligneNo === line.ligneNo);
+        await tx.insertImportLigne({
+          import_id: importRow.import_id,
+          ligne_no: line.ligneNo,
+          fingerprint: line.fingerprint,
+          statut: skip ? 'DEJA_IMPORTE' : 'IMPORTE',
+          type_propose: line.typePropose,
+          evenement_id: done ? done.evenement.evenement_id : null,
+          legacy_id: done && done.legacy ? done.legacy.legacy_id : null,
+          payload_source: line.source,
+          raison: line.raison,
+          action: skip ? 'IGNORER_DEJA_IMPORTE' : line.actionPrevue
+        });
+      }
+
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'import',
+        entite_id: importRow.import_id,
+        action: 'IMPORTER_EVENEMENTS',
+        apres: {
+          filename,
+          imported: created.length,
+          skipped: skipped.length,
+          excluded: [...excluded]
+        }
+      });
+
+      return {
+        importId: importRow.import_id,
+        created,
+        skipped,
+        excluded: [...excluded],
+        summary: {
+          nbLignes: preview.lignes.length,
+          imported: created.length,
+          dejaImporte: skipped.length,
+          exclus: excluded.size
+        }
+      };
+    });
   }
 
   async function assertNoAffectationOverlap(personneId, cibleId, dateDebut, dateFin, ignoreId){
@@ -587,6 +819,8 @@ function createScopeService(repo){
     annulerEvenement,
     lireEvenement,
     tauxEvenement,
+    previewImportEvenements,
+    commitImportEvenements,
     assertNoAffectationOverlap,
     computeTaux
   };

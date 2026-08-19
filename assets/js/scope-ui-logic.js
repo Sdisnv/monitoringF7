@@ -65,6 +65,7 @@
     const parts = path.split('/').filter(Boolean);
     if (!parts.length || parts[0] === 'exercices') {
       if (parts[1] === 'nouveau') return { screen: 'nouveau', nav: 'exercices' };
+      if (parts[1] === 'import') return { screen: 'import', nav: 'exercices' };
       if (parts[1] && parts[2] === 'saisie') return { screen: 'saisie', nav: 'exercices', id: parts[1] };
       if (parts[1]) return { screen: 'fiche', nav: 'exercices', id: parts[1] };
       return { screen: 'liste', nav: 'exercices' };
@@ -74,7 +75,8 @@
     return { screen: 'liste', nav: 'exercices' };
   }
 
-  function principalCta({ statut, populationFigee, previewReady }) {
+  function principalCta({ statut, populationFigee, previewReady, origine }) {
+    if (origine === 'LEGACY_AGGREGATED') return null;
     if (statut && statut !== 'PLANIFIE') return null;
     if (populationFigee) return { action: 'saisir', label: 'Saisir les participations' };
     if (previewReady) return { action: 'figer', label: 'Figer la population' };
@@ -172,10 +174,23 @@
     return cibles.map((c) => c.niveau_code || c.niveauCode || c.libelle || c).join(' · ');
   }
 
-  function displayTauxForList(statut, officiel, percentage) {
+  function displayTauxForList(statut, officiel, percentage, extra) {
+    if (extra && extra.origine === 'LEGACY_AGGREGATED') {
+      const label = formatTaux(percentage);
+      return label === '—' ? 'Non nominatif' : `${label} · non nominatif`;
+    }
     if (statut !== 'REALISE') return '—';
     if (officiel === false) return '—';
     return formatTaux(percentage);
+  }
+
+  function legacyTauxFromRow(legacy) {
+    if (!legacy) return null;
+    const presents = Number(legacy.nb_presents);
+    const payload = legacy.payload_v67 || legacy.payloadV67 || {};
+    const attendu = Number(payload.total_attendu || legacy.nb_convoques);
+    if (!Number.isFinite(presents) || !Number.isFinite(attendu) || attendu <= 0) return null;
+    return Math.round((100 * presents) / attendu * 10) / 10;
   }
 
   function emptyMessage(kind) {
@@ -223,6 +238,7 @@
     friendlyError,
     ciblesLabel,
     displayTauxForList,
+    legacyTauxFromRow,
     emptyMessage,
     resolveClientMode,
     oktaLoginHref

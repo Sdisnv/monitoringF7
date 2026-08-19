@@ -27,11 +27,63 @@ function createMemoryRepo(){
   const participations = new Map();
   const legacy = new Map();
   const journal = [];
+  const reglesBascule = new Map();
+  const imports = new Map();
+  const importLignes = new Map();
+  let txLevel = 0;
 
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
+  function keyLigne(importId, ligneNo){ return `${importId}::${ligneNo}`; }
+
+  function cloneMap(map){
+    return new Map([...map.entries()].map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]));
+  }
+
+  function snapshot(){
+    return {
+      personnes: cloneMap(personnes),
+      affectations: cloneMap(affectations),
+      evenements: cloneMap(evenements),
+      evenementCibles: new Map([...evenementCibles.entries()].map(([k, v]) => [k, [...v]])),
+      attendus: cloneMap(attendus),
+      participations: cloneMap(participations),
+      legacy: cloneMap(legacy),
+      journal: JSON.parse(JSON.stringify(journal)),
+      reglesBascule: cloneMap(reglesBascule),
+      imports: cloneMap(imports),
+      importLignes: cloneMap(importLignes)
+    };
+  }
+
+  function restore(snap){
+    personnes.clear(); snap.personnes.forEach((v, k) => personnes.set(k, v));
+    affectations.clear(); snap.affectations.forEach((v, k) => affectations.set(k, v));
+    evenements.clear(); snap.evenements.forEach((v, k) => evenements.set(k, v));
+    evenementCibles.clear(); snap.evenementCibles.forEach((v, k) => evenementCibles.set(k, v));
+    attendus.clear(); snap.attendus.forEach((v, k) => attendus.set(k, v));
+    participations.clear(); snap.participations.forEach((v, k) => participations.set(k, v));
+    legacy.clear(); snap.legacy.forEach((v, k) => legacy.set(k, v));
+    journal.splice(0, journal.length, ...snap.journal);
+    reglesBascule.clear(); snap.reglesBascule.forEach((v, k) => reglesBascule.set(k, v));
+    imports.clear(); snap.imports.forEach((v, k) => imports.set(k, v));
+    importLignes.clear(); snap.importLignes.forEach((v, k) => importLignes.set(k, v));
+  }
 
   const api = {
-    async withTransaction(fn){ return fn(api); },
+    async withTransaction(fn){
+      if(txLevel > 0) return fn(api);
+      const snap = snapshot();
+      txLevel += 1;
+      try{
+        const result = await fn(api);
+        txLevel -= 1;
+        return result;
+      }catch(error){
+        restore(snap);
+        txLevel -= 1;
+        throw error;
+      }
+    },
     async listDomaines(){ return domaines.filter(d => d.actif !== false); },
     async listCibles(){ return cibles.filter(c => c.actif !== false); },
     async getCible(id){ return cibles.find(c => c.cible_id === id) || null; },
@@ -219,6 +271,8 @@ function createMemoryRepo(){
         nb_excuses: row.nb_excuses ?? null,
         nb_absents: row.nb_absents ?? null,
         payload_v67: row.payload_v67 || null,
+        evenement_id: row.evenement_id || null,
+        fingerprint: row.fingerprint || null,
         created_at: now(),
         updated_at: now()
       };
@@ -226,6 +280,69 @@ function createMemoryRepo(){
       return item;
     },
     async listLegacy(){ return [...legacy.values()]; },
+    async getLegacyByEvenementId(eventId){
+      return [...legacy.values()].find(item => item.evenement_id === eventId) || null;
+    },
+    async listReglesBascule(){
+      return [...reglesBascule.values()];
+    },
+    async upsertRegleBascule(row){
+      const item = {
+        domaine_code: row.domaine_code,
+        date_bascule: isoDate(row.date_bascule),
+        commentaire: row.commentaire || null,
+        updated_at: now()
+      };
+      reglesBascule.set(item.domaine_code, item);
+      return item;
+    },
+    async insertImport(row){
+      const item = {
+        import_id: row.import_id || randomUUID(),
+        source_filename: row.source_filename || null,
+        source_sha256: row.source_sha256 || null,
+        imported_at: now(),
+        imported_par: row.imported_par || null,
+        statut: row.statut || 'COMMITE',
+        nb_lignes: row.nb_lignes || 0,
+        rapport: row.rapport || null
+      };
+      imports.set(item.import_id, item);
+      return item;
+    },
+    async insertImportLigne(row){
+      const item = {
+        import_id: row.import_id,
+        ligne_no: row.ligne_no,
+        fingerprint: row.fingerprint,
+        statut: row.statut,
+        type_propose: row.type_propose || null,
+        evenement_id: row.evenement_id || null,
+        legacy_id: row.legacy_id || null,
+        payload_source: row.payload_source || null,
+        raison: row.raison || null,
+        action: row.action || null
+      };
+      importLignes.set(keyLigne(item.import_id, item.ligne_no), item);
+      return item;
+    },
+    async listImportedFingerprints(){
+      return [...importLignes.values()]
+        .filter(l => l.statut === 'IMPORTE')
+        .map(l => l.fingerprint);
+    },
+    async countTable(name){
+      const map = {
+        scope_personnes: personnes.size,
+        scope_evenements: evenements.size,
+        scope_attendus: attendus.size,
+        scope_participations: participations.size,
+        scope_legacy_aggregates: legacy.size,
+        scope_imports: imports.size,
+        scope_import_lignes: importLignes.size
+      };
+      return map[name] ?? 0;
+    },
     async appendJournal(row){
       const item = {
         journal_id: randomUUID(),

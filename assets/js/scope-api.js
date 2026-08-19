@@ -108,7 +108,9 @@
       cloturer(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/cloturer`, withBaseVersion({}, baseVersion)); },
       reouvrir(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/reouvrir`, withBaseVersion({ motif }, baseVersion)); },
       annuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/annuler`, withBaseVersion({ motif }, baseVersion)); },
-      taux(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/taux`); }
+      taux(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/taux`); },
+      previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
+      commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); }
     };
   }
 

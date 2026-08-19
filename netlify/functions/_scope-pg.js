@@ -287,12 +287,14 @@ function createPgRepo(client){
       const result = await q(
         `insert into scope_legacy_aggregates(
            legacy_id, source_record_id, date, domaine_code, libelle,
-           nb_convoques, nb_presents, nb_excuses, nb_absents, payload_v67
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb) returning *`,
+           nb_convoques, nb_presents, nb_excuses, nb_absents, payload_v67,
+           evenement_id, fingerprint
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12) returning *`,
         [
           id, row.source_record_id || null, isoDate(row.date), row.domaine_code, row.libelle || null,
           row.nb_convoques ?? null, row.nb_presents ?? null, row.nb_excuses ?? null, row.nb_absents ?? null,
-          JSON.stringify(row.payload_v67 || {})
+          JSON.stringify(row.payload_v67 || {}),
+          row.evenement_id || null, row.fingerprint || null
         ]
       );
       return result.rows[0];
@@ -300,6 +302,72 @@ function createPgRepo(client){
     async listLegacy(){
       const result = await q('select * from scope_legacy_aggregates order by date');
       return result.rows;
+    },
+    async getLegacyByEvenementId(eventId){
+      const result = await q(
+        'select * from scope_legacy_aggregates where evenement_id = $1',
+        [eventId]
+      );
+      return result.rows[0] || null;
+    },
+    async listReglesBascule(){
+      const result = await q('select * from scope_regles_bascule');
+      return result.rows;
+    },
+    async upsertRegleBascule(row){
+      const result = await q(
+        `insert into scope_regles_bascule(domaine_code, date_bascule, commentaire)
+         values ($1,$2,$3)
+         on conflict (domaine_code) do update set
+           date_bascule = excluded.date_bascule,
+           commentaire = excluded.commentaire,
+           updated_at = now()
+         returning *`,
+        [row.domaine_code, isoDate(row.date_bascule), row.commentaire || null]
+      );
+      return result.rows[0];
+    },
+    async insertImport(row){
+      const id = row.import_id || randomUUID();
+      const result = await q(
+        `insert into scope_imports(
+           import_id, source_filename, source_sha256, imported_par, statut, nb_lignes, rapport
+         ) values ($1,$2,$3,$4,$5,$6,$7::jsonb) returning *`,
+        [
+          id, row.source_filename || null, row.source_sha256 || null, row.imported_par || null,
+          row.statut || 'COMMITE', row.nb_lignes || 0, JSON.stringify(row.rapport || null)
+        ]
+      );
+      return result.rows[0];
+    },
+    async insertImportLigne(row){
+      const result = await q(
+        `insert into scope_import_lignes(
+           import_id, ligne_no, fingerprint, statut, type_propose,
+           evenement_id, legacy_id, payload_source, raison, action
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10) returning *`,
+        [
+          row.import_id, row.ligne_no, row.fingerprint, row.statut, row.type_propose || null,
+          row.evenement_id || null, row.legacy_id || null,
+          JSON.stringify(row.payload_source || null), row.raison || null, row.action || null
+        ]
+      );
+      return result.rows[0];
+    },
+    async listImportedFingerprints(){
+      const result = await q(
+        `select fingerprint from scope_import_lignes where statut = 'IMPORTE'`
+      );
+      return result.rows.map((r) => r.fingerprint);
+    },
+    async countTable(name){
+      const allowed = new Set([
+        'scope_personnes', 'scope_evenements', 'scope_attendus', 'scope_participations',
+        'scope_legacy_aggregates', 'scope_imports', 'scope_import_lignes'
+      ]);
+      if(!allowed.has(name)) return 0;
+      const result = await q(`select count(*)::int as n from ${name}`);
+      return result.rows[0].n;
     },
     async appendJournal(row){
       const result = await q(

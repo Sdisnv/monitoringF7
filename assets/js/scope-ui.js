@@ -1,4 +1,4 @@
-/* SCOPE-IMPL-1B — écrans P0 nominatifs. */
+/* SCOPE-IMPL-1B — écrans P0 nominatifs. SCOPE-DATA-5 — import CSV. */
 (function () {
   'use strict';
   const L = window.ScopeUiLogic;
@@ -51,7 +51,11 @@
     reopenMotif: '',
     session: null,
     needOkta: false,
-    personCount: null
+    personCount: null,
+    importFile: { filename: '', csvText: '', drag: false },
+    importPreview: null,
+    importExcluded: {},
+    importRapport: null
   };
 
   function toast(tone, title, message, extra) {
@@ -281,17 +285,31 @@
     const rows = state.list;
     const body = rows.length ? rows.map((item) => {
       const ev = item.evenement;
-      const taux = L.displayTauxForList(ev.statut, ev.statut === 'REALISE', item.compteurs && item.compteurs.percentage);
-      const action = ev.statut === 'PLANIFIE' && ev.population_figee ? 'Saisir' : 'Ouvrir';
-      const href = ev.statut === 'PLANIFIE' && ev.population_figee ? `#/exercices/${ev.evenement_id}/saisie` : `#/exercices/${ev.evenement_id}`;
+      const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
+      const legacyPct = isLegacy ? L.legacyTauxFromRow(item.legacy) : null;
+      const taux = L.displayTauxForList(
+        ev.statut,
+        ev.statut === 'REALISE',
+        isLegacy ? legacyPct : (item.compteurs && item.compteurs.percentage),
+        { origine: ev.origine }
+      );
+      const action = ev.statut === 'PLANIFIE' && ev.population_figee && !isLegacy ? 'Saisir' : 'Ouvrir';
+      const href = ev.statut === 'PLANIFIE' && ev.population_figee && !isLegacy ? `#/exercices/${ev.evenement_id}/saisie` : `#/exercices/${ev.evenement_id}`;
+      const statutHtml = isLegacy
+        ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
+        : statutBadge(ev.statut);
+      const attenduLegacy = item.legacy && ((item.legacy.payload_v67 && item.legacy.payload_v67.total_attendu) || item.legacy.nb_convoques);
+      const presents = isLegacy && item.legacy
+        ? `${item.legacy.nb_presents} / ${attenduLegacy}`
+        : (ev.statut === 'REALISE' ? (item.compteurs.presents ?? '—') : '—');
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
         <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine_code))}</td>
         <td data-label="Cible(s)">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
-        <td data-label="Statut">${statutBadge(ev.statut)}</td>
-        <td data-label="Attendus">${ev.population_figee ? item.attendusInclus : '—'}</td>
-        <td data-label="Présents">${ev.statut === 'REALISE' ? (item.compteurs.presents ?? '—') : '—'}</td>
+        <td data-label="Statut">${statutHtml}</td>
+        <td data-label="Attendus">${isLegacy ? '—' : (ev.population_figee ? item.attendusInclus : '—')}</td>
+        <td data-label="Présents">${presents}</td>
         <td data-label="Taux">${escapeHtml(taux)}</td>
         <td data-label="Action"><a class="scope-btn" href="${href}">${action}</a></td>
       </tr>`;
@@ -318,6 +336,7 @@
               ${state.referentiels.domaines.map((d) => `<option value="${d.code}">${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}
             </select>
           </div>
+          <a class="scope-btn" id="scope-import" href="#/exercices/import">Importer un programme CSV</a>
           <button type="button" class="scope-btn scope-btn-primary" id="scope-new">Nouvel exercice</button>
         </div>
         <div class="scope-card scope-table-wrap">
@@ -385,9 +404,24 @@
     const cta = L.principalCta({
       statut: ev.statut,
       populationFigee: ev.population_figee,
-      previewReady: Boolean(state.preview)
+      previewReady: Boolean(state.preview),
+      origine: ev.origine
     });
     const previewBlock = state.preview ? renderPreviewList() : '';
+    const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
+    const legacy = fiche.legacy;
+    const legacyPct = L.legacyTauxFromRow(legacy);
+    const legacyBlock = isLegacy && legacy ? `
+        <div class="scope-card" style="margin-top:12px">
+          <h3 style="margin-top:0">Historique agrégé</h3>
+          <p style="margin:0 0 8px;color:var(--scope-muted)">Non nominatif — ces chiffres ne sont jamais mélangés au taux SCOPE.</p>
+          <dl class="scope-meta">
+            <div><dt>Présents</dt><dd>${escapeHtml(String(legacy.nb_presents ?? '—'))} / ${escapeHtml(String((legacy.payload_v67 && legacy.payload_v67.total_attendu) || legacy.nb_convoques || '—'))}</dd></div>
+            <div><dt>Taux legacy</dt><dd>${escapeHtml(L.formatTaux(legacyPct))}</dd></div>
+            <div><dt>Comptabilisé</dt><dd>${legacy.payload_v67 && legacy.payload_v67.a_comptabiliser ? 'Oui' : 'Non'}</dd></div>
+            <div><dt>Permutation</dt><dd>${escapeHtml(String((legacy.payload_v67 && legacy.payload_v67.nb_permutation) ?? '—'))}</dd></div>
+          </dl>
+        </div>` : '';
     return `
       <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main">
@@ -397,12 +431,13 @@
             <div><dt>Date</dt><dd>${escapeHtml(L.formatDate(ev.date))}</dd></div>
             <div><dt>Domaine</dt><dd>${escapeHtml(domaineLabel(ev.domaine_code))}</dd></div>
             <div><dt>Cibles</dt><dd>${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</dd></div>
-            <div><dt>Statut</dt><dd>${statutBadge(ev.statut)}</dd></div>
+            <div><dt>Statut</dt><dd>${isLegacy ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>' : statutBadge(ev.statut)}</dd></div>
             <div><dt>Version</dt><dd>${escapeHtml(String(ev.version))}</dd></div>
-            <div><dt>Population</dt><dd>${ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée')}</dd></div>
+            <div><dt>Population</dt><dd>${isLegacy ? 'Aucune (legacy)' : (ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée'))}</dd></div>
           </dl>
-          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}</div>` : (ev.statut !== 'ANNULE' ? `<div class="scope-actions"><button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button></div>` : '')}
+          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}</div>` : (!isLegacy && ev.statut !== 'ANNULE' ? `<div class="scope-actions"><button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button></div>` : '')}
         </div>
+        ${legacyBlock}
         ${previewBlock}
       </div>
     `;
@@ -617,6 +652,71 @@
     </div></div>`;
   }
 
+  function importPill(statut) {
+    const cls = statut === 'ERREUR' ? 'err' : (statut === 'AVERTISSEMENT' ? 'warn' : 'ok');
+    return `<span class="scope-import-pill ${cls}">${escapeHtml(statut)}</span>`;
+  }
+
+  function renderImport() {
+    const live = mode === 'live' && typeof client.previewImportEvenements === 'function';
+    const preview = state.importPreview;
+    const rapport = state.importRapport;
+    const lignes = (preview && preview.lignes) || [];
+    const includedErrors = lignes.filter((l) => l.statut === 'ERREUR' && !state.importExcluded[l.ligneNo]);
+    const canCommit = live && preview && !rapport && includedErrors.length === 0 && lignes.some((l) => !state.importExcluded[l.ligneNo]);
+    const cards = lignes.map((l) => {
+      const excluded = Boolean(state.importExcluded[l.ligneNo]);
+      return `<article class="scope-import-card ${l.statut === 'ERREUR' ? 'is-error' : ''}">
+        <header>
+          <strong>Ligne ${l.ligneNo}</strong>
+          ${importPill(l.statut)}
+          <span class="scope-import-type">${escapeHtml(l.typePropose || '—')}</span>
+        </header>
+        <p class="scope-import-meta">${escapeHtml(L.formatDate(l.date))} · ${escapeHtml(l.domaine || '')} · ${escapeHtml(l.publicCible || l.niveauCode || '')}</p>
+        <p class="scope-import-libelle">${escapeHtml(l.libelle || '')}</p>
+        <p class="scope-import-reason">${escapeHtml(l.raison || '')}</p>
+        <p class="scope-import-action">Action : ${escapeHtml(l.actionPrevue || '—')}</p>
+        <label class="scope-import-exclude">
+          <input type="checkbox" data-exclude-line="${l.ligneNo}" ${excluded ? 'checked' : ''}>
+          Exclure cette ligne
+        </label>
+      </article>`;
+    }).join('');
+    return `
+      <div class="scope-crumb">Exercices / Importer un programme CSV</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">Importer un programme CSV</h2>
+          <p>Le CSV alimente SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
+          ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
+          <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
+            <p>Glissez un fichier CSV ici ou</p>
+            <label class="scope-btn">
+              Choisir un fichier
+              <input id="scope-import-file" type="file" accept=".csv,text/csv" hidden>
+            </label>
+            <p class="scope-import-file">${escapeHtml(state.importFile.filename || 'Aucun fichier')}</p>
+          </div>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn" id="scope-import-preview" ${!state.importFile.csvText || !live ? 'disabled' : ''}>Contrôler (preview)</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="scope-import-commit" ${canCommit ? '' : 'disabled'}>Confirmer l’import</button>
+            <a class="scope-btn" href="#/exercices">Retour à la liste</a>
+          </div>
+        </div>
+        ${preview ? `<div class="scope-card" style="margin-top:12px">
+          <h3 style="margin-top:0">Preview · ${preview.summary.nbLignes} ligne(s)</h3>
+          <p>Valides ${preview.summary.VALIDE || 0} · Avertissements ${preview.summary.AVERTISSEMENT || 0} · Erreurs ${preview.summary.ERREUR || 0}. Aucune écriture tant que vous n’avez pas confirmé.</p>
+          <div class="scope-import-list">${cards}</div>
+        </div>` : ''}
+        ${rapport ? `<div class="scope-card" style="margin-top:12px">
+          <h3 style="margin-top:0">Rapport d’import</h3>
+          <p>Importées : ${rapport.summary.imported} · Déjà présentes : ${rapport.summary.dejaImporte} · Exclues : ${rapport.summary.exclus}</p>
+          <div class="scope-actions"><a class="scope-btn scope-btn-primary" href="#/exercices">Retour à la liste</a></div>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
   function render() {
     const r = route();
     const body = r.screen === 'vue' ? renderPlaceholder('Vue d’ensemble', 'Vue d’ensemble')
@@ -624,7 +724,8 @@
         : r.screen === 'nouveau' ? renderNouveau()
           : r.screen === 'saisie' ? renderSaisie()
             : r.screen === 'fiche' ? renderFiche()
-              : renderListe();
+              : r.screen === 'import' ? renderImport()
+                : renderListe();
     root.innerHTML = headerHtml(r.nav) + bannerHtml() + body + renderModalAllPresent() + renderModalCancel();
     bind();
     const statutSel = document.getElementById('filter-statut');
@@ -680,6 +781,50 @@
       withLoading(loadList);
     });
     document.getElementById('scope-new')?.addEventListener('click', () => go('#/exercices/nouveau'));
+    document.getElementById('scope-import-preview')?.addEventListener('click', () => {
+      withLoading(async () => {
+        state.importRapport = null;
+        state.importPreview = await client.previewImportEvenements({
+          csvText: state.importFile.csvText,
+          filename: state.importFile.filename
+        });
+        state.importExcluded = {};
+      });
+    });
+    document.getElementById('scope-import-commit')?.addEventListener('click', () => {
+      const excludedLineNos = Object.keys(state.importExcluded).filter((k) => state.importExcluded[k]).map(Number);
+      withLoading(async () => {
+        state.importRapport = await client.commitImportEvenements({
+          csvText: state.importFile.csvText,
+          filename: state.importFile.filename,
+          excludedLineNos
+        });
+        toast('success', 'Import terminé', `${state.importRapport.summary.imported} événement(s) créé(s).`);
+      });
+    });
+    document.getElementById('scope-import-file')?.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) readImportFile(file);
+    });
+    const drop = document.getElementById('scope-import-drop');
+    if (drop) {
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); state.importFile.drag = true; drop.classList.add('is-drag'); });
+      drop.addEventListener('dragleave', () => { state.importFile.drag = false; drop.classList.remove('is-drag'); });
+      drop.addEventListener('drop', (e) => {
+        e.preventDefault();
+        state.importFile.drag = false;
+        drop.classList.remove('is-drag');
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) readImportFile(file);
+      });
+    }
+    root.querySelectorAll('[data-exclude-line]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const no = Number(input.getAttribute('data-exclude-line'));
+        state.importExcluded[no] = input.checked;
+        render();
+      });
+    });
     document.getElementById('new-domaine')?.addEventListener('change', (e) => {
       state.domaineForm = e.target.value;
       render();
@@ -905,6 +1050,23 @@
       state.needOkta = Boolean(info.okta) || Number(error && error.status) === 401;
       return false;
     }
+  }
+
+  function readImportFile(file) {
+    const name = String(file.name || '');
+    if (!/\.csv$/i.test(name)) {
+      toast('error', 'Fichier refusé', 'Seuls les fichiers CSV sont acceptés.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.importFile = { filename: name, csvText: String(reader.result || ''), drag: false };
+      state.importPreview = null;
+      state.importRapport = null;
+      state.importExcluded = {};
+      render();
+    };
+    reader.readAsText(file, 'UTF-8');
   }
 
   async function onRoute() {

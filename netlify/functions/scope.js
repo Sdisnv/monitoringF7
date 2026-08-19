@@ -141,6 +141,13 @@ exports.handler = async function(event){
       return response(200, { ok:true, ...(await service.patchEvenement(params.id, body, claims)) });
     }
 
+    if(method === 'POST' && path === '/imports/evenements/preview'){
+      return response(200, { ok:true, ...(await service.previewImportEvenements(body)) });
+    }
+    if(method === 'POST' && path === '/imports/evenements/commit'){
+      return response(200, { ok:true, ...(await service.commitImportEvenements(body, claims)) });
+    }
+
     return response(404, { ok:false, error:'not_found', path });
   }catch(error){
     if(error instanceof HttpError){
