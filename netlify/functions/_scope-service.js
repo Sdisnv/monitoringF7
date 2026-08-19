@@ -448,6 +448,43 @@ function createScopeService(repo){
     });
   }
 
+  async function summarizeEvenement(evenement){
+    const cibleIds = await repo.listEventCibleIds(evenement.evenement_id);
+    const allCibles = await repo.listCibles();
+    const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
+    const attendus = await repo.listAttendus(evenement.evenement_id);
+    const participations = await repo.listParticipations(evenement.evenement_id);
+    const compteurs = computeTaux(participations, attendus);
+    const attendusInclus = attendus.filter(a => a.inclus !== false).length;
+    return { evenement, cibles, compteurs, attendusInclus };
+  }
+
+  async function listEvenements(query){
+    const annee = query?.annee || query?.year || null;
+    const statut = query?.statut || query?.status || null;
+    const domaine = query?.domaineCode || query?.domaine_code || query?.domaine || null;
+    const evenements = await repo.listEvenements({
+      annee: annee ? Number(annee) : null,
+      statut: statut && statut !== 'tous' ? statut : null,
+      domaine: domaine && domaine !== 'tous' ? domaine : null
+    });
+    const items = [];
+    for(const evenement of evenements){
+      items.push(await summarizeEvenement(evenement));
+    }
+    return { evenements: items };
+  }
+
+  async function hydratePersonnes(ids){
+    const unique = [...new Set((ids || []).filter(Boolean).map(String))];
+    const personnes = {};
+    for(const id of unique){
+      const personne = await repo.getPersonne(id);
+      if(personne) personnes[id] = personne;
+    }
+    return personnes;
+  }
+
   async function lireEvenement(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
@@ -458,12 +495,19 @@ function createScopeService(repo){
     const participations = await repo.listParticipations(eventId);
     const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
     const taux = computeTaux(participations, attendus);
+    const personnes = await hydratePersonnes([
+      ...attendus.map(a => a.personne_id),
+      ...participations.map(p => p.personne_id)
+    ]);
+    const journal = await repo.listJournal('evenement', eventId);
     return {
       evenement,
       cibles,
       attendus,
       participations,
       encadrement,
+      personnes,
+      journal,
       compteurs: taux,
       version: evenement.version
     };
@@ -505,6 +549,7 @@ function createScopeService(repo){
     referentiels,
     listPersonnes,
     affectationsValides,
+    listEvenements,
     createEvenement,
     patchEvenement,
     previewAttendus,

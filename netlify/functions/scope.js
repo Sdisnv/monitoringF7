@@ -73,6 +73,9 @@ exports.handler = async function(event){
     if(method === 'GET' && params){
       return response(200, { ok:true, ...(await service.affectationsValides(params.id, queryOf(event).date)) });
     }
+    if(method === 'GET' && path === '/evenements'){
+      return response(200, { ok:true, ...(await service.listEvenements(queryOf(event))) });
+    }
     if(method === 'POST' && path === '/evenements'){
       return response(201, { ok:true, ...(await service.createEvenement(body, claims)) });
     }

@@ -1,0 +1,419 @@
+/* SCOPE-IMPL-1B — UI P0, famille visuelle ORION / SDIS. */
+:root {
+  --scope-red: #E30613;
+  --scope-red-dark: #b8050f;
+  --scope-bg: #F4F5F8;
+  --scope-card: #ffffff;
+  --scope-line: #d8dbe2;
+  --scope-text: #1c1f24;
+  --scope-muted: #6b7280;
+  --scope-ok: #1f7a3a;
+  --scope-warn: #b26a00;
+  --scope-error: #b42318;
+  --scope-max: 1340px;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--scope-bg);
+  color: var(--scope-text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+* { box-sizing: border-box; }
+
+.scope-app {
+  max-width: var(--scope-max);
+  margin: 0 auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.scope-header {
+  background: var(--scope-red);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scope-header img {
+  width: 44px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.scope-header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.scope-header .sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.92;
+}
+
+.scope-header-spacer { flex: 1; }
+
+.scope-user {
+  display: flex;
+  align-items: center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.scope-header select,
+.scope-header .scope-user {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 4px;
+  height: 36px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.scope-nav {
+  background: #fff;
+  border-bottom: 1px solid var(--scope-line);
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scope-nav button {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.scope-nav button[aria-current="page"] {
+  background: #f3f4f6;
+  border-color: var(--scope-line);
+  font-weight: 700;
+}
+
+.scope-crumb {
+  padding: 10px 16px 0;
+  color: var(--scope-muted);
+  font-size: 12px;
+}
+
+.scope-main {
+  padding: 16px;
+}
+
+.scope-card {
+  background: var(--scope-card);
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.scope-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.scope-field label {
+  display: block;
+  font-size: 12px;
+  color: var(--scope-muted);
+  margin-bottom: 4px;
+}
+
+.scope-field input,
+.scope-field select,
+.scope-field textarea {
+  height: 36px;
+  border: 1px solid var(--scope-line);
+  border-radius: 4px;
+  padding: 0 10px;
+  width: 100%;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.scope-field textarea { height: 72px; padding: 8px 10px; }
+
+.scope-btn {
+  height: 38px;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 4px;
+  border: 1px solid var(--scope-line);
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.scope-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.scope-btn-primary {
+  background: var(--scope-red);
+  border-color: var(--scope-red);
+  color: #fff;
+}
+
+.scope-btn-ghost { background: transparent; }
+
+.scope-banner {
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 16px 12px;
+  font-size: 13px;
+}
+
+.scope-banner.demo { background: #eef2ff; color: #1e3a8a; }
+.scope-banner.success { background: #ecfdf3; color: var(--scope-ok); }
+.scope-banner.warning { background: #fff7ed; color: var(--scope-warn); }
+.scope-banner.error { background: #fef3f2; color: var(--scope-error); }
+.scope-banner.info { background: #f3f4f6; color: var(--scope-text); }
+
+.scope-table-wrap { width: 100%; }
+
+.scope-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.scope-table th,
+.scope-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--scope-line);
+  vertical-align: middle;
+}
+
+.scope-table th {
+  font-size: 12px;
+  color: var(--scope-muted);
+  font-weight: 600;
+  background: #fafbfc;
+}
+
+.scope-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.scope-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: #9ca3af;
+  flex-shrink: 0;
+}
+
+.scope-dot.PLANIFIE { background: #9ca3af; }
+.scope-dot.REALISE { background: #1f7a3a; }
+.scope-dot.REPORTE { background: #d97706; }
+.scope-dot.ANNULE { background: #6b7280; }
+
+.scope-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--scope-muted);
+}
+
+.scope-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.scope-kpi {
+  background: #fafbfc;
+  border: 1px solid var(--scope-line);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.scope-kpi strong { display: block; font-size: 20px; }
+.scope-kpi span { color: var(--scope-muted); font-size: 12px; }
+
+.scope-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.scope-status-row button {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid var(--scope-line);
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.scope-status-row button[aria-pressed="true"] {
+  background: var(--scope-red);
+  border-color: var(--scope-red);
+  color: #fff;
+}
+
+.scope-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.scope-chips button {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--scope-line);
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.scope-chips button[aria-pressed="true"] {
+  border-color: var(--scope-red);
+  color: var(--scope-red);
+  font-weight: 700;
+}
+
+.scope-placeholder {
+  color: var(--scope-muted);
+  padding: 24px 8px;
+}
+
+.scope-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.scope-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  font-size: 13px;
+}
+
+.scope-meta dt { color: var(--scope-muted); font-size: 12px; }
+.scope-meta dd { margin: 0 0 8px; }
+
+.scope-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+}
+
+.scope-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 18, 22, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 40;
+}
+
+.scope-modal .scope-card { width: min(520px, 100%); }
+
+.scope-loading { color: var(--scope-muted); font-size: 13px; }
+
+.scope-person-card {
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.scope-person-card h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.scope-person-card .nip {
+  color: var(--scope-muted);
+  font-size: 12px;
+}
+
+.scope-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 1024px) {
+  .scope-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .scope-table thead { display: none; }
+  .scope-table, .scope-table tbody, .scope-table tr, .scope-table td {
+    display: block;
+    width: 100%;
+  }
+  .scope-table tr {
+    border: 1px solid var(--scope-line);
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 8px;
+    padding: 8px;
+  }
+  .scope-table td {
+    border: 0;
+    padding: 4px 0;
+  }
+  .scope-table td::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 88px;
+    color: var(--scope-muted);
+    font-size: 12px;
+  }
+  .scope-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scope-meta { grid-template-columns: 1fr; }
+  .scope-status-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .scope-status-row button {
+    height: 44px;
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .scope-btn, .scope-nav button, .scope-header select {
+    min-height: 44px;
+    height: 44px;
+  }
+}

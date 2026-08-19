@@ -125,6 +125,17 @@ function createMemoryRepo(){
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
       return item;
     },
+    async listEvenements({ annee, statut, domaine } = {}){
+      return [...evenements.values()]
+        .filter((item) => {
+          if(annee && String(item.date).slice(0, 4) !== String(annee)) return false;
+          if(statut && item.statut !== statut) return false;
+          if(domaine && item.domaine_code !== domaine) return false;
+          return true;
+        })
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.libelle).localeCompare(String(b.libelle)))
+        .map((item) => ({ ...item, date: dateOnly(item.date) }));
+    },
     async getEvent(id){
       const item = evenements.get(id);
       if(!item) return null;

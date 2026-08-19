@@ -50,6 +50,14 @@ grep -q "AUTO_PUBLISH_LOCAL: false" assets/js/online-cache-policy.js
 grep -q 'from = "/api/scope/*"' netlify.toml
 grep -q "ensureScopeSchema" netlify/functions/_scope-schema.js
 grep -q "createScopeService" netlify/functions/_scope-service.js
+grep -q "listEvenements" netlify/functions/_scope-service.js
+grep -q "SCOPE-IMPL-1B" assets/js/scope-ui.js
+grep -q "scope-root" scope.html
+grep -q "Vue d’ensemble" assets/js/scope-ui.js
+if grep -q "min-width: *980px" assets/css/scope.css; then
+  echo "ERREUR: min-width 980px dans scope.css"
+  exit 1
+fi
 grep -q "getDataStatus" assets/js/api-client.js
 grep -q "scheduleOnlineCollectionWrite" assets/js/app.js
 grep -q "updateAdminCode" assets/js/api-client.js

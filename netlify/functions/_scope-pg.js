@@ -142,6 +142,29 @@ function createPgRepo(client){
       }
       return mapEvent(result.rows[0]);
     },
+    async listEvenements({ annee, statut, domaine } = {}){
+      const clauses = [];
+      const params = [];
+      let i = 1;
+      if(annee){
+        clauses.push(`extract(year from date) = $${i}`);
+        params.push(Number(annee));
+        i += 1;
+      }
+      if(statut){
+        clauses.push(`statut = $${i}`);
+        params.push(String(statut));
+        i += 1;
+      }
+      if(domaine){
+        clauses.push(`domaine_code = $${i}`);
+        params.push(String(domaine));
+        i += 1;
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      const result = await q(`select * from scope_evenements ${where} order by date desc, libelle`, params);
+      return result.rows.map(mapEvent);
+    },
     async getEvent(id){
       const result = await q('select * from scope_evenements where evenement_id = $1', [id]);
       return mapEvent(result.rows[0] || null);
