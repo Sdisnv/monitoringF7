@@ -13,7 +13,8 @@ const ALLOWED_KEYS = new Set([
   'domaine', 'domaineCode',
   'cible', 'cibleId',
   'year', 'annee', 'preset', 'month', 'quarter', 'from', 'to',
-  'nominatif', 'includeNominatif'
+  'nominatif', 'includeNominatif',
+  'includeQualification', 'include_qualification'
 ]);
 
 const FORBIDDEN_KEYS = new Set([
@@ -49,7 +50,10 @@ function sanitizeQuery(body){
     quarter: raw.quarter || null,
     from: raw.from || null,
     to: raw.to || null,
-    nominatif: raw.nominatif === true || raw.nominatif === 'true' || raw.includeNominatif === true || raw.includeNominatif === 'true'
+    nominatif: raw.nominatif === true || raw.nominatif === 'true' || raw.includeNominatif === true || raw.includeNominatif === 'true',
+    includeQualification: raw.includeQualification != null && raw.includeQualification !== ''
+      ? raw.includeQualification
+      : (raw.include_qualification != null && raw.include_qualification !== '' ? raw.include_qualification : undefined)
   };
 }
 

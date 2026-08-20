@@ -6,9 +6,18 @@
   if (!root || !L) return;
 
   const LIVE_KEY = 'scope-live-confirmed';
+  const QUAL_KEY = 'scope-include-qualification';
 
   function liveConfirmed() {
     try { return sessionStorage.getItem(LIVE_KEY) === '1'; } catch { return false; }
+  }
+
+  function readIncludeQualification() {
+    try { return sessionStorage.getItem(QUAL_KEY) === '1'; } catch { return false; }
+  }
+
+  function persistIncludeQualification(value) {
+    try { sessionStorage.setItem(QUAL_KEY, value ? '1' : '0'); } catch { /* ignore */ }
   }
 
   function resolveMode() {
@@ -48,6 +57,11 @@
     encadrementOpen: false,
     toast: null,
     loading: false,
+    listReady: false,
+    listError: null,
+    personnelReady: false,
+    personnelError: null,
+    includeQualification: readIncludeQualification(),
     conflict: false,
     modal: null,
     personQuery: '',
@@ -105,6 +119,7 @@
     reportForm: { kind: 'PERIOD', domaine: 'DAP', cible: 'Y4', evenementId: '' },
     objectifFocusId: null,
     dashboard: null,
+    dashboardError: null,
     alertCounts: null,
     explainOpen: false,
     graphExplainId: null,
@@ -177,12 +192,19 @@
   }
 
   async function loadList() {
-    const data = await client.listEvenements({
-      annee: state.year,
-      statut: state.statut,
-      domaineCode: state.domaine
-    });
-    state.list = data.evenements || [];
+    state.listError = null;
+    try {
+      const data = await client.listEvenements(Object.assign({
+        annee: state.year,
+        statut: state.statut,
+        domaineCode: state.domaine
+      }, qualQuery()));
+      state.list = data.evenements || [];
+      state.listReady = true;
+    } catch (error) {
+      state.listError = L.friendlyError(error).message || L.errorMessage('exercices');
+      throw error;
+    }
   }
 
   async function loadObjectifs() {
@@ -200,7 +222,7 @@
       state.dashboard = null;
       return;
     }
-    const params = L.periodParams({
+    const params = Object.assign(L.periodParams({
       preset: state.preset,
       year: state.year,
       month: state.month,
@@ -209,20 +231,26 @@
       to: state.to,
       domaine: r.domaine,
       cible: r.cible
-    });
-    state.dashboard = await client.dashboard(params);
+    }), qualQuery());
+    state.dashboardError = null;
+    try {
+      state.dashboard = await client.dashboard(params);
+    } catch (error) {
+      state.dashboardError = L.friendlyError(error).message || L.errorMessage('dashboard');
+      throw error;
+    }
   }
 
   async function refreshAlertCounts() {
     if (typeof client.listAlerts !== 'function') return;
-    const params = L.periodParams({
+    const params = Object.assign(L.periodParams({
       preset: state.preset,
       year: state.year,
       month: state.month,
       quarter: state.quarter,
       from: state.from,
       to: state.to
-    });
+    }), qualQuery());
     try {
       const data = await client.listAlerts(params);
       state.alertCounts = data.counts || null;
@@ -232,6 +260,15 @@
   }
 
   function reloadPeriod() {
+    const r = route();
+    if (r.screen === 'liste') {
+      state.listReady = false;
+      state.listError = null;
+    }
+    if (r.screen === 'personnel') {
+      state.personnelReady = false;
+      state.personnelError = null;
+    }
     withLoading(async () => {
       const r = route();
       if (r.screen === 'vue') {
@@ -456,6 +493,10 @@
               ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
             </div>
             <span class="scope-mode-pill">${mode === 'live' ? 'LIVE' : 'DEMO'}</span>
+            <label class="scope-qual-toggle">
+              <input type="checkbox" id="scope-include-qual" ${state.includeQualification ? 'checked' : ''}>
+              Inclure les données de qualification
+            </label>
             ${(state.alertCounts && Number(state.alertCounts.p0) > 0)
               ? `<a class="scope-alerts-count" href="#/vue" aria-label="À traiter, ${Number(state.alertCounts.p0)}">${escapeHtml(`À traiter · ${Number(state.alertCounts.p0)}`)}</a>`
               : ''}
@@ -555,7 +596,20 @@
 
   function renderListe() {
     const rows = state.list;
-    const body = rows.length ? rows.map((item) => {
+    const view = L.listViewState({
+      ready: state.listReady,
+      error: state.listError,
+      count: rows.length
+    });
+    let body;
+    if (view === 'error') {
+      body = `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.listError || L.errorMessage('exercices'))}</div></td></tr>`;
+    } else if (view === 'loading') {
+      body = `<tr><td colspan="9"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('exercices'))}</div></td></tr>`;
+    } else if (view === 'empty') {
+      body = `<tr><td colspan="9"><div class="scope-empty">${escapeHtml(L.emptyMessage('exercices'))}</div></td></tr>`;
+    } else {
+      body = rows.map((item) => {
       const ev = item.evenement;
       const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
       const mode = L.modeSuiviOf(ev);
@@ -589,7 +643,8 @@
         <td data-label="Taux">${escapeHtml(taux)}</td>
         <td data-label="Action"><a class="scope-btn" href="${href}">${action}</a></td>
       </tr>`;
-    }).join('') : `<tr><td colspan="9"><div class="scope-empty">${escapeHtml(L.emptyMessage('exercices'))}</div></td></tr>`;
+      }).join('');
+    }
 
     return `
       <div class="scope-crumb">Exercices · ${escapeHtml(state.year)}</div>
@@ -645,9 +700,13 @@
     const crumbs = ['<a href="#/vue">Vue d’ensemble</a>'];
     if (r.domaine) crumbs.push(`<a href="#/vue/${encodeURIComponent(r.domaine)}">${escapeHtml(domaineLabel(r.domaine))}</a>`);
     if (r.cible) crumbs.push(`<span>${escapeHtml(r.cible)}</span>`);
+    if (state.dashboardError) {
+      return `<div class="scope-crumb">${crumbs.join(' · ')}</div>
+        <div class="scope-main"><div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+    }
     if (!dash) {
       return `<div class="scope-crumb">${crumbs.join(' · ')}</div>
-        <div class="scope-main"><div class="scope-card scope-placeholder"><p>Chargement de la vue d’ensemble…</p></div></div>`;
+        <div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     const o = dash.officiel || {};
     const obj = L.objectiveKpiLabel(o);
@@ -663,7 +722,13 @@
       ? `+ ${dash.legacy.eventCount} historique${dash.legacy.eventCount > 1 ? 's' : ''}`
       : '';
     const abs = dash.absencesNonExcusees || { count: 0, events: [] };
-    const alertItems = (dash.alerts && dash.alerts.alerts) || [];
+    const alertItems = ((dash.alerts && dash.alerts.alerts) || []).filter((alert) => (
+      state.includeQualification || !L.isQualificationEvenement({
+        libelle: alert.title,
+        origine: alert.metadata && alert.metadata.origine,
+        identifiant_externe: alert.metadata && (alert.metadata.identifiantExterne || alert.metadata.identifiant_externe)
+      })
+    ));
     const p0Alerts = alertItems.filter((a) => a.level === 'P0');
     const p1Alerts = alertItems.filter((a) => a.level === 'P1');
     const p2Alerts = alertItems.filter((a) => a.level === 'P2');
@@ -679,7 +744,9 @@
     const childrenChart = C ? C.renderChartCard(graphs.children) : '';
     const compositionChart = C ? C.renderChartCard(graphs.composition) : '';
     const motifsChart = C ? C.renderChartCard(graphs.motifs) : '';
-    const permutationChart = C ? C.renderChartCard(graphs.permutations) : '';
+    const permutationChart = (C && L.shouldRenderPermutations(r.domaine, graphs.permutations))
+      ? C.renderChartCard(graphs.permutations)
+      : '';
     const openGraph = state.graphExplainId && graphs[state.graphExplainId];
     const graphExplainHtml = C && openGraph ? C.renderGraphExplain(openGraph, explain) : '';
 
@@ -813,27 +880,40 @@
     return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
   }
 
+  function qualQuery() {
+    return { includeQualification: state.includeQualification ? '1' : '0' };
+  }
+
   function periodQuery() {
-    return L.periodParams({
+    return Object.assign(L.periodParams({
       preset: state.preset,
       year: state.year,
       month: state.month,
       quarter: state.quarter,
       from: state.from,
       to: state.to
-    });
+    }), qualQuery());
   }
 
   async function loadPersonnelDirectory() {
     if (mode !== 'live' || typeof client.listPersonnelDirectory !== 'function' || !canReadPersonnel()) {
       state.personnelDirectory = null;
+      state.personnelReady = true;
+      state.personnelError = null;
       return;
     }
-    state.personnelDirectory = await client.listPersonnelDirectory(Object.assign(periodQuery(), {
-      q: state.personnelQuery,
-      statut: state.personnelStatut,
-      oi: state.personnelOi
-    }));
+    state.personnelError = null;
+    try {
+      state.personnelDirectory = await client.listPersonnelDirectory(Object.assign(periodQuery(), {
+        q: state.personnelQuery,
+        statut: state.personnelStatut,
+        oi: state.personnelOi
+      }));
+      state.personnelReady = true;
+    } catch (error) {
+      state.personnelError = L.friendlyError(error).message || L.errorMessage('personnel');
+      throw error;
+    }
   }
 
   async function loadPersonneFiche(id) {
@@ -932,6 +1012,29 @@
     const canRead = canReadPersonnel();
     const dir = state.personnelDirectory;
     const people = (dir && dir.personnes) || [];
+    const personnelView = L.listViewState({
+      ready: state.personnelReady,
+      error: state.personnelError,
+      count: people.length
+    });
+    let peopleBody;
+    if (personnelView === 'error') {
+      peopleBody = `<tr><td colspan="7"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
+    } else if (personnelView === 'loading') {
+      peopleBody = `<tr><td colspan="7"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
+    } else if (personnelView === 'empty') {
+      peopleBody = `<tr><td colspan="7"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
+    } else {
+      peopleBody = people.map((p) => `<tr>
+              <td data-label="Nom">${escapeHtml([p.prenom, p.nom].filter(Boolean).join(' '))}</td>
+              <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
+              <td data-label="Grade">${escapeHtml(p.grade || '—')}</td>
+              <td data-label="OI actuel">${escapeHtml(p.oiActuel || '—')}</td>
+              <td data-label="Statut">${escapeHtml(p.statutRh || '—')}</td>
+              <td data-label="Taux période">${p.taux && p.taux.percentage != null ? escapeHtml(L.formatTaux(p.taux.percentage)) : 'Non évaluable'}</td>
+              <td data-label="Action"><a class="scope-btn" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
+            </tr>`).join('');
+    }
     const statutFilters = [
       ['actifs', 'Actifs'],
       ['archives', 'Archivés'],
@@ -972,15 +1075,7 @@
         <table class="scope-table scope-person-table">
           <thead><tr><th>Nom</th><th>NIP</th><th>Grade</th><th>OI actuel</th><th>Statut</th><th>Taux période</th><th></th></tr></thead>
           <tbody>
-            ${people.map((p) => `<tr>
-              <td data-label="Nom">${escapeHtml([p.prenom, p.nom].filter(Boolean).join(' '))}</td>
-              <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
-              <td data-label="Grade">${escapeHtml(p.grade || '—')}</td>
-              <td data-label="OI actuel">${escapeHtml(p.oiActuel || '—')}</td>
-              <td data-label="Statut">${escapeHtml(p.statutRh || '—')}</td>
-              <td data-label="Taux période">${p.taux && p.taux.percentage != null ? escapeHtml(L.formatTaux(p.taux.percentage)) : 'Non évaluable'}</td>
-              <td data-label="Action"><a class="scope-btn" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
-            </tr>`).join('') || '<tr><td colspan="7">Aucune personne pour ce filtre.</td></tr>'}
+            ${peopleBody}
           </tbody>
         </table>
       </div>
@@ -1140,7 +1235,9 @@
     const childrenChart = C ? C.renderChartCard(graphs.children) : '';
     const compositionChart = C ? C.renderChartCard(graphs.composition) : '';
     const motifsChart = C ? C.renderChartCard(graphs.motifs) : '';
-    const permutationChart = vol.permutations ? C && C.renderChartCard(graphs.permutations) : '';
+    const permutationChart = (C && vol.permutations && L.shouldRenderPermutations('DAP', graphs.permutations))
+      ? C.renderChartCard(graphs.permutations)
+      : '';
     const events = personEventsFiltered(fiche);
     const eventFilters = [
       ['tout', 'Tout'],
@@ -1149,7 +1246,7 @@
       ['non_excuses', 'Non excusés'],
       ['dispenses', 'Dispensés']
     ];
-    const permNote = vol.permutations
+    const permNote = (vol.permutations && L.shouldRenderPermutations('DAP', graphs.permutations))
       ? `Présences : ${vol.presents} · dont permutations : ${vol.permutations}`
       : '';
     const motifs = kpi.motifs || {};
@@ -2189,6 +2286,11 @@
       location.search = '';
       location.hash = '#/exercices';
     });
+    document.getElementById('scope-include-qual')?.addEventListener('change', (e) => {
+      state.includeQualification = Boolean(e.target.checked);
+      persistIncludeQualification(state.includeQualification);
+      reloadPeriod();
+    });
     document.getElementById('scope-year')?.addEventListener('change', (e) => {
       state.year = e.target.value;
       if (state.preset === 'YEAR') {
@@ -2859,7 +2961,7 @@
   function openReport(body) {
     if (typeof client.generateReport !== 'function') return;
     withLoading(async () => {
-      const result = await client.generateReport(body);
+      const result = await client.generateReport(Object.assign({}, body, qualQuery()));
       if (window.ScopePdfViewer) window.ScopePdfViewer.open(result);
       else toast('success', 'Rapport généré', result.filename);
     });
@@ -2975,6 +3077,17 @@
       return;
     }
     const r = route();
+    if (r.screen === 'liste' || r.screen === 'rapports') {
+      state.listReady = false;
+      state.listError = null;
+    }
+    if (r.screen === 'personnel') {
+      state.personnelReady = false;
+      state.personnelError = null;
+    }
+    if (r.screen === 'vue') {
+      state.dashboardError = null;
+    }
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
       if (r.screen === 'objectifs') await loadObjectifs();

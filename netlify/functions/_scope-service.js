@@ -32,6 +32,7 @@ const {
   isSousDomaineFospec,
   resolveSuiviNominatif
 } = require('./_scope-model');
+const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -1012,52 +1013,91 @@ function createScopeService(repo){
     });
   }
 
+  function groupByEventId(rows){
+    const map = new Map();
+    (rows || []).forEach((row) => {
+      const id = row.evenement_id;
+      if(!map.has(id)) map.set(id, []);
+      map.get(id).push(row);
+    });
+    return map;
+  }
+
+  async function summarizeEvenements(evenements){
+    const list = evenements || [];
+    if(!list.length){
+      return { items: [], performance: { mode: 'batch', eventCount: 0, queries: 0 } };
+    }
+    const ids = list.map((e) => e.evenement_id);
+    const [allCibles, cibleRows, attendusRows, partRows, qtyRows, legacyRows] = await Promise.all([
+      repo.listCibles(),
+      repo.listEventCiblesForEvents ? repo.listEventCiblesForEvents(ids) : Promise.resolve([]),
+      repo.listAttendusForEvents ? repo.listAttendusForEvents(ids) : Promise.resolve([]),
+      repo.listParticipationsForEvents ? repo.listParticipationsForEvents(ids) : Promise.resolve([]),
+      repo.listQuantitatifSaisiesForEvents ? repo.listQuantitatifSaisiesForEvents(ids) : Promise.resolve([]),
+      repo.listLegacy ? repo.listLegacy() : Promise.resolve([])
+    ]);
+    const ciblesById = new Map((allCibles || []).map((c) => [c.cible_id, c]));
+    const ciblesByEvent = groupByEventId(cibleRows);
+    const attendusByEvent = groupByEventId(attendusRows);
+    const partsByEvent = groupByEventId(partRows);
+    const qtyByEvent = new Map((qtyRows || []).map((row) => [row.evenement_id, row]));
+    const legacyByEvent = new Map();
+    (legacyRows || []).forEach((row) => {
+      if(row.evenement_id) legacyByEvent.set(row.evenement_id, row);
+    });
+    const items = list.map((evenement) => {
+      const linked = ciblesByEvent.get(evenement.evenement_id) || [];
+      const cibles = linked.map((row) => ciblesById.get(row.cible_id) || row).filter(Boolean);
+      const attendus = attendusByEvent.get(evenement.evenement_id) || [];
+      const participations = partsByEvent.get(evenement.evenement_id) || [];
+      const saisie = qtyByEvent.get(evenement.evenement_id) || null;
+      const modeSuivi = inferModeSuivi(evenement);
+      let compteurs = computeTaux(participations, attendus);
+      let attendusInclus = attendus.filter((a) => a.inclus !== false).length;
+      if(modeSuivi === MODES.QUANTITATIF){
+        const official = saisie ? officialFromQuantitatif(saisie) : null;
+        attendusInclus = saisie ? Number(saisie.nb_attendus) : 0;
+        compteurs = official
+          ? { ...official, presents: official.volumes.presents }
+          : { numerator: 0, denominator: 0, percentage: null, presents: saisie ? saisie.nb_presents : 0 };
+      }
+      const legacy = evenement.origine === 'LEGACY_AGGREGATED'
+        ? (legacyByEvent.get(evenement.evenement_id) || null)
+        : null;
+      return {
+        evenement: { ...evenement, mode_suivi: modeSuivi },
+        cibles,
+        compteurs,
+        attendusInclus,
+        legacy,
+        saisieQuantitative: saisie,
+        modeSuivi,
+        qualification: isQualificationEvenement(evenement)
+      };
+    });
+    return { items, performance: { mode: 'batch', eventCount: list.length, queries: 6 } };
+  }
+
   async function summarizeEvenement(evenement){
-    const cibleIds = await repo.listEventCibleIds(evenement.evenement_id);
-    const allCibles = await repo.listCibles();
-    const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
-    const attendus = await repo.listAttendus(evenement.evenement_id);
-    const participations = await repo.listParticipations(evenement.evenement_id);
-    const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(evenement.evenement_id) : null;
-    const modeSuivi = inferModeSuivi(evenement);
-    let compteurs = computeTaux(participations, attendus);
-    let attendusInclus = attendus.filter(a => a.inclus !== false).length;
-    if(modeSuivi === MODES.QUANTITATIF){
-      const official = saisie ? officialFromQuantitatif(saisie) : null;
-      attendusInclus = saisie ? Number(saisie.nb_attendus) : 0;
-      compteurs = official
-        ? { ...official, presents: official.volumes.presents }
-        : { numerator: 0, denominator: 0, percentage: null, presents: saisie ? saisie.nb_presents : 0 };
-    }
-    let legacy = null;
-    if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
-      legacy = await repo.getLegacyByEvenementId(evenement.evenement_id);
-    }
-    return {
-      evenement: { ...evenement, mode_suivi: modeSuivi },
-      cibles,
-      compteurs,
-      attendusInclus,
-      legacy,
-      saisieQuantitative: saisie,
-      modeSuivi
-    };
+    const packed = await summarizeEvenements([evenement]);
+    return packed.items[0];
   }
 
   async function listEvenements(query){
     const annee = query?.annee || query?.year || null;
     const statut = query?.statut || query?.status || null;
     const domaine = query?.domaineCode || query?.domaine_code || query?.domaine || null;
-    const evenements = await repo.listEvenements({
+    let evenements = await repo.listEvenements({
       annee: annee ? Number(annee) : null,
       statut: statut && statut !== 'tous' ? statut : null,
       domaine: domaine && domaine !== 'tous' ? domaine : null
     });
-    const items = [];
-    for(const evenement of evenements){
-      items.push(await summarizeEvenement(evenement));
+    if(!wantsQualification(query)){
+      evenements = evenements.filter((row) => !isQualificationEvenement(row));
     }
-    return { evenements: items };
+    const packed = await summarizeEvenements(evenements);
+    return { evenements: packed.items, performance: packed.performance };
   }
 
   async function hydratePersonnes(ids){

@@ -16,6 +16,7 @@ const {
 } = require('./_scope-alerts');
 const { todayZurichIso } = require('./_scope-calendar');
 const { inferAnalysisGrain } = require('./_scope-objectives');
+const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 
 function groupBy(rows, key){
   const map = {};
@@ -88,10 +89,13 @@ function createScopeAlertsService(repo){
   async function operationalAlerts(query, period, today){
     const domaine = query.domaineCode || query.domaine || query.domain || null;
     const cibleId = query.cibleId || null;
-    const listed = await repo.listEvenements({
+    let listed = await repo.listEvenements({
       statut: 'PLANIFIE',
       domaine: domaine || undefined
     });
+    if(!wantsQualification(query)){
+      listed = listed.filter((row) => !isQualificationEvenement(row));
+    }
     const fromYear = period.from.slice(0, 4);
     const toYear = period.to.slice(0, 4);
     const candidates = [];

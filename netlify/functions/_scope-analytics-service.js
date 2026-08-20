@@ -19,6 +19,7 @@ const {
   resolveEventObjective,
   collectObjectiveContext
 } = require('./_scope-objectives');
+const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 
 function truthy(value){
   const text = String(value == null ? '' : value).toLowerCase();
@@ -143,8 +144,9 @@ async function resolveQuery(repo, query){
 
 function createScopeAnalyticsService(repo){
   async function loadBundle(query, period){
+    let bundle;
     if(typeof repo.loadAnalyticsBundle === 'function'){
-      return repo.loadAnalyticsBundle({
+      bundle = await repo.loadAnalyticsBundle({
         from: period.from,
         to: period.to,
         domaineCode: query.domaineCode || query.domaine || null,
@@ -152,32 +154,36 @@ function createScopeAnalyticsService(repo){
         evenementId: query.evenementId || query.evenement_id || null,
         personneId: query.personneId || query.personne_id || null
       });
-    }
-    const evenementId = query.evenementId || query.evenement_id || null;
-    const domaineCode = query.domaineCode || query.domaine || null;
-    const cibleId = looksLikeUuid(query.cibleId) ? query.cibleId : (looksLikeUuid(query.cible) ? query.cible : null);
-    const personneId = query.personneId || query.personne_id || null;
-    const events = evenementId
-      ? [await repo.getEvent(evenementId)].filter(Boolean)
-      : await repo.listEvenements({ domaine: domaineCode || undefined });
-    const bundle = { events: [], attendusByEvent: {}, participationsByEvent: {}, cibleIdsByEvent: {}, legacyByEvent: {}, quantitatifByEvent: {} };
-    for(const event of events){
-      if(!inPeriod(event.date, period)) continue;
-      if(domaineCode && event.domaine_code !== domaineCode) continue;
-      const cibleIds = await repo.listEventCibleIds(event.evenement_id);
-      if(cibleId && !cibleIds.includes(cibleId)) continue;
-      bundle.events.push({ ...event, mode_suivi: inferModeSuivi(event), cible_ids: cibleIds });
-      bundle.cibleIdsByEvent[event.evenement_id] = cibleIds;
-      bundle.attendusByEvent[event.evenement_id] = await repo.listAttendus(event.evenement_id);
-      bundle.participationsByEvent[event.evenement_id] = await repo.listParticipations(event.evenement_id);
-      if(repo.getLegacyByEvenementId){
-        bundle.legacyByEvent[event.evenement_id] = await repo.getLegacyByEvenementId(event.evenement_id);
+    } else {
+      const evenementId = query.evenementId || query.evenement_id || null;
+      const domaineCode = query.domaineCode || query.domaine || null;
+      const cibleId = looksLikeUuid(query.cibleId) ? query.cibleId : (looksLikeUuid(query.cible) ? query.cible : null);
+      const personneId = query.personneId || query.personne_id || null;
+      const events = evenementId
+        ? [await repo.getEvent(evenementId)].filter(Boolean)
+        : await repo.listEvenements({ domaine: domaineCode || undefined });
+      bundle = { events: [], attendusByEvent: {}, participationsByEvent: {}, cibleIdsByEvent: {}, legacyByEvent: {}, quantitatifByEvent: {} };
+      for(const event of events){
+        if(!inPeriod(event.date, period)) continue;
+        if(domaineCode && event.domaine_code !== domaineCode) continue;
+        const cibleIds = await repo.listEventCibleIds(event.evenement_id);
+        if(cibleId && !cibleIds.includes(cibleId)) continue;
+        bundle.events.push({ ...event, mode_suivi: inferModeSuivi(event), cible_ids: cibleIds });
+        bundle.cibleIdsByEvent[event.evenement_id] = cibleIds;
+        bundle.attendusByEvent[event.evenement_id] = await repo.listAttendus(event.evenement_id);
+        bundle.participationsByEvent[event.evenement_id] = await repo.listParticipations(event.evenement_id);
+        if(repo.getLegacyByEvenementId){
+          bundle.legacyByEvent[event.evenement_id] = await repo.getLegacyByEvenementId(event.evenement_id);
+        }
+        if(repo.getQuantitatifSaisie){
+          bundle.quantitatifByEvent[event.evenement_id] = await repo.getQuantitatifSaisie(event.evenement_id);
+        }
       }
-      if(repo.getQuantitatifSaisie){
-        bundle.quantitatifByEvent[event.evenement_id] = await repo.getQuantitatifSaisie(event.evenement_id);
-      }
+      bundle.personneId = personneId;
     }
-    bundle.personneId = personneId;
+    if(!wantsQualification(query)){
+      bundle.events = (bundle.events || []).filter((event) => !isQualificationEvenement(event));
+    }
     return bundle;
   }
 
@@ -437,7 +443,9 @@ function createScopeAnalyticsService(repo){
     const bundle = await loadBundle({
       from: period.from,
       to: period.to,
-      domaineCode: resolved.domaineCode || resolved.domaine || null
+      domaineCode: resolved.domaineCode || resolved.domaine || null,
+      includeQualification: resolved.includeQualification,
+      include_qualification: resolved.include_qualification
     }, period);
     const acc = new Map();
     for(const event of bundle.events){

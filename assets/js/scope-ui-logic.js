@@ -483,6 +483,59 @@
     return map[kind] || 'Aucun élément.';
   }
 
+  function loadingMessage(kind) {
+    const map = {
+      exercices: 'Chargement des exercices…',
+      personnel: 'Chargement du personnel…',
+      dashboard: 'Chargement de la vue d’ensemble…',
+      personne: 'Chargement de la fiche…',
+      rapports: 'Chargement des rapports…'
+    };
+    return map[kind] || 'Chargement…';
+  }
+
+  function errorMessage(kind) {
+    const map = {
+      exercices: 'Impossible de charger les exercices. Réessayez.',
+      personnel: 'Impossible de charger le personnel. Réessayez.',
+      dashboard: 'Impossible de charger la vue d’ensemble. Réessayez.',
+      personne: 'Impossible de charger la fiche. Réessayez.',
+      rapports: 'Impossible de charger les rapports. Réessayez.'
+    };
+    return map[kind] || 'Impossible de charger les données. Réessayez.';
+  }
+
+  function listViewState({ ready, error, count } = {}) {
+    if (error) return 'error';
+    if (!ready) return 'loading';
+    if (!count) return 'empty';
+    return 'content';
+  }
+
+  function isQualificationEvenement(row) {
+    const origine = String((row && (row.origine || row.origine_code)) || '').toUpperCase();
+    const mode = String((row && (row.mode_suivi || row.modeSuivi)) || '').toUpperCase();
+    if (origine === 'LEGACY_AGGREGATED' || mode === 'LEGACY') return false;
+    const libelle = String((row && (row.libelle || row.title)) || '');
+    const ext = String((row && (row.identifiant_externe || row.identifiantExterne)) || '');
+    if (/^TEST[\s—-]/i.test(libelle.trim())) return true;
+    if (/TEST IMPORT SCOPE/i.test(libelle)) return true;
+    if (/TEST SCOPE/i.test(libelle)) return true;
+    if (/^TEST-/i.test(ext.trim())) return true;
+    return false;
+  }
+
+  function isTestPersonnelNip(nip) {
+    return /^(99\d{3}|TSTR2)/i.test(String(nip || '').trim());
+  }
+
+  function shouldRenderPermutations(domaineCode, dataset) {
+    if (dataset && dataset.emptyReason === 'HORS_DAP') return false;
+    const domaine = String(domaineCode || '').toUpperCase();
+    if (domaine && domaine !== 'DAP') return false;
+    return true;
+  }
+
   function resolveClientMode({ search, sessionLive } = {}) {
     const params = new URLSearchParams(String(search || '').replace(/^\?/, ''));
     if (params.get('mode') === 'demo') return 'demo';
@@ -537,6 +590,12 @@
     displayTauxForList,
     legacyTauxFromRow,
     emptyMessage,
+    loadingMessage,
+    errorMessage,
+    listViewState,
+    isQualificationEvenement,
+    isTestPersonnelNip,
+    shouldRenderPermutations,
     resolveClientMode,
     oktaLoginHref
   };

@@ -162,6 +162,13 @@ grep -q "IMPORT_CSV" netlify/functions/_scope-schema.js
 grep -q "preview_obsolete" netlify/functions/_scope-service.js
 grep -qF 'assets/js/scope-import-contract.js' netlify.scope.toml
 grep -q "scope-event-import-1-tests.js" package.json
+grep -q "scope-qual-finish-1" netlify/functions/_scope-schema.js
+grep -q "scope-qual-finish-1-tests.js" package.json
+grep -q "Chargement des exercices" assets/js/scope-ui-logic.js
+grep -q "wantsQualification" netlify/functions/_scope-service.js
+grep -q "shouldRenderPermutations" assets/js/scope-ui.js
+grep -q "Inclure les données de qualification" assets/js/scope-ui.js
+test -f docs/SCOPE_RECETTE_MOA.md
 grep -q "SCOPE_Programme_Exercices_Exemple.csv" assets/js/scope-ui.js
 grep -q "Programme à importer" assets/js/scope-ui.js
 grep -q "SCOPE_EXERCICES_CSV_1" docs/SCOPE_IMPORT_EXERCICES_CSV.md

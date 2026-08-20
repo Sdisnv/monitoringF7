@@ -317,6 +317,7 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-event-import-1') on conflict (version) do nothing`
   );
+  /* scope-qual-finish-1 — pas de migration : filtre qualification applicatif */
   ready = true;
   return true;
 }

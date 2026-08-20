@@ -42,7 +42,8 @@ function queryKey(query){
     from: query.from,
     to: query.to,
     domaine: query.domaine || undefined,
-    cible: query.cible || undefined
+    cible: query.cible || undefined,
+    includeQualification: query.includeQualification || query.include_qualification || undefined
   });
 }
 
@@ -281,20 +282,27 @@ async function buildScopeGraphs({
   series,
   explain,
   cachedByDomaine,
-  cachedByCible
+  cachedByCible,
+  includeQualification,
+  include_qualification
 }){
   const from = period.from;
   const to = period.to;
+  const qual = {
+    includeQualification,
+    include_qualification
+  };
   const evalCache = new Map();
   if(evaluated){
-    evalCache.set(queryKey({ from, to, domaine: domaineCode || undefined, cible: cibleRaw || undefined }), evaluated);
+    evalCache.set(queryKey({ from, to, domaine: domaineCode || undefined, cible: cibleRaw || undefined, ...qual }), evaluated);
   }
   async function ev(query){
     const normalized = {
       from,
       to,
       domaine: query.domaine || undefined,
-      cible: query.cible || undefined
+      cible: query.cible || undefined,
+      ...qual
     };
     if(normalized.cible && cachedByCible && cachedByCible.has(normalized.cible)){
       return cachedByCible.get(normalized.cible);

@@ -37,7 +37,9 @@ function createScopeDashboardService(repo){
       from: period.from,
       to: period.to,
       domaine: domaineCode || undefined,
-      cible: cibleRaw || undefined
+      cible: cibleRaw || undefined,
+      includeQualification: resolved.includeQualification,
+      include_qualification: resolved.include_qualification
     };
     const evaluated = await analytics.evaluate(sdisQuery);
     const series = await analytics.timeseries(sdisQuery);
@@ -63,7 +65,13 @@ function createScopeDashboardService(repo){
     const cachedByCible = new Map();
     if(!domaineCode && !cibleRaw){
       for(const domaine of DOMAINES){
-        const sub = await analytics.evaluate({ from: period.from, to: period.to, domaine: domaine.code });
+        const sub = await analytics.evaluate({
+          from: period.from,
+          to: period.to,
+          domaine: domaine.code,
+          includeQualification: resolved.includeQualification,
+          include_qualification: resolved.include_qualification
+        });
         cachedByDomaine.set(domaine.code, sub);
         domaines.push({
           code: domaine.code,
@@ -79,7 +87,9 @@ function createScopeDashboardService(repo){
           from: period.from,
           to: period.to,
           domaine: domaineCode,
-          cible: cible.cible_id
+          cible: cible.cible_id,
+          includeQualification: resolved.includeQualification,
+          include_qualification: resolved.include_qualification
         });
         cachedByCible.set(cible.cible_id, sub);
         cibles.push({
@@ -102,7 +112,9 @@ function createScopeDashboardService(repo){
       series,
       explain,
       cachedByDomaine,
-      cachedByCible
+      cachedByCible,
+      includeQualification: resolved.includeQualification,
+      include_qualification: resolved.include_qualification
     });
 
     const evenements = (evaluated.includedEvents || []).map((row) => ({

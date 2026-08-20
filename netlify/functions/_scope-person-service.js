@@ -20,10 +20,7 @@ const {
 const { isPrincipalOi } = require('./_scope-personnel-sync-contract');
 const { TYPES_PERIODE } = require('./_scope-personnel');
 const { ALERTS_CONFIG } = require('./_scope-alerts');
-
-function isTestPersonnelNip(nip){
-  return /^(99\d{3}|TSTR2)/i.test(String(nip || '').trim());
-}
+const { isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
 
 function isArchivedStatut(statut){
   return statut === 'SORTI' || statut === 'DEMISSIONNAIRE';
@@ -87,13 +84,10 @@ function matchesOi(label, oiFilter){
     || a.split('/')[1] === b;
 }
 
-function visibleInDirectory({ archived, test }, statutFilter, searching){
+function visibleInDirectory({ archived, test }, statutFilter, searching, includeQualification){
+  if(test && !includeQualification) return false;
   if(statutFilter === 'archives') return archived;
-  if(statutFilter === 'actifs'){
-    if(archived || test) return searching;
-    return true;
-  }
-  if(test && !searching) return false;
+  if(statutFilter === 'actifs') return !archived;
   return true;
 }
 
@@ -230,7 +224,9 @@ function createScopePersonService(repo){
         preset: period.preset,
         year: period.year,
         month: period.month,
-        quarter: period.quarter
+        quarter: period.quarter,
+        includeQualification: query.includeQualification,
+        include_qualification: query.include_qualification
       })
     ]);
     const ciblesById = new Map(cibles.map((c) => [c.cible_id, c]));
@@ -247,13 +243,14 @@ function createScopePersonService(repo){
       perByPid.get(pid).push(row);
     }
     const searching = Boolean(q);
+    const includeQualification = wantsQualification(query);
     const rows = [];
     for(const personne of personnes){
       const test = isTestPersonnelNip(personne.nip);
       const persPeriodes = perByPid.get(personne.personne_id) || [];
       const statut = statutLabel(personne, persPeriodes);
       const archived = isArchivedStatut(statut);
-      if(!visibleInDirectory({ archived, test }, statutFilter, searching)) continue;
+      if(!visibleInDirectory({ archived, test }, statutFilter, searching, includeQualification)) continue;
       const affs = affByPid.get(personne.personne_id) || [];
       const current = principalOi(affs, ciblesById, today);
       if(!matchesOi(current && current.label, oiFilter)) continue;
