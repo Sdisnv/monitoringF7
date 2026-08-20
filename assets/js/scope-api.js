@@ -134,7 +134,38 @@
       patchObjectif(id, body) { return request('PATCH', `/objectifs/${encodeURIComponent(id)}`, body); },
       cloturerObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/cloturer`, body); },
       nouvellePeriodeObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/nouvelle-periode`, body); },
-      desactiverObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/desactiver`, body || {}); }
+      desactiverObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/desactiver`, body || {}); },
+      async generateReport(body) {
+        const headers = { Accept: 'application/pdf' };
+        const token = getToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+        let response;
+        try {
+          response = await fetch(`${base}/reports`, {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+            credentials: 'same-origin',
+            body: JSON.stringify(body || {})
+          });
+        } catch (error) {
+          throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
+        }
+        const contentType = response.headers.get('content-type') || '';
+        if (!response.ok) {
+          let payload = null;
+          if (contentType.includes('application/json')) payload = await response.json();
+          else payload = { message: await response.text() };
+          throw new ScopeApiError(response.status, payload || {});
+        }
+        const buffer = await response.arrayBuffer();
+        return {
+          buffer,
+          blob: new Blob([buffer], { type: 'application/pdf' }),
+          filename: response.headers.get('X-Scope-Report-Filename') || 'SCOPE_Rapport.pdf',
+          sha256: response.headers.get('X-Scope-Report-Sha256') || '',
+          pages: Number(response.headers.get('X-Scope-Report-Pages') || 0)
+        };
+      }
     };
   }
 

@@ -7,6 +7,7 @@ const { createScopeObjectivesService } = require('./_scope-objectives-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeAlertsService } = require('./_scope-alerts-service');
 const { getPgRepo } = require('./_scope-pg');
+const { generateReport, pdfResponse } = require('./_scope-report-service');
 
 function requireAccess(event){
   return verifyToken(bearerToken(event), 'access');
@@ -52,8 +53,9 @@ exports.handler = async function(event){
 
   const method = event.httpMethod;
   const path = scopePath(event);
+  const isReport = path === '/reports' || path.startsWith('/reports/');
   const write = method !== 'GET';
-  if(write && !canWriteRecords(claims)){
+  if(write && !isReport && !canWriteRecords(claims)){
     return response(403, { ok:false, error:'forbidden' });
   }
 
@@ -257,6 +259,27 @@ exports.handler = async function(event){
         return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
       }
       return response(200, { ok:true, ...(await objectives.desactiverObjectif(params.id, body, claims)) });
+    }
+
+    if((method === 'POST' || method === 'GET') && path === '/reports'){
+      if(!hasPermission(claims, 'dashboard:read')){
+        return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });
+      }
+      const payload = method === 'GET' ? queryOf(event) : body;
+      const result = await generateReport(repo, payload, claims);
+      return pdfResponse(result);
+    }
+    params = match(path, '/reports/event/:id');
+    if((method === 'GET' || method === 'POST') && params){
+      if(!hasPermission(claims, 'dashboard:read')){
+        return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });
+      }
+      const payload = Object.assign({}, method === 'GET' ? queryOf(event) : body, {
+        kind: 'EVENT',
+        evenementId: params.id
+      });
+      const result = await generateReport(repo, payload, claims);
+      return pdfResponse(result);
     }
 
     if(method === 'POST' && path === '/imports/evenements/preview'){

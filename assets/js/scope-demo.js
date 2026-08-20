@@ -713,6 +713,12 @@
         row.statut = 'NEUTRALISE';
         return { ok: true, objectif: row };
       },
+      async generateReport() {
+        throw new ScopeApiError(501, {
+          error: 'reports_live_only',
+          message: 'La génération PDF est disponible en mode LIVE uniquement. Le moteur PDF s’exécute sur le serveur SCOPE.'
+        });
+      },
       async patchObjectif(id, body) {
         const row = objectifs.get(id);
         if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });

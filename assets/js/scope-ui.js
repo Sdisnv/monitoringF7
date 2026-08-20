@@ -81,6 +81,7 @@
       commentaire: ''
     },
     objectifAction: null,
+    reportForm: { kind: 'PERIOD', domaine: 'DAP', cible: 'Y4', evenementId: '' },
     objectifFocusId: null,
     dashboard: null,
     alertCounts: null,
@@ -791,13 +792,64 @@
     `;
   }
 
+  function canNominatif() {
+    if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
+      return window.MonitoringRBAC.has('reports:nominatif');
+    }
+    const roles = (state.session && state.session.roles) || [];
+    return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
+  }
+
+  function reportButton(id) {
+    return `<button type="button" class="scope-btn" data-report-event="${escapeHtml(id)}">Générer le rapport</button>`;
+  }
+
   function renderRapports() {
+    const form = state.reportForm;
+    const roots = ['FOBA', 'FOCA', 'DPS', 'DAP', 'FOSPEC', 'JSP'];
+    const targetDomaines = (state.referentiels.domaines || []).map((d) => d.code);
+    const cibles = (state.referentiels.cibles || []).filter((c) => c.domaineCode === form.domaine);
+    const events = (state.list || []).slice(0, 40);
+    const demo = mode !== 'live';
     return `
       <div class="scope-crumb">Rapports</div>
       <div class="scope-main">
-        <div class="scope-card scope-placeholder">
+        <div class="scope-card">
           <h2 style="margin-top:0">Rapports</h2>
-          <p>REPORT-1 n’est pas actif. Cette entrée prépare la destination des synthèses institutionnelles.</p>
+          <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
+          ${demo ? `<p class="scope-mode-hint">La génération PDF est disponible en mode LIVE uniquement.</p>` : ''}
+          <div class="scope-report-grid">
+            <div class="scope-field"><label>Type de rapport</label>
+              <select id="report-kind">
+                <option value="PERIOD" ${form.kind === 'PERIOD' ? 'selected' : ''}>Période SDIS</option>
+                <option value="DOMAIN" ${form.kind === 'DOMAIN' ? 'selected' : ''}>Domaine</option>
+                <option value="TARGET" ${form.kind === 'TARGET' ? 'selected' : ''}>Cible / OI</option>
+                <option value="EVENT" ${form.kind === 'EVENT' ? 'selected' : ''}>Événement</option>
+              </select>
+            </div>
+            ${form.kind === 'DOMAIN' || form.kind === 'TARGET' ? `<div class="scope-field"><label>Domaine</label>
+              <select id="report-domaine">
+                ${(form.kind === 'DOMAIN' ? roots : targetDomaines).map((code) => `<option value="${escapeHtml(code)}" ${form.domaine === code ? 'selected' : ''}>${escapeHtml(domaineLabel(code))}</option>`).join('')}
+              </select>
+            </div>` : ''}
+            ${form.kind === 'TARGET' ? `<div class="scope-field"><label>Cible / OI</label>
+              <select id="report-cible">
+                ${cibles.map((c) => `<option value="${escapeHtml(c.niveauCode)}" ${form.cible === c.niveauCode ? 'selected' : ''}>${escapeHtml(c.niveauCode)}</option>`).join('')}
+              </select>
+            </div>` : ''}
+            ${form.kind === 'EVENT' ? `<div class="scope-field"><label>Exercice</label>
+              <select id="report-event">
+                ${events.map((item) => {
+                  const ev = item.evenement || item;
+                  return `<option value="${escapeHtml(ev.evenement_id)}" ${form.evenementId === ev.evenement_id ? 'selected' : ''}>${escapeHtml(ev.date)} · ${escapeHtml(ev.libelle)}</option>`;
+                }).join('') || '<option value="">Aucun exercice sur l’année</option>'}
+              </select>
+            </div>` : ''}
+          </div>
+          <p style="color:var(--scope-muted);font-size:13px">Période : celle du bandeau (année, trimestre, mois ou plage). REPORT-1 n’ouvre pas de seconde période.</p>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" id="report-generate" ${demo ? 'disabled' : ''}>Générer le rapport</button>
+          </div>
         </div>
       </div>
     `;
@@ -1049,7 +1101,7 @@
             <div><dt>Version</dt><dd>${escapeHtml(String(ev.version))}</dd></div>
             ${qty ? '' : `<div><dt>Population</dt><dd>${isLegacy ? 'Aucune (legacy)' : (ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée'))}</dd></div>`}
           </dl>
-          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}</div>` : (!isLegacy && ev.statut !== 'ANNULE' ? `<div class="scope-actions">${extraActions}<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button></div>` : '')}
+          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}${reportButton(ev.evenement_id)}</div>` : `<div class="scope-actions">${!isLegacy && ev.statut !== 'ANNULE' ? `${extraActions}<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>` : ''}${reportButton(ev.evenement_id)}</div>`}
         </div>
         ${qty && saisie ? volumesBlock(saisie, { taux: fiche.compteurs, officiel: false }) : ''}
         ${legacyBlock}
@@ -1264,6 +1316,7 @@
           <p style="color:var(--scope-muted);margin-top:4px">${escapeHtml(String(t.numerator ?? '—'))} / ${escapeHtml(String(t.denominator ?? '—'))}</p>
           <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
           <button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>
+          ${reportButton(ev.evenement_id)}
         </div>
         ${volumesBlock(saisie, { taux: t, officiel: true })}
         <details class="scope-card scope-details" style="margin-top:12px">
@@ -1306,6 +1359,7 @@
           </div>
           <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
           <button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>
+          ${reportButton(ev.evenement_id)}
         </div>
         <div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Liste nominative</h3>
@@ -1984,6 +2038,7 @@
         toast(info.tone, info.title, info.message);
       });
     });
+    bindReports();
     document.getElementById('reopen')?.addEventListener('click', () => { state.modal = 'reopen'; render(); });
     document.getElementById('reopen-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('cancel-event')?.addEventListener('click', () => { state.modal = 'cancel-event'; render(); });
@@ -2006,6 +2061,81 @@
         await loadFiche(id);
         go(`#/exercices/${id}`);
       });
+    });
+  }
+
+  function bindReports() {
+    document.getElementById('report-kind')?.addEventListener('change', (e) => {
+      state.reportForm.kind = e.target.value;
+      render();
+    });
+    document.getElementById('report-domaine')?.addEventListener('change', (e) => {
+      state.reportForm.domaine = e.target.value;
+      const first = (state.referentiels.cibles || []).find((c) => c.domaineCode === state.reportForm.domaine);
+      state.reportForm.cible = first ? first.niveauCode : '';
+      render();
+    });
+    document.getElementById('report-cible')?.addEventListener('change', (e) => {
+      state.reportForm.cible = e.target.value;
+    });
+    document.getElementById('report-event')?.addEventListener('change', (e) => {
+      state.reportForm.evenementId = e.target.value;
+    });
+    document.getElementById('report-generate')?.addEventListener('click', () => generateCurrentReport());
+    root.querySelectorAll('[data-report-event]').forEach((btn) => {
+      btn.addEventListener('click', () => generateEventReport(btn.getAttribute('data-report-event')));
+    });
+  }
+
+  function reportPeriodPayload() {
+    return L.periodParams({
+      preset: state.preset,
+      year: state.year,
+      month: state.month,
+      quarter: state.quarter,
+      from: state.from,
+      to: state.to
+    });
+  }
+
+  function generateEventReport(evenementId) {
+    const body = Object.assign(reportPeriodPayload(), {
+      kind: 'EVENT',
+      evenementId,
+      nominatif: canNominatif()
+    });
+    delete body.domaine;
+    delete body.cible;
+    openReport(body);
+  }
+
+  function generateCurrentReport() {
+    const form = state.reportForm;
+    const body = Object.assign(reportPeriodPayload(), { kind: form.kind });
+    if (form.kind === 'PERIOD') {
+      delete body.domaine;
+      delete body.cible;
+    } else if (form.kind === 'DOMAIN') {
+      body.domaine = form.domaine;
+      delete body.cible;
+    } else if (form.kind === 'TARGET') {
+      body.domaine = form.domaine;
+      body.cible = form.cible;
+    } else {
+      body.evenementId = form.evenementId || (document.getElementById('report-event') && document.getElementById('report-event').value);
+      body.nominatif = canNominatif();
+      delete body.domaine;
+      delete body.cible;
+    }
+    openReport(body);
+  }
+
+  function openReport(body) {
+    if (typeof client.generateReport !== 'function') return;
+    withLoading(async () => {
+      const result = await client.generateReport(body);
+      if (window.ScopePdfViewer) window.ScopePdfViewer.open(result);
+      else toast('success', 'Rapport généré', result.filename);
     });
   }
 
@@ -2062,6 +2192,9 @@
     try {
       const data = await client.sessionMe();
       state.session = data.user || null;
+      window.CurrentRoles = (state.session && state.session.roles) || [];
+      window.CurrentPermissions = (state.session && state.session.permissions) || [];
+      document.dispatchEvent(new Event('monitoring-f7-auth-session-changed'));
       state.needOkta = false;
       return true;
     } catch (error) {
@@ -2102,7 +2235,7 @@
         const people = await client.listPersonnes();
         state.personCount = (people.personnes || []).length;
       }
-      if (r.screen === 'liste') await loadList();
+      if (r.screen === 'liste' || r.screen === 'rapports') await loadList();
       if (r.screen === 'vue') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
       if (r.screen === 'personnel' && client.listPersonnes) {

@@ -120,6 +120,23 @@ grep -q "/analytics/graphs" netlify/functions/scope.js
 grep -q "scope-charts.js" scope.html
 grep -q -- "--scope-chart-primary" assets/css/scope.css
 grep -q "dash.graphs" assets/js/scope-ui.js
+grep -q "SCOPE-REPORT-1" netlify/functions/_scope-report-service.js
+grep -q "path === '/reports'" netlify/functions/scope.js
+grep -q "scope-pdf-viewer.js" scope.html
+grep -q "reports:nominatif" netlify/functions/_rbac.js
+grep -q "reports:nominatif" assets/js/rbac.js
+grep -qF 'assets/img/logo-scope-blanc.png' netlify.scope.toml
+grep -qF 'assets/img/LogoSDISblanc.png' netlify.scope.toml
+grep -q "frame-src 'self' blob:" netlify.scope.toml
+grep -q '"pdfkit"' package.json
+if grep -q "officialFromQuantitatif" netlify/functions/_scope-pdf-renderer.js; then
+  echo "ERREUR: formule KPI dans le renderer PDF"
+  exit 1
+fi
+if grep -q "computeTaux" netlify/functions/_scope-pdf-renderer.js; then
+  echo "ERREUR: computeTaux dans le renderer PDF"
+  exit 1
+fi
 if grep -q "officialFromQuantitatif" assets/js/scope-ui.js; then
   echo "ERREUR: calcul officiel dans scope-ui.js"
   exit 1

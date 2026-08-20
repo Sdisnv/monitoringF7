@@ -1,0 +1,293 @@
+'use strict';
+/** SCOPE-REPORT-1 — acquisition et normalisation. Aucun recalcul de taux. */
+
+const { DOMAINES_MODEL_2, SOUS_DOMAINES } = require('./_scope-schema');
+const { parsePeriod } = require('./_scope-period');
+const { HttpError } = require('./_scope-rules');
+const { KINDS } = require('./_scope-analytics');
+const { createScopeAnalyticsService } = require('./_scope-analytics-service');
+const { createScopeDashboardService } = require('./_scope-dashboard-service');
+const { createScopeService } = require('./_scope-service');
+const { ROOT_DOMAINES } = require('./_scope-graphs');
+
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT']);
+
+const STATUT_LABELS = Object.freeze({
+  PRESENT: 'Présent',
+  ABSENT_EXCUSE: 'Excusé',
+  ABSENT_NON_EXCUSE: 'Non excusé',
+  DISPENSE: 'Dispensé',
+  PERMUTATION: 'Permutation',
+  NON_RENSEIGNE: 'Non renseigné',
+  NON_CONCERNE: 'Non concerné',
+  PLANIFIE: 'Planifié',
+  REALISE: 'Réalisé',
+  REPORTE: 'Reporté',
+  ANNULE: 'Annulé'
+});
+
+const MOTIF_LABELS = Object.freeze({
+  PRIVE: 'Privé',
+  PROFESSIONNEL: 'Professionnel',
+  ARMEE: 'Armée',
+  ACCIDENT_MALADIE: 'Accident / maladie',
+  NON_PRECISE: 'Non précisé (historique)',
+  MALADIE: 'Maladie (historique)',
+  ACCIDENT: 'Accident (historique)',
+  AUTRE: 'Autre (historique)'
+});
+
+const MODE_LABELS = Object.freeze({
+  NOMINATIF: 'Nominatif',
+  QUANTITATIF: 'Quantitatif',
+  LEGACY: 'Historique agrégé (LEGACY)'
+});
+
+function normalizeKind(raw){
+  const text = String(raw || '').toUpperCase();
+  const map = {
+    PERIOD: 'PERIOD', PERIODE: 'PERIOD', SDIS: 'PERIOD',
+    DOMAIN: 'DOMAIN', DOMAINE: 'DOMAIN',
+    TARGET: 'TARGET', CIBLE: 'TARGET', OI: 'TARGET',
+    EVENT: 'EVENT', EVENEMENT: 'EVENT', EXERCICE: 'EVENT'
+  };
+  const kind = map[text];
+  if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
+  return kind;
+}
+
+function domaineLabel(code){
+  const meta = DOMAINES_MODEL_2[code];
+  if(!meta) return code || '';
+  if(code === 'PR') return 'Protection respiratoire';
+  return meta.libelleAffiche || meta.libelle || code;
+}
+
+function perimeterTitle(kind, { domaine, cible, event }){
+  if(kind === 'PERIOD') return 'SDIS régional du Nord vaudois';
+  if(kind === 'EVENT' && event){
+    const bits = [domaineLabel(event.domaine_code), ...(event.cibles || []).map((c) => c.niveau_code || c.niveauCode)];
+    return [event.libelle, bits.filter(Boolean).join(' / ')].filter(Boolean).join(' — ');
+  }
+  if(domaine && DOMAINES_MODEL_2[domaine] && DOMAINES_MODEL_2[domaine].parentCode){
+    return `${domaineLabel(DOMAINES_MODEL_2[domaine].parentCode)} / ${domaineLabel(domaine)}${cible ? ` / ${cible}` : ''}`;
+  }
+  return [domaineLabel(domaine), cible].filter(Boolean).join(' / ') || 'SCOPE';
+}
+
+function periodSlug(period){
+  if(!period) return '';
+  if(period.preset === 'YEAR') return String(period.from).slice(0, 4);
+  if(period.preset === 'MONTH') return String(period.from).slice(0, 7);
+  if(period.preset === 'QUARTER'){
+    const m = Number(String(period.from).slice(5, 7));
+    return `${String(period.from).slice(0, 4)}-T${Math.ceil(m / 3)}`;
+  }
+  return `${period.from}_${period.to}`;
+}
+
+function sanitizeFilename(name){
+  return String(name || 'SCOPE_Rapport')
+    .normalize('NFKD')
+    .replace(/[^\w.\-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^[_.]+|[_.]+$/g, '')
+    .slice(0, 120) || 'SCOPE_Rapport';
+}
+
+function buildFilename(kind, ctx){
+  const year = ctx.period ? periodSlug(ctx.period) : '';
+  if(kind === 'PERIOD') return sanitizeFilename(`SCOPE_Rapport_SDIS_${year}.pdf`);
+  if(kind === 'DOMAIN') return sanitizeFilename(`SCOPE_${ctx.domaine}_${year}.pdf`);
+  if(kind === 'TARGET') return sanitizeFilename(`SCOPE_${ctx.domaine}_${ctx.cible}_${year}.pdf`);
+  const date = ctx.eventDate || '';
+  const oi = ctx.cible || 'GEN';
+  return sanitizeFilename(`SCOPE_Exercice_${ctx.domaine || 'SCOPE'}_${oi}_${date}.pdf`);
+}
+
+function pickAlerts(alertsPayload){
+  const items = (alertsPayload && alertsPayload.alerts) || [];
+  const p0 = items.filter((a) => a.level === 'P0').slice(0, 8);
+  const p1 = items.filter((a) => a.level === 'P1').slice(0, 6);
+  return { p0, p1, p2: [] };
+}
+
+function nominativeRows(fiche){
+  const attendus = (fiche.attendus || []).filter((a) => a.inclus !== false);
+  const parts = fiche.participations || [];
+  const personnes = fiche.personnes || {};
+  const cibles = fiche.cibles || [];
+  const cibleById = Object.fromEntries(cibles.map((c) => [c.cible_id, c]));
+  return attendus.map((a) => {
+    const pid = a.personne_id;
+    const person = personnes[pid] || {};
+    const part = parts.find((p) => p.personne_id === pid && !['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(p.role)) || {};
+    const cible = cibleById[a.cible_id] || {};
+    return {
+      nom: person.nom || '',
+      prenom: person.prenom || '',
+      nip: person.nip || '',
+      oi: cible.niveau_code || '',
+      statut: part.statut || 'NON_RENSEIGNE',
+      statutLabel: STATUT_LABELS[part.statut] || part.statut || 'Non renseigné',
+      motif: part.motif_absence || null,
+      motifLabel: part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : '',
+      permutation: part.statut === 'PERMUTATION'
+    };
+  }).sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+}
+
+function encadrementRows(fiche){
+  const personnes = fiche.personnes || {};
+  return (fiche.encadrement || []).map((p) => {
+    const person = personnes[p.personne_id] || {};
+    return {
+      nom: person.nom || '',
+      prenom: person.prenom || '',
+      nip: person.nip || '',
+      role: p.role
+    };
+  });
+}
+
+async function collectReport(repo, query, options){
+  const kind = normalizeKind(query.kind || query.type);
+  const includeNominatif = Boolean(options && options.includeNominatif);
+  const analytics = createScopeAnalyticsService(repo);
+  const dashboard = createScopeDashboardService(repo);
+  const scope = createScopeService(repo);
+
+  if(kind === 'EVENT'){
+    const evenementId = query.evenementId || query.evenement_id || query.id;
+    if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport événement exige un identifiant.');
+    const fiche = await scope.lireEvenement(evenementId);
+    const date = fiche.evenement.date;
+    const period = { from: date, to: date, preset: 'CUSTOM' };
+    const evaluated = await analytics.evaluate({ evenementId, from: date, to: date });
+    const explain = await analytics.explain({ evenementId, from: date, to: date });
+    const series = await analytics.timeseries({ evenementId, from: date, to: date });
+    const { buildScopeGraphs } = require('./_scope-graphs');
+    const graphs = await buildScopeGraphs({
+      analytics,
+      repo,
+      period,
+      domaineCode: fiche.evenement.domaine_code,
+      cibleRaw: null,
+      evaluated,
+      series,
+      explain
+    });
+    const isLegacy = fiche.evenement.origine === 'LEGACY_AGGREGATED' || fiche.modeSuivi === 'LEGACY';
+    const cibles = fiche.cibles || [];
+    return {
+      kind,
+      period,
+      domaine: fiche.evenement.domaine_code,
+      cible: cibles[0] && cibles[0].niveau_code,
+      title: isLegacy ? 'Rapport d’exercice — historique agrégé' : 'Rapport d’exercice',
+      subtitle: perimeterTitle(kind, { event: { ...fiche.evenement, cibles } }),
+      filename: buildFilename(kind, {
+        period,
+        domaine: fiche.evenement.domaine_code,
+        cible: cibles[0] && cibles[0].niveau_code,
+        eventDate: date
+      }),
+      event: {
+        id: fiche.evenement.evenement_id,
+        date,
+        libelle: fiche.evenement.libelle,
+        domaine: fiche.evenement.domaine_code,
+        sousDomaine: (DOMAINES_MODEL_2[fiche.evenement.domaine_code] || {}).parentCode ? fiche.evenement.domaine_code : null,
+        parentDomaine: (DOMAINES_MODEL_2[fiche.evenement.domaine_code] || {}).parentCode || null,
+        cibles: cibles.map((c) => ({ code: c.niveau_code, libelle: c.libelle })),
+        modeSuivi: fiche.modeSuivi,
+        statut: fiche.evenement.statut,
+        statutLabel: STATUT_LABELS[fiche.evenement.statut] || fiche.evenement.statut,
+        modeLabel: MODE_LABELS[fiche.modeSuivi] || fiche.modeSuivi
+      },
+      officiel: isLegacy ? null : evaluated.officiel,
+      legacy: isLegacy ? {
+        kind: KINDS.LEGACY,
+        presents: fiche.legacy && fiche.legacy.nb_presents,
+        attendu: fiche.legacy && ((fiche.legacy.payload_v67 && fiche.legacy.payload_v67.total_attendu) || fiche.legacy.nb_convoques),
+        tauxLegacy: evaluated.legacy && evaluated.legacy.points && evaluated.legacy.points[0]
+          ? evaluated.legacy.points[0].tauxLegacy
+          : null,
+        banner: 'Historique agrégé — données non nominatives. Ce taux n’est pas le KPI officiel SCOPE.'
+      } : (evaluated.legacy || null),
+      graphs,
+      explain,
+      nominatif: includeNominatif && fiche.modeSuivi === 'NOMINATIF' && !isLegacy ? nominativeRows(fiche) : [],
+      encadrement: includeNominatif && fiche.modeSuivi === 'NOMINATIF' && !isLegacy ? encadrementRows(fiche) : [],
+      quantitative: fiche.modeSuivi === 'QUANTITATIF',
+      isLegacy,
+      alerts: { p0: [], p1: [], p2: [] },
+      events: [],
+      domaines: ROOT_DOMAINES
+    };
+  }
+
+  const period = parsePeriod(query);
+  const domaine = query.domaineCode || query.domaine || null;
+  const cible = query.cibleId || query.cible || null;
+  if(kind === 'DOMAIN' && !domaine) throw new HttpError(400, 'domaine_requis', 'Le rapport domaine exige un code domaine.');
+  if(kind === 'TARGET' && !domaine) throw new HttpError(400, 'cible_requise', 'Le rapport cible exige un domaine et une cible / un OI.');
+  if(kind === 'PERIOD' && (domaine || cible)){
+    /* ignore extra perimeter — PERIOD is SDIS */
+  }
+  const dashQuery = kind === 'PERIOD'
+    ? { ...query, from: period.from, to: period.to, domaine: undefined, cible: undefined, domaineCode: undefined, cibleId: undefined }
+    : { ...query, from: period.from, to: period.to, domaine: kind === 'PERIOD' ? undefined : domaine, cible: kind === 'TARGET' ? cible : undefined };
+  const dash = await dashboard.dashboard(dashQuery);
+  let cibleCode = kind === 'TARGET' ? cible : null;
+  if(kind === 'TARGET' && cible && String(cible).length > 8){
+    const all = typeof repo.listCibles === 'function' ? await repo.listCibles() : [];
+    const row = all.find((c) => c.cible_id === cible);
+    if(row) cibleCode = row.niveau_code;
+  }
+  const title = kind === 'PERIOD'
+    ? 'Rapport de période — commandement'
+    : (kind === 'DOMAIN' ? `Rapport de domaine — ${domaine}` : `Rapport de cible / OI — ${perimeterTitle(kind, { domaine, cible: cibleCode })}`);
+  return {
+    kind: kind === 'PERIOD' ? 'PERIOD' : kind,
+    period: dash.period,
+    domaine: kind === 'PERIOD' ? null : domaine,
+    cible: kind === 'TARGET' ? cibleCode : null,
+    title,
+    subtitle: perimeterTitle(kind === 'PERIOD' ? 'PERIOD' : kind, { domaine: kind === 'PERIOD' ? null : domaine, cible: kind === 'TARGET' ? cibleCode : null }),
+    filename: buildFilename(kind === 'PERIOD' ? 'PERIOD' : kind, {
+      period: dash.period,
+      domaine: kind === 'PERIOD' ? null : domaine,
+      cible: kind === 'TARGET' ? cibleCode : null
+    }),
+    event: null,
+    officiel: dash.officiel,
+    legacy: dash.legacy,
+    graphs: dash.graphs,
+    explain: dash.explain,
+    nominatif: [],
+    encadrement: [],
+    quantitative: false,
+    isLegacy: false,
+    alerts: pickAlerts(dash.alerts),
+    events: dash.evenements || [],
+    inboxCount: (dash.inbox || []).length,
+    absencesNonExcusees: dash.absencesNonExcusees,
+    domaines: kind === 'PERIOD' ? (dash.graphs.domaines.series[0] && dash.graphs.domaines.series[0].points) || [] : [],
+    children: (dash.graphs.children && dash.graphs.children.series[0] && dash.graphs.children.series[0].points) || []
+  };
+}
+
+module.exports = {
+  REPORT_KINDS,
+  STATUT_LABELS,
+  MOTIF_LABELS,
+  MODE_LABELS,
+  normalizeKind,
+  domaineLabel,
+  sanitizeFilename,
+  buildFilename,
+  periodSlug,
+  collectReport,
+  SOUS_DOMAINES
+};

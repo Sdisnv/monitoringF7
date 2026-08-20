@@ -1415,6 +1415,96 @@ html, body {
     margin-left: 0;
     width: 100%;
   }
-  .scope-banner { margin: 12px 14px 0; }
-  .scope-main { padding: 14px; }
+.scope-pdf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(15, 20, 35, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: auto;
+}
+.scope-pdf-dialog {
+  width: min(1100px, 100%);
+  height: min(860px, 100%);
+  background: var(--scope-card);
+  border-radius: var(--scope-radius);
+  box-shadow: 0 18px 50px rgba(20, 30, 50, 0.28);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.scope-pdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--scope-line);
+  flex-wrap: wrap;
+}
+.scope-pdf-title {
+  font-size: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.scope-pdf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.scope-pdf-actions .scope-btn,
+.scope-pdf-actions .scope-btn-primary {
+  min-height: 44px;
+  height: 44px;
+}
+.scope-pdf-page-label {
+  font-size: 13px;
+  color: var(--scope-muted);
+  min-width: 7.5rem;
+  text-align: center;
+}
+.scope-pdf-stage {
+  flex: 1;
+  min-height: 0;
+  background: var(--scope-bg);
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+.scope-pdf-frame {
+  width: 100%;
+  min-height: 640px;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+body.scope-pdf-open { overflow: hidden; }
+
+@media (max-width: 1200px) {
+  .scope-pdf-dialog { width: 100%; height: 100%; border-radius: 0; }
+}
+@media (max-width: 1024px) {
+  .scope-pdf-actions .scope-btn { min-height: 44px; height: 44px; }
+}
+@media (max-width: 768px) {
+  .scope-pdf-overlay { padding: 0; align-items: stretch; }
+  .scope-pdf-dialog { height: 100%; }
+  .scope-pdf-toolbar { position: sticky; top: 0; background: var(--scope-card); z-index: 2; }
+  .scope-pdf-actions { width: 100%; }
+  .scope-pdf-actions .scope-btn,
+  .scope-pdf-actions .scope-btn-primary { flex: 1 1 calc(50% - 8px); min-height: 44px; height: 44px; }
+  .scope-pdf-frame { min-height: 480px; }
+  .scope-report-grid { grid-template-columns: 1fr; }
+}
+
+.scope-report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 720px;
 }
