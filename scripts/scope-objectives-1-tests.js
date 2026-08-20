@@ -438,7 +438,7 @@ const PRESENT_13_15 = [
     assert.ok(ui.includes('Objectifs de participation'));
     assert.ok(ui.includes('scope-sidebar'));
     assert.ok(ui.includes('Vue d’ensemble'));
-    assert.ok(ui.includes('Exercices'));
+    assert.ok(ui.includes('Événements'));
     assert.ok(ui.includes('Personnel'));
     assert.ok(!ui.includes('const navButtons'));
     assert.ok(!ui.includes('data-nav="objectifs"'));

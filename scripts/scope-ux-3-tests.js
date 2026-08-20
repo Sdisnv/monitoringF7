@@ -25,14 +25,17 @@ function record(name, fn) {
   const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
   const logicSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
 
-  await record('sidebar présente, ancienne nav horizontale retirée', async () => {
+  await record('drawer dynamique présent, sidebar permanente retirée', async () => {
     assert.ok(ui.includes('scope-sidebar'));
     assert.ok(ui.includes('aria-label="Navigation principale"'));
     assert.ok(!ui.includes('scope-nav-inner'));
     assert.ok(!ui.includes('const navButtons'));
     assert.ok(!ui.includes('id="scope-header-menu"'));
     assert.ok(css.includes('.scope-sidebar'));
-    assert.ok(css.includes('--scope-sidebar:'));
+    assert.ok(css.includes('position: fixed'));
+    assert.ok(css.includes('scope-nav-backdrop'));
+    assert.ok(css.includes('translateX(-105%)'));
+    assert.ok(!css.includes('grid-template-columns: var(--scope-sidebar)'));
   });
 
   await record('navigation domaines depuis le référentiel', async () => {
@@ -81,23 +84,24 @@ function record(name, fn) {
     assert.ok(dap.expanded);
   });
 
-  await record('sélecteurs période / année', async () => {
+  await record('sélecteurs période hors header', async () => {
     assert.ok(ui.includes("periodSelect('scope-preset'"));
     assert.ok(ui.includes("periodSelect('scope-year'"));
+    assert.ok(ui.includes('scope-period-context'));
     assert.ok(ui.includes('scope-select-control'));
     assert.ok(css.includes('.scope-select'));
-    assert.ok(css.includes('color-scheme: dark'));
+    assert.ok(css.includes('.scope-period-context'));
     assert.ok(!css.includes("url(\"data:image/svg+xml"));
   });
 
   await record('logo SCOPE taille validée + logo SDIS officiel', async () => {
     assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
     assert.ok(ui.includes('class="scope-logo"'));
-    assert.match(css, /height:\s*68px/);
+    assert.match(css, /height:\s*75px/);
     assert.ok(css.includes('object-fit: contain'));
-    assert.ok(ui.includes('assets/img/LogoSDISblanc.png'));
+    assert.ok(ui.includes('assets/img/LogoSDISseulnoir.png'));
     assert.ok(ui.includes('SDIS régional du Nord vaudois'));
-    assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/LogoSDISblanc.png')));
+    assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/LogoSDISseulnoir.png')));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/logo-scope-blanc.png')));
   });
 
@@ -162,7 +166,7 @@ function record(name, fn) {
   await record('identité NIP / import exercices hors onglet principal', async () => {
     assert.ok(ui.includes('NIP'));
     assert.ok(ui.includes('PERSON-1'));
-    assert.ok(ui.includes('Importer un programme CSV'));
+    assert.ok(ui.includes('Importer un programme d’événements'));
     assert.ok(!ui.includes('data-nav="import"'));
     assert.ok(ui.includes('REPORT-1'));
   });

@@ -70,8 +70,8 @@ async function closeWith(service, eventId, people, statuses){
   await record('1 — list loading ≠ empty', async () => {
     assert.strictEqual(logic.listViewState({ ready: false, error: null, count: 0 }), 'loading');
     assert.notStrictEqual(logic.listViewState({ ready: false, error: null, count: 0 }), 'empty');
-    assert.strictEqual(logic.loadingMessage('exercices'), 'Chargement des exercices…');
-    assert.strictEqual(logic.emptyMessage('exercices'), 'Aucun exercice sur la période choisie.');
+    assert.strictEqual(logic.loadingMessage('exercices'), 'Chargement des événements…');
+    assert.strictEqual(logic.emptyMessage('exercices'), 'Aucun événement sur la période choisie.');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('listReady'));
     assert.ok(ui.includes('loadingMessage(\'exercices\')'));

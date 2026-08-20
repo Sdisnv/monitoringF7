@@ -394,6 +394,49 @@
     return 'LIVE Monitoring';
   }
 
+  function userInitials() {
+    const label = userLabel();
+    return label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC';
+  }
+
+  function hasScopePermission(permission) {
+    if (!permission) return true;
+    if (mode !== 'live') return true;
+    if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
+      return window.MonitoringRBAC.has(permission);
+    }
+    const roles = (state.session && state.session.roles) || [];
+    if (roles.includes('sdis-admin')) return true;
+    if (permission === 'dashboard:read') return roles.length > 0;
+    if (permission === 'personnel:read') return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
+    if (permission === 'personnel:manage') return roles.some((role) => ['sdis-admin', 'sdis-commandement', 'sdis-chef-formation', 'sdis-formation'].includes(role));
+    if (permission === 'references:manage') return roles.some((role) => ['sdis-admin', 'sdis-commandement', 'sdis-chef-formation', 'sdis-formation'].includes(role));
+    if (permission === 'events:create') return roles.some((role) => role !== 'sdis-readonly');
+    if (permission === 'users:admin' || permission === 'settings:manage') return roles.includes('sdis-admin');
+    return roles.length > 0;
+  }
+
+  function periodContextHtml() {
+    return `<section class="scope-period-context" aria-label="Période analysée">
+      <div>
+        <span>Période analysée</span>
+        <strong>${escapeHtml(periodLabel({ preset: state.preset, from: state.from, to: state.to }))}</strong>
+      </div>
+      <div class="scope-period-controls">
+        ${periodSelect('scope-preset', `
+          <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
+          <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
+          <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
+          <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Plage</option>
+        `)}
+        ${periodSelect('scope-year', [String(Number(state.year) - 1), state.year, String(Number(state.year) + 1)].filter((v, i, a) => a.indexOf(v) === i).map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join(''))}
+        ${state.preset === 'QUARTER' ? periodSelect('scope-quarter', [1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')) : ''}
+        ${state.preset === 'MONTH' ? periodSelect('scope-month', ['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')) : ''}
+        ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
+      </div>
+    </section>`;
+  }
+
   function periodSelect(id, optionsHtml) {
     return `<label class="scope-select">
       <span class="visually-hidden">${id === 'scope-preset' ? 'Type de période' : id === 'scope-year' ? 'Année' : id === 'scope-quarter' ? 'Trimestre' : 'Mois'}</span>
@@ -411,59 +454,73 @@
       L.normalizeNavArbre(state.referentiels.arbre, state.referentiels.domaines, state.referentiels.cibles),
       r
     );
-    const vueExact = r.screen === 'vue' && !r.domaine;
     const link = (item, currentPage) => `<a class="scope-nav-link" href="${item.href}" ${currentPage ? 'aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
+    const section = (label) => `<p class="scope-nav-section">${escapeHtml(label)}</p>`;
+    const primaryLink = (href, label, current) => link({ href, label }, current);
     const reglagesOpen = state.openGroups.reglages === true || r.nav === 'reglages';
     const domainBlocks = model.domains.map((d) => {
       const expanded = state.openGroups[d.id] != null ? state.openGroups[d.id] : d.expanded;
       const isCurrent = r.domaine === d.id && !r.cible;
+      const overview = `<a class="scope-nav-link" href="${d.href}" ${isCurrent ? 'aria-current="page"' : ''}>Vue d’ensemble</a>`;
       return `<div class="scope-nav-group${expanded ? '' : ' is-collapsed'}">
-        <div class="scope-nav-group-head${isCurrent ? ' is-current' : ''}">
-          <a class="scope-nav-link" href="${d.href}" ${isCurrent ? 'aria-current="page"' : ''}>${escapeHtml(d.label)}</a>
-          ${d.children.length ? `<button type="button" class="scope-nav-caret" data-nav-group="${escapeHtml(d.id)}" aria-expanded="${expanded ? 'true' : 'false'}" aria-label="Déplier ${escapeHtml(d.label)}">▸</button>` : ''}
-        </div>
-        ${d.children.length ? `<div class="scope-nav-sub">${d.children.map((c) => {
+        <button type="button" class="scope-nav-group-head${isCurrent ? ' is-current' : ''}" data-nav-group="${escapeHtml(d.id)}" aria-expanded="${expanded ? 'true' : 'false'}">
+          <span>${escapeHtml(d.label)}</span>
+          <span class="scope-nav-caret" aria-hidden="true">▸</span>
+        </button>
+        <div class="scope-nav-sub">${overview}${d.children.map((c) => {
           const childCurrent = r.domaine === c.id || (r.domaine === d.id && r.cible === c.id);
           return link(c, childCurrent);
-        }).join('')}</div>` : ''}
+        }).join('')}</div>
       </div>`;
     }).join('');
-    return `
-      <div class="scope-nav-backdrop" id="scope-nav-backdrop"></div>
-      <aside class="scope-sidebar" id="scope-sidebar" aria-label="Navigation principale">
-        <div class="scope-sidebar-head">
-          <p class="scope-sidebar-title">Navigation</p>
-          <button type="button" class="scope-nav-close" id="scope-nav-close" aria-label="Fermer le menu">×</button>
-        </div>
-        <nav class="scope-nav-scroll">
-          ${link({ href: '#/vue', label: 'Vue d’ensemble' }, vueExact)}
-          ${link({ href: '#/exercices', label: 'Exercices' }, r.nav === 'exercices')}
-          <p class="scope-nav-section">Domaines</p>
-          ${domainBlocks}
-          ${link({ href: '#/personnel', label: 'Personnel' }, r.nav === 'personnel')}
-          ${link({ href: '#/rapports', label: 'Rapports' }, r.nav === 'rapports')}
-          <p class="scope-nav-section">Réglages</p>
+    const settings = [
+      { href: '#/reglages/objectifs', label: 'Objectifs', current: r.screen === 'objectifs', permission: 'references:manage' },
+      { href: '#/reglages/suivi', label: 'Suivi nominatif', current: r.screen === 'suivi', permission: 'personnel:manage' },
+      { href: '#/reglages/import-evenements', label: 'Import des événements', current: r.screen === 'import-evenements', permission: 'events:create' },
+      { href: '#/reglages/import-personnel', label: 'Import du personnel', current: r.screen === 'import-personnel', permission: 'personnel:manage' },
+      { href: '#/reglages/utilisateurs', label: 'Utilisateurs', current: r.screen === 'utilisateurs', permission: 'users:admin' },
+      { href: '#/reglages/administration', label: 'Administration', current: r.screen === 'administration', permission: 'settings:manage' }
+    ].filter((item) => hasScopePermission(item.permission));
+    const settingsBlock = settings.length ? `
+          ${section('Réglages')}
           <div class="scope-nav-group${reglagesOpen ? '' : ' is-collapsed'}">
             <button type="button" class="scope-nav-group-head${r.nav === 'reglages' ? ' is-current' : ''}" data-nav-group="reglages" aria-expanded="${reglagesOpen ? 'true' : 'false'}">
               <span>Réglages</span>
               <span class="scope-nav-caret" aria-hidden="true">▸</span>
             </button>
             <div class="scope-nav-sub">
-              ${link({ href: '#/reglages/objectifs', label: 'Objectifs' }, r.screen === 'objectifs')}
-              ${link({ href: '#/reglages/suivi', label: 'Suivi nominatif' }, r.screen === 'suivi')}
+              ${settings.map((item) => link(item, item.current)).join('')}
             </div>
-          </div>
+          </div>` : '';
+    return `
+      <div class="scope-nav-backdrop" id="scope-nav-backdrop"></div>
+      <aside class="scope-sidebar" id="scope-sidebar" aria-label="Navigation principale" aria-modal="${state.navOpen ? 'true' : 'false'}">
+        <div class="scope-sidebar-head">
+          <p class="scope-sidebar-title">Navigation</p>
+          <button type="button" class="scope-nav-close" id="scope-nav-close" aria-label="Fermer la navigation">×</button>
+        </div>
+        <nav class="scope-nav-scroll">
+          ${section('Accueil')}
+          ${primaryLink('#/accueil', 'Accueil', r.screen === 'accueil')}
+          ${section('Activité')}
+          ${primaryLink('#/evenements', 'Événements', r.nav === 'exercices')}
+          ${primaryLink('#/statistiques', 'Statistiques', r.screen === 'statistiques')}
+          ${hasScopePermission('personnel:read') ? primaryLink('#/personnel', 'Personnel', r.nav === 'personnel') : ''}
+          ${primaryLink('#/rapports', 'Rapports', r.nav === 'rapports')}
+          ${section('Domaines')}
+          ${domainBlocks}
+          ${settingsBlock}
+          ${section('Informations')}
+          ${primaryLink('#/apropos', 'À propos', r.screen === 'apropos')}
         </nav>
         <div class="scope-sidebar-inst">
-          <img class="scope-sdis-logo" src="assets/img/LogoSDISblanc.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
+          <img class="scope-sdis-logo" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
         </div>
       </aside>
     `;
   }
 
   function headerHtml(r) {
-    const years = [String(Number(state.year) - 1), state.year, String(Number(state.year) + 1)]
-      .filter((v, i, a) => a.indexOf(v) === i);
     const logout = mode === 'live'
       ? `<a class="scope-btn scope-btn-ghost" href="/auth/logout?returnTo=/">Déconnexion</a>`
       : '';
@@ -472,7 +529,7 @@
         <div class="scope-header-inner">
           <button type="button" class="scope-nav-toggle" id="scope-nav-toggle" aria-expanded="${state.navOpen ? 'true' : 'false'}" aria-controls="scope-sidebar">
             <span aria-hidden="true"></span>
-            <span class="visually-hidden">Ouvrir le menu</span>
+            <b>Menu</b>
           </button>
           <div class="scope-brand">
             <img class="scope-logo" src="assets/img/logo-scope-blanc.png" alt="SCOPE" width="300" height="100">
@@ -480,18 +537,6 @@
           </div>
           <div class="scope-header-spacer"></div>
           <div class="scope-header-tools">
-            <div class="scope-period">
-              ${periodSelect('scope-preset', `
-                <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
-                <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
-                <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
-                <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Plage</option>
-              `)}
-              ${periodSelect('scope-year', years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join(''))}
-              ${state.preset === 'QUARTER' ? periodSelect('scope-quarter', [1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')) : ''}
-              ${state.preset === 'MONTH' ? periodSelect('scope-month', ['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')) : ''}
-              ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
-            </div>
             <span class="scope-mode-pill">${mode === 'live' ? 'LIVE' : 'DEMO'}</span>
             <label class="scope-qual-toggle">
               <input type="checkbox" id="scope-include-qual" ${state.includeQualification ? 'checked' : ''}>
@@ -501,6 +546,7 @@
               ? `<a class="scope-alerts-count" href="#/vue" aria-label="À traiter, ${Number(state.alertCounts.p0)}">${escapeHtml(`À traiter · ${Number(state.alertCounts.p0)}`)}</a>`
               : ''}
             <div class="scope-user-block">
+              <span class="scope-user-avatar" aria-hidden="true">${escapeHtml(userInitials())}</span>
               <div class="scope-user-text">
                 <strong class="scope-user">${escapeHtml(userLabel())}</strong>
                 ${mode === 'live' ? `<small>${escapeHtml(roleLabel())}</small>` : ''}
@@ -594,6 +640,93 @@
     return `<span class="scope-badge"><span class="scope-dot ${escapeHtml(code)}"></span>${escapeHtml(L.statutLabel(code))}</span>`;
   }
 
+  function renderAccueil() {
+    const dash = state.dashboard;
+    if (state.dashboardError) {
+      return `<div class="scope-crumb">Accueil</div><div class="scope-main"><div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+    }
+    if (!dash) {
+      return `<div class="scope-crumb">Accueil</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+    }
+    const o = dash.officiel || {};
+    const taux = o.analyticStatus === 'NON_EVALUABLE' && o.percentage == null ? 'Non évaluable' : L.formatTaux(o.percentage);
+    const alerts = ((dash.alerts && dash.alerts.alerts) || []).filter((a) => a.level === 'P0').slice(0, 4);
+    const graphs = dash.graphs || {};
+    const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
+    const evolutionCard = C ? C.renderChartCard(graphs.evolution, { size: { width: 640, height: 118 } }) : '';
+    const planned = (state.list || []).filter((item) => item.evenement && item.evenement.statut === 'PLANIFIE').length;
+    return `
+      <div class="scope-crumb">Accueil</div>
+      <div class="scope-main scope-home">
+        ${periodContextHtml()}
+        <section class="scope-home-hero">
+          <div>
+            <p class="scope-eyebrow">Centre de pilotage</p>
+            <h1>À traiter aujourd’hui</h1>
+            <p>SCOPE présente les alertes métier, la période analysée et les accès principaux sans recalculer les KPI dans le navigateur.</p>
+          </div>
+          <div class="scope-home-status">
+            <strong>${escapeHtml(String((dash.alerts && dash.alerts.counts && dash.alerts.counts.p0) || 0))}</strong>
+            <span>action(s) P0</span>
+          </div>
+        </section>
+        <div class="scope-dash-split">
+          <div class="scope-card scope-inbox">
+            <h2>Centre de pilotage</h2>
+            ${alerts.length ? `<div class="scope-alert-list">${alerts.map((alert) => alertCardHtml(alert, { ack: false })).join('')}</div>` : '<div class="scope-empty">Aucune action prioritaire.</div>'}
+          </div>
+          ${evolutionCard || '<div class="scope-card scope-chart-card is-empty"><h2>Évolution du taux de participation</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>'}
+        </div>
+        <section class="scope-card">
+          <h2>Synthèse de l’activité</h2>
+          <div class="scope-kpis">
+            <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(taux)}</strong><span>Taux de participation</span><em>${escapeHtml(periodLabel(dash.period))}</em></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String(o.eventCount || 0))}</strong><span>Événements réalisés</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String(planned))}</strong><span>Événements planifiés</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String((dash.absencesNonExcusees && dash.absencesNonExcusees.count) || 0))}</strong><span>Absences non excusées</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(L.formatGap(o.gapPct) || 'Non évaluable')}</strong><span>Objectif / écart</span></article>
+          </div>
+        </section>
+        <section class="scope-home-links">
+          <a href="#/evenements">Événements</a>
+          <a href="#/statistiques">Statistiques</a>
+          <a href="#/personnel">Personnel</a>
+          <a href="#/rapports">Rapports</a>
+          <a href="#/reglages/objectifs">Objectifs</a>
+        </section>
+      </div>
+    `;
+  }
+
+  function renderStatistiques() {
+    const dash = state.dashboard;
+    if (!dash && !state.dashboardError) {
+      return `<div class="scope-crumb">Statistiques</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+    }
+    if (state.dashboardError) {
+      return `<div class="scope-crumb">Statistiques</div><div class="scope-main"><div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+    }
+    const graphs = (dash && dash.graphs) || {};
+    const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
+    const chart = (id, opts) => C ? C.renderChartCard(graphs[id], opts) : '';
+    return `
+      <div class="scope-crumb">Statistiques</div>
+      <div class="scope-main">
+        ${periodContextHtml()}
+        <div class="scope-card">
+          <h2 style="margin-top:0">Statistiques</h2>
+          <p class="scope-mode-hint">Analyse à l’écran via GRAPH-1 / ANALYTICS-1. Les rapports PDF restent dans l’espace Rapports.</p>
+        </div>
+        <div class="scope-graph-stack">${chart('evolution', { size: { width: 640, height: 136 } })}</div>
+        <div class="scope-graph-stack">${chart('domaines')}</div>
+        <div class="scope-graph-stack">${chart('children')}</div>
+        <div class="scope-graph-grid">${chart('composition')}${chart('motifs')}</div>
+        ${L.shouldRenderPermutations(route().domaine, graphs.permutations) ? `<div class="scope-graph-stack">${chart('permutations')}</div>` : ''}
+        ${dash.legacy && dash.legacy.eventCount ? `<p class="scope-mode-hint">LEGACY affiché séparément : ${escapeHtml(String(dash.legacy.eventCount))} agrégat(s), hors KPI officiel.</p>` : ''}
+      </div>
+    `;
+  }
+
   function renderListe() {
     const rows = state.list;
     const view = L.listViewState({
@@ -647,8 +780,9 @@
     }
 
     return `
-      <div class="scope-crumb">Exercices · ${escapeHtml(state.year)}</div>
+      <div class="scope-crumb">Événements · ${escapeHtml(state.year)}</div>
       <div class="scope-main">
+        ${periodContextHtml()}
         <div class="scope-toolbar">
           <div class="scope-field">
             <label>Statut</label>
@@ -667,10 +801,10 @@
               ${state.referentiels.domaines.map((d) => `<option value="${d.code}">${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}
             </select>
           </div>
-          <a class="scope-btn scope-btn-primary" id="scope-import" href="#/exercices/import">Importer un programme CSV</a>
-          <button type="button" class="scope-btn" id="scope-new">Nouvel exercice</button>
+          <a class="scope-btn" id="scope-import" href="#/reglages/import-evenements">Import des événements</a>
+          <button type="button" class="scope-btn scope-btn-primary" id="scope-new">Nouvel événement</button>
         </div>
-        <p class="scope-mode-hint">L’import CSV est le parcours recommandé pour un programme complet. La création manuelle reste disponible pour un exercice ponctuel.</p>
+        <p class="scope-mode-hint">L’import CSV est le parcours recommandé pour un programme complet. La création manuelle reste disponible pour un événement ponctuel.</p>
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
             <thead>
@@ -811,7 +945,7 @@
 
     const p0Html = p0Alerts.length
       ? `<div class="scope-alert-list">${p0Alerts.map((alert) => alertCardHtml(alert, { ack: false })).join('')}</div>`
-      : `<div class="scope-empty">Aucun exercice à traiter</div>`;
+      : `<div class="scope-empty">Aucun événement à traiter</div>`;
     const p1Html = p1Alerts.length
       ? `<div class="scope-card scope-inbox scope-inbox-p1">
           <h2>Points de vigilance</h2>
@@ -848,6 +982,7 @@
     return `
       <div class="scope-crumb">${crumbs.join(' · ')}</div>
       <div class="scope-main">
+        ${periodContextHtml()}
         ${kpi}
         ${explainHtml}
         ${absHtml}
@@ -867,7 +1002,7 @@
         ${compositionChart || motifsChart ? `<div class="scope-graph-grid">${compositionChart}${motifsChart}</div>` : ''}
         ${permutationChart ? `<div class="scope-graph-stack">${permutationChart}</div>` : ''}
         ${eventRows}
-        ${!r.domaine ? `<p class="scope-inst-line"><img src="assets/img/LogoSDISblanc.png" alt="" width="120" height="36">SDIS régional du Nord vaudois</p>` : ''}
+        ${!r.domaine ? `<p class="scope-inst-line"><img src="assets/img/LogoSDISseulnoir.png" alt="" width="120" height="36">SDIS régional du Nord vaudois</p>` : ''}
       </div>
     `;
   }
@@ -1344,7 +1479,7 @@
         </div>
         <details class="scope-card scope-details" ${state.personneRhOpen ? 'open' : ''} id="scope-person-rh">
           <summary>Historique administratif / affectations</summary>
-          <p class="scope-mode-hint">Historique RH distinct des absences aux exercices.</p>
+          <p class="scope-mode-hint">Historique RH distinct des absences aux événements.</p>
           <ul class="scope-rh-list">
             ${(rh.periodes || []).map((row) => `<li><strong>${escapeHtml(L.formatDate(row.date_debut))}${row.date_fin ? ` – ${escapeHtml(L.formatDate(row.date_fin))}` : ' → en cours'}</strong> · ${escapeHtml(rhTypeLabel(row.type, row.motif))}${row.motif && row.type !== 'INDISPONIBLE' ? ` · ${escapeHtml(row.motif)}` : ''}</li>`).join('') || '<li>Aucune période RH.</li>'}
           </ul>
@@ -1379,6 +1514,7 @@
     return `
       <div class="scope-crumb">Rapports</div>
       <div class="scope-main">
+        ${periodContextHtml()}
         <div class="scope-card">
           <h2 style="margin-top:0">Rapports</h2>
           <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
@@ -1399,15 +1535,15 @@
             </div>` : ''}
             ${form.kind === 'TARGET' ? `<div class="scope-field"><label>Cible / OI</label>
               <select id="report-cible">
-                ${cibles.map((c) => `<option value="${escapeHtml(c.niveauCode)}" ${form.cible === c.niveauCode ? 'selected' : ''}>${escapeHtml(c.niveauCode)}</option>`).join('')}
+                ${cibles.map((c) => `<option value="${escapeHtml(c.niveauCode)}" ${form.cible === c.niveauCode ? 'selected' : ''}>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</option>`).join('')}
               </select>
             </div>` : ''}
-            ${form.kind === 'EVENT' ? `<div class="scope-field"><label>Exercice</label>
+            ${form.kind === 'EVENT' ? `<div class="scope-field"><label>Événement</label>
               <select id="report-event">
                 ${events.map((item) => {
                   const ev = item.evenement || item;
                   return `<option value="${escapeHtml(ev.evenement_id)}" ${form.evenementId === ev.evenement_id ? 'selected' : ''}>${escapeHtml(ev.date)} · ${escapeHtml(ev.libelle)}</option>`;
-                }).join('') || '<option value="">Aucun exercice sur l’année</option>'}
+                }).join('') || '<option value="">Aucun événement sur l’année</option>'}
               </select>
             </div>` : ''}
           </div>
@@ -1479,7 +1615,7 @@
             <select id="obj-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === form.domaineCode ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
           </div>` : ''}
           ${form.portee === 'CIBLE' ? `<div class="scope-field" style="margin-top:8px"><label>Cible</label>
-            <select id="obj-cible">${cibles.map((c) => `<option value="${c.cibleId}" ${c.cibleId === form.cibleId ? 'selected' : ''}>${escapeHtml(c.niveauCode)}</option>`).join('')}</select>
+            <select id="obj-cible">${cibles.map((c) => `<option value="${c.cibleId}" ${c.cibleId === form.cibleId ? 'selected' : ''}>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</option>`).join('')}</select>
           </div>` : ''}
           <div class="scope-field" style="margin-top:8px"><label>Seuil %</label><input id="obj-seuil" type="number" min="0" max="100" step="0.1" value="${escapeHtml(form.seuilPct)}"></div>
           <div class="scope-field" style="margin-top:8px"><label>Date de début</label><input id="obj-debut" type="date" value="${escapeHtml(form.dateDebut)}"></div>
@@ -1523,10 +1659,10 @@
     const chosen = state.modeChoice;
     const requireExplicit = Boolean(suggestion && suggestion.requireExplicit);
     return `
-      <div class="scope-crumb">Exercices / Nouvel exercice</div>
+      <div class="scope-crumb">Événements / Nouvel événement</div>
       <div class="scope-main">
         <div class="scope-card" style="max-width:640px">
-          <h2 style="margin-top:0">Créer un exercice</h2>
+          <h2 style="margin-top:0">Créer un événement</h2>
           <div class="scope-field"><label>Date</label><input id="new-date" type="date" value="${escapeHtml(state.dateForm || `${state.year}-03-12`)}"></div>
           <div class="scope-field" style="margin-top:8px"><label>Domaine</label>
             <select id="new-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === domaine ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
@@ -1534,7 +1670,7 @@
           <div class="scope-field" style="margin-top:8px"><label>Cible(s)</label>
             <div id="new-cibles" class="scope-chips">
               ${cibles.map((c) => `<label style="display:inline-flex;gap:6px;align-items:center;font-size:13px">
-                <input type="checkbox" value="${c.cibleId}" ${state.cibleForm.includes(c.cibleId) ? 'checked' : ''}> ${escapeHtml(c.niveauCode)}
+                <input type="checkbox" value="${c.cibleId}" ${state.cibleForm.includes(c.cibleId) ? 'checked' : ''}> ${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}
               </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
             </div>
           </div>
@@ -1621,7 +1757,7 @@
 
   function renderFiche() {
     const fiche = state.fiche;
-    if (!fiche) return `<div class="scope-main"><div class="scope-empty">Exercice introuvable.</div></div>`;
+    if (!fiche) return `<div class="scope-main"><div class="scope-empty">Événement introuvable.</div></div>`;
     const ev = fiche.evenement;
     const mode = eventMode(ev);
     if (ev.statut === 'REALISE') return renderRealise();
@@ -1653,7 +1789,7 @@
       ? '<button type="button" class="scope-btn" id="convert-nominatif">Passer en nominatif</button>'
       : '';
     return `
-      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)}</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
@@ -1666,7 +1802,7 @@
             <div><dt>Version</dt><dd>${escapeHtml(String(ev.version))}</dd></div>
             ${qty ? '' : `<div><dt>Population</dt><dd>${isLegacy ? 'Aucune (legacy)' : (ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée'))}</dd></div>`}
           </dl>
-          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>' : ''}${reportButton(ev.evenement_id)}</div>` : `<div class="scope-actions">${!isLegacy && ev.statut !== 'ANNULE' ? `${extraActions}<button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>` : ''}${reportButton(ev.evenement_id)}</div>`}
+          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’événement</button>' : ''}${reportButton(ev.evenement_id)}</div>` : `<div class="scope-actions">${!isLegacy && ev.statut !== 'ANNULE' ? `${extraActions}<button type="button" class="scope-btn" id="cancel-event">Annuler l’événement</button>` : ''}${reportButton(ev.evenement_id)}</div>`}
         </div>
         ${qty && saisie ? volumesBlock(saisie, { taux: fiche.compteurs, officiel: false }) : ''}
         ${legacyBlock}
@@ -1674,7 +1810,7 @@
       </div>
       ${state.modal === 'convert-nominatif' ? `<div class="scope-modal"><div class="scope-card">
         <h3>Passer en nominatif</h3>
-        <p>Les volumes quantitatifs de cet exercice seront supprimés. Cette action n’est possible qu’avant clôture.</p>
+        <p>Les volumes quantitatifs de cet événement seront supprimés. Cette action n’est possible qu’avant clôture.</p>
         <div class="scope-actions">
           <button type="button" class="scope-btn scope-btn-primary" id="convert-ok">Confirmer</button>
           <button type="button" class="scope-btn" id="convert-cancel">Annuler</button>
@@ -1723,7 +1859,7 @@
 
   function renderSaisie() {
     const fiche = state.fiche;
-    if (!fiche) return `<div class="scope-main"><div class="scope-empty">Exercice introuvable.</div></div>`;
+    if (!fiche) return `<div class="scope-main"><div class="scope-empty">Événement introuvable.</div></div>`;
     const ev = fiche.evenement;
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
     const c = counters();
@@ -1735,7 +1871,7 @@
       return `${person ? person.nom + ' ' + person.prenom : p.personne_id} · ${L.ROLE_LABELS[p.role] || p.role}`;
     });
     return `
-      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Saisie</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
@@ -1790,7 +1926,7 @@
     const preview = state.qtyPreview;
     const previewTaux = preview && preview.taux;
     return `
-      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Présences</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Présences</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">Saisir les présences</h2>
@@ -1865,7 +2001,7 @@
     if (mode === 'QUANTITATIF') {
       const saisie = fiche.saisieQuantitative || {};
       return `
-      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Réalisé</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
@@ -1880,7 +2016,7 @@
           <p style="color:var(--scope-muted);margin-top:4px">Taux officiel SCOPE</p>
           <p style="color:var(--scope-muted);margin-top:4px">${escapeHtml(String(t.numerator ?? '—'))} / ${escapeHtml(String(t.denominator ?? '—'))}</p>
           <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
-          <button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>
+          <button type="button" class="scope-btn" id="cancel-event">Annuler l’événement</button>
           ${reportButton(ev.evenement_id)}
         </div>
         ${volumesBlock(saisie, { taux: t, officiel: true })}
@@ -1890,7 +2026,7 @@
         </details>
       </div>
       ${state.modal === 'reopen' ? `<div class="scope-modal"><div class="scope-card">
-        <h3>Réouvrir l’exercice</h3>
+        <h3>Réouvrir l’événement</h3>
         <p>La séance redevient planifiée et sort du KPI tant qu’elle n’est pas reclôturée. Les volumes sont conservés.</p>
         <div class="scope-field"><label>Motif</label><textarea id="reopen-motif"></textarea></div>
         <div class="scope-actions">
@@ -1899,8 +2035,8 @@
         </div>
       </div></div>` : ''}
       ${state.modal === 'cancel-event' ? `<div class="scope-modal"><div class="scope-card">
-        <h3>Annuler l’exercice</h3>
-        <p>L’exercice passera à Annulé. Il n’entre plus dans le taux officiel.</p>
+        <h3>Annuler l’événement</h3>
+        <p>L’événement passera à Annulé. Il n’entre plus dans le taux officiel.</p>
         <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
         <div class="scope-actions">
           <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
@@ -1910,7 +2046,7 @@
     `;
     }
     return `
-      <div class="scope-crumb">Exercices / ${escapeHtml(ev.libelle)} / Réalisé</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
@@ -1923,7 +2059,7 @@
             <div class="scope-kpi"><strong>${t.dispenses ?? 0}</strong><span>Dispensés</span></div>
           </div>
           <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
-          <button type="button" class="scope-btn" id="cancel-event">Annuler l’exercice</button>
+          <button type="button" class="scope-btn" id="cancel-event">Annuler l’événement</button>
           ${reportButton(ev.evenement_id)}
         </div>
         <div class="scope-card" style="margin-top:12px">
@@ -1942,7 +2078,7 @@
         </details>
       </div>
       ${state.modal === 'reopen' ? `<div class="scope-modal"><div class="scope-card">
-        <h3>Réouvrir l’exercice</h3>
+        <h3>Réouvrir l’événement</h3>
         <p>La séance redevient planifiée et sort du KPI tant qu’elle n’est pas reclôturée.</p>
         <div class="scope-field"><label>Motif</label><textarea id="reopen-motif"></textarea></div>
         <div class="scope-actions">
@@ -1951,8 +2087,8 @@
         </div>
       </div></div>` : ''}
       ${state.modal === 'cancel-event' ? `<div class="scope-modal"><div class="scope-card">
-        <h3>Annuler l’exercice</h3>
-        <p>L’exercice passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
+        <h3>Annuler l’événement</h3>
+        <p>L’événement passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
         <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
         <div class="scope-actions">
           <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
@@ -1992,8 +2128,8 @@
   function renderModalCancel() {
     if (state.modal !== 'cancel-event') return '';
     return `<div class="scope-modal"><div class="scope-card">
-      <h3>Annuler l’exercice</h3>
-      <p>L’exercice passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
+      <h3>Annuler l’événement</h3>
+      <p>L’événement passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
       <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
@@ -2116,10 +2252,10 @@
       ? `<p class="scope-mode-hint">Les événements importés sont en ${escapeHtml(yearsHint.join(', '))}. Le bandeau affiche ${escapeHtml(String(state.year))} : changez l’année pour les voir.</p>`
       : '';
     return `
-      <div class="scope-crumb">Exercices / Importer un programme CSV</div>
+      <div class="scope-crumb">Réglages / Import des événements</div>
       <div class="scope-main">
         <div class="scope-card">
-          <h2 style="margin-top:0">Importer un programme d’exercices</h2>
+          <h2 style="margin-top:0">Importer un programme d’événements</h2>
           <p>Parcours recommandé pour alimenter le programme SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
           <p class="scope-mode-hint">Deux formats : <strong>programme SCOPE</strong> (date ; domaine ; cibles ; libellé ; mode) ou <strong>historique Monitoring F7</strong> (22 colonnes). Le fichier est reconnu à l’en-tête.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
@@ -2135,7 +2271,7 @@
           <div class="scope-actions">
             <button type="button" class="scope-btn" id="scope-import-preview" ${!state.importFile.csvText || !live ? 'disabled' : ''}>Contrôler (preview)</button>
             <button type="button" class="scope-btn scope-btn-primary" id="scope-import-commit" ${canCommit ? '' : 'disabled'}>Confirmer l’import</button>
-            <a class="scope-btn" href="#/exercices">Retour à la liste</a>
+            <a class="scope-btn" href="#/evenements">Retour à la liste</a>
           </div>
           ${formatBanner}
         </div>
@@ -2150,8 +2286,74 @@
           <h3 class="scope-import-title">Programme importé</h3>
           <p>${rapport.summary.imported} événement(s) créé(s) · ${rapport.summary.dejaImporte || 0} déjà présent(s) · ${rapport.summary.exclus || 0} exclu(s) · ${rapport.summary.erreurs || 0} erreur · ${rapport.summary.rollback || 0} rollback</p>
           ${periodNote}
-          <div class="scope-actions"><a class="scope-btn scope-btn-primary" id="scope-import-see" href="#/exercices">Voir les exercices</a></div>
+          <div class="scope-actions"><a class="scope-btn scope-btn-primary" id="scope-import-see" href="#/evenements">Voir les événements</a></div>
         </div>` : ''}
+      </div>
+    `;
+  }
+
+  function renderImportPersonnel() {
+    return renderPersonnel().replace('<div class="scope-crumb">Personnel</div>', '<div class="scope-crumb">Réglages / Import du personnel</div>');
+  }
+
+  function renderUtilisateurs() {
+    const canAdmin = hasScopePermission('users:admin');
+    return `
+      <div class="scope-crumb">Réglages / Utilisateurs</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">Utilisateurs</h2>
+          <p>SCOPE utilise la session institutionnelle Okta/OIDC et le RBAC serveur. La source de vérité des comptes reste l’identité institutionnelle ; cette page n’invente pas de gestion utilisateur locale.</p>
+          <dl class="scope-meta">
+            <div><dt>Okta / OIDC</dt><dd>Disponible via `/auth/me`, `/auth/oidc/start`, `/auth/logout`.</dd></div>
+            <div><dt>Rôles</dt><dd>admin, commandement, chef-formation, formation, instructeur, user, readonly.</dd></div>
+            <div><dt>Administration</dt><dd>${canAdmin ? 'Permission users:admin détectée.' : 'Non visible sans users:admin.'}</dd></div>
+            <div><dt>Gestion serveur</dt><dd>Fonctions admin-users présentes, hors création décorative dans ce lot.</dd></div>
+          </dl>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAdministration() {
+    return `
+      <div class="scope-crumb">Réglages / Administration</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">Administration</h2>
+          <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports, l’audit technique et les réglages serveur déjà protégés par RBAC.</p>
+          <div class="scope-home-links">
+            ${hasScopePermission('references:manage') ? '<a href="#/reglages/objectifs">Objectifs</a>' : ''}
+            ${hasScopePermission('personnel:manage') ? '<a href="#/reglages/suivi">Suivi nominatif</a><a href="#/reglages/import-personnel">Import du personnel</a>' : ''}
+            ${hasScopePermission('events:create') ? '<a href="#/reglages/import-evenements">Import des événements</a>' : ''}
+            ${hasScopePermission('users:admin') ? '<a href="#/reglages/utilisateurs">Utilisateurs</a>' : ''}
+          </div>
+          <p class="scope-mode-hint">Aucune pseudo-administration n’a été ajoutée. Les capacités absentes restent documentées plutôt que simulées.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderApropos() {
+    return `
+      <div class="scope-crumb">À propos</div>
+      <div class="scope-main">
+        <div class="scope-card scope-about-hero">
+          <img src="assets/img/logo-scope-blanc.png" alt="SCOPE">
+          <p class="scope-eyebrow">Suivi et analyse de l’activité</p>
+          <h2>À propos de SCOPE</h2>
+          <p>SCOPE accompagne le SDIS régional du Nord vaudois dans le suivi des événements, de la participation, des objectifs, du personnel et des rapports d’activité.</p>
+        </div>
+        <div class="scope-card">
+          <h2 style="margin-top:0">Cadre institutionnel</h2>
+          <div class="scope-about-inst"><img src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois"><span>SDIS régional du Nord vaudois</span></div>
+          <dl class="scope-meta">
+            <div><dt>Application</dt><dd>SCOPE</dd></div>
+            <div><dt>Environnement</dt><dd>${mode === 'live' ? 'LIVE' : 'DEMO'}</dd></div>
+            <div><dt>Déploiement</dt><dd>Netlify scope-sdisnv</dd></div>
+            <div><dt>Version source</dt><dd>SCOPE-QUAL-FINISH-1 · 197119c</dd></div>
+          </dl>
+        </div>
       </div>
     `;
   }
@@ -2254,12 +2456,19 @@
 
   function render() {
     const r = route();
-    const body = r.screen === 'vue' ? renderVue()
+    const body = r.screen === 'accueil' ? renderAccueil()
+      : r.screen === 'vue' ? renderVue()
+        : r.screen === 'statistiques' ? renderStatistiques()
       : r.screen === 'personnel' ? renderPersonnel()
         : r.screen === 'personne' ? renderPersonne()
         : r.screen === 'rapports' ? renderRapports()
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'suivi' ? renderSuiviNominatif()
+            : r.screen === 'import-evenements' ? renderImport()
+              : r.screen === 'import-personnel' ? renderImportPersonnel()
+                : r.screen === 'utilisateurs' ? renderUtilisateurs()
+                  : r.screen === 'administration' ? renderAdministration()
+                    : r.screen === 'apropos' ? renderApropos()
           : r.screen === 'nouveau' ? renderNouveau()
             : r.screen === 'saisie' ? renderSaisie()
               : r.screen === 'fiche' ? renderFiche()
@@ -2380,8 +2589,8 @@
         clearToast();
         if (r.screen === 'personne' && r.personneId) await loadPersonneFiche(r.personneId);
         else if (r.id) await loadFiche(r.id);
-        else if (r.screen === 'vue') await loadDashboard();
-        else if (r.screen === 'personnel') await loadPersonnelDirectory();
+        else if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
+        else if (r.screen === 'personnel' || r.screen === 'import-personnel') await loadPersonnelDirectory();
         else await loadList();
         await refreshAlertCounts();
       });
@@ -3095,10 +3304,10 @@
         const people = await client.listPersonnes();
         state.personCount = (people.personnes || []).length;
       }
-      if (r.screen === 'liste' || r.screen === 'rapports') await loadList();
-      if (r.screen === 'vue') await loadDashboard();
+      if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
+      if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
-      if (r.screen === 'personnel') {
+      if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         if (client.listPersonnes) {
           const people = await client.listPersonnes();
           state.personCount = (people.personnes || []).length;
@@ -3124,7 +3333,7 @@
       render();
       if (!ok) return;
     }
-    if (!location.hash) location.hash = '#/vue';
+    if (!location.hash) location.hash = '#/accueil';
     else await onRoute();
   })();
 })();

@@ -156,10 +156,10 @@ function record(name, fn){
     const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('Vue d’ensemble'));
-    assert.ok(ui.includes('Exercices'));
+    assert.ok(ui.includes('Événements'));
     assert.ok(ui.includes('Personnel'));
     assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
-    assert.ok(ui.includes('assets/img/LogoSDISblanc.png'));
+    assert.ok(ui.includes('assets/img/LogoSDISseulnoir.png'));
     assert.ok(ui.includes('scope-logo'));
     assert.ok(ui.includes('scope-sdis-logo'));
     assert.ok(!ui.includes('<h1>SCOPE</h1>'));

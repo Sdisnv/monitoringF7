@@ -305,8 +305,8 @@ function ctx(){
     assert.ok(ui.includes('À traiter'));
     assert.ok(ui.includes('client.dashboard'));
     assert.ok(ui.includes('Comprendre ce chiffre'));
-    assert.match(css, /height:\s*68px/);
-    assert.ok(68 >= Math.ceil(52 * 1.25));
+    assert.match(css, /height:\s*75px/);
+    assert.ok(75 >= Math.ceil(52 * 1.25));
     const chart = logic.participationChartSvg(
       [{ month: '2026-01', percentage: 80, thresholdPct: 85 }, { month: '2026-02', percentage: 90, thresholdPct: 85 }],
       [{ date: '2026-01-15', tauxLegacy: 70 }]

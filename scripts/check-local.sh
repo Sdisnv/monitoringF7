@@ -53,7 +53,7 @@ grep -q "createScopeService" netlify/functions/_scope-service.js
 grep -q "listEvenements" netlify/functions/_scope-service.js
 grep -q "SCOPE-IMPL-1B" assets/js/scope-ui.js
 grep -q "scope-confirm-live" assets/js/scope-ui.js
-grep -q "Importer un programme CSV" assets/js/scope-ui.js
+grep -q "Importer un programme d’événements" assets/js/scope-ui.js
 grep -q "imports/evenements/preview" netlify/functions/scope.js
 grep -q "imports/evenements/commit" netlify/functions/scope.js
 grep -qF "require('../../assets/js/scope-csv-import.js')" netlify/functions/_scope-csv-import.js
@@ -114,7 +114,7 @@ grep -q "scope-sidebar" assets/js/scope-ui.js
 grep -q "scope-select-control" assets/js/scope-ui.js
 grep -q "Dont permutations" assets/js/scope-ui.js
 grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
-grep -q "height: 68px" assets/css/scope.css
+grep -q "height: 75px" assets/css/scope.css
 grep -q "SCOPE-GRAPH-1" netlify/functions/_scope-graphs.js
 grep -q "/analytics/graphs" netlify/functions/scope.js
 grep -q "scope-charts.js" scope.html
@@ -127,6 +127,7 @@ grep -q "reports:nominatif" netlify/functions/_rbac.js
 grep -q "reports:nominatif" assets/js/rbac.js
 grep -qF 'assets/img/logo-scope-blanc.png' netlify.scope.toml
 grep -qF 'assets/img/LogoSDISblanc.png' netlify.scope.toml
+grep -qF 'assets/img/LogoSDISseulnoir.png' netlify.scope.toml
 grep -q "frame-src 'self' blob:" netlify.scope.toml
 grep -q '"pdfkit"' package.json
 grep -q "SCOPE-PERSONNEL-SYNC-1" netlify/functions/_scope-personnel-sync.js
@@ -164,7 +165,7 @@ grep -qF 'assets/js/scope-import-contract.js' netlify.scope.toml
 grep -q "scope-event-import-1-tests.js" package.json
 grep -q "scope-qual-finish-1" netlify/functions/_scope-schema.js
 grep -q "scope-qual-finish-1-tests.js" package.json
-grep -q "Chargement des exercices" assets/js/scope-ui-logic.js
+grep -q "Chargement des événements" assets/js/scope-ui-logic.js
 grep -q "wantsQualification" netlify/functions/_scope-service.js
 grep -q "shouldRenderPermutations" assets/js/scope-ui.js
 grep -q "Inclure les données de qualification" assets/js/scope-ui.js

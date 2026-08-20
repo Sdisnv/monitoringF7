@@ -278,9 +278,10 @@ async function withBasculeTest(repo){
     const data5 = fs.readFileSync(path.join(ROOT, 'database/migrations/20260819_scope_data_5.sql'), 'utf8');
     assert.ok(!/orion/i.test(data5));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('Importer un programme CSV'));
-    assert.ok(ui.includes('#/exercices/import'));
-    assert.strictEqual(logic.parseHash('#/exercices/import').screen, 'import');
+    assert.ok(ui.includes('Importer un programme d’événements'));
+    assert.ok(ui.includes('#/reglages/import-evenements'));
+    assert.strictEqual(logic.parseHash('#/exercices/import').screen, 'import-evenements');
+    assert.strictEqual(logic.parseHash('#/reglages/import-evenements').screen, 'import-evenements');
   });
 
   await record('Bascule non définie bloque le commit', async () => {
@@ -339,7 +340,7 @@ async function withBasculeTest(repo){
 
   await record('UI import / pas d’onglet principal', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('Importer un programme CSV'));
+    assert.ok(ui.includes('Importer un programme d’événements'));
     assert.ok(!ui.includes('data-nav="import"'));
     const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
     assert.ok(!html.includes('Monitoring F7 v67.0'));

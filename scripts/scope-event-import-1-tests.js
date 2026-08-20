@@ -408,7 +408,7 @@ async function commitNative(service, csvText, extra = {}){
     assert.ok(Object.prototype.hasOwnProperty.call(rapport.summary, 'rollback'));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('Programme importé'));
-    assert.ok(ui.includes('Voir les exercices'));
+    assert.ok(ui.includes('Voir les événements'));
   });
 
   await record('37 — liste rechargée', async () => {

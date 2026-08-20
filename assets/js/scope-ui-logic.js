@@ -42,7 +42,23 @@
   };
 
   function domaineAffiche(code) {
-    return code === 'PR' ? 'PAPR' : String(code || '');
+    const value = String(code || '');
+    if (value === 'PR') return 'PAPR';
+    if (value === 'GEN') return 'Général';
+    return value;
+  }
+
+  function niveauAffiche(domaineCode, niveauCode) {
+    const domaine = String(domaineCode || '');
+    const niveau = String(niveauCode || '');
+    if (niveau === 'GEN') return 'Général';
+    if (domaine === 'FOBA' && /^[123]$/.test(niveau)) return `FOBA ${niveau}`;
+    if (domaine === 'FOCA') {
+      if (niveau === 'I') return 'Échelon I';
+      if (niveau === 'II') return 'Échelon II';
+      if (niveau === 'III_IV' || niveau === 'III-IV' || niveau === 'III/IV') return 'Échelons III et IV';
+    }
+    return niveau;
   }
 
   function statutLabel(code) {
@@ -191,8 +207,10 @@
     const parent = navParentCode(arbre, r.domaine);
     return {
       primary: [
+        { id: 'accueil', href: '#/accueil', label: 'Accueil' },
         { id: 'vue', href: '#/vue', label: 'Vue d’ensemble' },
-        { id: 'exercices', href: '#/exercices', label: 'Exercices' }
+        { id: 'exercices', href: '#/evenements', label: 'Événements' },
+        { id: 'statistiques', href: '#/statistiques', label: 'Statistiques' }
       ],
       domains: roots.map((d) => {
         const sous = d.sousDomaines || [];
@@ -208,7 +226,7 @@
             ? cibles.map((c) => ({
               id: c.niveauCode,
               href: `#/vue/${encodeURIComponent(d.code)}/${encodeURIComponent(c.niveauCode)}`,
-              label: c.niveauCode
+              label: niveauAffiche(d.code, c.niveauCode)
             }))
             : []);
         const childActive = children.some((c) => c.id === r.domaine || c.id === r.cible);
@@ -222,7 +240,11 @@
       }),
       settings: [
         { id: 'objectifs', href: '#/reglages/objectifs', label: 'Objectifs' },
-        { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif' }
+        { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif' },
+        { id: 'import-evenements', href: '#/reglages/import-evenements', label: 'Import des événements' },
+        { id: 'import-personnel', href: '#/reglages/import-personnel', label: 'Import du personnel' },
+        { id: 'utilisateurs', href: '#/reglages/utilisateurs', label: 'Utilisateurs' },
+        { id: 'administration', href: '#/reglages/administration', label: 'Administration' }
       ],
       extras: [
         { id: 'personnel', href: '#/personnel', label: 'Personnel' },
@@ -293,9 +315,12 @@
     const raw = String(hash || '').replace(/^#/, '');
     const path = raw.split('?')[0];
     const parts = path.split('/').filter(Boolean);
+    if (!parts.length || parts[0] === 'accueil') return { screen: 'accueil', nav: 'accueil' };
+    if (parts[0] === 'statistiques') return { screen: 'statistiques', nav: 'statistiques' };
+    if (parts[0] === 'evenements') parts[0] = 'exercices';
     if (!parts.length || parts[0] === 'exercices') {
       if (parts[1] === 'nouveau') return { screen: 'nouveau', nav: 'exercices' };
-      if (parts[1] === 'import') return { screen: 'import', nav: 'exercices' };
+      if (parts[1] === 'import') return { screen: 'import-evenements', nav: 'reglages' };
       if (parts[1] && parts[2] === 'saisie') return { screen: 'saisie', nav: 'exercices', id: parts[1] };
       if (parts[1]) return { screen: 'fiche', nav: 'exercices', id: parts[1] };
       return { screen: 'liste', nav: 'exercices' };
@@ -310,14 +335,19 @@
       return { screen: 'personnel', nav: 'personnel' };
     }
     if (parts[0] === 'reglages' && parts[1] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
+    if (parts[0] === 'reglages' && parts[1] === 'import-evenements') return { screen: 'import-evenements', nav: 'reglages' };
+    if (parts[0] === 'reglages' && parts[1] === 'import-personnel') return { screen: 'import-personnel', nav: 'reglages' };
+    if (parts[0] === 'reglages' && parts[1] === 'utilisateurs') return { screen: 'utilisateurs', nav: 'reglages' };
+    if (parts[0] === 'reglages' && parts[1] === 'administration') return { screen: 'administration', nav: 'reglages' };
     if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };
+    if (parts[0] === 'apropos') return { screen: 'apropos', nav: 'apropos' };
     if (parts[0] === 'reglages' && parts[1] === 'suivi') {
       return { screen: 'suivi', nav: 'reglages' };
     }
     if (parts[0] === 'reglages' && (!parts[1] || parts[1] === 'objectifs')) {
       return { screen: 'objectifs', nav: 'reglages' };
     }
-    return { screen: 'liste', nav: 'exercices' };
+    return { screen: 'accueil', nav: 'accueil' };
   }
 
   function principalCta({ statut, populationFigee, previewReady, origine, modeSuivi }) {
@@ -450,7 +480,12 @@
 
   function ciblesLabel(cibles) {
     if (!cibles || !cibles.length) return '—';
-    return cibles.map((c) => c.niveau_code || c.niveauCode || c.libelle || c).join(' · ');
+    return cibles.map((c) => {
+      if (!c || typeof c !== 'object') return c;
+      const domaine = c.domaine_code || c.domaineCode || '';
+      const niveau = c.niveau_code || c.niveauCode || c.libelle || '';
+      return niveauAffiche(domaine, niveau);
+    }).join(' · ');
   }
 
   function displayTauxForList(statut, officiel, percentage, extra) {
@@ -474,9 +509,9 @@
 
   function emptyMessage(kind) {
     const map = {
-      exercices: 'Aucun exercice sur la période choisie.',
-      attendus: 'Aucun attendu généré pour cet exercice.',
-      resultats: 'Aucun résultat nominatif pour cet exercice.',
+      exercices: 'Aucun événement sur la période choisie.',
+      attendus: 'Aucun attendu généré pour cet événement.',
+      resultats: 'Aucun résultat nominatif pour cet événement.',
       personnes: 'Aucune personne ne correspond à cette recherche.',
       objectifs: 'Aucun objectif de participation défini.'
     };
@@ -485,7 +520,7 @@
 
   function loadingMessage(kind) {
     const map = {
-      exercices: 'Chargement des exercices…',
+      exercices: 'Chargement des événements…',
       personnel: 'Chargement du personnel…',
       dashboard: 'Chargement de la vue d’ensemble…',
       personne: 'Chargement de la fiche…',
@@ -496,7 +531,7 @@
 
   function errorMessage(kind) {
     const map = {
-      exercices: 'Impossible de charger les exercices. Réessayez.',
+      exercices: 'Impossible de charger les événements. Réessayez.',
       personnel: 'Impossible de charger le personnel. Réessayez.',
       dashboard: 'Impossible de charger la vue d’ensemble. Réessayez.',
       personne: 'Impossible de charger la fiche. Réessayez.',
@@ -558,6 +593,7 @@
     STATUT_LABELS,
     ROLE_LABELS,
     domaineAffiche,
+    niveauAffiche,
     statutLabel,
     formatDate,
     formatTaux,
