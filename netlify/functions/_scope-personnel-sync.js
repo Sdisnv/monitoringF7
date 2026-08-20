@@ -8,7 +8,8 @@ const {
   MOTIFS_INDISPONIBLE,
   dayBefore,
   assertPeriodCompatible,
-  deriveStatutCourant
+  deriveStatutCourant,
+  closeAllOpenAffectations
 } = require('./_scope-personnel');
 const contract = require('./_scope-personnel-sync-contract');
 
@@ -168,8 +169,28 @@ function resolveCible(cibles, parsedOi){
   return cibles.find((c) => c.domaine_code === parsedOi.domaineCode && c.niveau_code === parsedOi.niveauCode) || null;
 }
 
+async function journalClosedAffectations(tx, actor, personne, closed, dateEffet){
+  for(const item of closed){
+    await journal(tx, actor, 'CLOTURER_AFFECTATION', personne.personne_id, {
+      affectation_id: item.affectation_id,
+      cible_id: item.cible_id,
+      date_debut: item.date_debut,
+      date_fin: item.date_fin,
+      date_effet: dateEffet
+    }, { nip: personne.nip, date_fin: null });
+  }
+}
+
 async function applyArchive(tx, personne, date, type, actor){
   const existing = await tx.listPersonnesPeriodes(personne.personne_id);
+  const openArchive = existing.find((row) =>
+    (row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE) && !row.date_fin
+  );
+  if(openArchive){
+    const closed = await closeAllOpenAffectations(tx, personne.personne_id, openArchive.date_debut);
+    await journalClosedAffectations(tx, actor, personne, closed, openArchive.date_debut);
+    return syncPersonneSnapshot(tx, personne.personne_id, openArchive.date_debut);
+  }
   const lastActive = dayBefore(date);
   for(const row of existing){
     if(row.date_fin) continue;
@@ -187,15 +208,27 @@ async function applyArchive(tx, personne, date, type, actor){
     ...normalized,
     source: 'CSV_SYNC'
   });
-  const cibles = await tx.listCibles();
-  await closePrincipalAffectations(tx, personne.personne_id, date, cibles, null);
+  const closed = await closeAllOpenAffectations(tx, personne.personne_id, date);
+  await journalClosedAffectations(tx, actor, personne, closed, date);
   const next = await syncPersonneSnapshot(tx, personne.personne_id, date);
-  await journal(tx, actor, 'ARCHIVER_PERSONNE', personne.personne_id, { type, date, periode_id: periode.periode_id }, { nip: personne.nip });
+  await journal(tx, actor, 'ARCHIVER_PERSONNE', personne.personne_id, {
+    type,
+    date,
+    periode_id: periode.periode_id,
+    affectationsCloturees: closed.map((item) => item.affectation_id)
+  }, { nip: personne.nip });
   return next;
 }
 
 async function applyReactivation(tx, personne, date, parsedOi, cibles, actor){
   const existing = await tx.listPersonnesPeriodes(personne.personne_id);
+  const openArchive = existing.find((row) =>
+    (row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE) && !row.date_fin
+  );
+  if(openArchive){
+    const leftover = await closeAllOpenAffectations(tx, personne.personne_id, openArchive.date_debut);
+    await journalClosedAffectations(tx, actor, personne, leftover, openArchive.date_debut);
+  }
   const lastOut = dayBefore(date);
   for(const row of existing){
     if(row.date_fin) continue;
@@ -207,7 +240,8 @@ async function applyReactivation(tx, personne, date, parsedOi, cibles, actor){
     }
   }
   const afterClose = await tx.listPersonnesPeriodes(personne.personne_id);
-  if(!afterClose.some((row) => row.type === TYPES_PERIODE.ACTIF && !row.date_fin)){
+  const alreadyActive = afterClose.some((row) => row.type === TYPES_PERIODE.ACTIF && !row.date_fin);
+  if(!alreadyActive){
     const normalized = assertPeriodCompatible(afterClose, {
       type: TYPES_PERIODE.ACTIF,
       date_debut: date,
@@ -220,9 +254,14 @@ async function applyReactivation(tx, personne, date, parsedOi, cibles, actor){
     });
   }
   const cible = resolveCible(cibles, parsedOi);
-  if(cible){
-    await closePrincipalAffectations(tx, personne.personne_id, date, cibles, cible.cible_id);
-    await openAffectation(tx, personne.personne_id, cible, date);
+  if(cible && !alreadyActive){
+    const opened = await openAffectation(tx, personne.personne_id, cible, date);
+    if(opened.created){
+      await journal(tx, actor, 'OUVRIR_AFFECTATION', personne.personne_id, {
+        cible: `${cible.domaine_code}/${cible.niveau_code}`,
+        date
+      }, { nip: personne.nip });
+    }
   }
   const next = await syncPersonneSnapshot(tx, personne.personne_id, date);
   await journal(tx, actor, 'REACTIVER_PERSONNE', personne.personne_id, { date, nip: personne.nip }, { nip: personne.nip });

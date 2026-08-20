@@ -122,6 +122,63 @@ function deriveStatutCourant(periodes, today){
   return { statut_rh: 'ACTIF', actif: true };
 }
 
+/**
+ * SORTI / DEMISSIONNAIRE : toutes les affectations encore ouvertes cessent.
+ * Convention MODEL-2 : date_fin = veille de la date d’effet de la sortie.
+ * Aucune suppression : l’historique reste, simplement fermé.
+ * INDISPONIBLE / congé : ne pas appeler cette fonction.
+ */
+async function closeAllOpenAffectations(store, personneId, dateEffetSortie){
+  const lastDay = dayBefore(dateEffetSortie);
+  const existing = await store.listAffectations({ personneId });
+  const closed = [];
+  for(const aff of existing){
+    if(aff.date_fin) continue;
+    if(!lastDay || lastDay < aff.date_debut){
+      throw new HttpError(
+        422,
+        'archive_trop_tot',
+        'La date d’archivage ne peut pas précéder le début d’une affectation ouverte.'
+      );
+    }
+    await store.updateAffectation(aff.affectation_id, { date_fin: lastDay });
+    closed.push({
+      affectation_id: aff.affectation_id,
+      cible_id: aff.cible_id,
+      date_debut: aff.date_debut,
+      date_fin: lastDay
+    });
+  }
+  return closed;
+}
+
+function inconsistentSortiWithOpenAffectations(personnes, periodes, affectations){
+  const out = [];
+  for(const personne of personnes || []){
+    const pid = personne.personne_id || personne.personneId;
+    const archiveOpen = (periodes || []).find((row) =>
+      String(row.personne_id || row.personneId) === String(pid)
+      && (row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE)
+      && !row.date_fin && !row.dateFin
+    );
+    if(!archiveOpen) continue;
+    const openAff = (affectations || []).filter((row) =>
+      String(row.personne_id || row.personneId) === String(pid)
+      && !row.date_fin && !row.dateFin
+    );
+    if(openAff.length){
+      out.push({
+        nip: personne.nip,
+        personne_id: pid,
+        statut_rh: archiveOpen.type,
+        date_sortie: archiveOpen.date_debut || archiveOpen.dateDebut,
+        affectationsOuvertes: openAff.length
+      });
+    }
+  }
+  return out;
+}
+
 function periodFromPersonneRow(personne){
   const debut = isoDate(personne.date_entree) || '2020-01-01';
   const sortie = isoDate(personne.date_sortie);
@@ -155,5 +212,7 @@ module.exports = {
   evaluateEligibility,
   assertPeriodCompatible,
   deriveStatutCourant,
-  periodFromPersonneRow
+  periodFromPersonneRow,
+  closeAllOpenAffectations,
+  inconsistentSortiWithOpenAffectations
 };

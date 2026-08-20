@@ -137,6 +137,12 @@ grep -q "ABSENT_DU_FICHIER" assets/js/scope-personnel-sync-contract.js
 grep -q "CHANGEMENT_OI" assets/js/scope-personnel-sync-contract.js
 grep -q "scope-sync-preview" assets/js/scope-ui.js
 grep -q "scope-personnel-sync-1-tests.js" package.json
+grep -q "scope-personnel-sync-1-r1-tests.js" package.json
+grep -q "closeAllOpenAffectations" netlify/functions/_scope-personnel.js
+grep -q "closeAllOpenAffectations" netlify/functions/_scope-service.js
+grep -q "closeAllOpenAffectations" netlify/functions/_scope-personnel-sync.js
+grep -q "CLOTURER_AFFECTATION" netlify/functions/_scope-service.js
+grep -q "dejaArchive" netlify/functions/_scope-service.js
 if grep -q "officialFromQuantitatif" netlify/functions/_scope-pdf-renderer.js; then
   echo "ERREUR: formule KPI dans le renderer PDF"
   exit 1

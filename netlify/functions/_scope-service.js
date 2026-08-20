@@ -15,7 +15,8 @@ const {
   dayBefore,
   evaluateEligibility,
   assertPeriodCompatible,
-  deriveStatutCourant
+  deriveStatutCourant,
+  closeAllOpenAffectations
 } = require('./_scope-personnel');
 const personnelSync = require('./_scope-personnel-sync');
 const csvImport = require('./_scope-csv-import');
@@ -411,6 +412,28 @@ function createScopeService(repo){
     return tx.getPersonne(personneId);
   }
 
+  async function journalClotureAffectations(tx, actor, personne, closed, dateEffet){
+    for(const item of closed){
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: personne.personne_id,
+        action: 'CLOTURER_AFFECTATION',
+        avant: {
+          nip: personne.nip,
+          affectation_id: item.affectation_id,
+          cible_id: item.cible_id,
+          date_debut: item.date_debut,
+          date_fin: null
+        },
+        apres: {
+          date_fin: item.date_fin,
+          date_effet: dateEffet
+        }
+      });
+    }
+  }
+
   async function ouvrirPeriode(personneId, body, actor){
     const personne = await repo.getPersonne(personneId);
     if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
@@ -472,6 +495,15 @@ function createScopeService(repo){
     if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
     return repo.withTransaction(async (tx) => {
       const existing = await tx.listPersonnesPeriodes(personneId);
+      const openArchive = existing.find((row) =>
+        (row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE) && !row.date_fin
+      );
+      if(openArchive){
+        const closed = await closeAllOpenAffectations(tx, personneId, openArchive.date_debut);
+        await journalClotureAffectations(tx, actor, personne, closed, openArchive.date_debut);
+        const next = await syncPersonneSnapshot(tx, personneId, openArchive.date_debut);
+        return { personne: next, periode: openArchive, dejaArchive: true, affectationsCloturees: closed };
+      }
       const lastActive = dayBefore(date);
       for(const row of existing){
         if(row.date_fin) continue;
@@ -489,6 +521,8 @@ function createScopeService(repo){
         ...normalized,
         source: body.source || 'MANUEL'
       });
+      const closed = await closeAllOpenAffectations(tx, personneId, date);
+      await journalClotureAffectations(tx, actor, personne, closed, date);
       const next = await syncPersonneSnapshot(tx, personneId, date);
       await tx.appendJournal({
         auteur_id: actorId(actor),
@@ -496,9 +530,14 @@ function createScopeService(repo){
         entite_id: personneId,
         action: 'ARCHIVER',
         avant: { nip: personne.nip, personne_id: personneId },
-        apres: { type, date, periode_id: periode.periode_id }
+        apres: {
+          type,
+          date,
+          periode_id: periode.periode_id,
+          affectationsCloturees: closed.map((item) => item.affectation_id)
+        }
       });
-      return { personne: next, periode };
+      return { personne: next, periode, affectationsCloturees: closed };
     });
   }
 
@@ -514,6 +553,13 @@ function createScopeService(repo){
     if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable. Réactivation par NIP uniquement, jamais par nom/prénom.');
     return repo.withTransaction(async (tx) => {
       const existing = await tx.listPersonnesPeriodes(personne.personne_id);
+      const openArchive = existing.find((row) =>
+        (row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE) && !row.date_fin
+      );
+      if(openArchive){
+        const leftover = await closeAllOpenAffectations(tx, personne.personne_id, openArchive.date_debut);
+        await journalClotureAffectations(tx, actor, personne, leftover, openArchive.date_debut);
+      }
       const lastOut = dayBefore(date);
       for(const row of existing){
         if(row.date_fin) continue;
@@ -539,6 +585,17 @@ function createScopeService(repo){
         ...normalized,
         source: body.source || 'MANUEL'
       });
+      let affectation = null;
+      const cibleId = body.cibleId || body.cible_id;
+      if(cibleId){
+        await assertNoAffectationOverlapInDomain(personne.personne_id, cibleId, date, null, null, tx);
+        affectation = await tx.insertAffectation({
+          personne_id: personne.personne_id,
+          cible_id: cibleId,
+          date_debut: date,
+          source: body.source || 'MANUEL'
+        });
+      }
       const next = await syncPersonneSnapshot(tx, personne.personne_id, date);
       await tx.appendJournal({
         auteur_id: actorId(actor),
@@ -546,9 +603,14 @@ function createScopeService(repo){
         entite_id: personne.personne_id,
         action: 'REACTIVER',
         avant: { nip: personne.nip, personne_id: personne.personne_id },
-        apres: { date, periode_id: periode.periode_id }
+        apres: {
+          date,
+          periode_id: periode.periode_id,
+          affectation_id: affectation ? affectation.affectation_id : null,
+          cible_id: cibleId || null
+        }
       });
-      return { personne: next, periode, memeIdentite: true };
+      return { personne: next, periode, affectation, memeIdentite: true };
     });
   }
 
