@@ -499,22 +499,28 @@
           .map((ev) => {
             const echu = ev.date < today;
             const mode = ev.mode_suivi || 'NOMINATIF';
+            if (!echu) return null;
+            if (ev.origine === 'LEGACY_AGGREGATED' || mode === 'LEGACY') return null;
             let reasonCode = 'ECHU_PLANIFIE';
-            let reason = 'Date passée, exercice encore planifié.';
-            let label = 'Ouvrir';
+            let reason = 'La date est passée et l’exercice reste planifié.';
+            let message = 'Exercice échu non clôturé';
+            let label = 'Ouvrir la fiche';
             let href = `#/exercices/${ev.evenement_id}`;
+            let action = 'ouvrir';
             if (mode === 'QUANTITATIF') {
               reasonCode = 'QUANTITATIF_INCOMPLET';
-              reason = 'Saisie quantitative incomplète ou absente.';
+              reason = 'Aucune saisie quantitative exploitable.';
+              message = 'Saisie des volumes incomplète';
               label = 'Saisir les présences';
+              action = 'saisir-volumes';
               href = `#/exercices/${ev.evenement_id}/saisie`;
-            } else if (!ev.population_figee && echu) {
+            } else if (!ev.population_figee) {
               reasonCode = 'NOMINATIF_NON_FIGE';
-              reason = 'Date échue, population non figée.';
+              reason = 'L’exercice est échu. La liste des participants doit être figée avant la saisie.';
+              message = 'Population non figée';
               label = 'Figer la population';
+              action = 'figer';
             }
-            if (!echu && mode !== 'QUANTITATIF' && ev.population_figee) return null;
-            if (!echu && mode !== 'QUANTITATIF' && !ev.population_figee) return null;
             return {
               evenementId: ev.evenement_id,
               date: ev.date,
@@ -524,10 +530,33 @@
               cibles: [],
               reasonCode,
               reason,
-              cta: { action: 'ouvrir', label, href }
+              cta: { action, label, href },
+              alert: {
+                fingerprint: `${reasonCode}|EVENEMENT|${ev.evenement_id}`,
+                code: reasonCode,
+                level: 'P0',
+                levelLabel: 'Action requise',
+                category: 'OPERATIONNEL',
+                title: ev.libelle,
+                message,
+                reason,
+                scope: 'EVENEMENT',
+                entityType: 'EVENEMENT',
+                entityId: ev.evenement_id,
+                domainCode: ev.domaine_code,
+                eventId: ev.evenement_id,
+                eventDate: ev.date,
+                action,
+                actionLabel: label,
+                actionHref: href,
+                createdFrom: 'ALERTS-1',
+                evaluable: true,
+                metadata: { modeSuivi: mode, cibles: [] }
+              }
             };
           })
           .filter(Boolean);
+        const alerts = inbox.map((row) => row.alert);
         return {
           ok: true,
           period: { from: `${year}-01-01`, to: `${year}-12-31`, preset },
@@ -544,7 +573,25 @@
           cibles: [],
           evenements: [],
           timeseries: { officiel: [], legacy: [] },
-          inbox,
+          inbox: inbox.map((row) => ({
+            evenementId: row.evenementId,
+            date: row.date,
+            domaine: row.domaine,
+            libelle: row.libelle,
+            modeSuivi: row.modeSuivi,
+            cibles: row.cibles,
+            reasonCode: row.reasonCode,
+            reason: row.reason,
+            cta: row.cta
+          })),
+          alerts: {
+            period: { from: `${year}-01-01`, to: `${year}-12-31`, preset },
+            today,
+            timezone: 'Europe/Zurich',
+            counts: { total: alerts.length, p0: alerts.length, p1: 0, p2: 0 },
+            alerts,
+            config: { timezone: 'Europe/Zurich', jMinusUnfrozen: null }
+          },
           explain: {
             period: { from: `${year}-01-01`, to: `${year}-12-31`, preset },
             perimeter: { domaine: null, cible: null },
@@ -560,6 +607,13 @@
           },
           vigilanceMarginPct: null
         };
+      },
+      async listAlerts(params) {
+        const dash = await this.dashboard(params);
+        return { ok: true, period: dash.alerts.period, counts: dash.alerts.counts, alerts: dash.alerts.alerts, config: dash.alerts.config };
+      },
+      async acquitterAlerte() {
+        return { ok: true, hidesAlert: true, note: 'Démonstration : aucun acquittement persisté.' };
       },
       async listObjectifs() {
         return { ok: true, objectifs: [...objectifs.values()] };

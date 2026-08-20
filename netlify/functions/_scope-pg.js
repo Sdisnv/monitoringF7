@@ -208,6 +208,17 @@ function createPgRepo(client){
       const result = await q('select cible_id from scope_evenement_cibles where evenement_id = $1', [id]);
       return result.rows.map(r => r.cible_id);
     },
+    async listEventCiblesForEvents(ids){
+      if(!ids || !ids.length) return [];
+      const result = await q(
+        `select ec.evenement_id, c.*
+         from scope_evenement_cibles ec
+         join scope_cibles c on c.cible_id = ec.cible_id
+         where ec.evenement_id = any($1::uuid[])`,
+        [ids]
+      );
+      return result.rows;
+    },
     async setEventCibles(id, cibleIds){
       await q('delete from scope_evenement_cibles where evenement_id = $1', [id]);
       for(const cibleId of cibleIds){
@@ -242,6 +253,11 @@ function createPgRepo(client){
       const result = await q('select * from scope_attendus where evenement_id = $1', [eventId]);
       return result.rows;
     },
+    async listAttendusForEvents(ids){
+      if(!ids || !ids.length) return [];
+      const result = await q('select * from scope_attendus where evenement_id = any($1::uuid[])', [ids]);
+      return result.rows;
+    },
     async getAttendu(eventId, personneId){
       const result = await q(
         'select * from scope_attendus where evenement_id = $1 and personne_id = $2',
@@ -266,6 +282,11 @@ function createPgRepo(client){
     },
     async listParticipations(eventId){
       const result = await q('select * from scope_participations where evenement_id = $1', [eventId]);
+      return result.rows;
+    },
+    async listParticipationsForEvents(ids){
+      if(!ids || !ids.length) return [];
+      const result = await q('select * from scope_participations where evenement_id = any($1::uuid[])', [ids]);
       return result.rows;
     },
     async getParticipation(eventId, personneId){
@@ -399,7 +420,7 @@ function createPgRepo(client){
       const allowed = new Set([
         'scope_personnes', 'scope_evenements', 'scope_attendus', 'scope_participations',
         'scope_legacy_aggregates', 'scope_imports', 'scope_import_lignes', 'scope_saisies_quantitatives',
-        'scope_objectifs'
+        'scope_objectifs', 'scope_alertes_acquittements'
       ]);
       if(!allowed.has(name)) return 0;
       const result = await q(`select count(*)::int as n from ${name}`);
@@ -419,6 +440,42 @@ function createPgRepo(client){
     async getQuantitatifSaisie(eventId){
       const result = await q('select * from scope_saisies_quantitatives where evenement_id = $1', [eventId]);
       return result.rows[0] || null;
+    },
+    async listQuantitatifSaisiesForEvents(ids){
+      if(!ids || !ids.length) return [];
+      const result = await q(
+        'select * from scope_saisies_quantitatives where evenement_id = any($1::uuid[])',
+        [ids]
+      );
+      return result.rows;
+    },
+    async listAcquittementsByUser(utilisateurId){
+      const result = await q(
+        'select * from scope_alertes_acquittements where utilisateur_id = $1',
+        [String(utilisateurId)]
+      );
+      return result.rows;
+    },
+    async upsertAcquittement(row){
+      const result = await q(
+        `insert into scope_alertes_acquittements(
+           acquittement_id, fingerprint, code, entity_type, entity_id, utilisateur_id, commentaire
+         ) values ($1,$2,$3,$4,$5,$6,$7)
+         on conflict (utilisateur_id, fingerprint) do update set
+           commentaire = excluded.commentaire,
+           created_at = now()
+         returning *`,
+        [
+          row.acquittement_id || randomUUID(),
+          row.fingerprint,
+          row.code,
+          row.entity_type,
+          row.entity_id,
+          row.utilisateur_id,
+          row.commentaire || null
+        ]
+      );
+      return result.rows[0];
     },
     async upsertQuantitatifSaisie(row){
       const result = await q(

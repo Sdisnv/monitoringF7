@@ -32,6 +32,7 @@ function createMemoryRepo(){
   const importLignes = new Map();
   const quantitatives = new Map();
   const objectifs = new Map();
+  const acquittements = new Map();
   let txLevel = 0;
 
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
@@ -55,7 +56,8 @@ function createMemoryRepo(){
       imports: cloneMap(imports),
       importLignes: cloneMap(importLignes),
       quantitatives: cloneMap(quantitatives),
-      objectifs: cloneMap(objectifs)
+      objectifs: cloneMap(objectifs),
+      acquittements: cloneMap(acquittements)
     };
   }
 
@@ -73,6 +75,7 @@ function createMemoryRepo(){
     importLignes.clear(); snap.importLignes.forEach((v, k) => importLignes.set(k, v));
     quantitatives.clear(); (snap.quantitatives || new Map()).forEach((v, k) => quantitatives.set(k, v));
     objectifs.clear(); (snap.objectifs || new Map()).forEach((v, k) => objectifs.set(k, v));
+    acquittements.clear(); (snap.acquittements || new Map()).forEach((v, k) => acquittements.set(k, v));
   }
 
   const api = {
@@ -228,6 +231,10 @@ function createMemoryRepo(){
     async listAttendus(eventId){
       return [...attendus.values()].filter(a => a.evenement_id === eventId);
     },
+    async listAttendusForEvents(ids){
+      const set = new Set(ids || []);
+      return [...attendus.values()].filter((a) => set.has(a.evenement_id));
+    },
     async getAttendu(eventId, personneId){ return attendus.get(keyEP(eventId, personneId)) || null; },
     async upsertAttendu(row){
       const item = {
@@ -245,6 +252,10 @@ function createMemoryRepo(){
     },
     async listParticipations(eventId){
       return [...participations.values()].filter(p => p.evenement_id === eventId);
+    },
+    async listParticipationsForEvents(ids){
+      const set = new Set(ids || []);
+      return [...participations.values()].filter((p) => set.has(p.evenement_id));
     },
     async getParticipation(eventId, personneId){
       return participations.get(keyEP(eventId, personneId)) || null;
@@ -382,6 +393,21 @@ function createMemoryRepo(){
       const item = quantitatives.get(eventId);
       return item ? { ...item } : null;
     },
+    async listQuantitatifSaisiesForEvents(ids){
+      const set = new Set(ids || []);
+      return [...quantitatives.values()].filter((row) => set.has(row.evenement_id));
+    },
+    async listEventCiblesForEvents(ids){
+      const out = [];
+      for(const id of ids || []){
+        const cibleIds = evenementCibles.get(id) || [];
+        for(const cibleId of cibleIds){
+          const cible = cibles.find((c) => c.cible_id === cibleId);
+          if(cible) out.push({ evenement_id: id, ...cible });
+        }
+      }
+      return out;
+    },
     async upsertQuantitatifSaisie(row){
       const item = {
         evenement_id: row.evenement_id,
@@ -439,6 +465,25 @@ function createMemoryRepo(){
       };
       objectifs.set(id, next);
       return { ...next };
+    },
+    async listAcquittementsByUser(utilisateurId){
+      return [...acquittements.values()].filter((row) => row.utilisateur_id === utilisateurId);
+    },
+    async upsertAcquittement(row){
+      const key = `${row.utilisateur_id}::${row.fingerprint}`;
+      const existing = acquittements.get(key);
+      const item = {
+        acquittement_id: (existing && existing.acquittement_id) || randomUUID(),
+        fingerprint: row.fingerprint,
+        code: row.code,
+        entity_type: row.entity_type,
+        entity_id: row.entity_id,
+        utilisateur_id: row.utilisateur_id,
+        commentaire: row.commentaire || null,
+        created_at: now()
+      };
+      acquittements.set(key, item);
+      return { ...item };
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const { inferModeSuivi } = require('./_scope-analytics');

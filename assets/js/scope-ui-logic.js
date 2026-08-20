@@ -140,6 +140,13 @@
     return params;
   }
 
+  function alertLevelLabel(level) {
+    if (level === 'P0') return 'Action requise';
+    if (level === 'P1') return 'Vigilance métier';
+    if (level === 'P2') return 'Information';
+    return '';
+  }
+
   function objectiveKpiLabel(officiel) {
     const ctx = (officiel && officiel.objectiveContext) || {};
     const distinct = ctx.distinctObjectives || [];
@@ -367,6 +374,7 @@
     participationChartSvg,
     currentYear,
     periodParams,
+    alertLevelLabel,
     objectiveKpiLabel,
     parseHash,
     principalCta,

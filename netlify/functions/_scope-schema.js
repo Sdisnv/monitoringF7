@@ -285,8 +285,35 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-objectives-1') on conflict (version) do nothing`
   );
+  await migrateAlerts1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-alerts-1') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
+}
+
+async function migrateAlerts1(){
+  await db.query(`
+    create table if not exists scope_alertes_acquittements (
+      acquittement_id uuid primary key,
+      fingerprint text not null,
+      code text not null,
+      entity_type text not null,
+      entity_id text not null,
+      utilisateur_id text not null,
+      commentaire text,
+      created_at timestamptz not null default now()
+    )
+  `);
+  await db.query(`
+    create unique index if not exists scope_alertes_acq_user_fp
+      on scope_alertes_acquittements (utilisateur_id, fingerprint)
+  `);
+  await db.query(`
+    create index if not exists scope_alertes_acq_fp_idx
+      on scope_alertes_acquittements (fingerprint)
+  `);
 }
 
 async function migrateObjectives1(){

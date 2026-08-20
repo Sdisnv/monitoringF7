@@ -83,6 +83,7 @@
     objectifAction: null,
     objectifFocusId: null,
     dashboard: null,
+    alertCounts: null,
     explainOpen: false,
     absencesOpen: false
   };
@@ -182,11 +183,33 @@
     state.dashboard = await client.dashboard(params);
   }
 
+  async function refreshAlertCounts() {
+    if (typeof client.listAlerts !== 'function') return;
+    const params = L.periodParams({
+      preset: state.preset,
+      year: state.year,
+      month: state.month,
+      quarter: state.quarter,
+      from: state.from,
+      to: state.to
+    });
+    try {
+      const data = await client.listAlerts(params);
+      state.alertCounts = data.counts || null;
+    } catch {
+      /* le compteur header reste facultatif */
+    }
+  }
+
   function reloadPeriod() {
     withLoading(async () => {
       const r = route();
-      if (r.screen === 'vue') await loadDashboard();
-      else if (r.screen === 'liste') await loadList();
+      if (r.screen === 'vue') {
+        await loadDashboard();
+      } else if (r.screen === 'liste') {
+        await loadList();
+      }
+      await refreshAlertCounts();
     });
   }
 
@@ -339,6 +362,9 @@
               </label>` : ''}
               ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
             </div>
+            ${(state.alertCounts && Number(state.alertCounts.p0) > 0)
+              ? `<a class="scope-alerts-count" href="#/vue" aria-label="À traiter, ${Number(state.alertCounts.p0)}">${escapeHtml(`À traiter · ${Number(state.alertCounts.p0)}`)}</a>`
+              : ''}
             <div class="scope-user-block">
               <div class="scope-user-text">
                 <strong class="scope-user">${escapeHtml(userLabel())}</strong>
@@ -406,6 +432,32 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function alertCardHtml(alert, options) {
+    const ack = options && options.ack;
+    const cibles = (alert.metadata && alert.metadata.cibles) || [];
+    const cibleText = L.ciblesLabel(cibles);
+    const meta = [L.formatDate(alert.eventDate), domaineLabel(alert.domainCode), cibleText]
+      .filter((part) => part && part !== '—')
+      .join(' · ');
+    const ackBtn = ack && alert.level !== 'P0' && alert.fingerprint
+      ? `<button type="button" class="scope-btn" data-alert-ack="${escapeHtml(alert.fingerprint)}">Masquer</button>`
+      : '';
+    return `<article class="scope-alert-card" data-level="${escapeHtml(alert.level)}">
+      <p class="scope-alert-level" data-level="${escapeHtml(alert.level)}">
+        <span class="scope-alert-level-mark" aria-hidden="true"></span>
+        ${escapeHtml(alert.levelLabel || L.alertLevelLabel(alert.level))}
+      </p>
+      <h3>${escapeHtml(alert.title)}</h3>
+      ${meta ? `<p class="scope-alert-card-meta">${escapeHtml(meta)}</p>` : ''}
+      <p class="scope-alert-message">${escapeHtml(alert.message)}</p>
+      <p class="scope-alert-reason">${escapeHtml(alert.reason)}</p>
+      <div class="scope-alert-actions">
+        <a class="scope-btn scope-btn-primary" href="${escapeHtml(alert.actionHref)}">${escapeHtml(alert.actionLabel)}</a>
+        ${ackBtn}
+      </div>
+    </article>`;
   }
 
   function statutBadge(code) {
@@ -521,7 +573,10 @@
       ? `+ ${dash.legacy.eventCount} historique${dash.legacy.eventCount > 1 ? 's' : ''}`
       : '';
     const abs = dash.absencesNonExcusees || { count: 0, events: [] };
-    const inbox = dash.inbox || [];
+    const alertItems = (dash.alerts && dash.alerts.alerts) || [];
+    const p0Alerts = alertItems.filter((a) => a.level === 'P0');
+    const p1Alerts = alertItems.filter((a) => a.level === 'P1');
+    const p2Alerts = alertItems.filter((a) => a.level === 'P2');
     const explain = dash.explain || {};
     const exclusions = explain.exclusions || {};
     const chart = L.participationChartSvg(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points);
@@ -585,17 +640,21 @@
         <ul>${abs.events.map((ev) => `<li><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine))} · ${escapeHtml(ev.libelle)}</a> — ${escapeHtml(String(ev.nonExcuses))}</li>`).join('')}</ul>
       </div>` : '';
 
-    const inboxRows = inbox.length
-      ? inbox.map((item) => `<tr>
-          <td data-label="Date">${escapeHtml(L.formatDate(item.date))}</td>
-          <td data-label="Domaine">${escapeHtml(domaineLabel(item.domaine))}</td>
-          <td data-label="Cible">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
-          <td data-label="Libellé">${escapeHtml(item.libelle)}</td>
-          <td data-label="Mode">${escapeHtml(L.modeLabel(item.modeSuivi))}</td>
-          <td data-label="Raison"><span class="scope-inbox-reason">${escapeHtml(item.reason)}</span></td>
-          <td data-label="Action"><a class="scope-btn scope-btn-primary" href="${escapeHtml(item.cta && item.cta.href)}">${escapeHtml((item.cta && item.cta.label) || 'Ouvrir')}</a></td>
-        </tr>`).join('')
-      : `<tr><td colspan="7"><div class="scope-empty">Aucun exercice à traiter sur cette période.</div></td></tr>`;
+    const p0Html = p0Alerts.length
+      ? `<div class="scope-alert-list">${p0Alerts.map((alert) => alertCardHtml(alert, { ack: false })).join('')}</div>`
+      : `<div class="scope-empty">Aucun exercice à traiter</div>`;
+    const p1Html = p1Alerts.length
+      ? `<div class="scope-card scope-inbox scope-inbox-p1">
+          <h2>Points de vigilance</h2>
+          <div class="scope-alert-list">${p1Alerts.map((alert) => alertCardHtml(alert, { ack: true })).join('')}</div>
+        </div>`
+      : '';
+    const p2Html = p2Alerts.length
+      ? `<div class="scope-alert-info">
+          <h2>Informations</h2>
+          <ul>${p2Alerts.map((alert) => `<li><strong>${escapeHtml(alert.title)}</strong> — ${escapeHtml(alert.message)} <a href="${escapeHtml(alert.actionHref)}">${escapeHtml(alert.actionLabel)}</a></li>`).join('')}</ul>
+        </div>`
+      : '';
 
     const domainCards = (dash.domaines || []).map((d) => {
       const off = d.officiel || {};
@@ -645,16 +704,11 @@
         ${explainHtml}
         ${absHtml}
         <div class="scope-card scope-inbox">
-          <h2>Exercices à traiter</h2>
-          <div class="scope-table-wrap">
-            <table class="scope-table">
-              <thead>
-                <tr><th>Date</th><th>Domaine</th><th>Cible</th><th>Libellé</th><th>Mode</th><th>Raison</th><th>Action</th></tr>
-              </thead>
-              <tbody>${inboxRows}</tbody>
-            </table>
-          </div>
+          <h2>À traiter</h2>
+          ${p0Html}
         </div>
+        ${p1Html}
+        ${p2Html}
         <div class="scope-card scope-panel">
           <h2>Évolution du taux de participation</h2>
           ${chart}
@@ -1415,6 +1469,17 @@
       state.absencesOpen = !state.absencesOpen;
       render();
     });
+    root.querySelectorAll('[data-alert-ack]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const fp = btn.getAttribute('data-alert-ack');
+        if (!fp || typeof client.acquitterAlerte !== 'function') return;
+        withLoading(async () => {
+          await client.acquitterAlerte({ fingerprint: fp });
+          await loadDashboard();
+          await refreshAlertCounts();
+        });
+      });
+    });
     document.getElementById('scope-header-menu')?.addEventListener('click', () => {
       const panel = document.getElementById('scope-header-menu-panel');
       const btn = document.getElementById('scope-header-menu');
@@ -1436,6 +1501,7 @@
         if (r.id) await loadFiche(r.id);
         else if (r.screen === 'vue') await loadDashboard();
         else await loadList();
+        await refreshAlertCounts();
       });
     });
     document.getElementById('filter-statut')?.addEventListener('change', (e) => {
@@ -1891,6 +1957,7 @@
         state.personCount = (people.personnes || []).length;
       }
       if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) await loadFiche(r.id);
+      await refreshAlertCounts();
     });
   }
 

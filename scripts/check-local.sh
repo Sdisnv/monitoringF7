@@ -87,12 +87,26 @@ grep -q "scope-root" scope.html
 grep -q "Vue d’ensemble" assets/js/scope-ui.js
 grep -q "/dashboard" netlify/functions/scope.js
 grep -q "createScopeDashboardService" netlify/functions/_scope-dashboard-service.js
+grep -q "createScopeAlertsService" netlify/functions/_scope-alerts-service.js
+grep -q "/alerts" netlify/functions/scope.js
+grep -q "Europe/Zurich" netlify/functions/_scope-calendar.js
+grep -q "À traiter" assets/js/scope-ui.js
+grep -q "Points de vigilance" assets/js/scope-ui.js
 grep -q "classifyInboxItem" netlify/functions/_scope-inbox.js
-grep -q "Exercices à traiter" assets/js/scope-ui.js
+grep -q "scope_alertes_acquittements" netlify/functions/_scope-schema.js
+grep -q "scope_alertes_acquittements" database/migrations/20260820_scope_alerts_1.sql
 grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
 grep -q "height: 68px" assets/css/scope.css
 if grep -q "officialFromQuantitatif" assets/js/scope-ui.js; then
   echo "ERREUR: calcul officiel dans scope-ui.js"
+  exit 1
+fi
+if grep -q "classifyOperationalAlert" assets/js/scope-ui.js; then
+  echo "ERREUR: classification P0 dans scope-ui.js"
+  exit 1
+fi
+if grep -q "ECHU_PLANIFIE" assets/js/scope-ui.js; then
+  echo "ERREUR: code P0 parallèle dans scope-ui.js"
   exit 1
 fi
 if grep -q "min-width: *980px" assets/css/scope.css; then

@@ -1,9 +1,10 @@
 'use strict';
-/** SCOPE-DASH-1 — agrégat d’accueil. Les KPI officiels viennent exclusivement d’analytics.evaluate. */
+/** SCOPE-DASH-1 — agrégat d’accueil. Les KPI officiels viennent exclusivement d’analytics.evaluate.
+ *  L’inbox « À traiter » est la projection P0 d’ALERTS-1 (pas de règles parallèles). */
 const { DOMAINES } = require('./_scope-schema');
-const { parsePeriod, inPeriod } = require('./_scope-period');
+const { parsePeriod } = require('./_scope-period');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
-const { classifyInboxItem, todayIso } = require('./_scope-inbox');
+const { createScopeAlertsService } = require('./_scope-alerts-service');
 
 function packOfficiel(evaluated){
   const o = evaluated.officiel || {};
@@ -24,48 +25,7 @@ function packOfficiel(evaluated){
 
 function createScopeDashboardService(repo){
   const analytics = createScopeAnalyticsService(repo);
-
-  async function inboxFor(query, period){
-    const today = todayIso(query.today);
-    const domaine = query.domaineCode || query.domaine || null;
-    const cibleId = query.cibleId || null;
-    const listed = await repo.listEvenements({
-      statut: 'PLANIFIE',
-      domaine: domaine || undefined
-    });
-    const fromYear = period.from.slice(0, 4);
-    const toYear = period.to.slice(0, 4);
-    const items = [];
-    for(const evenement of listed){
-      const overdueSameSpan = evenement.statut === 'PLANIFIE'
-        && evenement.date < today
-        && evenement.date >= `${fromYear}-01-01`
-        && evenement.date <= `${toYear}-12-31`;
-      if(!inPeriod(evenement.date, period) && !overdueSameSpan){
-        continue;
-      }
-      if(domaine && evenement.domaine_code !== domaine) continue;
-      const cibleIds = await repo.listEventCibleIds(evenement.evenement_id);
-      if(cibleId && !cibleIds.includes(cibleId)) continue;
-      const cibles = [];
-      for(const id of cibleIds){
-        const cible = await repo.getCible(id);
-        if(cible) cibles.push(cible);
-      }
-      const classified = classifyInboxItem(
-        { evenement, cibles },
-        {
-          today,
-          attendus: await repo.listAttendus(evenement.evenement_id),
-          participations: await repo.listParticipations(evenement.evenement_id),
-          saisie: repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(evenement.evenement_id) : null
-        }
-      );
-      if(classified) items.push(classified);
-    }
-    items.sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
-    return items;
-  }
+  const alertsService = createScopeAlertsService(repo);
 
   async function dashboard(query = {}){
     const resolved = Object.assign({}, query);
@@ -81,6 +41,7 @@ function createScopeDashboardService(repo){
     const evaluated = await analytics.evaluate(sdisQuery);
     const series = await analytics.timeseries(sdisQuery);
     const explain = await analytics.explain(sdisQuery);
+    const alertsPayload = await alertsService.listAlerts(resolved);
 
     const absences = {
       count: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.nonExcuses) || 0),
@@ -138,7 +99,6 @@ function createScopeDashboardService(repo){
       kind: row.kind
     }));
 
-    const inbox = await inboxFor(resolved, period);
     const legacyCount = evaluated.legacy ? evaluated.legacy.eventCount : 0;
 
     return {
@@ -160,7 +120,15 @@ function createScopeDashboardService(repo){
         officiel: series.officiel,
         legacy: series.legacy
       },
-      inbox,
+      inbox: alertsPayload.inbox,
+      alerts: {
+        period: alertsPayload.period,
+        today: alertsPayload.today,
+        timezone: alertsPayload.timezone,
+        counts: alertsPayload.counts,
+        alerts: alertsPayload.alerts,
+        config: alertsPayload.config
+      },
       explain: {
         period: explain.period,
         perimeter: explain.perimeter,

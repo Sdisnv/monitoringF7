@@ -214,7 +214,7 @@ function ctx(){
     const item = classifyInboxItem({
       evenement: {
         evenement_id: 'q1',
-        date: '2026-09-01',
+        date: '2026-08-01',
         domaine_code: 'FOBA',
         libelle: 'QTT',
         statut: 'PLANIFIE',
@@ -302,8 +302,8 @@ function ctx(){
     assert.ok(!ui.includes('officialFromQuantitatif'));
     assert.ok(!ui.includes('safePercentage'));
     assert.ok(!ui.includes('officialFromTaux'));
+    assert.ok(ui.includes('À traiter'));
     assert.ok(ui.includes('client.dashboard'));
-    assert.ok(ui.includes('EXERCICES À TRAITER') || ui.includes('Exercices à traiter'));
     assert.ok(ui.includes('Comprendre ce chiffre'));
     assert.match(css, /height:\s*68px/);
     assert.ok(68 >= Math.ceil(52 * 1.25));
