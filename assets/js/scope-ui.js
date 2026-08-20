@@ -562,6 +562,7 @@
   function bannerHtml() {
     const bits = [];
     const params = new URLSearchParams(location.search.replace(/^\?/, ''));
+    const liveHref = `?mode=live${location.hash || '#/accueil'}`;
     if (params.get('authError') === '1') {
       const reason = params.get('reason') || 'callback';
       bits.push(`<div class="scope-banner warning" role="alert">
@@ -589,7 +590,13 @@
     } else if (mode === 'live') {
       bits.push(`<div class="scope-banner live">Mode LIVE — PostgreSQL Monitoring, session Okta. Toute saisie est réelle.</div>`);
     } else {
-      bits.push(`<div class="scope-banner demo">Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>`);
+      bits.push(`<div class="scope-banner demo">
+        <strong>Mode démonstration</strong>
+        <div>Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>
+        <div class="scope-actions">
+          <a class="scope-btn scope-btn-primary" id="scope-start-live" href="${escapeHtml(liveHref)}">Passer en mode LIVE</a>
+        </div>
+      </div>`);
     }
     if (state.loading) bits.push(`<div class="scope-banner info">Chargement…</div>`);
     if (state.toast) {
