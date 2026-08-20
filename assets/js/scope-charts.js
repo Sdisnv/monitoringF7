@@ -172,8 +172,11 @@
     const points = ((dataset && dataset.series && dataset.series[0]) || {}).points || [];
     if (!points.length) return emptyState(dataset && dataset.emptyReason);
     const width = (size && size.width) || 640;
-    const rowH = 44;
-    const pad = { l: 132, r: 118, t: 8, b: 8 };
+    const compact = dataset && dataset.id === 'domaines';
+    const rowH = compact ? 30 : 44;
+    const pad = compact
+      ? { l: 104, r: 96, t: 4, b: 4 }
+      : { l: 132, r: 118, t: 8, b: 8 };
     const height = pad.t + pad.b + points.length * rowH;
     const innerW = width - pad.l - pad.r;
     const rows = points.map((p, i) => {
@@ -190,12 +193,12 @@
       const title = `${p.label} · ${valueText}${vol ? ` · ${vol}` : ''}${obj != null ? ` · objectif ${obj} %` : ''}${gap ? ` · ${gap}` : ''}`;
       return `<${tag}${href} class="scope-chart-hit">
         <title>${escapeHtml(title)}</title>
-        <text x="8" y="${y + 28}" font-size="13" fill="#1f2730">${escapeHtml(p.label)}</text>
-        <rect x="${pad.l}" y="${y + 12}" width="${innerW}" height="20" fill="#f3f5f8" rx="2"/>
-        ${evaluable ? `<rect x="${pad.l}" y="${y + 12}" width="${barW.toFixed(1)}" height="20" fill="${TOKENS.primary}" rx="2"/>` : ''}
-        ${objX != null ? `<line x1="${objX}" x2="${objX}" y1="${y + 8}" y2="${y + 36}" stroke="${TOKENS.warning}" stroke-dasharray="3 3" stroke-width="2"/>` : ''}
-        <text x="${width - 8}" y="${y + 22}" font-size="12" text-anchor="end" fill="#1f2730">${escapeHtml(valueText)}</text>
-        <text x="${width - 8}" y="${y + 36}" font-size="10" text-anchor="end" fill="#6b7785">${escapeHtml([vol, gap].filter(Boolean).join(' · '))}</text>
+        <text x="8" y="${y + (compact ? 20 : 28)}" font-size="${compact ? 12 : 13}" fill="#1f2730">${escapeHtml(p.label)}</text>
+        <rect x="${pad.l}" y="${y + (compact ? 9 : 12)}" width="${innerW}" height="${compact ? 14 : 20}" fill="#f3f5f8" rx="2"/>
+        ${evaluable ? `<rect x="${pad.l}" y="${y + (compact ? 9 : 12)}" width="${barW.toFixed(1)}" height="${compact ? 14 : 20}" fill="${TOKENS.primary}" rx="2"/>` : ''}
+        ${objX != null ? `<line x1="${objX}" x2="${objX}" y1="${y + (compact ? 5 : 8)}" y2="${y + (compact ? 27 : 36)}" stroke="${TOKENS.warning}" stroke-dasharray="3 3" stroke-width="2"/>` : ''}
+        <text x="${width - 8}" y="${y + (compact ? 17 : 22)}" font-size="12" text-anchor="end" fill="#1f2730">${escapeHtml(valueText)}</text>
+        <text x="${width - 8}" y="${y + (compact ? 28 : 36)}" font-size="10" text-anchor="end" fill="#6b7785">${escapeHtml([vol, gap].filter(Boolean).join(' · '))}</text>
       </${tag}>`;
     }).join('');
     return `<svg class="scope-chart scope-chart-bar" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Comparaison')}">

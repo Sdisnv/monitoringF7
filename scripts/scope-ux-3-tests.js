@@ -97,7 +97,7 @@ function record(name, fn) {
   await record('logo SCOPE taille validée + logo SDIS officiel', async () => {
     assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
     assert.ok(ui.includes('class="scope-logo"'));
-    assert.match(css, /height:\s*75px/);
+    assert.match(css, /height:\s*83px/);
     assert.ok(css.includes('object-fit: contain'));
     assert.ok(ui.includes('assets/img/LogoSDISseulnoir.png'));
     assert.ok(ui.includes('SDIS régional du Nord vaudois'));

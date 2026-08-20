@@ -15,7 +15,9 @@
     "assets/js/scope-personnel-sync-contract.js",
     "assets/img/logo-scope-blanc.png",
     "assets/img/LogoSDISblanc.png",
-    "assets/img/LogoSDISseulnoir.png"
+    "assets/img/LogoSDISseulnoir.png",
+    "netlify/functions/data/**",
+    "node_modules/pdfkit/js/data/**"
   ]
 
 [[redirects]]

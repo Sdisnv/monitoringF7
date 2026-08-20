@@ -455,6 +455,10 @@
       r
     );
     const link = (item, currentPage) => `<a class="scope-nav-link" href="${item.href}" ${currentPage ? 'aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
+    const navSubsection = (label, items) => items.length ? `<div class="scope-nav-subsection">
+      <p>${escapeHtml(label)}</p>
+      ${items.map((item) => link(item, item.current)).join('')}
+    </div>` : '';
     const section = (label) => `<p class="scope-nav-section">${escapeHtml(label)}</p>`;
     const primaryLink = (href, label, current) => link({ href, label }, current);
     const reglagesOpen = state.openGroups.reglages === true || r.nav === 'reglages';
@@ -465,7 +469,6 @@
       return `<div class="scope-nav-group${expanded ? '' : ' is-collapsed'}">
         <button type="button" class="scope-nav-group-head${isCurrent ? ' is-current' : ''}" data-nav-group="${escapeHtml(d.id)}" aria-expanded="${expanded ? 'true' : 'false'}">
           <span>${escapeHtml(d.label)}</span>
-          <span class="scope-nav-caret" aria-hidden="true">▸</span>
         </button>
         <div class="scope-nav-sub">${overview}${d.children.map((c) => {
           const childCurrent = r.domaine === c.id || (r.domaine === d.id && r.cible === c.id);
@@ -473,25 +476,31 @@
         }).join('')}</div>
       </div>`;
     }).join('');
-    const settings = [
-      { href: '#/reglages/objectifs', label: 'Objectifs', current: r.screen === 'objectifs', permission: 'references:manage' },
-      { href: '#/reglages/suivi', label: 'Suivi nominatif', current: r.screen === 'suivi', permission: 'personnel:manage' },
-      { href: '#/reglages/import-evenements', label: 'Import des événements', current: r.screen === 'import-evenements', permission: 'events:create' },
-      { href: '#/reglages/import-personnel', label: 'Import du personnel', current: r.screen === 'import-personnel', permission: 'personnel:manage' },
+    const parametres = [
       { href: '#/reglages/utilisateurs', label: 'Utilisateurs', current: r.screen === 'utilisateurs', permission: 'users:admin' },
       { href: '#/reglages/administration', label: 'Administration', current: r.screen === 'administration', permission: 'settings:manage' }
     ].filter((item) => hasScopePermission(item.permission));
-    const settingsBlock = settings.length ? `
+    const application = [
+      { href: '#/reglages/objectifs', label: 'Objectifs', current: r.screen === 'objectifs', permission: 'references:manage' },
+      { href: '#/reglages/suivi', label: 'Suivi nominatif', current: r.screen === 'suivi', permission: 'personnel:manage' }
+    ].filter((item) => hasScopePermission(item.permission));
+    const importation = [
+      { href: '#/reglages/import-evenements', label: 'Événements', current: r.screen === 'import-evenements', permission: 'events:create' },
+      { href: '#/reglages/import-personnel', label: 'Personnel', current: r.screen === 'import-personnel', permission: 'personnel:manage' }
+    ].filter((item) => hasScopePermission(item.permission));
+    const settingsBlock = `
           ${section('Réglages')}
           <div class="scope-nav-group${reglagesOpen ? '' : ' is-collapsed'}">
             <button type="button" class="scope-nav-group-head${r.nav === 'reglages' ? ' is-current' : ''}" data-nav-group="reglages" aria-expanded="${reglagesOpen ? 'true' : 'false'}">
               <span>Réglages</span>
-              <span class="scope-nav-caret" aria-hidden="true">▸</span>
             </button>
             <div class="scope-nav-sub">
-              ${settings.map((item) => link(item, item.current)).join('')}
+              ${navSubsection('Paramètres', parametres)}
+              ${navSubsection('Application', application)}
+              ${navSubsection('Importation', importation)}
+              ${link({ href: '#/reglages/apropos', label: 'À propos' }, r.screen === 'apropos')}
             </div>
-          </div>` : '';
+          </div>`;
     return `
       <div class="scope-nav-backdrop" id="scope-nav-backdrop"></div>
       <aside class="scope-sidebar" id="scope-sidebar" aria-label="Navigation principale" aria-modal="${state.navOpen ? 'true' : 'false'}">
@@ -510,8 +519,6 @@
           ${section('Domaines')}
           ${domainBlocks}
           ${settingsBlock}
-          ${section('Informations')}
-          ${primaryLink('#/apropos', 'À propos', r.screen === 'apropos')}
         </nav>
         <div class="scope-sidebar-inst">
           <img class="scope-sdis-logo" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
@@ -617,6 +624,19 @@
       .replace(/"/g, '&quot;');
   }
 
+  function pageHeaderHtml(options) {
+    const o = options || {};
+    return `<header class="scope-page-head">
+      <div>
+        ${o.eyebrow ? `<p class="scope-page-eyebrow">${escapeHtml(o.eyebrow)}</p>` : ''}
+        <h1>${escapeHtml(o.title || 'SCOPE')}</h1>
+        ${o.context ? `<p class="scope-page-context">${escapeHtml(o.context)}</p>` : ''}
+        ${o.description ? `<p class="scope-page-desc">${escapeHtml(o.description)}</p>` : ''}
+      </div>
+      ${o.logo ? '<img class="scope-page-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="150" height="45">' : ''}
+    </header>`;
+  }
+
   function alertCardHtml(alert, options) {
     const ack = options && options.ack;
     const cibles = (alert.metadata && alert.metadata.cibles) || [];
@@ -650,10 +670,10 @@
   function renderAccueil() {
     const dash = state.dashboard;
     if (state.dashboardError) {
-      return `<div class="scope-crumb">Accueil</div><div class="scope-main"><div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+      return `<div class="scope-crumb">Accueil</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'SCOPE', title: 'Centre de pilotage', context: 'Accueil', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
     }
     if (!dash) {
-      return `<div class="scope-crumb">Accueil</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+      return `<div class="scope-crumb">Accueil</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'SCOPE', title: 'Centre de pilotage', context: 'Accueil', logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     const o = dash.officiel || {};
     const taux = o.analyticStatus === 'NON_EVALUABLE' && o.percentage == null ? 'Non évaluable' : L.formatTaux(o.percentage);
@@ -665,6 +685,7 @@
     return `
       <div class="scope-crumb">Accueil</div>
       <div class="scope-main scope-home">
+        ${pageHeaderHtml({ eyebrow: 'SCOPE', title: 'Centre de pilotage', context: periodLabel(dash.period), logo: true })}
         ${periodContextHtml()}
         <section class="scope-home-hero">
           <div>
@@ -708,10 +729,10 @@
   function renderStatistiques() {
     const dash = state.dashboard;
     if (!dash && !state.dashboardError) {
-      return `<div class="scope-crumb">Statistiques</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+      return `<div class="scope-crumb">Statistiques</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Statistiques', context: state.year, logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     if (state.dashboardError) {
-      return `<div class="scope-crumb">Statistiques</div><div class="scope-main"><div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+      return `<div class="scope-crumb">Statistiques</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Statistiques', context: state.year, logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
     }
     const graphs = (dash && dash.graphs) || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
@@ -719,11 +740,8 @@
     return `
       <div class="scope-crumb">Statistiques</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Statistiques', context: periodLabel(dash.period), description: 'Espace analytique principal SCOPE : GRAPH-1, ANALYTICS-1, OBJECTIVES-1 et ALERTS-1.', logo: true })}
         ${periodContextHtml()}
-        <div class="scope-card">
-          <h2 style="margin-top:0">Statistiques</h2>
-          <p class="scope-mode-hint">Analyse à l’écran via GRAPH-1 / ANALYTICS-1. Les rapports PDF restent dans l’espace Rapports.</p>
-        </div>
         <div class="scope-graph-stack">${chart('evolution', { size: { width: 640, height: 136 } })}</div>
         <div class="scope-graph-stack">${chart('domaines')}</div>
         <div class="scope-graph-stack">${chart('children')}</div>
@@ -789,6 +807,7 @@
     return `
       <div class="scope-crumb">Événements · ${escapeHtml(state.year)}</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Activité', title: 'Événements', context: state.year, description: 'Liste opérationnelle des événements planifiés, réalisés, reportés ou annulés.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-toolbar">
           <div class="scope-field">
@@ -808,10 +827,9 @@
               ${state.referentiels.domaines.map((d) => `<option value="${d.code}">${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}
             </select>
           </div>
-          <a class="scope-btn" id="scope-import" href="#/reglages/import-evenements">Import des événements</a>
           <button type="button" class="scope-btn scope-btn-primary" id="scope-new">Nouvel événement</button>
         </div>
-        <p class="scope-mode-hint">L’import CSV est le parcours recommandé pour un programme complet. La création manuelle reste disponible pour un événement ponctuel.</p>
+        <p class="scope-mode-hint">La création manuelle reste disponible pour un événement ponctuel. Les imports sont regroupés dans Réglages → Importation.</p>
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
             <thead>
@@ -838,16 +856,16 @@
   function renderVue() {
     const r = route();
     const dash = state.dashboard;
-    const crumbs = ['<a href="#/vue">Vue d’ensemble</a>'];
+    const crumbs = ['<a href="#/vue">Domaines</a>'];
     if (r.domaine) crumbs.push(`<a href="#/vue/${encodeURIComponent(r.domaine)}">${escapeHtml(domaineLabel(r.domaine))}</a>`);
     if (r.cible) crumbs.push(`<span>${escapeHtml(r.cible)}</span>`);
     if (state.dashboardError) {
-      return `<div class="scope-crumb">${crumbs.join(' · ')}</div>
-        <div class="scope-main"><div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+      return `<div class="scope-crumb">${crumbs.join(' / ')}</div>
+        <div class="scope-main">${pageHeaderHtml({ eyebrow: r.domaine ? 'Domaine' : 'Vue globale', title: domaineLabel(r.domaine || 'SDIS'), context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
     }
     if (!dash) {
-      return `<div class="scope-crumb">${crumbs.join(' · ')}</div>
-        <div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+      return `<div class="scope-crumb">${crumbs.join(' / ')}</div>
+        <div class="scope-main">${pageHeaderHtml({ eyebrow: r.domaine ? 'Domaine' : 'Vue globale', title: domaineLabel(r.domaine || 'SDIS'), context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble', logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     const o = dash.officiel || {};
     const obj = L.objectiveKpiLabel(o);
@@ -987,8 +1005,9 @@
       : '';
 
     return `
-      <div class="scope-crumb">${crumbs.join(' · ')}</div>
+      <div class="scope-crumb">${crumbs.join(' / ')}</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: r.domaine ? 'Domaine' : 'Vue globale', title: domaineLabel(r.domaine || 'SDIS'), context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble', description: 'Lecture métier du périmètre sélectionné, sans recalcul de KPI dans le navigateur.', logo: !r.cible })}
         ${periodContextHtml()}
         ${kpi}
         ${explainHtml}
@@ -1224,7 +1243,8 @@
     </div>`;
   }
 
-  function renderPersonnel() {
+  function renderPersonnel(options) {
+    const importMode = Boolean(options && options.importMode);
     const live = mode === 'live';
     const allowed = live && canManagePersonnel() && typeof client.previewPersonnelSync === 'function';
     const preview = state.personnelSync.preview;
@@ -1245,8 +1265,10 @@
     return `
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: importMode ? 'Réglages / Importation' : 'Personnel', title: importMode ? 'Import du personnel' : 'Personnel', context: importMode ? 'Synchronisation CSV' : 'Annuaire et fiches individuelles', logo: true })}
+        ${!importMode ? periodContextHtml() : ''}
         ${renderPersonnelDirectory()}
-        <div class="scope-card" style="margin-top:12px">
+        ${importMode ? `<div class="scope-card" style="margin-top:12px">
           <h2 style="margin-top:0">Synchronisation CSV</h2>
           <p class="scope-mode-hint">Synchronisation comparative par NIP. L’OI est une affectation temporelle. Absent du fichier ≠ démission. Les populations figées ne sont pas réécrites. SCOPE-PERSON-1.</p>
           ${live && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
@@ -1271,8 +1293,8 @@
             </div>
           </div>
           ` : ''}
-        </div>
-        ${preview ? `<div class="scope-card" style="margin-top:12px">
+        </div>` : ''}
+        ${importMode && preview ? `<div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Preview · ${summary.personnelFichier || summary.importes || 0} ligne(s) fichier</h3>
           <p class="scope-sync-summary">${summary.inchanges || counts.INCHANGE || 0} inchangé(s) · ${summary.nouveaux || counts.NOUVEAU || 0} nouveau(x) · ${summary.changementsOi || counts.CHANGEMENT_OI || 0} changement(s) d’OI · ${summary.changementsGrade || counts.CHANGEMENT_GRADE || 0} grade(s) · ${summary.absents || counts.ABSENT_DU_FICHIER || 0} absent(s) du fichier · ${summary.archivesRetrouves || counts.ARCHIVE_RETROUVE || 0} archive(s) retrouvée(s) · ${summary.reactivations || counts.REACTIVATION_PROPOSEE || 0} réactivation(s) · ${summary.conflits || counts.CONFLIT || 0} conflit(s) · 0 écriture</p>
           ${preview.dateEffetRequise ? '<p class="scope-mode-hint">Une date d’effet est obligatoire avant commit. Elle n’est jamais inventée.</p>' : ''}
@@ -1300,7 +1322,7 @@
             </table>
           </div>
         </div>` : ''}
-        ${rapport ? `<div class="scope-card" style="margin-top:12px">
+        ${importMode && rapport ? `<div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Rapport de synchronisation</h3>
           <p>${rapport.summary.analysed} lignes analysées · ${rapport.summary.inchanges} inchangées · ${rapport.summary.creations} créations · ${rapport.summary.changementsOi} changements OI · ${rapport.summary.changementsGrade} changements grade · ${rapport.summary.reactivations} réactivation(s) · ${rapport.summary.archivages} archivage(s) · ${rapport.summary.conflits} conflit(s) · ${rapport.summary.erreurs} erreur(s)</p>
         </div>` : ''}
@@ -1521,6 +1543,7 @@
     return `
       <div class="scope-crumb">Rapports</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Production', title: 'Rapports', context: 'PDF serveur', description: 'Aperçu et téléchargement issus du même document REPORT-1.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-card">
           <h2 style="margin-top:0">Rapports</h2>
@@ -1580,6 +1603,7 @@
     return `
       <div class="scope-crumb">Réglages / Objectifs</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Réglages / Application', title: 'Objectifs', context: 'Référentiel temporel', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Objectifs de participation</h2>
           <p class="scope-mode-hint">Référentiel temporel du KPI officiel SCOPE (nominatif + quantitatif réalisé). Un changement de seuil ouvre une nouvelle période : l’historique n’est pas réécrit. Aucun objectif réel du SDIS n’est proposé ici.</p>
@@ -1704,6 +1728,7 @@
     return `
       <div class="scope-crumb">Réglages / Suivi nominatif</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Réglages / Application', title: 'Suivi nominatif', context: 'Configuration', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Suivi nominatif configurable</h2>
           <p class="scope-mode-hint">Le nominatif est possible pour tous les domaines, sous-domaines et cibles. Ce réglage propose un mode à la création ou à l’import. Il ne transforme pas les événements existants et ne crée pas de personnes fictives.</p>
@@ -2261,9 +2286,10 @@
     return `
       <div class="scope-crumb">Réglages / Import des événements</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Réglages / Importation', title: 'Import des événements', context: 'Programme CSV', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme d’événements</h2>
-          <p>Parcours recommandé pour alimenter le programme SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
+          <p>Ce parcours recommandé alimente le programme SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
           <p class="scope-mode-hint">Deux formats : <strong>programme SCOPE</strong> (date ; domaine ; cibles ; libellé ; mode) ou <strong>historique Monitoring F7</strong> (22 colonnes). Le fichier est reconnu à l’en-tête.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
           <p><a class="scope-btn" href="assets/csv/SCOPE_Programme_Exercices_Exemple.csv" download>Télécharger un exemple SCOPE</a></p>
@@ -2300,7 +2326,7 @@
   }
 
   function renderImportPersonnel() {
-    return renderPersonnel().replace('<div class="scope-crumb">Personnel</div>', '<div class="scope-crumb">Réglages / Import du personnel</div>');
+    return renderPersonnel({ importMode: true }).replace('<div class="scope-crumb">Personnel</div>', '<div class="scope-crumb">Réglages / Importation / Personnel</div>');
   }
 
   function renderUtilisateurs() {
@@ -2308,6 +2334,7 @@
     return `
       <div class="scope-crumb">Réglages / Utilisateurs</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Réglages / Paramètres', title: 'Utilisateurs', context: 'Okta / RBAC', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Utilisateurs</h2>
           <p>SCOPE utilise la session institutionnelle Okta/OIDC et le RBAC serveur. La source de vérité des comptes reste l’identité institutionnelle ; cette page n’invente pas de gestion utilisateur locale.</p>
@@ -2326,6 +2353,7 @@
     return `
       <div class="scope-crumb">Réglages / Administration</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Réglages / Paramètres', title: 'Administration', context: 'Capacités réelles', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Administration</h2>
           <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports, l’audit technique et les réglages serveur déjà protégés par RBAC.</p>
@@ -2343,8 +2371,9 @@
 
   function renderApropos() {
     return `
-      <div class="scope-crumb">À propos</div>
+      <div class="scope-crumb">Réglages / À propos</div>
       <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Réglages', title: 'À propos', context: mode === 'live' ? 'LIVE' : 'DEMO', logo: true })}
         <div class="scope-card scope-about-hero">
           <img src="assets/img/logo-scope-blanc.png" alt="SCOPE">
           <p class="scope-eyebrow">Suivi et analyse de l’activité</p>
@@ -2581,7 +2610,7 @@
         const id = btn.getAttribute('data-nav-group');
         if (!id) return;
         const currently = btn.getAttribute('aria-expanded') === 'true';
-        state.openGroups[id] = !currently;
+        state.openGroups = currently ? {} : { [id]: true };
         render();
       });
     });

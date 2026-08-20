@@ -114,7 +114,7 @@ html, body {
 }
 
 .scope-logo {
-  height: 75px;
+  height: 83px;
   width: auto;
   max-width: 240px;
   object-fit: contain;
@@ -453,18 +453,6 @@ html, body {
   box-shadow: none;
   background: transparent;
 }
-.scope-nav-caret {
-  margin-left: auto;
-  border: 0;
-  background: transparent;
-  width: 32px;
-  min-height: 32px;
-  cursor: pointer;
-  font: inherit;
-  color: var(--scope-muted);
-  transform: rotate(90deg);
-}
-.scope-nav-group.is-collapsed .scope-nav-caret { transform: rotate(0deg); }
 .scope-nav-sub {
   display: flex;
   flex-direction: column;
@@ -480,6 +468,19 @@ html, body {
 .scope-nav-sub .scope-nav-link[aria-current="page"] {
   color: var(--scope-red-dark);
   font-weight: 650;
+}
+.scope-nav-subsection {
+  display: grid;
+  gap: 2px;
+  padding: 4px 0 6px;
+}
+.scope-nav-subsection p {
+  margin: 6px 0 2px 18px;
+  color: var(--scope-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 .scope-sidebar-inst {
   margin-top: auto;
@@ -548,6 +549,53 @@ html, body {
 .scope-period-context input[type="date"] {
   color: var(--scope-ink);
   color-scheme: light;
+}
+
+.scope-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 16px;
+  padding: 18px 20px;
+  border-left: 4px solid var(--scope-red);
+  background: #fff;
+  box-shadow: var(--scope-shadow);
+}
+.scope-page-head h1 {
+  margin: 0;
+  font-size: var(--scope-fs-h1);
+  line-height: var(--scope-lh-heading);
+}
+.scope-page-eyebrow,
+.scope-page-context,
+.scope-page-desc {
+  margin: 0;
+}
+.scope-page-eyebrow {
+  color: var(--scope-red-dark);
+  font-size: var(--scope-fs-label);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.scope-page-context {
+  margin-top: 4px;
+  color: var(--scope-muted);
+  font-weight: 700;
+}
+.scope-page-desc {
+  max-width: 760px;
+  margin-top: 6px;
+  color: var(--scope-muted);
+}
+.scope-page-sdis {
+  width: auto;
+  height: 45px;
+  max-width: 150px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  background: #fff;
 }
 
 .scope-home-hero {
@@ -942,6 +990,16 @@ html, body {
   margin: 0 0 8px;
   font-size: var(--scope-fs-h3);
   font-weight: 700;
+}
+.scope-graph-card[data-graph="domaines"] {
+  padding: 12px 14px;
+}
+.scope-graph-card[data-graph="domaines"] .scope-graph-head {
+  margin-bottom: 4px;
+}
+.scope-graph-card[data-graph="domaines"] .scope-chart-legend {
+  margin-top: 4px;
+  gap: 8px 14px;
 }
 .scope-chart-frame {
   max-height: 188px;
@@ -1508,7 +1566,7 @@ html, body {
 
 @media (max-width: 1200px) {
   .scope-content { max-width: 100%; }
-  .scope-logo { height: 75px; }
+  .scope-logo { height: 83px; }
 }
 
 @media (max-width: 1100px) {
@@ -1551,7 +1609,7 @@ html, body {
 
 @media (max-width: 1024px) {
   .scope-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .scope-logo { height: 64px; max-width: 232px; }
+  .scope-logo { height: 70px; max-width: 250px; }
   .scope-domain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scope-inbox .scope-btn,
   .scope-alert-actions .scope-btn { min-height: 44px; height: 44px; }
@@ -1573,8 +1631,10 @@ html, body {
     gap: 12px;
   }
   .scope-brand { min-width: 0; flex: 1; }
-  .scope-logo { height: 59px; max-width: 216px; }
+  .scope-logo { height: 64px; max-width: 230px; }
   .scope-tagline { font-size: 13px; }
+  .scope-page-head { align-items: flex-start; }
+  .scope-page-sdis { height: 38px; max-width: 126px; }
   .scope-header-tools {
     width: 100%;
     justify-content: flex-end;

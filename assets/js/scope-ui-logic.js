@@ -203,7 +203,20 @@
 
   function buildSidebarNav(arbre, route) {
     const r = route || {};
-    const roots = (arbre || []).filter((d) => d && d.nature !== 'SOUS_DOMAINE' && !d.parentCode);
+    const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
+    const rank = (code) => {
+      const idx = order.indexOf(code);
+      return idx === -1 ? order.length + 1 : idx;
+    };
+    const roots = (arbre || [])
+      .filter((d) => d && d.nature !== 'SOUS_DOMAINE' && !d.parentCode)
+      .slice()
+      .sort((a, b) => {
+        const ra = rank(a.code);
+        const rb = rank(b.code);
+        if (ra !== rb) return ra - rb;
+        return String(a.libelleAffiche || a.code).localeCompare(String(b.libelleAffiche || b.code), 'fr');
+      });
     const parent = navParentCode(arbre, r.domaine);
     return {
       primary: [
@@ -340,7 +353,8 @@
     if (parts[0] === 'reglages' && parts[1] === 'utilisateurs') return { screen: 'utilisateurs', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'administration') return { screen: 'administration', nav: 'reglages' };
     if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };
-    if (parts[0] === 'apropos') return { screen: 'apropos', nav: 'apropos' };
+    if (parts[0] === 'apropos') return { screen: 'apropos', nav: 'reglages' };
+    if (parts[0] === 'reglages' && parts[1] === 'apropos') return { screen: 'apropos', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'suivi') {
       return { screen: 'suivi', nav: 'reglages' };
     }

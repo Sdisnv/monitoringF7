@@ -159,7 +159,7 @@ async function record(name, fn) {
   });
 
   await record('26 — logo SCOPE agrandi', async () => {
-    assert.ok(css.includes('height: 75px'));
+    assert.ok(css.includes('height: 83px'));
     assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
   });
 
