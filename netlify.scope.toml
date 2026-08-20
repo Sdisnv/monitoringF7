@@ -8,7 +8,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["assets/js/scope-csv-import.js"]
+  included_files = ["assets/js/scope-csv-import.js", "assets/js/scope-personnel-sync-contract.js"]
 
 [[redirects]]
   from = "/"

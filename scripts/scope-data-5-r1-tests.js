@@ -236,7 +236,8 @@ async function seedY4(repo){
     assert.ok(wrapper.includes("require('../../assets/js/scope-csv-import.js')"));
     assert.ok(!/path\.join/.test(wrapper));
     const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
-    assert.ok(toml.includes('included_files = ["assets/js/scope-csv-import.js"]'));
+    assert.ok(toml.includes('assets/js/scope-csv-import.js'));
+    assert.ok(/included_files\s*=/.test(toml));
   });
 
   await record('Aucun impact Monitoring v67 / ORION', async () => {

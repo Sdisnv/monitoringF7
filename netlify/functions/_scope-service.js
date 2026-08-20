@@ -3,13 +3,21 @@ const {
   HttpError,
   isoDate,
   isAffectationValide,
-  personneActiveA,
   computeTaux,
   validateParticipationPatch,
   validateCloture,
   rangesOverlap,
   ROLES_ENCADREMENT
 } = require('./_scope-rules');
+const {
+  TYPES_PERIODE,
+  MOTIFS_INDISPONIBLE,
+  dayBefore,
+  evaluateEligibility,
+  assertPeriodCompatible,
+  deriveStatutCourant
+} = require('./_scope-personnel');
+const { previewPersonnelSync: previewPersonnelSyncContract } = require('./_scope-personnel-sync-contract');
 const csvImport = require('./_scope-csv-import');
 const {
   inferModeSuivi,
@@ -132,7 +140,11 @@ function createScopeService(repo){
         dateDebut: row.date_debut || row.dateDebut,
         dateFin: row.date_fin || row.dateFin || null,
         commentaire: row.commentaire || null
-      }))
+      })),
+      personnelTemporel: {
+        typesPeriode: Object.values(TYPES_PERIODE),
+        motifsIndisponible: Object.values(MOTIFS_INDISPONIBLE)
+      }
     };
   }
 
@@ -284,22 +296,33 @@ function createScopeService(repo){
     return { evenement: next, version: next.version };
   }
 
-  async function previewAttendus(eventId){
-    const evenement = await repo.getEvent(eventId);
-    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-    if(evenement.origine === 'LEGACY_AGGREGATED'){
-      return { count: 0, personnes: [], note: 'Legacy agrégé : aucune population nominative.' };
+  async function resolveEligiblePopulation({ eventDate, domaineCode, sousDomaineCode, cibleIds, suiviNominatif }){
+    const date = isoDate(eventDate);
+    if(!date) throw new HttpError(400, 'date_invalide', 'Date d’événement invalide.');
+    const ids = Array.isArray(cibleIds) ? cibleIds.filter(Boolean) : [];
+    const rules = suiviNominatif || (repo.listSuiviNominatif ? await repo.listSuiviNominatif() : []);
+    if(ids.length === 1){
+      const resolution = resolveSuiviNominatif(rules, {
+        date,
+        domaineCode,
+        sousDomaineCode,
+        cibleId: ids[0]
+      });
+      if(resolution.possible === false){
+        return { count: 0, personnes: [], note: 'suivi_nominatif_interdit', resolution };
+      }
     }
-    if(isQuantitatif(evenement)){
-      throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population nominative.');
-    }
-    const cibleIds = await repo.listEventCibleIds(eventId);
-    const affectations = await repo.listAffectationsForCibles(cibleIds, evenement.date);
+    const affectations = await repo.listAffectationsForCibles(ids, date);
     const byPersonne = new Map();
     for(const aff of affectations){
+      if(!isAffectationValide(aff, date)) continue;
       const personne = await repo.getPersonne(aff.personne_id);
-      if(!personne || !personneActiveA(personne, evenement.date)) continue;
-      if(!isAffectationValide(aff, evenement.date)) continue;
+      if(!personne) continue;
+      const periodes = repo.listPersonnesPeriodes
+        ? await repo.listPersonnesPeriodes(aff.personne_id)
+        : [];
+      const eligibility = evaluateEligibility(personne, periodes, date);
+      if(!eligibility.eligible) continue;
       const cible = await repo.getCible(aff.cible_id);
       const current = byPersonne.get(aff.personne_id) || {
         personneId: aff.personne_id,
@@ -308,7 +331,8 @@ function createScopeService(repo){
         prenom: personne.prenom,
         cibles: [],
         origine: 'REGLE',
-        motifInclusion: 'affectation_valide'
+        motifInclusion: 'affectation_valide_a_date',
+        eligibility
       };
       current.cibles.push({
         cibleId: aff.cible_id,
@@ -319,6 +343,317 @@ function createScopeService(repo){
     }
     const personnes = [...byPersonne.values()];
     return { count: personnes.length, personnes };
+  }
+
+  async function photographieFigee(eventId){
+    const attendus = await repo.listAttendus(eventId);
+    const personnes = [];
+    for(const row of attendus){
+      if(row.inclus === false) continue;
+      const personne = await repo.getPersonne(row.personne_id);
+      personnes.push({
+        personneId: row.personne_id,
+        nip: personne?.nip,
+        nom: personne?.nom,
+        prenom: personne?.prenom,
+        cibles: [],
+        origine: row.origine || 'FIGE',
+        motifInclusion: row.motif_inclusion || 'photographie_figee',
+        fige: true
+      });
+    }
+    return { count: personnes.length, personnes, fige: true, photographie: true };
+  }
+
+  async function previewAttendus(eventId){
+    const evenement = await repo.getEvent(eventId);
+    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    if(evenement.origine === 'LEGACY_AGGREGATED'){
+      return { count: 0, personnes: [], note: 'Legacy agrégé : aucune population nominative.' };
+    }
+    if(isQuantitatif(evenement)){
+      throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population nominative.');
+    }
+    if(evenement.population_figee){
+      return photographieFigee(eventId);
+    }
+    const cibleIds = await repo.listEventCibleIds(eventId);
+    return resolveEligiblePopulation({
+      eventDate: evenement.date,
+      domaineCode: evenement.domaine_code,
+      sousDomaineCode: evenement.sous_domaine_code,
+      cibleIds
+    });
+  }
+
+  async function listPeriodes(personneId){
+    const personne = await repo.getPersonne(personneId);
+    if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
+    const periodes = repo.listPersonnesPeriodes ? await repo.listPersonnesPeriodes(personneId) : [];
+    return { personne, periodes };
+  }
+
+  async function syncPersonneSnapshot(tx, personneId, today){
+    const periodes = await tx.listPersonnesPeriodes(personneId);
+    const snap = deriveStatutCourant(periodes, today);
+    const actifs = periodes
+      .filter((row) => row.type === TYPES_PERIODE.ACTIF)
+      .sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut)));
+    const archiveOpen = periodes.find((row) =>
+      (row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE) && !row.date_fin
+    );
+    await tx.updatePersonne(personneId, {
+      actif: snap.actif,
+      statut_rh: snap.statut_rh,
+      date_entree: actifs[0] ? actifs[0].date_debut : undefined,
+      date_sortie: archiveOpen ? archiveOpen.date_debut : null
+    });
+    return tx.getPersonne(personneId);
+  }
+
+  async function ouvrirPeriode(personneId, body, actor){
+    const personne = await repo.getPersonne(personneId);
+    if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
+    return repo.withTransaction(async (tx) => {
+      const existing = await tx.listPersonnesPeriodes(personneId);
+      const normalized = assertPeriodCompatible(existing, body);
+      const saved = await tx.insertPeriode({
+        personne_id: personneId,
+        type: normalized.type,
+        date_debut: normalized.date_debut,
+        date_fin: normalized.date_fin,
+        motif: normalized.motif,
+        source: body.source || 'MANUEL'
+      });
+      const next = await syncPersonneSnapshot(tx, personneId, normalized.date_debut);
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: personneId,
+        action: 'OUVRIR_PERIODE',
+        avant: { statut_rh: personne.statut_rh },
+        apres: { periode_id: saved.periode_id, type: saved.type, date_debut: saved.date_debut }
+      });
+      return { personne: next, periode: saved };
+    });
+  }
+
+  async function cloturerPeriode(personneId, periodeId, body, actor){
+    const personne = await repo.getPersonne(personneId);
+    if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
+    const dateFin = isoDate(body.dateFin || body.date_fin);
+    if(!dateFin) throw new HttpError(400, 'date_fin_obligatoire', 'La date de fin de période est obligatoire.');
+    return repo.withTransaction(async (tx) => {
+      const existing = await tx.listPersonnesPeriodes(personneId);
+      const current = existing.find((row) => row.periode_id === periodeId);
+      if(!current) throw new HttpError(404, 'periode_introuvable', 'Période introuvable.');
+      assertPeriodCompatible(existing, { ...current, date_fin: dateFin });
+      const saved = await tx.updatePeriode(periodeId, { date_fin: dateFin });
+      const next = await syncPersonneSnapshot(tx, personneId, dateFin);
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: personneId,
+        action: 'CLOTURER_PERIODE',
+        apres: { periode_id: periodeId, date_fin: dateFin }
+      });
+      return { personne: next, periode: saved };
+    });
+  }
+
+  async function archiverPersonne(personneId, body, actor){
+    const type = String(body.type || body.statut || TYPES_PERIODE.SORTI).toUpperCase();
+    if(type !== TYPES_PERIODE.SORTI && type !== TYPES_PERIODE.DEMISSIONNAIRE){
+      throw new HttpError(422, 'type_archive_invalide', 'Archivage : SORTI ou DEMISSIONNAIRE.');
+    }
+    const date = isoDate(body.date);
+    if(!date) throw new HttpError(400, 'date_invalide', 'Date d’archivage invalide.');
+    const personne = await repo.getPersonne(personneId);
+    if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
+    return repo.withTransaction(async (tx) => {
+      const existing = await tx.listPersonnesPeriodes(personneId);
+      const lastActive = dayBefore(date);
+      for(const row of existing){
+        if(row.date_fin) continue;
+        if(row.type === TYPES_PERIODE.ACTIF || row.type === TYPES_PERIODE.INDISPONIBLE){
+          if(!lastActive || lastActive < row.date_debut){
+            throw new HttpError(422, 'archive_trop_tot', 'La date d’archivage ne peut pas précéder le début d’activité.');
+          }
+          await tx.updatePeriode(row.periode_id, { date_fin: lastActive });
+        }
+      }
+      const afterClose = await tx.listPersonnesPeriodes(personneId);
+      const normalized = assertPeriodCompatible(afterClose, { type, date_debut: date, date_fin: null });
+      const periode = await tx.insertPeriode({
+        personne_id: personneId,
+        ...normalized,
+        source: body.source || 'MANUEL'
+      });
+      const next = await syncPersonneSnapshot(tx, personneId, date);
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: personneId,
+        action: 'ARCHIVER',
+        avant: { nip: personne.nip, personne_id: personneId },
+        apres: { type, date, periode_id: periode.periode_id }
+      });
+      return { personne: next, periode };
+    });
+  }
+
+  async function reactiverPersonne(body, actor){
+    const date = isoDate(body.date);
+    if(!date) throw new HttpError(400, 'date_invalide', 'Date de réactivation invalide.');
+    let personne = body.personneId || body.personne_id
+      ? await repo.getPersonne(body.personneId || body.personne_id)
+      : null;
+    if(!personne && body.nip){
+      personne = await repo.getPersonneByNip(String(body.nip).trim());
+    }
+    if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable. Réactivation par NIP uniquement, jamais par nom/prénom.');
+    return repo.withTransaction(async (tx) => {
+      const existing = await tx.listPersonnesPeriodes(personne.personne_id);
+      const lastOut = dayBefore(date);
+      for(const row of existing){
+        if(row.date_fin) continue;
+        if(row.type === TYPES_PERIODE.SORTI || row.type === TYPES_PERIODE.DEMISSIONNAIRE){
+          if(!lastOut || lastOut < row.date_debut){
+            throw new HttpError(422, 'reactivation_trop_tot', 'La réactivation ne peut pas précéder le début d’archivage.');
+          }
+          await tx.updatePeriode(row.periode_id, { date_fin: lastOut });
+        }
+      }
+      const afterClose = await tx.listPersonnesPeriodes(personne.personne_id);
+      if(afterClose.some((row) => row.type === TYPES_PERIODE.ACTIF && !row.date_fin)){
+        const next = await syncPersonneSnapshot(tx, personne.personne_id, date);
+        return { personne: next, dejaActive: true };
+      }
+      const normalized = assertPeriodCompatible(afterClose, {
+        type: TYPES_PERIODE.ACTIF,
+        date_debut: date,
+        date_fin: null
+      });
+      const periode = await tx.insertPeriode({
+        personne_id: personne.personne_id,
+        ...normalized,
+        source: body.source || 'MANUEL'
+      });
+      const next = await syncPersonneSnapshot(tx, personne.personne_id, date);
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: personne.personne_id,
+        action: 'REACTIVER',
+        avant: { nip: personne.nip, personne_id: personne.personne_id },
+        apres: { date, periode_id: periode.periode_id }
+      });
+      return { personne: next, periode, memeIdentite: true };
+    });
+  }
+
+  async function createPersonne(body, actor){
+    const nip = String(body.nip || '').trim();
+    const nom = String(body.nom || '').trim();
+    const prenom = String(body.prenom || '').trim();
+    if(!nip) throw new HttpError(400, 'nip_obligatoire', 'Le NIP est obligatoire.');
+    if(!nom || !prenom) throw new HttpError(400, 'identite_obligatoire', 'Nom et prénom sont obligatoires.');
+    const existing = await repo.getPersonneByNip(nip);
+    if(existing){
+      throw new HttpError(409, 'nip_existant', 'Ce NIP existe déjà. Réactiver la même personne, ne pas recréer d’identité.');
+    }
+    return repo.withTransaction(async (tx) => {
+      const saved = await tx.insertPersonne({
+        nip,
+        nom,
+        prenom,
+        grade: body.grade || null,
+        date_entree: isoDate(body.dateEntree || body.date_entree) || isoDate(body.date) || null,
+        source: body.source || 'MANUEL'
+      });
+      if(body.cibleId || body.cible_id){
+        const cibleId = body.cibleId || body.cible_id;
+        const debut = isoDate(body.dateDebut || body.date_debut || saved.date_entree) || isoDate(new Date().toISOString());
+        await assertNoAffectationOverlapInDomain(saved.personne_id, cibleId, debut, null);
+        await tx.insertAffectation({
+          personne_id: saved.personne_id,
+          cible_id: cibleId,
+          date_debut: debut,
+          source: body.source || 'MANUEL'
+        });
+      }
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: saved.personne_id,
+        action: 'CREER',
+        apres: { nip: saved.nip }
+      });
+      return { personne: saved };
+    });
+  }
+
+  async function changerAffectation(personneId, body, actor){
+    const cibleId = body.cibleId || body.cible_id;
+    const dateDebut = isoDate(body.dateDebut || body.date_debut || body.date);
+    if(!cibleId) throw new HttpError(400, 'cible_obligatoire', 'La nouvelle cible est obligatoire.');
+    if(!dateDebut) throw new HttpError(400, 'date_invalide', 'Date de changement d’affectation invalide.');
+    const personne = await repo.getPersonne(personneId);
+    if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
+    const cible = await repo.getCible(cibleId);
+    if(!cible) throw new HttpError(404, 'cible_introuvable', 'Cible introuvable.');
+    return repo.withTransaction(async (tx) => {
+      const existing = await tx.listAffectations({ personneId });
+      const lastDay = dayBefore(dateDebut);
+      for(const aff of existing){
+        const other = await tx.getCible(aff.cible_id);
+        if(!other || other.domaine_code !== cible.domaine_code) continue;
+        if(aff.date_fin) continue;
+        if(!lastDay || lastDay < aff.date_debut){
+          throw new HttpError(422, 'changement_trop_tot', 'Le changement d’affectation chevauche le début de l’affectation en cours.');
+        }
+        await tx.updateAffectation(aff.affectation_id, { date_fin: lastDay });
+      }
+      await assertNoAffectationOverlapInDomain(personneId, cibleId, dateDebut, isoDate(body.dateFin || body.date_fin), null, tx);
+      const saved = await tx.insertAffectation({
+        personne_id: personneId,
+        cible_id: cibleId,
+        date_debut: dateDebut,
+        date_fin: isoDate(body.dateFin || body.date_fin),
+        source: body.source || 'MANUEL'
+      });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'personne',
+        entite_id: personneId,
+        action: 'CHANGER_AFFECTATION',
+        apres: { cible_id: cibleId, date_debut: dateDebut, domaine: cible.domaine_code }
+      });
+      return { affectation: saved, cible };
+    });
+  }
+
+  async function previewPersonnelSync(body){
+    const csvText = body.csvText || body.csv || '';
+    const personnes = await repo.listPersonnes({});
+    const affectations = typeof repo.listAffectations === 'function'
+      ? await repo.listAffectations({})
+      : [];
+    const cibles = await repo.listCibles();
+    const byCible = new Map(cibles.map((c) => [c.cible_id, c]));
+    const enriched = affectations.map((a) => ({
+      ...a,
+      niveau_code: byCible.get(a.cible_id)?.niveau_code,
+      domaine_code: byCible.get(a.cible_id)?.domaine_code
+    }));
+    const periodes = [];
+    if(typeof repo.listPersonnesPeriodes === 'function'){
+      for(const personne of personnes){
+        const rows = await repo.listPersonnesPeriodes(personne.personne_id);
+        periodes.push(...rows);
+      }
+    }
+    return previewPersonnelSyncContract(csvText, { personnes, affectations: enriched, periodes });
   }
 
   async function figerPopulation(eventId, body, actor){
@@ -1187,6 +1522,29 @@ function createScopeService(repo){
     }
   }
 
+  async function assertNoAffectationOverlapInDomain(personneId, cibleId, dateDebut, dateFin, ignoreId, store){
+    const dbx = store || repo;
+    const cible = await dbx.getCible(cibleId);
+    if(!cible) throw new HttpError(404, 'cible_introuvable', 'Cible introuvable.');
+    const existing = await dbx.listAffectations({ personneId });
+    for(const a of existing){
+      if(ignoreId && a.affectation_id === ignoreId) continue;
+      if(a.cible_id === cibleId && rangesOverlap(a.date_debut, a.date_fin, dateDebut, dateFin || null)){
+        throw new HttpError(422, 'chevauchement', 'Chevauchement d’affectation Personne × Cible.');
+      }
+      const other = await dbx.getCible(a.cible_id);
+      if(!other || other.domaine_code !== cible.domaine_code) continue;
+      if(a.cible_id === cibleId) continue;
+      if(rangesOverlap(a.date_debut, a.date_fin, dateDebut, dateFin || null)){
+        throw new HttpError(
+          422,
+          'chevauchement_domaine',
+          'Chevauchement d’affectations dans le même domaine. Les appartenances multi-domaines restent autorisées.'
+        );
+      }
+    }
+  }
+
   return {
     referentiels,
     listPersonnes,
@@ -1195,6 +1553,7 @@ function createScopeService(repo){
     createEvenement,
     patchEvenement,
     previewAttendus,
+    resolveEligiblePopulation,
     figerPopulation,
     ajouterException,
     retirerAttendu,
@@ -1212,7 +1571,16 @@ function createScopeService(repo){
     convertirQuantitatif,
     previewImportEvenements,
     commitImportEvenements,
+    createPersonne,
+    listPeriodes,
+    ouvrirPeriode,
+    cloturerPeriode,
+    archiverPersonne,
+    reactiverPersonne,
+    changerAffectation,
+    previewPersonnelSync,
     assertNoAffectationOverlap,
+    assertNoAffectationOverlapInDomain,
     computeTaux
   };
 }

@@ -91,9 +91,37 @@ exports.handler = async function(event){
     if(method === 'GET' && path === '/personnes'){
       return response(200, { ok:true, ...(await service.listPersonnes(queryOf(event))) });
     }
+    if(method === 'POST' && path === '/personnes'){
+      return response(201, { ok:true, ...(await service.createPersonne(body, claims)) });
+    }
+    if(method === 'POST' && path === '/personnes/reactiver'){
+      return response(200, { ok:true, ...(await service.reactiverPersonne(body, claims)) });
+    }
+    if(method === 'POST' && path === '/imports/personnel/preview'){
+      return response(200, { ok:true, ...(await service.previewPersonnelSync(body)) });
+    }
     let params = match(path, '/personnes/:id/affectations');
     if(method === 'GET' && params){
       return response(200, { ok:true, ...(await service.affectationsValides(params.id, queryOf(event).date)) });
+    }
+    params = match(path, '/personnes/:id/periodes');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, ...(await service.listPeriodes(params.id)) });
+    }
+    if(method === 'POST' && params){
+      return response(201, { ok:true, ...(await service.ouvrirPeriode(params.id, body, claims)) });
+    }
+    params = match(path, '/personnes/:id/periodes/:periodeId/cloturer');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.cloturerPeriode(params.id, params.periodeId, body, claims)) });
+    }
+    params = match(path, '/personnes/:id/archiver');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.archiverPersonne(params.id, body, claims)) });
+    }
+    params = match(path, '/personnes/:id/changer-affectation');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.changerAffectation(params.id, body, claims)) });
     }
     if(method === 'GET' && path === '/evenements'){
       return response(200, { ok:true, ...(await service.listEvenements(queryOf(event))) });

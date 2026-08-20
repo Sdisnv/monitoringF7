@@ -57,7 +57,7 @@ grep -q "Importer un programme CSV" assets/js/scope-ui.js
 grep -q "imports/evenements/preview" netlify/functions/scope.js
 grep -q "imports/evenements/commit" netlify/functions/scope.js
 grep -qF "require('../../assets/js/scope-csv-import.js')" netlify/functions/_scope-csv-import.js
-grep -qF 'included_files = ["assets/js/scope-csv-import.js"]' netlify.scope.toml
+grep -qF 'assets/js/scope-csv-import.js' netlify.scope.toml
 grep -q "scope-data-5" netlify/functions/_scope-schema.js
 grep -q "scope-data-5-r1" netlify/functions/_scope-schema.js
 grep -q "scope-analytics-1" netlify/functions/_scope-schema.js
@@ -96,11 +96,18 @@ grep -q "classifyInboxItem" netlify/functions/_scope-inbox.js
 grep -q "scope_alertes_acquittements" netlify/functions/_scope-schema.js
 grep -q "scope_alertes_acquittements" database/migrations/20260820_scope_alerts_1.sql
 grep -q "scope-model-2" netlify/functions/_scope-schema.js
+grep -q "scope-model-2-r1" netlify/functions/_scope-schema.js
+grep -q "scope_personne_periodes" netlify/functions/_scope-schema.js
+grep -q "resolveEligiblePopulation" netlify/functions/_scope-service.js
+grep -q "ABSENT_DU_FICHIER" assets/js/scope-personnel-sync-contract.js
+grep -q "imports/personnel/preview" netlify/functions/scope.js
+grep -q "scope_personne_periodes" database/migrations/20260820_scope_model_2_r1.sql
 grep -q "scope_suivi_nominatif" netlify/functions/_scope-schema.js
 grep -q "PERMUTATION" netlify/functions/_scope-rules.js
 grep -q "ACCIDENT_MALADIE" netlify/functions/_scope-model.js
 grep -q "scope-import-contract.js" netlify/functions/_scope-import-contract.js
-grep -qF 'included_files = ["assets/js/scope-csv-import.js"]' netlify.scope.toml
+grep -qF 'assets/js/scope-csv-import.js' netlify.scope.toml
+grep -qF 'assets/js/scope-personnel-sync-contract.js' netlify.scope.toml
 grep -q "previewScopeImport" assets/js/scope-import-contract.js
 grep -q "Réglages · Suivi nominatif" assets/js/scope-ui.js
 grep -q "Dont permutations" assets/js/scope-ui.js

@@ -1,6 +1,7 @@
 const { randomUUID } = require('crypto');
 const { DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 } = require('./_scope-schema');
 const { isoDate } = require('./_scope-rules');
+const { periodFromPersonneRow } = require('./_scope-personnel');
 
 function now(){ return new Date().toISOString(); }
 
@@ -51,6 +52,7 @@ function createMemoryRepo(){
   const objectifs = new Map();
   const acquittements = new Map();
   const suiviNominatif = new Map();
+  const periodes = new Map();
   suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
     suivi_id: '8c0a0002-2026-4000-8000-000000000001',
     portee: 'GLOBAL',
@@ -87,7 +89,8 @@ function createMemoryRepo(){
       quantitatives: cloneMap(quantitatives),
       objectifs: cloneMap(objectifs),
       acquittements: cloneMap(acquittements),
-      suiviNominatif: cloneMap(suiviNominatif)
+      suiviNominatif: cloneMap(suiviNominatif),
+      periodes: cloneMap(periodes)
     };
   }
 
@@ -107,6 +110,7 @@ function createMemoryRepo(){
     objectifs.clear(); (snap.objectifs || new Map()).forEach((v, k) => objectifs.set(k, v));
     acquittements.clear(); (snap.acquittements || new Map()).forEach((v, k) => acquittements.set(k, v));
     suiviNominatif.clear(); (snap.suiviNominatif || new Map()).forEach((v, k) => suiviNominatif.set(k, v));
+    periodes.clear(); (snap.periodes || new Map()).forEach((v, k) => periodes.set(k, v));
   }
 
   const api = {
@@ -149,6 +153,62 @@ function createMemoryRepo(){
       };
       if([...personnes.values()].some(p => p.nip === item.nip)) throw new Error('nip_unique');
       personnes.set(item.personne_id, item);
+      if(!row.skipPeriodes){
+        for(const periode of periodFromPersonneRow(item)){
+          const stored = {
+            periode_id: randomUUID(),
+            personne_id: item.personne_id,
+            type: periode.type,
+            date_debut: periode.date_debut,
+            date_fin: periode.date_fin,
+            motif: periode.motif,
+            source: periode.source || 'MANUEL',
+            created_at: now(),
+            updated_at: now()
+          };
+          periodes.set(stored.periode_id, stored);
+        }
+      }
+      return item;
+    },
+    async updatePersonne(id, patch){
+      const item = personnes.get(id);
+      if(!item) return null;
+      const clean = {};
+      for(const [key, value] of Object.entries(patch || {})){
+        if(value !== undefined) clean[key] = value;
+      }
+      Object.assign(item, clean, { updated_at: now() });
+      return item;
+    },
+    async listPersonnesPeriodes(personneId){
+      return [...periodes.values()]
+        .filter((row) => row.personne_id === personneId)
+        .sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut)));
+    },
+    async insertPeriode(row){
+      const item = {
+        periode_id: row.periode_id || randomUUID(),
+        personne_id: row.personne_id,
+        type: row.type,
+        date_debut: isoDate(row.date_debut),
+        date_fin: isoDate(row.date_fin),
+        motif: row.motif || null,
+        source: row.source || 'MANUEL',
+        created_at: now(),
+        updated_at: now()
+      };
+      periodes.set(item.periode_id, item);
+      return item;
+    },
+    async updatePeriode(id, patch){
+      const item = periodes.get(id);
+      if(!item) return null;
+      Object.assign(item, patch, {
+        date_debut: patch.date_debut !== undefined ? isoDate(patch.date_debut) : item.date_debut,
+        date_fin: patch.date_fin !== undefined ? isoDate(patch.date_fin) : item.date_fin,
+        updated_at: now()
+      });
       return item;
     },
     async getPersonne(id){ return personnes.get(id) || null; },
@@ -189,6 +249,15 @@ function createMemoryRepo(){
         updated_at: now()
       };
       affectations.set(item.affectation_id, item);
+      return item;
+    },
+    async updateAffectation(id, patch){
+      const item = affectations.get(id);
+      if(!item) return null;
+      if(patch.date_debut !== undefined) item.date_debut = isoDate(patch.date_debut);
+      if(patch.date_fin !== undefined) item.date_fin = isoDate(patch.date_fin);
+      if(patch.cible_id) item.cible_id = patch.cible_id;
+      item.updated_at = now();
       return item;
     },
     async listAffectations({ personneId, date } = {}){

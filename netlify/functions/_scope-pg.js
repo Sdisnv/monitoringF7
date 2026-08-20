@@ -2,6 +2,7 @@ const { randomUUID } = require('crypto');
 const db = require('./_postgres');
 const { ensureScopeSchema } = require('./_scope-schema');
 const { isoDate } = require('./_scope-rules');
+const { periodFromPersonneRow } = require('./_scope-personnel');
 
 function dateOnly(value){
   if(!value) return null;
@@ -91,7 +92,81 @@ function createPgRepo(client){
           isoDate(row.date_entree), isoDate(row.date_sortie), row.source || 'MANUEL',
           row.statut_rh || (row.actif === false ? 'INACTIF' : 'ACTIF')]
       );
-      return result.rows[0];
+      const saved = result.rows[0];
+      if(!row.skipPeriodes){
+        for(const periode of periodFromPersonneRow(saved)){
+          await q(
+            `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
+             values ($1,$2,$3,$4,$5,$6,$7)`,
+            [randomUUID(), saved.personne_id, periode.type, periode.date_debut, periode.date_fin, periode.motif, periode.source || 'MANUEL']
+          );
+        }
+      }
+      return saved;
+    },
+    async updatePersonne(id, patch){
+      const current = await api.getPersonne(id);
+      if(!current) return null;
+      const cleaned = Object.fromEntries(Object.entries(patch || {}).filter(([, value]) => value !== undefined));
+      const next = { ...current, ...cleaned };
+      const result = await q(
+        `update scope_personnes
+         set actif = $2, statut_rh = $3, date_sortie = $4, date_entree = $5,
+             nom = $6, prenom = $7, grade = $8, updated_at = now()
+         where personne_id = $1 returning *`,
+        [
+          id,
+          next.actif !== false,
+          next.statut_rh || 'ACTIF',
+          isoDate(next.date_sortie),
+          isoDate(next.date_entree),
+          next.nom,
+          next.prenom,
+          next.grade || null
+        ]
+      );
+      return result.rows[0] || null;
+    },
+    async listPersonnesPeriodes(personneId){
+      const result = await q(
+        `select * from scope_personne_periodes where personne_id = $1 order by date_debut, created_at`,
+        [personneId]
+      );
+      return result.rows.map((row) => ({
+        ...row,
+        date_debut: dateOnly(row.date_debut),
+        date_fin: dateOnly(row.date_fin)
+      }));
+    },
+    async insertPeriode(row){
+      const result = await q(
+        `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
+         values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+        [
+          row.periode_id || randomUUID(), row.personne_id, row.type,
+          isoDate(row.date_debut), isoDate(row.date_fin), row.motif || null, row.source || 'MANUEL'
+        ]
+      );
+      const saved = result.rows[0];
+      return { ...saved, date_debut: dateOnly(saved.date_debut), date_fin: dateOnly(saved.date_fin) };
+    },
+    async updatePeriode(id, patch){
+      const current = await q('select * from scope_personne_periodes where periode_id = $1', [id]);
+      if(!current.rows[0]) return null;
+      const next = {
+        type: patch.type || current.rows[0].type,
+        date_debut: patch.date_debut !== undefined ? isoDate(patch.date_debut) : dateOnly(current.rows[0].date_debut),
+        date_fin: patch.date_fin !== undefined ? isoDate(patch.date_fin) : dateOnly(current.rows[0].date_fin),
+        motif: patch.motif !== undefined ? patch.motif : current.rows[0].motif
+      };
+      const result = await q(
+        `update scope_personne_periodes
+         set type = $2, date_debut = $3, date_fin = $4, motif = $5, updated_at = now()
+         where periode_id = $1 returning *`,
+        [id, next.type, next.date_debut, next.date_fin, next.motif]
+      );
+      const saved = result.rows[0];
+      return { ...saved, date_debut: dateOnly(saved.date_debut), date_fin: dateOnly(saved.date_fin) };
     },
     async getPersonneByNip(nip){
       const result = await q('select * from scope_personnes where nip = $1', [String(nip)]);
@@ -138,6 +213,24 @@ function createPgRepo(client){
         [id, row.personne_id, row.cible_id, isoDate(row.date_debut), isoDate(row.date_fin), row.source || 'MANUEL']
       );
       return result.rows[0];
+    },
+    async updateAffectation(id, patch){
+      const current = await q('select * from scope_affectations where affectation_id = $1', [id]);
+      if(!current.rows[0]) return null;
+      const row = current.rows[0];
+      const next = {
+        date_debut: patch.date_debut !== undefined ? isoDate(patch.date_debut) : dateOnly(row.date_debut),
+        date_fin: patch.date_fin !== undefined ? isoDate(patch.date_fin) : dateOnly(row.date_fin),
+        cible_id: patch.cible_id || row.cible_id
+      };
+      const result = await q(
+        `update scope_affectations
+         set date_debut = $2, date_fin = $3, cible_id = $4, updated_at = now()
+         where affectation_id = $1 returning *`,
+        [id, next.date_debut, next.date_fin, next.cible_id]
+      );
+      const saved = result.rows[0];
+      return { ...saved, date_debut: dateOnly(saved.date_debut), date_fin: dateOnly(saved.date_fin) };
     },
     async listAffectations({ personneId, date } = {}){
       if(personneId && date){

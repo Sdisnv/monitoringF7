@@ -50,12 +50,13 @@ function isAffectationValide(affectation, dateEvenement){
 }
 
 function personneActiveA(personne, dateEvenement){
-  if(personne.actif === false) return false;
   const date = isoDate(dateEvenement);
+  if(!date || !personne) return false;
   const sortie = personne.date_sortie || personne.dateSortie || null;
   if(sortie && isoDate(sortie) < date) return false;
   const entree = personne.date_entree || personne.dateEntree || null;
   if(entree && isoDate(entree) > date) return false;
+  if(personne.actif === false && !sortie && !entree) return false;
   return true;
 }
 
