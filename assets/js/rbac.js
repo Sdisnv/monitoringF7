@@ -2,10 +2,10 @@
 (function(){
   'use strict';
   const ROLE_PERMISSIONS = Object.freeze({
-    'sdis-admin': ['dashboard:read','events:create','events:update','events:delete','effectifs:manage','references:manage','data:import','data:export','reports:nominatif','users:admin','audit:read','settings:manage'],
-    'sdis-commandement': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','reports:nominatif','audit:read'],
-    'sdis-chef-formation': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','reports:nominatif','audit:read'],
-    'sdis-formation': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','reports:nominatif'],
+    'sdis-admin': ['dashboard:read','events:create','events:update','events:delete','effectifs:manage','personnel:manage','references:manage','data:import','data:export','reports:nominatif','users:admin','audit:read','settings:manage'],
+    'sdis-commandement': ['dashboard:read','events:create','events:update','effectifs:manage','personnel:manage','references:manage','data:import','data:export','reports:nominatif','audit:read'],
+    'sdis-chef-formation': ['dashboard:read','events:create','events:update','effectifs:manage','personnel:manage','references:manage','data:import','data:export','reports:nominatif','audit:read'],
+    'sdis-formation': ['dashboard:read','events:create','events:update','effectifs:manage','personnel:manage','references:manage','data:import','data:export','reports:nominatif'],
     'sdis-instructeur': ['dashboard:read','events:create','events:update','data:export','reports:nominatif'],
     'sdis-user': ['dashboard:read','events:create','events:update','data:export','reports:nominatif'],
     'sdis-readonly': ['dashboard:read','data:export']

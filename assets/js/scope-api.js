@@ -122,6 +122,8 @@
       },
       previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
+      previewPersonnelSync(body) { return request('POST', '/imports/personnel/preview', body); },
+      commitPersonnelSync(body) { return request('POST', '/imports/personnel/commit', body); },
       analyticsSummary(params) { return request('GET', `/analytics/summary${queryString(params || {})}`); },
       analyticsExplain(params) { return request('GET', `/analytics/explain${queryString(params || {})}`); },
       analyticsTimeseries(params) { return request('GET', `/analytics/timeseries${queryString(params || {})}`); },

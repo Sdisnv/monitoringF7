@@ -138,6 +138,14 @@ function createPgRepo(client){
         date_fin: dateOnly(row.date_fin)
       }));
     },
+    async listAllPeriodes(){
+      const result = await q('select * from scope_personne_periodes order by personne_id, date_debut, created_at');
+      return result.rows.map((row) => ({
+        ...row,
+        date_debut: dateOnly(row.date_debut),
+        date_fin: dateOnly(row.date_fin)
+      }));
+    },
     async insertPeriode(row){
       const result = await q(
         `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)

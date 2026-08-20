@@ -295,6 +295,7 @@
       return { screen: 'vue', nav: 'vue' };
     }
     if (parts[0] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
+    if (parts[0] === 'reglages' && parts[1] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
     if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };
     if (parts[0] === 'reglages' && parts[1] === 'suivi') {
       return { screen: 'suivi', nav: 'reglages' };

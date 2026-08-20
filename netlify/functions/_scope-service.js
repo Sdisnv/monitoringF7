@@ -17,7 +17,7 @@ const {
   assertPeriodCompatible,
   deriveStatutCourant
 } = require('./_scope-personnel');
-const { previewPersonnelSync: previewPersonnelSyncContract } = require('./_scope-personnel-sync-contract');
+const personnelSync = require('./_scope-personnel-sync');
 const csvImport = require('./_scope-csv-import');
 const {
   inferModeSuivi,
@@ -634,26 +634,11 @@ function createScopeService(repo){
   }
 
   async function previewPersonnelSync(body){
-    const csvText = body.csvText || body.csv || '';
-    const personnes = await repo.listPersonnes({});
-    const affectations = typeof repo.listAffectations === 'function'
-      ? await repo.listAffectations({})
-      : [];
-    const cibles = await repo.listCibles();
-    const byCible = new Map(cibles.map((c) => [c.cible_id, c]));
-    const enriched = affectations.map((a) => ({
-      ...a,
-      niveau_code: byCible.get(a.cible_id)?.niveau_code,
-      domaine_code: byCible.get(a.cible_id)?.domaine_code
-    }));
-    const periodes = [];
-    if(typeof repo.listPersonnesPeriodes === 'function'){
-      for(const personne of personnes){
-        const rows = await repo.listPersonnesPeriodes(personne.personne_id);
-        periodes.push(...rows);
-      }
-    }
-    return previewPersonnelSyncContract(csvText, { personnes, affectations: enriched, periodes });
+    return personnelSync.previewPersonnelSync(repo, body || {});
+  }
+
+  async function commitPersonnelSync(body, actor){
+    return personnelSync.commitPersonnelSync(repo, body || {}, actor);
   }
 
   async function figerPopulation(eventId, body, actor){
@@ -1579,6 +1564,7 @@ function createScopeService(repo){
     reactiverPersonne,
     changerAffectation,
     previewPersonnelSync,
+    commitPersonnelSync,
     assertNoAffectationOverlap,
     assertNoAffectationOverlapInDomain,
     computeTaux

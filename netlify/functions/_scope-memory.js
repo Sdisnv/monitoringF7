@@ -186,6 +186,9 @@ function createMemoryRepo(){
         .filter((row) => row.personne_id === personneId)
         .sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut)));
     },
+    async listAllPeriodes(){
+      return [...periodes.values()].sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut)));
+    },
     async insertPeriode(row){
       const item = {
         periode_id: row.periode_id || randomUUID(),

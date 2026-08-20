@@ -99,8 +99,16 @@ exports.handler = async function(event){
     if(method === 'POST' && path === '/personnes/reactiver'){
       return response(200, { ok:true, ...(await service.reactiverPersonne(body, claims)) });
     }
+    if(path === '/imports/personnel/preview' || path === '/imports/personnel/commit'){
+      if(!hasPermission(claims, 'personnel:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La synchronisation du personnel est réservée aux profils habilités (personnel:manage).' });
+      }
+    }
     if(method === 'POST' && path === '/imports/personnel/preview'){
       return response(200, { ok:true, ...(await service.previewPersonnelSync(body)) });
+    }
+    if(method === 'POST' && path === '/imports/personnel/commit'){
+      return response(200, { ok:true, ...(await service.commitPersonnelSync(body, claims)) });
     }
     let params = match(path, '/personnes/:id/affectations');
     if(method === 'GET' && params){

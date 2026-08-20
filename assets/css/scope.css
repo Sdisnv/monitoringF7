@@ -1502,6 +1502,44 @@ body.scope-pdf-open { overflow: hidden; }
   .scope-report-grid { grid-template-columns: 1fr; }
 }
 
+.scope-sync-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+.scope-sync-toolbar .scope-actions { margin: 0; }
+.scope-sync-summary { color: var(--scope-muted); font-size: var(--scope-fs-secondary); }
+.scope-sync-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.scope-sync-filters .scope-btn { min-height: 44px; }
+.scope-sync-table-wrap { overflow-x: auto; }
+.scope-sync-table select,
+.scope-sync-table input[type="date"] {
+  min-height: 44px;
+  max-width: 100%;
+}
+.scope-sync-detail td {
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-secondary);
+  padding-top: 0;
+}
+.scope-sync-table tr.is-conflict td { background: var(--scope-red-soft); }
+
+@media (max-width: 768px) {
+  .scope-sync-toolbar { flex-direction: column; align-items: stretch; }
+  .scope-sync-toolbar .scope-actions .scope-btn,
+  .scope-sync-toolbar .scope-actions .scope-btn-primary {
+    min-height: 44px;
+    width: 100%;
+  }
+}
+
 .scope-report-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

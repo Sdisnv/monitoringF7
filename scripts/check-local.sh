@@ -129,6 +129,14 @@ grep -qF 'assets/img/logo-scope-blanc.png' netlify.scope.toml
 grep -qF 'assets/img/LogoSDISblanc.png' netlify.scope.toml
 grep -q "frame-src 'self' blob:" netlify.scope.toml
 grep -q '"pdfkit"' package.json
+grep -q "SCOPE-PERSONNEL-SYNC-1" netlify/functions/_scope-personnel-sync.js
+grep -q "imports/personnel/commit" netlify/functions/scope.js
+grep -q "personnel:manage" netlify/functions/_rbac.js
+grep -q "personnel:manage" assets/js/rbac.js
+grep -q "ABSENT_DU_FICHIER" assets/js/scope-personnel-sync-contract.js
+grep -q "CHANGEMENT_OI" assets/js/scope-personnel-sync-contract.js
+grep -q "scope-sync-preview" assets/js/scope-ui.js
+grep -q "scope-personnel-sync-1-tests.js" package.json
 if grep -q "officialFromQuantitatif" netlify/functions/_scope-pdf-renderer.js; then
   echo "ERREUR: formule KPI dans le renderer PDF"
   exit 1

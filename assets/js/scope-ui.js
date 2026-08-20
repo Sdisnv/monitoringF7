@@ -61,6 +61,17 @@
     importPreview: null,
     importExcluded: {},
     importRapport: null,
+    personnelSync: {
+      filename: '',
+      csvText: '',
+      drag: false,
+      preview: null,
+      rapport: null,
+      filter: 'CHANGEMENTS',
+      dateEffet: '',
+      decisions: {},
+      openRow: null
+    },
     domaineForm: 'DPS',
     dateForm: '2026-03-12',
     libelleForm: '',
@@ -779,15 +790,153 @@
     `;
   }
 
+  function canManagePersonnel() {
+    if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
+      return window.MonitoringRBAC.has('personnel:manage');
+    }
+    const roles = (state.session && state.session.roles) || [];
+    return roles.some((role) => ['sdis-admin', 'sdis-commandement', 'sdis-chef-formation', 'sdis-formation'].includes(role));
+  }
+
+  function personnelPillClass(statut) {
+    if (statut === 'ERREUR' || statut === 'CONFLIT') return 'err';
+    if (statut === 'INCHANGE') return 'ok';
+    if (statut === 'ABSENT_DU_FICHIER') return 'warn';
+    return 'warn';
+  }
+
+  function personnelVisibleRows(preview) {
+    const rows = (preview && (preview.rows || (preview.lignes || []).concat(preview.absents || []))) || [];
+    const filter = state.personnelSync.filter;
+    if (filter === 'TOUS') return rows;
+    if (filter === 'CHANGEMENTS') return rows.filter((row) => row.statut !== 'INCHANGE');
+    return rows.filter((row) => row.statut === filter || row.proposition === filter);
+  }
+
+  function personnelDecisionOf(row) {
+    const patch = state.personnelSync.decisions[row.rowId];
+    return (patch && patch.decision) || row.decision || 'IGNORER';
+  }
+
+  function personnelDateOf(row) {
+    const patch = state.personnelSync.decisions[row.rowId];
+    return (patch && patch.dateEffet) || row.dateEffet || state.personnelSync.dateEffet || '';
+  }
+
+  function personnelDecisionSelect(row) {
+    const current = personnelDecisionOf(row);
+    let options = [];
+    if (row.statut === 'ABSENT_DU_FICHIER') {
+      options = [
+        ['IGNORER', 'Ne rien faire'],
+        ['ARCHIVER_SORTI', 'Archiver (sorti)'],
+        ['ARCHIVER_DEMISSIONNAIRE', 'Démissionnaire'],
+        ['DEBUT_CONGE', 'Congé sabbatique'],
+        ['FIN_AFFECTATION', 'Fin d’affectation seule']
+      ];
+    } else if (row.statut === 'ARCHIVE_RETROUVE') {
+      options = [
+        ['EXAMINER', 'Examiner'],
+        ['IGNORER', 'Ne rien faire'],
+        ['REACTIVER', 'Réactiver']
+      ];
+    } else if (row.statut === 'CONFLIT') {
+      options = [
+        ['EXAMINER', 'Examiner'],
+        ['IGNORER', 'Ignorer'],
+        ['MODIFIER_IDENTITE', 'Corriger l’identité']
+      ];
+    } else if (row.statut === 'NOUVEAU') {
+      options = [['CREER', 'Créer'], ['IGNORER', 'Ignorer']];
+    } else if (row.statut === 'INCHANGE') {
+      options = [['IGNORER', 'Aucune']];
+    } else {
+      options = [['APPLIQUER', 'Appliquer'], ['IGNORER', 'Ignorer'], ['EXAMINER', 'Examiner']];
+    }
+    return `<select class="scope-sync-decision" data-sync-decision="${escapeHtml(row.rowId)}">
+      ${options.map(([value, label]) => `<option value="${value}" ${current === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+    </select>`;
+  }
+
   function renderPersonnel() {
+    const live = mode === 'live';
+    const allowed = live && canManagePersonnel() && typeof client.previewPersonnelSync === 'function';
+    const preview = state.personnelSync.preview;
+    const rapport = state.personnelSync.rapport;
+    const summary = (preview && (preview.importSummary || preview.summary)) || {};
+    const rows = personnelVisibleRows(preview);
+    const counts = (preview && (preview.counts || preview.summary)) || {};
+    const filters = [
+      ['CHANGEMENTS', 'À traiter'],
+      ['TOUS', 'Tous'],
+      ['NOUVEAU', 'Nouveaux'],
+      ['CHANGEMENT_OI', 'OI'],
+      ['CHANGEMENT_GRADE', 'Grade'],
+      ['ABSENT_DU_FICHIER', 'Absents'],
+      ['ARCHIVE_RETROUVE', 'Archives'],
+      ['CONFLIT', 'Conflits']
+    ];
     return `
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
-        <div class="scope-card scope-placeholder">
+        <div class="scope-card">
           <h2 style="margin-top:0">Personnel</h2>
-          <p>Le module PERSON-1 n’est pas ouvert. L’identité restera le NIP, avec affectations OI datées, périodes RH, archivage et réactivation.</p>
-          ${mode === 'live' && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
+          <p class="scope-mode-hint">Synchronisation comparative par NIP. L’OI est une affectation temporelle. Absent du fichier ≠ démission. Les populations figées ne sont pas réécrites. La fiche personne complète reste PERSON-1.</p>
+          ${live && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
+          ${!live ? '<p class="scope-empty">La synchronisation CSV est disponible en mode LIVE uniquement.</p>' : ''}
+          ${live && !canManagePersonnel() ? '<p class="scope-empty">L’import personnel est réservé aux profils habilités (personnel:manage).</p>' : ''}
+          ${allowed ? `
+          <div id="scope-sync-drop" class="scope-import-drop ${state.personnelSync.drag ? 'is-drag' : ''}">
+            <p>Glissez un CSV personnel (NIP;Grade;Nom;Prénom;OI) ou</p>
+            <label class="scope-btn">
+              Choisir un fichier
+              <input id="scope-sync-file" type="file" accept=".csv,text/csv" hidden>
+            </label>
+            <p class="scope-import-file">${escapeHtml(state.personnelSync.filename || 'Aucun fichier')}</p>
+          </div>
+          <div class="scope-sync-toolbar">
+            <div class="scope-field"><label for="scope-sync-date">Date d’effet globale</label>
+              <input id="scope-sync-date" type="date" value="${escapeHtml(state.personnelSync.dateEffet || '')}">
+            </div>
+            <div class="scope-actions">
+              <button type="button" class="scope-btn" id="scope-sync-preview" ${!state.personnelSync.csvText ? 'disabled' : ''}>Contrôler (preview)</button>
+              <button type="button" class="scope-btn scope-btn-primary" id="scope-sync-commit" ${preview && preview.canCommit && !rapport ? '' : 'disabled'}>Confirmer la synchronisation</button>
+            </div>
+          </div>
+          ` : ''}
         </div>
+        ${preview ? `<div class="scope-card" style="margin-top:12px">
+          <h3 style="margin-top:0">Preview · ${summary.personnelFichier || summary.importes || 0} ligne(s) fichier</h3>
+          <p class="scope-sync-summary">${summary.inchanges || counts.INCHANGE || 0} inchangé(s) · ${summary.nouveaux || counts.NOUVEAU || 0} nouveau(x) · ${summary.changementsOi || counts.CHANGEMENT_OI || 0} changement(s) d’OI · ${summary.changementsGrade || counts.CHANGEMENT_GRADE || 0} grade(s) · ${summary.absents || counts.ABSENT_DU_FICHIER || 0} absent(s) du fichier · ${summary.archivesRetrouves || counts.ARCHIVE_RETROUVE || 0} archive(s) retrouvée(s) · ${summary.reactivations || counts.REACTIVATION_PROPOSEE || 0} réactivation(s) · ${summary.conflits || counts.CONFLIT || 0} conflit(s) · 0 écriture</p>
+          ${preview.dateEffetRequise ? '<p class="scope-mode-hint">Une date d’effet est obligatoire avant commit. Elle n’est jamais inventée.</p>' : ''}
+          ${preview.canCommit ? '<p>Aucune écriture tant que vous n’avez pas confirmé.</p>' : '<p class="scope-mode-hint">Commit bloqué : conflit, erreur ou date d’effet manquante.</p>'}
+          <div class="scope-sync-filters" role="tablist">
+            ${filters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personnelSync.filter === id ? 'scope-btn-primary' : ''}" data-sync-filter="${id}">${escapeHtml(label)}${id !== 'CHANGEMENTS' && id !== 'TOUS' && counts[id] != null ? ` (${counts[id]})` : ''}</button>`).join('')}
+          </div>
+          <div class="scope-table-wrap scope-sync-table-wrap">
+            <table class="scope-table scope-sync-table">
+              <thead><tr><th>NIP</th><th>Nom</th><th>OI actuel</th><th>OI proposé</th><th>Situation</th><th>Action</th><th>Date d’effet</th></tr></thead>
+              <tbody>
+                ${rows.map((row) => `
+                  <tr class="${row.statut === 'CONFLIT' || row.statut === 'ERREUR' ? 'is-conflict' : ''}">
+                    <td data-label="NIP">${escapeHtml(row.nip || '—')}</td>
+                    <td data-label="Nom">${escapeHtml([row.prenom, row.nom].filter(Boolean).join(' ') || '—')}</td>
+                    <td data-label="OI actuel">${escapeHtml(row.oiActuel || '—')}</td>
+                    <td data-label="OI proposé">${escapeHtml(row.oiPropose || '—')}</td>
+                    <td data-label="Situation"><span class="scope-import-pill ${personnelPillClass(row.statut)}">${escapeHtml(row.statut)}</span></td>
+                    <td data-label="Action">${personnelDecisionSelect(row)}</td>
+                    <td data-label="Date d’effet"><input type="date" class="scope-sync-row-date" data-sync-date="${escapeHtml(row.rowId)}" value="${escapeHtml(personnelDateOf(row))}" ${row.statut === 'INCHANGE' ? 'disabled' : ''}></td>
+                  </tr>
+                  ${row.message || (row.actions && row.actions.length > 1) ? `<tr class="scope-sync-detail"><td colspan="7">${escapeHtml(row.message || '')} ${(row.actions || []).map((a) => a.type).join(' · ')}</td></tr>` : ''}
+                `).join('') || '<tr><td colspan="7">Aucun élément pour ce filtre.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>` : ''}
+        ${rapport ? `<div class="scope-card" style="margin-top:12px">
+          <h3 style="margin-top:0">Rapport de synchronisation</h3>
+          <p>${rapport.summary.analysed} lignes analysées · ${rapport.summary.inchanges} inchangées · ${rapport.summary.creations} créations · ${rapport.summary.changementsOi} changements OI · ${rapport.summary.changementsGrade} changements grade · ${rapport.summary.reactivations} réactivation(s) · ${rapport.summary.archivages} archivage(s) · ${rapport.summary.conflits} conflit(s) · ${rapport.summary.erreurs} erreur(s)</p>
+        </div>` : ''}
       </div>
     `;
   }
@@ -1409,6 +1558,21 @@
     </div></div>`;
   }
 
+  function renderModalPersonnelSync() {
+    if (state.modal !== 'personnel-sync') return '';
+    const preview = state.personnelSync.preview;
+    const summary = (preview && (preview.importSummary || preview.summary)) || {};
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>Confirmer la synchronisation</h3>
+      <p>Les décisions explicites seront appliquées. Absent du fichier resté sur « ne rien faire » ne sera pas archivé. Les populations figées restent intactes.</p>
+      <p>${summary.nouveaux || 0} création(s) · ${summary.changementsOi || 0} OI · ${summary.absents || 0} absent(s) du fichier (décision manuelle uniquement).</p>
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="scope-sync-commit-ok">Confirmer</button>
+        <button type="button" class="scope-btn" id="scope-sync-commit-cancel">Annuler</button>
+      </div>
+    </div></div>`;
+  }
+
   function renderModalCancel() {
     if (state.modal !== 'cancel-event') return '';
     return `<div class="scope-modal"><div class="scope-card">
@@ -1458,7 +1622,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme CSV</h2>
           <p>Le CSV alimente SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
-          <p class="scope-mode-hint">Import exercices depuis cette page. L’import personnel (PERSONNEL-SYNC-1) n’est pas ouvert ici : matching par NIP, changement d’OI daté, pas de réécriture des populations figées.</p>
+          <p class="scope-mode-hint">Import exercices depuis cette page. La synchronisation du personnel se fait dans Personnel : matching par NIP, changement d’OI daté, pas de réécriture des populations figées.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
           <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
             <p>Glissez un fichier CSV ici ou</p>
@@ -1597,7 +1761,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalCancel()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalCancel()}${renderModalPersonnelSync()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -2039,6 +2203,7 @@
       });
     });
     bindReports();
+    bindPersonnelSync();
     document.getElementById('reopen')?.addEventListener('click', () => { state.modal = 'reopen'; render(); });
     document.getElementById('reopen-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('cancel-event')?.addEventListener('click', () => { state.modal = 'cancel-event'; render(); });
@@ -2084,6 +2249,94 @@
     document.getElementById('report-generate')?.addEventListener('click', () => generateCurrentReport());
     root.querySelectorAll('[data-report-event]').forEach((btn) => {
       btn.addEventListener('click', () => generateEventReport(btn.getAttribute('data-report-event')));
+    });
+  }
+
+  function bindPersonnelSync() {
+    const dateInput = document.getElementById('scope-sync-date');
+    dateInput?.addEventListener('change', (e) => {
+      state.personnelSync.dateEffet = e.target.value;
+    });
+    document.getElementById('scope-sync-preview')?.addEventListener('click', () => {
+      withLoading(async () => {
+        state.personnelSync.rapport = null;
+        state.personnelSync.preview = await client.previewPersonnelSync({
+          csvText: state.personnelSync.csvText,
+          filename: state.personnelSync.filename,
+          dateEffetGlobale: state.personnelSync.dateEffet || undefined
+        });
+        state.personnelSync.decisions = {};
+      });
+    });
+    document.getElementById('scope-sync-commit')?.addEventListener('click', () => {
+      state.modal = 'personnel-sync';
+      render();
+    });
+    document.getElementById('scope-sync-commit-cancel')?.addEventListener('click', () => {
+      state.modal = null;
+      render();
+    });
+    document.getElementById('scope-sync-commit-ok')?.addEventListener('click', () => {
+      const preview = state.personnelSync.preview;
+      const decisions = Object.keys(state.personnelSync.decisions).map((rowId) => Object.assign({ rowId }, state.personnelSync.decisions[rowId]));
+      (preview && preview.rows || []).forEach((row) => {
+        const date = personnelDateOf(row);
+        const decision = personnelDecisionOf(row);
+        if (decision !== row.decision || (date && date !== row.dateEffet)) {
+          if (!decisions.some((d) => d.rowId === row.rowId)) {
+            decisions.push({ rowId: row.rowId, nip: row.nip, decision, dateEffet: date || undefined });
+          }
+        }
+      });
+      withLoading(async () => {
+        state.personnelSync.rapport = await client.commitPersonnelSync({
+          csvText: state.personnelSync.csvText,
+          filename: state.personnelSync.filename,
+          fingerprint: preview.fingerprint,
+          importId: preview.importId,
+          dateEffetGlobale: state.personnelSync.dateEffet || undefined,
+          idempotencyKey: preview.importId,
+          decisions
+        });
+        state.modal = null;
+        const people = await client.listPersonnes();
+        state.personCount = (people.personnes || []).length;
+        toast('success', 'Synchronisation terminée', `${state.personnelSync.rapport.summary.mutations} mutation(s).`);
+      });
+    });
+    document.getElementById('scope-sync-file')?.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) readPersonnelFile(file);
+    });
+    const drop = document.getElementById('scope-sync-drop');
+    if (drop) {
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); state.personnelSync.drag = true; drop.classList.add('is-drag'); });
+      drop.addEventListener('dragleave', () => { state.personnelSync.drag = false; drop.classList.remove('is-drag'); });
+      drop.addEventListener('drop', (e) => {
+        e.preventDefault();
+        state.personnelSync.drag = false;
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) readPersonnelFile(file);
+        else render();
+      });
+    }
+    root.querySelectorAll('[data-sync-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.personnelSync.filter = btn.getAttribute('data-sync-filter');
+        render();
+      });
+    });
+    root.querySelectorAll('[data-sync-decision]').forEach((sel) => {
+      sel.addEventListener('change', () => {
+        const id = sel.getAttribute('data-sync-decision');
+        state.personnelSync.decisions[id] = Object.assign({}, state.personnelSync.decisions[id], { decision: sel.value });
+      });
+    });
+    root.querySelectorAll('[data-sync-date]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const id = input.getAttribute('data-sync-date');
+        state.personnelSync.decisions[id] = Object.assign({}, state.personnelSync.decisions[id], { dateEffet: input.value });
+      });
     });
   }
 
@@ -2217,6 +2470,25 @@
       state.importPreview = null;
       state.importRapport = null;
       state.importExcluded = {};
+      render();
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function readPersonnelFile(file) {
+    const name = String(file.name || '');
+    if (!/\.csv$/i.test(name)) {
+      toast('error', 'Fichier refusé', 'Seuls les fichiers CSV sont acceptés.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.personnelSync.filename = name;
+      state.personnelSync.csvText = String(reader.result || '');
+      state.personnelSync.drag = false;
+      state.personnelSync.preview = null;
+      state.personnelSync.rapport = null;
+      state.personnelSync.decisions = {};
       render();
     };
     reader.readAsText(file, 'UTF-8');
