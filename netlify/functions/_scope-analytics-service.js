@@ -278,18 +278,26 @@ function createScopeAnalyticsService(repo){
         },
         { objectives, grain, queryCibleId: cibleId }
       );
+      const part = personneId && (classified.participations || []).length
+        ? classified.participations[0]
+        : null;
       included.push({
         evenementId: event.evenement_id,
         date: event.date,
         libelle: event.libelle,
         domaine: event.domaine_code,
+        sousDomaine: event.sous_domaine_code || null,
+        cibleIds: bundle.cibleIdsByEvent[event.evenement_id] || event.cible_ids || [],
         modeSuivi: classified.mode,
         numerator: classified.official.numerator,
         denominator: classified.official.denominator,
         percentage: classified.official.percentage,
         volumes,
         kind: KINDS.OFFICIEL,
-        appliedObjective
+        appliedObjective,
+        statutParticipation: part ? part.statut : null,
+        motif: part && part.motif_absence ? part.motif_absence : null,
+        cibleSuivieId: part && (part.cible_suivie_id || part.cibleSuivieId) ? (part.cible_suivie_id || part.cibleSuivieId) : null
       });
     }
 
@@ -335,7 +343,10 @@ function createScopeAnalyticsService(repo){
   }
 
   async function summary(query){
-    const evaluated = await evaluate(query);
+    return summaryFrom(await evaluate(query));
+  }
+
+  function summaryFrom(evaluated){
     return {
       period: evaluated.period,
       scope: evaluated.scope,
@@ -354,7 +365,10 @@ function createScopeAnalyticsService(repo){
   }
 
   async function explain(query){
-    const evaluated = await evaluate(query);
+    return explainFrom(await evaluate(query));
+  }
+
+  function explainFrom(evaluated){
     return {
       period: evaluated.period,
       perimeter: evaluated.scope,
@@ -395,7 +409,10 @@ function createScopeAnalyticsService(repo){
   }
 
   async function timeseries(query){
-    const evaluated = await evaluate(query);
+    return timeseriesFrom(await evaluate(query));
+  }
+
+  function timeseriesFrom(evaluated){
     return {
       period: evaluated.period,
       scope: evaluated.scope,
@@ -404,7 +421,66 @@ function createScopeAnalyticsService(repo){
     };
   }
 
-  return { summary, explain, timeseries, evaluate };
+  async function snapshot(query){
+    const evaluated = await evaluate(query);
+    return {
+      evaluated,
+      summary: summaryFrom(evaluated),
+      explain: explainFrom(evaluated),
+      timeseries: timeseriesFrom(evaluated)
+    };
+  }
+
+  async function directoryRates(query){
+    const resolved = await resolveQuery(repo, query || {});
+    const period = parsePeriod(resolved);
+    const bundle = await loadBundle({
+      from: period.from,
+      to: period.to,
+      domaineCode: resolved.domaineCode || resolved.domaine || null
+    }, period);
+    const acc = new Map();
+    for(const event of bundle.events){
+      const classified = classify(event, bundle);
+      if(!classified.include || classified.mode !== MODES.NOMINATIF) continue;
+      const attendus = bundle.attendusByEvent[event.evenement_id] || [];
+      const parts = bundle.participationsByEvent[event.evenement_id] || [];
+      const byPid = new Map();
+      for(const part of parts){
+        byPid.set(String(part.personne_id || part.personneId), part);
+      }
+      for(const attendu of attendus){
+        if(attendu.inclus === false) continue;
+        const pid = String(attendu.personne_id || attendu.personneId);
+        const part = byPid.get(pid);
+        const official = officialFromTaux(computeTaux(part ? [part] : [], [attendu]));
+        const row = acc.get(pid) || {
+          numerator: 0,
+          denominator: 0,
+          eventCount: 0,
+          volumes: emptyVolumes()
+        };
+        row.numerator += Number(official.numerator || 0);
+        row.denominator += Number(official.denominator || 0);
+        row.volumes = addVolumes(row.volumes, official.volumes);
+        row.eventCount += 1;
+        acc.set(pid, row);
+      }
+    }
+    const rates = {};
+    for(const [pid, row] of acc.entries()){
+      rates[pid] = {
+        numerator: row.numerator,
+        denominator: row.denominator,
+        percentage: safePercentage(row.numerator, row.denominator),
+        eventCount: row.eventCount,
+        volumes: row.volumes
+      };
+    }
+    return { period, rates };
+  }
+
+  return { summary, explain, timeseries, evaluate, snapshot, directoryRates };
 }
 
 module.exports = { createScopeAnalyticsService };

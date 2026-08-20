@@ -151,7 +151,10 @@ function record(name, fn) {
     assert.ok(ui.includes('aria-current="page"'));
     assert.ok(ui.includes("e.key === 'Escape'"));
     assert.ok(ui.includes('scope-nav-backdrop'));
-    assert.strictEqual(logic.parseHash('#/rapports').screen, 'rapports');
+    assert.strictEqual(logic.parseHash('#/personnel').screen, 'personnel');
+    assert.strictEqual(logic.parseHash('#/personnel/abc').screen, 'personne');
+    assert.strictEqual(logic.parseHash('#/personnel/abc').personneId, 'abc');
+    assert.strictEqual(logic.parseHash('#/personnel/abc').id, undefined);
     assert.strictEqual(logic.parseHash('#/vue/PR').domaine, 'PR');
     assert.strictEqual(logic.parseHash('#/vue/DAP/Y4').cible, 'Y4');
   });

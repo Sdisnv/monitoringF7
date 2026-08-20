@@ -8,6 +8,7 @@ const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeAlertsService } = require('./_scope-alerts-service');
 const { getPgRepo } = require('./_scope-pg');
 const { generateReport, pdfResponse } = require('./_scope-report-service');
+const { createScopePersonService } = require('./_scope-person-service');
 
 function requireAccess(event){
   return verifyToken(bearerToken(event), 'access');
@@ -40,6 +41,18 @@ function queryOf(event){
   return event.queryStringParameters || {};
 }
 
+function queryWantsPersonne(query){
+  return Boolean(query && (query.personneId || query.personne_id));
+}
+
+function forbiddenPersonnel(){
+  return response(403, {
+    ok: false,
+    error: 'forbidden',
+    message: 'La fiche individuelle nominative est réservée aux profils habilités (personnel:read).'
+  });
+}
+
 exports.handler = async function(event){
   if(event.httpMethod === 'OPTIONS'){
     return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS' }, body: '' };
@@ -66,6 +79,7 @@ exports.handler = async function(event){
     const objectives = createScopeObjectivesService(repo);
     const dashboard = createScopeDashboardService(repo);
     const alerts = createScopeAlertsService(repo);
+    const persons = createScopePersonService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
     const body = parsed || {};
@@ -93,6 +107,20 @@ exports.handler = async function(event){
     if(method === 'GET' && path === '/personnes'){
       return response(200, { ok:true, ...(await service.listPersonnes(queryOf(event))) });
     }
+    if(method === 'GET' && path === '/personnel'){
+      if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await persons.directory(queryOf(event))) });
+    }
+    let params = match(path, '/personnel/:id');
+    if(method === 'GET' && params){
+      if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await persons.fiche(params.id, queryOf(event))) });
+    }
+    params = match(path, '/analytics/persons/:id');
+    if(method === 'GET' && params){
+      if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await persons.fiche(params.id, queryOf(event))) });
+    }
     if(method === 'POST' && path === '/personnes'){
       return response(201, { ok:true, ...(await service.createPersonne(body, claims)) });
     }
@@ -110,7 +138,7 @@ exports.handler = async function(event){
     if(method === 'POST' && path === '/imports/personnel/commit'){
       return response(200, { ok:true, ...(await service.commitPersonnelSync(body, claims)) });
     }
-    let params = match(path, '/personnes/:id/affectations');
+    params = match(path, '/personnes/:id/affectations');
     if(method === 'GET' && params){
       return response(200, { ok:true, ...(await service.affectationsValides(params.id, queryOf(event).date)) });
     }
@@ -207,13 +235,19 @@ exports.handler = async function(event){
     }
 
     if(method === 'GET' && path === '/analytics/summary'){
-      return response(200, { ok:true, ...(await analytics.summary(queryOf(event))) });
+      const q = queryOf(event);
+      if(queryWantsPersonne(q) && !hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await analytics.summary(q)) });
     }
     if(method === 'GET' && path === '/analytics/explain'){
-      return response(200, { ok:true, ...(await analytics.explain(queryOf(event))) });
+      const q = queryOf(event);
+      if(queryWantsPersonne(q) && !hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await analytics.explain(q)) });
     }
     if(method === 'GET' && path === '/analytics/timeseries'){
-      return response(200, { ok:true, ...(await analytics.timeseries(queryOf(event))) });
+      const q = queryOf(event);
+      if(queryWantsPersonne(q) && !hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await analytics.timeseries(q)) });
     }
     if(method === 'GET' && path === '/analytics/graphs'){
       return response(200, { ok:true, graphs: await dashboard.graphs(queryOf(event)) });

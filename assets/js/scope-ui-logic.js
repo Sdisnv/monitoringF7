@@ -278,6 +278,17 @@
     return { title, subtitle };
   }
 
+  function participationStatutLabel(statut) {
+    if (statut === 'PRESENT') return 'Présent';
+    if (statut === 'PERMUTATION') return 'Permutation (présent)';
+    if (statut === 'ABSENT_EXCUSE') return 'Excusé';
+    if (statut === 'ABSENT_NON_EXCUSE') return 'Non excusé';
+    if (statut === 'DISPENSE') return 'Dispensé';
+    if (statut === 'NON_RENSEIGNE') return 'Non renseigné';
+    if (statut === 'NON_CONCERNE') return 'Non concerné';
+    return statut || '—';
+  }
+
   function parseHash(hash) {
     const raw = String(hash || '').replace(/^#/, '');
     const path = raw.split('?')[0];
@@ -294,7 +305,10 @@
       if (parts[1]) return { screen: 'vue', nav: 'vue', domaine: parts[1] };
       return { screen: 'vue', nav: 'vue' };
     }
-    if (parts[0] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
+    if (parts[0] === 'personnel') {
+      if (parts[1]) return { screen: 'personne', nav: 'personnel', personneId: parts[1] };
+      return { screen: 'personnel', nav: 'personnel' };
+    }
     if (parts[0] === 'reglages' && parts[1] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
     if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };
     if (parts[0] === 'reglages' && parts[1] === 'suivi') {
@@ -507,6 +521,7 @@
     periodParams,
     alertLevelLabel,
     objectiveKpiLabel,
+    participationStatutLabel,
     parseHash,
     principalCta,
     modeSuiviOf,

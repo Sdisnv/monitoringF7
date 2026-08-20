@@ -1546,3 +1546,73 @@ body.scope-pdf-open { overflow: hidden; }
   gap: 12px;
   max-width: 720px;
 }
+
+.scope-person-head h1 {
+  margin: 0 0 4px;
+  font-size: var(--scope-fs-h1);
+  line-height: var(--scope-lh-heading);
+}
+.scope-person-meta,
+.scope-person-period {
+  margin: 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-secondary);
+}
+.scope-person-banner {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--scope-radius-sm);
+  font-size: var(--scope-fs-secondary);
+}
+.scope-person-banner.is-archive {
+  background: var(--scope-red-soft);
+  color: var(--scope-red-dark);
+}
+.scope-person-banner.is-conge {
+  background: #fff6e5;
+  color: #7a4d00;
+}
+.scope-person-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 0.8fr);
+  gap: 12px;
+  margin: 12px 0 4px;
+}
+.scope-person-kpis {
+  grid-template-columns: minmax(180px, 1.4fr) repeat(5, minmax(0, 1fr));
+}
+.scope-person-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.scope-domain-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scope-rh-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+.scope-person-table td small,
+.scope-table td small {
+  display: block;
+  color: var(--scope-muted);
+}
+
+@media (max-width: 1200px) {
+  .scope-person-kpis { grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 1fr)); }
+  .scope-person-split { grid-template-columns: 1fr; }
+}
+@media (max-width: 1024px) {
+  .scope-person-toolbar { grid-template-columns: 1fr 1fr; }
+  .scope-person-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .scope-person-kpis .scope-kpi-main { grid-column: 1 / -1; }
+}
+@media (max-width: 768px) {
+  .scope-person-toolbar { grid-template-columns: 1fr; }
+  .scope-person-kpis { grid-template-columns: 1fr 1fr; }
+  .scope-domain-pills .scope-btn { min-height: 44px; }
+}

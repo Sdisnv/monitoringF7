@@ -719,6 +719,21 @@
           message: 'La génération PDF est disponible en mode LIVE uniquement. Le moteur PDF s’exécute sur le serveur SCOPE.'
         });
       },
+      async listPersonnelDirectory() {
+        return {
+          ok: true,
+          personnes: [],
+          count: 0,
+          filter: 'actifs',
+          performance: { mode: 'demo', note: 'Démonstration : aucun nominatif réel.' }
+        };
+      },
+      async getPersonneFiche() {
+        throw new ScopeApiError(501, {
+          error: 'person_live_only',
+          message: 'La fiche individuelle nominative est disponible en mode LIVE uniquement.'
+        });
+      },
       async patchObjectif(id, body) {
         const row = objectifs.get(id);
         if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });

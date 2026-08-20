@@ -72,6 +72,14 @@
       decisions: {},
       openRow: null
     },
+    personnelDirectory: null,
+    personnelQuery: '',
+    personnelStatut: 'actifs',
+    personnelOi: '',
+    personneFiche: null,
+    personneEventFilter: 'tout',
+    personneDomainFilter: null,
+    personneRhOpen: false,
     domaineForm: 'DPS',
     dateForm: '2026-03-12',
     libelleForm: '',
@@ -228,6 +236,10 @@
         await loadDashboard();
       } else if (r.screen === 'liste') {
         await loadList();
+      } else if (r.screen === 'personnel') {
+        await loadPersonnelDirectory();
+      } else if (r.screen === 'personne' && r.personneId) {
+        await loadPersonneFiche(r.personneId);
       }
       await refreshAlertCounts();
     });
@@ -790,6 +802,50 @@
     `;
   }
 
+  function canReadPersonnel() {
+    if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
+      return window.MonitoringRBAC.has('personnel:read');
+    }
+    const roles = (state.session && state.session.roles) || [];
+    return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
+  }
+
+  function periodQuery() {
+    return L.periodParams({
+      preset: state.preset,
+      year: state.year,
+      month: state.month,
+      quarter: state.quarter,
+      from: state.from,
+      to: state.to
+    });
+  }
+
+  async function loadPersonnelDirectory() {
+    if (mode !== 'live' || typeof client.listPersonnelDirectory !== 'function' || !canReadPersonnel()) {
+      state.personnelDirectory = null;
+      return;
+    }
+    state.personnelDirectory = await client.listPersonnelDirectory(Object.assign(periodQuery(), {
+      q: state.personnelQuery,
+      statut: state.personnelStatut,
+      oi: state.personnelOi
+    }));
+  }
+
+  async function loadPersonneFiche(id) {
+    if (mode !== 'live' || typeof client.getPersonneFiche !== 'function' || !canReadPersonnel()) {
+      state.personneFiche = null;
+      return;
+    }
+    const prev = state.personneFiche && state.personneFiche.identite && state.personneFiche.identite.personneId;
+    state.personneFiche = await client.getPersonneFiche(id, periodQuery());
+    if (prev !== id) {
+      state.personneEventFilter = 'tout';
+      state.personneDomainFilter = null;
+    }
+  }
+
   function canManagePersonnel() {
     if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
       return window.MonitoringRBAC.has('personnel:manage');
@@ -858,6 +914,76 @@
     </select>`;
   }
 
+  function oiFilterOptions() {
+    const seen = new Set();
+    return (state.referentiels.cibles || []).filter((c) => {
+      const label = `${c.domaineCode || c.domaine_code}/${c.niveauCode || c.niveau_code}`;
+      if (seen.has(label)) return false;
+      seen.add(label);
+      return true;
+    }).map((c) => `${c.domaineCode || c.domaine_code}/${c.niveauCode || c.niveau_code}`);
+  }
+
+  function renderPersonnelDirectory() {
+    const live = mode === 'live';
+    const canRead = canReadPersonnel();
+    const dir = state.personnelDirectory;
+    const people = (dir && dir.personnes) || [];
+    const statutFilters = [
+      ['actifs', 'Actifs'],
+      ['archives', 'Archivés'],
+      ['tous', 'Tous']
+    ];
+    const oiOptions = oiFilterOptions();
+    if (!live) {
+      return `<div class="scope-card">
+        <h2 style="margin-top:0">Personnel</h2>
+        <p class="scope-mode-hint">SCOPE-PERSON-1 — fiche individuelle nominative. La liste et les taux individuels sont disponibles en mode LIVE uniquement. Aucun nominatif n’est inventé en démonstration.</p>
+      </div>`;
+    }
+    if (!canRead) {
+      return `<div class="scope-card">
+        <h2 style="margin-top:0">Personnel</h2>
+        <p class="scope-empty">La consultation des fiches individuelles exige la permission personnel:read. Le rôle en lecture agrégée n’y a pas accès.</p>
+      </div>`;
+    }
+    return `<div class="scope-card">
+      <h2 style="margin-top:0">Personnel</h2>
+      <p class="scope-mode-hint">SCOPE-PERSON-1 — « Cette personne suit-elle ce qu’on attend d’elle sur la période sélectionnée ? » Taux issus d’un agrégat serveur unique (pas de N+1). QUANTITATIF et LEGACY exclus.</p>
+      <div class="scope-person-toolbar">
+        <div class="scope-field"><label for="personnel-q">Recherche</label>
+          <input id="personnel-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personnelQuery)}">
+        </div>
+        <div class="scope-field"><label for="personnel-oi">OI actuel</label>
+          <select id="personnel-oi">
+            <option value="">Tous</option>
+            ${oiOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelOi === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="scope-sync-filters" role="tablist">
+        ${statutFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personnelStatut === id ? 'scope-btn-primary' : ''}" data-personnel-statut="${id}">${escapeHtml(label)}</button>`).join('')}
+      </div>
+      <p class="scope-sync-summary">${people.length} personne(s) · période ${escapeHtml(periodLabel(dir && dir.period))} · ${escapeHtml((dir && dir.performance && dir.performance.note) || 'Agrégat batch')}</p>
+      <div class="scope-table-wrap">
+        <table class="scope-table scope-person-table">
+          <thead><tr><th>Nom</th><th>NIP</th><th>Grade</th><th>OI actuel</th><th>Statut</th><th>Taux période</th><th></th></tr></thead>
+          <tbody>
+            ${people.map((p) => `<tr>
+              <td data-label="Nom">${escapeHtml([p.prenom, p.nom].filter(Boolean).join(' '))}</td>
+              <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
+              <td data-label="Grade">${escapeHtml(p.grade || '—')}</td>
+              <td data-label="OI actuel">${escapeHtml(p.oiActuel || '—')}</td>
+              <td data-label="Statut">${escapeHtml(p.statutRh || '—')}</td>
+              <td data-label="Taux période">${p.taux && p.taux.percentage != null ? escapeHtml(L.formatTaux(p.taux.percentage)) : 'Non évaluable'}</td>
+              <td data-label="Action"><a class="scope-btn" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
+            </tr>`).join('') || '<tr><td colspan="7">Aucune personne pour ce filtre.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
   function renderPersonnel() {
     const live = mode === 'live';
     const allowed = live && canManagePersonnel() && typeof client.previewPersonnelSync === 'function';
@@ -879,9 +1005,10 @@
     return `
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
-        <div class="scope-card">
-          <h2 style="margin-top:0">Personnel</h2>
-          <p class="scope-mode-hint">Synchronisation comparative par NIP. L’OI est une affectation temporelle. Absent du fichier ≠ démission. Les populations figées ne sont pas réécrites. La fiche personne complète reste PERSON-1.</p>
+        ${renderPersonnelDirectory()}
+        <div class="scope-card" style="margin-top:12px">
+          <h2 style="margin-top:0">Synchronisation CSV</h2>
+          <p class="scope-mode-hint">Synchronisation comparative par NIP. L’OI est une affectation temporelle. Absent du fichier ≠ démission. Les populations figées ne sont pas réécrites. SCOPE-PERSON-1.</p>
           ${live && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
           ${!live ? '<p class="scope-empty">La synchronisation CSV est disponible en mode LIVE uniquement.</p>' : ''}
           ${live && !canManagePersonnel() ? '<p class="scope-empty">L’import personnel est réservé aux profils habilités (personnel:manage).</p>' : ''}
@@ -937,6 +1064,195 @@
           <h3 style="margin-top:0">Rapport de synchronisation</h3>
           <p>${rapport.summary.analysed} lignes analysées · ${rapport.summary.inchanges} inchangées · ${rapport.summary.creations} créations · ${rapport.summary.changementsOi} changements OI · ${rapport.summary.changementsGrade} changements grade · ${rapport.summary.reactivations} réactivation(s) · ${rapport.summary.archivages} archivage(s) · ${rapport.summary.conflits} conflit(s) · ${rapport.summary.erreurs} erreur(s)</p>
         </div>` : ''}
+      </div>
+    `;
+  }
+
+  function motifLabel(code) {
+    if (code === 'prive') return 'Privé';
+    if (code === 'professionnel') return 'Professionnel';
+    if (code === 'armee') return 'Armée';
+    if (code === 'accidentMaladie') return 'Accident / maladie';
+    if (code === 'nonPrecise') return 'Non précisé (historique)';
+    return code;
+  }
+
+  function rhTypeLabel(type, motif) {
+    if (type === 'ACTIF') return 'ACTIF';
+    if (type === 'INDISPONIBLE') return motif === 'CONGE_SABBATIQUE' ? 'Congé sabbatique' : 'INDISPONIBLE';
+    if (type === 'SORTI') return 'SORTI';
+    if (type === 'DEMISSIONNAIRE') return 'DEMISSIONNAIRE';
+    return type || '—';
+  }
+
+  function personEventsFiltered(fiche) {
+    const statut = state.personneEventFilter || 'tout';
+    const domaine = state.personneDomainFilter;
+    return (fiche.evenements || []).filter((row) => {
+      if (domaine) {
+        const codes = domaine === 'FOSPEC' ? ['FOSPEC', 'PR', 'AUTO'] : [domaine];
+        if (!codes.includes(row.domaine)) return false;
+      }
+      if (statut === 'presents') return row.statutParticipation === 'PRESENT' || row.statutParticipation === 'PERMUTATION';
+      if (statut === 'excuses') return row.statutParticipation === 'ABSENT_EXCUSE';
+      if (statut === 'non_excuses') return row.statutParticipation === 'ABSENT_NON_EXCUSE';
+      if (statut === 'dispenses') return row.statutParticipation === 'DISPENSE';
+      return true;
+    });
+  }
+
+  function renderPersonne() {
+    const live = mode === 'live';
+    const fiche = state.personneFiche;
+    const identite = fiche && fiche.identite;
+    if (!live) {
+      return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
+        <div class="scope-main"><div class="scope-card"><p class="scope-empty">La fiche individuelle nominative est disponible en mode LIVE uniquement. Aucun événement nominatif n’est inventé en démonstration.</p></div></div>`;
+    }
+    if (!canReadPersonnel()) {
+      return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
+        <div class="scope-main"><div class="scope-card"><p class="scope-empty">Fiche individuelle réservée aux profils habilités (personnel:read).</p></div></div>`;
+    }
+    if (!fiche || !identite) {
+      return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
+        <div class="scope-main"><div class="scope-card"><p>Chargement de la fiche…</p></div></div>`;
+    }
+    const kpi = fiche.kpi || {};
+    const vol = kpi.volumes || {};
+    const status = kpi.analyticStatus || 'NON_EVALUABLE';
+    const tauxText = status === 'NON_EVALUABLE' && kpi.percentage == null
+      ? 'Non évaluable'
+      : L.formatTaux(kpi.percentage);
+    const numDen = kpi.denominator
+      ? `${kpi.numerator ?? 0} / ${kpi.denominator}`
+      : 'Aucune donnée nominative sur la période';
+    const obj = fiche.objectif || {};
+    const explain = fiche.explain || {};
+    const exclusions = explain.exclusions || {};
+    const graphs = fiche.graphs || {};
+    const C = (typeof window !== 'undefined' && window.ScopeCharts)
+      || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
+    const evolutionCard = C ? C.renderChartCard(graphs.evolution, { size: { width: 640, height: 128 } }) : '';
+    const domainChart = C ? C.renderChartCard(graphs.domaines) : '';
+    const childrenChart = C ? C.renderChartCard(graphs.children) : '';
+    const compositionChart = C ? C.renderChartCard(graphs.composition) : '';
+    const motifsChart = C ? C.renderChartCard(graphs.motifs) : '';
+    const permutationChart = vol.permutations ? C && C.renderChartCard(graphs.permutations) : '';
+    const events = personEventsFiltered(fiche);
+    const eventFilters = [
+      ['tout', 'Tout'],
+      ['presents', 'Présents'],
+      ['excuses', 'Excusés'],
+      ['non_excuses', 'Non excusés'],
+      ['dispenses', 'Dispensés']
+    ];
+    const permNote = vol.permutations
+      ? `Présences : ${vol.presents} · dont permutations : ${vol.permutations}`
+      : '';
+    const motifs = kpi.motifs || {};
+    const motifSum = Object.values(motifs).reduce((s, n) => s + Number(n || 0), 0);
+    const rh = fiche.historiqueRh || {};
+    const openGraph = state.graphExplainId && graphs[state.graphExplainId];
+    const graphExplainHtml = C && openGraph ? C.renderGraphExplain(openGraph, explain) : '';
+
+    return `
+      <div class="scope-crumb"><a href="#/personnel">Personnel</a> · ${escapeHtml(identite.prenom)} ${escapeHtml(identite.nom)}</div>
+      <div class="scope-main">
+        <header class="scope-person-head">
+          <h1>${escapeHtml(identite.prenom)} ${escapeHtml(identite.nom)}</h1>
+          <p class="scope-person-meta">${escapeHtml(identite.nip || '—')} · ${escapeHtml(identite.grade || '—')} · ${escapeHtml((identite.oiActuel && identite.oiActuel.label) || '—')} · ${escapeHtml(identite.statutRh || '—')}</p>
+          <p class="scope-person-period">Période analysée : ${escapeHtml(periodLabel(fiche.period))}</p>
+          ${identite.archivee ? `<p class="scope-person-banner is-archive">${escapeHtml(identite.libelleStatut)}</p>` : ''}
+          ${identite.conge ? `<p class="scope-person-banner is-conge">${escapeHtml(identite.conge.libelle)}</p>` : ''}
+        </header>
+        <div class="scope-kpis scope-person-kpis">
+          <article class="scope-kpi scope-kpi-main">
+            <strong>${escapeHtml(tauxText)}</strong>
+            <span>Taux de participation</span>
+            <em>${escapeHtml(numDen)}</em>
+            <small>Nominatif uniquement · QUANTITATIF et LEGACY exclus</small>
+            <span class="scope-status-pill ${escapeHtml(status)}">${escapeHtml(L.analyticStatusLabel(status))}</span>
+            <button type="button" class="linkish" id="scope-explain-toggle">Comprendre ce chiffre</button>
+          </article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(vol.attendus || 0))}</strong><span>Attendus</span></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(vol.presents || 0))}</strong><span>Présents</span>${permNote ? `<small>${escapeHtml(permNote)}</small>` : ''}</article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(vol.excuses || 0))}</strong><span>Excusés</span></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(vol.nonExcuses || 0))}</strong><span>Non excusés</span><small>Volume factuel — pas une alerte</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(vol.dispenses || 0))}</strong><span>Dispensés</span><small>Hors dénominateur</small></article>
+        </div>
+        ${state.explainOpen ? `<div class="scope-card scope-explain" id="scope-explain">
+          <h2>Comprendre ce chiffre</h2>
+          <dl>
+            <dt>Période</dt><dd>${escapeHtml(fiche.period.from)} → ${escapeHtml(fiche.period.to)} (${escapeHtml(fiche.period.preset || 'YEAR')})</dd>
+            <dt>Modes inclus</dt><dd>${escapeHtml(explain.modesInclus || 'NOMINATIF uniquement')}</dd>
+            <dt>Événements inclus</dt><dd>${escapeHtml(String((explain.includedEvents || []).length))} nominatif(s) réalisé(s)</dd>
+            <dt>Numérateur</dt><dd>${escapeHtml(String(kpi.numerator ?? 0))} (présents, permutations comprises)</dd>
+            <dt>Dénominateur</dt><dd>${escapeHtml(String(kpi.denominator ?? 0))} (présents + excusés + non excusés)</dd>
+            <dt>Dispensés exclus</dt><dd>${escapeHtml(String(vol.dispenses || exclusions.dispenses || 0))}</dd>
+            <dt>Non renseignés</dt><dd>${escapeHtml(String(vol.nonRenseignes || 0))} — non présentés comme absences</dd>
+            <dt>QUANTITATIF / LEGACY</dt><dd>Jamais attribués à cette personne</dd>
+            <dt>Objectif</dt><dd>${escapeHtml(obj.message || 'Aucun objectif défini.')}</dd>
+            <dt>Statut analytique</dt><dd>${escapeHtml(status)}${kpi.analyticStatusReason ? ` · ${escapeHtml(kpi.analyticStatusReason)}` : ''}</dd>
+          </dl>
+        </div>` : ''}
+        <div class="scope-person-split">
+          ${evolutionCard || `<div class="scope-card scope-chart-card is-empty"><h2>La participation de cette personne évolue-t-elle ?</h2><p class="scope-empty">Aucune série nominative sur cette période.</p></div>`}
+          ${domainChart || ''}
+        </div>
+        ${graphExplainHtml}
+        ${childrenChart || ''}
+        <div class="scope-card scope-panel">
+          <h2>Participation par domaine</h2>
+          <div class="scope-domain-pills">
+            ${(fiche.domaines || []).map((d) => `<button type="button" class="scope-btn ${state.personneDomainFilter === d.code ? 'scope-btn-primary' : ''}" data-person-domaine="${escapeHtml(d.code)}">${escapeHtml(d.libelle)} · ${d.eventCount ? escapeHtml(L.formatTaux(d.percentage)) : 'Non évaluable'}</button>`).join('')}
+            ${state.personneDomainFilter ? '<button type="button" class="scope-btn" data-person-domaine="">Tous les domaines</button>' : ''}
+          </div>
+        </div>
+        <div class="scope-card scope-table-wrap scope-panel">
+          <h2>Historique des événements</h2>
+          <p class="scope-mode-hint">Plus récent d’abord — lecture métier de la période courante, pas une chronologie RH.</p>
+          <div class="scope-sync-filters">
+            ${eventFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personneEventFilter === id ? 'scope-btn-primary' : ''}" data-person-events="${id}">${escapeHtml(label)}</button>`).join('')}
+          </div>
+          <table class="scope-table">
+            <thead><tr><th>Date</th><th>Domaine</th><th>Sous-domaine</th><th>OI à la date</th><th>Libellé</th><th>Statut</th><th>Motif</th><th></th></tr></thead>
+            <tbody>
+              ${events.map((ev) => `<tr>
+                <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
+                <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine))}</td>
+                <td data-label="Sous-domaine">${escapeHtml(ev.sousDomaine || '—')}</td>
+                <td data-label="OI à la date">${escapeHtml(ev.oiAtDate || '—')}${ev.permutation && ev.oiAccueil ? `<small>Accueil ${escapeHtml(ev.oiAccueil)}</small>` : ''}</td>
+                <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
+                <td data-label="Statut">${escapeHtml(L.participationStatutLabel(ev.statutParticipation))}${ev.permutation ? ' · permutation' : ''}</td>
+                <td data-label="Motif">${escapeHtml(ev.motif || '—')}</td>
+                <td data-label="Action"><a class="scope-btn" href="${escapeHtml(ev.href)}">Événement</a></td>
+              </tr>`).join('') || '<tr><td colspan="8">Aucun événement nominatif sur la période.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        ${compositionChart || motifsChart ? `<div class="scope-graph-grid">${compositionChart || ''}${motifsChart || ''}</div>` : ''}
+        ${permutationChart || ''}
+        <div class="scope-card">
+          <h2>Motifs d’excuse</h2>
+          <p>${motifSum ? Object.entries(motifs).filter(([, n]) => Number(n) > 0).map(([k, n]) => `${motifLabel(k)} : ${n}`).join(' · ') : 'Aucun motif d’excuse sur la période.'}</p>
+          ${motifSum && vol.excuses != null ? `<p class="scope-mode-hint">Somme des motifs : ${motifSum} · absences excusées : ${vol.excuses}</p>` : ''}
+        </div>
+        <div class="scope-card scope-person-alerts">
+          <h2>Alertes individuelles</h2>
+          <p>Absences non excusées : <strong>${escapeHtml(String(vol.nonExcuses || 0))}</strong></p>
+          <p class="scope-mode-hint">${escapeHtml((fiche.alertesPersonne && fiche.alertesPersonne.message) || 'Aucune alerte individuelle active.')}</p>
+        </div>
+        <details class="scope-card scope-details" ${state.personneRhOpen ? 'open' : ''} id="scope-person-rh">
+          <summary>Historique administratif / affectations</summary>
+          <p class="scope-mode-hint">Historique RH distinct des absences aux exercices.</p>
+          <ul class="scope-rh-list">
+            ${(rh.periodes || []).map((row) => `<li><strong>${escapeHtml(L.formatDate(row.date_debut))}${row.date_fin ? ` – ${escapeHtml(L.formatDate(row.date_fin))}` : ' → en cours'}</strong> · ${escapeHtml(rhTypeLabel(row.type, row.motif))}${row.motif && row.type !== 'INDISPONIBLE' ? ` · ${escapeHtml(row.motif)}` : ''}</li>`).join('') || '<li>Aucune période RH.</li>'}
+          </ul>
+          <h3>Affectations</h3>
+          <ul class="scope-rh-list">
+            ${(rh.affectations || []).map((row) => `<li><strong>${escapeHtml(L.formatDate(row.dateDebut))}${row.dateFin ? ` – ${escapeHtml(L.formatDate(row.dateFin))}` : ' → en cours'}</strong> · ${escapeHtml(row.label || '—')}</li>`).join('') || '<li>Aucune affectation.</li>'}
+          </ul>
+        </details>
       </div>
     `;
   }
@@ -1513,7 +1829,7 @@
         <div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Liste nominative</h3>
           ${rows.length ? `<table class="scope-table"><thead><tr><th>Nom</th><th>NIP</th><th>Statut</th></tr></thead><tbody>
-            ${rows.map((r) => `<tr><td data-label="Nom">${escapeHtml(r.nom)}</td><td data-label="NIP">${escapeHtml(r.nip)}</td><td data-label="Statut">${escapeHtml(r.statut === 'PRESENT' ? 'Présent' : r.statut === 'ABSENT_EXCUSE' ? 'Excusé' : r.statut === 'ABSENT_NON_EXCUSE' ? 'Absent' : r.statut === 'DISPENSE' ? 'Dispensé' : r.statut)}</td></tr>`).join('')}
+            ${rows.map((r) => `<tr><td data-label="Nom">${canReadPersonnel() && r.personneId ? `<a href="#/personnel/${escapeHtml(r.personneId)}">${escapeHtml(r.nom)}</a>` : escapeHtml(r.nom)}</td><td data-label="NIP">${escapeHtml(r.nip)}</td><td data-label="Statut">${escapeHtml(r.statut === 'PRESENT' ? 'Présent' : r.statut === 'ABSENT_EXCUSE' ? 'Excusé' : r.statut === 'ABSENT_NON_EXCUSE' ? 'Absent' : r.statut === 'DISPENSE' ? 'Dispensé' : r.statut)}</td></tr>`).join('')}
           </tbody></table>` : `<div class="scope-empty">${escapeHtml(L.emptyMessage('resultats'))}</div>`}
         </div>
         <details class="scope-card scope-details" style="margin-top:12px">
@@ -1752,6 +2068,7 @@
     const r = route();
     const body = r.screen === 'vue' ? renderVue()
       : r.screen === 'personnel' ? renderPersonnel()
+        : r.screen === 'personne' ? renderPersonne()
         : r.screen === 'rapports' ? renderRapports()
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'suivi' ? renderSuiviNominatif()
@@ -1868,8 +2185,10 @@
       const r = route();
       withLoading(async () => {
         clearToast();
-        if (r.id) await loadFiche(r.id);
+        if (r.screen === 'personne' && r.personneId) await loadPersonneFiche(r.personneId);
+        else if (r.id) await loadFiche(r.id);
         else if (r.screen === 'vue') await loadDashboard();
+        else if (r.screen === 'personnel') await loadPersonnelDirectory();
         else await loadList();
         await refreshAlertCounts();
       });
@@ -2338,6 +2657,45 @@
         state.personnelSync.decisions[id] = Object.assign({}, state.personnelSync.decisions[id], { dateEffet: input.value });
       });
     });
+    const personnelSearch = document.getElementById('personnel-q');
+    if (personnelSearch) {
+      personnelSearch.addEventListener('change', () => {
+        state.personnelQuery = personnelSearch.value.trim();
+        withLoading(loadPersonnelDirectory);
+      });
+      personnelSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          state.personnelQuery = personnelSearch.value.trim();
+          withLoading(loadPersonnelDirectory);
+        }
+      });
+    }
+    document.getElementById('personnel-oi')?.addEventListener('change', (e) => {
+      state.personnelOi = e.target.value;
+      withLoading(loadPersonnelDirectory);
+    });
+    root.querySelectorAll('[data-personnel-statut]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.personnelStatut = btn.getAttribute('data-personnel-statut');
+        withLoading(loadPersonnelDirectory);
+      });
+    });
+    root.querySelectorAll('[data-person-events]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.personneEventFilter = btn.getAttribute('data-person-events');
+        render();
+      });
+    });
+    root.querySelectorAll('[data-person-domaine]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.personneDomainFilter = btn.getAttribute('data-person-domaine') || null;
+        render();
+      });
+    });
+    document.getElementById('scope-person-rh')?.addEventListener('toggle', (e) => {
+      state.personneRhOpen = e.target.open;
+    });
   }
 
   function reportPeriodPayload() {
@@ -2510,10 +2868,14 @@
       if (r.screen === 'liste' || r.screen === 'rapports') await loadList();
       if (r.screen === 'vue') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
-      if (r.screen === 'personnel' && client.listPersonnes) {
-        const people = await client.listPersonnes();
-        state.personCount = (people.personnes || []).length;
+      if (r.screen === 'personnel') {
+        if (client.listPersonnes) {
+          const people = await client.listPersonnes();
+          state.personCount = (people.personnes || []).length;
+        }
+        await loadPersonnelDirectory();
       }
+      if (r.screen === 'personne' && r.personneId) await loadPersonneFiche(r.personneId);
       if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) await loadFiche(r.id);
       await refreshAlertCounts();
     });

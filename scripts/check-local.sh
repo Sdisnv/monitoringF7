@@ -143,6 +143,18 @@ grep -q "closeAllOpenAffectations" netlify/functions/_scope-service.js
 grep -q "closeAllOpenAffectations" netlify/functions/_scope-personnel-sync.js
 grep -q "CLOTURER_AFFECTATION" netlify/functions/_scope-service.js
 grep -q "dejaArchive" netlify/functions/_scope-service.js
+grep -q "createScopePersonService" netlify/functions/_scope-person-service.js
+grep -q "createScopePersonService" netlify/functions/scope.js
+grep -q "path === '/personnel'" netlify/functions/scope.js
+grep -q "/analytics/persons/:id" netlify/functions/scope.js
+grep -q "personnel:read" netlify/functions/_rbac.js
+grep -q "personnel:read" assets/js/rbac.js
+grep -q "directoryRates" netlify/functions/_scope-analytics-service.js
+grep -q "screen: 'personne'" assets/js/scope-ui-logic.js
+grep -q "#/personnel/" assets/js/scope-ui.js
+grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
+grep -q "Personne archivée" netlify/functions/_scope-person-service.js
+grep -q "scope-person-1-tests.js" package.json
 if grep -q "officialFromQuantitatif" netlify/functions/_scope-pdf-renderer.js; then
   echo "ERREUR: formule KPI dans le renderer PDF"
   exit 1
