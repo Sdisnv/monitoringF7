@@ -159,7 +159,9 @@ function record(name, fn){
     assert.ok(ui.includes('Exercices'));
     assert.ok(ui.includes('Personnel'));
     assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
-    assert.ok(!ui.includes('LogoSDISblanc.png'));
+    assert.ok(ui.includes('assets/img/LogoSDISblanc.png'));
+    assert.ok(ui.includes('scope-logo'));
+    assert.ok(ui.includes('scope-sdis-logo'));
     assert.ok(!ui.includes('<h1>SCOPE</h1>'));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/logo-scope-blanc.png')));
     assert.ok(!html.includes('Monitoring F7 v67.0'));

@@ -85,7 +85,9 @@
     dashboard: null,
     alertCounts: null,
     explainOpen: false,
-    absencesOpen: false
+    openGroups: {},
+    absencesOpen: false,
+    navOpen: false
   };
 
   function toast(tone, title, message, extra) {
@@ -328,22 +330,86 @@
     return 'LIVE Monitoring';
   }
 
-  function headerHtml(nav) {
+  function periodSelect(id, optionsHtml) {
+    return `<label class="scope-select">
+      <span class="visually-hidden">${id === 'scope-preset' ? 'Type de période' : id === 'scope-year' ? 'Année' : id === 'scope-quarter' ? 'Trimestre' : 'Mois'}</span>
+      <select id="${id}" class="scope-select-control">${optionsHtml}</select>
+    </label>`;
+  }
+
+  function closeNav() {
+    state.navOpen = false;
+    root.classList.remove('is-nav-open');
+  }
+
+  function sidebarHtml(r) {
+    const model = L.buildSidebarNav(
+      L.normalizeNavArbre(state.referentiels.arbre, state.referentiels.domaines, state.referentiels.cibles),
+      r
+    );
+    const vueExact = r.screen === 'vue' && !r.domaine;
+    const link = (item, currentPage) => `<a class="scope-nav-link" href="${item.href}" ${currentPage ? 'aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
+    const reglagesOpen = state.openGroups.reglages === true || r.nav === 'reglages';
+    const domainBlocks = model.domains.map((d) => {
+      const expanded = state.openGroups[d.id] != null ? state.openGroups[d.id] : d.expanded;
+      const isCurrent = r.domaine === d.id && !r.cible;
+      return `<div class="scope-nav-group${expanded ? '' : ' is-collapsed'}">
+        <div class="scope-nav-group-head${isCurrent ? ' is-current' : ''}">
+          <a class="scope-nav-link" href="${d.href}" ${isCurrent ? 'aria-current="page"' : ''}>${escapeHtml(d.label)}</a>
+          ${d.children.length ? `<button type="button" class="scope-nav-caret" data-nav-group="${escapeHtml(d.id)}" aria-expanded="${expanded ? 'true' : 'false'}" aria-label="Déplier ${escapeHtml(d.label)}">▸</button>` : ''}
+        </div>
+        ${d.children.length ? `<div class="scope-nav-sub">${d.children.map((c) => {
+          const childCurrent = r.domaine === c.id || (r.domaine === d.id && r.cible === c.id);
+          return link(c, childCurrent);
+        }).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+    return `
+      <div class="scope-nav-backdrop" id="scope-nav-backdrop"></div>
+      <aside class="scope-sidebar" id="scope-sidebar" aria-label="Navigation principale">
+        <div class="scope-sidebar-head">
+          <p class="scope-sidebar-title">Navigation</p>
+          <button type="button" class="scope-nav-close" id="scope-nav-close" aria-label="Fermer le menu">×</button>
+        </div>
+        <nav class="scope-nav-scroll">
+          ${link({ href: '#/vue', label: 'Vue d’ensemble' }, vueExact)}
+          ${link({ href: '#/exercices', label: 'Exercices' }, r.nav === 'exercices')}
+          <p class="scope-nav-section">Domaines</p>
+          ${domainBlocks}
+          ${link({ href: '#/personnel', label: 'Personnel' }, r.nav === 'personnel')}
+          ${link({ href: '#/rapports', label: 'Rapports' }, r.nav === 'rapports')}
+          <p class="scope-nav-section">Réglages</p>
+          <div class="scope-nav-group${reglagesOpen ? '' : ' is-collapsed'}">
+            <button type="button" class="scope-nav-group-head${r.nav === 'reglages' ? ' is-current' : ''}" data-nav-group="reglages" aria-expanded="${reglagesOpen ? 'true' : 'false'}">
+              <span>Réglages</span>
+              <span class="scope-nav-caret" aria-hidden="true">▸</span>
+            </button>
+            <div class="scope-nav-sub">
+              ${link({ href: '#/reglages/objectifs', label: 'Objectifs' }, r.screen === 'objectifs')}
+              ${link({ href: '#/reglages/suivi', label: 'Suivi nominatif' }, r.screen === 'suivi')}
+            </div>
+          </div>
+        </nav>
+        <div class="scope-sidebar-inst">
+          <img class="scope-sdis-logo" src="assets/img/LogoSDISblanc.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
+        </div>
+      </aside>
+    `;
+  }
+
+  function headerHtml(r) {
     const years = [String(Number(state.year) - 1), state.year, String(Number(state.year) + 1)]
       .filter((v, i, a) => a.indexOf(v) === i);
     const logout = mode === 'live'
       ? `<a class="scope-btn scope-btn-ghost" href="/auth/logout?returnTo=/">Déconnexion</a>`
       : '';
-    const navButtons = `
-        <button type="button" data-nav="vue" aria-current="${nav === 'vue' ? 'page' : 'false'}">Vue d’ensemble</button>
-        <button type="button" data-nav="exercices" aria-current="${nav === 'exercices' ? 'page' : 'false'}">Exercices</button>
-        <button type="button" data-nav="personnel" aria-current="${nav === 'personnel' ? 'page' : 'false'}">Personnel</button>`;
-    const menuExtras = `
-        <a href="#/reglages/objectifs" ${nav === 'reglages' ? 'aria-current="page"' : ''}>Réglages · Objectifs</a>
-        <a href="#/reglages/suivi">Réglages · Suivi nominatif</a>`;
     return `
       <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
         <div class="scope-header-inner">
+          <button type="button" class="scope-nav-toggle" id="scope-nav-toggle" aria-expanded="${state.navOpen ? 'true' : 'false'}" aria-controls="scope-sidebar">
+            <span aria-hidden="true"></span>
+            <span class="visually-hidden">Ouvrir le menu</span>
+          </button>
           <div class="scope-brand">
             <img class="scope-logo" src="assets/img/logo-scope-blanc.png" alt="SCOPE" width="300" height="100">
             <p class="scope-tagline">Suivi et analyse de l’activité</p>
@@ -351,29 +417,18 @@
           <div class="scope-header-spacer"></div>
           <div class="scope-header-tools">
             <div class="scope-period">
-              <label class="scope-field" style="margin:0">
-                <span class="visually-hidden">Type de période</span>
-                <select id="scope-preset">
-                  <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
-                  <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
-                  <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
-                  <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Plage</option>
-                </select>
-              </label>
-              <label class="scope-field" style="margin:0">
-                <span class="visually-hidden">Année</span>
-                <select id="scope-year">${years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join('')}</select>
-              </label>
-              ${state.preset === 'QUARTER' ? `<label class="scope-field" style="margin:0">
-                <span class="visually-hidden">Trimestre</span>
-                <select id="scope-quarter">${[1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')}</select>
-              </label>` : ''}
-              ${state.preset === 'MONTH' ? `<label class="scope-field" style="margin:0">
-                <span class="visually-hidden">Mois</span>
-                <select id="scope-month">${['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')}</select>
-              </label>` : ''}
+              ${periodSelect('scope-preset', `
+                <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
+                <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
+                <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
+                <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Plage</option>
+              `)}
+              ${periodSelect('scope-year', years.map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join(''))}
+              ${state.preset === 'QUARTER' ? periodSelect('scope-quarter', [1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')) : ''}
+              ${state.preset === 'MONTH' ? periodSelect('scope-month', ['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')) : ''}
               ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
             </div>
+            <span class="scope-mode-pill">${mode === 'live' ? 'LIVE' : 'DEMO'}</span>
             ${(state.alertCounts && Number(state.alertCounts.p0) > 0)
               ? `<a class="scope-alerts-count" href="#/vue" aria-label="À traiter, ${Number(state.alertCounts.p0)}">${escapeHtml(`À traiter · ${Number(state.alertCounts.p0)}`)}</a>`
               : ''}
@@ -383,15 +438,10 @@
                 ${mode === 'live' ? `<small>${escapeHtml(roleLabel())}</small>` : ''}
               </div>
             </div>
-            <button type="button" class="scope-btn scope-btn-ghost" id="scope-header-menu" aria-expanded="false" aria-controls="scope-header-menu-panel">Menu</button>
             ${logout}
           </div>
         </div>
-        <div class="scope-header-menu-panel" id="scope-header-menu-panel" hidden>${navButtons}${menuExtras}</div>
       </header>
-      <nav class="scope-nav" aria-label="Navigation principale">
-        <div class="scope-nav-inner">${navButtons}</div>
-      </nav>
     `;
   }
 
@@ -423,7 +473,7 @@
         </div>
       </div>`);
     } else if (mode === 'live') {
-      bits.push(`<div class="scope-banner live">Mode LIVE — base PostgreSQL Monitoring. Session Okta. Toute saisie est réelle. Pas de données fictives. <a class="scope-btn" href="/auth/logout?returnTo=/">Se déconnecter</a></div>`);
+      bits.push(`<div class="scope-banner live">Mode LIVE — PostgreSQL Monitoring, session Okta. Toute saisie est réelle.</div>`);
     } else {
       bits.push(`<div class="scope-banner demo">Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>`);
     }
@@ -591,7 +641,8 @@
     const p2Alerts = alertItems.filter((a) => a.level === 'P2');
     const explain = dash.explain || {};
     const exclusions = explain.exclusions || {};
-    const chart = L.participationChartSvg(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points);
+    const chartLayout = L.participationChartLayout(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points);
+    const chart = L.participationChartSvg(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points, { height: chartLayout.height });
 
     const kpi = `
       <div class="scope-kpis">
@@ -715,37 +766,52 @@
         ${kpi}
         ${explainHtml}
         ${absHtml}
-        <div class="scope-card scope-inbox">
-          <h2>À traiter</h2>
-          ${p0Html}
+        <div class="scope-dash-split">
+          <div class="scope-card scope-inbox">
+            <h2>À traiter</h2>
+            ${p0Html}
+          </div>
+          <div class="scope-card scope-chart-card is-${escapeHtml(chartLayout.mode)}">
+            <h2>Évolution du taux de participation</h2>
+            <div class="scope-chart-frame">${chart}</div>
+            <p class="scope-chart-legend">
+              <span><i class="off"></i>Taux officiel (mensuel, somme / somme)</span>
+              <span><i class="obj"></i>Objectif lorsqu’il est unique</span>
+              <span><i class="legacy"></i>LEGACY historique, hors KPI</span>
+            </p>
+            ${legacyNote}
+          </div>
         </div>
         ${p1Html}
         ${p2Html}
-        <div class="scope-card scope-panel">
-          <h2>Évolution du taux de participation</h2>
-          ${chart}
-          <p class="scope-chart-legend">
-            <span><i></i>Taux officiel (mensuel, somme / somme)</span>
-            <span><i class="obj"></i>Objectif lorsqu’il est unique</span>
-            <span><i class="legacy"></i>LEGACY historique, hors KPI</span>
-          </p>
-          ${legacyNote}
-        </div>
         ${domainCards ? `<div class="scope-panel"><h2 class="scope-card" style="box-shadow:none;border:0;padding:0 0 8px;background:transparent">Participation par domaine</h2><div class="scope-domain-grid">${domainCards}</div></div>` : ''}
         ${cibleCards ? `<div class="scope-panel"><h2 class="scope-card" style="box-shadow:none;border:0;padding:0 0 8px;background:transparent">Cibles</h2><div class="scope-domain-grid">${cibleCards}</div></div>` : ''}
         ${eventRows}
+        ${!r.domaine ? `<p class="scope-inst-line"><img src="assets/img/LogoSDISblanc.png" alt="" width="120" height="36">SDIS régional du Nord vaudois</p>` : ''}
       </div>
     `;
   }
 
-  function renderPlaceholder(title, crumb) {
+  function renderPersonnel() {
     return `
-      <div class="scope-crumb">${escapeHtml(crumb)}</div>
+      <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
         <div class="scope-card scope-placeholder">
-          <h2 style="margin-top:0">${escapeHtml(title)}</h2>
-          <p>Cet écran fera partie de SCOPE, mais il n’est pas construit dans le pilote P0. Utilisez Exercices pour la saisie nominative.</p>
+          <h2 style="margin-top:0">Personnel</h2>
+          <p>Le module PERSON-1 n’est pas ouvert. L’identité restera le NIP, avec affectations OI datées, périodes RH, archivage et réactivation.</p>
           ${mode === 'live' && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRapports() {
+    return `
+      <div class="scope-crumb">Rapports</div>
+      <div class="scope-main">
+        <div class="scope-card scope-placeholder">
+          <h2 style="margin-top:0">Rapports</h2>
+          <p>REPORT-1 n’est pas actif. Cette entrée prépare la destination des synthèses institutionnelles.</p>
         </div>
       </div>
     `;
@@ -1352,7 +1418,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme CSV</h2>
           <p>Le CSV alimente SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
-          <p class="scope-mode-hint">Le CSV Monitoring F7 22 colonnes reste disponible. Un format SCOPE natif (date, domaine, sous-domaine, cibles, libellé, mode, comptabilisation, identifiant externe) est défini pour les imports futurs : preview obligatoire, commit transactionnel, idempotence. L’écriture de ce format n’est pas ouverte dans MODEL-2.</p>
+          <p class="scope-mode-hint">Import exercices depuis cette page. L’import personnel (PERSONNEL-SYNC-1) n’est pas ouvert ici : matching par NIP, changement d’OI daté, pas de réécriture des populations figées.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
           <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
             <p>Glissez un fichier CSV ici ou</p>
@@ -1481,7 +1547,8 @@
   function render() {
     const r = route();
     const body = r.screen === 'vue' ? renderVue()
-      : r.screen === 'personnel' ? renderPlaceholder('Personnel', 'Personnel')
+      : r.screen === 'personnel' ? renderPersonnel()
+        : r.screen === 'rapports' ? renderRapports()
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'suivi' ? renderSuiviNominatif()
           : r.screen === 'nouveau' ? renderNouveau()
@@ -1489,7 +1556,8 @@
               : r.screen === 'fiche' ? renderFiche()
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
-    root.innerHTML = headerHtml(r.nav) + bannerHtml() + body + renderModalAllPresent() + renderModalCancel();
+    root.classList.toggle('is-nav-open', Boolean(state.navOpen));
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalCancel()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -1557,18 +1625,32 @@
         });
       });
     });
-    document.getElementById('scope-header-menu')?.addEventListener('click', () => {
-      const panel = document.getElementById('scope-header-menu-panel');
-      const btn = document.getElementById('scope-header-menu');
-      if (!panel || !btn) return;
-      const open = panel.classList.toggle('open');
-      panel.hidden = !open;
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.getElementById('scope-nav-toggle')?.addEventListener('click', () => {
+      state.navOpen = !state.navOpen;
+      render();
     });
-    root.querySelectorAll('[data-nav]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const nav = btn.getAttribute('data-nav');
-        go(nav === 'vue' ? '#/vue' : nav === 'personnel' ? '#/personnel' : '#/exercices');
+    document.getElementById('scope-nav-close')?.addEventListener('click', () => {
+      closeNav();
+      render();
+    });
+    document.getElementById('scope-nav-backdrop')?.addEventListener('click', () => {
+      closeNav();
+      render();
+    });
+    root.querySelectorAll('[data-nav-group]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.getAttribute('data-nav-group');
+        if (!id) return;
+        const currently = btn.getAttribute('aria-expanded') === 'true';
+        state.openGroups[id] = !currently;
+        render();
+      });
+    });
+    root.querySelectorAll('.scope-sidebar a[href^="#/"]').forEach((a) => {
+      a.addEventListener('click', () => {
+        if (state.navOpen) closeNav();
       });
     });
     document.getElementById('scope-reload')?.addEventListener('click', () => {
@@ -2040,6 +2122,12 @@
   }
 
   window.addEventListener('hashchange', onRoute);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.navOpen) {
+      closeNav();
+      render();
+    }
+  });
   (async function boot() {
     if (mode === 'live') {
       const ok = await ensureLiveSession();

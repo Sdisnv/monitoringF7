@@ -78,14 +78,31 @@
     return 'Non évaluable';
   }
 
+  const CHART_COLORS = Object.freeze({
+    officiel: '#171C8F',
+    objectif: '#FFA300',
+    legacy: '#54585A',
+    accent: '#DE000A'
+  });
+
+  function participationChartLayout(officiel, legacyPoints) {
+    const official = (officiel || []).filter((b) => b && b.month && b.percentage != null);
+    const legacy = (legacyPoints || []).filter((p) => p && p.date && p.tauxLegacy != null);
+    if (!official.length && !legacy.length) return { mode: 'empty', height: 72, width: 640 };
+    if (!official.length) return { mode: 'legacy', height: 112, width: 640 };
+    if (official.length < 3) return { mode: 'sparse', height: 132, width: 640 };
+    return { mode: 'full', height: 168, width: 640 };
+  }
+
   function participationChartSvg(officiel, legacyPoints, size) {
-    const width = (size && size.width) || 640;
-    const height = (size && size.height) || 220;
-    const pad = { l: 36, r: 12, t: 16, b: 28 };
+    const layout = participationChartLayout(officiel, legacyPoints);
+    const width = (size && size.width) || layout.width;
+    const height = (size && size.height) || layout.height;
+    const pad = { l: 36, r: 12, t: 12, b: 24 };
     const buckets = (officiel || []).filter((b) => b && b.month);
     const legacy = (legacyPoints || []).filter((p) => p && p.date && p.tauxLegacy != null);
     if (!buckets.length && !legacy.length) {
-      return `<p class="scope-empty">Aucune série officielle sur cette période.</p>`;
+      return `<p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p>`;
     }
     const months = [...new Set([
       ...buckets.map((b) => b.month),
@@ -106,7 +123,7 @@
     let objectiveMark = '';
     if (uniqueThresholds.length === 1) {
       const y = yOf(uniqueThresholds[0]);
-      objectiveMark = `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#b26a00" stroke-dasharray="5 4" stroke-width="2" />`;
+      objectiveMark = `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="${CHART_COLORS.objectif}" stroke-dasharray="5 4" stroke-width="2" />`;
     } else if (uniqueThresholds.length > 1) {
       objectiveMark = '';
     }
@@ -114,19 +131,104 @@
       const y = yOf(v);
       return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="4" y="${y + 4}" font-size="11" fill="#6b7785">${v}</text>`;
     }).join('');
-    const monthLabels = months.map((m) => `<text x="${xOf(m)}" y="${height - 8}" font-size="11" text-anchor="middle" fill="#6b7785">${m.slice(5)}</text>`).join('');
+    const monthLabels = months.map((m) => `<text x="${xOf(m)}" y="${height - 6}" font-size="11" text-anchor="middle" fill="#6b7785">${m.slice(5)}</text>`).join('');
     const legacyDots = legacy.map((p) => {
       const month = String(p.date).slice(0, 7);
-      return `<circle cx="${xOf(month)}" cy="${yOf(p.tauxLegacy)}" r="3.5" fill="#6b7785" />`;
+      return `<circle cx="${xOf(month)}" cy="${yOf(p.tauxLegacy)}" r="3.5" fill="${CHART_COLORS.legacy}" />`;
     }).join('');
     return `<svg class="scope-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Évolution du taux de participation">
       ${ticks}
       ${objectiveMark}
-      ${officialPts.length > 1 ? `<polyline fill="none" stroke="#1f2730" stroke-width="2.4" points="${officialPts.join(' ')}" />` : ''}
-      ${officialPts.length === 1 ? `<circle cx="${officialPts[0].split(',')[0]}" cy="${officialPts[0].split(',')[1]}" r="4" fill="#1f2730" />` : ''}
+      ${officialPts.length > 1 ? `<polyline fill="none" stroke="${CHART_COLORS.officiel}" stroke-width="2.4" points="${officialPts.join(' ')}" />` : ''}
+      ${officialPts.length === 1 ? `<circle cx="${officialPts[0].split(',')[0]}" cy="${officialPts[0].split(',')[1]}" r="4" fill="${CHART_COLORS.officiel}" />` : ''}
       ${legacyDots}
       ${monthLabels}
     </svg>`;
+  }
+
+  function sousDomaineNavLabel(node) {
+    if (!node) return '';
+    if (node.code === 'PR') return 'Protection respiratoire';
+    if (node.code === 'AUTO') return 'AUTO';
+    return node.libelle || node.libelleAffiche || node.code;
+  }
+
+  function navParentCode(arbre, code) {
+    const wanted = String(code || '');
+    for (const domaine of arbre || []) {
+      if ((domaine.sousDomaines || []).some((s) => s.code === wanted)) return domaine.code;
+    }
+    return null;
+  }
+
+  function normalizeNavArbre(arbre, domaines, cibles) {
+    if (arbre && arbre.length) return arbre;
+    const list = (domaines || []).map((d) => {
+      const code = d.code;
+      const inferredParent = (code === 'PR' || code === 'AUTO') ? 'FOSPEC' : (d.parentCode || d.parent_code || null);
+      return {
+        code,
+        libelle: d.libelle,
+        libelleAffiche: d.libelleAffiche || d.libelle_affiche || (code === 'PR' ? 'PAPR' : code),
+        nature: d.nature || (inferredParent ? 'SOUS_DOMAINE' : 'DOMAINE'),
+        parentCode: inferredParent
+      };
+    });
+    const roots = list.filter((d) => d.nature !== 'SOUS_DOMAINE' && !d.parentCode);
+    return roots.map((d) => ({
+      ...d,
+      sousDomaines: list.filter((s) => s.parentCode === d.code).map((s) => ({
+        ...s,
+        cibles: (cibles || []).filter((c) => c.domaineCode === s.code)
+      })),
+      cibles: (cibles || []).filter((c) => c.domaineCode === d.code)
+    }));
+  }
+
+  function buildSidebarNav(arbre, route) {
+    const r = route || {};
+    const roots = (arbre || []).filter((d) => d && d.nature !== 'SOUS_DOMAINE' && !d.parentCode);
+    const parent = navParentCode(arbre, r.domaine);
+    return {
+      primary: [
+        { id: 'vue', href: '#/vue', label: 'Vue d’ensemble' },
+        { id: 'exercices', href: '#/exercices', label: 'Exercices' }
+      ],
+      domains: roots.map((d) => {
+        const sous = d.sousDomaines || [];
+        const cibles = d.cibles || [];
+        const showCibles = !sous.length && cibles.length > 0 && cibles.length <= 6;
+        const children = sous.length
+          ? sous.map((s) => ({
+            id: s.code,
+            href: `#/vue/${encodeURIComponent(s.code)}`,
+            label: sousDomaineNavLabel(s)
+          }))
+          : (showCibles
+            ? cibles.map((c) => ({
+              id: c.niveauCode,
+              href: `#/vue/${encodeURIComponent(d.code)}/${encodeURIComponent(c.niveauCode)}`,
+              label: c.niveauCode
+            }))
+            : []);
+        const childActive = children.some((c) => c.id === r.domaine || c.id === r.cible);
+        return {
+          id: d.code,
+          href: `#/vue/${encodeURIComponent(d.code)}`,
+          label: d.libelleAffiche || d.code,
+          expanded: d.code === r.domaine || d.code === parent || childActive,
+          children
+        };
+      }),
+      settings: [
+        { id: 'objectifs', href: '#/reglages/objectifs', label: 'Objectifs' },
+        { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif' }
+      ],
+      extras: [
+        { id: 'personnel', href: '#/personnel', label: 'Personnel' },
+        { id: 'rapports', href: '#/rapports', label: 'Rapports' }
+      ]
+    };
   }
 
   function currentYear(now) {
@@ -193,6 +295,7 @@
       return { screen: 'vue', nav: 'vue' };
     }
     if (parts[0] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
+    if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };
     if (parts[0] === 'reglages' && parts[1] === 'suivi') {
       return { screen: 'suivi', nav: 'reglages' };
     }
@@ -392,7 +495,13 @@
     formatTaux,
     formatGap,
     analyticStatusLabel,
+    CHART_COLORS,
+    participationChartLayout,
     participationChartSvg,
+    sousDomaineNavLabel,
+    navParentCode,
+    normalizeNavArbre,
+    buildSidebarNav,
     currentYear,
     periodParams,
     alertLevelLabel,

@@ -434,14 +434,14 @@ const PRESENT_13_15 = [
     assert.strictEqual(logic.parseHash('#/reglages/objectifs').screen, 'objectifs');
     assert.strictEqual(logic.parseHash('#/reglages/objectifs').nav, 'reglages');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    assert.ok(ui.includes('#/reglages/objectifs'));
     assert.ok(ui.includes('Objectifs de participation'));
-    assert.ok(ui.includes('Réglages · Objectifs'));
-    const navBlock = ui.match(/const navButtons = `([\s\S]*?)`;/);
-    assert.ok(navBlock);
-    assert.ok(navBlock[1].includes('Vue d’ensemble'));
-    assert.ok(navBlock[1].includes('Exercices'));
-    assert.ok(navBlock[1].includes('Personnel'));
-    assert.ok(!navBlock[1].includes('Objectifs'));
+    assert.ok(ui.includes('scope-sidebar'));
+    assert.ok(ui.includes('Vue d’ensemble'));
+    assert.ok(ui.includes('Exercices'));
+    assert.ok(ui.includes('Personnel'));
+    assert.ok(!ui.includes('const navButtons'));
+    assert.ok(!ui.includes('data-nav="objectifs"'));
   });
 
   await record('30 — objectifs TEST neutralisables + RBAC', async () => {

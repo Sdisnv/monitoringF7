@@ -109,7 +109,9 @@ grep -q "scope-import-contract.js" netlify/functions/_scope-import-contract.js
 grep -qF 'assets/js/scope-csv-import.js' netlify.scope.toml
 grep -qF 'assets/js/scope-personnel-sync-contract.js' netlify.scope.toml
 grep -q "previewScopeImport" assets/js/scope-import-contract.js
-grep -q "Réglages · Suivi nominatif" assets/js/scope-ui.js
+grep -q "Suivi nominatif" assets/js/scope-ui.js
+grep -q "scope-sidebar" assets/js/scope-ui.js
+grep -q "scope-select-control" assets/js/scope-ui.js
 grep -q "Dont permutations" assets/js/scope-ui.js
 grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
 grep -q "height: 68px" assets/css/scope.css
