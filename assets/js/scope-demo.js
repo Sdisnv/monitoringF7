@@ -605,7 +605,29 @@
             analyticStatusReason: 'denominator_zero',
             gapPct: null
           },
-          vigilanceMarginPct: null
+          vigilanceMarginPct: null,
+          graphs: {
+            contract: 'SCOPE-GRAPH-1',
+            renderer: 'svg',
+            pdfReady: true,
+            period: { from: `${year}-01-01`, to: `${year}-12-31`, preset },
+            perimeter: { domaine: null, cible: null },
+            evolution: {
+              id: 'evolution',
+              question: 'Comment évolue notre taux de participation ?',
+              type: 'line',
+              emptyReason: 'AUCUNE_SERIE_OFFICIELLE',
+              series: [
+                { id: 'officiel', kind: 'OFFICIEL', label: 'Taux officiel', points: [] },
+                { id: 'legacy', kind: 'LEGACY', label: 'Historique agrégé (LEGACY)', points: [] }
+              ]
+            },
+            domaines: { id: 'domaines', question: 'Quels domaines contribuent aux écarts de participation ?', type: 'bar', emptyReason: 'NON_EVALUABLE', series: [{ id: 'domaines', kind: 'OFFICIEL', points: [] }] },
+            children: { id: 'children', emptyReason: 'CONTEXTE_SDIS', series: [] },
+            composition: { id: 'composition', question: 'De quoi est composé le résultat de participation ?', type: 'stacked', emptyReason: 'AUCUNE_COMPOSITION', series: [{ points: [] }] },
+            motifs: { id: 'motifs', question: 'Pourquoi le personnel est-il excusé ?', type: 'bar', emptyReason: 'AUCUN_MOTIF', series: [{ points: [] }] },
+            permutations: { id: 'permutations', emptyReason: 'HORS_DAP', series: [] }
+          }
         };
       },
       async listAlerts(params) {

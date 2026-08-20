@@ -115,6 +115,11 @@ grep -q "scope-select-control" assets/js/scope-ui.js
 grep -q "Dont permutations" assets/js/scope-ui.js
 grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
 grep -q "height: 68px" assets/css/scope.css
+grep -q "SCOPE-GRAPH-1" netlify/functions/_scope-graphs.js
+grep -q "/analytics/graphs" netlify/functions/scope.js
+grep -q "scope-charts.js" scope.html
+grep -q -- "--scope-chart-primary" assets/css/scope.css
+grep -q "dash.graphs" assets/js/scope-ui.js
 if grep -q "officialFromQuantitatif" assets/js/scope-ui.js; then
   echo "ERREUR: calcul officiel dans scope-ui.js"
   exit 1

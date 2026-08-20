@@ -17,6 +17,22 @@
   --scope-navy: #171C8F;
   --scope-amber: #FFA300;
   --scope-slate: #54585A;
+  --scope-chart-primary: #171C8F;
+  --scope-chart-secondary: #DE000A;
+  --scope-chart-neutral: #54585A;
+  --scope-chart-warning: #FFA300;
+  --scope-chart-officiel: var(--scope-chart-primary);
+  --scope-chart-legacy: var(--scope-chart-neutral);
+  --scope-chart-objectif: var(--scope-chart-warning);
+  --scope-chart-present: var(--scope-chart-primary);
+  --scope-chart-excuse: var(--scope-chart-warning);
+  --scope-chart-non-excuse: var(--scope-chart-secondary);
+  --scope-chart-dispense: var(--scope-chart-neutral);
+  --scope-chart-permutation: var(--scope-chart-warning);
+  --scope-chart-prive: var(--scope-chart-primary);
+  --scope-chart-professionnel: var(--scope-chart-warning);
+  --scope-chart-armee: var(--scope-chart-neutral);
+  --scope-chart-sante: var(--scope-chart-secondary);
   --scope-radius: 6px;
   --scope-radius-sm: 4px;
   --scope-shadow: 0 1px 2px rgba(20, 30, 50, 0.06);
@@ -738,10 +754,54 @@ html, body {
   max-height: 188px;
   overflow: hidden;
 }
+.scope-dash-split .scope-chart-frame,
+.scope-chart-frame.is-line {
+  max-height: 140px;
+}
+.scope-chart-frame.is-bar,
+.scope-chart-frame.is-stacked {
+  max-height: none;
+  overflow: visible;
+}
 .scope-chart-card.is-empty .scope-chart-frame,
 .scope-chart-card.is-legacy .scope-chart-frame,
 .scope-chart-card.is-sparse .scope-chart-frame {
   max-height: 140px;
+}
+.scope-graph-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.scope-graph-grid .scope-chart-card,
+.scope-graph-stack .scope-chart-card {
+  margin: 0;
+}
+.scope-graph-stack {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.scope-graph-card.is-wide {
+  grid-column: 1 / -1;
+}
+.scope-graph-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.scope-graph-head h2 {
+  margin: 0;
+  flex: 1;
+}
+.scope-graph-explain-btn {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 4px;
+  font-size: var(--scope-fs-secondary);
 }
 .scope-chart-empty {
   padding: 18px 8px;
@@ -977,14 +1037,39 @@ html, body {
   background: var(--scope-slate);
 }
 .scope-chart-legend i.off {
-  background: var(--scope-navy);
+  background: var(--scope-chart-officiel);
 }
+.scope-chart-legend i.present { background: var(--scope-chart-present); }
+.scope-chart-legend i.excuse { background: var(--scope-chart-excuse); }
+.scope-chart-legend i.nonExcuse { background: var(--scope-chart-non-excuse); }
+.scope-chart-legend i.dispense {
+  background: var(--scope-chart-dispense);
+  background-image: repeating-linear-gradient(-45deg, #fff 0 1px, transparent 1px 4px);
+}
+.scope-chart-legend i.permutation { background: var(--scope-chart-permutation); }
+.scope-chart-legend i.prive { background: var(--scope-chart-prive); }
+.scope-chart-legend i.professionnel { background: var(--scope-chart-professionnel); }
+.scope-chart-legend i.armee { background: var(--scope-chart-armee); }
+.scope-chart-legend i.sante { background: var(--scope-chart-sante); }
+.scope-chart-legend i.nonPrecise { background: var(--scope-chart-neutral); }
 .scope-chart {
   width: 100%;
   height: auto;
   max-width: 100%;
   max-height: 188px;
   display: block;
+}
+.scope-chart-line { max-height: 140px; }
+.scope-chart-bar,
+.scope-chart-stacked {
+  max-height: none;
+}
+.scope-chart-hit {
+  outline: none;
+}
+.scope-chart-bar a.scope-chart-hit:focus-visible rect {
+  stroke: var(--scope-ink);
+  stroke-width: 1.5;
 }
 .scope-explain {
   margin-top: 12px;
@@ -1238,6 +1323,7 @@ html, body {
   .scope-app.is-nav-open { overflow: hidden; }
   .scope-dash-split { grid-template-columns: 1fr; }
   .scope-chart-card { max-width: 100%; }
+  .scope-graph-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 1024px) {
@@ -1273,8 +1359,14 @@ html, body {
   }
   .scope-user-text { align-items: flex-start; }
   .scope-dash-split { grid-template-columns: 1fr; }
+  .scope-graph-grid { grid-template-columns: 1fr; }
+  .scope-graph-head { flex-direction: column; align-items: stretch; }
   .scope-chart-frame,
   .scope-chart { max-height: 148px; }
+  .scope-chart-frame.is-bar,
+  .scope-chart-frame.is-stacked,
+  .scope-chart-bar,
+  .scope-chart-stacked { max-height: none; }
   .scope-table thead { display: none; }
   .scope-table, .scope-table tbody, .scope-table tr, .scope-table td {
     display: block;

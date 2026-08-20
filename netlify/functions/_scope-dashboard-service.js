@@ -5,6 +5,7 @@ const { DOMAINES } = require('./_scope-schema');
 const { parsePeriod } = require('./_scope-period');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeAlertsService } = require('./_scope-alerts-service');
+const { buildScopeGraphs } = require('./_scope-graphs');
 
 function packOfficiel(evaluated){
   const o = evaluated.officiel || {};
@@ -58,9 +59,12 @@ function createScopeDashboardService(repo){
 
     const domaines = [];
     const cibles = [];
+    const cachedByDomaine = new Map();
+    const cachedByCible = new Map();
     if(!domaineCode && !cibleRaw){
       for(const domaine of DOMAINES){
         const sub = await analytics.evaluate({ from: period.from, to: period.to, domaine: domaine.code });
+        cachedByDomaine.set(domaine.code, sub);
         domaines.push({
           code: domaine.code,
           libelle: domaine.libelle,
@@ -77,6 +81,7 @@ function createScopeDashboardService(repo){
           domaine: domaineCode,
           cible: cible.cible_id
         });
+        cachedByCible.set(cible.cible_id, sub);
         cibles.push({
           cibleId: cible.cible_id,
           niveauCode: cible.niveau_code,
@@ -86,6 +91,19 @@ function createScopeDashboardService(repo){
         });
       }
     }
+
+    const graphs = await buildScopeGraphs({
+      analytics,
+      repo,
+      period,
+      domaineCode,
+      cibleRaw,
+      evaluated,
+      series,
+      explain,
+      cachedByDomaine,
+      cachedByCible
+    });
 
     const evenements = (evaluated.includedEvents || []).map((row) => ({
       evenementId: row.evenementId,
@@ -144,11 +162,17 @@ function createScopeDashboardService(repo){
         analyticStatusReason: explain.analyticStatusReason,
         gapPct: explain.gapPct
       },
+      graphs,
       vigilanceMarginPct: null
     };
   }
 
-  return { dashboard };
+  async function graphs(query = {}){
+    const dash = await dashboard(query);
+    return dash.graphs;
+  }
+
+  return { dashboard, graphs };
 }
 
 module.exports = { createScopeDashboardService };

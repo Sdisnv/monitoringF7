@@ -205,6 +205,9 @@ exports.handler = async function(event){
     if(method === 'GET' && path === '/analytics/timeseries'){
       return response(200, { ok:true, ...(await analytics.timeseries(queryOf(event))) });
     }
+    if(method === 'GET' && path === '/analytics/graphs'){
+      return response(200, { ok:true, graphs: await dashboard.graphs(queryOf(event)) });
+    }
     if(method === 'GET' && path === '/dashboard'){
       return response(200, { ok:true, ...(await dashboard.dashboard(queryOf(event))) });
     }

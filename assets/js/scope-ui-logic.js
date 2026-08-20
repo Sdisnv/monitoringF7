@@ -91,7 +91,7 @@
     if (!official.length && !legacy.length) return { mode: 'empty', height: 72, width: 640 };
     if (!official.length) return { mode: 'legacy', height: 112, width: 640 };
     if (official.length < 3) return { mode: 'sparse', height: 132, width: 640 };
-    return { mode: 'full', height: 168, width: 640 };
+    return { mode: 'full', height: 140, width: 640 };
   }
 
   function participationChartSvg(officiel, legacyPoints, size) {

@@ -85,6 +85,7 @@
     dashboard: null,
     alertCounts: null,
     explainOpen: false,
+    graphExplainId: null,
     openGroups: {},
     absencesOpen: false,
     navOpen: false
@@ -641,8 +642,19 @@
     const p2Alerts = alertItems.filter((a) => a.level === 'P2');
     const explain = dash.explain || {};
     const exclusions = explain.exclusions || {};
-    const chartLayout = L.participationChartLayout(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points);
-    const chart = L.participationChartSvg(dash.timeseries && dash.timeseries.officiel, dash.legacy && dash.legacy.points, { height: chartLayout.height });
+    const graphs = dash.graphs || {};
+    const C = (typeof window !== 'undefined' && window.ScopeCharts)
+      || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
+    const evolutionCard = C
+      ? C.renderChartCard(graphs.evolution, { size: { width: 640, height: 128 } })
+      : '';
+    const domainChart = C ? C.renderChartCard(graphs.domaines) : '';
+    const childrenChart = C ? C.renderChartCard(graphs.children) : '';
+    const compositionChart = C ? C.renderChartCard(graphs.composition) : '';
+    const motifsChart = C ? C.renderChartCard(graphs.motifs) : '';
+    const permutationChart = C ? C.renderChartCard(graphs.permutations) : '';
+    const openGraph = state.graphExplainId && graphs[state.graphExplainId];
+    const graphExplainHtml = C && openGraph ? C.renderGraphExplain(openGraph, explain) : '';
 
     const kpi = `
       <div class="scope-kpis">
@@ -719,27 +731,6 @@
         </div>`
       : '';
 
-    const domainCards = (dash.domaines || []).map((d) => {
-      const off = d.officiel || {};
-      const dGap = L.formatGap(off.gapPct);
-      const dObj = L.objectiveKpiLabel(off);
-      return `<a class="scope-domain-card" href="#/vue/${encodeURIComponent(d.code)}">
-        <strong>${escapeHtml(d.libelleAffiche || d.code)}</strong>
-        <span>${escapeHtml(L.formatTaux(off.percentage))}</span>
-        <small>${escapeHtml(dObj.title)}${dGap ? ` · ${escapeHtml(dGap)}` : ''}</small>
-        <small>${escapeHtml(String(off.eventCount || 0))} événement(s) · ${escapeHtml(L.analyticStatusLabel(off.analyticStatus))}</small>
-      </a>`;
-    }).join('');
-
-    const cibleCards = (dash.cibles || []).map((c) => {
-      const off = c.officiel || {};
-      return `<a class="scope-cible-card" href="#/vue/${encodeURIComponent(r.domaine)}/${encodeURIComponent(c.niveauCode)}">
-        <strong>${escapeHtml(c.niveauCode)}</strong>
-        <span>${escapeHtml(L.formatTaux(off.percentage))}</span>
-        <small>${escapeHtml(String(off.eventCount || 0))} événement(s) · ${escapeHtml(L.analyticStatusLabel(off.analyticStatus))}</small>
-      </a>`;
-    }).join('');
-
     const eventRows = r.cible && (dash.evenements || []).length
       ? `<div class="scope-card scope-table-wrap scope-panel">
           <h2>Événements officiels</h2>
@@ -771,21 +762,16 @@
             <h2>À traiter</h2>
             ${p0Html}
           </div>
-          <div class="scope-card scope-chart-card is-${escapeHtml(chartLayout.mode)}">
-            <h2>Évolution du taux de participation</h2>
-            <div class="scope-chart-frame">${chart}</div>
-            <p class="scope-chart-legend">
-              <span><i class="off"></i>Taux officiel (mensuel, somme / somme)</span>
-              <span><i class="obj"></i>Objectif lorsqu’il est unique</span>
-              <span><i class="legacy"></i>LEGACY historique, hors KPI</span>
-            </p>
-            ${legacyNote}
-          </div>
+          ${evolutionCard || `<div class="scope-card scope-chart-card is-empty"><h2>Comment évolue notre taux de participation ?</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>`}
         </div>
+        ${legacyNote}
+        ${graphExplainHtml}
         ${p1Html}
         ${p2Html}
-        ${domainCards ? `<div class="scope-panel"><h2 class="scope-card" style="box-shadow:none;border:0;padding:0 0 8px;background:transparent">Participation par domaine</h2><div class="scope-domain-grid">${domainCards}</div></div>` : ''}
-        ${cibleCards ? `<div class="scope-panel"><h2 class="scope-card" style="box-shadow:none;border:0;padding:0 0 8px;background:transparent">Cibles</h2><div class="scope-domain-grid">${cibleCards}</div></div>` : ''}
+        ${domainChart ? `<div class="scope-graph-stack">${domainChart}</div>` : ''}
+        ${childrenChart ? `<div class="scope-graph-stack">${childrenChart}</div>` : ''}
+        ${compositionChart || motifsChart ? `<div class="scope-graph-grid">${compositionChart}${motifsChart}</div>` : ''}
+        ${permutationChart ? `<div class="scope-graph-stack">${permutationChart}</div>` : ''}
         ${eventRows}
         ${!r.domaine ? `<p class="scope-inst-line"><img src="assets/img/LogoSDISblanc.png" alt="" width="120" height="36">SDIS régional du Nord vaudois</p>` : ''}
       </div>
@@ -1609,6 +1595,13 @@
     document.getElementById('scope-explain-toggle')?.addEventListener('click', () => {
       state.explainOpen = !state.explainOpen;
       render();
+    });
+    root.querySelectorAll('[data-graph-explain]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-graph-explain');
+        state.graphExplainId = state.graphExplainId === id ? null : id;
+        render();
+      });
     });
     document.getElementById('scope-absences-toggle')?.addEventListener('click', () => {
       state.absencesOpen = !state.absencesOpen;
