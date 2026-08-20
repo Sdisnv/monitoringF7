@@ -70,7 +70,7 @@
     let present = 0, excuse = 0, absent = 0, dispense = 0, nonRenseigne = 0, nonConcerne = 0;
     for (const p of participations || []) {
       if (!inclus.has(p.personne_id)) continue;
-      if (p.statut === 'PRESENT') present += 1;
+      if (p.statut === 'PRESENT' || p.statut === 'PERMUTATION') present += 1;
       else if (p.statut === 'ABSENT_EXCUSE') excuse += 1;
       else if (p.statut === 'ABSENT_NON_EXCUSE') absent += 1;
       else if (p.statut === 'DISPENSE') dispense += 1;

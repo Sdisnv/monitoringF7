@@ -12,6 +12,22 @@ const DOMAINES = [
   { code: 'JSP', libelle: 'Jeunes sapeurs-pompiers' }
 ];
 
+const DOMAINES_MODEL_2 = {
+  FOBA: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'FOBA' },
+  FOCA: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'FOCA' },
+  DPS: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'DPS' },
+  DAP: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'DAP' },
+  PR: { nature: 'SOUS_DOMAINE', parentCode: 'FOSPEC', libelleAffiche: 'PAPR', libelle: 'Protection respiratoire' },
+  AUTO: { nature: 'SOUS_DOMAINE', parentCode: 'FOSPEC', libelleAffiche: 'AUTO' },
+  FOSPEC: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'FOSPEC' },
+  JSP: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'JSP' }
+};
+
+const SOUS_DOMAINES = [
+  { code: 'PR', domaineParent: 'FOSPEC', libelle: 'Protection respiratoire', libelleAffiche: 'PAPR' },
+  { code: 'AUTO', domaineParent: 'FOSPEC', libelle: 'Automobile', libelleAffiche: 'AUTO' }
+];
+
 const CIBLES = [
   ['FOBA', '1', 'FOBA 1'],
   ['FOBA', '2', 'FOBA 2'],
@@ -289,6 +305,10 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-alerts-1') on conflict (version) do nothing`
   );
+  await migrateModel2();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-model-2') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
 }
@@ -447,6 +467,199 @@ async function migrateModeSuiviAnalytics1(){
   `);
 }
 
+async function migrateModel2(){
+  await db.query(`alter table scope_domaines add column if not exists nature text`);
+  await db.query(`alter table scope_domaines add column if not exists parent_code text`);
+  await db.query(`alter table scope_domaines add column if not exists libelle_affiche text`);
+  await db.query(`
+    update scope_domaines
+    set nature = coalesce(nature, 'DOMAINE'),
+        libelle_affiche = coalesce(libelle_affiche, case when code = 'PR' then 'PAPR' else code end)
+  `);
+  await db.query(`
+    update scope_domaines
+    set parent_code = 'FOSPEC',
+        nature = 'SOUS_DOMAINE',
+        libelle_affiche = case when code = 'PR' then 'PAPR' else 'AUTO' end
+    where code in ('PR', 'AUTO')
+  `);
+  await db.query(`
+    update scope_domaines
+    set libelle = 'Protection respiratoire', libelle_affiche = 'PAPR'
+    where code = 'PR'
+  `);
+  await db.query(`alter table scope_domaines drop constraint if exists scope_domaines_nature_chk`);
+  await db.query(`
+    alter table scope_domaines add constraint scope_domaines_nature_chk
+      check (nature in ('DOMAINE', 'SOUS_DOMAINE'))
+  `);
+  await db.query(`alter table scope_domaines drop constraint if exists scope_domaines_parent_fk`);
+  await db.query(`
+    alter table scope_domaines
+      add constraint scope_domaines_parent_fk
+      foreign key (parent_code) references scope_domaines(code)
+  `);
+
+  await db.query(`
+    create table if not exists scope_sous_domaines (
+      code text primary key,
+      domaine_parent text not null references scope_domaines(code),
+      libelle text not null,
+      libelle_affiche text not null,
+      actif boolean not null default true,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    )
+  `);
+  for(const row of SOUS_DOMAINES){
+    await db.query(
+      `insert into scope_sous_domaines(code, domaine_parent, libelle, libelle_affiche, actif)
+       values ($1,$2,$3,$4,true)
+       on conflict (code) do update set
+         domaine_parent = excluded.domaine_parent,
+         libelle = excluded.libelle,
+         libelle_affiche = excluded.libelle_affiche,
+         updated_at = now()`,
+      [row.code, row.domaineParent, row.libelle, row.libelleAffiche]
+    );
+  }
+
+  await db.query(`alter table scope_evenements add column if not exists sous_domaine_code text`);
+  await db.query(`
+    update scope_evenements
+    set sous_domaine_code = domaine_code
+    where domaine_code in ('PR', 'AUTO') and sous_domaine_code is null
+  `);
+  await db.query(`
+    do $$ begin
+      alter table scope_evenements
+        add constraint scope_evenements_sous_domaine_fk
+        foreign key (sous_domaine_code) references scope_sous_domaines(code);
+    exception when duplicate_object then null;
+    end $$
+  `);
+
+  await db.query(`alter table scope_participations add column if not exists cible_suivie_id uuid`);
+  await db.query(`
+    do $$ begin
+      alter table scope_participations
+        add constraint scope_participations_cible_suivie_fk
+        foreign key (cible_suivie_id) references scope_cibles(cible_id);
+    exception when duplicate_object then null;
+    end $$
+  `);
+  await db.query(`alter table scope_participations drop constraint if exists scope_participations_statut_chk`);
+  await db.query(`
+    alter table scope_participations add constraint scope_participations_statut_chk check (statut in (
+      'NON_RENSEIGNE','PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','NON_CONCERNE','PERMUTATION'
+    ))
+  `);
+  await db.query(`alter table scope_participations drop constraint if exists scope_participations_motif_val_chk`);
+  await db.query(`
+    alter table scope_participations add constraint scope_participations_motif_val_chk check (
+      motif_absence is null or motif_absence in (
+        'PRIVE','PROFESSIONNEL','ARMEE','ACCIDENT_MALADIE','MALADIE','ACCIDENT','AUTRE','NON_PRECISE'
+      )
+    )
+  `);
+  await db.query(`alter table scope_participations drop constraint if exists scope_participations_permutation_motif_chk`);
+  await db.query(`
+    alter table scope_participations add constraint scope_participations_permutation_motif_chk check (
+      statut <> 'PERMUTATION' or motif_absence is null
+    )
+  `);
+
+  await db.query(`alter table scope_saisies_quantitatives add column if not exists nb_excuses_prive integer`);
+  await db.query(`alter table scope_saisies_quantitatives add column if not exists nb_excuses_professionnel integer`);
+  await db.query(`alter table scope_saisies_quantitatives add column if not exists nb_excuses_armee integer`);
+  await db.query(`alter table scope_saisies_quantitatives add column if not exists nb_excuses_accident_maladie integer`);
+  await db.query(`alter table scope_saisies_quantitatives add column if not exists nb_excuses_non_precise integer`);
+  await db.query(`alter table scope_saisies_quantitatives add column if not exists nb_permutations integer`);
+  await db.query(`
+    update scope_saisies_quantitatives
+    set nb_excuses_prive = coalesce(nb_excuses_prive, 0),
+        nb_excuses_professionnel = coalesce(nb_excuses_professionnel, 0),
+        nb_excuses_armee = coalesce(nb_excuses_armee, 0),
+        nb_excuses_accident_maladie = coalesce(nb_excuses_accident_maladie, 0),
+        nb_excuses_non_precise = coalesce(
+          nb_excuses_non_precise,
+          case
+            when coalesce(nb_excuses_prive,0) + coalesce(nb_excuses_professionnel,0)
+               + coalesce(nb_excuses_armee,0) + coalesce(nb_excuses_accident_maladie,0) = 0
+            then nb_excuses
+            else 0
+          end
+        ),
+        nb_permutations = coalesce(nb_permutations, 0)
+  `);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_prive set default 0`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_professionnel set default 0`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_armee set default 0`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_accident_maladie set default 0`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_non_precise set default 0`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_permutations set default 0`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_prive set not null`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_professionnel set not null`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_armee set not null`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_accident_maladie set not null`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_excuses_non_precise set not null`);
+  await db.query(`alter table scope_saisies_quantitatives alter column nb_permutations set not null`);
+  await db.query(`alter table scope_saisies_quantitatives drop constraint if exists scope_saisies_q_motifs_chk`);
+  await db.query(`
+    alter table scope_saisies_quantitatives add constraint scope_saisies_q_motifs_chk check (
+      nb_excuses = nb_excuses_prive + nb_excuses_professionnel + nb_excuses_armee
+        + nb_excuses_accident_maladie + nb_excuses_non_precise
+    )
+  `);
+  await db.query(`alter table scope_saisies_quantitatives drop constraint if exists scope_saisies_q_perm_chk`);
+  await db.query(`
+    alter table scope_saisies_quantitatives add constraint scope_saisies_q_perm_chk check (
+      nb_permutations >= 0 and nb_permutations <= nb_presents
+    )
+  `);
+
+  await db.query(`alter table scope_personnes add column if not exists statut_rh text`);
+  await db.query(`
+    update scope_personnes
+    set statut_rh = coalesce(statut_rh, case when actif = false then 'INACTIF' else 'ACTIF' end)
+  `);
+  await db.query(`alter table scope_personnes alter column statut_rh set default 'ACTIF'`);
+  await db.query(`alter table scope_personnes alter column statut_rh set not null`);
+  await db.query(`alter table scope_personnes drop constraint if exists scope_personnes_statut_rh_chk`);
+  await db.query(`
+    alter table scope_personnes add constraint scope_personnes_statut_rh_chk
+      check (statut_rh in ('ACTIF','INACTIF','SORTI','DEMISSIONNAIRE'))
+  `);
+
+  await db.query(`
+    create table if not exists scope_suivi_nominatif (
+      suivi_id uuid primary key,
+      portee text not null,
+      domaine_code text references scope_domaines(code),
+      sous_domaine_code text references scope_sous_domaines(code),
+      cible_id uuid references scope_cibles(cible_id),
+      nominatif_autorise boolean not null,
+      date_debut date not null,
+      date_fin date,
+      commentaire text,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_suivi_portee_chk check (portee in ('GLOBAL','DOMAINE','SOUS_DOMAINE','CIBLE')),
+      constraint scope_suivi_dates_chk check (date_fin is null or date_fin >= date_debut)
+    )
+  `);
+  await db.query(`
+    insert into scope_suivi_nominatif(
+      suivi_id, portee, nominatif_autorise, date_debut, commentaire
+    ) values (
+      '8c0a0002-2026-4000-8000-000000000001',
+      'GLOBAL', true, date '2020-01-01',
+      'MODEL-2 : le suivi nominatif est possible pour tous les domaines. Ne change pas le mode des événements existants.'
+    )
+    on conflict (suivi_id) do nothing
+  `);
+}
+
 async function seedBasculeDapY4(){
   await db.query(
     `insert into scope_regles_bascule (portee, cible_id, domaine_code, date_bascule, commentaire)
@@ -458,4 +671,4 @@ async function seedBasculeDapY4(){
   );
 }
 
-module.exports = { ensureScopeSchema, DOMAINES, CIBLES };
+module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

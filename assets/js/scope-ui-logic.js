@@ -7,13 +7,22 @@
   'use strict';
 
   const MOTIFS = [
-    { value: 'MALADIE', label: 'Maladie' },
-    { value: 'ACCIDENT', label: 'Accident' },
-    { value: 'ARMEE', label: 'Armée' },
-    { value: 'PROFESSIONNEL', label: 'Professionnel' },
     { value: 'PRIVE', label: 'Privé' },
-    { value: 'AUTRE', label: 'Autre' }
+    { value: 'PROFESSIONNEL', label: 'Professionnel' },
+    { value: 'ARMEE', label: 'Armée' },
+    { value: 'ACCIDENT_MALADIE', label: 'Accident / maladie' }
   ];
+  const MOTIFS_HISTORIQUES = [
+    { value: 'MALADIE', label: 'Maladie (historique)' },
+    { value: 'ACCIDENT', label: 'Accident (historique)' },
+    { value: 'AUTRE', label: 'Autre (historique)' },
+    { value: 'NON_PRECISE', label: 'Non précisé (historique)' }
+  ];
+
+  function motifsForRow(row) {
+    const extra = MOTIFS_HISTORIQUES.filter((m) => row && row.motifAbsence === m.value);
+    return MOTIFS.concat(extra);
+  }
 
   const STATUT_LABELS = {
     PLANIFIE: 'Planifié',
@@ -184,6 +193,9 @@
       return { screen: 'vue', nav: 'vue' };
     }
     if (parts[0] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
+    if (parts[0] === 'reglages' && parts[1] === 'suivi') {
+      return { screen: 'suivi', nav: 'reglages' };
+    }
     if (parts[0] === 'reglages' && (!parts[1] || parts[1] === 'objectifs')) {
       return { screen: 'objectifs', nav: 'reglages' };
     }
@@ -215,10 +227,18 @@
   function volumesEquality(volumes) {
     const attendus = Number(volumes && volumes.attendus);
     const presents = Number(volumes && volumes.presents);
-    const excuses = Number(volumes && volumes.excuses);
     const nonExcuses = Number(volumes && volumes.nonExcuses);
     const dispenses = Number(volumes && volumes.dispenses);
-    if (![attendus, presents, excuses, nonExcuses, dispenses].every((n) => Number.isInteger(n) && n >= 0)) {
+    const permutations = Number((volumes && volumes.permutations) || 0);
+    const motifKeys = ['excusesPrive', 'excusesProfessionnel', 'excusesArmee', 'excusesAccidentMaladie', 'excusesNonPrecise'];
+    const hasMotifs = motifKeys.some((key) => volumes && volumes[key] !== undefined && volumes[key] !== '');
+    const motifSum = motifKeys.reduce((sum, key) => sum + Number((volumes && volumes[key]) || 0), 0);
+    const excuses = hasMotifs ? motifSum : Number(volumes && volumes.excuses);
+    if (![attendus, presents, excuses, nonExcuses, dispenses, permutations].every((n) => Number.isInteger(n) && n >= 0)) {
+      return false;
+    }
+    if (permutations > presents) return false;
+    if (hasMotifs && volumes.excuses !== '' && volumes.excuses != null && Number(volumes.excuses) !== motifSum) {
       return false;
     }
     return attendus === presents + excuses + nonExcuses + dispenses;
@@ -234,7 +254,7 @@
       if (row.inclus === false) continue;
       if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role) && row.inclus !== true) continue;
       const s = row.statut;
-      if (s === 'PRESENT') present += 1;
+      if (s === 'PRESENT' || s === 'PERMUTATION') present += 1;
       else if (s === 'ABSENT_EXCUSE') excuse += 1;
       else if (s === 'ABSENT_NON_EXCUSE') absent += 1;
       else if (s === 'DISPENSE') dispense += 1;
@@ -363,6 +383,7 @@
 
   return {
     MOTIFS,
+    motifsForRow,
     STATUT_LABELS,
     ROLE_LABELS,
     domaineAffiche,

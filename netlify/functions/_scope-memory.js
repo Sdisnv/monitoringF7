@@ -1,5 +1,5 @@
 const { randomUUID } = require('crypto');
-const { DOMAINES, CIBLES } = require('./_scope-schema');
+const { DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 } = require('./_scope-schema');
 const { isoDate } = require('./_scope-rules');
 
 function now(){ return new Date().toISOString(); }
@@ -11,7 +11,24 @@ function dateOnly(value){
 }
 
 function createMemoryRepo(){
-  const domaines = DOMAINES.map(d => ({ ...d, actif: true }));
+  const domaines = DOMAINES.map(d => {
+    const extra = DOMAINES_MODEL_2[d.code] || {};
+    return {
+      code: d.code,
+      libelle: extra.libelle || d.libelle,
+      nature: extra.nature || 'DOMAINE',
+      parent_code: extra.parentCode || null,
+      libelle_affiche: extra.libelleAffiche || d.code,
+      actif: true
+    };
+  });
+  const sousDomaines = SOUS_DOMAINES.map((row) => ({
+    code: row.code,
+    domaine_parent: row.domaineParent,
+    libelle: row.libelle,
+    libelle_affiche: row.libelleAffiche,
+    actif: true
+  }));
   const cibles = CIBLES.map(([domaine_code, niveau_code, libelle]) => ({
     cible_id: randomUUID(),
     domaine_code,
@@ -33,6 +50,18 @@ function createMemoryRepo(){
   const quantitatives = new Map();
   const objectifs = new Map();
   const acquittements = new Map();
+  const suiviNominatif = new Map();
+  suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
+    suivi_id: '8c0a0002-2026-4000-8000-000000000001',
+    portee: 'GLOBAL',
+    domaine_code: null,
+    sous_domaine_code: null,
+    cible_id: null,
+    nominatif_autorise: true,
+    date_debut: '2020-01-01',
+    date_fin: null,
+    commentaire: 'MODEL-2 : nominatif possible pour tous les domaines.'
+  });
   let txLevel = 0;
 
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
@@ -57,7 +86,8 @@ function createMemoryRepo(){
       importLignes: cloneMap(importLignes),
       quantitatives: cloneMap(quantitatives),
       objectifs: cloneMap(objectifs),
-      acquittements: cloneMap(acquittements)
+      acquittements: cloneMap(acquittements),
+      suiviNominatif: cloneMap(suiviNominatif)
     };
   }
 
@@ -76,6 +106,7 @@ function createMemoryRepo(){
     quantitatives.clear(); (snap.quantitatives || new Map()).forEach((v, k) => quantitatives.set(k, v));
     objectifs.clear(); (snap.objectifs || new Map()).forEach((v, k) => objectifs.set(k, v));
     acquittements.clear(); (snap.acquittements || new Map()).forEach((v, k) => acquittements.set(k, v));
+    suiviNominatif.clear(); (snap.suiviNominatif || new Map()).forEach((v, k) => suiviNominatif.set(k, v));
   }
 
   const api = {
@@ -94,6 +125,8 @@ function createMemoryRepo(){
       }
     },
     async listDomaines(){ return domaines.filter(d => d.actif !== false); },
+    async listSousDomaines(){ return sousDomaines.filter(d => d.actif !== false); },
+    async listSuiviNominatif(){ return [...suiviNominatif.values()].map((row) => ({ ...row })); },
     async listCibles(){ return cibles.filter(c => c.actif !== false); },
     async getCible(id){ return cibles.find(c => c.cible_id === id) || null; },
     async findCible(domaine, niveau){
@@ -107,6 +140,7 @@ function createMemoryRepo(){
         prenom: row.prenom,
         grade: row.grade || null,
         actif: row.actif !== false,
+        statut_rh: row.statut_rh || (row.actif === false ? 'INACTIF' : 'ACTIF'),
         date_entree: isoDate(row.date_entree) || null,
         date_sortie: isoDate(row.date_sortie) || null,
         source: row.source || 'MANUEL',
@@ -183,6 +217,7 @@ function createMemoryRepo(){
         evenement_id: row.evenement_id || randomUUID(),
         date: isoDate(row.date),
         domaine_code: row.domaine_code,
+        sous_domaine_code: row.sous_domaine_code || null,
         libelle: String(row.libelle).trim(),
         statut: row.statut || 'PLANIFIE',
         origine: row.origine || 'NOMINATIF',
@@ -268,6 +303,7 @@ function createMemoryRepo(){
         statut: row.statut,
         motif_absence: row.motif_absence || null,
         commentaire: row.commentaire || null,
+        cible_suivie_id: row.cible_suivie_id || null,
         role: row.role || 'PARTICIPANT',
         source: row.source || 'SAISIE',
         auteur_id: row.auteur_id || null,
@@ -416,6 +452,12 @@ function createMemoryRepo(){
         nb_excuses: row.nb_excuses,
         nb_non_excuses: row.nb_non_excuses,
         nb_dispenses: row.nb_dispenses,
+        nb_excuses_prive: Number(row.nb_excuses_prive || 0),
+        nb_excuses_professionnel: Number(row.nb_excuses_professionnel || 0),
+        nb_excuses_armee: Number(row.nb_excuses_armee || 0),
+        nb_excuses_accident_maladie: Number(row.nb_excuses_accident_maladie || 0),
+        nb_excuses_non_precise: Number(row.nb_excuses_non_precise || 0),
+        nb_permutations: Number(row.nb_permutations || 0),
         auteur_id: row.auteur_id || null,
         created_at: (quantitatives.get(row.evenement_id) || {}).created_at || now(),
         updated_at: now()

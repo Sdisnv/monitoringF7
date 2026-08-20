@@ -15,6 +15,7 @@ function mapEvent(row){
     evenement_id: row.evenement_id,
     date: dateOnly(row.date),
     domaine_code: row.domaine_code,
+    sous_domaine_code: row.sous_domaine_code || null,
     libelle: row.libelle,
     statut: row.statut,
     origine: row.origine,
@@ -54,6 +55,18 @@ function createPgRepo(client){
       const result = await q('select * from scope_domaines where actif = true order by code');
       return result.rows;
     },
+    async listSousDomaines(){
+      const result = await q('select * from scope_sous_domaines where actif = true order by code');
+      return result.rows;
+    },
+    async listSuiviNominatif(){
+      const result = await q('select * from scope_suivi_nominatif order by portee, date_debut');
+      return result.rows.map((row) => ({
+        ...row,
+        date_debut: dateOnly(row.date_debut),
+        date_fin: dateOnly(row.date_fin)
+      }));
+    },
     async listCibles(){
       const result = await q('select * from scope_cibles where actif = true order by domaine_code, niveau_code');
       return result.rows;
@@ -72,10 +85,11 @@ function createPgRepo(client){
     async insertPersonne(row){
       const id = row.personne_id || randomUUID();
       const result = await q(
-        `insert into scope_personnes(personne_id, nip, nom, prenom, grade, actif, date_entree, date_sortie, source)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
+        `insert into scope_personnes(personne_id, nip, nom, prenom, grade, actif, date_entree, date_sortie, source, statut_rh)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
         [id, row.nip, row.nom, row.prenom, row.grade || null, row.actif !== false,
-          isoDate(row.date_entree), isoDate(row.date_sortie), row.source || 'MANUEL']
+          isoDate(row.date_entree), isoDate(row.date_sortie), row.source || 'MANUEL',
+          row.statut_rh || (row.actif === false ? 'INACTIF' : 'ACTIF')]
       );
       return result.rows[0];
     },
@@ -160,9 +174,9 @@ function createPgRepo(client){
       const modeSuivi = inferModeSuivi(row);
       const result = await q(
         `insert into scope_evenements(
-           evenement_id, date, domaine_code, libelle, statut, origine, mode_suivi, version
-         ) values ($1,$2,$3,$4,$5,$6,$7,1) returning *`,
-        [id, isoDate(row.date), row.domaine_code, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF', modeSuivi]
+           evenement_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi, version
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,1) returning *`,
+        [id, isoDate(row.date), row.domaine_code, row.sous_domaine_code || null, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF', modeSuivi]
       );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){
@@ -299,8 +313,8 @@ function createPgRepo(client){
     async upsertParticipation(row){
       const result = await q(
         `insert into scope_participations(
-           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8)
+           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          on conflict (evenement_id, personne_id) do update set
            statut = excluded.statut,
            motif_absence = excluded.motif_absence,
@@ -308,11 +322,13 @@ function createPgRepo(client){
            role = excluded.role,
            source = excluded.source,
            auteur_id = excluded.auteur_id,
+           cible_suivie_id = excluded.cible_suivie_id,
            updated_at = now()
          returning *`,
         [
           row.evenement_id, row.personne_id, row.statut, row.motif_absence || null,
-          row.commentaire || null, row.role || 'PARTICIPANT', row.source || 'SAISIE', row.auteur_id || null
+          row.commentaire || null, row.role || 'PARTICIPANT', row.source || 'SAISIE', row.auteur_id || null,
+          row.cible_suivie_id || null
         ]
       );
       return result.rows[0];
@@ -480,8 +496,10 @@ function createPgRepo(client){
     async upsertQuantitatifSaisie(row){
       const result = await q(
         `insert into scope_saisies_quantitatives(
-           evenement_id, nb_attendus, nb_presents, nb_excuses, nb_non_excuses, nb_dispenses, auteur_id
-         ) values ($1,$2,$3,$4,$5,$6,$7)
+           evenement_id, nb_attendus, nb_presents, nb_excuses, nb_non_excuses, nb_dispenses, auteur_id,
+           nb_excuses_prive, nb_excuses_professionnel, nb_excuses_armee, nb_excuses_accident_maladie,
+           nb_excuses_non_precise, nb_permutations
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
          on conflict (evenement_id) do update set
            nb_attendus = excluded.nb_attendus,
            nb_presents = excluded.nb_presents,
@@ -489,6 +507,12 @@ function createPgRepo(client){
            nb_non_excuses = excluded.nb_non_excuses,
            nb_dispenses = excluded.nb_dispenses,
            auteur_id = excluded.auteur_id,
+           nb_excuses_prive = excluded.nb_excuses_prive,
+           nb_excuses_professionnel = excluded.nb_excuses_professionnel,
+           nb_excuses_armee = excluded.nb_excuses_armee,
+           nb_excuses_accident_maladie = excluded.nb_excuses_accident_maladie,
+           nb_excuses_non_precise = excluded.nb_excuses_non_precise,
+           nb_permutations = excluded.nb_permutations,
            updated_at = now()
          returning *`,
         [
@@ -498,7 +522,13 @@ function createPgRepo(client){
           row.nb_excuses,
           row.nb_non_excuses,
           row.nb_dispenses,
-          row.auteur_id || null
+          row.auteur_id || null,
+          Number(row.nb_excuses_prive || 0),
+          Number(row.nb_excuses_professionnel || 0),
+          Number(row.nb_excuses_armee || 0),
+          Number(row.nb_excuses_accident_maladie || 0),
+          Number(row.nb_excuses_non_precise || 0),
+          Number(row.nb_permutations || 0)
         ]
       );
       return result.rows[0];

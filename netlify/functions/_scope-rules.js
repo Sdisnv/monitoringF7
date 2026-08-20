@@ -1,7 +1,22 @@
-const STATUTS_TAUX = new Set(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
-const MOTIFS = new Set(['MALADIE', 'ACCIDENT', 'ARMEE', 'PROFESSIONNEL', 'PRIVE', 'AUTRE']);
+const {
+  MOTIFS_CANONIQUES,
+  MOTIFS_HISTORIQUES,
+  STATUT_PERMUTATION,
+  normalizeMotifKey,
+  emptyExcuseBreakdown
+} = require('./_scope-model');
+
+const STATUTS_TAUX = new Set(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', STATUT_PERMUTATION]);
+const MOTIFS = new Set([
+  ...Object.values(MOTIFS_CANONIQUES),
+  'MALADIE',
+  'ACCIDENT',
+  'AUTRE'
+]);
+const MOTIFS_LECTURE = new Set([...MOTIFS, MOTIFS_HISTORIQUES.NON_PRECISE]);
 const STATUTS_PARTICIPATION = new Set([
-  'NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'NON_CONCERNE'
+  'NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'NON_CONCERNE',
+  STATUT_PERMUTATION
 ]);
 const ROLES_ENCADREMENT = new Set(['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE']);
 const ROLES_EXCEPTION = new Set(['RENFORT', 'REMPLACANT', 'PARTICIPANT']);
@@ -60,12 +75,20 @@ function computeTaux(participations, attendus){
   let dispense = 0;
   let nonRenseigne = 0;
   let nonConcerne = 0;
+  let permutations = 0;
+  const excuses = emptyExcuseBreakdown();
   for(const p of participations || []){
     const id = String(p.personne_id || p.personneId);
     if(!inclus.has(id)) continue;
     const statut = p.statut;
-    if(statut === 'PRESENT') present += 1;
-    else if(statut === 'ABSENT_EXCUSE') excuse += 1;
+    if(statut === 'PRESENT' || statut === STATUT_PERMUTATION){
+      present += 1;
+      if(statut === STATUT_PERMUTATION) permutations += 1;
+    }
+    else if(statut === 'ABSENT_EXCUSE'){
+      excuse += 1;
+      excuses[normalizeMotifKey(p.motif_absence)] += 1;
+    }
     else if(statut === 'ABSENT_NON_EXCUSE') absent += 1;
     else if(statut === 'DISPENSE') dispense += 1;
     else if(statut === 'NON_RENSEIGNE') nonRenseigne += 1;
@@ -82,20 +105,42 @@ function computeTaux(participations, attendus){
     nonExcuses: absent,
     dispenses: dispense,
     nonRenseignes: nonRenseigne,
-    nonConcernes: nonConcerne
+    nonConcernes: nonConcerne,
+    permutations,
+    excusesPrive: excuses.prive,
+    excusesProfessionnel: excuses.professionnel,
+    excusesArmee: excuses.armee,
+    excusesAccidentMaladie: excuses.accidentMaladie,
+    excusesNonPrecise: excuses.nonPrecise
   };
 }
 
-function validateParticipationPatch(item){
+function validateParticipationPatch(item, ctx = {}){
   const statut = String(item.statut || '');
   if(!STATUTS_PARTICIPATION.has(statut)){
     throw new HttpError(422, 'statut_invalide', `Statut de participation invalide : ${statut}.`);
   }
   const motif = item.motif_absence || item.motifAbsence || null;
   const commentaire = item.commentaire || null;
+  const cibleSuivie = item.cible_suivie_id || item.cibleSuivieId || null;
+  if(statut === STATUT_PERMUTATION){
+    const domaine = String(ctx.domaineCode || ctx.domaine_code || '').toUpperCase();
+    if(domaine && domaine !== 'DAP'){
+      throw new HttpError(422, 'permutation_hors_dap', 'La permutation n’est définie que pour le domaine DAP.');
+    }
+    if(motif){
+      throw new HttpError(422, 'permutation_sans_motif', 'Une permutation n’est pas une absence : aucun motif d’excuse.');
+    }
+    return {
+      statut,
+      motif_absence: null,
+      commentaire: commentaire ? String(commentaire) : null,
+      cible_suivie_id: cibleSuivie || null
+    };
+  }
   if(statut === 'ABSENT_EXCUSE'){
     if(!motif || !MOTIFS.has(String(motif))){
-      throw new HttpError(422, 'motif_obligatoire', 'Une absence excusée exige un motif du référentiel.');
+      throw new HttpError(422, 'motif_obligatoire', 'Une absence excusée exige un motif du référentiel (privé, professionnel, armée, accident/maladie).');
     }
     if(motif === 'AUTRE' && !String(commentaire || '').trim()){
       throw new HttpError(422, 'commentaire_obligatoire', 'Le motif AUTRE exige un commentaire.');
@@ -104,7 +149,8 @@ function validateParticipationPatch(item){
   return {
     statut,
     motif_absence: statut === 'ABSENT_EXCUSE' ? String(motif) : null,
-    commentaire: commentaire ? String(commentaire) : null
+    commentaire: commentaire ? String(commentaire) : null,
+    cible_suivie_id: null
   };
 }
 
@@ -123,7 +169,7 @@ function validateCloture(evenement, attendus, participations){
       errors.push({ code: 'non_renseigne', personne_id: attendu.personne_id, message: 'Une personne attendue est encore NON_RENSEIGNE.' });
       continue;
     }
-    try { validateParticipationPatch(p); }
+    try { validateParticipationPatch(p, { domaineCode: evenement && evenement.domaine_code }); }
     catch(error){
       if(error instanceof HttpError) errors.push({ code: error.error, personne_id: attendu.personne_id, message: error.message });
       else throw error;
@@ -152,6 +198,7 @@ module.exports = {
   rangesOverlap,
   STATUTS_TAUX,
   MOTIFS,
+  MOTIFS_LECTURE,
   STATUTS_PARTICIPATION,
   ROLES_ENCADREMENT,
   ROLES_EXCEPTION

@@ -17,6 +17,11 @@ const {
   officialFromQuantitatif,
   parseQuantitatifInput
 } = require('./_scope-analytics');
+const {
+  domaineAffiche,
+  isSousDomaineFospec,
+  resolveSuiviNominatif
+} = require('./_scope-model');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -53,6 +58,9 @@ function volumesOrThrow(body){
   if(parsed.error === 'not_integer'){
     throw new HttpError(422, 'volume_invalide', 'Les volumes doivent être des entiers.');
   }
+  if(parsed.error === 'motifs_incoherents'){
+    throw new HttpError(422, 'motifs_incoherents', 'La somme des motifs d’excuse doit être égale aux excusés.');
+  }
   return parsed.row;
 }
 
@@ -81,20 +89,49 @@ async function bumpOrConflict(repo, eventId, baseVersion, patch){
 
 function createScopeService(repo){
   async function referentiels(){
-    const [domaines, cibles] = await Promise.all([repo.listDomaines(), repo.listCibles()]);
-    return {
-      domaines: domaines.map(d => ({
-        code: d.code,
-        libelle: d.libelle,
-        libelleAffiche: d.code === 'PR' ? 'PAPR' : d.code,
-        actif: d.actif !== false
+    const [domaines, cibles, suivi] = await Promise.all([
+      repo.listDomaines(),
+      repo.listCibles(),
+      repo.listSuiviNominatif ? repo.listSuiviNominatif() : Promise.resolve([])
+    ]);
+    const mappedDomaines = domaines.map(d => ({
+      code: d.code,
+      libelle: d.libelle,
+      libelleAffiche: d.libelle_affiche || domaineAffiche(d.code, d),
+      nature: d.nature || (d.parent_code ? 'SOUS_DOMAINE' : 'DOMAINE'),
+      parentCode: d.parent_code || d.parentCode || null,
+      actif: d.actif !== false
+    }));
+    const mappedCibles = cibles.map(c => ({
+      cibleId: c.cible_id,
+      domaineCode: c.domaine_code,
+      niveauCode: c.niveau_code,
+      libelle: c.libelle,
+      actif: c.actif !== false
+    }));
+    const roots = mappedDomaines.filter((d) => d.nature !== 'SOUS_DOMAINE' && !d.parentCode);
+    const arbre = roots.map((d) => ({
+      ...d,
+      sousDomaines: mappedDomaines.filter((s) => s.parentCode === d.code).map((s) => ({
+        ...s,
+        cibles: mappedCibles.filter((c) => c.domaineCode === s.code)
       })),
-      cibles: cibles.map(c => ({
-        cibleId: c.cible_id,
-        domaineCode: c.domaine_code,
-        niveauCode: c.niveau_code,
-        libelle: c.libelle,
-        actif: c.actif !== false
+      cibles: mappedCibles.filter((c) => c.domaineCode === d.code)
+    }));
+    return {
+      domaines: mappedDomaines,
+      cibles: mappedCibles,
+      arbre,
+      suiviNominatif: (suivi || []).map((row) => ({
+        suiviId: row.suivi_id || row.suiviId,
+        portee: row.portee,
+        domaineCode: row.domaine_code || row.domaineCode || null,
+        sousDomaineCode: row.sous_domaine_code || row.sousDomaineCode || null,
+        cibleId: row.cible_id || row.cibleId || null,
+        nominatifAutorise: row.nominatif_autorise !== false && row.nominatifAutorise !== false,
+        dateDebut: row.date_debut || row.dateDebut,
+        dateFin: row.date_fin || row.dateFin || null,
+        commentaire: row.commentaire || null
       }))
     };
   }
@@ -126,21 +163,36 @@ function createScopeService(repo){
   async function createEvenement(body, actor){
     const date = isoDate(body.date);
     if(!date) throw new HttpError(400, 'date_invalide', 'Date d’événement invalide.');
-    const domaine = String(body.domaineCode || body.domaine_code || '').trim();
+    let domaine = String(body.domaineCode || body.domaine_code || '').trim();
+    const sousDomaineRequested = String(body.sousDomaineCode || body.sous_domaine_code || '').trim().toUpperCase();
     const domaines = await repo.listDomaines();
     if(!domaines.some(d => d.code === domaine && d.actif !== false)){
       throw new HttpError(400, 'domaine_inconnu', 'Domaine inconnu.');
+    }
+    if(domaine === 'FOSPEC' && (sousDomaineRequested === 'PR' || sousDomaineRequested === 'AUTO')){
+      domaine = sousDomaineRequested;
     }
     const libelle = String(body.libelle || '').trim();
     if(!libelle) throw new HttpError(400, 'libelle_vide', 'Le libellé est obligatoire.');
     const cibleIds = Array.isArray(body.cibleIds || body.cible_ids) ? (body.cibleIds || body.cible_ids) : [];
     if(!cibleIds.length) throw new HttpError(400, 'cibles_obligatoires', 'Au moins une cible est obligatoire.');
     const cibles = await repo.listCibles();
+    const resolvedCibles = [];
     for(const id of cibleIds){
       const cible = cibles.find(c => c.cible_id === id);
-      if(!cible || cible.domaine_code !== domaine){
+      if(!cible){
         throw new HttpError(400, 'cible_invalide', 'Cible inconnue ou hors domaine.');
       }
+      resolvedCibles.push(cible);
+    }
+    const leafDomaines = [...new Set(resolvedCibles.map((c) => c.domaine_code))];
+    if(leafDomaines.length !== 1){
+      throw new HttpError(400, 'cible_invalide', 'Les cibles d’un exercice doivent appartenir au même domaine (ou sous-domaine).');
+    }
+    const leaf = leafDomaines[0];
+    if(domaine !== leaf){
+      if(domaine === 'FOSPEC' && isSousDomaineFospec(leaf)) domaine = leaf;
+      else throw new HttpError(400, 'cible_invalide', 'Cible inconnue ou hors domaine.');
     }
     const origine = body.origine === 'LEGACY_AGGREGATED' ? 'LEGACY_AGGREGATED' : 'NOMINATIF';
     let modeSuivi = inferModeSuivi({ origine, mode_suivi: body.modeSuivi || body.mode_suivi });
@@ -154,9 +206,22 @@ function createScopeService(repo){
       else if(requested === MODES.NOMINATIF) modeSuivi = MODES.NOMINATIF;
       else modeSuivi = MODES.NOMINATIF;
     }
+    if(modeSuivi === MODES.NOMINATIF && origine !== 'LEGACY_AGGREGATED'){
+      const rules = repo.listSuiviNominatif ? await repo.listSuiviNominatif() : [];
+      const resolution = resolveSuiviNominatif(rules, {
+        date,
+        domaineCode: domaine,
+        sousDomaineCode: isSousDomaineFospec(domaine) ? domaine : null,
+        cibleId: cibleIds[0]
+      });
+      if(resolution.possible === false){
+        throw new HttpError(422, 'nominatif_non_autorise', 'Le suivi nominatif n’est pas autorisé pour ce périmètre à cette date.');
+      }
+    }
     const evenement = await repo.insertEvenement({
       date,
       domaine_code: domaine,
+      sous_domaine_code: isSousDomaineFospec(domaine) ? domaine : null,
       libelle,
       statut: 'PLANIFIE',
       origine,
@@ -403,7 +468,7 @@ function createScopeService(repo){
         if(!attendu || attendu.inclus === false){
           throw new HttpError(422, 'non_attendu', 'Saisie réservée aux personnes attendues incluses.', { personneId });
         }
-        const patch = validateParticipationPatch(item);
+        const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code });
         const existing = await tx.getParticipation(eventId, personneId);
         await tx.upsertParticipation({
           ...(existing || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
@@ -977,9 +1042,10 @@ function createScopeService(repo){
       suggested: unique[0],
       requireExplicit: false,
       reason: unique[0] === MODES.NOMINATIF ? 'bascule_nominative' : 'defaut_quantitatif',
+      nominatifPossible: true,
       message: unique[0] === MODES.NOMINATIF
         ? 'Une règle de bascule nominative s’applique à cette date. Mode proposé : Nominatif.'
-        : 'Aucune bascule nominative à cette date. Mode proposé : Quantitatif.',
+        : 'Aucune bascule nominative à cette date. Mode proposé : Quantitatif. Le nominatif reste possible si vous le choisissez.',
       details
     };
   }
@@ -1001,6 +1067,9 @@ function createScopeService(repo){
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
     requireQuantitatif(evenement);
     const row = volumesOrThrow(body);
+    if(Number(row.nb_permutations || 0) > 0 && evenement.domaine_code !== 'DAP'){
+      throw new HttpError(422, 'permutation_hors_dap', 'Les permutations quantitatives ne sont définies que pour le domaine DAP.');
+    }
     const official = officialFromQuantitatif(row);
     if(!official){
       return {
@@ -1009,7 +1078,7 @@ function createScopeService(repo){
         officiel: false,
         volumes: row,
         taux: null,
-        message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus.'
+        message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus. Les permutations sont un sous-ensemble des présents.'
       };
     }
     const realise = evenement.statut === 'REALISE';
@@ -1038,6 +1107,9 @@ function createScopeService(repo){
       requireQuantitatif(evenement);
       if(evenement.statut !== 'PLANIFIE'){
         throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
+      }
+      if(Number(row.nb_permutations || 0) > 0 && evenement.domaine_code !== 'DAP'){
+        throw new HttpError(422, 'permutation_hors_dap', 'Les permutations quantitatives ne sont définies que pour le domaine DAP.');
       }
       const saved = await tx.upsertQuantitatifSaisie({
         evenement_id: eventId,

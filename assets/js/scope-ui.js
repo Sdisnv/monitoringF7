@@ -68,7 +68,7 @@
     modeChoice: '',
     modeTouched: false,
     modeSuggestion: null,
-    volumes: { attendus: '', presents: '', excuses: '', nonExcuses: '', dispenses: '0' },
+    volumes: { attendus: '', presents: '', excuses: '', excusesPrive: '', excusesProfessionnel: '', excusesArmee: '', excusesAccidentMaladie: '', excusesNonPrecise: '', nonExcuses: '', dispenses: '0', permutations: '0' },
     qtyPreview: null,
     objectifs: [],
     objectifForm: {
@@ -143,7 +143,12 @@
 
   async function loadReferentiels() {
     const data = await client.referentiels();
-    state.referentiels = { domaines: data.domaines || [], cibles: data.cibles || [] };
+    state.referentiels = {
+      domaines: data.domaines || [],
+      cibles: data.cibles || [],
+      arbre: data.arbre || [],
+      suiviNominatif: data.suiviNominatif || []
+    };
   }
 
   async function loadList() {
@@ -224,13 +229,19 @@
 
   function volumesFromFiche() {
     const s = state.fiche && (state.fiche.saisieQuantitative || state.fiche.saisie_quantitative);
-    if (!s) return { attendus: '', presents: '', excuses: '', nonExcuses: '', dispenses: '0' };
+    if (!s) return { attendus: '', presents: '', excuses: '', excusesPrive: '', excusesProfessionnel: '', excusesArmee: '', excusesAccidentMaladie: '', excusesNonPrecise: '', nonExcuses: '', dispenses: '0', permutations: '0' };
     return {
       attendus: s.nb_attendus == null ? '' : String(s.nb_attendus),
       presents: s.nb_presents == null ? '' : String(s.nb_presents),
       excuses: s.nb_excuses == null ? '' : String(s.nb_excuses),
+      excusesPrive: s.nb_excuses_prive == null ? '' : String(s.nb_excuses_prive),
+      excusesProfessionnel: s.nb_excuses_professionnel == null ? '' : String(s.nb_excuses_professionnel),
+      excusesArmee: s.nb_excuses_armee == null ? '' : String(s.nb_excuses_armee),
+      excusesAccidentMaladie: s.nb_excuses_accident_maladie == null ? '' : String(s.nb_excuses_accident_maladie),
+      excusesNonPrecise: s.nb_excuses_non_precise == null ? '' : String(s.nb_excuses_non_precise),
       nonExcuses: s.nb_non_excuses == null ? '' : String(s.nb_non_excuses),
-      dispenses: String(s.nb_dispenses == null ? 0 : s.nb_dispenses)
+      dispenses: String(s.nb_dispenses == null ? 0 : s.nb_dispenses),
+      permutations: String(s.nb_permutations == null ? 0 : s.nb_permutations)
     };
   }
 
@@ -328,7 +339,8 @@
         <button type="button" data-nav="exercices" aria-current="${nav === 'exercices' ? 'page' : 'false'}">Exercices</button>
         <button type="button" data-nav="personnel" aria-current="${nav === 'personnel' ? 'page' : 'false'}">Personnel</button>`;
     const menuExtras = `
-        <a href="#/reglages/objectifs" ${nav === 'reglages' ? 'aria-current="page"' : ''}>Réglages · Objectifs</a>`;
+        <a href="#/reglages/objectifs" ${nav === 'reglages' ? 'aria-current="page"' : ''}>Réglages · Objectifs</a>
+        <a href="#/reglages/suivi">Réglages · Suivi nominatif</a>`;
     return `
       <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
         <div class="scope-header-inner">
@@ -874,6 +886,41 @@
     `;
   }
 
+  function renderSuiviNominatif() {
+    const tree = (state.referentiels && state.referentiels.arbre) || [];
+    const rules = (state.referentiels && state.referentiels.suiviNominatif) || [];
+    return `
+      <div class="scope-crumb">Réglages / Suivi nominatif</div>
+      <div class="scope-main">
+        <div class="scope-card">
+          <h2 style="margin-top:0">Suivi nominatif configurable</h2>
+          <p class="scope-mode-hint">Le nominatif est possible pour tous les domaines, sous-domaines et cibles. Ce réglage propose un mode à la création ou à l’import. Il ne transforme pas les événements existants et ne crée pas de personnes fictives.</p>
+          <p>Résolution : <strong>CIBLE &gt; SOUS-DOMAINE &gt; DOMAINE &gt; GLOBAL</strong>.</p>
+          <div class="scope-table-wrap">
+            <table class="scope-table">
+              <thead><tr><th>Portée</th><th>Nominatif autorisé</th><th>Début</th></tr></thead>
+              <tbody>
+                ${rules.length ? rules.map((row) => `<tr>
+                  <td data-label="Portée">${escapeHtml(row.portee)}${row.domaineCode ? ` · ${escapeHtml(row.domaineCode)}` : ''}${row.sousDomaineCode ? ` / ${escapeHtml(row.sousDomaineCode)}` : ''}</td>
+                  <td data-label="Nominatif">${row.nominatifAutorise ? 'Oui' : 'Non'}</td>
+                  <td data-label="Début">${escapeHtml(L.formatDate(row.dateDebut))}</td>
+                </tr>`).join('') : '<tr><td colspan="3">Règle par défaut : nominatif possible.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="scope-card" style="margin-top:12px">
+          <h2 style="margin-top:0">Référentiel</h2>
+          <p class="scope-mode-hint">PR (PAPR) et AUTO sont des sous-domaines de FOSPEC. Les codes domaine PR/AUTO sont conservés pour les événements et les cibles.</p>
+          ${tree.map((d) => `
+            <p><strong>${escapeHtml(d.libelleAffiche || d.code)}</strong> — ${escapeHtml(d.libelle || '')}</p>
+            ${(d.sousDomaines || []).map((s) => `<p style="margin-left:16px">${escapeHtml(s.libelleAffiche || s.code)} — ${escapeHtml(s.libelle || '')}</p>`).join('')}
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function volumesBlock(saisie, opts) {
     const s = saisie || {};
     const t = (opts && opts.taux) || {};
@@ -885,8 +932,14 @@
           <div><dt>Attendus</dt><dd>${escapeHtml(String(s.nb_attendus ?? '—'))}</dd></div>
           <div><dt>Présents</dt><dd>${escapeHtml(String(s.nb_presents ?? '—'))}</dd></div>
           <div><dt>Excusés</dt><dd>${escapeHtml(String(s.nb_excuses ?? '—'))}</dd></div>
+          <div><dt>dont privé</dt><dd>${escapeHtml(String(s.nb_excuses_prive ?? '—'))}</dd></div>
+          <div><dt>dont professionnel</dt><dd>${escapeHtml(String(s.nb_excuses_professionnel ?? '—'))}</dd></div>
+          <div><dt>dont armée</dt><dd>${escapeHtml(String(s.nb_excuses_armee ?? '—'))}</dd></div>
+          <div><dt>dont accident/maladie</dt><dd>${escapeHtml(String(s.nb_excuses_accident_maladie ?? '—'))}</dd></div>
+          ${Number(s.nb_excuses_non_precise) > 0 ? `<div><dt>dont non précisé</dt><dd>${escapeHtml(String(s.nb_excuses_non_precise))}</dd></div>` : ''}
           <div><dt>Non excusés</dt><dd>${escapeHtml(String(s.nb_non_excuses ?? '—'))}</dd></div>
           <div><dt>Dispensés</dt><dd>${escapeHtml(String(s.nb_dispenses ?? '—'))}</dd></div>
+          ${Number(s.nb_permutations) > 0 ? `<div><dt>Dont permutations</dt><dd>${escapeHtml(String(s.nb_permutations))}</dd></div>` : ''}
         </dl>
       </div>
       <div class="scope-card" style="margin-top:12px">
@@ -1076,11 +1129,16 @@
           <form class="scope-qty-form" id="qty-form" autocomplete="off">
             <div class="scope-field scope-qty-field"><label for="qty-attendus">Attendus</label><input id="qty-attendus" name="attendus" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.attendus)}"></div>
             <div class="scope-field scope-qty-field"><label for="qty-presents">Présents</label><input id="qty-presents" name="presents" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.presents)}"></div>
-            <div class="scope-field scope-qty-field"><label for="qty-excuses">Excusés</label><input id="qty-excuses" name="excuses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excuses)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-excuses-prive">Excusés privé</label><input id="qty-excuses-prive" name="excusesPrive" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excusesPrive)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-excuses-pro">Excusés professionnel</label><input id="qty-excuses-pro" name="excusesProfessionnel" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excusesProfessionnel)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-excuses-armee">Excusés armée</label><input id="qty-excuses-armee" name="excusesArmee" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excusesArmee)}"></div>
+            <div class="scope-field scope-qty-field"><label for="qty-excuses-am">Excusés accident/maladie</label><input id="qty-excuses-am" name="excusesAccidentMaladie" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excusesAccidentMaladie)}"></div>
+            ${Number(v.excusesNonPrecise) > 0 ? `<div class="scope-field scope-qty-field"><label for="qty-excuses-np">Excusés non précisé (historique)</label><input id="qty-excuses-np" name="excusesNonPrecise" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.excusesNonPrecise)}"></div>` : ''}
             <div class="scope-field scope-qty-field"><label for="qty-non-excuses">Non excusés</label><input id="qty-non-excuses" name="nonExcuses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.nonExcuses)}"></div>
             <div class="scope-field scope-qty-field"><label for="qty-dispenses">Dispensés</label><input id="qty-dispenses" name="dispenses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.dispenses)}"></div>
+            ${ev.domaine_code === 'DAP' ? `<div class="scope-field scope-qty-field"><label for="qty-permutations">Dont permutations</label><input id="qty-permutations" name="permutations" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.permutations || '0')}"></div>` : ''}
           </form>
-          <p class="scope-qty-error" ${equal ? 'hidden' : ''}>Présents + excusés + non excusés + dispensés doit être égal aux attendus. Aucune correction automatique.</p>
+          <p class="scope-qty-error" ${equal ? 'hidden' : ''}>Présents + excusés (somme des motifs) + non excusés + dispensés doit être égal aux attendus. Les permutations sont un sous-ensemble des présents, jamais additionnées une seconde fois.</p>
           <div class="scope-card scope-qty-preview">
             <h3 style="margin-top:0">Aperçu du taux</h3>
             <p style="color:var(--scope-muted);margin-top:0">${escapeHtml((preview && preview.message) || 'Aperçu calculé par le serveur. Ce n’est pas encore un taux officiel réalisé.')}</p>
@@ -1098,6 +1156,9 @@
   }
 
   function renderSaisieRows(rows) {
+    const isDap = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code === 'DAP';
+    const statuses = [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
+    if (isDap) statuses.push(['PERMUTATION', 'Permutation']);
     return `
       <div class="scope-table-wrap scope-saisie-desktop">
         <table class="scope-table">
@@ -1109,13 +1170,13 @@
               <td data-label="Cible">${escapeHtml(row.cible)}</td>
               <td data-label="Présence">
                 <div class="scope-status-row">
-                  ${[['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']].map(([v, l]) => `
+                  ${statuses.map(([v, l]) => `
                     <button type="button" data-status="${v}" aria-pressed="${row.statut === v}">${l}</button>
                   `).join('')}
                 </div>
                 ${row.statut === 'ABSENT_EXCUSE' ? `<select data-motif style="margin-top:6px;height:36px">
                   <option value="">Motif</option>
-                  ${L.MOTIFS.map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
+                  ${(L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS).map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
                 </select>` : ''}
                 ${row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE' ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">` : ''}
               </td>
@@ -1291,6 +1352,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme CSV</h2>
           <p>Le CSV alimente SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
+          <p class="scope-mode-hint">Le CSV Monitoring F7 22 colonnes reste disponible. Un format SCOPE natif (date, domaine, sous-domaine, cibles, libellé, mode, comptabilisation, identifiant externe) est défini pour les imports futurs : preview obligatoire, commit transactionnel, idempotence. L’écriture de ce format n’est pas ouverte dans MODEL-2.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
           <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
             <p>Glissez un fichier CSV ici ou</p>
@@ -1328,16 +1390,30 @@
     state.volumes = {
       attendus: field('qty-attendus', state.volumes.attendus),
       presents: field('qty-presents', state.volumes.presents),
-      excuses: field('qty-excuses', state.volumes.excuses),
+      excusesPrive: field('qty-excuses-prive', state.volumes.excusesPrive),
+      excusesProfessionnel: field('qty-excuses-pro', state.volumes.excusesProfessionnel),
+      excusesArmee: field('qty-excuses-armee', state.volumes.excusesArmee),
+      excusesAccidentMaladie: field('qty-excuses-am', state.volumes.excusesAccidentMaladie),
+      excusesNonPrecise: field('qty-excuses-np', state.volumes.excusesNonPrecise || '0'),
       nonExcuses: field('qty-non-excuses', state.volumes.nonExcuses),
-      dispenses: field('qty-dispenses', state.volumes.dispenses || '0')
+      dispenses: field('qty-dispenses', state.volumes.dispenses || '0'),
+      permutations: field('qty-permutations', state.volumes.permutations || '0')
     };
+    const motifSum = ['excusesPrive', 'excusesProfessionnel', 'excusesArmee', 'excusesAccidentMaladie', 'excusesNonPrecise']
+      .reduce((sum, key) => sum + (state.volumes[key] === '' ? 0 : Number(state.volumes[key] || 0)), 0);
+    state.volumes.excuses = String(motifSum);
+    const num = (key) => state.volumes[key] === '' ? undefined : Number(state.volumes[key]);
     return {
-      attendus: state.volumes.attendus === '' ? undefined : Number(state.volumes.attendus),
-      presents: state.volumes.presents === '' ? undefined : Number(state.volumes.presents),
-      excuses: state.volumes.excuses === '' ? undefined : Number(state.volumes.excuses),
-      nonExcuses: state.volumes.nonExcuses === '' ? undefined : Number(state.volumes.nonExcuses),
-      dispenses: state.volumes.dispenses === '' ? 0 : Number(state.volumes.dispenses)
+      attendus: num('attendus'),
+      presents: num('presents'),
+      excusesPrive: num('excusesPrive') || 0,
+      excusesProfessionnel: num('excusesProfessionnel') || 0,
+      excusesArmee: num('excusesArmee') || 0,
+      excusesAccidentMaladie: num('excusesAccidentMaladie') || 0,
+      excusesNonPrecise: num('excusesNonPrecise') || 0,
+      nonExcuses: num('nonExcuses'),
+      dispenses: num('dispenses') || 0,
+      permutations: num('permutations') || 0
     };
   }
 
@@ -1407,6 +1483,7 @@
     const body = r.screen === 'vue' ? renderVue()
       : r.screen === 'personnel' ? renderPlaceholder('Personnel', 'Personnel')
         : r.screen === 'objectifs' ? renderObjectifs()
+          : r.screen === 'suivi' ? renderSuiviNominatif()
           : r.screen === 'nouveau' ? renderNouveau()
             : r.screen === 'saisie' ? renderSaisie()
               : r.screen === 'fiche' ? renderFiche()
@@ -1945,6 +2022,7 @@
     const r = route();
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
+      if (r.screen === 'objectifs') await loadObjectifs();
       if (mode === 'live' && client.listPersonnes && state.personCount == null) {
         const people = await client.listPersonnes();
         state.personCount = (people.personnes || []).length;

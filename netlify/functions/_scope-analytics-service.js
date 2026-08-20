@@ -367,7 +367,16 @@ function createScopeAnalyticsService(repo){
         denominator: evaluated.officiel.denominator,
         percentage: evaluated.officiel.percentage,
         eventCount: evaluated.officiel.eventCount,
-        volumes: evaluated.officiel.volumes
+        volumes: evaluated.officiel.volumes,
+        excuseMotifs: {
+          prive: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.excusesPrive) || 0),
+          professionnel: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.excusesProfessionnel) || 0),
+          armee: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.excusesArmee) || 0),
+          accidentMaladie: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.excusesAccidentMaladie) || 0),
+          nonPrecise: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.excusesNonPrecise) || 0),
+          total: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.excuses) || 0)
+        },
+        permutations: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.permutations) || 0)
       },
       exclusions: evaluated.exclusions,
       objective: evaluated.objective,
