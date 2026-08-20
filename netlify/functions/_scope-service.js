@@ -20,6 +20,7 @@ const {
 } = require('./_scope-personnel');
 const personnelSync = require('./_scope-personnel-sync');
 const csvImport = require('./_scope-csv-import');
+const importContract = require('./_scope-import-contract');
 const {
   inferModeSuivi,
   MODES,
@@ -1183,14 +1184,30 @@ function createScopeService(repo){
   }
 
   async function previewContext(){
-    const [domaines, cibles, rules, existingEvents, importedFingerprints] = await Promise.all([
+    const [domaines, cibles, rules, existingEvents, importedFingerprints, suiviRules] = await Promise.all([
       repo.listDomaines(),
       repo.listCibles(),
       rulesList(),
       repo.listEvenements({}),
-      repo.listImportedFingerprints ? repo.listImportedFingerprints() : []
+      repo.listImportedFingerprints ? repo.listImportedFingerprints() : [],
+      repo.listSuiviNominatif ? repo.listSuiviNominatif() : []
     ]);
-    return { domaines, cibles, rules, existingEvents, importedFingerprints };
+    return { domaines, cibles, rules, existingEvents, importedFingerprints, suiviRules };
+  }
+
+  async function existingEventsWithCibles(events){
+    const list = events || [];
+    if(!list.length || !repo.listEventCiblesForEvents){
+      return list.map((e) => ({ ...e, cibles: [] }));
+    }
+    const rows = await repo.listEventCiblesForEvents(list.map((e) => e.evenement_id));
+    const byId = {};
+    (rows || []).forEach((row) => {
+      const id = row.evenement_id;
+      if(!byId[id]) byId[id] = [];
+      byId[id].push(row);
+    });
+    return list.map((e) => ({ ...e, cibles: byId[e.evenement_id] || [] }));
   }
 
   function previewFromCsv(csvText, context){
@@ -1201,6 +1218,7 @@ function createScopeService(repo){
     const lignes = csvImport.buildPreviewRows(parsed, context);
     const summary = csvImport.summarizePreview(lignes);
     return {
+      format: csvImport.IMPORT_PROFIL,
       profil: csvImport.IMPORT_PROFIL,
       horizonNominatifConnu: csvImport.earliestNominativeHorizon(context.rules || []),
       separator: parsed.separator,
@@ -1212,14 +1230,188 @@ function createScopeService(repo){
     };
   }
 
+  async function previewNativeContext(body){
+    const ctx = await previewContext();
+    const evenementsExistants = await existingEventsWithCibles(ctx.existingEvents);
+    return {
+      cibles: ctx.cibles,
+      suiviRules: ctx.suiviRules || [],
+      importedFingerprints: ctx.importedFingerprints || [],
+      evenementsExistants,
+      decisions: body?.decisions || {}
+    };
+  }
+
   async function previewImportEvenements(body){
     const csvText = String(body?.csvText || body?.csv || '');
-    const preview = previewFromCsv(csvText, await previewContext());
-    return { ...preview, ecriture: false };
+    if(!csvText.trim()){
+      throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
+    }
+    const format = importContract.detectCsvFormatFromText(csvText);
+    if(format === importContract.FORMAT_NATIVE){
+      const preview = importContract.previewScopeImport(csvText, await previewNativeContext(body));
+      if(preview.error === 'fichier_vide'){
+        throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
+      }
+      return { ...preview, ecriture: false };
+    }
+    if(format === importContract.FORMAT_F7){
+      const preview = previewFromCsv(csvText, await previewContext());
+      return { ...preview, ecriture: false };
+    }
+    throw new HttpError(400, 'format_csv_inconnu', 'Format CSV non reconnu. Utilisez le programme SCOPE (date;domaine;cibles;libelle;mode_suivi) ou l’historique Monitoring F7 (22 colonnes).');
+  }
+
+  async function commitNativeImport(body, actor){
+    const csvText = String(body?.csvText || body?.csv || '');
+    const filename = String(body?.filename || body?.sourceFilename || '').slice(0, 240);
+    const excluded = new Set(
+      (Array.isArray(body?.excludedLineNos) ? body.excludedLineNos : [])
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n > 0)
+    );
+    const preview = importContract.previewScopeImport(csvText, await previewNativeContext(body));
+    if(!body?.previewToken){
+      throw new HttpError(400, 'preview_token_requis', 'Relancez le contrôle (preview) avant de confirmer l’import.');
+    }
+    if(preview.previewToken && body.previewToken !== preview.previewToken){
+      throw new HttpError(409, 'preview_obsolete', 'La preview n’est plus à jour. Relancez le contrôle avant de confirmer.', {
+        previewToken: preview.previewToken
+      });
+    }
+    const included = preview.lignes.filter((l) => !excluded.has(l.ligneNo));
+    const blocking = included.filter((l) =>
+      String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT' || l.statut === 'A_ARBITRER'
+    );
+    if(blocking.length){
+      throw new HttpError(422, 'import_refuse', 'Des lignes en erreur ou à arbitrer doivent être corrigées ou exclues avant commit.', {
+        erreurs: blocking.map((l) => ({ ligneNo: l.ligneNo, statut: l.statut, raison: l.raison })),
+        summary: preview.summary
+      });
+    }
+    if(!included.length){
+      throw new HttpError(400, 'import_vide', 'Aucune ligne à importer.');
+    }
+
+    return repo.withTransaction(async (tx) => {
+      const sourceSha = importContract.sha256Hex(csvText);
+      const created = [];
+      const skipped = [];
+      const imported = [];
+
+      for(const line of included){
+        if(line.actionPrevue === 'IGNORER_IDEMPOTENT' || line.statut === 'DEJA_IMPORTE' || line.statut === 'DEJA_PRESENT'){
+          skipped.push({ ligneNo: line.ligneNo, statut: line.statut, fingerprint: line.fingerprint });
+          continue;
+        }
+        const evenement = await tx.insertEvenement({
+          date: line.date,
+          domaine_code: line.domaineStockage,
+          sous_domaine_code: line.sousDomaine || null,
+          libelle: line.libelle,
+          statut: 'PLANIFIE',
+          origine: 'IMPORT_CSV',
+          mode_suivi: line.modePropose,
+          identifiant_externe: line.identifiantExterne || null,
+          cible_ids: (line.cibles || []).map((c) => c.cibleId)
+        });
+        created.push({
+          ligneNo: line.ligneNo,
+          evenementId: evenement.evenement_id,
+          mode: line.modePropose,
+          date: line.date
+        });
+        imported.push({ line, evenement });
+      }
+
+      const importRow = await tx.insertImport({
+        source_filename: filename || null,
+        source_sha256: sourceSha,
+        imported_par: actorId(actor),
+        statut: 'COMMITE',
+        nb_lignes: preview.lignes.length,
+        rapport: {
+          format: importContract.FORMAT_NATIVE,
+          imported: created.length,
+          skipped: skipped.length,
+          excluded: [...excluded]
+        }
+      });
+
+      for(const line of preview.lignes){
+        if(excluded.has(line.ligneNo)){
+          await tx.insertImportLigne({
+            import_id: importRow.import_id,
+            ligne_no: line.ligneNo,
+            fingerprint: line.fingerprint,
+            statut: 'EXCLU',
+            type_propose: line.modePropose,
+            payload_source: { format: importContract.FORMAT_NATIVE, fields: line },
+            raison: line.raison,
+            action: 'EXCLU'
+          });
+          continue;
+        }
+        const done = imported.find((item) => item.line.ligneNo === line.ligneNo);
+        const skip = skipped.find((item) => item.ligneNo === line.ligneNo);
+        await tx.insertImportLigne({
+          import_id: importRow.import_id,
+          ligne_no: line.ligneNo,
+          fingerprint: line.fingerprint,
+          statut: skip ? 'DEJA_IMPORTE' : 'IMPORTE',
+          type_propose: line.modePropose,
+          evenement_id: done ? done.evenement.evenement_id : null,
+          payload_source: { format: importContract.FORMAT_NATIVE, libelle: line.libelle, mode: line.modePropose },
+          raison: line.raison,
+          action: skip ? 'IGNORER_IDEMPOTENT' : line.actionPrevue
+        });
+      }
+
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'import',
+        entite_id: importRow.import_id,
+        action: 'IMPORTER_PROGRAMME_EXERCICES',
+        apres: {
+          filename,
+          format: importContract.FORMAT_NATIVE,
+          fingerprint: sourceSha,
+          imported: created.length,
+          skipped: skipped.length,
+          excluded: [...excluded]
+        }
+      });
+
+      return {
+        importId: importRow.import_id,
+        format: importContract.FORMAT_NATIVE,
+        created,
+        skipped,
+        excluded: [...excluded],
+        summary: {
+          nbLignes: preview.lignes.length,
+          imported: created.length,
+          dejaImporte: skipped.length,
+          exclus: excluded.size,
+          erreurs: 0,
+          rollback: 0
+        }
+      };
+    });
   }
 
   async function commitImportEvenements(body, actor){
     const csvText = String(body?.csvText || body?.csv || '');
+    if(!csvText.trim()){
+      throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
+    }
+    const format = importContract.detectCsvFormatFromText(csvText);
+    if(format === importContract.FORMAT_NATIVE){
+      return commitNativeImport(body, actor);
+    }
+    if(format !== importContract.FORMAT_F7){
+      throw new HttpError(400, 'format_csv_inconnu', 'Format CSV non reconnu. Utilisez le programme SCOPE ou l’historique Monitoring F7.');
+    }
     const filename = String(body?.filename || body?.sourceFilename || '').slice(0, 240);
     const excluded = new Set(
       (Array.isArray(body?.excludedLineNos) ? body.excludedLineNos : [])
@@ -1367,6 +1559,7 @@ function createScopeService(repo){
 
       return {
         importId: importRow.import_id,
+        format: csvImport.IMPORT_PROFIL,
         created,
         skipped,
         excluded: [...excluded],

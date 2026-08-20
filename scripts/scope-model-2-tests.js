@@ -455,7 +455,7 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
       '2026-10-01;FOSPEC;PR;G1;TEST import PAPR;NOMINATIF;oui;;ext-1'
     ].join('\n');
     const preview = previewScopeImport(csv, { cibles });
-    assert.strictEqual(preview.lignes[0].statut, 'VALIDE');
+    assert.strictEqual(preview.lignes[0].statut, 'A_CREER');
     assert.strictEqual(preview.lignes[0].domaineStockage, 'PR');
     assert.strictEqual(preview.lignes[0].sousDomaine, 'PR');
     assert.strictEqual(preview.lignes[0].actionPrevue, 'CREER');
@@ -469,7 +469,7 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
       '2026-10-01;XYZ;;G1;Inconnu;AUTO'
     ].join('\n');
     const preview = previewScopeImport(csv, { cibles });
-    assert.strictEqual(preview.lignes[0].statut, 'ERREUR');
+    assert.strictEqual(preview.lignes[0].statut, 'ERREUR_REFERENTIEL');
     assert.ok(preview.lignes[0].erreurs.some((e) => e.error === 'referentiel_inconnu'));
   });
 
@@ -487,7 +487,8 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
     });
     assert.ok(preview.lignes.some((l) => l.statut === 'DEJA_PRESENT' || l.actionPrevue === 'IGNORER_IDEMPOTENT'));
     assert.ok(preview.lignes.some((l) => l.erreurs && l.erreurs.some((e) => e.error === 'doublon_fichier')));
-    assert.strictEqual(preview.previewSeule, true);
+    assert.strictEqual(preview.ecriture, false);
+    assert.strictEqual(preview.commitTransactionnel, true);
   });
 
   await record('24 — 16 DAP/Y4 préservés + suppression physique interdite avec historique', async () => {

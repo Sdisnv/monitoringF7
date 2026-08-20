@@ -59,7 +59,7 @@ Seed GLOBAL `nominatif_autorise = true` : le nominatif est **possible** pour tou
 
 Colonnes : `date`, `domaine`, `sous_domaine`, `cibles`, `libelle`, `mode_suivi`, `comptabilise`, `remarque`, `identifiant_externe`.
 
-Preview avant écriture : valides / erreurs / doublons / référentiel inconnu / modes proposés / à créer / déjà présents. Commit transactionnel et idempotence : lot ultérieur. Le CSV F7 22 colonnes reste disponible.
+Preview avant écriture : à créer / erreurs / doublons / référentiel inconnu / modes demandés et proposés / déjà présents. Writer natif : lot **EVENT-IMPORT-1** (`docs/SCOPE_IMPORT_EXERCICES_CSV.md`). Le CSV F7 22 colonnes reste disponible pour la transition.
 
 ## Personnel (préparation PERSONNEL-SYNC-1)
 

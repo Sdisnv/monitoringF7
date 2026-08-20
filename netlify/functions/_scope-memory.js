@@ -294,6 +294,7 @@ function createMemoryRepo(){
         statut: row.statut || 'PLANIFIE',
         origine: row.origine || 'NOMINATIF',
         mode_suivi: require('./_scope-analytics').inferModeSuivi(row),
+        identifiant_externe: row.identifiant_externe || row.identifiantExterne || null,
         population_figee: false,
         population_version: 0,
         figee_at: null,

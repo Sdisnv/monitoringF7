@@ -61,6 +61,8 @@
     importPreview: null,
     importExcluded: {},
     importRapport: null,
+    importFilter: 'TOUS',
+    importDecisions: {},
     personnelSync: {
       filename: '',
       csvText: '',
@@ -610,9 +612,10 @@
               ${state.referentiels.domaines.map((d) => `<option value="${d.code}">${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}
             </select>
           </div>
-          <a class="scope-btn" id="scope-import" href="#/exercices/import">Importer un programme CSV</a>
-          <button type="button" class="scope-btn scope-btn-primary" id="scope-new">Nouvel exercice</button>
+          <a class="scope-btn scope-btn-primary" id="scope-import" href="#/exercices/import">Importer un programme CSV</a>
+          <button type="button" class="scope-btn" id="scope-new">Nouvel exercice</button>
         </div>
+        <p class="scope-mode-hint">L’import CSV est le parcours recommandé pour un programme complet. La création manuelle reste disponible pour un exercice ponctuel.</p>
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
             <thead>
@@ -1903,43 +1906,127 @@
   }
 
   function importPill(statut) {
-    const cls = statut === 'ERREUR' ? 'err' : (statut === 'AVERTISSEMENT' ? 'warn' : 'ok');
-    return `<span class="scope-import-pill ${cls}">${escapeHtml(statut)}</span>`;
+    const labels = {
+      A_CREER: 'À créer', VALIDE: 'À créer', DEJA_PRESENT: 'Déjà présent', DEJA_IMPORTE: 'Déjà importé',
+      ERREUR: 'Erreur', ERREUR_REFERENTIEL: 'Erreur de référentiel', ERREUR_DATE: 'Date invalide',
+      ERREUR_MODE: 'Mode invalide', CONFLIT: 'Conflit', A_ARBITRER: 'À arbitrer', EXCLU: 'Exclu',
+      AVERTISSEMENT: 'Avertissement'
+    };
+    const err = String(statut || '').indexOf('ERREUR') === 0 || statut === 'CONFLIT';
+    const warn = statut === 'A_ARBITRER' || statut === 'AVERTISSEMENT' || statut === 'DEJA_PRESENT' || statut === 'DEJA_IMPORTE';
+    const cls = err ? 'err' : (warn ? 'warn' : 'ok');
+    return `<span class="scope-import-pill ${cls}">${escapeHtml(labels[statut] || statut)}</span>`;
+  }
+
+  function importLineVisible(line) {
+    const filter = state.importFilter || 'TOUS';
+    const excluded = Boolean(state.importExcluded[line.ligneNo]);
+    if (filter === 'EXCLUS') return excluded;
+    if (excluded && filter !== 'TOUS') return false;
+    if (filter === 'TOUS') return true;
+    if (filter === 'A_CREER') return line.statut === 'A_CREER' || line.statut === 'VALIDE';
+    if (filter === 'DEJA') return line.statut === 'DEJA_PRESENT' || line.statut === 'DEJA_IMPORTE';
+    if (filter === 'ERREURS') return String(line.statut).indexOf('ERREUR') === 0 || line.statut === 'CONFLIT';
+    if (filter === 'ARBITRER') return line.statut === 'A_ARBITRER';
+    if (filter === 'NOMINATIF') return line.modePropose === 'NOMINATIF' || line.typePropose === 'NOMINATIF';
+    if (filter === 'QUANTITATIF') return line.modePropose === 'QUANTITATIF' || line.typePropose === 'QUANTITATIF';
+    return true;
   }
 
   function renderImport() {
     const live = mode === 'live' && typeof client.previewImportEvenements === 'function';
     const preview = state.importPreview;
     const rapport = state.importRapport;
-    const lignes = (preview && preview.lignes) || [];
-    const includedErrors = lignes.filter((l) => l.statut === 'ERREUR' && !state.importExcluded[l.ligneNo]);
-    const canCommit = live && preview && !rapport && includedErrors.length === 0 && lignes.some((l) => !state.importExcluded[l.ligneNo]);
+    const lignes = ((preview && preview.lignes) || []).filter(importLineVisible);
+    const all = (preview && preview.lignes) || [];
+    const native = preview && (preview.format === 'SCOPE_EXERCICES_CSV_1' || preview.profil === 'SCOPE_EXERCICES_CSV_1');
+    const f7 = preview && (preview.format === 'monitoring_exercices_sdis_22cols' || preview.profil === 'monitoring_exercices_sdis_22cols');
+    const blocking = all.filter((l) => {
+      if (state.importExcluded[l.ligneNo]) return false;
+      if (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT') return true;
+      if (l.statut === 'A_ARBITRER' && !(state.importDecisions[l.ligneNo] && state.importDecisions[l.ligneNo].mode)) return true;
+      return false;
+    });
+    const creatable = all.some((l) => {
+      if (state.importExcluded[l.ligneNo]) return false;
+      if (l.statut === 'A_CREER' || l.statut === 'VALIDE') return true;
+      if (l.statut === 'A_ARBITRER' && state.importDecisions[l.ligneNo] && state.importDecisions[l.ligneNo].mode) return true;
+      return false;
+    });
+    const canCommit = live && preview && !rapport && blocking.length === 0 && (creatable || all.some((l) => !state.importExcluded[l.ligneNo]));
+    const summary = (preview && preview.summary) || {};
+    const byDomaine = summary.byDomaine || {};
+    const modes = summary.modes || {};
     const cards = lignes.map((l) => {
       const excluded = Boolean(state.importExcluded[l.ligneNo]);
-      return `<article class="scope-import-card ${l.statut === 'ERREUR' ? 'is-error' : ''}">
+      const decision = state.importDecisions[l.ligneNo] || {};
+      const cibles = l.cibleCodes || l.publicCible || l.niveauCode || (l.cibles || []).map((c) => c.niveauCode).join(' | ');
+      const sous = l.sousDomaineAffiche || l.sousDomaine || '';
+      return `<article class="scope-import-card ${String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT' ? 'is-error' : ''}">
         <header>
           <strong>Ligne ${l.ligneNo}</strong>
           ${importPill(l.statut)}
-          <span class="scope-import-type">${escapeHtml(l.typePropose || '—')}</span>
+          <span class="scope-import-type">${escapeHtml(l.modePropose || l.typePropose || '—')}</span>
         </header>
-        <p class="scope-import-meta">${escapeHtml(L.formatDate(l.date))} · ${escapeHtml(l.domaine || '')} · ${escapeHtml(l.publicCible || l.niveauCode || '')}</p>
+        <p class="scope-import-meta">${escapeHtml(L.formatDate(l.date))} · ${escapeHtml(l.domaine || '')}${sous ? ` / ${escapeHtml(sous)}` : ''} · ${escapeHtml(cibles || '—')}</p>
         <p class="scope-import-libelle">${escapeHtml(l.libelle || '')}</p>
-        <p class="scope-import-reason">${escapeHtml(l.raison || '')}</p>
+        ${native ? `<p class="scope-import-mode">Mode demandé : ${escapeHtml(l.modeDemande || '—')} · Mode proposé : ${escapeHtml(l.modePropose || '—')}</p>` : ''}
+        <p class="scope-import-reason">${escapeHtml(l.raison || l.statutLibelle || '')}</p>
         <p class="scope-import-action">Action : ${escapeHtml(l.actionPrevue || '—')}</p>
+        ${l.statut === 'A_ARBITRER' ? `<div class="scope-field"><label>Arbitrage du mode</label>
+          <select data-import-decision="${l.ligneNo}">
+            <option value="">Choisir…</option>
+            <option value="NOMINATIF" ${decision.mode === 'NOMINATIF' ? 'selected' : ''}>Nominatif</option>
+            <option value="QUANTITATIF" ${decision.mode === 'QUANTITATIF' ? 'selected' : ''}>Quantitatif</option>
+          </select>
+        </div>` : ''}
         <label class="scope-import-exclude">
           <input type="checkbox" data-exclude-line="${l.ligneNo}" ${excluded ? 'checked' : ''}>
           Exclure cette ligne
         </label>
       </article>`;
     }).join('');
+    const formatBanner = !preview
+      ? ''
+      : native
+        ? '<p class="scope-import-format is-scope">Format détecté : <strong>programme SCOPE</strong> (événements PLANIFIE nominatifs ou quantitatifs). Aucun LEGACY.</p>'
+        : f7
+          ? '<p class="scope-import-format is-f7">Format détecté : <strong>historique Monitoring F7</strong> (22 colonnes). Conservé pour la transition. Ce n’est pas le programme SCOPE natif.</p>'
+          : '';
+    const resume = preview && native ? `
+      <div class="scope-import-resume">
+        <h3 class="scope-import-title">Programme à importer</h3>
+        <p>${summary.nbLignes || 0} ligne(s) analysée(s)</p>
+        <ul>
+          <li>${summary.A_CREER || summary.aCreer || 0} événement(s) à créer</li>
+          <li>${(summary.DEJA_PRESENT || 0) + (summary.DEJA_IMPORTE || 0)} déjà présent(s) / déjà importé(s)</li>
+          <li>${summary.ERREUR || 0} erreur(s)</li>
+          <li>${summary.A_ARBITRER || 0} ligne(s) à arbitrer</li>
+        </ul>
+        <p>Modes proposés : ${modes.NOMINATIF || 0} nominatif · ${modes.QUANTITATIF || 0} quantitatif</p>
+        <p>Répartition : ${Object.keys(byDomaine).length ? Object.keys(byDomaine).sort().map((k) => `${escapeHtml(k)} ${byDomaine[k]}`).join(' · ') : '—'}</p>
+        <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Population non figée. Aucun attendu ni volume inventé.</p>
+      </div>` : (preview ? `<p>Valides ${summary.VALIDE || summary.A_CREER || 0} · Avertissements ${summary.AVERTISSEMENT || 0} · Erreurs ${summary.ERREUR || 0}. Aucune écriture tant que vous n’avez pas confirmé.</p>` : '');
+    const filters = [
+      ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'],
+      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À arbitrer'], ['EXCLUS', 'Exclus'],
+      ['NOMINATIF', 'Nominatif'], ['QUANTITATIF', 'Quantitatif']
+    ];
+    const yearsHint = rapport && rapport.created && rapport.created.length
+      ? [...new Set(rapport.created.map((c) => String(c.date || '').slice(0, 4)).filter(Boolean))]
+      : [];
+    const periodNote = yearsHint.length && !yearsHint.includes(String(state.year))
+      ? `<p class="scope-mode-hint">Les événements importés sont en ${escapeHtml(yearsHint.join(', '))}. Le bandeau affiche ${escapeHtml(String(state.year))} : changez l’année pour les voir.</p>`
+      : '';
     return `
       <div class="scope-crumb">Exercices / Importer un programme CSV</div>
       <div class="scope-main">
         <div class="scope-card">
-          <h2 style="margin-top:0">Importer un programme CSV</h2>
-          <p>Le CSV alimente SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
-          <p class="scope-mode-hint">Import exercices depuis cette page. La synchronisation du personnel se fait dans Personnel : matching par NIP, changement d’OI daté, pas de réécriture des populations figées.</p>
+          <h2 style="margin-top:0">Importer un programme d’exercices</h2>
+          <p>Parcours recommandé pour alimenter le programme SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
+          <p class="scope-mode-hint">Deux formats : <strong>programme SCOPE</strong> (date ; domaine ; cibles ; libellé ; mode) ou <strong>historique Monitoring F7</strong> (22 colonnes). Le fichier est reconnu à l’en-tête.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
+          <p><a class="scope-btn" href="assets/csv/SCOPE_Programme_Exercices_Exemple.csv" download>Télécharger un exemple SCOPE</a></p>
           <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
             <p>Glissez un fichier CSV ici ou</p>
             <label class="scope-btn">
@@ -1953,16 +2040,20 @@
             <button type="button" class="scope-btn scope-btn-primary" id="scope-import-commit" ${canCommit ? '' : 'disabled'}>Confirmer l’import</button>
             <a class="scope-btn" href="#/exercices">Retour à la liste</a>
           </div>
+          ${formatBanner}
         </div>
         ${preview ? `<div class="scope-card" style="margin-top:12px">
-          <h3 style="margin-top:0">Preview · ${preview.summary.nbLignes} ligne(s)</h3>
-          <p>Valides ${preview.summary.VALIDE || 0} · Avertissements ${preview.summary.AVERTISSEMENT || 0} · Erreurs ${preview.summary.ERREUR || 0}. Aucune écriture tant que vous n’avez pas confirmé.</p>
-          <div class="scope-import-list">${cards}</div>
+          ${resume}
+          <div class="scope-sync-filters" role="tablist">
+            ${filters.map(([id, label]) => `<button type="button" class="scope-btn ${state.importFilter === id ? 'scope-btn-primary' : ''}" data-import-filter="${id}">${escapeHtml(label)}</button>`).join('')}
+          </div>
+          <div class="scope-import-list">${cards || '<p class="scope-empty">Aucune ligne pour ce filtre.</p>'}</div>
         </div>` : ''}
         ${rapport ? `<div class="scope-card" style="margin-top:12px">
-          <h3 style="margin-top:0">Rapport d’import</h3>
-          <p>Importées : ${rapport.summary.imported} · Déjà présentes : ${rapport.summary.dejaImporte} · Exclues : ${rapport.summary.exclus}</p>
-          <div class="scope-actions"><a class="scope-btn scope-btn-primary" href="#/exercices">Retour à la liste</a></div>
+          <h3 class="scope-import-title">Programme importé</h3>
+          <p>${rapport.summary.imported} événement(s) créé(s) · ${rapport.summary.dejaImporte || 0} déjà présent(s) · ${rapport.summary.exclus || 0} exclu(s) · ${rapport.summary.erreurs || 0} erreur · ${rapport.summary.rollback || 0} rollback</p>
+          ${periodNote}
+          <div class="scope-actions"><a class="scope-btn scope-btn-primary" id="scope-import-see" href="#/exercices">Voir les exercices</a></div>
         </div>` : ''}
       </div>
     `;
@@ -2299,9 +2390,11 @@
         state.importRapport = null;
         state.importPreview = await client.previewImportEvenements({
           csvText: state.importFile.csvText,
-          filename: state.importFile.filename
+          filename: state.importFile.filename,
+          decisions: state.importDecisions
         });
         state.importExcluded = {};
+        state.importFilter = 'TOUS';
       });
     });
     document.getElementById('scope-import-commit')?.addEventListener('click', () => {
@@ -2310,9 +2403,12 @@
         state.importRapport = await client.commitImportEvenements({
           csvText: state.importFile.csvText,
           filename: state.importFile.filename,
-          excludedLineNos
+          excludedLineNos,
+          previewToken: state.importPreview && state.importPreview.previewToken,
+          decisions: state.importDecisions
         });
-        toast('success', 'Import terminé', `${state.importRapport.summary.imported} événement(s) créé(s).`);
+        await loadList();
+        toast('success', 'Programme importé', `${state.importRapport.summary.imported} événement(s) créé(s).`);
       });
     });
     document.getElementById('scope-import-file')?.addEventListener('change', (e) => {
@@ -2336,6 +2432,25 @@
         const no = Number(input.getAttribute('data-exclude-line'));
         state.importExcluded[no] = input.checked;
         render();
+      });
+    });
+    root.querySelectorAll('[data-import-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.importFilter = btn.getAttribute('data-import-filter');
+        render();
+      });
+    });
+    root.querySelectorAll('[data-import-decision]').forEach((sel) => {
+      sel.addEventListener('change', () => {
+        const no = Number(sel.getAttribute('data-import-decision'));
+        state.importDecisions[no] = { mode: sel.value || null };
+        withLoading(async () => {
+          state.importPreview = await client.previewImportEvenements({
+            csvText: state.importFile.csvText,
+            filename: state.importFile.filename,
+            decisions: state.importDecisions
+          });
+        });
       });
     });
     document.getElementById('new-domaine')?.addEventListener('change', (e) => {
@@ -2828,6 +2943,8 @@
       state.importPreview = null;
       state.importRapport = null;
       state.importExcluded = {};
+      state.importDecisions = {};
+      state.importFilter = 'TOUS';
       render();
     };
     reader.readAsText(file, 'UTF-8');

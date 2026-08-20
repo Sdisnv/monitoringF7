@@ -325,9 +325,15 @@ exports.handler = async function(event){
     }
 
     if(method === 'POST' && path === '/imports/evenements/preview'){
+      if(!hasPermission(claims, 'events:create')){
+        return response(403, { ok:false, error:'forbidden', message:'L’import du programme d’exercices exige events:create.' });
+      }
       return response(200, { ok:true, ...(await service.previewImportEvenements(body)) });
     }
     if(method === 'POST' && path === '/imports/evenements/commit'){
+      if(!hasPermission(claims, 'events:create')){
+        return response(403, { ok:false, error:'forbidden', message:'L’import du programme d’exercices exige events:create.' });
+      }
       return response(200, { ok:true, ...(await service.commitImportEvenements(body, claims)) });
     }
 

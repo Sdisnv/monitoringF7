@@ -28,6 +28,7 @@ function mapEvent(row){
     cloture_at: row.cloture_at,
     cloture_par: row.cloture_par,
     version: row.version,
+    identifiant_externe: row.identifiant_externe || null,
     created_at: row.created_at,
     updated_at: row.updated_at
   };
@@ -275,9 +276,9 @@ function createPgRepo(client){
       const modeSuivi = inferModeSuivi(row);
       const result = await q(
         `insert into scope_evenements(
-           evenement_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi, version
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,1) returning *`,
-        [id, isoDate(row.date), row.domaine_code, row.sous_domaine_code || null, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF', modeSuivi]
+           evenement_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi, identifiant_externe, version
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,1) returning *`,
+        [id, isoDate(row.date), row.domaine_code, row.sous_domaine_code || null, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF', modeSuivi, row.identifiant_externe || row.identifiantExterne || null]
       );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){

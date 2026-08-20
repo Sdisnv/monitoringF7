@@ -313,6 +313,10 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-model-2-r1') on conflict (version) do nothing`
   );
+  await migrateEventImport1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-event-import-1') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
 }
@@ -733,6 +737,20 @@ async function seedBasculeDapY4(){
      where domaine_code = 'DAP' and niveau_code = 'Y4'
      on conflict (cible_id) where portee = 'CIBLE' do nothing`
   );
+}
+
+async function migrateEventImport1(){
+  await db.query('alter table scope_evenements drop constraint if exists scope_evenements_origine_chk');
+  await db.query(`
+    alter table scope_evenements add constraint scope_evenements_origine_chk
+      check (origine in ('NOMINATIF','LEGACY_AGGREGATED','IMPORT_CSV'))
+  `);
+  await db.query('alter table scope_evenements add column if not exists identifiant_externe text');
+  await db.query(`
+    create unique index if not exists scope_evenements_identifiant_externe_uq
+      on scope_evenements (identifiant_externe)
+      where identifiant_externe is not null
+  `);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

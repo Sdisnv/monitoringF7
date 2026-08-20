@@ -155,6 +155,18 @@ grep -q "#/personnel/" assets/js/scope-ui.js
 grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
 grep -q "Personne archivée" netlify/functions/_scope-person-service.js
 grep -q "scope-person-1-tests.js" package.json
+grep -q "SCOPE_EXERCICES_CSV_1" assets/js/scope-import-contract.js
+grep -q "IMPORTER_PROGRAMME_EXERCICES" netlify/functions/_scope-service.js
+grep -q "scope-event-import-1" netlify/functions/_scope-schema.js
+grep -q "IMPORT_CSV" netlify/functions/_scope-schema.js
+grep -q "preview_obsolete" netlify/functions/_scope-service.js
+grep -qF 'assets/js/scope-import-contract.js' netlify.scope.toml
+grep -q "scope-event-import-1-tests.js" package.json
+grep -q "SCOPE_Programme_Exercices_Exemple.csv" assets/js/scope-ui.js
+grep -q "Programme à importer" assets/js/scope-ui.js
+grep -q "SCOPE_EXERCICES_CSV_1" docs/SCOPE_IMPORT_EXERCICES_CSV.md
+test -f assets/csv/SCOPE_Programme_Exercices_Exemple.csv
+test -f docs/SCOPE_IMPORT_EXERCICES_CSV.md
 if grep -q "officialFromQuantitatif" netlify/functions/_scope-pdf-renderer.js; then
   echo "ERREUR: formule KPI dans le renderer PDF"
   exit 1
