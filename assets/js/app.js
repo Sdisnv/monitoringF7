@@ -163,6 +163,11 @@
     }
 
     function mergeServerAndLocalArrays(serverItems, localItems) {
+      // Conservé pour lecture historique. SCOPE-IMPL-1A : ne plus s'en servir pour republier.
+      const policy = window.MonitoringOnlineCachePolicy;
+      if (policy && policy.PUSH_HYDRATE_EXTRAS === false) {
+        return policy.serverWinsArray(serverItems);
+      }
       const merged = new Map();
       (Array.isArray(serverItems) ? serverItems : []).forEach((item, index) => {
         const id = String(item?.id || item?.key || `server-${index}`);
@@ -199,6 +204,8 @@
     }
 
     function scheduleOnlineCollectionWrite(name, data) {
+      // Résidu v67 : écriture de session vers monitoring_f7_* uniquement.
+      // SCOPE-IMPL-1A : jamais utilisé pour scope_*.
       if (!centralStorageReady()) return;
       clearTimeout(onlineWriteTimers[name]);
       const snapshot = Array.isArray(data) ? data.map(item => ({ ...(item || {}) })) : { ...(data || {}) };
@@ -211,24 +218,17 @@
     }
 
     async function publishLocalCacheToServer() {
-      if (!centralStorageReady()) return { ok:false, reason:"central_storage_not_ready", published:[] };
-      const knownServer = readLocalJSON("monitoring_f7_server_status_v1", null);
-      const lastPublish = readLocalJSON("monitoring_f7_online_publish_status_v1", null);
-      const serverHasData = knownServer && knownServer.collections && Object.values(knownServer.collections).some(value => Number(value || 0) > 0);
-      if (serverHasData && lastPublish?.ok === true) return Object.assign({}, lastPublish, { skipped:true, reason:"server_already_seeded" });
-      const status = { ok:true, published:[], failed:[], checkedAt:new Date().toISOString() };
-      for (const [name, config] of Object.entries(ONLINE_COLLECTIONS)) {
-        const localValue = readLocalJSON(config.storageKey, config.array ? [] : {});
-        if (!hasMeaningfulLocalData(config, localValue)) continue;
-        const result = await pushOnlineCollection(name, localValue);
-        if (result?.ok) status.published.push(name);
-        else {
-          status.ok = false;
-          status.failed.push({ collection:name, status:result?.status || 0, error:result?.data?.error || result?.error || "unknown" });
-        }
-      }
-      try { localStorage.setItem("monitoring_f7_online_publish_status_v1", JSON.stringify(status)); } catch {}
-      window.MonitoringAuditLog?.logInfo?.("online-cache-published", "Cache local publié vers le stockage central.", status);
+      // SCOPE-IMPL-1A : republication automatique cache → serveur désactivée.
+      const status = {
+        ok: true,
+        disabled: true,
+        reason: "SCOPE-IMPL-1A",
+        published: [],
+        failed: [],
+        skipped: true,
+        checkedAt: new Date().toISOString()
+      };
+      window.MonitoringAuditLog?.logInfo?.("online-cache-publish-disabled", "Publication automatique du cache local vers le serveur désactivée (SCOPE-IMPL-1A).", status);
       return status;
     }
 
@@ -251,24 +251,20 @@
           const serverValue = await fetchOnlineCollection(name, config);
           if (serverValue == null) return;
           if (config.array) {
-            const merged = mergeServerAndLocalArrays(serverValue, localValue);
-            writeLocalJSON(config.storageKey, merged);
+            const next = window.MonitoringOnlineCachePolicy
+              ? window.MonitoringOnlineCachePolicy.serverWinsArray(serverValue)
+              : (Array.isArray(serverValue) ? serverValue : []);
+            writeLocalJSON(config.storageKey, next);
             status.hydrated.push(name);
-            if (merged.length > (Array.isArray(serverValue) ? serverValue.length : 0)) {
-              await pushOnlineCollection(name, merged);
-              status.pushedLocal.push(name);
-            }
+            // SCOPE-IMPL-1A : jamais pushOnlineCollection des extras locaux.
           } else {
             const serverObject = serverValue && typeof serverValue === "object" && !Array.isArray(serverValue) ? serverValue : {};
             const localObject = localValue && typeof localValue === "object" && !Array.isArray(localValue) ? localValue : {};
-            const hasServer = Object.keys(serverObject).length > 0;
-            const next = hasServer ? { ...localObject, ...serverObject } : localObject;
+            const next = window.MonitoringOnlineCachePolicy
+              ? window.MonitoringOnlineCachePolicy.serverWinsObject(serverObject, localObject)
+              : (Object.keys(serverObject).length > 0 ? serverObject : localObject);
             writeLocalJSON(config.storageKey, next);
             status.hydrated.push(name);
-            if (!hasServer && Object.keys(localObject).length > 0) {
-              await pushOnlineCollection(name, localObject);
-              status.pushedLocal.push(name);
-            }
           }
         } catch (error) {
           status.ok = false;
@@ -314,7 +310,6 @@
       if (!centralStorageReady()) return Promise.resolve(null);
       if (onlineRefreshInFlight) return onlineRefreshInFlight;
       onlineRefreshInFlight = (async () => {
-        await publishLocalCacheToServer();
         const result = await hydrateOnlineDataCache();
         refreshApplicationAfterOnlineHydration(result);
         return result;

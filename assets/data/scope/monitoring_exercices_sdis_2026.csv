@@ -1,0 +1,9 @@
+date_exercice;domaine;public_cible;modele;a_comptabiliser;nb_convoques;nb_permutation;nb_ext_dap_y1;nb_ext_dap_y2;nb_ext_dap_y3;nb_ext_dap_y4;nb_ext_dap_total;nb_presents;nb_excuses_maladie;nb_excuses_accident;nb_excuses_professionnel;nb_excuses_prive;nb_excuses_total;nb_absents_non_excuses;total_detail;total_attendu;remarque
+2026-03-31;DAP;Y4;Exercice DAP 1;Oui;16;0;0;1;0;0;1;17;0;0;0;0;0;0;17;17;""
+2026-03-24;DPS;B1;Exercice DPS 1;Oui;25;0;0;0;0;0;0;24;0;0;1;0;1;0;25;25;""
+2026-03-24;DPS;C1;Exercice DPS 1;Oui;27;1;0;0;0;0;0;25;0;0;2;0;2;0;27;27;""
+2026-03-19;DAP;Y3;Exercice DAP 1;Oui;15;0;0;0;0;0;0;15;0;0;0;0;0;0;15;15;""
+2026-03-17;DAP;Y2;Exercice DAP 1;Oui;18;1;1;0;0;0;1;16;0;0;1;1;2;0;18;19;""
+2026-03-12;DAP;Y1;Exercice DAP 1;Oui;18;1;0;0;0;0;0;16;0;1;0;0;1;0;17;18;""
+2026-02-25;FOBA;FOBA 1;Exercice FOBA 1;Oui;17;0;0;0;0;0;0;17;0;0;0;0;0;0;17;17;""
+2026-02-25;FOBA;FOBA 2;Exercice FOBA 1;Oui;10;0;0;0;0;0;0;10;0;0;0;0;0;0;10;10;""

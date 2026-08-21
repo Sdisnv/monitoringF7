@@ -45,6 +45,160 @@ grep -q "serverAuthEnabled: true" assets/js/config.js
 grep -q "oidcEnabled: true" assets/js/config.js
 grep -q "hydrateOnlineDataCache" assets/js/app.js
 grep -q "publishLocalCacheToServer" assets/js/app.js
+grep -q "SCOPE-IMPL-1A" assets/js/app.js
+grep -q "AUTO_PUBLISH_LOCAL: false" assets/js/online-cache-policy.js
+grep -q 'from = "/api/scope/*"' netlify.toml
+grep -q "ensureScopeSchema" netlify/functions/_scope-schema.js
+grep -q "createScopeService" netlify/functions/_scope-service.js
+grep -q "listEvenements" netlify/functions/_scope-service.js
+grep -q "SCOPE-IMPL-1B" assets/js/scope-ui.js
+grep -q "scope-confirm-live" assets/js/scope-ui.js
+grep -q "Importer un programme d’événements" assets/js/scope-ui.js
+grep -q "imports/evenements/preview" netlify/functions/scope.js
+grep -q "imports/evenements/commit" netlify/functions/scope.js
+grep -qF "require('../../assets/js/scope-csv-import.js')" netlify/functions/_scope-csv-import.js
+grep -qF 'assets/js/scope-csv-import.js' netlify.scope.toml
+grep -q "scope-data-5" netlify/functions/_scope-schema.js
+grep -q "scope-data-5-r1" netlify/functions/_scope-schema.js
+grep -q "scope-analytics-1" netlify/functions/_scope-schema.js
+grep -q "createScopeAnalyticsService" netlify/functions/_scope-analytics-service.js
+grep -q "/analytics/summary" netlify/functions/scope.js
+grep -q "/analytics/explain" netlify/functions/scope.js
+grep -q "/analytics/timeseries" netlify/functions/scope.js
+grep -q "mode_suivi" netlify/functions/_scope-schema.js
+grep -q "scope-event-q1" netlify/functions/_scope-schema.js
+grep -q "scope_saisies_quantitatives" netlify/functions/_scope-schema.js
+grep -q "scope_saisies_quantitatives" database/migrations/20260819_scope_event_q1.sql
+grep -q "Saisir les présences" assets/js/scope-ui.js
+grep -q "saisie-quantitative" netlify/functions/scope.js
+grep -q "SAISIE_QUANTITATIVE" netlify/functions/_scope-service.js
+grep -q "scope-objectives-1" netlify/functions/_scope-schema.js
+grep -q "scope_objectifs" netlify/functions/_scope-schema.js
+grep -q "scope_objectifs" database/migrations/20260819_scope_objectives_1.sql
+grep -q "resolveObjective" netlify/functions/_scope-objectives.js
+grep -q "/objectifs" netlify/functions/scope.js
+grep -q "Objectifs de participation" assets/js/scope-ui.js
+grep -q "screen: 'objectifs'" assets/js/scope-ui-logic.js
+grep -q "#/reglages/objectifs" assets/js/scope-ui.js
+grep -q "references:manage" netlify/functions/scope.js
+grep -q "portee" netlify/functions/_scope-schema.js
+grep -q "DATE_BASCULE_SCOPE" assets/js/scope-oi-map.js
+grep -q "scope-root" scope.html
+grep -q "Vue d’ensemble" assets/js/scope-ui.js
+grep -q "/dashboard" netlify/functions/scope.js
+grep -q "createScopeDashboardService" netlify/functions/_scope-dashboard-service.js
+grep -q "createScopeAlertsService" netlify/functions/_scope-alerts-service.js
+grep -q "/alerts" netlify/functions/scope.js
+grep -q "Europe/Zurich" netlify/functions/_scope-calendar.js
+grep -q "À traiter" assets/js/scope-ui.js
+grep -q "Points de vigilance" assets/js/scope-ui.js
+grep -q "classifyInboxItem" netlify/functions/_scope-inbox.js
+grep -q "scope_alertes_acquittements" netlify/functions/_scope-schema.js
+grep -q "scope_alertes_acquittements" database/migrations/20260820_scope_alerts_1.sql
+grep -q "scope-model-2" netlify/functions/_scope-schema.js
+grep -q "scope-model-2-r1" netlify/functions/_scope-schema.js
+grep -q "scope_personne_periodes" netlify/functions/_scope-schema.js
+grep -q "resolveEligiblePopulation" netlify/functions/_scope-service.js
+grep -q "ABSENT_DU_FICHIER" assets/js/scope-personnel-sync-contract.js
+grep -q "imports/personnel/preview" netlify/functions/scope.js
+grep -q "scope_personne_periodes" database/migrations/20260820_scope_model_2_r1.sql
+grep -q "scope_suivi_nominatif" netlify/functions/_scope-schema.js
+grep -q "PERMUTATION" netlify/functions/_scope-rules.js
+grep -q "ACCIDENT_MALADIE" netlify/functions/_scope-model.js
+grep -q "scope-import-contract.js" netlify/functions/_scope-import-contract.js
+grep -qF 'assets/js/scope-csv-import.js' netlify.scope.toml
+grep -qF 'assets/js/scope-personnel-sync-contract.js' netlify.scope.toml
+grep -q "previewScopeImport" assets/js/scope-import-contract.js
+grep -q "Suivi nominatif" assets/js/scope-ui.js
+grep -q "scope-sidebar" assets/js/scope-ui.js
+grep -q "scope-select-control" assets/js/scope-ui.js
+grep -q "Dont permutations" assets/js/scope-ui.js
+grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
+grep -q "height: 83px" assets/css/scope.css
+grep -q "SCOPE-GRAPH-1" netlify/functions/_scope-graphs.js
+grep -q "/analytics/graphs" netlify/functions/scope.js
+grep -q "scope-charts.js" scope.html
+grep -q -- "--scope-chart-primary" assets/css/scope.css
+grep -q "dash.graphs" assets/js/scope-ui.js
+grep -q "SCOPE-REPORT-1" netlify/functions/_scope-report-service.js
+grep -q "path === '/reports'" netlify/functions/scope.js
+grep -q "scope-pdf-viewer.js" scope.html
+grep -q "reports:nominatif" netlify/functions/_rbac.js
+grep -q "reports:nominatif" assets/js/rbac.js
+grep -qF 'assets/img/logo-scope-blanc.png' netlify.scope.toml
+grep -qF 'assets/img/LogoSDISblanc.png' netlify.scope.toml
+grep -qF 'assets/img/LogoSDISseulnoir.png' netlify.scope.toml
+grep -q "frame-src 'self' blob:" netlify.scope.toml
+grep -q '"pdfkit"' package.json
+grep -q "SCOPE-PERSONNEL-SYNC-1" netlify/functions/_scope-personnel-sync.js
+grep -q "imports/personnel/commit" netlify/functions/scope.js
+grep -q "personnel:manage" netlify/functions/_rbac.js
+grep -q "personnel:manage" assets/js/rbac.js
+grep -q "ABSENT_DU_FICHIER" assets/js/scope-personnel-sync-contract.js
+grep -q "CHANGEMENT_OI" assets/js/scope-personnel-sync-contract.js
+grep -q "scope-sync-preview" assets/js/scope-ui.js
+grep -q "scope-personnel-sync-1-tests.js" package.json
+grep -q "scope-personnel-sync-1-r1-tests.js" package.json
+grep -q "closeAllOpenAffectations" netlify/functions/_scope-personnel.js
+grep -q "closeAllOpenAffectations" netlify/functions/_scope-service.js
+grep -q "closeAllOpenAffectations" netlify/functions/_scope-personnel-sync.js
+grep -q "CLOTURER_AFFECTATION" netlify/functions/_scope-service.js
+grep -q "dejaArchive" netlify/functions/_scope-service.js
+grep -q "createScopePersonService" netlify/functions/_scope-person-service.js
+grep -q "createScopePersonService" netlify/functions/scope.js
+grep -q "path === '/personnel'" netlify/functions/scope.js
+grep -q "/analytics/persons/:id" netlify/functions/scope.js
+grep -q "personnel:read" netlify/functions/_rbac.js
+grep -q "personnel:read" assets/js/rbac.js
+grep -q "directoryRates" netlify/functions/_scope-analytics-service.js
+grep -q "screen: 'personne'" assets/js/scope-ui-logic.js
+grep -q "#/personnel/" assets/js/scope-ui.js
+grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
+grep -q "Personne archivée" netlify/functions/_scope-person-service.js
+grep -q "scope-person-1-tests.js" package.json
+grep -q "SCOPE_EXERCICES_CSV_1" assets/js/scope-import-contract.js
+grep -q "IMPORTER_PROGRAMME_EXERCICES" netlify/functions/_scope-service.js
+grep -q "scope-event-import-1" netlify/functions/_scope-schema.js
+grep -q "IMPORT_CSV" netlify/functions/_scope-schema.js
+grep -q "preview_obsolete" netlify/functions/_scope-service.js
+grep -qF 'assets/js/scope-import-contract.js' netlify.scope.toml
+grep -q "scope-event-import-1-tests.js" package.json
+grep -q "scope-qual-finish-1" netlify/functions/_scope-schema.js
+grep -q "scope-qual-finish-1-tests.js" package.json
+grep -q "Chargement des événements" assets/js/scope-ui-logic.js
+grep -q "wantsQualification" netlify/functions/_scope-service.js
+grep -q "shouldRenderPermutations" assets/js/scope-ui.js
+grep -q "Inclure les données de qualification" assets/js/scope-ui.js
+test -f docs/SCOPE_RECETTE_MOA.md
+grep -q "SCOPE_Programme_Exercices_Exemple.csv" assets/js/scope-ui.js
+grep -q "Programme à importer" assets/js/scope-ui.js
+grep -q "SCOPE_EXERCICES_CSV_1" docs/SCOPE_IMPORT_EXERCICES_CSV.md
+test -f assets/csv/SCOPE_Programme_Exercices_Exemple.csv
+test -f docs/SCOPE_IMPORT_EXERCICES_CSV.md
+if grep -q "officialFromQuantitatif" netlify/functions/_scope-pdf-renderer.js; then
+  echo "ERREUR: formule KPI dans le renderer PDF"
+  exit 1
+fi
+if grep -q "computeTaux" netlify/functions/_scope-pdf-renderer.js; then
+  echo "ERREUR: computeTaux dans le renderer PDF"
+  exit 1
+fi
+if grep -q "officialFromQuantitatif" assets/js/scope-ui.js; then
+  echo "ERREUR: calcul officiel dans scope-ui.js"
+  exit 1
+fi
+if grep -q "classifyOperationalAlert" assets/js/scope-ui.js; then
+  echo "ERREUR: classification P0 dans scope-ui.js"
+  exit 1
+fi
+if grep -q "ECHU_PLANIFIE" assets/js/scope-ui.js; then
+  echo "ERREUR: code P0 parallèle dans scope-ui.js"
+  exit 1
+fi
+if grep -q "min-width: *980px" assets/css/scope.css; then
+  echo "ERREUR: min-width 980px dans scope.css"
+  exit 1
+fi
 grep -q "getDataStatus" assets/js/api-client.js
 grep -q "scheduleOnlineCollectionWrite" assets/js/app.js
 grep -q "updateAdminCode" assets/js/api-client.js

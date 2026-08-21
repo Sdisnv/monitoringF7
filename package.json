@@ -6,13 +6,13 @@
   "license": "UNLICENSED",
   "scripts": {
     "check": "./scripts/check-local.sh",
-    "scope:preflight": "node scripts/assert-scope-netlify-target.js",
-    "test:scope-personnel": "node tests/scope-personnel.test.js",
+    "test:scope": "node scripts/scope-impl-1a-tests.js && node scripts/scope-impl-1b-tests.js && node scripts/scope-qual-1-tests.js && node scripts/scope-data-5-tests.js && node scripts/scope-data-5-r1-tests.js && node scripts/scope-analytics-1-tests.js && node scripts/scope-event-q1-tests.js && node scripts/scope-objectives-1-tests.js && node scripts/scope-dash-1-tests.js && node scripts/scope-alerts-1-tests.js && node scripts/scope-model-2-tests.js && node scripts/scope-model-2-r1-tests.js && node scripts/scope-ux-3-tests.js && node scripts/scope-graph-1-tests.js && node scripts/scope-report-1-tests.js && node scripts/scope-personnel-sync-1-tests.js && node scripts/scope-personnel-sync-1-r1-tests.js && node scripts/scope-person-1-tests.js && node scripts/scope-event-import-1-tests.js && node scripts/scope-qual-finish-1-tests.js && node scripts/scope-moa-ux-r1-tests.js && node scripts/scope-moa-ux-r1-r1-tests.js && node scripts/scope-moa-ux-r2-tests.js",
     "deploy": "git status && git add . && git commit -m \"release: Monitoring F7 v66.15 oidc login flow\" && git push"
   },
   "dependencies": {
-    "pg": "^8.13.1",
-    "@netlify/blobs": "^10.7.7"
+    "@netlify/blobs": "^10.7.7",
+    "pdfkit": "^0.15.0",
+    "pg": "^8.13.1"
   },
   "engines": {
     "node": ">=18"

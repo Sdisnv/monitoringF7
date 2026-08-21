@@ -83,7 +83,6 @@
       writeJson(STATUS_KEY, status);
       return Object.freeze(status);
     }
-    if(window.MonitoringOnlineDataService?.publishLocal) await window.MonitoringOnlineDataService.publishLocal();
     if(window.MonitoringOnlineDataService?.hydrate) await window.MonitoringOnlineDataService.hydrate();
     if(window.MonitoringApiClient?.getDataStatus){
       const server = await window.MonitoringApiClient.getDataStatus();

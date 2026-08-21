@@ -5,6 +5,9 @@
   publish = "scope"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/auth/login"
   to = "/.netlify/functions/auth-login"
@@ -122,4 +125,14 @@
 [[redirects]]
   from = "/audit-log"
   to = "/.netlify/functions/audit-log"
+  status = 200
+
+[[redirects]]
+  from = "/api/scope"
+  to = "/.netlify/functions/scope"
+  status = 200
+
+[[redirects]]
+  from = "/api/scope/*"
+  to = "/.netlify/functions/scope"
   status = 200

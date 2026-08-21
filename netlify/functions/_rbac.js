@@ -1,14 +1,14 @@
 const ROLE_PERMISSIONS = Object.freeze({
-  'sdis-admin': ['dashboard:read','events:create','events:update','events:delete','effectifs:manage','references:manage','data:import','data:export','users:admin','audit:read','settings:manage'],
-  'sdis-commandement': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','audit:read'],
-  'sdis-chef-formation': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export','audit:read'],
-  'sdis-formation': ['dashboard:read','events:create','events:update','effectifs:manage','references:manage','data:import','data:export'],
-  'sdis-instructeur': ['dashboard:read','events:create','events:update','data:export'],
-  'sdis-user': ['dashboard:read','events:create','events:update','data:export'],
+  'sdis-admin': ['dashboard:read','events:create','events:update','events:delete','effectifs:manage','personnel:manage','references:manage','data:import','data:export','personnel:read','reports:nominatif','users:admin','audit:read','settings:manage'],
+  'sdis-commandement': ['dashboard:read','events:create','events:update','effectifs:manage','personnel:manage','references:manage','data:import','data:export','personnel:read','reports:nominatif','audit:read'],
+  'sdis-chef-formation': ['dashboard:read','events:create','events:update','effectifs:manage','personnel:manage','references:manage','data:import','data:export','personnel:read','reports:nominatif','audit:read'],
+  'sdis-formation': ['dashboard:read','events:create','events:update','effectifs:manage','personnel:manage','references:manage','data:import','data:export','personnel:read','reports:nominatif'],
+  'sdis-instructeur': ['dashboard:read','events:create','events:update','data:export','personnel:read','reports:nominatif'],
+  'sdis-user': ['dashboard:read','events:create','events:update','data:export','personnel:read','reports:nominatif'],
   'sdis-readonly': ['dashboard:read','data:export']
 });
 const KNOWN_ROLES = Object.freeze(Object.keys(ROLE_PERMISSIONS));
-const WRITE_PERMISSIONS = new Set(['events:create','events:update','data:import','effectifs:manage','references:manage','settings:manage']);
+const WRITE_PERMISSIONS = new Set(['events:create','events:update','data:import','effectifs:manage','personnel:manage','references:manage','settings:manage']);
 function normalizeRoles(roles){
   const input = Array.isArray(roles) ? roles : [];
   const valid = input.map(String).filter(role => ROLE_PERMISSIONS[role]);

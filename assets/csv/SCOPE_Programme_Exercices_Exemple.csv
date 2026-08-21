@@ -1,0 +1,6 @@
+date;domaine;sous_domaine;cibles;libelle;mode_suivi;a_comptabiliser;remarque;identifiant_externe
+2026-09-10;DAP;;Y4;TEST IMPORT SCOPE — DAP Y4;NOMINATIF;oui;Exemple fictif;EX-SCOPE-DAP-Y4
+2026-09-15;DPS;;G1;TEST IMPORT SCOPE — DPS G1;QUANTITATIF;oui;Exemple fictif;EX-SCOPE-DPS-G1
+2026-10-01;FOSPEC;PR;G1;TEST IMPORT SCOPE — Maintien PAPR;AUTO;oui;Exemple fictif;EX-SCOPE-FOSPEC-PR
+2026-10-15;FOSPEC;AUTO;VL;TEST IMPORT SCOPE — Conduite VL;QUANTITATIF;oui;Exemple fictif;EX-SCOPE-FOSPEC-AUTO
+2026-10-20;FOBA;;1;TEST IMPORT SCOPE — FOBA 1;QUANTITATIF;oui;Exemple fictif;EX-SCOPE-FOBA-1
