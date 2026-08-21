@@ -13,6 +13,7 @@ const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
 const personService = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-person-service.js'), 'utf8');
+const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pg.js'), 'utf8');
 const L = require(path.join(ROOT, 'assets/js/scope-ui-logic.js'));
 
 const arbre = [
@@ -201,6 +202,15 @@ async function record(name, fn) {
   await record('26 — date_fin annuaire exposée en INACTIF', async () => {
     assert.ok(personService.includes('dateInactif: primaryAffectation ? primaryAffectation.dateFin : null'));
     assert.ok(personService.includes('dateFin: row.aff.date_fin'));
+  });
+
+  await record('27 — référentiels tolèrent scope_suivi_nominatif sans date_fin', async () => {
+    const start = pgRepo.indexOf('async listSuiviNominatif()');
+    const end = pgRepo.indexOf('async listCibles()', start);
+    const block = pgRepo.slice(start, end);
+    assert.ok(block.includes('information_schema.columns'));
+    assert.ok(block.includes("existing.has('date_fin') ? 'date_fin' : 'null::date as date_fin'"));
+    assert.ok(!block.includes('select * from scope_suivi_nominatif'));
   });
 
   console.log(`SCOPE-MOA-UX-R2: ${passed} PASS`);

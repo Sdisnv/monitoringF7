@@ -62,7 +62,32 @@ function createPgRepo(client){
       return result.rows;
     },
     async listSuiviNominatif(){
-      const result = await q('select * from scope_suivi_nominatif order by portee, date_debut');
+      const columns = await q(`
+        select column_name
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'scope_suivi_nominatif'
+      `);
+      const existing = new Set(columns.rows.map((row) => row.column_name));
+      const optional = [
+        existing.has('date_fin') ? 'date_fin' : 'null::date as date_fin',
+        existing.has('sous_domaine_code') ? 'sous_domaine_code' : 'null::text as sous_domaine_code',
+        existing.has('commentaire') ? 'commentaire' : 'null::text as commentaire'
+      ];
+      const result = await q(`
+        select
+          suivi_id,
+          portee,
+          domaine_code,
+          ${optional[1]},
+          cible_id,
+          nominatif_autorise,
+          date_debut,
+          ${optional[0]},
+          ${optional[2]}
+        from scope_suivi_nominatif
+        order by portee, date_debut
+      `);
       return result.rows.map((row) => ({
         ...row,
         date_debut: dateOnly(row.date_debut),
