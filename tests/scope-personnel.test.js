@@ -13,7 +13,7 @@ function aff(overrides){
   return Object.assign({ categorie:'OI', domaine:'DPS', cible:'B1', role_domaine:'PRINCIPAL', date_actif:'2026-01-01', date_inactif:null }, overrides || {});
 }
 
-function run(){
+async function run(){
   const csv = `NIP;Grade;Prénom;Nom;Organe(s) d'intervention
 TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Belmont-sur-Yverdon, JSP B1 - Yvonand`;
   const normalized = svc.normalizeRows(svc.parsePersonnelCsv(csv), 'PR')[0].normalized;
@@ -137,7 +137,53 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(migration.includes('personne_id text not null references scope_personnes(id)'));
   assert.ok(migration.includes('create index if not exists'));
 
+  const postgresPath = require.resolve('../netlify/functions/_postgres');
+  const schemaPath = require.resolve('../netlify/functions/_scope-schema');
+  const originalPostgres = require.cache[postgresPath];
+  const originalSchema = require.cache[schemaPath];
+  const capturedSql = [];
+  require.cache[postgresPath] = {
+    id: postgresPath,
+    filename: postgresPath,
+    loaded: true,
+    exports: {
+      ensureCoreSchema: async () => {},
+      query: async (sql) => {
+        capturedSql.push(String(sql));
+        if (String(sql).includes('information_schema.columns')) return { rows: [] };
+        return { rows: [] };
+      }
+    }
+  };
+  delete require.cache[schemaPath];
+  try {
+    const { ensureScopeSchema } = require('../netlify/functions/_scope-schema');
+    await ensureScopeSchema();
+  } finally {
+    if (originalSchema) require.cache[schemaPath] = originalSchema;
+    else delete require.cache[schemaPath];
+    if (originalPostgres) require.cache[postgresPath] = originalPostgres;
+    else delete require.cache[postgresPath];
+  }
+  const bootstrapAffectationSql = capturedSql
+    .filter((sql) => /\bscope_affectations\b/i.test(sql))
+    .join('\n');
+  assert.ok(!/\baffectation_id\b/i.test(bootstrapAffectationSql));
+  assert.ok(!/\bcible_id\b/i.test(bootstrapAffectationSql));
+  assert.ok(!/\bdate_debut\b/i.test(bootstrapAffectationSql));
+  assert.ok(!/\bdate_fin\b/i.test(bootstrapAffectationSql));
+  assert.ok(bootstrapAffectationSql.includes('date_actif'));
+  assert.ok(bootstrapAffectationSql.includes('date_inactif'));
+  const bootstrapSousDomainesSql = capturedSql
+    .filter((sql) => /\bscope_sous_domaines\b/i.test(sql))
+    .join('\n');
+  assert.ok(bootstrapSousDomainesSql.includes('domaine_code'));
+  assert.ok(!/\bdomaine_parent\b/i.test(bootstrapSousDomainesSql));
+
   console.log('scope-personnel tests ok');
 }
 
-run();
+run().catch((error) => {
+  console.error(error && error.stack ? error.stack : error);
+  process.exit(1);
+});

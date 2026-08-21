@@ -142,7 +142,12 @@ function createPgRepo(client){
       return result.rows;
     },
     async listSousDomaines(){
-      const result = await q('select * from scope_sous_domaines where actif = true order by code');
+      const result = await q(`
+        select *, domaine_code as domaine_parent
+        from scope_sous_domaines
+        where actif = true
+        order by code
+      `);
       return result.rows;
     },
     async listSuiviNominatif(){

@@ -76,34 +76,36 @@ const DDL = [
     constraint scope_cibles_unique unique (domaine_code, niveau_code)
   )`,
   `create table if not exists scope_personnes (
-    personne_id uuid primary key,
+    id text primary key,
     nip text not null unique,
-    nom text not null,
-    prenom text not null,
     grade text,
-    actif boolean not null default true,
-    date_entree date,
-    date_sortie date,
-    source text not null default 'MANUEL',
+    nom text,
+    prenom text,
+    date_entree_sdis date,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    constraint scope_personnes_dates_chk check (date_sortie is null or date_entree is null or date_sortie >= date_entree)
+    archived_at timestamptz
   )`,
   `create table if not exists scope_affectations (
-    affectation_id uuid primary key,
-    personne_id uuid not null references scope_personnes(personne_id),
-    cible_id uuid not null references scope_cibles(cible_id),
-    date_debut date not null,
-    date_fin date,
-    source text not null default 'MANUEL',
+    id text primary key,
+    personne_id text not null references scope_personnes(id),
+    categorie text not null,
+    domaine text not null,
+    cible text not null,
+    role_domaine text,
+    date_actif date not null,
+    date_inactif date,
+    source_import_batch_id text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    constraint scope_affectations_dates_chk check (date_fin is null or date_fin >= date_debut)
+    constraint scope_affectations_dates_chk check (date_inactif is null or date_actif <= date_inactif)
   )`,
   `create unique index if not exists scope_affectations_open_unique
-    on scope_affectations (personne_id, cible_id) where date_fin is null`,
-  `create index if not exists scope_affectations_personne_cible_date
-    on scope_affectations (personne_id, cible_id, date_debut)`,
+    on scope_affectations (personne_id, categorie, domaine, cible, coalesce(role_domaine, '')) where date_inactif is null`,
+  `create index if not exists scope_affectations_scope
+    on scope_affectations (domaine, cible, role_domaine, date_actif, date_inactif)`,
+  `create index if not exists scope_affectations_personne_scope
+    on scope_affectations (personne_id, domaine, cible, date_actif)`,
   `create table if not exists scope_evenements (
     evenement_id uuid primary key,
     date date not null,
@@ -134,7 +136,7 @@ const DDL = [
   )`,
   `create table if not exists scope_attendus (
     evenement_id uuid not null references scope_evenements(evenement_id),
-    personne_id uuid not null references scope_personnes(personne_id),
+    personne_id text not null references scope_personnes(id),
     inclus boolean not null default true,
     origine text not null,
     origine_retrait text,
@@ -148,7 +150,7 @@ const DDL = [
   `create index if not exists scope_attendus_evenement on scope_attendus (evenement_id)`,
   `create table if not exists scope_participations (
     evenement_id uuid not null references scope_evenements(evenement_id),
-    personne_id uuid not null references scope_personnes(personne_id),
+    personne_id text not null references scope_personnes(id),
     statut text not null,
     motif_absence text,
     commentaire text,
@@ -512,7 +514,7 @@ async function migrateModel2(){
   await db.query(`
     create table if not exists scope_sous_domaines (
       code text primary key,
-      domaine_parent text not null references scope_domaines(code),
+      domaine_code text not null references scope_domaines(code),
       libelle text not null,
       libelle_affiche text not null,
       actif boolean not null default true,
@@ -522,10 +524,10 @@ async function migrateModel2(){
   `);
   for(const row of SOUS_DOMAINES){
     await db.query(
-      `insert into scope_sous_domaines(code, domaine_parent, libelle, libelle_affiche, actif)
+      `insert into scope_sous_domaines(code, domaine_code, libelle, libelle_affiche, actif)
        values ($1,$2,$3,$4,true)
        on conflict (code) do update set
-         domaine_parent = excluded.domaine_parent,
+         domaine_code = excluded.domaine_code,
          libelle = excluded.libelle,
          libelle_affiche = excluded.libelle_affiche,
          updated_at = now()`,
@@ -627,19 +629,6 @@ async function migrateModel2(){
     )
   `);
 
-  await db.query(`alter table scope_personnes add column if not exists statut_rh text`);
-  await db.query(`
-    update scope_personnes
-    set statut_rh = coalesce(statut_rh, case when actif = false then 'INACTIF' else 'ACTIF' end)
-  `);
-  await db.query(`alter table scope_personnes alter column statut_rh set default 'ACTIF'`);
-  await db.query(`alter table scope_personnes alter column statut_rh set not null`);
-  await db.query(`alter table scope_personnes drop constraint if exists scope_personnes_statut_rh_chk`);
-  await db.query(`
-    alter table scope_personnes add constraint scope_personnes_statut_rh_chk
-      check (statut_rh in ('ACTIF','INACTIF','SORTI','DEMISSIONNAIRE'))
-  `);
-
   await db.query(`
     create table if not exists scope_suivi_nominatif (
       suivi_id uuid primary key,
@@ -673,7 +662,7 @@ async function migrateModel2R1(){
   await db.query(`
     create table if not exists scope_personne_periodes (
       periode_id uuid primary key,
-      personne_id uuid not null references scope_personnes(personne_id),
+      personne_id text not null references scope_personnes(id),
       type text not null,
       date_debut date not null,
       date_fin date,
@@ -691,40 +680,27 @@ async function migrateModel2R1(){
   `);
   await db.query(`
     insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
-    select gen_random_uuid(), p.personne_id, 'ACTIF',
-           coalesce(p.date_entree, date '2020-01-01'),
-           p.date_sortie,
+    select gen_random_uuid(), p.id, 'ACTIF',
+           coalesce(p.date_entree_sdis, date '2020-01-01'),
+           null,
            null, 'BACKFILL'
     from scope_personnes p
     where not exists (
-      select 1 from scope_personne_periodes x where x.personne_id = p.personne_id
+      select 1 from scope_personne_periodes x where x.personne_id = p.id
     )
-      and coalesce(p.statut_rh, 'ACTIF') not in ('SORTI','DEMISSIONNAIRE')
-      and p.actif is not false
+      and p.archived_at is null
   `);
   await db.query(`
     insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
-    select gen_random_uuid(), p.personne_id, 'ACTIF',
-           coalesce(p.date_entree, date '2020-01-01'),
-           coalesce(p.date_sortie, current_date),
-           null, 'BACKFILL'
-    from scope_personnes p
-    where not exists (
-      select 1 from scope_personne_periodes x where x.personne_id = p.personne_id
-    )
-      and (p.date_sortie is not null or p.statut_rh in ('SORTI','DEMISSIONNAIRE') or p.actif is false)
-  `);
-  await db.query(`
-    insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
-    select gen_random_uuid(), p.personne_id,
-           case when p.statut_rh = 'DEMISSIONNAIRE' then 'DEMISSIONNAIRE' else 'SORTI' end,
-           coalesce(p.date_sortie, coalesce(p.date_entree, date '2020-01-01')),
+    select gen_random_uuid(), p.id,
+           'SORTI',
+           coalesce(p.archived_at::date, coalesce(p.date_entree_sdis, date '2020-01-01')),
            null, null, 'BACKFILL'
     from scope_personnes p
-    where (p.date_sortie is not null or p.statut_rh in ('SORTI','DEMISSIONNAIRE') or p.actif is false)
+    where p.archived_at is not null
       and not exists (
         select 1 from scope_personne_periodes x
-        where x.personne_id = p.personne_id and x.type in ('SORTI','DEMISSIONNAIRE')
+        where x.personne_id = p.id and x.type in ('SORTI','DEMISSIONNAIRE')
       )
   `);
 }
