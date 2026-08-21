@@ -12,7 +12,7 @@ const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
-const personService = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-person-service.js'), 'utf8');
+const apiSource = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
 const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pg.js'), 'utf8');
 const L = require(path.join(ROOT, 'assets/js/scope-ui-logic.js'));
 
@@ -199,9 +199,14 @@ async function record(name, fn) {
     assert.ok(css.includes('.scope-person-table tbody tr:nth-child(even)'));
   });
 
-  await record('26 — date_fin annuaire exposée en INACTIF', async () => {
-    assert.ok(personService.includes('dateInactif: primaryAffectation ? primaryAffectation.dateFin : null'));
-    assert.ok(personService.includes('dateFin: row.aff.date_fin'));
+  await record('26 — Personnel charge les fonctions nominatives', async () => {
+    assert.ok(apiSource.includes('scope-personnel-list'));
+    assert.ok(apiSource.includes('scope-personnel-detail'));
+    assert.ok(apiSource.includes('scope-personnel-import-analyze'));
+    assert.ok(apiSource.includes('scope-personnel-import-commit'));
+    assert.ok(apiSource.includes('scope-personnel-effectif-at-date'));
+    assert.ok(ui.includes('normalizePersonnelDirectory'));
+    assert.ok(!/listPersonnelDirectory\(params\)\s*\{\s*return request\('GET', `\/personnel/.test(apiSource));
   });
 
   await record('27 — référentiels tolèrent scope_suivi_nominatif sans date_fin', async () => {

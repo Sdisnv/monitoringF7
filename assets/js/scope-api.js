@@ -68,6 +68,33 @@
       return payload;
     }
 
+    async function directRequest(method, path, body) {
+      const headers = { Accept: 'application/json' };
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      const token = getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+      let response;
+      try {
+        response = await fetch(path, {
+          method,
+          headers,
+          credentials: 'same-origin',
+          body: body !== undefined ? JSON.stringify(body) : undefined
+        });
+      } catch (error) {
+        throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
+      }
+      let payload = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        payload = await response.json();
+      } else {
+        payload = { message: await response.text() };
+      }
+      if (!response.ok) throw new ScopeApiError(response.status, payload || {});
+      return payload;
+    }
+
     async function sessionMe() {
       let response;
       try {
@@ -122,12 +149,67 @@
       },
       previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
-      previewPersonnelSync(body) { return request('POST', '/imports/personnel/preview', body); },
-      commitPersonnelSync(body) { return request('POST', '/imports/personnel/commit', body); },
-      listPersonnelDirectory(params) { return request('GET', `/personnel${queryString(params || {})}`); },
-      getPersonneFiche(id, params) {
-        return request('GET', `/personnel/${encodeURIComponent(id)}${queryString(params || {})}`);
+      async previewPersonnelSync(body) {
+        const payload = await directRequest('POST', '/.netlify/functions/scope-personnel-import-analyze', Object.assign({}, body || {}, {
+          fileText: (body && (body.fileText || body.csvText)) || ''
+        }));
+        const result = payload && (payload.result || payload);
+        const lines = (result && result.lines) || [];
+        return Object.assign({}, result, {
+          rows: lines.map((line) => Object.assign({
+            rowId: String(line.lineNumber || line.id || line.nip || ''),
+            statut: line.status,
+            nip: line.normalized && line.normalized.nip,
+            decision: line.status === 'NEW_PERSON' ? 'CREER' : 'IGNORER'
+          }, line)),
+          fingerprint: result && result.batchId,
+          importId: result && result.batchId,
+          summary: (result && result.counts) || {}
+        });
       },
+      commitPersonnelSync(body) {
+        return directRequest('POST', '/.netlify/functions/scope-personnel-import-commit', {
+          batchId: body && (body.batchId || body.importId || body.fingerprint)
+        }).then((payload) => Object.assign({}, payload, {
+          summary: Object.assign({}, payload && payload.summary, {
+            mutations: (payload && (payload.personsTouched || 0)) + (payload && (payload.assignmentsCreated || 0))
+          })
+        }));
+      },
+      listPersonnelDirectory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-list${queryString(params || {})}`); },
+      async getPersonneFiche(id, params) {
+        const payload = await directRequest('GET', `/.netlify/functions/scope-personnel-detail${queryString(Object.assign({}, params || {}, { id }))}`);
+        if (payload && payload.personne && !payload.identite) {
+          const personne = payload.personne;
+          const affectations = personne.affectations || [];
+          const primary = affectations.find((aff) => aff.roleDomaine === 'PRINCIPAL' && aff.categorie === 'OI')
+            || affectations.find((aff) => aff.role_domaine === 'PRINCIPAL' && aff.categorie === 'OI')
+            || affectations[0]
+            || null;
+          const label = primary ? [primary.domaine, primary.cible].filter(Boolean).join(' ') : '';
+          return Object.assign({}, payload, {
+            identite: {
+              personneId: personne.id || id,
+              nip: personne.nip,
+              grade: personne.grade,
+              nom: personne.nom,
+              prenom: personne.prenom,
+              oiActuel: primary ? { label } : null,
+              statutRh: personne.archivedAt || personne.archived_at ? 'INACTIF' : 'ACTIF',
+              archivee: Boolean(personne.archivedAt || personne.archived_at),
+              libelleStatut: personne.archivedAt || personne.archived_at ? 'Personnel inactif' : 'Personnel actif'
+            },
+            period: params || {},
+            historiqueRh: {},
+            kpi: { volumes: {}, analyticStatus: 'NON_EVALUABLE', percentage: null },
+            explain: {},
+            graphs: {},
+            evenements: []
+          });
+        }
+        return payload;
+      },
+      personnelEffectifAtDate(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-effectif-at-date${queryString(params || {})}`); },
       analyticsPerson(id, params) {
         return request('GET', `/analytics/persons/${encodeURIComponent(id)}${queryString(params || {})}`);
       },

@@ -45,6 +45,90 @@ function mapObjectif(row){
   };
 }
 
+const PERSONNE_SELECT = `
+  id as personne_id,
+  id,
+  nip,
+  nom,
+  prenom,
+  grade,
+  (archived_at is null) as actif,
+  date_entree_sdis as date_entree,
+  null::date as date_sortie,
+  'PERSONNEL'::text as source,
+  case when archived_at is null then 'ACTIF' else 'INACTIF' end as statut_rh,
+  date_entree_sdis,
+  created_at,
+  updated_at,
+  archived_at
+`;
+
+const AFFECTATION_SELECT = `
+  a.id as affectation_id,
+  a.id,
+  a.personne_id,
+  c.cible_id,
+  a.categorie,
+  a.domaine,
+  a.cible,
+  a.role_domaine,
+  a.domaine as domaine_code,
+  a.cible as niveau_code,
+  a.date_actif as date_debut,
+  a.date_inactif as date_fin,
+  'PERSONNEL'::text as source,
+  a.date_actif,
+  a.date_inactif,
+  a.created_at,
+  a.updated_at
+`;
+
+function cibleJoinCondition(alias = 'a'){
+  return `c.domaine_code = ${alias}.domaine
+    and (
+      c.niveau_code = ${alias}.cible
+      or c.libelle = concat(${alias}.domaine, ' ', ${alias}.cible)
+      or (${alias}.domaine = 'JSP' and c.niveau_code = replace(${alias}.cible, 'JSP ', ''))
+      or (${alias}.domaine in ('PR','AUTO','FOSPEC') and c.niveau_code = 'GEN')
+    )`;
+}
+
+function normalizeAffectationInput(row = {}, cible){
+  const domaine = row.domaine || row.domaine_code || (cible && cible.domaine_code) || null;
+  const cibleCode = row.cible || row.niveau_code || (cible && cible.niveau_code) || null;
+  return {
+    id: row.affectation_id || row.id || randomUUID(),
+    personne_id: row.personne_id,
+    categorie: row.categorie || (domaine === 'PR' || domaine === 'AUTO' ? 'SPECIALISATION' : 'OI'),
+    domaine,
+    cible: cibleCode,
+    role_domaine: row.role_domaine || 'PRINCIPAL',
+    date_actif: isoDate(row.date_actif || row.date_debut),
+    date_inactif: isoDate(row.date_inactif || row.date_fin)
+  };
+}
+
+function mapPersonneDates(row){
+  if(!row) return null;
+  return {
+    ...row,
+    date_entree: dateOnly(row.date_entree),
+    date_sortie: dateOnly(row.date_sortie),
+    date_entree_sdis: dateOnly(row.date_entree_sdis)
+  };
+}
+
+function mapAffectationDates(row){
+  if(!row) return null;
+  return {
+    ...row,
+    date_debut: dateOnly(row.date_debut),
+    date_fin: dateOnly(row.date_fin),
+    date_actif: dateOnly(row.date_actif),
+    date_inactif: dateOnly(row.date_inactif)
+  };
+}
+
 function createPgRepo(client){
   const q = (text, params) => (client || db).query(text, params);
 
@@ -112,13 +196,19 @@ function createPgRepo(client){
     async insertPersonne(row){
       const id = row.personne_id || randomUUID();
       const result = await q(
-        `insert into scope_personnes(personne_id, nip, nom, prenom, grade, actif, date_entree, date_sortie, source, statut_rh)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
-        [id, row.nip, row.nom, row.prenom, row.grade || null, row.actif !== false,
-          isoDate(row.date_entree), isoDate(row.date_sortie), row.source || 'MANUEL',
-          row.statut_rh || (row.actif === false ? 'INACTIF' : 'ACTIF')]
+        `insert into scope_personnes(id, nip, nom, prenom, grade, date_entree_sdis, archived_at)
+         values ($1,$2,$3,$4,$5,$6,$7) returning ${PERSONNE_SELECT}`,
+        [
+          id,
+          row.nip,
+          row.nom,
+          row.prenom,
+          row.grade || null,
+          isoDate(row.date_entree_sdis || row.date_entree),
+          row.actif === false ? new Date().toISOString() : null
+        ]
       );
-      const saved = result.rows[0];
+      const saved = mapPersonneDates(result.rows[0]);
       if(!row.skipPeriodes){
         for(const periode of periodFromPersonneRow(saved)){
           await q(
@@ -135,23 +225,22 @@ function createPgRepo(client){
       if(!current) return null;
       const cleaned = Object.fromEntries(Object.entries(patch || {}).filter(([, value]) => value !== undefined));
       const next = { ...current, ...cleaned };
+      const archivedAt = next.actif === false ? (current.archived_at || new Date().toISOString()) : null;
       const result = await q(
         `update scope_personnes
-         set actif = $2, statut_rh = $3, date_sortie = $4, date_entree = $5,
-             nom = $6, prenom = $7, grade = $8, updated_at = now()
-         where personne_id = $1 returning *`,
+         set archived_at = $2, date_entree_sdis = $3,
+             nom = $4, prenom = $5, grade = $6, updated_at = now()
+         where id = $1 returning ${PERSONNE_SELECT}`,
         [
           id,
-          next.actif !== false,
-          next.statut_rh || 'ACTIF',
-          isoDate(next.date_sortie),
-          isoDate(next.date_entree),
+          archivedAt,
+          isoDate(next.date_entree_sdis || next.date_entree),
           next.nom,
           next.prenom,
           next.grade || null
         ]
       );
-      return result.rows[0] || null;
+      return mapPersonneDates(result.rows[0] || null);
     },
     async listPersonnesPeriodes(personneId){
       const result = await q(
@@ -203,97 +292,138 @@ function createPgRepo(client){
       return { ...saved, date_debut: dateOnly(saved.date_debut), date_fin: dateOnly(saved.date_fin) };
     },
     async getPersonneByNip(nip){
-      const result = await q('select * from scope_personnes where nip = $1', [String(nip)]);
-      return result.rows[0] || null;
+      const result = await q(`select ${PERSONNE_SELECT} from scope_personnes where nip = $1`, [String(nip)]);
+      return mapPersonneDates(result.rows[0] || null);
     },
     async upsertPersonne(row){
       const existing = row.nip ? await api.getPersonneByNip(row.nip) : null;
       if(existing){
         const result = await q(
           `update scope_personnes
-           set nom = $2, prenom = $3, grade = $4, source = $5, updated_at = now()
-           where personne_id = $1 returning *`,
-          [existing.personne_id, row.nom, row.prenom, row.grade || existing.grade, row.source || existing.source]
+           set nom = $2, prenom = $3, grade = $4, date_entree_sdis = coalesce($5, date_entree_sdis), updated_at = now()
+           where id = $1 returning ${PERSONNE_SELECT}`,
+          [
+            existing.personne_id,
+            row.nom,
+            row.prenom,
+            row.grade || existing.grade,
+            isoDate(row.date_entree_sdis || row.date_entree)
+          ]
         );
-        return result.rows[0];
+        return mapPersonneDates(result.rows[0]);
       }
       return api.insertPersonne(row);
     },
     async getPersonne(id){
-      const result = await q('select * from scope_personnes where personne_id = $1', [id]);
-      return result.rows[0] || null;
+      const result = await q(`select ${PERSONNE_SELECT} from scope_personnes where id = $1`, [id]);
+      return mapPersonneDates(result.rows[0] || null);
     },
     async listPersonnes({ q: search } = {}){
       if(!search){
-        const result = await q('select * from scope_personnes order by nom, prenom');
-        return result.rows;
+        const result = await q(`select ${PERSONNE_SELECT} from scope_personnes order by nom, prenom`);
+        return result.rows.map(mapPersonneDates);
       }
       const like = `%${String(search).trim()}%`;
       const result = await q(
-        `select * from scope_personnes
+        `select ${PERSONNE_SELECT} from scope_personnes
          where nip ilike $1 or nom ilike $1 or prenom ilike $1
             or (nom || ' ' || prenom) ilike $1
             or (prenom || ' ' || nom) ilike $1
          order by nom, prenom`,
         [like]
       );
-      return result.rows;
+      return result.rows.map(mapPersonneDates);
     },
     async insertAffectation(row){
-      const id = row.affectation_id || randomUUID();
+      const cible = row.cible_id ? await api.getCible(row.cible_id) : null;
+      const next = normalizeAffectationInput(row, cible);
+      if(!next.domaine || !next.cible) throw new Error('scope_affectation_target_required');
       const result = await q(
-        `insert into scope_affectations(affectation_id, personne_id, cible_id, date_debut, date_fin, source)
-         values ($1,$2,$3,$4,$5,$6) returning *`,
-        [id, row.personne_id, row.cible_id, isoDate(row.date_debut), isoDate(row.date_fin), row.source || 'MANUEL']
+        `with inserted as (
+           insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, date_actif, date_inactif)
+           values ($1,$2,$3,$4,$5,$6,$7,$8)
+           returning *
+         )
+         select ${AFFECTATION_SELECT}
+         from inserted a
+         left join scope_cibles c on ${cibleJoinCondition('a')}
+         where a.id = $1`,
+        [
+          next.id,
+          next.personne_id,
+          next.categorie,
+          next.domaine,
+          next.cible,
+          next.role_domaine,
+          next.date_actif,
+          next.date_inactif
+        ]
       );
-      return result.rows[0];
+      return mapAffectationDates(result.rows[0]);
     },
     async updateAffectation(id, patch){
-      const current = await q('select * from scope_affectations where affectation_id = $1', [id]);
+      patch = patch || {};
+      const current = await q('select * from scope_affectations where id = $1', [id]);
       if(!current.rows[0]) return null;
       const row = current.rows[0];
+      const cible = patch.cible_id ? await api.getCible(patch.cible_id) : null;
       const next = {
-        date_debut: patch.date_debut !== undefined ? isoDate(patch.date_debut) : dateOnly(row.date_debut),
-        date_fin: patch.date_fin !== undefined ? isoDate(patch.date_fin) : dateOnly(row.date_fin),
-        cible_id: patch.cible_id || row.cible_id
+        date_actif: patch.date_actif !== undefined ? isoDate(patch.date_actif) : (patch.date_debut !== undefined ? isoDate(patch.date_debut) : dateOnly(row.date_actif)),
+        date_inactif: patch.date_inactif !== undefined ? isoDate(patch.date_inactif) : (patch.date_fin !== undefined ? isoDate(patch.date_fin) : dateOnly(row.date_inactif)),
+        domaine: patch.domaine || patch.domaine_code || (cible && cible.domaine_code) || row.domaine,
+        cible: patch.cible || patch.niveau_code || (cible && cible.niveau_code) || row.cible,
+        categorie: patch.categorie || row.categorie,
+        role_domaine: patch.role_domaine !== undefined ? patch.role_domaine : row.role_domaine
       };
       const result = await q(
-        `update scope_affectations
-         set date_debut = $2, date_fin = $3, cible_id = $4, updated_at = now()
-         where affectation_id = $1 returning *`,
-        [id, next.date_debut, next.date_fin, next.cible_id]
+        `with updated as (
+           update scope_affectations
+           set date_actif = $2, date_inactif = $3, domaine = $4, cible = $5,
+               categorie = $6, role_domaine = $7, updated_at = now()
+           where id = $1
+           returning *
+         )
+         select ${AFFECTATION_SELECT}
+         from updated a
+         left join scope_cibles c on ${cibleJoinCondition('a')}
+         where a.id = $1`,
+        [id, next.date_actif, next.date_inactif, next.domaine, next.cible, next.categorie, next.role_domaine]
       );
-      const saved = result.rows[0];
-      return { ...saved, date_debut: dateOnly(saved.date_debut), date_fin: dateOnly(saved.date_fin) };
+      return mapAffectationDates(result.rows[0]);
     },
     async listAffectations({ personneId, date } = {}){
+      const base = `select ${AFFECTATION_SELECT}
+        from scope_affectations a
+        left join scope_cibles c on ${cibleJoinCondition('a')}`;
       if(personneId && date){
         const result = await q(
-          `select * from scope_affectations
-           where personne_id = $1
-             and date_debut <= $2::date
-             and (date_fin is null or $2::date <= date_fin)`,
+          `${base}
+           where a.personne_id = $1
+             and a.date_actif <= $2::date
+             and (a.date_inactif is null or $2::date <= a.date_inactif)`,
           [personneId, isoDate(date)]
         );
-        return result.rows.map(r => ({ ...r, date_debut: dateOnly(r.date_debut), date_fin: dateOnly(r.date_fin) }));
+        return result.rows.map(mapAffectationDates);
       }
       if(personneId){
-        const result = await q('select * from scope_affectations where personne_id = $1', [personneId]);
-        return result.rows.map(r => ({ ...r, date_debut: dateOnly(r.date_debut), date_fin: dateOnly(r.date_fin) }));
+        const result = await q(`${base} where a.personne_id = $1`, [personneId]);
+        return result.rows.map(mapAffectationDates);
       }
-      const result = await q('select * from scope_affectations');
-      return result.rows.map(r => ({ ...r, date_debut: dateOnly(r.date_debut), date_fin: dateOnly(r.date_fin) }));
+      const result = await q(base);
+      return result.rows.map(mapAffectationDates);
     },
     async listAffectationsForCibles(cibleIds, date){
       if(!cibleIds.length) return [];
       const result = await q(
-        `select * from scope_affectations
-         where cible_id = any($1::uuid[])
-           and date_debut <= $2::date
-           and (date_fin is null or $2::date <= date_fin)`,
+        `select ${AFFECTATION_SELECT}
+         from scope_affectations a
+         join scope_cibles c on ${cibleJoinCondition('a')}
+         where c.cible_id = any($1::uuid[])
+           and a.date_actif <= $2::date
+           and (a.date_inactif is null or $2::date <= a.date_inactif)`,
         [cibleIds, isoDate(date)]
       );
-      return result.rows.map(r => ({ ...r, date_debut: dateOnly(r.date_debut), date_fin: dateOnly(r.date_fin) }));
+      return result.rows.map(mapAffectationDates);
     },
     async insertEvenement(row){
       const id = row.evenement_id || randomUUID();

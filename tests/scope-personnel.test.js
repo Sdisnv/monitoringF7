@@ -1,5 +1,9 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const svc = require('../netlify/functions/_scope-personnel-service');
+
+const ROOT = path.join(__dirname, '..');
 
 function person(overrides = {}){
   return Object.assign({ id:'p1', nip:'TEST001', grade:'Sgt', nom:'TEST', prenom:'Marc', date_entree_sdis:'2020-02-03' }, overrides);
@@ -89,6 +93,49 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.strictEqual(countsJune['DAP Y2'], 1);
   assert.strictEqual(countsJune['JSP JSP B1'], 1);
   assert.strictEqual(countsJune['PR PR'] || 0, 0);
+
+  const personnelService = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-service.js'), 'utf8');
+  const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pg.js'), 'utf8');
+  const api = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
+  const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+  const migration = fs.readFileSync(path.join(ROOT, 'database/migrations/20260821_scope_db_convergence_1.sql'), 'utf8');
+
+  assert.ok(!/scope_personnes\s*\([^)]*\bpersonne_id\b/i.test(personnelService));
+  assert.ok(!/from\s+scope_personnes[\s\S]{0,120}\bpersonne_id\b/i.test(personnelService));
+  assert.ok(!/scope_affectations\s*\([^)]*\baffectation_id\b/i.test(personnelService));
+  assert.ok(!/scope_affectations\s*\([^)]*\bdate_debut\b/i.test(personnelService));
+  assert.ok(!/scope_affectations\s*\([^)]*\bdate_fin\b/i.test(personnelService));
+  assert.ok(personnelService.includes('date_entree_sdis'));
+  assert.ok(personnelService.includes('date_actif'));
+  assert.ok(personnelService.includes('date_inactif'));
+  assert.ok(personnelService.includes('nip text not null unique'));
+  assert.ok(personnelService.includes('role_domaine'));
+
+  assert.ok(pgRepo.includes('date_entree_sdis as date_entree'));
+  assert.ok(pgRepo.includes('a.date_actif as date_debut'));
+  assert.ok(pgRepo.includes('a.date_inactif as date_fin'));
+  assert.ok(pgRepo.includes('where id = $1'));
+  assert.ok(!/scope_personnes\s+where\s+personne_id/i.test(pgRepo));
+  assert.ok(!/insert\s+into\s+scope_personnes\s*\([^)]*\bpersonne_id\b/i.test(pgRepo));
+  assert.ok(!/insert\s+into\s+scope_affectations\s*\([^)]*\baffectation_id\b/i.test(pgRepo));
+  assert.ok(!/insert\s+into\s+scope_affectations\s*\([^)]*\bdate_debut\b/i.test(pgRepo));
+  assert.ok(!/update\s+scope_affectations[\s\S]{0,180}\bdate_fin\s*=/i.test(pgRepo));
+
+  assert.ok(api.includes('scope-personnel-list'));
+  assert.ok(api.includes('scope-personnel-detail'));
+  assert.ok(api.includes('scope-personnel-import-analyze'));
+  assert.ok(api.includes('scope-personnel-import-commit'));
+  assert.ok(api.includes('scope-personnel-effectif-at-date'));
+  assert.ok(!/listPersonnelDirectory\(params\)\s*\{\s*return request\('GET', `\/personnel/.test(api));
+  assert.ok(ui.includes('normalizePersonnelDirectory'));
+  assert.ok(ui.includes('dateEntreeSdis'));
+
+  assert.ok(!/create\s+table\s+if\s+not\s+exists\s+scope_personnes\b/i.test(migration));
+  assert.ok(!/create\s+table\s+if\s+not\s+exists\s+scope_affectations\b/i.test(migration));
+  assert.ok(!/\b(drop|truncate|delete)\b/i.test(migration));
+  assert.ok(migration.includes('create table if not exists scope_evenements'));
+  assert.ok(migration.includes('personne_id text not null references scope_personnes(id)'));
+  assert.ok(migration.includes('create index if not exists'));
 
   console.log('scope-personnel tests ok');
 }

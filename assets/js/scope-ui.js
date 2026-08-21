@@ -1065,11 +1065,13 @@
     }
     state.personnelError = null;
     try {
-      state.personnelDirectory = await client.listPersonnelDirectory(Object.assign(periodQuery(), {
+      const oi = parsePersonnelOiFilter(state.personnelOi);
+      const payload = await client.listPersonnelDirectory({
         q: state.personnelQuery,
-        statut: state.personnelStatut,
-        oi: state.personnelOi
-      }));
+        domaine: oi.domaine,
+        cible: oi.cible
+      });
+      state.personnelDirectory = normalizePersonnelDirectory(payload);
       state.personnelReady = true;
     } catch (error) {
       state.personnelError = L.friendlyError(error).message || L.errorMessage('personnel');
@@ -1168,10 +1170,64 @@
     }).map((c) => `${c.domaineCode || c.domaine_code}/${c.niveauCode || c.niveau_code}`);
   }
 
+  function parsePersonnelOiFilter(value) {
+    if (!value || value === 'tous') return {};
+    const parts = String(value).split('/');
+    return {
+      domaine: parts[0] || '',
+      cible: parts.slice(1).join('/') || ''
+    };
+  }
+
   function formatPersonnelAffectationLabel(affectation) {
     if (!affectation) return '';
-    const raw = affectation.label || [affectation.domaineCode || affectation.domaine_code, affectation.niveauCode || affectation.niveau_code].filter(Boolean).join(' ');
+    const raw = affectation.label || [
+      affectation.domaineCode || affectation.domaine_code || affectation.domaine,
+      affectation.niveauCode || affectation.niveau_code || affectation.cible
+    ].filter(Boolean).join(' ');
     return String(raw || '').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function normalizePersonnelAffectation(affectation) {
+    if (!affectation) return null;
+    const domaine = affectation.domaine || affectation.domaineCode || affectation.domaine_code || '';
+    const cible = affectation.cible || affectation.niveauCode || affectation.niveau_code || '';
+    return Object.assign({}, affectation, {
+      affectationId: affectation.affectationId || affectation.id,
+      domaineCode: domaine,
+      niveauCode: cible,
+      role_domaine: affectation.role_domaine || affectation.roleDomaine || '',
+      label: affectation.label || [domaine, cible].filter(Boolean).join(' '),
+      dateDebut: affectation.dateDebut || affectation.date_actif || affectation.dateActif,
+      dateFin: affectation.dateFin || affectation.date_inactif || affectation.dateInactif
+    });
+  }
+
+  function normalizePersonnelRow(personne) {
+    const affectations = (personne.affectations || personne.affectationsOuvertes || []).map(normalizePersonnelAffectation).filter(Boolean);
+    const primary = affectations.find((aff) => aff.role_domaine === 'PRINCIPAL' && aff.categorie === 'OI' && !aff.dateFin)
+      || affectations.find((aff) => aff.role_domaine === 'PRINCIPAL' && !aff.dateFin)
+      || affectations.find((aff) => !aff.dateFin)
+      || affectations[0]
+      || null;
+    const primaryKey = primary && (primary.affectationId || primary.label);
+    return Object.assign({}, personne, {
+      personneId: personne.personneId || personne.id,
+      dateActif: personne.dateActif || personne.date_entree_sdis || personne.dateEntreeSdis || (primary && primary.dateDebut) || '',
+      dateInactif: personne.dateInactif || (primary && primary.dateFin) || '',
+      affectationPrincipale: personne.affectationPrincipale || primary,
+      autresAffectations: personne.autresAffectations || affectations.filter((aff) => {
+        const key = aff.affectationId || aff.label;
+        return !primaryKey || key !== primaryKey;
+      }),
+      affectationsOuvertes: affectations
+    });
+  }
+
+  function normalizePersonnelDirectory(payload) {
+    return Object.assign({}, payload || {}, {
+      personnes: ((payload && payload.personnes) || []).map(normalizePersonnelRow)
+    });
   }
 
   function personnelPrimaryAffectation(personne) {
