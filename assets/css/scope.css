@@ -1883,6 +1883,43 @@ body.scope-pdf-open { overflow: hidden; }
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.scope-person-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.scope-person-table tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.scope-person-table .scope-btn-small {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: var(--scope-fs-small);
+}
+
+.scope-affectation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.scope-affectation-list span,
+.scope-affectation-list small {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid var(--scope-line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--scope-ink);
+  font-size: var(--scope-fs-small);
+}
+
+.scope-affectation-list small {
+  color: var(--scope-muted);
+}
 .scope-rh-list {
   margin: 8px 0 0;
   padding-left: 18px;

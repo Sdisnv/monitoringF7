@@ -34,6 +34,18 @@ function labelOi(cible){
   return `${domaine}/${niveau}`;
 }
 
+function affectationPayload(row){
+  if(!row) return null;
+  return {
+    cibleId: row.aff.cible_id,
+    label: row.label,
+    domaineCode: row.cible && row.cible.domaine_code,
+    niveauCode: row.cible && row.cible.niveau_code,
+    dateDebut: row.aff.date_debut,
+    dateFin: row.aff.date_fin
+  };
+}
+
 function coveringAffectations(affectations, date){
   return (affectations || []).filter((row) => isAffectationValide(row, date));
 }
@@ -126,14 +138,7 @@ function identityPayload(personne, periodes, affectations, ciblesById, today, pe
       dateFin: conge.date_fin,
       libelle: congeLibelle(conge)
     } : null,
-    oiActuel: current ? {
-      cibleId: current.aff.cible_id,
-      label: current.label,
-      domaineCode: current.cible && current.cible.domaine_code,
-      niveauCode: current.cible && current.cible.niveau_code,
-      dateDebut: current.aff.date_debut,
-      dateFin: current.aff.date_fin
-    } : null,
+    oiActuel: affectationPayload(current),
     affectationsOuvertes: openAff.map((aff) => {
       const cible = ciblesById.get(aff.cible_id);
       return {
@@ -255,6 +260,21 @@ function createScopePersonService(repo){
       const current = principalOi(affs, ciblesById, today);
       if(!matchesOi(current && current.label, oiFilter)) continue;
       if(domaineFilter && current && current.cible && current.cible.domaine_code !== domaineFilter) continue;
+      const ouvertes = coveringAffectations(affs, today).map((aff) => {
+        const cible = ciblesById.get(aff.cible_id);
+        return {
+          aff,
+          cible,
+          label: labelOi(cible),
+          principal: cible ? isPrincipalOi(cible.domaine_code, cible.niveau_code) : false
+        };
+      });
+      const primary = current || ouvertes[0] || null;
+      const primaryAffectation = affectationPayload(primary);
+      const otherAffectations = ouvertes
+        .filter((row) => !primary || row.aff.affectation_id !== primary.aff.affectation_id)
+        .map(affectationPayload)
+        .filter(Boolean);
       const rate = (ratesBundle.rates && ratesBundle.rates[personne.personne_id]) || {
         numerator: 0,
         denominator: 0,
@@ -271,6 +291,11 @@ function createScopePersonService(repo){
         archivee: archived,
         test,
         oiActuel: current ? current.label : null,
+        oiPrincipal: primaryAffectation ? primaryAffectation.label : null,
+        affectationPrincipale: primaryAffectation,
+        autresAffectations: otherAffectations,
+        dateActif: primaryAffectation ? primaryAffectation.dateDebut : null,
+        dateInactif: primaryAffectation ? primaryAffectation.dateFin : null,
         taux: {
           percentage: rate.percentage,
           numerator: rate.numerator,

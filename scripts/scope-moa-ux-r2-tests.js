@@ -12,6 +12,7 @@ const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
+const personService = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-person-service.js'), 'utf8');
 const L = require(path.join(ROOT, 'assets/js/scope-ui-logic.js'));
 
 const arbre = [
@@ -133,7 +134,8 @@ async function record(name, fn) {
     assert.ok(html.includes('scope-moa-ux-r2'));
     assert.ok(html.includes('scope-ui-logic.js?v=scope-moa-ux-r2'));
     assert.ok(html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-moa-ux-r2'));
+    assert.ok(html.includes('scope.css?v=scope-personnel-table-r1'));
+    assert.ok(html.includes('scope-ui.js?v=scope-personnel-table-r1'));
   });
 
   await record('17 — période hors header', async () => {
@@ -181,6 +183,24 @@ async function record(name, fn) {
     assert.ok(ui.includes('scope-start-live'));
     assert.ok(ui.includes('?mode=live'));
     assert.ok(ui.includes('Aucun jeton'));
+  });
+
+  await record('25 — tableau Personnel métier définitif', async () => {
+    const directory = ui.slice(ui.indexOf('function renderPersonnelDirectory'), ui.indexOf('function renderPersonnel(options)'));
+    assert.ok(directory.includes('<th>NIP</th><th>GRADE</th><th>NOM</th><th>PRÉNOM</th><th>OI PRINCIPAL</th><th>AUTRES AFFECTATIONS</th><th>ACTIF</th><th>INACTIF</th><th>ACTIONS</th>'));
+    assert.ok(directory.includes('data-label="NIP"'));
+    assert.ok(directory.includes('data-label="PRÉNOM"'));
+    assert.ok(directory.includes('personnelOtherAffectationsHtml'));
+    assert.ok(directory.includes('scope-btn-small'));
+    assert.ok(!directory.includes('Taux période'));
+    assert.ok(!directory.includes('OI actuel'));
+    assert.ok(!directory.includes('Affectation principale'));
+    assert.ok(css.includes('.scope-person-table tbody tr:nth-child(even)'));
+  });
+
+  await record('26 — date_fin annuaire exposée en INACTIF', async () => {
+    assert.ok(personService.includes('dateInactif: primaryAffectation ? primaryAffectation.dateFin : null'));
+    assert.ok(personService.includes('dateFin: row.aff.date_fin'));
   });
 
   console.log(`SCOPE-MOA-UX-R2: ${passed} PASS`);

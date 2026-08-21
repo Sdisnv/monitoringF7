@@ -1168,6 +1168,38 @@
     }).map((c) => `${c.domaineCode || c.domaine_code}/${c.niveauCode || c.niveau_code}`);
   }
 
+  function formatPersonnelAffectationLabel(affectation) {
+    if (!affectation) return '';
+    const raw = affectation.label || [affectation.domaineCode || affectation.domaine_code, affectation.niveauCode || affectation.niveau_code].filter(Boolean).join(' ');
+    return String(raw || '').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function personnelPrimaryAffectation(personne) {
+    return personne.affectationPrincipale
+      || (personne.oiPrincipal ? { label: personne.oiPrincipal, dateDebut: personne.dateActif, dateFin: personne.dateInactif } : null)
+      || (personne.oiActuel && typeof personne.oiActuel === 'object' ? personne.oiActuel : null)
+      || (personne.oiActuel ? { label: personne.oiActuel, dateDebut: personne.dateActif, dateFin: personne.dateInactif } : null)
+      || ((personne.affectationsOuvertes || [])[0])
+      || null;
+  }
+
+  function personnelOtherAffectations(personne, primary) {
+    const primaryKey = primary && (primary.affectationId || primary.cibleId || primary.label);
+    const explicit = Array.isArray(personne.autresAffectations) ? personne.autresAffectations : null;
+    const source = explicit || (personne.affectationsOuvertes || []).filter((aff) => {
+      const key = aff.affectationId || aff.cibleId || aff.label;
+      return !primaryKey || key !== primaryKey;
+    });
+    return source.map(formatPersonnelAffectationLabel).filter(Boolean);
+  }
+
+  function personnelOtherAffectationsHtml(labels) {
+    if (!labels.length) return '—';
+    const visible = labels.slice(0, 3);
+    const hidden = labels.length - visible.length;
+    return `<span class="scope-affectation-list">${visible.map((label) => `<span>${escapeHtml(label)}</span>`).join('')}${hidden > 0 ? `<small>+${hidden}</small>` : ''}</span>`;
+  }
+
   function renderPersonnelDirectory() {
     const live = mode === 'live';
     const canRead = canReadPersonnel();
@@ -1180,21 +1212,29 @@
     });
     let peopleBody;
     if (personnelView === 'error') {
-      peopleBody = `<tr><td colspan="7"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
     } else if (personnelView === 'loading') {
-      peopleBody = `<tr><td colspan="7"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="9"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
     } else if (personnelView === 'empty') {
-      peopleBody = `<tr><td colspan="7"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="9"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
     } else {
-      peopleBody = people.map((p) => `<tr>
-              <td data-label="Nom">${escapeHtml([p.prenom, p.nom].filter(Boolean).join(' '))}</td>
+      peopleBody = people.map((p) => {
+        const primary = personnelPrimaryAffectation(p);
+        const otherLabels = personnelOtherAffectations(p, primary);
+        const dateActif = p.dateActif || (primary && primary.dateDebut) || '';
+        const dateInactif = p.dateInactif || (primary && primary.dateFin) || '';
+        return `<tr>
               <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
-              <td data-label="Grade">${escapeHtml(p.grade || '—')}</td>
-              <td data-label="OI actuel">${escapeHtml(p.oiActuel || '—')}</td>
-              <td data-label="Statut">${escapeHtml(p.statutRh || '—')}</td>
-              <td data-label="Taux période">${p.taux && p.taux.percentage != null ? escapeHtml(L.formatTaux(p.taux.percentage)) : 'Non évaluable'}</td>
-              <td data-label="Action"><a class="scope-btn" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
-            </tr>`).join('');
+              <td data-label="GRADE">${escapeHtml(p.grade || '—')}</td>
+              <td data-label="NOM">${escapeHtml(p.nom || '—')}</td>
+              <td data-label="PRÉNOM">${escapeHtml(p.prenom || '—')}</td>
+              <td data-label="OI PRINCIPAL">${escapeHtml(formatPersonnelAffectationLabel(primary) || '—')}</td>
+              <td data-label="AUTRES AFFECTATIONS">${personnelOtherAffectationsHtml(otherLabels)}</td>
+              <td data-label="ACTIF">${escapeHtml(dateActif || '—')}</td>
+              <td data-label="INACTIF">${escapeHtml(dateInactif || '—')}</td>
+              <td data-label="ACTIONS"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
+            </tr>`;
+      }).join('');
     }
     const statutFilters = [
       ['actifs', 'Actifs'],
@@ -1221,7 +1261,7 @@
         <div class="scope-field"><label for="personnel-q">Recherche</label>
           <input id="personnel-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personnelQuery)}">
         </div>
-        <div class="scope-field"><label for="personnel-oi">OI actuel</label>
+        <div class="scope-field"><label for="personnel-oi">OI principal</label>
           <select id="personnel-oi">
             <option value="">Tous</option>
             ${oiOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelOi === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
@@ -1234,7 +1274,7 @@
       <p class="scope-sync-summary">${people.length} personne(s) · période ${escapeHtml(periodLabel(dir && dir.period))} · ${escapeHtml((dir && dir.performance && dir.performance.note) || 'Agrégat batch')}</p>
       <div class="scope-table-wrap">
         <table class="scope-table scope-person-table">
-          <thead><tr><th>Nom</th><th>NIP</th><th>Grade</th><th>OI actuel</th><th>Statut</th><th>Taux période</th><th></th></tr></thead>
+          <thead><tr><th>NIP</th><th>GRADE</th><th>NOM</th><th>PRÉNOM</th><th>OI PRINCIPAL</th><th>AUTRES AFFECTATIONS</th><th>ACTIF</th><th>INACTIF</th><th>ACTIONS</th></tr></thead>
           <tbody>
             ${peopleBody}
           </tbody>
