@@ -2,7 +2,7 @@
 # L'application reste locale par défaut ; les fonctions serveur ne sont utilisées que si le backend est activé.
 
 [build]
-  publish = "."
+  publish = "scope"
   functions = "netlify/functions"
 
 [[redirects]]
