@@ -335,7 +335,7 @@
 </div>
 </section>
 <div class="top-tabs-wrap">
-<div class="top-tabs monitoring-f7-tabs"><button class="tab-btn active" data-tab-target="dashboard" type="button">Situation COD</button><button class="tab-btn" data-tab-target="events" type="button">Événements</button><button class="tab-btn" data-tab-target="effectifs" type="button">Effectifs</button><button class="tab-btn" data-tab-target="analyses" type="button">Analyses</button><button class="tab-btn" data-tab-target="graphs" type="button">Graphiques</button><button class="tab-btn" data-tab-target="monitoring" type="button">Gestion</button></div>
+<div class="top-tabs monitoring-f7-tabs"><button class="tab-btn active" data-tab-target="dashboard" type="button">Situation COD</button><button class="tab-btn" data-tab-target="events" type="button">Événements</button><button class="tab-btn" data-tab-target="personnel" type="button">Personnel</button><button class="tab-btn" data-tab-target="effectifs" type="button">Effectifs</button><button class="tab-btn" data-tab-target="analyses" type="button">Analyses</button><button class="tab-btn" data-tab-target="graphs" type="button">Graphiques</button><button class="tab-btn" data-tab-target="monitoring" type="button">Gestion</button></div>
 </div>
 <div class="f7-message-bar" id="f7OperationalMessage" role="status" aria-live="polite" hidden></div>
 <section class="tab-panel active" id="tab-dashboard">
@@ -1244,6 +1244,46 @@
 </section></div>
 </section>
 
+<section class="tab-panel" id="tab-personnel">
+<div class="wrap f7-personnel-layout">
+<div class="f7-view-heading"><h1>Personnel</h1><p>Socle nominatif SCOPE : personnes uniques par NIP, affectations temporelles, import contrôlé et fiche personne.</p></div>
+<section class="card f7-personnel-toolbar-card">
+<div class="f7-personnel-toolbar">
+<div class="compact-field"><label>Recherche</label><input id="scopePersonnelSearch" placeholder="NIP, nom, prénom, grade" type="search"/></div>
+<div class="compact-field"><label>Domaine</label><select id="scopePersonnelDomain"><option value="">Tous</option><option>DPS</option><option>DAP</option><option>JSP</option><option>PR</option><option>AUTO</option></select></div>
+<div class="compact-field"><label>Affectation</label><select id="scopePersonnelTarget"><option value="">Toutes</option></select></div>
+<div class="compact-field"><label>Année import</label><input id="scopePersonnelYear" inputmode="numeric" maxlength="4" type="number" min="2000" max="2100" value="2026"/></div>
+<div class="compact-field"><label>Contexte import</label><select id="scopePersonnelImportContext"><option value="OI">OI général</option><option value="DPS">DPS</option><option value="DAP">DAP</option><option value="JSP">JSP</option><option value="PR">PR</option><option value="AUTO_VL">AUTO cond VL</option><option value="AUTO_PL">AUTO cond PL</option></select></div>
+<div class="compact-field"><label>Fichier CSV</label><input id="scopePersonnelFile" accept=".csv,.txt,text/csv" type="file"/></div>
+<button class="compact-btn primary" id="scopePersonnelAnalyzeBtn" type="button">Analyser</button>
+</div>
+<div class="f7-status-box" id="scopePersonnelStatus">PostgreSQL est la source de vérité du périmètre PERSONNEL. Aucun import n’écrit sans prévisualisation.</div>
+</section>
+<section class="card">
+<div class="toolbar"><h2 class="section-title"><span>Liste nominative</span></h2><span class="badge" id="scopePersonnelCount">0 personne</span></div>
+<div class="table-wrap">
+<table class="scope-table" id="scopePersonnelTable">
+<thead><tr><th data-sort="nip">NIP</th><th data-sort="grade">Grade</th><th data-sort="nom">Nom</th><th data-sort="prenom">Prénom</th><th>Affectation contexte</th><th>Autres affectations</th><th>Actif</th><th>Inactif</th><th>Actions</th></tr></thead>
+<tbody id="scopePersonnelBody"><tr><td colspan="9">Chargement en attente.</td></tr></tbody>
+</table>
+</div>
+</section>
+<section class="card" id="scopePersonnelPreviewCard" hidden>
+<div class="toolbar"><h2 class="section-title"><span>Prévisualisation import</span></h2><button class="compact-btn primary" id="scopePersonnelCommitBtn" type="button">Valider le commit</button></div>
+<div class="f7-personnel-summary" id="scopePersonnelImportSummary"></div>
+<div class="table-wrap">
+<table class="scope-table">
+<thead><tr><th>Ligne</th><th>NIP</th><th>Statut</th><th>Différences</th><th>Erreurs</th></tr></thead>
+<tbody id="scopePersonnelImportBody"></tbody>
+</table>
+</div>
+</section>
+<section class="card" id="scopePersonnelDetailCard" hidden>
+<div class="toolbar"><h2 class="section-title"><span id="scopePersonnelDetailTitle">Fiche personne</span></h2><button class="compact-btn" id="scopePersonnelCloseDetail" type="button">Fermer</button></div>
+<div id="scopePersonnelDetailBody"></div>
+</section>
+</div>
+</section>
 <section class="tab-panel" id="tab-effectifs">
 <div class="wrap grid">
 <div class="f7-view-heading"><h1>Gestion effectif</h1><p>Consultation, chargement, modification, sauvegarde et suppression confirmée des effectifs de référence. Conservation locale permanente.</p></div>
@@ -1935,6 +1975,7 @@ Régularité faible  : σ &gt; 20  (forte instabilité — nécessite analyse)</
 <script src="assets/js/ui/user-modal.js"></script>
 <script src="assets/js/admin.js"></script>
 <script src="assets/js/app.js"></script>
+<script src="assets/js/personnel.js"></script>
 <script src="assets/js/monitoring-f7-evolution.js"></script>
 </body>
 </html>

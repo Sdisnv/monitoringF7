@@ -1,1 +1,8 @@
 /* Tables, zébrage, séries et appendices : règles v47 conservées dans base.css pour éviter toute régression d’ordre CSS. */
+
+.scope-table th[data-sort]{cursor:pointer;}
+.scope-table th[data-sort]::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.32;}
+.scope-table tbody tr:nth-child(even){background:#f7f8fa;}
+.scope-table tbody tr:hover{background:#eef4ff;}
+.scope-table pre{max-width:420px;white-space:pre-wrap;font-size:11px;margin:0;}
+.scope-row-error{background:#fff1f2!important;}

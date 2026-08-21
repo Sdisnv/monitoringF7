@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "check": "./scripts/check-local.sh",
+    "test:scope-personnel": "node tests/scope-personnel.test.js",
     "deploy": "git status && git add . && git commit -m \"release: Monitoring F7 v66.15 oidc login flow\" && git push"
   },
   "dependencies": {

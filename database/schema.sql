@@ -89,10 +89,81 @@ create index if not exists idx_monitoring_f7_objectives_updated_at on monitoring
 create index if not exists idx_monitoring_f7_audit_entries_created_at on monitoring_f7_audit_entries (created_at desc);
 create index if not exists idx_monitoring_f7_sync_changes_entity on monitoring_f7_sync_changes (entity_type, entity_id, created_at desc);
 
+create table if not exists scope_personnes (
+  id text primary key,
+  nip text not null unique,
+  grade text,
+  nom text,
+  prenom text,
+  date_entree_sdis date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  archived_at timestamptz
+);
+
+create table if not exists scope_personnel_import_batches (
+  id text primary key,
+  import_type text not null,
+  contexte text,
+  annee_monitoring integer not null,
+  filename text,
+  status text not null,
+  total_lines integer not null default 0,
+  total_unique_nips integer not null default 0,
+  count_identical integer not null default 0,
+  count_new_persons integer not null default 0,
+  count_modified integer not null default 0,
+  count_new_assignments integer not null default 0,
+  count_missing_assignments integer not null default 0,
+  count_errors integer not null default 0,
+  created_by text,
+  created_at timestamptz not null default now(),
+  committed_at timestamptz
+);
+
+create table if not exists scope_affectations (
+  id text primary key,
+  personne_id text not null references scope_personnes(id),
+  categorie text not null,
+  domaine text not null,
+  cible text not null,
+  role_domaine text,
+  date_actif date not null,
+  date_inactif date,
+  source_import_batch_id text references scope_personnel_import_batches(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint scope_affectations_dates_chk check (date_inactif is null or date_actif <= date_inactif),
+  constraint scope_affectations_categorie_chk check (categorie in ('OI','SPECIALISATION')),
+  constraint scope_affectations_role_chk check (role_domaine is null or role_domaine in ('PRINCIPAL','SECONDAIRE'))
+);
+
+create table if not exists scope_personnel_import_lines (
+  id text primary key,
+  batch_id text not null references scope_personnel_import_batches(id) on delete cascade,
+  line_number integer not null,
+  nip text,
+  raw_payload jsonb not null default '{}'::jsonb,
+  normalized_payload jsonb not null default '{}'::jsonb,
+  status text not null,
+  diff_payload jsonb not null default '{}'::jsonb,
+  errors_payload jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_scope_personnes_nip on scope_personnes (nip);
+create index if not exists idx_scope_affectations_personne on scope_affectations (personne_id);
+create index if not exists idx_scope_affectations_scope on scope_affectations (domaine, cible, role_domaine, date_actif, date_inactif);
+create index if not exists idx_scope_import_lines_batch on scope_personnel_import_lines (batch_id, line_number);
+
 alter table monitoring_f7_user_profiles add column if not exists nip text;
 alter table monitoring_f7_user_profiles add column if not exists permissions text[] not null default array[]::text[];
 create index if not exists idx_monitoring_f7_user_profiles_email on monitoring_f7_user_profiles (lower(email));
 
 insert into monitoring_f7_schema_migrations(version)
 values ('v67.0-auto-core-schema')
+on conflict (version) do nothing;
+
+insert into monitoring_f7_schema_migrations(version)
+values ('scope-personnel-1b')
 on conflict (version) do nothing;
