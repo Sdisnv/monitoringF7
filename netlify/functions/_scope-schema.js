@@ -522,6 +522,9 @@ async function migrateModel2(){
       updated_at timestamptz not null default now()
     )
   `);
+  await db.query(`alter table scope_sous_domaines add column if not exists libelle_affiche text`);
+  await db.query(`update scope_sous_domaines set libelle_affiche = libelle where libelle_affiche is null`);
+  await db.query(`alter table scope_sous_domaines alter column libelle_affiche set not null`);
   for(const row of SOUS_DOMAINES){
     await db.query(
       `insert into scope_sous_domaines(code, domaine_code, libelle, libelle_affiche, actif)

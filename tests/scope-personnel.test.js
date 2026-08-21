@@ -179,6 +179,14 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
     .join('\n');
   assert.ok(bootstrapSousDomainesSql.includes('domaine_code'));
   assert.ok(!/\bdomaine_parent\b/i.test(bootstrapSousDomainesSql));
+  const addLibelleAfficheIndex = capturedSql.findIndex((sql) => /alter table scope_sous_domaines add column if not exists libelle_affiche text/i.test(sql));
+  const updateLibelleAfficheIndex = capturedSql.findIndex((sql) => /update scope_sous_domaines set libelle_affiche = libelle where libelle_affiche is null/i.test(sql));
+  const notNullLibelleAfficheIndex = capturedSql.findIndex((sql) => /alter table scope_sous_domaines alter column libelle_affiche set not null/i.test(sql));
+  const insertSousDomainesIndex = capturedSql.findIndex((sql) => /insert into scope_sous_domaines\(code, domaine_code, libelle, libelle_affiche, actif\)/i.test(sql));
+  assert.ok(addLibelleAfficheIndex >= 0);
+  assert.ok(updateLibelleAfficheIndex > addLibelleAfficheIndex);
+  assert.ok(notNullLibelleAfficheIndex > updateLibelleAfficheIndex);
+  assert.ok(insertSousDomainesIndex > notNullLibelleAfficheIndex);
 
   console.log('scope-personnel tests ok');
 }
