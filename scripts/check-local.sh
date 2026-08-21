@@ -26,10 +26,15 @@ grep -q 'functions = "netlify/functions"' netlify.toml
 grep -q 'to = "/.netlify/functions/auth-login"' netlify.toml
 grep -q 'to = "/.netlify/functions/auth-oidc-start"' netlify.toml
 grep -q 'to = "/.netlify/functions/auth-oidc-callback"' netlify.toml
-grep -q 'to = "/.netlify/functions/data-records"' netlify.toml
-grep -q 'to = "/.netlify/functions/data-objectives"' netlify.toml
-grep -q 'to = "/.netlify/functions/data-status"' netlify.toml
-grep -q 'to = "/.netlify/functions/admin-settings"' netlify.toml
+if grep -q 'from = "/api/scope/*"' netlify.toml; then
+  grep -q 'to = "/scope.html"' netlify.toml
+  grep -q 'to = "/.netlify/functions/scope"' netlify.toml
+else
+  grep -q 'to = "/.netlify/functions/data-records"' netlify.toml
+  grep -q 'to = "/.netlify/functions/data-objectives"' netlify.toml
+  grep -q 'to = "/.netlify/functions/data-status"' netlify.toml
+  grep -q 'to = "/.netlify/functions/admin-settings"' netlify.toml
+fi
 
 echo "-- Controle backend optionnel"
 grep -q 'DATABASE_URL' netlify/functions/_postgres.js

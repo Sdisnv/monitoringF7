@@ -1,12 +1,36 @@
-# Monitoring F7 v66.15 — configuration Netlify statique avec auth et stockage serveur optionnels.
-# L'application reste locale par défaut ; les fonctions serveur ne sont utilisées que si le backend est activé.
+# SCOPE-ENV-3 — configuration Netlify du site autonome scope-sdisnv.
+# Ne pas utiliser pour sdisnv-monitoring-f7 : le netlify.toml historique reste inchangé (index v67).
+# Redirects data v67 (/records, etc.) volontairement absents.
 
 [build]
-  publish = "scope"
+  publish = "."
   functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["pdfkit"]
+  included_files = [
+    "assets/js/scope-csv-import.js",
+    "assets/js/scope-import-contract.js",
+    "assets/js/scope-personnel-sync-contract.js",
+    "assets/img/logo-scope-blanc.png",
+    "assets/img/LogoSDISblanc.png",
+    "assets/img/LogoSDISseulnoir.png",
+    "netlify/functions/data/**",
+    "node_modules/pdfkit/js/data/**"
+  ]
+
+[[redirects]]
+  from = "/"
+  to = "/scope.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/index.html"
+  to = "/scope.html"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/auth/login"
@@ -39,28 +63,13 @@
   status = 200
 
 [[redirects]]
-  from = "/records"
-  to = "/.netlify/functions/data-records"
+  from = "/api/scope"
+  to = "/.netlify/functions/scope"
   status = 200
 
 [[redirects]]
-  from = "/imported-events"
-  to = "/.netlify/functions/data-imported-events"
-  status = 200
-
-[[redirects]]
-  from = "/reference-periods"
-  to = "/.netlify/functions/data-reference-periods"
-  status = 200
-
-[[redirects]]
-  from = "/objectives"
-  to = "/.netlify/functions/data-objectives"
-  status = 200
-
-[[redirects]]
-  from = "/data/status"
-  to = "/.netlify/functions/data-status"
+  from = "/api/scope/*"
+  to = "/.netlify/functions/scope"
   status = 200
 
 [[headers]]
@@ -72,7 +81,7 @@
     Permissions-Policy = "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=()"
     Cross-Origin-Opener-Policy = "same-origin"
     Cross-Origin-Resource-Policy = "same-origin"
-    Content-Security-Policy = "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 
 [[headers]]
   for = "/assets/css/*"
@@ -97,42 +106,3 @@
   [headers.values]
     Cache-Control = "no-cache"
     Content-Type = "text/html; charset=utf-8"
-
-[[headers]]
-  for = "/*.json"
-  [headers.values]
-    Content-Type = "application/json; charset=utf-8"
-    Cache-Control = "no-cache"
-    X-Content-Type-Options = "nosniff"
-
-[[headers]]
-  for = "/*.csv"
-  [headers.values]
-    Content-Type = "text/csv; charset=utf-8"
-    Cache-Control = "no-cache"
-    X-Content-Type-Options = "nosniff"
-
-[[redirects]]
-  from = "/admin/users"
-  to = "/.netlify/functions/admin-users"
-  status = 200
-
-[[redirects]]
-  from = "/admin/settings"
-  to = "/.netlify/functions/admin-settings"
-  status = 200
-
-[[redirects]]
-  from = "/audit-log"
-  to = "/.netlify/functions/audit-log"
-  status = 200
-
-[[redirects]]
-  from = "/api/scope"
-  to = "/.netlify/functions/scope"
-  status = 200
-
-[[redirects]]
-  from = "/api/scope/*"
-  to = "/.netlify/functions/scope"
-  status = 200
