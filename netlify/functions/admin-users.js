@@ -1,5 +1,5 @@
 const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { requirePermission, KNOWN_ROLES, ROLE_PERMISSIONS } = require('./_rbac');
+const { requirePermission, KNOWN_ROLES, ROLE_PERMISSIONS, isAdminRole, normalizeRoles } = require('./_rbac');
 const users = require('./_user-store');
 const audit = require('./_audit-store');
 
@@ -18,7 +18,8 @@ exports.handler = async function(event){
       if(!body) return response(400, { ok:false, error:'invalid_json' });
       const currentSubject = String(claims.sub || '').toLowerCase();
       const targetSubject = String(body.subject || body.email || body.nip || '').toLowerCase();
-      if(currentSubject && targetSubject === currentSubject && Array.isArray(body.roles) && !body.roles.includes('sdis-admin')){
+      const requestedRoles = normalizeRoles(body.roles || [body.role || 'UTILISATEUR']);
+      if(currentSubject && targetSubject === currentSubject && !isAdminRole(requestedRoles)){
         if(body.confirmRemoveOwnAdmin !== true) return response(409, { ok:false, error:'own_admin_removal_requires_confirmation' });
       }
       const before = targetSubject ? await users.getUser(targetSubject) : null;

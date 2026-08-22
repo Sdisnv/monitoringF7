@@ -33,7 +33,8 @@ function oidcConfig(){
     scopes: process.env.OIDC_SCOPES || 'openid profile email groups',
     forceLoginPrompt: process.env.OIDC_FORCE_LOGIN_PROMPT !== 'false',
     allowedGroups: String(process.env.OKTA_ALLOWED_GROUPS || '').split(',').map(v => v.trim()).filter(Boolean),
-    adminGroups: String(process.env.OKTA_ADMIN_GROUPS || '').split(',').map(v => v.trim()).filter(Boolean)
+    adminGroups: String(process.env.OKTA_ADMIN_GROUPS || '').split(',').map(v => v.trim()).filter(Boolean),
+    managerGroups: String(process.env.OKTA_MANAGER_GROUPS || process.env.OKTA_GESTIONNAIRE_GROUPS || process.env.OIDC_MANAGER_GROUPS || '').split(',').map(v => v.trim()).filter(Boolean)
   };
 }
 
@@ -158,9 +159,9 @@ function rolesFromClaims(config, claims){
   if(config.allowedGroups.length && !groups.some(group => config.allowedGroups.includes(group))){
     throw new Error('Groupe Okta non autorise.');
   }
-  const roles = ['sdis-user'];
-  if(groups.some(group => config.adminGroups.includes(group))) roles.push('sdis-admin');
-  return roles;
+  if(groups.some(group => config.adminGroups.includes(group))) return ['ADMINISTRATEUR'];
+  if(groups.some(group => config.managerGroups.includes(group))) return ['GESTIONNAIRE'];
+  return ['UTILISATEUR'];
 }
 
 function publicUserFromClaims(claims, roles){
@@ -170,7 +171,7 @@ function publicUserFromClaims(claims, roles){
     subject,
     nip: String(claims.preferred_username || claims.email || claims.sub || ''),
     email: String(claims.email || claims.preferred_username || ''),
-    displayName: String(claims.name || claims.email || claims.preferred_username || 'Utilisateur SDIS'),
+    displayName: String(claims.name || claims.email || claims.preferred_username || 'Utilisateur SCOPE'),
     roles: normalizedRoles,
     permissions: permissionsForRoles(normalizedRoles)
   };

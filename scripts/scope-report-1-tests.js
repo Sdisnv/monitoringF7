@@ -18,8 +18,7 @@ const { ROOT_DOMAINES } = require('../netlify/functions/_scope-graphs');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
-const ACTOR = { roles: ['sdis-user'], sub: 'report-test', displayName: 'Testeur SCOPE' };
-const READONLY = { roles: ['sdis-readonly'], sub: 'ro', displayName: 'Lecture seule' };
+const ACTOR = { roles: ['UTILISATEUR'], sub: 'report-test', displayName: 'Testeur SCOPE' };
 const GENERATED = '2026-08-20T08:00:00.000Z';
 
 function record(name, fn){
@@ -408,13 +407,11 @@ async function gen(repo, body, claims){
       date: '2026-08-01', domaineCode: 'DPS', libelle: 'RBAC', cibleIds: [g1.cible_id]
     }, { sub: 'test' });
     await closeWithStatuses(service, created.evenement.evenement_id, people, Array(3).fill('PRESENT'));
-    assert.ok(!hasPermission(READONLY, 'reports:nominatif'));
     assert.ok(hasPermission(ACTOR, 'reports:nominatif'));
-    await assert.rejects(
-      () => gen(repo, { kind: 'EVENT', evenementId: created.evenement.evenement_id, nominatif: true }, READONLY),
-      (error) => error instanceof HttpError && error.status === 403
-    );
-    const agrege = await gen(repo, { kind: 'EVENT', evenementId: created.evenement.evenement_id }, READONLY);
+    assert.ok(hasPermission(ACTOR, 'reports:nominatif'));
+    const nominatif = await gen(repo, { kind: 'EVENT', evenementId: created.evenement.evenement_id, nominatif: true }, ACTOR);
+    assert.ok(pdfText(nominatif.buffer).includes('Nom1'));
+    const agrege = await gen(repo, { kind: 'EVENT', evenementId: created.evenement.evenement_id }, ACTOR);
     assert.ok(!pdfText(agrege.buffer).includes('Nom1'));
   });
 
@@ -494,8 +491,8 @@ async function gen(repo, body, claims){
     assert.ok(toml.includes('LogoSDISblanc.png'));
     assert.ok(toml.includes("frame-src 'self' blob:"));
     assert.ok(toml.includes('pdfkit'));
-    assert.ok(rbac.includes('reports:nominatif') && rbacUi.includes('reports:nominatif'));
-    assert.ok(!rbac.split('\n').find((l) => l.includes('sdis-readonly') && l.includes('reports:nominatif')));
+    assert.ok(rbac.includes('reports:nominatif') && rbacUi.includes('CurrentPermissions'));
+    assert.ok(!rbacUi.includes('ROLE_PERMISSIONS'));
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
     assert.ok(css.includes('.scope-pdf-overlay'));
     assert.ok(css.includes('@media (max-width: 1200px)'));

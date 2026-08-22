@@ -50,7 +50,7 @@ async function ensureCoreSchema(){
     email text,
     display_name text,
     nip text,
-    roles text[] not null default array['sdis-user'],
+    roles text[] not null default array['UTILISATEUR'],
     permissions text[] not null default array[]::text[],
     provider text not null default 'oidc',
     active boolean not null default true,
@@ -58,6 +58,7 @@ async function ensureCoreSchema(){
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
   )`);
+  await query(`alter table monitoring_f7_user_profiles alter column roles set default array['UTILISATEUR']`);
   await query(`create table if not exists monitoring_f7_records (
     id text primary key,
     payload jsonb not null,

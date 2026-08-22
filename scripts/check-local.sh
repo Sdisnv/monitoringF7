@@ -129,7 +129,7 @@ grep -q "SCOPE-REPORT-1" netlify/functions/_scope-report-service.js
 grep -q "path === '/reports'" netlify/functions/scope.js
 grep -q "scope-pdf-viewer.js" scope.html
 grep -q "reports:nominatif" netlify/functions/_rbac.js
-grep -q "reports:nominatif" assets/js/rbac.js
+grep -q "CurrentPermissions" assets/js/rbac.js
 grep -qF 'assets/img/logo-scope-blanc.png' netlify.scope.toml
 grep -qF 'assets/img/LogoSDISblanc.png' netlify.scope.toml
 grep -qF 'assets/img/LogoSDISseulnoir.png' netlify.scope.toml
@@ -138,7 +138,7 @@ grep -q '"pdfkit"' package.json
 grep -q "SCOPE-PERSONNEL-SYNC-1" netlify/functions/_scope-personnel-sync.js
 grep -q "imports/personnel/commit" netlify/functions/scope.js
 grep -q "personnel:manage" netlify/functions/_rbac.js
-grep -q "personnel:manage" assets/js/rbac.js
+grep -q "personnel:manage" assets/js/scope-ui.js
 grep -q "ABSENT_DU_FICHIER" assets/js/scope-personnel-sync-contract.js
 grep -q "CHANGEMENT_OI" assets/js/scope-personnel-sync-contract.js
 grep -q "scope-sync-preview" assets/js/scope-ui.js
@@ -154,7 +154,7 @@ grep -q "createScopePersonService" netlify/functions/scope.js
 grep -q "path === '/personnel'" netlify/functions/scope.js
 grep -q "/analytics/persons/:id" netlify/functions/scope.js
 grep -q "personnel:read" netlify/functions/_rbac.js
-grep -q "personnel:read" assets/js/rbac.js
+grep -q "personnel:read" assets/js/scope-ui.js
 grep -q "directoryRates" netlify/functions/_scope-analytics-service.js
 grep -q "screen: 'personne'" assets/js/scope-ui-logic.js
 grep -q "#/personnel/" assets/js/scope-ui.js
@@ -211,8 +211,8 @@ grep -q "event.httpMethod === 'GET'" netlify/functions/auth-logout.js
 grep -q "prompt', 'login'" netlify/functions/_oidc-utils.js
 grep -q "DATABASE_URL || process.env.NETLIFY_DATABASE_URL" netlify/functions/_data-store.js
 grep -q "data:import" netlify/functions/_rbac.js
-grep -q "sdis-chef-formation" netlify/functions/_rbac.js
-grep -q "sdis-chef-formation" assets/js/rbac.js
+grep -q "GESTIONNAIRE" netlify/functions/_rbac.js
+grep -q "CurrentPermissions" assets/js/rbac.js
 grep -q "CSV local utilisateurs" assets/js/admin-users.js
 if grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin-users.js assets/js/admin.js assets/js/app.js; then
   echo "ERREUR: dépendance runtime au CSV public PersonnelSDIS.csv"

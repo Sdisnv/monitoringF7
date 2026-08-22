@@ -2,19 +2,14 @@
 (function(){
   'use strict';
   const ROLES = [
-    { value:'sdis-readonly', label:'Lecture seule' },
-    { value:'sdis-user', label:'Saisie standard' },
-    { value:'sdis-instructeur', label:'Instructeur' },
-    { value:'sdis-formation', label:'Formation' },
-    { value:'sdis-chef-formation', label:'Chef formation' },
-    { value:'sdis-commandement', label:'Commandement' },
-    { value:'sdis-admin', label:'Administrateur' }
+    { value:'UTILISATEUR', label:'Utilisateur' },
+    { value:'GESTIONNAIRE', label:'Gestionnaire' },
+    { value:'ADMINISTRATEUR', label:'Administrateur' }
   ];
   const QUICK_PROFILES = [
-    { value:'readonly', label:'Lecture seule', roles:['sdis-readonly'] },
-    { value:'write', label:'Lecture + écriture', roles:['sdis-user'] },
-    { value:'formation-chief', label:'Chef formation', roles:['sdis-chef-formation'] },
-    { value:'admin', label:'Admin', roles:['sdis-admin'] }
+    { value:'user', label:'Utilisateur', roles:['UTILISATEUR'] },
+    { value:'manager', label:'Gestionnaire', roles:['GESTIONNAIRE'] },
+    { value:'admin', label:'Administrateur', roles:['ADMINISTRATEUR'] }
   ];
   let personnelDirectory = [];
   const ROLE_LABELS = Object.freeze(ROLES.reduce((acc, role) => Object.assign(acc, { [role.value]: role.label }), {}));

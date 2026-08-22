@@ -17,7 +17,7 @@
     contractCheckEnabled: true,
     mockBackendEnabled: false,
     tokenStorage: 'memory',
-    requiredRole: 'sdis-user'
+    requiredRole: 'UTILISATEUR'
   });
 
   function normalizeConfig(input){

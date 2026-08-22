@@ -12,7 +12,7 @@ create table if not exists monitoring_f7_user_profiles (
   email text,
   display_name text,
   nip text,
-  roles text[] not null default array['sdis-user'],
+  roles text[] not null default array['UTILISATEUR'],
   permissions text[] not null default array[]::text[],
   provider text not null default 'oidc',
   active boolean not null default true,
@@ -168,4 +168,3 @@ on conflict (version) do nothing;
 -- Source de vérité SQL : database/migrations/20260819_scope_impl_1a.sql
 -- Appliqué au runtime par netlify/functions/_scope-schema.js (ensureScopeSchema).
 -- Ne pas DROP les tables monitoring_f7_*.
-

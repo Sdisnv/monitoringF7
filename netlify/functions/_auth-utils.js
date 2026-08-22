@@ -17,7 +17,7 @@ function response(statusCode, payload){
 function parseBody(event){
   if(!event.body) return {};
   try { return JSON.parse(event.body); }
-  catch { return null; }
+  catch (_error) { return null; }
 }
 
 function base64url(input){

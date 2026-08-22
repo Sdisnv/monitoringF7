@@ -457,14 +457,16 @@ async function closePresent(service, eventId, people){
   });
 
   await record('29 — RBAC', async () => {
+    assert.ok(hasPermission({ roles: ['ADMINISTRATEUR'] }, 'personnel:manage'));
+    assert.ok(hasPermission({ roles: ['GESTIONNAIRE'] }, 'personnel:manage'));
+    assert.ok(!hasPermission({ roles: ['UTILISATEUR'] }, 'personnel:manage'));
     assert.ok(hasPermission({ roles: ['sdis-admin'] }, 'personnel:manage'));
     assert.ok(hasPermission({ roles: ['sdis-commandement'] }, 'personnel:manage'));
-    assert.ok(!hasPermission({ roles: ['sdis-user'] }, 'personnel:manage'));
-    assert.ok(!hasPermission({ roles: ['sdis-instructeur'] }, 'personnel:manage'));
-    assert.ok(!hasPermission({ roles: ['sdis-readonly'] }, 'personnel:manage'));
     const rbac = fs.readFileSync(path.join(ROOT, 'netlify/functions/_rbac.js'), 'utf8');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/rbac.js'), 'utf8');
-    assert.ok(rbac.includes('personnel:manage') && ui.includes('personnel:manage'));
+    const scopeUi = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    assert.ok(rbac.includes('personnel:manage') && scopeUi.includes('personnel:manage'));
+    assert.ok(ui.includes('CurrentPermissions') && !ui.includes('ROLE_PERMISSIONS'));
   });
 
   await record('30 — pas suppression réelle automatique', async () => {

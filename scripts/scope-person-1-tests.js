@@ -722,15 +722,16 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
   });
 
   await record('37 — RBAC', async () => {
+    assert.ok(hasPermission({ roles: ['ADMINISTRATEUR'] }, 'personnel:read'));
+    assert.ok(hasPermission({ roles: ['GESTIONNAIRE'] }, 'personnel:read'));
+    assert.ok(hasPermission({ roles: ['UTILISATEUR'] }, 'personnel:read'));
+    assert.ok(!hasPermission({ roles: ['UTILISATEUR'] }, 'personnel:manage'));
     assert.ok(hasPermission({ roles: ['sdis-admin'] }, 'personnel:read'));
-    assert.ok(hasPermission({ roles: ['sdis-user'] }, 'personnel:read'));
-    assert.ok(hasPermission({ roles: ['sdis-instructeur'] }, 'personnel:read'));
-    assert.ok(!hasPermission({ roles: ['sdis-readonly'] }, 'personnel:read'));
-    assert.ok(!hasPermission({ roles: ['sdis-user'] }, 'personnel:manage'));
     const rbac = fs.readFileSync(path.join(ROOT, 'netlify/functions/_rbac.js'), 'utf8');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/rbac.js'), 'utf8');
-    assert.ok(rbac.includes('personnel:read') && ui.includes('personnel:read'));
-    assert.ok(!rbac.split('\n').find((l) => l.includes('sdis-readonly') && l.includes('personnel:read')));
+    const scopeUi = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    assert.ok(rbac.includes('personnel:read') && scopeUi.includes('personnel:read'));
+    assert.ok(ui.includes('CurrentPermissions') && !ui.includes('ROLE_PERMISSIONS'));
     const scope = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
     assert.ok(scope.includes("hasPermission(claims, 'personnel:read')"));
   });

@@ -26,7 +26,7 @@ window.MonitoringBackendConfigOverrides = Object.freeze({
   storageDriver: 'postgres',
   contractCheckEnabled: true,
   tokenStorage: 'memory',
-  requiredRole: 'sdis-user'
+  requiredRole: 'UTILISATEUR'
 });
 
 (function(){

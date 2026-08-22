@@ -94,7 +94,7 @@
     const permissions = Array.isArray(p.permissions) ? p.permissions : (Array.isArray(s?.permissions) ? s.permissions : []);
     const user = Object.freeze(Object.assign({}, window.CurrentUser || {}, {
       nip: p.nip || s?.nip || window.CurrentUser?.nip || '',
-      displayName: p.displayName || p.name || s?.displayName || window.CurrentUser?.displayName || 'Utilisateur SDIS',
+      displayName: p.displayName || p.name || s?.displayName || window.CurrentUser?.displayName || 'Utilisateur SCOPE',
       roles,
       permissions,
       authSource: 'okta-oidc'

@@ -1,12 +1,10 @@
 const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { permissionsForRoles, requirePermission } = require('./_rbac');
+const { permissionsForRoles, requirePermission, normalizeRoles, KNOWN_ROLES, isAdminRole } = require('./_rbac');
 const { auditEntry } = require('./_audit-server');
 const db = require('./_postgres');
 
-const ALLOWED_ROLES = ['sdis-admin','sdis-commandement','sdis-chef-formation','sdis-formation','sdis-instructeur','sdis-user','sdis-readonly'];
 function sanitizeRoles(input){
-  const roles = Array.isArray(input) ? input.filter(r => ALLOWED_ROLES.includes(String(r))) : ['sdis-user'];
-  return roles.length ? Array.from(new Set(roles)) : ['sdis-user'];
+  return normalizeRoles(Array.isArray(input) ? input : [input || 'UTILISATEUR']);
 }
 function publicRow(row){
   const roles = sanitizeRoles(row.roles);
@@ -33,7 +31,7 @@ exports.handler = async function(event){
   try{ claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, 'users:admin'); }
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized', message:String(error.message || error) }); }
   try{
-    if(event.httpMethod === 'GET') return response(200, { ok:true, users: await listUsers(), roles: ALLOWED_ROLES });
+    if(event.httpMethod === 'GET') return response(200, { ok:true, users: await listUsers(), roles: KNOWN_ROLES });
     const body = parseBody(event);
     if(!body) return response(400, { ok:false, error:'invalid_json' });
     if(event.httpMethod === 'POST'){
@@ -53,7 +51,7 @@ exports.handler = async function(event){
       const subject = String(body.subject || '').trim().toLowerCase();
       if(!subject) return response(400, { ok:false, error:'missing_subject' });
       const current = await db.query('select roles from monitoring_f7_user_profiles where subject=$1', [subject]);
-      if(subject === String(claims.sub || '').toLowerCase() && Array.isArray(current.rows?.[0]?.roles) && current.rows[0].roles.includes('sdis-admin') && !sanitizeRoles(body.roles).includes('sdis-admin') && body.confirmSelfAdminRemoval !== true){
+      if(subject === String(claims.sub || '').toLowerCase() && Array.isArray(current.rows?.[0]?.roles) && isAdminRole(current.rows[0].roles) && !isAdminRole(sanitizeRoles(body.roles)) && body.confirmSelfAdminRemoval !== true){
         return response(409, { ok:false, error:'self_admin_removal_requires_confirmation' });
       }
       const roles = sanitizeRoles(body.roles);

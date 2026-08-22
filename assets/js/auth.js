@@ -33,7 +33,7 @@
     const next = Object.assign({}, previous, {
       nip,
       displayName: configuredUser?.displayName || configuredUser?.name || previous.displayName || previous.name || `NIP ${nip}`,
-      role: configuredUser?.role || previous.role || 'sdis-user',
+      role: configuredUser?.role || previous.role || 'UTILISATEUR',
       authSource: source,
       passwordManagedBy: source === 'legacy-profile' ? 'legacy-local-profile' : 'local-configuration',
       updatedAt: now,
@@ -51,13 +51,13 @@
     const user = payload?.user || {};
     const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(user.roles) ? user.roles : []);
     const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(user.permissions) ? user.permissions : []);
-    const displayName = String(user.displayName || user.name || user.email || user.nip || 'Utilisateur SDIS').trim();
+    const displayName = String(user.displayName || user.name || user.email || user.nip || 'Utilisateur SCOPE').trim();
     return {
       nip: String(user.nip || user.sub || user.email || ''),
       displayName,
       name: displayName,
       email: user.email || '',
-      role: roles[0] || 'sdis-user',
+      role: user.role || roles[0] || 'UTILISATEUR',
       roles,
       permissions,
       authSource: 'okta-oidc',
@@ -93,7 +93,7 @@
     const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(user?.permissions) ? user.permissions : (Array.isArray(profile?.permissions) ? profile.permissions : []));
     window.CurrentUser = Object.freeze(Object.assign({}, user, {
       nip: user.nip || profile?.nip || user.email || '',
-      displayName: profile?.displayName || user.displayName || user.name || user.email || 'Utilisateur SDIS',
+      displayName: profile?.displayName || user.displayName || user.name || user.email || 'Utilisateur SCOPE',
       authSource: 'okta-oidc'
     }));
     window.CurrentRoles = Object.freeze(roles.slice());
@@ -109,7 +109,7 @@
     if(!activeOidcSession) return null;
     const user = window.CurrentUser || Object.freeze({
       nip: profile.nip || session.nip || '',
-      displayName: profile.displayName || profile.name || session.displayName || 'Utilisateur SDIS',
+      displayName: profile.displayName || profile.name || session.displayName || 'Utilisateur SCOPE',
       roles: Array.isArray(profile.roles) ? profile.roles : (Array.isArray(session.roles) ? session.roles : []),
       permissions: Array.isArray(profile.permissions) ? profile.permissions : (Array.isArray(session.permissions) ? session.permissions : []),
       authSource: 'okta-oidc'
@@ -304,7 +304,7 @@
     if(!resolvedProfile){ credentialsError('credentials'); return; }
     setProfile(resolvedProfile);
     window.CurrentUser = Object.freeze(Object.assign({}, resolvedProfile));
-    window.CurrentRoles = Object.freeze([resolvedProfile.role || 'sdis-user']);
+    window.CurrentRoles = Object.freeze([resolvedProfile.role || 'UTILISATEUR']);
     window.CurrentPermissions = Object.freeze([]);
     window.MonitoringAuditLog?.logWarning?.('login-local-fallback-used', 'Fallback local de secours utilisé.', { source: resolvedProfile.authSource || 'local' });
     setMessage('Accès local de secours autorisé.', 'ok');

@@ -383,8 +383,10 @@
   function roleLabel() {
     const roles = (state.session && (state.session.roles || [])) || [];
     if (mode !== 'live') return 'Démonstration';
-    if (roles.includes('sdis-admin')) return 'Administration';
-    if (roles.includes('sdis-user')) return 'Utilisateur SDIS';
+    if (state.session && state.session.roleLabel) return state.session.roleLabel;
+    if (roles.includes('ADMINISTRATEUR')) return 'Administrateur';
+    if (roles.includes('GESTIONNAIRE')) return 'Gestionnaire';
+    if (roles.includes('UTILISATEUR')) return 'Utilisateur';
     if (roles[0]) return String(roles[0]);
     return state.session ? 'Session live' : 'Session requise';
   }
@@ -406,15 +408,8 @@
     if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
       return window.MonitoringRBAC.has(permission);
     }
-    const roles = (state.session && state.session.roles) || [];
-    if (roles.includes('sdis-admin')) return true;
-    if (permission === 'dashboard:read') return roles.length > 0;
-    if (permission === 'personnel:read') return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
-    if (permission === 'personnel:manage') return roles.some((role) => ['sdis-admin', 'sdis-commandement', 'sdis-chef-formation', 'sdis-formation'].includes(role));
-    if (permission === 'references:manage') return roles.some((role) => ['sdis-admin', 'sdis-commandement', 'sdis-chef-formation', 'sdis-formation'].includes(role));
-    if (permission === 'events:create') return roles.some((role) => role !== 'sdis-readonly');
-    if (permission === 'users:admin' || permission === 'settings:manage') return roles.includes('sdis-admin');
-    return roles.length > 0;
+    const permissions = (state.session && state.session.permissions) || [];
+    return permissions.includes(permission);
   }
 
   function periodContextHtml() {
@@ -1038,8 +1033,8 @@
     if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
       return window.MonitoringRBAC.has('personnel:read');
     }
-    const roles = (state.session && state.session.roles) || [];
-    return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
+    const permissions = (state.session && state.session.permissions) || [];
+    return permissions.includes('personnel:read');
   }
 
   function qualQuery() {
@@ -1097,8 +1092,8 @@
     if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
       return window.MonitoringRBAC.has('personnel:manage');
     }
-    const roles = (state.session && state.session.roles) || [];
-    return roles.some((role) => ['sdis-admin', 'sdis-commandement', 'sdis-chef-formation', 'sdis-formation'].includes(role));
+    const permissions = (state.session && state.session.permissions) || [];
+    return permissions.includes('personnel:manage');
   }
 
   function personnelPillClass(statut) {
@@ -1689,8 +1684,8 @@
     if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
       return window.MonitoringRBAC.has('reports:nominatif');
     }
-    const roles = (state.session && state.session.roles) || [];
-    return roles.length > 0 && !roles.every((role) => role === 'sdis-readonly');
+    const permissions = (state.session && state.session.permissions) || [];
+    return permissions.includes('reports:nominatif');
   }
 
   function reportButton(id) {

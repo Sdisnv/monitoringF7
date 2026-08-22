@@ -473,9 +473,10 @@ async function commitNative(service, csvText, extra = {}){
     assert.ok(after.evenements.some((item) => item.evenement.origine === 'IMPORT_CSV'));
   });
 
-  await record('43 — RBAC events:create / readonly', async () => {
-    assert.strictEqual(hasPermission({ roles: ['sdis-readonly'] }, 'events:create'), false);
-    assert.strictEqual(hasPermission({ roles: ['sdis-user'] }, 'events:create'), true);
+  await record('43 — RBAC events:create / modèle SCOPE', async () => {
+    assert.strictEqual(hasPermission({ roles: ['UTILISATEUR'] }, 'events:create'), true);
+    assert.strictEqual(hasPermission({ roles: ['UTILISATEUR'] }, 'personnel:manage'), false);
+    assert.strictEqual(hasPermission({ roles: ['GESTIONNAIRE'] }, 'events:create'), true);
     const http = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
     assert.ok(http.includes("path === '/imports/evenements/preview'"));
     assert.ok(http.includes("hasPermission(claims, 'events:create')"));

@@ -1,16 +1,17 @@
 const db = require('./_postgres');
-const { normalizeRoles, permissionsForRoles } = require('./_rbac');
+const { normalizeRoles, permissionsForRoles, dominantRole, ROLE_LABELS } = require('./_rbac');
 function subjectFor(input){ return String(input.subject || input.email || input.nip || '').trim().toLowerCase(); }
 function publicUser(row){
   const roles = normalizeRoles(row.roles || []);
   const explicitPermissions = Array.isArray(row.permissions) ? row.permissions : [];
-  return { subject:row.subject, nip:row.nip || row.email || row.subject, email:row.email || '', displayName:row.display_name || row.displayName || row.email || row.subject, roles, permissions:permissionsForRoles(roles, explicitPermissions), explicitPermissions, active:row.active !== false, lastLoginAt:row.last_login_at || row.lastLoginAt || null, provider:row.provider || 'oidc', createdAt:row.created_at || row.createdAt || null, updatedAt:row.updated_at || row.updatedAt || null };
+  const role = dominantRole(roles);
+  return { subject:row.subject, nip:row.nip || row.email || row.subject, email:row.email || '', displayName:row.display_name || row.displayName || row.email || row.subject, role, roleLabel:ROLE_LABELS[role] || role, roles, permissions:permissionsForRoles(roles, explicitPermissions), explicitPermissions, active:row.active !== false, lastLoginAt:row.last_login_at || row.lastLoginAt || null, provider:row.provider || 'oidc', createdAt:row.created_at || row.createdAt || null, updatedAt:row.updated_at || row.updatedAt || null };
 }
 async function ensureUser(user){
   await db.ensureCoreSchema();
   const subject = subjectFor(user);
   if(!subject) return null;
-  const roles = normalizeRoles(user.roles || ['sdis-user']);
+  const roles = normalizeRoles(user.roles || ['UTILISATEUR']);
   const permissions = Array.isArray(user.permissions) ? user.permissions : [];
   const result = await db.query(`insert into monitoring_f7_user_profiles(subject,email,display_name,nip,roles,permissions,provider,active,last_login_at,updated_at)
     values ($1,$2,$3,$4,$5,$6,$7,true,now(),now())
@@ -35,7 +36,7 @@ async function getUserByIdentity(values){
 async function upsertUser(input){
   await db.ensureCoreSchema();
   const subject = subjectFor(input); if(!subject) throw new Error('subject_required');
-  const roles = normalizeRoles(input.roles || ['sdis-user']);
+  const roles = normalizeRoles(input.roles || [input.role || 'UTILISATEUR']);
   const permissions = Array.isArray(input.permissions) ? input.permissions : [];
   const r = await db.query(`insert into monitoring_f7_user_profiles(subject,email,display_name,nip,roles,permissions,provider,active,updated_at)
     values ($1,$2,$3,$4,$5,$6,'oidc',$7,now())
