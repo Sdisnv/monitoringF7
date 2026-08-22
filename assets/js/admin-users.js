@@ -16,8 +16,6 @@
     { value:'formation-chief', label:'Chef formation', roles:['sdis-chef-formation'] },
     { value:'admin', label:'Admin', roles:['sdis-admin'] }
   ];
-  const PERSONNEL_STORAGE_KEY = 'monitoring_f7_personnel_sdis_csv_v1';
-  const PERSONNEL_CSV_URL = 'assets/data/PersonnelSDIS.csv';
   let personnelDirectory = [];
   const ROLE_LABELS = Object.freeze(ROLES.reduce((acc, role) => Object.assign(acc, { [role.value]: role.label }), {}));
   function $(id){ return document.getElementById(id); }
@@ -49,7 +47,7 @@
       </div>
       <div class="f7-status-box">Lecture seule = consultation. Lecture + écriture = saisie. Chef formation = pilotage formation. Admin = droits complets.</div>
       <div class="grid-3">
-        <div><label>Importer PersonnelSDIS.csv</label><input id="f7PersonnelCsvFile" type="file" accept=".csv,text/csv"></div>
+        <div><label>Importer CSV local utilisateurs</label><input id="f7PersonnelCsvFile" type="file" accept=".csv,text/csv"></div>
         <div><label>Profil créé par import</label><select id="f7CsvQuickProfile">${QUICK_PROFILES.map(p=>`<option value="${p.value}">${p.label}</option>`).join('')}</select></div>
         <div><label>&nbsp;</label><button class="compact-btn" id="f7ImportPersonnelCsvBtn" type="button">Mettre à jour la liste / importer</button></div>
       </div>
@@ -79,24 +77,8 @@
     if(el){ el.className = 'f7-status-box ' + (type || ''); el.textContent = msg; }
   }
   async function loadPersonnelDirectory(){
-    try{
-      const saved = localStorage.getItem(PERSONNEL_STORAGE_KEY);
-      if(saved){
-        personnelDirectory = parsePersonnelCsv(saved);
-        setPersonnelStatus(`Référentiel personnel chargé depuis la dernière importation manuelle : ${personnelDirectory.length} personne(s).`, 'ok');
-        return;
-      }
-    }catch{}
-    try{
-      const response = await fetch(PERSONNEL_CSV_URL, { cache:'no-store' });
-      if(!response.ok) throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      personnelDirectory = parsePersonnelCsv(text);
-      setPersonnelStatus(`Référentiel PersonnelSDIS embarqué chargé : ${personnelDirectory.length} personne(s).`, 'ok');
-    }catch(error){
-      personnelDirectory = [];
-      setPersonnelStatus(`Référentiel PersonnelSDIS indisponible : ${error?.message || error}`, 'warn');
-    }
+    personnelDirectory = [];
+    setPersonnelStatus('Aucun référentiel personnel public chargé. Importez un CSV local si nécessaire.', 'warn');
   }
   function findPersonnelByNip(nip){
     const normalized = normalizeNip(nip);
@@ -179,20 +161,19 @@
   async function importPersonnelCsv(){
     if(!canAdmin()){ setStatus('Accès refusé : rôle admin requis.', 'error'); return; }
     const file = $('f7PersonnelCsvFile')?.files?.[0];
-    if(!file){ setStatus('Sélectionne PersonnelSDIS.csv.', 'error'); return; }
+    if(!file){ setStatus('Sélectionne un CSV local utilisateurs.', 'error'); return; }
     const profile = QUICK_PROFILES.find(item => item.value === $('f7CsvQuickProfile')?.value) || QUICK_PROFILES[1];
     try{
       const text = await file.text();
       const users = parsePersonnelCsv(text);
       if(!users.length){ setStatus('Aucun utilisateur exploitable dans le CSV.', 'error'); return; }
-      try { localStorage.setItem(PERSONNEL_STORAGE_KEY, text); } catch {}
       personnelDirectory = users;
       let ok = 0; let failed = 0;
       for(const user of users){
         const res = await window.MonitoringApiClient.saveUser(Object.assign({}, user, { roles:profile.roles, active:true }));
         if(res.ok && res.data?.ok) ok++; else failed++;
       }
-      setStatus(`Import PersonnelSDIS terminé : ${ok} utilisateur(s) créé(s)/mis à jour, ${failed} échec(s).`, failed ? 'warn' : 'ok');
+      setStatus(`Import CSV local terminé : ${ok} utilisateur(s) créé(s)/mis à jour, ${failed} échec(s).`, failed ? 'warn' : 'ok');
       loadUsers();
     }catch(error){
       setStatus(`Import CSV impossible : ${error?.message || error}`, 'error');

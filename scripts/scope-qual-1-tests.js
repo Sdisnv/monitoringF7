@@ -33,7 +33,7 @@ function record(name, fn){
   });
 
   await record('Dry-run DAP Y4 — 16 personnes, 0 OI inconnu', async () => {
-    const text = fs.readFileSync(path.join(ROOT, 'assets/data/PersonnelSDIS.csv'), 'utf8');
+    const text = fs.readFileSync(path.join(ROOT, 'tests/fixtures/personnel-dap-y4-anonymized.csv'), 'utf8');
     const parsed = map.parsePersonnelCsv(text);
     assert.strictEqual(parsed.separator, ';');
     assert.ok(parsed.header.includes('OI'));

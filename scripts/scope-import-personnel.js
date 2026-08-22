@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * Import pilote PersonnelSDIS → SCOPE.
+ * Import pilote CSV personnel local/anonymisé → SCOPE.
  * Dry-run par défaut. --execute exige DATABASE_URL et n’importe qu’un OI filtré.
  *
  *   node scripts/scope-import-personnel.js --dry-run --oi "DAP Y4"
@@ -30,7 +30,7 @@ function initials(nom, prenom) {
 }
 
 async function main() {
-  const csvPath = arg('csv', path.join(__dirname, '..', 'assets/data/PersonnelSDIS.csv'));
+  const csvPath = arg('csv', path.join(__dirname, '..', 'tests/fixtures/personnel-dap-y4-anonymized.csv'));
   const oi = arg('oi', '');
   const dateDebut = arg('date-debut', DATE_BASCULE_SCOPE);
   const execute = hasFlag('execute');

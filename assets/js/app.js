@@ -27,8 +27,6 @@
     const STORAGE_KEY_REFERENCES = "monitoring_exercices_sdis_references_v1";
     const STORAGE_KEY_IMPORTED_EVENTS = "monitoring_exercices_sdis_imported_events_v1";
     const STORAGE_KEY_OBJECTIVES = "monitoring_exercices_sdis_objectifs_v1";
-    const PERSONNEL_SDIS_CSV_URL = "assets/data/PersonnelSDIS.csv";
-    const PERSONNEL_SDIS_STORAGE_KEY = "monitoring_f7_personnel_sdis_csv_v1";
 
     const APP_VERSION = (window.MonitoringConfig && window.MonitoringConfig.version) || "v65";
     const MAX_IMPORT_JSON_BYTES = 8 * 1024 * 1024;
@@ -113,20 +111,7 @@
     }
 
     async function loadPersonnelSdisDirectory() {
-      try {
-        const saved = localStorage.getItem(PERSONNEL_SDIS_STORAGE_KEY);
-        if (saved) {
-          personnelSdisDirectory = parsePersonnelSdisCsv(saved);
-          return personnelSdisDirectory;
-        }
-      } catch {}
-      try {
-        const response = await fetch(PERSONNEL_SDIS_CSV_URL, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        personnelSdisDirectory = parsePersonnelSdisCsv(await response.text());
-      } catch {
-        personnelSdisDirectory = [];
-      }
+      personnelSdisDirectory = [];
       return personnelSdisDirectory;
     }
 

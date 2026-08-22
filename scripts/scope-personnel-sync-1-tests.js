@@ -14,7 +14,7 @@ const { hasPermission } = require('../netlify/functions/_rbac');
 const { canPhysicallyDeletePersonne } = require('../netlify/functions/_scope-model');
 
 const ROOT = path.join(__dirname, '..');
-const CSV_PATH = path.join(ROOT, 'assets/data/PersonnelSDIS.csv');
+const CSV_PATH = path.join(ROOT, 'tests/fixtures/personnel-dap-y4-anonymized.csv');
 const ACTOR = { sub: 'test-sync', roles: ['sdis-admin'] };
 const results = [];
 
@@ -77,11 +77,11 @@ async function closePresent(service, eventId, people){
 }
 
 (async () => {
-  const realCsv = fs.readFileSync(CSV_PATH, 'utf8');
+  const fixtureCsv = fs.readFileSync(CSV_PATH, 'utf8');
 
-  await record('1 — CSV réel parse', async () => {
-    const parsed = parseCsv(realCsv);
-    assert.ok(parsed.rows.length >= 200, `attendu ~226, reçu ${parsed.rows.length}`);
+  await record('1 — CSV fixture anonymisé parse', async () => {
+    const parsed = parseCsv(fixtureCsv);
+    assert.strictEqual(parsed.rows.length, 16);
     assert.ok(parsed.headers.includes('nip'));
     assert.ok(parsed.headers.includes('oi'));
   });
@@ -93,12 +93,12 @@ async function closePresent(service, eventId, people){
   });
 
   await record('3 — séparateur ;', async () => {
-    const parsed = parseCsv(realCsv);
+    const parsed = parseCsv(fixtureCsv);
     assert.strictEqual(parsed.separator, ';');
   });
 
   await record('4 — NIP unique fichier', async () => {
-    const parsed = parseCsv(realCsv);
+    const parsed = parseCsv(fixtureCsv);
     const nips = parsed.rows.map((r) => r.fields.nip);
     assert.strictEqual(nips.length, new Set(nips).size);
   });
@@ -490,7 +490,7 @@ async function closePresent(service, eventId, people){
 
   await record('32 — 16 DAP/Y4 préservés (contrat CSV)', async () => {
     const map = require('../assets/js/scope-oi-map.js');
-    const parsed = map.parsePersonnelCsv(realCsv);
+    const parsed = map.parsePersonnelCsv(fixtureCsv);
     const plan = map.planImport(parsed.rows, { oi: 'DAP Y4', dateDebut: map.DATE_BASCULE_SCOPE });
     assert.strictEqual(plan.personnesACreer, 16);
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');

@@ -213,19 +213,24 @@ grep -q "DATABASE_URL || process.env.NETLIFY_DATABASE_URL" netlify/functions/_da
 grep -q "data:import" netlify/functions/_rbac.js
 grep -q "sdis-chef-formation" netlify/functions/_rbac.js
 grep -q "sdis-chef-formation" assets/js/rbac.js
-grep -q "PersonnelSDIS" assets/js/admin-users.js
-grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin-users.js
+grep -q "CSV local utilisateurs" assets/js/admin-users.js
+if grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin-users.js assets/js/admin.js assets/js/app.js; then
+  echo "ERREUR: dépendance runtime au CSV public PersonnelSDIS.csv"
+  exit 1
+fi
+if grep -q "PERSONNEL_CSV_URL\\|PERSONNEL_SDIS_CSV_URL\\|monitoring_f7_personnel_sdis_csv_v1" assets/js/admin-users.js assets/js/admin.js assets/js/app.js; then
+  echo "ERREUR: fallback CSV personnel public ou localStorage legacy"
+  exit 1
+fi
 grep -q "applyPersonnelFromNip" assets/js/admin-users.js
 grep -q "NIP / identifiant" assets/js/admin.js
 grep -q "f7-role-choice" assets/js/admin.js
-grep -q "assets/data/PersonnelSDIS.csv" assets/js/admin.js
 grep -q "effectifUpdatedByNip" index.html
 grep -q "personnelSdisNipOptions" index.html
 grep -q "effectifUpdateScope" index.html
 grep -q "saveReferencePeriodBtn" index.html
 grep -q "Effectif concerné" index.html
 grep -q "domain-group-title-auto" index.html
-grep -q "PERSONNEL_SDIS_CSV_URL" assets/js/app.js
 grep -q "applyResponsibleFromNip" assets/js/app.js
 grep -q "findPersonnelSdisByDisplayName" assets/js/app.js
 grep -q "connectedUserDisplayName" assets/js/app.js

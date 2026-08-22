@@ -2,8 +2,6 @@
 (function(){
   'use strict';
 
-  const PERSONNEL_STORAGE_KEY = 'monitoring_f7_personnel_sdis_csv_v1';
-  const PERSONNEL_CSV_URL = 'assets/data/PersonnelSDIS.csv';
   const ROLES = [
     { value:'sdis-readonly', label:'Lecture seule' },
     { value:'sdis-user', label:'Lecture + écriture' },
@@ -80,23 +78,8 @@
 
   async function loadPersonnelDirectory(root){
     const status = root?.querySelector('#adminPersonnelStatus');
-    try{
-      const saved = localStorage.getItem(PERSONNEL_STORAGE_KEY);
-      if(saved){
-        personnelDirectory = parsePersonnelCsv(saved);
-        if(status) status.textContent = `Référentiel personnel chargé depuis la dernière importation manuelle : ${personnelDirectory.length} personne(s).`;
-        return;
-      }
-    }catch{}
-    try{
-      const res = await fetch(PERSONNEL_CSV_URL, { cache:'no-store' });
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      personnelDirectory = parsePersonnelCsv(await res.text());
-      if(status) status.textContent = `Référentiel PersonnelSDIS embarqué chargé : ${personnelDirectory.length} personne(s).`;
-    }catch(error){
-      personnelDirectory = [];
-      if(status) status.textContent = `Référentiel PersonnelSDIS indisponible : ${error.message || error}`;
-    }
+    personnelDirectory = [];
+    if(status) status.textContent = 'Aucun référentiel personnel public chargé. Importez un CSV local si nécessaire.';
   }
 
   function findPersonnelByNip(nip){
@@ -133,7 +116,7 @@
         <fieldset class="f7-role-fieldset"><legend>Droits</legend>${ROLES.map(role => `<label class="f7-role-choice"><input type="checkbox" name="roles" value="${role.value}"><span>${role.label}</span></label>`).join('')}</fieldset>
         <div class="f7-status-box" id="adminPersonnelStatus">Référentiel personnel non chargé.</div>
         <div class="grid-3">
-          <label>Importer PersonnelSDIS.csv<input id="adminPersonnelCsvFile" type="file" accept=".csv,text/csv"></label>
+          <label>Importer CSV local utilisateurs<input id="adminPersonnelCsvFile" type="file" accept=".csv,text/csv"></label>
           <label>Profil créé par import<select id="adminCsvQuickProfile">${QUICK_PROFILES.map(profile => `<option value="${profile.value}">${profile.label}</option>`).join('')}</select></label>
           <label>&nbsp;<button class="compact-btn" id="adminImportPersonnelBtn" type="button">Mettre à jour la liste / importer</button></label>
         </div>
@@ -159,12 +142,11 @@
   async function importPersonnelCsv(root){
     const file = root.querySelector('#adminPersonnelCsvFile')?.files?.[0];
     const msg = root.querySelector('#adminUserMessage');
-    if(!file){ if(msg) msg.textContent = 'Sélectionne PersonnelSDIS.csv.'; return; }
+    if(!file){ if(msg) msg.textContent = 'Sélectionne un CSV local utilisateurs.'; return; }
     const profile = quickProfile(root.querySelector('#adminCsvQuickProfile')?.value);
     try{
       const text = await file.text();
       const users = parsePersonnelCsv(text);
-      localStorage.setItem(PERSONNEL_STORAGE_KEY, text);
       personnelDirectory = users;
       let ok = 0; let failed = 0;
       for(const user of users){
@@ -173,7 +155,7 @@
           ok++;
         }catch{ failed++; }
       }
-      if(msg) msg.textContent = `Import PersonnelSDIS terminé : ${ok} utilisateur(s) créé(s)/mis à jour, ${failed} échec(s).`;
+      if(msg) msg.textContent = `Import CSV local terminé : ${ok} utilisateur(s) créé(s)/mis à jour, ${failed} échec(s).`;
       await renderUsers();
     }catch(error){
       if(msg) msg.textContent = `Import CSV impossible : ${error.message || error}`;
