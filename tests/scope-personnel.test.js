@@ -131,6 +131,7 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(ui.includes('dateEntreeSdis'));
   assert.ok(ui.includes('Importer du personnel'));
   assert.ok(ui.includes('scope-open-personnel-import'));
+  assert.ok(ui.includes('L’import personnel est réservé aux profils habilités (personnel:manage).'));
   assert.ok(ui.includes('scope-sync-file'));
   assert.ok(ui.includes('Sélectionner un fichier CSV'));
   assert.ok(ui.includes('Analyser le fichier'));

@@ -85,6 +85,7 @@ async function record(name, fn) {
     assert.ok(ui.includes('const importMode = Boolean(options && options.importMode)'));
     assert.ok(ui.includes('Importer du personnel'));
     assert.ok(ui.includes('scope-open-personnel-import'));
+    assert.ok(ui.includes('L’import personnel est réservé aux profils habilités (personnel:manage).'));
     assert.ok(ui.includes('Analyser le fichier'));
     assert.ok(ui.includes('Valider l’import'));
     assert.ok(ui.includes('previewPersonnelSync'));

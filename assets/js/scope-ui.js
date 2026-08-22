@@ -1385,7 +1385,7 @@
             ${oiOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelOi === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
           </select>
         </div>
-        ${canManagePersonnel() ? '<button type="button" class="scope-btn scope-btn-primary" id="scope-open-personnel-import">Importer du personnel</button>' : ''}
+        <button type="button" class="scope-btn scope-btn-primary" id="scope-open-personnel-import">Importer du personnel</button>
       </div>
       <div class="scope-sync-filters" role="tablist">
         ${statutFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personnelStatut === id ? 'scope-btn-primary' : ''}" data-personnel-statut="${id}">${escapeHtml(label)}</button>`).join('')}
