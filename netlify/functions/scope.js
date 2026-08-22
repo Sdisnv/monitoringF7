@@ -9,9 +9,11 @@ const { createScopeAlertsService } = require('./_scope-alerts-service');
 const { getPgRepo } = require('./_scope-pg');
 const { generateReport, pdfResponse } = require('./_scope-report-service');
 const { createScopePersonService } = require('./_scope-person-service');
+const users = require('./_user-store');
 
-function requireAccess(event){
-  return verifyToken(bearerToken(event), 'access');
+async function requireAccess(event){
+  const claims = verifyToken(bearerToken(event), 'access');
+  return await users.getUserByIdentity([claims.sub, claims.email, claims.nip]) || claims;
 }
 
 function scopePath(event){
@@ -59,7 +61,7 @@ exports.handler = async function(event){
   }
 
   let claims;
-  try { claims = requireAccess(event); }
+  try { claims = await requireAccess(event); }
   catch(error){
     return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) });
   }

@@ -44,8 +44,12 @@ pass('03 — aliases legacy préservés sans devenir rôles finaux', () => {
 pass('04 — import Personnel contrôlé par personnel:manage', () => {
   const analyze = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope-personnel-import-analyze.js'), 'utf8');
   const commit = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope-personnel-import-commit.js'), 'utf8');
+  const scopeRouter = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
   assert.ok(analyze.includes("requirePermission(claims, 'personnel:manage')"));
   assert.ok(commit.includes("requirePermission(claims, 'personnel:manage')"));
+  assert.ok(analyze.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
+  assert.ok(commit.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
+  assert.ok(scopeRouter.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
   assert.strictEqual(rbac.hasPermission({ roles:['UTILISATEUR'] }, 'personnel:manage'), false);
   assert.strictEqual(rbac.hasPermission({ roles:['GESTIONNAIRE'] }, 'personnel:manage'), true);
   assert.strictEqual(rbac.hasPermission({ roles:['ADMINISTRATEUR'] }, 'personnel:manage'), true);
@@ -75,11 +79,13 @@ pass('07 — frontend sans matrice RBAC dupliquée', () => {
 });
 
 pass('08 — administration utilisateurs limitée aux trois rôles', () => {
+  const adminUsersFunction = fs.readFileSync(path.join(ROOT, 'netlify/functions/admin-users.js'), 'utf8');
   assert.ok(adminUsers.includes("value:'UTILISATEUR'"));
   assert.ok(adminUsers.includes("value:'GESTIONNAIRE'"));
   assert.ok(adminUsers.includes("value:'ADMINISTRATEUR'"));
   assert.ok(!adminUsers.includes("value:'sdis-readonly'"));
   assert.ok(!adminUsers.includes("value:'sdis-chef-formation'"));
+  assert.ok(adminUsersFunction.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
 });
 
 pass('09 — modèle utilisateur applicatif séparé du Personnel métier', () => {

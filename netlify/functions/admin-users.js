@@ -3,10 +3,13 @@ const { requirePermission, KNOWN_ROLES, ROLE_PERMISSIONS, isAdminRole, normalize
 const users = require('./_user-store');
 const audit = require('./_audit-store');
 
-function claimsFrom(event){ return verifyToken(bearerToken(event), 'access'); }
+async function claimsFrom(event){
+  const claims = verifyToken(bearerToken(event), 'access');
+  return await users.getUserByIdentity([claims.sub, claims.email, claims.nip]) || claims;
+}
 exports.handler = async function(event){
   let claims;
-  try{ claims = claimsFrom(event); requirePermission(claims, 'users:admin'); }
+  try{ claims = await claimsFrom(event); requirePermission(claims, 'users:admin'); }
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized', message:String(error.message || error) }); }
   try{
     if(event.httpMethod === 'GET'){
