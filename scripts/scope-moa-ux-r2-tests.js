@@ -80,11 +80,18 @@ async function record(name, fn) {
     assert.ok(ui.includes('function renderImport'));
   });
 
-  await record('08 — import personnel absent de Personnel principal', async () => {
+  await record('08 — import personnel visible depuis Personnel principal', async () => {
     assert.ok(ui.includes('function renderPersonnel(options)'));
     assert.ok(ui.includes('const importMode = Boolean(options && options.importMode)'));
-    assert.ok(ui.includes('importMode ? `<div class="scope-card"'));
+    assert.ok(ui.includes('Importer du personnel'));
+    assert.ok(ui.includes('scope-open-personnel-import'));
+    assert.ok(ui.includes('Analyser le fichier'));
+    assert.ok(ui.includes('Valider l’import'));
+    assert.ok(ui.includes('previewPersonnelSync'));
     assert.ok(ui.includes('renderPersonnel({ importMode: true })'));
+    const analyzeHandler = ui.slice(ui.indexOf("document.getElementById('scope-sync-preview')"), ui.indexOf("document.getElementById('scope-sync-commit')"));
+    assert.ok(analyzeHandler.includes('previewPersonnelSync'));
+    assert.ok(!analyzeHandler.includes('commitPersonnelSync'));
   });
 
   await record('09 — importation accessible depuis Réglages', async () => {
