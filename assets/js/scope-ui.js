@@ -9,15 +9,15 @@
   const QUAL_KEY = 'scope-include-qualification';
 
   function liveConfirmed() {
-    try { return sessionStorage.getItem(LIVE_KEY) === '1'; } catch { return false; }
+    try { return sessionStorage.getItem(LIVE_KEY) === '1'; } catch (_error) { return false; }
   }
 
   function readIncludeQualification() {
-    try { return sessionStorage.getItem(QUAL_KEY) === '1'; } catch { return false; }
+    try { return sessionStorage.getItem(QUAL_KEY) === '1'; } catch (_error) { return false; }
   }
 
   function persistIncludeQualification(value) {
-    try { sessionStorage.setItem(QUAL_KEY, value ? '1' : '0'); } catch { /* ignore */ }
+    try { sessionStorage.setItem(QUAL_KEY, value ? '1' : '0'); } catch (_error) { /* ignore */ }
   }
 
   function resolveMode() {
@@ -255,7 +255,7 @@
     try {
       const data = await client.listAlerts(params);
       state.alertCounts = data.counts || null;
-    } catch {
+    } catch (_error) {
       /* le compteur header reste facultatif */
     }
   }
@@ -2685,13 +2685,13 @@
 
   function bind() {
     document.getElementById('scope-confirm-live')?.addEventListener('click', () => {
-      try { sessionStorage.setItem('scope-live-confirmed', '1'); } catch {}
+      try { sessionStorage.setItem('scope-live-confirmed', '1'); } catch (_error) {}
       const params = new URLSearchParams(location.search.replace(/^\?/, ''));
       if (params.get('mode') === 'live') location.reload();
       else location.search = '?mode=live';
     });
     document.getElementById('scope-stay-demo')?.addEventListener('click', () => {
-      try { sessionStorage.removeItem('scope-live-confirmed'); } catch {}
+      try { sessionStorage.removeItem('scope-live-confirmed'); } catch (_error) {}
       location.search = '';
       location.hash = '#/exercices';
     });
@@ -3198,10 +3198,6 @@
   }
 
   function bindPersonnelSync() {
-    document.getElementById('scope-open-personnel-import')?.addEventListener('click', () => {
-      state.personnelSync.panelOpen = true;
-      render();
-    });
     const dateInput = document.getElementById('scope-sync-date');
     dateInput?.addEventListener('change', (e) => {
       state.personnelSync.dateEffet = e.target.value;
@@ -3328,6 +3324,22 @@
     });
     document.getElementById('scope-person-rh')?.addEventListener('toggle', (e) => {
       state.personneRhOpen = e.target.open;
+    });
+  }
+
+  function openPersonnelImportPanel() {
+    state.personnelSync.panelOpen = true;
+    render();
+  }
+
+  function bindPersonnelImportDelegation() {
+    root.addEventListener('click', (event) => {
+      const trigger = event.target && event.target.closest
+        ? event.target.closest('#scope-open-personnel-import')
+        : null;
+      if (!trigger) return;
+      event.preventDefault();
+      openPersonnelImportPanel();
     });
   }
 
@@ -3534,6 +3546,8 @@
       render();
     }
   });
+  bindPersonnelImportDelegation();
+
   (async function boot() {
     if (mode === 'live') {
       const ok = await ensureLiveSession();

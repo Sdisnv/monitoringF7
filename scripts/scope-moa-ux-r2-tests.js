@@ -85,6 +85,13 @@ async function record(name, fn) {
     assert.ok(ui.includes('const importMode = Boolean(options && options.importMode)'));
     assert.ok(ui.includes('Importer du personnel'));
     assert.ok(ui.includes('scope-open-personnel-import'));
+    assert.ok(ui.includes('function openPersonnelImportPanel()'));
+    assert.ok(ui.includes('state.personnelSync.panelOpen = true'));
+    assert.ok(ui.includes('function bindPersonnelImportDelegation()'));
+    assert.ok(ui.includes("closest('#scope-open-personnel-import')"));
+    assert.ok(ui.includes('openPersonnelImportPanel();'));
+    assert.ok(ui.includes('id="scope-personnel-import-panel"'));
+    assert.ok(!ui.includes('catch {'));
     assert.ok(ui.includes('L’import personnel est réservé aux profils habilités (personnel:manage).'));
     assert.ok(ui.includes('Analyser le fichier'));
     assert.ok(ui.includes('Valider l’import'));
