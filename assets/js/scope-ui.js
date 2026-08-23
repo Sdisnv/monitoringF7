@@ -1106,11 +1106,23 @@
     return 'warn';
   }
 
+  function personnelPreviewSourceRows(preview) {
+    return (preview && (preview.rows || (preview.lignes || []).concat(preview.absents || []))) || [];
+  }
+
+  function personnelDisplay() {
+    return window.ScopePersonnelDisplay || null;
+  }
+
   function personnelVisibleRows(preview) {
-    const rows = (preview && (preview.rows || (preview.lignes || []).concat(preview.absents || []))) || [];
+    const source = personnelPreviewSourceRows(preview);
+    const display = personnelDisplay();
+    const rows = display && display.previewDetailRows ? display.previewDetailRows(source) : source.filter((row) => {
+      const status = row.statut || row.status;
+      return status !== 'INCHANGE' && status !== 'IDENTICAL';
+    });
     const filter = state.personnelSync.filter;
-    if (filter === 'TOUS') return rows;
-    if (filter === 'CHANGEMENTS') return rows.filter((row) => row.statut !== 'INCHANGE' && row.statut !== 'IDENTICAL');
+    if (filter === 'TOUS' || filter === 'CHANGEMENTS') return rows;
     if (filter === 'NOUVEAU') return rows.filter((row) => row.statut === 'NOUVEAU' || row.statut === 'NEW_PERSON' || row.statut === 'NEW_JSP');
     if (filter === 'CHANGEMENT_OI') return rows.filter((row) => row.statut === 'CHANGEMENT_OI' || row.statut === 'NEW_ASSIGNMENT' || row.statut === 'MISSING_ASSIGNMENT');
     if (filter === 'CHANGEMENT_GRADE') return rows.filter((row) => row.statut === 'CHANGEMENT_GRADE' || (row.diff && row.diff.person && row.diff.person.grade));
@@ -1183,10 +1195,17 @@
 
   function formatPersonnelAffectationLabel(affectation) {
     if (!affectation) return '';
-    const raw = affectation.label || [
-      affectation.domaineCode || affectation.domaine_code || affectation.domaine,
-      affectation.niveauCode || affectation.niveau_code || affectation.cible
-    ].filter(Boolean).join(' ');
+    const display = personnelDisplay();
+    if (display && display.formatAssignment) {
+      return display.formatAssignment(affectation);
+    }
+    const domaine = affectation.domaineCode || affectation.domaine_code || affectation.domaine || '';
+    const cible = affectation.niveauCode || affectation.niveau_code || affectation.cible || '';
+    const domain = String(domaine).trim();
+    const target = String(cible).replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+    if (domain && target && domain.toUpperCase() === target.toUpperCase()) return domain;
+    if (domain && target && target.toUpperCase().startsWith(`${domain.toUpperCase()} `)) return target;
+    const raw = affectation.label || [domain, target].filter(Boolean).join(' ');
     return String(raw || '').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
   }
 
@@ -1317,56 +1336,32 @@
   }
 
   function personnelAssignmentText(list) {
+    const display = personnelDisplay();
+    if (display && display.formatAssignmentList) return display.formatAssignmentList(list) || '—';
     return (list || []).map((a) => [a.domaine, a.cible, a.role_domaine || a.roleDomaine].filter(Boolean).join(' ')).filter(Boolean).join(', ') || '—';
   }
 
   function personnelLineCurrent(row) {
-    const identity = (row.diff && row.diff.identity) || {};
-    const person = (row.diff && row.diff.person) || {};
-    const grade = (identity.grade && identity.grade.current) || (person.grade && person.grade.before) || '';
-    const nom = (identity.nom && identity.nom.current) || (person.nom && person.nom.before) || '';
-    const prenom = (identity.prenom && identity.prenom.current) || (person.prenom && person.prenom.before) || '';
-    const parts = [];
-    if (grade || nom || prenom) {
-      parts.push(`Grade actuel ${grade || '—'}`);
-      parts.push(`Nom actuel ${nom || '—'}`);
-      parts.push(`Prénom actuel ${prenom || '—'}`);
-    }
-    return parts.join(' · ') || '—';
+    const display = personnelDisplay();
+    if (display && display.formatIdentitySide) return display.formatIdentitySide(row, 'current');
+    return '—';
   }
 
   function personnelLineProposed(row) {
-    const identity = (row.diff && row.diff.identity) || {};
-    const person = (row.diff && row.diff.person) || {};
-    const n = row.normalized || {};
-    const grade = (identity.grade && identity.grade.proposed) || (person.grade && person.grade.after) || n.grade || '';
-    const nom = (identity.nom && identity.nom.proposed) || (person.nom && person.nom.after) || n.nom || '';
-    const prenom = (identity.prenom && identity.prenom.proposed) || (person.prenom && person.prenom.after) || n.prenom || '';
-    return [`Grade proposé ${grade || '—'}`, `Nom proposé ${nom || '—'}`, `Prénom proposé ${prenom || '—'}`].join(' · ');
+    const display = personnelDisplay();
+    if (display && display.formatIdentitySide) return display.formatIdentitySide(row, 'proposed');
+    return '—';
   }
 
   function personnelLineCurrentAssignments(row) {
-    const diff = row.diff || {};
-    const pop = diff.population || {};
-    if (pop.oiSite && pop.oiSite.current) return pop.oiSite.current;
-    if (pop.specialization && pop.specialization.current) return pop.specialization.current;
-    if (Array.isArray(diff.principalChanges) && diff.principalChanges.length) {
-      return diff.principalChanges.map((change) => [change.domaine, change.before].filter(Boolean).join(' ')).join(', ');
-    }
-    if (Array.isArray(diff.missingAssignments) && diff.missingAssignments.length) return personnelAssignmentText(diff.missingAssignments);
-    if (Array.isArray(diff.existingAssignments) && diff.existingAssignments.length) return personnelAssignmentText(diff.existingAssignments);
+    const display = personnelDisplay();
+    if (display && display.assignmentSides) return display.assignmentSides(row).current;
     return '—';
   }
 
   function personnelLineProposedAssignments(row) {
-    const diff = row.diff || {};
-    const pop = diff.population || {};
-    if (pop.oiSite && pop.oiSite.proposed) return pop.oiSite.proposed;
-    if (pop.specialization && pop.specialization.proposed) return pop.specialization.proposed;
-    if (Array.isArray(diff.principalChanges) && diff.principalChanges.length) {
-      return diff.principalChanges.map((change) => [change.domaine, change.after].filter(Boolean).join(' ')).join(', ');
-    }
-    if (Array.isArray(diff.newAssignments) && diff.newAssignments.length) return personnelAssignmentText(diff.newAssignments);
+    const display = personnelDisplay();
+    if (display && display.assignmentSides) return display.assignmentSides(row).proposed;
     return personnelAssignmentText((row.normalized && row.normalized.assignments) || []);
   }
 

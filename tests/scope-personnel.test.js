@@ -166,6 +166,8 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(ui.includes('cond VL — DPS'));
   assert.ok(ui.includes('cond VL — DAP'));
   assert.ok(ui.includes('Erreurs'));
+  assert.ok(ui.includes('previewDetailRows'));
+  assert.ok(ui.includes('formatIdentitySide'));
   assert.ok(ui.includes('Valeur actuelle'));
   assert.ok(ui.includes('Valeur proposée'));
   assert.ok(ui.includes('Affectation actuelle'));

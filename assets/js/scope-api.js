@@ -208,7 +208,12 @@
             || affectations.find((aff) => aff.role_domaine === 'PRINCIPAL' && aff.categorie === 'OI')
             || affectations[0]
             || null;
-          const label = primary ? [primary.domaine, primary.cible].filter(Boolean).join(' ') : '';
+          const display = typeof window !== 'undefined' ? window.ScopePersonnelDisplay : null;
+          const label = display && display.formatAssignment
+            ? display.formatAssignment(primary)
+            : (primary ? (String(primary.domaine || '').toUpperCase() === String(primary.cible || '').toUpperCase()
+              ? (primary.domaine || primary.cible)
+              : [primary.domaine, primary.cible].filter(Boolean).join(' ')) : '');
           return Object.assign({}, payload, {
             identite: {
               personneId: personne.id || id,

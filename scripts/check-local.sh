@@ -273,6 +273,10 @@ grep -q "site_jsp" netlify/functions/_scope-personnel-service.js
 grep -q "preview.wrote = false" netlify/functions/_scope-personnel-service.js
 grep -q "scope-sync-context" assets/js/scope-ui.js
 grep -q "scope-sync-site" assets/js/scope-ui.js
+grep -q "compactAssignmentLabel" assets/js/scope-personnel-display.js
+grep -q "previewDetailRows" assets/js/scope-personnel-display.js
+grep -q "scope-personnel-display.js" scope.html
+grep -q "personnelVisibleRows" assets/js/scope-ui.js
 test -f database/migrations/20260823_scope_personnel_import_populations_1.sql
 test -f database/migrations/20260823_scope_jsp_grade_model_fix_1.sql
 grep -q "drop column if exists niveau" database/migrations/20260823_scope_jsp_grade_model_fix_1.sql
@@ -285,5 +289,6 @@ if grep -E "a\.niveau[^_]|coalesce\(niveau" netlify/functions/_scope-personnel-s
   exit 1
 fi
 grep -q "scope-personnel-import-populations.test.js" package.json
+grep -q "scope-personnel-import-ux.test.js" package.json
 
 echo "OK: controles locaux termines."

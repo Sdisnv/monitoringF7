@@ -20,8 +20,15 @@
     box.className = `f7-status-box ${kind || ''}`.trim();
   }
   function assignmentLabel(a){
-    const role = a.roleDomaine ? ` ${a.roleDomaine === 'PRINCIPAL' ? 'principal' : 'secondaire'}` : '';
-    return `${a.domaine} ${a.cible}${role}`;
+    const display = window.ScopePersonnelDisplay;
+    if(display && display.formatAssignment) return display.formatAssignment(a);
+    const role = a.roleDomaine === 'SECONDAIRE' ? 'secondaire' : '';
+    const domain = String(a.domaine || '').trim();
+    const target = String(a.cible || '').trim();
+    const core = domain && target && domain.toUpperCase() === target.toUpperCase()
+      ? domain
+      : [domain, target].filter(Boolean).join(' ');
+    return [core, role].filter(Boolean).join(' ');
   }
   function activeAssignments(person){
     const today = new Date().toISOString().slice(0, 10);
