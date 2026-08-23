@@ -277,6 +277,10 @@ grep -q "scope-sync-context" assets/js/scope-ui.js
 grep -q "scope-sync-site" assets/js/scope-ui.js
 grep -q "compactAssignmentLabel" assets/js/scope-personnel-display.js
 grep -q "previewDetailRows" assets/js/scope-personnel-display.js
+grep -q "evaluateAutoSpecializations" assets/js/scope-personnel-display.js
+grep -q "isEffectiveCondVlDps" netlify/functions/_scope-personnel-service.js
+grep -q "countsInVlDpsEffectif" netlify/functions/_scope-personnel-service.js
+grep -q "scope-auto-specializations-priority.test.js" package.json
 grep -q "scope-personnel-display.js" scope.html
 grep -q "personnelVisibleRows" assets/js/scope-ui.js
 test -f database/migrations/20260823_scope_personnel_import_populations_1.sql

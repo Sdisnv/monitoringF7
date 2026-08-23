@@ -1,6 +1,7 @@
 'use strict';
 const db = require('./_postgres');
 const ctx = require('./_scope-personnel-import-contexts');
+const display = require('../../assets/js/scope-personnel-display.js');
 
 function rid(){
   return (global.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -350,6 +351,18 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
     const otherJsp = open.filter((row) => row.domaine === 'JSP' && row.cible !== (siteJsp && siteJsp.code) && !row.date_inactif);
     otherJsp.forEach((row) => warnings.push(`${ctx.specializationLabel(row)} déjà actif — non clôturé automatiquement.`));
   }
+  const infos = [];
+  const autoEval = display.evaluateAutoSpecializations(open.concat(incoming), dateActif, resolved.code);
+  autoEval.infos.forEach((msg) => { if(!infos.includes(msg)) infos.push(msg); });
+  autoEval.anomalies.forEach((msg) => { if(!warnings.includes(msg)) warnings.push(msg); });
+  diff.auto = {
+    plPriorityForVlDps: autoEval.plPriorityForVlDps,
+    plWithoutActiveDps: autoEval.plWithoutActiveDps,
+    countsInVlDpsEffectif: autoEval.countsInVlDpsEffectif,
+    countsInPlEffectif: autoEval.countsInPlEffectif,
+    countsInVlDapEffectif: autoEval.countsInVlDapEffectif
+  };
+  const messages = warnings.concat(infos);
   if(!existingPerson){
     return {
       status: resolved.newPersonStatus,
@@ -357,22 +370,23 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
       diff: Object.assign(diff, { person: { created: true } }),
       errors: [],
       warnings,
-      messages: warnings.slice()
+      infos,
+      messages: messages.slice()
     };
   }
   if(diff.person.grade || diff.person.nom || diff.person.prenom){
-    return { status:'MODIFIED', statusLabel: ctx.STATUS_LABELS.MODIFIED, diff, errors:[], warnings, messages: warnings.slice() };
+    return { status:'MODIFIED', statusLabel: ctx.STATUS_LABELS.MODIFIED, diff, errors:[], warnings, infos, messages: messages.slice() };
   }
   if(diff.newAssignments.length){
-    return { status:'NEW_ASSIGNMENT', statusLabel: ctx.STATUS_LABELS.NEW_ASSIGNMENT, diff, errors:[], warnings, messages: warnings.slice() };
+    return { status:'NEW_ASSIGNMENT', statusLabel: ctx.STATUS_LABELS.NEW_ASSIGNMENT, diff, errors:[], warnings, infos, messages: messages.slice() };
   }
-  if(diff.existingAssignments.length && !warnings.length){
-    return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, messages: [] };
+  if(diff.existingAssignments.length && !warnings.length && !infos.length){
+    return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, infos: [], messages: [] };
   }
-  if(warnings.length){
-    return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, messages: warnings.slice() };
+  if(warnings.length || infos.length){
+    return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, infos, messages: messages.slice() };
   }
-  return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, messages: [] };
+  return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, infos: [], messages: [] };
 }
 
 function buildAbsentLine(person, assignments, resolved, siteJsp, dateActif, dateInactifProposee){
@@ -676,13 +690,17 @@ async function analyzeImport(input = {}){
   let population = input._population;
   if(!population){
     const popRows = await loadPopulation(resolved, siteJsp);
-    population = popRows;
     const extraNips = popRows.map((row) => row.nip).filter((nip) => !existing.persons.has(nip));
     if(extraNips.length){
       const extra = await loadExistingForNips(extraNips);
       extra.persons.forEach((person, nip) => existing.persons.set(nip, person));
       extra.assignments.forEach((list, nip) => existing.assignments.set(nip, list));
     }
+    const dateActif = monitoringStart(anneeMonitoring);
+    population = popRows.filter((person) => {
+      const assignments = existing.assignments.get(person.nip) || person.affectations || [];
+      return display.countsInImportPopulation(assignments, resolved, dateActif);
+    });
   }
   const preview = buildPreview({
     rows: parsed,
@@ -924,11 +942,30 @@ async function updateAffectation(id, patch){
 async function effectifAtDate({ domaine, cible, date }){
   await ensureScopeSchema();
   const d = clean(date) || new Date().toISOString().slice(0, 10);
-  const params = [d, clean(domaine)];
+  const domaineCode = clean(domaine);
+  if(domaineCode === 'AUTO'){
+    const res = await getDb().query(
+      `select a.personne_id, a.categorie, a.domaine, a.cible, a.role_domaine, a.date_actif, a.date_inactif
+       from scope_affectations a
+       where a.date_actif <= $1 and (a.date_inactif is null or a.date_inactif >= $1)
+         and (
+           (a.categorie='SPECIALISATION' and a.domaine='AUTO')
+           or (a.categorie='OI' and a.domaine='DPS')
+         )`,
+      [d]
+    );
+    const counts = computeEffectifsFromAssignments(res.rows || [], d);
+    const wanted = clean(cible);
+    const rows = Object.keys(counts).filter((key) => key.indexOf('AUTO ') === 0).map((key) => {
+      const cibleValue = key.slice(5);
+      return { domaine: 'AUTO', cible: cibleValue, count: counts[key] };
+    }).filter((row) => !wanted || row.cible === wanted || (wanted === 'PL' && row.cible === 'cond PL') || (wanted === 'VL_DPS' && row.cible === 'VL_DPS'));
+    return { date: d, domaine: domaineCode, cible: wanted, rows };
+  }
+  const params = [d, domaineCode];
   let where = `a.date_actif <= $1 and (a.date_inactif is null or a.date_inactif >= $1) and a.domaine=$2`;
   if(cible){ params.push(clean(cible)); where += ` and a.cible=$${params.length}`; }
-  const domaineCode = clean(domaine);
-  if(domaineCode === 'PR' || domaineCode === 'AUTO' || domaineCode === 'FOBA'){
+  if(domaineCode === 'PR' || domaineCode === 'FOBA'){
     where += ` and a.categorie='SPECIALISATION'`;
   } else {
     where += ` and a.categorie='OI' and a.role_domaine='PRINCIPAL'`;
@@ -940,18 +977,34 @@ async function effectifAtDate({ domaine, cible, date }){
      order by a.domaine, a.cible`,
     params
   );
-  return { date:d, domaine:clean(domaine), cible:clean(cible), rows:res.rows || [] };
+  return { date:d, domaine:domaineCode, cible:clean(cible), rows:res.rows || [] };
+}
+
+function groupAssignmentsByPerson(assignments){
+  const list = assignments || [];
+  const hasId = list.some((row) => row && (row.personne_id || row.personneId || row.nip));
+  if(!hasId) return [list];
+  const groups = new Map();
+  list.forEach((row) => {
+    const id = row.personne_id || row.personneId || row.nip;
+    if(!groups.has(id)) groups.set(id, []);
+    groups.get(id).push(row);
+  });
+  return [...groups.values()];
 }
 
 function computeEffectifsFromAssignments(assignments, date){
   const d = clean(date);
   const counts = {};
-  (assignments || []).forEach(a => {
-    if(a.date_actif > d) return;
-    if(a.date_inactif && a.date_inactif < d) return;
-    if(a.categorie === 'OI' && a.role_domaine !== 'PRINCIPAL') return;
-    const key = [a.domaine, a.cible].filter(Boolean).join(' ');
-    counts[key] = (counts[key] || 0) + 1;
+  groupAssignmentsByPerson(assignments).forEach((personAssignments) => {
+    personAssignments.forEach((a) => {
+      if(!display.isAssignmentActiveAt(a, d)) return;
+      if(a.categorie === 'OI' && a.role_domaine !== 'PRINCIPAL') return;
+      if(display.isAutoVlDps(a) && !display.countsInVlDpsEffectif(personAssignments, d)) return;
+      if(display.isAutoPl(a) && !display.countsInPlEffectif(personAssignments, d)) return;
+      const key = [a.domaine, a.cible].filter(Boolean).join(' ');
+      counts[key] = (counts[key] || 0) + 1;
+    });
   });
   return counts;
 }
@@ -973,6 +1026,9 @@ module.exports = {
   updateAffectation,
   effectifAtDate,
   computeEffectifsFromAssignments,
+  evaluateAutoSpecializations: display.evaluateAutoSpecializations,
+  isEffectiveCondVlDps: display.isEffectiveCondVlDps,
+  countsInVlDpsEffectif: display.countsInVlDpsEffectif,
   specializationForContext,
   assignmentKey,
   buildPopulationQuery,

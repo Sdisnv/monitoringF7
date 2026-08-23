@@ -41,8 +41,14 @@
     return list.map(assignmentLabel).join(', ') || '-';
   }
   function otherAssignments(person){
+    const display = window.ScopePersonnelDisplay || window.ScopePersonnelDisplay;
+    const active = activeAssignments(person);
     const current = new Set(contextAssignment(person).split(', ').filter(v => v && v !== '-'));
-    return activeAssignments(person).map(assignmentLabel).filter(label => !current.has(label)).slice(0, 4).join(', ') || '-';
+    if(display && display.formatOtherAffectations){
+      const rest = active.filter((row) => !current.has(assignmentLabel(row)));
+      return display.formatOtherAffectations(rest).text || '-';
+    }
+    return active.map(assignmentLabel).filter(label => !current.has(label)).slice(0, 4).join(', ') || '-';
   }
   function sortRows(rows){
     const key = state.sortKey;
@@ -169,8 +175,13 @@
     card.hidden = false;
     if(title) title.textContent = `${person.grade || ''} ${person.prenom || ''} ${person.nom || ''}`.trim() || 'Fiche personne';
     const groups = groupAssignments(person.affectations);
-    const groupHtml = Object.entries(groups).map(([name, assignments]) => `<section class="scope-person-group"><h3>${escape(name)}</h3>${assignments.map(a => `<div class="scope-aff-row"><strong>${escape(a.cible)}</strong><span>${escape(a.roleDomaine || '')}</span><label>Actif<input type="date" data-aff-actif="${escape(a.id)}" value="${escape(String(a.dateActif || '').slice(0, 10))}"></label><label>Inactif<input type="date" data-aff-inactif="${escape(a.id)}" value="${escape(String(a.dateInactif || '').slice(0, 10))}"></label><button class="compact-btn" data-save-aff="${escape(a.id)}" type="button">Enregistrer</button></div>`).join('')}</section>`).join('');
-    body.innerHTML = `<div class="scope-person-head"><div><strong>NIP ${escape(person.nip)}</strong><span>${escape(person.grade || '')} ${escape(person.prenom || '')} ${escape(person.nom || '')}</span></div><label>Date entrée SDIS<input id="scopePersonDateEntree" type="date" value="${escape(String(person.dateEntreeSdis || '').slice(0, 10))}"></label><button class="compact-btn primary" id="scopeSavePersonDate" type="button">Enregistrer fiche</button></div>${groupHtml || '<p class="muted">Aucune affectation enregistrée.</p>'}`;
+    const displayApi = window.ScopePersonnelDisplay || window.ScopePersonnelDisplay;
+    const autoNote = displayApi && displayApi.evaluateAutoSpecializations
+      ? displayApi.evaluateAutoSpecializations(person.affectations || [], new Date().toISOString().slice(0, 10))
+      : { infos: [], anomalies: [] };
+    const notice = (autoNote.anomalies || []).concat(autoNote.infos || []).map((msg) => `<p class="muted">${escape(msg)}</p>`).join('');
+    const groupHtml = Object.entries(groups).map(([name, assignments]) => `<section class="scope-person-group"><h3>${escape(name)}</h3>${assignments.map(a => `<div class="scope-aff-row"><strong>${escape(displayApi && displayApi.formatAssignment ? displayApi.formatAssignment(a) : a.cible)}</strong><span>${escape(a.roleDomaine || '')}</span><label>Actif<input type="date" data-aff-actif="${escape(a.id)}" value="${escape(String(a.dateActif || '').slice(0, 10))}"></label><label>Inactif<input type="date" data-aff-inactif="${escape(a.id)}" value="${escape(String(a.dateInactif || '').slice(0, 10))}"></label><button class="compact-btn" data-save-aff="${escape(a.id)}" type="button">Enregistrer</button></div>`).join('')}</section>`).join('');
+    body.innerHTML = `<div class="scope-person-head"><div><strong>NIP ${escape(person.nip)}</strong><span>${escape(person.grade || '')} ${escape(person.prenom || '')} ${escape(person.nom || '')}</span></div><label>Date entrée SDIS<input id="scopePersonDateEntree" type="date" value="${escape(String(person.dateEntreeSdis || '').slice(0, 10))}"></label><button class="compact-btn primary" id="scopeSavePersonDate" type="button">Enregistrer fiche</button></div>${notice}${groupHtml || '<p class="muted">Aucune affectation enregistrée.</p>'}`;
     $('scopeSavePersonDate')?.addEventListener('click', () => savePersonDate(person.id).catch(error => setStatus(`Enregistrement fiche impossible : ${error.message}`, 'error')));
     body.querySelectorAll('[data-save-aff]').forEach(btn => btn.addEventListener('click', () => saveAssignmentDates(btn.dataset.saveAff).catch(error => setStatus(`Enregistrement affectation impossible : ${error.message}`, 'error'))));
   }

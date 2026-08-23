@@ -1267,14 +1267,16 @@
       const key = aff.affectationId || aff.cibleId || aff.label;
       return !primaryKey || key !== primaryKey;
     });
+    const display = personnelDisplay();
+    if (display && display.formatOtherAffectations) {
+      return display.formatOtherAffectations(source).labels;
+    }
     return source.map(formatPersonnelAffectationLabel).filter(Boolean);
   }
 
   function personnelOtherAffectationsHtml(labels) {
     if (!labels.length) return '—';
-    const visible = labels.slice(0, 3);
-    const hidden = labels.length - visible.length;
-    return `<span class="scope-affectation-list">${visible.map((label) => `<span>${escapeHtml(label)}</span>`).join('')}${hidden > 0 ? `<small>+${hidden}</small>` : ''}</span>`;
+    return escapeHtml(labels.join(', '));
   }
 
   function personnelImportContextOptions() {

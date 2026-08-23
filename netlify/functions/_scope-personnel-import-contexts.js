@@ -286,17 +286,9 @@ function populationLabel(ctx, siteJsp){
 
 function specializationLabel(assignment){
   if(!assignment) return '';
-  if(assignment.domaine === 'PR') return 'PAPR';
-  if(assignment.domaine === 'AUTO'){
-    const cible = normalizeAutoCible(assignment.cible);
-    if(cible === 'VL_DPS') return 'cond VL — DPS';
-    if(cible === 'VL_DAP') return 'cond VL — DAP';
-    if(cible === 'PL') return 'cond PL';
-    return `AUTO ${assignment.cible}`;
-  }
-  if(assignment.domaine === 'FOBA') return `FOBA ${normalizeFobaCible(assignment.cible)}`;
+  const display = require('../../assets/js/scope-personnel-display.js');
   if(assignment.domaine === 'JSP') return assignment.cible || 'JSP';
-  return [assignment.domaine, assignment.cible, assignment.role_domaine].filter(Boolean).join(' ');
+  return display.specializationUserLabel(assignment) || display.formatAssignment(assignment);
 }
 
 function oiLabel(assignment){

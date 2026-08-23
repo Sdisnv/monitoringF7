@@ -3,17 +3,17 @@ const assert = require('assert');
 const display = require('../assets/js/scope-personnel-display.js');
 
 function run(){
-  assert.strictEqual(display.compactAssignmentLabel('PR', 'PR'), 'PR');
+  assert.strictEqual(display.compactAssignmentLabel('PR', 'PR'), 'PAPR');
   assert.notStrictEqual(display.compactAssignmentLabel('PR', 'PR'), 'PR PR');
-  assert.strictEqual(display.formatAssignment({ domaine: 'PR', cible: 'PR' }), 'PR');
-  assert.strictEqual(display.formatAssignment({ domaine: 'PR', cible: 'PR', roleDomaine: 'PRINCIPAL' }), 'PR');
-  assert.strictEqual(display.formatAssignment('PR PR'), 'PR');
+  assert.strictEqual(display.formatAssignment({ domaine: 'PR', cible: 'PR' }), 'PAPR');
+  assert.strictEqual(display.formatAssignment({ domaine: 'PR', cible: 'PR', roleDomaine: 'PRINCIPAL' }), 'PAPR');
+  assert.strictEqual(display.formatAssignment('PR PR'), 'PAPR');
 
   assert.strictEqual(display.compactAssignmentLabel('DPS', 'B1'), 'DPS B1');
   assert.strictEqual(display.compactAssignmentLabel('DAP', 'Y2'), 'DAP Y2');
   assert.strictEqual(display.compactAssignmentLabel('FOBA', '1'), 'FOBA 1');
-  assert.strictEqual(display.compactAssignmentLabel('AUTO', 'VL_DPS'), 'AUTO VL_DPS');
-  assert.strictEqual(display.compactAssignmentLabel('AUTO', 'PL'), 'AUTO PL');
+  assert.strictEqual(display.compactAssignmentLabel('AUTO', 'VL_DPS'), 'cond VL');
+  assert.strictEqual(display.compactAssignmentLabel('AUTO', 'PL'), 'cond PL');
   assert.strictEqual(display.compactAssignmentLabel('JSP', 'JSP G1'), 'JSP G1');
   assert.strictEqual(display.compactAssignmentLabel('JSP', 'JSP C1'), 'JSP C1');
 
@@ -84,7 +84,7 @@ function run(){
 
   assert.strictEqual(display.formatIdentitySide(newAssignment, 'current'), '—');
   assert.strictEqual(display.formatIdentitySide(newAssignment, 'proposed'), '—');
-  assert.strictEqual(display.assignmentSides(newAssignment).proposed, 'PR');
+  assert.strictEqual(display.assignmentSides(newAssignment).proposed, 'PAPR');
   assert.notStrictEqual(display.assignmentSides(newAssignment).proposed, 'PR PR');
 
   console.log('scope-personnel-import-ux tests ok');
