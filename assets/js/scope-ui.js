@@ -86,6 +86,9 @@
       rapport: null,
       filter: 'CHANGEMENTS',
       dateEffet: '',
+      contexte: 'GENERAL',
+      siteJsp: '',
+      anneeMonitoring: String(new Date().getFullYear()),
       decisions: {},
       openRow: null
     },
@@ -1108,10 +1111,11 @@
     const filter = state.personnelSync.filter;
     if (filter === 'TOUS') return rows;
     if (filter === 'CHANGEMENTS') return rows.filter((row) => row.statut !== 'INCHANGE' && row.statut !== 'IDENTICAL');
-    if (filter === 'NOUVEAU') return rows.filter((row) => row.statut === 'NOUVEAU' || row.statut === 'NEW_PERSON');
+    if (filter === 'NOUVEAU') return rows.filter((row) => row.statut === 'NOUVEAU' || row.statut === 'NEW_PERSON' || row.statut === 'NEW_JSP');
     if (filter === 'CHANGEMENT_OI') return rows.filter((row) => row.statut === 'CHANGEMENT_OI' || row.statut === 'NEW_ASSIGNMENT' || row.statut === 'MISSING_ASSIGNMENT');
     if (filter === 'CHANGEMENT_GRADE') return rows.filter((row) => row.statut === 'CHANGEMENT_GRADE' || (row.diff && row.diff.person && row.diff.person.grade));
     if (filter === 'CONFLIT') return rows.filter((row) => row.statut === 'CONFLIT' || row.statut === 'ERROR' || row.statut === 'ERREUR');
+    if (filter === 'ABSENT_DU_FICHIER') return rows.filter((row) => row.statut === 'ABSENT_DU_FICHIER' || row.statut === 'ABSENT_DU_NOUVEL_IMPORT');
     return rows.filter((row) => row.statut === filter || row.proposition === filter);
   }
 
@@ -1128,13 +1132,11 @@
   function personnelDecisionSelect(row) {
     const current = personnelDecisionOf(row);
     let options = [];
-    if (row.statut === 'ABSENT_DU_FICHIER') {
+    if (row.statut === 'ABSENT_DU_FICHIER' || row.statut === 'ABSENT_DU_NOUVEL_IMPORT') {
       options = [
-        ['IGNORER', 'Ne rien faire'],
-        ['ARCHIVER_SORTI', 'Archiver (sorti)'],
-        ['ARCHIVER_DEMISSIONNAIRE', 'Démissionnaire'],
-        ['DEBUT_CONGE', 'Congé sabbatique'],
-        ['FIN_AFFECTATION', 'Fin d’affectation seule']
+        ['CONSERVER', 'Conserver'],
+        ['CLOTURER', 'Clôturer'],
+        ['IGNORER', 'Ne rien faire']
       ];
     } else if (row.statut === 'ARCHIVE_RETROUVE') {
       options = [
@@ -1148,9 +1150,9 @@
         ['IGNORER', 'Ignorer'],
         ['MODIFIER_IDENTITE', 'Corriger l’identité']
       ];
-    } else if (row.statut === 'NOUVEAU') {
+    } else if (row.statut === 'NOUVEAU' || row.statut === 'NEW_PERSON' || row.statut === 'NEW_JSP') {
       options = [['CREER', 'Créer'], ['IGNORER', 'Ignorer']];
-    } else if (row.statut === 'INCHANGE') {
+    } else if (row.statut === 'INCHANGE' || row.statut === 'IDENTICAL') {
       options = [['IGNORER', 'Aucune']];
     } else {
       options = [['APPLIQUER', 'Appliquer'], ['IGNORER', 'Ignorer'], ['EXAMINER', 'Examiner']];
@@ -1256,19 +1258,54 @@
     return `<span class="scope-affectation-list">${visible.map((label) => `<span>${escapeHtml(label)}</span>`).join('')}${hidden > 0 ? `<small>+${hidden}</small>` : ''}</span>`;
   }
 
+  function personnelImportContextOptions() {
+    return [
+      ['GENERAL', 'Personnel général'],
+      ['PAPR', 'PAPR'],
+      ['AUTO_VL_DPS', 'cond VL — DPS'],
+      ['AUTO_VL_DAP', 'cond VL — DAP'],
+      ['AUTO_PL', 'cond PL'],
+      ['FOBA_1', 'FOBA 1'],
+      ['FOBA_2', 'FOBA 2'],
+      ['FOBA_3', 'FOBA 3'],
+      ['JSP_FLM_1', 'JSP — Flm 1'],
+      ['JSP_FLM_2', 'JSP — Flm 2'],
+      ['JSP_FLM_3', 'JSP — Flm 3']
+    ];
+  }
+
+  function jspImportSiteOptions() {
+    const fromRef = (state.referentiels.cibles || []).filter((cible) => {
+      const domaine = cible.domaineCode || cible.domaine_code;
+      const niveau = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
+      return domaine === 'JSP' && niveau !== 'CAD' && niveau !== 'GEN';
+    }).map((cible) => cible.libelle || `JSP ${cible.niveauCode || cible.niveau_code}`);
+    const unique = [...new Set(fromRef.length ? fromRef : ['JSP G1', 'JSP C1', 'JSP B1'])];
+    return unique;
+  }
+
+  function personnelImportRequiresSite(contexte) {
+    return String(contexte || '').indexOf('JSP_FLM_') === 0;
+  }
+
   function personnelImportCount(counts, key, fallback) {
     return Number((counts && counts[key]) || (fallback && counts && counts[fallback]) || 0);
   }
 
-  function personnelImportSummaryHtml(counts) {
+  function personnelImportSummaryHtml(counts, preview) {
     const items = [
+      ['Type d’import', (preview && (preview.contextLabel || preview.populationLabel)) || ''],
+      ['Site JSP', (preview && (preview.siteJspLabel || preview.siteJsp)) || '—'],
+      ['Année monitoring', (preview && preview.anneeMonitoring) || state.personnelSync.anneeMonitoring || ''],
       ['Lignes analysées', personnelImportCount(counts, 'totalLines')],
       ['Personnes uniques', personnelImportCount(counts, 'totalUniqueNips')],
       ['Identiques', personnelImportCount(counts, 'countIdentical', 'IDENTICAL')],
       ['Nouvelles personnes', personnelImportCount(counts, 'countNewPersons', 'NEW_PERSON')],
+      ['Nouveaux JSP', personnelImportCount(counts, 'countNewJsp', 'NEW_JSP')],
       ['Personnes modifiées', personnelImportCount(counts, 'countModified', 'MODIFIED')],
       ['Nouvelles affectations', personnelImportCount(counts, 'countNewAssignments', 'NEW_ASSIGNMENT')],
-      ['Affectations manquantes', personnelImportCount(counts, 'countMissingAssignments', 'MISSING_ASSIGNMENT')],
+      ['Affectations existantes', personnelImportCount(counts, 'countExistingAssignments')],
+      ['Absents du nouvel import', personnelImportCount(counts, 'countMissingAssignments', 'MISSING_ASSIGNMENT')],
       ['Erreurs', personnelImportCount(counts, 'countErrors', 'ERROR')]
     ];
     return `<div class="scope-import-summary-grid">${items.map(([label, value]) => `<span><strong>${escapeHtml(value)}</strong>${escapeHtml(label)}</span>`).join('')}</div>`;
@@ -1284,28 +1321,48 @@
   }
 
   function personnelLineCurrent(row) {
-    const diff = row.diff || {};
-    const person = diff.person || {};
-    return ['grade', 'nom', 'prenom'].map((key) => person[key] ? `${key}: ${person[key].before || '—'}` : '').filter(Boolean).join(' · ') || '—';
+    const identity = (row.diff && row.diff.identity) || {};
+    const person = (row.diff && row.diff.person) || {};
+    const grade = (identity.grade && identity.grade.current) || (person.grade && person.grade.before) || '';
+    const nom = (identity.nom && identity.nom.current) || (person.nom && person.nom.before) || '';
+    const prenom = (identity.prenom && identity.prenom.current) || (person.prenom && person.prenom.before) || '';
+    const parts = [];
+    if (grade || nom || prenom) {
+      parts.push(`Grade actuel ${grade || '—'}`);
+      parts.push(`Nom actuel ${nom || '—'}`);
+      parts.push(`Prénom actuel ${prenom || '—'}`);
+    }
+    return parts.join(' · ') || '—';
   }
 
   function personnelLineProposed(row) {
-    const diff = row.diff || {};
-    const person = diff.person || {};
-    return ['grade', 'nom', 'prenom'].map((key) => person[key] ? `${key}: ${person[key].after || '—'}` : '').filter(Boolean).join(' · ') || '—';
+    const identity = (row.diff && row.diff.identity) || {};
+    const person = (row.diff && row.diff.person) || {};
+    const n = row.normalized || {};
+    const grade = (identity.grade && identity.grade.proposed) || (person.grade && person.grade.after) || n.grade || '';
+    const nom = (identity.nom && identity.nom.proposed) || (person.nom && person.nom.after) || n.nom || '';
+    const prenom = (identity.prenom && identity.prenom.proposed) || (person.prenom && person.prenom.after) || n.prenom || '';
+    return [`Grade proposé ${grade || '—'}`, `Nom proposé ${nom || '—'}`, `Prénom proposé ${prenom || '—'}`].join(' · ');
   }
 
   function personnelLineCurrentAssignments(row) {
     const diff = row.diff || {};
+    const pop = diff.population || {};
+    if (pop.oiSite && pop.oiSite.current) return pop.oiSite.current;
+    if (pop.specialization && pop.specialization.current) return pop.specialization.current;
     if (Array.isArray(diff.principalChanges) && diff.principalChanges.length) {
       return diff.principalChanges.map((change) => [change.domaine, change.before].filter(Boolean).join(' ')).join(', ');
     }
     if (Array.isArray(diff.missingAssignments) && diff.missingAssignments.length) return personnelAssignmentText(diff.missingAssignments);
+    if (Array.isArray(diff.existingAssignments) && diff.existingAssignments.length) return personnelAssignmentText(diff.existingAssignments);
     return '—';
   }
 
   function personnelLineProposedAssignments(row) {
     const diff = row.diff || {};
+    const pop = diff.population || {};
+    if (pop.oiSite && pop.oiSite.proposed) return pop.oiSite.proposed;
+    if (pop.specialization && pop.specialization.proposed) return pop.specialization.proposed;
     if (Array.isArray(diff.principalChanges) && diff.principalChanges.length) {
       return diff.principalChanges.map((change) => [change.domaine, change.after].filter(Boolean).join(' ')).join(', ');
     }
@@ -1440,11 +1497,25 @@
             <p class="scope-import-file">${escapeHtml(state.personnelSync.filename || 'Aucun fichier')}</p>
           </div>
           <div class="scope-sync-toolbar">
+            <div class="scope-field"><label for="scope-sync-context">Type d’import</label>
+              <select id="scope-sync-context">
+                ${personnelImportContextOptions().map(([value, label]) => `<option value="${escapeHtml(value)}" ${state.personnelSync.contexte === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+              </select>
+            </div>
+            ${personnelImportRequiresSite(state.personnelSync.contexte) ? `<div class="scope-field"><label for="scope-sync-site">Site JSP</label>
+              <select id="scope-sync-site">
+                <option value="">Choisir un site</option>
+                ${jspImportSiteOptions().map((site) => `<option value="${escapeHtml(site)}" ${state.personnelSync.siteJsp === site ? 'selected' : ''}>${escapeHtml(site)}</option>`).join('')}
+              </select>
+            </div>` : ''}
+            <div class="scope-field"><label for="scope-sync-year">Année de monitoring</label>
+              <input id="scope-sync-year" type="number" min="2000" max="2100" value="${escapeHtml(state.personnelSync.anneeMonitoring || '')}">
+            </div>
             <div class="scope-field"><label for="scope-sync-date">Date d’effet globale</label>
               <input id="scope-sync-date" type="date" value="${escapeHtml(state.personnelSync.dateEffet || '')}">
             </div>
             <div class="scope-actions">
-              <button type="button" class="scope-btn scope-btn-primary" id="scope-sync-preview" ${!state.personnelSync.csvText ? 'disabled' : ''}>Analyser le fichier</button>
+              <button type="button" class="scope-btn scope-btn-primary" id="scope-sync-preview" ${!state.personnelSync.csvText || (personnelImportRequiresSite(state.personnelSync.contexte) && !state.personnelSync.siteJsp) ? 'disabled' : ''}>Analyser le fichier</button>
               <button type="button" class="scope-btn" id="scope-sync-commit" ${previewCanCommit && !rapport ? '' : 'disabled'}>Valider l’import</button>
             </div>
           </div>
@@ -1452,8 +1523,8 @@
         </div>` : ''}
         ${showImportPanel && preview ? `<div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Prévisualisation de l’import</h3>
-          ${personnelImportSummaryHtml(counts)}
-          <p class="scope-sync-summary">Analyse terminée · 0 écriture DB · batch ${escapeHtml(preview.batchId || preview.importId || '—')}</p>
+          ${personnelImportSummaryHtml(counts, preview)}
+          <p class="scope-sync-summary">Analyse terminée · 0 écriture DB · ${escapeHtml(preview.populationLabel || preview.contextLabel || '')}</p>
           ${preview.dateEffetRequise ? '<p class="scope-mode-hint">Une date d’effet est obligatoire avant commit. Elle n’est jamais inventée.</p>' : ''}
           ${previewCanCommit ? '<p>Aucune écriture tant que vous n’avez pas confirmé explicitement « Valider l’import ».</p>' : '<p class="scope-mode-hint">Validation bloquée : conflit, erreur ou date d’effet manquante.</p>'}
           <div class="scope-sync-filters" role="tablist">
@@ -1471,11 +1542,11 @@
                     <td data-label="Valeur proposée">${escapeHtml(personnelLineProposed(row))}</td>
                     <td data-label="Affectation actuelle">${escapeHtml(personnelLineCurrentAssignments(row))}</td>
                     <td data-label="Affectation proposée">${escapeHtml(personnelLineProposedAssignments(row))}</td>
-                    <td data-label="Situation"><span class="scope-import-pill ${personnelPillClass(row.statut)}">${escapeHtml(row.statut)}</span></td>
+                    <td data-label="Situation"><span class="scope-import-pill ${personnelPillClass(row.statut)}">${escapeHtml(row.statusLabel || row.statut)}</span></td>
                     <td data-label="Action">${personnelDecisionSelect(row)}</td>
                     <td data-label="Date d’effet"><input type="date" class="scope-sync-row-date" data-sync-date="${escapeHtml(row.rowId)}" value="${escapeHtml(personnelDateOf(row))}" ${row.statut === 'INCHANGE' || row.statut === 'IDENTICAL' ? 'disabled' : ''}></td>
                   </tr>
-                  ${row.message || (row.errors && row.errors.length) || (row.actions && row.actions.length > 1) ? `<tr class="scope-sync-detail"><td colspan="9">${escapeHtml(row.message || (row.errors || []).join(', ') || '')} ${(row.actions || []).map((a) => a.type).join(' · ')}</td></tr>` : ''}
+                  ${row.message || (row.messages && row.messages.length) || (row.errors && row.errors.length) || (row.warnings && row.warnings.length) || (row.actions && row.actions.length > 1) ? `<tr class="scope-sync-detail"><td colspan="9">${escapeHtml((row.messages || []).join(' ') || row.message || (row.errors || []).concat(row.warnings || []).join(', ') || '')} ${(row.actions || []).map((a) => a.type).join(' · ')}</td></tr>` : ''}
                 `).join('') || '<tr><td colspan="9">Aucun élément pour ce filtre.</td></tr>'}
               </tbody>
             </table>
@@ -3197,6 +3268,20 @@
     dateInput?.addEventListener('change', (e) => {
       state.personnelSync.dateEffet = e.target.value;
     });
+    document.getElementById('scope-sync-context')?.addEventListener('change', (e) => {
+      state.personnelSync.contexte = e.target.value;
+      if (!personnelImportRequiresSite(state.personnelSync.contexte)) state.personnelSync.siteJsp = '';
+      state.personnelSync.preview = null;
+      render();
+    });
+    document.getElementById('scope-sync-site')?.addEventListener('change', (e) => {
+      state.personnelSync.siteJsp = e.target.value;
+      state.personnelSync.preview = null;
+      render();
+    });
+    document.getElementById('scope-sync-year')?.addEventListener('change', (e) => {
+      state.personnelSync.anneeMonitoring = e.target.value;
+    });
     document.getElementById('scope-sync-preview')?.addEventListener('click', () => {
       withLoading(async () => {
         toast('info', 'Analyse du fichier en cours…', 'Aucune écriture DB ne sera effectuée.');
@@ -3204,7 +3289,11 @@
         state.personnelSync.preview = await client.previewPersonnelSync({
           csvText: state.personnelSync.csvText,
           filename: state.personnelSync.filename,
-          dateEffetGlobale: state.personnelSync.dateEffet || undefined
+          dateEffetGlobale: state.personnelSync.dateEffet || undefined,
+          contexte: state.personnelSync.contexte,
+          importType: state.personnelSync.contexte,
+          siteJsp: state.personnelSync.siteJsp || undefined,
+          anneeMonitoring: Number(state.personnelSync.anneeMonitoring) || new Date().getFullYear()
         });
         state.personnelSync.decisions = {};
         toast('success', 'Analyse terminée', 'Prévisualisation disponible. Aucune écriture DB effectuée.');
@@ -3235,6 +3324,10 @@
         state.personnelSync.rapport = await client.commitPersonnelSync({
           csvText: state.personnelSync.csvText,
           filename: state.personnelSync.filename,
+          contexte: state.personnelSync.contexte,
+          importType: state.personnelSync.contexte,
+          siteJsp: state.personnelSync.siteJsp || undefined,
+          anneeMonitoring: Number(state.personnelSync.anneeMonitoring) || new Date().getFullYear(),
           fingerprint: preview.fingerprint,
           importId: preview.importId,
           dateEffetGlobale: state.personnelSync.dateEffet || undefined,

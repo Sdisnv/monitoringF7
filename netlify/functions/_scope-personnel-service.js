@@ -1,4 +1,6 @@
+'use strict';
 const db = require('./_postgres');
+const ctx = require('./_scope-personnel-import-contexts');
 
 function rid(){
   return (global.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -7,10 +9,18 @@ function rid(){
 function clean(value){ return String(value || '').trim(); }
 function normalizeNip(value){ return clean(value).toUpperCase().replace(/[^A-Z0-9]+/g, ''); }
 function monitoringStart(year){ return `${Number(year) || new Date().getFullYear()}-01-01`; }
+function lastDayOfPreviousYear(year){
+  const y = Number(year) || new Date().getFullYear();
+  return `${y - 1}-12-31`;
+}
+
+function getDb(){ return db; }
 
 async function ensureScopeSchema(){
-  await db.ensureCoreSchema();
-  await db.query(`create table if not exists scope_personnes (
+  if(getDb()._skipScopeSchema) return true;
+  const schema = require('./_scope-schema');
+  await schema.ensureScopeSchema();
+  await getDb().query(`create table if not exists scope_personnes (
     id text primary key,
     nip text not null unique,
     grade text,
@@ -21,10 +31,11 @@ async function ensureScopeSchema(){
     updated_at timestamptz not null default now(),
     archived_at timestamptz
   )`);
-  await db.query(`create table if not exists scope_personnel_import_batches (
+  await getDb().query(`create table if not exists scope_personnel_import_batches (
     id text primary key,
     import_type text not null,
     contexte text,
+    site_jsp text,
     annee_monitoring integer not null,
     filename text,
     status text not null,
@@ -32,21 +43,25 @@ async function ensureScopeSchema(){
     total_unique_nips integer not null default 0,
     count_identical integer not null default 0,
     count_new_persons integer not null default 0,
+    count_new_jsp integer not null default 0,
     count_modified integer not null default 0,
     count_new_assignments integer not null default 0,
+    count_existing_assignments integer not null default 0,
     count_missing_assignments integer not null default 0,
+    count_closures integer not null default 0,
     count_errors integer not null default 0,
     created_by text,
     created_at timestamptz not null default now(),
     committed_at timestamptz
   )`);
-  await db.query(`create table if not exists scope_affectations (
+  await getDb().query(`create table if not exists scope_affectations (
     id text primary key,
     personne_id text not null references scope_personnes(id),
     categorie text not null,
     domaine text not null,
     cible text not null,
     role_domaine text,
+    niveau text,
     date_actif date not null,
     date_inactif date,
     source_import_batch_id text references scope_personnel_import_batches(id),
@@ -56,7 +71,8 @@ async function ensureScopeSchema(){
     constraint scope_affectations_categorie_chk check (categorie in ('OI','SPECIALISATION')),
     constraint scope_affectations_role_chk check (role_domaine is null or role_domaine in ('PRINCIPAL','SECONDAIRE'))
   )`);
-  await db.query(`create table if not exists scope_personnel_import_lines (
+  await getDb().query(`alter table scope_affectations add column if not exists niveau text`);
+  await getDb().query(`create table if not exists scope_personnel_import_lines (
     id text primary key,
     batch_id text not null references scope_personnel_import_batches(id) on delete cascade,
     line_number integer not null,
@@ -68,11 +84,11 @@ async function ensureScopeSchema(){
     errors_payload jsonb not null default '[]'::jsonb,
     created_at timestamptz not null default now()
   )`);
-  await db.query(`create index if not exists idx_scope_personnes_nip on scope_personnes (nip)`);
-  await db.query(`create index if not exists idx_scope_affectations_personne on scope_affectations (personne_id)`);
-  await db.query(`create index if not exists idx_scope_affectations_scope on scope_affectations (domaine, cible, role_domaine, date_actif, date_inactif)`);
-  await db.query(`create index if not exists idx_scope_import_lines_batch on scope_personnel_import_lines (batch_id, line_number)`);
-  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-personnel-1b') on conflict (version) do nothing`);
+  await getDb().query(`create index if not exists idx_scope_personnes_nip on scope_personnes (nip)`);
+  await getDb().query(`create index if not exists idx_scope_affectations_personne on scope_affectations (personne_id)`);
+  await getDb().query(`create index if not exists idx_scope_affectations_scope on scope_affectations (domaine, cible, role_domaine, date_actif, date_inactif)`);
+  await getDb().query(`create index if not exists idx_scope_import_lines_batch on scope_personnel_import_lines (batch_id, line_number)`);
+  return true;
 }
 
 function parseDelimitedLine(line, sep){
@@ -126,23 +142,15 @@ function normalizeOiToken(token){
   const left = raw.split(/\s+-\s+/)[0].trim();
   const upper = left.toUpperCase();
   let m = upper.match(/^DPS\s+(G1|C1|B1|B2)\b/);
-  if(m) return { categorie:'OI', domaine:'DPS', cible:m[1] };
+  if(m) return { categorie:'OI', domaine:'DPS', cible:m[1], role_domaine:null, niveau:null };
   m = upper.match(/^DAP\s+(Y1|Y2|Y3|Y4)\b/);
-  if(m) return { categorie:'OI', domaine:'DAP', cible:m[1] };
-  m = upper.match(/^JSP\s+(G1|C1|B1)\b/);
-  if(m) return { categorie:'OI', domaine:'JSP', cible:`JSP ${m[1]}` };
+  if(m) return { categorie:'OI', domaine:'DAP', cible:m[1], role_domaine:null, niveau:null };
+  m = upper.match(/^JSP\s+(G1|C1|B1|CAD|GEN)\b/);
+  if(m) return { categorie:'OI', domaine:'JSP', cible:`JSP ${m[1]}`, role_domaine:null, niveau:null };
   return null;
 }
 
-function specializationForContext(contexte){
-  const ctx = clean(contexte).toUpperCase();
-  if(ctx === 'PR') return { categorie:'SPECIALISATION', domaine:'PR', cible:'PR', role_domaine:null };
-  if(ctx === 'AUTO_VL' || ctx === 'COND VL' || ctx === 'AUTO COND VL') return { categorie:'SPECIALISATION', domaine:'AUTO', cible:'cond VL', role_domaine:null };
-  if(ctx === 'AUTO_PL' || ctx === 'COND PL' || ctx === 'AUTO COND PL') return { categorie:'SPECIALISATION', domaine:'AUTO', cible:'cond PL', role_domaine:null };
-  return null;
-}
-
-function normalizeAssignments(rawOrgans, contexte){
+function parseOiAssignments(rawOrgans){
   const assignments = [];
   const principalSeen = new Set();
   String(rawOrgans || '').split(',').map(clean).filter(Boolean).forEach(token => {
@@ -155,28 +163,74 @@ function normalizeAssignments(rawOrgans, contexte){
     principalSeen.add(parsed.domaine);
     assignments.push(Object.assign(parsed, { role_domaine: principal ? 'PRINCIPAL' : 'SECONDAIRE' }));
   });
-  const spec = specializationForContext(contexte);
-  if(spec) assignments.push(spec);
   return assignments;
 }
 
-function assignmentKey(a){ return `${a.categorie}|${a.domaine}|${a.cible}|${a.role_domaine || ''}`; }
+function specializationForContext(contexte, siteJsp){
+  const resolved = ctx.resolveImportContext(contexte);
+  return ctx.contextAssignment(resolved, siteJsp);
+}
 
-function normalizeRows(rows, contexte){
+function normalizeAssignments(rawOrgans, contexte, siteJsp){
+  const resolved = ctx.resolveImportContext(contexte);
+  const oi = parseOiAssignments(rawOrgans);
+  if(resolved.persistOi) return oi;
+  const spec = ctx.contextAssignment(resolved, siteJsp);
+  return spec ? [spec] : [];
+}
+
+function assignmentKey(a){ return ctx.assignmentKey(a); }
+
+function hasOpenDomaineOi(assignments, domaine){
+  return (assignments || []).some((row) => (
+    row.categorie === 'OI'
+    && row.domaine === domaine
+    && !row.date_inactif
+    && !row.error
+  ));
+}
+
+function identityChanged(existing, next){
+  if(!existing) return false;
+  return ['grade', 'nom', 'prenom'].some((key) => clean(existing[key]) !== clean(next[key]));
+}
+
+function normalizeRows(rows, contexte, siteJsp){
+  const resolved = ctx.resolveImportContext(contexte);
   const seen = new Map();
   return rows.map(row => {
     const errors = [];
+    const warnings = [];
     const nip = normalizeNip(row.nip);
     if(!nip) errors.push('NIP vide.');
-    const assignments = normalizeAssignments(row.organes, contexte);
-    const validAssignments = assignments.filter(a => !a.error);
-    assignments.filter(a => a.error).forEach(a => errors.push(a.error));
+    if(resolved.family !== 'JSP'){
+      if(!clean(row.nom)) errors.push('Nom vide.');
+      if(!clean(row.prenom)) errors.push('Prénom vide.');
+    } else {
+      if(!clean(row.nom)) errors.push('Nom vide.');
+      if(!clean(row.prenom)) errors.push('Prénom vide.');
+    }
+    const oiParsed = parseOiAssignments(row.organes);
+    const oiErrors = oiParsed.filter(a => a.error);
+    const oiValid = oiParsed.filter(a => !a.error);
+    if(resolved.persistOi){
+      oiErrors.forEach(a => errors.push(a.error));
+    } else if(oiErrors.length && clean(row.organes)){
+      oiErrors.forEach(a => warnings.push(a.error));
+    }
+    const assignments = resolved.persistOi
+      ? oiValid
+      : (ctx.contextAssignment(resolved, siteJsp) ? [ctx.contextAssignment(resolved, siteJsp)] : []);
+    if(resolved.family === 'JSP' && (!siteJsp || !siteJsp.code)){
+      errors.push('Site JSP obligatoire.');
+    }
     const normalized = {
       nip,
       grade: clean(row.grade),
       prenom: clean(row.prenom),
       nom: clean(row.nom),
-      assignments: validAssignments
+      assignments,
+      oiFromFile: oiValid
     };
     if(nip){
       const prev = seen.get(nip);
@@ -185,77 +239,284 @@ function normalizeRows(rows, contexte){
       }
       if(!prev) seen.set(nip, normalized);
     }
-    return { lineNumber: row.lineNumber, raw: row, normalized, errors };
+    return { lineNumber: row.lineNumber, raw: row, normalized, errors, warnings, duplicateOf: seen.get(nip) && seen.get(nip) !== normalized };
   });
 }
 
-function summarizeLine(normalizedLine, existingPerson, existingAssignments){
-  const errors = normalizedLine.errors || [];
-  if(errors.length) return { status:'ERROR', diff:{}, errors };
+function currentContextAssignments(existingAssignments, resolved, siteJsp){
+  return (existingAssignments || []).filter((row) => ctx.assignmentMatchesContext(row, resolved, siteJsp));
+}
+
+function summarizeLine(normalizedLine, existingPerson, existingAssignments, resolved, siteJsp, dateActif){
+  if(!resolved || !resolved.family){
+    resolved = ctx.IMPORT_CONTEXTS.GENERAL;
+  }
+  const errors = (normalizedLine.errors || []).slice();
+  const warnings = (normalizedLine.warnings || []).slice();
   const n = normalizedLine.normalized;
-  const diff = { person:{}, newAssignments:[], missingAssignments:[], principalChanges:[] };
-  let modified = false;
-  if(!existingPerson) {
-    diff.person.created = true;
-  } else {
-    ['grade','nom','prenom'].forEach(key => {
-      if(clean(existingPerson[key]) !== clean(n[key])) {
+  const open = (existingAssignments || []).filter((row) => !row.date_inactif);
+  const contextCurrent = currentContextAssignments(open, resolved, siteJsp);
+  const incoming = n.assignments || [];
+  const diff = {
+    person: {},
+    identity: {
+      grade: { current: existingPerson ? clean(existingPerson.grade) : '', proposed: n.grade },
+      nom: { current: existingPerson ? clean(existingPerson.nom) : '', proposed: n.nom },
+      prenom: { current: existingPerson ? clean(existingPerson.prenom) : '', proposed: n.prenom }
+    },
+    population: {
+      oiSite: {
+        current: contextCurrent.filter((row) => row.categorie === 'OI').map(ctx.oiLabel).join(', '),
+        proposed: incoming.filter((row) => row.categorie === 'OI').map(ctx.oiLabel).join(', ')
+      },
+      specialization: {
+        current: contextCurrent.map(ctx.specializationLabel).join(', '),
+        proposed: incoming.map(ctx.specializationLabel).join(', ')
+      },
+      dateActif: dateActif,
+      dateInactif: null
+    },
+    newAssignments: [],
+    existingAssignments: [],
+    missingAssignments: [],
+    principalChanges: [],
+    otherPopulations: open.filter((row) => !ctx.assignmentMatchesContext(row, resolved, siteJsp)).map(ctx.specializationLabel).filter(Boolean)
+  };
+  if(errors.length){
+    return {
+      status: 'ERROR',
+      statusLabel: ctx.STATUS_LABELS.ERROR,
+      diff,
+      errors,
+      warnings,
+      messages: errors.concat(warnings)
+    };
+  }
+  if(existingPerson && identityChanged(existingPerson, n)){
+    ['grade', 'nom', 'prenom'].forEach((key) => {
+      if(clean(existingPerson[key]) !== clean(n[key])){
         diff.person[key] = { before: clean(existingPerson[key]), after: clean(n[key]) };
-        modified = true;
+      }
+    });
+    if(diff.person.nom || diff.person.prenom){
+      warnings.push('Nom/prénom différent de la fiche existante.');
+    }
+    if(diff.person.grade){
+      warnings.push('Changement de grade.');
+    }
+  }
+  const existingKeys = new Set(open.map(assignmentKey));
+  const incomingKeys = new Set(incoming.map(assignmentKey));
+  incoming.forEach((assignment) => {
+    if(existingKeys.has(assignmentKey(assignment))) diff.existingAssignments.push(assignment);
+    else diff.newAssignments.push(assignment);
+  });
+  if(resolved.family === 'GENERAL'){
+    open.forEach((assignment) => {
+      if(incomingKeys.has(assignmentKey(assignment))) return;
+      if(assignment.categorie === 'OI' && (assignment.domaine === 'DPS' || assignment.domaine === 'DAP')){
+        diff.missingAssignments.push(assignment);
+        warnings.push(`OI ${ctx.oiLabel(assignment)} absent du fichier — non clôturé automatiquement.`);
+      }
+    });
+    incoming.forEach((assignment) => {
+      if(assignment.role_domaine !== 'PRINCIPAL') return;
+      const prevPrincipal = open.find((old) => old.categorie === 'OI' && old.domaine === assignment.domaine && old.role_domaine === 'PRINCIPAL' && !old.date_inactif);
+      if(prevPrincipal && prevPrincipal.cible !== assignment.cible){
+        diff.principalChanges.push({ domaine:assignment.domaine, before:prevPrincipal.cible, after:assignment.cible });
       }
     });
   }
-  const existingActive = (existingAssignments || []).filter(a => !a.date_inactif);
-  const existingKeys = new Set(existingActive.map(assignmentKey));
-  const incomingKeys = new Set(n.assignments.map(assignmentKey));
-  n.assignments.forEach(a => { if(!existingKeys.has(assignmentKey(a))) diff.newAssignments.push(a); });
-  existingActive.forEach(a => {
-    if(incomingKeys.has(assignmentKey(a))) return;
-    if(n.assignments.some(next => next.categorie === a.categorie && next.domaine === a.domaine)) diff.missingAssignments.push(a);
-  });
-  n.assignments.forEach(a => {
-    if(a.role_domaine !== 'PRINCIPAL') return;
-    const prevPrincipal = existingActive.find(old => old.categorie === 'OI' && old.domaine === a.domaine && old.role_domaine === 'PRINCIPAL');
-    if(prevPrincipal && prevPrincipal.cible !== a.cible) diff.principalChanges.push({ domaine:a.domaine, before:prevPrincipal.cible, after:a.cible });
-  });
-  if(!existingPerson) return { status:'NEW_PERSON', diff, errors:[] };
-  if(modified) return { status:'MODIFIED', diff, errors:[] };
-  if(diff.newAssignments.length) return { status:'NEW_ASSIGNMENT', diff, errors:[] };
-  if(diff.missingAssignments.length || diff.principalChanges.length) return { status:'MISSING_ASSIGNMENT', diff, errors:[] };
-  return { status:'IDENTICAL', diff, errors:[] };
+  if(resolved.requiresDpsOi && !hasOpenDomaineOi(open.concat(n.oiFromFile || []), 'DPS')){
+    warnings.push('cond VL — DPS sans rattachement DPS cohérent.');
+  }
+  if(resolved.requiresDapOi && !hasOpenDomaineOi(open.concat(n.oiFromFile || []), 'DAP')){
+    warnings.push('cond VL — DAP sans rattachement DAP cohérent.');
+  }
+  if(resolved.family === 'FOBA'){
+    const otherFoba = open.filter((row) => row.domaine === 'FOBA' && ctx.normalizeFobaCible(row.cible) !== resolved.fobaLevel && !row.date_inactif);
+    otherFoba.forEach((row) => warnings.push(`FOBA ${ctx.normalizeFobaCible(row.cible)} déjà actif — non clôturé automatiquement.`));
+  }
+  if(resolved.family === 'JSP'){
+    const otherJsp = open.filter((row) => row.domaine === 'JSP' && row.niveau && (row.cible !== (siteJsp && siteJsp.code) || row.niveau !== resolved.jspFlamme) && !row.date_inactif);
+    otherJsp.forEach((row) => warnings.push(`${ctx.specializationLabel(row)} déjà actif — non clôturé automatiquement.`));
+  }
+  if(!existingPerson){
+    return {
+      status: resolved.newPersonStatus,
+      statusLabel: resolved.newPersonLabel,
+      diff: Object.assign(diff, { person: { created: true } }),
+      errors: [],
+      warnings,
+      messages: warnings.slice()
+    };
+  }
+  if(diff.person.grade || diff.person.nom || diff.person.prenom){
+    return { status:'MODIFIED', statusLabel: ctx.STATUS_LABELS.MODIFIED, diff, errors:[], warnings, messages: warnings.slice() };
+  }
+  if(diff.newAssignments.length){
+    return { status:'NEW_ASSIGNMENT', statusLabel: ctx.STATUS_LABELS.NEW_ASSIGNMENT, diff, errors:[], warnings, messages: warnings.slice() };
+  }
+  if(diff.existingAssignments.length && !warnings.length){
+    return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, messages: [] };
+  }
+  if(warnings.length){
+    return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, messages: warnings.slice() };
+  }
+  return { status:'IDENTICAL', statusLabel: ctx.STATUS_LABELS.IDENTICAL, diff, errors:[], warnings, messages: [] };
+}
+
+function buildAbsentLine(person, assignments, resolved, siteJsp, dateActif, dateInactifProposee){
+  const contextCurrent = currentContextAssignments(assignments, resolved, siteJsp);
+  return {
+    lineNumber: `absent-${person.nip}`,
+    raw: { nip: person.nip, grade: person.grade, nom: person.nom, prenom: person.prenom },
+    normalized: {
+      nip: person.nip,
+      grade: clean(person.grade),
+      nom: clean(person.nom),
+      prenom: clean(person.prenom),
+      assignments: [],
+      oiFromFile: []
+    },
+    status: 'ABSENT_DU_NOUVEL_IMPORT',
+    statusLabel: ctx.STATUS_LABELS.ABSENT_DU_NOUVEL_IMPORT,
+    errors: [],
+    warnings: [],
+    messages: ['Absent du nouvel import. Aucune clôture automatique.'],
+    decision: 'CONSERVER',
+    dateEffet: dateInactifProposee,
+    diff: {
+      person: {},
+      identity: {
+        grade: { current: clean(person.grade), proposed: clean(person.grade) },
+        nom: { current: clean(person.nom), proposed: clean(person.nom) },
+        prenom: { current: clean(person.prenom), proposed: clean(person.prenom) }
+      },
+      population: {
+        oiSite: { current: contextCurrent.filter((row) => row.categorie === 'OI').map(ctx.oiLabel).join(', '), proposed: '' },
+        specialization: { current: contextCurrent.map(ctx.specializationLabel).join(', '), proposed: '' },
+        dateActif,
+        dateInactif: dateInactifProposee
+      },
+      newAssignments: [],
+      existingAssignments: contextCurrent,
+      missingAssignments: contextCurrent,
+      principalChanges: [],
+      otherPopulations: []
+    }
+  };
 }
 
 function summarizeAnalysis(lines){
   const uniqueNips = new Set(lines.map(l => l.normalized?.nip).filter(Boolean));
   const counts = {
-    totalLines: lines.length,
+    totalLines: lines.filter((line) => line.status !== 'ABSENT_DU_NOUVEL_IMPORT').length,
     totalUniqueNips: uniqueNips.size,
     countIdentical: 0,
     countNewPersons: 0,
+    countNewJsp: 0,
     countModified: 0,
     countNewAssignments: 0,
+    countExistingAssignments: 0,
     countMissingAssignments: 0,
     countErrors: 0
   };
   lines.forEach(line => {
     if(line.status === 'IDENTICAL') counts.countIdentical++;
     if(line.status === 'NEW_PERSON') counts.countNewPersons++;
+    if(line.status === 'NEW_JSP') counts.countNewJsp++;
     if(line.status === 'MODIFIED') counts.countModified++;
     if(line.status === 'NEW_ASSIGNMENT') counts.countNewAssignments++;
-    if(line.status === 'MISSING_ASSIGNMENT') counts.countMissingAssignments++;
+    if(line.diff && line.diff.existingAssignments && line.diff.existingAssignments.length && line.status !== 'ABSENT_DU_NOUVEL_IMPORT'){
+      counts.countExistingAssignments++;
+    }
+    if(line.status === 'ABSENT_DU_NOUVEL_IMPORT' || line.status === 'MISSING_ASSIGNMENT') counts.countMissingAssignments++;
     if(line.status === 'ERROR') counts.countErrors++;
   });
   return counts;
 }
 
+function buildPreview({ rows, existingPersons, existingAssignments, population, resolved, siteJsp, anneeMonitoring, filename }){
+  const dateActif = monitoringStart(anneeMonitoring);
+  const dateInactifProposee = lastDayOfPreviousYear(anneeMonitoring);
+  const seenNips = new Set();
+  const lines = [];
+  rows.forEach((row) => {
+    const nip = row.normalized.nip;
+    if(nip && seenNips.has(nip) && !(row.errors || []).length){
+      lines.push(Object.assign({}, row, {
+        status: 'IDENTICAL',
+        statusLabel: ctx.STATUS_LABELS.IDENTICAL,
+        diff: { person:{}, newAssignments:[], existingAssignments: row.normalized.assignments, missingAssignments:[], principalChanges:[] },
+        errors: [],
+        warnings: row.warnings || [],
+        messages: ['Ligne dupliquée dans le fichier.']
+      }));
+      return;
+    }
+    if(nip) seenNips.add(nip);
+    const person = existingPersons.get(nip);
+    const summary = summarizeLine(row, person, existingAssignments.get(nip) || [], resolved, siteJsp, dateActif);
+    lines.push(Object.assign({}, row, summary));
+  });
+  (population || []).forEach((person) => {
+    if(seenNips.has(person.nip)) return;
+    lines.push(buildAbsentLine(person, existingAssignments.get(person.nip) || person.affectations || [], resolved, siteJsp, dateActif, dateInactifProposee));
+  });
+  const counts = summarizeAnalysis(lines);
+  return {
+    wrote: false,
+    status: 'PREVIEW',
+    contexte: resolved.code,
+    importType: resolved.code,
+    contextLabel: resolved.label,
+    siteJsp: siteJsp ? siteJsp.code : null,
+    siteJspLabel: siteJsp ? siteJsp.label : null,
+    populationLabel: ctx.populationLabel(resolved, siteJsp),
+    anneeMonitoring: Number(anneeMonitoring) || new Date().getFullYear(),
+    dateActif,
+    filename: filename || '',
+    counts,
+    lines
+  };
+}
+
+async function loadJspSites(){
+  try{
+    const res = await getDb().query(
+      `select niveau_code, libelle from scope_cibles where domaine_code='JSP' and coalesce(actif, true) is not false order by niveau_code`
+    );
+    return ctx.jspSitesFromCibles((res.rows || []).map((row) => ({
+      domaine_code: 'JSP',
+      niveau_code: row.niveau_code,
+      libelle: row.libelle
+    })));
+  }catch(_error){
+    return ctx.JSP_IMPORT_SITES.slice();
+  }
+}
+
+async function resolveSiteOrThrow(resolved, rawSite){
+  if(!resolved.requiresSite) return null;
+  const allowed = await loadJspSites();
+  const site = ctx.normalizeJspSite(rawSite, allowed);
+  if(!site){
+    const error = new Error('Site JSP inconnu ou obligatoire.');
+    error.code = 'site_jsp_invalide';
+    throw error;
+  }
+  return site;
+}
+
 async function loadExistingForNips(nips){
   if(!nips.length) return { persons:new Map(), assignments:new Map() };
-  const personsRes = await db.query(`select * from scope_personnes where nip = any($1::text[]) and archived_at is null`, [nips]);
+  const personsRes = await getDb().query(`select * from scope_personnes where nip = any($1::text[]) and archived_at is null`, [nips]);
   const persons = new Map((personsRes.rows || []).map(p => [p.nip, p]));
   const ids = [...persons.values()].map(p => p.id);
   const assignments = new Map();
   if(ids.length){
-    const affRes = await db.query(`select a.*, p.nip from scope_affectations a join scope_personnes p on p.id = a.personne_id where a.personne_id = any($1::text[])`, [ids]);
+    const affRes = await getDb().query(`select a.*, p.nip from scope_affectations a join scope_personnes p on p.id = a.personne_id where a.personne_id = any($1::text[])`, [ids]);
     (affRes.rows || []).forEach(row => {
       if(!assignments.has(row.nip)) assignments.set(row.nip, []);
       assignments.get(row.nip).push(row);
@@ -264,66 +525,286 @@ async function loadExistingForNips(nips){
   return { persons, assignments };
 }
 
-async function analyzeImport({ fileText, filename='', importType='OI', contexte='OI', anneeMonitoring, createdBy='' }){
-  await ensureScopeSchema();
-  if(String(filename || '').toLowerCase().endsWith('.xlsx')) throw new Error('Import XLSX non active dans ce lot sans dependance tableur serveur. Exporter en CSV.');
-  const normalized = normalizeRows(parsePersonnelCsv(fileText), contexte);
-  const nips = [...new Set(normalized.map(l => l.normalized.nip).filter(Boolean))];
-  const existing = await loadExistingForNips(nips);
-  const lines = normalized.map(line => {
-    const person = existing.persons.get(line.normalized.nip);
-    const summary = summarizeLine(line, person, existing.assignments.get(line.normalized.nip) || []);
-    return Object.assign({}, line, summary);
-  });
-  const counts = summarizeAnalysis(lines);
-  const batchId = rid();
-  await db.transaction(async client => {
-    await client.query(`insert into scope_personnel_import_batches(id, import_type, contexte, annee_monitoring, filename, status, total_lines, total_unique_nips, count_identical, count_new_persons, count_modified, count_new_assignments, count_missing_assignments, count_errors, created_by)
-      values ($1,$2,$3,$4,$5,'PREVIEW',$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-      [batchId, importType, contexte, Number(anneeMonitoring) || new Date().getFullYear(), filename, counts.totalLines, counts.totalUniqueNips, counts.countIdentical, counts.countNewPersons, counts.countModified, counts.countNewAssignments, counts.countMissingAssignments, counts.countErrors, createdBy || null]);
-    for(const line of lines){
-      await client.query(`insert into scope_personnel_import_lines(id, batch_id, line_number, nip, raw_payload, normalized_payload, status, diff_payload, errors_payload)
-        values ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8::jsonb,$9::jsonb)`,
-        [rid(), batchId, line.lineNumber, line.normalized.nip || null, JSON.stringify(line.raw), JSON.stringify(line.normalized), line.status, JSON.stringify(line.diff || {}), JSON.stringify(line.errors || [])]);
+async function loadPopulation(resolved, siteJsp){
+  const params = [];
+  let where = `p.archived_at is null and a.date_inactif is null`;
+  if(resolved.family === 'GENERAL'){
+    where += ` and a.categorie='OI' and a.domaine in ('DPS','DAP')`;
+  } else if(resolved.family === 'JSP'){
+    params.push(siteJsp.code, resolved.jspFlamme);
+    where += ` and a.categorie='OI' and a.domaine='JSP' and a.cible=$1 and a.niveau=$2`;
+  } else if(resolved.specialization){
+    const spec = resolved.specialization;
+    params.push(spec.categorie, spec.domaine, spec.cible);
+    where += ` and a.categorie=$1 and a.domaine=$2`;
+    if(spec.domaine === 'FOBA'){
+      where += ` and (a.cible=$3 or a.cible=('FOBA ' || $3))`;
+    } else if(spec.domaine === 'AUTO' && spec.cible === 'PL'){
+      where += ` and a.cible in ('PL', 'cond PL')`;
+    } else {
+      where += ` and a.cible=$3`;
     }
-  });
-  return { batchId, status:'PREVIEW', counts, lines };
+  } else {
+    return [];
+  }
+  const res = await getDb().query(
+    `select distinct p.* from scope_affectations a join scope_personnes p on p.id = a.personne_id where ${where}`,
+    params
+  );
+  return res.rows || [];
 }
 
-async function commitImport(batchId, actorSubject=''){
+function defaultDecision(line, decisions){
+  const rowId = String(line.lineNumber);
+  const found = (decisions || []).find((item) => String(item.rowId) === rowId || (item.nip && item.nip === line.normalized.nip));
+  if(found && found.decision) return found;
+  if(line.status === 'ABSENT_DU_NOUVEL_IMPORT') return { decision: 'CONSERVER', dateEffet: line.dateEffet };
+  if(line.status === 'NEW_PERSON' || line.status === 'NEW_JSP') return { decision: 'CREER' };
+  if(line.status === 'IDENTICAL') return { decision: 'APPLIQUER' };
+  return { decision: 'APPLIQUER' };
+}
+
+function planCommitMutations(preview, decisions){
+  const mutations = {
+    personInserts: [],
+    personUpdates: [],
+    assignmentInserts: [],
+    assignmentClosures: [],
+    skipped: []
+  };
+  const seenNips = new Set();
+  (preview.lines || []).forEach((line) => {
+    const choice = defaultDecision(line, decisions);
+    const decision = String(choice.decision || '').toUpperCase();
+    if(line.status === 'ERROR' || decision === 'IGNORER' || decision === 'CONSERVER' || decision === 'EXAMINER'){
+      mutations.skipped.push({ nip: line.normalized.nip, decision, status: line.status });
+      return;
+    }
+    if(line.status === 'ABSENT_DU_NOUVEL_IMPORT' && (decision === 'CLOTURER' || decision === 'FIN_AFFECTATION' || decision === 'ARCHIVER_SORTI')){
+      const dateInactif = choice.dateEffet || choice.dateInactif || line.dateEffet || lastDayOfPreviousYear(preview.anneeMonitoring);
+      (line.diff.missingAssignments || line.diff.existingAssignments || []).forEach((assignment) => {
+        mutations.assignmentClosures.push({
+          nip: line.normalized.nip,
+          assignment,
+          dateInactif
+        });
+      });
+      return;
+    }
+    if(line.status === 'ABSENT_DU_NOUVEL_IMPORT'){
+      mutations.skipped.push({ nip: line.normalized.nip, decision, status: line.status });
+      return;
+    }
+    const nip = line.normalized.nip;
+    if(seenNips.has(nip)) return;
+    seenNips.add(nip);
+    const created = Boolean(line.diff && line.diff.person && line.diff.person.created);
+    if(created && (decision === 'CREER' || decision === 'APPLIQUER')){
+      mutations.personInserts.push({
+        nip,
+        grade: line.normalized.grade || null,
+        nom: line.normalized.nom || null,
+        prenom: line.normalized.prenom || null
+      });
+    } else if(line.status === 'MODIFIED' && (decision === 'APPLIQUER' || decision === 'MODIFIER_IDENTITE')){
+      mutations.personUpdates.push({
+        nip,
+        grade: line.normalized.grade || null,
+        nom: line.normalized.nom || null,
+        prenom: line.normalized.prenom || null
+      });
+    }
+    (line.diff.newAssignments || []).forEach((assignment) => {
+      mutations.assignmentInserts.push({
+        nip,
+        assignment,
+        dateActif: choice.dateEffet || preview.dateActif
+      });
+    });
+  });
+  return mutations;
+}
+
+async function analyzeImport(input = {}){
   await ensureScopeSchema();
-  return db.transaction(async client => {
-    const batchRes = await client.query(`select * from scope_personnel_import_batches where id=$1 for update`, [batchId]);
-    const batch = batchRes.rows[0];
-    if(!batch) throw new Error('Batch import introuvable.');
-    if(batch.status !== 'PREVIEW') throw new Error(`Batch non commitable: ${batch.status}`);
-    const lineRes = await client.query(`select * from scope_personnel_import_lines where batch_id=$1 order by line_number asc`, [batchId]);
-    if((lineRes.rows || []).some(line => line.status === 'ERROR')) throw new Error('Import refuse: corriger les lignes en erreur avant commit.');
+  const filename = input.filename || '';
+  if(String(filename).toLowerCase().endsWith('.xlsx')) throw new Error('Import XLSX non active dans ce lot sans dependance tableur serveur. Exporter en CSV.');
+  const fileText = input.fileText || input.csvText || '';
+  const resolved = ctx.resolveImportContext(input.contexte || input.importType || input.context || 'GENERAL');
+  const siteJsp = await resolveSiteOrThrow(resolved, input.siteJsp || input.site || input.cibleJsp);
+  const anneeMonitoring = Number(input.anneeMonitoring || input.annee || new Date().getFullYear());
+  const parsed = normalizeRows(parsePersonnelCsv(fileText), resolved.code, siteJsp);
+  const nips = [...new Set(parsed.map(line => line.normalized.nip).filter(Boolean))];
+  const existing = input._existing || await loadExistingForNips(nips);
+  let population = input._population;
+  if(!population){
+    const popRows = await loadPopulation(resolved, siteJsp);
+    population = popRows;
+    const extraNips = popRows.map((row) => row.nip).filter((nip) => !existing.persons.has(nip));
+    if(extraNips.length){
+      const extra = await loadExistingForNips(extraNips);
+      extra.persons.forEach((person, nip) => existing.persons.set(nip, person));
+      extra.assignments.forEach((list, nip) => existing.assignments.set(nip, list));
+    }
+  }
+  const preview = buildPreview({
+    rows: parsed,
+    existingPersons: existing.persons,
+    existingAssignments: existing.assignments,
+    population,
+    resolved,
+    siteJsp,
+    anneeMonitoring,
+    filename
+  });
+  preview.wrote = false;
+  return preview;
+}
+
+function jsonParam(value){
+  return JSON.stringify(value || {});
+}
+
+async function commitImport(payload, actorSubject){
+  if(typeof payload === 'string'){
+    throw new Error('Commit refusé: le preview n’est plus persisté. Renvoyer le fichier et le contexte après validation explicite.');
+  }
+  const input = payload || {};
+  const actor = actorSubject || input.createdBy || '';
+  if(input.confirmed === false) throw new Error('Commit refusé: validation explicite requise.');
+  const fileText = input.fileText || input.csvText || '';
+  if(!fileText) throw new Error('Commit refusé: fichier d’import manquant.');
+  const preview = input._preview || await analyzeImport(input);
+  if((preview.lines || []).some((line) => line.status === 'ERROR')){
+    throw new Error('Import refuse: corriger les lignes en erreur avant commit.');
+  }
+  const mutations = input._mutations || planCommitMutations(preview, input.decisions || []);
+  await ensureScopeSchema();
+  return getDb().transaction(async client => {
+    const batchId = rid();
+    const counts = preview.counts || {};
+    await client.query(
+      `insert into scope_personnel_import_batches(
+        id, import_type, contexte, site_jsp, annee_monitoring, filename, status,
+        total_lines, total_unique_nips, count_identical, count_new_persons, count_new_jsp,
+        count_modified, count_new_assignments, count_existing_assignments, count_missing_assignments,
+        count_closures, count_errors, created_by, committed_at
+      ) values ($1,$2,$3,$4,$5,$6,'COMMITTED',$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,now())`,
+      [
+        batchId, preview.importType, preview.contexte, preview.siteJsp, preview.anneeMonitoring, preview.filename,
+        counts.totalLines || 0, counts.totalUniqueNips || 0, counts.countIdentical || 0, counts.countNewPersons || 0,
+        counts.countNewJsp || 0, counts.countModified || 0, counts.countNewAssignments || 0,
+        counts.countExistingAssignments || 0, counts.countMissingAssignments || 0,
+        mutations.assignmentClosures.length, counts.countErrors || 0, actor || null
+      ]
+    );
+    for(const line of preview.lines || []){
+      await client.query(
+        `insert into scope_personnel_import_lines(id, batch_id, line_number, nip, raw_payload, normalized_payload, status, diff_payload, errors_payload)
+         values ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8::jsonb,$9::jsonb)`,
+        [
+          rid(), batchId, Number(line.lineNumber) || 0, line.normalized.nip || null,
+          jsonParam(line.raw), jsonParam(line.normalized), line.status,
+          jsonParam(line.diff || {}), jsonParam(line.errors || [])
+        ]
+      );
+    }
     let personsTouched = 0;
     let assignmentsCreated = 0;
-    for(const line of lineRes.rows || []){
-      const n = line.normalized_payload;
-      let personRes = await client.query(`select * from scope_personnes where nip=$1 for update`, [n.nip]);
-      let person = personRes.rows[0];
-      if(!person){
-        person = { id:rid() };
-        await client.query(`insert into scope_personnes(id, nip, grade, nom, prenom) values ($1,$2,$3,$4,$5)`, [person.id, n.nip, n.grade || null, n.nom || null, n.prenom || null]);
-        personsTouched++;
-      } else {
-        await client.query(`update scope_personnes set grade=coalesce($2, grade), nom=coalesce($3, nom), prenom=coalesce($4, prenom), updated_at=now() where id=$1`, [person.id, n.grade || null, n.nom || null, n.prenom || null]);
-        personsTouched++;
+    let closures = 0;
+    const personIds = new Map();
+    async function personIdFor(nip){
+      if(personIds.has(nip)) return personIds.get(nip);
+      const found = await client.query(`select * from scope_personnes where nip=$1 for update`, [nip]);
+      if(found.rows[0]){
+        personIds.set(nip, found.rows[0].id);
+        return found.rows[0].id;
       }
-      for(const a of n.assignments || []){
-        const exists = await client.query(`select id from scope_affectations where personne_id=$1 and categorie=$2 and domaine=$3 and cible=$4 and coalesce(role_domaine,'')=coalesce($5,'') and date_actif=$6 and date_inactif is null limit 1`,
-          [person.id, a.categorie, a.domaine, a.cible, a.role_domaine || null, monitoringStart(batch.annee_monitoring)]);
-        if(exists.rows[0]) continue;
-        await client.query(`insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, date_actif, source_import_batch_id)
-          values ($1,$2,$3,$4,$5,$6,$7,$8)`, [rid(), person.id, a.categorie, a.domaine, a.cible, a.role_domaine || null, monitoringStart(batch.annee_monitoring), batchId]);
-        assignmentsCreated++;
-      }
+      return null;
     }
-    await client.query(`update scope_personnel_import_batches set status='COMMITTED', committed_at=now(), created_by=coalesce(created_by,$2) where id=$1`, [batchId, actorSubject || null]);
-    return { ok:true, batchId, personsTouched, assignmentsCreated };
+    for(const row of mutations.personInserts){
+      const existing = await personIdFor(row.nip);
+      if(existing) continue;
+      const id = rid();
+      await client.query(
+        `insert into scope_personnes(id, nip, grade, nom, prenom) values ($1,$2,$3,$4,$5)`,
+        [id, row.nip, row.grade, row.nom, row.prenom]
+      );
+      personIds.set(row.nip, id);
+      personsTouched++;
+    }
+    for(const row of mutations.personUpdates){
+      const id = await personIdFor(row.nip);
+      if(!id) continue;
+      await client.query(
+        `update scope_personnes
+         set grade=coalesce($2, grade), nom=coalesce($3, nom), prenom=coalesce($4, prenom), updated_at=now()
+         where id=$1`,
+        [id, row.grade, row.nom, row.prenom]
+      );
+      personsTouched++;
+    }
+    for(const row of mutations.assignmentInserts){
+      const id = await personIdFor(row.nip);
+      if(!id) continue;
+      const a = row.assignment;
+      const exists = await client.query(
+        `select id from scope_affectations
+         where personne_id=$1 and categorie=$2 and domaine=$3 and cible=$4
+           and coalesce(role_domaine,'')=coalesce($5,'')
+           and coalesce(niveau,'')=coalesce($6,'')
+           and date_inactif is null
+         limit 1`,
+        [id, a.categorie, a.domaine, a.cible, a.role_domaine || null, a.niveau || null]
+      );
+      if(exists.rows[0]) continue;
+      await client.query(
+        `insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, niveau, date_actif, source_import_batch_id)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [rid(), id, a.categorie, a.domaine, a.cible, a.role_domaine || null, a.niveau || null, row.dateActif, batchId]
+      );
+      assignmentsCreated++;
+    }
+    for(const row of mutations.assignmentClosures){
+      const id = await personIdFor(row.nip);
+      if(!id) continue;
+      const a = row.assignment;
+      if(a.id){
+        await client.query(
+          `update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1 and date_inactif is null`,
+          [a.id, row.dateInactif]
+        );
+        closures++;
+        continue;
+      }
+      await client.query(
+        `update scope_affectations
+         set date_inactif=$7::date, updated_at=now()
+         where personne_id=$1 and categorie=$2 and domaine=$3 and cible=$4
+           and coalesce(role_domaine,'')=coalesce($5,'')
+           and coalesce(niveau,'')=coalesce($6,'')
+           and date_inactif is null`,
+        [id, a.categorie, a.domaine, a.cible, a.role_domaine || null, a.niveau || null, row.dateInactif]
+      );
+      closures++;
+    }
+    return {
+      ok: true,
+      batchId,
+      wrote: true,
+      personsTouched,
+      assignmentsCreated,
+      closures,
+      contexte: preview.contexte,
+      siteJsp: preview.siteJsp,
+      populationLabel: preview.populationLabel,
+      summary: {
+        mutations: personsTouched + assignmentsCreated + closures,
+        personsTouched,
+        assignmentsCreated,
+        closures
+      }
+    };
   });
 }
 
@@ -348,13 +829,14 @@ function mapAssignment(row){
     domaine: row.domaine,
     cible: row.cible,
     roleDomaine: row.role_domaine,
+    niveau: row.niveau || null,
     dateActif: row.date_actif,
     dateInactif: row.date_inactif,
     sourceImportBatchId: row.source_import_batch_id
   };
 }
 
-async function listPersonnel({ q='', domaine='', cible='' } = {}){
+async function listPersonnel({ q='', domaine='', cible='', niveau='' } = {}){
   await ensureScopeSchema();
   const values = [];
   const where = [`p.archived_at is null`];
@@ -370,12 +852,16 @@ async function listPersonnel({ q='', domaine='', cible='' } = {}){
     values.push(cible);
     where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.cible=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
   }
-  const res = await db.query(`select p.* from scope_personnes p where ${where.join(' and ')} order by lower(coalesce(p.nom,'')), lower(coalesce(p.prenom,'')), p.nip limit 500`, values);
+  if(niveau){
+    values.push(niveau);
+    where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.niveau=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
+  }
+  const res = await getDb().query(`select p.* from scope_personnes p where ${where.join(' and ')} order by lower(coalesce(p.nom,'')), lower(coalesce(p.prenom,'')), p.nip limit 500`, values);
   const persons = (res.rows || []).map(mapPerson);
   const ids = persons.map(p => p.id);
   let assignments = [];
   if(ids.length){
-    const aff = await db.query(`select * from scope_affectations where personne_id = any($1::text[]) order by domaine, cible, date_actif`, [ids]);
+    const aff = await getDb().query(`select * from scope_affectations where personne_id = any($1::text[]) order by domaine, cible, date_actif`, [ids]);
     assignments = (aff.rows || []).map(mapAssignment);
   }
   return persons.map(person => Object.assign(person, { affectations: assignments.filter(a => a.personneId === person.id) }));
@@ -383,16 +869,16 @@ async function listPersonnel({ q='', domaine='', cible='' } = {}){
 
 async function getPersonne(id){
   await ensureScopeSchema();
-  const person = await db.query(`select * from scope_personnes where id=$1 and archived_at is null`, [id]);
+  const person = await getDb().query(`select * from scope_personnes where id=$1 and archived_at is null`, [id]);
   if(!person.rows[0]) return null;
-  const aff = await db.query(`select * from scope_affectations where personne_id=$1 order by domaine, cible, date_actif`, [id]);
+  const aff = await getDb().query(`select * from scope_affectations where personne_id=$1 order by domaine, cible, date_actif`, [id]);
   return Object.assign(mapPerson(person.rows[0]), { affectations:(aff.rows || []).map(mapAssignment) });
 }
 
 async function updatePersonne(id, patch){
   await ensureScopeSchema();
   const dateEntree = clean(patch.dateEntreeSdis || '');
-  await db.query(`update scope_personnes set date_entree_sdis=$2::date, updated_at=now() where id=$1`, [id, dateEntree || null]);
+  await getDb().query(`update scope_personnes set date_entree_sdis=$2::date, updated_at=now() where id=$1`, [id, dateEntree || null]);
   return getPersonne(id);
 }
 
@@ -400,22 +886,34 @@ async function updateAffectation(id, patch){
   await ensureScopeSchema();
   const actif = clean(patch.dateActif || '');
   const inactif = clean(patch.dateInactif || '');
-  await db.query(`update scope_affectations set date_actif=coalesce($2::date, date_actif), date_inactif=$3::date, updated_at=now() where id=$1`, [id, actif || null, inactif || null]);
-  const res = await db.query(`select personne_id from scope_affectations where id=$1`, [id]);
+  await getDb().query(`update scope_affectations set date_actif=coalesce($2::date, date_actif), date_inactif=$3::date, updated_at=now() where id=$1`, [id, actif || null, inactif || null]);
+  const res = await getDb().query(`select personne_id from scope_affectations where id=$1`, [id]);
   return res.rows[0] ? getPersonne(res.rows[0].personne_id) : null;
 }
 
-async function effectifAtDate({ domaine, cible, date }){
+async function effectifAtDate({ domaine, cible, niveau, date }){
   await ensureScopeSchema();
   const d = clean(date) || new Date().toISOString().slice(0, 10);
   const params = [d, clean(domaine)];
   let where = `a.date_actif <= $1 and (a.date_inactif is null or a.date_inactif >= $1) and a.domaine=$2`;
   if(cible){ params.push(clean(cible)); where += ` and a.cible=$${params.length}`; }
-  where += clean(domaine) === 'PR' || clean(domaine) === 'AUTO'
-    ? ` and a.categorie='SPECIALISATION'`
-    : ` and a.categorie='OI' and a.role_domaine='PRINCIPAL'`;
-  const res = await db.query(`select a.domaine, a.cible, count(distinct a.personne_id)::int as count from scope_affectations a where ${where} group by a.domaine, a.cible order by a.domaine, a.cible`, params);
-  return { date:d, domaine:clean(domaine), cible:clean(cible), rows:res.rows || [] };
+  if(niveau){ params.push(clean(niveau)); where += ` and a.niveau=$${params.length}`; }
+  const domaineCode = clean(domaine);
+  if(domaineCode === 'PR' || domaineCode === 'AUTO' || domaineCode === 'FOBA'){
+    where += ` and a.categorie='SPECIALISATION'`;
+  } else if(domaineCode === 'JSP' && niveau){
+    where += ` and a.categorie='OI'`;
+  } else {
+    where += ` and a.categorie='OI' and a.role_domaine='PRINCIPAL'`;
+  }
+  const res = await getDb().query(
+    `select a.domaine, a.cible, a.niveau, count(distinct a.personne_id)::int as count
+     from scope_affectations a where ${where}
+     group by a.domaine, a.cible, a.niveau
+     order by a.domaine, a.cible, a.niveau`,
+    params
+  );
+  return { date:d, domaine:clean(domaine), cible:clean(cible), niveau:clean(niveau), rows:res.rows || [] };
 }
 
 function computeEffectifsFromAssignments(assignments, date){
@@ -425,7 +923,7 @@ function computeEffectifsFromAssignments(assignments, date){
     if(a.date_actif > d) return;
     if(a.date_inactif && a.date_inactif < d) return;
     if(a.categorie === 'OI' && a.role_domaine !== 'PRINCIPAL') return;
-    const key = `${a.domaine} ${a.cible}`;
+    const key = [a.domaine, a.cible, a.niveau].filter(Boolean).join(' ');
     counts[key] = (counts[key] || 0) + 1;
   });
   return counts;
@@ -438,6 +936,8 @@ module.exports = {
   normalizeRows,
   summarizeLine,
   summarizeAnalysis,
+  buildPreview,
+  planCommitMutations,
   analyzeImport,
   commitImport,
   listPersonnel,
@@ -445,5 +945,10 @@ module.exports = {
   updatePersonne,
   updateAffectation,
   effectifAtDate,
-  computeEffectifsFromAssignments
+  computeEffectifsFromAssignments,
+  specializationForContext,
+  assignmentKey,
+  visibleImportContexts: ctx.visibleImportContexts,
+  resolveImportContext: ctx.resolveImportContext,
+  IMPORT_CONTEXTS: ctx.IMPORT_CONTEXTS
 };

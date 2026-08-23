@@ -93,6 +93,7 @@ const DDL = [
     domaine text not null,
     cible text not null,
     role_domaine text,
+    niveau text,
     date_actif date not null,
     date_inactif date,
     source_import_batch_id text,
@@ -101,7 +102,7 @@ const DDL = [
     constraint scope_affectations_dates_chk check (date_inactif is null or date_actif <= date_inactif)
   )`,
   `create unique index if not exists scope_affectations_open_unique
-    on scope_affectations (personne_id, categorie, domaine, cible, coalesce(role_domaine, '')) where date_inactif is null`,
+    on scope_affectations (personne_id, categorie, domaine, cible, coalesce(niveau, ''), coalesce(role_domaine, '')) where date_inactif is null`,
   `create index if not exists scope_affectations_scope
     on scope_affectations (domaine, cible, role_domaine, date_actif, date_inactif)`,
   `create index if not exists scope_affectations_personne_scope
@@ -320,6 +321,10 @@ async function ensureScopeSchema(){
     `insert into monitoring_f7_schema_migrations(version) values ('scope-event-import-1') on conflict (version) do nothing`
   );
   /* scope-qual-finish-1 — pas de migration : filtre qualification applicatif */
+  await migratePersonnelImportPopulations1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-personnel-import-populations-1') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
 }
@@ -730,6 +735,79 @@ async function migrateEventImport1(){
     create unique index if not exists scope_evenements_identifiant_externe_uq
       on scope_evenements (identifiant_externe)
       where identifiant_externe is not null
+  `);
+}
+
+async function migratePersonnelImportPopulations1(){
+  await db.query(`alter table scope_affectations add column if not exists niveau text`);
+  await db.query(`alter table scope_affectations drop constraint if exists scope_affectations_niveau_chk`);
+  await db.query(`
+    alter table scope_affectations add constraint scope_affectations_niveau_chk
+      check (niveau is null or niveau in ('FLM_1', 'FLM_2', 'FLM_3'))
+  `);
+  await db.query(`drop index if exists scope_affectations_open_unique`);
+  await db.query(`
+    create unique index if not exists scope_affectations_open_unique
+      on scope_affectations (
+        personne_id,
+        categorie,
+        domaine,
+        cible,
+        coalesce(niveau, ''),
+        coalesce(role_domaine, '')
+      )
+      where date_inactif is null
+  `);
+  await db.query(`
+    create index if not exists scope_affectations_population_idx
+      on scope_affectations (domaine, cible, niveau, date_actif, date_inactif)
+  `);
+  await db.query(`
+    create table if not exists scope_personnel_import_batches (
+      id text primary key,
+      import_type text not null,
+      contexte text,
+      site_jsp text,
+      annee_monitoring integer not null,
+      filename text,
+      status text not null,
+      total_lines integer not null default 0,
+      total_unique_nips integer not null default 0,
+      count_identical integer not null default 0,
+      count_new_persons integer not null default 0,
+      count_new_jsp integer not null default 0,
+      count_modified integer not null default 0,
+      count_new_assignments integer not null default 0,
+      count_existing_assignments integer not null default 0,
+      count_missing_assignments integer not null default 0,
+      count_closures integer not null default 0,
+      count_errors integer not null default 0,
+      created_by text,
+      created_at timestamptz not null default now(),
+      committed_at timestamptz
+    )
+  `);
+  await db.query(`alter table scope_personnel_import_batches add column if not exists site_jsp text`);
+  await db.query(`alter table scope_personnel_import_batches add column if not exists count_new_jsp integer not null default 0`);
+  await db.query(`alter table scope_personnel_import_batches add column if not exists count_existing_assignments integer not null default 0`);
+  await db.query(`alter table scope_personnel_import_batches add column if not exists count_closures integer not null default 0`);
+  await db.query(`
+    create table if not exists scope_personnel_import_lines (
+      id text primary key,
+      batch_id text not null references scope_personnel_import_batches(id) on delete cascade,
+      line_number integer not null,
+      nip text,
+      raw_payload jsonb not null default '{}'::jsonb,
+      normalized_payload jsonb not null default '{}'::jsonb,
+      status text not null,
+      diff_payload jsonb not null default '{}'::jsonb,
+      errors_payload jsonb not null default '[]'::jsonb,
+      created_at timestamptz not null default now()
+    )
+  `);
+  await db.query(`
+    create index if not exists idx_scope_import_lines_batch
+      on scope_personnel_import_lines (batch_id, line_number)
   `);
 }
 

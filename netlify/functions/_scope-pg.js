@@ -72,6 +72,7 @@ const AFFECTATION_SELECT = `
   a.domaine,
   a.cible,
   a.role_domaine,
+  a.niveau,
   a.domaine as domaine_code,
   a.cible as niveau_code,
   a.date_actif as date_debut,
@@ -103,6 +104,7 @@ function normalizeAffectationInput(row = {}, cible){
     domaine,
     cible: cibleCode,
     role_domaine: row.role_domaine || 'PRINCIPAL',
+    niveau: row.niveau || null,
     date_actif: isoDate(row.date_actif || row.date_debut),
     date_inactif: isoDate(row.date_inactif || row.date_fin)
   };
@@ -345,8 +347,8 @@ function createPgRepo(client){
       if(!next.domaine || !next.cible) throw new Error('scope_affectation_target_required');
       const result = await q(
         `with inserted as (
-           insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, date_actif, date_inactif)
-           values ($1,$2,$3,$4,$5,$6,$7,$8)
+           insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, niveau, date_actif, date_inactif)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
            returning *
          )
          select ${AFFECTATION_SELECT}
@@ -360,6 +362,7 @@ function createPgRepo(client){
           next.domaine,
           next.cible,
           next.role_domaine,
+          next.niveau,
           next.date_actif,
           next.date_inactif
         ]
@@ -378,13 +381,14 @@ function createPgRepo(client){
         domaine: patch.domaine || patch.domaine_code || (cible && cible.domaine_code) || row.domaine,
         cible: patch.cible || patch.niveau_code || (cible && cible.niveau_code) || row.cible,
         categorie: patch.categorie || row.categorie,
-        role_domaine: patch.role_domaine !== undefined ? patch.role_domaine : row.role_domaine
+        role_domaine: patch.role_domaine !== undefined ? patch.role_domaine : row.role_domaine,
+        niveau: patch.niveau !== undefined ? patch.niveau : row.niveau
       };
       const result = await q(
         `with updated as (
            update scope_affectations
            set date_actif = $2, date_inactif = $3, domaine = $4, cible = $5,
-               categorie = $6, role_domaine = $7, updated_at = now()
+               categorie = $6, role_domaine = $7, niveau = $8, updated_at = now()
            where id = $1
            returning *
          )
@@ -392,7 +396,7 @@ function createPgRepo(client){
          from updated a
          left join scope_cibles c on ${cibleJoinCondition('a')}
          where a.id = $1`,
-        [id, next.date_actif, next.date_inactif, next.domaine, next.cible, next.categorie, next.role_domaine]
+        [id, next.date_actif, next.date_inactif, next.domaine, next.cible, next.categorie, next.role_domaine, next.niveau]
       );
       return mapAffectationDates(result.rows[0]);
     },

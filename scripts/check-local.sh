@@ -263,5 +263,15 @@ if grep -q 'delete from' netlify/functions/_data-store-postgres.js; then
   echo "ERREUR: remplacement destructif detecte dans _data-store-postgres.js"
   exit 1
 fi
+grep -q "scope-personnel-import-populations-1" netlify/functions/_scope-schema.js
+grep -q "JSP_FLM_1" netlify/functions/_scope-personnel-import-contexts.js
+grep -q "AUTO_VL_DPS" netlify/functions/_scope-personnel-import-contexts.js
+grep -q "AUTO_VL_DAP" netlify/functions/_scope-personnel-import-contexts.js
+grep -q "site_jsp" netlify/functions/_scope-personnel-service.js
+grep -q "preview.wrote = false" netlify/functions/_scope-personnel-service.js
+grep -q "scope-sync-context" assets/js/scope-ui.js
+grep -q "scope-sync-site" assets/js/scope-ui.js
+test -f database/migrations/20260823_scope_personnel_import_populations_1.sql
+grep -q "scope-personnel-import-populations.test.js" package.json
 
 echo "OK: controles locaux termines."

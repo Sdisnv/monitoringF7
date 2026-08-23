@@ -2,8 +2,8 @@
 (function(){
   'use strict';
 
-  const TARGETS = { DPS:['G1','C1','B1','B2'], DAP:['Y1','Y2','Y3','Y4'], JSP:['JSP G1','JSP C1','JSP B1'], PR:['PR'], AUTO:['cond VL','cond PL'] };
-  const state = { rows:[], sortKey:'nom', sortDir:'asc', batchId:null };
+  const TARGETS = { DPS:['G1','C1','B1','B2'], DAP:['Y1','Y2','Y3','Y4'], JSP:['JSP G1','JSP C1','JSP B1'], PR:['PR'], AUTO:['VL_DPS','VL_DAP','PL','cond VL','cond PL'], FOBA:['1','2','3'] };
+  const state = { rows:[], sortKey:'nom', sortDir:'asc', batchId:null, lastImport:null };
   const $ = id => document.getElementById(id);
   const escape = value => window.MonitoringSecurity?.escapeHTML ? window.MonitoringSecurity.escapeHTML(value) : String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
@@ -99,25 +99,37 @@
   async function analyzeImport(){
     const file = $('scopePersonnelFile')?.files?.[0];
     if(!file){ setStatus('Sélectionne un fichier CSV.', 'error'); return; }
+    const contexte = $('scopePersonnelImportContext')?.value || 'GENERAL';
+    if(String(contexte).indexOf('JSP_FLM_') === 0 && !$('scopePersonnelImportSite')?.value){
+      setStatus('Le site JSP est obligatoire pour cet import.', 'error');
+      return;
+    }
     try{
+      const fileText = await file.text();
+      const payload = {
+        fileText,
+        filename:file.name,
+        importType:contexte,
+        contexte,
+        siteJsp:$('scopePersonnelImportSite')?.value || undefined,
+        anneeMonitoring:Number($('scopePersonnelYear')?.value) || new Date().getFullYear()
+      };
       const data = await api('/.netlify/functions/scope-personnel-import-analyze', {
         method:'POST',
-        body:JSON.stringify({
-          fileText:await file.text(),
-          filename:file.name,
-          importType:$('scopePersonnelImportContext')?.value || 'OI',
-          contexte:$('scopePersonnelImportContext')?.value || 'OI',
-          anneeMonitoring:Number($('scopePersonnelYear')?.value) || new Date().getFullYear()
-        })
+        body:JSON.stringify(payload)
       });
       renderImportPreview(data.result);
+      state.lastImport = payload;
     }catch(error){ setStatus(`Analyse impossible : ${error.message}`, 'error'); }
   }
   async function commitImport(){
-    if(!state.batchId){ setStatus('Aucun batch à valider.', 'error'); return; }
+    if(!state.lastImport){ setStatus('Aucun fichier analysé à valider.', 'error'); return; }
     if(!confirm('Valider transactionnellement cet import PERSONNEL ?')) return;
     try{
-      const data = await api('/.netlify/functions/scope-personnel-import-commit', { method:'POST', body:JSON.stringify({ batchId:state.batchId }) });
+      const data = await api('/.netlify/functions/scope-personnel-import-commit', {
+        method:'POST',
+        body:JSON.stringify(Object.assign({ confirmed:true }, state.lastImport))
+      });
       setStatus(`Commit terminé : ${data.personsTouched || 0} personne(s), ${data.assignmentsCreated || 0} affectation(s) créée(s).`, 'ok');
       await loadPersonnel();
     }catch(error){ setStatus(`Commit refusé : ${error.message}`, 'error'); }

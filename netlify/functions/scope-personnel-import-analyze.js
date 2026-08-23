@@ -14,7 +14,7 @@ exports.handler = async function(event){
   if(event.httpMethod !== 'POST') return response(405, { ok:false, error:'method_not_allowed' });
   try{
     const body = parseBody(event);
-    if(!body || !body.fileText) return response(400, { ok:false, error:'missing_file_text' });
+    if(!body || !(body.fileText || body.csvText)) return response(400, { ok:false, error:'missing_file_text' });
     const result = await personnel.analyzeImport(Object.assign({}, body, { createdBy:claims.sub || claims.email || claims.nip || '' }));
     return response(200, { ok:true, result });
   }catch(error){

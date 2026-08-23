@@ -151,28 +151,50 @@
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
       async previewPersonnelSync(body) {
         const payload = await directRequest('POST', '/.netlify/functions/scope-personnel-import-analyze', Object.assign({}, body || {}, {
-          fileText: (body && (body.fileText || body.csvText)) || ''
+          fileText: (body && (body.fileText || body.csvText)) || '',
+          csvText: (body && (body.csvText || body.fileText)) || '',
+          importType: (body && (body.importType || body.contexte || body.context)) || 'GENERAL',
+          contexte: (body && (body.contexte || body.importType || body.context)) || 'GENERAL',
+          siteJsp: body && (body.siteJsp || body.site),
+          anneeMonitoring: body && (body.anneeMonitoring || body.annee)
         }));
         const result = payload && (payload.result || payload);
         const lines = (result && result.lines) || [];
         return Object.assign({}, result, {
+          wrote: false,
           rows: lines.map((line) => Object.assign({
-            rowId: String(line.lineNumber || line.id || line.nip || ''),
-            statut: line.status,
-            nip: line.normalized && line.normalized.nip,
-            decision: line.status === 'NEW_PERSON' ? 'CREER' : 'IGNORER'
+            rowId: String(line.lineNumber || line.id || (line.normalized && line.normalized.nip) || line.nip || ''),
+            statut: line.status === 'NEW_JSP' ? 'NOUVEAU' : (line.status === 'ABSENT_DU_NOUVEL_IMPORT' ? 'ABSENT_DU_FICHIER' : line.status),
+            statusLabel: line.statusLabel,
+            nip: (line.normalized && line.normalized.nip) || line.nip,
+            decision: line.status === 'NEW_PERSON' || line.status === 'NEW_JSP' ? 'CREER' : (line.status === 'ABSENT_DU_NOUVEL_IMPORT' ? 'CONSERVER' : (line.status === 'IDENTICAL' ? 'IGNORER' : 'APPLIQUER'))
           }, line)),
-          fingerprint: result && result.batchId,
-          importId: result && result.batchId,
-          summary: (result && result.counts) || {}
+          fingerprint: result && (result.fingerprint || [result.contexte, result.siteJsp, result.anneeMonitoring, result.filename].filter(Boolean).join('|')),
+          importId: result && (result.importId || result.batchId || null),
+          summary: (result && result.counts) || {},
+          importSummary: Object.assign({}, result && result.counts, {
+            contextLabel: result && result.contextLabel,
+            siteJspLabel: result && result.siteJspLabel,
+            anneeMonitoring: result && result.anneeMonitoring
+          })
         });
       },
       commitPersonnelSync(body) {
         return directRequest('POST', '/.netlify/functions/scope-personnel-import-commit', {
-          batchId: body && (body.batchId || body.importId || body.fingerprint)
+          fileText: body && (body.fileText || body.csvText),
+          csvText: body && (body.csvText || body.fileText),
+          filename: body && body.filename,
+          importType: body && (body.importType || body.contexte),
+          contexte: body && (body.contexte || body.importType),
+          siteJsp: body && (body.siteJsp || body.site),
+          anneeMonitoring: body && (body.anneeMonitoring || body.annee),
+          decisions: body && body.decisions,
+          confirmed: true
         }).then((payload) => Object.assign({}, payload, {
           summary: Object.assign({}, payload && payload.summary, {
-            mutations: (payload && (payload.personsTouched || 0)) + (payload && (payload.assignmentsCreated || 0))
+            mutations: payload && payload.summary && payload.summary.mutations != null
+              ? payload.summary.mutations
+              : ((payload && payload.personsTouched) || 0) + ((payload && payload.assignmentsCreated) || 0) + ((payload && payload.closures) || 0)
           })
         }));
       },

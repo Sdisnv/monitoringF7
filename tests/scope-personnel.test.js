@@ -16,32 +16,35 @@ function aff(overrides){
 async function run(){
   const csv = `NIP;Grade;Prénom;Nom;Organe(s) d'intervention
 TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Belmont-sur-Yverdon, JSP B1 - Yvonand`;
-  const normalized = svc.normalizeRows(svc.parsePersonnelCsv(csv), 'PR')[0].normalized;
-  assert.strictEqual(normalized.nip, 'TEST001');
-  assert.strictEqual(normalized.assignments.length, 5);
-  assert.deepStrictEqual(normalized.assignments.map(a => `${a.domaine}/${a.cible}/${a.role_domaine || ''}`), [
+  const general = svc.normalizeRows(svc.parsePersonnelCsv(csv), 'GENERAL')[0].normalized;
+  assert.strictEqual(general.nip, 'TEST001');
+  assert.strictEqual(general.assignments.length, 4);
+  assert.deepStrictEqual(general.assignments.map(a => `${a.domaine}/${a.cible}/${a.role_domaine || ''}`), [
     'DPS/B1/PRINCIPAL',
     'DPS/G1/SECONDAIRE',
     'DAP/Y2/PRINCIPAL',
-    'JSP/JSP B1/PRINCIPAL',
-    'PR/PR/'
+    'JSP/JSP B1/PRINCIPAL'
   ]);
 
-  const identical = svc.summarizeLine({ normalized, errors:[] }, person(), [
+  const paprOnly = svc.normalizeRows(svc.parsePersonnelCsv(csv), 'PAPR')[0].normalized;
+  assert.strictEqual(paprOnly.assignments.length, 1);
+  assert.strictEqual(paprOnly.assignments[0].domaine, 'PR');
+  assert.strictEqual(paprOnly.assignments[0].cible, 'PR');
+
+  const identical = svc.summarizeLine({ normalized: general, errors:[] }, person(), [
     aff({ domaine:'DPS', cible:'B1', role_domaine:'PRINCIPAL' }),
     aff({ domaine:'DPS', cible:'G1', role_domaine:'SECONDAIRE' }),
     aff({ domaine:'DAP', cible:'Y2', role_domaine:'PRINCIPAL' }),
-    aff({ domaine:'JSP', cible:'JSP B1', role_domaine:'PRINCIPAL' }),
-    aff({ categorie:'SPECIALISATION', domaine:'PR', cible:'PR', role_domaine:null })
-  ]);
+    aff({ domaine:'JSP', cible:'JSP B1', role_domaine:'PRINCIPAL' })
+  ], svc.resolveImportContext('GENERAL'));
   assert.strictEqual(identical.status, 'IDENTICAL');
 
-  const gradeChanged = svc.summarizeLine({ normalized:Object.assign({}, normalized, { grade:'Adj' }), errors:[] }, person(), []);
+  const gradeChanged = svc.summarizeLine({ normalized:Object.assign({}, general, { grade:'Adj' }), errors:[] }, person(), []);
   assert.strictEqual(gradeChanged.status, 'MODIFIED');
   assert.strictEqual(gradeChanged.diff.person.grade.before, 'Sgt');
   assert.strictEqual(gradeChanged.diff.person.grade.after, 'Adj');
 
-  const newPr = svc.summarizeLine({ normalized, errors:[] }, null, []);
+  const newPr = svc.summarizeLine({ normalized:paprOnly, errors:[] }, null, [], svc.resolveImportContext('PAPR'));
   assert.strictEqual(newPr.status, 'NEW_PERSON');
 
   const duplicate = svc.normalizeRows(svc.parsePersonnelCsv(`NIP;Grade;Prénom;Nom;Organe(s) d'intervention
@@ -57,16 +60,16 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
 12345;Cpl;Marc;DUPONT;XYZ B9`), 'OI')[0];
   assert.ok(unknownOi.errors.some(error => error.includes('OI inconnu')));
 
-  const missing = svc.summarizeLine({ normalized:Object.assign({}, normalized, { assignments:[aff({ domaine:'DPS', cible:'B1', role_domaine:'PRINCIPAL' })] }), errors:[] }, person(), [
+  const missing = svc.summarizeLine({ normalized:Object.assign({}, general, { assignments:[aff({ domaine:'DPS', cible:'B1', role_domaine:'PRINCIPAL' })] }), errors:[] }, person(), [
     aff({ domaine:'DPS', cible:'B1', role_domaine:'PRINCIPAL' }),
     aff({ domaine:'DPS', cible:'G1', role_domaine:'SECONDAIRE' })
-  ]);
-  assert.strictEqual(missing.status, 'MISSING_ASSIGNMENT');
+  ], svc.resolveImportContext('GENERAL'));
   assert.strictEqual(missing.diff.missingAssignments.length, 1);
+  assert.ok((missing.warnings || []).some((msg) => msg.includes('non clôturé automatiquement')));
 
-  const changedPrincipal = svc.summarizeLine({ normalized:Object.assign({}, normalized, { assignments:[aff({ domaine:'DPS', cible:'G1', role_domaine:'PRINCIPAL' })] }), errors:[] }, person(), [
+  const changedPrincipal = svc.summarizeLine({ normalized:Object.assign({}, general, { assignments:[aff({ domaine:'DPS', cible:'G1', role_domaine:'PRINCIPAL' })] }), errors:[] }, person(), [
     aff({ domaine:'DPS', cible:'B1', role_domaine:'PRINCIPAL' })
-  ]);
+  ], svc.resolveImportContext('GENERAL'));
   assert.strictEqual(changedPrincipal.diff.principalChanges[0].before, 'B1');
   assert.strictEqual(changedPrincipal.diff.principalChanges[0].after, 'G1');
 
@@ -110,6 +113,10 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(personnelService.includes('date_inactif'));
   assert.ok(personnelService.includes('nip text not null unique'));
   assert.ok(personnelService.includes('role_domaine'));
+  assert.ok(personnelService.includes('niveau text'));
+  assert.ok(personnelService.includes('site_jsp'));
+  assert.ok(personnelService.includes('preview.wrote = false'));
+  assert.ok(personnelService.includes('JSP_FLM_1') || fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8').includes('JSP_FLM_1'));
 
   assert.ok(pgRepo.includes('date_entree_sdis as date_entree'));
   assert.ok(pgRepo.includes('a.date_actif as date_debut'));
@@ -149,7 +156,13 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(ui.includes('Lignes analysées'));
   assert.ok(ui.includes('Personnes uniques'));
   assert.ok(ui.includes('Nouvelles personnes'));
-  assert.ok(ui.includes('Affectations manquantes'));
+  assert.ok(ui.includes('Affectations existantes'));
+  assert.ok(ui.includes('Absents du nouvel import'));
+  assert.ok(ui.includes('Type d’import'));
+  assert.ok(ui.includes('Site JSP'));
+  assert.ok(ui.includes('JSP — Flm 1'));
+  assert.ok(ui.includes('cond VL — DPS'));
+  assert.ok(ui.includes('cond VL — DAP'));
   assert.ok(ui.includes('Erreurs'));
   assert.ok(ui.includes('Valeur actuelle'));
   assert.ok(ui.includes('Valeur proposée'));
@@ -171,6 +184,14 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(migration.includes('create table if not exists scope_evenements'));
   assert.ok(migration.includes('personne_id text not null references scope_personnes(id)'));
   assert.ok(migration.includes('create index if not exists'));
+
+  const migrationPop = fs.readFileSync(path.join(ROOT, 'database/migrations/20260823_scope_personnel_import_populations_1.sql'), 'utf8');
+  assert.ok(!/create\s+table\s+if\s+not\s+exists\s+scope_personnes\b/i.test(migrationPop));
+  assert.ok(!/\b(truncate|delete from)\b/i.test(migrationPop));
+  assert.ok(migrationPop.includes('add column if not exists niveau'));
+  assert.ok(migrationPop.includes('site_jsp'));
+  assert.ok(migrationPop.includes('FLM_1'));
+  assert.ok(migrationPop.includes('coalesce(niveau, \'\')'));
 
   const postgresPath = require.resolve('../netlify/functions/_postgres');
   const schemaPath = require.resolve('../netlify/functions/_scope-schema');
@@ -209,6 +230,8 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(!/\bdate_fin\b/i.test(bootstrapAffectationSql));
   assert.ok(bootstrapAffectationSql.includes('date_actif'));
   assert.ok(bootstrapAffectationSql.includes('date_inactif'));
+  assert.ok(bootstrapAffectationSql.includes('niveau'));
+  assert.ok(bootstrapAffectationSql.includes('coalesce(niveau, \'\')'));
   const bootstrapSousDomainesSql = capturedSql
     .filter((sql) => /\bscope_sous_domaines\b/i.test(sql))
     .join('\n');

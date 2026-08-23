@@ -14,8 +14,8 @@ exports.handler = async function(event){
   if(event.httpMethod !== 'POST') return response(405, { ok:false, error:'method_not_allowed' });
   try{
     const body = parseBody(event);
-    if(!body?.batchId) return response(400, { ok:false, error:'missing_batch_id' });
-    return response(200, await personnel.commitImport(body.batchId, claims.sub || claims.email || claims.nip || ''));
+    if(!body || !(body.fileText || body.csvText)) return response(400, { ok:false, error:'missing_file_text' });
+    return response(200, await personnel.commitImport(Object.assign({}, body, { confirmed:true }), claims.sub || claims.email || claims.nip || ''));
   }catch(error){
     return response(409, { ok:false, error:'scope_personnel_import_commit_failed', message:String(error.message || error) });
   }
