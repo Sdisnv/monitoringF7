@@ -1,14 +1,14 @@
 'use strict';
 /**
- * SCOPE-PERSONNEL-IMPORT-POPULATIONS-1
- * Contextes métier d’import nominatif. NIP = clé Personne unique.
- * Site JSP et niveau Flamme sont deux dimensions distinctes (pas de chaîne fusionnée).
+ * Contextes d’import nominatif. NIP = clé Personne unique.
+ * JSP : Flamme = grade de la Personne ; site JSP = cible d’affectation.
+ * FOBA 1/2/3 restent des populations distinctes (pas des grades JSP).
  */
 
 const JSP_IMPORT_SITES = Object.freeze([
-  { code: 'JSP G1', niveau: 'G1', label: 'JSP G1' },
-  { code: 'JSP C1', niveau: 'C1', label: 'JSP C1' },
-  { code: 'JSP B1', niveau: 'B1', label: 'JSP B1' }
+  { code: 'JSP G1', siteCode: 'G1', label: 'JSP G1' },
+  { code: 'JSP C1', siteCode: 'C1', label: 'JSP C1' },
+  { code: 'JSP B1', siteCode: 'B1', label: 'JSP B1' }
 ]);
 
 const JSP_CADRE_NIVEAUX = Object.freeze(['CAD', 'GEN']);
@@ -97,7 +97,7 @@ const IMPORT_CONTEXTS = Object.freeze({
     family: 'JSP',
     persistOi: false,
     requiresSite: true,
-    jspFlamme: 'FLM_1',
+    jspGrade: 'Flm 1',
     jspFlammeLabel: 'Flm 1',
     newPersonStatus: 'NEW_JSP',
     newPersonLabel: 'Nouveau JSP'
@@ -108,7 +108,7 @@ const IMPORT_CONTEXTS = Object.freeze({
     family: 'JSP',
     persistOi: false,
     requiresSite: true,
-    jspFlamme: 'FLM_2',
+    jspGrade: 'Flm 2',
     jspFlammeLabel: 'Flm 2',
     newPersonStatus: 'NEW_JSP',
     newPersonLabel: 'Nouveau JSP'
@@ -119,7 +119,7 @@ const IMPORT_CONTEXTS = Object.freeze({
     family: 'JSP',
     persistOi: false,
     requiresSite: true,
-    jspFlamme: 'FLM_3',
+    jspGrade: 'Flm 3',
     jspFlammeLabel: 'Flm 3',
     newPersonStatus: 'NEW_JSP',
     newPersonLabel: 'Nouveau JSP'
@@ -161,6 +161,15 @@ function clean(value){
   return String(value || '').trim();
 }
 
+function normalizeJspGrade(value){
+  const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if(!raw) return '';
+  if(raw === 'FLM 1' || raw === 'FLAMME 1' || raw === 'FLM1') return 'Flm 1';
+  if(raw === 'FLM 2' || raw === 'FLAMME 2' || raw === 'FLM2') return 'Flm 2';
+  if(raw === 'FLM 3' || raw === 'FLAMME 3' || raw === 'FLM3') return 'Flm 3';
+  return clean(value);
+}
+
 function resolveImportContext(raw){
   const key = clean(raw).toUpperCase().replace(/[\s-]+/g, '_');
   const aliased = CONTEXT_ALIASES[key] || CONTEXT_ALIASES[clean(raw).toUpperCase()];
@@ -187,29 +196,29 @@ function normalizeJspSite(value, allowed = JSP_IMPORT_SITES){
   if(JSP_CADRE_NIVEAUX.includes(compact)) return null;
   const found = allowed.find((site) => {
     const code = String(site.code || site.label || '').toUpperCase();
-    const niveau = String(site.niveau || site.niveau_code || '').toUpperCase();
-    return code === raw || code === `JSP ${compact}` || niveau === compact;
+    const siteCode = String(site.siteCode || site.niveau || site.niveau_code || '').toUpperCase();
+    return code === raw || code === `JSP ${compact}` || siteCode === compact;
   });
   if(!found) return null;
-  const niveau = found.niveau || found.niveau_code || compact;
+  const siteCode = found.siteCode || found.niveau || found.niveau_code || compact;
   return {
-    code: found.code || found.libelle || `JSP ${niveau}`,
-    label: found.label || found.libelle || found.code || `JSP ${niveau}`,
-    niveau
+    code: found.code || found.libelle || `JSP ${siteCode}`,
+    label: found.label || found.libelle || found.code || `JSP ${siteCode}`,
+    siteCode
   };
 }
 
 function jspSitesFromCibles(cibles){
   const rows = (cibles || []).filter((cible) => {
     const domaine = cible.domaineCode || cible.domaine_code || cible.domaine;
-    const niveau = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
+    const siteCode = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
     if(domaine !== 'JSP') return false;
-    if(JSP_CADRE_NIVEAUX.includes(niveau)) return false;
+    if(JSP_CADRE_NIVEAUX.includes(siteCode)) return false;
     return true;
   }).map((cible) => {
-    const niveau = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
-    const label = cible.libelle || cible.label || `JSP ${niveau}`;
-    return { code: label, label, niveau };
+    const siteCode = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
+    const label = cible.libelle || cible.label || `JSP ${siteCode}`;
+    return { code: label, label, siteCode };
   });
   return rows.length ? rows : JSP_IMPORT_SITES.slice();
 }
@@ -224,8 +233,7 @@ function contextAssignment(ctx, siteJsp){
       categorie: 'OI',
       domaine: 'JSP',
       cible: typeof site === 'string' ? site : String(site || ''),
-      role_domaine: 'PRINCIPAL',
-      niveau: ctx.jspFlamme
+      role_domaine: 'PRINCIPAL'
     };
   }
   return null;
@@ -245,13 +253,12 @@ function normalizeAutoCible(cible){
 }
 
 function assignmentKey(assignment){
-  const niveau = assignment.niveau || '';
   const cible = assignment.domaine === 'FOBA'
     ? normalizeFobaCible(assignment.cible)
     : assignment.domaine === 'AUTO'
       ? normalizeAutoCible(assignment.cible)
       : assignment.cible;
-  return `${assignment.categorie}|${assignment.domaine}|${cible}|${assignment.role_domaine || ''}|${niveau}`;
+  return `${assignment.categorie}|${assignment.domaine}|${cible}|${assignment.role_domaine || ''}`;
 }
 
 function assignmentMatchesContext(assignment, ctx, siteJsp){
@@ -262,6 +269,11 @@ function assignmentMatchesContext(assignment, ctx, siteJsp){
   const expected = contextAssignment(ctx, siteJsp);
   if(!expected) return false;
   return assignmentKey(assignment) === assignmentKey(expected);
+}
+
+function personMatchesJspPopulation(person, ctx){
+  if(!person || ctx.family !== 'JSP') return false;
+  return normalizeJspGrade(person.grade) === ctx.jspGrade;
 }
 
 function populationLabel(ctx, siteJsp){
@@ -283,10 +295,7 @@ function specializationLabel(assignment){
     return `AUTO ${assignment.cible}`;
   }
   if(assignment.domaine === 'FOBA') return `FOBA ${normalizeFobaCible(assignment.cible)}`;
-  if(assignment.domaine === 'JSP' && assignment.niveau){
-    const flamme = String(assignment.niveau).replace('FLM_', 'Flm ');
-    return `${assignment.cible} / ${flamme}`;
-  }
+  if(assignment.domaine === 'JSP') return assignment.cible || 'JSP';
   return [assignment.domaine, assignment.cible, assignment.role_domaine].filter(Boolean).join(' ');
 }
 
@@ -306,12 +315,14 @@ module.exports = {
   resolveImportContext,
   visibleImportContexts,
   normalizeJspSite,
+  normalizeJspGrade,
   jspSitesFromCibles,
   contextAssignment,
   normalizeFobaCible,
   normalizeAutoCible,
   assignmentKey,
   assignmentMatchesContext,
+  personMatchesJspPopulation,
   populationLabel,
   specializationLabel,
   oiLabel

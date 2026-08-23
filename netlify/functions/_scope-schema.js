@@ -93,7 +93,6 @@ const DDL = [
     domaine text not null,
     cible text not null,
     role_domaine text,
-    niveau text,
     date_actif date not null,
     date_inactif date,
     source_import_batch_id text,
@@ -102,7 +101,7 @@ const DDL = [
     constraint scope_affectations_dates_chk check (date_inactif is null or date_actif <= date_inactif)
   )`,
   `create unique index if not exists scope_affectations_open_unique
-    on scope_affectations (personne_id, categorie, domaine, cible, coalesce(niveau, ''), coalesce(role_domaine, '')) where date_inactif is null`,
+    on scope_affectations (personne_id, categorie, domaine, cible, coalesce(role_domaine, '')) where date_inactif is null`,
   `create index if not exists scope_affectations_scope
     on scope_affectations (domaine, cible, role_domaine, date_actif, date_inactif)`,
   `create index if not exists scope_affectations_personne_scope
@@ -324,6 +323,10 @@ async function ensureScopeSchema(){
   await migratePersonnelImportPopulations1();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-personnel-import-populations-1') on conflict (version) do nothing`
+  );
+  await migrateJspGradeModelFix1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-jsp-grade-model-fix-1') on conflict (version) do nothing`
   );
   ready = true;
   return true;
@@ -739,29 +742,6 @@ async function migrateEventImport1(){
 }
 
 async function migratePersonnelImportPopulations1(){
-  await db.query(`alter table scope_affectations add column if not exists niveau text`);
-  await db.query(`alter table scope_affectations drop constraint if exists scope_affectations_niveau_chk`);
-  await db.query(`
-    alter table scope_affectations add constraint scope_affectations_niveau_chk
-      check (niveau is null or niveau in ('FLM_1', 'FLM_2', 'FLM_3'))
-  `);
-  await db.query(`drop index if exists scope_affectations_open_unique`);
-  await db.query(`
-    create unique index if not exists scope_affectations_open_unique
-      on scope_affectations (
-        personne_id,
-        categorie,
-        domaine,
-        cible,
-        coalesce(niveau, ''),
-        coalesce(role_domaine, '')
-      )
-      where date_inactif is null
-  `);
-  await db.query(`
-    create index if not exists scope_affectations_population_idx
-      on scope_affectations (domaine, cible, niveau, date_actif, date_inactif)
-  `);
   await db.query(`
     create table if not exists scope_personnel_import_batches (
       id text primary key,
@@ -808,6 +788,45 @@ async function migratePersonnelImportPopulations1(){
   await db.query(`
     create index if not exists idx_scope_import_lines_batch
       on scope_personnel_import_lines (batch_id, line_number)
+  `);
+}
+
+async function migrateJspGradeModelFix1(){
+  const col = await db.query(`
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'scope_affectations'
+      and column_name = 'niveau'
+  `);
+  if(col.rows && col.rows.length){
+    await db.query(`
+      update scope_personnes p
+      set grade = case a.niveau
+        when 'FLM_1' then 'Flm 1'
+        when 'FLM_2' then 'Flm 2'
+        when 'FLM_3' then 'Flm 3'
+        else p.grade
+      end
+      from scope_affectations a
+      where a.personne_id = p.id
+        and a.niveau in ('FLM_1', 'FLM_2', 'FLM_3')
+        and (p.grade is null or btrim(p.grade) = '')
+    `);
+    await db.query(`alter table scope_affectations drop constraint if exists scope_affectations_niveau_chk`);
+    await db.query(`drop index if exists scope_affectations_population_idx`);
+    await db.query(`drop index if exists scope_affectations_open_unique`);
+    await db.query(`alter table scope_affectations drop column if exists niveau`);
+  }
+  await db.query(`
+    create unique index if not exists scope_affectations_open_unique
+      on scope_affectations (
+        personne_id,
+        categorie,
+        domaine,
+        cible,
+        coalesce(role_domaine, '')
+      )
+      where date_inactif is null
   `);
 }
 

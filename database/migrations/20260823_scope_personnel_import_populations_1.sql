@@ -1,39 +1,14 @@
 -- SCOPE-PERSONNEL-IMPORT-POPULATIONS-1
--- Import nominatif multi-populations (PAPR, AUTO VL DPS/DAP, AUTO PL, FOBA, JSP Flm+site).
+-- Import nominatif multi-populations (PAPR, AUTO VL DPS/DAP, AUTO PL, FOBA, JSP).
 -- Additif. Idempotent. Non destructif.
 -- Ne redéfinit pas scope_personnes. Ne supprime aucune affectation.
--- Site JSP = cible d’affectation ; niveau Flamme = colonne niveau (dimensions distinctes).
--- CAD/GEN JSP conservés (niveau NULL). Ne touche pas ORION.
+-- JSP : Flamme = grade Personne ; site = cible d’affectation.
+-- Ne crée PAS scope_affectations.niveau.
+-- CAD/GEN JSP conservés. Ne touche pas ORION.
 
 insert into monitoring_f7_schema_migrations(version)
 values ('scope-personnel-import-populations-1')
 on conflict (version) do nothing;
-
-alter table scope_affectations
-  add column if not exists niveau text;
-
-alter table scope_affectations
-  drop constraint if exists scope_affectations_niveau_chk;
-
-alter table scope_affectations
-  add constraint scope_affectations_niveau_chk
-  check (niveau is null or niveau in ('FLM_1', 'FLM_2', 'FLM_3'));
-
-drop index if exists scope_affectations_open_unique;
-
-create unique index if not exists scope_affectations_open_unique
-  on scope_affectations (
-    personne_id,
-    categorie,
-    domaine,
-    cible,
-    coalesce(niveau, ''),
-    coalesce(role_domaine, '')
-  )
-  where date_inactif is null;
-
-create index if not exists scope_affectations_population_idx
-  on scope_affectations (domaine, cible, niveau, date_actif, date_inactif);
 
 create table if not exists scope_personnel_import_batches (
   id text primary key,

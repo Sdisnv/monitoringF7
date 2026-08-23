@@ -33,7 +33,6 @@ function aff(overrides){
     domaine: 'DPS',
     cible: 'B1',
     role_domaine: 'PRINCIPAL',
-    niveau: null,
     date_actif: '2026-01-01',
     date_inactif: null
   }, overrides || {});
@@ -116,7 +115,10 @@ function createMemoryDb(){
       const matched = [...persons.values()].filter((person) => assignments.some((row) => {
         if(row.personne_id !== person.id || row.date_inactif) return false;
         if(lower.includes("domaine in ('dps','dap')")) return row.categorie === 'OI' && (row.domaine === 'DPS' || row.domaine === 'DAP');
-        if(lower.includes("a.domaine='jsp'")) return row.domaine === 'JSP' && row.cible === params[0] && row.niveau === params[1];
+        if(lower.includes("a.domaine='jsp'")){
+          const wanted = ctx.normalizeJspGrade(params[1]);
+          return row.domaine === 'JSP' && row.cible === params[0] && ctx.normalizeJspGrade(person.grade) === wanted;
+        }
         if(lower.includes("a.domaine=$2") && params[1] === 'PR') return row.domaine === 'PR' && row.cible === params[2];
         if(lower.includes("a.domaine=$2") && params[1] === 'AUTO') return row.domaine === 'AUTO' && (row.cible === params[2] || (params[2] === 'PL' && row.cible === 'cond PL'));
         if(lower.includes("a.domaine=$2") && params[1] === 'FOBA') return row.domaine === 'FOBA' && (row.cible === params[2] || row.cible === `FOBA ${params[2]}`);
@@ -150,12 +152,12 @@ function createMemoryDb(){
         && row.domaine === params[2]
         && row.cible === params[3]
         && (row.role_domaine || '') === (params[4] || '')
-        && (row.niveau || '') === (params[5] || '')
         && !row.date_inactif
       ));
       return { rows: found ? [{ id: found.id }] : [] };
     }
     if(lower.startsWith('insert into scope_affectations')){
+      assert.ok(!lower.includes('niveau'));
       assignments.push({
         id: params[0],
         personne_id: params[1],
@@ -163,10 +165,9 @@ function createMemoryDb(){
         domaine: params[3],
         cible: params[4],
         role_domaine: params[5],
-        niveau: params[6],
-        date_actif: params[7],
+        date_actif: params[6],
         date_inactif: null,
-        source_import_batch_id: params[8]
+        source_import_batch_id: params[7]
       });
       return { rows: [] };
     }
@@ -243,7 +244,7 @@ async function run(){
     assert.strictEqual(preview.lines[0].diff.newAssignments[0].cible, String(index + 1));
   });
 
-  // I JSP G1 Flm 1 without general personnel
+  // I JSP G1 Flm 1 without general personnel — grade on person, site on assignment
   const jspG1Flm1 = previewOf({
     contexte: 'JSP_FLM_1',
     site: 'JSP G1',
@@ -251,29 +252,47 @@ async function run(){
   });
   assert.strictEqual(jspG1Flm1.lines[0].status, 'NEW_JSP');
   assert.ok(!(jspG1Flm1.lines[0].errors || []).length);
+  assert.strictEqual(jspG1Flm1.lines[0].normalized.grade, 'Flm 1');
+  assert.strictEqual(jspG1Flm1.lines[0].diff.identity.grade.proposed, 'Flm 1');
   assert.strictEqual(jspG1Flm1.lines[0].diff.newAssignments[0].cible, 'JSP G1');
-  assert.strictEqual(jspG1Flm1.lines[0].diff.newAssignments[0].niveau, 'FLM_1');
+  assert.strictEqual(jspG1Flm1.lines[0].diff.newAssignments[0].domaine, 'JSP');
+  assert.ok(jspG1Flm1.lines[0].diff.newAssignments[0].niveau == null);
   assert.ok(!jspG1Flm1.lines[0].diff.newAssignments.some((row) => row.domaine === 'DPS' || row.domaine === 'DAP'));
 
-  // J Flm 2 distinct from Flm 1
+  // J Flm 1 → Flm 2 same NIP / same site = grade change, no niveau assignment
   const jspG1Flm2 = previewOf({
     contexte: 'JSP_FLM_2',
     site: 'JSP G1',
     file: jspCsv('JSP001;MARTIN;Lea'),
-    persons: [personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'' })],
-    assignments: [Object.assign(aff({ domaine:'JSP', cible:'JSP G1', niveau:'FLM_1' }), { nip:'JSP001' })]
+    persons: [personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'Flm 1' })],
+    assignments: [Object.assign(aff({ domaine:'JSP', cible:'JSP G1' }), { nip:'JSP001' })]
   });
-  assert.strictEqual(jspG1Flm2.lines[0].status, 'NEW_ASSIGNMENT');
-  assert.strictEqual(jspG1Flm2.lines[0].diff.newAssignments[0].niveau, 'FLM_2');
+  assert.strictEqual(jspG1Flm2.lines[0].status, 'MODIFIED');
+  assert.strictEqual(jspG1Flm2.lines[0].normalized.nip, 'JSP001');
+  assert.strictEqual(jspG1Flm2.lines[0].normalized.grade, 'Flm 2');
+  assert.strictEqual(jspG1Flm2.lines[0].diff.identity.grade.current, 'Flm 1');
+  assert.strictEqual(jspG1Flm2.lines[0].diff.identity.grade.proposed, 'Flm 2');
+  assert.strictEqual(jspG1Flm2.lines[0].diff.person.grade.before, 'Flm 1');
+  assert.strictEqual(jspG1Flm2.lines[0].diff.person.grade.after, 'Flm 2');
+  assert.strictEqual(jspG1Flm2.lines[0].diff.newAssignments.length, 0);
+  assert.strictEqual(jspG1Flm2.lines[0].diff.existingAssignments[0].cible, 'JSP G1');
+  assert.ok(jspG1Flm2.lines[0].diff.existingAssignments[0].niveau == null);
+  const flmChangeMut = svc.planCommitMutations(jspG1Flm2, []);
+  assert.strictEqual(flmChangeMut.personInserts.length, 0);
+  assert.strictEqual(flmChangeMut.personUpdates.length, 1);
+  assert.strictEqual(flmChangeMut.personUpdates[0].grade, 'Flm 2');
+  assert.strictEqual(flmChangeMut.assignmentInserts.length, 0);
 
-  // K JSP C1 Flm 1 distinct from G1 Flm 1
-  const jspC1Flm1 = previewOf({
-    contexte: 'JSP_FLM_1',
+  // K JSP C1 Flm 2 — site distinct from grade
+  const jspC1Flm2 = previewOf({
+    contexte: 'JSP_FLM_2',
     site: 'JSP C1',
     file: jspCsv('JSP002;BERNARD;Luc')
   });
-  assert.notStrictEqual(jspC1Flm1.siteJsp, jspG1Flm1.siteJsp);
-  assert.strictEqual(jspC1Flm1.lines[0].diff.newAssignments[0].cible, 'JSP C1');
+  assert.notStrictEqual(jspC1Flm2.siteJsp, jspG1Flm1.siteJsp);
+  assert.strictEqual(jspC1Flm2.lines[0].normalized.grade, 'Flm 2');
+  assert.strictEqual(jspC1Flm2.lines[0].diff.newAssignments[0].cible, 'JSP C1');
+  assert.ok(jspC1Flm2.lines[0].diff.newAssignments[0].niveau == null);
 
   // L same NIP GENERAL + PAPR = 1 person
   const afterGeneral = previewOf({
@@ -310,11 +329,11 @@ async function run(){
   assert.strictEqual(genMut.assignmentClosures.length, 0);
 
   // O / P JSP then FOBA / GENERAL = 1 person
-  const jspPerson = personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'' });
-  const jspAff = Object.assign(aff({ domaine:'JSP', cible:'JSP G1', niveau:'FLM_1' }), { nip:'JSP001' });
+  const jspPerson = personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'Flm 1' });
+  const jspAff = Object.assign(aff({ domaine:'JSP', cible:'JSP G1' }), { nip:'JSP001' });
   const jspThenFoba = previewOf({
     contexte: 'FOBA_1',
-    file: csv('JSP001;;MARTIN;Lea;'),
+    file: csv('JSP001;Flm 1;MARTIN;Lea;'),
     persons: [jspPerson],
     assignments: [jspAff]
   });
@@ -386,17 +405,18 @@ async function run(){
   const withClose = svc.planCommitMutations(paprAbsent, [{ rowId: String(absent.lineNumber), nip:'NIP001', decision:'CLOTURER', dateEffet:'2026-12-31' }]);
   assert.strictEqual(withClose.assignmentClosures.length, 1);
 
-  // V Flm 1 → Flm 2 same person
+  // V Flm 1 → Flm 2 same person (no new person, no niveau assignment)
   assert.notStrictEqual(jspG1Flm2.lines[0].status, 'NEW_JSP');
+  assert.notStrictEqual(jspG1Flm2.lines[0].status, 'NEW_PERSON');
   assert.strictEqual(jspG1Flm2.lines[0].normalized.nip, 'JSP001');
 
-  // W site change same person
+  // W site change same person — grade unchanged, new site assignment
   const siteChange = previewOf({
     contexte: 'JSP_FLM_2',
     site: 'JSP C1',
     file: jspCsv('JSP001;MARTIN;Lea'),
-    persons: [jspPerson],
-    assignments: [Object.assign(aff({ domaine:'JSP', cible:'JSP G1', niveau:'FLM_2' }), { nip:'JSP001' })]
+    persons: [personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'Flm 2' })],
+    assignments: [Object.assign(aff({ domaine:'JSP', cible:'JSP G1' }), { nip:'JSP001' })]
   });
   assert.notStrictEqual(siteChange.lines[0].status, 'NEW_JSP');
   assert.strictEqual(siteChange.lines[0].diff.newAssignments[0].cible, 'JSP C1');
@@ -460,6 +480,10 @@ async function run(){
   assert.strictEqual(jspMemory.batches[0].contexte, 'JSP_FLM_1');
   assert.strictEqual(jspMemory.batches[0].site_jsp, 'JSP G1');
   assert.strictEqual(jspMemory.persons.size, 1);
+  assert.strictEqual(jspMemory.persons.get('JSP009').grade, 'Flm 1');
+  assert.strictEqual(jspMemory.assignments[0].cible, 'JSP G1');
+  assert.strictEqual(jspMemory.assignments[0].domaine, 'JSP');
+  assert.ok(jspMemory.assignments[0].niveau == null);
 
   // AC date_entree_sdis not overwritten by empty
   const existingDate = jspMemory.persons.get('JSP009').date_entree_sdis;
@@ -480,7 +504,17 @@ async function run(){
   const contexts = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8');
   assert.ok(contexts.includes('AUTO_VL_DPS'));
   assert.ok(contexts.includes('AUTO_VL_DAP'));
+  assert.ok(contexts.includes("jspGrade: 'Flm 1'"));
   assert.ok(!contexts.includes('JSP_G1_FLM1'));
+  assert.ok(!contexts.includes('jspFlamme:'));
+
+  const serviceSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-personnel-service.js'), 'utf8');
+  const pgSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-pg.js'), 'utf8');
+  assert.ok(!/a\.niveau/.test(serviceSrc));
+  assert.ok(!/coalesce\(niveau/.test(serviceSrc));
+  assert.ok(!/add column if not exists niveau/.test(serviceSrc));
+  assert.ok(!/insert into scope_affectations\([^)]*\bniveau\b/.test(pgSrc));
+  assert.ok(!/\ba\.niveau\b/.test(pgSrc));
 
   console.log('scope-personnel-import-populations tests ok', statuses(generalPreview)[0]);
 }

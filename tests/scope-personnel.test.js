@@ -113,7 +113,9 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(personnelService.includes('date_inactif'));
   assert.ok(personnelService.includes('nip text not null unique'));
   assert.ok(personnelService.includes('role_domaine'));
-  assert.ok(personnelService.includes('niveau text'));
+  assert.ok(!personnelService.includes('niveau text'));
+  assert.ok(!/a\.niveau/.test(personnelService));
+  assert.ok(!/coalesce\(niveau/.test(personnelService));
   assert.ok(personnelService.includes('site_jsp'));
   assert.ok(personnelService.includes('preview.wrote = false'));
   assert.ok(personnelService.includes('JSP_FLM_1') || fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8').includes('JSP_FLM_1'));
@@ -188,10 +190,14 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   const migrationPop = fs.readFileSync(path.join(ROOT, 'database/migrations/20260823_scope_personnel_import_populations_1.sql'), 'utf8');
   assert.ok(!/create\s+table\s+if\s+not\s+exists\s+scope_personnes\b/i.test(migrationPop));
   assert.ok(!/\b(truncate|delete from)\b/i.test(migrationPop));
-  assert.ok(migrationPop.includes('add column if not exists niveau'));
+  assert.ok(!/add column if not exists niveau/i.test(migrationPop));
+  assert.ok(!/coalesce\(niveau/i.test(migrationPop));
   assert.ok(migrationPop.includes('site_jsp'));
-  assert.ok(migrationPop.includes('FLM_1'));
-  assert.ok(migrationPop.includes('coalesce(niveau, \'\')'));
+
+  const migrationJspGrade = fs.readFileSync(path.join(ROOT, 'database/migrations/20260823_scope_jsp_grade_model_fix_1.sql'), 'utf8');
+  assert.ok(migrationJspGrade.includes('drop column if exists niveau'));
+  assert.ok(migrationJspGrade.includes('Flm 1'));
+  assert.ok(!/add column if not exists niveau/i.test(migrationJspGrade));
 
   const postgresPath = require.resolve('../netlify/functions/_postgres');
   const schemaPath = require.resolve('../netlify/functions/_scope-schema');
@@ -230,8 +236,10 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(!/\bdate_fin\b/i.test(bootstrapAffectationSql));
   assert.ok(bootstrapAffectationSql.includes('date_actif'));
   assert.ok(bootstrapAffectationSql.includes('date_inactif'));
-  assert.ok(bootstrapAffectationSql.includes('niveau'));
-  assert.ok(bootstrapAffectationSql.includes('coalesce(niveau, \'\')'));
+  assert.ok(!/add column if not exists niveau/i.test(bootstrapAffectationSql));
+  assert.ok(!/coalesce\(niveau/i.test(bootstrapAffectationSql));
+  assert.ok(bootstrapAffectationSql.includes("column_name = 'niveau'"));
+  assert.ok(bootstrapAffectationSql.includes("coalesce(role_domaine, '')"));
   const bootstrapSousDomainesSql = capturedSql
     .filter((sql) => /\bscope_sous_domaines\b/i.test(sql))
     .join('\n');

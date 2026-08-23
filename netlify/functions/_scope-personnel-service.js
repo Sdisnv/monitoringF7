@@ -61,7 +61,6 @@ async function ensureScopeSchema(){
     domaine text not null,
     cible text not null,
     role_domaine text,
-    niveau text,
     date_actif date not null,
     date_inactif date,
     source_import_batch_id text references scope_personnel_import_batches(id),
@@ -71,7 +70,6 @@ async function ensureScopeSchema(){
     constraint scope_affectations_categorie_chk check (categorie in ('OI','SPECIALISATION')),
     constraint scope_affectations_role_chk check (role_domaine is null or role_domaine in ('PRINCIPAL','SECONDAIRE'))
   )`);
-  await getDb().query(`alter table scope_affectations add column if not exists niveau text`);
   await getDb().query(`create table if not exists scope_personnel_import_lines (
     id text primary key,
     batch_id text not null references scope_personnel_import_batches(id) on delete cascade,
@@ -142,11 +140,11 @@ function normalizeOiToken(token){
   const left = raw.split(/\s+-\s+/)[0].trim();
   const upper = left.toUpperCase();
   let m = upper.match(/^DPS\s+(G1|C1|B1|B2)\b/);
-  if(m) return { categorie:'OI', domaine:'DPS', cible:m[1], role_domaine:null, niveau:null };
+  if(m) return { categorie:'OI', domaine:'DPS', cible:m[1], role_domaine:null };
   m = upper.match(/^DAP\s+(Y1|Y2|Y3|Y4)\b/);
-  if(m) return { categorie:'OI', domaine:'DAP', cible:m[1], role_domaine:null, niveau:null };
+  if(m) return { categorie:'OI', domaine:'DAP', cible:m[1], role_domaine:null };
   m = upper.match(/^JSP\s+(G1|C1|B1|CAD|GEN)\b/);
-  if(m) return { categorie:'OI', domaine:'JSP', cible:`JSP ${m[1]}`, role_domaine:null, niveau:null };
+  if(m) return { categorie:'OI', domaine:'JSP', cible:`JSP ${m[1]}`, role_domaine:null };
   return null;
 }
 
@@ -190,9 +188,17 @@ function hasOpenDomaineOi(assignments, domaine){
   ));
 }
 
+function gradesEqual(a, b){
+  const left = ctx.normalizeJspGrade(a);
+  const right = ctx.normalizeJspGrade(b);
+  if(left && right && (String(left).startsWith('Flm ') || String(right).startsWith('Flm ')) && left === right) return true;
+  return clean(a) === clean(b);
+}
+
 function identityChanged(existing, next){
   if(!existing) return false;
-  return ['grade', 'nom', 'prenom'].some((key) => clean(existing[key]) !== clean(next[key]));
+  return !gradesEqual(existing.grade, next.grade)
+    || ['nom', 'prenom'].some((key) => clean(existing[key]) !== clean(next[key]));
 }
 
 function normalizeRows(rows, contexte, siteJsp){
@@ -226,7 +232,7 @@ function normalizeRows(rows, contexte, siteJsp){
     }
     const normalized = {
       nip,
-      grade: clean(row.grade),
+      grade: resolved.family === 'JSP' ? resolved.jspGrade : clean(row.grade),
       prenom: clean(row.prenom),
       nom: clean(row.nom),
       assignments,
@@ -294,7 +300,10 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
   }
   if(existingPerson && identityChanged(existingPerson, n)){
     ['grade', 'nom', 'prenom'].forEach((key) => {
-      if(clean(existingPerson[key]) !== clean(n[key])){
+      const changed = key === 'grade'
+        ? !gradesEqual(existingPerson[key], n[key])
+        : clean(existingPerson[key]) !== clean(n[key]);
+      if(changed){
         diff.person[key] = { before: clean(existingPerson[key]), after: clean(n[key]) };
       }
     });
@@ -338,7 +347,7 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
     otherFoba.forEach((row) => warnings.push(`FOBA ${ctx.normalizeFobaCible(row.cible)} déjà actif — non clôturé automatiquement.`));
   }
   if(resolved.family === 'JSP'){
-    const otherJsp = open.filter((row) => row.domaine === 'JSP' && row.niveau && (row.cible !== (siteJsp && siteJsp.code) || row.niveau !== resolved.jspFlamme) && !row.date_inactif);
+    const otherJsp = open.filter((row) => row.domaine === 'JSP' && row.cible !== (siteJsp && siteJsp.code) && !row.date_inactif);
     otherJsp.forEach((row) => warnings.push(`${ctx.specializationLabel(row)} déjà actif — non clôturé automatiquement.`));
   }
   if(!existingPerson){
@@ -531,8 +540,10 @@ async function loadPopulation(resolved, siteJsp){
   if(resolved.family === 'GENERAL'){
     where += ` and a.categorie='OI' and a.domaine in ('DPS','DAP')`;
   } else if(resolved.family === 'JSP'){
-    params.push(siteJsp.code, resolved.jspFlamme);
-    where += ` and a.categorie='OI' and a.domaine='JSP' and a.cible=$1 and a.niveau=$2`;
+    params.push(siteJsp.code, resolved.jspGrade);
+    where += ` and a.categorie='OI' and a.domaine='JSP' and a.cible=$1
+      and replace(replace(upper(coalesce(p.grade,'')), '_', ' '), 'FLAMME ', 'FLM ')
+        = replace(replace(upper($2::text), '_', ' '), 'FLAMME ', 'FLM ')`;
   } else if(resolved.specialization){
     const spec = resolved.specialization;
     params.push(spec.categorie, spec.domaine, spec.cible);
@@ -752,16 +763,15 @@ async function commitImport(payload, actorSubject){
         `select id from scope_affectations
          where personne_id=$1 and categorie=$2 and domaine=$3 and cible=$4
            and coalesce(role_domaine,'')=coalesce($5,'')
-           and coalesce(niveau,'')=coalesce($6,'')
            and date_inactif is null
          limit 1`,
-        [id, a.categorie, a.domaine, a.cible, a.role_domaine || null, a.niveau || null]
+        [id, a.categorie, a.domaine, a.cible, a.role_domaine || null]
       );
       if(exists.rows[0]) continue;
       await client.query(
-        `insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, niveau, date_actif, source_import_batch_id)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [rid(), id, a.categorie, a.domaine, a.cible, a.role_domaine || null, a.niveau || null, row.dateActif, batchId]
+        `insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, date_actif, source_import_batch_id)
+         values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [rid(), id, a.categorie, a.domaine, a.cible, a.role_domaine || null, row.dateActif, batchId]
       );
       assignmentsCreated++;
     }
@@ -779,12 +789,11 @@ async function commitImport(payload, actorSubject){
       }
       await client.query(
         `update scope_affectations
-         set date_inactif=$7::date, updated_at=now()
+         set date_inactif=$6::date, updated_at=now()
          where personne_id=$1 and categorie=$2 and domaine=$3 and cible=$4
            and coalesce(role_domaine,'')=coalesce($5,'')
-           and coalesce(niveau,'')=coalesce($6,'')
            and date_inactif is null`,
-        [id, a.categorie, a.domaine, a.cible, a.role_domaine || null, a.niveau || null, row.dateInactif]
+        [id, a.categorie, a.domaine, a.cible, a.role_domaine || null, row.dateInactif]
       );
       closures++;
     }
@@ -829,14 +838,13 @@ function mapAssignment(row){
     domaine: row.domaine,
     cible: row.cible,
     roleDomaine: row.role_domaine,
-    niveau: row.niveau || null,
     dateActif: row.date_actif,
     dateInactif: row.date_inactif,
     sourceImportBatchId: row.source_import_batch_id
   };
 }
 
-async function listPersonnel({ q='', domaine='', cible='', niveau='' } = {}){
+async function listPersonnel({ q='', domaine='', cible='' } = {}){
   await ensureScopeSchema();
   const values = [];
   const where = [`p.archived_at is null`];
@@ -851,10 +859,6 @@ async function listPersonnel({ q='', domaine='', cible='', niveau='' } = {}){
   if(cible){
     values.push(cible);
     where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.cible=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
-  }
-  if(niveau){
-    values.push(niveau);
-    where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.niveau=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
   }
   const res = await getDb().query(`select p.* from scope_personnes p where ${where.join(' and ')} order by lower(coalesce(p.nom,'')), lower(coalesce(p.prenom,'')), p.nip limit 500`, values);
   const persons = (res.rows || []).map(mapPerson);
@@ -891,29 +895,26 @@ async function updateAffectation(id, patch){
   return res.rows[0] ? getPersonne(res.rows[0].personne_id) : null;
 }
 
-async function effectifAtDate({ domaine, cible, niveau, date }){
+async function effectifAtDate({ domaine, cible, date }){
   await ensureScopeSchema();
   const d = clean(date) || new Date().toISOString().slice(0, 10);
   const params = [d, clean(domaine)];
   let where = `a.date_actif <= $1 and (a.date_inactif is null or a.date_inactif >= $1) and a.domaine=$2`;
   if(cible){ params.push(clean(cible)); where += ` and a.cible=$${params.length}`; }
-  if(niveau){ params.push(clean(niveau)); where += ` and a.niveau=$${params.length}`; }
   const domaineCode = clean(domaine);
   if(domaineCode === 'PR' || domaineCode === 'AUTO' || domaineCode === 'FOBA'){
     where += ` and a.categorie='SPECIALISATION'`;
-  } else if(domaineCode === 'JSP' && niveau){
-    where += ` and a.categorie='OI'`;
   } else {
     where += ` and a.categorie='OI' and a.role_domaine='PRINCIPAL'`;
   }
   const res = await getDb().query(
-    `select a.domaine, a.cible, a.niveau, count(distinct a.personne_id)::int as count
+    `select a.domaine, a.cible, count(distinct a.personne_id)::int as count
      from scope_affectations a where ${where}
-     group by a.domaine, a.cible, a.niveau
-     order by a.domaine, a.cible, a.niveau`,
+     group by a.domaine, a.cible
+     order by a.domaine, a.cible`,
     params
   );
-  return { date:d, domaine:clean(domaine), cible:clean(cible), niveau:clean(niveau), rows:res.rows || [] };
+  return { date:d, domaine:clean(domaine), cible:clean(cible), rows:res.rows || [] };
 }
 
 function computeEffectifsFromAssignments(assignments, date){
@@ -923,7 +924,7 @@ function computeEffectifsFromAssignments(assignments, date){
     if(a.date_actif > d) return;
     if(a.date_inactif && a.date_inactif < d) return;
     if(a.categorie === 'OI' && a.role_domaine !== 'PRINCIPAL') return;
-    const key = [a.domaine, a.cible, a.niveau].filter(Boolean).join(' ');
+    const key = [a.domaine, a.cible].filter(Boolean).join(' ');
     counts[key] = (counts[key] || 0) + 1;
   });
   return counts;

@@ -31,4 +31,12 @@ Type : FOBA 2. Population distincte de FOBA 1. Même NIP = même personne.
 Type : FOBA 3. Même logique.
 
 ## TEST 9 — JSP — Flm 1 + site
-Type : JSP — Flm 1. Site JSP obligatoire (JSP G1 / JSP C1 / JSP B1). NIP absent du personnel général = **Nouveau JSP**, cas normal. Vérifier que le résumé affiche le site et le niveau Flamme.
+Type : **JSP — Flm 1**. Site JSP obligatoire (JSP G1 / JSP C1 / JSP B1). NIP absent du personnel général = **Nouveau JSP**, cas normal.
+
+La Flamme est le **grade** de la personne (`Flm 1`), pas un niveau d’affectation. Le site choisi (ex. JSP G1) est l’affectation JSP. Vérifier le résumé : **Grade proposé Flm 1** et affectation **JSP G1**.
+
+## TEST 9b — Changement de Flamme
+Même NIP déjà en Flm 1 / JSP G1. Importer en **JSP — Flm 2** sur le même site.
+
+Résultat attendu : même personne, **Grade actuel Flm 1** / **Grade proposé Flm 2**, pas de nouvelle personne, pas d’affectation « niveau ».
+
