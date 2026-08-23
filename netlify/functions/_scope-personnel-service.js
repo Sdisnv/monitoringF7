@@ -534,7 +534,26 @@ async function loadExistingForNips(nips){
   return { persons, assignments };
 }
 
-async function loadPopulation(resolved, siteJsp){
+function sqlPlaceholderArity(sql){
+  let max = 0;
+  String(sql).replace(/\$(\d+)/g, (_, n) => {
+    max = Math.max(max, Number(n));
+    return _;
+  });
+  return max;
+}
+
+function assertSqlBind(sql, params){
+  const arity = sqlPlaceholderArity(sql);
+  const count = (params || []).length;
+  if(arity !== count){
+    const error = new Error(`bind message supplies ${count} parameters, but prepared statement requires ${arity}`);
+    error.code = 'sql_bind_mismatch';
+    throw error;
+  }
+}
+
+function buildPopulationQuery(resolved, siteJsp){
   const params = [];
   let where = `p.archived_at is null and a.date_inactif is null`;
   if(resolved.family === 'GENERAL'){
@@ -551,17 +570,24 @@ async function loadPopulation(resolved, siteJsp){
     if(spec.domaine === 'FOBA'){
       where += ` and (a.cible=$3 or a.cible=('FOBA ' || $3))`;
     } else if(spec.domaine === 'AUTO' && spec.cible === 'PL'){
-      where += ` and a.cible in ('PL', 'cond PL')`;
+      where += ` and (a.cible=$3 or a.cible in ('PL', 'cond PL'))`;
     } else {
       where += ` and a.cible=$3`;
     }
   } else {
-    return [];
+    return null;
   }
-  const res = await getDb().query(
-    `select distinct p.* from scope_affectations a join scope_personnes p on p.id = a.personne_id where ${where}`,
+  return {
+    sql: `select distinct p.* from scope_affectations a join scope_personnes p on p.id = a.personne_id where ${where}`,
     params
-  );
+  };
+}
+
+async function loadPopulation(resolved, siteJsp){
+  const built = buildPopulationQuery(resolved, siteJsp);
+  if(!built) return [];
+  assertSqlBind(built.sql, built.params);
+  const res = await getDb().query(built.sql, built.params);
   return res.rows || [];
 }
 
@@ -949,6 +975,8 @@ module.exports = {
   computeEffectifsFromAssignments,
   specializationForContext,
   assignmentKey,
+  buildPopulationQuery,
+  sqlPlaceholderArity,
   visibleImportContexts: ctx.visibleImportContexts,
   resolveImportContext: ctx.resolveImportContext,
   IMPORT_CONTEXTS: ctx.IMPORT_CONTEXTS

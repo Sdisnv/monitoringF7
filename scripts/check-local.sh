@@ -271,6 +271,8 @@ grep -q "AUTO_VL_DPS" netlify/functions/_scope-personnel-import-contexts.js
 grep -q "AUTO_VL_DAP" netlify/functions/_scope-personnel-import-contexts.js
 grep -q "site_jsp" netlify/functions/_scope-personnel-service.js
 grep -q "preview.wrote = false" netlify/functions/_scope-personnel-service.js
+grep -q "buildPopulationQuery" netlify/functions/_scope-personnel-service.js
+grep -q "a.cible=\$3 or a.cible in ('PL', 'cond PL')" netlify/functions/_scope-personnel-service.js
 grep -q "scope-sync-context" assets/js/scope-ui.js
 grep -q "scope-sync-site" assets/js/scope-ui.js
 grep -q "compactAssignmentLabel" assets/js/scope-personnel-display.js

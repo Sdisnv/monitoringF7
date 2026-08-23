@@ -84,9 +84,22 @@ function createMemoryDb(){
       || s.includes('scope_personnel_import_lines')
     );
   }
+  function placeholderArity(sql){
+    let max = 0;
+    String(sql).replace(/\$(\d+)/g, (_, n) => {
+      max = Math.max(max, Number(n));
+      return _;
+    });
+    return max;
+  }
   async function query(sql, params){
     const s = String(sql).replace(/\s+/g, ' ');
     const lower = s.toLowerCase();
+    const arity = placeholderArity(sql);
+    const count = (params || []).length;
+    if(arity !== count){
+      throw new Error(`bind message supplies ${count} parameters, but prepared statement requires ${arity}`);
+    }
     log.push({ sql: s, params, write: personnelWrite(sql) });
     if(lower.includes('from scope_cibles') && lower.includes('jsp')){
       return { rows: [
@@ -507,6 +520,78 @@ async function run(){
   assert.ok(contexts.includes("jspGrade: 'Flm 1'"));
   assert.ok(!contexts.includes('JSP_G1_FLM1'));
   assert.ok(!contexts.includes('jspFlamme:'));
+
+  const allContexts = ['GENERAL', 'PAPR', 'AUTO_VL_DPS', 'AUTO_VL_DAP', 'AUTO_PL', 'FOBA_1', 'FOBA_2', 'FOBA_3', 'JSP_FLM_1', 'JSP_FLM_2', 'JSP_FLM_3'];
+  allContexts.forEach((code) => {
+    const resolved = svc.resolveImportContext(code);
+    const site = resolved.requiresSite ? { code: 'JSP G1', label: 'JSP G1' } : null;
+    const built = svc.buildPopulationQuery(resolved, site);
+    assert.ok(built, code);
+    assert.strictEqual(svc.sqlPlaceholderArity(built.sql), built.params.length, `${code} bind mismatch`);
+  });
+  const autoPlQuery = svc.buildPopulationQuery(svc.resolveImportContext('AUTO_PL'), null);
+  assert.ok(autoPlQuery.sql.includes('$3'));
+  assert.strictEqual(autoPlQuery.params.length, 3);
+  assert.strictEqual(autoPlQuery.params[2], 'PL');
+  const autoDpsQuery = svc.buildPopulationQuery(svc.resolveImportContext('AUTO_VL_DPS'), null);
+  assert.ok(autoDpsQuery.sql.includes('$3'));
+  assert.strictEqual(autoDpsQuery.params[2], 'VL_DPS');
+
+  function seedExistingDps(db, nip){
+    const person = personRow({ nip, id: `id-${nip}` });
+    db.persons.set(nip, person);
+    db.assignments.push(Object.assign(aff({ domaine:'DPS', cible:'B1' }), { personne_id: person.id, nip }));
+    return person;
+  }
+
+  const vlDpsMemory = createMemoryDb();
+  installDb(vlDpsMemory);
+  seedExistingDps(vlDpsMemory, 'NIP001');
+  const vlDpsAnalyze = await svc.analyzeImport({
+    fileText: csv('NIP001;Sgt;DUPONT;Marc;DPS B1'),
+    filename: 'auto-vl-dps.csv',
+    contexte: 'AUTO_VL_DPS',
+    anneeMonitoring: 2026
+  });
+  assert.strictEqual(vlDpsAnalyze.wrote, false);
+  assert.strictEqual(vlDpsMemory.personnelWrites().length, 0);
+  assert.ok(!(vlDpsAnalyze.lines[0].errors || []).length);
+  assert.strictEqual(vlDpsAnalyze.lines[0].status, 'NEW_ASSIGNMENT');
+  assert.strictEqual(vlDpsAnalyze.lines[0].normalized.nip, 'NIP001');
+  assert.strictEqual(vlDpsAnalyze.lines[0].diff.newAssignments[0].domaine, 'AUTO');
+  assert.strictEqual(vlDpsAnalyze.lines[0].diff.newAssignments[0].cible, 'VL_DPS');
+  assert.ok(!vlDpsAnalyze.lines[0].diff.newAssignments.some((row) => row.domaine === 'DPS'));
+  assert.strictEqual(vlDpsMemory.assignments.filter((row) => row.domaine === 'DPS').length, 1);
+  assert.strictEqual(vlDpsMemory.assignments.filter((row) => row.domaine === 'AUTO').length, 0);
+
+  const vlDapMemory = createMemoryDb();
+  installDb(vlDapMemory);
+  const dapPerson = personRow({ nip:'NIP001', id:'id-NIP001' });
+  vlDapMemory.persons.set('NIP001', dapPerson);
+  vlDapMemory.assignments.push(Object.assign(aff({ domaine:'DAP', cible:'Y2' }), { personne_id: dapPerson.id, nip:'NIP001' }));
+  const vlDapAnalyze = await svc.analyzeImport({
+    fileText: csv('NIP001;Sgt;DUPONT;Marc;DAP Y2'),
+    filename: 'auto-vl-dap.csv',
+    contexte: 'AUTO_VL_DAP',
+    anneeMonitoring: 2026
+  });
+  assert.strictEqual(vlDapAnalyze.wrote, false);
+  assert.strictEqual(vlDapAnalyze.lines[0].status, 'NEW_ASSIGNMENT');
+  assert.strictEqual(vlDapAnalyze.lines[0].diff.newAssignments[0].cible, 'VL_DAP');
+  assert.notStrictEqual(vlDapAnalyze.lines[0].diff.newAssignments[0].cible, 'VL_DPS');
+
+  const autoPlMemory = createMemoryDb();
+  installDb(autoPlMemory);
+  seedExistingDps(autoPlMemory, 'NIP001');
+  const autoPlAnalyze = await svc.analyzeImport({
+    fileText: csv('NIP001;Sgt;DUPONT;Marc;DPS B1'),
+    filename: 'auto-pl.csv',
+    contexte: 'AUTO_PL',
+    anneeMonitoring: 2026
+  });
+  assert.strictEqual(autoPlAnalyze.wrote, false);
+  assert.strictEqual(autoPlAnalyze.lines[0].status, 'NEW_ASSIGNMENT');
+  assert.strictEqual(autoPlAnalyze.lines[0].diff.newAssignments[0].cible, 'PL');
 
   const serviceSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-personnel-service.js'), 'utf8');
   const pgSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-pg.js'), 'utf8');
