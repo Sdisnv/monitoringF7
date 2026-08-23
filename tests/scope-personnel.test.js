@@ -168,10 +168,8 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(ui.includes('Erreurs'));
   assert.ok(ui.includes('previewDetailRows'));
   assert.ok(ui.includes('formatIdentitySide'));
-  assert.ok(ui.includes('Valeur actuelle'));
-  assert.ok(ui.includes('Valeur proposée'));
-  assert.ok(ui.includes('Affectation actuelle'));
-  assert.ok(ui.includes('Affectation proposée'));
+  assert.ok(ui.includes('Modification'));
+  assert.ok(ui.includes('Aucune modification à importer'));
   assert.ok(ui.includes('Valider l’import'));
   assert.ok(ui.includes('Confirmer l’import de ces modifications dans SCOPE'));
   assert.ok(ui.includes('commitPersonnelSync'));

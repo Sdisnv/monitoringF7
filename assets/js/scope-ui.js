@@ -1099,7 +1099,19 @@
     return permissions.includes('personnel:manage');
   }
 
-  function personnelPillClass(statut) {
+
+  function personnelRowClass(row) {
+    const display = personnelDisplay();
+    const kind = display && display.previewRowKind ? display.previewRowKind(row) : '';
+    if (kind === 'error' || row.statut === 'CONFLIT' || row.statut === 'ERREUR') return 'is-conflict';
+    if (kind === 'anomaly') return 'is-anomaly';
+    if (kind === 'info') return 'is-info';
+    return '';
+  }
+
+  function personnelPillClass(statut, row) {
+    const display = personnelDisplay();
+    if (row && display && display.situationPillClass) return display.situationPillClass(row);
     if (statut === 'ERREUR' || statut === 'ERROR' || statut === 'CONFLIT') return 'err';
     if (statut === 'INCHANGE' || statut === 'IDENTICAL') return 'ok';
     if (statut === 'ABSENT_DU_FICHIER') return 'warn';
@@ -1107,7 +1119,9 @@
   }
 
   function personnelPreviewSourceRows(preview) {
-    return (preview && (preview.rows || (preview.lignes || []).concat(preview.absents || []))) || [];
+    if (!preview) return [];
+    if (preview.lines) return preview.lines;
+    return preview.rows || (preview.lignes || []).concat(preview.absents || []) || [];
   }
 
   function personnelDisplay() {
@@ -1117,6 +1131,9 @@
   function personnelVisibleRows(preview) {
     const source = personnelPreviewSourceRows(preview);
     const display = personnelDisplay();
+    if (display && display.filterPreviewRows) {
+      return display.filterPreviewRows(source, state.personnelSync.filter);
+    }
     const rows = display && display.previewDetailRows ? display.previewDetailRows(source) : source.filter((row) => {
       const status = row.statut || row.status;
       return status !== 'INCHANGE' && status !== 'IDENTICAL';
@@ -1314,22 +1331,62 @@
   }
 
   function personnelImportSummaryHtml(counts, preview) {
+    const typeLabel = (preview && (preview.contextLabel || preview.populationLabel)) || '';
+    const isJsp = Boolean(preview && (preview.siteJsp || preview.siteJspLabel || String(preview.contexte || preview.importType || '').indexOf('JSP') === 0));
+    const people = personnelImportCount(counts, 'totalUniqueNips') || personnelImportCount(counts, 'totalLines');
+    const identical = personnelImportCount(counts, 'countIdentical', 'IDENTICAL');
+    const existing = personnelImportCount(counts, 'countExistingAssignments');
+    const errors = personnelImportCount(counts, 'countErrors', 'ERROR');
+    const newPersons = personnelImportCount(counts, 'countNewPersons', 'NEW_PERSON');
+    const modified = personnelImportCount(counts, 'countModified', 'MODIFIED');
+    const newAssignments = personnelImportCount(counts, 'countNewAssignments', 'NEW_ASSIGNMENT');
+    const missing = personnelImportCount(counts, 'countMissingAssignments', 'MISSING_ASSIGNMENT');
+    const divergences = newPersons + personnelImportCount(counts, 'countNewJsp', 'NEW_JSP') + modified + newAssignments + missing + errors;
     const items = [
-      ['Type d’import', (preview && (preview.contextLabel || preview.populationLabel)) || ''],
-      ['Site JSP', (preview && (preview.siteJspLabel || preview.siteJsp)) || '—'],
-      ['Année monitoring', (preview && preview.anneeMonitoring) || state.personnelSync.anneeMonitoring || ''],
+      ['Type d’import', typeLabel],
+      ['Année', (preview && preview.anneeMonitoring) || state.personnelSync.anneeMonitoring || '']
+    ];
+    if (isJsp) items.push(['Site JSP', (preview && (preview.siteJspLabel || preview.siteJsp)) || '—']);
+    items.push(
       ['Lignes analysées', personnelImportCount(counts, 'totalLines')],
       ['Personnes uniques', personnelImportCount(counts, 'totalUniqueNips')],
-      ['Identiques', personnelImportCount(counts, 'countIdentical', 'IDENTICAL')],
-      ['Nouvelles personnes', personnelImportCount(counts, 'countNewPersons', 'NEW_PERSON')],
-      ['Nouveaux JSP', personnelImportCount(counts, 'countNewJsp', 'NEW_JSP')],
-      ['Personnes modifiées', personnelImportCount(counts, 'countModified', 'MODIFIED')],
-      ['Nouvelles affectations', personnelImportCount(counts, 'countNewAssignments', 'NEW_ASSIGNMENT')],
-      ['Affectations existantes', personnelImportCount(counts, 'countExistingAssignments')],
-      ['Absents du nouvel import', personnelImportCount(counts, 'countMissingAssignments', 'MISSING_ASSIGNMENT')],
-      ['Erreurs', personnelImportCount(counts, 'countErrors', 'ERROR')]
-    ];
-    return `<div class="scope-import-summary-grid">${items.map(([label, value]) => `<span><strong>${escapeHtml(value)}</strong>${escapeHtml(label)}</span>`).join('')}</div>`;
+      ['Identiques', identical],
+      ['Nouvelles personnes', newPersons],
+      ['Personnes modifiées', modified],
+      ['Nouvelles affectations', newAssignments],
+      ['Affectations existantes', existing],
+      ['Absents du nouvel import', missing],
+      ['Erreurs', errors]
+    );
+    if (personnelImportCount(counts, 'countNewJsp', 'NEW_JSP')) {
+      items.splice(7, 0, ['Nouveaux JSP', personnelImportCount(counts, 'countNewJsp', 'NEW_JSP')]);
+    }
+    const itemHtml = items.map(([label, value]) => `<div class="scope-import-summary-item"><span class="scope-import-summary-label">${escapeHtml(label)}</span><span class="scope-import-summary-value">${escapeHtml(value)}</span></div>`).join('');
+    return `<div class="scope-import-summary">
+      <p class="scope-import-summary-hero">${escapeHtml(people)} personne${people > 1 ? 's' : ''} analysée${people > 1 ? 's' : ''} · ${escapeHtml(identical)} identique${identical > 1 ? 's' : ''} · ${escapeHtml(existing)} affectation${existing > 1 ? 's' : ''} existante${existing > 1 ? 's' : ''} · ${escapeHtml(divergences)} divergence${divergences > 1 ? 's' : ''} · ${escapeHtml(errors)} erreur${errors > 1 ? 's' : ''}</p>
+      ${itemHtml}
+    </div>`;
+  }
+
+  function personnelLineModification(row) {
+    const display = personnelDisplay();
+    if (display && display.previewModificationText) return display.previewModificationText(row);
+    return row.statusLabel || row.statut || '';
+  }
+
+  function personnelLineSituation(row) {
+    const display = personnelDisplay();
+    if (display && display.situationLabel) return display.situationLabel(row);
+    return row.statusLabel || row.statut || '';
+  }
+
+  function personnelLineAffectation(row) {
+    const display = personnelDisplay();
+    if (display && display.assignmentSides) {
+      const sides = display.assignmentSides(row);
+      return sides.proposed && sides.proposed !== '—' ? sides.proposed : (sides.current || '—');
+    }
+    return personnelAssignmentText((row.normalized && row.normalized.assignments) || []);
   }
 
   function personnelLineName(row) {
@@ -1461,17 +1518,17 @@
     const summary = (preview && (preview.importSummary || preview.summary)) || {};
     const rows = personnelVisibleRows(preview);
     const counts = (preview && (preview.counts || preview.summary)) || {};
-    const previewCanCommit = Boolean(preview && preview.canCommit !== false && personnelImportCount(counts, 'countErrors', 'ERROR') === 0);
-    const filters = [
-      ['CHANGEMENTS', 'À traiter'],
-      ['TOUS', 'Tous'],
-      ['NOUVEAU', 'Nouveaux'],
-      ['CHANGEMENT_OI', 'OI'],
-      ['CHANGEMENT_GRADE', 'Grade'],
-      ['ABSENT_DU_FICHIER', 'Absents'],
-      ['ARCHIVE_RETROUVE', 'Archives'],
-      ['CONFLIT', 'Conflits']
+    const display = personnelDisplay();
+    const previewCanCommit = Boolean(preview && preview.canCommit !== false && personnelImportCount(counts, 'countErrors', 'ERROR') === 0
+      && (display && display.importCanCommit ? display.importCanCommit(preview) : true));
+    const filters = display && display.importFilterButtons ? display.importFilterButtons(preview) : [
+      { id: 'CHANGEMENTS', label: 'À traiter' },
+      { id: 'TOUS', label: 'Tous' }
     ];
+    const emptyState = display && display.importEmptyState ? display.importEmptyState(preview, state.personnelSync.filter, rows.length) : null;
+    const commitLabel = preview && display && display.importIsFullyIdentical && display.importIsFullyIdentical(preview)
+      ? 'Aucune modification à importer'
+      : 'Valider l’import';
     return `
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
@@ -1513,7 +1570,7 @@
             </div>
             <div class="scope-actions">
               <button type="button" class="scope-btn scope-btn-primary" id="scope-sync-preview" ${!state.personnelSync.csvText || (personnelImportRequiresSite(state.personnelSync.contexte) && !state.personnelSync.siteJsp) ? 'disabled' : ''}>Analyser le fichier</button>
-              <button type="button" class="scope-btn" id="scope-sync-commit" ${previewCanCommit && !rapport ? '' : 'disabled'}>Valider l’import</button>
+              <button type="button" class="scope-btn" id="scope-sync-commit" ${previewCanCommit && !rapport ? '' : 'disabled'}>${commitLabel}</button>
             </div>
           </div>
           ` : ''}
@@ -1525,26 +1582,24 @@
           ${preview.dateEffetRequise ? '<p class="scope-mode-hint">Une date d’effet est obligatoire avant commit. Elle n’est jamais inventée.</p>' : ''}
           ${previewCanCommit ? '<p>Aucune écriture tant que vous n’avez pas confirmé explicitement « Valider l’import ».</p>' : '<p class="scope-mode-hint">Validation bloquée : conflit, erreur ou date d’effet manquante.</p>'}
           <div class="scope-sync-filters" role="tablist">
-            ${filters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personnelSync.filter === id ? 'scope-btn-primary' : ''}" data-sync-filter="${id}">${escapeHtml(label)}${id !== 'CHANGEMENTS' && id !== 'TOUS' && counts[id] != null ? ` (${counts[id]})` : ''}</button>`).join('')}
+            ${filters.map((item) => `<button type="button" class="scope-btn ${state.personnelSync.filter === item.id ? 'scope-btn-primary' : ''}" data-sync-filter="${item.id}">${escapeHtml(item.label)}${item.id !== 'CHANGEMENTS' && item.id !== 'TOUS' && item.count != null ? ` (${item.count})` : ''}</button>`).join('')}
           </div>
           <div class="scope-table-wrap scope-sync-table-wrap">
             <table class="scope-table scope-sync-table">
-              <thead><tr><th>NIP</th><th>Personne</th><th>Valeur actuelle</th><th>Valeur proposée</th><th>Affectation actuelle</th><th>Affectation proposée</th><th>Situation</th><th>Action</th><th>Date d’effet</th></tr></thead>
+              <thead><tr><th>NIP</th><th>Personne</th><th>Modification</th><th>Affectation</th><th>Situation</th><th>Action</th><th>Date d’effet</th></tr></thead>
               <tbody>
                 ${rows.map((row) => `
-                  <tr class="${row.statut === 'CONFLIT' || row.statut === 'ERREUR' ? 'is-conflict' : ''}">
+                  <tr class="${personnelRowClass(row)}">
                     <td data-label="NIP">${escapeHtml(row.nip || '—')}</td>
                     <td data-label="Personne">${escapeHtml(personnelLineName(row))}</td>
-                    <td data-label="Valeur actuelle">${escapeHtml(personnelLineCurrent(row))}</td>
-                    <td data-label="Valeur proposée">${escapeHtml(personnelLineProposed(row))}</td>
-                    <td data-label="Affectation actuelle">${escapeHtml(personnelLineCurrentAssignments(row))}</td>
-                    <td data-label="Affectation proposée">${escapeHtml(personnelLineProposedAssignments(row))}</td>
-                    <td data-label="Situation"><span class="scope-import-pill ${personnelPillClass(row.statut)}">${escapeHtml(row.statusLabel || row.statut)}</span></td>
+                    <td data-label="Modification">${escapeHtml(personnelLineModification(row))}</td>
+                    <td data-label="Affectation">${escapeHtml(personnelLineAffectation(row))}</td>
+                    <td data-label="Situation"><span class="scope-import-pill ${personnelPillClass(row.statut, row)}">${escapeHtml(personnelLineSituation(row))}</span></td>
                     <td data-label="Action">${personnelDecisionSelect(row)}</td>
                     <td data-label="Date d’effet"><input type="date" class="scope-sync-row-date" data-sync-date="${escapeHtml(row.rowId)}" value="${escapeHtml(personnelDateOf(row))}" ${row.statut === 'INCHANGE' || row.statut === 'IDENTICAL' ? 'disabled' : ''}></td>
                   </tr>
-                  ${row.message || (row.messages && row.messages.length) || (row.errors && row.errors.length) || (row.warnings && row.warnings.length) || (row.actions && row.actions.length > 1) ? `<tr class="scope-sync-detail"><td colspan="9">${escapeHtml((row.messages || []).join(' ') || row.message || (row.errors || []).concat(row.warnings || []).join(', ') || '')} ${(row.actions || []).map((a) => a.type).join(' · ')}</td></tr>` : ''}
-                `).join('') || '<tr><td colspan="9">Aucun élément pour ce filtre.</td></tr>'}
+                  ${row.infos && row.infos.length && personnelLineModification(row).indexOf(row.infos[0]) < 0 ? `<tr class="scope-sync-detail"><td colspan="7">${escapeHtml((row.infos || []).join(' · '))}</td></tr>` : ''}
+                `).join('') || `<tr><td colspan="7"><div class="scope-import-empty"><h4>${escapeHtml((emptyState && emptyState.title) || 'Aucune ligne dans ce filtre')}</h4><p>${escapeHtml((emptyState && emptyState.text) || '')}</p></div></td></tr>`}
               </tbody>
             </table>
           </div>
@@ -3292,6 +3347,10 @@
           siteJsp: state.personnelSync.siteJsp || undefined,
           anneeMonitoring: Number(state.personnelSync.anneeMonitoring) || new Date().getFullYear()
         });
+        const display = personnelDisplay();
+        state.personnelSync.filter = display && display.defaultImportFilter
+          ? display.defaultImportFilter(state.personnelSync.preview)
+          : 'CHANGEMENTS';
         state.personnelSync.decisions = {};
         toast('success', 'Analyse terminée', 'Prévisualisation disponible. Aucune écriture DB effectuée.');
       });
@@ -3307,7 +3366,7 @@
     document.getElementById('scope-sync-commit-ok')?.addEventListener('click', () => {
       const preview = state.personnelSync.preview;
       const decisions = Object.keys(state.personnelSync.decisions).map((rowId) => Object.assign({ rowId }, state.personnelSync.decisions[rowId]));
-      (preview && preview.rows || []).forEach((row) => {
+      personnelPreviewSourceRows(preview).forEach((row) => {
         const date = personnelDateOf(row);
         const decision = personnelDecisionOf(row);
         if (decision !== row.decision || (date && date !== row.dateEffet)) {

@@ -296,5 +296,6 @@ if grep -E "a\.niveau[^_]|coalesce\(niveau" netlify/functions/_scope-personnel-s
 fi
 grep -q "scope-personnel-import-populations.test.js" package.json
 grep -q "scope-personnel-import-ux.test.js" package.json
+grep -q "scope-personnel-import-ux-order.test.js" package.json
 
 echo "OK: controles locaux termines."

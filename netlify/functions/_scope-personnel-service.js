@@ -488,7 +488,7 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     lines.push(buildAbsentLine(person, existingAssignments.get(person.nip) || person.affectations || [], resolved, siteJsp, dateActif, dateInactifProposee));
   });
   const counts = summarizeAnalysis(lines);
-  return {
+  const preview = {
     wrote: false,
     status: 'PREVIEW',
     contexte: resolved.code,
@@ -503,6 +503,14 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     counts,
     lines
   };
+  const planned = planCommitMutations(preview, []);
+  preview.needsWrite = Boolean(
+    planned.personInserts.length
+    || planned.personUpdates.length
+    || planned.assignmentInserts.length
+    || planned.assignmentClosures.length
+  );
+  return preview;
 }
 
 async function loadJspSites(){
@@ -734,6 +742,20 @@ async function commitImport(payload, actorSubject){
     throw new Error('Import refuse: corriger les lignes en erreur avant commit.');
   }
   const mutations = input._mutations || planCommitMutations(preview, input.decisions || []);
+  const mutationCount = mutations.personInserts.length + mutations.personUpdates.length
+    + mutations.assignmentInserts.length + mutations.assignmentClosures.length;
+  if(!mutationCount){
+    return {
+      ok: true,
+      wrote: false,
+      skipped: true,
+      reason: 'no_mutations',
+      personsTouched: 0,
+      assignmentsCreated: 0,
+      closures: 0,
+      summary: { mutations: 0, personsTouched: 0, assignmentsCreated: 0, closures: 0 }
+    };
+  }
   await ensureScopeSchema();
   return getDb().transaction(async client => {
     const batchId = rid();

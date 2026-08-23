@@ -935,6 +935,54 @@ html, body {
 .scope-import-pill.ok { background: #e8f5ec; color: var(--scope-ok); }
 .scope-import-pill.warn { background: #fff4e0; color: var(--scope-warn); }
 .scope-import-pill.err { background: var(--scope-red-soft); color: var(--scope-error); }
+.scope-import-pill.info { background: #e7f0fb; color: #1a5fb4; }
+.scope-import-pill.action { background: #fff4e0; color: var(--scope-warn); }
+
+.scope-import-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px 16px;
+  margin: 12px 0 16px;
+}
+.scope-import-summary-hero {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.scope-import-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.scope-import-summary-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scope-muted);
+}
+.scope-import-summary-value {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.25;
+  word-break: break-word;
+}
+.scope-import-empty {
+  padding: 28px 12px;
+  text-align: center;
+}
+.scope-import-empty h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.scope-import-empty p {
+  margin: 0;
+  color: var(--scope-muted);
+}
+.scope-sync-table tr.is-info td { background: #f4f8fd; }
+.scope-sync-table tr.is-anomaly td { background: #fff8ec; }
 .scope-import-type { color: var(--scope-muted); font-size: var(--scope-fs-secondary); }
 .scope-import-meta, .scope-import-reason, .scope-import-action {
   margin: 6px 0 0;

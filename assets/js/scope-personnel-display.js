@@ -11,6 +11,7 @@
 
   const SPECIALIZATION_SEPARATOR = ', ';
   const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP']);
+  const SPECIALIZATION_DISPLAY_ORDER = SPECIALIZATION_ORDER;
   const SPECIALIZATION_CODE_LABELS = Object.freeze({
     FOBA_1: 'FOBA 1',
     FOBA_2: 'FOBA 2',
@@ -22,7 +23,7 @@
     AUTO_PL: 'cond PL',
     JSP: 'JSP'
   });
-  const MSG_PL_PRIORITY = 'cond PL prioritaire pour l’effectif cond VL DPS';
+  const MSG_PL_PRIORITY = 'Priorité cond PL — cond PL déjà actif, hors effectif cond VL DPS';
   const MSG_PL_WITHOUT_DPS = 'Conducteur PL sans affectation DPS active';
 
   function clean(value){
@@ -326,6 +327,160 @@
     return (rows || []).filter((row) => !isStrictlyIdenticalPreviewRow(row));
   }
 
+  function previewRowKind(row){
+    const status = previewStatus(row);
+    if(status === 'ERROR' || status === 'ERREUR' || status === 'CONFLIT') return 'error';
+    if((row.warnings || []).length) return 'anomaly';
+    if(status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU'
+      || status === 'MODIFIED' || status === 'NEW_ASSIGNMENT'
+      || status === 'ABSENT_DU_NOUVEL_IMPORT' || status === 'ABSENT_DU_FICHIER'
+      || status === 'ARCHIVE_RETROUVE') return 'action';
+    if((row.infos || []).length) return 'info';
+    return 'identical';
+  }
+
+  function previewSourceRows(preview){
+    return (preview && (preview.lines || preview.rows || (preview.lignes || []).concat(preview.absents || []))) || [];
+  }
+
+  function countPreviewKind(rows, kind){
+    return previewDetailRows(rows).filter((row) => previewRowKind(row) === kind).length;
+  }
+
+  function importHasMutations(preview){
+    if(preview && typeof preview.needsWrite === 'boolean') return preview.needsWrite;
+    const counts = (preview && (preview.counts || preview.summary)) || {};
+    return ['countNewPersons', 'countNewJsp', 'countModified', 'countNewAssignments', 'countErrors']
+      .some((key) => Number(counts[key] || 0) > 0);
+  }
+
+  function importCanCommit(preview){
+    if(!preview || preview.canCommit === false) return false;
+    const rows = previewSourceRows(preview);
+    if(countPreviewKind(rows, 'error') > 0) return false;
+    if(importHasMutations(preview)) return true;
+    return countPreviewKind(rows, 'action') > 0;
+  }
+
+  function importIsFullyIdentical(preview){
+    const rows = previewSourceRows(preview);
+    if(!rows.length) return false;
+    return !importHasMutations(preview) && countPreviewKind(rows, 'action') === 0
+      && countPreviewKind(rows, 'anomaly') === 0 && countPreviewKind(rows, 'error') === 0
+      && countPreviewKind(rows, 'info') === 0;
+  }
+
+  function defaultImportFilter(preview){
+    const rows = previewSourceRows(preview);
+    if(countPreviewKind(rows, 'action') || countPreviewKind(rows, 'anomaly') || countPreviewKind(rows, 'error')){
+      return 'CHANGEMENTS';
+    }
+    if(countPreviewKind(rows, 'info')) return 'INFOS';
+    return 'CHANGEMENTS';
+  }
+
+  function filterPreviewRows(rows, filter){
+    const detail = previewDetailRows(rows);
+    const status = (row) => previewStatus(row);
+    if(filter === 'TOUS') return detail;
+    if(filter === 'INFOS') return detail.filter((row) => previewRowKind(row) === 'info');
+    if(filter === 'NOUVEAU'){
+      return detail.filter((row) => status(row) === 'NOUVEAU' || status(row) === 'NEW_PERSON' || status(row) === 'NEW_JSP');
+    }
+    if(filter === 'MODIFICATIONS'){
+      return detail.filter((row) => status(row) === 'MODIFIED' || status(row) === 'NEW_ASSIGNMENT' || status(row) === 'CHANGEMENT_OI' || status(row) === 'CHANGEMENT_GRADE');
+    }
+    if(filter === 'ABSENT_DU_FICHIER'){
+      return detail.filter((row) => status(row) === 'ABSENT_DU_FICHIER' || status(row) === 'ABSENT_DU_NOUVEL_IMPORT');
+    }
+    if(filter === 'ANOMALIES'){
+      return detail.filter((row) => previewRowKind(row) === 'anomaly' || previewRowKind(row) === 'error');
+    }
+    if(filter === 'CONFLIT'){
+      return detail.filter((row) => status(row) === 'CONFLIT' || status(row) === 'ERROR' || status(row) === 'ERREUR');
+    }
+    return detail.filter((row) => {
+      const kind = previewRowKind(row);
+      return kind === 'action' || kind === 'anomaly' || kind === 'error';
+    });
+  }
+
+  function importFilterButtons(preview){
+    const rows = previewSourceRows(preview);
+    const detail = previewDetailRows(rows);
+    const count = (fn) => detail.filter(fn).length;
+    const status = (row) => previewStatus(row);
+    const buttons = [
+      { id: 'CHANGEMENTS', label: 'À traiter', count: count((row) => ['action', 'anomaly', 'error'].includes(previewRowKind(row))), always: true },
+      { id: 'INFOS', label: 'Informations', count: count((row) => previewRowKind(row) === 'info') },
+      { id: 'NOUVEAU', label: 'Nouveaux', count: count((row) => status(row) === 'NOUVEAU' || status(row) === 'NEW_PERSON' || status(row) === 'NEW_JSP') },
+      { id: 'MODIFICATIONS', label: 'Modifications', count: count((row) => status(row) === 'MODIFIED' || status(row) === 'NEW_ASSIGNMENT') },
+      { id: 'ABSENT_DU_FICHIER', label: 'Absents', count: count((row) => status(row) === 'ABSENT_DU_FICHIER' || status(row) === 'ABSENT_DU_NOUVEL_IMPORT') },
+      { id: 'ANOMALIES', label: 'Anomalies', count: count((row) => previewRowKind(row) === 'anomaly' || previewRowKind(row) === 'error') },
+      { id: 'TOUS', label: 'Tous', count: detail.length, always: true }
+    ];
+    return buttons.filter((item) => item.always || item.count > 0);
+  }
+
+  function situationLabel(row){
+    const kind = previewRowKind(row);
+    if(kind === 'error') return 'Erreur';
+    if(kind === 'anomaly') return 'Anomalie';
+    if(kind === 'info') return 'Information';
+    if(kind === 'action'){
+      const status = previewStatus(row);
+      if(status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU') return 'À traiter';
+      if(status === 'ABSENT_DU_NOUVEL_IMPORT' || status === 'ABSENT_DU_FICHIER') return 'À traiter';
+      return 'À traiter';
+    }
+    return row.statusLabel || 'Identique';
+  }
+
+  function situationPillClass(row){
+    const kind = previewRowKind(row);
+    if(kind === 'error') return 'err';
+    if(kind === 'anomaly') return 'warn';
+    if(kind === 'info') return 'info';
+    if(kind === 'action') return 'action';
+    return 'ok';
+  }
+
+  function previewModificationText(row){
+    const parts = [];
+    identityDiffFields(row).forEach((field) => {
+      parts.push(`${field.label} ${field.current || '—'} → ${field.proposed || '—'}`);
+    });
+    const status = previewStatus(row);
+    if(status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU') parts.push('Nouvelle personne');
+    if(status === 'NEW_ASSIGNMENT') parts.push('Nouvelle affectation');
+    if(status === 'ABSENT_DU_NOUVEL_IMPORT' || status === 'ABSENT_DU_FICHIER') parts.push('Absente du nouvel import');
+    if(status === 'MODIFIED' && !parts.length) parts.push('Identité ou affectation modifiée');
+    (row.infos || []).forEach((msg) => { if(msg && !parts.includes(msg)) parts.push(msg); });
+    (row.warnings || []).forEach((msg) => { if(msg && !parts.includes(msg)) parts.push(msg); });
+    (row.errors || []).forEach((msg) => { if(msg && !parts.includes(msg)) parts.push(msg); });
+    return parts.join(' · ') || row.statusLabel || situationLabel(row);
+  }
+
+  function importEmptyState(preview, filter, visibleCount){
+    if(visibleCount) return null;
+    if(importIsFullyIdentical(preview)){
+      const counts = (preview && (preview.counts || preview.summary)) || {};
+      const people = Number(counts.totalUniqueNips || counts.totalLines || 0);
+      const existing = Number(counts.countExistingAssignments || counts.countIdentical || people);
+      return {
+        title: 'Aucune divergence détectée',
+        text: `${people} personne${people > 1 ? 's' : ''} analysée${people > 1 ? 's' : ''} · ${existing} affectation${existing > 1 ? 's' : ''} déjà conforme${existing > 1 ? 's' : ''}. Aucune modification n’est nécessaire.`
+      };
+    }
+    if(filter === 'CHANGEMENTS' && countPreviewKind(previewSourceRows(preview), 'info')){
+      return {
+        title: 'Aucune ligne à traiter',
+        text: 'Des informations métier sont disponibles dans l’onglet Informations.'
+      };
+    }
+    return { title: 'Aucune ligne dans ce filtre', text: 'Changez de filtre pour afficher d’autres lignes de la prévisualisation.' };
+  }
+
   function identityDiffFields(row){
     const identity = (row && row.diff && row.diff.identity) || {};
     const person = (row && row.diff && row.diff.person) || {};
@@ -436,13 +591,32 @@
     countsInImportPopulation: countsInImportPopulation,
     SPECIALIZATION_SEPARATOR,
     SPECIALIZATION_ORDER,
+    SPECIALIZATION_DISPLAY_ORDER: SPECIALIZATION_ORDER,
     SPECIALIZATION_CODE_LABELS,
     MSG_PL_PRIORITY,
     MSG_PL_WITHOUT_DPS,
     isStrictlyIdenticalPreviewRow,
-    isStrictlyIdenticalPreviewRow: isStrictlyIdenticalPreviewRow,
     previewDetailRows,
-    previewDetailRows: previewDetailRows,
+    previewRowKind,
+    filterPreviewRows,
+    filterPreviewRows: filterPreviewRows,
+    importFilterButtons,
+    importFilterButtons: importFilterButtons,
+    importHasMutations,
+    importCanCommit,
+    importCanCommit: importCanCommit,
+    importIsFullyIdentical,
+    importIsFullyIdentical: importIsFullyIdentical,
+    defaultImportFilter,
+    defaultImportFilter: defaultImportFilter,
+    situationPillClass,
+    situationPillClass: situationPillClass,
+    previewModificationText,
+    previewModificationText: previewModificationText,
+    importEmptyState,
+    importEmptyState: importEmptyState,
+    situationLabel,
+    situationLabel: situationLabel,
     identityDiffFields,
     identityDiffFields: identityDiffFields,
     formatIdentitySide,
