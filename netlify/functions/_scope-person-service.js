@@ -21,6 +21,7 @@ const { isPrincipalOi } = require('./_scope-personnel-sync-contract');
 const { TYPES_PERIODE } = require('./_scope-personnel');
 const { ALERTS_CONFIG } = require('./_scope-alerts');
 const { isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
+const display = require('../../assets/js/scope-personnel-display.js');
 
 function isArchivedStatut(statut){
   return statut === 'SORTI' || statut === 'DEMISSIONNAIRE';
@@ -383,6 +384,10 @@ function createScopePersonService(repo){
         analyticStatus: pack.analyticStatus
       };
     });
+    const jspEvents = included.filter((row) => String(row.domaine || '').toUpperCase() === 'JSP');
+    const jspRole = display.classifyJspRole(personne, affectations, today);
+    const jspStats = display.jspParticipation(jspEvents);
+    const jspDomain = domaines.find((row) => row.code === 'JSP') || null;
     const oiHisto = [];
     const seenOi = new Set();
     for(const row of included){
@@ -451,6 +456,13 @@ function createScopePersonService(repo){
       },
       evenements: included,
       domaines,
+      jsp: {
+        role: jspRole,
+        roleLabel: jspRole === 'MONITEUR' ? 'Moniteur JSP' : jspRole === 'JEUNE' ? 'JSP' : null,
+        tauxJeunes: jspRole === 'JEUNE' ? jspDomain : null,
+        tauxMoniteurs: jspRole === 'MONITEUR' ? jspDomain : null,
+        participationJsp: jspRole ? jspStats : null
+      },
       oiHistoriqueEvenements: oiHisto,
       explain: Object.assign({}, snap.explain, {
         modesInclus: 'NOMINATIF uniquement. QUANTITATIF et LEGACY ne sont jamais attribués à une personne.'

@@ -118,7 +118,7 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(!/coalesce\(niveau/.test(personnelService));
   assert.ok(personnelService.includes('site_jsp'));
   assert.ok(personnelService.includes('preview.wrote = false'));
-  assert.ok(personnelService.includes('JSP_FLM_1') || fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8').includes('JSP_FLM_1'));
+  assert.ok(fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8').includes('JSP_NORD_VAUDOIS'));
 
   assert.ok(pgRepo.includes('date_entree_sdis as date_entree'));
   assert.ok(pgRepo.includes('a.date_actif as date_debut'));
@@ -162,7 +162,9 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(ui.includes('Absents du nouvel import'));
   assert.ok(ui.includes('Type d’import'));
   assert.ok(ui.includes('Site JSP'));
-  assert.ok(ui.includes('JSP — Flm 1'));
+  assert.ok(ui.includes('JSP Nord vaudois'));
+  assert.ok(ui.includes('Moniteurs JSP'));
+  assert.ok(!ui.includes('JSP — Flm 1'));
   assert.ok(ui.includes('cond VL — DPS'));
   assert.ok(ui.includes('cond VL — DAP'));
   assert.ok(ui.includes('Erreurs'));

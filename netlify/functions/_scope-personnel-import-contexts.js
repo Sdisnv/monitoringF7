@@ -91,38 +91,32 @@ const IMPORT_CONTEXTS = Object.freeze({
     newPersonStatus: 'NEW_PERSON',
     newPersonLabel: 'Nouvelle personne'
   },
-  JSP_FLM_1: {
-    code: 'JSP_FLM_1',
-    label: 'JSP — Flm 1',
+  JSP_NORD_VAUDOIS: {
+    code: 'JSP_NORD_VAUDOIS',
+    label: 'JSP Nord vaudois',
     family: 'JSP',
+    jspPopulation: 'JEUNES',
     persistOi: false,
-    requiresSite: true,
-    jspGrade: 'Flm 1',
-    jspFlammeLabel: 'Flm 1',
+    requiresSite: false,
+    siteFromFile: true,
+    gradeFromFile: true,
+    allowCreatePerson: true,
     newPersonStatus: 'NEW_JSP',
     newPersonLabel: 'Nouveau JSP'
   },
-  JSP_FLM_2: {
-    code: 'JSP_FLM_2',
-    label: 'JSP — Flm 2',
+  MONITEURS_JSP: {
+    code: 'MONITEURS_JSP',
+    label: 'Moniteurs JSP',
     family: 'JSP',
+    jspPopulation: 'MONITEURS',
     persistOi: false,
-    requiresSite: true,
-    jspGrade: 'Flm 2',
-    jspFlammeLabel: 'Flm 2',
-    newPersonStatus: 'NEW_JSP',
-    newPersonLabel: 'Nouveau JSP'
-  },
-  JSP_FLM_3: {
-    code: 'JSP_FLM_3',
-    label: 'JSP — Flm 3',
-    family: 'JSP',
-    persistOi: false,
-    requiresSite: true,
-    jspGrade: 'Flm 3',
-    jspFlammeLabel: 'Flm 3',
-    newPersonStatus: 'NEW_JSP',
-    newPersonLabel: 'Nouveau JSP'
+    requiresSite: false,
+    siteFromFile: true,
+    gradeFromFile: false,
+    allowCreatePerson: false,
+    requiresSdisOi: true,
+    newPersonStatus: 'NEW_ASSIGNMENT',
+    newPersonLabel: 'Nouvelle affectation JSP'
   }
 });
 
@@ -141,9 +135,14 @@ const CONTEXT_ALIASES = Object.freeze({
   FOBA_1: 'FOBA_1',
   FOBA_2: 'FOBA_2',
   FOBA_3: 'FOBA_3',
-  JSP_FLM_1: 'JSP_FLM_1',
-  JSP_FLM_2: 'JSP_FLM_2',
-  JSP_FLM_3: 'JSP_FLM_3'
+  JSP_FLM_1: 'JSP_NORD_VAUDOIS',
+  JSP_FLM_2: 'JSP_NORD_VAUDOIS',
+  JSP_FLM_3: 'JSP_NORD_VAUDOIS',
+  JSP_NORD_VAUDOIS: 'JSP_NORD_VAUDOIS',
+  JSP_NV: 'JSP_NORD_VAUDOIS',
+  JEUNES_JSP: 'JSP_NORD_VAUDOIS',
+  MONITEURS_JSP: 'MONITEURS_JSP',
+  MONITEUR_JSP: 'MONITEURS_JSP'
 });
 
 const STATUS_LABELS = Object.freeze({
@@ -167,6 +166,7 @@ function normalizeJspGrade(value){
   if(raw === 'FLM 1' || raw === 'FLAMME 1' || raw === 'FLM1') return 'Flm 1';
   if(raw === 'FLM 2' || raw === 'FLAMME 2' || raw === 'FLM2') return 'Flm 2';
   if(raw === 'FLM 3' || raw === 'FLAMME 3' || raw === 'FLM3') return 'Flm 3';
+  if(raw === 'CADET' || raw === 'CAD') return 'Cadet';
   return clean(value);
 }
 
@@ -181,11 +181,51 @@ function resolveImportContext(raw){
   return IMPORT_CONTEXTS[aliased];
 }
 
+const JSP_YOUTH_GRADES = Object.freeze(['Cadet', 'Flm 3', 'Flm 2', 'Flm 1']);
+
+function isJspYouthGrade(value){
+  return JSP_YOUTH_GRADES.includes(normalizeJspGrade(value));
+}
+
+function isActiveAssignment(assignment, date){
+  if(!assignment || assignment.error) return false;
+  if(assignment.date_inactif && date && assignment.date_inactif < date) return false;
+  if(assignment.date_actif && date && assignment.date_actif > date) return false;
+  return true;
+}
+
+function hasActiveOi(assignments, domaines, date){
+  const wanted = Array.isArray(domaines) ? domaines : [domaines];
+  return (assignments || []).some((row) => (
+    row.categorie === 'OI'
+    && wanted.includes(row.domaine)
+    && isActiveAssignment(row, date)
+    && !JSP_CADRE_NIVEAUX.includes(String(row.cible || '').replace(/^JSP\s+/, '').toUpperCase())
+  ));
+}
+
+function isJspMonitor(assignments, date){
+  return hasActiveOi(assignments, 'JSP', date) && hasActiveOi(assignments, ['DPS', 'DAP'], date);
+}
+
+function isJspYouth(person, assignments, date){
+  if(!hasActiveOi(assignments, 'JSP', date) || isJspMonitor(assignments, date)) return false;
+  if(person && person.grade && !isJspYouthGrade(person.grade)) return false;
+  return true;
+}
+
+function classifyJspRole(person, assignments, date){
+  if(isJspMonitor(assignments, date)) return 'MONITEUR';
+  if(isJspYouth(person, assignments, date)) return 'JEUNE';
+  return null;
+}
+
 function visibleImportContexts(){
   return Object.values(IMPORT_CONTEXTS).map((ctx) => ({
     code: ctx.code,
     label: ctx.label,
-    requiresSite: Boolean(ctx.requiresSite)
+    requiresSite: Boolean(ctx.requiresSite),
+    jspPopulation: ctx.jspPopulation || null
   }));
 }
 
@@ -271,13 +311,18 @@ function assignmentMatchesContext(assignment, ctx, siteJsp){
   return assignmentKey(assignment) === assignmentKey(expected);
 }
 
-function personMatchesJspPopulation(person, ctx){
+function personMatchesJspPopulation(person, ctx, assignments, date){
   if(!person || ctx.family !== 'JSP') return false;
-  return normalizeJspGrade(person.grade) === ctx.jspGrade;
+  if(ctx.jspPopulation === 'MONITEURS') return isJspMonitor(assignments || person.affectations || [], date);
+  return isJspYouth(person, assignments || person.affectations || [], date);
 }
 
 function populationLabel(ctx, siteJsp){
-  if(ctx.family === 'JSP'){
+  if(ctx.code === 'JSP_NORD_VAUDOIS'){
+    const site = siteJsp && (siteJsp.label || siteJsp.code);
+    return site ? `JSP Nord vaudois — ${site}` : 'JSP Nord vaudois';
+  }
+  if(ctx.family === 'JSP' && ctx.jspFlammeLabel){
     const site = (siteJsp && (siteJsp.label || siteJsp.code)) || '';
     return `${site} — ${ctx.jspFlammeLabel}`;
   }
@@ -308,6 +353,11 @@ module.exports = {
   visibleImportContexts,
   normalizeJspSite,
   normalizeJspGrade,
+  isJspYouthGrade,
+  isJspMonitor,
+  isJspYouth,
+  classifyJspRole,
+  hasActiveOi,
   jspSitesFromCibles,
   contextAssignment,
   normalizeFobaCible,
@@ -317,5 +367,6 @@ module.exports = {
   personMatchesJspPopulation,
   populationLabel,
   specializationLabel,
-  oiLabel
+  oiLabel,
+  JSP_YOUTH_GRADES
 };

@@ -200,10 +200,65 @@
     };
   }
 
+  const JSP_YOUTH_GRADES = Object.freeze(['Cadet', 'Flm 3', 'Flm 2', 'Flm 1']);
+
+  function isJspYouthGrade(value){
+    const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ');
+    return raw === 'FLM 1' || raw === 'FLM 2' || raw === 'FLM 3' || raw === 'CADET' || raw === 'CAD'
+      || JSP_YOUTH_GRADES.includes(clean(value));
+  }
+
+  function hasActiveDomainOi(assignments, domaines, date){
+    const wanted = (Array.isArray(domaines) ? domaines : [domaines]).map((d) => String(d).toUpperCase());
+    return (assignments || []).some((row) => {
+      if(!isAssignmentActiveAt(row, date)) return false;
+      const parts = assignmentParts(row);
+      const categorie = String(row.categorie || row.category || 'OI').toUpperCase();
+      if(categorie !== 'OI') return false;
+      return wanted.includes(String(parts.domaine || '').toUpperCase());
+    });
+  }
+
+  function isJspMonitor(assignments, date){
+    return hasActiveDomainOi(assignments, 'JSP', date) && hasActiveDomainOi(assignments, ['DPS', 'DAP'], date);
+  }
+
+  function isJspYouth(person, assignments, date){
+    if(isJspMonitor(assignments, date)) return false;
+    if(!hasActiveDomainOi(assignments, 'JSP', date)) return false;
+    if(person && person.grade && !isJspYouthGrade(person.grade)) return false;
+    return true;
+  }
+
+  function classifyJspRole(person, assignments, date){
+    if(isJspMonitor(assignments, date)) return 'MONITEUR';
+    if(isJspYouth(person, assignments, date)) return 'JEUNE';
+    return null;
+  }
+
+  function jspParticipation(events){
+    const list = (events || []).filter((row) => String(row.domaine || row.domaineCode || '').toUpperCase() === 'JSP');
+    const expected = list.length;
+    const present = list.filter((row) => ['PRESENT', 'PERMUTATION'].includes(String(row.statutParticipation || row.statut || '').toUpperCase())).length;
+    const excused = list.filter((row) => String(row.statutParticipation || row.statut || '').toUpperCase() === 'EXCUSE').length;
+    const absent = list.filter((row) => ['ABSENT', 'NON_EXCUSE', 'ABSENT_NON_EXCUSE'].includes(String(row.statutParticipation || row.statut || '').toUpperCase())).length;
+    return {
+      expected,
+      present,
+      excused,
+      absent,
+      rate: expected ? Math.round((present / expected) * 1000) / 10 : null
+    };
+  }
+
   function countsInImportPopulation(assignments, resolved, date){
     const code = resolved && resolved.code;
     if(code === 'AUTO_VL_DPS') return countsInVlDpsEffectif(assignments, date);
     if(code === 'AUTO_PL') return countsInPlEffectif(assignments, date);
+    if(code === 'MONITEURS_JSP') return isJspMonitor(assignments, date);
+    if(code === 'JSP_NORD_VAUDOIS' || code === 'JSP_FLM_1' || code === 'JSP_FLM_2' || code === 'JSP_FLM_3'){
+      return isJspYouth(null, assignments, date);
+    }
     return true;
   }
 
@@ -583,6 +638,13 @@
     evaluateAutoSpecializations,
     evaluateAutoSpecializations: evaluateAutoSpecializations,
     countsInImportPopulation,
+    isJspYouthGrade,
+    isJspMonitor,
+    isJspYouth,
+    classifyJspRole,
+    classifyJspRole: classifyJspRole,
+    jspParticipation,
+    JSP_YOUTH_GRADES,
     countsInImportPopulation: countsInImportPopulation,
     isAssignmentActiveAt,
     isAssignmentActiveAt: isAssignmentActiveAt,

@@ -265,8 +265,9 @@ if grep -q 'delete from' netlify/functions/_data-store-postgres.js; then
 fi
 grep -q "scope-personnel-import-populations-1" netlify/functions/_scope-schema.js
 grep -q "scope-jsp-grade-model-fix-1" netlify/functions/_scope-schema.js
-grep -q "JSP_FLM_1" netlify/functions/_scope-personnel-import-contexts.js
-grep -q "jspGrade" netlify/functions/_scope-personnel-import-contexts.js
+grep -q "JSP_NORD_VAUDOIS" netlify/functions/_scope-personnel-import-contexts.js
+grep -q "MONITEURS_JSP" netlify/functions/_scope-personnel-import-contexts.js
+grep -q "classifyJspRole" netlify/functions/_scope-personnel-import-contexts.js
 grep -q "AUTO_VL_DPS" netlify/functions/_scope-personnel-import-contexts.js
 grep -q "AUTO_VL_DAP" netlify/functions/_scope-personnel-import-contexts.js
 grep -q "site_jsp" netlify/functions/_scope-personnel-service.js
@@ -297,5 +298,6 @@ fi
 grep -q "scope-personnel-import-populations.test.js" package.json
 grep -q "scope-personnel-import-ux.test.js" package.json
 grep -q "scope-personnel-import-ux-order.test.js" package.json
+grep -q "scope-jsp-populations.test.js" package.json
 
 echo "OK: controles locaux termines."

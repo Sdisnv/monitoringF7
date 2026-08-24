@@ -350,7 +350,8 @@
           commentaire: part.commentaire || '',
           inclus: true,
           role: part.role || 'PARTICIPANT',
-          origine: a.origine
+          origine: a.origine,
+          jspRole: a.jspRole || a.jsp_role || null
         };
       });
   }
@@ -1306,9 +1307,8 @@
       ['FOBA_1', 'FOBA 1'],
       ['FOBA_2', 'FOBA 2'],
       ['FOBA_3', 'FOBA 3'],
-      ['JSP_FLM_1', 'JSP — Flm 1'],
-      ['JSP_FLM_2', 'JSP — Flm 2'],
-      ['JSP_FLM_3', 'JSP — Flm 3']
+      ['JSP_NORD_VAUDOIS', 'JSP Nord vaudois'],
+      ['MONITEURS_JSP', 'Moniteurs JSP']
     ];
   }
 
@@ -1323,7 +1323,7 @@
   }
 
   function personnelImportRequiresSite(contexte) {
-    return String(contexte || '').indexOf('JSP_FLM_') === 0;
+    return false;
   }
 
   function personnelImportCount(counts, key, fallback) {
@@ -1332,7 +1332,7 @@
 
   function personnelImportSummaryHtml(counts, preview) {
     const typeLabel = (preview && (preview.contextLabel || preview.populationLabel)) || '';
-    const isJsp = Boolean(preview && (preview.siteJsp || preview.siteJspLabel || String(preview.contexte || preview.importType || '').indexOf('JSP') === 0));
+    const isJsp = Boolean(preview && (preview.siteJsp || preview.siteJspLabel));
     const people = personnelImportCount(counts, 'totalUniqueNips') || personnelImportCount(counts, 'totalLines');
     const identical = personnelImportCount(counts, 'countIdentical', 'IDENTICAL');
     const existing = personnelImportCount(counts, 'countExistingAssignments');
@@ -1726,6 +1726,19 @@
           <article class="scope-kpi"><strong>${escapeHtml(String(vol.nonExcuses || 0))}</strong><span>Non excusés</span><small>Volume factuel — pas une alerte</small></article>
           <article class="scope-kpi"><strong>${escapeHtml(String(vol.dispenses || 0))}</strong><span>Dispensés</span><small>Hors dénominateur</small></article>
         </div>
+        ${fiche.jsp && fiche.jsp.role ? `<div class="scope-card" style="margin-top:12px">
+          <h2>${fiche.jsp.role === 'JEUNE' ? 'Participation JSP' : 'Participation comme moniteur JSP'}</h2>
+          <p class="scope-mode-hint">${fiche.jsp.role === 'JEUNE'
+            ? 'Taux calculé uniquement sur les événements JSP où cette personne était attendue comme jeune.'
+            : 'Taux calculé uniquement sur les événements JSP où cette personne était attendue comme moniteur. Les exercices DPS/DAP n’y figurent pas.'}</p>
+          <div class="scope-kpis">
+            <article class="scope-kpi"><strong>${escapeHtml(fiche.jsp.participationJsp && fiche.jsp.participationJsp.rate != null ? `${fiche.jsp.participationJsp.rate} %` : '—')}</strong><span>Taux JSP</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.expected) || 0))}</strong><span>Attendus</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.present) || 0))}</strong><span>Présents</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.excused) || 0))}</strong><span>Excusés</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.absent) || 0))}</strong><span>Absents</span></article>
+          </div>
+        </div>` : ''}
         ${state.explainOpen ? `<div class="scope-card scope-explain" id="scope-explain">
           <h2>Comprendre ce chiffre</h2>
           <dl>
@@ -2133,22 +2146,29 @@
     `;
   }
 
-  function renderPreviewList() {
-    const people = (state.preview.personnes || []).filter((p) => !state.pendingRetraits.includes(p.personneId));
-    const extras = state.pendingExceptions;
-    const rows = people.concat(extras);
-    const body = rows.length ? rows.map((p) => `
+  function previewRowsHtml(rows) {
+    return rows.length ? rows.map((p) => `
       <tr>
         <td data-label="Nom">${escapeHtml(`${p.nom} ${p.prenom}`)}</td>
         <td data-label="NIP">${escapeHtml(p.nip)}</td>
         <td data-label="Cible">${escapeHtml((p.cibles || []).map((c) => c.niveauCode || c).join(' · ') || 'Exception')}</td>
-        <td data-label="Motif">${escapeHtml(p.motifInclusion === 'exception_ajout' ? 'Ajout manuel' : 'Affectation')}</td>
+        <td data-label="Motif">${escapeHtml(p.motifInclusion === 'exception_ajout' ? 'Ajout manuel' : (p.jspRole === 'MONITEUR' ? 'Moniteur JSP' : p.jspRole === 'JEUNE' ? 'Jeune JSP' : 'Affectation'))}</td>
         <td data-label="Action"><button type="button" class="scope-btn" data-retrait="${p.personneId}">Retirer</button></td>
       </tr>
     `).join('') : `<tr><td colspan="5"><div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div></td></tr>`;
+  }
+
+  function renderPreviewList() {
+    const people = (state.preview.personnes || []).filter((p) => !state.pendingRetraits.includes(p.personneId));
+    const extras = state.pendingExceptions;
+    const rows = people.concat(extras);
+    const jeunes = ((state.preview && state.preview.jeunes) || people.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId));
+    const moniteurs = ((state.preview && state.preview.moniteurs) || people.filter((p) => p.jspRole === 'MONITEUR')).filter((p) => !state.pendingRetraits.includes(p.personneId));
+    const splitJsp = Boolean(jeunes.length || moniteurs.length);
+    const body = previewRowsHtml(rows);
     return `
       <div class="scope-card" style="margin-top:12px">
-        <h3 style="margin-top:0">Attendus générés · ${rows.length}</h3>
+        <h3 style="margin-top:0">Attendus générés · ${rows.length}${splitJsp ? ` · jeunes ${jeunes.length} · moniteurs ${moniteurs.length}` : ''}</h3>
         <div class="scope-toolbar">
           <div class="scope-field" style="min-width:220px">
             <label>Ajouter une personne</label>
@@ -2160,13 +2180,34 @@
             <span>${escapeHtml(p.nom)} ${escapeHtml(p.prenom)} · ${escapeHtml(p.nip)}</span>
             <button type="button" class="scope-btn" data-add-ex="${p.personne_id}">Ajouter</button>
           </div>`).join('')}</div>` : (state.personQuery ? `<div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div>` : '')}
+        ${splitJsp ? `
+        <h3 style="margin-top:16px">JEUNES JSP · ${jeunes.length}</h3>
         <div class="scope-table-wrap">
+          <table class="scope-table">
+            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
+            <tbody>${previewRowsHtml(jeunes)}</tbody>
+          </table>
+        </div>
+        <h3 style="margin-top:16px">MONITEURS JSP · ${moniteurs.length}</h3>
+        <div class="scope-table-wrap">
+          <table class="scope-table">
+            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
+            <tbody>${previewRowsHtml(moniteurs)}</tbody>
+          </table>
+        </div>
+        ${extras.length ? `<h3 style="margin-top:16px">Ajouts manuels · ${extras.length}</h3>
+        <div class="scope-table-wrap">
+          <table class="scope-table">
+            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
+            <tbody>${previewRowsHtml(extras)}</tbody>
+          </table>
+        </div>` : ''}` : `<div class="scope-table-wrap">
           <table class="scope-table">
             <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
             <tbody>${body}</tbody>
           </table>
-        </div>
-        <p style="color:var(--scope-muted);font-size:12px">Le gel calcule la population côté serveur. Les ajouts et retraits préparés ici sont appliqués ensuite, sans envoyer une liste nominative comme source de vérité.</p>
+        </div>`}
+        <p style="color:var(--scope-muted);font-size:12px">Le gel calcule la population côté serveur. Les ajouts et retraits préparés ici sont appliqués ensuite, sans envoyer une liste nominative comme source de vérité. Les taux jeunes JSP et moniteurs JSP restent distincts.</p>
       </div>
     `;
   }
@@ -2207,9 +2248,25 @@
           <button type="button" data-cible-filter="tous" aria-pressed="${state.cibleFilter === 'tous'}">Tous</button>
           ${niveaux.map((n) => `<button type="button" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
         </div>` : ''}
+        ${(() => {
+          const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
+          const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
+          const moniteurs = filtered.filter((row) => row.jspRole === 'MONITEUR');
+          const autres = filtered.filter((row) => row.jspRole !== 'JEUNE' && row.jspRole !== 'MONITEUR');
+          if (!isJsp || !(jeunes.length || moniteurs.length)) {
+            return `<div class="scope-card" style="margin-top:12px">${filtered.length ? renderSaisieRows(filtered) : `<div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div>`}</div>`;
+          }
+          return `
         <div class="scope-card" style="margin-top:12px">
-          ${filtered.length ? renderSaisieRows(filtered) : `<div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div>`}
+          <h3 style="margin-top:0">JEUNES JSP · ${jeunes.length}</h3>
+          ${jeunes.length ? renderSaisieRows(jeunes) : `<div class="scope-empty">Aucun jeune attendu.</div>`}
         </div>
+        <div class="scope-card" style="margin-top:12px">
+          <h3 style="margin-top:0">MONITEURS JSP · ${moniteurs.length}</h3>
+          ${moniteurs.length ? renderSaisieRows(moniteurs) : `<div class="scope-empty">Aucun moniteur attendu.</div>`}
+        </div>
+        ${autres.length ? `<div class="scope-card" style="margin-top:12px"><h3 style="margin-top:0">Autres attendus · ${autres.length}</h3>${renderSaisieRows(autres)}</div>` : ''}`;
+        })()}
         <details class="scope-details scope-card" style="margin-top:12px" ${state.encadrementOpen ? 'open' : ''}>
           <summary>Encadrement</summary>
           <p style="color:var(--scope-muted);font-size:13px">Hors taux principal. Une personne déjà attendue ne peut pas être ajoutée une seconde fois.</p>
@@ -2366,6 +2423,7 @@
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
           <p style="font-size:28px;margin:8px 0 0">${escapeHtml(L.formatTaux(t.percentage))}</p>
           <p style="color:var(--scope-muted);margin-top:4px">Taux de participation officiel</p>
+          ${fiche.jsp && (fiche.jsp.tauxJeunes || fiche.jsp.tauxMoniteurs) ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes && fiche.jsp.tauxJeunes.percentage))} · Moniteurs JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxMoniteurs && fiche.jsp.tauxMoniteurs.percentage))}</p>` : ''}
           <div class="scope-kpis">
             <div class="scope-kpi"><strong>${t.presents ?? 0}</strong><span>Présents</span></div>
             <div class="scope-kpi"><strong>${t.excuses ?? 0}</strong><span>Absents excusés</span></div>

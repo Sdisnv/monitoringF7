@@ -33,6 +33,7 @@ const {
   resolveSuiviNominatif
 } = require('./_scope-model');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
+const display = require('../../assets/js/scope-personnel-display.js');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -359,6 +360,7 @@ function createScopeService(repo){
         nip: personne?.nip,
         nom: personne?.nom,
         prenom: personne?.prenom,
+        grade: personne?.grade,
         cibles: [],
         origine: row.origine || 'FIGE',
         motifInclusion: row.motif_inclusion || 'photographie_figee',
@@ -366,6 +368,29 @@ function createScopeService(repo){
       });
     }
     return { count: personnes.length, personnes, fige: true, photographie: true };
+  }
+
+
+  async function decorateJspEventPopulations(evenement, preview){
+    const result = preview || { personnes: [] };
+    const personnes = result.personnes || [];
+    if(String(evenement && evenement.domaine_code || '').toUpperCase() !== 'JSP'){
+      return Object.assign({}, result, { jeunes: [], moniteurs: [] });
+    }
+    const date = evenement.date;
+    const decorated = [];
+    for(const person of personnes){
+      const affs = repo.listAffectations
+        ? await repo.listAffectations({ personneId: person.personneId || person.personne_id, date })
+        : [];
+      const role = display.classifyJspRole({ grade: person.grade }, affs, date);
+      decorated.push(Object.assign({}, person, { jspRole: role }));
+    }
+    return Object.assign({}, result, {
+      personnes: decorated,
+      jeunes: decorated.filter((row) => row.jspRole === 'JEUNE'),
+      moniteurs: decorated.filter((row) => row.jspRole === 'MONITEUR')
+    });
   }
 
   async function previewAttendus(eventId){
@@ -378,15 +403,17 @@ function createScopeService(repo){
       throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population nominative.');
     }
     if(evenement.population_figee){
-      return photographieFigee(eventId);
+      const frozen = await photographieFigee(eventId);
+      return decorateJspEventPopulations(evenement, frozen);
     }
     const cibleIds = await repo.listEventCibleIds(eventId);
-    return resolveEligiblePopulation({
+    const preview = await resolveEligiblePopulation({
       eventDate: evenement.date,
       domaineCode: evenement.domaine_code,
       sousDomaineCode: evenement.sous_domaine_code,
       cibleIds
     });
+    return decorateJspEventPopulations(evenement, preview);
   }
 
   async function listPeriodes(personneId){
@@ -1116,7 +1143,7 @@ function createScopeService(repo){
     const cibleIds = await repo.listEventCibleIds(eventId);
     const allCibles = await repo.listCibles();
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
-    const attendus = await repo.listAttendus(eventId);
+    let attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
     const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
     const taux = computeTaux(participations, attendus);
@@ -1138,6 +1165,32 @@ function createScopeService(repo){
     if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
       legacy = await repo.getLegacyByEvenementId(eventId);
     }
+    let jsp = { jeunes: [], moniteurs: [], tauxJeunes: null, tauxMoniteurs: null };
+    if(String(evenement.domaine_code || '').toUpperCase() === 'JSP'){
+      const date = evenement.date;
+      const tagged = [];
+      for(const row of attendus){
+        const person = personnes[String(row.personne_id)] || personnes[row.personne_id];
+        const affs = repo.listAffectations
+          ? await repo.listAffectations({ personneId: row.personne_id, date })
+          : [];
+        const jspRole = display.classifyJspRole(person, affs, date);
+        tagged.push(Object.assign({}, row, { jspRole }));
+      }
+      attendus = tagged;
+      const jeunes = tagged.filter((row) => row.jspRole === 'JEUNE');
+      const moniteurs = tagged.filter((row) => row.jspRole === 'MONITEUR');
+      const jeuneIds = new Set(jeunes.map((row) => String(row.personne_id)));
+      const monitorIds = new Set(moniteurs.map((row) => String(row.personne_id)));
+      jsp = {
+        jeunes,
+        moniteurs,
+        jeunesAttendus: jeunes.filter((row) => row.inclus !== false).length,
+        moniteursAttendus: moniteurs.filter((row) => row.inclus !== false).length,
+        tauxJeunes: computeTaux(participations.filter((row) => jeuneIds.has(String(row.personne_id))), jeunes),
+        tauxMoniteurs: computeTaux(participations.filter((row) => monitorIds.has(String(row.personne_id))), moniteurs)
+      };
+    }
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi },
       cibles,
@@ -1150,6 +1203,7 @@ function createScopeService(repo){
       saisieQuantitative: saisie,
       modeSuivi,
       legacy,
+      jsp,
       version: evenement.version
     };
   }

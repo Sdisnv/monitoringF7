@@ -113,10 +113,6 @@
     const file = $('scopePersonnelFile')?.files?.[0];
     if(!file){ setStatus('Sélectionne un fichier CSV.', 'error'); return; }
     const contexte = $('scopePersonnelImportContext')?.value || 'GENERAL';
-    if(String(contexte).indexOf('JSP_FLM_') === 0 && !$('scopePersonnelImportSite')?.value){
-      setStatus('Le site JSP est obligatoire pour cet import.', 'error');
-      return;
-    }
     try{
       const fileText = await file.text();
       const payload = {

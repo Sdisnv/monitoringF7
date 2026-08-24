@@ -11,7 +11,7 @@ function csv(body){
 }
 
 function jspCsv(body){
-  return `NIP;NOM;PRENOM\n${body}`;
+  return `NIP;GRADE;NOM;PRENOM;OI\n${body}`;
 }
 
 function personRow(overrides){
@@ -259,9 +259,8 @@ async function run(){
 
   // I JSP G1 Flm 1 without general personnel — grade on person, site on assignment
   const jspG1Flm1 = previewOf({
-    contexte: 'JSP_FLM_1',
-    site: 'JSP G1',
-    file: jspCsv('JSP001;MARTIN;Lea')
+    contexte: 'JSP_NORD_VAUDOIS',
+    file: jspCsv('JSP001;Flm 1;MARTIN;Lea;JSP G1')
   });
   assert.strictEqual(jspG1Flm1.lines[0].status, 'NEW_JSP');
   assert.ok(!(jspG1Flm1.lines[0].errors || []).length);
@@ -274,9 +273,8 @@ async function run(){
 
   // J Flm 1 → Flm 2 same NIP / same site = grade change, no niveau assignment
   const jspG1Flm2 = previewOf({
-    contexte: 'JSP_FLM_2',
-    site: 'JSP G1',
-    file: jspCsv('JSP001;MARTIN;Lea'),
+    contexte: 'JSP_NORD_VAUDOIS',
+    file: jspCsv('JSP001;Flm 2;MARTIN;Lea;JSP G1'),
     persons: [personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'Flm 1' })],
     assignments: [Object.assign(aff({ domaine:'JSP', cible:'JSP G1' }), { nip:'JSP001' })]
   });
@@ -298,11 +296,10 @@ async function run(){
 
   // K JSP C1 Flm 2 — site distinct from grade
   const jspC1Flm2 = previewOf({
-    contexte: 'JSP_FLM_2',
-    site: 'JSP C1',
-    file: jspCsv('JSP002;BERNARD;Luc')
+    contexte: 'JSP_NORD_VAUDOIS',
+    file: jspCsv('JSP002;Flm 2;BERNARD;Luc;JSP C1')
   });
-  assert.notStrictEqual(jspC1Flm2.siteJsp, jspG1Flm1.siteJsp);
+  assert.notStrictEqual(jspC1Flm2.lines[0].diff.newAssignments[0].cible, jspG1Flm1.lines[0].diff.newAssignments[0].cible);
   assert.strictEqual(jspC1Flm2.lines[0].normalized.grade, 'Flm 2');
   assert.strictEqual(jspC1Flm2.lines[0].diff.newAssignments[0].cible, 'JSP C1');
   assert.ok(jspC1Flm2.lines[0].diff.newAssignments[0].niveau == null);
@@ -377,9 +374,8 @@ async function run(){
 
   // S / T idempotent reimport
   const jspSame = previewOf({
-    contexte: 'JSP_FLM_1',
-    site: 'JSP G1',
-    file: jspCsv('JSP001;MARTIN;Lea'),
+    contexte: 'JSP_NORD_VAUDOIS',
+    file: jspCsv('JSP001;Flm 1;MARTIN;Lea;JSP G1'),
     persons: [jspPerson],
     assignments: [jspAff]
   });
@@ -425,9 +421,8 @@ async function run(){
 
   // W site change same person — grade unchanged, new site assignment
   const siteChange = previewOf({
-    contexte: 'JSP_FLM_2',
-    site: 'JSP C1',
-    file: jspCsv('JSP001;MARTIN;Lea'),
+    contexte: 'JSP_NORD_VAUDOIS',
+    file: jspCsv('JSP001;Flm 2;MARTIN;Lea;JSP C1'),
     persons: [personRow({ nip:'JSP001', nom:'MARTIN', prenom:'Lea', grade:'Flm 2' })],
     assignments: [Object.assign(aff({ domaine:'JSP', cible:'JSP G1' }), { nip:'JSP001' })]
   });
@@ -483,15 +478,14 @@ async function run(){
   const jspMemory = createMemoryDb();
   installDb(jspMemory);
   await svc.commitImport({
-    fileText: jspCsv('JSP009;NOEL;Anne'),
+    fileText: jspCsv('JSP009;Flm 1;NOEL;Anne;JSP G1'),
     filename: 'jsp.csv',
-    contexte: 'JSP_FLM_1',
-    siteJsp: 'JSP G1',
+    contexte: 'JSP_NORD_VAUDOIS',
     anneeMonitoring: 2026,
     confirmed: true
   }, 'tester');
-  assert.strictEqual(jspMemory.batches[0].contexte, 'JSP_FLM_1');
-  assert.strictEqual(jspMemory.batches[0].site_jsp, 'JSP G1');
+  assert.strictEqual(jspMemory.batches[0].contexte, 'JSP_NORD_VAUDOIS');
+  assert.ok(jspMemory.batches[0].site_jsp === 'JSP G1' || jspMemory.batches[0].site_jsp == null);
   assert.strictEqual(jspMemory.persons.size, 1);
   assert.strictEqual(jspMemory.persons.get('JSP009').grade, 'Flm 1');
   assert.strictEqual(jspMemory.assignments[0].cible, 'JSP G1');
@@ -501,10 +495,9 @@ async function run(){
   // AC date_entree_sdis not overwritten by empty
   const existingDate = jspMemory.persons.get('JSP009').date_entree_sdis;
   await svc.commitImport({
-    fileText: jspCsv('JSP009;NOEL;Anne'),
+    fileText: jspCsv('JSP009;Flm 1;NOEL;Anne;JSP G1'),
     filename: 'jsp2.csv',
-    contexte: 'JSP_FLM_1',
-    siteJsp: 'JSP G1',
+    contexte: 'JSP_NORD_VAUDOIS',
     anneeMonitoring: 2026,
     confirmed: true
   }, 'tester');
@@ -517,11 +510,13 @@ async function run(){
   const contexts = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8');
   assert.ok(contexts.includes('AUTO_VL_DPS'));
   assert.ok(contexts.includes('AUTO_VL_DAP'));
-  assert.ok(contexts.includes("jspGrade: 'Flm 1'"));
+  assert.ok(contexts.includes('JSP_NORD_VAUDOIS'));
+  assert.ok(contexts.includes('MONITEURS_JSP'));
+  assert.ok(contexts.includes("return 'Flm 1'"));
   assert.ok(!contexts.includes('JSP_G1_FLM1'));
   assert.ok(!contexts.includes('jspFlamme:'));
 
-  const allContexts = ['GENERAL', 'PAPR', 'AUTO_VL_DPS', 'AUTO_VL_DAP', 'AUTO_PL', 'FOBA_1', 'FOBA_2', 'FOBA_3', 'JSP_FLM_1', 'JSP_FLM_2', 'JSP_FLM_3'];
+  const allContexts = ['GENERAL', 'PAPR', 'AUTO_VL_DPS', 'AUTO_VL_DAP', 'AUTO_PL', 'FOBA_1', 'FOBA_2', 'FOBA_3', 'JSP_NORD_VAUDOIS', 'MONITEURS_JSP'];
   allContexts.forEach((code) => {
     const resolved = svc.resolveImportContext(code);
     const site = resolved.requiresSite ? { code: 'JSP G1', label: 'JSP G1' } : null;

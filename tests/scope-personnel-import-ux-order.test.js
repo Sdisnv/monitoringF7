@@ -143,7 +143,7 @@ function run(){
   const planned = svc.planCommitMutations(plPreview, []);
   assert.strictEqual(planned.personInserts.length + planned.personUpdates.length + planned.assignmentInserts.length + planned.assignmentClosures.length, 0);
 
-  ['PAPR', 'AUTO_VL_DPS', 'AUTO_VL_DAP', 'AUTO_PL', 'FOBA_1', 'FOBA_2', 'FOBA_3', 'JSP_FLM_1'].forEach((code) => {
+  ['PAPR', 'AUTO_VL_DPS', 'AUTO_VL_DAP', 'AUTO_PL', 'FOBA_1', 'FOBA_2', 'FOBA_3', 'JSP_NORD_VAUDOIS', 'MONITEURS_JSP'].forEach((code) => {
     const resolved = svc.resolveImportContext(code);
     assert.ok(resolved && resolved.code, code);
   });

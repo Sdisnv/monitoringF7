@@ -225,19 +225,42 @@ function normalizeRows(rows, contexte, siteJsp){
     } else if(oiErrors.length && clean(row.organes)){
       oiErrors.forEach(a => warnings.push(a.error));
     }
-    const assignments = resolved.persistOi
+    let siteFromRow = siteJsp;
+    let assignments = resolved.persistOi
       ? oiValid
       : (ctx.contextAssignment(resolved, siteJsp) ? [ctx.contextAssignment(resolved, siteJsp)] : []);
-    if(resolved.family === 'JSP' && (!siteJsp || !siteJsp.code)){
+    if(resolved.siteFromFile){
+      const jspOi = oiValid.find((row) => row.domaine === 'JSP');
+      siteFromRow = jspOi ? ctx.normalizeJspSite(jspOi.cible) : ctx.normalizeJspSite(row.organes);
+      if(!siteFromRow){
+        errors.push('Site JSP inconnu.');
+        assignments = [];
+      } else {
+        assignments = [ctx.contextAssignment(resolved, siteFromRow) || {
+          categorie: 'OI',
+          domaine: 'JSP',
+          cible: siteFromRow.code,
+          role_domaine: 'PRINCIPAL'
+        }];
+      }
+    } else if(resolved.family === 'JSP' && (!siteJsp || !siteJsp.code)){
       errors.push('Site JSP obligatoire.');
+    }
+    let grade = clean(row.grade);
+    if(resolved.gradeFromFile || resolved.jspPopulation === 'JEUNES'){
+      grade = ctx.normalizeJspGrade(row.grade);
+      if(!ctx.isJspYouthGrade(grade)) errors.push('Grade JSP inconnu.');
+    } else if(resolved.family === 'JSP' && resolved.jspGrade){
+      grade = resolved.jspGrade;
     }
     const normalized = {
       nip,
-      grade: resolved.family === 'JSP' ? resolved.jspGrade : clean(row.grade),
+      grade,
       prenom: clean(row.prenom),
       nom: clean(row.nom),
       assignments,
-      oiFromFile: oiValid
+      oiFromFile: oiValid,
+      siteJsp: siteFromRow ? siteFromRow.code : null
     };
     if(nip){
       const prev = seen.get(nip);
@@ -289,6 +312,18 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
     principalChanges: [],
     otherPopulations: open.filter((row) => !ctx.assignmentMatchesContext(row, resolved, siteJsp)).map(ctx.specializationLabel).filter(Boolean)
   };
+  if(resolved.jspPopulation === 'MONITEURS'){
+    if(!existingPerson){
+      errors.push('Moniteur JSP absent du personnel SDIS');
+    } else {
+      n.grade = clean(existingPerson.grade);
+      diff.identity.grade.proposed = n.grade;
+      const probe = (existingAssignments || []).concat(n.oiFromFile || []).concat(incoming);
+      if(!ctx.hasActiveOi(probe, ['DPS', 'DAP'], dateActif)){
+        errors.push('Moniteur JSP sans OI SDIS actif');
+      }
+    }
+  }
   if(errors.length){
     return {
       status: 'ERROR',
@@ -348,7 +383,8 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
     otherFoba.forEach((row) => warnings.push(`FOBA ${ctx.normalizeFobaCible(row.cible)} déjà actif — non clôturé automatiquement.`));
   }
   if(resolved.family === 'JSP'){
-    const otherJsp = open.filter((row) => row.domaine === 'JSP' && row.cible !== (siteJsp && siteJsp.code) && !row.date_inactif);
+    const siteCode = n.siteJsp || (siteJsp && siteJsp.code);
+    const otherJsp = open.filter((row) => row.domaine === 'JSP' && row.cible !== siteCode && !row.date_inactif);
     otherJsp.forEach((row) => warnings.push(`${ctx.specializationLabel(row)} déjà actif — non clôturé automatiquement.`));
   }
   const infos = [];
@@ -503,6 +539,11 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     counts,
     lines
   };
+  const sites = [...new Set((preview.lines || []).map((line) => line.normalized && line.normalized.siteJsp).filter(Boolean))];
+  if(!preview.siteJsp && sites.length === 1){
+    preview.siteJsp = sites[0];
+    preview.siteJspLabel = sites[0];
+  }
   const planned = planCommitMutations(preview, []);
   preview.needsWrite = Boolean(
     planned.personInserts.length
@@ -529,7 +570,7 @@ async function loadJspSites(){
 }
 
 async function resolveSiteOrThrow(resolved, rawSite){
-  if(!resolved.requiresSite) return null;
+  if(!resolved.requiresSite) return rawSite ? ctx.normalizeJspSite(rawSite) : null;
   const allowed = await loadJspSites();
   const site = ctx.normalizeJspSite(rawSite, allowed);
   if(!site){
@@ -580,11 +621,24 @@ function buildPopulationQuery(resolved, siteJsp){
   let where = `p.archived_at is null and a.date_inactif is null`;
   if(resolved.family === 'GENERAL'){
     where += ` and a.categorie='OI' and a.domaine in ('DPS','DAP')`;
+  } else if(resolved.jspPopulation === 'MONITEURS'){
+    where += ` and a.categorie='OI' and a.domaine='JSP'
+      and exists (
+        select 1 from scope_affectations sdis
+        where sdis.personne_id = p.id and sdis.categorie='OI' and sdis.domaine in ('DPS','DAP')
+          and sdis.date_inactif is null
+      )`;
   } else if(resolved.family === 'JSP'){
-    params.push(siteJsp.code, resolved.jspGrade);
-    where += ` and a.categorie='OI' and a.domaine='JSP' and a.cible=$1
-      and replace(replace(upper(coalesce(p.grade,'')), '_', ' '), 'FLAMME ', 'FLM ')
-        = replace(replace(upper($2::text), '_', ' '), 'FLAMME ', 'FLM ')`;
+    where += ` and a.categorie='OI' and a.domaine='JSP'
+      and not exists (
+        select 1 from scope_affectations sdis
+        where sdis.personne_id = p.id and sdis.categorie='OI' and sdis.domaine in ('DPS','DAP')
+          and sdis.date_inactif is null
+      )`;
+    if(siteJsp && siteJsp.code){
+      params.push(siteJsp.code);
+      where += ` and a.cible=$${params.length}`;
+    }
   } else if(resolved.specialization){
     const spec = resolved.specialization;
     params.push(spec.categorie, spec.domaine, spec.cible);
@@ -658,6 +712,12 @@ function planCommitMutations(preview, decisions){
     if(seenNips.has(nip)) return;
     seenNips.add(nip);
     const created = Boolean(line.diff && line.diff.person && line.diff.person.created);
+    const ctxCode = preview.contexte || preview.importType;
+    const resolvedCtx = ctx.resolveImportContext(ctxCode);
+    if(resolvedCtx.jspPopulation === 'MONITEURS' && created){
+      mutations.skipped.push({ nip, decision, status: line.status, reason: 'moniteur_absent_personnel' });
+      return;
+    }
     if(created && (decision === 'CREER' || decision === 'APPLIQUER')){
       mutations.personInserts.push({
         nip,
@@ -666,12 +726,14 @@ function planCommitMutations(preview, decisions){
         prenom: line.normalized.prenom || null
       });
     } else if(line.status === 'MODIFIED' && (decision === 'APPLIQUER' || decision === 'MODIFIER_IDENTITE')){
-      mutations.personUpdates.push({
-        nip,
-        grade: line.normalized.grade || null,
-        nom: line.normalized.nom || null,
-        prenom: line.normalized.prenom || null
-      });
+      if(resolvedCtx.jspPopulation !== 'MONITEURS'){
+        mutations.personUpdates.push({
+          nip,
+          grade: line.normalized.grade || null,
+          nom: line.normalized.nom || null,
+          prenom: line.normalized.prenom || null
+        });
+      }
     }
     (line.diff.newAssignments || []).forEach((assignment) => {
       mutations.assignmentInserts.push({
@@ -1057,5 +1119,8 @@ module.exports = {
   sqlPlaceholderArity,
   visibleImportContexts: ctx.visibleImportContexts,
   resolveImportContext: ctx.resolveImportContext,
-  IMPORT_CONTEXTS: ctx.IMPORT_CONTEXTS
+  IMPORT_CONTEXTS: ctx.IMPORT_CONTEXTS,
+  isJspMonitor: ctx.isJspMonitor,
+  isJspYouth: ctx.isJspYouth,
+  classifyJspRole: ctx.classifyJspRole
 };
