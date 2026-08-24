@@ -31,9 +31,13 @@ function listLike(people, opts){
   const asOf = temporal.iso(opts && opts.asOf);
   const status = String((opts && opts.statut) || 'actifs').toLowerCase();
   const decorated = (people || []).map((row) => Object.assign({}, row, {
-    statutTemporel: temporal.evaluateStatus(row, period, asOf)
+    statutTemporel: temporal.evaluateStatus(row, period, asOf),
+    relevantTemporel: asOf
+      ? temporal.personRelevantAtDate(row, asOf)
+      : temporal.personRelevantInPeriod(row, period)
   }));
   const filtered = decorated.filter((row) => {
+    if(row.relevantTemporel === false) return false;
     if(status === 'tous' || status === 'all') return true;
     if(status === 'inactifs' || status === 'inactif') return row.statutTemporel === 'inactif';
     return row.statutTemporel === 'actif';
@@ -89,7 +93,7 @@ const closedApr = person([aff('2026-01-01', planApr.dernierJourActif)], {
 assert.ok(temporal.personActiveAtDate(closedApr, '2026-04-19'));
 assert.ok(!temporal.personActiveAtDate(closedApr, '2026-04-20'));
 assert.ok(!temporal.personActiveAtDate(closedApr, '2026-04-21'));
-assert.strictEqual(temporal.evaluateStatus(closedApr, year2026), 'actif');
+assert.strictEqual(temporal.evaluateStatus(closedApr, year2026), 'inactif');
 assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, '2026-04-20'), 'inactif');
 
 // TEMP-05 inactivation métier 01.01.2026
@@ -125,7 +129,7 @@ assert.ok(temporal.personActiveInPeriod(only2026, year2026));
 
 // TEMP-09 Situation au ≠ chevauchement annuel
 assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, '2026-04-20'), 'inactif');
-assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, ''), 'actif');
+assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, ''), 'inactif');
 
 // TEMP-10 compteur = même filtre serveur
 assert.strictEqual(list2026.count, list2026.personnes.length);
@@ -144,8 +148,20 @@ assert.strictEqual(mutated.after.affectations.find((row) => row.id === 'future-s
 assert.strictEqual(mutated.journal.action, 'INACTIVER');
 assert.ok(temporal.personActiveAtDate(mutated.after, '2026-04-19'));
 assert.ok(!temporal.personActiveAtDate(mutated.after, '2026-04-20'));
-assert.strictEqual(listLike([mutated.after], { preset: 'YEAR', year: '2026', statut: 'actifs' }).count, 1);
+assert.strictEqual(listLike([mutated.after], { preset: 'YEAR', year: '2026', statut: 'actifs' }).count, 0);
+assert.strictEqual(listLike([mutated.after], { preset: 'YEAR', year: '2026', statut: 'inactifs' }).count, 1);
 assert.strictEqual(listLike([mutated.after], { preset: 'YEAR', year: '2026', statut: 'actifs', asOf: '2026-04-20' }).count, 0);
+
+// Régression réelle MOA : une période ACTIF backfill 2020 ne doit pas faire
+// apparaître en 2025 une personne dont la première affectation commence en 2026.
+const legacyBackfill = person([aff('2026-01-01', null)], {
+  nip: 'BACKFILL-2026',
+  periodes: [{ type: 'ACTIF', date_debut: '2020-01-01', date_fin: null, source: 'BACKFILL' }]
+});
+assert.strictEqual(temporal.personRelevantInPeriod(legacyBackfill, year2025), false);
+assert.strictEqual(listLike([legacyBackfill], { preset: 'YEAR', year: '2025', statut: 'tous' }).count, 0);
+assert.strictEqual(listLike([legacyBackfill], { preset: 'YEAR', year: '2025', statut: 'inactifs' }).count, 0);
+assert.strictEqual(listLike([legacyBackfill], { preset: 'YEAR', year: '2026', statut: 'actifs' }).count, 1);
 
 const service = fs.readFileSync(path.join(__dirname, '../netlify/functions/_scope-personnel-service.js'), 'utf8');
 assert.ok(service.includes('planAssignmentClosures'));

@@ -1024,10 +1024,14 @@ async function listPersonnel({ q='', domaine='', cible='', statut='', from='', t
     const personPeriodes = periodes.filter((row) => row.personne_id === person.id);
     const bundle = Object.assign({}, person, { affectations, periodes: personPeriodes });
     const statutTemporel = temporal.evaluateStatus ? temporal.evaluateStatus(bundle, period, asOfDay) : temporal.temporalStatus(bundle, period);
+    const relevantTemporel = asOfDay
+      ? (temporal.personRelevantAtDate ? temporal.personRelevantAtDate(bundle, asOfDay) : true)
+      : (temporal.personRelevantInPeriod ? temporal.personRelevantInPeriod(bundle, period) : true);
     const window = temporal.activityWindow(bundle, period, asOfDay);
     return Object.assign(bundle, {
       statutTemporel,
       temporalStatus: statutTemporel,
+      relevantTemporel,
       dateActif: window.from || '',
       dateInactif: window.to || '',
       period,
@@ -1036,6 +1040,7 @@ async function listPersonnel({ q='', domaine='', cible='', statut='', from='', t
     });
   });
   const filtered = decorated.filter((person) => {
+    if(person.relevantTemporel === false) return false;
     if(status === 'tous' || status === 'all') return true;
     if(status === 'inactifs' || status === 'inactif' || status === 'inactive') return person.statutTemporel === 'inactif';
     if(status === 'archives' || status === 'archived') return person.statutTemporel === 'inactif';
@@ -1194,12 +1199,12 @@ async function inactivatePersonne(id, body, actor){
     throw error;
   }
   const toClose = closures.close.concat(closures.sameDay);
-  for(const item of toClose){
-    const aff = item.assignment;
-    await getDb().query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [aff.id, item.dateInactif]);
-  }
-  try {
-    const openPeriodes = await getDb().query(
+  await getDb().transaction(async (tx) => {
+    for(const item of toClose){
+      const aff = item.assignment;
+      await tx.query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [aff.id, item.dateInactif]);
+    }
+    const openPeriodes = await tx.query(
       `select * from scope_personne_periodes where personne_id=$1 and date_fin is null and type in ('ACTIF','INDISPONIBLE')`,
       [id]
     );
@@ -1207,27 +1212,29 @@ async function inactivatePersonne(id, body, actor){
       const start = temporal.iso(row.date_debut);
       let dateFin = plan.dernierJourActif;
       if(!dateFin || (start && dateFin < start)) dateFin = start;
-      await getDb().query(`update scope_personne_periodes set date_fin=$2::date, updated_at=now() where periode_id=$1`, [row.periode_id, dateFin]);
+      await tx.query(`update scope_personne_periodes set date_fin=$2::date, updated_at=now() where periode_id=$1`, [row.periode_id, dateFin]);
     }
-    await getDb().query(
+    await tx.query(
       `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
        values ($1,$2,'SORTI',$3::date,null,$4,'MANUEL')`,
       [rid(), id, dateEffet, (body && body.commentaire) || 'Inactivation manuelle']
     );
-  } catch (_error) { /* periodes absentes : les affectations restent la source opérationnelle */ }
-  await appendPersonnelJournal({
-    auteurId: actor && (actor.sub || actor.id || actor.email),
-    entite: 'personne',
-    entiteId: id,
-    action: 'INACTIVER',
-    avant: { affectations: existing.affectations, statutTemporel: existing.statutTemporel },
-    apres: {
-      dateEffet,
-      dernierJourActif: plan.dernierJourActif,
-      affectationsCloturees: toClose.map((item) => item.assignment.id),
-      affectationsFuturesConservees: closures.future.map((item) => item.assignment.id)
-    },
-    commentaire: (body && body.commentaire) || 'Inactivation manuelle'
+    await tx.query(
+      `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
+       values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8)`,
+      [
+        rid(), actor && (actor.sub || actor.id || actor.email) || null,
+        'personne', String(id), 'INACTIVER',
+        JSON.stringify({ affectations: existing.affectations, statutTemporel: existing.statutTemporel }),
+        JSON.stringify({
+          dateEffet,
+          dernierJourActif: plan.dernierJourActif,
+          affectationsCloturees: toClose.map((item) => item.assignment.id),
+          affectationsFuturesConservees: closures.future.map((item) => item.assignment.id)
+        }),
+        (body && body.commentaire) || 'Inactivation manuelle'
+      ]
+    );
   });
   return getPersonne(id, { asOf: dateEffet });
 }

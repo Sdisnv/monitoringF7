@@ -122,13 +122,19 @@
   function personActiveInPeriod(person, period){
     const p = resolveAnalyzedPeriod(period || {});
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
-    if(assignments.some((row) => assignmentOverlapsPeriod(row, p))) return true;
+    if(assignments.length){
+      return assignments.some((row) => assignmentOverlapsPeriod(row, p));
+    }
     const periodes = (person && (person.periodes || [])) || [];
     return periodes.some((row) => {
       const type = String(row.type || '').toUpperCase();
       if(type !== 'ACTIF') return false;
       return rangesOverlap(row.date_debut || row.dateDebut, row.date_fin || row.dateFin, p.from, p.to);
     });
+  }
+
+  function personRelevantInPeriod(person, period){
+    return personActiveInPeriod(person, period);
   }
 
   function coveringPeriodes(person, day){
@@ -146,9 +152,26 @@
     })) return false;
     if(covering.some((row) => String(row.type || '').toUpperCase() === 'INDISPONIBLE')) return false;
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
-    if(assignments.some((row) => assignmentCoversDate(row, day))) return true;
+    if(assignments.length) return assignments.some((row) => assignmentCoversDate(row, day));
     if(covering.some((row) => String(row.type || '').toUpperCase() === 'ACTIF')) return true;
     return false;
+  }
+
+  function personRelevantAtDate(person, date){
+    const day = iso(date);
+    if(!day) return false;
+    const assignments = (person && (person.affectations || person.assignments || [])) || [];
+    if(assignments.length){
+      return assignments.some((row) => {
+        const b = assignmentBounds(row);
+        return Boolean(b.from && b.from <= day);
+      });
+    }
+    const periodes = (person && (person.periodes || [])) || [];
+    return periodes.some((row) => {
+      const start = iso(row.date_debut || row.dateDebut);
+      return Boolean(start && start <= day);
+    });
   }
 
   function activityWindow(person, period, asOf){
@@ -171,7 +194,8 @@
   }
 
   function temporalStatus(person, period){
-    return personActiveInPeriod(person, period) ? 'actif' : 'inactif';
+    const p = resolveAnalyzedPeriod(period || {});
+    return personActiveAtDate(person, p.to) ? 'actif' : 'inactif';
   }
 
   function evaluateStatus(person, period, asOf){
@@ -236,7 +260,9 @@
     assignmentOverlapsPeriod,
     assignmentCoversDate,
     personActiveInPeriod,
+    personRelevantInPeriod,
     personActiveAtDate,
+    personRelevantAtDate,
     activityWindow,
     temporalStatus,
     evaluateStatus,
