@@ -41,7 +41,7 @@
     { code: 'Civ', libelle: 'Civil', rang: 201, famille: 'CIVIL' }
   ]);
 
-  const GRADES = Object.freeze(SDIS_GRADES.concat(JSP_GRADES, CIVIL_GRADES));
+  const GRADES = Object.freeze(CIVIL_GRADES.concat(JSP_GRADES, SDIS_GRADES));
   const GRADE_CODES_ASC = Object.freeze(GRADES.map((row) => row.code));
   const UNKNOWN_GRADE_BASE = 1000;
   const FR = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });

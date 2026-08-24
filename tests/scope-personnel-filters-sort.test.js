@@ -120,5 +120,7 @@ assert.ok(ui.includes('personnel-specialization'));
 assert.ok(ui.includes("personnelSortHeader('nip', 'NIP')"));
 assert.ok(!ui.includes('OI principal'));
 assert.ok(!ui.includes('OI PRINCIPAL'));
+assert.ok(ui.includes('<optgroup'));
+assert.deepStrictEqual(display.operationalOiGroups([]).map((g)=>g.label), ['DPS','DAP','JSP']);
 
 console.log('scope-personnel-filters-sort.test.js PASS');

@@ -1,4 +1,8 @@
-/* SCOPE-PERSONNEL-TEMPORAL-UX-1 — période analysée, actif/inactif métier, MODEL-2. */
+/* SCOPE-PERSONNEL-TEMPORAL-UX-R1
+   Source métier : scope_affectations.date_actif / date_inactif
+   (périodes ACTIF en complément). Jamais created_at / imported_at.
+   MODEL-2 : date_inactif = dernier jour actif inclus.
+   Inactivité au 14.07 → dernier jour actif 13.07. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -7,8 +11,19 @@
   'use strict';
 
   function iso(value){
-    const text = String(value == null ? '' : value).trim().slice(0, 10);
-    return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : '';
+    if(value == null || value === '') return '';
+    if(value instanceof Date && !Number.isNaN(value.getTime())){
+      const y = value.getFullYear();
+      const m = String(value.getMonth() + 1).padStart(2, '0');
+      const d = String(value.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    const text = String(value).trim();
+    const isoMatch = text.match(/^(\d{4}-\d{2}-\d{2})/);
+    if(isoMatch) return isoMatch[1];
+    const swiss = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if(swiss) return `${swiss[3]}-${swiss[2]}-${swiss[1]}`;
+    return '';
   }
 
   function addDays(date, days){
@@ -31,22 +46,17 @@
 
   function resolveAnalyzedPeriod(input){
     const src = input || {};
-    const asOf = iso(src.asOf || src.situationAu);
-    if(asOf) return { from: asOf, to: asOf, preset: 'AS_OF', year: asOf.slice(0, 4) };
     const fromHint = iso(src.from);
     const toHint = iso(src.to);
-    if(fromHint && toHint && !src.preset){
-      return { from: fromHint, to: toHint, preset: 'CUSTOM', year: fromHint.slice(0, 4) };
-    }
     const preset = String(src.preset || src.mode || 'YEAR').toUpperCase();
     const year = String(src.year || (fromHint || '2026').slice(0, 4));
-    if(preset === 'CUSTOM' || preset === 'PERSONNALISEE' || preset === 'PERSONNALISE' || (fromHint && toHint && preset !== 'YEAR' && preset !== 'MONTH' && preset !== 'QUARTER')){
-      const from = fromHint || `${year}-01-01`;
-      const to = toHint || `${year}-12-31`;
-      return { from, to, preset: 'CUSTOM', year };
-    }
-    if(fromHint && toHint && String(src.preset || '').toUpperCase() === 'CUSTOM'){
-      return { from: fromHint, to: toHint, preset: 'CUSTOM', year };
+    if(preset === 'CUSTOM' || preset === 'PERSONNALISEE' || preset === 'PERSONNALISE'){
+      return {
+        from: fromHint || `${year}-01-01`,
+        to: toHint || `${year}-12-31`,
+        preset: 'CUSTOM',
+        year
+      };
     }
     if(preset === 'MONTH'){
       const month = String(src.month || '1').padStart(2, '0');
@@ -85,7 +95,7 @@
 
   function assignmentBounds(assignment){
     if(!assignment || typeof assignment === 'string') return { from: '', to: '' };
-    const from = iso(assignment.dateActif || assignment.date_actif || assignment.dateDebut || assignment.date_debut || assignment.date_actif);
+    const from = iso(assignment.dateActif || assignment.date_actif || assignment.dateDebut || assignment.date_debut);
     const to = iso(assignment.dateInactif || assignment.date_inactif || assignment.dateFin || assignment.date_fin);
     return { from, to };
   }
@@ -107,18 +117,20 @@
   }
 
   function personActiveInPeriod(person, period){
+    const p = resolveAnalyzedPeriod(period || {});
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
-    if(assignments.some((row) => assignmentOverlapsPeriod(row, period))) return true;
+    if(assignments.some((row) => assignmentOverlapsPeriod(row, p))) return true;
     const periodes = (person && (person.periodes || [])) || [];
     return periodes.some((row) => {
       const type = String(row.type || '').toUpperCase();
       if(type !== 'ACTIF') return false;
-      return rangesOverlap(row.date_debut || row.dateDebut, row.date_fin || row.dateFin, period.from, period.to);
+      return rangesOverlap(row.date_debut || row.dateDebut, row.date_fin || row.dateFin, p.from, p.to);
     });
   }
 
   function personActiveAtDate(person, date){
     const day = iso(date);
+    if(!day) return false;
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
     if(assignments.some((row) => assignmentCoversDate(row, day))) return true;
     const periodes = (person && (person.periodes || [])) || [];
@@ -133,8 +145,9 @@
   }
 
   function activityWindow(person, period){
+    const p = resolveAnalyzedPeriod(period || {});
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
-    const overlapping = assignments.filter((row) => assignmentOverlapsPeriod(row, period));
+    const overlapping = assignments.filter((row) => assignmentOverlapsPeriod(row, p));
     const source = overlapping.length ? overlapping : assignments;
     let from = '';
     let to = '';
@@ -151,6 +164,12 @@
 
   function temporalStatus(person, period){
     return personActiveInPeriod(person, period) ? 'actif' : 'inactif';
+  }
+
+  function evaluateStatus(person, period, asOf){
+    const day = iso(asOf);
+    if(day) return personActiveAtDate(person, day) ? 'actif' : 'inactif';
+    return temporalStatus(person, period);
   }
 
   function planInactivation(effectDate){
@@ -180,12 +199,9 @@
     personActiveAtDate,
     activityWindow,
     temporalStatus,
+    evaluateStatus,
     planInactivation,
     appliesToFrozenEventPopulation,
-    resolveAnalyzedPeriod: resolveAnalyzedPeriod,
-    temporalStatus: temporalStatus,
-    activityWindow: activityWindow,
-    iso: iso,
-    rangesOverlap: rangesOverlap
+    SOURCE_METIER: 'scope_affectations.date_actif/date_inactif'
   };
 });

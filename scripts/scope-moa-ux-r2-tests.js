@@ -150,9 +150,9 @@ async function record(name, fn) {
     assert.ok(html.includes('scope-moa-ux-r2'));
     assert.ok(html.includes('scope-ui-logic.js?v=scope-moa-ux-r2'));
     assert.ok(html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-personnel-temporal-ux-1'));
-    assert.ok(html.includes('scope-personnel-display.js?v=scope-personnel-temporal-ux-1'));
-    assert.ok(html.includes('scope-ui.js?v=scope-personnel-temporal-ux-1'));
+    assert.ok(html.includes('scope.css?v=scope-personnel-temporal-ux-r1'));
+    assert.ok(html.includes('scope-personnel-display.js?v=scope-personnel-temporal-ux-r1'));
+    assert.ok(html.includes('scope-ui.js?v=scope-personnel-temporal-ux-r1'));
   });
 
   await record('17 — période hors header', async () => {

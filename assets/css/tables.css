@@ -3,7 +3,7 @@
 .scope-table th[data-sort]{cursor:pointer;}
 .scope-table th[data-sort]::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.32;}
 .scope-table tbody tr:nth-child(odd){background:#fff;}
-.scope-table tbody tr:nth-child(even){background:#f4f6f8;}
+.scope-table tbody tr:nth-child(even){background:#e6e9ee;}
 .scope-table tbody tr:hover{background:#e8eef8;}
 .scope-table tbody tr.is-selected,
 .scope-table tbody tr[aria-selected="true"]{background:#dbe7fb;}

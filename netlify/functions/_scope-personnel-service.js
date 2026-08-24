@@ -979,15 +979,16 @@ function mapAssignment(row){
     domaine: row.domaine,
     cible: row.cible,
     roleDomaine: row.role_domaine,
-    dateActif: row.date_actif,
-    dateInactif: row.date_inactif,
+    dateActif: temporal.iso(row.date_actif),
+    dateInactif: temporal.iso(row.date_inactif) || null,
     sourceImportBatchId: row.source_import_batch_id
   };
 }
 
-async function listPersonnel({ q='', domaine='', cible='', statut='', from='', to='', preset='', year='', asOf='' } = {}){
+async function listPersonnel({ q='', domaine='', cible='', statut='', from='', to='', preset='', year='', asOf='', month='', quarter='' } = {}){
   await ensureScopeSchema();
-  const period = temporal.resolveAnalyzedPeriod({ from, to, preset, year, asOf, month: arguments[0] && arguments[0].month, quarter: arguments[0] && arguments[0].quarter });
+  const asOfDay = temporal.iso(asOf);
+  const period = temporal.resolveAnalyzedPeriod({ from, to, preset, year, month, quarter });
   const values = [];
   const where = [];
   if(q){
@@ -1022,7 +1023,7 @@ async function listPersonnel({ q='', domaine='', cible='', statut='', from='', t
     const affectations = assignments.filter((a) => a.personneId === person.id);
     const personPeriodes = periodes.filter((row) => row.personne_id === person.id);
     const bundle = Object.assign({}, person, { affectations, periodes: personPeriodes });
-    const statutTemporel = temporal.temporalStatus(bundle, period);
+    const statutTemporel = temporal.evaluateStatus ? temporal.evaluateStatus(bundle, period, asOfDay) : temporal.temporalStatus(bundle, period);
     const window = temporal.activityWindow(bundle, period);
     return Object.assign(bundle, {
       statutTemporel,
@@ -1071,7 +1072,7 @@ async function getPersonne(id, opts = {}){
     journal
   });
   const period = temporal.resolveAnalyzedPeriod(opts);
-  const statutTemporel = temporal.temporalStatus(mapped, period);
+  const statutTemporel = temporal.evaluateStatus ? temporal.evaluateStatus(mapped, period, opts.asOf) : temporal.temporalStatus(mapped, period);
   const window = temporal.activityWindow(mapped, period);
   return Object.assign(mapped, {
     statutTemporel,
@@ -1316,14 +1317,23 @@ async function correctAffectationPeriod(affectationId, body, actor){
   return getPersonne(row.personne_id, {});
 }
 
-function importTypeLabel(type){
+function importTypeLabel(type, extra){
   const raw = String(type || '').toUpperCase();
-  if(raw === 'GENERAL' || raw === 'PERSONNEL_GENERAL') return 'Import Personnel général';
-  if(raw.indexOf('PAPR') >= 0) return 'Import PAPR';
-  if(raw.indexOf('FOBA') >= 0) return 'Import FOBA';
-  if(raw.indexOf('AUTO') >= 0) return 'Import AUTO';
-  if(raw.indexOf('JSP') >= 0) return 'Import JSP';
-  return 'Mise à jour Personnel';
+  try {
+    const resolved = ctx.resolveImportContext(raw);
+    if(resolved && resolved.label) return resolved.label;
+  } catch (_error) {}
+  if(raw === 'GENERAL' || raw === 'PERSONNEL_GENERAL') return 'Personnel général';
+  if(raw.indexOf('PAPR') >= 0) return 'PAPR';
+  if(raw === 'AUTO_PL' || raw.indexOf('PL') >= 0 && raw.indexOf('AUTO') >= 0) return 'cond PL';
+  if(raw.indexOf('VL_DPS') >= 0) return 'cond VL — DPS';
+  if(raw.indexOf('VL_DAP') >= 0) return 'cond VL — DAP';
+  if(raw.indexOf('FOBA_1') >= 0 || raw.indexOf('FOBA 1') >= 0) return 'FOBA 1';
+  if(raw.indexOf('FOBA_2') >= 0) return 'FOBA 2';
+  if(raw.indexOf('FOBA_3') >= 0) return 'FOBA 3';
+  if(raw.indexOf('FOBA') >= 0) return 'FOBA';
+  if(raw.indexOf('JSP') >= 0) return extra && extra.site ? ('JSP ' + extra.site) : 'JSP';
+  return extra && extra.filename ? String(extra.filename).replace(/\.[^.]+$/, '') : 'Mise à jour Personnel';
 }
 
 async function listPersonnelImportHistory(){
@@ -1334,7 +1344,7 @@ async function listPersonnelImportHistory(){
     dateImport: row.committed_at || row.created_at,
     dateEffet: row.annee_monitoring ? `${row.annee_monitoring}-01-01` : (row.committed_at || row.created_at),
     type: row.import_type,
-    libelle: importTypeLabel(row.import_type),
+    libelle: importTypeLabel(row.import_type || row.contexte, { site: row.site_jsp, filename: row.filename }),
     fichier: row.filename,
     auteur: row.created_by,
     totalLignes: row.total_lines,

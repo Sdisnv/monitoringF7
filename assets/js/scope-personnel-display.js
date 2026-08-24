@@ -732,6 +732,15 @@
     });
   }
 
+  function operationalOiGroups(cibles){
+    const labels = operationalOiOptions(cibles);
+    return [
+      { label: 'DPS', items: labels.filter((row) => row.indexOf('DPS ') === 0) },
+      { label: 'DAP', items: labels.filter((row) => row.indexOf('DAP ') === 0) },
+      { label: 'JSP', items: labels.filter((row) => row.indexOf('JSP ') === 0) }
+    ].filter((group) => group.items.length);
+  }
+
   function specializationFilterOptions(){
     return SPECIALIZATION_ORDER.slice();
   }
@@ -779,7 +788,7 @@
     const raw = clean(person && (person.statutTemporel || person.temporalStatus || person.statutRh || '')).toLowerCase();
     if(raw === 'actif' || raw === 'active' || raw === 'actifs') return 'actif';
     if(raw === 'inactif' || raw === 'inactive' || raw === 'inactifs') return 'inactif';
-    return personIsArchived(person) ? 'inactif' : 'actif';
+    return 'actif';
   }
 
   function personMatchesStatut(person, statut){
@@ -802,7 +811,9 @@
   }
 
   function formatPersonnelDate(value){
-    const text = String(value == null ? '' : value).trim();
+    const temporal = (typeof require === 'function' ? require('./scope-personnel-temporal.js') : (root && root.ScopePersonnelTemporal)) || {};
+    const day = temporal.iso ? temporal.iso(value) : '';
+    const text = day || String(value == null ? '' : value).trim();
     if(!text) return '';
     const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if(!match) return text.indexOf('T') >= 0 ? text.slice(0, 10) : text;
@@ -987,6 +998,7 @@
     personTemporalStatut,
     compareGrade,
     operationalOiOptions,
+    operationalOiGroups,
     specializationFilterOptions,
     filterPersonnelRows,
     sortPersonnelRows,
