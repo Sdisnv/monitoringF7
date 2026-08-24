@@ -163,10 +163,10 @@ function clean(value){
 function normalizeJspGrade(value){
   const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
   if(!raw) return '';
+  if(raw === 'JSP') return 'JSP';
   if(raw === 'FLM 1' || raw === 'FLAMME 1' || raw === 'FLM1') return 'Flm 1';
   if(raw === 'FLM 2' || raw === 'FLAMME 2' || raw === 'FLM2') return 'Flm 2';
   if(raw === 'FLM 3' || raw === 'FLAMME 3' || raw === 'FLM3') return 'Flm 3';
-  if(raw === 'CADET' || raw === 'CAD') return 'Cadet';
   return clean(value);
 }
 
@@ -181,10 +181,15 @@ function resolveImportContext(raw){
   return IMPORT_CONTEXTS[aliased];
 }
 
-const JSP_YOUTH_GRADES = Object.freeze(['Cadet', 'Flm 3', 'Flm 2', 'Flm 1']);
+const JSP_YOUTH_GRADES = Object.freeze(['JSP', 'Flm 1', 'Flm 2', 'Flm 3']);
 
 function isJspYouthGrade(value){
   return JSP_YOUTH_GRADES.includes(normalizeJspGrade(value));
+}
+
+function isLegacyJspCadetGrade(value){
+  const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return raw === 'CADET' || raw === 'CAD';
 }
 
 function isActiveAssignment(assignment, date){
@@ -210,7 +215,7 @@ function isJspMonitor(assignments, date){
 
 function isJspYouth(person, assignments, date){
   if(!hasActiveOi(assignments, 'JSP', date) || isJspMonitor(assignments, date)) return false;
-  if(person && person.grade && !isJspYouthGrade(person.grade)) return false;
+  if(person && person.grade && !isJspYouthGrade(person.grade) && !isLegacyJspCadetGrade(person.grade)) return false;
   return true;
 }
 
@@ -354,6 +359,7 @@ module.exports = {
   normalizeJspSite,
   normalizeJspGrade,
   isJspYouthGrade,
+  isLegacyJspCadetGrade,
   isJspMonitor,
   isJspYouth,
   classifyJspRole,

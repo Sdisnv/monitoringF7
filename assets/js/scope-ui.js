@@ -1394,6 +1394,15 @@
     return [n.grade, n.prenom, n.nom].filter(Boolean).join(' ') || [row.prenom, row.nom].filter(Boolean).join(' ') || '—';
   }
 
+  function personnelNip(row) {
+    const display = personnelDisplay();
+    if (display && display.previewNip) {
+      const nip = display.previewNip(row);
+      return nip || '—';
+    }
+    return row.nip || (row.normalized && row.normalized.nip) || (row.sourceNip) || (row.raw && row.raw.nip) || '—';
+  }
+
   function personnelAssignmentText(list) {
     const display = personnelDisplay();
     if (display && display.formatAssignmentList) return display.formatAssignmentList(list) || '—';
@@ -1590,7 +1599,7 @@
               <tbody>
                 ${rows.map((row) => `
                   <tr class="${personnelRowClass(row)}">
-                    <td data-label="NIP">${escapeHtml(row.nip || '—')}</td>
+                    <td data-label="NIP">${escapeHtml(personnelNip(row))}</td>
                     <td data-label="Personne">${escapeHtml(personnelLineName(row))}</td>
                     <td data-label="Modification">${escapeHtml(personnelLineModification(row))}</td>
                     <td data-label="Affectation">${escapeHtml(personnelLineAffectation(row))}</td>

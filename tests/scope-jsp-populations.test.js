@@ -60,7 +60,10 @@ function run(){
   assert.ok(!ctx.visibleImportContexts().some((row) => String(row.code).indexOf('JSP_FLM_') === 0));
   assert.ok(ctx.visibleImportContexts().some((row) => row.code === 'JSP_NORD_VAUDOIS'));
   assert.ok(ctx.visibleImportContexts().some((row) => row.code === 'MONITEURS_JSP'));
-  assert.strictEqual(ctx.normalizeJspGrade('Cadet'), 'Cadet');
+  assert.strictEqual(ctx.normalizeJspGrade('JSP'), 'JSP');
+  assert.strictEqual(ctx.isJspYouthGrade('JSP'), true);
+  assert.strictEqual(ctx.isJspYouthGrade('Cadet'), false);
+  assert.ok(!ctx.JSP_YOUTH_GRADES.includes('Cadet'));
 
   const flm1 = previewOf({ contexte:'JSP_NORD_VAUDOIS', file: csv('JSP001;Flm 1;MARTIN;Lea;JSP G1') });
   assert.strictEqual(flm1.lines[0].status, 'NEW_JSP');
@@ -72,10 +75,43 @@ function run(){
   assert.strictEqual(flm2.lines[0].normalized.grade, 'Flm 2');
   assert.strictEqual(flm2.lines[0].diff.newAssignments[0].cible, 'JSP C1');
 
-  const cadet = previewOf({ contexte:'JSP_NORD_VAUDOIS', file: csv('JSP003;Cadet;PETIT;Nina;JSP B1') });
-  assert.strictEqual(cadet.lines[0].normalized.grade, 'Cadet');
-  assert.strictEqual(cadet.lines[0].diff.newAssignments[0].cible, 'JSP B1');
-  assert.ok(!(cadet.lines[0].errors || []).length);
+  const jspGrade = previewOf({ contexte:'JSP_NORD_VAUDOIS', file: csv('12345;JSP;DUPONT;Jean;JSP G1') });
+  assert.strictEqual(jspGrade.lines[0].status, 'NEW_JSP');
+  assert.strictEqual(jspGrade.lines[0].normalized.grade, 'JSP');
+  assert.strictEqual(jspGrade.lines[0].diff.newAssignments[0].cible, 'JSP G1');
+  assert.ok(!(jspGrade.lines[0].errors || []).length);
+  assert.strictEqual(display.previewNip(jspGrade.lines[0]), '12345');
+  const jspMod = display.previewModificationText(jspGrade.lines[0]);
+  assert.ok(jspMod.includes('Nouvelle personne JSP'));
+  assert.ok(!jspMod.includes('Grade —'));
+
+  const cadet = previewOf({ contexte:'JSP_NORD_VAUDOIS', file: csv('12345;Cadet;DUPONT;Jean;JSP G1') });
+  assert.strictEqual(cadet.lines[0].status, 'ERROR');
+  assert.notStrictEqual(cadet.lines[0].normalized.grade, 'Cadet');
+  assert.ok((cadet.lines[0].errors || []).some((msg) => msg.includes('Grade JSP inconnu : "Cadet"')));
+  assert.strictEqual(display.previewNip(cadet.lines[0]), '12345');
+
+  const badGrade = previewOf({ contexte:'JSP_NORD_VAUDOIS', file: csv('98765;GRADE_INCONNU;DUPONT;Jean;JSP G1') });
+  assert.strictEqual(display.previewNip(badGrade.lines[0]), '98765');
+  assert.ok((badGrade.lines[0].errors || []).some((msg) => msg.includes('Grade JSP inconnu : "GRADE_INCONNU"')));
+  assert.notStrictEqual(display.previewNip(badGrade.lines[0]), '—');
+
+  const genErr = previewOf({ contexte:'GENERAL', file: csv('98765;Sgt;DUPONT;Jean;XYZ B9') });
+  assert.strictEqual(display.previewNip(genErr.lines[0]), '98765');
+  assert.ok((genErr.lines[0].errors || []).some((msg) => msg.includes('OI inconnu') && msg.includes('XYZ B9')));
+
+  const paprErr = previewOf({ contexte:'PAPR', file: csv('98765;Sgt;DUPONT;Jean;') });
+  assert.strictEqual(display.previewNip(paprErr.lines[0] || paprErr.lines[0]), '98765');
+
+  const autoErr = previewOf({ contexte:'AUTO_VL_DPS', file: csv('98765;Sgt;DUPONT;Jean;') });
+  assert.strictEqual(display.previewNip(autoErr.lines[0]), '98765');
+
+  const fobaErr = previewOf({ contexte:'FOBA_1', file: csv('98765;Sgt;DUPONT;Jean;') });
+  assert.strictEqual(display.previewNip(fobaErr.lines[0]), '98765');
+
+  const monitorErr = previewOf({ contexte:'MONITEURS_JSP', file: csv('98765;Sgt;DUPONT;Jean;JSP G1') });
+  assert.strictEqual(display.previewNip(monitorErr.lines[0]), '98765');
+  assert.ok((monitorErr.lines[0].errors || []).some((msg) => msg.includes('Moniteur JSP absent du personnel SDIS')));
 
   const gradeChange = previewOf({
     contexte:'JSP_NORD_VAUDOIS',
@@ -195,6 +231,7 @@ function run(){
   assert.strictEqual(monitorRate.expected, 3);
   assert.ok(display.classifyJspRole(personRow(), [aff(), aff({ domaine:'JSP', cible:'JSP G1' })]) === 'MONITEUR');
   assert.ok(display.classifyJspRole({ grade:'Flm 1' }, [aff({ domaine:'JSP', cible:'JSP G1' })]) === 'JEUNE');
+  assert.ok(display.classifyJspRole({ grade:'Cadet' }, [aff({ domaine:'JSP', cible:'JSP G1' })]) === 'JEUNE');
 
   console.log('scope-jsp-populations tests ok');
 }

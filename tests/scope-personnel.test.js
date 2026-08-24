@@ -54,7 +54,7 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
 
   const badNip = svc.normalizeRows(svc.parsePersonnelCsv(`NIP;Grade;Prénom;Nom;Organe(s) d'intervention
 ;Cpl;Marc;DUPONT;DPS B1`), 'OI')[0];
-  assert.ok(badNip.errors.includes('NIP vide.'));
+  assert.ok(badNip.errors.includes('NIP manquant'));
 
   const unknownOi = svc.normalizeRows(svc.parsePersonnelCsv(`NIP;Grade;Prénom;Nom;Organe(s) d'intervention
 12345;Cpl;Marc;DUPONT;XYZ B9`), 'OI')[0];

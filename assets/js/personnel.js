@@ -106,7 +106,7 @@
     if(card) card.hidden = false;
     const c = result.counts || {};
     if(summary) summary.innerHTML = [['Lignes', c.totalLines], ['NIP uniques', c.totalUniqueNips], ['Identiques', c.countIdentical], ['Nouvelles personnes', c.countNewPersons], ['Modifications', c.countModified], ['Nouvelles affectations', c.countNewAssignments], ['Affectations absentes', c.countMissingAssignments], ['Erreurs', c.countErrors]].map(([label, value]) => `<span><strong>${escape(value || 0)}</strong>${escape(label)}</span>`).join('');
-    if(body) body.innerHTML = (result.lines || []).map(line => `<tr class="${line.status === 'ERROR' ? 'scope-row-error' : ''}"><td>${line.lineNumber}</td><td>${escape(line.normalized?.nip || '-')}</td><td>${escape(line.status)}</td><td><pre>${escape(JSON.stringify(line.diff || {}, null, 2))}</pre></td><td>${escape((line.errors || []).join(', ') || '-')}</td></tr>`).join('');
+    if(body) body.innerHTML = (result.lines || []).map(line => `<tr class="${line.status === 'ERROR' ? 'scope-row-error' : ''}"><td>${line.lineNumber}</td><td>${escape((line.nip || line.normalized?.nip || line.sourceNip || line.raw?.nip || '-'))}</td><td>${escape(line.status)}</td><td><pre>${escape(JSON.stringify(line.diff || {}, null, 2))}</pre></td><td>${escape((line.errors || []).join(', ') || '-')}</td></tr>`).join('');
     setStatus('Analyse terminée. Aucune Personne ni affectation n’a encore été modifiée.', c.countErrors ? 'warn' : 'ok');
   }
   async function analyzeImport(){

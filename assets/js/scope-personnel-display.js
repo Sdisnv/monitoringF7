@@ -200,12 +200,17 @@
     };
   }
 
-  const JSP_YOUTH_GRADES = Object.freeze(['Cadet', 'Flm 3', 'Flm 2', 'Flm 1']);
+  const JSP_YOUTH_GRADES = Object.freeze(['JSP', 'Flm 1', 'Flm 2', 'Flm 3']);
 
   function isJspYouthGrade(value){
-    const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ');
-    return raw === 'FLM 1' || raw === 'FLM 2' || raw === 'FLM 3' || raw === 'CADET' || raw === 'CAD'
+    const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return raw === 'JSP' || raw === 'FLM 1' || raw === 'FLM 2' || raw === 'FLM 3'
       || JSP_YOUTH_GRADES.includes(clean(value));
+  }
+
+  function isLegacyJspCadetGrade(value){
+    const raw = clean(value).toUpperCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return raw === 'CADET' || raw === 'CAD';
   }
 
   function hasActiveDomainOi(assignments, domaines, date){
@@ -226,8 +231,25 @@
   function isJspYouth(person, assignments, date){
     if(isJspMonitor(assignments, date)) return false;
     if(!hasActiveDomainOi(assignments, 'JSP', date)) return false;
-    if(person && person.grade && !isJspYouthGrade(person.grade)) return false;
+    if(person && person.grade && !isJspYouthGrade(person.grade) && !isLegacyJspCadetGrade(person.grade)) return false;
     return true;
+  }
+
+  function previewNip(row){
+    if(!row) return '';
+    const candidates = [
+      row.nip,
+      row.sourceNip,
+      row.normalized && row.normalized.nip,
+      row.normalized && row.normalized.sourceNip,
+      row.raw && row.raw.nip,
+      row.raw && row.raw.NIP
+    ];
+    for(const value of candidates){
+      const text = clean(value);
+      if(text && text !== '—' && text !== '-') return text;
+    }
+    return '';
   }
 
   function classifyJspRole(person, assignments, date){
@@ -502,11 +524,15 @@
 
   function previewModificationText(row){
     const parts = [];
-    identityDiffFields(row).forEach((field) => {
-      parts.push(`${field.label} ${field.current || '—'} → ${field.proposed || '—'}`);
-    });
     const status = previewStatus(row);
-    if(status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU') parts.push('Nouvelle personne');
+    const isNewPerson = status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU';
+    if(!isNewPerson){
+      identityDiffFields(row).forEach((field) => {
+        parts.push(`${field.label} ${field.current || '—'} → ${field.proposed || '—'}`);
+      });
+    }
+    if(status === 'NEW_JSP') parts.push('Nouvelle personne JSP');
+    else if(isNewPerson) parts.push('Nouvelle personne');
     if(status === 'NEW_ASSIGNMENT') parts.push('Nouvelle affectation');
     if(status === 'ABSENT_DU_NOUVEL_IMPORT' || status === 'ABSENT_DU_FICHIER') parts.push('Absente du nouvel import');
     if(status === 'MODIFIED' && !parts.length) parts.push('Identité ou affectation modifiée');
@@ -639,9 +665,11 @@
     evaluateAutoSpecializations: evaluateAutoSpecializations,
     countsInImportPopulation,
     isJspYouthGrade,
+    isLegacyJspCadetGrade,
     isJspMonitor,
     isJspYouth,
     classifyJspRole,
+    previewNip,
     classifyJspRole: classifyJspRole,
     jspParticipation,
     JSP_YOUTH_GRADES,

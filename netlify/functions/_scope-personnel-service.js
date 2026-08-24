@@ -155,7 +155,7 @@ function parseOiAssignments(rawOrgans){
   String(rawOrgans || '').split(',').map(clean).filter(Boolean).forEach(token => {
     const parsed = normalizeOiToken(token);
     if(!parsed) {
-      assignments.push({ error:`OI inconnu: ${token}`, raw:token });
+      assignments.push({ error:`OI inconnu : "${token}"`, raw:token });
       return;
     }
     const principal = !principalSeen.has(parsed.domaine);
@@ -209,7 +209,7 @@ function normalizeRows(rows, contexte, siteJsp){
     const errors = [];
     const warnings = [];
     const nip = normalizeNip(row.nip);
-    if(!nip) errors.push('NIP vide.');
+    if(!nip) errors.push('NIP manquant');
     if(resolved.family !== 'JSP'){
       if(!clean(row.nom)) errors.push('Nom vide.');
       if(!clean(row.prenom)) errors.push('Prénom vide.');
@@ -233,7 +233,8 @@ function normalizeRows(rows, contexte, siteJsp){
       const jspOi = oiValid.find((row) => row.domaine === 'JSP');
       siteFromRow = jspOi ? ctx.normalizeJspSite(jspOi.cible) : ctx.normalizeJspSite(row.organes);
       if(!siteFromRow){
-        errors.push('Site JSP inconnu.');
+        const rawSite = clean(row.organes);
+        errors.push(rawSite ? `Site JSP inconnu : "${rawSite}"` : 'Site JSP manquant');
         assignments = [];
       } else {
         assignments = [ctx.contextAssignment(resolved, siteFromRow) || {
@@ -246,15 +247,22 @@ function normalizeRows(rows, contexte, siteJsp){
     } else if(resolved.family === 'JSP' && (!siteJsp || !siteJsp.code)){
       errors.push('Site JSP obligatoire.');
     }
+    const sourceNip = clean(row.nip);
     let grade = clean(row.grade);
     if(resolved.gradeFromFile || resolved.jspPopulation === 'JEUNES'){
+      const rawGrade = clean(row.grade);
       grade = ctx.normalizeJspGrade(row.grade);
-      if(!ctx.isJspYouthGrade(grade)) errors.push('Grade JSP inconnu.');
+      if(!ctx.isJspYouthGrade(grade)){
+        errors.push(rawGrade ? `Grade JSP inconnu : "${rawGrade}"` : 'Grade JSP manquant');
+        grade = '';
+      }
     } else if(resolved.family === 'JSP' && resolved.jspGrade){
       grade = resolved.jspGrade;
     }
+    const visibleNip = nip || sourceNip;
     const normalized = {
-      nip,
+      nip: visibleNip,
+      sourceNip,
       grade,
       prenom: clean(row.prenom),
       nom: clean(row.nom),
@@ -269,7 +277,7 @@ function normalizeRows(rows, contexte, siteJsp){
       }
       if(!prev) seen.set(nip, normalized);
     }
-    return { lineNumber: row.lineNumber, raw: row, normalized, errors, warnings, duplicateOf: seen.get(nip) && seen.get(nip) !== normalized };
+    return { lineNumber: row.lineNumber, raw: row, nip: visibleNip, sourceNip, normalized, errors, warnings, duplicateOf: seen.get(nip) && seen.get(nip) !== normalized };
   });
 }
 
@@ -344,7 +352,7 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
       }
     });
     if(diff.person.nom || diff.person.prenom){
-      warnings.push('Nom/prénom différent de la fiche existante.');
+      warnings.push(`NIP ${n.nip} associé à une identité différente`);
     }
     if(diff.person.grade){
       warnings.push('Changement de grade.');
@@ -430,8 +438,10 @@ function buildAbsentLine(person, assignments, resolved, siteJsp, dateActif, date
   return {
     lineNumber: `absent-${person.nip}`,
     raw: { nip: person.nip, grade: person.grade, nom: person.nom, prenom: person.prenom },
+    nip: person.nip,
     normalized: {
       nip: person.nip,
+      sourceNip: person.nip,
       grade: clean(person.grade),
       nom: clean(person.nom),
       prenom: clean(person.prenom),
@@ -505,6 +515,7 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     const nip = row.normalized.nip;
     if(nip && seenNips.has(nip) && !(row.errors || []).length){
       lines.push(Object.assign({}, row, {
+        nip: row.nip || nip,
         status: 'IDENTICAL',
         statusLabel: ctx.STATUS_LABELS.IDENTICAL,
         diff: { person:{}, newAssignments:[], existingAssignments: row.normalized.assignments, missingAssignments:[], principalChanges:[] },
@@ -517,7 +528,7 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     if(nip) seenNips.add(nip);
     const person = existingPersons.get(nip);
     const summary = summarizeLine(row, person, existingAssignments.get(nip) || [], resolved, siteJsp, dateActif);
-    lines.push(Object.assign({}, row, summary));
+    lines.push(Object.assign({}, row, summary, { nip: row.nip || nip || (row.normalized && row.normalized.nip) }));
   });
   (population || []).forEach((person) => {
     if(seenNips.has(person.nip)) return;
