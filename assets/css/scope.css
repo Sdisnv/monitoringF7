@@ -1913,9 +1913,40 @@ body.scope-pdf-open { overflow: hidden; }
 }
 .scope-person-toolbar {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 0.8fr);
+  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 0.8fr) minmax(140px, 0.8fr) auto;
   gap: 12px;
   margin: 12px 0 4px;
+  align-items: end;
+}
+.scope-person-table th[data-sort]{
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.scope-person-table th[data-sort] span{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.scope-person-table th[data-sort]::after{
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  opacity: .32;
+  vertical-align: middle;
+}
+.scope-person-table th[data-sort].is-asc::after{
+  transform: rotate(-135deg) translateY(-1px);
+  opacity: 1;
+}
+.scope-person-table th[data-sort].is-desc::after{
+  transform: rotate(45deg) translateY(-1px);
+  opacity: 1;
 }
 .scope-person-kpis {
   grid-template-columns: minmax(180px, 1.4fr) repeat(5, minmax(0, 1fr));

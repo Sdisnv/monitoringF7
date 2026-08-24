@@ -304,6 +304,14 @@
       seen.add(label);
       labels.push(label);
     });
+    const hasJsp = (list || []).some((item) => {
+      if(date && !isAssignmentActiveAt(item, date)) return false;
+      return assignmentParts(item).domaine.toUpperCase() === 'JSP';
+    });
+    if(hasJsp && !seen.has('JSP')){
+      seen.add('JSP');
+      labels.push('JSP');
+    }
     const ordered = sortSpecializationLabels(labels);
     const text = ordered.join(SPECIALIZATION_SEPARATOR);
     const note = opts.withPriorityNote === false ? '' : vlDpsPriorityNote(list, date);
@@ -636,6 +644,252 @@
     return { current, proposed };
   }
 
+  const OPERATIONAL_OI_ORDER = Object.freeze([
+    'DPS G1', 'DPS C1', 'DPS B1', 'DPS B2',
+    'DAP Y1', 'DAP Y2', 'DAP Y3', 'DAP Y4',
+    'JSP G1', 'JSP C1', 'JSP B1'
+  ]);
+  const OPERATIONAL_OI_DOMAINS = Object.freeze(['DPS', 'DAP', 'JSP']);
+  const TECHNICAL_OI_DOMAINS = Object.freeze(['AUTO', 'FOBA', 'FOCA', 'FOSPEC', 'PR', 'PAPR']);
+  const EXCLUDED_OI_LEVELS = Object.freeze(['CAD', 'GEN', 'PL', 'VL', 'VL_DPS', 'VL_DAP', 'PR']);
+  const FR_COLLATOR = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+  const JSP_GRADE_SORT_ORDER = Object.freeze(['JSP', 'Flm 1', 'Flm 2', 'Flm 3']);
+  const GRADE_SORT_MODE = 'INCOMPLETE_FR_COLLATOR';
+
+  function personAssignments(person){
+    if(!person) return [];
+    return person.affectationsOuvertes || person.affectations || person.assignments || [];
+  }
+
+  function normalizeOiToken(value){
+    return clean(value).replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function operationalOiLevel(domaine, cible){
+    const domain = clean(domaine).toUpperCase();
+    let level = normalizeOiToken(cible).toUpperCase();
+    if(domain && level.indexOf(domain + ' ') === 0) level = level.slice(domain.length + 1);
+    return level;
+  }
+
+  function isExcludedOiLevel(level){
+    const raw = clean(level).toUpperCase().replace(/\s+/g, '_');
+    return EXCLUDED_OI_LEVELS.includes(raw) || EXCLUDED_OI_LEVELS.includes(clean(level).toUpperCase());
+  }
+
+  function isOperationalOiAssignment(assignment){
+    if(!assignment) return false;
+    const cat = String(assignment.categorie || assignment.category || 'OI').toUpperCase();
+    if(cat && cat !== 'OI') return false;
+    const parts = assignmentParts(assignment);
+    const domaine = parts.domaine.toUpperCase();
+    if(TECHNICAL_OI_DOMAINS.includes(domaine)) return false;
+    if(!OPERATIONAL_OI_DOMAINS.includes(domaine)) return false;
+    const level = operationalOiLevel(domaine, parts.cible);
+    if(isExcludedOiLevel(level)) return false;
+    return Boolean(level);
+  }
+
+  function operationalOiLabel(assignment){
+    if(!isOperationalOiAssignment(assignment)) return '';
+    const parts = assignmentParts(assignment);
+    const domaine = parts.domaine.toUpperCase();
+    const level = operationalOiLevel(domaine, parts.cible);
+    if(domaine === 'JSP') return compactAssignmentLabel('JSP', level.startsWith('JSP') ? level : ('JSP ' + level));
+    return compactAssignmentLabel(domaine, level);
+  }
+
+  function parseOperationalOiLabel(value){
+    const label = normalizeOiToken(value);
+    const match = label.match(/^(DPS|DAP|JSP)\s+(.+)$/i);
+    if(!match) return null;
+    const domaine = match[1].toUpperCase();
+    const niveau = operationalOiLevel(domaine, match[2]);
+    if(!niveau || isExcludedOiLevel(niveau)) return null;
+    return { domaine, niveau, label: compactAssignmentLabel(domaine, domaine === 'JSP' && niveau.indexOf('JSP') !== 0 ? 'JSP ' + niveau : niveau) };
+  }
+
+  function operationalOiOptions(cibles){
+    const seen = new Set();
+    const fromRef = [];
+    (cibles || []).forEach((cible) => {
+      const domaine = clean(cible.domaineCode || cible.domaine_code || cible.domaine || '');
+      const niveau = clean(cible.niveauCode || cible.niveau_code || cible.cible || cible.code || '');
+      const assignment = { categorie: 'OI', domaine, cible: niveau };
+      const label = operationalOiLabel(assignment);
+      if(!label || seen.has(label)) return;
+      seen.add(label);
+      fromRef.push(label);
+    });
+    const source = fromRef.length ? fromRef : OPERATIONAL_OI_ORDER.slice();
+    return source.slice().sort((a, b) => {
+      const ia = OPERATIONAL_OI_ORDER.indexOf(a);
+      const ib = OPERATIONAL_OI_ORDER.indexOf(b);
+      return (ia === -1 ? 100 : ia) - (ib === -1 ? 100 : ib) || FR_COLLATOR.compare(a, b);
+    });
+  }
+
+  function specializationFilterOptions(){
+    return SPECIALIZATION_ORDER.slice();
+  }
+
+  function assignmentMatchesOiFilter(assignment, oiLabel){
+    const wanted = parseOperationalOiLabel(oiLabel);
+    if(!wanted || !isAssignmentActiveAt(assignment)) return false;
+    const got = parseOperationalOiLabel(operationalOiLabel(assignment));
+    return Boolean(got && got.domaine === wanted.domaine && got.niveau === wanted.niveau);
+  }
+
+  function personMatchesOiFilter(person, oiLabel){
+    if(!oiLabel) return true;
+    return personAssignments(person).some((row) => assignmentMatchesOiFilter(row, oiLabel));
+  }
+
+  function personMatchesSpecializationFilter(person, specLabel){
+    if(!specLabel) return true;
+    const wanted = clean(specLabel);
+    const assignments = personAssignments(person);
+    if(wanted === 'JSP'){
+      return classifyJspRole(person, assignments) != null || hasActiveDomainOi(assignments, 'JSP');
+    }
+    if(wanted === 'cond VL'){
+      return assignments.some((row) => isAssignmentActiveAt(row) && (isAutoVlDps(row) || isAutoVlDap(row)));
+    }
+    if(wanted === 'cond PL'){
+      return assignments.some((row) => isAssignmentActiveAt(row) && isAutoPl(row));
+    }
+    return formatSpecializations(assignments).labels.includes(wanted);
+  }
+
+  function personMatchesQuery(person, query){
+    const q = clean(query).toLowerCase();
+    if(!q) return true;
+    const hay = [person.nip, person.nom, person.prenom].map((v) => clean(v).toLowerCase());
+    return hay.some((value) => value.indexOf(q) !== -1);
+  }
+
+  function personIsArchived(person){
+    return Boolean(person && (person.archivedAt || person.archived_at || person.archivee));
+  }
+
+  function personMatchesStatut(person, statut){
+    const wanted = clean(statut || 'actifs').toLowerCase();
+    if(wanted === 'tous' || wanted === 'all') return true;
+    if(wanted === 'archives' || wanted === 'archived') return personIsArchived(person);
+    return !personIsArchived(person);
+  }
+
+  function filterPersonnelRows(rows, filters){
+    const f = filters || {};
+    return (rows || []).filter((person) =>
+      personMatchesQuery(person, f.q || f.query)
+      && personMatchesStatut(person, f.statut)
+      && personMatchesOiFilter(person, f.oi)
+      && personMatchesSpecializationFilter(person, f.specialization || f.specialisation)
+    );
+  }
+
+  function formatPersonnelDate(value){
+    const text = String(value == null ? '' : value).trim();
+    if(!text) return '';
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!match) return text.indexOf('T') >= 0 ? text.slice(0, 10) : text;
+    return `${match[3]}.${match[2]}.${match[1]}`;
+  }
+
+  function personnelDateSortValue(value){
+    const text = String(value == null ? '' : value).trim();
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(match) return match[0];
+    const swiss = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if(swiss) return `${swiss[3]}-${swiss[2]}-${swiss[1]}`;
+    return text ? '9999-12-31' : '';
+  }
+
+  function primaryOperationalOiLabel(person){
+    const assignments = personAssignments(person).filter((row) => isOperationalOiAssignment(row) && isAssignmentActiveAt(row));
+    const principal = assignments.find((row) => {
+      const role = String(row.role_domaine || row.roleDomaine || '').toUpperCase();
+      return role === 'PRINCIPAL';
+    });
+    return operationalOiLabel(principal || assignments[0] || person.affectationPrincipale || null);
+  }
+
+  function specializationSortKey(person){
+    const labels = formatSpecializations(personAssignments(person)).labels;
+    if(!labels.length) return '';
+    return labels[0];
+  }
+
+  function compareNip(a, b){
+    const na = clean(a);
+    const nb = clean(b);
+    const aNum = /^\d+$/.test(na);
+    const bNum = /^\d+$/.test(nb);
+    if(aNum && bNum){
+      const diff = Number(na) - Number(nb);
+      if(diff) return diff;
+    }
+    return FR_COLLATOR.compare(na, nb);
+  }
+
+  function compareGrade(a, b){
+    const ga = clean(a);
+    const gb = clean(b);
+    const ia = JSP_GRADE_SORT_ORDER.indexOf(ga);
+    const ib = JSP_GRADE_SORT_ORDER.indexOf(gb);
+    if(ia !== -1 && ib !== -1) return ia - ib;
+    return FR_COLLATOR.compare(ga, gb);
+  }
+
+  function compareOiLabel(a, b){
+    const ia = OPERATIONAL_OI_ORDER.indexOf(a);
+    const ib = OPERATIONAL_OI_ORDER.indexOf(b);
+    return (ia === -1 ? 100 : ia) - (ib === -1 ? 100 : ib) || FR_COLLATOR.compare(a || '', b || '');
+  }
+
+  function compareSpecializationKey(a, b){
+    const ia = SPECIALIZATION_ORDER.indexOf(a);
+    const ib = SPECIALIZATION_ORDER.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || FR_COLLATOR.compare(a || '', b || '');
+  }
+
+  function sortPersonnelRows(rows, sort){
+    const key = sort && sort.key;
+    const dir = sort && sort.dir;
+    const list = (rows || []).slice();
+    if(!key || !dir){
+      return list.sort((a, b) =>
+        FR_COLLATOR.compare(clean(a.nom), clean(b.nom))
+        || FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom))
+        || compareNip(a.nip, b.nip)
+      );
+    }
+    const factor = dir === 'desc' ? -1 : 1;
+    list.sort((a, b) => {
+      let cmp = 0;
+      if(key === 'nip') cmp = compareNip(a.nip, b.nip);
+      else if(key === 'grade') cmp = compareGrade(a.grade, b.grade);
+      else if(key === 'nom') cmp = FR_COLLATOR.compare(clean(a.nom), clean(b.nom));
+      else if(key === 'prenom') cmp = FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom));
+      else if(key === 'oi') cmp = compareOiLabel(primaryOperationalOiLabel(a), primaryOperationalOiLabel(b));
+      else if(key === 'specializations') cmp = compareSpecializationKey(specializationSortKey(a), specializationSortKey(b));
+      else if(key === 'actif') cmp = String(personnelDateSortValue(a.dateActif || a.date_actif)).localeCompare(String(personnelDateSortValue(b.dateActif || b.date_actif)));
+      else if(key === 'inactif') cmp = String(personnelDateSortValue(a.dateInactif || a.date_inactif)).localeCompare(String(personnelDateSortValue(b.dateInactif || b.date_inactif)));
+      else cmp = FR_COLLATOR.compare(clean(a.nom), clean(b.nom));
+      if(cmp) return cmp * factor;
+      return FR_COLLATOR.compare(clean(a.nom), clean(b.nom)) || FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom));
+    });
+    return list;
+  }
+
+  function nextPersonnelSort(current, key){
+    const cur = current || {};
+    if(cur.key !== key) return { key, dir: 'asc' };
+    if(cur.dir === 'asc') return { key, dir: 'desc' };
+    return { key: '', dir: '' };
+  }
+
   return {
     compactAssignmentLabel,
     compactAssignmentLabel: compactAssignmentLabel,
@@ -712,6 +966,19 @@
     formatIdentitySide,
     formatIdentitySide: formatIdentitySide,
     assignmentSides,
-    assignmentSides: assignmentSides
+    assignmentSides: assignmentSides,
+    OPERATIONAL_OI_ORDER,
+    GRADE_SORT_MODE,
+    operationalOiOptions,
+    specializationFilterOptions,
+    filterPersonnelRows,
+    sortPersonnelRows,
+    nextPersonnelSort,
+    formatPersonnelDate,
+    primaryOperationalOiLabel,
+    personMatchesOiFilter,
+    personMatchesSpecializationFilter,
+    isOperationalOiAssignment,
+    operationalOiLabel
   };
 });

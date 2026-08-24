@@ -964,6 +964,7 @@ function mapPerson(row){
     nom: row.nom || '',
     prenom: row.prenom || '',
     dateEntreeSdis: row.date_entree_sdis || null,
+    archivedAt: row.archived_at || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -983,10 +984,13 @@ function mapAssignment(row){
   };
 }
 
-async function listPersonnel({ q='', domaine='', cible='' } = {}){
+async function listPersonnel({ q='', domaine='', cible='', statut='' } = {}){
   await ensureScopeSchema();
   const values = [];
-  const where = [`p.archived_at is null`];
+  const status = String(statut || 'actifs').toLowerCase();
+  const where = [];
+  if(status === 'archives' || status === 'archived') where.push(`p.archived_at is not null`);
+  else if(status !== 'tous' && status !== 'all') where.push(`p.archived_at is null`);
   if(q){
     values.push(`%${String(q).toLowerCase()}%`);
     where.push(`(lower(p.nip) like $${values.length} or lower(coalesce(p.nom,'')) like $${values.length} or lower(coalesce(p.prenom,'')) like $${values.length} or lower(coalesce(p.grade,'')) like $${values.length})`);
@@ -999,7 +1003,7 @@ async function listPersonnel({ q='', domaine='', cible='' } = {}){
     values.push(cible);
     where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.cible=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
   }
-  const res = await getDb().query(`select p.* from scope_personnes p where ${where.join(' and ')} order by lower(coalesce(p.nom,'')), lower(coalesce(p.prenom,'')), p.nip limit 500`, values);
+  const res = await getDb().query(`select p.* from scope_personnes p where ${where.length ? where.join(' and ') : 'true'} order by lower(coalesce(p.nom,'')), lower(coalesce(p.prenom,'')), p.nip limit 500`, values);
   const persons = (res.rows || []).map(mapPerson);
   const ids = persons.map(p => p.id);
   let assignments = [];

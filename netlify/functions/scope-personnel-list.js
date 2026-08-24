@@ -8,7 +8,12 @@ exports.handler = async function(event){
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
   try{
     const params = event.queryStringParameters || {};
-    const personnes = await personnel.listPersonnel({ q:params.q || '', domaine:params.domaine || '', cible:params.cible || '' });
+    const personnes = await personnel.listPersonnel({
+      q: params.q || '',
+      domaine: params.domaine || '',
+      cible: params.cible || params.cible || '',
+      statut: params.statut || params.status || 'actifs'
+    });
     return response(200, { ok:true, personnes });
   }catch(error){
     return response(500, { ok:false, error:'scope_personnel_list_failed', message:String(error.message || error) });

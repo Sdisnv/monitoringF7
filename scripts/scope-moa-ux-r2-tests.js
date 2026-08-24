@@ -150,9 +150,9 @@ async function record(name, fn) {
     assert.ok(html.includes('scope-moa-ux-r2'));
     assert.ok(html.includes('scope-ui-logic.js?v=scope-moa-ux-r2'));
     assert.ok(html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-personnel-table-r1'));
-    assert.ok(html.includes('scope-personnel-display.js?v=scope-auto-specializations-priority-1'));
-    assert.ok(html.includes('scope-ui.js?v=scope-auto-specializations-priority-1'));
+    assert.ok(html.includes('scope.css?v=scope-personnel-filters-sort-1'));
+    assert.ok(html.includes('scope-personnel-display.js?v=scope-personnel-filters-sort-1'));
+    assert.ok(html.includes('scope-ui.js?v=scope-personnel-filters-sort-1'));
   });
 
   await record('17 — période hors header', async () => {
@@ -204,7 +204,11 @@ async function record(name, fn) {
 
   await record('25 — tableau Personnel métier définitif', async () => {
     const directory = ui.slice(ui.indexOf('function renderPersonnelDirectory'), ui.indexOf('function renderPersonnel(options)'));
-    assert.ok(directory.includes('<th>NIP</th><th>GRADE</th><th>NOM</th><th>PRÉNOM</th><th>OI PRINCIPAL</th><th>AUTRES AFFECTATIONS</th><th>ACTIF</th><th>INACTIF</th><th>ACTIONS</th>'));
+    assert.ok(directory.includes("personnelSortHeader('nip', 'NIP')"));
+    assert.ok(directory.includes("personnelSortHeader('oi', 'OI')"));
+    assert.ok(directory.includes("personnelSortHeader('specializations', 'SPÉCIALISATIONS')"));
+    assert.ok(directory.includes('data-label="OI"'));
+    assert.ok(directory.includes('data-label="SPÉCIALISATIONS"'));
     assert.ok(directory.includes('data-label="NIP"'));
     assert.ok(directory.includes('data-label="PRÉNOM"'));
     assert.ok(directory.includes('personnelOtherAffectationsHtml'));

@@ -96,6 +96,8 @@
     personnelQuery: '',
     personnelStatut: 'actifs',
     personnelOi: '',
+    personnelSpecialization: '',
+    personnelSort: { key: '', dir: '' },
     personneFiche: null,
     personneEventFilter: 'tout',
     personneDomainFilter: null,
@@ -1065,11 +1067,9 @@
     }
     state.personnelError = null;
     try {
-      const oi = parsePersonnelOiFilter(state.personnelOi);
       const payload = await client.listPersonnelDirectory({
         q: state.personnelQuery,
-        domaine: oi.domaine,
-        cible: oi.cible
+        statut: state.personnelStatut === 'tous' ? 'all' : state.personnelStatut
       });
       state.personnelDirectory = normalizePersonnelDirectory(payload);
       state.personnelReady = true;
@@ -1193,13 +1193,53 @@
   }
 
   function oiFilterOptions() {
-    const seen = new Set();
-    return (state.referentiels.cibles || []).filter((c) => {
-      const label = `${c.domaineCode || c.domaine_code}/${c.niveauCode || c.niveau_code}`;
-      if (seen.has(label)) return false;
-      seen.add(label);
-      return true;
-    }).map((c) => `${c.domaineCode || c.domaine_code}/${c.niveauCode || c.niveau_code}`);
+    const display = personnelDisplay();
+    if (display && display.operationalOiOptions) {
+      return display.operationalOiOptions(state.referentiels.cibles || []);
+    }
+    return ['DPS G1', 'DPS C1', 'DPS B1', 'DPS B2', 'DAP Y1', 'DAP Y2', 'DAP Y3', 'DAP Y4', 'JSP G1', 'JSP C1', 'JSP B1'];
+  }
+
+  function specializationFilterOptions() {
+    const display = personnelDisplay();
+    if (display && display.specializationFilterOptions) return display.specializationFilterOptions();
+    return ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP'];
+  }
+
+  function visiblePersonnelRows() {
+    const dir = state.personnelDirectory;
+    const people = (dir && dir.personnes) || [];
+    const display = personnelDisplay();
+    const filtered = display && display.filterPersonnelRows
+      ? display.filterPersonnelRows(people, {
+          q: state.personnelQuery,
+          statut: state.personnelStatut,
+          oi: state.personnelOi,
+          specialization: state.personnelSpecialization
+        })
+      : people;
+    if (display && display.sortPersonnelRows) return display.sortPersonnelRows(filtered, state.personnelSort);
+    return filtered;
+  }
+
+  function personnelSortHeader(key, label) {
+    const sort = state.personnelSort || {};
+    const active = sort.key === key && sort.dir;
+    const cls = active ? (sort.dir === 'desc' ? 'is-desc' : 'is-asc') : '';
+    const aria = active ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none';
+    return `<th data-sort="${key}" data-personnel-sort="${key}" class="${cls}" aria-sort="${aria}"><span>${label}</span></th>`;
+  }
+
+  function formatPersonnelDateCell(value) {
+    const display = personnelDisplay();
+    if (display && display.formatPersonnelDate) {
+      const text = display.formatPersonnelDate(value);
+      return text || '—';
+    }
+    const text = String(value || '').trim();
+    const m = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+    return text || '—';
   }
 
   function parsePersonnelOiFilter(value) {
@@ -1252,6 +1292,7 @@
     const primaryKey = primary && (primary.affectationId || primary.label);
     return Object.assign({}, personne, {
       personneId: personne.personneId || personne.id,
+      archivedAt: personne.archivedAt || personne.archived_at || null,
       dateActif: personne.dateActif || personne.date_entree_sdis || personne.dateEntreeSdis || (primary && primary.dateDebut) || '',
       dateInactif: personne.dateInactif || (primary && primary.dateFin) || '',
       affectationPrincipale: personne.affectationPrincipale || primary,
@@ -1437,7 +1478,7 @@
     const live = mode === 'live';
     const canRead = canReadPersonnel();
     const dir = state.personnelDirectory;
-    const people = (dir && dir.personnes) || [];
+    const people = visiblePersonnelRows();
     const personnelView = L.listViewState({
       ready: state.personnelReady,
       error: state.personnelError,
@@ -1453,7 +1494,13 @@
     } else {
       peopleBody = people.map((p) => {
         const primary = personnelPrimaryAffectation(p);
-        const otherLabels = personnelOtherAffectations(p, primary);
+        const display = personnelDisplay();
+        const oiLabel = (display && display.primaryOperationalOiLabel)
+          ? display.primaryOperationalOiLabel(p)
+          : formatPersonnelAffectationLabel(primary);
+        const specLabels = (display && display.formatSpecializations)
+          ? display.formatSpecializations(p.affectationsOuvertes || p.affectations || []).labels
+          : personnelOtherAffectations(p, primary);
         const dateActif = p.dateActif || (primary && primary.dateDebut) || '';
         const dateInactif = p.dateInactif || (primary && primary.dateFin) || '';
         return `<tr>
@@ -1461,10 +1508,10 @@
               <td data-label="GRADE">${escapeHtml(p.grade || '—')}</td>
               <td data-label="NOM">${escapeHtml(p.nom || '—')}</td>
               <td data-label="PRÉNOM">${escapeHtml(p.prenom || '—')}</td>
-              <td data-label="OI PRINCIPAL">${escapeHtml(formatPersonnelAffectationLabel(primary) || '—')}</td>
-              <td data-label="AUTRES AFFECTATIONS">${personnelOtherAffectationsHtml(otherLabels)}</td>
-              <td data-label="ACTIF">${escapeHtml(dateActif || '—')}</td>
-              <td data-label="INACTIF">${escapeHtml(dateInactif || '—')}</td>
+              <td data-label="OI">${escapeHtml(oiLabel || '—')}</td>
+              <td data-label="SPÉCIALISATIONS">${personnelOtherAffectationsHtml(specLabels)}</td>
+              <td data-label="ACTIF">${escapeHtml(formatPersonnelDateCell(dateActif))}</td>
+              <td data-label="INACTIF">${escapeHtml(formatPersonnelDateCell(dateInactif))}</td>
               <td data-label="ACTIONS"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
             </tr>`;
       }).join('');
@@ -1475,6 +1522,7 @@
       ['tous', 'Tous']
     ];
     const oiOptions = oiFilterOptions();
+    const specOptions = specializationFilterOptions();
     if (!live) {
       return `<div class="scope-card">
         <h2 style="margin-top:0">Personnel</h2>
@@ -1494,10 +1542,16 @@
         <div class="scope-field"><label for="personnel-q">Recherche</label>
           <input id="personnel-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personnelQuery)}">
         </div>
-        <div class="scope-field"><label for="personnel-oi">OI principal</label>
+        <div class="scope-field"><label for="personnel-oi">OI</label>
           <select id="personnel-oi">
             <option value="">Tous</option>
             ${oiOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelOi === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="scope-field"><label for="personnel-specialization">Spécialisation</label>
+          <select id="personnel-specialization">
+            <option value="">Toutes</option>
+            ${specOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelSpecialization === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
           </select>
         </div>
         <button type="button" class="scope-btn scope-btn-primary" id="scope-open-personnel-import">Importer du personnel</button>
@@ -1508,7 +1562,7 @@
       <p class="scope-sync-summary">${people.length} personne(s) · période ${escapeHtml(periodLabel(dir && dir.period))} · ${escapeHtml((dir && dir.performance && dir.performance.note) || 'Agrégat batch')}</p>
       <div class="scope-table-wrap">
         <table class="scope-table scope-person-table">
-          <thead><tr><th>NIP</th><th>GRADE</th><th>NOM</th><th>PRÉNOM</th><th>OI PRINCIPAL</th><th>AUTRES AFFECTATIONS</th><th>ACTIF</th><th>INACTIF</th><th>ACTIONS</th></tr></thead>
+          <thead><tr>${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('oi', 'OI')}${personnelSortHeader('specializations', 'SPÉCIALISATIONS')}${personnelSortHeader('actif', 'ACTIF')}${personnelSortHeader('inactif', 'INACTIF')}<th>ACTIONS</th></tr></thead>
           <tbody>
             ${peopleBody}
           </tbody>
@@ -3513,7 +3567,21 @@
     }
     document.getElementById('personnel-oi')?.addEventListener('change', (e) => {
       state.personnelOi = e.target.value;
-      withLoading(loadPersonnelDirectory);
+      render();
+    });
+    document.getElementById('personnel-specialization')?.addEventListener('change', (e) => {
+      state.personnelSpecialization = e.target.value;
+      render();
+    });
+    root.querySelectorAll('[data-personnel-sort]').forEach((th) => {
+      th.addEventListener('click', () => {
+        const display = personnelDisplay();
+        const key = th.getAttribute('data-personnel-sort');
+        state.personnelSort = display && display.nextPersonnelSort
+          ? display.nextPersonnelSort(state.personnelSort, key)
+          : { key, dir: state.personnelSort && state.personnelSort.key === key && state.personnelSort.dir === 'asc' ? 'desc' : 'asc' };
+        render();
+      });
     });
     root.querySelectorAll('[data-personnel-statut]').forEach((btn) => {
       btn.addEventListener('click', () => {
