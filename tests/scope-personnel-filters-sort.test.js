@@ -54,7 +54,7 @@ const rows = [
     spec('FOBA', '1')
   ]),
   person({ nip: '5', nom: 'Viret', prenom: 'Léa', grade: 'Sgt' }, [oi('DPS', 'G1'), spec('AUTO', 'VL_DPS')]),
-  person({ nip: '6', nom: 'Archive', prenom: 'Jean', grade: 'Sgt', archivedAt: '2026-02-01' }, [oi('DPS', 'G1')])
+  person({ nip: '6', nom: 'Archive', prenom: 'Jean', grade: 'Sgt', statutTemporel: 'inactif' }, [oi('DPS', 'G1')])
 ];
 
 const oiOptions = display.operationalOiOptions([
@@ -93,7 +93,7 @@ assert.strictEqual(ids(display.filterPersonnelRows(rows, {
   statut: 'actifs'
 })), '10');
 assert.ok(!ids(display.filterPersonnelRows(rows, { statut: 'actifs' })).includes('6'));
-assert.strictEqual(ids(display.filterPersonnelRows(rows, { statut: 'archives' })), '6');
+assert.strictEqual(ids(display.filterPersonnelRows(rows, { statut: 'inactifs' })), '6');
 
 assert.strictEqual(ids(display.sortPersonnelRows(rows, { key: 'nip', dir: 'asc' })), '2,3,4,5,6,10,100');
 assert.strictEqual(ids(display.sortPersonnelRows(rows, { key: 'nip', dir: 'desc' })), '100,10,6,5,4,3,2');

@@ -2023,3 +2023,29 @@ body.scope-pdf-open { overflow: hidden; }
   .scope-person-kpis { grid-template-columns: 1fr 1fr; }
   .scope-domain-pills .scope-btn { min-height: 44px; }
 }
+
+
+/* SCOPE-PERSONNEL-TEMPORAL-UX-1 */
+.scope-period-range { display:block; font-style:normal; color:var(--scope-muted,#6b7280); font-size:12px; font-weight:500; margin-top:2px; }
+.scope-period-date { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--scope-muted,#6b7280); }
+.scope-person-toolbar { gap:8px; margin:8px 0 4px; }
+.scope-row-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.scope-linkish { background:none; border:0; padding:0; color:#1e3a8a; cursor:pointer; font:inherit; text-decoration:underline; font-size:12px; }
+.scope-history-card { margin-top:16px; }
+.scope-history-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.scope-history-head h3 { margin:0; font-size:16px; }
+.scope-history-asof { display:flex; gap:8px; align-items:center; margin:8px 0; flex-wrap:wrap; }
+.scope-history-list { list-style:none; padding:0; margin:8px 0 0; }
+.scope-history-list li { padding:6px 0; border-bottom:1px solid #eef0f3; }
+.scope-modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.35); display:flex; align-items:center; justify-content:center; z-index:40; }
+.scope-modal { background:#fff; border-radius:12px; padding:18px; width:min(420px, calc(100vw - 32px)); box-shadow:0 12px 40px rgba(15,23,42,.18); }
+.scope-modal h3 { margin:0 0 8px; }
+.scope-modal label { display:block; margin:10px 0 4px; font-size:12px; color:#4b5563; }
+.scope-modal input { width:100%; min-height:40px; }
+.scope-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+
+.scope-table tbody tr:nth-child(odd){background:#fff;}
+.scope-table tbody tr:nth-child(even){background:#f4f6f8;}
+.scope-table tbody tr:hover{background:#e8eef8;}
+.scope-table tbody tr.is-selected{background:#dbe7fb;}
+.scope-table thead th{background:#f3f4f6;}

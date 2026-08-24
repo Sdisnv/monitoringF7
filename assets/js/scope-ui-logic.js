@@ -280,6 +280,9 @@
     if (preset === 'CUSTOM') {
       params.from = (state && state.from) || `${year}-01-01`;
       params.to = (state && state.to) || `${year}-12-31`;
+    } else if (state && state.from && state.to) {
+      params.from = state.from;
+      params.to = state.to;
     }
     if (state && state.domaine) params.domaine = state.domaine;
     if (state && state.cible) params.cible = state.cible;

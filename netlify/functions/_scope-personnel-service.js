@@ -2,6 +2,7 @@
 const db = require('./_postgres');
 const ctx = require('./_scope-personnel-import-contexts');
 const display = require('../../assets/js/scope-personnel-display.js');
+const temporal = require('../../assets/js/scope-personnel-temporal.js');
 
 function rid(){
   return (global.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -984,42 +985,101 @@ function mapAssignment(row){
   };
 }
 
-async function listPersonnel({ q='', domaine='', cible='', statut='' } = {}){
+async function listPersonnel({ q='', domaine='', cible='', statut='', from='', to='', preset='', year='', asOf='' } = {}){
   await ensureScopeSchema();
+  const period = temporal.resolveAnalyzedPeriod({ from, to, preset, year, asOf, month: arguments[0] && arguments[0].month, quarter: arguments[0] && arguments[0].quarter });
   const values = [];
-  const status = String(statut || 'actifs').toLowerCase();
   const where = [];
-  if(status === 'archives' || status === 'archived') where.push(`p.archived_at is not null`);
-  else if(status !== 'tous' && status !== 'all') where.push(`p.archived_at is null`);
   if(q){
     values.push(`%${String(q).toLowerCase()}%`);
     where.push(`(lower(p.nip) like $${values.length} or lower(coalesce(p.nom,'')) like $${values.length} or lower(coalesce(p.prenom,'')) like $${values.length} or lower(coalesce(p.grade,'')) like $${values.length})`);
   }
   if(domaine){
     values.push(domaine);
-    where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.domaine=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
+    where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.domaine=$${values.length})`);
   }
   if(cible){
     values.push(cible);
-    where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.cible=$${values.length} and (a.date_inactif is null or a.date_inactif >= current_date))`);
+    where.push(`exists (select 1 from scope_affectations a where a.personne_id=p.id and a.cible=$${values.length})`);
   }
   const res = await getDb().query(`select p.* from scope_personnes p where ${where.length ? where.join(' and ') : 'true'} order by lower(coalesce(p.nom,'')), lower(coalesce(p.prenom,'')), p.nip limit 500`, values);
   const persons = (res.rows || []).map(mapPerson);
   const ids = persons.map(p => p.id);
   let assignments = [];
+  let periodes = [];
   if(ids.length){
     const aff = await getDb().query(`select * from scope_affectations where personne_id = any($1::text[]) order by domaine, cible, date_actif`, [ids]);
     assignments = (aff.rows || []).map(mapAssignment);
+    try {
+      const per = await getDb().query(`select * from scope_personne_periodes where personne_id = any($1::text[]) order by date_debut`, [ids]);
+      periodes = per.rows || [];
+    } catch (_error) {
+      periodes = [];
+    }
   }
-  return persons.map(person => Object.assign(person, { affectations: assignments.filter(a => a.personneId === person.id) }));
+  const status = String(statut || 'actifs').toLowerCase();
+  const decorated = persons.map((person) => {
+    const affectations = assignments.filter((a) => a.personneId === person.id);
+    const personPeriodes = periodes.filter((row) => row.personne_id === person.id);
+    const bundle = Object.assign({}, person, { affectations, periodes: personPeriodes });
+    const statutTemporel = temporal.temporalStatus(bundle, period);
+    const window = temporal.activityWindow(bundle, period);
+    return Object.assign(bundle, {
+      statutTemporel,
+      temporalStatus: statutTemporel,
+      dateActif: window.from || person.dateEntreeSdis || '',
+      dateInactif: window.to || '',
+      period
+    });
+  });
+  const filtered = decorated.filter((person) => {
+    if(status === 'tous' || status === 'all') return true;
+    if(status === 'inactifs' || status === 'inactif' || status === 'inactive') return person.statutTemporel === 'inactif';
+    if(status === 'archives' || status === 'archived') return person.statutTemporel === 'inactif';
+    return person.statutTemporel === 'actif';
+  });
+  filtered._period = period;
+  return filtered;
 }
 
-async function getPersonne(id){
+async function appendPersonnelJournal({ auteurId, entite, entiteId, action, avant, apres, commentaire }){
+  await getDb().query(
+    `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
+     values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8)`,
+    [rid(), auteurId || null, entite, String(entiteId), action, JSON.stringify(avant || null), JSON.stringify(apres || null), commentaire || null]
+  );
+}
+
+async function getPersonne(id, opts = {}){
   await ensureScopeSchema();
-  const person = await getDb().query(`select * from scope_personnes where id=$1 and archived_at is null`, [id]);
+  const person = await getDb().query(`select * from scope_personnes where id=$1`, [id]);
   if(!person.rows[0]) return null;
   const aff = await getDb().query(`select * from scope_affectations where personne_id=$1 order by domaine, cible, date_actif`, [id]);
-  return Object.assign(mapPerson(person.rows[0]), { affectations:(aff.rows || []).map(mapAssignment) });
+  let periodes = [];
+  let journal = [];
+  try {
+    const per = await getDb().query(`select * from scope_personne_periodes where personne_id=$1 order by date_debut`, [id]);
+    periodes = per.rows || [];
+  } catch (_error) { periodes = []; }
+  try {
+    const jr = await getDb().query(`select * from scope_journal_metier where entite='personne' and entite_id=$1 order by at desc limit 50`, [id]);
+    journal = jr.rows || [];
+  } catch (_error) { journal = []; }
+  const mapped = Object.assign(mapPerson(person.rows[0]), {
+    affectations:(aff.rows || []).map(mapAssignment),
+    periodes,
+    journal
+  });
+  const period = temporal.resolveAnalyzedPeriod(opts);
+  const statutTemporel = temporal.temporalStatus(mapped, period);
+  const window = temporal.activityWindow(mapped, period);
+  return Object.assign(mapped, {
+    statutTemporel,
+    temporalStatus: statutTemporel,
+    dateActif: window.from || mapped.dateEntreeSdis || '',
+    dateInactif: window.to || '',
+    period
+  });
 }
 
 async function updatePersonne(id, patch){
@@ -1108,6 +1168,198 @@ function computeEffectifsFromAssignments(assignments, date){
   return counts;
 }
 
+
+async function inactivatePersonne(id, body, actor){
+  await ensureScopeSchema();
+  const dateEffet = temporal.iso(body && (body.dateInactivite || body.date || body.dateEffet));
+  if(!dateEffet){
+    const error = new Error('La date d’inactivité est obligatoire.');
+    error.statusCode = 400;
+    throw error;
+  }
+  const plan = temporal.planInactivation(dateEffet);
+  const existing = await getPersonne(id, { asOf: plan.dernierJourActif });
+  if(!existing){
+    const error = new Error('Personne introuvable.');
+    error.statusCode = 404;
+    throw error;
+  }
+  const open = (existing.affectations || []).filter((row) => !row.dateInactif);
+  for(const aff of open){
+    const start = temporal.iso(aff.dateActif);
+    if(plan.dernierJourActif && start && plan.dernierJourActif < start){
+      const error = new Error('La date d’inactivité ne peut pas précéder le début d’une affectation ouverte.');
+      error.statusCode = 422;
+      throw error;
+    }
+    await getDb().query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [aff.id, plan.dernierJourActif]);
+  }
+  try {
+    const openPeriodes = await getDb().query(
+      `select * from scope_personne_periodes where personne_id=$1 and date_fin is null and type in ('ACTIF','INDISPONIBLE')`,
+      [id]
+    );
+    for(const row of (openPeriodes.rows || [])){
+      await getDb().query(`update scope_personne_periodes set date_fin=$2::date, updated_at=now() where periode_id=$1`, [row.periode_id, plan.dernierJourActif]);
+    }
+    await getDb().query(
+      `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
+       values ($1,$2,'SORTI',$3::date,null,$4,'MANUEL')`,
+      [rid(), id, dateEffet, (body && body.commentaire) || 'Inactivation manuelle']
+    );
+  } catch (_error) { /* periodes absentes : les affectations restent la source opérationnelle */ }
+  await appendPersonnelJournal({
+    auteurId: actor && (actor.sub || actor.id || actor.email),
+    entite: 'personne',
+    entiteId: id,
+    action: 'INACTIVER',
+    avant: { affectations: existing.affectations, statutTemporel: existing.statutTemporel },
+    apres: { dateEffet, dernierJourActif: plan.dernierJourActif, affectationsCloturees: open.map((row) => row.id) },
+    commentaire: (body && body.commentaire) || 'Inactivation manuelle'
+  });
+  return getPersonne(id, { asOf: dateEffet });
+}
+
+async function correctPersonneInactivation(id, body, actor){
+  await ensureScopeSchema();
+  const dateEffet = temporal.iso(body && (body.dateInactivite || body.date || body.dateEffet));
+  const existing = await getPersonne(id, {});
+  if(!existing){
+    const error = new Error('Personne introuvable.');
+    error.statusCode = 404;
+    throw error;
+  }
+  if(!dateEffet){
+    try {
+      await getDb().query(
+        `update scope_personne_periodes set date_fin=$2::date, updated_at=now()
+         where personne_id=$1 and type='SORTI' and date_fin is null`,
+        [id, temporal.dayBefore(temporal.iso(body && body.dateReactivation) || new Date().toISOString().slice(0, 10))]
+      );
+    } catch (_error) {}
+    await appendPersonnelJournal({
+      auteurId: actor && (actor.sub || actor.id),
+      entite: 'personne',
+      entiteId: id,
+      action: 'REACTIVER',
+      avant: { statutTemporel: existing.statutTemporel },
+      apres: { dateReactivation: body && body.dateReactivation },
+      commentaire: (body && body.commentaire) || 'Réactivation / correction'
+    });
+    return getPersonne(id, {});
+  }
+  const plan = temporal.planInactivation(dateEffet);
+  await getDb().query(
+    `update scope_affectations set date_inactif=$2::date, updated_at=now()
+     where personne_id=$1 and date_inactif is not null`,
+    [id, plan.dernierJourActif]
+  );
+  try {
+    await getDb().query(
+      `update scope_personne_periodes set date_debut=$2::date, updated_at=now()
+       where personne_id=$1 and type='SORTI' and date_fin is null`,
+      [id, dateEffet]
+    );
+  } catch (_error) {}
+  await appendPersonnelJournal({
+    auteurId: actor && (actor.sub || actor.id),
+    entite: 'personne',
+    entiteId: id,
+    action: 'CORRIGER_INACTIVATION',
+    avant: { dateInactif: existing.dateInactif },
+    apres: { dateEffet, dernierJourActif: plan.dernierJourActif },
+    commentaire: (body && body.commentaire) || 'Correction rétroactive'
+  });
+  return getPersonne(id, {});
+}
+
+async function correctAffectationPeriod(affectationId, body, actor){
+  await ensureScopeSchema();
+  const dateActif = temporal.iso(body && (body.dateActif || body.dateDebut));
+  const dateInactif = temporal.iso(body && (body.dateInactif || body.dateFin));
+  if(!dateActif){
+    const error = new Error('La date d’effet est obligatoire.');
+    error.statusCode = 400;
+    throw error;
+  }
+  const current = await getDb().query(`select * from scope_affectations where id=$1`, [affectationId]);
+  if(!current.rows[0]){
+    const error = new Error('Affectation introuvable.');
+    error.statusCode = 404;
+    throw error;
+  }
+  const row = current.rows[0];
+  const others = await getDb().query(
+    `select * from scope_affectations where personne_id=$1 and id<>$2 and categorie=$3 and domaine=$4 and cible=$5`,
+    [row.personne_id, affectationId, row.categorie, row.domaine, row.cible]
+  );
+  for(const other of (others.rows || [])){
+    if(temporal.rangesOverlap(dateActif, dateInactif, other.date_actif, other.date_inactif)){
+      const error = new Error('La correction chevauche une autre affectation du même type.');
+      error.statusCode = 422;
+      throw error;
+    }
+  }
+  await getDb().query(
+    `update scope_affectations set date_actif=$2::date, date_inactif=$3::date, updated_at=now() where id=$1`,
+    [affectationId, dateActif, dateInactif || null]
+  );
+  await appendPersonnelJournal({
+    auteurId: actor && (actor.sub || actor.id),
+    entite: 'affectation',
+    entiteId: affectationId,
+    action: 'CORRIGER_PERIODE',
+    avant: { dateActif: row.date_actif, dateInactif: row.date_inactif },
+    apres: { dateActif, dateInactif },
+    commentaire: (body && body.commentaire) || 'Correction rétroactive d’affectation'
+  });
+  return getPersonne(row.personne_id, {});
+}
+
+function importTypeLabel(type){
+  const raw = String(type || '').toUpperCase();
+  if(raw === 'GENERAL' || raw === 'PERSONNEL_GENERAL') return 'Import Personnel général';
+  if(raw.indexOf('PAPR') >= 0) return 'Import PAPR';
+  if(raw.indexOf('FOBA') >= 0) return 'Import FOBA';
+  if(raw.indexOf('AUTO') >= 0) return 'Import AUTO';
+  if(raw.indexOf('JSP') >= 0) return 'Import JSP';
+  return 'Mise à jour Personnel';
+}
+
+async function listPersonnelImportHistory(){
+  await ensureScopeSchema();
+  const res = await getDb().query(`select * from scope_personnel_import_batches order by created_at desc, committed_at desc nulls last limit 100`);
+  return (res.rows || []).map((row) => ({
+    id: row.id,
+    dateImport: row.committed_at || row.created_at,
+    dateEffet: row.annee_monitoring ? `${row.annee_monitoring}-01-01` : (row.committed_at || row.created_at),
+    type: row.import_type,
+    libelle: importTypeLabel(row.import_type),
+    fichier: row.filename,
+    auteur: row.created_by,
+    totalLignes: row.total_lines,
+    creations: row.count_new_persons,
+    modifications: row.count_modified,
+    affectations: row.count_new_assignments,
+    erreurs: row.count_errors,
+    statut: row.status
+  }));
+}
+
+async function getPersonnelImportBatch(id){
+  await ensureScopeSchema();
+  const batch = await getDb().query(`select * from scope_personnel_import_batches where id=$1`, [id]);
+  if(!batch.rows[0]) return null;
+  const lines = await getDb().query(`select * from scope_personnel_import_lines where batch_id=$1 order by line_number limit 500`, [id]);
+  const mapped = (await listPersonnelImportHistory()).find((row) => row.id === id);
+  return Object.assign({}, mapped, { lignes: lines.rows || [] });
+}
+
+async function situationAtDate(date, statut){
+  return listPersonnel({ statut: statut || 'tous', asOf: date, from: date, to: date });
+}
+
+
 module.exports = {
   ensureScopeSchema,
   parsePersonnelCsv,
@@ -1123,6 +1375,15 @@ module.exports = {
   getPersonne,
   updatePersonne,
   updateAffectation,
+  inactivatePersonne,
+  correctPersonneInactivation,
+  correctAffectationPeriod,
+  listPersonnelImportHistory,
+  getPersonnelImportBatch,
+  situationAtDate,
+  listPersonnelImportHistory,
+  getPersonnelImportBatch,
+  situationAtDate,
   effectifAtDate,
   computeEffectifsFromAssignments,
   evaluateAutoSpecializations: display.evaluateAutoSpecializations,

@@ -1,13 +1,16 @@
 /* SCOPE-AUTO-SPECIALISATIONS-PRIORITE-1
    Libellés métier centralisés + règle AUTO PL > VL DPS (effectif uniquement). */
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.ScopePersonnelDisplay = api;
   root.ScopePersonnelDisplay = api;
   root.ScopePersonnelDisplay = api;
-})(typeof window !== 'undefined' ? window : globalThis, function () {
+})(typeof window !== 'undefined' ? window : globalThis, function (root) {
   'use strict';
+  const refs = (typeof require === 'function'
+    ? require('./scope-personnel-referentials.js')
+    : (root && root.ScopePersonnelReferentials) || {});
 
   const SPECIALIZATION_SEPARATOR = ', ';
   const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP']);
@@ -653,8 +656,8 @@
   const TECHNICAL_OI_DOMAINS = Object.freeze(['AUTO', 'FOBA', 'FOCA', 'FOSPEC', 'PR', 'PAPR']);
   const EXCLUDED_OI_LEVELS = Object.freeze(['CAD', 'GEN', 'PL', 'VL', 'VL_DPS', 'VL_DAP', 'PR']);
   const FR_COLLATOR = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
-  const JSP_GRADE_SORT_ORDER = Object.freeze(['JSP', 'Flm 1', 'Flm 2', 'Flm 3']);
-  const GRADE_SORT_MODE = 'INCOMPLETE_FR_COLLATOR';
+  const JSP_GRADE_SORT_ORDER = Object.freeze((refs.GRADE_CODES_ASC || ['JSP', 'Flm 1', 'Flm 2', 'Flm 3']).slice());
+  const GRADE_SORT_MODE = refs.GRADE_SORT_MODE || 'OFFICIAL_HIERARCHY';
 
   function personAssignments(person){
     if(!person) return [];
@@ -772,11 +775,20 @@
     return Boolean(person && (person.archivedAt || person.archived_at || person.archivee));
   }
 
+  function personTemporalStatut(person){
+    const raw = clean(person && (person.statutTemporel || person.temporalStatus || person.statutRh || '')).toLowerCase();
+    if(raw === 'actif' || raw === 'active' || raw === 'actifs') return 'actif';
+    if(raw === 'inactif' || raw === 'inactive' || raw === 'inactifs') return 'inactif';
+    return personIsArchived(person) ? 'inactif' : 'actif';
+  }
+
   function personMatchesStatut(person, statut){
     const wanted = clean(statut || 'actifs').toLowerCase();
     if(wanted === 'tous' || wanted === 'all') return true;
-    if(wanted === 'archives' || wanted === 'archived') return personIsArchived(person);
-    return !personIsArchived(person);
+    const temporal = personTemporalStatut(person);
+    if(wanted === 'inactifs' || wanted === 'inactif' || wanted === 'inactive') return temporal === 'inactif';
+    if(wanted === 'archives' || wanted === 'archived') return temporal === 'inactif';
+    return temporal === 'actif';
   }
 
   function filterPersonnelRows(rows, filters){
@@ -834,12 +846,14 @@
   }
 
   function compareGrade(a, b){
+    if(typeof refs.compareGrades === 'function') return refs.compareGrades(a, b);
     const ga = clean(a);
     const gb = clean(b);
     const ia = JSP_GRADE_SORT_ORDER.indexOf(ga);
     const ib = JSP_GRADE_SORT_ORDER.indexOf(gb);
-    if(ia !== -1 && ib !== -1) return ia - ib;
-    return FR_COLLATOR.compare(ga, gb);
+    const ra = ia === -1 ? 1000 : ia;
+    const rb = ib === -1 ? 1000 : ib;
+    return ra - rb || FR_COLLATOR.compare(ga, gb);
   }
 
   function compareOiLabel(a, b){
@@ -969,6 +983,9 @@
     assignmentSides: assignmentSides,
     OPERATIONAL_OI_ORDER,
     GRADE_SORT_MODE,
+    JSP_GRADE_SORT_ORDER,
+    personTemporalStatut,
+    compareGrade,
     operationalOiOptions,
     specializationFilterOptions,
     filterPersonnelRows,

@@ -12,9 +12,16 @@ exports.handler = async function(event){
       q: params.q || '',
       domaine: params.domaine || '',
       cible: params.cible || params.cible || '',
-      statut: params.statut || params.status || 'actifs'
+      statut: params.statut || params.status || 'actifs',
+      from: params.from || '',
+      to: params.to || '',
+      preset: params.preset || '',
+      year: params.year || '',
+      month: params.month || '',
+      quarter: params.quarter || '',
+      asOf: params.asOf || params.situationAu || ''
     });
-    return response(200, { ok:true, personnes });
+    return response(200, { ok:true, personnes, personnes: personnes, period: personnes._period || null });
   }catch(error){
     return response(500, { ok:false, error:'scope_personnel_list_failed', message:String(error.message || error) });
   }

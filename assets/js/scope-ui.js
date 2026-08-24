@@ -95,6 +95,10 @@
     personnelDirectory: null,
     personnelQuery: '',
     personnelStatut: 'actifs',
+    personnelHistory: null,
+    personnelHistoryOpen: false,
+    personnelSituationDate: '',
+    personnelInactivate: null,
     personnelOi: '',
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
@@ -423,18 +427,19 @@
       <div>
         <span>Période analysée</span>
         <strong>${escapeHtml(periodLabel({ preset: state.preset, from: state.from, to: state.to }))}</strong>
+        <em class="scope-period-range">${escapeHtml((window.ScopePersonnelTemporal && window.ScopePersonnelTemporal.periodLabel({ preset: state.preset, year: state.year, month: state.month, quarter: state.quarter, from: state.from, to: state.to })) || '')}</em>
       </div>
       <div class="scope-period-controls">
         ${periodSelect('scope-preset', `
           <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
           <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
           <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
-          <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Plage</option>
+          <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Personnalisée</option>
         `)}
         ${periodSelect('scope-year', [String(Number(state.year) - 1), state.year, String(Number(state.year) + 1)].filter((v, i, a) => a.indexOf(v) === i).map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join(''))}
         ${state.preset === 'QUARTER' ? periodSelect('scope-quarter', [1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')) : ''}
         ${state.preset === 'MONTH' ? periodSelect('scope-month', ['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')) : ''}
-        ${state.preset === 'CUSTOM' ? `<input id="scope-from" type="date" value="${escapeHtml(state.from)}"><input id="scope-to" type="date" value="${escapeHtml(state.to)}">` : ''}
+        ${state.preset === 'CUSTOM' ? `<label class="scope-period-date">Du <input id="scope-from" type="date" value="${escapeHtml(state.from)}"></label><label class="scope-period-date">Au <input id="scope-to" type="date" value="${escapeHtml(state.to)}"></label>` : ''}
       </div>
     </section>`;
   }
@@ -1067,9 +1072,26 @@
     }
     state.personnelError = null;
     try {
+      const temporal = window.ScopePersonnelTemporal;
+      const period = temporal && temporal.resolveAnalyzedPeriod
+        ? temporal.resolveAnalyzedPeriod({
+            preset: state.preset,
+            year: state.year,
+            month: state.month,
+            quarter: state.quarter,
+            from: state.from,
+            to: state.to,
+            asOf: state.personnelSituationDate
+          })
+        : { from: state.from, to: state.to, preset: state.preset, year: state.year };
       const payload = await client.listPersonnelDirectory({
         q: state.personnelQuery,
-        statut: state.personnelStatut === 'tous' ? 'all' : state.personnelStatut
+        statut: state.personnelStatut === 'tous' ? 'all' : state.personnelStatut,
+        from: period.from,
+        to: period.to,
+        preset: period.preset || state.preset,
+        year: period.year || state.year,
+        asOf: state.personnelSituationDate || ''
       });
       state.personnelDirectory = normalizePersonnelDirectory(payload);
       state.personnelReady = true;
@@ -1512,13 +1534,13 @@
               <td data-label="SPÉCIALISATIONS">${personnelOtherAffectationsHtml(specLabels)}</td>
               <td data-label="ACTIF">${escapeHtml(formatPersonnelDateCell(dateActif))}</td>
               <td data-label="INACTIF">${escapeHtml(formatPersonnelDateCell(dateInactif))}</td>
-              <td data-label="ACTIONS"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a></td>
+              <td data-label="ACTIONS"><div class="scope-row-actions"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a>${canManagePersonnel() && (p.statutTemporel !== 'inactif') ? `<button type="button" class="scope-linkish" data-inactivate-person="${escapeHtml(p.personneId)}" data-inactivate-label="${escapeHtml((p.prenom || '') + ' ' + (p.nom || ''))}">Rendre inactif</button>` : (canManagePersonnel() && p.statutTemporel === 'inactif' ? `<button type="button" class="scope-linkish" data-correct-person="${escapeHtml(p.personneId)}">Corriger</button>` : '')}</div></td>
             </tr>`;
       }).join('');
     }
     const statutFilters = [
       ['actifs', 'Actifs'],
-      ['archives', 'Archivés'],
+      ['inactifs', 'Inactifs'],
       ['tous', 'Tous']
     ];
     const oiOptions = oiFilterOptions();
@@ -1537,7 +1559,7 @@
     }
     return `<div class="scope-card">
       <h2 style="margin-top:0">Personnel</h2>
-      <p class="scope-mode-hint">SCOPE-PERSON-1 — « Cette personne suit-elle ce qu’on attend d’elle sur la période sélectionnée ? » Taux issus d’un agrégat serveur unique (pas de N+1). QUANTITATIF et LEGACY exclus.</p>
+      <p class="scope-mode-hint">Annuaire du personnel sur la période analysée. Les taux individuels restent disponibles dans la fiche.</p>
       <div class="scope-person-toolbar">
         <div class="scope-field"><label for="personnel-q">Recherche</label>
           <input id="personnel-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personnelQuery)}">
@@ -1559,7 +1581,7 @@
       <div class="scope-sync-filters" role="tablist">
         ${statutFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personnelStatut === id ? 'scope-btn-primary' : ''}" data-personnel-statut="${id}">${escapeHtml(label)}</button>`).join('')}
       </div>
-      <p class="scope-sync-summary">${people.length} personne(s) · période ${escapeHtml(periodLabel(dir && dir.period))} · ${escapeHtml((dir && dir.performance && dir.performance.note) || 'Agrégat batch')}</p>
+      <p class="scope-sync-summary">${people.length} personne(s) · ${escapeHtml((window.ScopePersonnelTemporal && window.ScopePersonnelTemporal.periodLabel({ from: state.from, to: state.to, preset: state.preset, year: state.year })) || periodLabel(dir && dir.period) || '')}</p>
       <div class="scope-table-wrap">
         <table class="scope-table scope-person-table">
           <thead><tr>${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('oi', 'OI')}${personnelSortHeader('specializations', 'SPÉCIALISATIONS')}${personnelSortHeader('actif', 'ACTIF')}${personnelSortHeader('inactif', 'INACTIF')}<th>ACTIONS</th></tr></thead>
@@ -1568,8 +1590,54 @@
           </tbody>
         </table>
       </div>
+      ${renderPersonnelHistoryPanel()}
+      ${renderPersonnelInactivateModal()}
     </div>`;
   }
+
+
+  function renderPersonnelHistoryPanel(){
+    const batches = (state.personnelHistory && state.personnelHistory.batches) || [];
+    const open = state.personnelHistoryOpen;
+    return `<section class="scope-card scope-history-card">
+      <div class="scope-history-head">
+        <h3>Historique Personnel</h3>
+        <button type="button" class="scope-btn" id="scope-toggle-personnel-history">${open ? 'Masquer' : 'Afficher'}</button>
+      </div>
+      <div class="scope-history-asof">
+        <label for="personnel-asof">Situation au</label>
+        <input id="personnel-asof" type="date" value="${escapeHtml(state.personnelSituationDate || '')}">
+        <button type="button" class="scope-btn" id="scope-apply-personnel-asof">Appliquer</button>
+      </div>
+      ${open ? `<ul class="scope-history-list">${batches.length ? batches.map((b) => {
+        const d = (window.ScopePersonnelDisplay && window.ScopePersonnelDisplay.formatPersonnelDate)
+          ? window.ScopePersonnelDisplay.formatPersonnelDate(b.dateImport || b.dateEffet)
+          : String(b.dateImport || '').slice(0,10);
+        return `<li><button type="button" class="scope-linkish" data-personnel-batch="${escapeHtml(b.id)}">${escapeHtml(d)} — ${escapeHtml(b.libelle || 'Mise à jour Personnel')}</button></li>`;
+      }).join('') : '<li>Aucun import enregistré.</li>'}</ul>` : ''}
+    </section>`;
+  }
+
+  function renderPersonnelInactivateModal(){
+    const modal = state.personnelInactivate;
+    if(!modal) return '';
+    return `<div class="scope-modal-backdrop" id="scope-inactivate-modal">
+      <div class="scope-modal" role="dialog" aria-labelledby="scope-inactivate-title">
+        <h3 id="scope-inactivate-title">${modal.mode === 'correct' ? 'Corriger l’inactivité' : 'Rendre inactif'}</h3>
+        <p>${escapeHtml(modal.label || '')}</p>
+        <label for="scope-inactivate-date">Date d’inactivité</label>
+        <input id="scope-inactivate-date" type="date" required value="${escapeHtml(modal.date || '')}">
+        <p class="scope-mode-hint">Dernier jour actif = veille de cette date (convention MODEL-2).</p>
+        <label for="scope-inactivate-comment">Commentaire</label>
+        <input id="scope-inactivate-comment" type="text" value="${escapeHtml(modal.comment || '')}">
+        <div class="scope-modal-actions">
+          <button type="button" class="scope-btn" id="scope-inactivate-cancel">Annuler</button>
+          <button type="button" class="scope-btn scope-btn-primary" id="scope-inactivate-confirm">Confirmer</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
 
   function renderPersonnel(options) {
     const importMode = Boolean(options && options.importMode);
@@ -3587,6 +3655,68 @@
       btn.addEventListener('click', () => {
         state.personnelStatut = btn.getAttribute('data-personnel-statut');
         withLoading(loadPersonnelDirectory);
+      });
+    });
+
+    document.getElementById('scope-toggle-personnel-history')?.addEventListener('click', async () => {
+      state.personnelHistoryOpen = !state.personnelHistoryOpen;
+      if(state.personnelHistoryOpen && !state.personnelHistory && client.listPersonnelHistory){
+        state.personnelHistory = await client.listPersonnelHistory();
+      }
+      render();
+    });
+    document.getElementById('scope-apply-personnel-asof')?.addEventListener('click', () => {
+      state.personnelSituationDate = document.getElementById('personnel-asof')?.value || '';
+      withLoading(loadPersonnelDirectory);
+    });
+    root.querySelectorAll('[data-inactivate-person]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.personnelInactivate = {
+          id: btn.getAttribute('data-inactivate-person'),
+          label: btn.getAttribute('data-inactivate-label') || '',
+          mode: 'inactivate',
+          date: state.to || new Date().toISOString().slice(0,10)
+        };
+        render();
+      });
+    });
+    root.querySelectorAll('[data-correct-person]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.personnelInactivate = {
+          id: btn.getAttribute('data-correct-person'),
+          mode: 'correct',
+          date: ''
+        };
+        render();
+      });
+    });
+    document.getElementById('scope-inactivate-cancel')?.addEventListener('click', () => {
+      state.personnelInactivate = null;
+      render();
+    });
+    document.getElementById('scope-inactivate-confirm')?.addEventListener('click', () => {
+      const date = document.getElementById('scope-inactivate-date')?.value;
+      const comment = document.getElementById('scope-inactivate-comment')?.value || '';
+      if(!date){ toast('error', 'Date obligatoire', 'La date d’inactivité est obligatoire.'); return; }
+      const modal = state.personnelInactivate;
+      withLoading(async () => {
+        await client.inactivatePersonne({
+          personneId: modal.id,
+          dateInactivite: date,
+          commentaire: comment,
+          action: modal.mode === 'correct' ? 'correct' : 'inactivate'
+        });
+        state.personnelInactivate = null;
+        await loadPersonnelDirectory();
+      });
+    });
+    root.querySelectorAll('[data-personnel-batch]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        withLoading(async () => {
+          const detail = await client.listPersonnelHistory({ batchId: btn.getAttribute('data-personnel-batch') });
+          state.personnelHistory = Object.assign({}, state.personnelHistory || {}, { openBatch: detail.batch || detail });
+          render();
+        });
       });
     });
     root.querySelectorAll('[data-person-events]').forEach((btn) => {

@@ -199,6 +199,9 @@
         }));
       },
       listPersonnelDirectory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-list${queryString(params || {})}`); },
+      inactivatePersonne(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-inactivate', body); },
+      listPersonnelHistory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-history${queryString(params || {})}`); },
+      correctPersonnelPeriod(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-correct-period', body); },
       async getPersonneFiche(id, params) {
         const payload = await directRequest('GET', `/.netlify/functions/scope-personnel-detail${queryString(Object.assign({}, params || {}, { id }))}`);
         if (payload && payload.personne && !payload.identite) {
@@ -222,9 +225,9 @@
               nom: personne.nom,
               prenom: personne.prenom,
               oiActuel: primary ? { label } : null,
-              statutRh: personne.archivedAt || personne.archived_at ? 'INACTIF' : 'ACTIF',
-              archivee: Boolean(personne.archivedAt || personne.archived_at),
-              libelleStatut: personne.archivedAt || personne.archived_at ? 'Personnel inactif' : 'Personnel actif'
+              statutRh: (personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at) ? 'INACTIF' : 'ACTIF',
+              archivee: Boolean(personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at),
+              libelleStatut: (personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at) ? 'Personnel inactif' : 'Personnel actif'
             },
             period: params || {},
             historiqueRh: {},
