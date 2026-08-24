@@ -1024,13 +1024,15 @@ async function listPersonnel({ q='', domaine='', cible='', statut='', from='', t
     const personPeriodes = periodes.filter((row) => row.personne_id === person.id);
     const bundle = Object.assign({}, person, { affectations, periodes: personPeriodes });
     const statutTemporel = temporal.evaluateStatus ? temporal.evaluateStatus(bundle, period, asOfDay) : temporal.temporalStatus(bundle, period);
-    const window = temporal.activityWindow(bundle, period);
+    const window = temporal.activityWindow(bundle, period, asOfDay);
     return Object.assign(bundle, {
       statutTemporel,
       temporalStatus: statutTemporel,
-      dateActif: window.from || person.dateEntreeSdis || '',
+      dateActif: window.from || '',
       dateInactif: window.to || '',
-      period
+      period,
+      viewMode: asOfDay ? 'asof' : 'period',
+      asOf: asOfDay || ''
     });
   });
   const filtered = decorated.filter((person) => {
@@ -1073,11 +1075,11 @@ async function getPersonne(id, opts = {}){
   });
   const period = temporal.resolveAnalyzedPeriod(opts);
   const statutTemporel = temporal.evaluateStatus ? temporal.evaluateStatus(mapped, period, opts.asOf) : temporal.temporalStatus(mapped, period);
-  const window = temporal.activityWindow(mapped, period);
+  const window = temporal.activityWindow(mapped, period, opts.asOf);
   return Object.assign(mapped, {
     statutTemporel,
     temporalStatus: statutTemporel,
-    dateActif: window.from || mapped.dateEntreeSdis || '',
+    dateActif: window.from || '',
     dateInactif: window.to || '',
     period
   });
@@ -1185,15 +1187,16 @@ async function inactivatePersonne(id, body, actor){
     error.statusCode = 404;
     throw error;
   }
-  const open = (existing.affectations || []).filter((row) => !row.dateInactif);
-  for(const aff of open){
-    const start = temporal.iso(aff.dateActif);
-    if(plan.dernierJourActif && start && plan.dernierJourActif < start){
-      const error = new Error('La date d’inactivité ne peut pas précéder le début d’une affectation ouverte.');
-      error.statusCode = 422;
-      throw error;
-    }
-    await getDb().query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [aff.id, plan.dernierJourActif]);
+  const closures = temporal.planAssignmentClosures(existing.affectations || [], dateEffet);
+  if(!closures.canProceed){
+    const error = new Error('Aucune affectation ouverte ne peut être clôturée à cette date d’inactivité. Des affectations commencent après cette date ; elles sont laissées intactes.');
+    error.statusCode = 422;
+    throw error;
+  }
+  const toClose = closures.close.concat(closures.sameDay);
+  for(const item of toClose){
+    const aff = item.assignment;
+    await getDb().query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [aff.id, item.dateInactif]);
   }
   try {
     const openPeriodes = await getDb().query(
@@ -1201,7 +1204,10 @@ async function inactivatePersonne(id, body, actor){
       [id]
     );
     for(const row of (openPeriodes.rows || [])){
-      await getDb().query(`update scope_personne_periodes set date_fin=$2::date, updated_at=now() where periode_id=$1`, [row.periode_id, plan.dernierJourActif]);
+      const start = temporal.iso(row.date_debut);
+      let dateFin = plan.dernierJourActif;
+      if(!dateFin || (start && dateFin < start)) dateFin = start;
+      await getDb().query(`update scope_personne_periodes set date_fin=$2::date, updated_at=now() where periode_id=$1`, [row.periode_id, dateFin]);
     }
     await getDb().query(
       `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
@@ -1215,7 +1221,12 @@ async function inactivatePersonne(id, body, actor){
     entiteId: id,
     action: 'INACTIVER',
     avant: { affectations: existing.affectations, statutTemporel: existing.statutTemporel },
-    apres: { dateEffet, dernierJourActif: plan.dernierJourActif, affectationsCloturees: open.map((row) => row.id) },
+    apres: {
+      dateEffet,
+      dernierJourActif: plan.dernierJourActif,
+      affectationsCloturees: toClose.map((item) => item.assignment.id),
+      affectationsFuturesConservees: closures.future.map((item) => item.assignment.id)
+    },
     commentaire: (body && body.commentaire) || 'Inactivation manuelle'
   });
   return getPersonne(id, { asOf: dateEffet });
@@ -1366,7 +1377,7 @@ async function getPersonnelImportBatch(id){
 }
 
 async function situationAtDate(date, statut){
-  return listPersonnel({ statut: statut || 'tous', asOf: date, from: date, to: date });
+  return listPersonnel({ statut: statut || 'tous', asOf: date });
 }
 
 

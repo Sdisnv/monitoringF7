@@ -99,6 +99,7 @@
     personnelHistoryOpen: false,
     personnelSituationDate: '',
     personnelSituationApplied: false,
+    personnelListSeq: 0,
     personnelInactivate: null,
     personnelOi: '',
     personnelSpecialization: '',
@@ -280,6 +281,7 @@
       state.personnelReady = false;
       state.personnelError = null;
       state.personnelSituationApplied = false;
+      state.personnelDirectory = null;
     }
     withLoading(async () => {
       const r = route();
@@ -1073,6 +1075,9 @@
       return;
     }
     state.personnelError = null;
+    state.personnelReady = false;
+    state.personnelDirectory = null;
+    const seq = (state.personnelListSeq = (state.personnelListSeq || 0) + 1);
     try {
       const temporal = window.ScopePersonnelTemporal;
       const period = temporal && temporal.resolveAnalyzedPeriod
@@ -1094,10 +1099,13 @@
         year: period.year || state.year,
         asOf: state.personnelSituationApplied ? (state.personnelSituationDate || '') : ''
       });
+      if (seq !== state.personnelListSeq) return;
       state.personnelDirectory = normalizePersonnelDirectory(payload);
       state.personnelReady = true;
     } catch (error) {
+      if (seq !== state.personnelListSeq) return;
       state.personnelError = L.friendlyError(error).message || L.errorMessage('personnel');
+      state.personnelReady = true;
       throw error;
     }
   }
@@ -1257,6 +1265,25 @@
     </section>`;
   }
 
+  function personnelContextBannerHtml(){
+    if(state.personnelSituationApplied && state.personnelSituationDate){
+      const label = (window.ScopePersonnelDisplay && window.ScopePersonnelDisplay.formatPersonnelDate)
+        ? window.ScopePersonnelDisplay.formatPersonnelDate(state.personnelSituationDate)
+        : state.personnelSituationDate;
+      return `<div class="scope-personnel-context is-asof" role="status">
+        <div>
+          <strong>Situation historique</strong>
+          <span>Au ${escapeHtml(label)} — personnes actives à cette date, pas sur la période.</span>
+        </div>
+        <button type="button" class="scope-btn" id="scope-quit-personnel-asof">Quitter la situation historique</button>
+      </div>`;
+    }
+    return `<div class="scope-personnel-context is-period" role="status">
+      <strong>Période analysée</strong>
+      <span>Actifs = au moins un jour d’activité dans la plage affichée.</span>
+    </div>`;
+  }
+
   function oiFilterSelectHtml() {
     const display = personnelDisplay();
     const groups = display && display.operationalOiGroups
@@ -1282,12 +1309,18 @@
     const dir = state.personnelDirectory;
     const people = (dir && dir.personnes) || [];
     const display = personnelDisplay();
+    const temporal = window.ScopePersonnelTemporal;
+    const period = temporal && temporal.resolveAnalyzedPeriod
+      ? temporal.resolveAnalyzedPeriod({ preset: state.preset, year: state.year, from: state.from, to: state.to })
+      : { to: state.to };
     const filtered = display && display.filterPersonnelRows
       ? display.filterPersonnelRows(people, {
           q: state.personnelQuery,
           statut: state.personnelStatut,
           oi: state.personnelOi,
-          specialization: state.personnelSpecialization
+          specialization: state.personnelSpecialization,
+          asOf: state.personnelSituationApplied ? (state.personnelSituationDate || '') : '',
+          period
         })
       : people;
     if (display && display.sortPersonnelRows) return display.sortPersonnelRows(filtered, state.personnelSort);
@@ -1584,7 +1617,7 @@
               <td data-label="SPÉCIALISATIONS">${personnelOtherAffectationsHtml(specLabels)}</td>
               <td data-label="ACTIF">${escapeHtml(formatPersonnelDateCell(dateActif))}</td>
               <td data-label="INACTIF">${escapeHtml(formatPersonnelDateCell(dateInactif))}</td>
-              <td data-label="ACTIONS"><div class="scope-row-actions"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a>${canManagePersonnel() ? `<details class="scope-row-more"><summary aria-label="Autres actions">⋯</summary><div class="scope-row-more-menu">${p.statutTemporel !== 'inactif' ? `<button type="button" data-inactivate-person="${escapeHtml(p.personneId)}" data-inactivate-label="${escapeHtml((p.prenom || '') + ' ' + (p.nom || ''))}">Rendre inactif</button>` : `<button type="button" data-correct-person="${escapeHtml(p.personneId)}">Corriger la période</button>`}</div></details>` : ''}</div></td>
+              <td data-label="ACTIONS"><div class="scope-row-actions"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a>${canManagePersonnel() ? `<details class="scope-row-more"><summary aria-label="Autres actions">⋯</summary><div class="scope-row-more-menu">${p.statutTemporel !== 'inactif' ? `<button type="button" data-inactivate-person="${escapeHtml(p.personneId)}" data-inactivate-nip="${escapeHtml(p.nip || '')}" data-inactivate-label="${escapeHtml([p.grade, p.prenom, p.nom].filter(Boolean).join(' '))}">Rendre inactif</button>` : `<button type="button" data-correct-person="${escapeHtml(p.personneId)}">Corriger la période</button>`}</div></details>` : ''}</div></td>
             </tr>`;
       }).join('');
     }
@@ -1613,6 +1646,7 @@
         <p>Annuaire nominatif. Les taux individuels restent dans la fiche.</p>
       </header>
       ${personnelPeriodControlsHtml()}
+      ${personnelContextBannerHtml()}
       <div class="scope-personnel-toolbar">
         <div class="scope-field scope-personnel-search"><label for="personnel-q">Recherche</label>
           <input id="personnel-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personnelQuery)}">
@@ -1635,7 +1669,7 @@
           <button type="button" class="scope-btn" id="scope-open-personnel-import">Importer du personnel</button>
         </div>
       </div>
-      <p class="scope-personnel-count">${people.length} personne(s)</p>
+      <p class="scope-personnel-count">${personnelView === 'loading' ? 'Chargement…' : (people.length + ' personne(s)')}${state.personnelSituationApplied ? ' — situation à la date' : ''}</p>
       <div class="scope-table-wrap">
         <table class="scope-table scope-person-table">
           <thead><tr>${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('oi', 'OI')}${personnelSortHeader('specializations', 'SPÉCIALISATIONS')}${personnelSortHeader('actif', 'ACTIF')}${personnelSortHeader('inactif', 'INACTIF')}<th>ACTIONS</th></tr></thead>
@@ -1669,7 +1703,7 @@
         <input id="personnel-asof" type="date" value="${escapeHtml(state.personnelSituationDate || '')}">
         <button type="button" class="scope-btn scope-btn-primary" id="scope-apply-personnel-asof">Appliquer</button>
       </div>
-      ${state.personnelSituationApplied && state.personnelSituationDate ? `<p class="scope-history-asof-result">Situation au ${escapeHtml((window.ScopePersonnelDisplay && window.ScopePersonnelDisplay.formatPersonnelDate) ? window.ScopePersonnelDisplay.formatPersonnelDate(state.personnelSituationDate) : state.personnelSituationDate)}</p>` : ''}
+      ${state.personnelSituationApplied && state.personnelSituationDate ? `<p class="scope-history-asof-result">Situation historique au ${escapeHtml((window.ScopePersonnelDisplay && window.ScopePersonnelDisplay.formatPersonnelDate) ? window.ScopePersonnelDisplay.formatPersonnelDate(state.personnelSituationDate) : state.personnelSituationDate)} <button type="button" class="scope-btn scope-btn-small" id="scope-quit-personnel-asof-history">Quitter</button></p>` : ''}
       <ul class="scope-history-list">${batches.length ? batches.map((b) => {
         const d = (window.ScopePersonnelDisplay && window.ScopePersonnelDisplay.formatPersonnelDate)
           ? window.ScopePersonnelDisplay.formatPersonnelDate(b.dateImport || b.dateEffet)
@@ -1683,18 +1717,31 @@
   function renderPersonnelInactivateModal(){
     const modal = state.personnelInactivate;
     if(!modal) return '';
+    const temporal = window.ScopePersonnelTemporal;
+    const plan = temporal && temporal.planInactivation && modal.date ? temporal.planInactivation(modal.date) : null;
+    const lastActive = plan && plan.dernierJourActif
+      ? ((window.ScopePersonnelDisplay && window.ScopePersonnelDisplay.formatPersonnelDate)
+        ? window.ScopePersonnelDisplay.formatPersonnelDate(plan.dernierJourActif)
+        : plan.dernierJourActif)
+      : '—';
     return `<div class="scope-modal-backdrop" id="scope-inactivate-modal">
-      <div class="scope-modal" role="dialog" aria-labelledby="scope-inactivate-title">
-        <h3 id="scope-inactivate-title">${modal.mode === 'correct' ? 'Corriger l’inactivité' : 'Rendre inactif'}</h3>
-        <p>${escapeHtml(modal.label || '')}</p>
+      <div class="scope-modal scope-modal-inactivate" role="dialog" aria-labelledby="scope-inactivate-title">
+        <h3 id="scope-inactivate-title">${modal.mode === 'correct' ? 'Corriger l’inactivité' : 'Rendre la personne inactive'}</h3>
+        <dl class="scope-inactivate-identity">
+          <dt>Personne</dt>
+          <dd>${escapeHtml(modal.label || '—')}</dd>
+          <dt>NIP</dt>
+          <dd>${escapeHtml(modal.nip || '—')}</dd>
+        </dl>
         <label for="scope-inactivate-date">Date d’inactivité</label>
         <input id="scope-inactivate-date" type="date" required value="${escapeHtml(modal.date || '')}">
-        <p class="scope-mode-hint">Le dernier jour d’activité est la veille de cette date.</p>
+        <p class="scope-mode-hint">Premier jour où cette personne ne sera plus considérée comme active.</p>
+        <p class="scope-inactivate-last">Dernier jour actif : <strong>${escapeHtml(lastActive)}</strong></p>
         <label for="scope-inactivate-comment">Commentaire</label>
-        <input id="scope-inactivate-comment" type="text" value="${escapeHtml(modal.comment || '')}">
+        <input id="scope-inactivate-comment" type="text" value="${escapeHtml(modal.comment || '')}" placeholder="Facultatif">
         <div class="scope-modal-actions">
           <button type="button" class="scope-btn" id="scope-inactivate-cancel">Annuler</button>
-          <button type="button" class="scope-btn scope-btn-primary" id="scope-inactivate-confirm">Confirmer</button>
+          <button type="button" class="scope-btn scope-inactivate-confirm" id="scope-inactivate-confirm">Confirmer l’inactivation</button>
         </div>
       </div>
     </div>`;
@@ -3732,6 +3779,19 @@
       state.personnelSituationApplied = Boolean(state.personnelSituationDate);
       withLoading(loadPersonnelDirectory);
     });
+    const quitAsOf = () => {
+      state.personnelSituationApplied = false;
+      state.personnelSituationDate = '';
+      withLoading(loadPersonnelDirectory);
+    };
+    document.getElementById('scope-quit-personnel-asof')?.addEventListener('click', quitAsOf);
+    document.getElementById('scope-quit-personnel-asof-history')?.addEventListener('click', quitAsOf);
+    document.getElementById('scope-inactivate-date')?.addEventListener('change', (e) => {
+      if(state.personnelInactivate){
+        state.personnelInactivate.date = e.target.value;
+        render();
+      }
+    });
     document.getElementById('personnel-period-mode')?.addEventListener('change', (e) => {
       const mode = e.target.value;
       if (mode === 'YEAR') {
@@ -3769,8 +3829,9 @@
         state.personnelInactivate = {
           id: btn.getAttribute('data-inactivate-person'),
           label: btn.getAttribute('data-inactivate-label') || '',
+          nip: btn.getAttribute('data-inactivate-nip') || '',
           mode: 'inactivate',
-          date: state.to || new Date().toISOString().slice(0,10)
+          date: ''
         };
         render();
       });

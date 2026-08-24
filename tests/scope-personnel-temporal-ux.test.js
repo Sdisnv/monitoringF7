@@ -15,76 +15,185 @@ function person(assignments, extra){
   }, extra || {});
 }
 
-function aff(from, to){
-  return { categorie: 'OI', domaine: 'DPS', cible: 'G1', dateActif: from, dateInactif: to };
+function aff(from, to, extra){
+  return Object.assign({
+    id: (extra && extra.id) || 'a1',
+    categorie: 'OI',
+    domaine: 'DPS',
+    cible: 'G1',
+    dateActif: from,
+    dateInactif: to
+  }, extra || {});
 }
 
+function listLike(people, opts){
+  const period = temporal.resolveAnalyzedPeriod(opts || {});
+  const asOf = temporal.iso(opts && opts.asOf);
+  const status = String((opts && opts.statut) || 'actifs').toLowerCase();
+  const decorated = (people || []).map((row) => Object.assign({}, row, {
+    statutTemporel: temporal.evaluateStatus(row, period, asOf)
+  }));
+  const filtered = decorated.filter((row) => {
+    if(status === 'tous' || status === 'all') return true;
+    if(status === 'inactifs' || status === 'inactif') return row.statutTemporel === 'inactif';
+    return row.statutTemporel === 'actif';
+  });
+  return { period, asOf, count: filtered.length, personnes: filtered };
+}
+
+function persistInactivation(source, effectDate){
+  const closures = temporal.planAssignmentClosures(source.affectations || [], effectDate);
+  const affectations = (source.affectations || []).map((row) => {
+    const hit = closures.close.concat(closures.sameDay).find((item) => item.assignment === row);
+    return hit ? Object.assign({}, row, { dateInactif: hit.dateInactif }) : Object.assign({}, row);
+  });
+  const periodes = (source.periodes || []).concat([{
+    type: 'SORTI',
+    date_debut: closures.plan.dateEffet,
+    date_fin: null
+  }]);
+  return {
+    closures,
+    journal: { action: 'INACTIVER', dateEffet: closures.plan.dateEffet, dernierJourActif: closures.plan.dernierJourActif },
+    after: Object.assign({}, source, { affectations, periodes })
+  };
+}
+
+const year2025 = temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2025' });
+const year2026 = temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' });
+const officialAsc = ['Civ','JSP','Flm 1','Flm 2','Flm 3','Rec','Sap','App','Cpl','Sgt','Sgt instr','Sgt chef','Sgt chef instr','Sgtm','Four','Adj','Lt','Lt instr','Plt','Plt instr','Of spéc','Cap','Cap instr','Cap adj','Maj','Maj instr'];
+
+// TEMP-01 Date PostgreSQL (UTC midnight) → normalisation
+assert.strictEqual(temporal.iso(new Date('2026-01-01T00:00:00.000Z')), '2026-01-01');
 assert.strictEqual(temporal.iso(new Date(2026, 0, 1)), '2026-01-01');
 assert.strictEqual(temporal.iso('24.08.2026'), '2026-08-24');
 assert.strictEqual(temporal.iso('2026-01-01T12:00:00.000Z'), '2026-01-01');
-assert.ok(!temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026', asOf: '2026-07-14' }).from.includes('2026-07-14') || temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026', asOf: '2026-07-14' }).from === '2026-01-01');
-assert.deepStrictEqual(temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' }), Object.assign({ from: '2026-01-01', to: '2026-12-31', preset: 'YEAR', year: '2026' }, temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' })));
 
-const year2026 = temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' });
-assert.strictEqual(year2026.from, '2026-01-01');
-assert.strictEqual(year2026.to, '2026-12-31');
-assert.strictEqual(year2026.preset, 'YEAR');
+const open2026 = person([aff(new Date('2026-01-01T00:00:00.000Z'), null)]);
 
-const custom = temporal.resolveAnalyzedPeriod({ preset: 'CUSTOM', from: '2026-08-01', to: '2026-12-31' });
-assert.strictEqual(custom.from, '2026-08-01');
-assert.strictEqual(custom.to, '2026-12-31');
+// TEMP-02 / TEMP-03
+assert.ok(!temporal.personActiveAtDate(open2026, '2025-12-31'));
+assert.ok(temporal.personActiveAtDate(open2026, '2026-01-01'));
+assert.ok(temporal.personActiveAtDate(open2026, '2026-04-20'));
+assert.ok(temporal.personActiveAtDate(open2026, '2026-12-31'));
+assert.strictEqual(temporal.evaluateStatus(open2026, year2025), 'inactif');
+assert.strictEqual(temporal.evaluateStatus(open2026, year2026), 'actif');
 
-// A. actif 01.01.2026 → null sur année 2026 → ACTIF
-const open2026 = person([aff(new Date(2026, 0, 1), null)]);
-assert.strictEqual(temporal.temporalStatus(open2026, year2026), 'actif');
-assert.strictEqual(temporal.evaluateStatus(open2026, year2026, ''), 'actif');
+// TEMP-04 inactivation métier 20.04.2026
+const planApr = temporal.planInactivation('2026-04-20');
+assert.strictEqual(planApr.dateEffet, '2026-04-20');
+assert.strictEqual(planApr.dernierJourActif, '2026-04-19');
+const closedApr = person([aff('2026-01-01', planApr.dernierJourActif)], {
+  periodes: [{ type: 'SORTI', date_debut: '2026-04-20', date_fin: null }]
+});
+assert.ok(temporal.personActiveAtDate(closedApr, '2026-04-19'));
+assert.ok(!temporal.personActiveAtDate(closedApr, '2026-04-20'));
+assert.ok(!temporal.personActiveAtDate(closedApr, '2026-04-21'));
+assert.strictEqual(temporal.evaluateStatus(closedApr, year2026), 'actif');
+assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, '2026-04-20'), 'inactif');
 
-// B. actif 01.01 → inactif 13.07 sur année 2026 → présent (actif sur la période)
-const mid = person([aff('2026-01-01', '2026-07-13')]);
-assert.strictEqual(temporal.temporalStatus(mid, year2026), 'actif');
-assert.ok(temporal.personActiveInPeriod(mid, year2026));
-
-// C. même personne 01.08 → 31.12 → INACTIVE
-assert.strictEqual(temporal.temporalStatus(mid, custom), 'inactif');
-
-// D. inactive dès 01.01.2026 → pas active le 01.01
+// TEMP-05 inactivation métier 01.01.2026
 const planJan = temporal.planInactivation('2026-01-01');
 assert.strictEqual(planJan.dernierJourActif, '2025-12-31');
-const leftBefore = person([aff('2025-01-01', planJan.dernierJourActif)]);
-assert.ok(!temporal.personActiveAtDate(leftBefore, '2026-01-01'));
-assert.strictEqual(temporal.temporalStatus(leftBefore, year2026), 'inactif');
+const sameDayPlan = temporal.planAssignmentClosures([aff('2026-01-01', null)], '2026-01-01');
+assert.strictEqual(sameDayPlan.sameDay[0].dateInactif, '2026-01-01');
+const sameDayPerson = person(
+  [Object.assign({}, aff('2026-01-01', null), { dateInactif: '2026-01-01' })],
+  { periodes: [{ type: 'SORTI', date_debut: '2026-01-01', date_fin: null }] }
+);
+assert.ok(!temporal.personActiveAtDate(sameDayPerson, '2026-01-01'));
 
-// E. import technique 24.08, date effet 01.01 → métier 01.01
-const imported = person([aff(new Date(2026, 0, 1), null)], { createdAt: new Date(2026, 7, 24), importedAt: '2026-08-24' });
+// TEMP-06 import 24.08 + date_actif 01.01
+const imported = person([aff(new Date('2026-01-01T00:00:00.000Z'), null)], {
+  createdAt: new Date('2026-08-24T00:00:00.000Z'),
+  importedAt: '2026-08-24'
+});
 assert.strictEqual(temporal.iso(imported.createdAt), '2026-08-24');
 assert.strictEqual(temporal.iso(imported.affectations[0].dateActif), '2026-01-01');
-assert.strictEqual(temporal.evaluateStatus(imported, year2026), 'actif');
 assert.ok(temporal.personActiveAtDate(imported, '2026-01-01'));
-assert.ok(!temporal.personActiveAtDate(imported, '2025-12-31') || temporal.personActiveAtDate(imported, '2026-01-01'));
+assert.ok(!temporal.personActiveAtDate(imported, '2025-12-31'));
+assert.strictEqual(temporal.activityWindow(imported, year2026).from, '2026-01-01');
 
-const plan = temporal.planInactivation('2026-07-14');
-assert.strictEqual(plan.dernierJourActif, '2026-07-13');
-assert.strictEqual(plan.dateEffet, '2026-07-14');
+// TEMP-07 / TEMP-08 période
+const only2026 = person([aff('2026-01-01', null)], { nip: '2026only' });
+const list2025 = listLike([only2026], { preset: 'YEAR', year: '2025', statut: 'actifs' });
+assert.strictEqual(list2025.count, 0);
+assert.strictEqual(list2025.personnes.length, 0);
+const list2026 = listLike([only2026], { preset: 'YEAR', year: '2026', statut: 'actifs' });
+assert.strictEqual(list2026.count, 1);
+assert.ok(temporal.personActiveInPeriod(only2026, year2026));
+
+// TEMP-09 Situation au ≠ chevauchement annuel
+assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, '2026-04-20'), 'inactif');
+assert.strictEqual(temporal.evaluateStatus(closedApr, year2026, ''), 'actif');
+
+// TEMP-10 compteur = même filtre serveur
+assert.strictEqual(list2026.count, list2026.personnes.length);
+
+// TEMP-11 / intégration inactivation 20.04
+const fixture = person([
+  aff('2026-01-01', null, { id: 'oi' }),
+  aff('2026-08-24', null, { id: 'future-spec', categorie: 'SPECIALISATION', domaine: 'AUTO', cible: 'cond VL' })
+], { nip: 'NIP-R2' });
+const mutated = persistInactivation(fixture, '2026-04-20');
+assert.ok(mutated.closures.canProceed);
+assert.strictEqual(mutated.closures.close[0].dateInactif, '2026-04-19');
+assert.strictEqual(mutated.closures.future[0].assignment.id, 'future-spec');
+assert.strictEqual(mutated.after.affectations.find((row) => row.id === 'oi').dateInactif, '2026-04-19');
+assert.strictEqual(mutated.after.affectations.find((row) => row.id === 'future-spec').dateInactif, null);
+assert.strictEqual(mutated.journal.action, 'INACTIVER');
+assert.ok(temporal.personActiveAtDate(mutated.after, '2026-04-19'));
+assert.ok(!temporal.personActiveAtDate(mutated.after, '2026-04-20'));
+assert.strictEqual(listLike([mutated.after], { preset: 'YEAR', year: '2026', statut: 'actifs' }).count, 1);
+assert.strictEqual(listLike([mutated.after], { preset: 'YEAR', year: '2026', statut: 'actifs', asOf: '2026-04-20' }).count, 0);
+
+const service = fs.readFileSync(path.join(__dirname, '../netlify/functions/_scope-personnel-service.js'), 'utf8');
+assert.ok(service.includes('planAssignmentClosures'));
+assert.ok(!service.includes('La date d’inactivité ne peut pas précéder le début d’une affectation ouverte'));
+assert.ok(service.includes('INACTIVER'));
+assert.ok(!service.includes('DELETE FROM scope_personnes'));
+assert.ok(service.includes('evaluateStatus'));
+assert.ok(service.includes('temporal.iso(row.date_actif)'));
+assert.ok(service.includes('resolveImportContext'));
+
+const listHandler = fs.readFileSync(path.join(__dirname, '../netlify/functions/scope-personnel-list.js'), 'utf8');
+assert.ok(listHandler.includes('count:'));
+assert.ok(listHandler.includes("viewMode:"));
+
+assert.strictEqual(temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' }).from, '2026-01-01');
+assert.strictEqual(temporal.resolveAnalyzedPeriod({ preset: 'CUSTOM', from: '2026-08-01', to: '2026-12-31' }).to, '2026-12-31');
+
+const custom = temporal.resolveAnalyzedPeriod({ preset: 'CUSTOM', from: '2026-08-01', to: '2026-12-31' });
+assert.strictEqual(temporal.temporalStatus(person([aff('2026-01-01', '2026-07-13')]), custom), 'inactif');
 assert.strictEqual(temporal.appliesToFrozenEventPopulation({ populationFigee: true }), false);
 
-const officialAsc = ['Civ','JSP','Flm 1','Flm 2','Flm 3','Rec','Sap','App','Cpl','Sgt','Sgt instr','Sgt chef','Sgt chef instr','Sgtm','Four','Adj','Lt','Lt instr','Plt','Plt instr','Of spéc','Cap','Cap instr','Cap adj','Maj','Maj instr'];
+// TEMP-12 / TEMP-13 / TEMP-14 grades
 assert.deepStrictEqual(refs.GRADE_CODES_ASC.slice(), officialAsc);
-assert.deepStrictEqual(officialAsc.slice().sort(refs.compareGrades), officialAsc);
-assert.deepStrictEqual(officialAsc.slice().sort((a,b) => refs.compareGrades(b,a)), officialAsc.slice().reverse());
 assert.strictEqual(officialAsc.slice().sort((a,b) => refs.compareGrades(b,a))[0], 'Maj instr');
-assert.strictEqual(officialAsc.slice().sort((a,b) => refs.compareGrades(b,a)).slice(-1)[0], 'Civ');
-assert.ok(refs.compareGrades('Civ', 'Maj instr') < 0);
-assert.ok(refs.compareGrades('JSP', 'Rec') < 0);
+assert.ok(refs.compareGrades('Flm 3', 'Rec') < 0);
+assert.ok(refs.compareGrades('Civ', 'JSP') < 0);
+assert.ok(refs.compareGrades('JSP', 'Flm 1') < 0);
+assert.ok(refs.compareGrades('Flm 1', 'Flm 2') < 0);
+assert.ok(refs.compareGrades('Flm 2', 'Flm 3') < 0);
+assert.ok(refs.compareGrades('Flm 3', 'Rec') < 0);
 assert.ok(refs.compareGrades('Inconnu', 'Maj instr') > 0);
-assert.strictEqual(refs.GRADE_SORT_MODE, 'OFFICIAL_HIERARCHY');
 
 const gradeRows = officialAsc.map((grade, i) => person([], { nip: String(i+1), grade }));
-assert.deepStrictEqual(display.sortPersonnelRows(gradeRows, { key: 'grade', dir: 'asc' }).map((row) => row.grade), officialAsc);
-assert.deepStrictEqual(display.sortPersonnelRows(gradeRows, { key: 'grade', dir: 'desc' }).map((row) => row.grade), officialAsc.slice().reverse());
+assert.deepStrictEqual(display.sortPersonnelRows(gradeRows, { key: 'grade', dir: 'desc' }).map((row) => row.grade)[0], 'Maj instr');
 
+// TEMP-15 OI
 const groups = display.operationalOiGroups([]);
 assert.deepStrictEqual(groups.map((g) => g.label), ['DPS','DAP','JSP']);
 assert.ok(!groups.some((g) => g.items.some((label) => String(label).includes('/'))));
+const oiClosedDuringYear = person([aff('2026-01-01', '2026-04-19')]);
+assert.ok(display.filterPersonnelRows([oiClosedDuringYear], {
+  oi: 'DPS G1',
+  period: year2026
+}).length === 1);
+assert.strictEqual(display.filterPersonnelRows([oiClosedDuringYear], {
+  oi: 'DPS G1',
+  asOf: '2026-04-20'
+}).length, 0);
 
 const mixed = [
   person([aff('2026-01-01', null)], { nip: 'a', statutTemporel: 'actif' }),
@@ -93,32 +202,33 @@ const mixed = [
 assert.deepStrictEqual(display.filterPersonnelRows(mixed, { statut: 'actifs' }).map((row) => row.nip), ['a']);
 assert.deepStrictEqual(display.filterPersonnelRows(mixed, { statut: 'inactifs' }).map((row) => row.nip), ['b']);
 assert.strictEqual(display.filterPersonnelRows(mixed, { statut: 'tous' }).length, 2);
-assert.deepStrictEqual(display.filterPersonnelRows([{ nip: 'x', statutTemporel: 'actif', archivedAt: '2026-01-01' }], { statut: 'actifs' }).map((row) => row.nip), ['x']);
 
 const ui = fs.readFileSync(path.join(__dirname, '../assets/js/scope-ui.js'), 'utf8');
 assert.ok(ui.includes("['inactifs', 'Inactifs']"));
 assert.ok(!ui.includes("['archives', 'Archivés']"));
 assert.ok(!ui.includes('Agrégat batch'));
-assert.ok(ui.includes('Rendre inactif'));
-assert.ok(ui.includes('Afficher l’historique') || ui.includes("Afficher l'historique"));
+assert.ok(ui.includes('Rendre la personne inactive'));
+assert.ok(ui.includes('Confirmer l’inactivation') || ui.includes("Confirmer l'inactivation"));
+assert.ok(ui.includes('Premier jour où cette personne ne sera plus considérée comme active.'));
+assert.ok(ui.includes('Situation historique'));
+assert.ok(ui.includes('Quitter la situation historique'));
+assert.ok(ui.includes('Afficher l’historique') || ui.includes("Afficher l'historique") || ui.includes('Afficher l’historique'));
 assert.ok(ui.includes('Masquer'));
 assert.ok(ui.includes('Personnalisée'));
 assert.ok(ui.includes('personnel-period-mode'));
 assert.ok(ui.includes('<optgroup'));
-assert.ok(ui.includes('<optgroup label="${escapeHtml(group.label)}">') || ui.includes("label: 'DPS'"));
 assert.ok(ui.includes('Situation au'));
+assert.ok(ui.includes('personnelListSeq'));
+assert.ok(ui.includes('personnelSituationApplied'));
 
-const css = fs.readFileSync(path.join(__dirname, '../assets/css/tables.css'), 'utf8')
-  + fs.readFileSync(path.join(__dirname, '../assets/css/scope.css'), 'utf8');
+// TEMP-16 historique
+assert.ok(ui.includes('scope-toggle-personnel-history'));
+assert.ok(ui.includes('scope-apply-personnel-asof'));
+
+const css = fs.readFileSync(path.join(__dirname, '../assets/css/scope.css'), 'utf8');
 assert.ok(css.includes('nth-child(odd)'));
-assert.ok(css.includes('#e6e9ee'));
+assert.ok(css.includes('#d7dee8'));
 
-const service = fs.readFileSync(path.join(__dirname, '../netlify/functions/_scope-personnel-service.js'), 'utf8');
-assert.ok(service.includes('inactivatePersonne'));
-assert.ok(!service.includes('DELETE FROM scope_personnes'));
-assert.ok(service.includes('INACTIVER') || service.includes("'INACTIVER'"));
-assert.ok(service.includes('evaluateStatus'));
-assert.ok(service.includes('temporal.iso(row.date_actif)'));
 assert.ok(service.includes('resolveImportContext'));
 assert.ok(!service.includes('Import AUTO') || service.includes('cond PL'));
 

@@ -13,6 +13,9 @@
   function iso(value){
     if(value == null || value === '') return '';
     if(value instanceof Date && !Number.isNaN(value.getTime())){
+      const utcMidnight = value.getUTCHours() === 0 && value.getUTCMinutes() === 0
+        && value.getUTCSeconds() === 0 && value.getUTCMilliseconds() === 0;
+      if(utcMidnight) return value.toISOString().slice(0, 10);
       const y = value.getFullYear();
       const m = String(value.getMonth() + 1).padStart(2, '0');
       const d = String(value.getDate()).padStart(2, '0');
@@ -128,27 +131,32 @@
     });
   }
 
+  function coveringPeriodes(person, day){
+    const periodes = (person && (person.periodes || [])) || [];
+    return periodes.filter((row) => rangesOverlap(row.date_debut || row.dateDebut, row.date_fin || row.dateFin, day, day));
+  }
+
   function personActiveAtDate(person, date){
     const day = iso(date);
     if(!day) return false;
-    const assignments = (person && (person.affectations || person.assignments || [])) || [];
-    if(assignments.some((row) => assignmentCoversDate(row, day))) return true;
-    const periodes = (person && (person.periodes || [])) || [];
-    const covering = periodes.filter((row) => rangesOverlap(row.date_debut || row.dateDebut, row.date_fin || row.dateFin, day, day));
-    if(covering.some((row) => String(row.type || '').toUpperCase() === 'INDISPONIBLE')) return false;
-    if(covering.some((row) => String(row.type || '').toUpperCase() === 'ACTIF')) return true;
+    const covering = coveringPeriodes(person, day);
     if(covering.some((row) => {
       const type = String(row.type || '').toUpperCase();
       return type === 'SORTI' || type === 'DEMISSIONNAIRE';
     })) return false;
+    if(covering.some((row) => String(row.type || '').toUpperCase() === 'INDISPONIBLE')) return false;
+    const assignments = (person && (person.affectations || person.assignments || [])) || [];
+    if(assignments.some((row) => assignmentCoversDate(row, day))) return true;
+    if(covering.some((row) => String(row.type || '').toUpperCase() === 'ACTIF')) return true;
     return false;
   }
 
-  function activityWindow(person, period){
-    const p = resolveAnalyzedPeriod(period || {});
+  function activityWindow(person, period, asOf){
+    const day = iso(asOf);
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
-    const overlapping = assignments.filter((row) => assignmentOverlapsPeriod(row, p));
-    const source = overlapping.length ? overlapping : assignments;
+    const source = day
+      ? assignments.filter((row) => assignmentCoversDate(row, day))
+      : assignments.filter((row) => assignmentOverlapsPeriod(row, period || {}));
     let from = '';
     let to = '';
     let open = false;
@@ -177,7 +185,39 @@
     return {
       dateEffet,
       dernierJourActif: dayBefore(dateEffet),
-      convention: 'MODEL-2'
+      convention: 'MODEL-2',
+      storage: 'date_inactif = dernier jour actif inclus',
+      businessInactiveDate: dateEffet
+    };
+  }
+
+  function isOpenAssignment(assignment){
+    const b = assignmentBounds(assignment);
+    return Boolean(b.from) && !b.to;
+  }
+
+  function planAssignmentClosures(assignments, effectDate){
+    const plan = planInactivation(effectDate);
+    const open = (assignments || []).filter(isOpenAssignment);
+    const close = [];
+    const sameDay = [];
+    const future = [];
+    open.forEach((assignment) => {
+      const start = assignmentBounds(assignment).from;
+      if(plan.dernierJourActif && start <= plan.dernierJourActif){
+        close.push({ assignment, dateInactif: plan.dernierJourActif, mode: 'close' });
+      } else if(start === plan.dateEffet){
+        sameDay.push({ assignment, dateInactif: start, mode: 'same-day' });
+      } else {
+        future.push({ assignment, mode: 'future' });
+      }
+    });
+    return {
+      plan,
+      close,
+      sameDay,
+      future,
+      canProceed: open.length === 0 || close.length + sameDay.length > 0
     };
   }
 
@@ -201,6 +241,8 @@
     temporalStatus,
     evaluateStatus,
     planInactivation,
+    planAssignmentClosures,
+    isOpenAssignment,
     appliesToFrozenEventPopulation,
     SOURCE_METIER: 'scope_affectations.date_actif/date_inactif'
   };

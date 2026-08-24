@@ -21,7 +21,15 @@ exports.handler = async function(event){
       quarter: params.quarter || '',
       asOf: params.asOf || params.situationAu || ''
     });
-    return response(200, { ok:true, personnes, personnes: personnes, period: personnes._period || null });
+    const period = personnes._period || null;
+    return response(200, {
+      ok: true,
+      personnes,
+      period,
+      asOf: params.asOf || params.situationAu || '',
+      viewMode: (params.asOf || params.situationAu) ? 'asof' : 'period',
+      count: Array.isArray(personnes) ? personnes.length : 0
+    });
   }catch(error){
     return response(500, { ok:false, error:'scope_personnel_list_failed', message:String(error.message || error) });
   }

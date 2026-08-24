@@ -745,16 +745,23 @@
     return SPECIALIZATION_ORDER.slice();
   }
 
-  function assignmentMatchesOiFilter(assignment, oiLabel){
+  function assignmentMatchesOiFilter(assignment, oiLabel, atDate, period){
     const wanted = parseOperationalOiLabel(oiLabel);
-    if(!wanted || !isAssignmentActiveAt(assignment)) return false;
+    if(!wanted) return false;
+    const temporal = (typeof require === 'function' ? require('./scope-personnel-temporal.js') : (root && root.ScopePersonnelTemporal)) || {};
+    const relevant = atDate
+      ? isAssignmentActiveAt(assignment, atDate)
+      : (period && temporal.assignmentOverlapsPeriod
+        ? temporal.assignmentOverlapsPeriod(assignment, period)
+        : isAssignmentActiveAt(assignment, atDate));
+    if(!relevant) return false;
     const got = parseOperationalOiLabel(operationalOiLabel(assignment));
     return Boolean(got && got.domaine === wanted.domaine && got.niveau === wanted.niveau);
   }
 
-  function personMatchesOiFilter(person, oiLabel){
+  function personMatchesOiFilter(person, oiLabel, atDate, period){
     if(!oiLabel) return true;
-    return personAssignments(person).some((row) => assignmentMatchesOiFilter(row, oiLabel));
+    return personAssignments(person).some((row) => assignmentMatchesOiFilter(row, oiLabel, atDate, period));
   }
 
   function personMatchesSpecializationFilter(person, specLabel){
@@ -802,10 +809,12 @@
 
   function filterPersonnelRows(rows, filters){
     const f = filters || {};
+    const atDate = f.asOf || '';
+    const period = f.period || ((f.periodFrom || f.periodTo) ? { from: f.periodFrom, to: f.periodTo } : null);
     return (rows || []).filter((person) =>
       personMatchesQuery(person, f.q || f.query)
       && personMatchesStatut(person, f.statut)
-      && personMatchesOiFilter(person, f.oi)
+      && personMatchesOiFilter(person, f.oi, atDate, period)
       && personMatchesSpecializationFilter(person, f.specialization || f.specialisation)
     );
   }
