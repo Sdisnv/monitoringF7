@@ -112,7 +112,7 @@ assert.strictEqual(display.formatAssignment(oi('DAP', 'Y2')), 'DAP Y2');
 assert.ok(!String(display.formatAssignment(oi('DPS', 'G1'))).includes('/'));
 assert.deepStrictEqual(display.nextPersonnelSort({}, 'nom'), { key: 'nom', dir: 'asc' });
 assert.deepStrictEqual(display.nextPersonnelSort({ key: 'nom', dir: 'asc' }, 'nom'), { key: 'nom', dir: 'desc' });
-assert.deepStrictEqual(display.nextPersonnelSort({ key: 'nom', dir: 'desc' }, 'nom'), { key: '', dir: '' });
+assert.deepStrictEqual(display.nextPersonnelSort({ key: 'nom', dir: 'desc' }, 'nom'), { key: 'nom', dir: 'asc' });
 
 const ui = fs.readFileSync(path.join(__dirname, '../assets/js/scope-ui.js'), 'utf8');
 assert.ok(ui.includes('for="personnel-oi">OI<'));

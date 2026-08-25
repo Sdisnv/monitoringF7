@@ -105,6 +105,8 @@
     personnelOi: '',
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
+    eventSort: { key: 'date', dir: 'desc' },
+    eventPersonnelSort: { key: 'nom', dir: 'asc' },
     personneFiche: null,
     personneEventFilter: 'tout',
     personneDomainFilter: null,
@@ -765,7 +767,17 @@
   }
 
   function renderListe() {
-    const rows = state.list;
+    const eventColumns = [
+      { key: 'date', type: 'date', value: (item) => item && item.evenement && item.evenement.date },
+      { key: 'heure', type: 'time', value: (item) => item && item.evenement && item.evenement.heure_debut },
+      { key: 'code', type: 'text', value: (item) => item && item.evenement && (item.evenement.code_cours || item.evenement.identifiant_externe || '') },
+      { key: 'libelle', type: 'text', value: (item) => item && item.evenement && item.evenement.libelle },
+      { key: 'domaine', type: 'text', value: (item) => item && item.evenement && domaineLabel(item.evenement.domaine_code) },
+      { key: 'public', type: 'text', value: (item) => L.ciblesLabel(item && item.cibles) },
+      { key: 'effectif', type: 'number', value: (item) => item && item.attendusInclus },
+      { key: 'etat', type: 'status', value: (item) => item && item.evenement && item.evenement.statut }
+    ];
+    const rows = L.sortRows ? L.sortRows(state.list, state.eventSort, eventColumns) : state.list;
     const view = L.listViewState({
       ready: state.listReady,
       error: state.listError,
@@ -847,8 +859,15 @@
           <table class="scope-table">
             <thead>
               <tr>
-                <th>Date</th><th>Heure</th><th>Code</th><th>Événement</th>
-                <th>Domaine</th><th>Public</th><th>Effectif</th><th>État</th><th>Actions</th>
+                ${sortableHeader('events', 'date', 'Date', state.eventSort)}
+                ${sortableHeader('events', 'heure', 'Heure', state.eventSort)}
+                ${sortableHeader('events', 'code', 'Code', state.eventSort)}
+                ${sortableHeader('events', 'libelle', 'Événement', state.eventSort)}
+                ${sortableHeader('events', 'domaine', 'Domaine', state.eventSort)}
+                ${sortableHeader('events', 'public', 'Public', state.eventSort)}
+                ${sortableHeader('events', 'effectif', 'Effectif', state.eventSort)}
+                ${sortableHeader('events', 'etat', 'État', state.eventSort)}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -1329,12 +1348,17 @@
     return filtered;
   }
 
+  function sortableHeader(table, key, label, sort) {
+    const s = L.sortHeaderState ? L.sortHeaderState(sort, key) : { className: '', ariaSort: 'none', indicator: '↕' };
+    const attr = table === 'personnel' ? 'data-personnel-sort' : `data-scope-sort="${table}" data-sort-key`;
+    const data = table === 'personnel'
+      ? `data-sort="${escapeHtml(key)}" ${attr}="${escapeHtml(key)}"`
+      : `${attr}="${escapeHtml(key)}"`;
+    return `<th ${data} class="scope-sortable ${s.className}" aria-sort="${s.ariaSort}" scope="col"><button type="button" class="scope-sort-button"><span>${escapeHtml(label)}</span><span class="scope-sort-indicator" aria-hidden="true">${escapeHtml(s.indicator)}</span></button></th>`;
+  }
+
   function personnelSortHeader(key, label) {
-    const sort = state.personnelSort || {};
-    const active = sort.key === key && sort.dir;
-    const cls = active ? (sort.dir === 'desc' ? 'is-desc' : 'is-asc') : '';
-    const aria = active ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none';
-    return `<th data-sort="${key}" data-personnel-sort="${key}" class="${cls}" aria-sort="${aria}"><span>${label}</span></th>`;
+    return sortableHeader('personnel', key, label, state.personnelSort);
   }
 
   function formatPersonnelDateCell(value) {
@@ -2461,7 +2485,8 @@
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
     const c = counters();
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
-    const filtered = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
+    const filteredRaw = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
+    const filtered = sortSaisieRows(filteredRaw);
     const disabledCloture = L.clotureDisabled(c);
     const enc = (fiche.encadrement || []).map((p) => {
       const person = personOf(fiche, p.personne_id);
@@ -2531,6 +2556,16 @@
     `;
   }
 
+  function sortSaisieRows(rows) {
+    const columns = [
+      { key: 'nom', type: 'text', value: (row) => row && row.nom },
+      { key: 'nip', type: 'text', value: (row) => row && row.nip },
+      { key: 'cible', type: 'text', value: (row) => row && row.cible },
+      { key: 'presence', type: 'status', value: (row) => row && row.statut }
+    ];
+    return L.sortRows ? L.sortRows(rows, state.eventPersonnelSort, columns) : (rows || []).slice();
+  }
+
   function renderSaisieQuantitative() {
     const fiche = state.fiche;
     const ev = fiche.evenement;
@@ -2580,7 +2615,12 @@
     return `
       <div class="scope-table-wrap scope-saisie-desktop">
         <table class="scope-table">
-          <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Présence</th></tr></thead>
+          <thead><tr>
+            ${sortableHeader('event-personnel', 'nom', 'Nom', state.eventPersonnelSort)}
+            ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
+            ${sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)}
+            ${sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)}
+          </tr></thead>
           <tbody>
             ${rows.map((row) => `<tr data-pid="${row.personneId}">
               <td data-label="Nom">${escapeHtml(row.nom)}</td>
@@ -3936,6 +3976,21 @@
           ? display.nextPersonnelSort(state.personnelSort, key)
           : { key, dir: state.personnelSort && state.personnelSort.key === key && state.personnelSort.dir === 'asc' ? 'desc' : 'asc' };
         render();
+      });
+    });
+    root.querySelectorAll('[data-scope-sort][data-sort-key]').forEach((th) => {
+      th.addEventListener('click', () => {
+        const table = th.getAttribute('data-scope-sort');
+        const key = th.getAttribute('data-sort-key');
+        if (table === 'events') {
+          const initial = key === 'date' ? 'desc' : 'asc';
+          state.eventSort = L.nextSort ? L.nextSort(state.eventSort, key, initial) : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'event-personnel') {
+          state.eventPersonnelSort = L.nextSort ? L.nextSort(state.eventPersonnelSort, key, 'asc') : { key, dir: 'asc' };
+          render();
+        }
       });
     });
     root.querySelectorAll('[data-personnel-statut]').forEach((btn) => {

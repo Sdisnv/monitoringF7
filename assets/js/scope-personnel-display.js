@@ -11,6 +11,9 @@
   const refs = (typeof require === 'function'
     ? require('./scope-personnel-referentials.js')
     : (root && root.ScopePersonnelReferentials) || {});
+  const uiLogic = (typeof require === 'function'
+    ? require('./scope-ui-logic.js')
+    : (root && root.ScopeUiLogic) || {});
 
   const SPECIALIZATION_SEPARATOR = ', ';
   const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP']);
@@ -854,15 +857,8 @@
   }
 
   function compareNip(a, b){
-    const na = clean(a);
-    const nb = clean(b);
-    const aNum = /^\d+$/.test(na);
-    const bNum = /^\d+$/.test(nb);
-    if(aNum && bNum){
-      const diff = Number(na) - Number(nb);
-      if(diff) return diff;
-    }
-    return FR_COLLATOR.compare(na, nb);
+    if(uiLogic.compareSortValues) return uiLogic.compareSortValues(a, b, 'text');
+    return FR_COLLATOR.compare(clean(a), clean(b));
   }
 
   function compareGrade(a, b){
@@ -918,10 +914,10 @@
   }
 
   function nextPersonnelSort(current, key){
+    if(uiLogic.nextSort) return uiLogic.nextSort(current, key, 'asc');
     const cur = current || {};
     if(cur.key !== key) return { key, dir: 'asc' };
-    if(cur.dir === 'asc') return { key, dir: 'desc' };
-    return { key: '', dir: '' };
+    return { key, dir: cur.dir === 'asc' ? 'desc' : 'asc' };
   }
 
   return {

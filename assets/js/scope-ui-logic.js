@@ -577,6 +577,107 @@
     return 'content';
   }
 
+  const SORT_STATUS_ORDER = Object.freeze({
+    PLANIFIE: 10,
+    REALISE: 20,
+    REPORTE: 30,
+    ANNULE: 40,
+    LEGACY_AGGREGATED: 50,
+    NON_RENSEIGNE: 10,
+    PRESENT: 20,
+    ABSENT_EXCUSE: 30,
+    ABSENT_NON_EXCUSE: 40,
+    DISPENSE: 50,
+    PERMUTATION: 60
+  });
+
+  const FR_SORT_COLLATOR = new Intl.Collator('fr-CH', { numeric: true, sensitivity: 'base' });
+
+  function cleanSortText(value) {
+    return String(value == null ? '' : value).trim();
+  }
+
+  function parseSortDate(value) {
+    const text = cleanSortText(value).slice(0, 10);
+    let m = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return Number(`${m[1]}${m[2]}${m[3]}`);
+    m = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (m) return Number(`${m[3]}${m[2]}${m[1]}`);
+    const timestamp = Date.parse(text);
+    return Number.isFinite(timestamp) ? timestamp : null;
+  }
+
+  function parseSortTime(value) {
+    const text = cleanSortText(value);
+    const m = text.match(/(\d{1,2})[:hH](\d{2})?/);
+    if (!m) return null;
+    const hours = Number(m[1]);
+    const minutes = Number(m[2] || 0);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+    return hours * 60 + minutes;
+  }
+
+  function compareSortValues(a, b, type) {
+    const kind = type || 'text';
+    if (kind === 'date') {
+      const da = parseSortDate(a);
+      const db = parseSortDate(b);
+      if (da !== null || db !== null) return (da ?? Number.MAX_SAFE_INTEGER) - (db ?? Number.MAX_SAFE_INTEGER);
+    }
+    if (kind === 'time') {
+      const ta = parseSortTime(a);
+      const tb = parseSortTime(b);
+      if (ta !== null || tb !== null) return (ta ?? Number.MAX_SAFE_INTEGER) - (tb ?? Number.MAX_SAFE_INTEGER);
+    }
+    if (kind === 'number') {
+      const na = Number(cleanSortText(a).replace(',', '.'));
+      const nb = Number(cleanSortText(b).replace(',', '.'));
+      if (Number.isFinite(na) || Number.isFinite(nb)) return (Number.isFinite(na) ? na : Number.MAX_SAFE_INTEGER) - (Number.isFinite(nb) ? nb : Number.MAX_SAFE_INTEGER);
+    }
+    if (kind === 'status') {
+      const sa = SORT_STATUS_ORDER[cleanSortText(a).toUpperCase()] ?? Number.MAX_SAFE_INTEGER;
+      const sb = SORT_STATUS_ORDER[cleanSortText(b).toUpperCase()] ?? Number.MAX_SAFE_INTEGER;
+      if (sa !== sb) return sa - sb;
+    }
+    return FR_SORT_COLLATOR.compare(cleanSortText(a), cleanSortText(b));
+  }
+
+  function sortRows(rows, sort, columns) {
+    const source = Array.isArray(rows) ? rows : [];
+    const key = sort && sort.key;
+    const dir = sort && sort.dir;
+    const column = key && (columns || []).find((item) => item && item.key === key);
+    if (!column || !dir) return source.slice();
+    const factor = dir === 'desc' ? -1 : 1;
+    return source
+      .map((row, index) => ({ row, index }))
+      .sort((a, b) => {
+        const av = typeof column.value === 'function' ? column.value(a.row) : a.row[column.key];
+        const bv = typeof column.value === 'function' ? column.value(b.row) : b.row[column.key];
+        const cmp = compareSortValues(av, bv, column.type);
+        if (cmp) return cmp * factor;
+        return a.index - b.index;
+      })
+      .map((item) => item.row);
+  }
+
+  function nextSort(current, key, defaultDir) {
+    const cur = current || {};
+    const initial = defaultDir || 'asc';
+    if (cur.key !== key) return { key, dir: initial };
+    return { key, dir: cur.dir === 'asc' ? 'desc' : 'asc' };
+  }
+
+  function sortHeaderState(sort, key) {
+    const active = sort && sort.key === key && sort.dir;
+    return {
+      active: Boolean(active),
+      className: active ? (sort.dir === 'desc' ? 'is-desc' : 'is-asc') : '',
+      ariaSort: active ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none',
+      indicator: active ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'
+    };
+  }
+
   function isQualificationEvenement(row) {
     const origine = String((row && (row.origine || row.origine_code)) || '').toUpperCase();
     const mode = String((row && (row.mode_suivi || row.modeSuivi)) || '').toUpperCase();
@@ -707,6 +808,14 @@
     loadingMessage,
     errorMessage,
     listViewState,
+    SORT_STATUS_ORDER,
+    cleanSortText,
+    parseSortDate,
+    parseSortTime,
+    compareSortValues,
+    sortRows,
+    nextSort,
+    sortHeaderState,
     isQualificationEvenement,
     isTestPersonnelNip,
     shouldRenderPermutations,

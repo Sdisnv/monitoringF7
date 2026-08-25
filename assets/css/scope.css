@@ -2013,15 +2013,38 @@ body.scope-pdf-open { overflow: hidden; }
   margin: 12px 0 4px;
   align-items: end;
 }
+.scope-sortable,
 .scope-person-table th[data-sort]{
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
 }
+.scope-sort-button,
 .scope-person-table th[data-sort] span{
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+.scope-sort-button{
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.scope-sort-indicator{
+  min-width: 12px;
+  opacity: .38;
+  font-size: 11px;
+  line-height: 1;
+}
+.scope-sortable.is-asc .scope-sort-indicator,
+.scope-sortable.is-desc .scope-sort-indicator{
+  opacity: 1;
 }
 .scope-person-table th[data-sort]::after{
   content: "";
@@ -2042,6 +2065,10 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-person-table th[data-sort].is-desc::after{
   transform: rotate(45deg) translateY(-1px);
   opacity: 1;
+}
+.scope-person-table th.scope-sortable[data-sort]::after{
+  content: none;
+  display: none;
 }
 .scope-person-kpis {
   grid-template-columns: minmax(180px, 1.4fr) repeat(5, minmax(0, 1fr));

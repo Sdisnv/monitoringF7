@@ -171,6 +171,64 @@ function record(name, fn) {
     assert.ok(ui.includes('REPORT-1'));
   });
 
+  await record('tri commun typé — dates, nombres, NIP, accents, ASC/DESC', async () => {
+    const dateRows = [{ id: 'b', date: '15.01.2026' }, { id: 'c', date: '01.02.2026' }, { id: 'a', date: '02.01.2026' }];
+    assert.deepStrictEqual(
+      logic.sortRows(dateRows, { key: 'date', dir: 'asc' }, [{ key: 'date', type: 'date' }]).map((r) => r.id),
+      ['a', 'b', 'c']
+    );
+    const effectifRows = [{ n: 94 }, { n: 9 }, { n: 25 }];
+    assert.deepStrictEqual(
+      logic.sortRows(effectifRows, { key: 'n', dir: 'asc' }, [{ key: 'n', type: 'number' }]).map((r) => r.n),
+      [9, 25, 94]
+    );
+    const nipRows = [{ nip: '10' }, { nip: '2' }, { nip: 'A1' }, { nip: '2' }];
+    assert.deepStrictEqual(
+      logic.sortRows(nipRows, { key: 'nip', dir: 'asc' }, [{ key: 'nip', type: 'text' }]).map((r) => r.nip),
+      ['2', '2', '10', 'A1']
+    );
+    assert.strictEqual(logic.sortRows(nipRows, { key: 'nip', dir: 'asc' }, [{ key: 'nip', type: 'text' }])[1], nipRows[3]);
+    const names = [{ nom: 'Évrard' }, { nom: 'Eclair' }, { nom: 'Van der Meer' }, { nom: 'Anne-Marie' }];
+    assert.deepStrictEqual(
+      logic.sortRows(names, { key: 'nom', dir: 'asc' }, [{ key: 'nom', type: 'text' }]).map((r) => r.nom),
+      ['Anne-Marie', 'Eclair', 'Évrard', 'Van der Meer']
+    );
+    assert.deepStrictEqual(logic.nextSort({}, 'date', 'desc'), { key: 'date', dir: 'desc' });
+    assert.deepStrictEqual(logic.nextSort({ key: 'date', dir: 'desc' }, 'date', 'desc'), { key: 'date', dir: 'asc' });
+    assert.deepStrictEqual(logic.nextSort({ key: 'date', dir: 'asc' }, 'date', 'desc'), { key: 'date', dir: 'desc' });
+  });
+
+  await record('tri commun — filtre actif et source non mutée', async () => {
+    const source = [
+      { id: 'dap-25', domaine: 'DAP', effectif: 25 },
+      { id: 'dps-94', domaine: 'DPS', effectif: 94 },
+      { id: 'dap-9', domaine: 'DAP', effectif: 9 }
+    ];
+    const before = JSON.stringify(source);
+    const filtered = source.filter((row) => row.domaine === 'DAP');
+    const sorted = logic.sortRows(filtered, { key: 'effectif', dir: 'asc' }, [{ key: 'effectif', type: 'number' }]);
+    assert.deepStrictEqual(sorted.map((r) => r.id), ['dap-9', 'dap-25']);
+    assert.strictEqual(JSON.stringify(source), before);
+    assert.notStrictEqual(sorted, filtered);
+  });
+
+  await record('tri événement après retour navigation conservé côté état UI', async () => {
+    assert.ok(ui.includes("eventSort: { key: 'date', dir: 'desc' }"));
+    assert.ok(ui.includes('state.eventSort = L.nextSort'));
+    assert.ok(ui.includes("sortableHeader('events', 'date', 'Date', state.eventSort)"));
+    assert.ok(!ui.includes('withLoading(loadList);\\n        render();'));
+  });
+
+  await record('table personnel événement triable sans mutation de saisie', async () => {
+    assert.ok(ui.includes("eventPersonnelSort: { key: 'nom', dir: 'asc' }"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'Nom', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)"));
+    assert.ok(ui.includes('const filteredRaw = state.cibleFilter'));
+    assert.ok(ui.includes('const filtered = sortSaisieRows(filteredRaw);'));
+  });
+
   const failed = results.filter((r) => r.status !== 'PASS');
   for (const row of results) {
     console.log(`${row.status}\t${row.name}`);
