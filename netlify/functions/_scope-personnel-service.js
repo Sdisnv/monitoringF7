@@ -1106,6 +1106,18 @@ async function updateAffectation(id, patch){
   return res.rows[0] ? getPersonne(res.rows[0].personne_id) : null;
 }
 
+async function getPopulationAtDate({ domaine, cible, date, jspRole } = {}){
+  await ensureScopeSchema();
+  const day = temporal.iso(date);
+  if(!day){
+    const error = new Error('La date de population est obligatoire.');
+    error.statusCode = 400;
+    throw error;
+  }
+  const people = await listPersonnel({ statut: 'actifs', asOf: day });
+  return display.resolvePopulationAtDate(people, { domaine, cible, date: day, jspRole });
+}
+
 async function effectifAtDate({ domaine, cible, date }){
   await ensureScopeSchema();
   const d = clean(date) || new Date().toISOString().slice(0, 10);
@@ -1135,7 +1147,7 @@ async function effectifAtDate({ domaine, cible, date }){
   if(domaineCode === 'PR' || domaineCode === 'FOBA'){
     where += ` and a.categorie='SPECIALISATION'`;
   } else {
-    where += ` and a.categorie='OI' and a.role_domaine='PRINCIPAL'`;
+    where += ` and a.categorie='OI'`;
   }
   const res = await getDb().query(
     `select a.domaine, a.cible, count(distinct a.personne_id)::int as count
@@ -1164,12 +1176,14 @@ function computeEffectifsFromAssignments(assignments, date){
   const d = clean(date);
   const counts = {};
   groupAssignmentsByPerson(assignments).forEach((personAssignments) => {
+    const counted = new Set();
     personAssignments.forEach((a) => {
       if(!display.isAssignmentActiveAt(a, d)) return;
-      if(a.categorie === 'OI' && a.role_domaine !== 'PRINCIPAL') return;
       if(display.isAutoVlDps(a) && !display.countsInVlDpsEffectif(personAssignments, d)) return;
       if(display.isAutoPl(a) && !display.countsInPlEffectif(personAssignments, d)) return;
       const key = [a.domaine, a.cible].filter(Boolean).join(' ');
+      if(!key || counted.has(key)) return;
+      counted.add(key);
       counts[key] = (counts[key] || 0) + 1;
     });
   });
@@ -1409,6 +1423,7 @@ module.exports = {
   listPersonnelImportHistory,
   getPersonnelImportBatch,
   situationAtDate,
+  getPopulationAtDate,
   effectifAtDate,
   computeEffectifsFromAssignments,
   evaluateAutoSpecializations: display.evaluateAutoSpecializations,

@@ -81,7 +81,7 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
     aff({ categorie:'SPECIALISATION', domaine:'PR', cible:'PR', role_domaine:null })
   ], '2026-03-15');
   assert.strictEqual(countsMarch['DPS B1'], 1);
-  assert.strictEqual(countsMarch['DPS G1'] || 0, 0);
+  assert.strictEqual(countsMarch['DPS G1'], 1);
   assert.strictEqual(countsMarch['DAP Y2'], 1);
   assert.strictEqual(countsMarch['JSP JSP B1'], 1);
   assert.strictEqual(countsMarch['PR PR'], 1);

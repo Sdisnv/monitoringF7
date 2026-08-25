@@ -924,6 +924,137 @@
     return { key: '', dir: '' };
   }
 
+  function temporalApi(){
+    return (typeof require === 'function' ? require('./scope-personnel-temporal.js') : (root && root.ScopePersonnelTemporal)) || {};
+  }
+
+  function personEligibleAtDate(person, date){
+    const temporal = temporalApi();
+    if(temporal.personActiveAtDate) return temporal.personActiveAtDate(person, date);
+    return personAssignments(person).some((row) => isAssignmentActiveAt(row, date));
+  }
+
+  function wantedOi(domaine, cible){
+    const domain = clean(domaine).toUpperCase();
+    const raw = normalizeOiToken(cible);
+    if(!raw) return { domaine: domain, niveau: '' };
+    if(parseOperationalOiLabel(raw)) return parseOperationalOiLabel(raw);
+    return parseOperationalOiLabel(`${domain} ${raw}`) || { domaine: domain, niveau: operationalOiLevel(domain, raw) };
+  }
+
+  function oiAssignmentMatches(assignment, domaine, cible, date){
+    if(!isAssignmentActiveAt(assignment, date)) return false;
+    if(!isOperationalOiAssignment(assignment)) return false;
+    const got = parseOperationalOiLabel(operationalOiLabel(assignment));
+    if(!got) return false;
+    const wanted = wantedOi(domaine, cible);
+    if(!wanted || got.domaine !== wanted.domaine) return false;
+    if(!wanted.niveau) return true;
+    return String(got.niveau).toUpperCase() === String(wanted.niveau).toUpperCase();
+  }
+
+  function populationAutoCode(cible){
+    const normalized = normalizeAutoCible(cible);
+    if(normalized === 'VL_DPS' || normalized === 'VL_DAP' || normalized === 'PL') return normalized;
+    const raw = clean(cible).toUpperCase().replace(/[_-]+/g, ' ');
+    if(raw.indexOf('DAP') >= 0) return 'VL_DAP';
+    if(raw.indexOf('DPS') >= 0) return 'VL_DPS';
+    if(raw.indexOf('PL') >= 0) return 'PL';
+    return normalized;
+  }
+
+  function belongsToPopulationAtDate(person, query){
+    const q = query || {};
+    const date = clean(q.date).slice(0, 10);
+    if(!date || !personEligibleAtDate(person, date)) return false;
+    const assignments = personAssignments(person);
+    const domaine = clean(q.domaine).toUpperCase();
+    const cible = clean(q.cible);
+    const jspRole = clean(q.jspRole || q.roleJsp).toUpperCase();
+    if(domaine === 'DPS' || domaine === 'DAP'){
+      return assignments.some((row) => oiAssignmentMatches(row, domaine, cible, date));
+    }
+    if(domaine === 'JSP'){
+      if(jspRole === 'JEUNE' || jspRole === 'MONITEUR'){
+        if(classifyJspRole(person, assignments, date) !== jspRole) return false;
+      }
+      return assignments.some((row) => oiAssignmentMatches(row, 'JSP', cible, date));
+    }
+    if(domaine === 'PR' || domaine === 'PAPR'){
+      return assignments.some((row) => specializationCode(row) === 'PAPR' && isAssignmentActiveAt(row, date));
+    }
+    if(domaine === 'AUTO'){
+      const code = populationAutoCode(cible);
+      if(code === 'VL_DPS') return countsInVlDpsEffectif(assignments, date);
+      if(code === 'VL_DAP') return countsInVlDapEffectif(assignments, date);
+      if(code === 'PL') return countsInPlEffectif(assignments, date);
+      return false;
+    }
+    if(domaine === 'FOBA'){
+      const level = normalizeFobaCible(cible);
+      const wanted = `FOBA_${level}`;
+      return assignments.some((row) => specializationCode(row) === wanted && isAssignmentActiveAt(row, date));
+    }
+    return false;
+  }
+
+  function describePopulationMember(person, date){
+    const assignments = personAssignments(person);
+    const oi = [];
+    const seenOi = new Set();
+    assignments.forEach((row) => {
+      if(!isOperationalOiAssignment(row) || !isAssignmentActiveAt(row, date)) return;
+      const label = operationalOiLabel(row);
+      if(!label || seenOi.has(label)) return;
+      seenOi.add(label);
+      oi.push(label);
+    });
+    return {
+      personneId: person.personneId || person.id || null,
+      nip: person.nip || '',
+      nom: person.nom || '',
+      prenom: person.prenom || '',
+      grade: person.grade || '',
+      oi,
+      specializations: formatSpecializations(assignments, { date }).labels,
+      jspRole: classifyJspRole(person, assignments, date)
+    };
+  }
+
+  function resolvePopulationAtDate(people, query){
+    const q = query || {};
+    const date = clean(q.date).slice(0, 10);
+    const domaine = clean(q.domaine).toUpperCase();
+    const cible = clean(q.cible);
+    const jspRole = clean(q.jspRole || q.roleJsp).toUpperCase();
+    const seen = new Set();
+    const personnes = [];
+    const anomalies = [];
+    (people || []).forEach((person) => {
+      const assignments = personAssignments(person);
+      const nip = clean(person.nip);
+      const id = nip || clean(person.personneId || person.id);
+      if(hasActiveAutoPl(assignments, date) && !hasActiveDpsOi(assignments, date)){
+        if(nip && !anomalies.some((row) => row.nip === nip && row.code === 'PL_SANS_DPS')){
+          anomalies.push({ nip, code: 'PL_SANS_DPS', message: 'cond PL sans DPS actif' });
+        }
+      }
+      if(!belongsToPopulationAtDate(person, { domaine, cible, date, jspRole })) return;
+      if(!id || seen.has(id)) return;
+      seen.add(id);
+      personnes.push(describePopulationMember(person, date));
+    });
+    return {
+      date,
+      domaine: domaine === 'PAPR' ? 'PR' : domaine,
+      cible,
+      jspRole: jspRole || null,
+      count: personnes.length,
+      personnes,
+      anomalies
+    };
+  }
+
   return {
     compactAssignmentLabel,
     formatAssignment,
@@ -993,6 +1124,9 @@
     personMatchesOiFilter,
     personMatchesSpecializationFilter,
     isOperationalOiAssignment,
-    operationalOiLabel
+    operationalOiLabel,
+    belongsToPopulationAtDate,
+    resolvePopulationAtDate,
+    describePopulationMember
   };
 });
