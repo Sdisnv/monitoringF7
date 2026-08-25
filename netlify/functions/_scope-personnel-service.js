@@ -3,6 +3,7 @@ const db = require('./_postgres');
 const ctx = require('./_scope-personnel-import-contexts');
 const display = require('../../assets/js/scope-personnel-display.js');
 const temporal = require('../../assets/js/scope-personnel-temporal.js');
+const populations = require('../../assets/js/scope-personnel-populations.js');
 
 function rid(){
   return (global.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -1115,7 +1116,7 @@ async function getPopulationAtDate({ domaine, cible, date, jspRole } = {}){
     throw error;
   }
   const people = await listPersonnel({ statut: 'actifs', asOf: day });
-  return display.resolvePopulationAtDate(people, { domaine, cible, date: day, jspRole });
+  return populations.resolvePopulationAtDate(people, { domaine, cible, date: day, jspRole });
 }
 
 async function effectifAtDate({ domaine, cible, date }){
@@ -1424,6 +1425,7 @@ module.exports = {
   getPersonnelImportBatch,
   situationAtDate,
   getPopulationAtDate,
+  addExistingPersonToPopulation: populations.addExistingPersonToPopulation,
   effectifAtDate,
   computeEffectifsFromAssignments,
   evaluateAutoSpecializations: display.evaluateAutoSpecializations,
