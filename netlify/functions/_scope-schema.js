@@ -319,6 +319,10 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-event-import-1') on conflict (version) do nothing`
   );
+  await migrateEventStandard1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-event-std-1') on conflict (version) do nothing`
+  );
   /* scope-qual-finish-1 — pas de migration : filtre qualification applicatif */
   await migratePersonnelImportPopulations1();
   await db.query(
@@ -738,6 +742,41 @@ async function migrateEventImport1(){
     create unique index if not exists scope_evenements_identifiant_externe_uq
       on scope_evenements (identifiant_externe)
       where identifiant_externe is not null
+  `);
+}
+
+async function migrateEventStandard1(){
+  await db.query('alter table scope_evenements add column if not exists internal_event_id text');
+  await db.query('update scope_evenements set internal_event_id = evenement_id::text where internal_event_id is null');
+  await db.query('alter table scope_evenements alter column internal_event_id set not null');
+  await db.query(`
+    create unique index if not exists scope_evenements_internal_event_id_uq
+      on scope_evenements (internal_event_id)
+  `);
+  await db.query('alter table scope_evenements add column if not exists code_cours text');
+  await db.query('alter table scope_evenements add column if not exists code_source text');
+  await db.query('alter table scope_evenements add column if not exists source_type text');
+  await db.query('alter table scope_evenements add column if not exists heure_debut text');
+  await db.query('alter table scope_evenements add column if not exists heure_fin text');
+  await db.query('alter table scope_evenements add column if not exists salle text');
+  await db.query('alter table scope_evenements add column if not exists responsable text');
+  await db.query(`
+    update scope_evenements
+    set source_type = case
+      when origine = 'IMPORT_CSV' then 'CSV'
+      when origine = 'LEGACY_AGGREGATED' then 'LEGACY'
+      else 'MANUEL'
+    end
+    where source_type is null
+  `);
+  await db.query(`
+    create unique index if not exists scope_evenements_code_cours_uq
+      on scope_evenements (code_cours)
+      where code_cours is not null
+  `);
+  await db.query(`
+    create index if not exists scope_evenements_standard_match_idx
+      on scope_evenements (date, domaine_code, sous_domaine_code, heure_debut, heure_fin)
   `);
 }
 

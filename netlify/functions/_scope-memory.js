@@ -295,6 +295,14 @@ function createMemoryRepo(){
         origine: row.origine || 'NOMINATIF',
         mode_suivi: require('./_scope-analytics').inferModeSuivi(row),
         identifiant_externe: row.identifiant_externe || row.identifiantExterne || null,
+        internal_event_id: row.internal_event_id || row.internalEventId || row.evenement_id || null,
+        code_cours: row.code_cours || row.codeCours || null,
+        code_source: row.code_source || row.codeSource || row.code_cours || row.codeCours || null,
+        source_type: row.source_type || row.sourceType || (row.origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
+        heure_debut: row.heure_debut || row.heureDebut || null,
+        heure_fin: row.heure_fin || row.heureFin || null,
+        salle: row.salle || null,
+        responsable: row.responsable || null,
         population_figee: false,
         population_version: 0,
         figee_at: null,
@@ -335,6 +343,23 @@ function createMemoryRepo(){
       Object.assign(item, patch, { version: item.version + 1, updated_at: now() });
       evenements.set(id, item);
       return { ...item };
+    },
+    async nextManualEventSequence(){
+      let max = 0;
+      for(const item of evenements.values()){
+        const m = String(item.code_cours || '').match(/S(\d+)$/);
+        if(m) max = Math.max(max, Number(m[1]));
+      }
+      return max + 1;
+    },
+    async deleteEventIfNoDependencies(eventId){
+      const hasAttendus = [...attendus.values()].some((row) => row.evenement_id === eventId);
+      const hasParticipations = [...participations.values()].some((row) => row.evenement_id === eventId);
+      if(hasAttendus || hasParticipations) return { deleted: false, reason: 'dependencies' };
+      const event = evenements.get(eventId);
+      evenementCibles.delete(eventId);
+      evenements.delete(eventId);
+      return { deleted: Boolean(event), event: event || null };
     },
     async listAttendus(eventId){
       return [...attendus.values()].filter(a => a.evenement_id === eventId);

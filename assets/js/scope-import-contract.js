@@ -8,6 +8,7 @@
   'use strict';
 
   const FORMAT_NATIVE = 'SCOPE_EXERCICES_CSV_1';
+  const FORMAT_STANDARD = 'SCOPE_EVENT_STANDARD_CSV_1';
   const FORMAT_F7 = 'monitoring_exercices_sdis_22cols';
 
   const COLUMNS = [
@@ -23,6 +24,12 @@
   ];
 
   const REQUIRED = ['date', 'domaine', 'cibles', 'libelle'];
+  const STANDARD_COLUMNS = {
+    obligatoires: ['code_cours', 'date', 'evenement', 'domaine', 'qui'],
+    optionnelles: ['debut', 'fin', 'sous_domaine', 'responsable', 'salle', 'public_cible', 'stat_com'],
+    informatives: ['semaine', 'jour', 'monitoring', 'code_exercice'],
+    ignorees: []
+  };
   const DOMAINES_CONNUS = ['FOBA', 'FOCA', 'DPS', 'DAP', 'PR', 'AUTO', 'FOSPEC', 'JSP'];
   const SOUS_DOMAINES = { PR: 'FOSPEC', AUTO: 'FOSPEC' };
   const MODES = ['NOMINATIF', 'QUANTITATIF', 'AUTO'];
@@ -50,6 +57,13 @@
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '_');
+    if (key === 'code_cours' || key === 'code_cour' || key === 'code') return 'code_cours';
+    if (key === 'date_evenement' || key === 'date_exercice') return key;
+    if (key === 'debut' || key === 'heure_debut') return 'debut';
+    if (key === 'fin' || key === 'heure_fin') return 'fin';
+    if (key === 'evenement' || key === 'modele' || key === 'libelle') return key === 'modele' ? 'modele' : key;
+    if (key === 'stat_com' || key === 'stat_com_') return 'stat_com';
+    if (key === 'public' || key === 'population' || key === 'populations') return 'public_cible';
     if (key === 'comptabilise') return 'a_comptabiliser';
     if (key === 'cible' || key === 'public_cible') return key === 'public_cible' ? key : 'cibles';
     return key;
@@ -98,7 +112,9 @@
     const h = (headers || []).map((x) => String(x || '').toLowerCase());
     const has = (name) => h.includes(name);
     const f7 = has('date_exercice') && has('nb_convoques') && has('public_cible');
+    const standard = has('code_cours') && (has('date') || has('date_evenement')) && (has('evenement') || has('modele') || has('libelle'));
     const native = has('date') && has('domaine') && (has('libelle') || has('cibles'));
+    if (standard) return FORMAT_STANDARD;
     if (f7 && !has('date')) return FORMAT_F7;
     if (f7 && has('nb_presents')) return FORMAT_F7;
     if (native && !f7) return FORMAT_NATIVE;
@@ -130,9 +146,30 @@
     return { error: 'date_invalide', message: 'Date invalide (AAAA-MM-JJ).' };
   }
 
+  function normalizeLabelForMatch(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function normalizeTime(raw) {
+    const text = String(raw || '').trim();
+    if (!text) return '';
+    const m = text.match(/^(\d{1,2})[h:.]?(\d{2})?$/i);
+    if (!m) return text;
+    return `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}`;
+  }
+
   function fingerprint(fields, resolved) {
-    const ext = String(fields.identifiant_externe || fields.identifiantexterne || '').trim();
+    const ext = String(fields.internal_event_id || fields.identifiant_externe || fields.identifiantexterne || '').trim();
     if (ext) return `ext:${ext}`;
+    const codeCours = String(fields.code_cours || '').trim();
+    if (codeCours) return `code:${codeCours}`;
     const date = (resolved && resolved.date) || String(fields.date || '').slice(0, 10);
     const domaine = (resolved && resolved.domaineStockage) || String(fields.domaine || '').toUpperCase();
     const sous = (resolved && resolved.sousDomaine) || String(fields.sous_domaine || '').toUpperCase();
@@ -187,7 +224,7 @@
   }
 
   function parseCibles(fields, domaineStockage, knownCibles) {
-    const text = String(fields.cibles || '').trim();
+    const text = String(fields.cibles || fields.qui || fields.public_cible || '').trim();
     if (!text) return { error: 'cibles_manquantes', message: 'Cible(s) manquante(s). Séparateur officiel : |' };
     const tokens = text.split(/[|;]+/).map((s) => s.trim()).filter(Boolean);
     if (!tokens.length) return { error: 'cibles_manquantes', message: 'Cible(s) manquante(s).' };
@@ -273,6 +310,9 @@
     const byExt = new Set();
     const byMode = new Set();
     const byIdentity = new Set();
+    const byCodeCours = new Set();
+    const byBusiness = new Map();
+    const byBusinessLite = new Map();
     (context && context.evenementsExistants || []).forEach((e) => {
       const date = String(e.date || '').slice(0, 10);
       const domaine = String(e.domaine_code || e.domaineCode || '').toUpperCase();
@@ -285,12 +325,34 @@
         .sort()
         .join('|');
       const ext = String(e.identifiant_externe || e.identifiantExterne || '').trim();
+      const codeCours = String(e.code_cours || e.codeCours || '').trim();
       if (ext) byExt.add(ext);
+      if (codeCours) byCodeCours.add(codeCours);
       const base = `nat:${date}|${domaine}|${sous}|${codes}|${libelle}`;
       byIdentity.add(base);
       byMode.add(`${base}|${mode}`);
+      const business = [
+        date,
+        domaine,
+        sous,
+        normalizeLabelForMatch(e.libelle),
+        String(e.heure_debut || e.heureDebut || ''),
+        String(e.heure_fin || e.heureFin || '')
+      ].join('|');
+      const list = byBusiness.get(business) || [];
+      list.push(e);
+      byBusiness.set(business, list);
+      const lite = [
+        date,
+        normalizeLabelForMatch(e.libelle),
+        String(e.heure_debut || e.heureDebut || ''),
+        String(e.heure_fin || e.heureFin || '')
+      ].join('|');
+      const liteList = byBusinessLite.get(lite) || [];
+      liteList.push(e);
+      byBusinessLite.set(lite, liteList);
     });
-    return { imported, byExt, byMode, byIdentity };
+    return { imported, byExt, byMode, byIdentity, byCodeCours, byBusiness, byBusinessLite };
   }
 
   function sha256Hex(text) {
@@ -521,14 +583,200 @@
     };
   }
 
+  function inferDomainFromStandard(fields) {
+    const raw = String(fields.domaine || fields.monitoring || '').trim().toUpperCase();
+    if (raw === 'PAPR') return 'PR';
+    if (DOMAINES_CONNUS.includes(raw)) return raw;
+    const text = `${fields.code_cours || ''} ${fields.evenement || fields.modele || fields.libelle || ''} ${fields.qui || ''}`.toUpperCase();
+    if (/\bDAP\b/.test(text)) return 'DAP';
+    if (/\bDPS\b/.test(text)) return 'DPS';
+    if (/\bFOBA\b/.test(text)) return 'FOBA';
+    if (/\bJSP\b/.test(text)) return 'JSP';
+    if (/\bPAPR\b|\bPR\b/.test(text)) return 'PR';
+    if (/\bAUTO\b|\bVL\b|\bPL\b/.test(text)) return 'AUTO';
+    return raw;
+  }
+
+  function previewStandardImport(csvText, context) {
+    const parsed = parseCsv(csvText);
+    if (parsed.error) return { ok: false, error: parsed.error, format: FORMAT_STANDARD, lignes: [], groups: [], summary: { nbLignes: 0 } };
+    const missing = STANDARD_COLUMNS.obligatoires.filter((col) => {
+      if (col === 'date') return !parsed.headers.includes('date') && !parsed.headers.includes('date_evenement');
+      if (col === 'evenement') return !parsed.headers.includes('evenement') && !parsed.headers.includes('modele') && !parsed.headers.includes('libelle');
+      return !parsed.headers.includes(col);
+    });
+    const known = (context && context.cibles) || [];
+    const maps = existingMaps(context || {});
+    const seenCode = new Map();
+    const lines = parsed.rows.map((row) => {
+      const f = row.fields;
+      const errors = [];
+      const warnings = [];
+      if (missing.length) errors.push({ error: 'colonnes_manquantes', message: `Colonnes obligatoires absentes : ${missing.join(', ')}` });
+      const dateInfo = normalizeDate(f.date || f.date_evenement);
+      if (dateInfo.error) errors.push(dateInfo);
+      const codeCours = String(f.code_cours || '').trim();
+      if (!codeCours) errors.push({ error: 'code_cours_manquant', message: 'CODE COURS manquant.' });
+      if (codeCours && seenCode.has(codeCours)) warnings.push(`CODE COURS déjà présent ligne ${seenCode.get(codeCours)} : regroupement possible.`);
+      else if (codeCours) seenCode.set(codeCours, row.ligneNo);
+      const libelle = String(f.evenement || f.libelle || f.modele || '').trim();
+      if (!libelle) errors.push({ error: 'libelle_vide', message: 'Événement/libellé obligatoire.' });
+      const domaine = inferDomainFromStandard(f);
+      if (!DOMAINES_CONNUS.includes(domaine)) errors.push({ error: 'domaine_inconnu', message: `Domaine inconnu : ${domaine || '(vide)'}` });
+      const resolvedDomaine = resolveDomaine({ domaine, sous_domaine: f.sous_domaine });
+      if (resolvedDomaine.error) errors.push(resolvedDomaine);
+      let cibles = [];
+      let cibleCodes = '';
+      if (!resolvedDomaine.error) {
+        const parsedCibles = parseCibles({ cibles: f.qui || f.public_cible || f.cibles }, resolvedDomaine.domaineStockage, known);
+        if (parsedCibles.error) errors.push(parsedCibles);
+        else {
+          cibles = parsedCibles.cibles;
+          cibleCodes = parsedCibles.cibleCodes;
+        }
+      }
+      const heureDebut = normalizeTime(f.debut);
+      const heureFin = normalizeTime(f.fin);
+      const normalizedLabel = normalizeLabelForMatch(libelle);
+      const groupKey = [
+        dateInfo.iso || '',
+        normalizedLabel,
+        heureDebut,
+        heureFin
+      ].join('|');
+      const businessMatches = (maps.byBusinessLite && maps.byBusinessLite.get(groupKey)) || maps.byBusiness.get(groupKey) || [];
+      let matchStatus = 'NEW_EVENT';
+      let statut = 'NEW_EVENT';
+      let actionPrevue = 'CREER';
+      if (errors.length) {
+        statut = 'ERREUR';
+        actionPrevue = 'REFUSER';
+      } else if (maps.byCodeCours.has(codeCours)) {
+        matchStatus = 'EXACT_MATCH';
+        statut = 'EXACT_MATCH';
+        actionPrevue = 'IGNORER_IDEMPOTENT';
+      } else if (businessMatches.length === 1) {
+        matchStatus = 'PROBABLE_MATCH';
+        statut = 'PROBABLE_MATCH';
+        actionPrevue = 'MATCH_EXISTANT';
+      } else if (businessMatches.length > 1) {
+        matchStatus = 'AMBIGUOUS';
+        statut = 'REVIEW_REQUIRED';
+        actionPrevue = 'ARBITRER';
+      }
+      return {
+        ligneNo: row.ligneNo,
+        source: f,
+        statut,
+        statutLibelle: STATUT_LABELS[statut] || (statut === 'NEW_EVENT' ? 'Nouveau' : statut),
+        matchStatus,
+        actionPrevue,
+        errors,
+        erreurs: errors,
+        avertissements: warnings,
+        codeCours,
+        code_cours: codeCours,
+        codeSource: codeCours,
+        date: dateInfo.iso || String(f.date || f.date_evenement || ''),
+        heureDebut,
+        heureFin,
+        domaine: resolvedDomaine.domaineAffiche || domaine,
+        domaineStockage: resolvedDomaine.domaineStockage || domaine,
+        sousDomaine: resolvedDomaine.sousDomaine || null,
+        libelle,
+        normalizedLabel,
+        responsable: String(f.responsable || '').trim(),
+        salle: String(f.salle || '').trim(),
+        statCom: String(f.stat_com || '').trim(),
+        qui: String(f.qui || '').trim(),
+        cibles,
+        cibleCodes,
+        publicCible: cibleCodes,
+        groupKey,
+        fingerprint: codeCours ? `code:${codeCours}` : `std:${groupKey}|${cibleCodes}`,
+        existingEventIds: businessMatches.map((e) => e.evenement_id),
+        raison: errors.map((e) => e.message).concat(warnings).join(' ')
+      };
+    });
+
+    const groupsMap = new Map();
+    lines.forEach((line) => {
+      if (!line.groupKey || line.statut === 'ERREUR') return;
+      const group = groupsMap.get(line.groupKey) || {
+        groupKey: line.groupKey,
+        statut: 'NEW_EVENT',
+        actionPrevue: 'CREER',
+        lignes: [],
+        sourceLineNos: [],
+        cibles: [],
+        cibleCodes: '',
+        codeCours: line.codeCours,
+        date: line.date,
+        domaineStockage: line.domaineStockage,
+        sousDomaine: line.sousDomaine,
+        libelle: line.libelle,
+        heureDebut: line.heureDebut,
+        heureFin: line.heureFin,
+        responsable: line.responsable,
+        salle: line.salle
+      };
+      group.lignes.push(line);
+      group.sourceLineNos.push(line.ligneNo);
+      group.cibles.push(...line.cibles);
+      if (line.matchStatus === 'AMBIGUOUS') group.statut = 'REVIEW_REQUIRED';
+      else if (line.matchStatus === 'EXACT_MATCH' && group.statut !== 'REVIEW_REQUIRED') group.statut = 'EXACT_MATCH';
+      else if (line.matchStatus === 'PROBABLE_MATCH' && group.statut === 'NEW_EVENT') group.statut = 'PROBABLE_MATCH';
+      groupsMap.set(line.groupKey, group);
+    });
+    const groups = [...groupsMap.values()].map((group) => {
+      const cibleById = new Map();
+      group.cibles.forEach((c) => cibleById.set(c.cibleId, c));
+      group.cibles = [...cibleById.values()];
+      group.cibleCodes = group.cibles.map((c) => c.niveauCode).sort().join('|');
+      if (group.lignes.length > 1 && group.statut === 'NEW_EVENT') group.statut = 'GROUPED';
+      group.actionPrevue = group.statut === 'REVIEW_REQUIRED' ? 'ARBITRER'
+        : (group.statut === 'EXACT_MATCH' ? 'IGNORER_IDEMPOTENT' : 'CREER');
+      return group;
+    });
+    const errors = lines.filter((l) => l.statut === 'ERREUR').length;
+    const review = groups.filter((g) => g.statut === 'REVIEW_REQUIRED').length;
+    const summary = {
+      nbLignes: lines.length,
+      eventsDetected: groups.length,
+      nouveaux: groups.filter((g) => g.statut === 'NEW_EVENT' || g.statut === 'GROUPED').length,
+      reconnus: groups.filter((g) => g.statut === 'EXACT_MATCH' || g.statut === 'PROBABLE_MATCH').length,
+      modifies: groups.filter((g) => g.statut === 'PROBABLE_MATCH').length,
+      regroupes: groups.filter((g) => g.statut === 'GROUPED').length,
+      aControler: review,
+      erreurs: errors,
+      peutCommit: errors === 0 && review === 0
+    };
+    const tokenPayload = JSON.stringify({ format: FORMAT_STANDARD, lines: lines.map((l) => [l.ligneNo, l.fingerprint, l.statut]), groups: groups.map((g) => [g.groupKey, g.statut]) });
+    return {
+      ok: summary.peutCommit,
+      format: FORMAT_STANDARD,
+      profil: FORMAT_STANDARD,
+      csvContract: STANDARD_COLUMNS,
+      ecriture: false,
+      previewToken: sha256Hex(tokenPayload) || tokenPayload.slice(0, 64),
+      lignes: lines,
+      groups,
+      summary
+    };
+  }
+
   return {
     COLUMNS,
     REQUIRED,
     FORMAT_NATIVE,
+    FORMAT_STANDARD,
     FORMAT_F7,
+    STANDARD_COLUMNS,
     STATUT_LABELS,
     previewScopeImport,
+    previewStandardImport,
     fingerprint,
+    normalizeLabelForMatch,
     resolveDomaine,
     detectCsvFormat,
     detectCsvFormatFromText,

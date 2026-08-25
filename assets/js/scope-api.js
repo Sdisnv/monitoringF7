@@ -135,6 +135,7 @@
       cloturer(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/cloturer`, withBaseVersion({}, baseVersion)); },
       reouvrir(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/reouvrir`, withBaseVersion({ motif }, baseVersion)); },
       annuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/annuler`, withBaseVersion({ motif }, baseVersion)); },
+      supprimerOuAnnuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/supprimer-ou-annuler`, withBaseVersion({ motif }, baseVersion)); },
       taux(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/taux`); },
       suggestModeSuivi(params) { return request('GET', `/mode-suivi-suggere${queryString(params || {})}`); },
       previewTauxQuantitatif(id, body) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-taux-quantitatif`, body || {}); },

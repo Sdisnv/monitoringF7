@@ -1,0 +1,232 @@
+#!/usr/bin/env node
+'use strict';
+
+const assert = require('assert');
+const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
+const { createScopeService } = require('../netlify/functions/_scope-service');
+const { computeTaux } = require('../netlify/functions/_scope-rules');
+
+const ACTOR = { sub: 'scope-event-std-1-test', roles: ['sdis-admin'] };
+const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;responsable;salle;STAT.COM.;semaine;jour;monitoring;code exercice';
+
+function csv(rows){
+  return [HEADER, ...rows].join('\n');
+}
+
+async function cible(repo, domaine, niveau){
+  const row = await repo.findCible(domaine, niveau);
+  assert.ok(row, `cible ${domaine}/${niveau}`);
+  return row;
+}
+
+async function person(repo, nip, affs){
+  const p = await repo.insertPersonne({ nip, nom: `Nom${nip}`, prenom: `Pre${nip}`, grade: 'Sap', date_entree: '2020-01-01' });
+  for(const aff of affs){
+    const c = await cible(repo, aff[0], aff[1]);
+    await repo.insertAffectation({
+      personne_id: p.personne_id,
+      cible_id: c.cible_id,
+      date_debut: aff[2] || '2020-01-01',
+      date_fin: aff[3] || null
+    });
+  }
+  return p;
+}
+
+async function commit(service, text){
+  const preview = await service.previewImportEvenements({ csvText: text, filename: 'std.csv' });
+  const result = await service.commitImportEvenements({ csvText: text, filename: 'std.csv', previewToken: preview.previewToken }, ACTOR);
+  return { preview, result };
+}
+
+(async () => {
+  const results = [];
+  async function run(name, fn){
+    try {
+      await fn();
+      results.push({ name, status: 'PASS' });
+    } catch (error) {
+      results.push({ name, status: 'NOK', proof: String(error && error.stack || error) });
+    }
+  }
+
+  await run('A — 1 ligne CSV normale => 1 événement', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv(['DPS.G1.001;14.04.2026;19:30;21:30;Conduite formation continue;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;TRUCK']));
+    assert.strictEqual(result.summary.imported, 1);
+    assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 1);
+  });
+
+  await run('B — 3 lignes même événement => 1 événement + plusieurs targets', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = csv([
+      'DPS.G1.010;14.04.2026;19:30;21:30;Exercice combiné;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;TRUCK',
+      'DPS.B1.011;14.04.2026;19:30;21:30;Exercice combiné;DPS;B1;Resp;Salle;DPS.B1;16;ma;oui;TRUCK',
+      'FOBA.2.012;14.04.2026;19:30;21:30;Exercice combiné;FOBA;2;Resp;Salle;FOBA.2;16;ma;oui;TRUCK'
+    ]);
+    const { preview, result } = await commit(service, text);
+    assert.strictEqual(preview.summary.regroupes, 1);
+    assert.strictEqual(result.summary.imported, 1);
+    const event = (await repo.listEvenements({ annee: 2026 }))[0];
+    assert.strictEqual((await repo.listEventCibleIds(event.evenement_id)).length, 3);
+  });
+
+  await run('C — DPS G1 + FOBA 2 avec double appartenance => 1 NIP', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'C001', [['DPS', 'G1'], ['FOBA', '2']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv([
+      'DPS.G1.020;14.04.2026;19:30;21:30;Exercice double inclusion;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A',
+      'FOBA.2.021;14.04.2026;19:30;21:30;Exercice double inclusion;FOBA;2;Resp;Salle;FOBA.2;16;ma;oui;A'
+    ]));
+    const attendus = await repo.listAttendus(result.created[0].evenementId);
+    assert.strictEqual(attendus.filter((a) => a.personne_id).length, 1);
+  });
+
+  await run('D — DPS B1 principal + G1 secondaire, événement G1 => incluse', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'D001', [['DPS', 'B1'], ['DPS', 'G1']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv(['DPS.G1.030;14.04.2026;19:30;21:30;G1 drill;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    assert.ok((await repo.listAttendus(result.created[0].evenementId)).some((a) => a.personne_id === p.personne_id));
+  });
+
+  await run('E — G1 principal + B1 secondaire, événement B1 => incluse', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'E001', [['DPS', 'G1'], ['DPS', 'B1']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv(['DPS.B1.040;14.04.2026;19:30;21:30;B1 drill;DPS;B1;Resp;Salle;DPS.B1;16;ma;oui;A']));
+    assert.ok((await repo.listAttendus(result.created[0].evenementId)).some((a) => a.personne_id === p.personne_id));
+  });
+
+  await run('F — CODE existant réimporté => pas de nouvel événement', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = csv(['DPS.G1.050;14.04.2026;19:30;21:30;Réimport code;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']);
+    await commit(service, text);
+    const second = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(second.groups[0].statut, 'EXACT_MATCH');
+    assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 1);
+  });
+
+  await run('G — numéro source changé mais rapprochement évident => pas de doublon', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    await commit(service, csv(['DPS.G1.060;14.04.2026;19:30;21:30;Libellé identique;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const preview = await service.previewImportEvenements({ csvText: csv(['DPS.G1.999;14.04.2026;19:30;21:30;Libelle - identique;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']) });
+    assert.strictEqual(preview.groups[0].statut, 'PROBABLE_MATCH');
+  });
+
+  await run('H — rapprochement ambigu => REVIEW_REQUIRED', async () => {
+    const repo = createMemoryRepo();
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const service = createScopeService(repo);
+    await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ambigu', cibleIds: [g1.cible_id], heureDebut: '19:30', heureFin: '21:30' }, ACTOR);
+    await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ambigu', cibleIds: [g1.cible_id], heureDebut: '19:30', heureFin: '21:30' }, ACTOR);
+    const preview = await service.previewImportEvenements({ csvText: csv(['DPS.G1.070;14.04.2026;19:30;21:30;Ambigu;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']) });
+    assert.strictEqual(preview.groups[0].statut, 'REVIEW_REQUIRED');
+  });
+
+  await run('I — événement déplacé de date => CODE inchangé', async () => {
+    const repo = createMemoryRepo();
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const service = createScopeService(repo);
+    const created = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Déplacement', cibleIds: [g1.cible_id] }, ACTOR);
+    const code = created.evenement.code_cours;
+    const moved = await service.patchEvenement(created.evenement.evenement_id, { baseVersion: 1, date: '2026-04-21' }, ACTOR);
+    assert.strictEqual(moved.evenement.code_cours, code);
+    assert.strictEqual(moved.evenement.date, '2026-04-21');
+  });
+
+  await run('J — événement manuel => suffixe Sxxx stable', async () => {
+    const repo = createMemoryRepo();
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const service = createScopeService(repo);
+    const a = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Manuel A', cibleIds: [g1.cible_id], statCom: 'DPS' }, ACTOR);
+    const b = await service.createEvenement({ date: '2026-04-21', domaineCode: 'DPS', libelle: 'Manuel B', cibleIds: [g1.cible_id], statCom: 'DPS' }, ACTOR);
+    assert.ok(/S001$/.test(a.evenement.code_cours));
+    assert.ok(/S002$/.test(b.evenement.code_cours));
+  });
+
+  await run('K — personne ajoutée manuellement => une seule ligne', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'K001', []);
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const service = createScopeService(repo);
+    const ev = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ajout manuel', cibleIds: [g1.cible_id] }, ACTOR);
+    await service.figerPopulation(ev.evenement.evenement_id, { baseVersion: 1 }, ACTOR);
+    await service.ajouterException(ev.evenement.evenement_id, { baseVersion: 2, personneId: p.personne_id }, ACTOR);
+    assert.strictEqual((await repo.listAttendus(ev.evenement.evenement_id)).filter((a) => a.personne_id === p.personne_id).length, 1);
+  });
+
+  await run('L — personne déjà calculée puis ajout manuel => pas de doublon', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'L001', [['DPS', 'G1']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv(['DPS.G1.080;14.04.2026;19:30;21:30;Déjà calculé;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const eventId = result.created[0].evenementId;
+    const ev = await repo.getEvent(eventId);
+    const added = await service.ajouterException(eventId, { baseVersion: ev.version, personneId: p.personne_id }, ACTOR);
+    assert.strictEqual(added.dejaPresent, true);
+    assert.strictEqual((await repo.listAttendus(eventId)).filter((a) => a.personne_id === p.personne_id).length, 1);
+  });
+
+  await run('M — 2 présents + 1 dispensé => taux 100 % sur 2', async () => {
+    const attendus = [{ personne_id: '1', inclus: true }, { personne_id: '2', inclus: true }, { personne_id: '3', inclus: true }];
+    const parts = [{ personne_id: '1', statut: 'PRESENT' }, { personne_id: '2', statut: 'PRESENT' }, { personne_id: '3', statut: 'DISPENSE' }];
+    const taux = computeTaux(parts, attendus);
+    assert.strictEqual(taux.numerator, 2);
+    assert.strictEqual(taux.denominator, 2);
+    assert.strictEqual(taux.percentage, 100);
+  });
+
+  await run('N — ligne 2027 dans fichier 2026 => événement 2027', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    await commit(service, csv(['DPS.G1.090;07.01.2027;19:30;21:30;Début 2027;DPS;G1;Resp;Salle;DPS.G1;1;je;oui;A']));
+    assert.strictEqual((await repo.listEvenements({ annee: 2027 })).length, 1);
+    assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 0);
+  });
+
+  await run('O — suppression sans participation => autorisée', async () => {
+    const repo = createMemoryRepo();
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const service = createScopeService(repo);
+    const ev = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Suppression', cibleIds: [g1.cible_id] }, ACTOR);
+    const res = await service.supprimerOuAnnulerEvenement(ev.evenement.evenement_id, { baseVersion: 1, motif: 'test' }, ACTOR);
+    assert.strictEqual(res.deleted, true);
+    assert.strictEqual(await repo.getEvent(ev.evenement.evenement_id), null);
+  });
+
+  await run('P — suppression avec participation => annulation et données conservées', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'P001', [['DPS', 'G1']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv(['DPS.G1.100;14.04.2026;19:30;21:30;Annulation;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const eventId = result.created[0].evenementId;
+    await repo.upsertParticipation({ evenement_id: eventId, personne_id: p.personne_id, statut: 'PRESENT' });
+    const ev = await repo.getEvent(eventId);
+    const res = await service.supprimerOuAnnulerEvenement(eventId, { baseVersion: ev.version, motif: 'test' }, ACTOR);
+    assert.strictEqual(res.annule, true);
+    assert.strictEqual((await repo.getEvent(eventId)).statut, 'ANNULE');
+    assert.ok((await repo.listParticipations(eventId)).length > 0);
+  });
+
+  await run('Q — snapshot avril inchangé après affectation modifiée ensuite', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'Q001', [['DPS', 'G1', '2020-01-01', null]]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv(['DPS.G1.110;14.04.2026;19:30;21:30;Snapshot;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const eventId = result.created[0].evenementId;
+    const aff = (await repo.listAffectations({ personneId: p.personne_id }))[0];
+    await repo.updateAffectation(aff.affectation_id, { date_fin: '2026-09-01' });
+    assert.ok((await repo.listAttendus(eventId)).some((a) => a.personne_id === p.personne_id));
+  });
+
+  const failed = results.filter((r) => r.status !== 'PASS');
+  results.forEach((r) => console.log(`${r.status} ${r.name}${r.proof ? `\n${r.proof}` : ''}`));
+  if(failed.length) process.exit(1);
+  console.log('scope-event-std-1-tests.js PASS');
+})();

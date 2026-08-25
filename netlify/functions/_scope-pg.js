@@ -29,6 +29,14 @@ function mapEvent(row){
     cloture_par: row.cloture_par,
     version: row.version,
     identifiant_externe: row.identifiant_externe || null,
+    internal_event_id: row.internal_event_id || row.evenement_id || null,
+    code_cours: row.code_cours || null,
+    code_source: row.code_source || null,
+    source_type: row.source_type || null,
+    heure_debut: row.heure_debut || null,
+    heure_fin: row.heure_fin || null,
+    salle: row.salle || null,
+    responsable: row.responsable || null,
     created_at: row.created_at,
     updated_at: row.updated_at
   };
@@ -434,11 +442,31 @@ function createPgRepo(client){
       const id = row.evenement_id || randomUUID();
       const { inferModeSuivi } = require('./_scope-analytics');
       const modeSuivi = inferModeSuivi(row);
+      const codeCours = row.code_cours || row.codeCours || null;
       const result = await q(
         `insert into scope_evenements(
-           evenement_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi, identifiant_externe, version
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,1) returning *`,
-        [id, isoDate(row.date), row.domaine_code, row.sous_domaine_code || null, row.libelle, row.statut || 'PLANIFIE', row.origine || 'NOMINATIF', modeSuivi, row.identifiant_externe || row.identifiantExterne || null]
+           evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
+           identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable, version
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1) returning *`,
+        [
+          id,
+          row.internal_event_id || row.internalEventId || id,
+          isoDate(row.date),
+          row.domaine_code,
+          row.sous_domaine_code || null,
+          row.libelle,
+          row.statut || 'PLANIFIE',
+          row.origine || 'NOMINATIF',
+          modeSuivi,
+          row.identifiant_externe || row.identifiantExterne || null,
+          codeCours,
+          row.code_source || row.codeSource || codeCours,
+          row.source_type || row.sourceType || (row.origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
+          row.heure_debut || row.heureDebut || null,
+          row.heure_fin || row.heureFin || null,
+          row.salle || null,
+          row.responsable || null
+        ]
       );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){
@@ -504,7 +532,7 @@ function createPgRepo(client){
     async updateEventIfVersion(id, baseVersion, patch){
       const allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
-        'figee_at','figee_par','cloture_at','cloture_par'
+        'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable'
       ];
       const sets = ['version = version + 1', 'updated_at = now()'];
       const params = [];
@@ -693,6 +721,27 @@ function createPgRepo(client){
         `select fingerprint from scope_import_lignes where statut = 'IMPORTE'`
       );
       return result.rows.map((r) => r.fingerprint);
+    },
+    async nextManualEventSequence(){
+      const result = await q(`
+        select coalesce(max((substring(code_cours from 'S([0-9]+)$'))::int), 0) + 1 as next
+        from scope_evenements
+        where code_cours ~ 'S[0-9]+$'
+      `);
+      return Number(result.rows[0]?.next || 1);
+    },
+    async deleteEventIfNoDependencies(eventId){
+      const deps = await q(`
+        select
+          (select count(*)::int from scope_attendus where evenement_id = $1) as attendus,
+          (select count(*)::int from scope_participations where evenement_id = $1) as participations
+      `, [eventId]);
+      if(Number(deps.rows[0].attendus || 0) > 0 || Number(deps.rows[0].participations || 0) > 0){
+        return { deleted: false, reason: 'dependencies' };
+      }
+      await q('delete from scope_evenement_cibles where evenement_id = $1', [eventId]);
+      const result = await q('delete from scope_evenements where evenement_id = $1 returning *', [eventId]);
+      return { deleted: Boolean(result.rows[0]), event: mapEvent(result.rows[0] || null) };
     },
     async countTable(name){
       const allowed = new Set([

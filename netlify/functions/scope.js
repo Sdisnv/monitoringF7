@@ -224,6 +224,10 @@ exports.handler = async function(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.annulerEvenement(params.id, body, claims)) });
     }
+    params = match(path, '/evenements/:id/supprimer-ou-annuler');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.supprimerOuAnnulerEvenement(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/taux');
     if(method === 'GET' && params){
       return response(200, { ok:true, taux: await service.tauxEvenement(params.id) });

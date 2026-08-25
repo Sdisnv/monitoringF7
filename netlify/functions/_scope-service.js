@@ -49,6 +49,25 @@ function actorId(actor){
   return String(actor?.sub || actor?.email || actor?.nip || actor || 'systeme');
 }
 
+function compactCodePart(value, fallback){
+  const text = String(value || fallback || '')
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9]+/g, '');
+  return text || String(fallback || 'SCOPE');
+}
+
+async function nextManualCode(repo, body, cibleIds){
+  if(body.codeCours || body.code_cours) return String(body.codeCours || body.code_cours).trim();
+  const seq = repo.nextManualEventSequence ? await repo.nextManualEventSequence() : 1;
+  const suffix = `S${String(seq).padStart(3, '0')}`;
+  const stat = compactCodePart(body.statCom || body.stat_com || body.codeSource || body.code_source, 'SCOPE');
+  const qui = compactCodePart(body.qui || body.publicCible || body.public_cible || (cibleIds || []).length, 'GEN');
+  return `${stat}.${qui}.${suffix}`;
+}
+
 function isQuantitatif(evenement){
   return inferModeSuivi(evenement) === MODES.QUANTITATIF;
 }
@@ -202,11 +221,8 @@ function createScopeService(repo){
       resolvedCibles.push(cible);
     }
     const leafDomaines = [...new Set(resolvedCibles.map((c) => c.domaine_code))];
-    if(leafDomaines.length !== 1){
-      throw new HttpError(400, 'cible_invalide', 'Les cibles d’un exercice doivent appartenir au même domaine (ou sous-domaine).');
-    }
     const leaf = leafDomaines[0];
-    if(domaine !== leaf){
+    if(leafDomaines.length === 1 && domaine !== leaf){
       if(domaine === 'FOSPEC' && isSousDomaineFospec(leaf)) domaine = leaf;
       else throw new HttpError(400, 'cible_invalide', 'Cible inconnue ou hors domaine.');
     }
@@ -234,6 +250,7 @@ function createScopeService(repo){
         throw new HttpError(422, 'nominatif_non_autorise', 'Le suivi nominatif n’est pas autorisé pour ce périmètre à cette date.');
       }
     }
+    const codeCours = await nextManualCode(repo, body, cibleIds);
     const evenement = await repo.insertEvenement({
       date,
       domaine_code: domaine,
@@ -242,6 +259,13 @@ function createScopeService(repo){
       statut: 'PLANIFIE',
       origine,
       mode_suivi: modeSuivi,
+      code_cours: codeCours,
+      code_source: codeCours,
+      source_type: origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL',
+      heure_debut: body.heureDebut || body.heure_debut || body.debut || null,
+      heure_fin: body.heureFin || body.heure_fin || body.fin || null,
+      salle: body.salle || null,
+      responsable: body.responsable || null,
       cible_ids: cibleIds
     });
     await repo.appendJournal({
@@ -259,6 +283,9 @@ function createScopeService(repo){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
     const patch = {};
+    if(body.codeCours !== undefined || body.code_cours !== undefined){
+      throw new HttpError(422, 'code_cours_immutable', 'CODE COURS immuable après création.');
+    }
     if(body.libelle !== undefined){
       const libelle = String(body.libelle || '').trim();
       if(!libelle) throw new HttpError(400, 'libelle_vide', 'Le libellé est obligatoire.');
@@ -278,6 +305,14 @@ function createScopeService(repo){
     if(wantsDomaine){
       patch.domaine_code = String(body.domaineCode || body.domaine_code);
     }
+    if(body.heureDebut !== undefined || body.heure_debut !== undefined || body.debut !== undefined){
+      patch.heure_debut = body.heureDebut || body.heure_debut || body.debut || null;
+    }
+    if(body.heureFin !== undefined || body.heure_fin !== undefined || body.fin !== undefined){
+      patch.heure_fin = body.heureFin || body.heure_fin || body.fin || null;
+    }
+    if(body.salle !== undefined) patch.salle = String(body.salle || '').trim() || null;
+    if(body.responsable !== undefined) patch.responsable = String(body.responsable || '').trim() || null;
     const next = await repo.withTransaction(async (tx) => {
       const updated = await bumpOrConflict(tx, eventId, baseVersion, patch);
       if(wantsCibles && !evenement.population_figee){
@@ -300,11 +335,12 @@ function createScopeService(repo){
     return { evenement: next, version: next.version };
   }
 
-  async function resolveEligiblePopulation({ eventDate, domaineCode, sousDomaineCode, cibleIds, suiviNominatif }){
+  async function resolveEligiblePopulation({ eventDate, domaineCode, sousDomaineCode, cibleIds, suiviNominatif, store }){
+    const dbx = store || repo;
     const date = isoDate(eventDate);
     if(!date) throw new HttpError(400, 'date_invalide', 'Date d’événement invalide.');
     const ids = Array.isArray(cibleIds) ? cibleIds.filter(Boolean) : [];
-    const rules = suiviNominatif || (repo.listSuiviNominatif ? await repo.listSuiviNominatif() : []);
+    const rules = suiviNominatif || (dbx.listSuiviNominatif ? await dbx.listSuiviNominatif() : []);
     if(ids.length === 1){
       const resolution = resolveSuiviNominatif(rules, {
         date,
@@ -316,18 +352,18 @@ function createScopeService(repo){
         return { count: 0, personnes: [], note: 'suivi_nominatif_interdit', resolution };
       }
     }
-    const affectations = await repo.listAffectationsForCibles(ids, date);
+    const affectations = await dbx.listAffectationsForCibles(ids, date);
     const byPersonne = new Map();
     for(const aff of affectations){
       if(!isAffectationValide(aff, date)) continue;
-      const personne = await repo.getPersonne(aff.personne_id);
+      const personne = await dbx.getPersonne(aff.personne_id);
       if(!personne) continue;
-      const periodes = repo.listPersonnesPeriodes
-        ? await repo.listPersonnesPeriodes(aff.personne_id)
+      const periodes = dbx.listPersonnesPeriodes
+        ? await dbx.listPersonnesPeriodes(aff.personne_id)
         : [];
       const eligibility = evaluateEligibility(personne, periodes, date);
       if(!eligibility.eligible) continue;
-      const cible = await repo.getCible(aff.cible_id);
+      const cible = await dbx.getCible(aff.cible_id);
       const current = byPersonne.get(aff.personne_id) || {
         personneId: aff.personne_id,
         nip: personne.nip,
@@ -799,7 +835,14 @@ function createScopeService(repo){
       const personne = await tx.getPersonne(personneId);
       if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
       const existing = await tx.getAttendu(eventId, personneId);
-      if(existing && existing.inclus) throw new HttpError(422, 'doublon', 'Cette personne est déjà attendue.');
+      if(existing && existing.inclus){
+        return {
+          evenement,
+          version: evenement.version,
+          dejaPresent: true,
+          message: 'Cette personne appartient déjà à l’effectif.'
+        };
+      }
       await tx.upsertAttendu({
         evenement_id: eventId,
         personne_id: personneId,
@@ -812,7 +855,7 @@ function createScopeService(repo){
         evenement_id: eventId,
         personne_id: personneId,
         statut: 'NON_RENSEIGNE',
-        role,
+        role: 'PARTICIPANT',
         source: 'EXCEPTION',
         auteur_id: actorId(actor)
       });
@@ -1012,6 +1055,38 @@ function createScopeService(repo){
         apres: { statut: 'ANNULE', version: next.version }
       });
       return { evenement: next, version: next.version };
+    });
+  }
+
+  async function supprimerOuAnnulerEvenement(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    const motif = String(body.motif || body.commentaire || 'Correction événement').trim();
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      const deleted = tx.deleteEventIfNoDependencies ? await tx.deleteEventIfNoDependencies(eventId) : { deleted: false, reason: 'unsupported' };
+      if(deleted.deleted){
+        await tx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'evenement',
+          entite_id: eventId,
+          action: 'SUPPRIMER',
+          avant: { codeCours: evenement.code_cours, date: evenement.date, libelle: evenement.libelle },
+          commentaire: motif
+        });
+        return { deleted: true, annule: false, evenement: deleted.event };
+      }
+      const next = await bumpOrConflict(tx, eventId, baseVersion, { statut: 'ANNULE' });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'ANNULER_APRES_DEPENDANCES',
+        avant: { statut: evenement.statut, version: evenement.version },
+        apres: { statut: 'ANNULE', version: next.version },
+        commentaire: motif
+      });
+      return { deleted: false, annule: true, evenement: next, version: next.version };
     });
   }
 
@@ -1349,11 +1424,175 @@ function createScopeService(repo){
       }
       return { ...preview, ecriture: false };
     }
+    if(format === importContract.FORMAT_STANDARD){
+      const preview = importContract.previewStandardImport(csvText, await previewNativeContext(body));
+      if(preview.error === 'fichier_vide'){
+        throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
+      }
+      return { ...preview, ecriture: false };
+    }
     if(format === importContract.FORMAT_F7){
       const preview = previewFromCsv(csvText, await previewContext());
       return { ...preview, ecriture: false };
     }
-    throw new HttpError(400, 'format_csv_inconnu', 'Format CSV non reconnu. Utilisez le programme SCOPE (date;domaine;cibles;libelle;mode_suivi) ou l’historique Monitoring F7 (22 colonnes).');
+    throw new HttpError(400, 'format_csv_inconnu', 'Format CSV non reconnu. Utilisez le programme SCOPE, le standard CODE COURS ou l’historique Monitoring F7.');
+  }
+
+  async function commitStandardImport(body, actor){
+    const csvText = String(body?.csvText || body?.csv || '');
+    const filename = String(body?.filename || body?.sourceFilename || '').slice(0, 240);
+    const preview = importContract.previewStandardImport(csvText, await previewNativeContext(body));
+    if(!body?.previewToken){
+      throw new HttpError(400, 'preview_token_requis', 'Relancez le contrôle (preview) avant de confirmer l’import.');
+    }
+    if(preview.previewToken && body.previewToken !== preview.previewToken){
+      throw new HttpError(409, 'preview_obsolete', 'La preview n’est plus à jour. Relancez le contrôle avant de confirmer.', {
+        previewToken: preview.previewToken
+      });
+    }
+    const excluded = new Set(
+      (Array.isArray(body?.excludedLineNos) ? body.excludedLineNos : [])
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n > 0)
+    );
+    const groups = (preview.groups || []).filter((g) => !g.sourceLineNos.every((n) => excluded.has(n)));
+    const blockingLines = preview.lignes.filter((l) => !excluded.has(l.ligneNo) && l.statut === 'ERREUR');
+    const blockingGroups = groups.filter((g) => g.statut === 'REVIEW_REQUIRED');
+    if(blockingLines.length || blockingGroups.length){
+      throw new HttpError(422, 'import_refuse', 'Des lignes en erreur ou à contrôler doivent être corrigées ou exclues avant commit.', {
+        erreurs: blockingLines.map((l) => ({ ligneNo: l.ligneNo, raison: l.raison })),
+        groupes: blockingGroups.map((g) => ({ sourceLineNos: g.sourceLineNos, statut: g.statut }))
+      });
+    }
+    return repo.withTransaction(async (tx) => {
+      const sourceSha = importContract.sha256Hex(csvText);
+      const created = [];
+      const skipped = [];
+      const importedGroups = [];
+      for(const group of groups){
+        if(group.actionPrevue === 'IGNORER_IDEMPOTENT' || group.statut === 'EXACT_MATCH' || group.statut === 'PROBABLE_MATCH'){
+          skipped.push({ sourceLineNos: group.sourceLineNos, statut: group.statut, codeCours: group.codeCours });
+          continue;
+        }
+        const event = await tx.insertEvenement({
+          date: group.date,
+          domaine_code: group.domaineStockage,
+          sous_domaine_code: group.sousDomaine || null,
+          libelle: group.libelle,
+          statut: 'PLANIFIE',
+          origine: 'IMPORT_CSV',
+          mode_suivi: 'NOMINATIF',
+          code_cours: group.codeCours,
+          code_source: group.codeCours,
+          source_type: 'CSV',
+          heure_debut: group.heureDebut || null,
+          heure_fin: group.heureFin || null,
+          salle: group.salle || null,
+          responsable: group.responsable || null,
+          cible_ids: (group.cibles || []).map((c) => c.cibleId)
+        });
+        await tx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'evenement',
+          entite_id: event.evenement_id,
+          action: 'CREER_IMPORT_STANDARD',
+          apres: { codeCours: group.codeCours, sourceLineNos: group.sourceLineNos, cibles: group.cibleCodes }
+        });
+        const population = await resolveEligiblePopulation({
+          eventDate: group.date,
+          domaineCode: group.domaineStockage,
+          sousDomaineCode: group.sousDomaine || null,
+          cibleIds: (group.cibles || []).map((c) => c.cibleId),
+          store: tx
+        });
+        for(const personne of population.personnes){
+          await tx.upsertAttendu({
+            evenement_id: event.evenement_id,
+            personne_id: personne.personneId,
+            inclus: true,
+            origine: 'REGLE',
+            motif_inclusion: (personne.cibles || [])
+              .map((c) => `${c.domaineCode}_${c.niveauCode}`)
+              .filter(Boolean)
+              .join('|') || 'population_standard'
+          });
+          await tx.upsertParticipation({
+            evenement_id: event.evenement_id,
+            personne_id: personne.personneId,
+            statut: 'NON_RENSEIGNE',
+            role: 'PARTICIPANT',
+            source: 'GENERATION',
+            auteur_id: actorId(actor)
+          });
+        }
+        const frozen = await tx.updateEventIfVersion(event.evenement_id, event.version, {
+          population_figee: true,
+          population_version: 1,
+          figee_at: new Date().toISOString(),
+          figee_par: actorId(actor)
+        });
+        created.push({
+          evenementId: event.evenement_id,
+          codeCours: group.codeCours,
+          sourceLineNos: group.sourceLineNos,
+          targets: group.cibles.length,
+          population: population.count,
+          version: frozen ? frozen.version : event.version
+        });
+        importedGroups.push({ group, event });
+      }
+      const importRow = await tx.insertImport({
+        source_filename: filename || null,
+        source_sha256: sourceSha,
+        imported_par: actorId(actor),
+        statut: 'COMMITE',
+        nb_lignes: preview.lignes.length,
+        rapport: {
+          format: importContract.FORMAT_STANDARD,
+          imported: created.length,
+          skipped: skipped.length,
+          grouped: preview.summary.regroupes,
+          excluded: [...excluded]
+        }
+      });
+      for(const line of preview.lignes){
+        const groupDone = importedGroups.find((item) => item.group.sourceLineNos.includes(line.ligneNo));
+        const groupSkipped = skipped.find((item) => item.sourceLineNos.includes(line.ligneNo));
+        await tx.insertImportLigne({
+          import_id: importRow.import_id,
+          ligne_no: line.ligneNo,
+          fingerprint: line.fingerprint,
+          statut: excluded.has(line.ligneNo) ? 'EXCLU' : (groupSkipped ? 'DEJA_IMPORTE' : 'IMPORTE'),
+          type_propose: 'STANDARD',
+          evenement_id: groupDone ? groupDone.event.evenement_id : null,
+          payload_source: { format: importContract.FORMAT_STANDARD, line },
+          raison: line.raison,
+          action: excluded.has(line.ligneNo) ? 'EXCLU' : (groupSkipped ? 'IGNORER_IDEMPOTENT' : 'CREER')
+        });
+      }
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'import',
+        entite_id: importRow.import_id,
+        action: 'IMPORTER_EVENEMENTS_STANDARD',
+        apres: { filename, imported: created.length, skipped: skipped.length, grouped: preview.summary.regroupes }
+      });
+      return {
+        importId: importRow.import_id,
+        format: importContract.FORMAT_STANDARD,
+        created,
+        skipped,
+        excluded: [...excluded],
+        summary: {
+          nbLignes: preview.lignes.length,
+          imported: created.length,
+          dejaImporte: skipped.length,
+          regroupes: preview.summary.regroupes,
+          exclus: excluded.size,
+          erreurs: 0
+        }
+      };
+    });
   }
 
   async function commitNativeImport(body, actor){
@@ -1502,6 +1741,9 @@ function createScopeService(repo){
     const format = importContract.detectCsvFormatFromText(csvText);
     if(format === importContract.FORMAT_NATIVE){
       return commitNativeImport(body, actor);
+    }
+    if(format === importContract.FORMAT_STANDARD){
+      return commitStandardImport(body, actor);
     }
     if(format !== importContract.FORMAT_F7){
       throw new HttpError(400, 'format_csv_inconnu', 'Format CSV non reconnu. Utilisez le programme SCOPE ou l’historique Monitoring F7.');
@@ -1896,6 +2138,7 @@ function createScopeService(repo){
     cloturer,
     reouvrir,
     annulerEvenement,
+    supprimerOuAnnulerEvenement,
     lireEvenement,
     tauxEvenement,
     suggestModeSuivi,

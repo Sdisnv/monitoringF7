@@ -801,16 +801,17 @@
         ? `${item.legacy.nb_presents} / ${attenduLegacy}`
         : (ev.statut === 'REALISE' ? (item.compteurs.presents ?? '—') : '—');
       const attendusCell = isLegacy ? '—' : (mode === 'QUANTITATIF' ? (item.attendusInclus || '—') : (ev.population_figee ? item.attendusInclus : '—'));
+      const horaire = [ev.heure_debut, ev.heure_fin].filter(Boolean).join('–') || '—';
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
+        <td data-label="Heure">${escapeHtml(horaire)}</td>
+        <td data-label="Code">${escapeHtml(ev.code_cours || ev.identifiant_externe || '—')}</td>
+        <td data-label="Événement">${escapeHtml(ev.libelle)}</td>
         <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine_code))}</td>
-        <td data-label="Cible(s)">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
-        <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
-        <td data-label="Statut">${statutHtml}</td>
-        <td data-label="Attendus">${attendusCell}</td>
-        <td data-label="Présents">${presents}</td>
-        <td data-label="Taux">${escapeHtml(taux)}</td>
-        <td data-label="Action"><a class="scope-btn" href="${href}">${action}</a></td>
+        <td data-label="Public">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
+        <td data-label="Effectif">${attendusCell}${presents !== '—' ? ` · ${escapeHtml(String(presents))}` : ''}${taux !== '—' ? ` · ${escapeHtml(taux)}` : ''}</td>
+        <td data-label="État">${statutHtml}</td>
+        <td data-label="Actions"><a class="scope-btn" href="${href}">${action}</a></td>
       </tr>`;
       }).join('');
     }
@@ -845,8 +846,8 @@
           <table class="scope-table">
             <thead>
               <tr>
-                <th>Date</th><th>Domaine</th><th>Cible(s)</th><th>Libellé</th>
-                <th>Statut</th><th>Attendus</th><th>Présents</th><th>Taux</th><th>Action</th>
+                <th>Date</th><th>Heure</th><th>Code</th><th>Événement</th>
+                <th>Domaine</th><th>Public</th><th>Effectif</th><th>État</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -2755,7 +2756,8 @@
       A_CREER: 'À créer', VALIDE: 'À créer', DEJA_PRESENT: 'Déjà présent', DEJA_IMPORTE: 'Déjà importé',
       ERREUR: 'Erreur', ERREUR_REFERENTIEL: 'Erreur de référentiel', ERREUR_DATE: 'Date invalide',
       ERREUR_MODE: 'Mode invalide', CONFLIT: 'Conflit', A_ARBITRER: 'À arbitrer', EXCLU: 'Exclu',
-      AVERTISSEMENT: 'Avertissement'
+      AVERTISSEMENT: 'Avertissement', NEW_EVENT: 'Nouveau', EXACT_MATCH: 'Reconnu',
+      PROBABLE_MATCH: 'Probable', GROUPED: 'Regroupé', REVIEW_REQUIRED: 'À contrôler'
     };
     const err = String(statut || '').indexOf('ERREUR') === 0 || statut === 'CONFLIT';
     const warn = statut === 'A_ARBITRER' || statut === 'AVERTISSEMENT' || statut === 'DEJA_PRESENT' || statut === 'DEJA_IMPORTE';
@@ -2769,10 +2771,11 @@
     if (filter === 'EXCLUS') return excluded;
     if (excluded && filter !== 'TOUS') return false;
     if (filter === 'TOUS') return true;
-    if (filter === 'A_CREER') return line.statut === 'A_CREER' || line.statut === 'VALIDE';
-    if (filter === 'DEJA') return line.statut === 'DEJA_PRESENT' || line.statut === 'DEJA_IMPORTE';
+    if (filter === 'A_CREER') return line.statut === 'A_CREER' || line.statut === 'VALIDE' || line.statut === 'NEW_EVENT';
+    if (filter === 'DEJA') return ['DEJA_PRESENT', 'DEJA_IMPORTE', 'EXACT_MATCH', 'PROBABLE_MATCH'].includes(line.statut);
+    if (filter === 'GROUPED') return Boolean(line.groupKey);
     if (filter === 'ERREURS') return String(line.statut).indexOf('ERREUR') === 0 || line.statut === 'CONFLIT';
-    if (filter === 'ARBITRER') return line.statut === 'A_ARBITRER';
+    if (filter === 'ARBITRER') return line.statut === 'A_ARBITRER' || line.statut === 'REVIEW_REQUIRED';
     if (filter === 'NOMINATIF') return line.modePropose === 'NOMINATIF' || line.typePropose === 'NOMINATIF';
     if (filter === 'QUANTITATIF') return line.modePropose === 'QUANTITATIF' || line.typePropose === 'QUANTITATIF';
     return true;
@@ -2785,16 +2788,17 @@
     const lignes = ((preview && preview.lignes) || []).filter(importLineVisible);
     const all = (preview && preview.lignes) || [];
     const native = preview && (preview.format === 'SCOPE_EXERCICES_CSV_1' || preview.profil === 'SCOPE_EXERCICES_CSV_1');
+    const standard = preview && (preview.format === 'SCOPE_EVENT_STANDARD_CSV_1' || preview.profil === 'SCOPE_EVENT_STANDARD_CSV_1');
     const f7 = preview && (preview.format === 'monitoring_exercices_sdis_22cols' || preview.profil === 'monitoring_exercices_sdis_22cols');
     const blocking = all.filter((l) => {
       if (state.importExcluded[l.ligneNo]) return false;
-      if (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT') return true;
+      if (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT' || l.statut === 'REVIEW_REQUIRED') return true;
       if (l.statut === 'A_ARBITRER' && !(state.importDecisions[l.ligneNo] && state.importDecisions[l.ligneNo].mode)) return true;
       return false;
     });
     const creatable = all.some((l) => {
       if (state.importExcluded[l.ligneNo]) return false;
-      if (l.statut === 'A_CREER' || l.statut === 'VALIDE') return true;
+      if (l.statut === 'A_CREER' || l.statut === 'VALIDE' || l.statut === 'NEW_EVENT' || l.statut === 'GROUPED') return true;
       if (l.statut === 'A_ARBITRER' && state.importDecisions[l.ligneNo] && state.importDecisions[l.ligneNo].mode) return true;
       return false;
     });
@@ -2815,6 +2819,7 @@
         </header>
         <p class="scope-import-meta">${escapeHtml(L.formatDate(l.date))} · ${escapeHtml(l.domaine || '')}${sous ? ` / ${escapeHtml(sous)}` : ''} · ${escapeHtml(cibles || '—')}</p>
         <p class="scope-import-libelle">${escapeHtml(l.libelle || '')}</p>
+        ${standard ? `<p class="scope-import-mode">CODE COURS : ${escapeHtml(l.codeCours || '—')} · Stat.Com : ${escapeHtml(l.statCom || '—')}</p>` : ''}
         ${native ? `<p class="scope-import-mode">Mode demandé : ${escapeHtml(l.modeDemande || '—')} · Mode proposé : ${escapeHtml(l.modePropose || '—')}</p>` : ''}
         <p class="scope-import-reason">${escapeHtml(l.raison || l.statutLibelle || '')}</p>
         <p class="scope-import-action">Action : ${escapeHtml(l.actionPrevue || '—')}</p>
@@ -2833,12 +2838,27 @@
     }).join('');
     const formatBanner = !preview
       ? ''
-      : native
+      : standard
+        ? '<p class="scope-import-format is-scope">Format détecté : <strong>événements standard</strong> (CODE COURS conservé, regroupement métier, population nominative).</p>'
+        : native
         ? '<p class="scope-import-format is-scope">Format détecté : <strong>programme SCOPE</strong> (événements PLANIFIE nominatifs ou quantitatifs). Aucun LEGACY.</p>'
         : f7
           ? '<p class="scope-import-format is-f7">Format détecté : <strong>historique Monitoring F7</strong> (22 colonnes). Conservé pour la transition. Ce n’est pas le programme SCOPE natif.</p>'
           : '';
-    const resume = preview && native ? `
+    const resume = preview && standard ? `
+      <div class="scope-import-resume">
+        <h3 class="scope-import-title">Import des événements</h3>
+        <p>${summary.eventsDetected || 0} événement(s) détecté(s) depuis ${summary.nbLignes || 0} ligne(s)</p>
+        <ul>
+          <li>${summary.nouveaux || 0} nouveau(x)</li>
+          <li>${summary.reconnus || 0} reconnu(s)</li>
+          <li>${summary.modifies || 0} modifié(s) potentiel(s)</li>
+          <li>${summary.regroupes || 0} regroupement(s)</li>
+          <li>${summary.aControler || 0} à contrôler</li>
+          <li>${summary.erreurs || 0} erreur(s)</li>
+        </ul>
+        <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Le CODE COURS source est conservé et verrouillé.</p>
+      </div>` : preview && native ? `
       <div class="scope-import-resume">
         <h3 class="scope-import-title">Programme à importer</h3>
         <p>${summary.nbLignes || 0} ligne(s) analysée(s)</p>
@@ -2853,7 +2873,7 @@
         <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Population non figée. Aucun attendu ni volume inventé.</p>
       </div>` : (preview ? `<p>Valides ${summary.VALIDE || summary.A_CREER || 0} · Avertissements ${summary.AVERTISSEMENT || 0} · Erreurs ${summary.ERREUR || 0}. Aucune écriture tant que vous n’avez pas confirmé.</p>` : '');
     const filters = [
-      ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'],
+      ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
       ['ERREURS', 'Erreurs'], ['ARBITRER', 'À arbitrer'], ['EXCLUS', 'Exclus'],
       ['NOMINATIF', 'Nominatif'], ['QUANTITATIF', 'Quantitatif']
     ];
@@ -2870,7 +2890,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme d’événements</h2>
           <p>Ce parcours recommandé alimente le programme SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
-          <p class="scope-mode-hint">Deux formats : <strong>programme SCOPE</strong> (date ; domaine ; cibles ; libellé ; mode) ou <strong>historique Monitoring F7</strong> (22 colonnes). Le fichier est reconnu à l’en-tête.</p>
+          <p class="scope-mode-hint">Trois formats : <strong>événements standard</strong> avec CODE COURS, <strong>programme SCOPE</strong> (date ; domaine ; cibles ; libellé ; mode) ou <strong>historique Monitoring F7</strong> (22 colonnes). Le fichier est reconnu à l’en-tête.</p>
           ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
           <p><a class="scope-btn" href="assets/csv/SCOPE_Programme_Exercices_Exemple.csv" download>Télécharger un exemple SCOPE</a></p>
           <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
