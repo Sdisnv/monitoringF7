@@ -884,31 +884,34 @@
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || FR_COLLATOR.compare(a || '', b || '');
   }
 
+  function comparePersonnelIdentity(a, b){
+    return FR_COLLATOR.compare(clean(a && a.nom), clean(b && b.nom))
+      || FR_COLLATOR.compare(clean(a && a.prenom), clean(b && b.prenom))
+      || compareGrade(a && a.grade, b && b.grade)
+      || compareNip(a && a.nip, b && b.nip);
+  }
+
   function sortPersonnelRows(rows, sort){
     const key = sort && sort.key;
     const dir = sort && sort.dir;
     const list = (rows || []).slice();
     if(!key || !dir){
-      return list.sort((a, b) =>
-        FR_COLLATOR.compare(clean(a.nom), clean(b.nom))
-        || FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom))
-        || compareNip(a.nip, b.nip)
-      );
+      return list.sort(comparePersonnelIdentity);
     }
     const factor = dir === 'desc' ? -1 : 1;
     list.sort((a, b) => {
       let cmp = 0;
       if(key === 'nip') cmp = compareNip(a.nip, b.nip);
       else if(key === 'grade') cmp = compareGrade(a.grade, b.grade);
-      else if(key === 'nom') cmp = FR_COLLATOR.compare(clean(a.nom), clean(b.nom));
-      else if(key === 'prenom') cmp = FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom));
+      else if(key === 'nom') cmp = comparePersonnelIdentity(a, b);
+      else if(key === 'prenom') cmp = FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom)) || FR_COLLATOR.compare(clean(a.nom), clean(b.nom)) || compareGrade(a.grade, b.grade) || compareNip(a.nip, b.nip);
       else if(key === 'oi') cmp = compareOiLabel(primaryOperationalOiLabel(a), primaryOperationalOiLabel(b));
       else if(key === 'specializations') cmp = compareSpecializationKey(specializationSortKey(a), specializationSortKey(b));
       else if(key === 'actif') cmp = String(personnelDateSortValue(a.dateActif || a.date_actif)).localeCompare(String(personnelDateSortValue(b.dateActif || b.date_actif)));
       else if(key === 'inactif') cmp = String(personnelDateSortValue(a.dateInactif || a.date_inactif)).localeCompare(String(personnelDateSortValue(b.dateInactif || b.date_inactif)));
-      else cmp = FR_COLLATOR.compare(clean(a.nom), clean(b.nom));
+      else cmp = comparePersonnelIdentity(a, b);
       if(cmp) return cmp * factor;
-      return FR_COLLATOR.compare(clean(a.nom), clean(b.nom)) || FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom));
+      return comparePersonnelIdentity(a, b);
     });
     return list;
   }

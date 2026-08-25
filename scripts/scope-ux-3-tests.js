@@ -172,7 +172,7 @@ function record(name, fn) {
   });
 
   await record('tri commun typé — dates, nombres, NIP, accents, ASC/DESC', async () => {
-    const dateRows = [{ id: 'b', date: '15.01.2026' }, { id: 'c', date: '01.02.2026' }, { id: 'a', date: '02.01.2026' }];
+    const dateRows = [{ id: 'c', date: '10.12.2026' }, { id: 'a', date: '12.01.2026' }, { id: 'b', date: '02.02.2026' }];
     assert.deepStrictEqual(
       logic.sortRows(dateRows, { key: 'date', dir: 'asc' }, [{ key: 'date', type: 'date' }]).map((r) => r.id),
       ['a', 'b', 'c']
@@ -193,9 +193,9 @@ function record(name, fn) {
       logic.sortRows(names, { key: 'nom', dir: 'asc' }, [{ key: 'nom', type: 'text' }]).map((r) => r.nom),
       ['Anne-Marie', 'Eclair', 'Évrard', 'Van der Meer']
     );
-    assert.deepStrictEqual(logic.nextSort({}, 'date', 'desc'), { key: 'date', dir: 'desc' });
-    assert.deepStrictEqual(logic.nextSort({ key: 'date', dir: 'desc' }, 'date', 'desc'), { key: 'date', dir: 'asc' });
-    assert.deepStrictEqual(logic.nextSort({ key: 'date', dir: 'asc' }, 'date', 'desc'), { key: 'date', dir: 'desc' });
+    assert.deepStrictEqual(logic.nextSort({}, 'date', 'asc'), { key: 'date', dir: 'asc' });
+    assert.deepStrictEqual(logic.nextSort({ key: 'date', dir: 'asc' }, 'date', 'asc'), { key: 'date', dir: 'desc' });
+    assert.deepStrictEqual(logic.nextSort({ key: 'date', dir: 'desc' }, 'date', 'asc'), { key: 'date', dir: 'asc' });
   });
 
   await record('tri commun — filtre actif et source non mutée', async () => {
@@ -213,20 +213,78 @@ function record(name, fn) {
   });
 
   await record('tri événement après retour navigation conservé côté état UI', async () => {
-    assert.ok(ui.includes("eventSort: { key: 'date', dir: 'desc' }"));
+    assert.ok(ui.includes("eventSort: { key: 'date', dir: 'asc' }"));
     assert.ok(ui.includes('state.eventSort = L.nextSort'));
     assert.ok(ui.includes("sortableHeader('events', 'date', 'Date', state.eventSort)"));
+    assert.ok(ui.includes('data-scope-sort="${table}" data-sort-key'));
     assert.ok(!ui.includes('withLoading(loadList);\\n        render();'));
   });
 
   await record('table personnel événement triable sans mutation de saisie', async () => {
     assert.ok(ui.includes("eventPersonnelSort: { key: 'nom', dir: 'asc' }"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'Nom', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'prenom', 'Prénom', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'grade', 'Grade', state.eventPersonnelSort)"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)"));
+    assert.ok(ui.includes('nomFamille: person.nom'));
+    assert.ok(ui.includes('prenom: person.prenom'));
+    assert.ok(ui.includes('grade: person.grade'));
     assert.ok(ui.includes('const filteredRaw = state.cibleFilter'));
     assert.ok(ui.includes('const filtered = sortSaisieRows(filteredRaw);'));
+  });
+
+  await record('rendu final — headers interactifs et indicateurs visibles', async () => {
+    assert.ok(ui.includes('class="scope-sort-button"'));
+    assert.ok(ui.includes('class="scope-sort-indicator"'));
+    assert.ok(logicSrc.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : '↕'"));
+    assert.ok(css.includes('.scope-sortable'));
+    assert.ok(css.includes('cursor: pointer'));
+    assert.ok(css.includes('.scope-sort-indicator'));
+    assert.ok(ui.includes('root.querySelectorAll(\'[data-scope-sort][data-sort-key]\')'));
+    assert.ok(ui.includes('root.querySelectorAll(\'[data-personnel-sort]\')'));
+  });
+
+  await record('tri DOM simulé événements — défaut ASC, clic DATE inverse, filtre conservé', async () => {
+    const columns = [
+      { key: 'date', type: 'date', value: (item) => item.evenement.date, tieBreakers: [
+        { key: 'heure', type: 'time', value: (item) => item.evenement.heure_debut },
+        { key: 'libelle', type: 'text', value: (item) => item.evenement.libelle }
+      ] },
+      { key: 'domaine', type: 'text', value: (item) => item.evenement.domaine_code }
+    ];
+    const rows = [
+      { id: 'dec', evenement: { date: '2026-12-10', heure_debut: '09:00', libelle: 'Décembre', domaine_code: 'DPS' } },
+      { id: 'jan', evenement: { date: '2026-01-12', heure_debut: '14:00', libelle: 'Janvier', domaine_code: 'DAP' } },
+      { id: 'feb', evenement: { date: '2026-02-02', heure_debut: '08:00', libelle: 'Février', domaine_code: 'DAP' } }
+    ];
+    assert.deepStrictEqual(logic.sortRows(rows, { key: 'date', dir: 'asc' }, columns).map((r) => r.id), ['jan', 'feb', 'dec']);
+    assert.deepStrictEqual(logic.sortRows(rows, logic.nextSort({ key: 'date', dir: 'asc' }, 'date', 'asc'), columns).map((r) => r.id), ['dec', 'feb', 'jan']);
+    const filtered = rows.filter((row) => row.evenement.domaine_code === 'DAP');
+    assert.deepStrictEqual(logic.sortRows(filtered, { key: 'date', dir: 'desc' }, columns).map((r) => r.id), ['feb', 'jan']);
+  });
+
+  await record('tri DOM simulé personnel événement — identité structurée et présence conservée', async () => {
+    const columns = [
+      { key: 'nom', type: 'text', value: (row) => row.nomFamille, tieBreakers: [
+        { key: 'prenom', type: 'text', value: (row) => row.prenom },
+        { key: 'grade', type: 'text', value: (row) => row.grade },
+        { key: 'nip', type: 'text', value: (row) => row.nip }
+      ] },
+      { key: 'presence', type: 'status', value: (row) => row.statut }
+    ];
+    const rows = [
+      { id: 'dzs', nomFamille: 'Dupont', prenom: 'Zoé', grade: 'Sap', nip: '4', statut: 'PRESENT' },
+      { id: 'dap', nomFamille: 'Dupont', prenom: 'Alain', grade: 'Plt', nip: '3', statut: 'ABSENT_EXCUSE' },
+      { id: 'bmc', nomFamille: 'Bernard', prenom: 'Marc', grade: 'Cpl', nip: '1', statut: 'NON_RENSEIGNE' },
+      { id: 'dac', nomFamille: 'Dupont', prenom: 'Alain', grade: 'Cpl', nip: '2', statut: 'ABSENT_NON_EXCUSE' }
+    ];
+    const before = JSON.stringify(rows);
+    assert.deepStrictEqual(logic.sortRows(rows, { key: 'nom', dir: 'asc' }, columns).map((r) => r.id), ['bmc', 'dac', 'dap', 'dzs']);
+    assert.deepStrictEqual(logic.sortRows(rows, { key: 'nom', dir: 'desc' }, columns).map((r) => r.id), ['dzs', 'dap', 'dac', 'bmc']);
+    assert.deepStrictEqual(rows.map((r) => r.statut), ['PRESENT', 'ABSENT_EXCUSE', 'NON_RENSEIGNE', 'ABSENT_NON_EXCUSE']);
+    assert.strictEqual(JSON.stringify(rows), before);
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

@@ -100,6 +100,16 @@ assert.strictEqual(ids(display.sortPersonnelRows(rows, { key: 'nip', dir: 'desc'
 const namesAsc = display.sortPersonnelRows(rows, { key: 'nom', dir: 'asc' }).map((row) => row.nom);
 assert.ok(namesAsc.indexOf('Archive') < namesAsc.indexOf('Dupont'));
 assert.ok(namesAsc.indexOf('Bernard') < namesAsc.indexOf('Dupont'));
+const identityRows = [
+  person({ nip: '4', nom: 'Dupont', prenom: 'Zoé', grade: 'Sap' }),
+  person({ nip: '3', nom: 'Dupont', prenom: 'Alain', grade: 'Plt' }),
+  person({ nip: '1', nom: 'Bernard', prenom: 'Marc', grade: 'Cpl' }),
+  person({ nip: '2', nom: 'Dupont', prenom: 'Alain', grade: 'Cpl' })
+];
+assert.deepStrictEqual(
+  display.sortPersonnelRows(identityRows, { key: '', dir: '' }).map((row) => `${row.nom} ${row.prenom} ${row.grade}`),
+  ['Bernard Marc Cpl', 'Dupont Alain Cpl', 'Dupont Alain Plt', 'Dupont Zoé Sap']
+);
 const specAsc = display.sortPersonnelRows([
   person({ nip: 'a' }, [spec('PR', 'PR'), spec('AUTO', 'PL')]),
   person({ nip: 'b' }, [spec('FOBA', '2'), spec('PR', 'PR')])

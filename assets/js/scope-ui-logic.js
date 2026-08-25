@@ -656,6 +656,12 @@
         const bv = typeof column.value === 'function' ? column.value(b.row) : b.row[column.key];
         const cmp = compareSortValues(av, bv, column.type);
         if (cmp) return cmp * factor;
+        for (const tie of column.tieBreakers || []) {
+          const tav = typeof tie.value === 'function' ? tie.value(a.row) : a.row[tie.key];
+          const tbv = typeof tie.value === 'function' ? tie.value(b.row) : b.row[tie.key];
+          const tcmp = compareSortValues(tav, tbv, tie.type || 'text');
+          if (tcmp) return tcmp * factor;
+        }
         return a.index - b.index;
       })
       .map((item) => item.row);
@@ -674,7 +680,7 @@
       active: Boolean(active),
       className: active ? (sort.dir === 'desc' ? 'is-desc' : 'is-asc') : '',
       ariaSort: active ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none',
-      indicator: active ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'
+      indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : '↕'
     };
   }
 

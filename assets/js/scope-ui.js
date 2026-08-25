@@ -105,7 +105,7 @@
     personnelOi: '',
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
-    eventSort: { key: 'date', dir: 'desc' },
+    eventSort: { key: 'date', dir: 'asc' },
     eventPersonnelSort: { key: 'nom', dir: 'asc' },
     personneFiche: null,
     personneEventFilter: 'tout',
@@ -352,9 +352,13 @@
       .filter((a) => a.inclus !== false)
       .map((a) => {
         const part = parts.get(a.personne_id) || {};
+        const person = personOf(fiche, a.personne_id) || {};
         return {
           personneId: a.personne_id,
           nom: displayPerson(fiche, a.personne_id),
+          nomFamille: person.nom || '',
+          prenom: person.prenom || '',
+          grade: person.grade || '',
           nip: nipOf(fiche, a.personne_id),
           cible: cibleForPersonne(a.personne_id),
           cibles: [cibleForPersonne(a.personne_id)],
@@ -768,7 +772,10 @@
 
   function renderListe() {
     const eventColumns = [
-      { key: 'date', type: 'date', value: (item) => item && item.evenement && item.evenement.date },
+      { key: 'date', type: 'date', value: (item) => item && item.evenement && item.evenement.date, tieBreakers: [
+        { key: 'heure', type: 'time', value: (item) => item && item.evenement && item.evenement.heure_debut },
+        { key: 'libelle', type: 'text', value: (item) => item && item.evenement && item.evenement.libelle }
+      ] },
       { key: 'heure', type: 'time', value: (item) => item && item.evenement && item.evenement.heure_debut },
       { key: 'code', type: 'text', value: (item) => item && item.evenement && (item.evenement.code_cours || item.evenement.identifiant_externe || '') },
       { key: 'libelle', type: 'text', value: (item) => item && item.evenement && item.evenement.libelle },
@@ -2558,7 +2565,21 @@
 
   function sortSaisieRows(rows) {
     const columns = [
-      { key: 'nom', type: 'text', value: (row) => row && row.nom },
+      { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom), tieBreakers: [
+        { key: 'prenom', type: 'text', value: (row) => row && row.prenom },
+        { key: 'grade', type: 'text', value: (row) => row && row.grade },
+        { key: 'nip', type: 'text', value: (row) => row && row.nip }
+      ] },
+      { key: 'prenom', type: 'text', value: (row) => row && row.prenom, tieBreakers: [
+        { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom) },
+        { key: 'grade', type: 'text', value: (row) => row && row.grade },
+        { key: 'nip', type: 'text', value: (row) => row && row.nip }
+      ] },
+      { key: 'grade', type: 'text', value: (row) => row && row.grade, tieBreakers: [
+        { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom) },
+        { key: 'prenom', type: 'text', value: (row) => row && row.prenom },
+        { key: 'nip', type: 'text', value: (row) => row && row.nip }
+      ] },
       { key: 'nip', type: 'text', value: (row) => row && row.nip },
       { key: 'cible', type: 'text', value: (row) => row && row.cible },
       { key: 'presence', type: 'status', value: (row) => row && row.statut }
@@ -2617,13 +2638,17 @@
         <table class="scope-table">
           <thead><tr>
             ${sortableHeader('event-personnel', 'nom', 'Nom', state.eventPersonnelSort)}
+            ${sortableHeader('event-personnel', 'prenom', 'Prénom', state.eventPersonnelSort)}
+            ${sortableHeader('event-personnel', 'grade', 'Grade', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)}
           </tr></thead>
           <tbody>
             ${rows.map((row) => `<tr data-pid="${row.personneId}">
-              <td data-label="Nom">${escapeHtml(row.nom)}</td>
+              <td data-label="Nom">${escapeHtml(row.nomFamille || row.nom)}</td>
+              <td data-label="Prénom">${escapeHtml(row.prenom || '—')}</td>
+              <td data-label="Grade">${escapeHtml(row.grade || '—')}</td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
               <td data-label="Cible">${escapeHtml(row.cible)}</td>
               <td data-label="Présence">
