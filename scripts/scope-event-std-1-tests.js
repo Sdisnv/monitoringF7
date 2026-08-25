@@ -2,9 +2,12 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
 const { createScopeService } = require('../netlify/functions/_scope-service');
 const { computeTaux } = require('../netlify/functions/_scope-rules');
+const importContract = require('../assets/js/scope-import-contract.js');
 
 const ACTOR = { sub: 'scope-event-std-1-test', roles: ['sdis-admin'] };
 const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;public_cible;responsable;salle;STAT.COM.;semaine;jour;monitoring;code exercice';
@@ -251,6 +254,57 @@ async function commit(service, text){
     ].join('\n');
     const preview = await service.previewImportEvenements({ csvText: bad });
     assert.ok(preview.lignes[0].raison.includes('Colonne QUI obligatoire manquante'));
+  });
+
+  await run('REALCSV — colonnes MOA, dates JJ.MM.AA et cibles réelles', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = fs.readFileSync(path.join(__dirname, '..', 'tests/fixtures/scope-events-real-moa.csv'), 'utf8');
+    const preview = await service.previewImportEvenements({ csvText: text, filename: 'scope-events-real-moa.csv' });
+    assert.strictEqual(preview.summary.erreurs, 0);
+    assert.strictEqual(preview.summary.aControler, 0);
+    assert.strictEqual(preview.summary.eventsDetected, 10);
+    assert.strictEqual(preview.summary.regroupes, 1);
+    const byCode = new Map(preview.lignes.map((line) => [line.codeCours, line]));
+    assert.strictEqual(byCode.get('010JC1JSP.2').date, '2026-01-12');
+    assert.strictEqual(byCode.get('010JC1JSP.2').domaineStockage, 'JSP');
+    assert.strictEqual(byCode.get('010JC1JSP.2').cibleCodes, 'C1');
+    assert.strictEqual(byCode.get('011PRPR.10').domaineStockage, 'PR');
+    assert.strictEqual(byCode.get('011PRPR.10').cibleCodes, 'GEN');
+    assert.strictEqual(byCode.get('013Y1DAP.14').cibleCodes, 'Y1');
+    assert.strictEqual(byCode.get('014G1DPS.20').cibleCodes, 'G1');
+    assert.strictEqual(byCode.get('01521F7AUTO.33').cibleCodes, 'PL');
+    assert.strictEqual(byCode.get('01520F7AUTO.34').cibleCodes, 'VL');
+    assert.strictEqual(byCode.get('010JC1JSP.140').date, '2027-01-12');
+    const result = await service.commitImportEvenements({
+      csvText: text,
+      filename: 'scope-events-real-moa.csv',
+      previewToken: preview.previewToken
+    }, ACTOR);
+    assert.strictEqual(result.summary.imported, 10);
+    const foba = result.created.find((item) => item.codeCours === '010FOBAFOBA.7');
+    assert.ok(foba);
+    assert.strictEqual(foba.targets, 3);
+    const saved = await repo.getEvent(foba.evenementId);
+    assert.strictEqual(saved.code_cours, '010FOBAFOBA.7');
+    assert.strictEqual((await repo.listEvenements({ annee: 2027 })).length, 1);
+  });
+
+  await run('REALCSV — date jour.mois.année, jamais inversion US', async () => {
+    assert.strictEqual(importContract.normalizeDate('13.02.26').iso, '2026-02-13');
+    assert.strictEqual(importContract.normalizeDate('02.13.26').error, 'date_invalide');
+  });
+
+  await run('REALCSV — QUI/DOMAINE contradictoires => REVIEW_REQUIRED', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Domaine;Stat.Com;Cible',
+      '010JC1JSP.2;12.01.26;Exercice JSP 1;JSP;DAP;010JC1;JSP C1'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.lignes[0].statut, 'REVIEW_REQUIRED');
+    assert.ok(preview.lignes[0].raison.includes('contradictoires'));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

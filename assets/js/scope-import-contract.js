@@ -25,8 +25,8 @@
 
   const REQUIRED = ['date', 'domaine', 'cibles', 'libelle'];
   const STANDARD_COLUMNS = {
-    obligatoires: ['code_cours', 'date', 'evenement', 'domaine', 'qui'],
-    optionnelles: ['debut', 'fin', 'sous_domaine', 'responsable', 'salle', 'public_cible', 'stat_com'],
+    obligatoires: ['code_cours', 'date', 'evenement', 'qui', 'stat_com', 'public_cible'],
+    optionnelles: ['debut', 'fin', 'domaine', 'sous_domaine', 'responsable', 'salle'],
     informatives: ['semaine', 'jour', 'monitoring', 'code_exercice'],
     ignorees: []
   };
@@ -65,7 +65,7 @@
     if (key === 'stat_com' || key === 'stat_com_') return 'stat_com';
     if (key === 'public' || key === 'population' || key === 'populations') return 'public_cible';
     if (key === 'comptabilise') return 'a_comptabiliser';
-    if (key === 'cible' || key === 'public_cible') return key === 'public_cible' ? key : 'cibles';
+    if (key === 'cible' || key === 'public_cible') return 'public_cible';
     return key;
   }
 
@@ -143,7 +143,14 @@
       const iso = `${local[3]}-${String(local[2]).padStart(2, '0')}-${String(local[1]).padStart(2, '0')}`;
       if (validIsoDate(iso)) return { iso, original: text };
     }
-    return { error: 'date_invalide', message: 'Date invalide (AAAA-MM-JJ).' };
+    const shortLocal = text.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})$/);
+    if (shortLocal) {
+      const year = Number(shortLocal[3]);
+      const fullYear = year >= 70 ? 1900 + year : 2000 + year;
+      const iso = `${fullYear}-${String(shortLocal[2]).padStart(2, '0')}-${String(shortLocal[1]).padStart(2, '0')}`;
+      if (validIsoDate(iso)) return { iso, original: text };
+    }
+    return { error: 'date_invalide', message: 'Date invalide. Formats acceptés : JJ.MM.AA, JJ.MM.AAAA ou AAAA-MM-JJ.' };
   }
 
   function normalizeLabelForMatch(value) {
@@ -258,13 +265,13 @@
   }
 
   function parseCibles(fields, domaineStockage, knownCibles) {
-    const text = String(fields.cibles || fields.qui || fields.public_cible || '').trim();
+    const text = String(fields.cibles || fields.public_cible || '').trim();
     if (!text) return { error: 'cibles_manquantes', message: 'Cible(s) manquante(s). Séparateur officiel : |' };
     const tokens = text.split(/[|;]+/).map((s) => s.trim()).filter(Boolean);
     if (!tokens.length) return { error: 'cibles_manquantes', message: 'Cible(s) manquante(s).' };
     const resolved = [];
     for (const token of tokens) {
-      const niveau = token.toUpperCase();
+      const niveau = normalizeTargetCode(domaineStockage, token);
       const hit = (knownCibles || []).find((c) =>
         c.domaine_code === domaineStockage && String(c.niveau_code).toUpperCase() === niveau
       );
@@ -278,6 +285,52 @@
       });
     }
     return { cibles: resolved, cibleCodes: resolved.map((c) => c.niveauCode).sort().join('|') };
+  }
+
+  function normalizeTargetCode(domaineStockage, token) {
+    const domaine = String(domaineStockage || '').trim().toUpperCase();
+    let text = String(token || '')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ');
+    const compact = text.replace(/[^A-Z0-9]+/g, '');
+    if (domaine === 'JSP') {
+      if (compact === 'JSPG1') return 'G1';
+      if (compact === 'JSPC1') return 'C1';
+      if (compact === 'JSPB1') return 'B1';
+      if (compact === 'JSPCAD') return 'CAD';
+    }
+    if (domaine === 'FOBA') {
+      if (compact === 'FOBA1') return '1';
+      if (compact === 'FOBA2') return '2';
+      if (compact === 'FOBA3') return '3';
+    }
+    if (domaine === 'PR') {
+      if (compact === 'PAPR' || compact === 'PR') return 'GEN';
+      if (compact === 'PAPRG1') return 'G1';
+      if (compact === 'PAPRC1') return 'C1';
+      if (compact === 'PAPRB1') return 'B1';
+      if (compact === 'PAPRB2') return 'B2';
+    }
+    if (domaine === 'DPS') {
+      if (compact === 'DPSG1') return 'G1';
+      if (compact === 'DPSC1') return 'C1';
+      if (compact === 'DPSB1') return 'B1';
+      if (compact === 'DPSB2') return 'B2';
+    }
+    if (domaine === 'DAP') {
+      if (compact === 'DAPY1') return 'Y1';
+      if (compact === 'DAPY2') return 'Y2';
+      if (compact === 'DAPY3') return 'Y3';
+      if (compact === 'DAPY4') return 'Y4';
+    }
+    if (domaine === 'AUTO') {
+      if (compact === 'CONDVL' || compact === 'AUTOVL') return 'VL';
+      if (compact === 'CONDPL' || compact === 'AUTOPL') return 'PL';
+    }
+    return compact;
   }
 
   function parseMode(fields) {
@@ -621,7 +674,9 @@
   }
 
   function inferDomainFromStandard(fields) {
-    const raw = String(fields.domaine || fields.monitoring || '').trim().toUpperCase();
+    const domaineRaw = String(fields.domaine || '').trim().toUpperCase();
+    const quiRaw = String(fields.qui || '').trim().toUpperCase();
+    const raw = domaineRaw || (DOMAINES_CONNUS.includes(quiRaw) || quiRaw === 'PAPR' ? quiRaw : '') || String(fields.monitoring || '').trim().toUpperCase();
     if (raw === 'PAPR') return 'PR';
     if (DOMAINES_CONNUS.includes(raw)) return raw;
     const text = `${fields.code_cours || ''} ${fields.evenement || fields.modele || fields.libelle || ''} ${fields.qui || ''}`.toUpperCase();
@@ -640,6 +695,7 @@
     const missing = STANDARD_COLUMNS.obligatoires.filter((col) => {
       if (col === 'date') return !parsed.headers.includes('date') && !parsed.headers.includes('date_evenement');
       if (col === 'evenement') return !parsed.headers.includes('evenement') && !parsed.headers.includes('modele') && !parsed.headers.includes('libelle');
+      if (col === 'public_cible') return !parsed.headers.includes('public_cible') && !parsed.headers.includes('cibles');
       return !parsed.headers.includes(col);
     });
     const known = (context && context.cibles) || [];
@@ -666,6 +722,11 @@
       if (!libelle) errors.push({ error: 'libelle_vide', message: 'Événement/libellé obligatoire.' });
       const domaine = inferDomainFromStandard(f);
       if (!DOMAINES_CONNUS.includes(domaine)) errors.push({ error: 'domaine_inconnu', message: `Domaine inconnu : ${domaine || '(vide)'}` });
+      const explicitDomaine = String(f.domaine || '').trim().toUpperCase();
+      const quiDomaine = String(f.qui || '').trim().toUpperCase();
+      if (explicitDomaine && DOMAINES_CONNUS.includes(explicitDomaine) && DOMAINES_CONNUS.includes(quiDomaine) && explicitDomaine !== quiDomaine) {
+        errors.push({ error: 'domaine_qui_contradictoire', reviewRequired: true, message: `QUI (${quiDomaine}) et DOMAINE (${explicitDomaine}) sont contradictoires.` });
+      }
       const resolvedDomaine = resolveDomaine({ domaine, sous_domaine: f.sous_domaine });
       if (resolvedDomaine.error) errors.push(resolvedDomaine);
       let cibles = [];
@@ -694,8 +755,14 @@
       let statut = 'NEW_EVENT';
       let actionPrevue = 'CREER';
       if (errors.length) {
-        statut = 'ERREUR';
-        actionPrevue = 'REFUSER';
+        if (errors.some((e) => e.reviewRequired)) {
+          matchStatus = 'CONFLICT';
+          statut = 'REVIEW_REQUIRED';
+          actionPrevue = 'ARBITRER';
+        } else {
+          statut = 'ERREUR';
+          actionPrevue = 'REFUSER';
+        }
       } else if (maps.byCodeCours.has(codeCours)) {
         matchStatus = 'EXACT_MATCH';
         statut = 'EXACT_MATCH';
@@ -787,6 +854,8 @@
     });
     const errors = lines.filter((l) => l.statut === 'ERREUR').length;
     const review = groups.filter((g) => g.statut === 'REVIEW_REQUIRED').length;
+    const distinctTargets = [...new Set(lines.map((l) => String(l.source && (l.source.public_cible || l.source.cibles) || '').trim()).filter(Boolean))].sort();
+    const unknownTargets = [...new Set(lines.filter((l) => l.erreurs.some((e) => e.error === 'referentiel_inconnu')).map((l) => String(l.source && (l.source.public_cible || l.source.cibles) || '').trim()).filter(Boolean))].sort();
     const summary = {
       nbLignes: lines.length,
       eventsDetected: groups.length,
@@ -796,6 +865,8 @@
       regroupes: groups.filter((g) => g.statut === 'GROUPED').length,
       aControler: review,
       erreurs: errors,
+      ciblesDistinctes: distinctTargets,
+      ciblesInconnues: unknownTargets,
       peutCommit: errors === 0 && review === 0
     };
     const tokenPayload = JSON.stringify({ format: FORMAT_STANDARD, lines: lines.map((l) => [l.ligneNo, l.fingerprint, l.statut]), groups: groups.map((g) => [g.groupKey, g.statut]) });
@@ -826,6 +897,7 @@
     normalizeLabelForMatch,
     normalizeStatCom,
     normalizeQui,
+    normalizeTargetCode,
     buildCodeCours,
     splitCodeCours,
     resolveDomaine,

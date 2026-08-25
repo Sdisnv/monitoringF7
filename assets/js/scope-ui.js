@@ -2785,11 +2785,14 @@
     const live = mode === 'live' && typeof client.previewImportEvenements === 'function';
     const preview = state.importPreview;
     const rapport = state.importRapport;
-    const lignes = ((preview && preview.lignes) || []).filter(importLineVisible);
     const all = (preview && preview.lignes) || [];
     const native = preview && (preview.format === 'SCOPE_EXERCICES_CSV_1' || preview.profil === 'SCOPE_EXERCICES_CSV_1');
     const standard = preview && (preview.format === 'SCOPE_EVENT_STANDARD_CSV_1' || preview.profil === 'SCOPE_EVENT_STANDARD_CSV_1');
     const f7 = preview && (preview.format === 'monitoring_exercices_sdis_22cols' || preview.profil === 'monitoring_exercices_sdis_22cols');
+    const visibleCandidates = standard && (state.importFilter || 'TOUS') === 'TOUS'
+      ? all.filter((l) => String(l.statut).indexOf('ERREUR') === 0 || ['CONFLIT', 'REVIEW_REQUIRED', 'A_ARBITRER'].includes(l.statut) || (l.avertissements || []).length)
+      : all;
+    const lignes = visibleCandidates.filter(importLineVisible);
     const blocking = all.filter((l) => {
       if (state.importExcluded[l.ligneNo]) return false;
       if (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT' || l.statut === 'REVIEW_REQUIRED') return true;
@@ -2857,7 +2860,7 @@
           <li>${summary.aControler || 0} à contrôler</li>
           <li>${summary.erreurs || 0} erreur(s)</li>
         </ul>
-        <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Le CODE COURS source est conservé et verrouillé.</p>
+        <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Le CODE COURS source est conservé et verrouillé. La vue par défaut n’ouvre que les erreurs, arbitrages et anomalies.</p>
       </div>` : preview && native ? `
       <div class="scope-import-resume">
         <h3 class="scope-import-title">Programme à importer</h3>
