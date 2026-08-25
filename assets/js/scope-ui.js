@@ -2494,7 +2494,8 @@
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
     const filteredRaw = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
     const filtered = sortSaisieRows(filteredRaw);
-    const disabledCloture = L.clotureDisabled(c);
+    const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
+    const disabledCloture = L.clotureDisabled(c) || hasIncompleteExcuse;
     const enc = (fiche.encadrement || []).map((p) => {
       const person = personOf(fiche, p.personne_id);
       return `${person ? person.nom + ' ' + person.prenom : p.personne_id} · ${L.ROLE_LABELS[p.role] || p.role}`;
@@ -2507,11 +2508,13 @@
           <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</p>
           <div class="scope-kpis">
             <div class="scope-kpi"><strong>${c.present}</strong><span>Présents</span></div>
+            <div class="scope-kpi"><strong>${c.formateur || 0}</strong><span>Formateurs</span></div>
             <div class="scope-kpi"><strong>${c.excuse}</strong><span>Excusés</span></div>
             <div class="scope-kpi"><strong>${c.absent}</strong><span>Absents</span></div>
             <div class="scope-kpi"><strong>${c.dispense}</strong><span>Dispensés</span></div>
             <div class="scope-kpi"><strong>${c.open}</strong><span>À renseigner</span></div>
           </div>
+          ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
           <div class="scope-actions">
             <button type="button" class="scope-btn" id="all-present">Tout présent</button>
             <button type="button" class="scope-btn scope-btn-primary" id="save-part">Enregistrer</button>
@@ -2582,7 +2585,7 @@
       ] },
       { key: 'nip', type: 'text', value: (row) => row && row.nip },
       { key: 'cible', type: 'text', value: (row) => row && row.cible },
-      { key: 'presence', type: 'status', value: (row) => row && row.statut }
+      { key: 'presence', type: 'status', value: (row) => row && row.role === 'FORMATEUR' && row.statut === 'PRESENT' ? 'FORMATEUR' : row && row.statut }
     ];
     return L.sortRows ? L.sortRows(rows, state.eventPersonnelSort, columns) : (rows || []).slice();
   }
@@ -2631,8 +2634,13 @@
 
   function renderSaisieRows(rows) {
     const isDap = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code === 'DAP';
-    const statuses = [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
+    const statuses = [['PRESENT', 'Présent'], ['FORMATEUR', 'Formateur'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
     if (isDap) statuses.push(['PERMUTATION', 'Permutation']);
+    const statusPressed = (row, value) => {
+      if (value === 'FORMATEUR') return row.statut === 'PRESENT' && row.role === 'FORMATEUR';
+      if (value === 'PRESENT') return row.statut === 'PRESENT' && row.role !== 'FORMATEUR';
+      return row.statut === value;
+    };
     return `
       <div class="scope-table-wrap scope-saisie-desktop">
         <table class="scope-table">
@@ -2654,7 +2662,7 @@
               <td data-label="Présence">
                 <div class="scope-status-row">
                   ${statuses.map(([v, l]) => `
-                    <button type="button" data-status="${v}" aria-pressed="${row.statut === v}">${l}</button>
+                    <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}">${l}</button>
                   `).join('')}
                 </div>
                 ${row.statut === 'ABSENT_EXCUSE' ? `<select data-motif style="margin-top:6px;height:36px">
@@ -2733,6 +2741,7 @@
           ${fiche.jsp && (fiche.jsp.tauxJeunes || fiche.jsp.tauxMoniteurs) ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes && fiche.jsp.tauxJeunes.percentage))} · Moniteurs JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxMoniteurs && fiche.jsp.tauxMoniteurs.percentage))}</p>` : ''}
           <div class="scope-kpis">
             <div class="scope-kpi"><strong>${t.presents ?? 0}</strong><span>Présents</span></div>
+            <div class="scope-kpi"><strong>${rows.filter((row) => row.role === 'FORMATEUR' && row.statut === 'PRESENT').length}</strong><span>Formateurs</span></div>
             <div class="scope-kpi"><strong>${t.excuses ?? 0}</strong><span>Absents excusés</span></div>
             <div class="scope-kpi"><strong>${t.nonExcuses ?? 0}</strong><span>Absents non excusés</span></div>
             <div class="scope-kpi"><strong>${t.dispenses ?? 0}</strong><span>Dispensés</span></div>
@@ -2744,7 +2753,7 @@
         <div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">Liste nominative</h3>
           ${rows.length ? `<table class="scope-table"><thead><tr><th>Nom</th><th>NIP</th><th>Statut</th></tr></thead><tbody>
-            ${rows.map((r) => `<tr><td data-label="Nom">${canReadPersonnel() && r.personneId ? `<a href="#/personnel/${escapeHtml(r.personneId)}">${escapeHtml(r.nom)}</a>` : escapeHtml(r.nom)}</td><td data-label="NIP">${escapeHtml(r.nip)}</td><td data-label="Statut">${escapeHtml(r.statut === 'PRESENT' ? 'Présent' : r.statut === 'ABSENT_EXCUSE' ? 'Excusé' : r.statut === 'ABSENT_NON_EXCUSE' ? 'Absent' : r.statut === 'DISPENSE' ? 'Dispensé' : r.statut)}</td></tr>`).join('')}
+            ${rows.map((r) => `<tr><td data-label="Nom">${canReadPersonnel() && r.personneId ? `<a href="#/personnel/${escapeHtml(r.personneId)}">${escapeHtml(r.nom)}</a>` : escapeHtml(r.nom)}</td><td data-label="NIP">${escapeHtml(r.nip)}</td><td data-label="Statut">${escapeHtml(r.role === 'FORMATEUR' && r.statut === 'PRESENT' ? 'Formateur' : r.statut === 'PRESENT' ? 'Présent' : r.statut === 'ABSENT_EXCUSE' ? 'Excusé' : r.statut === 'ABSENT_NON_EXCUSE' ? 'Absent' : r.statut === 'DISPENSE' ? 'Dispensé' : r.statut)}</td></tr>`).join('')}
           </tbody></table>` : `<div class="scope-empty">${escapeHtml(L.emptyMessage('resultats'))}</div>`}
         </div>
         <details class="scope-card scope-details" style="margin-top:12px">
@@ -3760,8 +3769,16 @@
         const statut = btn.getAttribute('data-status');
         const row = state.saisie.find((r) => r.personneId === pid);
         if (!row) return;
-        row.statut = statut;
-        if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; }
+        if (statut === 'FORMATEUR') {
+          row.statut = 'PRESENT';
+          row.role = 'FORMATEUR';
+          row.motifAbsence = '';
+          row.commentaire = '';
+        } else {
+          row.statut = statut;
+          row.role = 'PARTICIPANT';
+          if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; }
+        }
         render();
       });
     });
@@ -4236,6 +4253,7 @@
       .map((r) => ({
         personneId: r.personneId,
         statut: r.statut,
+        role: r.role === 'FORMATEUR' ? 'FORMATEUR' : 'PARTICIPANT',
         motif_absence: r.motifAbsence || null,
         commentaire: r.commentaire || null
       }));

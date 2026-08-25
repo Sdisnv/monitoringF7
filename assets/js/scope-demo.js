@@ -342,6 +342,7 @@
           part.statut = item.statut;
           part.motif_absence = item.motif_absence || item.motifAbsence || null;
           part.commentaire = item.commentaire || null;
+          part.role = item.role === 'FORMATEUR' && item.statut === 'PRESENT' ? 'FORMATEUR' : 'PARTICIPANT';
           part.source = 'SAISIE';
           participations.set(key(id, personneId), part);
         });

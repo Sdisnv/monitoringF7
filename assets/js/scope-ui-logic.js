@@ -10,7 +10,7 @@
     { value: 'PRIVE', label: 'Privé' },
     { value: 'PROFESSIONNEL', label: 'Professionnel' },
     { value: 'ARMEE', label: 'Armée' },
-    { value: 'ACCIDENT_MALADIE', label: 'Accident / maladie' }
+    { value: 'ACCIDENT_MALADIE', label: 'Accident/Maladie' }
   ];
   const MOTIFS_HISTORIQUES = [
     { value: 'MALADIE', label: 'Maladie (historique)' },
@@ -414,6 +414,7 @@
 
   function liveCounters(rows) {
     let present = 0;
+    let formateur = 0;
     let excuse = 0;
     let absent = 0;
     let dispense = 0;
@@ -422,17 +423,29 @@
       if (row.inclus === false) continue;
       if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role) && row.inclus !== true) continue;
       const s = row.statut;
-      if (s === 'PRESENT' || s === 'PERMUTATION') present += 1;
+      if (s === 'PRESENT' || s === 'PERMUTATION') {
+        present += 1;
+        if (row.role === 'FORMATEUR') formateur += 1;
+      }
       else if (s === 'ABSENT_EXCUSE') excuse += 1;
       else if (s === 'ABSENT_NON_EXCUSE') absent += 1;
       else if (s === 'DISPENSE') dispense += 1;
       else if (s === 'NON_RENSEIGNE' || !s) open += 1;
     }
-    return { present, excuse, absent, dispense, open };
+    return { present, formateur, excuse, absent, dispense, open };
   }
 
   function clotureDisabled(counters) {
     return Number(counters && counters.open) > 0;
+  }
+
+  function hasIncompleteExcuse(rows) {
+    return (rows || []).some((row) =>
+      row
+      && row.inclus !== false
+      && row.statut === 'ABSENT_EXCUSE'
+      && !row.motifAbsence
+    );
   }
 
   function needsConfirmAllPresent(rows) {
@@ -447,7 +460,7 @@
     return (rows || []).map((row) => {
       if (row.inclus === false) return row;
       if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role)) return row;
-      return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '' });
+      return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '', role: 'PARTICIPANT' });
     });
   }
 
@@ -456,7 +469,7 @@
       if (cibleCode && row.cible !== cibleCode && !(row.cibles || []).includes(cibleCode)) return row;
       if (row.inclus === false) return row;
       if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role)) return row;
-      return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '' });
+      return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '', role: 'PARTICIPANT' });
     });
   }
 
@@ -585,6 +598,7 @@
     LEGACY_AGGREGATED: 50,
     NON_RENSEIGNE: 10,
     PRESENT: 20,
+    FORMATEUR: 25,
     ABSENT_EXCUSE: 30,
     ABSENT_NON_EXCUSE: 40,
     DISPENSE: 50,
@@ -806,6 +820,7 @@
     needsConfirmAllPresent,
     applyAllPresent,
     applyAllPresentFiltered,
+    hasIncompleteExcuse,
     friendlyError,
     ciblesLabel,
     displayTauxForList,

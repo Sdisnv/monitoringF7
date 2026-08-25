@@ -1014,10 +1014,16 @@ function createScopeService(repo){
           throw new HttpError(422, 'non_attendu', 'Saisie réservée aux personnes attendues incluses.', { personneId });
         }
         const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code });
+        const role = String(item.role || item.role_participation || 'PARTICIPANT').toUpperCase();
+        const participationRole = role === 'FORMATEUR' ? 'FORMATEUR' : 'PARTICIPANT';
+        if(participationRole === 'FORMATEUR' && patch.statut !== 'PRESENT'){
+          throw new HttpError(422, 'formateur_present', 'Un formateur standard doit être présent.');
+        }
         const existing = await tx.getParticipation(eventId, personneId);
         await tx.upsertParticipation({
           ...(existing || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
           ...patch,
+          role: participationRole,
           source: 'SAISIE',
           auteur_id: actorId(actor)
         });
@@ -1311,7 +1317,8 @@ function createScopeService(repo){
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
     let attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
-    const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
+    const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
+    const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role) && !attenduIds.has(String(p.personne_id)));
     const taux = computeTaux(participations, attendus);
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),

@@ -1515,12 +1515,31 @@ html, body {
   font-size: 14px;
   cursor: pointer;
   font-family: inherit;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.scope-status-row button:hover {
+  background: #f7f8fa;
+  border-color: #cfd6df;
+}
+
+.scope-status-row button:focus-visible {
+  outline: 2px solid rgba(222, 0, 10, .34);
+  outline-offset: 2px;
 }
 
 .scope-status-row button[aria-pressed="true"] {
   background: var(--scope-red);
   border-color: var(--scope-red);
   color: #fff;
+  box-shadow: 0 0 0 1px rgba(222, 0, 10, .12);
+}
+
+.scope-presence-warning {
+  margin: -4px 0 12px;
+  color: var(--scope-warn);
+  font-size: var(--scope-fs-secondary);
+  font-weight: 650;
 }
 
 .scope-chips {
