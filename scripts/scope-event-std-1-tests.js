@@ -65,19 +65,19 @@ async function commit(service, text){
     assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 1);
   });
 
-  await run('B — 3 lignes même événement => 1 événement + plusieurs targets', async () => {
+  await run('B — spécialisation AUTO : 3 lignes même événement => 1 événement + plusieurs targets', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const text = csv([
-      row({ code: 'EX.TRUCK.010', libelle: 'Exercice combiné', domaine: 'DPS', qui: 'TRUCK', publicCible: 'G1', statCom: 'EX.' }),
-      row({ code: 'EX.TRUCK.011', libelle: 'Exercice combiné', domaine: 'DPS', qui: 'TRUCK', publicCible: 'B1', statCom: 'EX.' }),
-      row({ code: 'EX.TRUCK.012', libelle: 'Exercice combiné', domaine: 'FOBA', qui: 'TRUCK', publicCible: '2', statCom: 'EX.' })
+      row({ code: 'EX.AUTO.010', libelle: 'Exercice combiné', domaine: 'AUTO', qui: 'AUTO', publicCible: 'VL', statCom: 'EX.' }),
+      row({ code: 'EX.AUTO.011', libelle: 'Exercice combiné', domaine: 'AUTO', qui: 'AUTO', publicCible: 'PL', statCom: 'EX.' }),
+      row({ code: 'EX.AUTO.012', libelle: 'Exercice combiné', domaine: 'AUTO', qui: 'AUTO', publicCible: 'VL', statCom: 'EX.' })
     ]);
     const { preview, result } = await commit(service, text);
     assert.strictEqual(preview.summary.regroupes, 1);
     assert.strictEqual(result.summary.imported, 1);
     const event = (await repo.listEvenements({ annee: 2026 }))[0];
-    assert.strictEqual((await repo.listEventCibleIds(event.evenement_id)).length, 3);
+    assert.strictEqual((await repo.listEventCibleIds(event.evenement_id)).length, 2);
   });
 
   await run('C — DPS G1 + FOBA 2 avec double appartenance => 1 NIP', async () => {
@@ -147,6 +147,195 @@ async function commit(service, text){
     const { preview, result } = await commit(service, text);
     assert.strictEqual(preview.summary.eventsDetected, 3);
     assert.strictEqual(result.summary.imported, 3);
+  });
+
+  await run('METIER A — JSP C1 + JSP B1 même date/libellé/STAT.COM => 2 événements', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '010JC1JSP.201;12.01.26;Exercice JSP 1;JSP;010J.;JSP C1',
+      '010JB1JSP.202;12.01.26;Exercice JSP 1;JSP;010J.;JSP B1'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 2);
+    assert.strictEqual(preview.summary.regroupes, 0);
+  });
+
+  await run('METIER B — JSP C1 + JSP B1 + JSP G1 même date/libellé/STAT.COM => 3 événements', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '010JC1JSP.211;12.01.26;Exercice JSP 1;JSP;010J.;JSP C1',
+      '010JB1JSP.212;12.01.26;Exercice JSP 1;JSP;010J.;JSP B1',
+      '010JG1JSP.213;12.01.26;Exercice JSP 1;JSP;010J.;JSP G1'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 3);
+    assert.strictEqual(preview.summary.territoriauxDistincts, 3);
+  });
+
+  await run('METIER C — DPS G1 + DPS B1 même date/libellé/STAT.COM => 2 événements', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '014G1DPS.221;24.03.26;Exercice DPS 1;DPS;014.;DPS G1',
+      '014B1DPS.222;24.03.26;Exercice DPS 1;DPS;014.;DPS B1'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 2);
+    assert.strictEqual(preview.summary.regroupes, 0);
+  });
+
+  await run('METIER D — DAP Y1 + DAP Y2 même date/libellé/STAT.COM => 2 événements', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '013Y1DAP.231;12.03.26;Exercice DAP 1;DAP;013.;DAP Y1',
+      '013Y2DAP.232;12.03.26;Exercice DAP 1;DAP;013.;DAP Y2'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 2);
+    assert.strictEqual(preview.summary.regroupes, 0);
+  });
+
+  await run('METIER E — spécialisation AUTO identique => 1 événement regroupé', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '01521F7AUTO.241;08.09.26;Exercice CAR 1.1;FOSPEC / AUTO;01522F7.;Cond VL DPS',
+      '01521F7AUTO.242;08.09.26;Exercice CAR 1.1;FOSPEC / AUTO;01522F7.;Cond PL'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 1);
+    assert.strictEqual(preview.summary.regroupes, 1);
+    assert.strictEqual(preview.groups[0].cibleCodes, 'PL|VL');
+  });
+
+  await run('METIER F — spécialisation AUTO même STAT.COM mais dates différentes => événements différents', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '01521F7AUTO.251;08.09.26;Exercice CAR 1.1;AUTO;01522F7.;Cond VL',
+      '01521F7AUTO.252;09.09.26;Exercice CAR 1.1;AUTO;01522F7.;Cond VL'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 2);
+  });
+
+  await run('METIER G — spécialisation même STAT.COM mais libellés incompatibles => pas de fusion', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '01521F7AUTO.261;08.09.26;Exercice CAR 1.1;AUTO;01522F7.;Cond VL',
+      '01521F7AUTO.262;08.09.26;Formation continue conduite;AUTO;01522F7.;Cond VL'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 2);
+  });
+
+  await run('METIER H — FOBA 1 + FOBA 2 + FOBA 3 même activité => 1 événement + plusieurs cibles', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '010FOBAFOBA.271;25.02.26;Exercice FOBA 1;FOBA;010FOBA.;FOBA 1',
+      '010FOBAFOBA.272;25.02.26;Exercice FOBA 1;FOBA;010FOBA.;FOBA 2',
+      '010FOBAFOBA.273;25.02.26;Exercice FOBA 1;FOBA;010FOBA.;FOBA 3'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 1);
+    assert.strictEqual(preview.groups[0].cibleCodes, '1|2|3');
+  });
+
+  await run('METIER I — personne présente dans DPS + FOBA => 1 NIP dans attendus', async () => {
+    const repo = createMemoryRepo();
+    const p = await person(repo, 'MI001', [['DPS', 'G1'], ['FOBA', '2']]);
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const foba2 = await cible(repo, 'FOBA', '2');
+    const service = createScopeService(repo);
+    const ev = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Union DPS FOBA', cibleIds: [g1.cible_id, foba2.cible_id] }, ACTOR);
+    await service.figerPopulation(ev.evenement.evenement_id, { baseVersion: 1 }, ACTOR);
+    assert.strictEqual((await repo.listAttendus(ev.evenement.evenement_id)).filter((a) => a.personne_id === p.personne_id).length, 1);
+  });
+
+  await run('METIER J — deux populations regroupées => 1 NIP', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'MJ001', [['FOBA', '1'], ['FOBA', '2']]);
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '010FOBAFOBA.281;25.02.26;Exercice FOBA union;FOBA;010FOBA.;FOBA 1',
+      '010FOBAFOBA.282;25.02.26;Exercice FOBA union;FOBA;010FOBA.;FOBA 2'
+    ].join('\n');
+    const { result } = await commit(service, text);
+    const attendus = await repo.listAttendus(result.created[0].evenementId);
+    assert.strictEqual(attendus.filter((a) => a.personne_id).length, 1);
+  });
+
+  await run('METIER O — STAT.COM identique seul insuffisant pour fusionner', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '01521F7AUTO.291;08.09.26;Exercice CAR 1.1;AUTO;01522F7.;Cond VL',
+      '01521F7AUTO.292;08.09.26;Exercice TRUCK 1.1;AUTO;01522F7.;Cond PL'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 2);
+  });
+
+  await run('METIER P — cible générique DPS sans résolution fiable => REVIEW_REQUIRED', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '010F7DPS.301;12.01.26;Exercice DPS générique;DPS;010F7.;DPS'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.lignes[0].statut, 'REVIEW_REQUIRED');
+    assert.ok(preview.lignes[0].raison.includes('OI impossible à déterminer'));
+  });
+
+  await run('METIER K/L — dates JJ.MM.AA françaises et refus US', async () => {
+    assert.strictEqual(importContract.normalizeDate('13.02.26').iso, '2026-02-13');
+    assert.strictEqual(importContract.normalizeDate('02.13.26').error, 'date_invalide');
+  });
+
+  await run('METIER M — CODE COURS source strictement conservé', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv([
+      row({ code: '010JC1JSP.401', date: '12.01.26', libelle: 'Code conservé', domaine: 'JSP', qui: 'JSP', publicCible: 'JSP C1', statCom: '010JC1.' })
+    ]));
+    const saved = await repo.getEvent(result.created[0].evenementId);
+    assert.strictEqual(saved.code_cours, '010JC1JSP.401');
+  });
+
+  await run('METIER N — réimport CODE COURS existant avec date modifiée => pas de duplication', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    await commit(service, csv([row({ code: 'DPS.G1.410', date: '14.04.2026', libelle: 'Réimport date' })]));
+    const changed = csv([row({ code: 'DPS.G1.410', date: '21.04.2026', libelle: 'Réimport date' })]);
+    const preview = await service.previewImportEvenements({ csvText: changed });
+    assert.strictEqual(preview.groups[0].statut, 'EXACT_MATCH');
+    assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 1);
+  });
+
+  await run('METIER Q — événement manuel => suffixe Sxxx stable', async () => {
+    const repo = createMemoryRepo();
+    const g1 = await cible(repo, 'DPS', 'G1');
+    const service = createScopeService(repo);
+    const a = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Manuel Q1', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
+    const b = await service.createEvenement({ date: '2026-04-21', domaineCode: 'DPS', libelle: 'Manuel Q2', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
+    assert.strictEqual(a.evenement.code_cours, 'DPS.G1.S001');
+    assert.strictEqual(b.evenement.code_cours, 'DPS.G1.S002');
   });
 
   await run('I — événement déplacé de date => CODE inchangé', async () => {

@@ -898,6 +898,35 @@ html, body {
 .scope-import-resume {
   margin-bottom: 12px;
 }
+.scope-import-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.scope-import-kpi {
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  background: #fff;
+  padding: 10px;
+}
+.scope-import-kpi span {
+  display: block;
+  color: var(--scope-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.scope-import-kpi strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1.1;
+}
+.scope-import-section-title {
+  margin: 14px 0 4px;
+  font-size: 14px;
+}
 .scope-import-resume ul {
   margin: 8px 0;
   padding-left: 18px;
@@ -923,6 +952,72 @@ html, body {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+.scope-import-event {
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  background: #fff;
+  padding: 12px;
+}
+.scope-import-event.is-attention { border-color: var(--scope-warn); }
+.scope-import-event-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+.scope-import-event-head p {
+  margin: 3px 0 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-secondary);
+}
+.scope-import-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.scope-import-event-grid div {
+  min-width: 0;
+  border-top: 1px solid var(--scope-line);
+  padding-top: 7px;
+}
+.scope-import-event-grid span {
+  display: block;
+  color: var(--scope-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.scope-import-event-grid strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.scope-import-decision {
+  margin-top: 12px;
+  border-left: 3px solid var(--scope-warn);
+  padding: 8px 10px;
+  background: #fff9ec;
+}
+.scope-import-decision p { margin: 4px 0 0; }
+.scope-import-source {
+  margin-top: 10px;
+  color: var(--scope-muted);
+}
+.scope-import-source summary { cursor: pointer; }
+.scope-import-source table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: var(--scope-fs-secondary);
+}
+.scope-import-source th,
+.scope-import-source td {
+  border-top: 1px solid var(--scope-line);
+  padding: 6px;
+  text-align: left;
+  vertical-align: top;
 }
 .scope-import-pill {
   font-size: 11px;

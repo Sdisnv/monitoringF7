@@ -2781,11 +2781,29 @@
     return true;
   }
 
+  function importStandardGroupVisible(item) {
+    const filter = state.importFilter || 'TOUS';
+    const status = item.statut;
+    const excluded = (item.sourceLineNos || []).length && (item.sourceLineNos || []).every((n) => state.importExcluded[n]);
+    if (filter === 'EXCLUS') return excluded;
+    if (excluded) return false;
+    if (filter === 'TOUS') {
+      return status === 'REVIEW_REQUIRED' || status === 'CONFLIT' || String(status).indexOf('ERREUR') === 0 || (item.avertissements || []).length;
+    }
+    if (filter === 'A_CREER') return status === 'NEW_EVENT' || status === 'GROUPED';
+    if (filter === 'DEJA') return status === 'EXACT_MATCH' || status === 'PROBABLE_MATCH';
+    if (filter === 'GROUPED') return status === 'GROUPED';
+    if (filter === 'ERREURS') return String(status).indexOf('ERREUR') === 0 || status === 'CONFLIT';
+    if (filter === 'ARBITRER') return status === 'REVIEW_REQUIRED' || status === 'A_ARBITRER';
+    return true;
+  }
+
   function renderImport() {
     const live = mode === 'live' && typeof client.previewImportEvenements === 'function';
     const preview = state.importPreview;
     const rapport = state.importRapport;
     const all = (preview && preview.lignes) || [];
+    const previewGroups = (preview && preview.groups) || [];
     const native = preview && (preview.format === 'SCOPE_EXERCICES_CSV_1' || preview.profil === 'SCOPE_EXERCICES_CSV_1');
     const standard = preview && (preview.format === 'SCOPE_EVENT_STANDARD_CSV_1' || preview.profil === 'SCOPE_EVENT_STANDARD_CSV_1');
     const f7 = preview && (preview.format === 'monitoring_exercices_sdis_22cols' || preview.profil === 'monitoring_exercices_sdis_22cols');
@@ -2809,7 +2827,7 @@
     const summary = (preview && preview.summary) || {};
     const byDomaine = summary.byDomaine || {};
     const modes = summary.modes || {};
-    const cards = lignes.map((l) => {
+    const lineCards = lignes.map((l) => {
       const excluded = Boolean(state.importExcluded[l.ligneNo]);
       const decision = state.importDecisions[l.ligneNo] || {};
       const cibles = l.cibleCodes || l.publicCible || l.niveauCode || (l.cibles || []).map((c) => c.niveauCode).join(' | ');
@@ -2839,6 +2857,68 @@
         </label>
       </article>`;
     }).join('');
+    const standardIssueLines = standard
+      ? all.filter((l) => String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT')
+      : [];
+    const standardItems = standard
+      ? previewGroups.concat(standardIssueLines.map((line) => ({
+        statut: line.statut,
+        actionPrevue: line.actionPrevue,
+        lignes: [line],
+        sourceLineNos: [line.ligneNo],
+        cibles: line.cibles || [],
+        cibleCodes: line.cibleCodes || '',
+        codeCours: line.codeCours,
+        codeParts: line.codeParts,
+        date: line.date,
+        domaineStockage: line.domaineStockage,
+        sousDomaine: line.sousDomaine,
+        libelle: line.libelle,
+        heureDebut: line.heureDebut,
+        heureFin: line.heureFin,
+        responsable: line.responsable,
+        salle: line.salle,
+        raison: line.raison,
+        avertissements: line.avertissements || []
+      }))).filter(importStandardGroupVisible)
+      : [];
+    const standardCards = standardItems.map((g) => {
+      const lines = g.lignes || [];
+      const first = lines[0] || {};
+      const isIssue = g.statut === 'REVIEW_REQUIRED' || g.statut === 'CONFLIT' || String(g.statut).indexOf('ERREUR') === 0;
+      const cibles = g.cibleCodes || (g.cibles || []).map((c) => c.niveauCode).join(' | ') || first.cibleCodes || '—';
+      const sourceLines = (g.sourceLineNos || []).join(', ');
+      const population = g.populationCount || g.population || '—';
+      const detailRows = lines.map((line) => `<tr>
+        <td>${escapeHtml(String(line.ligneNo || '—'))}</td>
+        <td>${escapeHtml(line.codeCours || '—')}</td>
+        <td>${escapeHtml(line.source && (line.source.public_cible || line.source.cibles) || line.cibleCodes || '—')}</td>
+        <td>${escapeHtml(line.raison || line.statutLibelle || '')}</td>
+      </tr>`).join('');
+      return `<article class="scope-import-event ${isIssue ? 'is-attention' : ''}">
+        <header class="scope-import-event-head">
+          <div>
+            <strong>${escapeHtml(g.libelle || first.libelle || 'Événement sans libellé')}</strong>
+            <p>${escapeHtml(L.formatDate(g.date || first.date))}${g.heureDebut ? ` · ${escapeHtml(g.heureDebut)}` : ''}${g.heureFin ? `-${escapeHtml(g.heureFin)}` : ''}</p>
+          </div>
+          ${importPill(g.statut)}
+        </header>
+        <div class="scope-import-event-grid">
+          <div><span>STAT.COM</span><strong>${escapeHtml((g.codeParts && g.codeParts.statCom) || first.statCom || '—')}</strong></div>
+          <div><span>QUI</span><strong>${escapeHtml((g.codeParts && g.codeParts.qui) || first.qui || '—')}</strong></div>
+          <div><span>Publics</span><strong>${escapeHtml(cibles)}</strong></div>
+          <div><span>Événement SCOPE</span><strong>1</strong></div>
+          <div><span>Lignes source</span><strong>${escapeHtml(String((g.sourceLineNos || []).length || 1))}</strong></div>
+          <div><span>Population</span><strong>${escapeHtml(String(population))}</strong></div>
+        </div>
+        ${isIssue ? `<div class="scope-import-decision"><strong>${escapeHtml(g.raison || first.raison || 'Point à contrôler')}</strong><p>Action : ${escapeHtml(g.actionPrevue || first.actionPrevue || 'ARBITRER')}</p></div>` : ''}
+        <details class="scope-import-source">
+          <summary>Consulter les lignes source ${escapeHtml(sourceLines ? `(${sourceLines})` : '')}</summary>
+          <table><thead><tr><th>Ligne</th><th>CODE COURS</th><th>Cible source</th><th>Message</th></tr></thead><tbody>${detailRows}</tbody></table>
+        </details>
+      </article>`;
+    }).join('');
+    const cards = standard ? standardCards : lineCards;
     const formatBanner = !preview
       ? ''
       : standard
@@ -2850,16 +2930,19 @@
           : '';
     const resume = preview && standard ? `
       <div class="scope-import-resume">
-        <h3 class="scope-import-title">Import des événements</h3>
-        <p>${summary.eventsDetected || 0} événement(s) détecté(s) depuis ${summary.nbLignes || 0} ligne(s)</p>
-        <ul>
-          <li>${summary.nouveaux || 0} nouveau(x)</li>
-          <li>${summary.reconnus || 0} reconnu(s)</li>
-          <li>${summary.modifies || 0} modifié(s) potentiel(s)</li>
-          <li>${summary.regroupes || 0} regroupement(s)</li>
-          <li>${summary.aControler || 0} à contrôler</li>
-          <li>${summary.erreurs || 0} erreur(s)</li>
-        </ul>
+        <h3 class="scope-import-title">IMPORT DU PROGRAMME</h3>
+        <div class="scope-import-kpis">
+          ${[
+            ['LIGNES LUES', summary.nbLignes || 0],
+            ['ÉVÉNEMENTS', summary.eventsDetected || 0],
+            ['NOUVEAUX', summary.nouveaux || 0],
+            ['REGROUPEMENTS', summary.regroupes || 0],
+            ['RECONNUS', summary.reconnus || 0],
+            ['À CONTRÔLER', summary.aControler || 0],
+            ['ERREURS', summary.erreurs || 0]
+          ].map(([label, value]) => `<div class="scope-import-kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`).join('')}
+        </div>
+        <h4 class="scope-import-section-title">Points à traiter</h4>
         <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Le CODE COURS source est conservé et verrouillé. La vue par défaut n’ouvre que les erreurs, arbitrages et anomalies.</p>
       </div>` : preview && native ? `
       <div class="scope-import-resume">
@@ -2875,7 +2958,10 @@
         <p>Répartition : ${Object.keys(byDomaine).length ? Object.keys(byDomaine).sort().map((k) => `${escapeHtml(k)} ${byDomaine[k]}`).join(' · ') : '—'}</p>
         <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Population non figée. Aucun attendu ni volume inventé.</p>
       </div>` : (preview ? `<p>Valides ${summary.VALIDE || summary.A_CREER || 0} · Avertissements ${summary.AVERTISSEMENT || 0} · Erreurs ${summary.ERREUR || 0}. Aucune écriture tant que vous n’avez pas confirmé.</p>` : '');
-    const filters = [
+    const filters = standard ? [
+      ['TOUS', 'Points à traiter'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
+      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À contrôler'], ['EXCLUS', 'Exclus']
+    ] : [
       ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
       ['ERREURS', 'Erreurs'], ['ARBITRER', 'À arbitrer'], ['EXCLUS', 'Exclus'],
       ['NOMINATIF', 'Nominatif'], ['QUANTITATIF', 'Quantitatif']
