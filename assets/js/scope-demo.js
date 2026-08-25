@@ -30,7 +30,9 @@
   const CIBLE_SPEC = [
     ['FOBA', '1', 'FOBA 1'], ['FOBA', '2', 'FOBA 2'], ['FOBA', '3', 'FOBA 3'],
     ['FOCA', 'GEN', 'FOCA'],
+    ['DPS', 'GEN', 'DPS'],
     ['DPS', 'G1', 'DPS G1'], ['DPS', 'C1', 'DPS C1'], ['DPS', 'B1', 'DPS B1'], ['DPS', 'B2', 'DPS B2'],
+    ['DAP', 'GEN', 'DAP'],
     ['DAP', 'Y1', 'DAP Y1'], ['DAP', 'Y2', 'DAP Y2'], ['DAP', 'Y3', 'DAP Y3'], ['DAP', 'Y4', 'DAP Y4'],
     ['PR', 'G1', 'PAPR G1'], ['PR', 'C1', 'PAPR C1'], ['PR', 'B1', 'PAPR B1'], ['PR', 'B2', 'PAPR B2'], ['PR', 'GEN', 'PAPR GEN'],
     ['AUTO', 'VL', 'AUTO VL'], ['AUTO', 'PL', 'AUTO PL'],

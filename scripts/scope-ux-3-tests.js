@@ -70,7 +70,7 @@ function record(name, fn) {
     assert.ok(fospec.children.some((c) => c.id === 'AUTO' && c.href === '#/vue/AUTO'));
   });
 
-  await record('navigation OI DPS / DAP sans 25 cibles', async () => {
+  await record('navigation OI DPS / DAP sans cibles globales', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const refs = await service.referentiels();

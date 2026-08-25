@@ -2830,7 +2830,7 @@
     const lineCards = lignes.map((l) => {
       const excluded = Boolean(state.importExcluded[l.ligneNo]);
       const decision = state.importDecisions[l.ligneNo] || {};
-      const cibles = l.cibleCodes || l.publicCible || l.niveauCode || (l.cibles || []).map((c) => c.niveauCode).join(' | ');
+      const cibles = l.publicCible || l.cibleCodes || l.niveauCode || (l.cibles || []).map((c) => c.niveauCode).join(' | ');
       const sous = l.sousDomaineAffiche || l.sousDomaine || '';
       return `<article class="scope-import-card ${String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT' ? 'is-error' : ''}">
         <header>
@@ -2886,7 +2886,7 @@
       const lines = g.lignes || [];
       const first = lines[0] || {};
       const isIssue = g.statut === 'REVIEW_REQUIRED' || g.statut === 'CONFLIT' || String(g.statut).indexOf('ERREUR') === 0;
-      const cibles = g.cibleCodes || (g.cibles || []).map((c) => c.niveauCode).join(' | ') || first.cibleCodes || '—';
+      const cibles = g.publicCible || g.cibleCodes || (g.cibles || []).map((c) => c.niveauCode).join(' | ') || first.publicCible || first.cibleCodes || '—';
       const sourceLines = (g.sourceLineNos || []).join(', ');
       const population = g.populationCount || g.population || '—';
       const detailRows = lines.map((line) => `<tr>

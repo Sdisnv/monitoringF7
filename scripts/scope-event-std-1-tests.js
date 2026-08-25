@@ -291,7 +291,7 @@ async function commit(service, text){
     assert.strictEqual(preview.summary.eventsDetected, 2);
   });
 
-  await run('METIER P — cible générique DPS sans résolution fiable => REVIEW_REQUIRED', async () => {
+  await run('METIER P — cible globale DPS => événement valide, pas REVIEW_REQUIRED', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const text = [
@@ -299,8 +299,89 @@ async function commit(service, text){
       '010F7DPS.301;12.01.26;Exercice DPS générique;DPS;010F7.;DPS'
     ].join('\n');
     const preview = await service.previewImportEvenements({ csvText: text });
-    assert.strictEqual(preview.lignes[0].statut, 'REVIEW_REQUIRED');
-    assert.ok(preview.lignes[0].raison.includes('OI impossible à déterminer'));
+    assert.strictEqual(preview.lignes[0].statut, 'NEW_EVENT');
+    assert.strictEqual(preview.lignes[0].cibleCodes, 'GEN');
+    assert.strictEqual(preview.lignes[0].publicCible, 'Tous les DPS');
+  });
+
+  await run('STATCOM A/B/C/D — normalisation canonique sans point final', async () => {
+    assert.strictEqual(importContract.normalizeStatCom('010JSP'), '010JSP');
+    assert.strictEqual(importContract.normalizeStatCom('010JSP.'), '010JSP');
+    assert.strictEqual(importContract.normalizeStatCom('0120F7'), '0120F7');
+    assert.strictEqual(importContract.normalizeStatCom('0130F7'), '0130F7');
+  });
+
+  await run('TARGET C/D/E — DPS/DAP/JSP globaux valides', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '0120F7DPS.501;12.05.26;FOCO DPS;DPS;0120F7;DPS',
+      '0130F7DAP.502;23.04.26;FOCO DAP;DAP;0130F7;DAP',
+      '010JSPJSP.503;21.03.26;Exercice JSP global;JSP;010JSP;JSP'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.aControler, 0);
+    assert.strictEqual(preview.summary.erreurs, 0);
+    assert.deepStrictEqual(preview.lignes.map((l) => l.cibleCodes), ['GEN', 'GEN', 'GEN']);
+    assert.deepStrictEqual(preview.lignes.map((l) => l.publicCible), ['Tous les DPS', 'Tous les DAP', 'Tout le personnel JSP']);
+  });
+
+  await run('TARGET F/G/H — cibles territoriales précises conservées', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '012G1DPS.511;12.05.26;DPS G1;DPS;012G1;G1',
+      '013Y2DAP.512;23.04.26;DAP Y2;DAP;013Y2;Y2',
+      '010JC1JSP.513;21.03.26;JSP C1;JSP;010JC1;JSP C1'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.deepStrictEqual(preview.lignes.map((l) => l.cibleCodes), ['G1', 'Y2', 'C1']);
+    assert.strictEqual(preview.summary.regroupes, 0);
+  });
+
+  await run('TARGET I — DPS global => NIP unique malgré multi-OI', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'GI001', [['DPS', 'G1'], ['DPS', 'B1']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv([row({ code: '0120F7DPS.521', libelle: 'Global DPS', domaine: 'DPS', qui: 'DPS', publicCible: 'DPS', statCom: '0120F7' })]));
+    const attendus = await repo.listAttendus(result.created[0].evenementId);
+    assert.strictEqual(attendus.filter((a) => a.personne_id).length, 1);
+  });
+
+  await run('TARGET J — DAP global => NIP unique', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'GJ001', [['DAP', 'Y1'], ['DAP', 'Y2']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv([row({ code: '0130F7DAP.522', libelle: 'Global DAP', domaine: 'DAP', qui: 'DAP', publicCible: 'DAP', statCom: '0130F7' })]));
+    const attendus = await repo.listAttendus(result.created[0].evenementId);
+    assert.strictEqual(attendus.filter((a) => a.personne_id).length, 1);
+  });
+
+  await run('TARGET K — JSP global => NIP unique', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'GK001', [['JSP', 'G1'], ['JSP', 'B1']]);
+    const service = createScopeService(repo);
+    const { result } = await commit(service, csv([row({ code: '010JSPJSP.523', libelle: 'Global JSP', domaine: 'JSP', qui: 'JSP', publicCible: 'JSP', statCom: '010JSP' })]));
+    const attendus = await repo.listAttendus(result.created[0].evenementId);
+    assert.strictEqual(attendus.filter((a) => a.personne_id).length, 1);
+  });
+
+  await run('TARGET O — 4 lignes JSP globales distinctes ne fusionnent pas', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = [
+      'Code cours;Date événement;Événement;Qui;Stat.Com;Cible',
+      '010JSPJSP.61;30.05.26;Formation groupée JSP | Simulateur;JSP;010JSP;JSP',
+      '010JSPJSP.62;30.05.26;Formation groupée JSP | Simulateur;JSP;010JSP;JSP',
+      '010JSPJSP.63;30.05.26;Formation groupée JSP | Simulateur;JSP;010JSP;JSP',
+      '010JSPJSP.64;30.05.26;Formation groupée JSP | Simulateur;JSP;010JSP;JSP'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 4);
+    assert.strictEqual(preview.summary.regroupes, 0);
+    assert.strictEqual(preview.summary.aControler, 0);
   });
 
   await run('METIER K/L — dates JJ.MM.AA françaises et refus US', async () => {
@@ -334,8 +415,8 @@ async function commit(service, text){
     const service = createScopeService(repo);
     const a = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Manuel Q1', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
     const b = await service.createEvenement({ date: '2026-04-21', domaineCode: 'DPS', libelle: 'Manuel Q2', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
-    assert.strictEqual(a.evenement.code_cours, 'DPS.G1.S001');
-    assert.strictEqual(b.evenement.code_cours, 'DPS.G1.S002');
+    assert.strictEqual(a.evenement.code_cours, 'DPSG1.S001');
+    assert.strictEqual(b.evenement.code_cours, 'DPSG1.S002');
   });
 
   await run('I — événement déplacé de date => CODE inchangé', async () => {
@@ -355,8 +436,8 @@ async function commit(service, text){
     const service = createScopeService(repo);
     const a = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Manuel A', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
     const b = await service.createEvenement({ date: '2026-04-21', domaineCode: 'DPS', libelle: 'Manuel B', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
-    assert.strictEqual(a.evenement.code_cours, 'DPS.G1.S001');
-    assert.strictEqual(b.evenement.code_cours, 'DPS.G1.S002');
+    assert.strictEqual(a.evenement.code_cours, 'DPSG1.S001');
+    assert.strictEqual(b.evenement.code_cours, 'DPSG1.S002');
   });
 
   await run('K — personne ajoutée manuellement => une seule ligne', async () => {

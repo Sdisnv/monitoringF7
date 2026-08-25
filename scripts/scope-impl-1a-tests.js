@@ -252,9 +252,9 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.ok(!/scope_/.test(pgStore));
   });
 
-  await record('Test 9 — référentiel SQL = 8 domaines / 25 cibles runtime', async () => {
+  await record('Test 9 — référentiel SQL = 8 domaines / 27 cibles runtime', async () => {
     assert.strictEqual(DOMAINES.length, 8);
-    assert.strictEqual(CIBLES.length, 25);
+    assert.strictEqual(CIBLES.length, 27);
     assert.deepStrictEqual(DOMAINES.map(d => d.code), ['FOBA','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP']);
 
     const sql = fs.readFileSync(path.join(ROOT, 'database/migrations/20260819_scope_impl_1a.sql'), 'utf8');
@@ -276,7 +276,7 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
       .map((m) => [m[1], m[2], m[3]]);
 
     assert.strictEqual(sqlDomaines.length, 8);
-    assert.strictEqual(sqlCibles.length, 25);
+    assert.strictEqual(sqlCibles.length, 27);
     assert.deepStrictEqual(sqlDomaines, DOMAINES);
     assert.deepStrictEqual(sqlCibles, CIBLES);
 
@@ -296,8 +296,8 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     const jsFirst = CIBLES.map((row, i) => [row[0], row[1], `js-${i}`]);
     const casA = applyOnConflict(sqlFirst, jsFirst);
     const casB = applyOnConflict(jsFirst, sqlFirst);
-    assert.strictEqual(casA.length, 25);
-    assert.strictEqual(casB.length, 25);
+    assert.strictEqual(casA.length, 27);
+    assert.strictEqual(casB.length, 27);
     assert.deepStrictEqual(casA.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
     assert.deepStrictEqual(casB.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
     assert.ok(casA.every(r => r[2].startsWith('sql-')), 'Cas A doit conserver les UUID SQL');

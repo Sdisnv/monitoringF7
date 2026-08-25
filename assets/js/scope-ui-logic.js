@@ -227,7 +227,10 @@
       ],
       domains: roots.map((d) => {
         const sous = d.sousDomaines || [];
-        const cibles = d.cibles || [];
+        const cibles = (d.cibles || []).filter((c) => {
+          const niveau = String(c.niveauCode || c.niveau_code || '').toUpperCase();
+          return !(niveau === 'GEN' && ['DPS', 'DAP', 'JSP'].includes(String(d.code || '').toUpperCase()));
+        });
         const showCibles = !sous.length && cibles.length > 0 && cibles.length <= 6;
         const children = sous.length
           ? sous.map((s) => ({

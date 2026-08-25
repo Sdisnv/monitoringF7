@@ -352,7 +352,10 @@ async function buildScopeGraphs({
       }
     } else if(typeof repo.listCibles === 'function'){
       const all = await repo.listCibles();
-      const rows = all.filter((row) => row.domaine_code === domaineCode && row.actif !== false);
+      const rows = all.filter((row) => {
+        if(row.domaine_code !== domaineCode || row.actif === false) return false;
+        return !(row.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP'].includes(String(domaineCode || '').toUpperCase()));
+      });
       childEmpty = rows.length ? null : 'AUCUNE_DONNEE';
       for(const cible of rows){
         const events = await includedOf(ev, { domaine: domaineCode, cible: cible.cible_id });

@@ -340,6 +340,18 @@ function createScopeService(repo){
     const date = isoDate(eventDate);
     if(!date) throw new HttpError(400, 'date_invalide', 'Date d’événement invalide.');
     const ids = Array.isArray(cibleIds) ? cibleIds.filter(Boolean) : [];
+    const allCibles = dbx.listCibles ? await dbx.listCibles() : [];
+    const requestedCibles = ids.map((id) => allCibles.find((c) => c.cible_id === id)).filter(Boolean);
+    const expanded = new Set(ids);
+    for(const cible of requestedCibles){
+      const domaine = String(cible.domaine_code || '').toUpperCase();
+      if(cible.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP'].includes(domaine)){
+        allCibles
+          .filter((c) => c.domaine_code === domaine && c.niveau_code !== 'GEN')
+          .forEach((c) => expanded.add(c.cible_id));
+      }
+    }
+    const populationIds = [...expanded];
     const rules = suiviNominatif || (dbx.listSuiviNominatif ? await dbx.listSuiviNominatif() : []);
     if(ids.length === 1){
       const resolution = resolveSuiviNominatif(rules, {
@@ -352,7 +364,7 @@ function createScopeService(repo){
         return { count: 0, personnes: [], note: 'suivi_nominatif_interdit', resolution };
       }
     }
-    const affectations = await dbx.listAffectationsForCibles(ids, date);
+    const affectations = await dbx.listAffectationsForCibles(populationIds, date);
     const byPersonne = new Map();
     for(const aff of affectations){
       if(!isAffectationValide(aff, date)) continue;

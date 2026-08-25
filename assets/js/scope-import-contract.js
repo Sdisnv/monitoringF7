@@ -37,6 +37,16 @@
     DAP: ['Y1', 'Y2', 'Y3', 'Y4'],
     JSP: ['G1', 'C1', 'B1', 'CAD']
   };
+  const STAT_COM_REFERENTIEL = Object.freeze([
+    '014B1', '012B1', '014B2', '012B2', '014C1', '012C1',
+    'CECA', 'CFSSP', 'CDIV',
+    '010FOBC', '010FOBA', '010JSP', '011PR',
+    '014G1', '012G1',
+    '0151F7', '0152F7', '01521F7', '01522F7', '0153F7', '0154F7', '0155F7',
+    '0161F7', '0162F7', '0163F7', '0164F7', '0165F7', '0166F7', '0167F7', '0168F7',
+    '0171F7', '0172F7', '0173F7', '0174F7', '0175F7', '0170F7',
+    '0120F7', '0130F7', '070F7'
+  ]);
   const SOUS_DOMAINES = { PR: 'FOSPEC', AUTO: 'FOSPEC' };
   const MODES = ['NOMINATIF', 'QUANTITATIF', 'AUTO'];
 
@@ -188,8 +198,7 @@
   }
 
   function normalizeStatCom(value) {
-    const text = normalizeCodeComponent(value).replace(/\.+$/, '');
-    return text ? `${text}.` : '';
+    return normalizeCodeComponent(value).replace(/\.+$/, '');
   }
 
   function normalizeQui(value) {
@@ -214,12 +223,31 @@
     return `${stat}${who}.${end}`;
   }
 
+  function splitCompactCodePrefix(prefix) {
+    const text = normalizeCodeComponent(prefix).replace(/\.+$/, '');
+    if (!text) return null;
+    const knownQui = [
+      ...Object.values(TARGET_CODES).flat(),
+      ...DOMAINES_CONNUS,
+      'FOBA', 'FOCA', 'PAPR', 'AUTO', 'VL', 'PL'
+    ]
+      .map((code) => normalizeQui(code))
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+    for (const candidate of knownQui) {
+      if (!text.endsWith(candidate) || text.length <= candidate.length) continue;
+      return { statCom: text.slice(0, -candidate.length), qui: candidate };
+    }
+    return null;
+  }
+
   function splitCodeCours(codeCours, explicitStatCom, explicitQui) {
     const code = String(codeCours || '').trim();
     const parts = code.split('.').filter((p) => p !== '');
     const suffix = parts.length ? parts[parts.length - 1] : '';
-    const qui = normalizeQui(explicitQui || (parts.length >= 2 ? parts[parts.length - 2] : ''));
-    const stat = normalizeStatCom(explicitStatCom || (parts.length >= 3 ? `${parts.slice(0, -2).join('.')}.` : (parts.length >= 2 ? `${parts[0]}.` : '')));
+    const compact = !explicitStatCom && !explicitQui && parts.length === 2 ? splitCompactCodePrefix(parts[0]) : null;
+    const qui = normalizeQui(explicitQui || (compact && compact.qui) || (parts.length >= 2 ? parts[parts.length - 2] : ''));
+    const stat = normalizeStatCom(explicitStatCom || (compact && compact.statCom) || (parts.length >= 3 ? parts.slice(0, -2).join('.') : (parts.length >= 2 ? parts[0] : '')));
     return { statCom: stat, qui, suffix, normalized: stat && qui && suffix ? buildCodeCours(stat, qui, suffix) : code };
   }
 
@@ -310,14 +338,7 @@
     const domaine = String(domaineStockage || '').trim().toUpperCase();
     const direct = normalizeTargetCode(domaine, token);
     if (DOMAINES_TERRITORIAUX.includes(domaine) && direct === domaine) {
-      const inferred = inferTerritorialTargetCode(domaine, fields || {});
-      if (inferred) return { niveauCode: inferred, inferred: true };
-      return {
-        error: 'oi_indetermine',
-        reviewRequired: true,
-        action: 'CHOISIR_OI',
-        message: `OI impossible à déterminer. Le fichier indique une activité ${domaine} mais aucun OI ${TARGET_CODES[domaine].join('/')} n’a pu être identifié avec certitude.`
-      };
+      return { niveauCode: 'GEN', global: true };
     }
     return { niveauCode: direct, inferred: false };
   }
@@ -352,6 +373,7 @@
       .replace(/\s+/g, ' ');
     const compact = text.replace(/[^A-Z0-9]+/g, '');
     if (domaine === 'JSP') {
+      if (compact === 'JSP') return 'JSP';
       if (compact === 'JSPG1') return 'G1';
       if (compact === 'JSPC1') return 'C1';
       if (compact === 'JSPB1') return 'B1';
@@ -370,12 +392,14 @@
       if (compact === 'PAPRB2') return 'B2';
     }
     if (domaine === 'DPS') {
+      if (compact === 'DPS') return 'DPS';
       if (compact === 'DPSG1') return 'G1';
       if (compact === 'DPSC1') return 'C1';
       if (compact === 'DPSB1') return 'B1';
       if (compact === 'DPSB2') return 'B2';
     }
     if (domaine === 'DAP') {
+      if (compact === 'DAP') return 'DAP';
       if (compact === 'DAPY1') return 'Y1';
       if (compact === 'DAPY2') return 'Y2';
       if (compact === 'DAPY3') return 'Y3';
@@ -407,8 +431,19 @@
       parts.normalizedLabel || '',
       parts.heureDebut || '',
       parts.heureFin || '',
-      territorial ? `territorial:${parts.cibleCodes || ''}` : 'specialisation'
+      territorial ? `territorial:${parts.cibleCodes || ''}:${parts.codeCours || ''}` : 'specialisation'
     ].join('|');
+  }
+
+  function displayTargetLabel(domaineStockage, cibleCodes) {
+    const domaine = String(domaineStockage || '').toUpperCase();
+    const codes = String(cibleCodes || '').split('|').filter(Boolean);
+    if (codes.length === 1 && codes[0] === 'GEN') {
+      if (domaine === 'DPS') return 'Tous les DPS';
+      if (domaine === 'DAP') return 'Tous les DAP';
+      if (domaine === 'JSP') return 'Tout le personnel JSP';
+    }
+    return codes.join('|');
   }
 
   function parseMode(fields) {
@@ -833,6 +868,7 @@
         statCom: codeParts.statCom,
         qui: codeParts.qui,
         quiSource: f.qui,
+        codeCours,
         date: dateInfo.iso || '',
         normalizedLabel,
         heureDebut,
@@ -894,7 +930,8 @@
         qui: codeParts.qui,
         cibles,
         cibleCodes,
-        publicCible: cibleCodes,
+        publicCible: displayTargetLabel(resolvedDomaine.domaineStockage || domaine, cibleCodes),
+        publicCibleCode: cibleCodes,
         groupKey,
         matchKey,
         regroupementMetier: isTerritorialStandardEvent({
@@ -944,6 +981,7 @@
       group.cibles.forEach((c) => cibleById.set(c.cibleId, c));
       group.cibles = [...cibleById.values()];
       group.cibleCodes = group.cibles.map((c) => c.niveauCode).sort().join('|');
+      group.publicCible = displayTargetLabel(group.domaineStockage, group.cibleCodes);
       if (group.lignes.length > 1 && group.statut === 'NEW_EVENT') group.statut = 'GROUPED';
       group.regroupementMetier = group.lignes.some((l) => l.regroupementMetier === 'TERRITORIAL_DISTINCT') ? 'TERRITORIAL_DISTINCT' : 'SPECIALISATION_REGROUPABLE';
       group.actionPrevue = group.statut === 'REVIEW_REQUIRED' ? 'ARBITRER'
@@ -990,6 +1028,7 @@
     FORMAT_STANDARD,
     FORMAT_F7,
     STANDARD_COLUMNS,
+    STAT_COM_REFERENTIEL,
     STATUT_LABELS,
     previewScopeImport,
     previewStandardImport,
@@ -999,6 +1038,7 @@
     normalizeQui,
     normalizeQuiDomain,
     normalizeTargetCode,
+    displayTargetLabel,
     resolveTargetCode,
     inferTerritorialTargetCode,
     isTerritorialStandardEvent,
