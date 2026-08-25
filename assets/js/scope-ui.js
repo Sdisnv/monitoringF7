@@ -2798,6 +2798,54 @@
     return true;
   }
 
+  function importFilterCount(id, { standard, all, groups }) {
+    const excludedLines = (line) => Boolean(state.importExcluded[line.ligneNo]);
+    const groupExcluded = (item) => (item.sourceLineNos || []).length && (item.sourceLineNos || []).every((n) => state.importExcluded[n]);
+    if (standard) {
+      if (id === 'TOUS') return groups.filter((g) => !groupExcluded(g) && (g.statut === 'REVIEW_REQUIRED' || g.statut === 'CONFLIT' || String(g.statut).indexOf('ERREUR') === 0 || (g.avertissements || []).length)).length;
+      if (id === 'A_CREER') return groups.filter((g) => !groupExcluded(g) && (g.statut === 'NEW_EVENT' || g.statut === 'GROUPED')).length;
+      if (id === 'DEJA') return groups.filter((g) => !groupExcluded(g) && (g.statut === 'EXACT_MATCH' || g.statut === 'PROBABLE_MATCH')).length;
+      if (id === 'GROUPED') return groups.filter((g) => !groupExcluded(g) && g.statut === 'GROUPED').length;
+      if (id === 'ERREURS') return all.filter((l) => !excludedLines(l) && (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT')).length;
+      if (id === 'ARBITRER') return groups.filter((g) => !groupExcluded(g) && (g.statut === 'REVIEW_REQUIRED' || g.statut === 'A_ARBITRER')).length;
+      if (id === 'EXCLUS') return Object.keys(state.importExcluded).filter((k) => state.importExcluded[k]).length;
+      return 0;
+    }
+    if (id === 'TOUS') return all.filter((l) => !excludedLines(l)).length;
+    if (id === 'A_CREER') return all.filter((l) => !excludedLines(l) && (l.statut === 'A_CREER' || l.statut === 'VALIDE' || l.statut === 'NEW_EVENT')).length;
+    if (id === 'DEJA') return all.filter((l) => !excludedLines(l) && ['DEJA_PRESENT', 'DEJA_IMPORTE', 'EXACT_MATCH', 'PROBABLE_MATCH'].includes(l.statut)).length;
+    if (id === 'GROUPED') return all.filter((l) => !excludedLines(l) && Boolean(l.groupKey)).length;
+    if (id === 'ERREURS') return all.filter((l) => !excludedLines(l) && (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT')).length;
+    if (id === 'ARBITRER') return all.filter((l) => !excludedLines(l) && (l.statut === 'A_ARBITRER' || l.statut === 'REVIEW_REQUIRED')).length;
+    if (id === 'EXCLUS') return Object.keys(state.importExcluded).filter((k) => state.importExcluded[k]).length;
+    if (id === 'NOMINATIF') return all.filter((l) => !excludedLines(l) && (l.modePropose === 'NOMINATIF' || l.typePropose === 'NOMINATIF')).length;
+    if (id === 'QUANTITATIF') return all.filter((l) => !excludedLines(l) && (l.modePropose === 'QUANTITATIF' || l.typePropose === 'QUANTITATIF')).length;
+    return 0;
+  }
+
+  function buildImportFilters({ standard, all, groups }) {
+    if (L && typeof L.buildImportPreviewFilters === 'function') {
+      return L.buildImportPreviewFilters({ standard, all, groups, excluded: state.importExcluded });
+    }
+    const defs = standard ? [
+      ['TOUS', 'Points à traiter'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
+      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À contrôler'], ['EXCLUS', 'Exclus']
+    ] : [
+      ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
+      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À arbitrer'], ['EXCLUS', 'Exclus'],
+      ['NOMINATIF', 'Nominatif'], ['QUANTITATIF', 'Quantitatif']
+    ];
+    return defs
+      .map(([id, label]) => ({ id, label, count: importFilterCount(id, { standard, all, groups }) }))
+      .filter((item) => item.count > 0);
+  }
+
+  function defaultImportFilter(filters) {
+    if (L && typeof L.defaultImportPreviewFilter === 'function') return L.defaultImportPreviewFilter(filters);
+    const order = ['TOUS', 'A_CREER', 'DEJA', 'GROUPED'];
+    return (order.map((id) => filters.find((f) => f.id === id)).find(Boolean) || filters[0] || { id: 'TOUS' }).id;
+  }
+
   function renderImport() {
     const live = mode === 'live' && typeof client.previewImportEvenements === 'function';
     const preview = state.importPreview;
@@ -2807,6 +2855,10 @@
     const native = preview && (preview.format === 'SCOPE_EXERCICES_CSV_1' || preview.profil === 'SCOPE_EXERCICES_CSV_1');
     const standard = preview && (preview.format === 'SCOPE_EVENT_STANDARD_CSV_1' || preview.profil === 'SCOPE_EVENT_STANDARD_CSV_1');
     const f7 = preview && (preview.format === 'monitoring_exercices_sdis_22cols' || preview.profil === 'monitoring_exercices_sdis_22cols');
+    const filters = preview ? buildImportFilters({ standard, all, groups: previewGroups }) : [];
+    if (preview && filters.length && !filters.some((item) => item.id === state.importFilter)) {
+      state.importFilter = defaultImportFilter(filters);
+    }
     const visibleCandidates = standard && (state.importFilter || 'TOUS') === 'TOUS'
       ? all.filter((l) => String(l.statut).indexOf('ERREUR') === 0 || ['CONFLIT', 'REVIEW_REQUIRED', 'A_ARBITRER'].includes(l.statut) || (l.avertissements || []).length)
       : all;
@@ -2868,6 +2920,7 @@
         sourceLineNos: [line.ligneNo],
         cibles: line.cibles || [],
         cibleCodes: line.cibleCodes || '',
+        publicCible: line.publicCible || line.cibleCodes || '',
         codeCours: line.codeCours,
         codeParts: line.codeParts,
         date: line.date,
@@ -2888,7 +2941,7 @@
       const isIssue = g.statut === 'REVIEW_REQUIRED' || g.statut === 'CONFLIT' || String(g.statut).indexOf('ERREUR') === 0;
       const cibles = g.publicCible || g.cibleCodes || (g.cibles || []).map((c) => c.niveauCode).join(' | ') || first.publicCible || first.cibleCodes || '—';
       const sourceLines = (g.sourceLineNos || []).join(', ');
-      const population = g.populationCount || g.population || '—';
+      const population = g.populationLabel || (g.populationCount === 0 || g.populationCount ? `${g.populationCount} ${g.populationCount > 1 ? 'personnes' : 'personne'}` : (g.population || '—'));
       const detailRows = lines.map((line) => `<tr>
         <td>${escapeHtml(String(line.ligneNo || '—'))}</td>
         <td>${escapeHtml(line.codeCours || '—')}</td>
@@ -2958,14 +3011,6 @@
         <p>Répartition : ${Object.keys(byDomaine).length ? Object.keys(byDomaine).sort().map((k) => `${escapeHtml(k)} ${byDomaine[k]}`).join(' · ') : '—'}</p>
         <p class="scope-mode-hint">Aucune écriture tant que vous n’avez pas confirmé. Population non figée. Aucun attendu ni volume inventé.</p>
       </div>` : (preview ? `<p>Valides ${summary.VALIDE || summary.A_CREER || 0} · Avertissements ${summary.AVERTISSEMENT || 0} · Erreurs ${summary.ERREUR || 0}. Aucune écriture tant que vous n’avez pas confirmé.</p>` : '');
-    const filters = standard ? [
-      ['TOUS', 'Points à traiter'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
-      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À contrôler'], ['EXCLUS', 'Exclus']
-    ] : [
-      ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
-      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À arbitrer'], ['EXCLUS', 'Exclus'],
-      ['NOMINATIF', 'Nominatif'], ['QUANTITATIF', 'Quantitatif']
-    ];
     const yearsHint = rapport && rapport.created && rapport.created.length
       ? [...new Set(rapport.created.map((c) => String(c.date || '').slice(0, 4)).filter(Boolean))]
       : [];
@@ -3000,7 +3045,7 @@
         ${preview ? `<div class="scope-card" style="margin-top:12px">
           ${resume}
           <div class="scope-sync-filters" role="tablist">
-            ${filters.map(([id, label]) => `<button type="button" class="scope-btn ${state.importFilter === id ? 'scope-btn-primary' : ''}" data-import-filter="${id}">${escapeHtml(label)}</button>`).join('')}
+            ${filters.map((item) => `<button type="button" class="scope-btn ${state.importFilter === item.id ? 'scope-btn-primary' : ''}" data-import-filter="${item.id}">${escapeHtml(item.label)} (${escapeHtml(String(item.count))})</button>`).join('')}
           </div>
           <div class="scope-import-list">${cards || '<p class="scope-empty">Aucune ligne pour ce filtre.</p>'}</div>
         </div>` : ''}
@@ -3430,7 +3475,13 @@
           decisions: state.importDecisions
         });
         state.importExcluded = {};
-        state.importFilter = 'TOUS';
+        const preview = state.importPreview || {};
+        const standard = preview.format === 'SCOPE_EVENT_STANDARD_CSV_1' || preview.profil === 'SCOPE_EVENT_STANDARD_CSV_1';
+        state.importFilter = defaultImportFilter(buildImportFilters({
+          standard,
+          all: preview.lignes || [],
+          groups: preview.groups || []
+        }));
       });
     });
     document.getElementById('scope-import-commit')?.addEventListener('click', () => {

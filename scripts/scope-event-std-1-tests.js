@@ -8,6 +8,7 @@ const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
 const { createScopeService } = require('../netlify/functions/_scope-service');
 const { computeTaux } = require('../netlify/functions/_scope-rules');
 const importContract = require('../assets/js/scope-import-contract.js');
+const uiLogic = require('../assets/js/scope-ui-logic.js');
 
 const ACTOR = { sub: 'scope-event-std-1-test', roles: ['sdis-admin'] };
 const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;public_cible;responsable;salle;STAT.COM.;semaine;jour;monitoring;code exercice';
@@ -384,6 +385,105 @@ async function commit(service, text){
     assert.strictEqual(preview.summary.aControler, 0);
   });
 
+  await run('FINISH K — population regroupée avec NIP commun compté une seule fois en preview', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'PK001', [['FOBA', '1'], ['FOBA', '2']]);
+    await person(repo, 'PK002', [['FOBA', '1']]);
+    await person(repo, 'PK003', [['FOBA', '2']]);
+    const service = createScopeService(repo);
+    const preview = await service.previewImportEvenements({ csvText: csv([
+      row({ code: '010FOBAFOBA.611', libelle: 'Exercice FOBA union', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 1', statCom: '010FOBA' }),
+      row({ code: '010FOBAFOBA.612', libelle: 'Exercice FOBA union', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 2', statCom: '010FOBA' })
+    ])});
+    assert.strictEqual(preview.groups.length, 1);
+    assert.strictEqual(preview.groups[0].populationCount, 3);
+    assert.strictEqual(preview.groups[0].populationLabel, '3 personnes');
+    assert.strictEqual(preview.groups[0].publicCible, 'FOBA 1 · FOBA 2');
+  });
+
+  await run('FINISH L — population preview respecte les affectations actives à date', async () => {
+    const repo = createMemoryRepo();
+    await person(repo, 'PL001', [['DPS', 'G1', '2026-01-01', null]]);
+    await person(repo, 'PL002', [['DPS', 'G1', '2026-06-01', null]]);
+    await person(repo, 'PL003', [['DPS', 'G1', '2025-01-01', '2026-03-31']]);
+    const service = createScopeService(repo);
+    const preview = await service.previewImportEvenements({ csvText: csv([
+      row({ code: '012G1DPS.621', date: '14.04.2026', libelle: 'DPS actif date', domaine: 'DPS', qui: 'DPS', publicCible: 'G1', statCom: '012G1' })
+    ])});
+    assert.strictEqual(preview.groups[0].populationCount, 1);
+    assert.strictEqual(preview.groups[0].populationLabel, '1 personne');
+  });
+
+  await run('FINISH M-R — filtres preview masqués si vides et défaut non vide', async () => {
+    const clean = {
+      standard: true,
+      all: [{ ligneNo: 1, statut: 'NEW_EVENT' }],
+      groups: [{ statut: 'NEW_EVENT', sourceLineNos: [1] }],
+      excluded: {}
+    };
+    const cleanFilters = uiLogic.buildImportPreviewFilters(clean);
+    assert.deepStrictEqual(cleanFilters.map((f) => f.id), ['A_CREER']);
+    assert.strictEqual(uiLogic.defaultImportPreviewFilter(cleanFilters), 'A_CREER');
+    const withError = uiLogic.buildImportPreviewFilters({
+      standard: true,
+      all: [{ ligneNo: 1, statut: 'ERREUR' }],
+      groups: [{ statut: 'ERREUR', sourceLineNos: [1] }],
+      excluded: {}
+    });
+    assert.ok(withError.some((f) => f.id === 'ERREURS'));
+    const withReview = uiLogic.buildImportPreviewFilters({
+      standard: true,
+      all: [{ ligneNo: 1, statut: 'REVIEW_REQUIRED' }],
+      groups: [{ statut: 'REVIEW_REQUIRED', sourceLineNos: [1] }],
+      excluded: {}
+    });
+    assert.ok(withReview.some((f) => f.id === 'ARBITRER'));
+    const withExcluded = uiLogic.buildImportPreviewFilters({
+      standard: true,
+      all: [{ ligneNo: 1, statut: 'NEW_EVENT' }],
+      groups: [{ statut: 'NEW_EVENT', sourceLineNos: [1] }],
+      excluded: { 1: true }
+    });
+    assert.deepStrictEqual(withExcluded.map((f) => f.id), ['EXCLUS']);
+  });
+
+  await run('FINISH O — parité preview/commit population', async () => {
+    async function assertParity(repo, service, text){
+      const preview = await service.previewImportEvenements({ csvText: text, filename: 'finish.csv' });
+      const result = await service.commitImportEvenements({ csvText: text, filename: 'finish.csv', previewToken: preview.previewToken }, ACTOR);
+      for(const created of result.created){
+        const group = preview.groups.find((g) => g.codeCours === created.codeCours);
+        assert.ok(group, `groupe preview ${created.codeCours}`);
+        const attendus = await repo.listAttendus(created.evenementId);
+        assert.strictEqual(group.populationCount, attendus.filter((a) => a.personne_id && a.inclus !== false).length);
+      }
+    }
+    {
+      const repo = createMemoryRepo();
+      await person(repo, 'PP001', [['DPS', 'G1']]);
+      await assertParity(repo, createScopeService(repo), csv([row({ code: '012G1DPS.701', libelle: 'Precise', domaine: 'DPS', qui: 'DPS', publicCible: 'G1', statCom: '012G1' })]));
+    }
+    {
+      const repo = createMemoryRepo();
+      await person(repo, 'PP002', [['DPS', 'G1'], ['DPS', 'B1']]);
+      await assertParity(repo, createScopeService(repo), csv([row({ code: '0120F7DPS.702', libelle: 'Global', domaine: 'DPS', qui: 'DPS', publicCible: 'DPS', statCom: '0120F7' })]));
+    }
+    {
+      const repo = createMemoryRepo();
+      await person(repo, 'PP003', [['AUTO', 'PL']]);
+      await assertParity(repo, createScopeService(repo), csv([row({ code: '01521F7AUTO.703', libelle: 'Auto simple', domaine: 'AUTO', qui: 'AUTO', publicCible: 'PL', statCom: '01521F7' })]));
+    }
+    {
+      const repo = createMemoryRepo();
+      await person(repo, 'PP004', [['FOBA', '1'], ['FOBA', '2']]);
+      await person(repo, 'PP005', [['FOBA', '2']]);
+      await assertParity(repo, createScopeService(repo), csv([
+        row({ code: '010FOBAFOBA.704', libelle: 'FOBA group', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 1', statCom: '010FOBA' }),
+        row({ code: '010FOBAFOBA.705', libelle: 'FOBA group', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 2', statCom: '010FOBA' })
+      ]));
+    }
+  });
+
   await run('METIER K/L — dates JJ.MM.AA françaises et refus US', async () => {
     assert.strictEqual(importContract.normalizeDate('13.02.26').iso, '2026-02-13');
     assert.strictEqual(importContract.normalizeDate('02.13.26').error, 'date_invalide');
@@ -575,6 +675,35 @@ async function commit(service, text){
     const preview = await service.previewImportEvenements({ csvText: text });
     assert.strictEqual(preview.lignes[0].statut, 'REVIEW_REQUIRED');
     assert.ok(preview.lignes[0].raison.includes('contradictoires'));
+  });
+
+  await run('FINISH REAL139 — preview fichier MOA réel stable et populations prévisionnelles présentes', async () => {
+    const file = '/Users/thierrygrunig/Downloads/2026_evenements_SDIS.csv';
+    if(!fs.existsSync(file)) return;
+    const repo = createMemoryRepo();
+    await person(repo, 'R139A', [['DPS', 'G1'], ['DPS', 'B1']]);
+    await person(repo, 'R139B', [['DAP', 'Y1'], ['DAP', 'Y2']]);
+    await person(repo, 'R139C', [['JSP', 'G1'], ['JSP', 'C1']]);
+    await person(repo, 'R139D', [['FOBA', '1'], ['FOBA', '2']]);
+    const service = createScopeService(repo);
+    const text = fs.readFileSync(file, 'utf8');
+    const preview = await service.previewImportEvenements({ csvText: text, filename: path.basename(file) });
+    assert.strictEqual(preview.summary.nbLignes, 139);
+    assert.strictEqual(preview.summary.eventsDetected, 122);
+    assert.strictEqual(preview.summary.regroupes, 15);
+    assert.strictEqual(preview.summary.aControler, 0);
+    assert.strictEqual(preview.summary.erreurs, 0);
+    const territorial = new Set(['DPS', 'DAP', 'JSP']);
+    assert.strictEqual(preview.groups.filter((g) => territorial.has(g.domaineStockage) && (g.sourceLineNos || []).length > 1).length, 0);
+    assert.ok(preview.lignes.every((l) => !String(l.statCom || '').endsWith('.')));
+    assert.strictEqual(preview.lignes.find((l) => l.ligneNo === 20).codeCours, '010JSPJSP.20');
+    assert.strictEqual(preview.lignes.find((l) => l.ligneNo === 20).publicCible, 'Tout le personnel JSP');
+    assert.strictEqual(preview.lignes.find((l) => l.ligneNo === 38).publicCible, 'Tous les DAP');
+    assert.strictEqual(preview.lignes.find((l) => l.ligneNo === 47).publicCible, 'Tous les DPS');
+    const fobaGroup = preview.groups.find((g) => (g.sourceLineNos || []).includes(7) && (g.sourceLineNos || []).includes(8));
+    assert.ok(fobaGroup);
+    assert.strictEqual(fobaGroup.publicCible, 'FOBA 1 · FOBA 2');
+    assert.ok(preview.groups.every((g) => g.populationCount === 0 || g.populationCount > 0));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

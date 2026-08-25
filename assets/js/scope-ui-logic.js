@@ -607,6 +607,54 @@
     return `/auth/oidc/start?returnTo=${encodeURIComponent(safe)}`;
   }
 
+  function importPreviewFilterCount(id, { standard, all, groups, excluded } = {}) {
+    const lines = all || [];
+    const previewGroups = groups || [];
+    const excludedMap = excluded || {};
+    const excludedLine = (line) => Boolean(excludedMap[line.ligneNo]);
+    const excludedGroup = (item) => (item.sourceLineNos || []).length && (item.sourceLineNos || []).every((n) => excludedMap[n]);
+    if (standard) {
+      if (id === 'TOUS') return previewGroups.filter((g) => !excludedGroup(g) && (g.statut === 'REVIEW_REQUIRED' || g.statut === 'CONFLIT' || String(g.statut).indexOf('ERREUR') === 0 || (g.avertissements || []).length)).length;
+      if (id === 'A_CREER') return previewGroups.filter((g) => !excludedGroup(g) && (g.statut === 'NEW_EVENT' || g.statut === 'GROUPED')).length;
+      if (id === 'DEJA') return previewGroups.filter((g) => !excludedGroup(g) && (g.statut === 'EXACT_MATCH' || g.statut === 'PROBABLE_MATCH')).length;
+      if (id === 'GROUPED') return previewGroups.filter((g) => !excludedGroup(g) && g.statut === 'GROUPED').length;
+      if (id === 'ERREURS') return lines.filter((l) => !excludedLine(l) && (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT')).length;
+      if (id === 'ARBITRER') return previewGroups.filter((g) => !excludedGroup(g) && (g.statut === 'REVIEW_REQUIRED' || g.statut === 'A_ARBITRER')).length;
+      if (id === 'EXCLUS') return Object.keys(excludedMap).filter((k) => excludedMap[k]).length;
+      return 0;
+    }
+    if (id === 'TOUS') return lines.filter((l) => !excludedLine(l)).length;
+    if (id === 'A_CREER') return lines.filter((l) => !excludedLine(l) && (l.statut === 'A_CREER' || l.statut === 'VALIDE' || l.statut === 'NEW_EVENT')).length;
+    if (id === 'DEJA') return lines.filter((l) => !excludedLine(l) && ['DEJA_PRESENT', 'DEJA_IMPORTE', 'EXACT_MATCH', 'PROBABLE_MATCH'].includes(l.statut)).length;
+    if (id === 'GROUPED') return lines.filter((l) => !excludedLine(l) && Boolean(l.groupKey)).length;
+    if (id === 'ERREURS') return lines.filter((l) => !excludedLine(l) && (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT')).length;
+    if (id === 'ARBITRER') return lines.filter((l) => !excludedLine(l) && (l.statut === 'A_ARBITRER' || l.statut === 'REVIEW_REQUIRED')).length;
+    if (id === 'EXCLUS') return Object.keys(excludedMap).filter((k) => excludedMap[k]).length;
+    if (id === 'NOMINATIF') return lines.filter((l) => !excludedLine(l) && (l.modePropose === 'NOMINATIF' || l.typePropose === 'NOMINATIF')).length;
+    if (id === 'QUANTITATIF') return lines.filter((l) => !excludedLine(l) && (l.modePropose === 'QUANTITATIF' || l.typePropose === 'QUANTITATIF')).length;
+    return 0;
+  }
+
+  function buildImportPreviewFilters(options) {
+    const standard = Boolean(options && options.standard);
+    const defs = standard ? [
+      ['TOUS', 'Points à traiter'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
+      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À contrôler'], ['EXCLUS', 'Exclus']
+    ] : [
+      ['TOUS', 'Tout'], ['A_CREER', 'À créer'], ['DEJA', 'Déjà présents'], ['GROUPED', 'Regroupés'],
+      ['ERREURS', 'Erreurs'], ['ARBITRER', 'À arbitrer'], ['EXCLUS', 'Exclus'],
+      ['NOMINATIF', 'Nominatif'], ['QUANTITATIF', 'Quantitatif']
+    ];
+    return defs
+      .map(([id, label]) => ({ id, label, count: importPreviewFilterCount(id, options || {}) }))
+      .filter((item) => item.count > 0);
+  }
+
+  function defaultImportPreviewFilter(filters) {
+    const order = ['TOUS', 'A_CREER', 'DEJA', 'GROUPED'];
+    return (order.map((id) => (filters || []).find((f) => f.id === id)).find(Boolean) || (filters || [])[0] || { id: 'TOUS' }).id;
+  }
+
   return {
     MOTIFS,
     motifsForRow,
@@ -653,6 +701,9 @@
     isTestPersonnelNip,
     shouldRenderPermutations,
     resolveClientMode,
+    importPreviewFilterCount,
+    buildImportPreviewFilters,
+    defaultImportPreviewFilter,
     oktaLoginHref
   };
 });

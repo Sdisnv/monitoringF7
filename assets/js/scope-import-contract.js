@@ -328,7 +328,8 @@
       resolved.push({
         cibleId: hit.cible_id,
         niveauCode: hit.niveau_code,
-        domaineCode: hit.domaine_code
+        domaineCode: hit.domaine_code,
+        libelle: hit.libelle
       });
     }
     return { cibles: resolved, cibleCodes: resolved.map((c) => c.niveauCode).sort().join('|') };
@@ -435,7 +436,7 @@
     ].join('|');
   }
 
-  function displayTargetLabel(domaineStockage, cibleCodes) {
+  function displayTargetLabel(domaineStockage, cibleCodes, cibles) {
     const domaine = String(domaineStockage || '').toUpperCase();
     const codes = String(cibleCodes || '').split('|').filter(Boolean);
     if (codes.length === 1 && codes[0] === 'GEN') {
@@ -443,7 +444,24 @@
       if (domaine === 'DAP') return 'Tous les DAP';
       if (domaine === 'JSP') return 'Tout le personnel JSP';
     }
-    return codes.join('|');
+    const rows = Array.isArray(cibles) ? cibles : [];
+    if (rows.length) {
+      return rows
+        .slice()
+        .sort((a, b) => String(a.niveauCode || '').localeCompare(String(b.niveauCode || ''), 'fr'))
+        .map((c) => {
+          const niveau = String(c.niveauCode || '').toUpperCase();
+          if (domaine === 'AUTO' && niveau === 'PL') return 'Cond PL';
+          if (domaine === 'AUTO' && niveau === 'VL') return 'Cond VL';
+          if (domaine === 'FOBA') return c.libelle || `FOBA ${niveau}`;
+          if (domaine === 'FOCA') return c.libelle || (niveau === 'GEN' ? 'FOCA' : niveau);
+          if (domaine === 'PR') return c.libelle || (niveau === 'GEN' ? 'PAPR' : `PAPR ${niveau}`);
+          return c.libelle || niveau;
+        })
+        .filter(Boolean)
+        .join(' · ');
+    }
+    return codes.join(' · ');
   }
 
   function parseMode(fields) {
@@ -930,7 +948,7 @@
         qui: codeParts.qui,
         cibles,
         cibleCodes,
-        publicCible: displayTargetLabel(resolvedDomaine.domaineStockage || domaine, cibleCodes),
+        publicCible: displayTargetLabel(resolvedDomaine.domaineStockage || domaine, cibleCodes, cibles),
         publicCibleCode: cibleCodes,
         groupKey,
         matchKey,
@@ -981,7 +999,7 @@
       group.cibles.forEach((c) => cibleById.set(c.cibleId, c));
       group.cibles = [...cibleById.values()];
       group.cibleCodes = group.cibles.map((c) => c.niveauCode).sort().join('|');
-      group.publicCible = displayTargetLabel(group.domaineStockage, group.cibleCodes);
+      group.publicCible = displayTargetLabel(group.domaineStockage, group.cibleCodes, group.cibles);
       if (group.lignes.length > 1 && group.statut === 'NEW_EVENT') group.statut = 'GROUPED';
       group.regroupementMetier = group.lignes.some((l) => l.regroupementMetier === 'TERRITORIAL_DISTINCT') ? 'TERRITORIAL_DISTINCT' : 'SPECIALISATION_REGROUPABLE';
       group.actionPrevue = group.statut === 'REVIEW_REQUIRED' ? 'ARBITRER'

@@ -397,6 +397,84 @@ function createScopeService(repo){
     return { count: personnes.length, personnes };
   }
 
+  function previewPopulationStore(){
+    const cache = {
+      cibles: null,
+      ciblesById: new Map(),
+      personnes: new Map(),
+      periodes: new Map(),
+      suivi: null
+    };
+    return {
+      async listCibles(){
+        if(!cache.cibles){
+          cache.cibles = repo.listCibles ? await repo.listCibles() : [];
+          cache.cibles.forEach((cible) => cache.ciblesById.set(cible.cible_id, cible));
+        }
+        return cache.cibles;
+      },
+      async getCible(id){
+        await this.listCibles();
+        if(cache.ciblesById.has(id)) return cache.ciblesById.get(id);
+        const cible = repo.getCible ? await repo.getCible(id) : null;
+        if(cible) cache.ciblesById.set(id, cible);
+        return cible;
+      },
+      async listSuiviNominatif(){
+        if(!cache.suivi){
+          cache.suivi = repo.listSuiviNominatif ? await repo.listSuiviNominatif() : [];
+        }
+        return cache.suivi;
+      },
+      async listAffectationsForCibles(cibleIds, date){
+        return repo.listAffectationsForCibles ? repo.listAffectationsForCibles(cibleIds, date) : [];
+      },
+      async getPersonne(id){
+        if(cache.personnes.has(id)) return cache.personnes.get(id);
+        const personne = repo.getPersonne ? await repo.getPersonne(id) : null;
+        cache.personnes.set(id, personne);
+        return personne;
+      },
+      async listPersonnesPeriodes(id){
+        if(cache.periodes.has(id)) return cache.periodes.get(id);
+        const periodes = repo.listPersonnesPeriodes ? await repo.listPersonnesPeriodes(id) : [];
+        cache.periodes.set(id, periodes);
+        return periodes;
+      }
+    };
+  }
+
+  async function enrichStandardPreviewPopulations(preview){
+    if(!preview || !Array.isArray(preview.groups) || !preview.groups.length) return preview;
+    const store = previewPopulationStore();
+    for(const group of preview.groups){
+      const cibleIds = (group.cibles || []).map((c) => c.cibleId).filter(Boolean);
+      if(!group.date || !group.domaineStockage || !cibleIds.length || String(group.statut || '').indexOf('ERREUR') === 0){
+        group.populationCount = null;
+        group.populationLabel = '—';
+        continue;
+      }
+      const population = await resolveEligiblePopulation({
+        eventDate: group.date,
+        domaineCode: group.domaineStockage,
+        sousDomaineCode: group.sousDomaine || null,
+        cibleIds,
+        store
+      });
+      group.populationCount = population.count;
+      group.populationLabel = `${population.count} ${population.count > 1 ? 'personnes' : 'personne'}`;
+      group.populationPreview = {
+        count: population.count,
+        note: population.note || null
+      };
+      (group.lignes || []).forEach((line) => {
+        line.populationCount = population.count;
+        line.populationLabel = group.populationLabel;
+      });
+    }
+    return preview;
+  }
+
   async function photographieFigee(eventId){
     const attendus = await repo.listAttendus(eventId);
     const personnes = [];
@@ -1441,7 +1519,7 @@ function createScopeService(repo){
       if(preview.error === 'fichier_vide'){
         throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
       }
-      return { ...preview, ecriture: false };
+      return { ...(await enrichStandardPreviewPopulations(preview)), ecriture: false };
     }
     if(format === importContract.FORMAT_F7){
       const preview = previewFromCsv(csvText, await previewContext());
