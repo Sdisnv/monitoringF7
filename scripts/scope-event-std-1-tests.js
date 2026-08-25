@@ -7,10 +7,14 @@ const { createScopeService } = require('../netlify/functions/_scope-service');
 const { computeTaux } = require('../netlify/functions/_scope-rules');
 
 const ACTOR = { sub: 'scope-event-std-1-test', roles: ['sdis-admin'] };
-const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;responsable;salle;STAT.COM.;semaine;jour;monitoring;code exercice';
+const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;public_cible;responsable;salle;STAT.COM.;semaine;jour;monitoring;code exercice';
 
 function csv(rows){
   return [HEADER, ...rows].join('\n');
+}
+
+function row({ code, date = '14.04.2026', debut = '19:30', fin = '21:30', libelle, domaine = 'DPS', qui = 'G1', publicCible = 'G1', statCom = 'DPS.', source = 'A' }){
+  return [code, date, debut, fin, libelle, domaine, qui, publicCible, 'Resp', 'Salle', statCom, '16', 'ma', 'oui', source].join(';');
 }
 
 async function cible(repo, domaine, niveau){
@@ -53,7 +57,7 @@ async function commit(service, text){
   await run('A — 1 ligne CSV normale => 1 événement', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
-    const { result } = await commit(service, csv(['DPS.G1.001;14.04.2026;19:30;21:30;Conduite formation continue;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;TRUCK']));
+    const { result } = await commit(service, csv([row({ code: 'DPS.G1.001', libelle: 'Conduite formation continue' })]));
     assert.strictEqual(result.summary.imported, 1);
     assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 1);
   });
@@ -62,9 +66,9 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const text = csv([
-      'DPS.G1.010;14.04.2026;19:30;21:30;Exercice combiné;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;TRUCK',
-      'DPS.B1.011;14.04.2026;19:30;21:30;Exercice combiné;DPS;B1;Resp;Salle;DPS.B1;16;ma;oui;TRUCK',
-      'FOBA.2.012;14.04.2026;19:30;21:30;Exercice combiné;FOBA;2;Resp;Salle;FOBA.2;16;ma;oui;TRUCK'
+      row({ code: 'EX.TRUCK.010', libelle: 'Exercice combiné', domaine: 'DPS', qui: 'TRUCK', publicCible: 'G1', statCom: 'EX.' }),
+      row({ code: 'EX.TRUCK.011', libelle: 'Exercice combiné', domaine: 'DPS', qui: 'TRUCK', publicCible: 'B1', statCom: 'EX.' }),
+      row({ code: 'EX.TRUCK.012', libelle: 'Exercice combiné', domaine: 'FOBA', qui: 'TRUCK', publicCible: '2', statCom: 'EX.' })
     ]);
     const { preview, result } = await commit(service, text);
     assert.strictEqual(preview.summary.regroupes, 1);
@@ -78,8 +82,8 @@ async function commit(service, text){
     await person(repo, 'C001', [['DPS', 'G1'], ['FOBA', '2']]);
     const service = createScopeService(repo);
     const { result } = await commit(service, csv([
-      'DPS.G1.020;14.04.2026;19:30;21:30;Exercice double inclusion;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A',
-      'FOBA.2.021;14.04.2026;19:30;21:30;Exercice double inclusion;FOBA;2;Resp;Salle;FOBA.2;16;ma;oui;A'
+      row({ code: 'EX.DOUBLE.020', libelle: 'Exercice double inclusion', domaine: 'DPS', qui: 'DOUBLE', publicCible: 'G1', statCom: 'EX.' }),
+      row({ code: 'EX.DOUBLE.021', libelle: 'Exercice double inclusion', domaine: 'FOBA', qui: 'DOUBLE', publicCible: '2', statCom: 'EX.' })
     ]));
     const attendus = await repo.listAttendus(result.created[0].evenementId);
     assert.strictEqual(attendus.filter((a) => a.personne_id).length, 1);
@@ -89,7 +93,7 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const p = await person(repo, 'D001', [['DPS', 'B1'], ['DPS', 'G1']]);
     const service = createScopeService(repo);
-    const { result } = await commit(service, csv(['DPS.G1.030;14.04.2026;19:30;21:30;G1 drill;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const { result } = await commit(service, csv([row({ code: 'DPS.G1.030', libelle: 'G1 drill' })]));
     assert.ok((await repo.listAttendus(result.created[0].evenementId)).some((a) => a.personne_id === p.personne_id));
   });
 
@@ -97,14 +101,14 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const p = await person(repo, 'E001', [['DPS', 'G1'], ['DPS', 'B1']]);
     const service = createScopeService(repo);
-    const { result } = await commit(service, csv(['DPS.B1.040;14.04.2026;19:30;21:30;B1 drill;DPS;B1;Resp;Salle;DPS.B1;16;ma;oui;A']));
+    const { result } = await commit(service, csv([row({ code: 'DPS.B1.040', libelle: 'B1 drill', qui: 'B1', publicCible: 'B1', statCom: 'DPS.' })]));
     assert.ok((await repo.listAttendus(result.created[0].evenementId)).some((a) => a.personne_id === p.personne_id));
   });
 
   await run('F — CODE existant réimporté => pas de nouvel événement', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
-    const text = csv(['DPS.G1.050;14.04.2026;19:30;21:30;Réimport code;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']);
+    const text = csv([row({ code: 'DPS.G1.050', libelle: 'Réimport code' })]);
     await commit(service, text);
     const second = await service.previewImportEvenements({ csvText: text });
     assert.strictEqual(second.groups[0].statut, 'EXACT_MATCH');
@@ -114,8 +118,8 @@ async function commit(service, text){
   await run('G — numéro source changé mais rapprochement évident => pas de doublon', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
-    await commit(service, csv(['DPS.G1.060;14.04.2026;19:30;21:30;Libellé identique;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
-    const preview = await service.previewImportEvenements({ csvText: csv(['DPS.G1.999;14.04.2026;19:30;21:30;Libelle - identique;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']) });
+    await commit(service, csv([row({ code: 'DPS.G1.060', libelle: 'Libellé identique' })]));
+    const preview = await service.previewImportEvenements({ csvText: csv([row({ code: 'DPS.G1.999', libelle: 'Libelle - identique' })]) });
     assert.strictEqual(preview.groups[0].statut, 'PROBABLE_MATCH');
   });
 
@@ -123,10 +127,23 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const g1 = await cible(repo, 'DPS', 'G1');
     const service = createScopeService(repo);
-    await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ambigu', cibleIds: [g1.cible_id], heureDebut: '19:30', heureFin: '21:30' }, ACTOR);
-    await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ambigu', cibleIds: [g1.cible_id], heureDebut: '19:30', heureFin: '21:30' }, ACTOR);
-    const preview = await service.previewImportEvenements({ csvText: csv(['DPS.G1.070;14.04.2026;19:30;21:30;Ambigu;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']) });
+    await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ambigu', cibleIds: [g1.cible_id], heureDebut: '19:30', heureFin: '21:30', statCom: 'DPS.', qui: 'G1' }, ACTOR);
+    await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Ambigu', cibleIds: [g1.cible_id], heureDebut: '19:30', heureFin: '21:30', statCom: 'DPS.', qui: 'G1' }, ACTOR);
+    const preview = await service.previewImportEvenements({ csvText: csv([row({ code: 'DPS.G1.070', libelle: 'Ambigu' })]) });
     assert.strictEqual(preview.groups[0].statut, 'REVIEW_REQUIRED');
+  });
+
+  await run('H2 — même date/horaire/libellé mais QUI ou STAT.COM différent => pas de fusion automatique', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const text = csv([
+      row({ code: 'DPS.G1.071', libelle: 'Même surface', qui: 'G1', publicCible: 'G1', statCom: 'DPS.' }),
+      row({ code: 'DPS.B1.072', libelle: 'Même surface', qui: 'B1', publicCible: 'B1', statCom: 'DPS.' }),
+      row({ code: 'DAP.Y1.073', libelle: 'Même surface', domaine: 'DAP', qui: 'Y1', publicCible: 'Y1', statCom: 'DAP.' })
+    ]);
+    const { preview, result } = await commit(service, text);
+    assert.strictEqual(preview.summary.eventsDetected, 3);
+    assert.strictEqual(result.summary.imported, 3);
   });
 
   await run('I — événement déplacé de date => CODE inchangé', async () => {
@@ -144,10 +161,10 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const g1 = await cible(repo, 'DPS', 'G1');
     const service = createScopeService(repo);
-    const a = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Manuel A', cibleIds: [g1.cible_id], statCom: 'DPS' }, ACTOR);
-    const b = await service.createEvenement({ date: '2026-04-21', domaineCode: 'DPS', libelle: 'Manuel B', cibleIds: [g1.cible_id], statCom: 'DPS' }, ACTOR);
-    assert.ok(/S001$/.test(a.evenement.code_cours));
-    assert.ok(/S002$/.test(b.evenement.code_cours));
+    const a = await service.createEvenement({ date: '2026-04-14', domaineCode: 'DPS', libelle: 'Manuel A', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
+    const b = await service.createEvenement({ date: '2026-04-21', domaineCode: 'DPS', libelle: 'Manuel B', cibleIds: [g1.cible_id], statCom: 'DPS.', qui: 'G1' }, ACTOR);
+    assert.strictEqual(a.evenement.code_cours, 'DPS.G1.S001');
+    assert.strictEqual(b.evenement.code_cours, 'DPS.G1.S002');
   });
 
   await run('K — personne ajoutée manuellement => une seule ligne', async () => {
@@ -165,7 +182,7 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const p = await person(repo, 'L001', [['DPS', 'G1']]);
     const service = createScopeService(repo);
-    const { result } = await commit(service, csv(['DPS.G1.080;14.04.2026;19:30;21:30;Déjà calculé;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const { result } = await commit(service, csv([row({ code: 'DPS.G1.080', libelle: 'Déjà calculé' })]));
     const eventId = result.created[0].evenementId;
     const ev = await repo.getEvent(eventId);
     const added = await service.ajouterException(eventId, { baseVersion: ev.version, personneId: p.personne_id }, ACTOR);
@@ -185,7 +202,7 @@ async function commit(service, text){
   await run('N — ligne 2027 dans fichier 2026 => événement 2027', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
-    await commit(service, csv(['DPS.G1.090;07.01.2027;19:30;21:30;Début 2027;DPS;G1;Resp;Salle;DPS.G1;1;je;oui;A']));
+    await commit(service, csv([row({ code: 'DPS.G1.090', date: '07.01.2027', libelle: 'Début 2027' })]));
     assert.strictEqual((await repo.listEvenements({ annee: 2027 })).length, 1);
     assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 0);
   });
@@ -204,7 +221,7 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const p = await person(repo, 'P001', [['DPS', 'G1']]);
     const service = createScopeService(repo);
-    const { result } = await commit(service, csv(['DPS.G1.100;14.04.2026;19:30;21:30;Annulation;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const { result } = await commit(service, csv([row({ code: 'DPS.G1.100', libelle: 'Annulation' })]));
     const eventId = result.created[0].evenementId;
     await repo.upsertParticipation({ evenement_id: eventId, personne_id: p.personne_id, statut: 'PRESENT' });
     const ev = await repo.getEvent(eventId);
@@ -218,11 +235,22 @@ async function commit(service, text){
     const repo = createMemoryRepo();
     const p = await person(repo, 'Q001', [['DPS', 'G1', '2020-01-01', null]]);
     const service = createScopeService(repo);
-    const { result } = await commit(service, csv(['DPS.G1.110;14.04.2026;19:30;21:30;Snapshot;DPS;G1;Resp;Salle;DPS.G1;16;ma;oui;A']));
+    const { result } = await commit(service, csv([row({ code: 'DPS.G1.110', libelle: 'Snapshot' })]));
     const eventId = result.created[0].evenementId;
     const aff = (await repo.listAffectations({ personneId: p.personne_id }))[0];
     await repo.updateAffectation(aff.affectation_id, { date_fin: '2026-09-01' });
     assert.ok((await repo.listAttendus(eventId)).some((a) => a.personne_id === p.personne_id));
+  });
+
+  await run('QUI — colonne manquante => erreur explicite', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const bad = [
+      'CODE COURS;date;début;fin;événement;domaine;public_cible;responsable;salle;STAT.COM.',
+      'DPS.G1.120;14.04.2026;19:30;21:30;Sans qui;DPS;G1;Resp;Salle;DPS.'
+    ].join('\n');
+    const preview = await service.previewImportEvenements({ csvText: bad });
+    assert.ok(preview.lignes[0].raison.includes('Colonne QUI obligatoire manquante'));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

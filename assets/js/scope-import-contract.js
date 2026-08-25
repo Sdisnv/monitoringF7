@@ -165,6 +165,40 @@
     return `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}`;
   }
 
+  function normalizeCodeComponent(value) {
+    return String(value || '')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '');
+  }
+
+  function normalizeStatCom(value) {
+    const text = normalizeCodeComponent(value).replace(/\.+$/, '');
+    return text ? `${text}.` : '';
+  }
+
+  function normalizeQui(value) {
+    return normalizeCodeComponent(value).replace(/^\.+|\.+$/g, '');
+  }
+
+  function buildCodeCours(statCom, qui, suffix) {
+    const stat = normalizeStatCom(statCom);
+    const who = normalizeQui(qui);
+    const end = normalizeCodeComponent(suffix);
+    return `${stat}${who}.${end}`;
+  }
+
+  function splitCodeCours(codeCours, explicitStatCom, explicitQui) {
+    const code = String(codeCours || '').trim();
+    const parts = code.split('.').filter((p) => p !== '');
+    const suffix = parts.length ? parts[parts.length - 1] : '';
+    const qui = normalizeQui(explicitQui || (parts.length >= 2 ? parts[parts.length - 2] : ''));
+    const stat = normalizeStatCom(explicitStatCom || (parts.length >= 3 ? `${parts.slice(0, -2).join('.')}.` : (parts.length >= 2 ? `${parts[0]}.` : '')));
+    return { statCom: stat, qui, suffix, normalized: stat && qui && suffix ? buildCodeCours(stat, qui, suffix) : code };
+  }
+
   function fingerprint(fields, resolved) {
     const ext = String(fields.internal_event_id || fields.identifiant_externe || fields.identifiantexterne || '').trim();
     if (ext) return `ext:${ext}`;
@@ -326,6 +360,7 @@
         .join('|');
       const ext = String(e.identifiant_externe || e.identifiantExterne || '').trim();
       const codeCours = String(e.code_cours || e.codeCours || '').trim();
+      const codeParts = splitCodeCours(codeCours, e.stat_com || e.statCom, e.qui);
       if (ext) byExt.add(ext);
       if (codeCours) byCodeCours.add(codeCours);
       const base = `nat:${date}|${domaine}|${sous}|${codes}|${libelle}`;
@@ -343,6 +378,8 @@
       list.push(e);
       byBusiness.set(business, list);
       const lite = [
+        codeParts.statCom,
+        codeParts.qui,
         date,
         normalizeLabelForMatch(e.libelle),
         String(e.heure_debut || e.heureDebut || ''),
@@ -612,13 +649,19 @@
       const f = row.fields;
       const errors = [];
       const warnings = [];
-      if (missing.length) errors.push({ error: 'colonnes_manquantes', message: `Colonnes obligatoires absentes : ${missing.join(', ')}` });
+      if (missing.length) {
+        const messages = missing.map((col) => col === 'qui' ? 'Colonne QUI obligatoire manquante' : `Colonne ${col.toUpperCase()} obligatoire manquante`);
+        errors.push({ error: 'colonnes_manquantes', message: messages.join('. ') });
+      }
       const dateInfo = normalizeDate(f.date || f.date_evenement);
       if (dateInfo.error) errors.push(dateInfo);
       const codeCours = String(f.code_cours || '').trim();
       if (!codeCours) errors.push({ error: 'code_cours_manquant', message: 'CODE COURS manquant.' });
       if (codeCours && seenCode.has(codeCours)) warnings.push(`CODE COURS déjà présent ligne ${seenCode.get(codeCours)} : regroupement possible.`);
       else if (codeCours) seenCode.set(codeCours, row.ligneNo);
+      const codeParts = splitCodeCours(codeCours, f.stat_com, f.qui);
+      if (!codeParts.qui) errors.push({ error: 'qui_manquant', message: 'Colonne QUI obligatoire manquante' });
+      if (!codeParts.statCom) errors.push({ error: 'stat_com_manquant', message: 'STAT.COM obligatoire manquant pour le rapprochement.' });
       const libelle = String(f.evenement || f.libelle || f.modele || '').trim();
       if (!libelle) errors.push({ error: 'libelle_vide', message: 'Événement/libellé obligatoire.' });
       const domaine = inferDomainFromStandard(f);
@@ -628,7 +671,7 @@
       let cibles = [];
       let cibleCodes = '';
       if (!resolvedDomaine.error) {
-        const parsedCibles = parseCibles({ cibles: f.qui || f.public_cible || f.cibles }, resolvedDomaine.domaineStockage, known);
+        const parsedCibles = parseCibles({ cibles: f.public_cible || f.cibles }, resolvedDomaine.domaineStockage, known);
         if (parsedCibles.error) errors.push(parsedCibles);
         else {
           cibles = parsedCibles.cibles;
@@ -639,6 +682,8 @@
       const heureFin = normalizeTime(f.fin);
       const normalizedLabel = normalizeLabelForMatch(libelle);
       const groupKey = [
+        codeParts.statCom,
+        codeParts.qui,
         dateInfo.iso || '',
         normalizedLabel,
         heureDebut,
@@ -677,6 +722,7 @@
         codeCours,
         code_cours: codeCours,
         codeSource: codeCours,
+        codeParts,
         date: dateInfo.iso || String(f.date || f.date_evenement || ''),
         heureDebut,
         heureFin,
@@ -687,8 +733,8 @@
         normalizedLabel,
         responsable: String(f.responsable || '').trim(),
         salle: String(f.salle || '').trim(),
-        statCom: String(f.stat_com || '').trim(),
-        qui: String(f.qui || '').trim(),
+        statCom: codeParts.statCom,
+        qui: codeParts.qui,
         cibles,
         cibleCodes,
         publicCible: cibleCodes,
@@ -711,6 +757,7 @@
         cibles: [],
         cibleCodes: '',
         codeCours: line.codeCours,
+        codeParts: line.codeParts,
         date: line.date,
         domaineStockage: line.domaineStockage,
         sousDomaine: line.sousDomaine,
@@ -777,6 +824,10 @@
     previewStandardImport,
     fingerprint,
     normalizeLabelForMatch,
+    normalizeStatCom,
+    normalizeQui,
+    buildCodeCours,
+    splitCodeCours,
     resolveDomaine,
     detectCsvFormat,
     detectCsvFormatFromText,

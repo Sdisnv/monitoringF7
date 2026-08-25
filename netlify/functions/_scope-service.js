@@ -63,9 +63,9 @@ async function nextManualCode(repo, body, cibleIds){
   if(body.codeCours || body.code_cours) return String(body.codeCours || body.code_cours).trim();
   const seq = repo.nextManualEventSequence ? await repo.nextManualEventSequence() : 1;
   const suffix = `S${String(seq).padStart(3, '0')}`;
-  const stat = compactCodePart(body.statCom || body.stat_com || body.codeSource || body.code_source, 'SCOPE');
-  const qui = compactCodePart(body.qui || body.publicCible || body.public_cible || (cibleIds || []).length, 'GEN');
-  return `${stat}.${qui}.${suffix}`;
+  const stat = body.statCom || body.stat_com || body.codeSource || body.code_source || 'SCOPE';
+  const qui = body.qui || body.publicCible || body.public_cible || compactCodePart((cibleIds || []).length, 'GEN');
+  return importContract.buildCodeCours(stat, qui, suffix);
 }
 
 function isQuantitatif(evenement){
