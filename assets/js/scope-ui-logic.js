@@ -463,8 +463,18 @@
   function friendlyError(error) {
     const status = Number(error && error.status);
     const code = error && (error.error || error.code);
+    const message = String(error && error.message || '');
+    const payloadMessage = String(error && error.payload && error.payload.message || '');
+    const raw = `${message} ${payloadMessage}`;
+    if (/<html[\s>]/i.test(raw) || /inactivity timeout|timed?\s*out|timeout/i.test(raw)) {
+      return {
+        tone: 'error',
+        title: 'Import interrompu',
+        message: 'Le traitement n’a pas pu être finalisé. Aucune nouvelle tentative ne sera lancée automatiquement. Erreur technique : délai d’exécution dépassé.'
+      };
+    }
     if (status === 0 || code === 'network') {
-      return { tone: 'error', title: 'Connexion interrompue', message: 'Le serveur n’est pas joignable. Vérifiez le réseau puis réessayez.' };
+      return { tone: 'error', title: 'Import interrompu', message: 'La réponse du serveur a été interrompue. Relancez une preview avant de décider de réessayer.' };
     }
     if (status === 401) {
       return {

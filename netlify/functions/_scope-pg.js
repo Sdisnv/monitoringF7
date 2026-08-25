@@ -38,7 +38,8 @@ function mapEvent(row){
     salle: row.salle || null,
     responsable: row.responsable || null,
     created_at: row.created_at,
-    updated_at: row.updated_at
+    updated_at: row.updated_at,
+    already_exists: Boolean(row.already_exists)
   };
 }
 
@@ -443,31 +444,52 @@ function createPgRepo(client){
       const { inferModeSuivi } = require('./_scope-analytics');
       const modeSuivi = inferModeSuivi(row);
       const codeCours = row.code_cours || row.codeCours || null;
-      const result = await q(
-        `insert into scope_evenements(
-           evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
-           identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable, version
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1) returning *`,
-        [
-          id,
-          row.internal_event_id || row.internalEventId || id,
-          isoDate(row.date),
-          row.domaine_code,
-          row.sous_domaine_code || null,
-          row.libelle,
-          row.statut || 'PLANIFIE',
-          row.origine || 'NOMINATIF',
-          modeSuivi,
-          row.identifiant_externe || row.identifiantExterne || null,
-          codeCours,
-          row.code_source || row.codeSource || codeCours,
-          row.source_type || row.sourceType || (row.origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
-          row.heure_debut || row.heureDebut || null,
-          row.heure_fin || row.heureFin || null,
-          row.salle || null,
-          row.responsable || null
-        ]
-      );
+      const params = [
+        id,
+        row.internal_event_id || row.internalEventId || id,
+        isoDate(row.date),
+        row.domaine_code,
+        row.sous_domaine_code || null,
+        row.libelle,
+        row.statut || 'PLANIFIE',
+        row.origine || 'NOMINATIF',
+        modeSuivi,
+        row.identifiant_externe || row.identifiantExterne || null,
+        codeCours,
+        row.code_source || row.codeSource || codeCours,
+        row.source_type || row.sourceType || (row.origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
+        row.heure_debut || row.heureDebut || null,
+        row.heure_fin || row.heureFin || null,
+        row.salle || null,
+        row.responsable || null
+      ];
+      const result = codeCours
+        ? await q(
+          `with ins as (
+             insert into scope_evenements(
+               evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
+               identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable, version
+             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1)
+             on conflict (code_cours) where code_cours is not null do nothing
+             returning *, false as already_exists
+           )
+           select * from ins
+           union all
+           select e.*, true as already_exists
+           from scope_evenements e
+           where e.code_cours = $11
+             and not exists (select 1 from ins)
+           limit 1`,
+          params
+        )
+        : await q(
+          `insert into scope_evenements(
+             evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
+             identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable, version
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1)
+           returning *, false as already_exists`,
+          params
+        );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){
         await q(
@@ -584,6 +606,38 @@ function createPgRepo(client){
       );
       return result.rows[0];
     },
+    async bulkUpsertAttendus(rows){
+      const list = rows || [];
+      if(!list.length) return [];
+      const result = await q(
+        `insert into scope_attendus(evenement_id, personne_id, inclus, origine, origine_retrait, motif_inclusion)
+         select evenement_id, personne_id, coalesce(inclus, true), origine, origine_retrait, motif_inclusion
+         from jsonb_to_recordset($1::jsonb) as x(
+           evenement_id uuid,
+           personne_id uuid,
+           inclus boolean,
+           origine text,
+           origine_retrait text,
+           motif_inclusion text
+         )
+         on conflict (evenement_id, personne_id) do update set
+           inclus = excluded.inclus,
+           origine = excluded.origine,
+           origine_retrait = excluded.origine_retrait,
+           motif_inclusion = excluded.motif_inclusion,
+           updated_at = now()
+         returning *`,
+        [JSON.stringify(list.map((row) => ({
+          evenement_id: row.evenement_id,
+          personne_id: row.personne_id,
+          inclus: row.inclus !== false,
+          origine: row.origine,
+          origine_retrait: row.origine_retrait || null,
+          motif_inclusion: row.motif_inclusion || null
+        })))]
+      );
+      return result.rows;
+    },
     async listParticipations(eventId){
       const result = await q('select * from scope_participations where evenement_id = $1', [eventId]);
       return result.rows;
@@ -622,6 +676,50 @@ function createPgRepo(client){
         ]
       );
       return result.rows[0];
+    },
+    async bulkUpsertParticipations(rows){
+      const list = rows || [];
+      if(!list.length) return [];
+      const result = await q(
+        `insert into scope_participations(
+           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id
+         )
+         select evenement_id, personne_id, statut, motif_absence, commentaire,
+                coalesce(role, 'PARTICIPANT'), coalesce(source, 'SAISIE'), auteur_id, cible_suivie_id
+         from jsonb_to_recordset($1::jsonb) as x(
+           evenement_id uuid,
+           personne_id uuid,
+           statut text,
+           motif_absence text,
+           commentaire text,
+           role text,
+           source text,
+           auteur_id text,
+           cible_suivie_id uuid
+         )
+         on conflict (evenement_id, personne_id) do update set
+           statut = excluded.statut,
+           motif_absence = excluded.motif_absence,
+           commentaire = excluded.commentaire,
+           role = excluded.role,
+           source = excluded.source,
+           auteur_id = excluded.auteur_id,
+           cible_suivie_id = excluded.cible_suivie_id,
+           updated_at = now()
+         returning *`,
+        [JSON.stringify(list.map((row) => ({
+          evenement_id: row.evenement_id,
+          personne_id: row.personne_id,
+          statut: row.statut,
+          motif_absence: row.motif_absence || null,
+          commentaire: row.commentaire || null,
+          role: row.role || 'PARTICIPANT',
+          source: row.source || 'SAISIE',
+          auteur_id: row.auteur_id || null,
+          cible_suivie_id: row.cible_suivie_id || null
+        })))]
+      );
+      return result.rows;
     },
     async insertLegacy(row){
       const id = row.legacy_id || randomUUID();
@@ -715,6 +813,44 @@ function createPgRepo(client){
         ]
       );
       return result.rows[0];
+    },
+    async bulkInsertImportLignes(rows){
+      const list = rows || [];
+      if(!list.length) return [];
+      const result = await q(
+        `insert into scope_import_lignes(
+           import_id, ligne_no, fingerprint, statut, type_propose,
+           evenement_id, legacy_id, payload_source, raison, action
+         )
+         select import_id, ligne_no, fingerprint, statut, type_propose,
+                evenement_id, legacy_id, payload_source, raison, action
+         from jsonb_to_recordset($1::jsonb) as x(
+           import_id uuid,
+           ligne_no integer,
+           fingerprint text,
+           statut text,
+           type_propose text,
+           evenement_id uuid,
+           legacy_id uuid,
+           payload_source jsonb,
+           raison text,
+           action text
+         )
+         returning *`,
+        [JSON.stringify(list.map((row) => ({
+          import_id: row.import_id,
+          ligne_no: row.ligne_no,
+          fingerprint: row.fingerprint,
+          statut: row.statut,
+          type_propose: row.type_propose || null,
+          evenement_id: row.evenement_id || null,
+          legacy_id: row.legacy_id || null,
+          payload_source: row.payload_source || null,
+          raison: row.raison || null,
+          action: row.action || null
+        })))]
+      );
+      return result.rows;
     },
     async listImportedFingerprints(){
       const result = await q(

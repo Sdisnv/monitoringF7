@@ -397,7 +397,8 @@ function createScopeService(repo){
     return { count: personnes.length, personnes };
   }
 
-  function previewPopulationStore(){
+  function previewPopulationStore(store){
+    const base = store || repo;
     const cache = {
       cibles: null,
       ciblesById: new Map(),
@@ -408,7 +409,7 @@ function createScopeService(repo){
     return {
       async listCibles(){
         if(!cache.cibles){
-          cache.cibles = repo.listCibles ? await repo.listCibles() : [];
+          cache.cibles = base.listCibles ? await base.listCibles() : [];
           cache.cibles.forEach((cible) => cache.ciblesById.set(cible.cible_id, cible));
         }
         return cache.cibles;
@@ -416,28 +417,28 @@ function createScopeService(repo){
       async getCible(id){
         await this.listCibles();
         if(cache.ciblesById.has(id)) return cache.ciblesById.get(id);
-        const cible = repo.getCible ? await repo.getCible(id) : null;
+        const cible = base.getCible ? await base.getCible(id) : null;
         if(cible) cache.ciblesById.set(id, cible);
         return cible;
       },
       async listSuiviNominatif(){
         if(!cache.suivi){
-          cache.suivi = repo.listSuiviNominatif ? await repo.listSuiviNominatif() : [];
+          cache.suivi = base.listSuiviNominatif ? await base.listSuiviNominatif() : [];
         }
         return cache.suivi;
       },
       async listAffectationsForCibles(cibleIds, date){
-        return repo.listAffectationsForCibles ? repo.listAffectationsForCibles(cibleIds, date) : [];
+        return base.listAffectationsForCibles ? base.listAffectationsForCibles(cibleIds, date) : [];
       },
       async getPersonne(id){
         if(cache.personnes.has(id)) return cache.personnes.get(id);
-        const personne = repo.getPersonne ? await repo.getPersonne(id) : null;
+        const personne = base.getPersonne ? await base.getPersonne(id) : null;
         cache.personnes.set(id, personne);
         return personne;
       },
       async listPersonnesPeriodes(id){
         if(cache.periodes.has(id)) return cache.periodes.get(id);
-        const periodes = repo.listPersonnesPeriodes ? await repo.listPersonnesPeriodes(id) : [];
+        const periodes = base.listPersonnesPeriodes ? await base.listPersonnesPeriodes(id) : [];
         cache.periodes.set(id, periodes);
         return periodes;
       }
@@ -1559,9 +1560,15 @@ function createScopeService(repo){
       const created = [];
       const skipped = [];
       const importedGroups = [];
+      const importedByLine = new Map();
+      const skippedByLine = new Map();
+      const attenduRows = [];
+      const participationRows = [];
+      const populationStore = previewPopulationStore(tx);
       for(const group of groups){
         if(group.actionPrevue === 'IGNORER_IDEMPOTENT' || group.statut === 'EXACT_MATCH' || group.statut === 'PROBABLE_MATCH'){
           skipped.push({ sourceLineNos: group.sourceLineNos, statut: group.statut, codeCours: group.codeCours });
+          group.sourceLineNos.forEach((lineNo) => skippedByLine.set(lineNo, skipped[skipped.length - 1]));
           continue;
         }
         const event = await tx.insertEvenement({
@@ -1581,6 +1588,12 @@ function createScopeService(repo){
           responsable: group.responsable || null,
           cible_ids: (group.cibles || []).map((c) => c.cibleId)
         });
+        if(event.already_exists){
+          const item = { sourceLineNos: group.sourceLineNos, statut: 'EXACT_MATCH', codeCours: group.codeCours };
+          skipped.push(item);
+          group.sourceLineNos.forEach((lineNo) => skippedByLine.set(lineNo, item));
+          continue;
+        }
         await tx.appendJournal({
           auteur_id: actorId(actor),
           entite: 'evenement',
@@ -1593,10 +1606,10 @@ function createScopeService(repo){
           domaineCode: group.domaineStockage,
           sousDomaineCode: group.sousDomaine || null,
           cibleIds: (group.cibles || []).map((c) => c.cibleId),
-          store: tx
+          store: populationStore
         });
         for(const personne of population.personnes){
-          await tx.upsertAttendu({
+          attenduRows.push({
             evenement_id: event.evenement_id,
             personne_id: personne.personneId,
             inclus: true,
@@ -1606,7 +1619,7 @@ function createScopeService(repo){
               .filter(Boolean)
               .join('|') || 'population_standard'
           });
-          await tx.upsertParticipation({
+          participationRows.push({
             evenement_id: event.evenement_id,
             personne_id: personne.personneId,
             statut: 'NON_RENSEIGNE',
@@ -1630,6 +1643,15 @@ function createScopeService(repo){
           version: frozen ? frozen.version : event.version
         });
         importedGroups.push({ group, event });
+        group.sourceLineNos.forEach((lineNo) => importedByLine.set(lineNo, event));
+      }
+      if(tx.bulkUpsertAttendus) await tx.bulkUpsertAttendus(attenduRows);
+      else {
+        for(const row of attenduRows) await tx.upsertAttendu(row);
+      }
+      if(tx.bulkUpsertParticipations) await tx.bulkUpsertParticipations(participationRows);
+      else {
+        for(const row of participationRows) await tx.upsertParticipation(row);
       }
       const importRow = await tx.insertImport({
         source_filename: filename || null,
@@ -1645,20 +1667,25 @@ function createScopeService(repo){
           excluded: [...excluded]
         }
       });
+      const importLineRows = [];
       for(const line of preview.lignes){
-        const groupDone = importedGroups.find((item) => item.group.sourceLineNos.includes(line.ligneNo));
-        const groupSkipped = skipped.find((item) => item.sourceLineNos.includes(line.ligneNo));
-        await tx.insertImportLigne({
+        const groupDone = importedByLine.get(line.ligneNo);
+        const groupSkipped = skippedByLine.get(line.ligneNo);
+        importLineRows.push({
           import_id: importRow.import_id,
           ligne_no: line.ligneNo,
           fingerprint: line.fingerprint,
           statut: excluded.has(line.ligneNo) ? 'EXCLU' : (groupSkipped ? 'DEJA_IMPORTE' : 'IMPORTE'),
           type_propose: 'STANDARD',
-          evenement_id: groupDone ? groupDone.event.evenement_id : null,
+          evenement_id: groupDone ? groupDone.evenement_id : null,
           payload_source: { format: importContract.FORMAT_STANDARD, line },
           raison: line.raison,
           action: excluded.has(line.ligneNo) ? 'EXCLU' : (groupSkipped ? 'IGNORER_IDEMPOTENT' : 'CREER')
         });
+      }
+      if(tx.bulkInsertImportLignes) await tx.bulkInsertImportLignes(importLineRows);
+      else {
+        for(const row of importLineRows) await tx.insertImportLigne(row);
       }
       await tx.appendJournal({
         auteur_id: actorId(actor),

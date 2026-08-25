@@ -77,6 +77,7 @@
     importRapport: null,
     importFilter: 'TOUS',
     importDecisions: {},
+    importCommitProgress: null,
     personnelSync: {
       filename: '',
       csvText: '',
@@ -2875,7 +2876,7 @@
       if (l.statut === 'A_ARBITRER' && state.importDecisions[l.ligneNo] && state.importDecisions[l.ligneNo].mode) return true;
       return false;
     });
-    const canCommit = live && preview && !rapport && blocking.length === 0 && (creatable || all.some((l) => !state.importExcluded[l.ligneNo]));
+    const canCommit = live && preview && !rapport && !state.loading && !state.importCommitProgress && blocking.length === 0 && (creatable || all.some((l) => !state.importExcluded[l.ligneNo]));
     const summary = (preview && preview.summary) || {};
     const byDomaine = summary.byDomaine || {};
     const modes = summary.modes || {};
@@ -3017,6 +3018,12 @@
     const periodNote = yearsHint.length && !yearsHint.includes(String(state.year))
       ? `<p class="scope-mode-hint">Les événements importés sont en ${escapeHtml(yearsHint.join(', '))}. Le bandeau affiche ${escapeHtml(String(state.year))} : changez l’année pour les voir.</p>`
       : '';
+    const progress = state.importCommitProgress;
+    const progressOverlay = progress ? `<div class="scope-modal-backdrop"><div class="scope-modal" role="status" aria-live="polite">
+      <h3>${escapeHtml(progress.title || 'Import du programme en cours')}</h3>
+      <p>${escapeHtml(progress.phase || 'Préparation...')}</p>
+      <div class="scope-loading-row">Merci de garder cette fenêtre ouverte. Aucune relance automatique ne sera effectuée.</div>
+    </div></div>` : '';
     return `
       <div class="scope-crumb">Réglages / Import des événements</div>
       <div class="scope-main">
@@ -3055,6 +3062,7 @@
           ${periodNote}
           <div class="scope-actions"><a class="scope-btn scope-btn-primary" id="scope-import-see" href="#/evenements">Voir les événements</a></div>
         </div>` : ''}
+        ${progressOverlay}
       </div>
     `;
   }
@@ -3487,15 +3495,25 @@
     document.getElementById('scope-import-commit')?.addEventListener('click', () => {
       const excludedLineNos = Object.keys(state.importExcluded).filter((k) => state.importExcluded[k]).map(Number);
       withLoading(async () => {
-        state.importRapport = await client.commitImportEvenements({
-          csvText: state.importFile.csvText,
-          filename: state.importFile.filename,
-          excludedLineNos,
-          previewToken: state.importPreview && state.importPreview.previewToken,
-          decisions: state.importDecisions
-        });
-        await loadList();
-        toast('success', 'Programme importé', `${state.importRapport.summary.imported} événement(s) créé(s).`);
+        try {
+          state.importCommitProgress = { title: 'Import du programme en cours', phase: 'Préparation...' };
+          render();
+          state.importCommitProgress = { title: 'Import du programme en cours', phase: 'Création des événements et constitution des populations...' };
+          render();
+          state.importRapport = await client.commitImportEvenements({
+            csvText: state.importFile.csvText,
+            filename: state.importFile.filename,
+            excludedLineNos,
+            previewToken: state.importPreview && state.importPreview.previewToken,
+            decisions: state.importDecisions
+          });
+          state.importCommitProgress = { title: 'Import du programme en cours', phase: 'Finalisation...' };
+          render();
+          await loadList();
+          toast('success', 'Programme importé', `${state.importRapport.summary.imported} événement(s) créé(s).`);
+        } finally {
+          state.importCommitProgress = null;
+        }
       });
     });
     document.getElementById('scope-import-file')?.addEventListener('change', (e) => {

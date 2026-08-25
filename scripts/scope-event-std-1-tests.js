@@ -10,6 +10,7 @@ const { computeTaux } = require('../netlify/functions/_scope-rules');
 const importContract = require('../assets/js/scope-import-contract.js');
 const uiLogic = require('../assets/js/scope-ui-logic.js');
 
+const ROOT = path.join(__dirname, '..');
 const ACTOR = { sub: 'scope-event-std-1-test', roles: ['sdis-admin'] };
 const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;public_cible;responsable;salle;STAT.COM.;semaine;jour;monitoring;code exercice';
 
@@ -39,6 +40,47 @@ async function person(repo, nip, affs){
     });
   }
   return p;
+}
+
+async function people(repo, prefix, count, affs){
+  const out = [];
+  for(let i = 1; i <= count; i += 1){
+    out.push(await person(repo, `${prefix}${String(i).padStart(3, '0')}`, affs));
+  }
+  return out;
+}
+
+function countedRepo(repo){
+  const counts = {};
+  const wrap = (target) => new Proxy(target, {
+    get(inner, prop){
+      const value = inner[prop];
+      if(typeof value !== 'function') return value;
+      return (...args) => {
+        counts[prop] = (counts[prop] || 0) + 1;
+        return value.apply(inner, args);
+      };
+    }
+  });
+  return {
+    counts,
+    repo: new Proxy(repo, {
+      get(target, prop){
+        const value = target[prop];
+        if(typeof value !== 'function') return value;
+        if(prop === 'withTransaction'){
+          return (fn) => {
+            counts[prop] = (counts[prop] || 0) + 1;
+            return value.call(target, (tx) => fn(wrap(tx)));
+          };
+        }
+        return (...args) => {
+          counts[prop] = (counts[prop] || 0) + 1;
+          return value.apply(target, args);
+        };
+      }
+    })
+  };
 }
 
 async function commit(service, text){
@@ -482,6 +524,144 @@ async function commit(service, text){
         row({ code: '010FOBAFOBA.705', libelle: 'FOBA group', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 2', statCom: '010FOBA' })
       ]));
     }
+  });
+
+  await run('ROBUST O — populations preview/commit JSP 14, FOBA 25, Cond PL 94', async () => {
+    {
+      const repo = createMemoryRepo();
+      await people(repo, 'JSP14', 14, [['JSP', 'C1']]);
+      const service = createScopeService(repo);
+      const text = csv([row({ code: '010JC1JSP.801', libelle: 'JSP C1 pop', domaine: 'JSP', qui: 'JSP', publicCible: 'JSP C1', statCom: '010JC1' })]);
+      const preview = await service.previewImportEvenements({ csvText: text });
+      assert.strictEqual(preview.groups[0].populationCount, 14);
+      const result = await service.commitImportEvenements({ csvText: text, previewToken: preview.previewToken }, ACTOR);
+      assert.strictEqual((await repo.listAttendus(result.created[0].evenementId)).filter((a) => a.inclus !== false).length, 14);
+    }
+    {
+      const repo = createMemoryRepo();
+      await people(repo, 'FOBA1', 10, [['FOBA', '1']]);
+      await people(repo, 'FOBA2', 10, [['FOBA', '2']]);
+      await people(repo, 'FOBAX', 5, [['FOBA', '1'], ['FOBA', '2']]);
+      const service = createScopeService(repo);
+      const text = csv([
+        row({ code: '010FOBAFOBA.802', libelle: 'FOBA pop', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 1', statCom: '010FOBA' }),
+        row({ code: '010FOBAFOBA.803', libelle: 'FOBA pop', domaine: 'FOBA', qui: 'FOBA', publicCible: 'FOBA 2', statCom: '010FOBA' })
+      ]);
+      const preview = await service.previewImportEvenements({ csvText: text });
+      assert.strictEqual(preview.groups[0].populationCount, 25);
+      const result = await service.commitImportEvenements({ csvText: text, previewToken: preview.previewToken }, ACTOR);
+      assert.strictEqual((await repo.listAttendus(result.created[0].evenementId)).filter((a) => a.inclus !== false).length, 25);
+    }
+    {
+      const repo = createMemoryRepo();
+      await people(repo, 'PL94', 94, [['AUTO', 'PL']]);
+      const service = createScopeService(repo);
+      const text = csv([row({ code: '01521F7AUTO.804', libelle: 'Cond PL pop', domaine: 'AUTO', qui: 'AUTO', publicCible: 'PL', statCom: '01521F7' })]);
+      const preview = await service.previewImportEvenements({ csvText: text });
+      assert.strictEqual(preview.groups[0].populationCount, 94);
+      const result = await service.commitImportEvenements({ csvText: text, previewToken: preview.previewToken }, ACTOR);
+      assert.strictEqual((await repo.listAttendus(result.created[0].evenementId)).filter((a) => a.inclus !== false).length, 94);
+    }
+  });
+
+  await run('ROBUST R/Q — 122 événements utilisent les bulk inserts et terminent rapidement', async () => {
+    const base = createMemoryRepo();
+    await people(base, 'BULKPL', 94, [['AUTO', 'PL']]);
+    const { repo, counts } = countedRepo(base);
+    const service = createScopeService(repo);
+    const rows = [];
+    for(let i = 1; i <= 122; i += 1){
+      rows.push(row({
+        code: `01521F7AUTO.${900 + i}`,
+        date: `01.${String((i % 12) + 1).padStart(2, '0')}.2026`,
+        libelle: `Bulk Cond PL ${i}`,
+        domaine: 'AUTO',
+        qui: 'AUTO',
+        publicCible: 'PL',
+        statCom: '01521F7'
+      }));
+    }
+    const text = csv(rows);
+    const preview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(preview.summary.eventsDetected, 122);
+    const start = process.hrtime.bigint();
+    const result = await service.commitImportEvenements({ csvText: text, filename: 'bulk-122.csv', previewToken: preview.previewToken }, ACTOR);
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.strictEqual(result.summary.imported, 122);
+    assert.ok(ms < 2500, `commit mémoire 122 trop lent: ${ms.toFixed(1)}ms`);
+    assert.strictEqual(counts.bulkUpsertAttendus, 1);
+    assert.strictEqual(counts.bulkUpsertParticipations, 1);
+    assert.strictEqual(counts.bulkInsertImportLignes, 1);
+  });
+
+  await run('ROBUST S — erreur au milieu du commit => rollback complet', async () => {
+    const repo = createMemoryRepo();
+    const original = repo.insertEvenement;
+    let n = 0;
+    repo.insertEvenement = async function patchedInsert(row){
+      n += 1;
+      if(n === 51) throw new Error('injection_commit_milieu');
+      return original.call(repo, row);
+    };
+    const service = createScopeService(repo);
+    const text = csv(Array.from({ length: 80 }, (_, i) => row({
+      code: `012G1DPS.${1000 + i}`,
+      libelle: `Atomic ${i}`,
+      domaine: 'DPS',
+      qui: 'DPS',
+      publicCible: 'G1',
+      statCom: '012G1'
+    })));
+    const preview = await service.previewImportEvenements({ csvText: text });
+    await assert.rejects(() => service.commitImportEvenements({ csvText: text, previewToken: preview.previewToken }, ACTOR), /injection_commit_milieu/);
+    assert.strictEqual((await repo.listEvenements({})).length, 0);
+  });
+
+  await run('ROBUST T — réimport exact idempotent sans doublon attendu', async () => {
+    const repo = createMemoryRepo();
+    await people(repo, 'IDEM', 3, [['DPS', 'G1']]);
+    const service = createScopeService(repo);
+    const text = csv([row({ code: '012G1DPS.1101', libelle: 'Idempotent', domaine: 'DPS', qui: 'DPS', publicCible: 'G1', statCom: '012G1' })]);
+    const firstPreview = await service.previewImportEvenements({ csvText: text });
+    const first = await service.commitImportEvenements({ csvText: text, previewToken: firstPreview.previewToken }, ACTOR);
+    const secondPreview = await service.previewImportEvenements({ csvText: text });
+    assert.strictEqual(secondPreview.summary.nouveaux, 0);
+    assert.strictEqual(secondPreview.summary.reconnus, 1);
+    const second = await service.commitImportEvenements({ csvText: text, previewToken: secondPreview.previewToken }, ACTOR);
+    assert.strictEqual(second.summary.imported, 0);
+    assert.strictEqual((await repo.listEvenements({})).length, 1);
+    assert.strictEqual((await repo.listAttendus(first.created[0].evenementId)).length, 3);
+  });
+
+  await run('ROBUST U — double appel même import sans doublon CODE COURS', async () => {
+    const repo = createMemoryRepo();
+    await people(repo, 'DUO', 2, [['DPS', 'G1']]);
+    const service = createScopeService(repo);
+    const text = csv([row({ code: '012G1DPS.1201', libelle: 'Double clic', domaine: 'DPS', qui: 'DPS', publicCible: 'G1', statCom: '012G1' })]);
+    const preview = await service.previewImportEvenements({ csvText: text });
+    const [a, b] = await Promise.all([
+      service.commitImportEvenements({ csvText: text, previewToken: preview.previewToken }, ACTOR),
+      service.commitImportEvenements({ csvText: text, previewToken: preview.previewToken }, ACTOR)
+    ]);
+    assert.strictEqual((await repo.listEvenements({})).length, 1);
+    assert.strictEqual(a.summary.imported + b.summary.imported, 1);
+    const eventId = (await repo.listEvenements({}))[0].evenement_id;
+    assert.strictEqual((await repo.listAttendus(eventId)).length, 2);
+  });
+
+  await run('ROBUST V — UX commit : progression, double clic bloqué, HTML timeout masqué', async () => {
+    const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    assert.ok(ui.includes('importCommitProgress'));
+    assert.ok(ui.includes('Import du programme en cours'));
+    assert.ok(ui.includes('Création des événements et constitution des populations'));
+    assert.ok(ui.includes('!state.loading && !state.importCommitProgress'));
+    const info = uiLogic.friendlyError({
+      status: 504,
+      message: '<HTML><HEAD><TITLE>Inactivity Timeout</TITLE></HEAD><BODY>Too much time has passed without sending any data for document.</BODY></HTML>'
+    });
+    assert.strictEqual(info.title, 'Import interrompu');
+    assert.ok(!info.message.includes('<HTML>'));
+    assert.ok(info.message.includes('délai d’exécution dépassé'));
   });
 
   await run('METIER K/L — dates JJ.MM.AA françaises et refus US', async () => {

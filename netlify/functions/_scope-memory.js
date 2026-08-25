@@ -285,6 +285,15 @@ function createMemoryRepo(){
       });
     },
     async insertEvenement(row){
+      const codeCours = row.code_cours || row.codeCours || null;
+      if(codeCours){
+        const existing = [...evenements.values()].find((item) => item.code_cours === codeCours);
+        if(existing){
+          const current = evenementCibles.get(existing.evenement_id) || [];
+          evenementCibles.set(existing.evenement_id, [...new Set(current.concat(row.cible_ids || []))]);
+          return { ...existing, already_exists: true };
+        }
+      }
       const item = {
         evenement_id: row.evenement_id || randomUUID(),
         date: isoDate(row.date),
@@ -296,7 +305,7 @@ function createMemoryRepo(){
         mode_suivi: require('./_scope-analytics').inferModeSuivi(row),
         identifiant_externe: row.identifiant_externe || row.identifiantExterne || null,
         internal_event_id: row.internal_event_id || row.internalEventId || row.evenement_id || null,
-        code_cours: row.code_cours || row.codeCours || null,
+        code_cours: codeCours,
         code_source: row.code_source || row.codeSource || row.code_cours || row.codeCours || null,
         source_type: row.source_type || row.sourceType || (row.origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
         heure_debut: row.heure_debut || row.heureDebut || null,
@@ -315,7 +324,7 @@ function createMemoryRepo(){
       };
       evenements.set(item.evenement_id, item);
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
-      return item;
+      return { ...item, already_exists: false };
     },
     async listEvenements({ annee, statut, domaine } = {}){
       return [...evenements.values()]
@@ -383,6 +392,11 @@ function createMemoryRepo(){
       attendus.set(keyEP(item.evenement_id, item.personne_id), item);
       return item;
     },
+    async bulkUpsertAttendus(rows){
+      const out = [];
+      for(const row of rows || []) out.push(await api.upsertAttendu(row));
+      return out;
+    },
     async listParticipations(eventId){
       return [...participations.values()].filter(p => p.evenement_id === eventId);
     },
@@ -410,6 +424,11 @@ function createMemoryRepo(){
       };
       participations.set(keyEP(item.evenement_id, item.personne_id), item);
       return item;
+    },
+    async bulkUpsertParticipations(rows){
+      const out = [];
+      for(const row of rows || []) out.push(await api.upsertParticipation(row));
+      return out;
     },
     async insertLegacy(row){
       const item = {
@@ -489,6 +508,11 @@ function createMemoryRepo(){
       };
       importLignes.set(keyLigne(item.import_id, item.ligne_no), item);
       return item;
+    },
+    async bulkInsertImportLignes(rows){
+      const out = [];
+      for(const row of rows || []) out.push(await api.insertImportLigne(row));
+      return out;
     },
     async listImportedFingerprints(){
       return [...importLignes.values()]
