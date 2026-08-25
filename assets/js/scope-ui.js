@@ -277,7 +277,7 @@
       state.listReady = false;
       state.listError = null;
     }
-    if (r.screen === 'personnel') {
+    if (r.screen === 'personnel' || r.screen === 'import-personnel') {
       state.personnelReady = false;
       state.personnelError = null;
       state.personnelSituationApplied = false;
@@ -289,7 +289,7 @@
         await loadDashboard();
       } else if (r.screen === 'liste') {
         await loadList();
-      } else if (r.screen === 'personnel') {
+      } else if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         await loadPersonnelDirectory();
       } else if (r.screen === 'personne' && r.personneId) {
         await loadPersonneFiche(r.personneId);
