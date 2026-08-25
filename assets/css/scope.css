@@ -2013,38 +2013,83 @@ body.scope-pdf-open { overflow: hidden; }
   margin: 12px 0 4px;
   align-items: end;
 }
+.scope-table-sort-header,
 .scope-sortable,
 .scope-person-table th[data-sort]{
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
 }
+.scope-table-sort-header{
+  transition: background-color .16s ease, color .16s ease;
+}
+.scope-table-sort-header:hover{
+  background: #f3f5f8;
+  color: var(--scope-ink);
+}
+.scope-table-sort-header.is-asc,
+.scope-table-sort-header.is-desc{
+  color: var(--scope-ink);
+  background: #f7f8fa;
+}
+.scope-table-sort-control,
 .scope-sort-button,
 .scope-person-table th[data-sort] span{
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
+.scope-table-sort-control,
 .scope-sort-button{
+  appearance: none;
+  -webkit-appearance: none;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   font-weight: inherit;
   letter-spacing: inherit;
+  min-height: 28px;
+  width: 100%;
   padding: 0;
   cursor: pointer;
   text-align: left;
+  outline: none;
 }
+.scope-table-sort-control:hover,
+.scope-table-sort-control:active,
+.scope-table-sort-control:focus{
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.scope-table-sort-control:focus-visible{
+  outline: 2px solid rgba(222, 0, 10, .34);
+  outline-offset: 3px;
+}
+.scope-table-sort-label{
+  min-width: 0;
+}
+.scope-table-sort-indicator,
 .scope-sort-indicator{
-  min-width: 12px;
+  flex: 0 0 10px;
   opacity: .38;
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1;
+  color: #7b8491;
+  transform: translateY(-.5px);
 }
+.scope-table-sort-header.is-asc .scope-table-sort-label,
+.scope-table-sort-header.is-desc .scope-table-sort-label{
+  font-weight: 750;
+}
+.scope-table-sort-header.is-asc .scope-table-sort-indicator,
+.scope-table-sort-header.is-desc .scope-table-sort-indicator,
 .scope-sortable.is-asc .scope-sort-indicator,
 .scope-sortable.is-desc .scope-sort-indicator{
   opacity: 1;
+  color: var(--scope-red);
 }
 .scope-person-table th[data-sort]::after{
   content: "";

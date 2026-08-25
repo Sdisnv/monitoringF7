@@ -1361,7 +1361,7 @@
     const data = table === 'personnel'
       ? `data-sort="${escapeHtml(key)}" ${attr}="${escapeHtml(key)}"`
       : `${attr}="${escapeHtml(key)}"`;
-    return `<th ${data} class="scope-sortable ${s.className}" aria-sort="${s.ariaSort}" scope="col"><button type="button" class="scope-sort-button"><span>${escapeHtml(label)}</span><span class="scope-sort-indicator" aria-hidden="true">${escapeHtml(s.indicator)}</span></button></th>`;
+    return `<th ${data} class="scope-table-sort-header scope-sortable ${s.className}" aria-sort="${s.ariaSort}" scope="col"><button type="button" class="scope-table-sort-control scope-sort-button"><span class="scope-table-sort-label">${escapeHtml(label)}</span><span class="scope-table-sort-indicator scope-sort-indicator" aria-hidden="true">${escapeHtml(s.indicator)}</span></button></th>`;
   }
 
   function personnelSortHeader(key, label) {

@@ -236,14 +236,35 @@ function record(name, fn) {
   });
 
   await record('rendu final — headers interactifs et indicateurs visibles', async () => {
-    assert.ok(ui.includes('class="scope-sort-button"'));
-    assert.ok(ui.includes('class="scope-sort-indicator"'));
+    assert.ok(ui.includes('class="scope-table-sort-header scope-sortable'));
+    assert.ok(ui.includes('class="scope-table-sort-control scope-sort-button"'));
+    assert.ok(ui.includes('class="scope-table-sort-label"'));
+    assert.ok(ui.includes('class="scope-table-sort-indicator scope-sort-indicator"'));
     assert.ok(logicSrc.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : '↕'"));
+    assert.ok(css.includes('.scope-table-sort-header'));
+    assert.ok(css.includes('.scope-table-sort-header:hover'));
+    assert.ok(css.includes('.scope-table-sort-control:focus-visible'));
     assert.ok(css.includes('.scope-sortable'));
     assert.ok(css.includes('cursor: pointer'));
     assert.ok(css.includes('.scope-sort-indicator'));
+    assert.ok(css.includes('appearance: none'));
+    assert.ok(css.includes('border-radius: 0'));
     assert.ok(ui.includes('root.querySelectorAll(\'[data-scope-sort][data-sort-key]\')'));
     assert.ok(ui.includes('root.querySelectorAll(\'[data-personnel-sort]\')'));
+  });
+
+  await record('rendu ORION — pas de capsule bouton dans les en-têtes triables', async () => {
+    const controlBlock = css.slice(css.indexOf('.scope-table-sort-control,'), css.indexOf('.scope-table-sort-control:hover'));
+    assert.ok(controlBlock.includes('border: 0'));
+    assert.ok(controlBlock.includes('border-radius: 0'));
+    assert.ok(controlBlock.includes('background: transparent'));
+    assert.ok(!/border-radius:\s*(?:99|999|8|12)px/.test(controlBlock));
+    assert.ok(!/background:\s*#(?:fff|f3f4f6|eef2f6)/i.test(controlBlock));
+    assert.ok(css.includes('color: var(--scope-red);'));
+    assert.ok(ui.includes('<th>Actions</th>'));
+    assert.ok(ui.includes('<th>ACTIONS</th>'));
+    assert.ok(!ui.includes("sortableHeader('events', 'actions'"));
+    assert.ok(!ui.includes("personnelSortHeader('actions'"));
   });
 
   await record('tri DOM simulé événements — défaut ASC, clic DATE inverse, filtre conservé', async () => {
