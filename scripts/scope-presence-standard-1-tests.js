@@ -56,7 +56,7 @@ async function setupEventFor(domaineCode, niveauCode, countOrSpecs){
       nip: `PSTD${String(index + 1).padStart(3, '0')}`,
       nom: `Nom${String(index + 1).padStart(2, '0')}`,
       prenom: `Prenom${String(index + 1).padStart(2, '0')}`,
-      grade: index % 2 ? 'Cpl' : 'Sap'
+      grade: domaineCode === 'JSP' ? 'JSP' : (index % 2 ? 'Cpl' : 'Sap')
     }));
   const people = [];
   for (const spec of specs) people.push(await seedPerson(repo, g1.cible_id, spec));
@@ -413,6 +413,35 @@ function part(personne, statut, extra){
     assert.strictEqual(add.version, before.version + 1);
   });
 
+  await record('CAS 1R4.1 — JSP ne génère aucun attendu Moniteur JSP', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const jspG1 = await repo.findCible('JSP', 'G1');
+    const dpsG1 = await repo.findCible('DPS', 'G1');
+    const jeune = await repo.insertPersonne({ nip: 'JSP-Y-1', nom: 'Jeune', prenom: 'Alice', grade: 'JSP' });
+    const monitor = await repo.insertPersonne({ nip: 'JSP-M-1', nom: 'Monitor', prenom: 'Marc', grade: 'Sgt' });
+    await repo.insertAffectation({ personne_id: jeune.personne_id, cible_id: jspG1.cible_id, date_debut: '2026-01-01' });
+    await repo.insertAffectation({ personne_id: monitor.personne_id, cible_id: jspG1.cible_id, date_debut: '2026-01-01' });
+    await repo.insertAffectation({ personne_id: monitor.personne_id, cible_id: dpsG1.cible_id, date_debut: '2026-01-01' });
+    const created = await service.createEvenement({
+      date: '2026-04-15',
+      domaineCode: 'JSP',
+      libelle: 'Presence JSP',
+      cibleIds: [jspG1.cible_id]
+    }, { sub: 'presence-test' });
+    const preview = await service.previewAttendus(created.evenement.evenement_id);
+    assert.deepStrictEqual(preview.personnes.map((row) => row.personneId), [jeune.personne_id]);
+    assert.strictEqual(preview.jeunes.length, 1);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(preview, 'moniteurs'), false);
+    await service.figerPopulation(created.evenement.evenement_id, { baseVersion: created.version }, { sub: 'presence-test' });
+    const fiche = await service.lireEvenement(created.evenement.evenement_id);
+    assert.strictEqual(fiche.attendus.length, 1);
+    assert.strictEqual(fiche.attendus[0].personne_id, jeune.personne_id);
+    assert.strictEqual(fiche.jsp.jeunes.length, 1);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(fiche.jsp, 'moniteurs'), false);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(fiche.jsp, 'tauxMoniteurs'), false);
+  });
+
   await record('CAS 1R4 Q4-Q15 — matrice contribution encadrement et dédup NIP', async () => {
     for (const domaine of ['DPS', 'DAP', 'JSP', 'AUTO', 'PAPR']) {
       const aux = getEncadrementContribution({ domaine, role: 'AUXILIAIRE' });
@@ -477,7 +506,33 @@ function part(personne, statut, extra){
     assert.strictEqual(readd.version, reset.version + 1);
   });
 
-  await record('UI — 1R4 Orion, feedback central, KPI encadrement et reset persistant', async () => {
+  await record('CAS 1R4.1 — ventilation dynamique des excusés depuis la saisie locale', async () => {
+    const rows = [
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'PRIVE', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'PRIVE', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'PROFESSIONNEL', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'PROFESSIONNEL', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'PROFESSIONNEL', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'ARMEE', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: 'ACCIDENT_MALADIE', inclus: true },
+      { statut: 'PRESENT', motifAbsence: 'PRIVE', inclus: true }
+    ];
+    assert.deepStrictEqual(logic.excuseBreakdown(rows).map((row) => [row.label, row.count]), [
+      ['Privé', 2],
+      ['Professionnel', 3],
+      ['Armée', 1],
+      ['Accident/Maladie', 1]
+    ]);
+    rows[2].motifAbsence = 'ARMEE';
+    assert.deepStrictEqual(logic.excuseBreakdown(rows).map((row) => [row.label, row.count]), [
+      ['Privé', 2],
+      ['Professionnel', 2],
+      ['Armée', 2],
+      ['Accident/Maladie', 1]
+    ]);
+  });
+
+  await record('UI — 1R4.1 conservation saisie, JSP et KPI excusés', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const logicSource = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
@@ -530,6 +585,28 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('scopeSearchTimers'));
     assert.ok(ui.includes('scopeSearchTokens'));
     assert.ok(ui.includes('clearPresenceSearchState'));
+    assert.ok(ui.includes('function snapshotSaisieState'));
+    assert.ok(ui.includes('function refreshFichePreservingSaisie'));
+    assert.ok(ui.includes("state.encRole = 'FORMATEUR';"));
+    assert.ok(ui.includes('state.saisie = snapshot.saisie'));
+    assert.ok(ui.includes('state.cibleFilter = snapshot.cibleFilter'));
+    assert.ok(ui.includes('snapshot.scrollY'));
+    assert.ok(ui.includes('await refreshFichePreservingSaisie(id, snapshot)'));
+    const addEncSource = ui.slice(ui.indexOf('function addEncadrement'), ui.indexOf('function removeEncadrement'));
+    const removeEncSource = ui.slice(ui.indexOf('function removeEncadrement'), ui.indexOf('function addManualParticipant'));
+    assert.ok(!addEncSource.includes('await loadFiche(id)'));
+    assert.ok(!removeEncSource.includes('await loadFiche(id)'));
+    assert.ok(!ui.includes('MONITEURS JSP ·'));
+    assert.ok(!ui.includes('Aucun moniteur attendu.'));
+    assert.ok(ui.includes('renderExcuseBreakdown(rows)'));
+    assert.ok(ui.includes('scope-kpi-popover'));
+    assert.ok(ui.includes('tabindex="0"'));
+    assert.ok(ui.includes('aria-haspopup="true"'));
+    assert.ok(css.includes('.scope-kpi-popover'));
+    assert.ok(css.includes('.scope-kpi-card.has-detail:hover .scope-kpi-popover'));
+    assert.ok(css.includes('.scope-kpi-card.has-detail:focus .scope-kpi-popover'));
+    assert.ok(logicSource.includes('function excuseBreakdown'));
+    assert.ok(logicSource.includes('excuseBreakdown,'));
     assert.ok(ui.includes('setTimeout'));
     assert.ok(ui.includes('renderSuggestionList'));
     assert.ok(logicSource.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : ''"));

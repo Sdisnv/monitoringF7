@@ -1336,11 +1336,21 @@ html, body {
 }
 
 .scope-kpi-card {
+  position: relative;
   min-width: 0;
   padding: 10px 12px;
   border-left: 4px solid #9aa6b2;
   border-radius: var(--scope-radius-sm);
   background: #f7f9fb;
+}
+
+.scope-kpi-card.has-detail {
+  cursor: help;
+}
+
+.scope-kpi-card.has-detail:focus {
+  outline: 2px solid rgba(23, 28, 143, 0.25);
+  outline-offset: 2px;
 }
 
 .scope-kpi-card strong {
@@ -1352,10 +1362,79 @@ html, body {
 }
 
 .scope-kpi-card span {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   margin-top: 3px;
   color: var(--scope-muted);
   font-size: 12px;
+}
+
+.scope-kpi-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.scope-kpi-popover {
+  position: absolute;
+  z-index: 20;
+  left: 10px;
+  top: calc(100% + 6px);
+  min-width: 190px;
+  max-width: 240px;
+  padding: 9px 10px;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius-sm);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  color: var(--scope-ink);
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.scope-kpi-card.has-detail:hover .scope-kpi-popover,
+.scope-kpi-card.has-detail:focus .scope-kpi-popover,
+.scope-kpi-card.has-detail:focus-within .scope-kpi-popover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.scope-kpi-popover p {
+  margin: 0;
+  color: var(--scope-muted);
+}
+
+.scope-kpi-popover dl {
+  margin: 0;
+}
+
+.scope-kpi-popover div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: baseline;
+}
+
+.scope-kpi-popover dt,
+.scope-kpi-popover dd {
+  margin: 0;
+}
+
+.scope-kpi-popover dd {
+  font-weight: 800;
 }
 
 .scope-kpi-card.is-present { border-left-color: #23845f; background: #eef8f4; }

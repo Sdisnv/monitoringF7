@@ -390,9 +390,38 @@
     const data = await client.getEvenement(id);
     state.fiche = data;
     state.conflict = false;
+    state.encRole = 'FORMATEUR';
     buildSaisieFromFiche();
     state.volumes = volumesFromFiche();
     state.qtyPreview = null;
+  }
+
+  function snapshotSaisieState() {
+    return {
+      saisie: (state.saisie || []).map((row) => Object.assign({}, row, {
+        cibles: Array.isArray(row.cibles) ? row.cibles.slice() : []
+      })),
+      cibleFilter: state.cibleFilter,
+      manualPersonQuery: state.manualPersonQuery,
+      manualPersonHits: state.manualPersonHits.slice(),
+      scrollY: typeof window !== 'undefined' ? window.scrollY : 0
+    };
+  }
+
+  async function refreshFichePreservingSaisie(id, snapshot) {
+    const data = await client.getEvenement(id);
+    state.fiche = data;
+    state.conflict = false;
+    state.saisie = snapshot.saisie;
+    state.cibleFilter = snapshot.cibleFilter;
+    state.manualPersonQuery = snapshot.manualPersonQuery;
+    state.manualPersonHits = snapshot.manualPersonHits;
+    state.volumes = volumesFromFiche();
+    state.qtyPreview = null;
+    render();
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => window.scrollTo({ top: snapshot.scrollY, left: window.scrollX, behavior: 'auto' }));
+    }
   }
 
   function volumesFromFiche() {
@@ -2589,12 +2618,11 @@
     const extras = state.pendingExceptions;
     const rows = people.concat(extras);
     const jeunes = ((state.preview && state.preview.jeunes) || people.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId));
-    const moniteurs = ((state.preview && state.preview.moniteurs) || people.filter((p) => p.jspRole === 'MONITEUR')).filter((p) => !state.pendingRetraits.includes(p.personneId));
-    const splitJsp = Boolean(jeunes.length || moniteurs.length);
+    const splitJsp = Boolean(jeunes.length);
     const body = previewRowsHtml(rows);
     return `
       <div class="scope-card" style="margin-top:12px">
-        <h3 style="margin-top:0">Attendus générés · ${rows.length}${splitJsp ? ` · jeunes ${jeunes.length} · moniteurs ${moniteurs.length}` : ''}</h3>
+        <h3 style="margin-top:0">Attendus générés · ${rows.length}${splitJsp ? ` · jeunes ${jeunes.length}` : ''}</h3>
         <div class="scope-toolbar">
           <div class="scope-field" style="min-width:220px">
             <label>Ajouter une personne</label>
@@ -2612,13 +2640,6 @@
           <table class="scope-table">
             <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
             <tbody>${previewRowsHtml(jeunes)}</tbody>
-          </table>
-        </div>
-        <h3 style="margin-top:16px">MONITEURS JSP · ${moniteurs.length}</h3>
-        <div class="scope-table-wrap">
-          <table class="scope-table">
-            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
-            <tbody>${previewRowsHtml(moniteurs)}</tbody>
           </table>
         </div>
         ${extras.length ? `<h3 style="margin-top:16px">Ajouts manuels · ${extras.length}</h3>
@@ -2674,19 +2695,14 @@
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
           const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
-          const moniteurs = filtered.filter((row) => row.jspRole === 'MONITEUR');
           const autres = filtered.filter((row) => row.jspRole !== 'JEUNE' && row.jspRole !== 'MONITEUR');
-          if (!isJsp || !(jeunes.length || moniteurs.length)) {
+          if (!isJsp || !jeunes.length) {
             return `<div class="scope-card" style="margin-top:12px">${filtered.length ? renderSaisieRows(filtered) : `<div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div>`}</div>`;
           }
           return `
         <div class="scope-card" style="margin-top:12px">
           <h3 style="margin-top:0">JEUNES JSP · ${jeunes.length}</h3>
           ${jeunes.length ? renderSaisieRows(jeunes) : `<div class="scope-empty">Aucun jeune attendu.</div>`}
-        </div>
-        <div class="scope-card" style="margin-top:12px">
-          <h3 style="margin-top:0">MONITEURS JSP · ${moniteurs.length}</h3>
-          ${moniteurs.length ? renderSaisieRows(moniteurs) : `<div class="scope-empty">Aucun moniteur attendu.</div>`}
         </div>
         ${autres.length ? `<div class="scope-card" style="margin-top:12px"><h3 style="margin-top:0">Autres attendus · ${autres.length}</h3>${renderSaisieRows(autres)}</div>` : ''}`;
         })()}
@@ -2711,8 +2727,19 @@
     return c;
   }
 
-  function renderKpiCard(kind, value, label) {
-    return `<div class="scope-kpi-card is-${escapeHtml(kind)}"><strong>${escapeHtml(String(value || 0))}</strong><span>${escapeHtml(label)}</span></div>`;
+  function renderExcuseBreakdown(rows) {
+    const items = L.excuseBreakdown ? L.excuseBreakdown(rows) : [];
+    const total = items.reduce((sum, item) => sum + Number(item.count || 0), 0);
+    if (!total) return '<p>Aucune absence excusée</p>';
+    return `<dl>${items.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(String(item.count || 0))}</dd></div>`).join('')}</dl>`;
+  }
+
+  function renderKpiCard(kind, value, label, options) {
+    const detail = options && options.detailHtml ? `<div class="scope-kpi-popover" role="tooltip">${options.detailHtml}</div>` : '';
+    const tab = detail ? ' tabindex="0"' : '';
+    const hint = detail ? ' aria-haspopup="true"' : '';
+    const marker = detail ? '<span class="scope-kpi-info" aria-hidden="true">i</span>' : '';
+    return `<div class="scope-kpi-card is-${escapeHtml(kind)}${detail ? ' has-detail' : ''}"${tab}${hint}><strong>${escapeHtml(String(value || 0))}</strong><span>${escapeHtml(label)}${marker}</span>${detail}</div>`;
   }
 
   function renderPresenceKpis(niveaux, fiche) {
@@ -2724,7 +2751,7 @@
         <h3>${escapeHtml(label)}</h3>
         <div class="scope-kpi-strip">
           ${renderKpiCard('present', c.present, 'Présents')}
-          ${renderKpiCard('excuse', c.excuse, 'Excusés')}
+          ${renderKpiCard('excuse', c.excuse, 'Excusés', { detailHtml: renderExcuseBreakdown(rows) })}
           ${renderKpiCard('absent', c.absent, 'Absents')}
           ${renderKpiCard('dispense', c.dispense, 'Dispensés')}
           ${renderKpiCard('open', c.open, 'À renseigner')}
@@ -3011,7 +3038,7 @@
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
           <p style="font-size:28px;margin:8px 0 0">${escapeHtml(L.formatTaux(t.percentage))}</p>
           <p style="color:var(--scope-muted);margin-top:4px">Taux de participation officiel</p>
-          ${fiche.jsp && (fiche.jsp.tauxJeunes || fiche.jsp.tauxMoniteurs) ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes && fiche.jsp.tauxJeunes.percentage))} · Moniteurs JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxMoniteurs && fiche.jsp.tauxMoniteurs.percentage))}</p>` : ''}
+          ${fiche.jsp && fiche.jsp.tauxJeunes ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes && fiche.jsp.tauxJeunes.percentage))}</p>` : ''}
           <div class="scope-kpis">
             <div class="scope-kpi"><strong>${t.presents ?? 0}</strong><span>Présents</span></div>
             <div class="scope-kpi"><strong>${rows.filter((row) => row.role === 'FORMATEUR' && row.statut === 'PRESENT').length}</strong><span>Formateurs</span></div>
@@ -4760,6 +4787,7 @@
   function addEncadrement(personneId) {
     const id = route().id;
     const role = state.encRole || document.getElementById('enc-role')?.value || 'FORMATEUR';
+    const snapshot = snapshotSaisieState();
     withFeedbackAction({
       progressTitle: 'Ajout à l’encadrement',
       successTitle: 'Encadrement ajouté',
@@ -4768,19 +4796,20 @@
       await client.ajouterEncadrement(id, { personneId, role }, state.fiche.evenement.version);
       state.encQuery = '';
       state.encHits = [];
-      await loadFiche(id);
+      await refreshFichePreservingSaisie(id, snapshot);
     });
   }
 
   function removeEncadrement(personneId) {
     const id = route().id;
+    const snapshot = snapshotSaisieState();
     withFeedbackAction({
       progressTitle: 'Retrait de l’encadrement',
       successTitle: 'Encadrement retiré',
       successMessage: 'La personne peut être sélectionnée de nouveau.'
     }, async () => {
       await client.retirerEncadrement(id, { personneId }, state.fiche.evenement.version);
-      await loadFiche(id);
+      await refreshFichePreservingSaisie(id, snapshot);
     });
   }
 

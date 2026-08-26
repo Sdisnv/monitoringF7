@@ -502,22 +502,43 @@ function createScopeService(repo){
     const result = preview || { personnes: [] };
     const personnes = result.personnes || [];
     if(String(evenement && evenement.domaine_code || '').toUpperCase() !== 'JSP'){
-      return Object.assign({}, result, { jeunes: [], moniteurs: [] });
+      return Object.assign({}, result, { jeunes: [] });
     }
     const date = evenement.date;
     const decorated = [];
     for(const person of personnes){
-      const affs = repo.listAffectations
-        ? await repo.listAffectations({ personneId: person.personneId || person.personne_id, date })
-        : [];
-      const role = display.classifyJspRole({ grade: person.grade }, affs, date);
+      const role = await classifyJspRoleForEventPerson(
+        { grade: person.grade },
+        person.personneId || person.personne_id,
+        date
+      );
       decorated.push(Object.assign({}, person, { jspRole: role }));
     }
+    const jeunes = decorated.filter((row) => row.jspRole === 'JEUNE');
     return Object.assign({}, result, {
-      personnes: decorated,
-      jeunes: decorated.filter((row) => row.jspRole === 'JEUNE'),
-      moniteurs: decorated.filter((row) => row.jspRole === 'MONITEUR')
+      personnes: jeunes,
+      count: jeunes.length,
+      jeunes
     });
+  }
+
+  async function classifyJspRoleForEventPerson(person, personneId, date){
+    const raw = repo.listAffectations
+      ? await repo.listAffectations({ personneId, date })
+      : [];
+    const affs = [];
+    for(const aff of raw){
+      const cible = aff.cible_id && repo.getCible ? await repo.getCible(aff.cible_id) : null;
+      affs.push({
+        ...aff,
+        categorie: aff.categorie || 'OI',
+        domaine: aff.domaine || cible?.domaine_code,
+        cible: aff.cible || cible?.niveau_code,
+        date_actif: aff.date_actif || aff.date_debut,
+        date_inactif: aff.date_inactif || aff.date_fin
+      });
+    }
+    return display.classifyJspRole(person, affs, date);
   }
 
   async function previewAttendus(eventId){
@@ -1431,30 +1452,22 @@ function createScopeService(repo){
     if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
       legacy = await repo.getLegacyByEvenementId(eventId);
     }
-    let jsp = { jeunes: [], moniteurs: [], tauxJeunes: null, tauxMoniteurs: null };
+    let jsp = { jeunes: [], tauxJeunes: null };
     if(String(evenement.domaine_code || '').toUpperCase() === 'JSP'){
       const date = evenement.date;
       const tagged = [];
       for(const row of attendus){
         const person = personnes[String(row.personne_id)] || personnes[row.personne_id];
-        const affs = repo.listAffectations
-          ? await repo.listAffectations({ personneId: row.personne_id, date })
-          : [];
-        const jspRole = display.classifyJspRole(person, affs, date);
+        const jspRole = await classifyJspRoleForEventPerson(person, row.personne_id, date);
         tagged.push(Object.assign({}, row, { jspRole }));
       }
       attendus = tagged;
       const jeunes = tagged.filter((row) => row.jspRole === 'JEUNE');
-      const moniteurs = tagged.filter((row) => row.jspRole === 'MONITEUR');
       const jeuneIds = new Set(jeunes.map((row) => String(row.personne_id)));
-      const monitorIds = new Set(moniteurs.map((row) => String(row.personne_id)));
       jsp = {
         jeunes,
-        moniteurs,
         jeunesAttendus: jeunes.filter((row) => row.inclus !== false).length,
-        moniteursAttendus: moniteurs.filter((row) => row.inclus !== false).length,
-        tauxJeunes: computeTaux(participations.filter((row) => jeuneIds.has(String(row.personne_id))), jeunes),
-        tauxMoniteurs: computeTaux(participations.filter((row) => monitorIds.has(String(row.personne_id))), moniteurs)
+        tauxJeunes: computeTaux(participations.filter((row) => jeuneIds.has(String(row.personne_id))), jeunes)
       };
     }
     return {

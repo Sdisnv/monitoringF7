@@ -438,6 +438,16 @@
     return { present, formateur, excuse, absent, dispense, open };
   }
 
+  function excuseBreakdown(rows) {
+    const counts = Object.fromEntries(MOTIFS.map((m) => [m.value, 0]));
+    for (const row of rows || []) {
+      if (!row || row.inclus === false || row.statut !== 'ABSENT_EXCUSE') continue;
+      const key = String(row.motifAbsence || row.motif_absence || '');
+      if (Object.prototype.hasOwnProperty.call(counts, key)) counts[key] += 1;
+    }
+    return MOTIFS.map((m) => ({ value: m.value, label: m.label, count: counts[m.value] || 0 }));
+  }
+
   function clotureDisabled(counters) {
     return false;
   }
@@ -884,6 +894,7 @@
     modeLabel,
     volumesEquality,
     liveCounters,
+    excuseBreakdown,
     clotureDisabled,
     needsConfirmAllPresent,
     applyAllPresent,
