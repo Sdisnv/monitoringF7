@@ -124,12 +124,13 @@ function stateFor(currentEventId, participations, cyclePersonnes, personnes){
   await record('I — tooltip exact et ligne bleue non sélectionnable', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
-    assert.ok(ui.includes('a déjà participé à l’exercice en qualité de PAPR.'));
+    assert.ok(ui.includes("relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'"));
+    assert.ok(ui.includes('à la session PR ${referenceLabel} en qualité de ${referenceQuality}.'));
     assert.ok(ui.includes('disabled aria-disabled="true"'));
     assert.ok(ui.includes('scope-row-session-counted'));
     assert.ok(css.includes('background: #e5f0ff'));
-    const tooltip = `${person('p1', '7647').prenom} ${person('p1', '7647').nom} (${person('p1', '7647').nip}) a déjà participé à l’exercice en qualité de PAPR.`;
-    assert.strictEqual(tooltip, 'Thierry Grünig (7647) a déjà participé à l’exercice en qualité de PAPR.');
+    const tooltip = `${person('p1', '7647').prenom} ${person('p1', '7647').nom} (${person('p1', '7647').nip}) a participé à la session PR 1.2 en qualité de PAPR.`;
+    assert.strictEqual(tooltip, 'Thierry Grünig (7647) a participé à la session PR 1.2 en qualité de PAPR.');
   });
 
   for(const result of results){

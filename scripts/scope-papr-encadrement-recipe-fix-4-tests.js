@@ -95,17 +95,19 @@ function attendu(detail, personneId){
     assert.strictEqual(attendu(pr2, 'a').alreadyCountedInSession, true);
   });
 
-  await record('B — Formateur première fois en 1.2 ne verrouille pas 1.1 ni 1.2', async () => {
+  await record('B — Formateur première fois en 1.2 garde 1.2 source et verrouille les autres sessions', async () => {
     const ctx = await setup();
     await addEnc(ctx, 'pr2', 'a', 'FORMATEUR');
     const pr1 = await ctx.service.lireEvenement('pr1');
     const pr2 = await ctx.service.lireEvenement('pr2');
     const pr3 = await ctx.service.lireEvenement('pr3');
-    assert.strictEqual(pr1.prExerciseParticipation.kpis.presents, 0);
-    assert.ok(!attendu(pr1, 'a').alreadyCountedInSession);
+    assert.strictEqual(pr1.prExerciseParticipation.kpis.presents, 1);
+    assert.strictEqual(attendu(pr1, 'a').alreadyCountedInSession, true);
+    assert.strictEqual(attendu(pr1, 'a').sessionReferenceRelation, 'BEFORE_REFERENCE');
     assert.strictEqual(pr2.prExerciseParticipation.kpis.presents, 1);
     assert.ok(!attendu(pr2, 'a').alreadyCountedInSession);
     assert.strictEqual(attendu(pr3, 'a').alreadyCountedInSession, true);
+    assert.strictEqual(attendu(pr3, 'a').sessionReferenceRelation, 'AFTER_REFERENCE');
   });
 
   await record('C — Surveillant seul encadre sans KPI général ni verrou bleu', async () => {

@@ -623,8 +623,11 @@
         const cibleLabel = cibleLabelFromAttendu(a);
         const alreadyCountedInSession = Boolean(a.alreadyCountedInSession || a.already_counted_in_session);
         const fullName = [person.prenom, person.nom].filter(Boolean).join(' ') || displayPerson(fiche, a.personne_id);
+        const referenceLabel = a.sessionReferenceLabel || a.session_reference_label || '—';
+        const referenceQuality = a.sessionReferenceQuality || a.session_reference_quality || 'PAPR';
+        const relation = a.sessionReferenceRelation || a.session_reference_relation;
         const alreadyCountedTooltip = alreadyCountedInSession
-          ? `${fullName} (${nipOf(fiche, a.personne_id)}) a déjà participé à l’exercice en qualité de PAPR.`
+          ? `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`
           : '';
         return {
           personneId: a.personne_id,

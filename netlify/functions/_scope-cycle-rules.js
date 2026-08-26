@@ -171,6 +171,17 @@ function prSessionKey(event){
   return match ? `${cyclePart}:PR:${match[1]}` : '';
 }
 
+function prSessionLabel(event){
+  const explicit = normalizeText(event && (event.pr_session_label || event.prSessionLabel));
+  if(explicit) return explicit;
+  const libelle = normalizeText(event && (event.libelle || event.label));
+  const match = libelle.match(/exercice\s+pr\s+([0-9]+\.[0-9]+)/i);
+  if(match) return match[1];
+  const key = prSessionKey(event);
+  const keyMatch = key.match(/PR:([0-9]+\.[0-9]+)$/);
+  return keyMatch ? keyMatch[1] : normalizeText(event && (event.code_cours || event.codeCours)) || normalizeText(eventId(event));
+}
+
 function prExerciseEvents(input = {}){
   const events = input.evenements || input.events || [];
   const currentId = normalizeText(input.currentEventId || input.current_event_id);
@@ -307,6 +318,7 @@ function computePrExerciseParticipationState(input = {}){
   const groupEventIds = new Set(events.map(eventId).filter(Boolean));
   const currentEventId = normalizeText(input.currentEventId || input.current_event_id);
   const eventOrder = new Map(events.map((event, index) => [eventId(event), index]));
+  const eventsById = new Map(events.map((event) => [eventId(event), event]));
   const currentOrder = currentEventId && eventOrder.has(currentEventId) ? eventOrder.get(currentEventId) : null;
   const population = new Set();
   const countedByPerson = new Map();
@@ -332,7 +344,6 @@ function computePrExerciseParticipationState(input = {}){
   for(const participation of input.participations || []){
     const eid = eventId(participation);
     if(!groupEventIds.has(eid)) continue;
-    if(currentOrder !== null && eventOrder.has(eid) && eventOrder.get(eid) > currentOrder) continue;
     const key = dedupeKey(participation, personnesById);
     if(!key) continue;
     if(!isSessionCountingParticipation(participation, personnesById, population)) continue;
@@ -352,23 +363,35 @@ function computePrExerciseParticipationState(input = {}){
   const presentKeys = new Set();
   const dispenseKeys = new Set();
   for(const [key, rows] of countedByPerson.entries()){
+    rows.sort((a, b) => (eventOrder.get(a.eventId) ?? 9999) - (eventOrder.get(b.eventId) ?? 9999));
     const first = rows[0] || {};
     if(first.statut === 'DISPENSE') dispenseKeys.add(key);
     else presentKeys.add(key);
   }
   for(const [key, rows] of countedByPerson.entries()){
+    const reference = rows[0] || {};
     const outsideCurrent = currentEventId
       ? rows.filter((row) => row.eventId !== currentEventId)
       : rows;
     if(!outsideCurrent.length) continue;
+    const referenceOrder = eventOrder.get(reference.eventId);
+    const referenceEvent = eventsById.get(reference.eventId) || {};
+    const relation = currentOrder != null && referenceOrder != null && currentOrder < referenceOrder
+      ? 'BEFORE_REFERENCE'
+      : 'AFTER_REFERENCE';
     for(const person of personnesById.values()){
       const id = personneId(person);
       if(!id || dedupeKey(person, personnesById) !== key) continue;
       byPersonneId[id] = {
         alreadyCountedInSession: true,
-        countedEventId: outsideCurrent[0].eventId,
-        countedRole: outsideCurrent[0].role,
-        countedStatut: outsideCurrent[0].statut
+        countedEventId: reference.eventId,
+        countedRole: reference.role,
+        countedStatut: reference.statut,
+        countedSource: reference.source,
+        referenceEventId: reference.eventId,
+        referenceSessionLabel: prSessionLabel(referenceEvent),
+        referenceQuality: reference.role === 'FORMATEUR' ? 'Formateur PR' : 'PAPR',
+        referenceRelation: relation
       };
     }
   }

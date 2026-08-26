@@ -135,7 +135,8 @@ async function expectHttpError(fn, status, error){
     assert.strictEqual(row.alreadyCountedInSession, true);
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
-    assert.ok(ui.includes('a déjà participé à l’exercice en qualité de PAPR.'));
+    assert.ok(ui.includes("relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'"));
+    assert.ok(ui.includes('à la session PR ${referenceLabel} en qualité de ${referenceQuality}.'));
     assert.ok(ui.includes('disabled aria-disabled="true"'));
     assert.ok(css.includes('scope-row-session-counted'));
   });

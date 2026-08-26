@@ -1565,7 +1565,17 @@ function createScopeService(repo){
               already_counted_in_session: true,
               alreadyCountedInSession: true,
               session_counted_event_id: state.countedEventId,
-              session_counted_role: state.countedRole
+              session_counted_role: state.countedRole,
+              session_counted_statut: state.countedStatut,
+              session_counted_source: state.countedSource,
+              session_reference_event_id: state.referenceEventId,
+              session_reference_label: state.referenceSessionLabel,
+              session_reference_quality: state.referenceQuality,
+              session_reference_relation: state.referenceRelation,
+              sessionReferenceEventId: state.referenceEventId,
+              sessionReferenceLabel: state.referenceSessionLabel,
+              sessionReferenceQuality: state.referenceQuality,
+              sessionReferenceRelation: state.referenceRelation
             })
             : row;
         });

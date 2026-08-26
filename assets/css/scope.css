@@ -1746,7 +1746,12 @@ html, body {
   color: #0b3f6f;
 }
 
-.scope-status-row button[data-status="ABSENT_EXCUSE"],
+.scope-status-row button[data-status="ABSENT_EXCUSE"] {
+  background: #fff1f2;
+  border-color: #ef4444;
+  color: #9f1239;
+}
+
 .scope-status-row button[data-status="DISPENSE"] {
   background: #fff8db;
   border-color: #9a6b00;
@@ -1769,7 +1774,11 @@ html, body {
   border-color: #073b66;
 }
 
-.scope-status-row button[data-status="ABSENT_EXCUSE"]:hover,
+.scope-status-row button[data-status="ABSENT_EXCUSE"]:hover {
+  background: #ffe4e6;
+  border-color: #dc2626;
+}
+
 .scope-status-row button[data-status="DISPENSE"]:hover {
   background: #fff0b8;
   border-color: #7a5200;
@@ -1793,7 +1802,13 @@ html, body {
   box-shadow: 0 0 0 2px rgba(11, 79, 134, .18);
 }
 
-.scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"],
+.scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"] {
+  background: #ef4444;
+  border-color: #b91c1c;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, .18);
+}
+
 .scope-status-row button[data-status="DISPENSE"][aria-pressed="true"] {
   background: #d69b00;
   border-color: #7a5200;
