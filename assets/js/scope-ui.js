@@ -589,6 +589,11 @@
         const part = parts.get(a.personne_id) || {};
         const person = personOf(fiche, a.personne_id) || {};
         const cibleLabel = cibleLabelFromAttendu(a);
+        const alreadyCountedInSession = Boolean(a.alreadyCountedInSession || a.already_counted_in_session);
+        const fullName = [person.prenom, person.nom].filter(Boolean).join(' ') || displayPerson(fiche, a.personne_id);
+        const alreadyCountedTooltip = alreadyCountedInSession
+          ? `${fullName} (${nipOf(fiche, a.personne_id)}) a déjà participé à l’exercice en qualité de PAPR.`
+          : '';
         return {
           personneId: a.personne_id,
           nom: displayPerson(fiche, a.personne_id),
@@ -605,7 +610,9 @@
           role: part.role || 'PARTICIPANT',
           origine: a.origine,
           manual: a.origine === 'EXCEPTION_AJOUT',
-          jspRole: a.jspRole || a.jsp_role || null
+          jspRole: a.jspRole || a.jsp_role || null,
+          alreadyCountedInSession,
+          alreadyCountedTooltip
         };
       });
   }
@@ -3153,8 +3160,15 @@
             <th>Justificatif</th>
           </tr></thead>
           <tbody>
-            ${rows.map((row) => `<tr data-pid="${row.personneId}" class="${row.manual ? 'scope-row-manual' : ''}">
-              <td data-label="Nom">${escapeHtml(row.nomFamille || row.nom)}</td>
+            ${rows.map((row) => {
+              const blocked = Boolean(row.alreadyCountedInSession);
+              const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
+              const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : ''].filter(Boolean).join(' ');
+              const blockedAttrs = blocked
+                ? ` tabindex="0" title="${escapeHtml(row.alreadyCountedTooltip)}" aria-describedby="${tooltipId}"`
+                : '';
+              return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
+              <td data-label="Nom">${escapeHtml(row.nomFamille || row.nom)}${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
               <td data-label="Prénom">${escapeHtml(row.prenom || '—')}</td>
               <td data-label="Grade">${escapeHtml(row.grade || '—')}</td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
@@ -3162,12 +3176,13 @@
               <td data-label="Présence">
                 <div class="scope-status-row">
                   ${statuses.map(([v, l]) => `
-                    <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}">${l}</button>
+                    <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}"${blocked ? ` disabled aria-disabled="true" title="${escapeHtml(row.alreadyCountedTooltip)}"` : ''}>${l}</button>
                   `).join('')}
                 </div>
               </td>
               <td data-label="Justificatif" class="scope-justificatif-cell">${justificatifCell(row) || '<span class="scope-muted-inline">—</span>'}</td>
-            </tr>`).join('')}
+            </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -4360,7 +4375,7 @@
         const pid = btn.closest('[data-pid]').getAttribute('data-pid');
         const statut = btn.getAttribute('data-status');
         const row = state.saisie.find((r) => r.personneId === pid);
-        if (!row) return;
+        if (!row || row.alreadyCountedInSession) return;
         const wasActive = row.statut === statut;
         if (wasActive) {
           row.statut = 'NON_RENSEIGNE';
@@ -4863,8 +4878,11 @@
   }
 
   function applyPresent() {
+    const locked = new Set((state.saisie || []).filter((row) => row.alreadyCountedInSession).map((row) => String(row.personneId)));
+    const before = new Map((state.saisie || []).map((row) => [String(row.personneId), row]));
     if (state.cibleFilter === 'tous') state.saisie = L.applyAllPresent(state.saisie);
     else state.saisie = L.applyAllPresentFiltered(state.saisie, state.cibleFilter);
+    state.saisie = (state.saisie || []).map((row) => locked.has(String(row.personneId)) ? before.get(String(row.personneId)) : row);
     render();
   }
 
@@ -4932,10 +4950,7 @@
       });
         if (kind === 'encadrement') {
           const used = usedEncadrementIds();
-          const expected = expectedIds();
-          state.encHits = sortPeopleForEncadrement(hits.filter((p) =>
-            !used.has(String(p.personne_id)) && !expected.has(String(p.personne_id))
-          ));
+          state.encHits = sortPeopleForEncadrement(hits.filter((p) => !used.has(String(p.personne_id))));
           renderSuggestionList(kind, state.encHits);
         } else {
           const expected = expectedIds();
@@ -4966,11 +4981,11 @@
   function saveParticipations() {
     const id = route().id;
     const payload = state.saisie
-      .filter((r) => r.inclus !== false)
+      .filter((r) => r.inclus !== false && !r.alreadyCountedInSession)
       .map((r) => ({
         personneId: r.personneId,
         statut: r.statut,
-        role: r.role === 'FORMATEUR' ? 'FORMATEUR' : 'PARTICIPANT',
+        role: ['FORMATEUR', 'SURVEILLANT'].includes(r.role) ? r.role : 'PARTICIPANT',
         motif_absence: r.motifAbsence || null,
         commentaire: r.commentaire || null
       }));

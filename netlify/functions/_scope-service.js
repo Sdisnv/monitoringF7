@@ -33,6 +33,7 @@ const {
   resolveSuiviNominatif
 } = require('./_scope-model');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
+const { computeSessionParticipationState } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
 function requireBaseVersion(body){
@@ -1033,7 +1034,24 @@ function createScopeService(repo){
       }
       const attendu = await tx.getAttendu(eventId, personneId);
       if(attendu && attendu.inclus){
-        throw new HttpError(422, 'deja_attendu', 'Cette personne est attendue : utilisez la ligne de présence principale.');
+        await tx.upsertParticipation({
+          ...participation,
+          statut: 'NON_RENSEIGNE',
+          motif_absence: null,
+          commentaire: null,
+          role: 'PARTICIPANT',
+          source: 'SAISIE',
+          auteur_id: actorId(actor)
+        });
+        const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+        await tx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'evenement',
+          entite_id: eventId,
+          action: 'ENCADREMENT_RETRAIT',
+          apres: { personneId, role: participation.role, attendu: true }
+        });
+        return { evenement: next, version: next.version };
       }
       if(typeof tx.deleteParticipation === 'function'){
         await tx.deleteParticipation(eventId, personneId);
@@ -1078,9 +1096,9 @@ function createScopeService(repo){
         }
         const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code });
         const role = String(item.role || item.role_participation || 'PARTICIPANT').toUpperCase();
-        const participationRole = role === 'FORMATEUR' ? 'FORMATEUR' : 'PARTICIPANT';
-        if(participationRole === 'FORMATEUR' && patch.statut !== 'PRESENT'){
-          throw new HttpError(422, 'formateur_present', 'Un formateur standard doit être présent.');
+        const participationRole = ['FORMATEUR', 'SURVEILLANT'].includes(role) ? role : 'PARTICIPANT';
+        if(['FORMATEUR', 'SURVEILLANT'].includes(participationRole) && patch.statut !== 'PRESENT'){
+          throw new HttpError(422, 'encadrement_present', 'Un rôle d’encadrement compté en session doit être présent.');
         }
         const existing = await tx.getParticipation(eventId, personneId);
         await tx.upsertParticipation({
@@ -1163,22 +1181,25 @@ function createScopeService(repo){
       const personne = await tx.getPersonne(personneId);
       if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
       const attendu = await tx.getAttendu(eventId, personneId);
-      if(attendu && attendu.inclus){
-        throw new HttpError(422, 'deja_attendu', 'Cette personne est déjà attendue : pas de ligne d’encadrement distincte. Elle reste PARTICIPANT et entre dans le taux.');
-      }
       const existing = await tx.getParticipation(eventId, personneId);
       if(existing && ROLES_ENCADREMENT.has(existing.role)){
         throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
       }
-      if(existing && !ROLES_ENCADREMENT.has(existing.role)){
+      if(existing && !ROLES_ENCADREMENT.has(existing.role) && !(attendu && attendu.inclus)){
         const residualEncadrement = String(existing.statut || '') === 'NON_CONCERNE';
         if(!residualEncadrement){
           throw new HttpError(422, 'doublon', 'Une participation existe déjà pour cette personne.');
         }
       }
+      const attenduInclus = attendu && attendu.inclus;
+      const statutEncadrement = attenduInclus && ['FORMATEUR', 'SURVEILLANT'].includes(role)
+        ? 'PRESENT'
+        : 'NON_CONCERNE';
       await tx.upsertParticipation({
         ...(existing || { evenement_id: eventId, personne_id: personneId }),
-        statut: 'NON_CONCERNE',
+        statut: statutEncadrement,
+        motif_absence: null,
+        commentaire: null,
         role,
         source: 'ENCADREMENT',
         auteur_id: actorId(actor)
@@ -1432,12 +1453,46 @@ function createScopeService(repo){
     let attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
     const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
-    const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role) && !attenduIds.has(String(p.personne_id)));
+    const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
     const taux = computeTaux(participations, attendus);
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id)
     ]);
+    let sessionParticipation = { byPersonneId: {} };
+    if(evenement.cycle_id && repo.getCycle && repo.listCycleEvents && repo.listCyclePersonnes && repo.listParticipationsForEvents){
+      const cycle = await repo.getCycle(evenement.cycle_id);
+      if(cycle){
+        const cycleEvents = await repo.listCycleEvents(evenement.cycle_id);
+        const cyclePersonnes = await repo.listCyclePersonnes(evenement.cycle_id);
+        const cycleParticipations = cycleEvents.length
+          ? await repo.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id))
+          : [];
+        const cyclePersonnesById = await hydratePersonnes([
+          ...cyclePersonnes.map((row) => row.personne_id),
+          ...cycleParticipations.map((row) => row.personne_id)
+        ]);
+        sessionParticipation = computeSessionParticipationState({
+          cycle,
+          evenements: cycleEvents,
+          cyclePersonnes,
+          participations: cycleParticipations,
+          personnes: cyclePersonnesById,
+          currentEventId: eventId
+        });
+        attendus = attendus.map((row) => {
+          const state = sessionParticipation.byPersonneId[String(row.personne_id)];
+          return state
+            ? Object.assign({}, row, {
+              already_counted_in_session: true,
+              alreadyCountedInSession: true,
+              session_counted_event_id: state.countedEventId,
+              session_counted_role: state.countedRole
+            })
+            : row;
+        });
+      }
+    }
     const journal = await repo.listJournal('evenement', eventId);
     const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(eventId) : null;
     const modeSuivi = inferModeSuivi(evenement);
@@ -1477,6 +1532,7 @@ function createScopeService(repo){
       participations,
       encadrement,
       personnes,
+      sessionParticipation,
       journal,
       compteurs,
       saisieQuantitative: saisie,

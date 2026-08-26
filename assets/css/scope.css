@@ -889,6 +889,47 @@ html, body {
   background: #ffe8e8;
 }
 
+.scope-table tbody tr.scope-row-session-counted,
+.scope-table tbody tr.scope-row-session-counted td,
+.scope-table tbody tr.scope-row-session-counted:nth-child(odd),
+.scope-table tbody tr.scope-row-session-counted:nth-child(odd) td,
+.scope-table tbody tr.scope-row-session-counted:nth-child(even),
+.scope-table tbody tr.scope-row-session-counted:nth-child(even) td,
+.scope-table tbody tr.scope-row-session-counted:hover,
+.scope-table tbody tr.scope-row-session-counted:hover td {
+  background: #e5f0ff;
+}
+
+.scope-table tbody tr.scope-row-session-counted:focus-visible {
+  outline: 2px solid #8bbcff;
+  outline-offset: -2px;
+}
+
+.scope-session-counted-tooltip {
+  position: absolute;
+  z-index: 12;
+  max-width: min(360px, 82vw);
+  margin: 24px 0 0 0;
+  padding: 8px 10px;
+  border-radius: var(--scope-radius-sm);
+  background: #162033;
+  color: #fff;
+  box-shadow: var(--scope-shadow);
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition: opacity .14s ease, transform .14s ease;
+}
+
+.scope-row-session-counted:hover .scope-session-counted-tooltip,
+.scope-row-session-counted:focus .scope-session-counted-tooltip,
+.scope-row-session-counted:focus-within .scope-session-counted-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .scope-badge {
   display: inline-flex;
   align-items: center;
@@ -1713,6 +1754,15 @@ html, body {
   border-color: var(--scope-red);
   color: #fff;
   box-shadow: 0 0 0 1px rgba(222, 0, 10, .12);
+}
+
+.scope-status-row button:disabled,
+.scope-status-row button[aria-disabled="true"] {
+  cursor: not-allowed;
+  color: #7d8794;
+  background: #eef3fb;
+  border-color: #d7e3f4;
+  box-shadow: none;
 }
 
 .scope-status-row select {
@@ -2871,6 +2921,10 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-table tbody tr:hover{background:#fdeef0;}
 .scope-table tbody tr.scope-row-manual{background:#fff3f3;}
 .scope-table tbody tr.scope-row-manual:hover{background:#ffe8e8;}
+.scope-table tbody tr.scope-row-session-counted,
+.scope-table tbody tr.scope-row-session-counted td,
+.scope-table tbody tr.scope-row-session-counted:hover,
+.scope-table tbody tr.scope-row-session-counted:hover td{background:#e5f0ff;}
 .scope-table tbody tr.is-selected{background:#dbe7fb;}
 .scope-table tbody tr.is-anomaly{background:#fde8e8;}
 .scope-table thead th{background:#f6f7f9;}

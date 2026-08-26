@@ -4,6 +4,7 @@ const { getEncadrementContribution, round1 } = require('./_scope-rules');
 const ROLES_CYCLE = new Set(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
 const STATUTS_PRESENTS = new Set(['PRESENT', STATUT_PERMUTATION]);
 const STATUTS_ABSENCE = new Set(['ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
+const SESSION_COUNTING_ROLES = new Set(['PARTICIPANT', 'FORMATEUR', 'SURVEILLANT']);
 
 function normalizeText(value){
   return String(value || '').trim();
@@ -47,6 +48,16 @@ function addPerson(set, row, personnesById){
   const key = dedupeKey(row, personnesById);
   if(key) set.add(key);
   return key;
+}
+
+function isSessionCountingParticipation(row, personnesById, population){
+  const role = normalizeUpper(row && row.role || 'PARTICIPANT');
+  const statut = normalizeUpper(row && row.statut || 'NON_RENSEIGNE');
+  if(!SESSION_COUNTING_ROLES.has(role)) return false;
+  if(role === 'PARTICIPANT') return STATUTS_PRESENTS.has(statut);
+  if(!STATUTS_PRESENTS.has(statut)) return false;
+  const key = dedupeKey(row, personnesById);
+  return Boolean(key && population.has(key));
 }
 
 function sortedValues(set){
@@ -191,15 +202,14 @@ function computeCycleMetrics(input = {}){
     else if(role === 'MONITEUR') moniteurs.add(key);
     else if(role === 'SURVEILLANT') surveillants.add(key);
     else if(role === 'AUXILIAIRE') auxiliaires.add(key);
-    if(role !== 'PARTICIPANT') continue;
-    if(STATUTS_PRESENTS.has(statut)){
+    if(isSessionCountingParticipation(participation, personnesById, population)){
       population.add(key);
       participantsReconnus.add(key);
       participatedByPerson.set(key, eid);
       if(sessionCounts[eid]) sessionCounts[eid].presents += 1;
-    } else if(statut === 'NON_RENSEIGNE'){
+    } else if(role === 'PARTICIPANT' && statut === 'NON_RENSEIGNE'){
       nonRenseignes.add(key);
-    } else if(STATUTS_ABSENCE.has(statut) && assignedByPerson.get(key) === eid){
+    } else if(role === 'PARTICIPANT' && STATUTS_ABSENCE.has(statut) && assignedByPerson.get(key) === eid){
       absencesQualifiees.add(key);
     }
   }
@@ -251,6 +261,59 @@ function computeCycleMetrics(input = {}){
   };
 }
 
+function computeSessionParticipationState(input = {}){
+  const cycle = input.cycle || {};
+  const personnesById = personneLookup(input.personnes);
+  const events = cycleEvents(input, cycle);
+  const cycleEventIds = new Set(events.map(eventId).filter(Boolean));
+  const currentEventId = normalizeText(input.currentEventId || input.current_event_id);
+  const population = new Set();
+  const countedByPerson = new Map();
+
+  for(const row of input.cyclePersonnes || input.cycle_personnes || []){
+    if(cycleId(row) && cycleId(cycle) && cycleId(row) !== cycleId(cycle)) continue;
+    if(roleCycle(row) !== 'PARTICIPANT' || statutCycle(row) === 'EXCLU') continue;
+    const key = addPerson(new Set(), row, personnesById);
+    if(key) population.add(key);
+  }
+
+  for(const participation of input.participations || []){
+    const eid = eventId(participation);
+    if(!cycleEventIds.has(eid)) continue;
+    const key = dedupeKey(participation, personnesById);
+    if(!key) continue;
+    if(!isSessionCountingParticipation(participation, personnesById, population)) continue;
+    const rows = countedByPerson.get(key) || [];
+    rows.push({
+      eventId: eid,
+      personneId: personneId(participation),
+      role: normalizeUpper(participation.role || 'PARTICIPANT'),
+      statut: normalizeUpper(participation.statut || 'NON_RENSEIGNE')
+    });
+    countedByPerson.set(key, rows);
+  }
+
+  const byPersonneId = {};
+  for(const [key, rows] of countedByPerson.entries()){
+    const outsideCurrent = currentEventId
+      ? rows.filter((row) => row.eventId !== currentEventId)
+      : rows;
+    if(!outsideCurrent.length) continue;
+    for(const person of personnesById.values()){
+      const id = personneId(person);
+      if(!id || dedupeKey(person, personnesById) !== key) continue;
+      byPersonneId[id] = {
+        alreadyCountedInSession: true,
+        countedEventId: outsideCurrent[0].eventId,
+        countedRole: outsideCurrent[0].role,
+        countedStatut: outsideCurrent[0].statut
+      };
+    }
+  }
+
+  return { byPersonneId };
+}
+
 function computeStandardEventMetricsUnchanged(input = {}){
   const event = input.evenement || input.event || {};
   return {
@@ -266,5 +329,6 @@ module.exports = {
   sameTechnicalCycle,
   proposeCycleLink,
   computeCycleMetrics,
+  computeSessionParticipationState,
   computeStandardEventMetricsUnchanged
 };

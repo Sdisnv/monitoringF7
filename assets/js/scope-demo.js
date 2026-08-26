@@ -453,23 +453,18 @@
         requireVersion(evenement, baseVersion);
         const personneId = body.personneId || body.personne_id;
         const attendu = attendus.get(key(id, personneId));
-        if (attendu && attendu.inclus) {
-          throw new ScopeApiError(422, {
-            error: 'deja_attendu',
-            message: 'Cette personne est déjà attendue : elle reste dans la liste principale et entre dans le taux.'
-          });
-        }
         const existing = participations.get(key(id, personneId));
         if (existing && ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(existing.role)) {
           throw new ScopeApiError(422, { error: 'deja_encadrement', message: 'Cette personne est déjà ajoutée à l’encadrement.' });
         }
-        if (existing && existing.statut !== 'NON_CONCERNE') {
+        if (existing && existing.statut !== 'NON_CONCERNE' && !(attendu && attendu.inclus)) {
           throw new ScopeApiError(422, { error: 'doublon', message: 'Une participation existe déjà pour cette personne.' });
         }
+        const attenduInclus = attendu && attendu.inclus;
         participations.set(key(id, personneId), {
           evenement_id: id,
           personne_id: personneId,
-          statut: 'NON_CONCERNE',
+          statut: attenduInclus && ['FORMATEUR', 'SURVEILLANT'].includes(body.role) ? 'PRESENT' : 'NON_CONCERNE',
           role: body.role,
           source: 'ENCADREMENT'
         });
