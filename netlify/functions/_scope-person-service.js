@@ -127,6 +127,7 @@ function identityPayload(personne, periodes, affectations, ciblesById, today, pe
     nom: personne.nom,
     prenom: personne.prenom,
     grade: personne.grade || null,
+    dateEntreeSdis: personne.date_entree_sdis || personne.date_entree || null,
     statutRh: statutLabel(personne, periodes),
     actif: !archive,
     archivee: Boolean(archive),
@@ -206,6 +207,24 @@ function personGraphs(evaluated, series, explain){
 
 function createScopePersonService(repo){
   const analytics = createScopeAnalyticsService(repo);
+
+  function actorId(actor){
+    return actor && (actor.sub || actor.email || actor.userId || actor.nip || actor.id) || null;
+  }
+
+  function cleanedIdentityPatch(body = {}){
+    const nom = String(body.nom || '').trim();
+    const prenom = String(body.prenom || '').trim();
+    if(!nom) throw new HttpError(400, 'nom_obligatoire', 'Le nom est obligatoire.');
+    if(!prenom) throw new HttpError(400, 'prenom_obligatoire', 'Le prénom est obligatoire.');
+    const dateEntree = body.dateEntreeSdis || body.date_entree_sdis || body.dateEntree || body.date_entree || null;
+    return {
+      grade: String(body.grade || '').trim() || null,
+      nom,
+      prenom,
+      date_entree_sdis: dateEntree ? isoDate(dateEntree) : null
+    };
+  }
 
   async function ciblesMap(){
     const cibles = await repo.listCibles();
@@ -474,7 +493,42 @@ function createScopePersonService(repo){
     };
   }
 
-  return { directory, fiche, isTestPersonnelNip };
+  async function updateIdentite(personneId, body = {}, actor = null){
+    const current = await repo.getPersonne(personneId);
+    if(!current) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
+    const patch = cleanedIdentityPatch(body);
+    const before = {
+      personneId: current.personne_id,
+      nip: current.nip,
+      grade: current.grade || null,
+      nom: current.nom,
+      prenom: current.prenom,
+      dateEntreeSdis: current.date_entree_sdis || current.date_entree || null
+    };
+    const updated = await repo.updatePersonne(personneId, patch);
+    const after = {
+      personneId: updated.personne_id,
+      nip: updated.nip,
+      grade: updated.grade || null,
+      nom: updated.nom,
+      prenom: updated.prenom,
+      dateEntreeSdis: updated.date_entree_sdis || updated.date_entree || null
+    };
+    if(typeof repo.appendJournal === 'function'){
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'PERSONNE',
+        entite_id: personneId,
+        action: 'MODIFIER_PERSONNE_IDENTITE',
+        avant: before,
+        apres: after,
+        commentaire: 'FICHE_PERSONNE'
+      });
+    }
+    return { personne: after };
+  }
+
+  return { directory, fiche, updateIdentite, isTestPersonnelNip };
 }
 
 module.exports = { createScopePersonService, isTestPersonnelNip };

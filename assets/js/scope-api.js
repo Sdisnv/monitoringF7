@@ -179,7 +179,13 @@
             statut: line.status === 'NEW_JSP' ? 'NOUVEAU' : (line.status === 'ABSENT_DU_NOUVEL_IMPORT' ? 'ABSENT_DU_FICHIER' : line.status),
             statusLabel: line.statusLabel,
             nip: (line.normalized && line.normalized.nip) || line.nip,
-            decision: line.status === 'NEW_PERSON' || line.status === 'NEW_JSP' ? 'CREER' : (line.status === 'ABSENT_DU_NOUVEL_IMPORT' ? 'CONSERVER' : (line.status === 'IDENTICAL' ? 'IGNORER' : 'APPLIQUER'))
+            decision: line.status === 'NEW_PERSON' || line.status === 'NEW_JSP'
+              ? 'CREER'
+              : (line.status === 'ABSENT_DU_NOUVEL_IMPORT'
+                ? 'CONSERVER'
+                : (line.status === 'MODIFIED'
+                  ? 'EXAMINER'
+                  : (line.status === 'IDENTICAL' ? 'IGNORER' : 'APPLIQUER')))
           }, line)),
           fingerprint: result && (result.fingerprint || [result.contexte, result.siteJsp, result.anneeMonitoring, result.filename].filter(Boolean).join('|')),
           importId: result && (result.importId || result.batchId || null),
@@ -214,6 +220,7 @@
       inactivatePersonne(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-inactivate', body); },
       listPersonnelHistory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-history${queryString(params || {})}`); },
       correctPersonnelPeriod(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-correct-period', body); },
+      updatePersonne(id, body) { return request('PATCH', `/personnel/${encodeURIComponent(id)}`, body || {}); },
       async getPersonneFiche(id, params) {
         const payload = await directRequest('GET', `/.netlify/functions/scope-personnel-detail${queryString(Object.assign({}, params || {}, { id }))}`);
         if (payload && payload.personne && !payload.identite) {
@@ -236,6 +243,7 @@
               grade: personne.grade,
               nom: personne.nom,
               prenom: personne.prenom,
+              dateEntreeSdis: personne.dateEntreeSdis || personne.date_entree_sdis || personne.dateEntree || personne.date_entree || null,
               oiActuel: primary ? { label } : null,
               statutRh: (personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at) ? 'INACTIF' : 'ACTIF',
               archivee: Boolean(personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at),

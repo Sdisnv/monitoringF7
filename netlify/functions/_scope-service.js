@@ -33,7 +33,7 @@ const {
   resolveSuiviNominatif
 } = require('./_scope-model');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computePrExerciseParticipationState } = require('./_scope-cycle-rules');
+const { computePrExerciseParticipationState, prSessionLabel } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
 function requireBaseVersion(body){
@@ -1028,9 +1028,57 @@ function createScopeService(repo){
     });
   }
 
+  async function prSeriesEvents(tx, evenement){
+    if(String(evenement.domaine_code || '').toUpperCase() !== 'PR') return [evenement];
+    const rows = evenement.cycle_id && tx.listCycleEvents
+      ? await tx.listCycleEvents(evenement.cycle_id)
+      : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+    const groupKey = evenement.pr_exercise_group_key || null;
+    return (rows || [])
+      .filter((row) => !groupKey || row.pr_exercise_group_key === groupKey)
+      .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(prSessionLabel(a)).localeCompare(String(prSessionLabel(b)), 'fr', { numeric: true }));
+  }
+
+  function isFirstPrSessionEvent(evenement){
+    return String(evenement.domaine_code || '').toUpperCase() === 'PR' && /\b\d+\.1$/.test(prSessionLabel(evenement));
+  }
+
+  async function removeEncadrementRow(tx, eventId, personneId, participation, actor){
+    const attendu = await tx.getAttendu(eventId, personneId);
+    if(attendu && attendu.inclus){
+      const previousStatut = String(participation.statut || '').toUpperCase();
+      const previousSource = String(participation.source || '').toUpperCase();
+      const keepPrPresence = String(participation.role || '').toUpperCase() === 'FORMATEUR'
+        && previousStatut === 'PRESENT'
+        && previousSource !== 'ENCADREMENT';
+      await tx.upsertParticipation({
+        ...participation,
+        statut: keepPrPresence ? 'PRESENT' : 'NON_RENSEIGNE',
+        motif_absence: null,
+        commentaire: null,
+        role: 'PARTICIPANT',
+        source: keepPrPresence ? participation.source : 'SAISIE',
+        auteur_id: actorId(actor)
+      });
+      return;
+    }
+    if(typeof tx.deleteParticipation === 'function'){
+      await tx.deleteParticipation(eventId, personneId);
+    } else {
+      await tx.upsertParticipation({
+        ...participation,
+        statut: 'NON_CONCERNE',
+        role: 'PARTICIPANT',
+        source: 'SAISIE',
+        auteur_id: actorId(actor)
+      });
+    }
+  }
+
   async function retirerEncadrement(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const personneId = body.personneId || body.personne_id;
+    const scope = String(body.scope || body.portee || 'SESSION').toUpperCase();
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
@@ -1039,49 +1087,29 @@ function createScopeService(repo){
       if(!participation || !ROLES_ENCADREMENT.has(participation.role)){
         throw new HttpError(404, 'encadrement_introuvable', 'Encadrement introuvable.');
       }
-      const attendu = await tx.getAttendu(eventId, personneId);
-      if(attendu && attendu.inclus){
-        const previousStatut = String(participation.statut || '').toUpperCase();
-        const previousRole = String(participation.role || '').toUpperCase();
-        const previousSource = String(participation.source || '').toUpperCase();
-        const keepPrPresence = previousRole === 'FORMATEUR' && previousStatut === 'PRESENT' && previousSource !== 'ENCADREMENT';
-        await tx.upsertParticipation({
-          ...participation,
-          statut: keepPrPresence ? 'PRESENT' : 'NON_RENSEIGNE',
-          motif_absence: null,
-          commentaire: null,
-          role: 'PARTICIPANT',
-          source: 'SAISIE',
-          auteur_id: actorId(actor)
-        });
-        const next = await bumpOrConflict(tx, eventId, baseVersion, {});
-        await tx.appendJournal({
-          auteur_id: actorId(actor),
-          entite: 'evenement',
-          entite_id: eventId,
-          action: 'ENCADREMENT_RETRAIT',
-          apres: { personneId, role: participation.role, attendu: true }
-        });
-        return { evenement: next, version: next.version };
+      if(scope === 'SERIE' && String(participation.role || '').toUpperCase() !== 'FORMATEUR'){
+        throw new HttpError(422, 'serie_formateur_uniquement', 'Le retrait de série est réservé au rôle Formateur.');
       }
-      if(typeof tx.deleteParticipation === 'function'){
-        await tx.deleteParticipation(eventId, personneId);
-      } else {
-        await tx.upsertParticipation({
-          ...participation,
-          statut: 'NON_CONCERNE',
-          role: 'PARTICIPANT',
-          source: 'SAISIE',
-          auteur_id: actorId(actor)
-        });
+      const targets = scope === 'SERIE'
+        ? (await prSeriesEvents(tx, evenement)).filter((row) => row.statut === 'PLANIFIE')
+        : [evenement];
+      let removed = 0;
+      for(const target of targets){
+        const targetId = target.evenement_id;
+        const row = targetId === eventId ? participation : await tx.getParticipation(targetId, personneId);
+        if(!row || !ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase())) continue;
+        if(scope === 'SERIE' && String(row.role || '').toUpperCase() !== 'FORMATEUR') continue;
+        await removeEncadrementRow(tx, targetId, personneId, row, actor);
+        await bumpOrConflict(tx, targetId, targetId === eventId ? baseVersion : target.version, {});
+        removed += 1;
       }
-      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      const next = await tx.getEvent(eventId);
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'ENCADREMENT_RETRAIT',
-        apres: { personneId, role: participation.role }
+        action: scope === 'SERIE' ? 'ENCADREMENT_SERIE_RETRAIT' : 'ENCADREMENT_RETRAIT',
+        apres: { personneId, role: participation.role, scope, count: removed }
       });
       return { evenement: next, version: next.version };
     });
@@ -1233,12 +1261,49 @@ function createScopeService(repo){
     });
   }
 
+  async function upsertEncadrementRow(tx, evenement, personneId, role, actor, options = {}){
+    const eventId = evenement.evenement_id;
+    const attendu = await tx.getAttendu(eventId, personneId);
+    const existing = await tx.getParticipation(eventId, personneId);
+    if(existing && ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase())){
+      if(options.allowSameRole && String(existing.role || '').toUpperCase() === role) return { changed: false };
+      throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
+    }
+    if(existing && !ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase()) && !(attendu && attendu.inclus)){
+      const residualEncadrement = String(existing.statut || '') === 'NON_CONCERNE';
+      if(!residualEncadrement){
+        throw new HttpError(422, 'doublon', 'Une participation existe déjà pour cette personne.');
+      }
+    }
+    const attenduInclus = attendu && attendu.inclus;
+    const existingStatut = String(existing?.statut || '').toUpperCase();
+    const existingSource = String(existing?.source || '').toUpperCase();
+    const presenceDejaSaisie = attenduInclus && existingStatut === 'PRESENT' && existingSource !== 'ENCADREMENT';
+    const statutEncadrement = attenduInclus && (role === 'FORMATEUR' || presenceDejaSaisie)
+      ? 'PRESENT'
+      : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE');
+    await tx.upsertParticipation({
+      ...(existing || { evenement_id: eventId, personne_id: personneId }),
+      statut: statutEncadrement,
+      motif_absence: null,
+      commentaire: null,
+      role,
+      source: presenceDejaSaisie ? existing.source : 'ENCADREMENT',
+      auteur_id: actorId(actor)
+    });
+    return { changed: true };
+  }
+
   async function ajouterEncadrement(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const personneId = body.personneId || body.personne_id;
     const role = String(body.role || '');
+    const serieComplete = Boolean(body.serieComplete || body.seriesComplete || body.touteSerie);
     if(!ROLES_ENCADREMENT.has(role)){
       throw new HttpError(422, 'role_invalide', 'Rôle d’encadrement invalide (FORMATEUR, MONITEUR, SURVEILLANT, AUXILIAIRE).');
+    }
+    if(serieComplete && role !== 'FORMATEUR'){
+      throw new HttpError(422, 'serie_formateur_uniquement', 'L’option série complète est réservée au rôle Formateur.');
     }
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
@@ -1246,40 +1311,26 @@ function createScopeService(repo){
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Encadrement saisissable uniquement sur PLANIFIE.');
       const personne = await tx.getPersonne(personneId);
       if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
-      const attendu = await tx.getAttendu(eventId, personneId);
-      const existing = await tx.getParticipation(eventId, personneId);
-      if(existing && ROLES_ENCADREMENT.has(existing.role)){
-        throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
+      if(serieComplete && !isFirstPrSessionEvent(evenement)){
+        throw new HttpError(422, 'serie_depuis_premiere_session', 'L’option série complète est disponible uniquement depuis la première session PR.');
       }
-      if(existing && !ROLES_ENCADREMENT.has(existing.role) && !(attendu && attendu.inclus)){
-        const residualEncadrement = String(existing.statut || '') === 'NON_CONCERNE';
-        if(!residualEncadrement){
-          throw new HttpError(422, 'doublon', 'Une participation existe déjà pour cette personne.');
-        }
+      const targets = serieComplete
+        ? (await prSeriesEvents(tx, evenement)).filter((row) => row.statut === 'PLANIFIE')
+        : [evenement];
+      let changed = 0;
+      for(const target of targets){
+        const result = await upsertEncadrementRow(tx, target, personneId, role, actor, { allowSameRole: serieComplete });
+        if(!result.changed) continue;
+        await bumpOrConflict(tx, target.evenement_id, target.evenement_id === eventId ? baseVersion : target.version, {});
+        changed += 1;
       }
-      const attenduInclus = attendu && attendu.inclus;
-      const existingStatut = String(existing?.statut || '').toUpperCase();
-      const existingSource = String(existing?.source || '').toUpperCase();
-      const presenceDejaSaisie = attenduInclus && existingStatut === 'PRESENT' && existingSource !== 'ENCADREMENT';
-      const statutEncadrement = attenduInclus && (role === 'FORMATEUR' || presenceDejaSaisie)
-        ? 'PRESENT'
-        : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE');
-      await tx.upsertParticipation({
-        ...(existing || { evenement_id: eventId, personne_id: personneId }),
-        statut: statutEncadrement,
-        motif_absence: null,
-        commentaire: null,
-        role,
-        source: presenceDejaSaisie ? existing.source : 'ENCADREMENT',
-        auteur_id: actorId(actor)
-      });
-      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      const next = await tx.getEvent(eventId);
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'ENCADREMENT',
-        apres: { personneId, role }
+        action: serieComplete ? 'ENCADREMENT_SERIE' : 'ENCADREMENT',
+        apres: { personneId, role, serieComplete, count: changed }
       });
       return { evenement: next, version: next.version };
     });

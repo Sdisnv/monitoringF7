@@ -2008,8 +2008,18 @@ html, body {
 
 .scope-inline-fields {
   display: grid;
-  grid-template-columns: minmax(132px, .35fr) minmax(180px, 1fr);
+  grid-template-columns: minmax(132px, .35fr) auto minmax(180px, 1fr);
   gap: 8px;
+  align-items: center;
+}
+
+.scope-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: var(--scope-muted);
+  font-size: 13px;
 }
 
 .scope-person-lookup {

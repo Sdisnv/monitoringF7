@@ -686,8 +686,30 @@ function defaultDecision(line, decisions){
   if(found && found.decision) return found;
   if(line.status === 'ABSENT_DU_NOUVEL_IMPORT') return { decision: 'CONSERVER', dateEffet: line.dateEffet };
   if(line.status === 'NEW_PERSON' || line.status === 'NEW_JSP') return { decision: 'CREER' };
+  if(line.status === 'MODIFIED') return { decision: 'EXAMINER' };
   if(line.status === 'IDENTICAL') return { decision: 'APPLIQUER' };
   return { decision: 'APPLIQUER' };
+}
+
+function requiresExplicitDecision(line){
+  return line && line.status === 'MODIFIED'
+    && line.diff && line.diff.person
+    && (line.diff.person.grade || line.diff.person.nom || line.diff.person.prenom);
+}
+
+function unresolvedRequiredDecisions(preview, decisions){
+  return (preview.lines || [])
+    .filter(requiresExplicitDecision)
+    .filter((line) => {
+      const decision = String(defaultDecision(line, decisions).decision || '').toUpperCase();
+      return !['APPLIQUER', 'MODIFIER_IDENTITE', 'IGNORER', 'CONSERVER'].includes(decision);
+    })
+    .map((line) => ({
+      lineNumber: line.lineNumber,
+      nip: line.normalized && line.normalized.nip,
+      status: line.status,
+      message: 'Décision obligatoire pour divergence d’identité.'
+    }));
 }
 
 function planCommitMutations(preview, decisions){
@@ -815,6 +837,11 @@ async function commitImport(payload, actorSubject){
   const preview = input._preview || await analyzeImport(input);
   if((preview.lines || []).some((line) => line.status === 'ERROR')){
     throw new Error('Import refuse: corriger les lignes en erreur avant commit.');
+  }
+  const unresolved = unresolvedRequiredDecisions(preview, input.decisions || []);
+  if(unresolved.length){
+    const first = unresolved[0];
+    throw new Error(`Décision obligatoire avant validation pour le NIP ${first.nip || 'inconnu'} (ligne ${first.lineNumber}).`);
   }
   const mutations = input._mutations || planCommitMutations(preview, input.decisions || []);
   const mutationCount = mutations.personInserts.length + mutations.personUpdates.length
@@ -1412,6 +1439,8 @@ module.exports = {
   summarizeAnalysis,
   buildPreview,
   planCommitMutations,
+  requiresExplicitDecision,
+  unresolvedRequiredDecisions,
   analyzeImport,
   commitImport,
   listPersonnel,

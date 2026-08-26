@@ -288,7 +288,8 @@ async function run(){
   assert.strictEqual(jspG1Flm2.lines[0].diff.newAssignments.length, 0);
   assert.strictEqual(jspG1Flm2.lines[0].diff.existingAssignments[0].cible, 'JSP G1');
   assert.ok(jspG1Flm2.lines[0].diff.existingAssignments[0].niveau == null);
-  const flmChangeMut = svc.planCommitMutations(jspG1Flm2, []);
+  assert.strictEqual(svc.unresolvedRequiredDecisions(jspG1Flm2, []).length, 1);
+  const flmChangeMut = svc.planCommitMutations(jspG1Flm2, [{ rowId: jspG1Flm2.lines[0].lineNumber, decision: 'APPLIQUER' }]);
   assert.strictEqual(flmChangeMut.personInserts.length, 0);
   assert.strictEqual(flmChangeMut.personUpdates.length, 1);
   assert.strictEqual(flmChangeMut.personUpdates[0].grade, 'Flm 2');

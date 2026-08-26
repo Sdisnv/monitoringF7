@@ -455,6 +455,7 @@ module.exports = {
   computeCycleMetrics,
   prExerciseGroupKey,
   prSessionKey,
+  prSessionLabel,
   computePrExerciseParticipationState,
   computeSessionParticipationState,
   computeStandardEventMetricsUnchanged

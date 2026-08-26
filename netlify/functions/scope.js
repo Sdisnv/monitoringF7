@@ -120,6 +120,10 @@ exports.handler = async function(event){
       if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
       return response(200, { ok:true, ...(await persons.fiche(params.id, queryOf(event))) });
     }
+    if(method === 'PATCH' && params){
+      if(!hasPermission(claims, 'personnel:manage')) return forbiddenPersonnel();
+      return response(200, { ok:true, ...(await persons.updateIdentite(params.id, body, claims)) });
+    }
     params = match(path, '/analytics/persons/:id');
     if(method === 'GET' && params){
       if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();

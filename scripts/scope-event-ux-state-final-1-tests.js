@@ -176,7 +176,8 @@ async function insertListEvent(repo, id, patch = {}){
 
   await record('I — retour direct liste depuis fiche et saisie', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('<a href="#/exercices">Événements</a> / ${escapeHtml(ev.libelle)}'));
+    assert.ok(ui.includes('<div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>'));
+    assert.ok(!ui.includes('<a href="#/exercices">Événements</a> / ${escapeHtml(ev.libelle)}'));
     assert.ok(ui.includes('<a class="scope-btn" href="#/exercices">Retour aux événements</a>'));
   });
 
