@@ -103,6 +103,12 @@ function part(personne, statut, extra){
       }, { sub: 'presence-test' }),
       (error) => error instanceof HttpError && error.status === 422 && error.error === 'motif_obligatoire'
     );
+    await ctx.repo.upsertParticipation({
+      evenement_id: ctx.eventId,
+      personne_id: ctx.people[1].personne_id,
+      statut: 'ABSENT_EXCUSE',
+      role: 'PARTICIPANT'
+    });
     await assert.rejects(
       () => ctx.service.cloturer(ctx.eventId, { baseVersion: ctx.version }, { sub: 'presence-test' }),
       (error) => error instanceof HttpError && error.status === 422 && error.error === 'cloture_refusee'
@@ -176,23 +182,20 @@ function part(personne, statut, extra){
     assert.strictEqual(second.version, 4);
   });
 
-  await record('CAS I/J — Clôture refusée incomplète puis réussie complète', async () => {
+  await record('CAS I/J — Clôture incomplète autorisée, NON_RENSEIGNE conservé hors taux', async () => {
     const ctx = await setupEvent(2);
     const first = await ctx.service.enregistrerParticipations(ctx.eventId, {
       baseVersion: ctx.version,
       participations: [part(ctx.people[0], 'PRESENT')]
     }, { sub: 'presence-test' });
-    await assert.rejects(
-      () => ctx.service.cloturer(ctx.eventId, { baseVersion: first.version }, { sub: 'presence-test' }),
-      (error) => error instanceof HttpError && error.error === 'cloture_refusee'
-    );
-    const second = await ctx.service.enregistrerParticipations(ctx.eventId, {
-      baseVersion: first.version,
-      participations: [part(ctx.people[1], 'DISPENSE')]
-    }, { sub: 'presence-test' });
-    const closed = await ctx.service.cloturer(ctx.eventId, { baseVersion: second.version }, { sub: 'presence-test' });
+    const closed = await ctx.service.cloturer(ctx.eventId, { baseVersion: first.version }, { sub: 'presence-test' });
     assert.strictEqual(closed.evenement.statut, 'REALISE');
-    assert.strictEqual((await ctx.service.lireEvenement(ctx.eventId)).evenement.statut, 'REALISE');
+    const fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.evenement.statut, 'REALISE');
+    assert.strictEqual(fiche.participations.find((row) => row.personne_id === ctx.people[1].personne_id).statut, 'NON_RENSEIGNE');
+    const taux = computeTaux(fiche.participations, fiche.attendus);
+    assert.strictEqual(taux.nonRenseignes, 1);
+    assert.strictEqual(taux.denominator, 1);
   });
 
   await record('CAS K — population attendue figée après modification affectation', async () => {
@@ -242,6 +245,7 @@ function part(personne, statut, extra){
     assert.strictEqual(blockers.open, 1);
     assert.strictEqual(blockers.incompleteExcuses, 1);
     assert.ok(blockers.message.includes('Clôture impossible'));
+    assert.strictEqual(logic.clotureDisabled({ open: 4 }), false);
   });
 
   await record('CAS 1R1 D/E/F/G — encadrement ajout, retrait, réajout, anti-doublon', async () => {
@@ -369,26 +373,44 @@ function part(personne, statut, extra){
     assert.strictEqual(second.version, first.version + 1);
   });
 
-  await record('UI — saisie directe Formateur, motif en ligne, clôture protégée', async () => {
+  await record('UI — 1R2 Orion, ajout manuel dédié, clôture incomplète confirmée', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
-    assert.ok(ui.includes("['FORMATEUR', 'Formateur']"));
+    const saisieRows = ui.slice(ui.indexOf('function renderSaisieRows'), ui.indexOf('function renderRealise'));
+    assert.ok(!saisieRows.includes("['FORMATEUR', 'Formateur']"));
+    assert.ok(!saisieRows.includes('data-status="FORMATEUR"'));
     assert.ok(ui.includes('data-motif'));
     assert.ok(ui.includes("state.modal = 'reset-saisie'"));
+    assert.ok(ui.includes("state.modal = 'cloture-incomplete'"));
+    assert.ok(ui.includes('cloture-incomplete-ok'));
+    assert.ok(ui.includes('Clôturer quand même'));
     assert.ok(ui.includes('data-enc-remove'));
     assert.ok(ui.includes('data-manual-add'));
     assert.ok(ui.includes('data-manual-remove'));
+    assert.ok(ui.includes('function renderManualParticipantBlock'));
+    assert.ok(ui.includes('Ajouter un participant à cet événement'));
+    assert.ok(ui.includes('id="manual-person-suggestions"'));
+    assert.ok(ui.includes('scope-row-manual'));
+    assert.ok(ui.includes('scope-row-manual-badge'));
+    assert.ok(ui.includes('<th>Justificatif</th>'));
+    assert.ok(!saisieRows.includes('<th>Action</th>'));
     assert.ok(ui.includes('cibleLabelFromAttendu'));
     assert.ok(ui.includes('scope-presence-warning'));
     assert.ok(ui.includes('scope-cloture-reason'));
-    assert.ok(ui.includes("role: r.role === 'FORMATEUR' ? 'FORMATEUR' : 'PARTICIPANT'"));
-    assert.ok(ui.includes("row.role = 'FORMATEUR'"));
     assert.ok(ui.includes("row.role = 'PARTICIPANT'"));
+    assert.ok(ui.includes('scopeSearchTimers'));
+    assert.ok(ui.includes('scopeSearchTokens'));
+    assert.ok(ui.includes('setTimeout'));
+    assert.ok(ui.includes('renderSuggestionList'));
     assert.ok(css.includes('.scope-status-row button[aria-pressed="true"]'));
-    assert.ok(css.includes('.scope-enc-grid'));
+    assert.ok(!css.includes('.scope-enc-grid'));
+    assert.ok(css.includes('.scope-enc-groups'));
+    assert.ok(css.includes('.scope-enc-group'));
     assert.ok(css.includes('grid-template-rows: repeat(4'));
     assert.ok(css.includes('.scope-person-suggestions'));
-    assert.ok(css.includes('tbody tr:nth-child(even){background:#f7f8fa;}'));
+    assert.ok(css.includes('tbody tr:nth-child(even){background:#f4f6f8;}'));
+    assert.ok(css.includes('.scope-table thead th{background:#f6f7f9;}'));
+    assert.ok(css.includes('border-radius: 4px;'));
     assert.ok(css.includes('.scope-presence-warning'));
     assert.ok(logic.hasIncompleteExcuse([{ statut: 'ABSENT_EXCUSE', motifAbsence: '', inclus: true }]));
     assert.ok(!logic.hasIncompleteExcuse([{ statut: 'ABSENT_EXCUSE', motifAbsence: 'PRIVE', inclus: true }]));

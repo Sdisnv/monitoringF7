@@ -854,12 +854,39 @@ html, body {
 }
 
 .scope-table th {
-  font-size: var(--scope-fs-table-head);
+  font-size: 11px;
   color: var(--scope-muted);
-  font-weight: 650;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: #fafbfc;
+  letter-spacing: 0;
+  background: #f6f7f9;
+  padding: 8px 10px;
+  border-bottom-color: #dfe4ea;
+}
+
+.scope-table tbody tr:nth-child(odd),
+.scope-table tbody tr:nth-child(odd) td {
+  background: #fff;
+}
+
+.scope-table tbody tr:nth-child(even),
+.scope-table tbody tr:nth-child(even) td {
+  background: #f4f6f8;
+}
+
+.scope-table tbody tr:hover,
+.scope-table tbody tr:hover td {
+  background: #fdeef0;
+}
+
+.scope-table tbody tr.scope-row-manual,
+.scope-table tbody tr.scope-row-manual td {
+  background: #fff3f3;
+}
+
+.scope-table tbody tr.scope-row-manual:hover,
+.scope-table tbody tr.scope-row-manual:hover td {
+  background: #ffe8e8;
 }
 
 .scope-badge {
@@ -1584,26 +1611,27 @@ html, body {
   font-size: var(--scope-fs-secondary);
 }
 
-.scope-encadrement-card {
+.scope-encadrement-card,
+.scope-manual-participant-card {
   margin-top: 12px;
   padding-bottom: 14px;
 }
 
-.scope-enc-grid {
+.scope-enc-search {
+  max-width: 720px;
+}
+
+.scope-enc-groups {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  margin-top: 12px;
 }
 
-.scope-enc-role {
+.scope-enc-group {
   min-width: 0;
-  border: 1px solid var(--scope-line);
-  border-radius: var(--scope-radius-sm);
-  background: #fff;
-  padding: 8px;
 }
 
-.scope-enc-role h4 {
+.scope-enc-group h4 {
   margin: 0 0 6px;
   font-size: 11px;
   font-weight: 800;
@@ -1628,9 +1656,10 @@ html, body {
   gap: 2px 6px;
   align-items: center;
   padding: 5px 6px;
-  border: 1px solid #dfe4ea;
-  border-radius: var(--scope-radius-sm);
-  background: #f8fafc;
+  border: 0;
+  border-bottom: 1px solid #e6ebf0;
+  border-radius: 0;
+  background: transparent;
   font-size: 12px;
 }
 
@@ -1707,6 +1736,10 @@ html, body {
   box-shadow: 0 10px 28px rgba(20, 30, 50, .18);
 }
 
+.scope-suggestion-anchor {
+  position: relative;
+}
+
 .scope-person-suggestions button {
   display: flex;
   flex-direction: column;
@@ -1755,10 +1788,10 @@ html, body {
 }
 
 .scope-chips button {
-  height: 36px;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 999px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 4px;
   border: 1px solid var(--scope-line);
   background: #fff;
   cursor: pointer;
@@ -1768,8 +1801,31 @@ html, body {
 
 .scope-chips button[aria-pressed="true"] {
   border-color: var(--scope-red);
+  background: var(--scope-red-soft);
   color: var(--scope-red);
   font-weight: 700;
+}
+
+.scope-justificatif-cell {
+  min-width: 170px;
+}
+
+.scope-row-manual-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 7px;
+  margin-right: 6px;
+  border: 1px solid #f2b8b8;
+  border-radius: 4px;
+  background: #fff3f3;
+  color: var(--scope-red-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.scope-muted-inline {
+  color: var(--scope-muted);
 }
 
 .scope-placeholder {
@@ -2248,13 +2304,13 @@ body.scope-pdf-open { overflow: hidden; }
   transition: background-color .16s ease, color .16s ease;
 }
 .scope-table-sort-header:hover{
-  background: #f3f5f8;
+  background: #eef1f5;
   color: var(--scope-ink);
 }
 .scope-table-sort-header.is-asc,
 .scope-table-sort-header.is-desc{
   color: var(--scope-ink);
-  background: #f7f8fa;
+  background: #f6f7f9;
 }
 .scope-table-sort-control,
 .scope-sort-button,
@@ -2265,11 +2321,14 @@ body.scope-pdf-open { overflow: hidden; }
 }
 .scope-table-sort-control,
 .scope-sort-button{
+  all: unset;
   appearance: none;
   -webkit-appearance: none;
   border: 0;
   border-radius: 0;
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none;
   color: inherit;
   font: inherit;
   font-weight: inherit;
@@ -2554,14 +2613,16 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-personnel-context span { display:block; margin-top:2px; color:#4b5563; font-size:13px; }
 
 .scope-table tbody tr:nth-child(odd){background:#fff;}
-.scope-table tbody tr:nth-child(even){background:#f7f8fa;}
-.scope-table tbody tr:hover{background:#fff7f8;}
+.scope-table tbody tr:nth-child(even){background:#f4f6f8;}
+.scope-table tbody tr:hover{background:#fdeef0;}
+.scope-table tbody tr.scope-row-manual{background:#fff3f3;}
+.scope-table tbody tr.scope-row-manual:hover{background:#ffe8e8;}
 .scope-table tbody tr.is-selected{background:#dbe7fb;}
 .scope-table tbody tr.is-anomaly{background:#fde8e8;}
-.scope-table thead th{background:#f3f4f6;}
+.scope-table thead th{background:#f6f7f9;}
 
 @media (max-width: 900px) {
-  .scope-enc-grid,
+  .scope-enc-groups,
   .scope-presence-tools {
     grid-template-columns: 1fr;
   }

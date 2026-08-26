@@ -436,7 +436,7 @@
   }
 
   function clotureDisabled(counters) {
-    return Number(counters && counters.open) > 0;
+    return false;
   }
 
   function hasIncompleteExcuse(rows) {
@@ -456,7 +456,6 @@
       if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
     });
     const parts = [];
-    if (out.open) parts.push(`${out.open} personne${out.open > 1 ? 's restent' : ' reste'} à renseigner`);
     if (out.incompleteExcuses) parts.push(`${out.incompleteExcuses} absence${out.incompleteExcuses > 1 ? 's excusées sans motif' : ' excusée sans motif'}`);
     out.message = parts.length ? `Clôture impossible : ${parts.join(' ; ')}.` : '';
     return out;

@@ -166,10 +166,7 @@ function validateCloture(evenement, attendus, participations){
   const byPersonne = new Map((participations || []).map(p => [String(p.personne_id), p]));
   for(const attendu of (attendus || []).filter(a => a.inclus !== false)){
     const p = byPersonne.get(String(attendu.personne_id));
-    if(!p || p.statut === 'NON_RENSEIGNE'){
-      errors.push({ code: 'non_renseigne', personne_id: attendu.personne_id, message: 'Une personne attendue est encore NON_RENSEIGNE.' });
-      continue;
-    }
+    if(!p || p.statut === 'NON_RENSEIGNE') continue;
     try { validateParticipationPatch(p, { domaineCode: evenement && evenement.domaine_code }); }
     catch(error){
       if(error instanceof HttpError) errors.push({ code: error.error, personne_id: attendu.personne_id, message: error.message });

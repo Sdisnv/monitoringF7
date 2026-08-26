@@ -106,7 +106,7 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.strictEqual(closed.taux.percentage, 87.2);
   });
 
-  await record('Test 3 — NON_RENSEIGNE bloque la clôture 422', async () => {
+  await record('Test 3 — NON_RENSEIGNE autorisé à la clôture et hors dénominateur', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const g1 = await repo.findCible('DPS', 'G1');
@@ -122,10 +122,11 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
         { personneId: people[1].personne_id, statut: 'PRESENT' }
       ]
     }, { sub: 'test' });
-    await assert.rejects(
-      () => service.cloturer(evenement.evenement_id, { baseVersion: 3 }, { sub: 'test' }),
-      (error) => error instanceof HttpError && error.status === 422 && error.error === 'cloture_refusee'
-    );
+    const closed = await service.cloturer(evenement.evenement_id, { baseVersion: 3 }, { sub: 'test' });
+    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    assert.strictEqual(closed.taux.nonRenseignes, 1);
+    assert.strictEqual(closed.taux.denominator, 2);
+    assert.strictEqual(closed.taux.percentage, 100);
   });
 
   await record('Test 4 — ABSENT_EXCUSE sans motif refusé', async () => {

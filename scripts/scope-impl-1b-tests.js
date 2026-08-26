@@ -81,14 +81,17 @@ function record(name, fn){
     assert.strictEqual(logic.formatTaux(87.2), '87,2 %');
   });
 
-  await record('Test UI 3 — NON_RENSEIGNE : clôture désactivée / 422', async () => {
+  await record('Test UI 3 — NON_RENSEIGNE : clôture autorisée après confirmation UI', async () => {
     const rows = [
       { inclus: true, role: 'PARTICIPANT', statut: 'PRESENT' },
       { inclus: true, role: 'PARTICIPANT', statut: 'NON_RENSEIGNE' }
     ];
     const counters = logic.liveCounters(rows);
     assert.strictEqual(counters.open, 1);
-    assert.strictEqual(logic.clotureDisabled(counters), true);
+    assert.strictEqual(logic.clotureDisabled(counters), false);
+    const blockers = logic.closureBlockers(rows);
+    assert.strictEqual(blockers.open, 1);
+    assert.strictEqual(blockers.incompleteExcuses, 0);
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const g1 = await repo.findCible('DPS', 'G1');
@@ -98,10 +101,10 @@ function record(name, fn){
       date: '2026-03-12', domaineCode: 'DPS', libelle: 'Non renseigné', cibleIds: [g1.cible_id]
     }, { sub: 'test' });
     await service.figerPopulation(evenement.evenement_id, { baseVersion: 1 }, { sub: 'test' });
-    await assert.rejects(
-      () => service.cloturer(evenement.evenement_id, { baseVersion: 2 }, { sub: 'test' }),
-      (error) => error instanceof HttpError && error.status === 422 && error.error === 'cloture_refusee'
-    );
+    const closed = await service.cloturer(evenement.evenement_id, { baseVersion: 2 }, { sub: 'test' });
+    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    assert.strictEqual(closed.taux.nonRenseignes, 1);
+    assert.strictEqual(closed.taux.denominator, 0);
   });
 
   await record('Test UI 4 — 409 message + aucun écrasement', async () => {

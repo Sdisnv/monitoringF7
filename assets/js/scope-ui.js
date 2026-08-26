@@ -69,6 +69,8 @@
     encRole: 'FORMATEUR',
     encQuery: '',
     encHits: [],
+    scopeSearchTimers: {},
+    scopeSearchTokens: { encadrement: 0, manual: 0 },
     manualPersonQuery: '',
     manualPersonHits: [],
     reopenMotif: '',
@@ -2554,7 +2556,7 @@
     const filteredRaw = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
     const filtered = sortSaisieRows(filteredRaw);
     const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
-    const disabledCloture = L.clotureDisabled(c) || hasIncompleteExcuse;
+    const disabledCloture = hasIncompleteExcuse;
     const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
@@ -2579,11 +2581,12 @@
           </div>
           ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
         </div>
-        ${niveaux.length > 1 ? `<div class="scope-chips">
+        ${niveaux.length > 1 ? `<div class="scope-chips scope-segmented">
           <button type="button" data-cible-filter="tous" aria-pressed="${state.cibleFilter === 'tous'}">Tous</button>
           ${niveaux.map((n) => `<button type="button" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
         </div>` : ''}
         ${renderEncadrementBlock()}
+        ${renderManualParticipantBlock()}
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
           const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
@@ -2654,12 +2657,6 @@
     const byRole = new Map(roleOrder.map((role) => [role, encRows.filter((p) => p.role === role)]));
     const used = usedEncadrementIds();
     const expected = expectedIds();
-    const encHits = sortPeopleForEncadrement((state.encHits || []).filter((p) =>
-      !used.has(String(p.personne_id)) && !expected.has(String(p.personne_id))
-    ));
-    const manualHits = sortPeopleForEncadrement((state.manualPersonHits || []).filter((p) =>
-      !expected.has(String(p.personne_id))
-    ));
     return `
       <div class="scope-card scope-encadrement-card">
         <div class="scope-section-head">
@@ -2668,37 +2665,49 @@
             <p>Hors taux principal. Rôles séparés, retrait possible sans supprimer la personne.</p>
           </div>
         </div>
-        <div class="scope-enc-grid">
+        <div class="scope-field scope-person-lookup scope-enc-search">
+          <label>Ajouter à l’encadrement</label>
+          <div class="scope-inline-fields">
+            <select id="enc-role">
+              <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
+              <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
+              <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
+            </select>
+            <input id="enc-q" type="search" placeholder="Rechercher par nom, prénom ou NIP..." value="${escapeHtml(state.encQuery)}" autocomplete="off">
+          </div>
+          <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
+        </div>
+        <div class="scope-enc-groups">
           ${roleOrder.map((role) => {
             const rows = byRole.get(role) || [];
-            return `<section class="scope-enc-role">
+            if (!rows.length) return '';
+            return `<section class="scope-enc-group">
               <h4>${escapeHtml(L.ROLE_LABELS[role] || role)}</h4>
-              ${rows.length ? `<div class="scope-enc-people">${rows.map((p) => `<div class="scope-enc-person">
+              <div class="scope-enc-people">${rows.map((p) => `<div class="scope-enc-person">
                 <span>${escapeHtml(personLine(p))}</span>
                 <small>${escapeHtml(p.nip || '')}</small>
                 <button type="button" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(personLine(p))}">×</button>
-              </div>`).join('')}</div>` : '<p class="scope-enc-empty">Aucun</p>'}
+              </div>`).join('')}</div>
             </section>`;
-          }).join('')}
+          }).join('') || '<p class="scope-enc-empty">Aucun encadrement</p>'}
         </div>
-        <div class="scope-presence-tools">
-          <div class="scope-field scope-person-lookup">
-            <label>Ajouter à l’encadrement</label>
-            <div class="scope-inline-fields">
-              <select id="enc-role">
-                <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
-                <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
-                <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
-              </select>
-              <input id="enc-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.encQuery)}" autocomplete="off">
-            </div>
-            ${renderPersonSuggestions('encadrement', encHits)}
+      </div>
+    `;
+  }
+
+  function renderManualParticipantBlock() {
+    return `
+      <div class="scope-card scope-manual-participant-card">
+        <div class="scope-section-head">
+          <div>
+            <h3>Ajouter un participant à cet événement</h3>
+            <p>Ajout ponctuel à cet événement uniquement.</p>
           </div>
-          <div class="scope-field scope-person-lookup">
-            <label>Ajouter une personne</label>
-            <input id="manual-person-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.manualPersonQuery)}" autocomplete="off">
-            ${renderPersonSuggestions('manual', manualHits)}
-          </div>
+        </div>
+        <div class="scope-field scope-person-lookup">
+          <label for="manual-person-q">Participant</label>
+          <input id="manual-person-q" type="search" placeholder="Rechercher par nom, prénom ou NIP..." value="${escapeHtml(state.manualPersonQuery)}" autocomplete="off">
+          <div id="manual-person-suggestions" class="scope-suggestion-anchor"></div>
         </div>
       </div>
     `;
@@ -2748,12 +2757,25 @@
 
   function renderSaisieRows(rows) {
     const isDap = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code === 'DAP';
-    const statuses = [['PRESENT', 'Présent'], ['FORMATEUR', 'Formateur'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
+    const statuses = [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
     if (isDap) statuses.push(['PERMUTATION', 'Permutation']);
     const statusPressed = (row, value) => {
-      if (value === 'FORMATEUR') return row.statut === 'PRESENT' && row.role === 'FORMATEUR';
-      if (value === 'PRESENT') return row.statut === 'PRESENT' && row.role !== 'FORMATEUR';
+      if (value === 'PRESENT') return row.statut === 'PRESENT';
       return row.statut === value;
+    };
+    const justificatifCell = (row) => {
+      const motif = row.statut === 'ABSENT_EXCUSE' ? `<select data-motif aria-label="Motif d’excuse">
+        <option value="">Motif</option>
+        ${(L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS).map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
+      </select>` : '';
+      const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
+        ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">`
+        : '';
+      const manual = row.manual
+        ? `<span class="scope-row-manual-badge">Ajout manuel</span><button type="button" class="scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel">×</button>`
+        : '';
+      const historicalTrainer = row.role === 'FORMATEUR' ? '<span class="scope-mode-hint">Formateur historique</span>' : '';
+      return [motif, comment, manual, historicalTrainer].filter(Boolean).join('');
     };
     return `
       <div class="scope-table-wrap scope-saisie-desktop">
@@ -2765,10 +2787,10 @@
             ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)}
-            <th>Action</th>
+            <th>Justificatif</th>
           </tr></thead>
           <tbody>
-            ${rows.map((row) => `<tr data-pid="${row.personneId}">
+            ${rows.map((row) => `<tr data-pid="${row.personneId}" class="${row.manual ? 'scope-row-manual' : ''}">
               <td data-label="Nom">${escapeHtml(row.nomFamille || row.nom)}</td>
               <td data-label="Prénom">${escapeHtml(row.prenom || '—')}</td>
               <td data-label="Grade">${escapeHtml(row.grade || '—')}</td>
@@ -2779,14 +2801,9 @@
                   ${statuses.map(([v, l]) => `
                     <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}">${l}</button>
                   `).join('')}
-                  ${row.statut === 'ABSENT_EXCUSE' ? `<select data-motif aria-label="Motif d’excuse">
-                    <option value="">Motif</option>
-                    ${(L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS).map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
-                  </select>` : ''}
                 </div>
-                ${row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE' ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">` : ''}
               </td>
-              <td data-label="Action">${row.manual ? `<button type="button" class="scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel">×</button>` : ''}</td>
+              <td data-label="Justificatif" class="scope-justificatif-cell">${justificatifCell(row) || '<span class="scope-muted-inline">—</span>'}</td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -2922,6 +2939,20 @@
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="reset-saisie-ok">Confirmer</button>
         <button type="button" class="scope-btn" id="reset-saisie-cancel">Annuler</button>
+      </div>
+    </div></div>`;
+  }
+
+  function renderModalClotureIncomplete() {
+    if (state.modal !== 'cloture-incomplete') return '';
+    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0 };
+    const open = Number(blockers.open || 0);
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>Clôturer avec saisie incomplète</h3>
+      <p>${escapeHtml(String(open))} personne${open > 1 ? 's restent' : ' reste'} sans statut. ${open > 1 ? 'Elles resteront' : 'Elle restera'} non renseignée${open > 1 ? 's' : ''} après clôture. Voulez-vous clôturer l’événement ?</p>
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="cloture-incomplete-ok">Clôturer quand même</button>
+        <button type="button" class="scope-btn" id="cloture-incomplete-cancel">Annuler</button>
       </div>
     </div></div>`;
   }
@@ -3455,7 +3486,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalResetSaisie()}${renderModalCancel()}${renderModalPersonnelSync()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -3907,11 +3938,7 @@
         const statut = btn.getAttribute('data-status');
         const row = state.saisie.find((r) => r.personneId === pid);
         if (!row) return;
-        const wasActive = statut === 'FORMATEUR'
-          ? row.statut === 'PRESENT' && row.role === 'FORMATEUR'
-          : statut === 'PRESENT'
-            ? row.statut === 'PRESENT' && row.role !== 'FORMATEUR'
-            : row.statut === statut;
+        const wasActive = row.statut === statut;
         if (wasActive) {
           row.statut = 'NON_RENSEIGNE';
           row.role = 'PARTICIPANT';
@@ -3920,16 +3947,9 @@
           render();
           return;
         }
-        if (statut === 'FORMATEUR') {
-          row.statut = 'PRESENT';
-          row.role = 'FORMATEUR';
-          row.motifAbsence = '';
-          row.commentaire = '';
-        } else {
-          row.statut = statut;
-          row.role = 'PARTICIPANT';
-          if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; }
-        }
+        row.statut = statut;
+        row.role = 'PARTICIPANT';
+        if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; }
         render();
       });
     });
@@ -3954,7 +3974,17 @@
       });
     });
     document.getElementById('save-part')?.addEventListener('click', saveParticipations);
-    document.getElementById('cloturer')?.addEventListener('click', cloturer);
+    document.getElementById('cloturer')?.addEventListener('click', () => {
+      const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0 };
+      if (blockers.open > 0 && blockers.incompleteExcuses === 0) {
+        state.modal = 'cloture-incomplete';
+        render();
+        return;
+      }
+      cloturer();
+    });
+    document.getElementById('cloture-incomplete-ok')?.addEventListener('click', () => { state.modal = null; cloturer(); });
+    document.getElementById('cloture-incomplete-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('enc-role')?.addEventListener('change', (e) => {
       state.encRole = e.target.value || 'FORMATEUR';
       render();
@@ -4414,22 +4444,57 @@
     const q = String(value || '').trim();
     if (kind === 'encadrement') {
       state.encQuery = q;
-      if (q.length < 2) { state.encHits = []; render(); return; }
+      state.encHits = [];
     } else {
       state.manualPersonQuery = q;
-      if (q.length < 2) { state.manualPersonHits = []; render(); return; }
+      state.manualPersonHits = [];
     }
-    client.listPersonnes(q).then((data) => {
+    clearTimeout(state.scopeSearchTimers[kind]);
+    const targetId = kind === 'encadrement' ? 'enc-suggestions' : 'manual-person-suggestions';
+    const target = document.getElementById(targetId);
+    if (q.length < 2) {
+      if (target) target.innerHTML = '';
+      return;
+    }
+    const token = (state.scopeSearchTokens[kind] || 0) + 1;
+    state.scopeSearchTokens[kind] = token;
+    state.scopeSearchTimers[kind] = setTimeout(() => {
+      client.listPersonnes(q).then((data) => {
+        if (state.scopeSearchTokens[kind] !== token) return;
       const hits = (data.personnes || []).filter((p) => {
         const text = normalizeSearchText([p.grade, p.nom, p.prenom, p.nip].join(' '));
         return text.includes(normalizeSearchText(q));
       });
-      if (kind === 'encadrement') state.encHits = hits;
-      else state.manualPersonHits = hits;
-      render();
-    }).catch((error) => {
-      const info = L.friendlyError(error);
-      toast(info.tone, info.title, info.message);
+        if (kind === 'encadrement') {
+          const used = usedEncadrementIds();
+          const expected = expectedIds();
+          state.encHits = sortPeopleForEncadrement(hits.filter((p) =>
+            !used.has(String(p.personne_id)) && !expected.has(String(p.personne_id))
+          ));
+          renderSuggestionList(kind, state.encHits);
+        } else {
+          const expected = expectedIds();
+          state.manualPersonHits = sortPeopleForEncadrement(hits.filter((p) => !expected.has(String(p.personne_id))));
+          renderSuggestionList(kind, state.manualPersonHits);
+        }
+      }).catch((error) => {
+        if (state.scopeSearchTokens[kind] !== token) return;
+        const info = L.friendlyError(error);
+        toast(info.tone, info.title, info.message);
+      });
+    }, 240);
+  }
+
+  function renderSuggestionList(kind, rows) {
+    const targetId = kind === 'encadrement' ? 'enc-suggestions' : 'manual-person-suggestions';
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    target.innerHTML = renderPersonSuggestions(kind, rows || []);
+    target.querySelectorAll('[data-enc-add]').forEach((btn) => {
+      btn.addEventListener('click', () => addEncadrement(btn.getAttribute('data-enc-add')));
+    });
+    target.querySelectorAll('[data-manual-add]').forEach((btn) => {
+      btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-manual-add')));
     });
   }
 
