@@ -2946,10 +2946,20 @@
   }
 
   function renderPresenceKpis(niveaux, fiche) {
+    const prKpis = fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.kpis;
     const labels = niveaux && niveaux.length ? niveaux : ['Population'];
     const groups = labels.map((label) => {
       const rows = label === 'Population' ? state.saisie : rowsForCible(label);
-      const c = countStatuses(rows);
+      const local = countStatuses(rows);
+      const c = (prKpis && (label === 'Population' || labels.length === 1))
+        ? {
+          present: Number(prKpis.presents || 0),
+          excuse: Number(prKpis.excuses || 0),
+          absent: Number(prKpis.absents || 0),
+          dispense: Number(prKpis.dispenses || 0),
+          open: Number(prKpis.open || 0)
+        }
+        : local;
       return `<section class="scope-kpi-group scope-kpi-target">
         <h3>${escapeHtml(label)}</h3>
         <div class="scope-kpi-strip">
@@ -2961,7 +2971,16 @@
         </div>
       </section>`;
     }).join('');
-    const global = countStatuses(state.saisie || []);
+    const localGlobal = countStatuses(state.saisie || []);
+    const global = prKpis
+      ? {
+        present: Number(prKpis.presents || 0),
+        excuse: Number(prKpis.excuses || 0),
+        absent: Number(prKpis.absents || 0),
+        dispense: Number(prKpis.dispenses || 0),
+        open: Number(prKpis.open || 0)
+      }
+      : localGlobal;
     const enc = (fiche && fiche.encadrement) || (state.fiche && state.fiche.encadrement) || [];
     const encCount = (role) => enc.filter((p) => p && p.role === role).length;
     return `<div class="scope-kpi-board">

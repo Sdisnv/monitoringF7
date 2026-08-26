@@ -38,6 +38,8 @@ function mapEvent(row){
     salle: row.salle || null,
     responsable: row.responsable || null,
     cycle_id: row.cycle_id || null,
+    pr_exercise_group_key: row.pr_exercise_group_key || null,
+    pr_session_key: row.pr_session_key || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     already_exists: Boolean(row.already_exists)
@@ -508,15 +510,18 @@ function createPgRepo(client){
         row.heure_debut || row.heureDebut || null,
         row.heure_fin || row.heureFin || null,
         row.salle || null,
-        row.responsable || null
+        row.responsable || null,
+        row.pr_exercise_group_key || row.prExerciseGroupKey || null,
+        row.pr_session_key || row.prSessionKey || null
       ];
       const result = codeCours
         ? await q(
           `with ins as (
              insert into scope_evenements(
                evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
-               identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable, version
-             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1)
+               identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
+               pr_exercise_group_key, pr_session_key, version
+             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,1)
              on conflict (code_cours) where code_cours is not null do nothing
              returning *, false as already_exists
            )
@@ -532,8 +537,9 @@ function createPgRepo(client){
         : await q(
           `insert into scope_evenements(
              evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
-             identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable, version
-           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1)
+             identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
+             pr_exercise_group_key, pr_session_key, version
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,1)
            returning *, false as already_exists`,
           params
         );
@@ -601,7 +607,8 @@ function createPgRepo(client){
     async updateEventIfVersion(id, baseVersion, patch){
       const allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
-        'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id'
+        'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
+        'pr_exercise_group_key','pr_session_key'
       ];
       const sets = ['version = version + 1', 'updated_at = now()'];
       const params = [];
@@ -876,6 +883,10 @@ function createPgRepo(client){
     },
     async listCycleEvents(cycleId){
       const result = await q('select * from scope_evenements where cycle_id = $1 order by date, libelle', [cycleId]);
+      return result.rows.map(mapEvent);
+    },
+    async listPrExerciseEvents(groupKey){
+      const result = await q('select * from scope_evenements where pr_exercise_group_key = $1 order by date, libelle', [groupKey]);
       return result.rows.map(mapEvent);
     },
     async attachEventToCycle(cycleId, eventId){

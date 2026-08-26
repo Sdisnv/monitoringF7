@@ -5,6 +5,7 @@ const ROLES_CYCLE = new Set(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SURVEILLAN
 const STATUTS_PRESENTS = new Set(['PRESENT', STATUT_PERMUTATION]);
 const STATUTS_ABSENCE = new Set(['ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
 const SESSION_COUNTING_ROLES = new Set(['PARTICIPANT', 'FORMATEUR', 'SURVEILLANT']);
+const STATUTS_PR_EXERCISE_RECONNUS = new Set(['PRESENT', STATUT_PERMUTATION, 'DISPENSE']);
 
 function normalizeText(value){
   return String(value || '').trim();
@@ -54,7 +55,7 @@ function isSessionCountingParticipation(row, personnesById, population){
   const role = normalizeUpper(row && row.role || 'PARTICIPANT');
   const statut = normalizeUpper(row && row.statut || 'NON_RENSEIGNE');
   if(!SESSION_COUNTING_ROLES.has(role)) return false;
-  if(role === 'PARTICIPANT') return STATUTS_PRESENTS.has(statut);
+  if(role === 'PARTICIPANT') return STATUTS_PR_EXERCISE_RECONNUS.has(statut);
   if(!STATUTS_PRESENTS.has(statut)) return false;
   const key = dedupeKey(row, personnesById);
   return Boolean(key && population.has(key));
@@ -147,6 +148,39 @@ function mapEventCounts(events){
     if(id) counts[id] = { eventId: id, codeCours: event.code_cours || event.codeCours || null, date: event.date || null, population: 0, presents: 0 };
   }
   return counts;
+}
+
+function prExerciseGroupKey(event){
+  const explicit = normalizeText(event && (event.pr_exercise_group_key || event.prExerciseGroupKey));
+  if(explicit) return explicit;
+  const cyclePart = cycleId(event) || 'NO_CYCLE';
+  const libelle = normalizeText(event && (event.libelle || event.label));
+  const match = libelle.match(/exercice\s+pr\s+([0-9]+)(?:\.[0-9]+)?/i);
+  return match ? `${cyclePart}:PR:${match[1]}` : '';
+}
+
+function prSessionKey(event){
+  const explicit = normalizeText(event && (event.pr_session_key || event.prSessionKey));
+  if(explicit) return explicit;
+  const cyclePart = cycleId(event) || 'NO_CYCLE';
+  const libelle = normalizeText(event && (event.libelle || event.label));
+  const match = libelle.match(/exercice\s+pr\s+([0-9]+\.[0-9]+)/i);
+  return match ? `${cyclePart}:PR:${match[1]}` : '';
+}
+
+function prExerciseEvents(input = {}){
+  const events = input.evenements || input.events || [];
+  const currentId = normalizeText(input.currentEventId || input.current_event_id);
+  const current = events.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
+  const groupKey = prExerciseGroupKey(current);
+  if(!groupKey){
+    return { current, groupKey: '', events: currentId ? events.filter((event) => eventId(event) === currentId) : [] };
+  }
+  return {
+    current,
+    groupKey,
+    events: events.filter((event) => prExerciseGroupKey(event) === groupKey)
+  };
 }
 
 function computeCycleMetrics(input = {}){
@@ -261,14 +295,27 @@ function computeCycleMetrics(input = {}){
   };
 }
 
-function computeSessionParticipationState(input = {}){
+function computePrExerciseParticipationState(input = {}){
   const cycle = input.cycle || {};
   const personnesById = personneLookup(input.personnes);
-  const events = cycleEvents(input, cycle);
-  const cycleEventIds = new Set(events.map(eventId).filter(Boolean));
+  const allEvents = cycleEvents(input, cycle);
+  const group = prExerciseEvents({ ...input, evenements: allEvents });
+  const events = group.events;
+  const groupEventIds = new Set(events.map(eventId).filter(Boolean));
   const currentEventId = normalizeText(input.currentEventId || input.current_event_id);
   const population = new Set();
   const countedByPerson = new Map();
+  const attendusByPerson = new Map();
+
+  for(const attendu of input.attendus || input.expected || []){
+    if(attendu && attendu.inclus === false) continue;
+    const eid = eventId(attendu);
+    if(eid && groupEventIds.size && !groupEventIds.has(eid)) continue;
+    const key = addPerson(new Set(), attendu, personnesById);
+    if(!key) continue;
+    population.add(key);
+    attendusByPerson.set(key, personneId(attendu));
+  }
 
   for(const row of input.cyclePersonnes || input.cycle_personnes || []){
     if(cycleId(row) && cycleId(cycle) && cycleId(row) !== cycleId(cycle)) continue;
@@ -279,7 +326,7 @@ function computeSessionParticipationState(input = {}){
 
   for(const participation of input.participations || []){
     const eid = eventId(participation);
-    if(!cycleEventIds.has(eid)) continue;
+    if(!groupEventIds.has(eid)) continue;
     const key = dedupeKey(participation, personnesById);
     if(!key) continue;
     if(!isSessionCountingParticipation(participation, personnesById, population)) continue;
@@ -294,6 +341,14 @@ function computeSessionParticipationState(input = {}){
   }
 
   const byPersonneId = {};
+  const countedKeys = new Set(countedByPerson.keys());
+  const presentKeys = new Set();
+  const dispenseKeys = new Set();
+  for(const [key, rows] of countedByPerson.entries()){
+    const first = rows[0] || {};
+    if(first.statut === 'DISPENSE') dispenseKeys.add(key);
+    else presentKeys.add(key);
+  }
   for(const [key, rows] of countedByPerson.entries()){
     const outsideCurrent = currentEventId
       ? rows.filter((row) => row.eventId !== currentEventId)
@@ -311,7 +366,42 @@ function computeSessionParticipationState(input = {}){
     }
   }
 
-  return { byPersonneId };
+  return {
+    groupKey: group.groupKey || null,
+    sessionKey: prSessionKey(group.current) || null,
+    eventIds: [...groupEventIds],
+    byPersonneId,
+    kpis: {
+      population: population.size,
+      presents: presentKeys.size,
+      dispenses: dispenseKeys.size,
+      excuses: 0,
+      absents: 0,
+      open: Math.max(0, population.size - countedKeys.size)
+    },
+    details: {
+      population: sortedValues(population),
+      counted: sortedValues(countedKeys),
+      presents: sortedValues(presentKeys),
+      dispenses: sortedValues(dispenseKeys),
+      open: sortedValues(new Set([...population].filter((key) => !countedKeys.has(key)))),
+      attendusByPerson: Object.fromEntries(attendusByPerson.entries())
+    }
+  };
+}
+
+function computeSessionParticipationState(input = {}){
+  const cycle = input.cycle || {};
+  const events = cycleEvents(input, cycle);
+  const currentId = normalizeText(input.currentEventId || input.current_event_id);
+  const current = events.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
+  if(prExerciseGroupKey(current)) return computePrExerciseParticipationState(input);
+  const legacyEvents = events.map((event) => ({ ...event, pr_exercise_group_key: '__LEGACY_CYCLE_SCOPE__' }));
+  return computePrExerciseParticipationState({
+    ...input,
+    evenements: legacyEvents,
+    currentEvent: currentId ? null : { ...current, pr_exercise_group_key: '__LEGACY_CYCLE_SCOPE__' }
+  });
 }
 
 function computeStandardEventMetricsUnchanged(input = {}){
@@ -329,6 +419,9 @@ module.exports = {
   sameTechnicalCycle,
   proposeCycleLink,
   computeCycleMetrics,
+  prExerciseGroupKey,
+  prSessionKey,
+  computePrExerciseParticipationState,
   computeSessionParticipationState,
   computeStandardEventMetricsUnchanged
 };

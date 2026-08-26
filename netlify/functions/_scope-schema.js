@@ -920,8 +920,21 @@ async function migrateSpecialisationCyclesArch1(){
       add column if not exists cycle_id uuid references scope_cycles(cycle_id) on delete set null
   `);
   await db.query(`
+    alter table scope_evenements
+      add column if not exists pr_exercise_group_key text
+  `);
+  await db.query(`
+    alter table scope_evenements
+      add column if not exists pr_session_key text
+  `);
+  await db.query(`
     create index if not exists scope_evenements_cycle_id_idx
       on scope_evenements (cycle_id)
+  `);
+  await db.query(`
+    create index if not exists scope_evenements_pr_exercise_group_idx
+      on scope_evenements (cycle_id, pr_exercise_group_key)
+      where pr_exercise_group_key is not null
   `);
   await db.query(`
     create table if not exists scope_cycle_personnes (

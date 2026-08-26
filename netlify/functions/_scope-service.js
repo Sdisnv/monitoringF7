@@ -33,7 +33,7 @@ const {
   resolveSuiviNominatif
 } = require('./_scope-model');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computeSessionParticipationState } = require('./_scope-cycle-rules');
+const { computePrExerciseParticipationState } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
 function requireBaseVersion(body){
@@ -71,6 +71,12 @@ async function nextManualCode(repo, body, cibleIds){
 
 function isQuantitatif(evenement){
   return inferModeSuivi(evenement) === MODES.QUANTITATIF;
+}
+
+function isPrParticipantContribution(statut, role){
+  const r = String(role || 'PARTICIPANT').toUpperCase();
+  const s = String(statut || '').toUpperCase();
+  return r === 'PARTICIPANT' && ['PRESENT', 'PERMUTATION', 'DISPENSE'].includes(s);
 }
 
 function requireQuantitatif(evenement){
@@ -1100,6 +1106,35 @@ function createScopeService(repo){
         if(['FORMATEUR', 'SURVEILLANT'].includes(participationRole) && patch.statut !== 'PRESENT'){
           throw new HttpError(422, 'encadrement_present', 'Un rôle d’encadrement compté en session doit être présent.');
         }
+        if(isPrParticipantContribution(patch.statut, participationRole) && (evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
+          const cycle = evenement.cycle_id && tx.getCycle
+            ? await tx.getCycle(evenement.cycle_id)
+            : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
+          const cycleEvents = evenement.cycle_id && tx.listCycleEvents
+            ? await tx.listCycleEvents(evenement.cycle_id)
+            : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+          const cycleParticipations = cycleEvents.length ? await tx.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
+          const cycleAttendus = tx.listAttendusForEvents && cycleEvents.length ? await tx.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
+          const cyclePersonnes = evenement.cycle_id && tx.listCyclePersonnes ? await tx.listCyclePersonnes(evenement.cycle_id) : [];
+          const personnes = await hydratePersonnes([
+            personneId,
+            ...cyclePersonnes.map((row) => row.personne_id),
+            ...cycleParticipations.map((row) => row.personne_id),
+            ...cycleAttendus.map((row) => row.personne_id)
+          ]);
+          const prState = computePrExerciseParticipationState({
+            cycle,
+            evenements: cycleEvents,
+            cyclePersonnes,
+            attendus: cycleAttendus,
+            participations: cycleParticipations,
+            personnes,
+            currentEventId: eventId
+          });
+          if(prState.byPersonneId[String(personneId)]){
+            throw new HttpError(409, 'pr_exercise_participation_deja_comptee', 'Cette personne a déjà une contribution comptabilisante dans cet Exercice PR.', { personneId, prExerciseGroupKey: prState.groupKey });
+          }
+        }
         const existing = await tx.getParticipation(eventId, personneId);
         await tx.upsertParticipation({
           ...(existing || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
@@ -1129,10 +1164,13 @@ function createScopeService(repo){
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Réinitialisation possible uniquement sur PLANIFIE.');
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
       const attendus = await tx.listAttendus(eventId);
-      const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
       const participations = await tx.listParticipations(eventId);
       const resetRows = attendus
         .filter(a => a.inclus !== false)
+        .filter((a) => {
+          const existing = participations.find(p => String(p.personne_id) === String(a.personne_id));
+          return !(existing && ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase()));
+        })
         .map((a) => {
           const existing = participations.find(p => String(p.personne_id) === String(a.personne_id));
           return {
@@ -1149,19 +1187,13 @@ function createScopeService(repo){
       else {
         for(const row of resetRows) await tx.upsertParticipation(row);
       }
-      for(const p of participations){
-        const personneId = String(p.personne_id);
-        if(ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()) && !attenduIds.has(personneId)){
-          await tx.deleteParticipation(eventId, p.personne_id);
-        }
-      }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {});
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
         action: 'RESET_SAISIE',
-        apres: { resetParticipations: resetRows.length, encadrementSupprime: participations.filter(p => ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()) && !attenduIds.has(String(p.personne_id))).length }
+        apres: { resetParticipations: resetRows.length, encadrementSupprime: 0 }
       });
       return { evenement: next, version: next.version };
     });
@@ -1459,29 +1491,38 @@ function createScopeService(repo){
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id)
     ]);
-    let sessionParticipation = { byPersonneId: {} };
-    if(evenement.cycle_id && repo.getCycle && repo.listCycleEvents && repo.listCyclePersonnes && repo.listParticipationsForEvents){
-      const cycle = await repo.getCycle(evenement.cycle_id);
+    let prExerciseParticipation = { byPersonneId: {}, kpis: null };
+    if((evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
+      const cycle = evenement.cycle_id && repo.getCycle
+        ? await repo.getCycle(evenement.cycle_id)
+        : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
       if(cycle){
-        const cycleEvents = await repo.listCycleEvents(evenement.cycle_id);
-        const cyclePersonnes = await repo.listCyclePersonnes(evenement.cycle_id);
+        const cycleEvents = evenement.cycle_id && repo.listCycleEvents
+          ? await repo.listCycleEvents(evenement.cycle_id)
+          : (repo.listPrExerciseEvents && evenement.pr_exercise_group_key ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+        const cyclePersonnes = evenement.cycle_id && repo.listCyclePersonnes ? await repo.listCyclePersonnes(evenement.cycle_id) : [];
         const cycleParticipations = cycleEvents.length
           ? await repo.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id))
           : [];
+        const cycleAttendus = repo.listAttendusForEvents && cycleEvents.length
+          ? await repo.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id))
+          : attendus;
         const cyclePersonnesById = await hydratePersonnes([
           ...cyclePersonnes.map((row) => row.personne_id),
-          ...cycleParticipations.map((row) => row.personne_id)
+          ...cycleParticipations.map((row) => row.personne_id),
+          ...cycleAttendus.map((row) => row.personne_id)
         ]);
-        sessionParticipation = computeSessionParticipationState({
+        prExerciseParticipation = computePrExerciseParticipationState({
           cycle,
           evenements: cycleEvents,
           cyclePersonnes,
+          attendus: cycleAttendus,
           participations: cycleParticipations,
           personnes: cyclePersonnesById,
           currentEventId: eventId
         });
         attendus = attendus.map((row) => {
-          const state = sessionParticipation.byPersonneId[String(row.personne_id)];
+          const state = prExerciseParticipation.byPersonneId[String(row.personne_id)];
           return state
             ? Object.assign({}, row, {
               already_counted_in_session: true,
@@ -1532,7 +1573,8 @@ function createScopeService(repo){
       participations,
       encadrement,
       personnes,
-      sessionParticipation,
+      prExerciseParticipation,
+      sessionParticipation: prExerciseParticipation,
       journal,
       compteurs,
       saisieQuantitative: saisie,

@@ -320,6 +320,8 @@ function createMemoryRepo(){
         salle: row.salle || null,
         responsable: row.responsable || null,
         cycle_id: row.cycle_id || row.cycleId || null,
+        pr_exercise_group_key: row.pr_exercise_group_key || row.prExerciseGroupKey || null,
+        pr_session_key: row.pr_session_key || row.prSessionKey || null,
         population_figee: false,
         population_version: 0,
         figee_at: null,
@@ -522,6 +524,12 @@ function createMemoryRepo(){
     async listCycleEvents(cycleId){
       return [...evenements.values()]
         .filter((item) => item.cycle_id === cycleId)
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
+        .map((item) => ({ ...item, date: dateOnly(item.date) }));
+    },
+    async listPrExerciseEvents(groupKey){
+      return [...evenements.values()]
+        .filter((item) => item.pr_exercise_group_key === groupKey)
         .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
         .map((item) => ({ ...item, date: dateOnly(item.date) }));
     },

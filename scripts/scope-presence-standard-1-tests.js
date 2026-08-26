@@ -27,6 +27,16 @@ function record(name, fn){
     });
 }
 
+async function expectHttpError(fn, status, error){
+  try{
+    await fn();
+    assert.fail(`Erreur ${status}/${error} attendue`);
+  }catch(err){
+    assert.strictEqual(err.status, status);
+    assert.strictEqual(err.error, error);
+  }
+}
+
 async function seedPerson(repo, cibleId, spec){
   const personne = await repo.insertPersonne({
     nip: spec.nip,
@@ -492,18 +502,17 @@ function part(personne, statut, extra){
     }, { sub: 'presence-test' });
     const reset = await ctx.service.resetParticipations(ctx.eventId, { baseVersion: added.version + 1 }, { sub: 'presence-test' });
     let fiche = await ctx.service.lireEvenement(ctx.eventId);
-    assert.strictEqual(fiche.encadrement.length, 0);
+    assert.strictEqual(fiche.encadrement.length, 1);
+    assert.strictEqual(fiche.encadrement[0].personne_id, trainer.personne_id);
+    assert.strictEqual(fiche.encadrement[0].role, 'FORMATEUR');
     assert.ok(fiche.attendus.some((row) => row.personne_id === ctx.people[0].personne_id && row.inclus !== false));
     assert.ok(fiche.attendus.some((row) => row.personne_id === manual.personne_id && row.origine === 'EXCEPTION_AJOUT'));
     assert.strictEqual(fiche.participations.find((row) => row.personne_id === manual.personne_id).statut, 'NON_RENSEIGNE');
-    const readd = await ctx.service.ajouterEncadrement(ctx.eventId, {
+    await expectHttpError(() => ctx.service.ajouterEncadrement(ctx.eventId, {
       baseVersion: reset.version,
       personneId: trainer.personne_id,
       role: 'FORMATEUR'
-    }, { sub: 'presence-test' });
-    fiche = await ctx.service.lireEvenement(ctx.eventId);
-    assert.strictEqual(fiche.encadrement.length, 1);
-    assert.strictEqual(readd.version, reset.version + 1);
+    }, { sub: 'presence-test' }), 422, 'deja_encadrement');
   });
 
   await record('CAS 1R4.1 — ventilation dynamique des excusés depuis la saisie locale', async () => {
