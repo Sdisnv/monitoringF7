@@ -3181,10 +3181,12 @@
       return row.statut === value;
     };
     const justificatifCell = (row) => {
-      const motif = row.statut === 'ABSENT_EXCUSE' ? `<select data-motif aria-label="Motif d’excuse">
+      const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
+      const selectedMotif = motifs.find((m) => m.value === row.motifAbsence);
+      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control"><select data-motif aria-label="Motif d’excuse">
         <option value="">Motif</option>
-        ${(L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS).map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
-      </select>` : '';
+        ${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}
+      </select>${selectedMotif ? `<span class="scope-motif-selected">${escapeHtml(selectedMotif.label)}</span>` : ''}</div>` : '';
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">`
         : '';

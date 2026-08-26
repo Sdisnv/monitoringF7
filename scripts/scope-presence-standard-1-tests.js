@@ -479,7 +479,7 @@ function part(personne, statut, extra){
     assert.deepStrictEqual(effectif.nips, ['N1', 'NF']);
   });
 
-  await record('CAS 1R4 Q21-Q26 — reset persistant encadrement, recherches, manuel conservé', async () => {
+  await record('CAS FIX-3 Q21-Q26 — reset remet encadrement à zéro, recherches et manuel conservés', async () => {
     const ctx = await setupEvent(1);
     const trainer = await ctx.repo.insertPersonne({ nip: 'RST101', nom: 'Reset', prenom: 'Formateur', grade: 'Sgt' });
     const manual = await ctx.repo.insertPersonne({ nip: 'RST102', nom: 'Reset', prenom: 'Manuel', grade: 'Sap' });
@@ -502,17 +502,16 @@ function part(personne, statut, extra){
     }, { sub: 'presence-test' });
     const reset = await ctx.service.resetParticipations(ctx.eventId, { baseVersion: added.version + 1 }, { sub: 'presence-test' });
     let fiche = await ctx.service.lireEvenement(ctx.eventId);
-    assert.strictEqual(fiche.encadrement.length, 1);
-    assert.strictEqual(fiche.encadrement[0].personne_id, trainer.personne_id);
-    assert.strictEqual(fiche.encadrement[0].role, 'FORMATEUR');
+    assert.strictEqual(fiche.encadrement.length, 0);
     assert.ok(fiche.attendus.some((row) => row.personne_id === ctx.people[0].personne_id && row.inclus !== false));
     assert.ok(fiche.attendus.some((row) => row.personne_id === manual.personne_id && row.origine === 'EXCEPTION_AJOUT'));
+    assert.strictEqual(fiche.participations.find((row) => row.personne_id === trainer.personne_id), undefined);
     assert.strictEqual(fiche.participations.find((row) => row.personne_id === manual.personne_id).statut, 'NON_RENSEIGNE');
-    await expectHttpError(() => ctx.service.ajouterEncadrement(ctx.eventId, {
+    await ctx.service.ajouterEncadrement(ctx.eventId, {
       baseVersion: reset.version,
       personneId: trainer.personne_id,
       role: 'FORMATEUR'
-    }, { sub: 'presence-test' }), 422, 'deja_encadrement');
+    }, { sub: 'presence-test' });
   });
 
   await record('CAS 1R4.1 — ventilation dynamique des excusés depuis la saisie locale', async () => {

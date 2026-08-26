@@ -1765,10 +1765,12 @@ html, body {
   box-shadow: none;
 }
 
-.scope-status-row select {
+.scope-status-row select,
+.scope-justificatif-cell select[data-motif] {
   width: auto;
   min-width: 150px;
   height: 40px;
+  min-height: 40px;
   padding: 0 10px;
   border: 1px solid var(--scope-line);
   border-radius: var(--scope-radius-sm);
@@ -2030,6 +2032,30 @@ html, body {
 
 .scope-justificatif-cell {
   min-width: 170px;
+}
+
+.scope-motif-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.scope-motif-selected {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  max-width: 170px;
+  padding: 0 10px;
+  border: 1px solid #efb6b9;
+  border-radius: var(--scope-radius-sm);
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scope-muted-inline {

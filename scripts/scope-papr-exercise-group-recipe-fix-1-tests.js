@@ -195,17 +195,17 @@ async function expectHttpError(fn, status, error){
     assert.ok(!ui.includes("!used.has(String(p.personne_id)) && !expected.has(String(p.personne_id))"));
   });
 
-  await record('I — retrait Formateur seule contribution réouvre globalement', async () => {
+  await record('I — retrait Formateur attendu garde la participation PAPR présente', async () => {
     const ctx = await setup();
     await addEnc(ctx, 's1', 'p1', 'FORMATEUR');
     await removeEnc(ctx, 's1', 'p1');
     const detail = await ctx.service.lireEvenement('s2');
-    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 0);
-    assert.strictEqual(detail.prExerciseParticipation.kpis.open, 77);
-    assert.ok(!detail.attendus.find((a) => a.personne_id === 'p1').alreadyCountedInSession);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 1);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.open, 76);
+    assert.strictEqual(detail.attendus.find((a) => a.personne_id === 'p1').alreadyCountedInSession, true);
     const p = await ctx.repo.getParticipation('s1', 'p1');
     assert.strictEqual(p.role, 'PARTICIPANT');
-    assert.strictEqual(p.statut, 'NON_RENSEIGNE');
+    assert.strictEqual(p.statut, 'PRESENT');
   });
 
   await record('J — retrait Formateur avec présence antérieure garde le verrou global', async () => {
@@ -247,15 +247,17 @@ async function expectHttpError(fn, status, error){
     assert.strictEqual(parts.filter((p) => p.personne_id === 'p1' && p.statut === 'PRESENT').length, 1);
   });
 
-  await record('N — Réinitialiser une session préserve encadrement et autres sessions', async () => {
+  await record('N — Réinitialiser une session supprime encadrement local et préserve autres sessions', async () => {
     const ctx = await setup();
     await savePresence(ctx, 's1', 'p1');
     await addEnc(ctx, 's2', 'p2', 'FORMATEUR');
     await ctx.service.resetParticipations('s2', { baseVersion: await version(ctx.repo, 's2') });
     const detail = await ctx.service.lireEvenement('s2');
-    assert.ok(detail.encadrement.some((p) => p.personne_id === 'p2' && p.role === 'FORMATEUR'));
+    assert.strictEqual(detail.encadrement.length, 0);
+    assert.strictEqual((await ctx.repo.getParticipation('s2', 'p2')).role, 'PARTICIPANT');
+    assert.strictEqual((await ctx.repo.getParticipation('s2', 'p2')).statut, 'NON_RENSEIGNE');
     assert.strictEqual((await ctx.repo.getParticipation('s1', 'p1')).statut, 'PRESENT');
-    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 2);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 1);
   });
 
   for(const result of results){

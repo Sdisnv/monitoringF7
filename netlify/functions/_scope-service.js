@@ -1040,9 +1040,12 @@ function createScopeService(repo){
       }
       const attendu = await tx.getAttendu(eventId, personneId);
       if(attendu && attendu.inclus){
+        const previousStatut = String(participation.statut || '').toUpperCase();
+        const previousRole = String(participation.role || '').toUpperCase();
+        const keepPrPresence = ['FORMATEUR', 'SURVEILLANT'].includes(previousRole) && previousStatut === 'PRESENT';
         await tx.upsertParticipation({
           ...participation,
-          statut: 'NON_RENSEIGNE',
+          statut: keepPrPresence ? 'PRESENT' : 'NON_RENSEIGNE',
           motif_absence: null,
           commentaire: null,
           role: 'PARTICIPANT',
@@ -1175,14 +1178,13 @@ function createScopeService(repo){
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
       const attendus = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
+      const participationsByPersonneId = new Map(participations.map((p) => [String(p.personne_id), p]));
+      const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map((a) => String(a.personne_id)));
+      const encadrementRows = participations.filter((p) => ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()));
       const resetRows = attendus
         .filter(a => a.inclus !== false)
-        .filter((a) => {
-          const existing = participations.find(p => String(p.personne_id) === String(a.personne_id));
-          return !(existing && ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase()));
-        })
         .map((a) => {
-          const existing = participations.find(p => String(p.personne_id) === String(a.personne_id));
+          const existing = participationsByPersonneId.get(String(a.personne_id));
           return {
             ...(existing || { evenement_id: eventId, personne_id: a.personne_id }),
             statut: 'NON_RENSEIGNE',
@@ -1197,13 +1199,29 @@ function createScopeService(repo){
       else {
         for(const row of resetRows) await tx.upsertParticipation(row);
       }
+      const encadrementHorsPopulation = encadrementRows.filter((p) => !attenduIds.has(String(p.personne_id)));
+      for(const row of encadrementHorsPopulation){
+        if(typeof tx.deleteParticipation === 'function'){
+          await tx.deleteParticipation(eventId, row.personne_id);
+        } else {
+          await tx.upsertParticipation({
+            ...row,
+            statut: 'NON_CONCERNE',
+            motif_absence: null,
+            commentaire: null,
+            role: 'PARTICIPANT',
+            source: 'RESET',
+            auteur_id: actorId(actor)
+          });
+        }
+      }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {});
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
         action: 'RESET_SAISIE',
-        apres: { resetParticipations: resetRows.length, encadrementSupprime: 0 }
+        apres: { resetParticipations: resetRows.length, encadrementSupprime: encadrementRows.length }
       });
       return { evenement: next, version: next.version };
     });

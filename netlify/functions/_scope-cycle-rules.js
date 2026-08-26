@@ -351,7 +351,7 @@ function computePrExerciseParticipationState(input = {}){
   }
   for(const [key, rows] of countedByPerson.entries()){
     const outsideCurrent = currentEventId
-      ? rows.filter((row) => row.eventId !== currentEventId)
+      ? rows.filter((row) => row.eventId !== currentEventId && row.role !== 'SURVEILLANT')
       : rows;
     if(!outsideCurrent.length) continue;
     for(const person of personnesById.values()){

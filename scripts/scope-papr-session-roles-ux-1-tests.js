@@ -90,12 +90,12 @@ function stateFor(currentEventId, participations, cyclePersonnes, personnes){
     assert.strictEqual(m.effectifEngageCycle, 1);
   });
 
-  await record('E — Surveillant PAPR applique la même unicité', () => {
+  await record('E — Surveillant PAPR compte mais ne verrouille pas la saisie normale ailleurs', () => {
     const participations = [part('ex1', 'p1', 'PRESENT', 'SURVEILLANT')];
     const m = metrics(participations);
     const s = stateFor('ex2', participations);
     assert.strictEqual(m.participantsReconnusDistincts, 1);
-    assert.strictEqual(s.byPersonneId.p1.countedRole, 'SURVEILLANT');
+    assert.strictEqual(s.byPersonneId.p1, undefined);
   });
 
   await record('F — Formateur externe reste hors contribution PAPR', () => {
