@@ -379,6 +379,9 @@ function computePrExerciseParticipationState(input = {}){
     const relation = currentOrder != null && referenceOrder != null && currentOrder < referenceOrder
       ? 'BEFORE_REFERENCE'
       : 'AFTER_REFERENCE';
+    const formateurSessionLabels = rows
+      .filter((row) => row.role === 'FORMATEUR')
+      .map((row) => prSessionLabel(eventsById.get(row.eventId) || { evenement_id: row.eventId }));
     for(const person of personnesById.values()){
       const id = personneId(person);
       if(!id || dedupeKey(person, personnesById) !== key) continue;
@@ -391,7 +394,8 @@ function computePrExerciseParticipationState(input = {}){
         referenceEventId: reference.eventId,
         referenceSessionLabel: prSessionLabel(referenceEvent),
         referenceQuality: reference.role === 'FORMATEUR' ? 'Formateur PR' : 'PAPR',
-        referenceRelation: relation
+        referenceRelation: relation,
+        formateurSessionLabels
       };
     }
   }

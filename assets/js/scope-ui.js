@@ -56,6 +56,9 @@
     cycleDetailError: null,
     cycleFilter: { domaine: 'tous', statut: 'tous' },
     fiche: null,
+    ficheReady: false,
+    activeFicheId: null,
+    ficheRequestSeq: 0,
     preview: null,
     pendingRetraits: [],
     pendingExceptions: [],
@@ -443,13 +446,25 @@
   }
 
   async function loadFiche(id) {
+    const expectedId = String(id);
+    const token = ++state.ficheRequestSeq;
+    state.activeFicheId = expectedId;
+    state.ficheReady = false;
+    state.fiche = null;
+    state.preview = null;
+    state.saisie = [];
+    state.volumes = volumesFromFiche();
+    render();
     const data = await client.getEvenement(id);
+    if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
+    state.ficheReady = true;
     state.conflict = false;
     state.encRole = 'FORMATEUR';
     buildSaisieFromFiche();
     state.volumes = volumesFromFiche();
     state.qtyPreview = null;
+    return data;
   }
 
   function snapshotSaisieState() {
@@ -465,8 +480,13 @@
   }
 
   async function refreshFichePreservingSaisie(id, snapshot) {
+    const expectedId = String(id);
+    const token = ++state.ficheRequestSeq;
+    state.activeFicheId = expectedId;
     const data = await client.getEvenement(id);
+    if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
+    state.ficheReady = true;
     state.conflict = false;
     buildSaisieFromFiche();
     mergeEditableSaisieState(snapshot);
@@ -479,6 +499,22 @@
     if (typeof window !== 'undefined') {
       requestAnimationFrame(() => window.scrollTo({ top: snapshot.scrollY, left: window.scrollX, behavior: 'auto' }));
     }
+    return data;
+  }
+
+  async function reloadFicheFromServer(id) {
+    const expectedId = String(id);
+    const token = ++state.ficheRequestSeq;
+    state.activeFicheId = expectedId;
+    const data = await client.getEvenement(id);
+    if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
+    state.fiche = data;
+    state.ficheReady = true;
+    state.conflict = false;
+    buildSaisieFromFiche();
+    state.volumes = volumesFromFiche();
+    state.qtyPreview = null;
+    return data;
   }
 
   function mergeEditableSaisieState(snapshot) {
@@ -626,8 +662,12 @@
         const referenceLabel = a.sessionReferenceLabel || a.session_reference_label || '—';
         const referenceQuality = a.sessionReferenceQuality || a.session_reference_quality || 'PAPR';
         const relation = a.sessionReferenceRelation || a.session_reference_relation;
+        const formateurSessions = a.sessionFormateurSessions || a.session_formateur_sessions || [];
+        const formateurTooltip = referenceQuality === 'Formateur PR' && formateurSessions.length && L.formatFormateurPrTooltip
+          ? L.formatFormateurPrTooltip(fullName, nipOf(fiche, a.personne_id), formateurSessions)
+          : '';
         const alreadyCountedTooltip = alreadyCountedInSession
-          ? `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`
+          ? (formateurTooltip || `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`)
           : '';
         return {
           personneId: a.personne_id,
@@ -966,6 +1006,18 @@
     return `<span class="scope-badge"><span class="scope-dot ${escapeHtml(code)}"></span>${escapeHtml(L.statutLabel(code))}</span>`;
   }
 
+  function eventBusinessState(item) {
+    const stateValue = item && (item.etatMetier || item.etat_metier);
+    const code = (stateValue && stateValue.code) || (item && item.evenement && item.evenement.statut) || '';
+    const label = (stateValue && stateValue.label) || L.statutLabel(code);
+    return { code, label };
+  }
+
+  function eventBusinessStateBadge(item) {
+    const etat = eventBusinessState(item);
+    return `<span class="scope-badge scope-state-badge"><span class="scope-dot ${escapeHtml(etat.code)}"></span>${escapeHtml(etat.label)}</span>`;
+  }
+
   function renderAccueil() {
     const dash = state.dashboard;
     if (state.dashboardError) {
@@ -1063,7 +1115,7 @@
       { key: 'domaine', type: 'text', value: (item) => item && item.evenement && domaineLabel(item.evenement.domaine_code) },
       { key: 'public', type: 'text', value: (item) => L.ciblesLabel(item && item.cibles) },
       { key: 'effectif', type: 'number', value: (item) => item && item.attendusInclus },
-      { key: 'etat', type: 'status', value: (item) => item && item.evenement && item.evenement.statut }
+      { key: 'etat', type: 'status', value: (item) => eventBusinessState(item).code }
     ];
     const rows = L.sortRows ? L.sortRows(state.list, state.eventSort, eventColumns) : state.list;
     const view = L.listViewState({
@@ -1096,7 +1148,7 @@
         : `#/exercices/${ev.evenement_id}`;
       const statutHtml = isLegacy
         ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
-        : `${statutBadge(ev.statut)}<span class="scope-mode-hint">${escapeHtml(L.modeLabel(mode))}</span>`;
+        : `${eventBusinessStateBadge(item)}<span class="scope-mode-hint">${escapeHtml(L.modeLabel(mode))}</span>`;
       const attenduLegacy = item.legacy && ((item.legacy.payload_v67 && item.legacy.payload_v67.total_attendu) || item.legacy.nb_convoques);
       const presents = isLegacy && item.legacy
         ? `${item.legacy.nb_presents} / ${attenduLegacy}`
@@ -1128,9 +1180,9 @@
             <select id="filter-statut">
               <option value="tous">Tous</option>
               <option value="PLANIFIE">Planifié</option>
-              <option value="REALISE">Réalisé</option>
-              <option value="REPORTE">Reporté</option>
-              <option value="ANNULE">Annulé</option>
+              <option value="SAISIE_EN_COURS">Saisie en cours</option>
+              <option value="A_TRAITER">À traiter</option>
+              <option value="TRAITE">Traité</option>
             </select>
           </div>
           <div class="scope-field">
@@ -2778,7 +2830,10 @@
 
   function renderFiche() {
     const fiche = state.fiche;
-    if (!fiche) return `<div class="scope-main"><div class="scope-empty">Événement introuvable.</div></div>`;
+    if (!fiche) {
+      const loading = state.loading || !state.ficheReady;
+      return `<div class="scope-crumb"><a href="#/exercices">Événements</a></div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
+    }
     const ev = fiche.evenement;
     const mode = eventMode(ev);
     if (ev.statut === 'REALISE') return renderRealise();
@@ -2810,7 +2865,7 @@
       ? '<button type="button" class="scope-btn" id="convert-nominatif">Passer en nominatif</button>'
       : '';
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
+      <div class="scope-crumb"><a href="#/exercices">Événements</a> / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
@@ -2900,7 +2955,10 @@
 
   function renderSaisie() {
     const fiche = state.fiche;
-    if (!fiche) return `<div class="scope-main"><div class="scope-empty">Événement introuvable.</div></div>`;
+    if (!fiche) {
+      const loading = state.loading || !state.ficheReady;
+      return `<div class="scope-crumb"><a href="#/exercices">Événements</a> / Saisie</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
+    }
     const ev = fiche.evenement;
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
@@ -2910,7 +2968,7 @@
     const disabledCloture = hasIncompleteExcuse;
     const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
+      <div class="scope-crumb"><a href="#/exercices">Événements</a> / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
@@ -2918,6 +2976,7 @@
           ${renderPresenceKpis(niveaux, fiche)}
           ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
           <div class="scope-actions">
+            <a class="scope-btn" href="#/exercices">Retour aux événements</a>
             <button type="button" class="scope-btn" id="all-present">Tout présent</button>
             <button type="button" class="scope-btn" id="reset-saisie">Réinitialiser la saisie</button>
             <button type="button" class="scope-btn scope-btn-primary" id="save-part">Enregistrer</button>
@@ -3146,7 +3205,7 @@
     const preview = state.qtyPreview;
     const previewTaux = preview && preview.taux;
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Présences</div>
+      <div class="scope-crumb"><a href="#/exercices">Événements</a> / ${escapeHtml(ev.libelle)} / Présences</div>
       <div class="scope-main">
         <div class="scope-card">
           <h2 style="margin-top:0">Saisir les présences</h2>
@@ -3173,7 +3232,8 @@
           <div class="scope-actions scope-qty-actions">
             <button type="button" class="scope-btn" id="qty-save">Enregistrer</button>
             <button type="button" class="scope-btn scope-btn-primary" id="qty-cloturer" ${equal ? '' : 'disabled'}>Clôturer</button>
-            <a class="scope-btn" href="#/exercices/${escapeHtml(ev.evenement_id)}">Retour</a>
+            <a class="scope-btn" href="#/exercices">Retour aux événements</a>
+            <a class="scope-btn" href="#/exercices/${escapeHtml(ev.evenement_id)}">Retour fiche</a>
           </div>
         </div>
       </div>
@@ -3223,7 +3283,7 @@
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
               const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : ''].filter(Boolean).join(' ');
               const blockedAttrs = blocked
-                ? ` tabindex="0" title="${escapeHtml(row.alreadyCountedTooltip)}" aria-describedby="${tooltipId}"`
+                ? ` tabindex="0" aria-describedby="${tooltipId}"`
                 : '';
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
               <td data-label="Nom">${escapeHtml(row.nomFamille || row.nom)}${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
@@ -3234,7 +3294,7 @@
               <td data-label="Présence">
                 <div class="scope-status-row">
                   ${statuses.map(([v, l]) => `
-                    <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}"${blocked ? ` disabled aria-disabled="true" title="${escapeHtml(row.alreadyCountedTooltip)}"` : ''}>${l}</button>
+                    <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}"${blocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>
                   `).join('')}
                 </div>
               </td>
@@ -3880,7 +3940,7 @@
       const body = readQtyVolumes();
       withLoading(async () => {
         const res = await client.enregistrerSaisieQuantitative(id, body, state.fiche.evenement.version);
-        await loadFiche(id);
+        await reloadFicheFromServer(id);
         toast('success', 'Enregistré', 'Les présences ont été enregistrées.');
         state.fiche.evenement.version = res.version;
       });
@@ -3893,9 +3953,9 @@
           throw { status: 422, error: 'volumes_incoherents', message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus.' };
         }
         await client.enregistrerSaisieQuantitative(id, body, state.fiche.evenement.version);
-        await loadFiche(id);
+        await reloadFicheFromServer(id);
         await client.cloturer(id, state.fiche.evenement.version);
-        await loadFiche(id);
+        await reloadFicheFromServer(id);
         go(`#/exercices/${id}`);
       });
     });
@@ -5055,8 +5115,8 @@
       successMessage: 'Les participations ont été enregistrées.'
     }, async () => {
       const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
-      await loadFiche(id);
-      state.fiche.evenement.version = res.version;
+      const fresh = await reloadFicheFromServer(id);
+      if (fresh && state.fiche && state.fiche.evenement && res.version) state.fiche.evenement.version = res.version;
     });
   }
 
@@ -5213,6 +5273,15 @@
     }
     if (r.screen === 'vue') {
       state.dashboardError = null;
+    }
+    if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id && state.activeFicheId !== String(r.id)) {
+      state.activeFicheId = String(r.id);
+      state.ficheReady = false;
+      state.fiche = null;
+      state.preview = null;
+      state.saisie = [];
+      state.volumes = volumesFromFiche();
+      render();
     }
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();

@@ -947,6 +947,9 @@ html, body {
 }
 
 .scope-dot.PLANIFIE { background: #9ca3af; }
+.scope-dot.SAISIE_EN_COURS { background: #2563eb; }
+.scope-dot.A_TRAITER { background: #dc2626; }
+.scope-dot.TRAITE { background: #1f7a3a; }
 .scope-dot.REALISE { background: #1f7a3a; }
 .scope-dot.REPORTE { background: #d97706; }
 .scope-dot.ANNULE { background: #6b7280; }

@@ -1426,7 +1426,59 @@ function createScopeService(repo){
     return map;
   }
 
-  async function summarizeEvenements(evenements){
+  function hasQuantitativeBusinessInput(saisie){
+    if(!saisie) return false;
+    return [
+      'nb_attendus',
+      'nb_presents',
+      'nb_excuses',
+      'nb_excuses_prive',
+      'nb_excuses_professionnel',
+      'nb_excuses_armee',
+      'nb_excuses_accident_maladie',
+      'nb_excuses_non_precise',
+      'nb_non_excuses',
+      'nb_dispenses',
+      'nb_permutations'
+    ].some((key) => {
+      const value = saisie[key];
+      return value !== null && value !== undefined && value !== '' && Number(value) !== 0;
+    });
+  }
+
+  function hasNominativeBusinessInput(participations, attendus){
+    const expectedOrigins = new Map((attendus || []).map((row) => [String(row.personne_id), String(row.origine || '').toUpperCase()]));
+    return (participations || []).some((row) => {
+      const statut = String(row.statut || '').toUpperCase();
+      const role = String(row.role || 'PARTICIPANT').toUpperCase();
+      const source = String(row.source || '').toUpperCase();
+      const motif = String(row.motif_absence || '').trim();
+      const commentaire = String(row.commentaire || '').trim();
+      if(ROLES_ENCADREMENT.has(role)) return true;
+      if(motif || commentaire) return true;
+      if(expectedOrigins.get(String(row.personne_id)) === 'EXCEPTION_AJOUT') return true;
+      if(statut && !['NON_RENSEIGNE', 'NON_CONCERNE'].includes(statut)) return true;
+      if(source && !['GENERATION', 'RESET'].includes(source) && statut !== 'NON_RENSEIGNE') return true;
+      return false;
+    });
+  }
+
+  function businessEtatForEvenement(evenement, context = {}){
+    if(String(evenement.statut || '').toUpperCase() === 'REALISE'){
+      return { code: 'TRAITE', label: 'Traité' };
+    }
+    const date = String(evenement.date || '').slice(0, 10);
+    const today = String(context.today || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    if(date && /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today){
+      return { code: 'A_TRAITER', label: 'À traiter' };
+    }
+    const started = hasNominativeBusinessInput(context.participations, context.attendus)
+      || hasQuantitativeBusinessInput(context.saisie);
+    if(started) return { code: 'SAISIE_EN_COURS', label: 'Saisie en cours' };
+    return { code: 'PLANIFIE', label: 'Planifié' };
+  }
+
+  async function summarizeEvenements(evenements, options = {}){
     const list = evenements || [];
     if(!list.length){
       return { items: [], performance: { mode: 'batch', eventCount: 0, queries: 0 } };
@@ -1455,6 +1507,12 @@ function createScopeService(repo){
       const attendus = attendusByEvent.get(evenement.evenement_id) || [];
       const participations = partsByEvent.get(evenement.evenement_id) || [];
       const saisie = qtyByEvent.get(evenement.evenement_id) || null;
+      const etatMetier = businessEtatForEvenement(evenement, {
+        participations,
+        attendus,
+        saisie,
+        today: options.today
+      });
       const modeSuivi = inferModeSuivi(evenement);
       let compteurs = computeTaux(participations, attendus);
       let attendusInclus = attendus.filter((a) => a.inclus !== false).length;
@@ -1475,6 +1533,8 @@ function createScopeService(repo){
         attendusInclus,
         legacy,
         saisieQuantitative: saisie,
+        etatMetier,
+        etat_metier: etatMetier,
         modeSuivi,
         qualification: isQualificationEvenement(evenement)
       };
@@ -1490,17 +1550,23 @@ function createScopeService(repo){
   async function listEvenements(query){
     const annee = query?.annee || query?.year || null;
     const statut = query?.statut || query?.status || null;
+    const etatsMetier = new Set(['PLANIFIE', 'SAISIE_EN_COURS', 'A_TRAITER', 'TRAITE']);
+    const statutFilter = statut && statut !== 'tous' && !etatsMetier.has(statut) ? statut : null;
+    const etatMetierFilter = statut && statut !== 'tous' && etatsMetier.has(statut) ? statut : null;
     const domaine = query?.domaineCode || query?.domaine_code || query?.domaine || null;
     let evenements = await repo.listEvenements({
       annee: annee ? Number(annee) : null,
-      statut: statut && statut !== 'tous' ? statut : null,
+      statut: statutFilter,
       domaine: domaine && domaine !== 'tous' ? domaine : null
     });
     if(!wantsQualification(query)){
       evenements = evenements.filter((row) => !isQualificationEvenement(row));
     }
-    const packed = await summarizeEvenements(evenements);
-    return { evenements: packed.items, performance: packed.performance };
+    const packed = await summarizeEvenements(evenements, { today: query?.today });
+    const items = etatMetierFilter
+      ? packed.items.filter((item) => item.etatMetier && item.etatMetier.code === etatMetierFilter)
+      : packed.items;
+    return { evenements: items, performance: packed.performance };
   }
 
   async function hydratePersonnes(ids){
@@ -1572,10 +1638,12 @@ function createScopeService(repo){
               session_reference_label: state.referenceSessionLabel,
               session_reference_quality: state.referenceQuality,
               session_reference_relation: state.referenceRelation,
+              session_formateur_sessions: state.formateurSessionLabels || [],
               sessionReferenceEventId: state.referenceEventId,
               sessionReferenceLabel: state.referenceSessionLabel,
               sessionReferenceQuality: state.referenceQuality,
-              sessionReferenceRelation: state.referenceRelation
+              sessionReferenceRelation: state.referenceRelation,
+              sessionFormateurSessions: state.formateurSessionLabels || []
             })
             : row;
         });

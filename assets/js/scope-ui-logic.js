@@ -26,6 +26,9 @@
 
   const STATUT_LABELS = {
     PLANIFIE: 'Planifié',
+    SAISIE_EN_COURS: 'Saisie en cours',
+    A_TRAITER: 'À traiter',
+    TRAITE: 'Traité',
     REALISE: 'Réalisé',
     REPORTE: 'Reporté',
     ANNULE: 'Annulé',
@@ -66,6 +69,83 @@
 
   function statutLabel(code) {
     return STATUT_LABELS[code] || code || '';
+  }
+
+  function parsePrSessionLabel(label) {
+    const text = String(label || '').trim();
+    const m = text.match(/^(\d+)(?:\.(\d+))?$/);
+    if (!m) return { label: text, major: Number.MAX_SAFE_INTEGER, minor: Number.MAX_SAFE_INTEGER };
+    return { label: text, major: Number(m[1]), minor: m[2] == null ? 0 : Number(m[2]) };
+  }
+
+  function uniqueSortedPrSessionLabels(labels) {
+    const seen = new Set();
+    return (labels || [])
+      .map((label) => String(label || '').trim())
+      .filter(Boolean)
+      .filter((label) => {
+        if (seen.has(label)) return false;
+        seen.add(label);
+        return true;
+      })
+      .sort((a, b) => {
+        const left = parsePrSessionLabel(a);
+        const right = parsePrSessionLabel(b);
+        if (left.major !== right.major) return left.major - right.major;
+        if (left.minor !== right.minor) return left.minor - right.minor;
+        return left.label.localeCompare(right.label, 'fr', { numeric: true, sensitivity: 'base' });
+      });
+  }
+
+  function compactPrSessionLabels(labels) {
+    const sorted = uniqueSortedPrSessionLabels(labels);
+    const parts = [];
+    let run = [];
+    const flush = () => {
+      if (!run.length) return;
+      if (run.length >= 3) parts.push(`${run[0].label} à ${run[run.length - 1].label}`);
+      else run.forEach((item) => parts.push(item.label));
+      run = [];
+    };
+    for (const label of sorted) {
+      const parsed = parsePrSessionLabel(label);
+      const last = run[run.length - 1];
+      const continuous = last
+        && parsed.major === last.major
+        && Number.isFinite(parsed.minor)
+        && Number.isFinite(last.minor)
+        && parsed.minor === last.minor + 1;
+      if (!run.length || continuous) run.push(parsed);
+      else {
+        flush();
+        run.push(parsed);
+      }
+    }
+    flush();
+    return parts;
+  }
+
+  function joinFrenchList(parts) {
+    const values = (parts || []).filter(Boolean);
+    if (!values.length) return '';
+    if (values.length === 1) return values[0];
+    if (values.length === 2) return `${values[0]} et ${values[1]}`;
+    return `${values.slice(0, -1).join(', ')} et ${values[values.length - 1]}`;
+  }
+
+  function formatPrSessionList(labels) {
+    const parts = compactPrSessionLabels(labels);
+    return joinFrenchList(parts);
+  }
+
+  function formatFormateurPrTooltip(fullName, nip, labels) {
+    const sorted = uniqueSortedPrSessionLabels(labels);
+    if (!sorted.length) return '';
+    const person = `${fullName || 'Personne'}${nip ? ` (${nip})` : ''}`;
+    if (sorted.length === 1) {
+      return `${person} participe comme Formateur PR à la session ${sorted[0]}.`;
+    }
+    return `${person} participe comme Formateur PR aux sessions ${formatPrSessionList(sorted)}.`;
   }
 
   function formatDate(iso) {
@@ -877,6 +957,8 @@
     domaineAffiche,
     niveauAffiche,
     statutLabel,
+    formatPrSessionList,
+    formatFormateurPrTooltip,
     formatDate,
     formatTaux,
     formatGap,
