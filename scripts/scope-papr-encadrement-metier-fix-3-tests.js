@@ -118,11 +118,11 @@ function extractFunction(source, name){
     assert.strictEqual(row.statut, 'PRESENT');
   });
 
-  await record('B — Surveillant PAPR reste participant présent et ne verrouille pas un autre exercice', async () => {
+  await record('B — Surveillant PAPR seul reste hors KPI et ne verrouille pas un autre exercice', async () => {
     const ctx = await setup();
     await addEnc(ctx, 'pr1', 'a', 'SURVEILLANT');
     let detail = await ctx.service.lireEvenement('pr2');
-    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 1);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 0);
     assert.ok(!detail.attendus.find((row) => row.personne_id === 'a').alreadyCountedInSession);
     await save(ctx, 'pr2', [{ personneId: 'a', statut: 'PRESENT' }]);
     detail = await ctx.service.lireEvenement('pr2');
@@ -166,7 +166,7 @@ function extractFunction(source, name){
     assert.strictEqual((await ctx.repo.getParticipation('pr2', 'c')).statut, 'PRESENT');
   });
 
-  await record('F — Retrait Formateur/Surveillant attendus conserve la présence PAPR', async () => {
+  await record('F — Retrait Formateur automatique et Surveillant seul réouvre la participation PAPR', async () => {
     const ctx = await setup();
     await addEnc(ctx, 'pr1', 'a', 'FORMATEUR');
     await addEnc(ctx, 'pr1', 'b', 'SURVEILLANT');
@@ -175,10 +175,10 @@ function extractFunction(source, name){
     for(const id of ['a', 'b']){
       const row = await ctx.repo.getParticipation('pr1', id);
       assert.strictEqual(row.role, 'PARTICIPANT');
-      assert.strictEqual(row.statut, 'PRESENT');
+      assert.strictEqual(row.statut, 'NON_RENSEIGNE');
     }
     const detail = await ctx.service.lireEvenement('pr1');
-    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 2);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 0);
   });
 
   await record('G — Payload frontend n’émet aucun PARTICIPANT pour encadrants courants', () => {
@@ -187,12 +187,13 @@ function extractFunction(source, name){
     const rows = [
       { personneId: 'a', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'FORMATEUR' },
       { personneId: 'b', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'SURVEILLANT' },
+      { personneId: 'b2', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'SURVEILLANT', presenceEdited: true },
       { personneId: 'c', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'PARTICIPANT' }
     ];
     const before = buildPresenceSavePayload(rows, new Set()).map((row) => [row.personneId, row.role]);
     const after = buildPresenceSavePayload(rows, new Set(['a', 'b'])).map((row) => [row.personneId, row.role]);
-    assert.deepStrictEqual(before, [['a', 'FORMATEUR'], ['b', 'SURVEILLANT'], ['c', 'PARTICIPANT']]);
-    assert.deepStrictEqual(after, [['c', 'PARTICIPANT']]);
+    assert.deepStrictEqual(before, [['a', 'FORMATEUR'], ['b', 'SURVEILLANT'], ['b2', 'SURVEILLANT'], ['c', 'PARTICIPANT']]);
+    assert.deepStrictEqual(after, [['b2', 'SURVEILLANT'], ['c', 'PARTICIPANT']]);
   });
 
   await record('H — UX Motif hauteur alignée et encart visuel compact', () => {

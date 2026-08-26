@@ -90,11 +90,11 @@ function stateFor(currentEventId, participations, cyclePersonnes, personnes){
     assert.strictEqual(m.effectifEngageCycle, 1);
   });
 
-  await record('E — Surveillant PAPR compte mais ne verrouille pas la saisie normale ailleurs', () => {
-    const participations = [part('ex1', 'p1', 'PRESENT', 'SURVEILLANT')];
+  await record('E — Surveillant PAPR seul ne compte pas et ne verrouille pas ailleurs', () => {
+    const participations = [Object.assign(part('ex1', 'p1', 'PRESENT', 'SURVEILLANT'), { source: 'ENCADREMENT' })];
     const m = metrics(participations);
     const s = stateFor('ex2', participations);
-    assert.strictEqual(m.participantsReconnusDistincts, 1);
+    assert.strictEqual(m.participantsReconnusDistincts, 0);
     assert.strictEqual(s.byPersonneId.p1, undefined);
   });
 

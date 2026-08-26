@@ -1733,10 +1733,30 @@ html, body {
   border-radius: var(--scope-radius-sm);
   border: 1px solid var(--scope-line);
   background: #fff;
+  color: #1f2937;
   font-size: 14px;
   cursor: pointer;
   font-family: inherit;
   transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.scope-status-row button[data-status="PRESENT"] {
+  background: #eef6ff;
+  border-color: #0b4f86;
+  color: #0b3f6f;
+}
+
+.scope-status-row button[data-status="ABSENT_EXCUSE"],
+.scope-status-row button[data-status="DISPENSE"] {
+  background: #fff8db;
+  border-color: #9a6b00;
+  color: #4a3600;
+}
+
+.scope-status-row button[data-status="ABSENT_NON_EXCUSE"] {
+  background: #fff;
+  border-color: #111827;
+  color: #111827;
 }
 
 .scope-status-row button:hover {
@@ -1744,16 +1764,48 @@ html, body {
   border-color: #cfd6df;
 }
 
+.scope-status-row button[data-status="PRESENT"]:hover {
+  background: #dbeeff;
+  border-color: #073b66;
+}
+
+.scope-status-row button[data-status="ABSENT_EXCUSE"]:hover,
+.scope-status-row button[data-status="DISPENSE"]:hover {
+  background: #fff0b8;
+  border-color: #7a5200;
+}
+
+.scope-status-row button[data-status="ABSENT_NON_EXCUSE"]:hover {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
 .scope-status-row button:focus-visible {
   outline: 2px solid rgba(222, 0, 10, .34);
   outline-offset: 2px;
 }
 
-.scope-status-row button[aria-pressed="true"] {
-  background: var(--scope-red);
-  border-color: var(--scope-red);
+.scope-status-row button[data-status="PRESENT"][aria-pressed="true"] {
+  background: #0b4f86;
+  border-color: #062f52;
   color: #fff;
-  box-shadow: 0 0 0 1px rgba(222, 0, 10, .12);
+  box-shadow: 0 0 0 2px rgba(11, 79, 134, .18);
+}
+
+.scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"],
+.scope-status-row button[data-status="DISPENSE"][aria-pressed="true"] {
+  background: #d69b00;
+  border-color: #7a5200;
+  color: #1f1600;
+  box-shadow: 0 0 0 2px rgba(154, 107, 0, .18);
+}
+
+.scope-status-row button[data-status="ABSENT_NON_EXCUSE"][aria-pressed="true"] {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(17, 24, 39, .18);
 }
 
 .scope-status-row button:disabled,
@@ -2044,7 +2096,8 @@ html, body {
 .scope-motif-selected {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
+  min-height: 40px;
+  height: 40px;
   max-width: 170px;
   padding: 0 10px;
   border: 1px solid #efb6b9;
@@ -2053,9 +2106,18 @@ html, body {
   color: #9f1239;
   font-size: 12px;
   font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.scope-motif-selected:hover,
+.scope-motif-selected:focus-visible {
+  border-color: #dc2626;
+  background: #ffe4e6;
+  outline: none;
 }
 
 .scope-muted-inline {

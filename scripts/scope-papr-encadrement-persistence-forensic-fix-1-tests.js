@@ -112,7 +112,8 @@ async function runPersistenceCase(client, service, repo, role, withSecondPartici
   const stalePayload = uiPayloadFromFiche(initialFiche);
   const added = await service.ajouterEncadrement(eventId, { personneId: personA.personne_id, role, baseVersion: 1 }, { sub: 'forensic-test' });
   const afterRole = await dbParticipation(client, eventId, personA.personne_id);
-  assert(afterRole && afterRole.role === role && afterRole.statut === 'PRESENT', `${role} non présent après ajout`);
+  const expectedAfterAdd = role === 'FORMATEUR' ? 'PRESENT' : 'NON_RENSEIGNE';
+  assert(afterRole && afterRole.role === role && afterRole.statut === expectedAfterAdd, `${role} statut ${expectedAfterAdd} attendu après ajout`);
 
   const payload = stalePayload.map((row) => ({ ...row }));
   if(withSecondParticipant){
@@ -124,7 +125,7 @@ async function runPersistenceCase(client, service, repo, role, withSecondPartici
 
   const afterSave = await dbParticipation(client, eventId, personA.personne_id);
   assert(afterSave && afterSave.role === role, `${role} écrasé après Enregistrer`);
-  assert(afterSave.statut === 'PRESENT', `${role} n'est plus PRESENT après Enregistrer`);
+  assert(afterSave.statut === expectedAfterAdd, `${role} statut ${expectedAfterAdd} non conservé après Enregistrer`);
   const reloaded = await service.lireEvenement(eventId);
   assert((reloaded.encadrement || []).some((row) => row.personne_id === personA.personne_id && row.role === role), `${role} absent après relecture backend`);
   if(withSecondParticipant){

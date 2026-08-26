@@ -76,6 +76,7 @@ function isQuantitatif(evenement){
 function isPrParticipantContribution(statut, role){
   const r = String(role || 'PARTICIPANT').toUpperCase();
   const s = String(statut || '').toUpperCase();
+  if(r === 'SURVEILLANT') return s === 'PRESENT';
   return r === 'PARTICIPANT' && ['PRESENT', 'PERMUTATION', 'DISPENSE'].includes(s);
 }
 
@@ -1042,7 +1043,8 @@ function createScopeService(repo){
       if(attendu && attendu.inclus){
         const previousStatut = String(participation.statut || '').toUpperCase();
         const previousRole = String(participation.role || '').toUpperCase();
-        const keepPrPresence = ['FORMATEUR', 'SURVEILLANT'].includes(previousRole) && previousStatut === 'PRESENT';
+        const previousSource = String(participation.source || '').toUpperCase();
+        const keepPrPresence = previousRole === 'FORMATEUR' && previousStatut === 'PRESENT' && previousSource !== 'ENCADREMENT';
         await tx.upsertParticipation({
           ...participation,
           statut: keepPrPresence ? 'PRESENT' : 'NON_RENSEIGNE',
@@ -1107,11 +1109,15 @@ function createScopeService(repo){
         }
         const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code });
         const role = String(item.role || item.role_participation || 'PARTICIPANT').toUpperCase();
-        const participationRole = ['FORMATEUR', 'SURVEILLANT'].includes(role) ? role : 'PARTICIPANT';
-        if(['FORMATEUR', 'SURVEILLANT'].includes(participationRole) && patch.statut !== 'PRESENT'){
+        let participationRole = ['FORMATEUR', 'SURVEILLANT'].includes(role) ? role : 'PARTICIPANT';
+        if(participationRole === 'FORMATEUR' && patch.statut !== 'PRESENT'){
           throw new HttpError(422, 'encadrement_present', 'Un rôle d’encadrement compté en session doit être présent.');
         }
         const existing = await tx.getParticipation(eventId, personneId);
+        const existingRole = String(existing?.role || '').toUpperCase();
+        if(existingRole === 'SURVEILLANT' && participationRole === 'PARTICIPANT' && patch.statut !== 'NON_RENSEIGNE'){
+          participationRole = 'SURVEILLANT';
+        }
         if(existing && ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase()) && participationRole === 'PARTICIPANT'){
           skippedEncadrement += 1;
           continue;
@@ -1252,16 +1258,19 @@ function createScopeService(repo){
         }
       }
       const attenduInclus = attendu && attendu.inclus;
-      const statutEncadrement = attenduInclus && ['FORMATEUR', 'SURVEILLANT'].includes(role)
+      const existingStatut = String(existing?.statut || '').toUpperCase();
+      const existingSource = String(existing?.source || '').toUpperCase();
+      const presenceDejaSaisie = attenduInclus && existingStatut === 'PRESENT' && existingSource !== 'ENCADREMENT';
+      const statutEncadrement = attenduInclus && (role === 'FORMATEUR' || presenceDejaSaisie)
         ? 'PRESENT'
-        : 'NON_CONCERNE';
+        : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE');
       await tx.upsertParticipation({
         ...(existing || { evenement_id: eventId, personne_id: personneId }),
         statut: statutEncadrement,
         motif_absence: null,
         commentaire: null,
         role,
-        source: 'ENCADREMENT',
+        source: presenceDejaSaisie ? existing.source : 'ENCADREMENT',
         auteur_id: actorId(actor)
       });
       const next = await bumpOrConflict(tx, eventId, baseVersion, {});

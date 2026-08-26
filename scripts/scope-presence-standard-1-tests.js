@@ -589,7 +589,7 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('Vue globale dédupliquée par personne'));
     assert.ok(ui.includes('scope-presence-warning'));
     assert.ok(ui.includes('scope-cloture-reason'));
-    assert.ok(ui.includes("row.role = 'PARTICIPANT'"));
+    assert.ok(ui.includes("row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT'"));
     assert.ok(ui.includes('scopeSearchTimers'));
     assert.ok(ui.includes('scopeSearchTokens'));
     assert.ok(ui.includes('clearPresenceSearchState'));
@@ -620,7 +620,7 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('setTimeout'));
     assert.ok(ui.includes('renderSuggestionList'));
     assert.ok(logicSource.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : ''"));
-    assert.ok(css.includes('.scope-status-row button[aria-pressed="true"]'));
+    assert.ok(css.includes('[aria-pressed="true"]'));
     assert.ok(!css.includes('.scope-enc-grid'));
     assert.ok(css.includes('.scope-enc-groups'));
     assert.ok(css.includes('.scope-enc-group'));

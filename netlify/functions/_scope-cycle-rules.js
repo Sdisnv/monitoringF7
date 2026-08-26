@@ -54,11 +54,14 @@ function addPerson(set, row, personnesById){
 function isSessionCountingParticipation(row, personnesById, population){
   const role = normalizeUpper(row && row.role || 'PARTICIPANT');
   const statut = normalizeUpper(row && row.statut || 'NON_RENSEIGNE');
+  const source = normalizeUpper(row && row.source);
   if(!SESSION_COUNTING_ROLES.has(role)) return false;
   if(role === 'PARTICIPANT') return STATUTS_PR_EXERCISE_RECONNUS.has(statut);
   if(!STATUTS_PRESENTS.has(statut)) return false;
   const key = dedupeKey(row, personnesById);
-  return Boolean(key && population.has(key));
+  if(!key || !population.has(key)) return false;
+  if(role === 'SURVEILLANT') return source === 'SAISIE';
+  return true;
 }
 
 function sortedValues(set){
@@ -303,6 +306,8 @@ function computePrExerciseParticipationState(input = {}){
   const events = group.events;
   const groupEventIds = new Set(events.map(eventId).filter(Boolean));
   const currentEventId = normalizeText(input.currentEventId || input.current_event_id);
+  const eventOrder = new Map(events.map((event, index) => [eventId(event), index]));
+  const currentOrder = currentEventId && eventOrder.has(currentEventId) ? eventOrder.get(currentEventId) : null;
   const population = new Set();
   const countedByPerson = new Map();
   const attendusByPerson = new Map();
@@ -327,6 +332,7 @@ function computePrExerciseParticipationState(input = {}){
   for(const participation of input.participations || []){
     const eid = eventId(participation);
     if(!groupEventIds.has(eid)) continue;
+    if(currentOrder !== null && eventOrder.has(eid) && eventOrder.get(eid) > currentOrder) continue;
     const key = dedupeKey(participation, personnesById);
     if(!key) continue;
     if(!isSessionCountingParticipation(participation, personnesById, population)) continue;
@@ -335,7 +341,8 @@ function computePrExerciseParticipationState(input = {}){
       eventId: eid,
       personneId: personneId(participation),
       role: normalizeUpper(participation.role || 'PARTICIPANT'),
-      statut: normalizeUpper(participation.statut || 'NON_RENSEIGNE')
+      statut: normalizeUpper(participation.statut || 'NON_RENSEIGNE'),
+      source: normalizeUpper(participation.source)
     });
     countedByPerson.set(key, rows);
   }
@@ -351,7 +358,7 @@ function computePrExerciseParticipationState(input = {}){
   }
   for(const [key, rows] of countedByPerson.entries()){
     const outsideCurrent = currentEventId
-      ? rows.filter((row) => row.eventId !== currentEventId && row.role !== 'SURVEILLANT')
+      ? rows.filter((row) => row.eventId !== currentEventId)
       : rows;
     if(!outsideCurrent.length) continue;
     for(const person of personnesById.values()){

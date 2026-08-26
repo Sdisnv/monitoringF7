@@ -195,17 +195,17 @@ async function expectHttpError(fn, status, error){
     assert.ok(!ui.includes("!used.has(String(p.personne_id)) && !expected.has(String(p.personne_id))"));
   });
 
-  await record('I — retrait Formateur attendu garde la participation PAPR présente', async () => {
+  await record('I — retrait Formateur automatique réouvre la participation PAPR', async () => {
     const ctx = await setup();
     await addEnc(ctx, 's1', 'p1', 'FORMATEUR');
     await removeEnc(ctx, 's1', 'p1');
     const detail = await ctx.service.lireEvenement('s2');
-    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 1);
-    assert.strictEqual(detail.prExerciseParticipation.kpis.open, 76);
-    assert.strictEqual(detail.attendus.find((a) => a.personne_id === 'p1').alreadyCountedInSession, true);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.presents, 0);
+    assert.strictEqual(detail.prExerciseParticipation.kpis.open, 77);
+    assert.ok(!detail.attendus.find((a) => a.personne_id === 'p1').alreadyCountedInSession);
     const p = await ctx.repo.getParticipation('s1', 'p1');
     assert.strictEqual(p.role, 'PARTICIPANT');
-    assert.strictEqual(p.statut, 'PRESENT');
+    assert.strictEqual(p.statut, 'NON_RENSEIGNE');
   });
 
   await record('J — retrait Formateur avec présence antérieure garde le verrou global', async () => {

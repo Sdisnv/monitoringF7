@@ -498,7 +498,11 @@
   function buildPresenceSavePayload(rows, encadrementIds) {
     const lockedEncadrement = encadrementIds || new Set();
     return (rows || [])
-      .filter((r) => r.inclus !== false && !r.alreadyCountedInSession && !lockedEncadrement.has(String(r.personneId)))
+      .filter((r) => {
+        if (r.inclus === false || r.alreadyCountedInSession) return false;
+        const locked = lockedEncadrement.has(String(r.personneId));
+        return !locked || (r.role === 'SURVEILLANT' && r.presenceEdited);
+      })
       .map((r) => ({
         personneId: r.personneId,
         statut: r.statut,
@@ -634,6 +638,7 @@
           statut: part.statut || 'NON_RENSEIGNE',
           motifAbsence: part.motif_absence || '',
           commentaire: part.commentaire || '',
+          source: part.source || '',
           inclus: true,
           role: part.role || 'PARTICIPANT',
           origine: a.origine,
@@ -3183,10 +3188,11 @@
     const justificatifCell = (row) => {
       const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
       const selectedMotif = motifs.find((m) => m.value === row.motifAbsence);
-      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control"><select data-motif aria-label="Motif d’excuse">
+      const motifSelect = !selectedMotif || row.editMotif;
+      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control">${motifSelect ? `<select data-motif aria-label="Motif d’excuse">
         <option value="">Motif</option>
         ${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}
-      </select>${selectedMotif ? `<span class="scope-motif-selected">${escapeHtml(selectedMotif.label)}</span>` : ''}</div>` : '';
+      </select>` : `<button type="button" class="scope-motif-selected" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selectedMotif.label)}</button>`}</div>` : '';
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">`
         : '';
@@ -4428,15 +4434,18 @@
         const wasActive = row.statut === statut;
         if (wasActive) {
           row.statut = 'NON_RENSEIGNE';
-          row.role = 'PARTICIPANT';
+          row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT';
           row.motifAbsence = '';
           row.commentaire = '';
+          row.editMotif = false;
+          row.presenceEdited = true;
           render();
           return;
         }
         row.statut = statut;
-        row.role = 'PARTICIPANT';
-        if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; }
+        row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT';
+        row.presenceEdited = true;
+        if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; row.editMotif = false; }
         render();
       });
     });
@@ -4444,7 +4453,13 @@
       sel.addEventListener('change', () => {
         const pid = sel.closest('[data-pid]').getAttribute('data-pid');
         const row = state.saisie.find((r) => r.personneId === pid);
-        if (row) { row.motifAbsence = sel.value; render(); }
+        if (row) { row.motifAbsence = sel.value; row.editMotif = false; render(); }
+      });
+    });
+    root.querySelectorAll('[data-motif-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = state.saisie.find((r) => r.personneId === btn.getAttribute('data-motif-edit'));
+        if (row) { row.editMotif = true; render(); }
       });
     });
     root.querySelectorAll('[data-comment]').forEach((inp) => {
