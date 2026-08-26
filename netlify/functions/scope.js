@@ -192,6 +192,10 @@ exports.handler = async function(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.enregistrerParticipations(params.id, body, claims)) });
     }
+    params = match(path, '/evenements/:id/participations/reset');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.resetParticipations(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/encadrement');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.ajouterEncadrement(params.id, body, claims)) });

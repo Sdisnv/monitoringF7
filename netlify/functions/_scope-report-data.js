@@ -3,7 +3,7 @@
 
 const { DOMAINES_MODEL_2, SOUS_DOMAINES } = require('./_scope-schema');
 const { parsePeriod } = require('./_scope-period');
-const { HttpError } = require('./_scope-rules');
+const { HttpError, ROLES_ENCADREMENT } = require('./_scope-rules');
 const { KINDS } = require('./_scope-analytics');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
@@ -121,7 +121,7 @@ function nominativeRows(fiche){
   return attendus.map((a) => {
     const pid = a.personne_id;
     const person = personnes[pid] || {};
-    const part = parts.find((p) => p.personne_id === pid && !['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(p.role)) || {};
+    const part = parts.find((p) => p.personne_id === pid && !ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase())) || {};
     const cible = cibleById[a.cible_id] || {};
     return {
       nom: person.nom || '',

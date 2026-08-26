@@ -35,11 +35,14 @@
   const ROLE_LABELS = {
     PARTICIPANT: 'Participant',
     FORMATEUR: 'Formateur',
+    MONITEUR: 'Moniteur',
     SURVEILLANT: 'Surveillant',
     AUXILIAIRE: 'Auxiliaire',
     RENFORT: 'Renfort',
     REMPLACANT: 'Remplaçant'
   };
+  const ENCADREMENT_ROLE_ORDER = Object.freeze(['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
+  const ROLES_ENCADREMENT = new Set(ENCADREMENT_ROLE_ORDER);
 
   function domaineAffiche(code) {
     const value = String(code || '');
@@ -421,7 +424,7 @@
     let open = 0;
     for (const row of rows || []) {
       if (row.inclus === false) continue;
-      if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role) && row.inclus !== true) continue;
+      if (row.role && ROLES_ENCADREMENT.has(row.role) && row.inclus !== true) continue;
       const s = row.statut;
       if (s === 'PRESENT' || s === 'PERMUTATION') {
         present += 1;
@@ -464,16 +467,47 @@
   function resetSaisie(rows) {
     return (rows || []).map((row) => Object.assign({}, row, {
       statut: 'NON_RENSEIGNE',
-      role: row && row.role && ['SURVEILLANT', 'AUXILIAIRE'].includes(row.role) ? row.role : 'PARTICIPANT',
+      role: 'PARTICIPANT',
       motifAbsence: '',
       commentaire: ''
     }));
   }
 
-  function needsConfirmReset(rows) {
+  function normalizeDomaineForContribution(value) {
+    const domaine = String(value || '').toUpperCase();
+    return domaine === 'PR' ? 'PAPR' : domaine;
+  }
+
+  function getEncadrementContribution({ domaine, role, contexte } = {}) {
+    const d = normalizeDomaineForContribution(domaine);
+    const r = String(role || '').toUpperCase();
+    const session = String((contexte && (contexte.type || contexte.kind)) || '').toUpperCase() === 'SESSION';
+    const base = {
+      role: r,
+      domaine: d,
+      countsPopulationSuivie: false,
+      countsTauxPresence: false,
+      countsEffectifEngageEvenement: false,
+      countsEffectifConsolideSession: false,
+      informatifSeulement: true,
+      dedupeByNip: true
+    };
+    if (r === 'AUXILIAIRE') return base;
+    if (r === 'MONITEUR') return base;
+    if (r === 'SURVEILLANT') return base;
+    if (r === 'FORMATEUR') return Object.assign({}, base, {
+      countsEffectifEngageEvenement: d === 'DPS' || d === 'DAP',
+      countsEffectifConsolideSession: session && (d === 'AUTO' || d === 'PAPR'),
+      informatifSeulement: !(d === 'DPS' || d === 'DAP' || (session && (d === 'AUTO' || d === 'PAPR')))
+    });
+    return Object.assign({}, base, { dedupeByNip: false });
+  }
+
+  function needsConfirmReset(rows, encadrement) {
+    if ((encadrement || []).some((row) => row && ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase()))) return true;
     return (rows || []).some((row) => row && row.inclus !== false && (
       (row.statut && row.statut !== 'NON_RENSEIGNE') ||
-      row.role === 'FORMATEUR' ||
+      ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase()) ||
       row.motifAbsence ||
       row.commentaire
     ));
@@ -482,7 +516,7 @@
   function needsConfirmAllPresent(rows) {
     return (rows || []).some((row) => {
       if (row.inclus === false) return false;
-      if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role)) return false;
+      if (row.role && ROLES_ENCADREMENT.has(row.role)) return false;
       return row.statut && row.statut !== 'NON_RENSEIGNE' && row.statut !== 'PRESENT';
     });
   }
@@ -490,7 +524,7 @@
   function applyAllPresent(rows) {
     return (rows || []).map((row) => {
       if (row.inclus === false) return row;
-      if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role)) return row;
+      if (row.role && ROLES_ENCADREMENT.has(row.role)) return row;
       return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '', role: 'PARTICIPANT' });
     });
   }
@@ -499,7 +533,7 @@
     return (rows || []).map((row) => {
       if (cibleCode && row.cible !== cibleCode && !(row.cibles || []).includes(cibleCode)) return row;
       if (row.inclus === false) return row;
-      if (row.role && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(row.role)) return row;
+      if (row.role && ROLES_ENCADREMENT.has(row.role)) return row;
       return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '', role: 'PARTICIPANT' });
     });
   }
@@ -822,6 +856,9 @@
     motifsForRow,
     STATUT_LABELS,
     ROLE_LABELS,
+    ENCADREMENT_ROLE_ORDER,
+    ROLES_ENCADREMENT,
+    getEncadrementContribution,
     domaineAffiche,
     niveauAffiche,
     statutLabel,

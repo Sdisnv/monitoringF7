@@ -1082,12 +1082,58 @@ function createScopeService(repo){
     });
   }
 
+  async function resetParticipations(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Réinitialisation possible uniquement sur PLANIFIE.');
+      if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
+      const attendus = await tx.listAttendus(eventId);
+      const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
+      const participations = await tx.listParticipations(eventId);
+      const resetRows = attendus
+        .filter(a => a.inclus !== false)
+        .map((a) => {
+          const existing = participations.find(p => String(p.personne_id) === String(a.personne_id));
+          return {
+            ...(existing || { evenement_id: eventId, personne_id: a.personne_id }),
+            statut: 'NON_RENSEIGNE',
+            motif_absence: null,
+            commentaire: null,
+            role: 'PARTICIPANT',
+            source: 'RESET',
+            auteur_id: actorId(actor)
+          };
+        });
+      if(typeof tx.bulkUpsertParticipations === 'function') await tx.bulkUpsertParticipations(resetRows);
+      else {
+        for(const row of resetRows) await tx.upsertParticipation(row);
+      }
+      for(const p of participations){
+        const personneId = String(p.personne_id);
+        if(ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()) && !attenduIds.has(personneId)){
+          await tx.deleteParticipation(eventId, p.personne_id);
+        }
+      }
+      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'RESET_SAISIE',
+        apres: { resetParticipations: resetRows.length, encadrementSupprime: participations.filter(p => ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()) && !attenduIds.has(String(p.personne_id))).length }
+      });
+      return { evenement: next, version: next.version };
+    });
+  }
+
   async function ajouterEncadrement(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const personneId = body.personneId || body.personne_id;
     const role = String(body.role || '');
     if(!ROLES_ENCADREMENT.has(role)){
-      throw new HttpError(422, 'role_invalide', 'Rôle d’encadrement invalide (FORMATEUR, SURVEILLANT, AUXILIAIRE).');
+      throw new HttpError(422, 'role_invalide', 'Rôle d’encadrement invalide (FORMATEUR, MONITEUR, SURVEILLANT, AUXILIAIRE).');
     }
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
@@ -2307,6 +2353,7 @@ function createScopeService(repo){
     enregistrerParticipations,
     ajouterEncadrement,
     retirerEncadrement,
+    resetParticipations,
     cloturer,
     reouvrir,
     annulerEvenement,

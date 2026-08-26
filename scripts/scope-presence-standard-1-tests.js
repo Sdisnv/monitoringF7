@@ -6,7 +6,12 @@ const fs = require('fs');
 const path = require('path');
 const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
 const { createScopeService } = require('../netlify/functions/_scope-service');
-const { computeTaux, HttpError } = require('../netlify/functions/_scope-rules');
+const {
+  computeTaux,
+  computeEffectifEngageEvenement,
+  getEncadrementContribution,
+  HttpError
+} = require('../netlify/functions/_scope-rules');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -38,9 +43,13 @@ async function seedPerson(repo, cibleId, spec){
 }
 
 async function setupEvent(countOrSpecs){
+  return setupEventFor('DPS', 'G1', countOrSpecs);
+}
+
+async function setupEventFor(domaineCode, niveauCode, countOrSpecs){
   const repo = createMemoryRepo();
   const service = createScopeService(repo);
-  const g1 = await repo.findCible('DPS', 'G1');
+  const g1 = await repo.findCible(domaineCode, niveauCode);
   const specs = Array.isArray(countOrSpecs)
     ? countOrSpecs
     : Array.from({ length: countOrSpecs }, (_x, index) => ({
@@ -53,7 +62,7 @@ async function setupEvent(countOrSpecs){
   for (const spec of specs) people.push(await seedPerson(repo, g1.cible_id, spec));
   const created = await service.createEvenement({
     date: '2026-04-15',
-    domaineCode: 'DPS',
+    domaineCode,
     libelle: 'Presence standard',
     cibleIds: [g1.cible_id]
   }, { sub: 'presence-test' });
@@ -233,6 +242,7 @@ function part(personne, statut, extra){
       { statut: 'PRESENT', role: 'FORMATEUR', motifAbsence: '', commentaire: '', inclus: true }
     ]);
     assert.strictEqual(logic.needsConfirmReset([row]), true);
+    assert.strictEqual(logic.needsConfirmReset([], [{ role: 'MONITEUR' }]), true);
     assert.deepStrictEqual(reset.map((r) => [r.statut, r.role, r.motifAbsence, r.commentaire]), [
       ['NON_RENSEIGNE', 'PARTICIPANT', '', ''],
       ['NON_RENSEIGNE', 'PARTICIPANT', '', ''],
@@ -293,11 +303,12 @@ function part(personne, statut, extra){
       { role: 'AUXILIAIRE', grade: 'Sap', nom: 'Zulu', prenom: 'Zoé', nip: '3' },
       { role: 'FORMATEUR', grade: 'Sgt', nom: 'Martin', prenom: 'Paul', nip: '2' },
       { role: 'FORMATEUR', grade: 'Cpl', nom: 'Alpha', prenom: 'Anne', nip: '1' },
+      { role: 'MONITEUR', grade: 'Sgt', nom: 'Jaccard', prenom: 'Lina', nip: '5' },
       { role: 'SURVEILLANT', grade: 'Cap', nom: 'Bernard', prenom: 'Marc', nip: '4' }
     ];
-    const roleOrder = ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'];
+    const roleOrder = logic.ENCADREMENT_ROLE_ORDER;
     const orderedRoles = [...new Set(source.sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role)).map((p) => p.role))];
-    assert.deepStrictEqual(orderedRoles, roleOrder);
+    assert.deepStrictEqual(orderedRoles, ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
     const refs = require('../assets/js/scope-personnel-referentials.js');
     const sorted = source.filter((p) => p.role === 'FORMATEUR').sort((a, b) =>
       refs.compareGrades(a.grade, b.grade) || a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr') || a.nip.localeCompare(b.nip, 'fr', { numeric: true })
@@ -380,7 +391,93 @@ function part(personne, statut, extra){
     assert.strictEqual(second.version, first.version + 1);
   });
 
-  await record('UI — 1R3 Orion, feedback central, KPI par cible et ajout manuel propre', async () => {
+  await record('CAS 1R4 Q1-Q3 — JSP jeunes suivis, Moniteur encadrement hors taux', async () => {
+    const ctx = await setupEventFor('JSP', 'G1', 2);
+    const moniteur = await ctx.repo.insertPersonne({ nip: 'JSPMON1', nom: 'Moniteur', prenom: 'Jules', grade: 'Sgt' });
+    const before = await ctx.service.enregistrerParticipations(ctx.eventId, {
+      baseVersion: ctx.version,
+      participations: [part(ctx.people[0], 'PRESENT'), part(ctx.people[1], 'ABSENT_NON_EXCUSE')]
+    }, { sub: 'presence-test' });
+    const add = await ctx.service.ajouterEncadrement(ctx.eventId, {
+      baseVersion: before.version,
+      personneId: moniteur.personne_id,
+      role: 'MONITEUR'
+    }, { sub: 'presence-test' });
+    const fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.ok(fiche.attendus.some((row) => row.personne_id === ctx.people[0].personne_id));
+    assert.ok(!fiche.attendus.some((row) => row.personne_id === moniteur.personne_id));
+    assert.strictEqual(fiche.encadrement.find((row) => row.personne_id === moniteur.personne_id).role, 'MONITEUR');
+    const taux = computeTaux(fiche.participations, fiche.attendus);
+    assert.strictEqual(taux.numerator, 1);
+    assert.strictEqual(taux.denominator, 2);
+    assert.strictEqual(add.version, before.version + 1);
+  });
+
+  await record('CAS 1R4 Q4-Q15 — matrice contribution encadrement et dédup NIP', async () => {
+    for (const domaine of ['DPS', 'DAP', 'JSP', 'AUTO', 'PAPR']) {
+      const aux = getEncadrementContribution({ domaine, role: 'AUXILIAIRE' });
+      assert.strictEqual(aux.countsPopulationSuivie, false);
+      assert.strictEqual(aux.countsTauxPresence, false);
+      assert.strictEqual(aux.countsEffectifEngageEvenement, false);
+      assert.strictEqual(aux.countsEffectifConsolideSession, false);
+    }
+    assert.strictEqual(getEncadrementContribution({ domaine: 'DPS', role: 'FORMATEUR' }).countsEffectifEngageEvenement, true);
+    assert.strictEqual(getEncadrementContribution({ domaine: 'DAP', role: 'FORMATEUR' }).countsEffectifEngageEvenement, true);
+    assert.strictEqual(getEncadrementContribution({ domaine: 'JSP', role: 'MONITEUR' }).informatifSeulement, true);
+    assert.strictEqual(getEncadrementContribution({ domaine: 'PAPR', role: 'SURVEILLANT' }).countsEffectifEngageEvenement, false);
+    assert.strictEqual(getEncadrementContribution({ domaine: 'AUTO', role: 'FORMATEUR', contexte: { type: 'SESSION' } }).countsEffectifConsolideSession, true);
+    assert.strictEqual(getEncadrementContribution({ domaine: 'PAPR', role: 'FORMATEUR', contexte: { type: 'SESSION' } }).countsEffectifConsolideSession, true);
+    const effectif = computeEffectifEngageEvenement({
+      domaine: 'DPS',
+      attendus: [{ personne_id: 'p1', inclus: true }],
+      participations: [
+        { personne_id: 'p1', nip: 'N1', statut: 'PRESENT', role: 'PARTICIPANT' },
+        { personne_id: 'p1', nip: 'N1', statut: 'NON_CONCERNE', role: 'FORMATEUR' },
+        { personne_id: 'f1', nip: 'NF', statut: 'NON_CONCERNE', role: 'FORMATEUR' },
+        { personne_id: 'a1', nip: 'NA', statut: 'NON_CONCERNE', role: 'AUXILIAIRE' }
+      ]
+    });
+    assert.deepStrictEqual(effectif.nips, ['N1', 'NF']);
+  });
+
+  await record('CAS 1R4 Q21-Q26 — reset persistant encadrement, recherches, manuel conservé', async () => {
+    const ctx = await setupEvent(1);
+    const trainer = await ctx.repo.insertPersonne({ nip: 'RST101', nom: 'Reset', prenom: 'Formateur', grade: 'Sgt' });
+    const manual = await ctx.repo.insertPersonne({ nip: 'RST102', nom: 'Reset', prenom: 'Manuel', grade: 'Sap' });
+    const enc = await ctx.service.ajouterEncadrement(ctx.eventId, {
+      baseVersion: ctx.version,
+      personneId: trainer.personne_id,
+      role: 'FORMATEUR'
+    }, { sub: 'presence-test' });
+    const added = await ctx.service.ajouterException(ctx.eventId, {
+      baseVersion: enc.version,
+      personneId: manual.personne_id,
+      role: 'PARTICIPANT'
+    }, { sub: 'presence-test' });
+    await ctx.service.enregistrerParticipations(ctx.eventId, {
+      baseVersion: added.version,
+      participations: [
+        part(ctx.people[0], 'PRESENT'),
+        part(manual, 'PRESENT')
+      ]
+    }, { sub: 'presence-test' });
+    const reset = await ctx.service.resetParticipations(ctx.eventId, { baseVersion: added.version + 1 }, { sub: 'presence-test' });
+    let fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.encadrement.length, 0);
+    assert.ok(fiche.attendus.some((row) => row.personne_id === ctx.people[0].personne_id && row.inclus !== false));
+    assert.ok(fiche.attendus.some((row) => row.personne_id === manual.personne_id && row.origine === 'EXCEPTION_AJOUT'));
+    assert.strictEqual(fiche.participations.find((row) => row.personne_id === manual.personne_id).statut, 'NON_RENSEIGNE');
+    const readd = await ctx.service.ajouterEncadrement(ctx.eventId, {
+      baseVersion: reset.version,
+      personneId: trainer.personne_id,
+      role: 'FORMATEUR'
+    }, { sub: 'presence-test' });
+    fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.encadrement.length, 1);
+    assert.strictEqual(readd.version, reset.version + 1);
+  });
+
+  await record('UI — 1R4 Orion, feedback central, KPI encadrement et reset persistant', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const logicSource = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
@@ -393,11 +490,25 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('scope-feedback-overlay'));
     assert.ok(ui.includes('scope-feedback-progress'));
     assert.ok(ui.includes('Réinitialiser la saisie'));
+    assert.ok(ui.includes('Les présences, justificatifs et l’encadrement de cet événement seront effacés.'));
+    assert.ok(ui.includes('La population convoquée restera inchangée.'));
+    assert.ok(ui.includes('client.resetParticipations'));
     assert.ok(ui.includes('Clôturer l’événement'));
     assert.ok(ui.includes('Clôturer avec des participations non renseignées'));
     assert.ok(ui.includes('Clôturer quand même'));
     assert.ok(ui.includes('data-enc-remove'));
-    assert.ok(ui.includes('class="scope-enc-remove"'));
+    assert.ok(ui.includes('scope-remove-action scope-enc-remove'));
+    assert.ok(ui.includes('function trashIcon'));
+    assert.ok(ui.includes('scope-trash-icon'));
+    assert.ok(!/scope-enc-remove[\s\S]{0,220}>×<\/button>/.test(ui));
+    assert.ok(!/data-manual-remove[\s\S]{0,220}>×<\/button>/.test(ui));
+    assert.ok(css.includes('.scope-remove-action'));
+    assert.ok(css.includes('.scope-trash-icon'));
+    assert.ok(css.includes('.scope-kpi-card.is-monitor'));
+    assert.ok(ui.includes('renderPresenceKpis(niveaux, fiche)'));
+    assert.ok(ui.includes('const enc = (fiche && fiche.encadrement)'));
+    assert.ok(ui.includes('<option value="MONITEUR"'));
+    assert.ok(ui.includes("encCount('MONITEUR')"));
     assert.ok(ui.includes('data-manual-add'));
     assert.ok(ui.includes('data-manual-remove'));
     assert.ok(ui.includes('function renderManualParticipantBlock'));

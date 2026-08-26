@@ -166,7 +166,7 @@ const DDL = [
       'NON_RENSEIGNE','PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','NON_CONCERNE'
     )),
     constraint scope_participations_role_chk check (role in (
-      'PARTICIPANT','FORMATEUR','SURVEILLANT','AUXILIAIRE','RENFORT','REMPLACANT'
+      'PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE','RENFORT','REMPLACANT'
     )),
     constraint scope_participations_motif_chk check (
       statut <> 'ABSENT_EXCUSE' or motif_absence is not null
@@ -580,6 +580,12 @@ async function migrateModel2(){
   await db.query(`
     alter table scope_participations add constraint scope_participations_statut_chk check (statut in (
       'NON_RENSEIGNE','PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','NON_CONCERNE','PERMUTATION'
+    ))
+  `);
+  await db.query(`alter table scope_participations drop constraint if exists scope_participations_role_chk`);
+  await db.query(`
+    alter table scope_participations add constraint scope_participations_role_chk check (role in (
+      'PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE','RENFORT','REMPLACANT'
     ))
   `);
   await db.query(`alter table scope_participations drop constraint if exists scope_participations_motif_val_chk`);

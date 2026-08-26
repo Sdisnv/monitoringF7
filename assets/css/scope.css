@@ -1332,7 +1332,7 @@ html, body {
 }
 
 .scope-kpi-encadrement .scope-kpi-strip {
-  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  grid-template-columns: repeat(4, minmax(90px, 1fr));
 }
 
 .scope-kpi-card {
@@ -1364,6 +1364,7 @@ html, body {
 .scope-kpi-card.is-dispense { border-left-color: #5f7591; background: #f0f4f8; }
 .scope-kpi-card.is-open { border-left-color: #7b8794; background: #f5f6f8; }
 .scope-kpi-card.is-trainer { border-left-color: #171c8f; background: #f1f2ff; }
+.scope-kpi-card.is-monitor { border-left-color: #2f7d8c; background: #edf8fa; }
 .scope-kpi-card.is-watcher { border-left-color: #5d6d7e; background: #f3f6f9; }
 .scope-kpi-card.is-helper { border-left-color: #6f5aa7; background: #f5f2fb; }
 
@@ -1752,6 +1753,7 @@ html, body {
   color: var(--scope-muted);
 }
 
+.scope-remove-action,
 .scope-enc-person button,
 .scope-icon-action {
   width: 24px;
@@ -1759,16 +1761,35 @@ html, body {
   border: 0;
   border-radius: var(--scope-radius-sm);
   background: transparent;
-  color: var(--scope-muted);
+  color: var(--scope-red);
   cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
+.scope-trash-icon {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.scope-remove-action:hover,
+.scope-remove-action:focus-visible,
 .scope-enc-person button:hover,
 .scope-icon-action:hover {
   background: var(--scope-red-soft);
   color: var(--scope-red);
+  outline: 0;
+}
+
+.scope-remove-action:focus-visible {
+  box-shadow: 0 0 0 2px rgba(222, 0, 10, .28);
 }
 
 .scope-enc-empty {

@@ -131,6 +131,7 @@
       enregistrerParticipations(id, participations, baseVersion) {
         return request('POST', `/evenements/${encodeURIComponent(id)}/participations`, withBaseVersion({ participations }, baseVersion));
       },
+      resetParticipations(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/participations/reset`, withBaseVersion({}, baseVersion)); },
       ajouterEncadrement(id, body, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/encadrement`, withBaseVersion(body, baseVersion)); },
       retirerEncadrement(id, body, baseVersion) { return request('DELETE', `/evenements/${encodeURIComponent(id)}/encadrement`, withBaseVersion(body, baseVersion)); },
       cloturer(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/cloturer`, withBaseVersion({}, baseVersion)); },

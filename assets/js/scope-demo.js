@@ -221,7 +221,7 @@
         cibles: cibles.filter((c) => ids.includes(c.cible_id)),
         attendus: att,
         participations: parts,
-        encadrement: parts.filter((p) => ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(p.role)),
+        encadrement: parts.filter((p) => ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(p.role)),
         personnes: personnesMap,
         journal: journal.filter((j) => j.entite_id === id),
         compteurs: evenement.mode_suivi === 'QUANTITATIF' && quantitatives.get(id)
@@ -365,7 +365,7 @@
           });
         }
         const existing = participations.get(key(id, personneId));
-        if (existing && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(existing.role)) {
+        if (existing && ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(existing.role)) {
           throw new ScopeApiError(422, { error: 'deja_encadrement', message: 'Cette personne est déjà ajoutée à l’encadrement.' });
         }
         if (existing && existing.statut !== 'NON_CONCERNE') {
@@ -381,12 +381,35 @@
         bump(evenement);
         return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
       },
+      async resetParticipations(id, baseVersion) {
+        const evenement = getEvent(id);
+        requireVersion(evenement, baseVersion);
+        const expected = [...attendus.values()].filter((a) => a.evenement_id === id && a.inclus !== false);
+        const expectedIds = new Set(expected.map((a) => a.personne_id));
+        for (const a of expected) {
+          const existing = participations.get(key(id, a.personne_id)) || { evenement_id: id, personne_id: a.personne_id };
+          participations.set(key(id, a.personne_id), Object.assign({}, existing, {
+            statut: 'NON_RENSEIGNE',
+            motif_absence: null,
+            commentaire: null,
+            role: 'PARTICIPANT',
+            source: 'RESET'
+          }));
+        }
+        [...participations.values()].forEach((p) => {
+          if (p.evenement_id === id && ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(p.role) && !expectedIds.has(p.personne_id)) {
+            participations.delete(key(id, p.personne_id));
+          }
+        });
+        bump(evenement);
+        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
+      },
       async retirerEncadrement(id, body, baseVersion) {
         const evenement = getEvent(id);
         requireVersion(evenement, baseVersion);
         const personneId = body.personneId || body.personne_id;
         const part = participations.get(key(id, personneId));
-        if (!part || !['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(part.role)) {
+        if (!part || !['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(part.role)) {
           throw new ScopeApiError(404, { error: 'encadrement_introuvable', message: 'Encadrement introuvable.' });
         }
         participations.delete(key(id, personneId));

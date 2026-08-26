@@ -462,6 +462,16 @@
     return [`NIP ${person.nip || '—'}`, cible].filter(Boolean).join(' · ');
   }
 
+  function trashIcon() {
+    return `<svg class="scope-trash-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 15h10l1-15"></path><path d="M10 10v7"></path><path d="M14 10v7"></path>
+    </svg>`;
+  }
+
+  function encadrementRoleOrder() {
+    return L.ENCADREMENT_ROLE_ORDER || ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'];
+  }
+
   function usedEncadrementIds() {
     return new Set(((state.fiche && state.fiche.encadrement) || []).map((p) => String(p.personne_id)));
   }
@@ -2645,7 +2655,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
           <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</p>
-          ${renderPresenceKpis(niveaux)}
+          ${renderPresenceKpis(niveaux, fiche)}
           ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
           <div class="scope-actions">
             <button type="button" class="scope-btn" id="all-present">Tout présent</button>
@@ -2705,7 +2715,7 @@
     return `<div class="scope-kpi-card is-${escapeHtml(kind)}"><strong>${escapeHtml(String(value || 0))}</strong><span>${escapeHtml(label)}</span></div>`;
   }
 
-  function renderPresenceKpis(niveaux) {
+  function renderPresenceKpis(niveaux, fiche) {
     const labels = niveaux && niveaux.length ? niveaux : ['Population'];
     const groups = labels.map((label) => {
       const rows = label === 'Population' ? state.saisie : rowsForCible(label);
@@ -2722,7 +2732,7 @@
       </section>`;
     }).join('');
     const global = countStatuses(state.saisie || []);
-    const enc = (state.fiche && state.fiche.encadrement) || [];
+    const enc = (fiche && fiche.encadrement) || (state.fiche && state.fiche.encadrement) || [];
     const encCount = (role) => enc.filter((p) => p && p.role === role).length;
     return `<div class="scope-kpi-board">
       ${groups}
@@ -2731,6 +2741,7 @@
         <h3>Encadrement</h3>
         <div class="scope-kpi-strip">
           ${renderKpiCard('trainer', encCount('FORMATEUR'), 'Formateurs')}
+          ${renderKpiCard('monitor', encCount('MONITEUR'), 'Moniteurs')}
           ${renderKpiCard('watcher', encCount('SURVEILLANT'), 'Surveillants')}
           ${renderKpiCard('helper', encCount('AUXILIAIRE'), 'Auxiliaires')}
         </div>
@@ -2777,7 +2788,7 @@
 
   function renderEncadrementBlock() {
     const fiche = state.fiche || {};
-    const roleOrder = ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'];
+    const roleOrder = encadrementRoleOrder();
     const encRows = sortPeopleForEncadrement((fiche.encadrement || []).map((p) => {
       const person = personOf(fiche, p.personne_id) || {};
       return Object.assign({}, p, person, { personne_id: p.personne_id, role: p.role });
@@ -2798,6 +2809,7 @@
           <div class="scope-inline-fields">
             <select id="enc-role">
               <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
+              <option value="MONITEUR" ${state.encRole === 'MONITEUR' ? 'selected' : ''}>Moniteur</option>
               <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
               <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
             </select>
@@ -2812,7 +2824,7 @@
             return `<section class="scope-enc-group">
               <h4>${escapeHtml(L.ROLE_LABELS[role] || role)}</h4>
               <div class="scope-enc-people">${rows.map((p) => `<div class="scope-enc-person">
-                <button type="button" class="scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(personLine(p))}" title="Retirer">×</button>
+                <button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml((L.ROLE_LABELS[role] || role).toLowerCase())} ${escapeHtml(personLine(p))}" title="Retirer ${escapeHtml((L.ROLE_LABELS[role] || role).toLowerCase())}">${trashIcon()}</button>
                 <span>${escapeHtml(personLine(p))}</span>
                 <small>${escapeHtml(p.nip || '')}</small>
               </div>`).join('')}</div>
@@ -2900,7 +2912,7 @@
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">`
         : '';
       const manual = row.manual
-        ? `<button type="button" class="scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">×</button>`
+        ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
         : '';
       const historicalTrainer = row.role === 'FORMATEUR' ? '<span class="scope-mode-hint">Formateur historique</span>' : '';
       return [motif, comment, manual, historicalTrainer].filter(Boolean).join('');
@@ -4087,20 +4099,16 @@
       applyPresent();
     });
     document.getElementById('reset-saisie')?.addEventListener('click', () => {
-      if (L.needsConfirmReset && L.needsConfirmReset(state.saisie)) {
+      if (L.needsConfirmReset && L.needsConfirmReset(state.saisie, (state.fiche && state.fiche.encadrement) || [])) {
         ScopeFeedback.confirm({
           title: 'Réinitialiser la saisie',
-          message: 'Les statuts saisis seront remis à zéro. L’encadrement existant est conservé.',
+          message: 'Les présences, justificatifs et l’encadrement de cet événement seront effacés. La population convoquée restera inchangée.',
           confirmText: 'Réinitialiser',
           cancelText: 'Annuler'
-        }, () => {
-          resetSaisie();
-          ScopeFeedback.success('Saisie réinitialisée', 'Les champs temporaires de recherche ont aussi été vidés.');
-        });
+        }, () => resetSaisie());
         return;
       }
       resetSaisie();
-      ScopeFeedback.success('Saisie réinitialisée', 'Les champs temporaires de recherche ont aussi été vidés.');
     });
     document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); });
     document.getElementById('all-present-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
@@ -4620,13 +4628,24 @@
   }
 
   function resetSaisie() {
+    clearPresenceSearchState();
+    const id = route().id;
+    if (client.resetParticipations && state.fiche && state.fiche.evenement) {
+      return withFeedbackAction({
+        progressTitle: 'Réinitialisation de la saisie',
+        successTitle: 'Saisie réinitialisée',
+        successMessage: 'Les présences, justificatifs et l’encadrement ont été effacés.'
+      }, async () => {
+        await client.resetParticipations(id, state.fiche.evenement.version);
+        await loadFiche(id);
+      });
+    }
     state.saisie = L.resetSaisie ? L.resetSaisie(state.saisie) : state.saisie.map((row) => Object.assign({}, row, {
       statut: 'NON_RENSEIGNE',
       role: 'PARTICIPANT',
       motifAbsence: '',
       commentaire: ''
     }));
-    clearPresenceSearchState();
     render();
   }
 

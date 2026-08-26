@@ -18,7 +18,8 @@ const STATUTS_PARTICIPATION = new Set([
   'NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'NON_CONCERNE',
   STATUT_PERMUTATION
 ]);
-const ROLES_ENCADREMENT = new Set(['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE']);
+const ENCADREMENT_ROLE_ORDER = Object.freeze(['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
+const ROLES_ENCADREMENT = new Set(ENCADREMENT_ROLE_ORDER);
 const ROLES_EXCEPTION = new Set(['RENFORT', 'REMPLACANT', 'PARTICIPANT']);
 
 class HttpError extends Error {
@@ -116,6 +117,94 @@ function computeTaux(participations, attendus){
   };
 }
 
+function normalizeDomaineForContribution(value){
+  const domaine = String(value || '').toUpperCase();
+  if(domaine === 'PR') return 'PAPR';
+  return domaine;
+}
+
+function getEncadrementContribution({ domaine, role, contexte } = {}){
+  const d = normalizeDomaineForContribution(domaine);
+  const r = String(role || '').toUpperCase();
+  const session = String((contexte && (contexte.type || contexte.kind)) || '').toUpperCase() === 'SESSION';
+  const base = {
+    role: r,
+    domaine: d,
+    countsPopulationSuivie: false,
+    countsTauxPresence: false,
+    countsEffectifEngageEvenement: false,
+    countsEffectifConsolideSession: false,
+    informatifSeulement: true,
+    dedupeByNip: true,
+    note: ''
+  };
+  if(r === 'AUXILIAIRE'){
+    return { ...base, note: 'AUXILIAIRE visible en encadrement, jamais contributif aux effectifs métier.' };
+  }
+  if(r === 'MONITEUR'){
+    return {
+      ...base,
+      informatifSeulement: true,
+      note: d === 'JSP'
+        ? 'JSP suit uniquement les jeunes; MONITEUR est informatif hors population et hors taux.'
+        : 'MONITEUR est réservé au contrat JSP standard.'
+    };
+  }
+  if(r === 'SURVEILLANT'){
+    return {
+      ...base,
+      informatifSeulement: true,
+      note: d === 'PAPR'
+        ? 'SURVEILLANT PAPR est un rôle complémentaire; aucun ajout effectif et aucune double comptabilisation NIP.'
+        : 'SURVEILLANT est pertinent uniquement pour PAPR/PR.'
+    };
+  }
+  if(r === 'FORMATEUR'){
+    return {
+      ...base,
+      countsEffectifEngageEvenement: d === 'DPS' || d === 'DAP',
+      countsEffectifConsolideSession: session && (d === 'AUTO' || d === 'PAPR'),
+      informatifSeulement: !(d === 'DPS' || d === 'DAP' || (session && (d === 'AUTO' || d === 'PAPR'))),
+      note: d === 'DPS' || d === 'DAP'
+        ? 'FORMATEUR hors population peut contribuer à l’effectif engagé événement, sans toucher au taux.'
+        : (d === 'AUTO' || d === 'PAPR')
+          ? 'FORMATEUR prévu pour le futur effectif consolidé session, dédupliqué par NIP.'
+          : 'FORMATEUR visible en encadrement hors population suivie.'
+    };
+  }
+  return { ...base, dedupeByNip: false, note: 'Rôle non reconnu dans le référentiel encadrement standard.' };
+}
+
+function idOfPersonne(row){
+  return String(row && (row.personne_id || row.personneId) || '');
+}
+
+function nipOfParticipation(row, personnesById){
+  const id = idOfPersonne(row);
+  const person = personnesById && personnesById.get ? personnesById.get(id) : null;
+  return String((person && person.nip) || row.nip || id);
+}
+
+function computeEffectifEngageEvenement({ domaine, attendus, participations, personnes } = {}){
+  const attenduIds = new Set((attendus || []).filter(a => a.inclus !== false).map(idOfPersonne));
+  const personnesById = new Map(Object.entries(personnes || {}).map(([id, p]) => [String(id), p]));
+  const nips = new Set();
+  for(const p of participations || []){
+    const id = idOfPersonne(p);
+    if(!id) continue;
+    const statut = p.statut;
+    if(attenduIds.has(id) && (statut === 'PRESENT' || statut === 'PERMUTATION')){
+      nips.add(nipOfParticipation(p, personnesById));
+      continue;
+    }
+    const contribution = getEncadrementContribution({ domaine, role: p.role });
+    if(ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()) && contribution.countsEffectifEngageEvenement){
+      nips.add(nipOfParticipation(p, personnesById));
+    }
+  }
+  return { count: nips.size, nips: [...nips].sort() };
+}
+
 function validateParticipationPatch(item, ctx = {}){
   const statut = String(item.statut || '');
   if(!STATUTS_PARTICIPATION.has(statut)){
@@ -199,5 +288,8 @@ module.exports = {
   MOTIFS_LECTURE,
   STATUTS_PARTICIPATION,
   ROLES_ENCADREMENT,
+  ENCADREMENT_ROLE_ORDER,
+  getEncadrementContribution,
+  computeEffectifEngageEvenement,
   ROLES_EXCEPTION
 };

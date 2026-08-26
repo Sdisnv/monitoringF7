@@ -166,7 +166,7 @@ create table if not exists scope_participations (
     'NON_RENSEIGNE','PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','NON_CONCERNE'
   )),
   constraint scope_participations_role_chk check (role in (
-    'PARTICIPANT','FORMATEUR','SURVEILLANT','AUXILIAIRE','RENFORT','REMPLACANT'
+    'PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE','RENFORT','REMPLACANT'
   )),
   constraint scope_participations_motif_chk check (
     statut <> 'ABSENT_EXCUSE' or motif_absence is not null
