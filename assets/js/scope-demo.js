@@ -115,10 +115,13 @@
     const eventCibles = new Map();
     const attendus = new Map();
     const participations = new Map();
+    const cycles = new Map();
+    const cyclePersonnes = new Map();
     const quantitatives = new Map();
     const objectifs = new Map();
     const journal = [];
     const key = (e, p) => `${e}::${p}`;
+    const cyclePersonKey = (c, p, r) => `${c}::${p}::${r || 'PARTICIPANT'}`;
 
     function requireVersion(event, baseVersion) {
       if (forceConflict) {
@@ -285,6 +288,98 @@
         bump(evenement);
         return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
       },
+      async listCycles(params) {
+        let list = [...cycles.values()];
+        if (params && params.annee) list = list.filter((c) => String(c.annee || '') === String(params.annee));
+        if (params && params.domaine && params.domaine !== 'tous') list = list.filter((c) => c.domaine_code === params.domaine);
+        return { ok: true, cycles: list.map((cycle) => Object.assign({}, cycle, {
+          eventCount: [...evenements.values()].filter((e) => e.cycle_id === cycle.cycle_id).length,
+          populationCount: [...cyclePersonnes.values()].filter((p) => p.cycle_id === cycle.cycle_id && p.role_cycle === 'PARTICIPANT').length,
+          metrics: {
+            populationDistincte: [...cyclePersonnes.values()].filter((p) => p.cycle_id === cycle.cycle_id && p.role_cycle === 'PARTICIPANT').length,
+            participantsReconnusDistincts: 0,
+            effectifEngageCycle: 0,
+            tauxParticipationCycle: { percentage: null, numerator: 0, denominator: 0 }
+          }
+        })) };
+      },
+      async getCycle(id) {
+        const cycle = cycles.get(id);
+        if (!cycle) throw new ScopeApiError(404, { error: 'cycle_introuvable', message: 'Cycle introuvable.' });
+        const evs = [...evenements.values()].filter((e) => e.cycle_id === id);
+        const rows = [...cyclePersonnes.values()].filter((p) => p.cycle_id === id).map((row) => Object.assign({}, row, personnes.get(row.personne_id) || {}));
+        return { ok: true, cycle: Object.assign({}, cycle), evenements: evs, personnes: rows, metrics: {
+          populationDistincte: rows.filter((p) => p.role_cycle === 'PARTICIPANT').length,
+          participantsReconnusDistincts: 0,
+          nonRenseignesDistincts: 0,
+          formateursDistincts: rows.filter((p) => p.role_cycle === 'FORMATEUR').length,
+          moniteursDistincts: rows.filter((p) => p.role_cycle === 'MONITEUR').length,
+          surveillantsDistincts: rows.filter((p) => p.role_cycle === 'SURVEILLANT').length,
+          auxiliairesDistincts: rows.filter((p) => p.role_cycle === 'AUXILIAIRE').length,
+          effectifEngageCycle: 0,
+          tauxParticipationCycle: { percentage: null, numerator: 0, denominator: rows.filter((p) => p.role_cycle === 'PARTICIPANT').length },
+          sessionCounts: evs.map((e) => ({ eventId: e.evenement_id, codeCours: e.code_cours || null, date: e.date, population: 0, presents: 0 })),
+          distributionSessions: []
+        } };
+      },
+      async createCycle(body) {
+        const id = uid();
+        const cycle = {
+          cycle_id: id,
+          cycle_key: body.cycleKey || body.cycle_key || null,
+          annee: Number(body.annee || new Date().getFullYear()),
+          domaine_code: body.domaineCode || body.domaine_code || 'PR',
+          type_cycle: body.typeCycle || body.type_cycle || 'ALTERNATIF',
+          libelle: String(body.libelle || '').trim(),
+          statut: body.statut || 'PLANIFIE',
+          stat_com: body.statCom || body.stat_com || null,
+          qui: body.qui || null,
+          date_debut: body.dateDebut || body.date_debut || null,
+          date_fin: body.dateFin || body.date_fin || null
+        };
+        cycles.set(id, cycle);
+        return this.getCycle(id);
+      },
+      async patchCycle(id, body) {
+        const cycle = cycles.get(id);
+        if (!cycle) throw new ScopeApiError(404, { error: 'cycle_introuvable', message: 'Cycle introuvable.' });
+        Object.assign(cycle, body || {});
+        return this.getCycle(id);
+      },
+      async attachCycleEvent(id, body) {
+        const ev = evenements.get(body.evenementId || body.evenement_id);
+        if (!ev) throw new ScopeApiError(404, { error: 'evenement_introuvable', message: 'Événement introuvable.' });
+        ev.cycle_id = id;
+        return this.getCycle(id);
+      },
+      async detachCycleEvent(id, body) {
+        const ev = evenements.get(body.evenementId || body.evenement_id);
+        if (ev && ev.cycle_id === id) ev.cycle_id = null;
+        return this.getCycle(id);
+      },
+      async upsertCyclePersonne(id, body) {
+        let personneId = body.personneId || body.personne_id;
+        if (!personneId && body.nip) {
+          const p = [...personnes.values()].find((row) => row.nip === String(body.nip));
+          personneId = p && p.personne_id;
+        }
+        if (!personneId) throw new ScopeApiError(404, { error: 'personne_introuvable', message: 'Personne introuvable.' });
+        const role = body.roleCycle || body.role_cycle || 'PARTICIPANT';
+        cyclePersonnes.set(cyclePersonKey(id, personneId, role), {
+          cycle_id: id,
+          personne_id: personneId,
+          role_cycle: role,
+          statut_cycle: body.statutCycle || body.statut_cycle || 'ACTIF',
+          session_event_id: body.sessionEventId || body.session_event_id || null,
+          participated_event_id: body.participatedEventId || body.participated_event_id || null
+        });
+        return this.getCycle(id);
+      },
+      async removeCyclePersonne(id, body) {
+        cyclePersonnes.delete(cyclePersonKey(id, body.personneId || body.personne_id, body.roleCycle || body.role_cycle));
+        return this.getCycle(id);
+      },
+      async proposeCycle() { return { ok: true, proposition: { action: 'REVIEW_REQUIRED', automatic: false, evidence: [] } }; },
       async previewAttendus(id) { return Object.assign({ ok: true }, previewOf(id)); },
       async figer(id, baseVersion) {
         const evenement = getEvent(id);

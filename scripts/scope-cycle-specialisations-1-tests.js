@@ -59,6 +59,7 @@ function sixPaprEvents(){
     assert.ok(sql.includes('cycle_key text'));
     assert.ok(sql.includes('add column if not exists cycle_id uuid references scope_cycles(cycle_id) on delete set null'));
     assert.ok(sql.includes('create table if not exists scope_cycle_personnes'));
+    assert.ok(sql.includes("'PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE'"));
     assert.ok(sql.includes('session_event_id uuid references scope_evenements(evenement_id) on delete set null'));
     assert.ok(sql.includes('participated_event_id uuid references scope_evenements(evenement_id) on delete set null'));
     assert.ok(!/\bscope_sessions\b/.test(sql));
@@ -75,6 +76,7 @@ function sixPaprEvents(){
     assert.ok(schema.includes("values ('scope-specialisation-cycles-arch-1')"));
     assert.ok(schema.includes('scope_cycles'));
     assert.ok(schema.includes('scope_cycle_personnes'));
+    assert.ok(schema.includes("'PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE'"));
     assert.ok(schema.includes('cycle_id uuid references scope_cycles(cycle_id) on delete set null'));
   });
 
@@ -138,6 +140,7 @@ function sixPaprEvents(){
       cycle: { cycle_id: 'cycle-papr-2026', domaine_code: 'PR' },
       personnes: [person('f1', '2001')],
       evenements: sixPaprEvents(),
+      cyclePersonnes: [cyclePersonne('f1', 'PARTICIPANT')],
       participations: sixPaprEvents().map((e) => part(e.evenement_id, 'f1', 'NON_CONCERNE', 'FORMATEUR'))
     });
     assert.strictEqual(metrics.formateursDistincts, 1);

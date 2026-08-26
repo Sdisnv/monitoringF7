@@ -150,6 +150,15 @@
       convertirQuantitatif(id, body, baseVersion) {
         return request('POST', `/evenements/${encodeURIComponent(id)}/convertir-quantitatif`, withBaseVersion(body || {}, baseVersion));
       },
+      listCycles(params) { return request('GET', `/cycles${queryString(params || {})}`); },
+      getCycle(id) { return request('GET', `/cycles/${encodeURIComponent(id)}`); },
+      createCycle(body) { return request('POST', '/cycles', body); },
+      patchCycle(id, body) { return request('PATCH', `/cycles/${encodeURIComponent(id)}`, body); },
+      attachCycleEvent(id, body) { return request('POST', `/cycles/${encodeURIComponent(id)}/evenements`, body); },
+      detachCycleEvent(id, body) { return request('DELETE', `/cycles/${encodeURIComponent(id)}/evenements`, body); },
+      upsertCyclePersonne(id, body) { return request('POST', `/cycles/${encodeURIComponent(id)}/personnes`, body); },
+      removeCyclePersonne(id, body) { return request('DELETE', `/cycles/${encodeURIComponent(id)}/personnes`, body); },
+      proposeCycle(body) { return request('POST', '/cycles/proposer', body); },
       previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
       async previewPersonnelSync(body) {

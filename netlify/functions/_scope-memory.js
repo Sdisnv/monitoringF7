@@ -53,6 +53,8 @@ function createMemoryRepo(){
   const acquittements = new Map();
   const suiviNominatif = new Map();
   const periodes = new Map();
+  const cycles = new Map();
+  const cyclePersonnes = new Map();
   suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
     suivi_id: '8c0a0002-2026-4000-8000-000000000001',
     portee: 'GLOBAL',
@@ -68,6 +70,7 @@ function createMemoryRepo(){
 
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
   function keyLigne(importId, ligneNo){ return `${importId}::${ligneNo}`; }
+  function keyCP(cycleId, personneId, roleCycle){ return `${cycleId}::${personneId}::${roleCycle || 'PARTICIPANT'}`; }
 
   function cloneMap(map){
     return new Map([...map.entries()].map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]));
@@ -90,7 +93,9 @@ function createMemoryRepo(){
       objectifs: cloneMap(objectifs),
       acquittements: cloneMap(acquittements),
       suiviNominatif: cloneMap(suiviNominatif),
-      periodes: cloneMap(periodes)
+      periodes: cloneMap(periodes),
+      cycles: cloneMap(cycles),
+      cyclePersonnes: cloneMap(cyclePersonnes)
     };
   }
 
@@ -111,6 +116,8 @@ function createMemoryRepo(){
     acquittements.clear(); (snap.acquittements || new Map()).forEach((v, k) => acquittements.set(k, v));
     suiviNominatif.clear(); (snap.suiviNominatif || new Map()).forEach((v, k) => suiviNominatif.set(k, v));
     periodes.clear(); (snap.periodes || new Map()).forEach((v, k) => periodes.set(k, v));
+    cycles.clear(); (snap.cycles || new Map()).forEach((v, k) => cycles.set(k, v));
+    cyclePersonnes.clear(); (snap.cyclePersonnes || new Map()).forEach((v, k) => cyclePersonnes.set(k, v));
   }
 
   const api = {
@@ -312,6 +319,7 @@ function createMemoryRepo(){
         heure_fin: row.heure_fin || row.heureFin || null,
         salle: row.salle || null,
         responsable: row.responsable || null,
+        cycle_id: row.cycle_id || row.cycleId || null,
         population_figee: false,
         population_version: 0,
         figee_at: null,
@@ -454,6 +462,116 @@ function createMemoryRepo(){
       return item;
     },
     async listLegacy(){ return [...legacy.values()]; },
+    async listCycles({ annee, domaine, statut } = {}){
+      return [...cycles.values()]
+        .filter((item) => {
+          if(annee && Number(item.annee) !== Number(annee)) return false;
+          if(domaine && item.domaine_code !== domaine) return false;
+          if(statut && item.statut !== statut) return false;
+          return true;
+        })
+        .sort((a, b) => String(b.annee || '').localeCompare(String(a.annee || '')) || String(a.libelle).localeCompare(String(b.libelle)))
+        .map((item) => ({ ...item }));
+    },
+    async getCycle(id){ return cycles.get(id) ? { ...cycles.get(id) } : null; },
+    async getCycleByKey(cycleKey){
+      const item = [...cycles.values()].find((row) => row.cycle_key === cycleKey);
+      return item ? { ...item } : null;
+    },
+    async insertCycle(row){
+      if(row.cycle_key && [...cycles.values()].some((item) => item.cycle_key === row.cycle_key)){
+        const err = new Error('cycle_key_unique');
+        err.code = '23505';
+        throw err;
+      }
+      const item = {
+        cycle_id: row.cycle_id || randomUUID(),
+        cycle_key: row.cycle_key || null,
+        annee: row.annee == null ? null : Number(row.annee),
+        domaine_code: row.domaine_code,
+        type_cycle: row.type_cycle || null,
+        libelle: row.libelle,
+        statut: row.statut || 'PLANIFIE',
+        stat_com: row.stat_com || null,
+        qui: row.qui || null,
+        date_debut: isoDate(row.date_debut),
+        date_fin: isoDate(row.date_fin),
+        source_type: row.source_type || 'MANUEL',
+        metadata: row.metadata || {},
+        created_at: now(),
+        updated_at: now()
+      };
+      cycles.set(item.cycle_id, item);
+      return { ...item };
+    },
+    async updateCycle(id, patch){
+      const item = cycles.get(id);
+      if(!item) return null;
+      const clean = {};
+      for(const [key, value] of Object.entries(patch || {})){
+        if(value !== undefined) clean[key] = value;
+      }
+      Object.assign(item, clean, {
+        annee: clean.annee !== undefined ? Number(clean.annee) : item.annee,
+        date_debut: clean.date_debut !== undefined ? isoDate(clean.date_debut) : item.date_debut,
+        date_fin: clean.date_fin !== undefined ? isoDate(clean.date_fin) : item.date_fin,
+        updated_at: now()
+      });
+      return { ...item };
+    },
+    async listCycleEvents(cycleId){
+      return [...evenements.values()]
+        .filter((item) => item.cycle_id === cycleId)
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
+        .map((item) => ({ ...item, date: dateOnly(item.date) }));
+    },
+    async attachEventToCycle(cycleId, eventId){
+      const item = evenements.get(eventId);
+      if(!item) return null;
+      item.cycle_id = cycleId;
+      item.version = Number(item.version || 1) + 1;
+      item.updated_at = now();
+      return { ...item };
+    },
+    async detachEventFromCycle(cycleId, eventId){
+      const item = evenements.get(eventId);
+      if(!item || item.cycle_id !== cycleId) return null;
+      item.cycle_id = null;
+      item.version = Number(item.version || 1) + 1;
+      item.updated_at = now();
+      return { ...item };
+    },
+    async listCyclePersonnes(cycleId){
+      return [...cyclePersonnes.values()]
+        .filter((row) => row.cycle_id === cycleId)
+        .map((row) => ({ ...row, ...(personnes.get(row.personne_id) || {}) }));
+    },
+    async upsertCyclePersonne(row){
+      const role = row.role_cycle || 'PARTICIPANT';
+      const existing = cyclePersonnes.get(keyCP(row.cycle_id, row.personne_id, role));
+      const item = {
+        cycle_id: row.cycle_id,
+        personne_id: row.personne_id,
+        role_cycle: role,
+        statut_cycle: row.statut_cycle || 'ACTIF',
+        session_event_id: row.session_event_id || null,
+        participated_event_id: row.participated_event_id || null,
+        exception_type: row.exception_type || null,
+        exercise_scope: row.exercise_scope || [],
+        source: row.source || 'MANUEL',
+        date_debut: isoDate(row.date_debut),
+        date_fin: isoDate(row.date_fin),
+        commentaire: row.commentaire || null,
+        metadata: row.metadata || {},
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      cyclePersonnes.set(keyCP(item.cycle_id, item.personne_id, item.role_cycle), item);
+      return { ...item, ...(personnes.get(item.personne_id) || {}) };
+    },
+    async deleteCyclePersonne(cycleId, personneId, roleCycle){
+      return cyclePersonnes.delete(keyCP(cycleId, personneId, roleCycle));
+    },
     async getLegacyByEvenementId(eventId){
       return [...legacy.values()].find(item => item.evenement_id === eventId) || null;
     },

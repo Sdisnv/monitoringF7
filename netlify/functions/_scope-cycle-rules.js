@@ -1,7 +1,7 @@
 const { STATUT_PERMUTATION } = require('./_scope-model');
 const { getEncadrementContribution, round1 } = require('./_scope-rules');
 
-const ROLES_CYCLE = new Set(['PARTICIPANT', 'FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE']);
+const ROLES_CYCLE = new Set(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
 const STATUTS_PRESENTS = new Set(['PRESENT', STATUT_PERMUTATION]);
 const STATUTS_ABSENCE = new Set(['ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
 
@@ -149,6 +149,7 @@ function computeCycleMetrics(input = {}){
   const nonRenseignes = new Set();
   const absencesQualifiees = new Set();
   const formateurs = new Set();
+  const moniteurs = new Set();
   const surveillants = new Set();
   const auxiliaires = new Set();
   const dispensesInternes = new Set();
@@ -174,6 +175,7 @@ function computeCycleMetrics(input = {}){
       if(normalizeUpper(row.exception_type || row.exceptionType) === 'DISPENSE_EXERCICE_INTERNE') dispensesInternes.add(key);
       if(assigned && sessionCounts[assigned]) sessionCounts[assigned].population += 1;
     } else if(role === 'FORMATEUR') formateurs.add(key);
+    else if(role === 'MONITEUR') moniteurs.add(key);
     else if(role === 'SURVEILLANT') surveillants.add(key);
     else if(role === 'AUXILIAIRE') auxiliaires.add(key);
   }
@@ -186,6 +188,7 @@ function computeCycleMetrics(input = {}){
     const key = addPerson(new Set(), participation, personnesById);
     if(!key) continue;
     if(role === 'FORMATEUR') formateurs.add(key);
+    else if(role === 'MONITEUR') moniteurs.add(key);
     else if(role === 'SURVEILLANT') surveillants.add(key);
     else if(role === 'AUXILIAIRE') auxiliaires.add(key);
     if(role !== 'PARTICIPANT') continue;
@@ -204,7 +207,7 @@ function computeCycleMetrics(input = {}){
   const effectif = new Set([...participantsReconnus]);
   for(const key of formateurs){
     const contribution = getEncadrementContribution({ domaine, role: 'FORMATEUR', contexte: { type: 'SESSION' } });
-    if(contribution.countsEffectifConsolideSession) effectif.add(key);
+    if(contribution.countsEffectifConsolideSession && population.has(key)) effectif.add(key);
   }
 
   const denominator = population.size;
@@ -213,6 +216,7 @@ function computeCycleMetrics(input = {}){
     participantsReconnusDistincts: participantsReconnus.size,
     nonRenseignesDistincts: nonRenseignes.size,
     formateursDistincts: formateurs.size,
+    moniteursDistincts: moniteurs.size,
     surveillantsDistincts: surveillants.size,
     auxiliairesDistincts: auxiliaires.size,
     absencesQualifieesDistinctes: absencesQualifiees.size,
@@ -237,6 +241,7 @@ function computeCycleMetrics(input = {}){
       participantsReconnus: sortedValues(participantsReconnus),
       nonRenseignes: sortedValues(nonRenseignes),
       formateurs: sortedValues(formateurs),
+      moniteurs: sortedValues(moniteurs),
       surveillants: sortedValues(surveillants),
       auxiliaires: sortedValues(auxiliaires),
       absencesQualifiees: sortedValues(absencesQualifiees),

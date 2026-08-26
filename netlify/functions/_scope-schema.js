@@ -942,7 +942,7 @@ async function migrateSpecialisationCyclesArch1(){
       updated_at timestamptz not null default now(),
       primary key (cycle_id, personne_id, role_cycle),
       constraint scope_cycle_personnes_role_chk check (role_cycle in (
-        'PARTICIPANT','FORMATEUR','SURVEILLANT','AUXILIAIRE'
+        'PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE'
       )),
       constraint scope_cycle_personnes_statut_chk check (statut_cycle in (
         'ACTIF','DISPENSE','EXCLU','NON_RENSEIGNE'

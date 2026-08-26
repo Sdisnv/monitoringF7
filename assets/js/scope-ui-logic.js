@@ -226,6 +226,7 @@
         { id: 'accueil', href: '#/accueil', label: 'Accueil' },
         { id: 'vue', href: '#/vue', label: 'Vue d’ensemble' },
         { id: 'exercices', href: '#/evenements', label: 'Événements' },
+        { id: 'cycles', href: '#/cycles', label: 'Cycles' },
         { id: 'statistiques', href: '#/statistiques', label: 'Statistiques' }
       ],
       domains: roots.map((d) => {
@@ -339,6 +340,10 @@
     const parts = path.split('/').filter(Boolean);
     if (!parts.length || parts[0] === 'accueil') return { screen: 'accueil', nav: 'accueil' };
     if (parts[0] === 'statistiques') return { screen: 'statistiques', nav: 'statistiques' };
+    if (parts[0] === 'cycles') {
+      if(parts[1]) return { screen: 'cycle', nav: 'cycles', id: parts[1] };
+      return { screen: 'cycles', nav: 'cycles' };
+    }
     if (parts[0] === 'evenements') parts[0] = 'exercices';
     if (!parts.length || parts[0] === 'exercices') {
       if (parts[1] === 'nouveau') return { screen: 'nouveau', nav: 'exercices' };

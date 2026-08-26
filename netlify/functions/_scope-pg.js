@@ -37,9 +37,56 @@ function mapEvent(row){
     heure_fin: row.heure_fin || null,
     salle: row.salle || null,
     responsable: row.responsable || null,
+    cycle_id: row.cycle_id || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     already_exists: Boolean(row.already_exists)
+  };
+}
+
+function mapCycle(row){
+  if(!row) return null;
+  return {
+    cycle_id: row.cycle_id,
+    cycle_key: row.cycle_key || null,
+    annee: row.annee == null ? null : Number(row.annee),
+    domaine_code: row.domaine_code,
+    type_cycle: row.type_cycle || null,
+    libelle: row.libelle,
+    statut: row.statut,
+    stat_com: row.stat_com || null,
+    qui: row.qui || null,
+    date_debut: dateOnly(row.date_debut),
+    date_fin: dateOnly(row.date_fin),
+    source_type: row.source_type || 'MANUEL',
+    metadata: row.metadata || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function mapCyclePersonne(row){
+  if(!row) return null;
+  return {
+    cycle_id: row.cycle_id,
+    personne_id: row.personne_id,
+    role_cycle: row.role_cycle,
+    statut_cycle: row.statut_cycle,
+    session_event_id: row.session_event_id || null,
+    participated_event_id: row.participated_event_id || null,
+    exception_type: row.exception_type || null,
+    exercise_scope: row.exercise_scope || [],
+    source: row.source || 'MANUEL',
+    date_debut: dateOnly(row.date_debut),
+    date_fin: dateOnly(row.date_fin),
+    commentaire: row.commentaire || null,
+    metadata: row.metadata || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    nip: row.nip || null,
+    nom: row.nom || null,
+    prenom: row.prenom || null,
+    grade: row.grade || null
   };
 }
 
@@ -554,7 +601,7 @@ function createPgRepo(client){
     async updateEventIfVersion(id, baseVersion, patch){
       const allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
-        'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable'
+        'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id'
       ];
       const sets = ['version = version + 1', 'updated_at = now()'];
       const params = [];
@@ -748,6 +795,151 @@ function createPgRepo(client){
     async listLegacy(){
       const result = await q('select * from scope_legacy_aggregates order by date');
       return result.rows;
+    },
+    async listCycles({ annee, domaine, statut } = {}){
+      const clauses = [];
+      const params = [];
+      let i = 1;
+      if(annee){
+        clauses.push(`annee = $${i}`);
+        params.push(Number(annee));
+        i += 1;
+      }
+      if(domaine){
+        clauses.push(`domaine_code = $${i}`);
+        params.push(String(domaine));
+        i += 1;
+      }
+      if(statut){
+        clauses.push(`statut = $${i}`);
+        params.push(String(statut));
+        i += 1;
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      const result = await q(`select * from scope_cycles ${where} order by annee desc nulls last, date_debut desc nulls last, libelle`, params);
+      return result.rows.map(mapCycle);
+    },
+    async getCycle(id){
+      const result = await q('select * from scope_cycles where cycle_id = $1', [id]);
+      return mapCycle(result.rows[0] || null);
+    },
+    async getCycleByKey(cycleKey){
+      const result = await q('select * from scope_cycles where cycle_key = $1', [cycleKey]);
+      return mapCycle(result.rows[0] || null);
+    },
+    async insertCycle(row){
+      const id = row.cycle_id || randomUUID();
+      const result = await q(
+        `insert into scope_cycles(
+          cycle_id, cycle_key, annee, domaine_code, type_cycle, libelle, statut,
+          stat_com, qui, date_debut, date_fin, source_type, metadata
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb)
+        returning *`,
+        [
+          id,
+          row.cycle_key || null,
+          row.annee == null ? null : Number(row.annee),
+          row.domaine_code,
+          row.type_cycle || null,
+          row.libelle,
+          row.statut || 'PLANIFIE',
+          row.stat_com || null,
+          row.qui || null,
+          isoDate(row.date_debut),
+          isoDate(row.date_fin),
+          row.source_type || 'MANUEL',
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return mapCycle(result.rows[0]);
+    },
+    async updateCycle(id, patch){
+      const allowed = ['cycle_key','annee','domaine_code','type_cycle','libelle','statut','stat_com','qui','date_debut','date_fin','source_type','metadata'];
+      const sets = ['updated_at = now()'];
+      const params = [];
+      let i = 1;
+      for(const key of allowed){
+        if(Object.prototype.hasOwnProperty.call(patch || {}, key)){
+          if(key === 'metadata') {
+            sets.push(`${key} = $${i}::jsonb`);
+            params.push(JSON.stringify(patch[key] || {}));
+          } else {
+            sets.push(`${key} = $${i}`);
+            params.push(key === 'date_debut' || key === 'date_fin' ? isoDate(patch[key]) : patch[key]);
+          }
+          i += 1;
+        }
+      }
+      params.push(id);
+      const result = await q(`update scope_cycles set ${sets.join(', ')} where cycle_id = $${i} returning *`, params);
+      return mapCycle(result.rows[0] || null);
+    },
+    async listCycleEvents(cycleId){
+      const result = await q('select * from scope_evenements where cycle_id = $1 order by date, libelle', [cycleId]);
+      return result.rows.map(mapEvent);
+    },
+    async attachEventToCycle(cycleId, eventId){
+      const result = await q('update scope_evenements set cycle_id = $1, updated_at = now(), version = version + 1 where evenement_id = $2 returning *', [cycleId, eventId]);
+      return mapEvent(result.rows[0] || null);
+    },
+    async detachEventFromCycle(cycleId, eventId){
+      const result = await q('update scope_evenements set cycle_id = null, updated_at = now(), version = version + 1 where evenement_id = $2 and cycle_id = $1 returning *', [cycleId, eventId]);
+      return mapEvent(result.rows[0] || null);
+    },
+    async listCyclePersonnes(cycleId){
+      const result = await q(
+        `select cp.*, p.nip, p.nom, p.prenom, p.grade
+         from scope_cycle_personnes cp
+         join scope_personnes p on p.id = cp.personne_id
+         where cp.cycle_id = $1
+         order by cp.role_cycle, p.nom, p.prenom`,
+        [cycleId]
+      );
+      return result.rows.map(mapCyclePersonne);
+    },
+    async upsertCyclePersonne(row){
+      const result = await q(
+        `insert into scope_cycle_personnes(
+          cycle_id, personne_id, role_cycle, statut_cycle, session_event_id, participated_event_id,
+          exception_type, exercise_scope, source, date_debut, date_fin, commentaire, metadata
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13::jsonb)
+        on conflict (cycle_id, personne_id, role_cycle) do update set
+          statut_cycle = excluded.statut_cycle,
+          session_event_id = excluded.session_event_id,
+          participated_event_id = excluded.participated_event_id,
+          exception_type = excluded.exception_type,
+          exercise_scope = excluded.exercise_scope,
+          source = excluded.source,
+          date_debut = excluded.date_debut,
+          date_fin = excluded.date_fin,
+          commentaire = excluded.commentaire,
+          metadata = excluded.metadata,
+          updated_at = now()
+        returning *`,
+        [
+          row.cycle_id,
+          row.personne_id,
+          row.role_cycle || 'PARTICIPANT',
+          row.statut_cycle || 'ACTIF',
+          row.session_event_id || null,
+          row.participated_event_id || null,
+          row.exception_type || null,
+          JSON.stringify(row.exercise_scope || []),
+          row.source || 'MANUEL',
+          isoDate(row.date_debut),
+          isoDate(row.date_fin),
+          row.commentaire || null,
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return mapCyclePersonne(result.rows[0]);
+    },
+    async deleteCyclePersonne(cycleId, personneId, roleCycle){
+      const result = await q(
+        'delete from scope_cycle_personnes where cycle_id = $1 and personne_id = $2 and role_cycle = $3',
+        [cycleId, personneId, roleCycle || 'PARTICIPANT']
+      );
+      return result.rowCount > 0;
     },
     async getLegacyByEvenementId(eventId){
       const result = await q(

@@ -6,6 +6,7 @@ const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeObjectivesService } = require('./_scope-objectives-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeAlertsService } = require('./_scope-alerts-service');
+const { createScopeCycleService } = require('./_scope-cycle-service');
 const { getPgRepo } = require('./_scope-pg');
 const { generateReport, pdfResponse } = require('./_scope-report-service');
 const { createScopePersonService } = require('./_scope-person-service');
@@ -81,6 +82,7 @@ exports.handler = async function(event){
     const objectives = createScopeObjectivesService(repo);
     const dashboard = createScopeDashboardService(repo);
     const alerts = createScopeAlertsService(repo);
+    const cycles = createScopeCycleService(repo);
     const persons = createScopePersonService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
@@ -245,6 +247,37 @@ exports.handler = async function(event){
     }
     if(method === 'PATCH' && params){
       return response(200, { ok:true, ...(await service.patchEvenement(params.id, body, claims)) });
+    }
+
+    if(method === 'GET' && path === '/cycles'){
+      return response(200, { ok:true, ...(await cycles.listCycles(queryOf(event))) });
+    }
+    if(method === 'POST' && path === '/cycles'){
+      return response(201, { ok:true, ...(await cycles.createCycle(body, claims)) });
+    }
+    if(method === 'POST' && path === '/cycles/proposer'){
+      return response(200, { ok:true, ...(cycles.proposeCycle(body)) });
+    }
+    params = match(path, '/cycles/:id');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, ...(await cycles.getCycle(params.id)) });
+    }
+    if(method === 'PATCH' && params){
+      return response(200, { ok:true, ...(await cycles.patchCycle(params.id, body, claims)) });
+    }
+    params = match(path, '/cycles/:id/evenements');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await cycles.attachEvent(params.id, body, claims)) });
+    }
+    if(method === 'DELETE' && params){
+      return response(200, { ok:true, ...(await cycles.detachEvent(params.id, body, claims)) });
+    }
+    params = match(path, '/cycles/:id/personnes');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await cycles.upsertPersonne(params.id, body, claims)) });
+    }
+    if(method === 'DELETE' && params){
+      return response(200, { ok:true, ...(await cycles.removePersonne(params.id, body, claims)) });
     }
 
     if(method === 'GET' && path === '/analytics/summary'){

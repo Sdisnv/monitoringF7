@@ -48,6 +48,13 @@
     domaine: 'tous',
     referentiels: { domaines: [], cibles: [] },
     list: [],
+    cycles: [],
+    cyclesReady: false,
+    cyclesError: null,
+    cycleDetail: null,
+    cycleDetailReady: false,
+    cycleDetailError: null,
+    cycleFilter: { domaine: 'tous', statut: 'tous' },
     fiche: null,
     preview: null,
     pendingRetraits: [],
@@ -307,6 +314,47 @@
     }
   }
 
+  async function loadCycles() {
+    if (typeof client.listCycles !== 'function') {
+      state.cycles = [];
+      state.cyclesReady = true;
+      state.cyclesError = null;
+      return;
+    }
+    state.cyclesError = null;
+    try {
+      const data = await client.listCycles({
+        annee: state.year,
+        domaine: state.cycleFilter.domaine,
+        statut: state.cycleFilter.statut
+      });
+      state.cycles = data.cycles || [];
+      state.cyclesReady = true;
+    } catch (error) {
+      state.cyclesError = L.friendlyError(error).message || 'Les cycles n’ont pas pu être chargés.';
+      state.cyclesReady = true;
+      throw error;
+    }
+  }
+
+  async function loadCycle(id) {
+    if (typeof client.getCycle !== 'function') {
+      state.cycleDetail = null;
+      state.cycleDetailReady = true;
+      state.cycleDetailError = null;
+      return;
+    }
+    state.cycleDetailError = null;
+    try {
+      state.cycleDetail = await client.getCycle(id);
+      state.cycleDetailReady = true;
+    } catch (error) {
+      state.cycleDetailError = L.friendlyError(error).message || 'Le cycle n’a pas pu être chargé.';
+      state.cycleDetailReady = true;
+      throw error;
+    }
+  }
+
   async function loadObjectifs() {
     if (!client.listObjectifs) {
       state.objectifs = [];
@@ -365,6 +413,10 @@
       state.listReady = false;
       state.listError = null;
     }
+    if (r.screen === 'cycles') {
+      state.cyclesReady = false;
+      state.cyclesError = null;
+    }
     if (r.screen === 'personnel' || r.screen === 'import-personnel') {
       state.personnelReady = false;
       state.personnelError = null;
@@ -377,6 +429,10 @@
         await loadDashboard();
       } else if (r.screen === 'liste') {
         await loadList();
+      } else if (r.screen === 'cycles') {
+        await loadCycles();
+      } else if (r.screen === 'cycle' && r.id) {
+        await loadCycle(r.id);
       } else if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         await loadPersonnelDirectory();
       } else if (r.screen === 'personne' && r.personneId) {
@@ -712,6 +768,7 @@
           ${primaryLink('#/accueil', 'Accueil', r.screen === 'accueil')}
           ${section('Activité')}
           ${primaryLink('#/evenements', 'Événements', r.nav === 'exercices')}
+          ${primaryLink('#/cycles', 'Cycles', r.nav === 'cycles')}
           ${primaryLink('#/statistiques', 'Statistiques', r.screen === 'statistiques')}
           ${hasScopePermission('personnel:read') ? primaryLink('#/personnel', 'Personnel', r.nav === 'personnel') : ''}
           ${primaryLink('#/rapports', 'Rapports', r.nav === 'rapports')}
@@ -1060,6 +1117,145 @@
             </thead>
             <tbody>${body}</tbody>
           </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function cycleRoleLabel(role) {
+    const code = String(role || '').toUpperCase();
+    if (code === 'FORMATEUR') return 'Formateur';
+    if (code === 'MONITEUR') return 'Moniteur JSP';
+    if (code === 'SURVEILLANT') return 'Surveillant';
+    if (code === 'AUXILIAIRE') return 'Auxiliaire';
+    return 'Participant';
+  }
+
+  function cycleStatutLabel(statut) {
+    const code = String(statut || '').toUpperCase();
+    if (code === 'DISPENSE') return 'Dispensé';
+    if (code === 'EXCLU') return 'Exclu';
+    if (code === 'NON_RENSEIGNE') return 'Non renseigné';
+    return 'Actif';
+  }
+
+  function cycleMetric(metrics, key) {
+    return Number((metrics && metrics[key]) || 0);
+  }
+
+  function renderCycles() {
+    const rows = state.cycles || [];
+    let body;
+    if (state.cyclesError) {
+      body = `<tr><td colspan="8"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.cyclesError)}</div></td></tr>`;
+    } else if (!state.cyclesReady) {
+      body = `<tr><td colspan="8"><div class="scope-loading-row" role="status">Chargement des cycles…</div></td></tr>`;
+    } else if (!rows.length) {
+      body = '<tr><td colspan="8"><div class="scope-empty">Aucun cycle de spécialisation sur cette période.</div></td></tr>';
+    } else {
+      body = rows.map((cycle) => {
+        const metrics = cycle.metrics || {};
+        const period = [cycle.date_debut, cycle.date_fin].filter(Boolean).map(L.formatDate).join(' – ') || '—';
+        return `<tr>
+          <td data-label="Cycle"><a href="#/cycles/${escapeHtml(cycle.cycle_id)}">${escapeHtml(cycle.libelle)}</a></td>
+          <td data-label="Spécialisation">${escapeHtml(cycle.type_cycle || cycle.domaine_code || '—')}</td>
+          <td data-label="Période">${escapeHtml(period)}</td>
+          <td data-label="État">${statutBadge(cycle.statut || 'PLANIFIE')}</td>
+          <td data-label="Population">${escapeHtml(String(cycle.populationCount ?? cycleMetric(metrics, 'populationDistincte')))}</td>
+          <td data-label="Présents">${escapeHtml(String(cycleMetric(metrics, 'participantsReconnusDistincts')))}</td>
+          <td data-label="Sessions">${escapeHtml(String(cycle.eventCount || 0))}</td>
+          <td data-label="Actions"><a class="scope-btn" href="#/cycles/${escapeHtml(cycle.cycle_id)}">Ouvrir</a></td>
+        </tr>`;
+      }).join('');
+    }
+    return `
+      <div class="scope-crumb">Activité / Cycles</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Spécialisations', title: 'Cycles', context: state.year, description: 'Cycles PAPR et AUTO rattachés aux événements SCOPE.', logo: true })}
+        ${periodContextHtml()}
+        <div class="scope-toolbar">
+          <div class="scope-field">
+            <label>Domaine</label>
+            <select id="cycle-filter-domaine">
+              <option value="tous">Tous</option>
+              <option value="PR">PAPR / PR</option>
+              <option value="AUTO">AUTO</option>
+            </select>
+          </div>
+          <div class="scope-field">
+            <label>Statut</label>
+            <select id="cycle-filter-statut">
+              <option value="tous">Tous</option>
+              <option value="PLANIFIE">Planifié</option>
+              <option value="REALISE">Réalisé</option>
+              <option value="REPORTE">Reporté</option>
+              <option value="ANNULE">Annulé</option>
+            </select>
+          </div>
+        </div>
+        <div class="scope-card scope-table-wrap">
+          <table class="scope-table">
+            <thead><tr><th>Cycle</th><th>Spécialisation</th><th>Période</th><th>État</th><th>Population</th><th>Présents</th><th>Sessions</th><th>Actions</th></tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCycle() {
+    const detail = state.cycleDetail;
+    if (state.cycleDetailError) {
+      return `<div class="scope-crumb"><a href="#/cycles">Cycles</a></div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Spécialisations', title: 'Cycle', context: 'Erreur', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.cycleDetailError)}</p></div></div>`;
+    }
+    if (!state.cycleDetailReady || !detail) {
+      return `<div class="scope-crumb"><a href="#/cycles">Cycles</a></div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Spécialisations', title: 'Cycle', context: 'Chargement', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du cycle…</p></div></div>`;
+    }
+    const cycle = detail.cycle || {};
+    const metrics = detail.metrics || {};
+    const evenements = detail.evenements || [];
+    const personnes = detail.personnes || [];
+    const period = [cycle.date_debut, cycle.date_fin].filter(Boolean).map(L.formatDate).join(' – ') || '—';
+    const eventRows = evenements.length ? evenements.map((ev) => `<tr>
+      <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
+      <td data-label="Code">${escapeHtml(ev.code_cours || ev.identifiant_externe || '—')}</td>
+      <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a></td>
+      <td data-label="État">${statutBadge(ev.statut)}</td>
+    </tr>`).join('') : '<tr><td colspan="4"><div class="scope-empty">Aucune session rattachée.</div></td></tr>';
+    const peopleRows = personnes.length ? personnes.map((p) => `<tr>
+      <td data-label="Nom">${escapeHtml([p.grade, p.nom, p.prenom].filter(Boolean).join(' ') || 'Personne')}</td>
+      <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
+      <td data-label="Rôle">${escapeHtml(cycleRoleLabel(p.role_cycle))}</td>
+      <td data-label="Statut">${escapeHtml(cycleStatutLabel(p.statut_cycle))}</td>
+      <td data-label="Session">${escapeHtml(p.session_event_id || p.participated_event_id || '—')}</td>
+      <td data-label="Exception">${escapeHtml(p.exception_type || '—')}</td>
+    </tr>`).join('') : '<tr><td colspan="6"><div class="scope-empty">Aucune personne rattachée.</div></td></tr>';
+    return `
+      <div class="scope-crumb"><a href="#/cycles">Cycles</a> / ${escapeHtml(cycle.libelle || 'Cycle')}</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Spécialisations', title: cycle.libelle || 'Cycle', context: `${cycle.type_cycle || cycle.domaine_code || '—'} · ${period}`, logo: true })}
+        <div class="scope-kpis">
+          <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(String(cycleMetric(metrics, 'populationDistincte')))}</strong><span>Population suivie</span><em>${escapeHtml(cycle.statut || 'PLANIFIE')}</em></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(cycleMetric(metrics, 'participantsReconnusDistincts')))}</strong><span>Présents reconnus</span></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(cycleMetric(metrics, 'formateursDistincts') + cycleMetric(metrics, 'moniteursDistincts') + cycleMetric(metrics, 'surveillantsDistincts') + cycleMetric(metrics, 'auxiliairesDistincts')))}</strong><span>Encadrement visible</span><small>Hors comptage sauf population spécialisée</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(L.formatTaux(metrics.tauxParticipationCycle && metrics.tauxParticipationCycle.percentage))}</strong><span>Taux cycle</span></article>
+        </div>
+        <div class="scope-card">
+          <h2 style="margin-top:0">Identité métier</h2>
+          <dl class="scope-meta">
+            <div><dt>STAT.COM</dt><dd>${escapeHtml(cycle.stat_com || '—')}</dd></div>
+            <div><dt>QUI</dt><dd>${escapeHtml(cycle.qui || '—')}</dd></div>
+            <div><dt>Clé</dt><dd>${escapeHtml(cycle.cycle_key || '—')}</dd></div>
+            <div><dt>Source</dt><dd>${escapeHtml(cycle.source_type || 'MANUEL')}</dd></div>
+          </dl>
+        </div>
+        <div class="scope-card scope-table-wrap" style="margin-top:12px">
+          <h2>Sessions</h2>
+          <table class="scope-table"><thead><tr><th>Date</th><th>Code</th><th>Événement</th><th>État</th></tr></thead><tbody>${eventRows}</tbody></table>
+        </div>
+        <div class="scope-card scope-table-wrap" style="margin-top:12px">
+          <h2>Population et rôles</h2>
+          <table class="scope-table"><thead><tr><th>Nom</th><th>NIP</th><th>Rôle</th><th>Statut</th><th>Session</th><th>Exception</th></tr></thead><tbody>${peopleRows}</tbody></table>
         </div>
       </div>
     `;
@@ -3666,6 +3862,8 @@
     const body = r.screen === 'accueil' ? renderAccueil()
       : r.screen === 'vue' ? renderVue()
         : r.screen === 'statistiques' ? renderStatistiques()
+      : r.screen === 'cycles' ? renderCycles()
+        : r.screen === 'cycle' ? renderCycle()
       : r.screen === 'personnel' ? renderPersonnel()
         : r.screen === 'personne' ? renderPersonne()
         : r.screen === 'rapports' ? renderRapports()
@@ -3688,6 +3886,10 @@
     const domaineSel = document.getElementById('filter-domaine');
     if (statutSel) statutSel.value = state.statut;
     if (domaineSel) domaineSel.value = state.domaine;
+    const cycleDomaineSel = document.getElementById('cycle-filter-domaine');
+    const cycleStatutSel = document.getElementById('cycle-filter-statut');
+    if (cycleDomaineSel) cycleDomaineSel.value = state.cycleFilter.domaine;
+    if (cycleStatutSel) cycleStatutSel.value = state.cycleFilter.statut;
   }
 
   function bind() {
@@ -3804,9 +4006,11 @@
       withLoading(async () => {
         clearToast();
         if (r.screen === 'personne' && r.personneId) await loadPersonneFiche(r.personneId);
+        else if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
         else if (r.id) await loadFiche(r.id);
         else if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
         else if (r.screen === 'personnel' || r.screen === 'import-personnel') await loadPersonnelDirectory();
+        else if (r.screen === 'cycles') await loadCycles();
         else await loadList();
         await refreshAlertCounts();
       });
@@ -3818,6 +4022,16 @@
     document.getElementById('filter-domaine')?.addEventListener('change', (e) => {
       state.domaine = e.target.value;
       withLoading(loadList);
+    });
+    document.getElementById('cycle-filter-domaine')?.addEventListener('change', (e) => {
+      state.cycleFilter.domaine = e.target.value;
+      state.cyclesReady = false;
+      withLoading(loadCycles);
+    });
+    document.getElementById('cycle-filter-statut')?.addEventListener('change', (e) => {
+      state.cycleFilter.statut = e.target.value;
+      state.cyclesReady = false;
+      withLoading(loadCycles);
     });
     document.getElementById('obj-add')?.addEventListener('click', () => {
       state.objectifAction = 'create';
@@ -4910,6 +5124,14 @@
       state.listReady = false;
       state.listError = null;
     }
+    if (r.screen === 'cycles') {
+      state.cyclesReady = false;
+      state.cyclesError = null;
+    }
+    if (r.screen === 'cycle') {
+      state.cycleDetailReady = false;
+      state.cycleDetailError = null;
+    }
     if (r.screen === 'personnel') {
       state.personnelReady = false;
       state.personnelError = null;
@@ -4925,6 +5147,8 @@
         state.personCount = (people.personnes || []).length;
       }
       if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
+      if (r.screen === 'cycles') await loadCycles();
+      if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
       if (r.screen === 'personnel' || r.screen === 'import-personnel') {
