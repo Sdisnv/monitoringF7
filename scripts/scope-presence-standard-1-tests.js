@@ -597,7 +597,9 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('function snapshotSaisieState'));
     assert.ok(ui.includes('function refreshFichePreservingSaisie'));
     assert.ok(ui.includes("state.encRole = 'FORMATEUR';"));
-    assert.ok(ui.includes('state.saisie = snapshot.saisie'));
+    assert.ok(ui.includes('buildSaisieFromFiche();'));
+    assert.ok(ui.includes('mergeEditableSaisieState(snapshot);'));
+    assert.ok(!ui.includes('state.saisie = snapshot.saisie'));
     assert.ok(ui.includes('state.cibleFilter = snapshot.cibleFilter'));
     assert.ok(ui.includes('snapshot.scrollY'));
     assert.ok(ui.includes('await refreshFichePreservingSaisie(id, snapshot)'));

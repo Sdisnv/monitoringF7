@@ -468,7 +468,8 @@
     const data = await client.getEvenement(id);
     state.fiche = data;
     state.conflict = false;
-    state.saisie = snapshot.saisie;
+    buildSaisieFromFiche();
+    mergeEditableSaisieState(snapshot);
     state.cibleFilter = snapshot.cibleFilter;
     state.manualPersonQuery = snapshot.manualPersonQuery;
     state.manualPersonHits = snapshot.manualPersonHits;
@@ -478,6 +479,33 @@
     if (typeof window !== 'undefined') {
       requestAnimationFrame(() => window.scrollTo({ top: snapshot.scrollY, left: window.scrollX, behavior: 'auto' }));
     }
+  }
+
+  function mergeEditableSaisieState(snapshot) {
+    const previous = new Map(((snapshot && snapshot.saisie) || []).map((row) => [String(row.personneId), row]));
+    const encadrementIds = usedEncadrementIds();
+    state.saisie = (state.saisie || []).map((row) => {
+      const prior = previous.get(String(row.personneId));
+      if (!prior || encadrementIds.has(String(row.personneId))) return row;
+      return Object.assign({}, row, {
+        statut: prior.statut,
+        motifAbsence: prior.motifAbsence || '',
+        commentaire: prior.commentaire || ''
+      });
+    });
+  }
+
+  function buildPresenceSavePayload(rows, encadrementIds) {
+    const lockedEncadrement = encadrementIds || new Set();
+    return (rows || [])
+      .filter((r) => r.inclus !== false && !r.alreadyCountedInSession && !lockedEncadrement.has(String(r.personneId)))
+      .map((r) => ({
+        personneId: r.personneId,
+        statut: r.statut,
+        role: ['FORMATEUR', 'SURVEILLANT'].includes(r.role) ? r.role : 'PARTICIPANT',
+        motif_absence: r.motifAbsence || null,
+        commentaire: r.commentaire || null
+      }));
   }
 
   function volumesFromFiche() {
@@ -4999,15 +5027,8 @@
 
   function saveParticipations() {
     const id = route().id;
-    const payload = state.saisie
-      .filter((r) => r.inclus !== false && !r.alreadyCountedInSession)
-      .map((r) => ({
-        personneId: r.personneId,
-        statut: r.statut,
-        role: ['FORMATEUR', 'SURVEILLANT'].includes(r.role) ? r.role : 'PARTICIPANT',
-        motif_absence: r.motifAbsence || null,
-        commentaire: r.commentaire || null
-      }));
+    const encadrementIds = usedEncadrementIds();
+    const payload = buildPresenceSavePayload(state.saisie, encadrementIds);
     withFeedbackAction({
       progressTitle: 'Enregistrement des présences',
       successTitle: 'Présences enregistrées',
