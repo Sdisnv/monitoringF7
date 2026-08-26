@@ -1094,6 +1094,8 @@ function createScopeService(repo){
       }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
+      let savedCount = 0;
+      let skippedEncadrement = 0;
       for(const item of items){
         const personneId = item.personneId || item.personne_id;
         const attendu = await tx.getAttendu(eventId, personneId);
@@ -1105,6 +1107,11 @@ function createScopeService(repo){
         const participationRole = ['FORMATEUR', 'SURVEILLANT'].includes(role) ? role : 'PARTICIPANT';
         if(['FORMATEUR', 'SURVEILLANT'].includes(participationRole) && patch.statut !== 'PRESENT'){
           throw new HttpError(422, 'encadrement_present', 'Un rôle d’encadrement compté en session doit être présent.');
+        }
+        const existing = await tx.getParticipation(eventId, personneId);
+        if(existing && ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase()) && participationRole === 'PARTICIPANT'){
+          skippedEncadrement += 1;
+          continue;
         }
         if(isPrParticipantContribution(patch.statut, participationRole) && (evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
           const cycle = evenement.cycle_id && tx.getCycle
@@ -1135,7 +1142,6 @@ function createScopeService(repo){
             throw new HttpError(409, 'pr_exercise_participation_deja_comptee', 'Cette personne a déjà une contribution comptabilisante dans cet Exercice PR.', { personneId, prExerciseGroupKey: prState.groupKey });
           }
         }
-        const existing = await tx.getParticipation(eventId, personneId);
         await tx.upsertParticipation({
           ...(existing || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
           ...patch,
@@ -1143,6 +1149,10 @@ function createScopeService(repo){
           source: 'SAISIE',
           auteur_id: actorId(actor)
         });
+        savedCount += 1;
+      }
+      if(savedCount === 0){
+        return { evenement, version: evenement.version, skippedEncadrement };
       }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {});
       await tx.appendJournal({
@@ -1150,7 +1160,7 @@ function createScopeService(repo){
         entite: 'evenement',
         entite_id: eventId,
         action: 'SAISIE_PARTICIPATIONS',
-        apres: { count: items.length, version: next.version }
+        apres: { count: savedCount, skippedEncadrement, version: next.version }
       });
       return { evenement: next, version: next.version };
     });
