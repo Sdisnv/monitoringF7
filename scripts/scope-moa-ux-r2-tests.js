@@ -147,12 +147,12 @@ async function record(name, fn) {
 
   await record('16 — logo SCOPE agrandi R2', async () => {
     assert.ok(css.includes('height: 83px'));
-    assert.ok(html.includes('scope-presence-standard-1'));
-    assert.ok(html.includes('scope-ui-logic.js?v=scope-presence-standard-1'));
+    assert.ok(html.includes('scope-presence-standard-1r1'));
+    assert.ok(html.includes('scope-ui-logic.js?v=scope-presence-standard-1r1'));
     assert.ok(html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-presence-standard-1'));
+    assert.ok(html.includes('scope.css?v=scope-presence-standard-1r1'));
     assert.ok(html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
-    assert.ok(html.includes('scope-ui.js?v=scope-presence-standard-1'));
+    assert.ok(html.includes('scope-ui.js?v=scope-presence-standard-1r1'));
   });
 
   await record('17 — période hors header', async () => {

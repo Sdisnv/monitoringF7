@@ -654,6 +654,13 @@ function createPgRepo(client){
       );
       return result.rows[0] || null;
     },
+    async deleteParticipation(eventId, personneId){
+      const result = await q(
+        'delete from scope_participations where evenement_id = $1 and personne_id = $2',
+        [eventId, personneId]
+      );
+      return result.rowCount > 0;
+    },
     async upsertParticipation(row){
       const result = await q(
         `insert into scope_participations(

@@ -67,6 +67,10 @@
     personQuery: '',
     personHits: [],
     encRole: 'FORMATEUR',
+    encQuery: '',
+    encHits: [],
+    manualPersonQuery: '',
+    manualPersonHits: [],
     reopenMotif: '',
     session: null,
     needOkta: false,
@@ -344,6 +348,59 @@
     return '—';
   }
 
+  function cibleLabelFromAttendu(attendu) {
+    if (!attendu) return '—';
+    if (attendu.origine === 'EXCEPTION_AJOUT') return 'Ajout manuel';
+    const raw = String(attendu.motif_inclusion || attendu.motifInclusion || '').trim();
+    const labels = raw.split('|')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const m = part.match(/^([A-Z]+)_(.+)$/i);
+        if (!m) return '';
+        return L.niveauAffiche ? L.niveauAffiche(m[1].toUpperCase(), m[2]) : m[2];
+      })
+      .filter(Boolean);
+    const unique = [...new Set(labels)];
+    if (unique.length) return unique.join(' · ');
+    return cibleForPersonne(attendu.personne_id);
+  }
+
+  function normalizeSearchText(value) {
+    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function personLine(person) {
+    return [person.grade, person.nom, person.prenom].filter(Boolean).join(' ') || person.nip || 'Personne';
+  }
+
+  function personSubLine(person) {
+    const cible = person.oiActuel || person.oi || person.affectation || person.cible || '';
+    return [`NIP ${person.nip || '—'}`, cible].filter(Boolean).join(' · ');
+  }
+
+  function usedEncadrementIds() {
+    return new Set(((state.fiche && state.fiche.encadrement) || []).map((p) => String(p.personne_id)));
+  }
+
+  function expectedIds() {
+    return new Set(((state.fiche && state.fiche.attendus) || [])
+      .filter((a) => a.inclus !== false)
+      .map((a) => String(a.personne_id)));
+  }
+
+  function sortPeopleForEncadrement(rows) {
+    const ref = window.ScopePersonnelReferentials;
+    const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+    return (rows || []).slice().sort((a, b) => {
+      const grade = ref && ref.compareGrades ? ref.compareGrades(a.grade, b.grade) : collator.compare(a.grade || '', b.grade || '');
+      return grade
+        || collator.compare(a.nom || '', b.nom || '')
+        || collator.compare(a.prenom || '', b.prenom || '')
+        || collator.compare(a.nip || '', b.nip || '');
+    });
+  }
+
   function buildSaisieFromFiche() {
     const fiche = state.fiche;
     if (!fiche) { state.saisie = []; return; }
@@ -353,6 +410,7 @@
       .map((a) => {
         const part = parts.get(a.personne_id) || {};
         const person = personOf(fiche, a.personne_id) || {};
+        const cibleLabel = cibleLabelFromAttendu(a);
         return {
           personneId: a.personne_id,
           nom: displayPerson(fiche, a.personne_id),
@@ -360,14 +418,15 @@
           prenom: person.prenom || '',
           grade: person.grade || '',
           nip: nipOf(fiche, a.personne_id),
-          cible: cibleForPersonne(a.personne_id),
-          cibles: [cibleForPersonne(a.personne_id)],
+          cible: cibleLabel,
+          cibles: cibleLabel === '—' ? [] : cibleLabel.split(' · '),
           statut: part.statut || 'NON_RENSEIGNE',
           motifAbsence: part.motif_absence || '',
           commentaire: part.commentaire || '',
           inclus: true,
           role: part.role || 'PARTICIPANT',
           origine: a.origine,
+          manual: a.origine === 'EXCEPTION_AJOUT',
           jspRole: a.jspRole || a.jsp_role || null
         };
       });
@@ -2496,10 +2555,7 @@
     const filtered = sortSaisieRows(filteredRaw);
     const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
     const disabledCloture = L.clotureDisabled(c) || hasIncompleteExcuse;
-    const enc = (fiche.encadrement || []).map((p) => {
-      const person = personOf(fiche, p.personne_id);
-      return `${person ? person.nom + ' ' + person.prenom : p.personne_id} · ${L.ROLE_LABELS[p.role] || p.role}`;
-    });
+    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main">
@@ -2517,14 +2573,17 @@
           ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
           <div class="scope-actions">
             <button type="button" class="scope-btn" id="all-present">Tout présent</button>
+            <button type="button" class="scope-btn" id="reset-saisie">Réinitialiser la saisie</button>
             <button type="button" class="scope-btn scope-btn-primary" id="save-part">Enregistrer</button>
             <button type="button" class="scope-btn" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
           </div>
+          ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
         </div>
         ${niveaux.length > 1 ? `<div class="scope-chips">
           <button type="button" data-cible-filter="tous" aria-pressed="${state.cibleFilter === 'tous'}">Tous</button>
           ${niveaux.map((n) => `<button type="button" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
         </div>` : ''}
+        ${renderEncadrementBlock()}
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
           const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
@@ -2544,24 +2603,6 @@
         </div>
         ${autres.length ? `<div class="scope-card" style="margin-top:12px"><h3 style="margin-top:0">Autres attendus · ${autres.length}</h3>${renderSaisieRows(autres)}</div>` : ''}`;
         })()}
-        <details class="scope-details scope-card" style="margin-top:12px" ${state.encadrementOpen ? 'open' : ''}>
-          <summary>Encadrement</summary>
-          <p style="color:var(--scope-muted);font-size:13px">Hors taux principal. Une personne déjà attendue ne peut pas être ajoutée une seconde fois.</p>
-          ${enc.length ? `<ul>${enc.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>` : '<p>Aucun encadrement.</p>'}
-          <div class="scope-toolbar">
-            <div class="scope-field"><label>Rôle</label>
-              <select id="enc-role">
-                <option value="FORMATEUR">Formateur</option>
-                <option value="SURVEILLANT">Surveillant</option>
-                <option value="AUXILIAIRE">Auxiliaire</option>
-              </select>
-            </div>
-            <div class="scope-field" style="min-width:220px"><label>Personne</label>
-              <input id="enc-q" type="search" placeholder="Nom ou NIP">
-            </div>
-          </div>
-          <div id="enc-hits"></div>
-        </details>
       </div>
     `;
   }
@@ -2588,6 +2629,79 @@
       { key: 'presence', type: 'status', value: (row) => row && row.role === 'FORMATEUR' && row.statut === 'PRESENT' ? 'FORMATEUR' : row && row.statut }
     ];
     return L.sortRows ? L.sortRows(rows, state.eventPersonnelSort, columns) : (rows || []).slice();
+  }
+
+  function renderPersonSuggestions(kind, rows) {
+    const action = kind === 'encadrement' ? 'data-enc-add' : 'data-manual-add';
+    const query = kind === 'encadrement' ? state.encQuery : state.manualPersonQuery;
+    if (!String(query || '').trim() || String(query || '').trim().length < 2) return '';
+    if (!rows.length) return `<div class="scope-lookup-empty">${escapeHtml(L.emptyMessage('personnes'))}</div>`;
+    return `<div class="scope-person-suggestions" role="listbox">
+      ${rows.map((p) => `<button type="button" ${action}="${escapeHtml(p.personne_id)}" role="option">
+        <span>${escapeHtml(personLine(p))}</span>
+        <small>${escapeHtml(personSubLine(p))}</small>
+      </button>`).join('')}
+    </div>`;
+  }
+
+  function renderEncadrementBlock() {
+    const fiche = state.fiche || {};
+    const roleOrder = ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'];
+    const encRows = sortPeopleForEncadrement((fiche.encadrement || []).map((p) => {
+      const person = personOf(fiche, p.personne_id) || {};
+      return Object.assign({}, p, person, { personne_id: p.personne_id, role: p.role });
+    }));
+    const byRole = new Map(roleOrder.map((role) => [role, encRows.filter((p) => p.role === role)]));
+    const used = usedEncadrementIds();
+    const expected = expectedIds();
+    const encHits = sortPeopleForEncadrement((state.encHits || []).filter((p) =>
+      !used.has(String(p.personne_id)) && !expected.has(String(p.personne_id))
+    ));
+    const manualHits = sortPeopleForEncadrement((state.manualPersonHits || []).filter((p) =>
+      !expected.has(String(p.personne_id))
+    ));
+    return `
+      <div class="scope-card scope-encadrement-card">
+        <div class="scope-section-head">
+          <div>
+            <h3>Encadrement</h3>
+            <p>Hors taux principal. Rôles séparés, retrait possible sans supprimer la personne.</p>
+          </div>
+        </div>
+        <div class="scope-enc-grid">
+          ${roleOrder.map((role) => {
+            const rows = byRole.get(role) || [];
+            return `<section class="scope-enc-role">
+              <h4>${escapeHtml(L.ROLE_LABELS[role] || role)}</h4>
+              ${rows.length ? `<div class="scope-enc-people">${rows.map((p) => `<div class="scope-enc-person">
+                <span>${escapeHtml(personLine(p))}</span>
+                <small>${escapeHtml(p.nip || '')}</small>
+                <button type="button" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(personLine(p))}">×</button>
+              </div>`).join('')}</div>` : '<p class="scope-enc-empty">Aucun</p>'}
+            </section>`;
+          }).join('')}
+        </div>
+        <div class="scope-presence-tools">
+          <div class="scope-field scope-person-lookup">
+            <label>Ajouter à l’encadrement</label>
+            <div class="scope-inline-fields">
+              <select id="enc-role">
+                <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
+                <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
+                <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
+              </select>
+              <input id="enc-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.encQuery)}" autocomplete="off">
+            </div>
+            ${renderPersonSuggestions('encadrement', encHits)}
+          </div>
+          <div class="scope-field scope-person-lookup">
+            <label>Ajouter une personne</label>
+            <input id="manual-person-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.manualPersonQuery)}" autocomplete="off">
+            ${renderPersonSuggestions('manual', manualHits)}
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function renderSaisieQuantitative() {
@@ -2651,6 +2765,7 @@
             ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)}
+            <th>Action</th>
           </tr></thead>
           <tbody>
             ${rows.map((row) => `<tr data-pid="${row.personneId}">
@@ -2664,13 +2779,14 @@
                   ${statuses.map(([v, l]) => `
                     <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}">${l}</button>
                   `).join('')}
+                  ${row.statut === 'ABSENT_EXCUSE' ? `<select data-motif aria-label="Motif d’excuse">
+                    <option value="">Motif</option>
+                    ${(L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS).map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
+                  </select>` : ''}
                 </div>
-                ${row.statut === 'ABSENT_EXCUSE' ? `<select data-motif style="margin-top:6px;height:36px">
-                  <option value="">Motif</option>
-                  ${(L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS).map((m) => `<option value="${m.value}" ${row.motifAbsence === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
-                </select>` : ''}
                 ${row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE' ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">` : ''}
               </td>
+              <td data-label="Action">${row.manual ? `<button type="button" class="scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel">×</button>` : ''}</td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -2794,6 +2910,18 @@
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="all-present-ok">Confirmer</button>
         <button type="button" class="scope-btn" id="all-present-cancel">Annuler</button>
+      </div>
+    </div></div>`;
+  }
+
+  function renderModalResetSaisie() {
+    if (state.modal !== 'reset-saisie') return '';
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>Réinitialiser la saisie</h3>
+      <p>Les statuts et motifs déjà saisis seront remis à Non renseigné. La population attendue et l’encadrement sont conservés.</p>
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="reset-saisie-ok">Confirmer</button>
+        <button type="button" class="scope-btn" id="reset-saisie-cancel">Annuler</button>
       </div>
     </div></div>`;
   }
@@ -3327,7 +3455,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalCancel()}${renderModalPersonnelSync()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalResetSaisie()}${renderModalCancel()}${renderModalPersonnelSync()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -3761,14 +3889,37 @@
       }
       applyPresent();
     });
+    document.getElementById('reset-saisie')?.addEventListener('click', () => {
+      if (L.needsConfirmReset && L.needsConfirmReset(state.saisie)) {
+        state.modal = 'reset-saisie';
+        render();
+        return;
+      }
+      resetSaisie();
+    });
     document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); });
     document.getElementById('all-present-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('reset-saisie-ok')?.addEventListener('click', () => { state.modal = null; resetSaisie(); });
+    document.getElementById('reset-saisie-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     root.querySelectorAll('[data-status]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const pid = btn.closest('[data-pid]').getAttribute('data-pid');
         const statut = btn.getAttribute('data-status');
         const row = state.saisie.find((r) => r.personneId === pid);
         if (!row) return;
+        const wasActive = statut === 'FORMATEUR'
+          ? row.statut === 'PRESENT' && row.role === 'FORMATEUR'
+          : statut === 'PRESENT'
+            ? row.statut === 'PRESENT' && row.role !== 'FORMATEUR'
+            : row.statut === statut;
+        if (wasActive) {
+          row.statut = 'NON_RENSEIGNE';
+          row.role = 'PARTICIPANT';
+          row.motifAbsence = '';
+          row.commentaire = '';
+          render();
+          return;
+        }
         if (statut === 'FORMATEUR') {
           row.statut = 'PRESENT';
           row.role = 'FORMATEUR';
@@ -3804,24 +3955,27 @@
     });
     document.getElementById('save-part')?.addEventListener('click', saveParticipations);
     document.getElementById('cloturer')?.addEventListener('click', cloturer);
+    document.getElementById('enc-role')?.addEventListener('change', (e) => {
+      state.encRole = e.target.value || 'FORMATEUR';
+      render();
+    });
     document.getElementById('enc-q')?.addEventListener('input', (e) => {
-      const q = e.target.value.trim();
-      const box = document.getElementById('enc-hits');
-      if (!box) return;
-      if (q.length < 2) { box.innerHTML = ''; return; }
-      client.listPersonnes(q).then((data) => {
-        box.innerHTML = (data.personnes || []).map((p) => `
-          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0">
-            <span>${escapeHtml(p.nom)} ${escapeHtml(p.prenom)}</span>
-            <button type="button" class="scope-btn" data-enc="${p.personne_id}">Ajouter</button>
-          </div>`).join('') || `<div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div>`;
-        box.querySelectorAll('[data-enc]').forEach((btn) => {
-          btn.addEventListener('click', () => addEncadrement(btn.getAttribute('data-enc')));
-        });
-      }).catch((error) => {
-        const info = L.friendlyError(error);
-        toast(info.tone, info.title, info.message);
-      });
+      searchPersonnes(e.target.value, 'encadrement');
+    });
+    document.getElementById('manual-person-q')?.addEventListener('input', (e) => {
+      searchPersonnes(e.target.value, 'manual');
+    });
+    root.querySelectorAll('[data-enc-add]').forEach((btn) => {
+      btn.addEventListener('click', () => addEncadrement(btn.getAttribute('data-enc-add')));
+    });
+    root.querySelectorAll('[data-enc-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => removeEncadrement(btn.getAttribute('data-enc-remove')));
+    });
+    root.querySelectorAll('[data-manual-add]').forEach((btn) => {
+      btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-manual-add')));
+    });
+    root.querySelectorAll('[data-manual-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => removeManualParticipant(btn.getAttribute('data-manual-remove')));
     });
     bindReports();
     bindPersonnelSync();
@@ -4246,10 +4400,43 @@
     render();
   }
 
+  function resetSaisie() {
+    state.saisie = L.resetSaisie ? L.resetSaisie(state.saisie) : state.saisie.map((row) => Object.assign({}, row, {
+      statut: 'NON_RENSEIGNE',
+      role: 'PARTICIPANT',
+      motifAbsence: '',
+      commentaire: ''
+    }));
+    render();
+  }
+
+  function searchPersonnes(value, kind) {
+    const q = String(value || '').trim();
+    if (kind === 'encadrement') {
+      state.encQuery = q;
+      if (q.length < 2) { state.encHits = []; render(); return; }
+    } else {
+      state.manualPersonQuery = q;
+      if (q.length < 2) { state.manualPersonHits = []; render(); return; }
+    }
+    client.listPersonnes(q).then((data) => {
+      const hits = (data.personnes || []).filter((p) => {
+        const text = normalizeSearchText([p.grade, p.nom, p.prenom, p.nip].join(' '));
+        return text.includes(normalizeSearchText(q));
+      });
+      if (kind === 'encadrement') state.encHits = hits;
+      else state.manualPersonHits = hits;
+      render();
+    }).catch((error) => {
+      const info = L.friendlyError(error);
+      toast(info.tone, info.title, info.message);
+    });
+  }
+
   function saveParticipations() {
     const id = route().id;
     const payload = state.saisie
-      .filter((r) => r.inclus !== false && r.role === 'PARTICIPANT')
+      .filter((r) => r.inclus !== false)
       .map((r) => ({
         personneId: r.personneId,
         statut: r.statut,
@@ -4276,11 +4463,47 @@
 
   function addEncadrement(personneId) {
     const id = route().id;
-    const role = document.getElementById('enc-role')?.value || 'FORMATEUR';
+    const role = state.encRole || document.getElementById('enc-role')?.value || 'FORMATEUR';
     withLoading(async () => {
       await client.ajouterEncadrement(id, { personneId, role }, state.fiche.evenement.version);
+      state.encQuery = '';
+      state.encHits = [];
       await loadFiche(id);
       toast('success', 'Encadrement ajouté', 'La personne est hors du taux principal.');
+    });
+  }
+
+  function removeEncadrement(personneId) {
+    const id = route().id;
+    withLoading(async () => {
+      await client.retirerEncadrement(id, { personneId }, state.fiche.evenement.version);
+      await loadFiche(id);
+      toast('success', 'Encadrement retiré', 'La personne peut être sélectionnée de nouveau.');
+    });
+  }
+
+  function addManualParticipant(personneId) {
+    const id = route().id;
+    withLoading(async () => {
+      await client.ajouterException(id, { personneId, role: 'PARTICIPANT' }, state.fiche.evenement.version);
+      state.manualPersonQuery = '';
+      state.manualPersonHits = [];
+      await loadFiche(id);
+      toast('success', 'Personne ajoutée', 'Ajout nominatif propre à cet événement.');
+    });
+  }
+
+  function removeManualParticipant(personneId) {
+    const row = state.saisie.find((item) => item.personneId === personneId);
+    if (!row || !row.manual) {
+      toast('error', 'Retrait refusé', 'Seuls les ajouts manuels sont retirables ici.');
+      return;
+    }
+    const id = route().id;
+    withLoading(async () => {
+      await client.retirerAttendu(id, { personneId }, state.fiche.evenement.version);
+      await loadFiche(id);
+      toast('success', 'Ajout retiré', 'La personne reste dans le référentiel SCOPE.');
     });
   }
 

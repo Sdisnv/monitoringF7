@@ -196,6 +196,9 @@ exports.handler = async function(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.ajouterEncadrement(params.id, body, claims)) });
     }
+    if(method === 'DELETE' && params){
+      return response(200, { ok:true, ...(await service.retirerEncadrement(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/saisie-quantitative');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.enregistrerSaisieQuantitative(params.id, body, claims)) });

@@ -311,7 +311,7 @@
           evenement_id: id, personne_id: personneId, inclus: true, origine: 'EXCEPTION_AJOUT', motif_inclusion: 'exception_ajout'
         });
         participations.set(key(id, personneId), {
-          evenement_id: id, personne_id: personneId, statut: 'NON_RENSEIGNE', role: body.role || 'RENFORT', source: 'EXCEPTION'
+          evenement_id: id, personne_id: personneId, statut: 'NON_RENSEIGNE', role: 'PARTICIPANT', source: 'EXCEPTION'
         });
         bump(evenement);
         return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
@@ -360,6 +360,10 @@
             message: 'Cette personne est déjà attendue : elle reste dans la liste principale et entre dans le taux.'
           });
         }
+        const existing = participations.get(key(id, personneId));
+        if (existing && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(existing.role)) {
+          throw new ScopeApiError(422, { error: 'deja_encadrement', message: 'Cette personne est déjà ajoutée à l’encadrement.' });
+        }
         participations.set(key(id, personneId), {
           evenement_id: id,
           personne_id: personneId,
@@ -367,6 +371,18 @@
           role: body.role,
           source: 'ENCADREMENT'
         });
+        bump(evenement);
+        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
+      },
+      async retirerEncadrement(id, body, baseVersion) {
+        const evenement = getEvent(id);
+        requireVersion(evenement, baseVersion);
+        const personneId = body.personneId || body.personne_id;
+        const part = participations.get(key(id, personneId));
+        if (!part || !['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(part.role)) {
+          throw new ScopeApiError(404, { error: 'encadrement_introuvable', message: 'Encadrement introuvable.' });
+        }
+        participations.delete(key(id, personneId));
         bump(evenement);
         return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
       },

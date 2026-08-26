@@ -407,6 +407,9 @@ function createMemoryRepo(){
     async getParticipation(eventId, personneId){
       return participations.get(keyEP(eventId, personneId)) || null;
     },
+    async deleteParticipation(eventId, personneId){
+      return participations.delete(keyEP(eventId, personneId));
+    },
     async upsertParticipation(row){
       const existing = participations.get(keyEP(row.evenement_id, row.personne_id));
       const item = {

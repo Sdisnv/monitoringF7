@@ -448,6 +448,38 @@
     );
   }
 
+  function closureBlockers(rows) {
+    const out = { open: 0, incompleteExcuses: 0, message: '' };
+    (rows || []).forEach((row) => {
+      if (!row || row.inclus === false) return;
+      if (!row.statut || row.statut === 'NON_RENSEIGNE') out.open += 1;
+      if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
+    });
+    const parts = [];
+    if (out.open) parts.push(`${out.open} personne${out.open > 1 ? 's restent' : ' reste'} à renseigner`);
+    if (out.incompleteExcuses) parts.push(`${out.incompleteExcuses} absence${out.incompleteExcuses > 1 ? 's excusées sans motif' : ' excusée sans motif'}`);
+    out.message = parts.length ? `Clôture impossible : ${parts.join(' ; ')}.` : '';
+    return out;
+  }
+
+  function resetSaisie(rows) {
+    return (rows || []).map((row) => Object.assign({}, row, {
+      statut: 'NON_RENSEIGNE',
+      role: row && row.role && ['SURVEILLANT', 'AUXILIAIRE'].includes(row.role) ? row.role : 'PARTICIPANT',
+      motifAbsence: '',
+      commentaire: ''
+    }));
+  }
+
+  function needsConfirmReset(rows) {
+    return (rows || []).some((row) => row && row.inclus !== false && (
+      (row.statut && row.statut !== 'NON_RENSEIGNE') ||
+      row.role === 'FORMATEUR' ||
+      row.motifAbsence ||
+      row.commentaire
+    ));
+  }
+
   function needsConfirmAllPresent(rows) {
     return (rows || []).some((row) => {
       if (row.inclus === false) return false;
@@ -821,6 +853,9 @@
     applyAllPresent,
     applyAllPresentFiltered,
     hasIncompleteExcuse,
+    closureBlockers,
+    resetSaisie,
+    needsConfirmReset,
     friendlyError,
     ciblesLabel,
     displayTauxForList,

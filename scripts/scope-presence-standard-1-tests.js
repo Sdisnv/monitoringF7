@@ -222,16 +222,173 @@ function part(personne, statut, extra){
     assert.deepStrictEqual(Object.values(fiche.personnes).map((personne) => personne.nip).sort(), ['DUP001', 'DUP002']);
   });
 
+  await record('CAS 1R1 A/B/C — toggle statut, excusé et reset global', async () => {
+    const row = { statut: 'PRESENT', role: 'PARTICIPANT', motifAbsence: '', commentaire: '', inclus: true };
+    const reset = logic.resetSaisie([
+      row,
+      { statut: 'ABSENT_EXCUSE', role: 'PARTICIPANT', motifAbsence: 'PRIVE', commentaire: 'x', inclus: true },
+      { statut: 'PRESENT', role: 'FORMATEUR', motifAbsence: '', commentaire: '', inclus: true }
+    ]);
+    assert.strictEqual(logic.needsConfirmReset([row]), true);
+    assert.deepStrictEqual(reset.map((r) => [r.statut, r.role, r.motifAbsence, r.commentaire]), [
+      ['NON_RENSEIGNE', 'PARTICIPANT', '', ''],
+      ['NON_RENSEIGNE', 'PARTICIPANT', '', ''],
+      ['NON_RENSEIGNE', 'PARTICIPANT', '', '']
+    ]);
+    const blockers = logic.closureBlockers([
+      { statut: 'NON_RENSEIGNE', inclus: true },
+      { statut: 'ABSENT_EXCUSE', motifAbsence: '', inclus: true }
+    ]);
+    assert.strictEqual(blockers.open, 1);
+    assert.strictEqual(blockers.incompleteExcuses, 1);
+    assert.ok(blockers.message.includes('Clôture impossible'));
+  });
+
+  await record('CAS 1R1 D/E/F/G — encadrement ajout, retrait, réajout, anti-doublon', async () => {
+    const ctx = await setupEvent(1);
+    const extra = await ctx.repo.insertPersonne({ nip: 'ENC101', nom: 'Martin', prenom: 'Paul', grade: 'Sgt' });
+    const add = await ctx.service.ajouterEncadrement(ctx.eventId, {
+      baseVersion: ctx.version,
+      personneId: extra.personne_id,
+      role: 'FORMATEUR'
+    }, { sub: 'presence-test' });
+    let fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.encadrement.length, 1);
+    await assert.rejects(
+      () => ctx.service.ajouterEncadrement(ctx.eventId, {
+        baseVersion: add.version,
+        personneId: extra.personne_id,
+        role: 'FORMATEUR'
+      }, { sub: 'presence-test' }),
+      (error) => error instanceof HttpError && error.status === 422
+    );
+    const removed = await ctx.service.retirerEncadrement(ctx.eventId, {
+      baseVersion: add.version,
+      personneId: extra.personne_id
+    }, { sub: 'presence-test' });
+    fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.encadrement.length, 0);
+    await ctx.service.ajouterEncadrement(ctx.eventId, {
+      baseVersion: removed.version,
+      personneId: extra.personne_id,
+      role: 'SURVEILLANT'
+    }, { sub: 'presence-test' });
+    fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.encadrement[0].role, 'SURVEILLANT');
+  });
+
+  await record('CAS 1R1 H/I — ordre rôles et tri encadrement Grade Nom Prénom', async () => {
+    const source = [
+      { role: 'AUXILIAIRE', grade: 'Sap', nom: 'Zulu', prenom: 'Zoé', nip: '3' },
+      { role: 'FORMATEUR', grade: 'Sgt', nom: 'Martin', prenom: 'Paul', nip: '2' },
+      { role: 'FORMATEUR', grade: 'Cpl', nom: 'Alpha', prenom: 'Anne', nip: '1' },
+      { role: 'SURVEILLANT', grade: 'Cap', nom: 'Bernard', prenom: 'Marc', nip: '4' }
+    ];
+    const roleOrder = ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'];
+    const orderedRoles = [...new Set(source.sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role)).map((p) => p.role))];
+    assert.deepStrictEqual(orderedRoles, roleOrder);
+    const refs = require('../assets/js/scope-personnel-referentials.js');
+    const sorted = source.filter((p) => p.role === 'FORMATEUR').sort((a, b) =>
+      refs.compareGrades(a.grade, b.grade) || a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr') || a.nip.localeCompare(b.nip, 'fr', { numeric: true })
+    );
+    assert.deepStrictEqual(sorted.map((p) => p.nip), ['1', '2']);
+  });
+
+  await record('CAS 1R1 J/K/L — ajout manuel participant, anti-doublon, retrait', async () => {
+    const ctx = await setupEvent(1);
+    const extra = await ctx.repo.insertPersonne({ nip: 'MAN101', nom: 'Ajout', prenom: 'Manuel', grade: 'Sap' });
+    const add = await ctx.service.ajouterException(ctx.eventId, {
+      baseVersion: ctx.version,
+      personneId: extra.personne_id,
+      role: 'PARTICIPANT'
+    }, { sub: 'presence-test' });
+    let fiche = await ctx.service.lireEvenement(ctx.eventId);
+    const attendu = fiche.attendus.find((row) => row.personne_id === extra.personne_id);
+    assert.strictEqual(attendu.origine, 'EXCEPTION_AJOUT');
+    assert.strictEqual(fiche.participations.find((row) => row.personne_id === extra.personne_id).statut, 'NON_RENSEIGNE');
+    const duplicate = await ctx.service.ajouterException(ctx.eventId, {
+      baseVersion: add.version,
+      personneId: ctx.people[0].personne_id,
+      role: 'PARTICIPANT'
+    }, { sub: 'presence-test' });
+    assert.strictEqual(duplicate.dejaPresent, true);
+    assert.strictEqual(duplicate.version, add.version);
+    await ctx.service.retirerAttendu(ctx.eventId, {
+      baseVersion: add.version,
+      personneId: extra.personne_id
+    }, { sub: 'presence-test' });
+    fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.ok(!fiche.attendus.filter((row) => row.inclus !== false).some((row) => row.personne_id === extra.personne_id));
+    assert.ok(await ctx.repo.getPersonne(extra.personne_id));
+  });
+
+  await record('CAS 1R1 M/N/X — cible individuelle figée et multiple sans doublon', async () => {
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const foba1 = await repo.findCible('FOBA', '1');
+    const foba2 = await repo.findCible('FOBA', '2');
+    const p = await repo.insertPersonne({ nip: 'FOBA12', nom: 'Cible', prenom: 'Double', grade: 'Sap' });
+    await repo.insertAffectation({ personne_id: p.personne_id, cible_id: foba1.cible_id, date_debut: '2026-01-01' });
+    await repo.insertAffectation({ personne_id: p.personne_id, cible_id: foba2.cible_id, date_debut: '2026-01-01' });
+    const created = await service.createEvenement({
+      date: '2026-04-15',
+      domaineCode: 'FOBA',
+      libelle: 'FOBA double cible',
+      cibleIds: [foba1.cible_id, foba2.cible_id]
+    }, { sub: 'presence-test' });
+    await service.figerPopulation(created.evenement.evenement_id, { baseVersion: created.version }, { sub: 'presence-test' });
+    const fiche = await service.lireEvenement(created.evenement.evenement_id);
+    assert.strictEqual(fiche.attendus.length, 1);
+    assert.strictEqual(fiche.attendus[0].motif_inclusion, 'FOBA_1|FOBA_2');
+    const foba3 = await repo.findCible('FOBA', '3');
+    await repo.insertAffectation({ personne_id: p.personne_id, cible_id: foba3.cible_id, date_debut: '2026-04-16' });
+    const reopened = await service.lireEvenement(created.evenement.evenement_id);
+    assert.strictEqual(reopened.attendus[0].motif_inclusion, 'FOBA_1|FOBA_2');
+  });
+
+  await record('CAS 1R1 U/V/W — une sauvegarde suffit, réouverture et idempotence', async () => {
+    const ctx = await setupEvent(2);
+    const first = await ctx.service.enregistrerParticipations(ctx.eventId, {
+      baseVersion: ctx.version,
+      participations: [
+        part(ctx.people[0], 'PRESENT', { role: 'FORMATEUR' }),
+        part(ctx.people[1], 'DISPENSE')
+      ]
+    }, { sub: 'presence-test' });
+    let fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.participations.find((row) => row.personne_id === ctx.people[0].personne_id).role, 'FORMATEUR');
+    const second = await ctx.service.enregistrerParticipations(ctx.eventId, {
+      baseVersion: first.version,
+      participations: [
+        part(ctx.people[0], 'PRESENT', { role: 'FORMATEUR' }),
+        part(ctx.people[1], 'DISPENSE')
+      ]
+    }, { sub: 'presence-test' });
+    fiche = await ctx.service.lireEvenement(ctx.eventId);
+    assert.strictEqual(fiche.participations.length, 2);
+    assert.strictEqual(second.version, first.version + 1);
+  });
+
   await record('UI — saisie directe Formateur, motif en ligne, clôture protégée', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
     assert.ok(ui.includes("['FORMATEUR', 'Formateur']"));
     assert.ok(ui.includes('data-motif'));
+    assert.ok(ui.includes("state.modal = 'reset-saisie'"));
+    assert.ok(ui.includes('data-enc-remove'));
+    assert.ok(ui.includes('data-manual-add'));
+    assert.ok(ui.includes('data-manual-remove'));
+    assert.ok(ui.includes('cibleLabelFromAttendu'));
     assert.ok(ui.includes('scope-presence-warning'));
+    assert.ok(ui.includes('scope-cloture-reason'));
     assert.ok(ui.includes("role: r.role === 'FORMATEUR' ? 'FORMATEUR' : 'PARTICIPANT'"));
     assert.ok(ui.includes("row.role = 'FORMATEUR'"));
     assert.ok(ui.includes("row.role = 'PARTICIPANT'"));
     assert.ok(css.includes('.scope-status-row button[aria-pressed="true"]'));
+    assert.ok(css.includes('.scope-enc-grid'));
+    assert.ok(css.includes('grid-template-rows: repeat(4'));
+    assert.ok(css.includes('.scope-person-suggestions'));
+    assert.ok(css.includes('tbody tr:nth-child(even){background:#f7f8fa;}'));
     assert.ok(css.includes('.scope-presence-warning'));
     assert.ok(logic.hasIncompleteExcuse([{ statut: 'ABSENT_EXCUSE', motifAbsence: '', inclus: true }]));
     assert.ok(!logic.hasIncompleteExcuse([{ statut: 'ABSENT_EXCUSE', motifAbsence: 'PRIVE', inclus: true }]));

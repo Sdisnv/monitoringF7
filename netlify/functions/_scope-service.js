@@ -875,12 +875,16 @@ function createScopeService(repo){
       const preview = await previewAttendus(eventId);
       const stamp = new Date().toISOString();
       for(const personne of preview.personnes){
+        const cibleMotif = (personne.cibles || [])
+          .map((c) => `${c.domaineCode || c.domaine_code}_${c.niveauCode || c.niveau_code}`)
+          .filter(Boolean)
+          .join('|');
         await tx.upsertAttendu({
           evenement_id: eventId,
           personne_id: personne.personneId,
           inclus: true,
           origine: 'REGLE',
-          motif_inclusion: personne.motifInclusion
+          motif_inclusion: cibleMotif || personne.motifInclusion
         });
         await tx.upsertParticipation({
           evenement_id: eventId,
@@ -995,6 +999,44 @@ function createScopeService(repo){
     });
   }
 
+  async function retirerEncadrement(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    const personneId = body.personneId || body.personne_id;
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Encadrement saisissable uniquement sur PLANIFIE.');
+      const participation = await tx.getParticipation(eventId, personneId);
+      if(!participation || !ROLES_ENCADREMENT.has(participation.role)){
+        throw new HttpError(404, 'encadrement_introuvable', 'Encadrement introuvable.');
+      }
+      const attendu = await tx.getAttendu(eventId, personneId);
+      if(attendu && attendu.inclus){
+        throw new HttpError(422, 'deja_attendu', 'Cette personne est attendue : utilisez la ligne de présence principale.');
+      }
+      if(typeof tx.deleteParticipation === 'function'){
+        await tx.deleteParticipation(eventId, personneId);
+      } else {
+        await tx.upsertParticipation({
+          ...participation,
+          statut: 'NON_CONCERNE',
+          role: 'PARTICIPANT',
+          source: 'SAISIE',
+          auteur_id: actorId(actor)
+        });
+      }
+      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'ENCADREMENT_RETRAIT',
+        apres: { personneId, role: participation.role }
+      });
+      return { evenement: next, version: next.version };
+    });
+  }
+
   async function enregistrerParticipations(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const items = Array.isArray(body.participations) ? body.participations : [];
@@ -1058,6 +1100,9 @@ function createScopeService(repo){
         throw new HttpError(422, 'deja_attendu', 'Cette personne est déjà attendue : pas de ligne d’encadrement distincte. Elle reste PARTICIPANT et entre dans le taux.');
       }
       const existing = await tx.getParticipation(eventId, personneId);
+      if(existing && ROLES_ENCADREMENT.has(existing.role)){
+        throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
+      }
       if(existing && !ROLES_ENCADREMENT.has(existing.role)){
         throw new HttpError(422, 'doublon', 'Une participation existe déjà pour cette personne.');
       }
@@ -2259,6 +2304,7 @@ function createScopeService(repo){
     retirerAttendu,
     enregistrerParticipations,
     ajouterEncadrement,
+    retirerEncadrement,
     cloturer,
     reouvrir,
     annulerEvenement,
