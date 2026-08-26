@@ -56,6 +56,9 @@
     cibleFilter: 'tous',
     encadrementOpen: false,
     toast: null,
+    feedback: null,
+    feedbackAction: null,
+    feedbackTimer: null,
     loading: false,
     listReady: false,
     listError: null,
@@ -155,6 +158,82 @@
   }
 
   function clearToast() { state.toast = null; }
+
+  const ScopeFeedback = {
+    show(kind, title, message, extra) {
+      if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
+      state.feedback = Object.assign({
+        kind,
+        title,
+        message,
+        confirmText: '',
+        cancelText: 'Annuler',
+        progress: false,
+        closeable: kind !== 'progress'
+      }, extra || {});
+      if (state.feedback.kind !== 'confirm') state.feedbackAction = null;
+      render();
+      if (state.feedback.autoCloseMs) {
+        const shown = state.feedback;
+        state.feedbackTimer = setTimeout(() => {
+          if (state.feedback === shown) {
+            state.feedback = null;
+            state.feedbackTimer = null;
+            render();
+          }
+        }, state.feedback.autoCloseMs);
+      }
+    },
+    success(title, message) { this.show('success', title, message, { autoCloseMs: 2200 }); },
+    error(title, message, extra) { this.show('error', title, message, extra); },
+    warning(title, message, extra) { this.show('warning', title, message, extra); },
+    info(title, message, extra) { this.show('info', title, message, extra); },
+    progress(title, message) { this.show('progress', title, message, { progress: true, closeable: false }); },
+    confirm(options, action) {
+      state.feedbackAction = action;
+      this.show('confirm', options.title, options.message, {
+        confirmText: options.confirmText || 'Confirmer',
+        cancelText: options.cancelText || 'Annuler',
+        tone: options.tone || 'warning'
+      });
+    },
+    clear() {
+      if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
+      state.feedbackTimer = null;
+      state.feedback = null;
+      state.feedbackAction = null;
+      render();
+    }
+  };
+  window.ScopeFeedback = ScopeFeedback;
+
+  function friendlyActionError(error) {
+    const info = L.friendlyError(error);
+    state.conflict = Boolean(info.conflict);
+    if (info.okta) state.needOkta = true;
+    return info;
+  }
+
+  async function withFeedbackAction(options, fn) {
+    state.loading = true;
+    if (options && options.progressTitle) {
+      ScopeFeedback.progress(options.progressTitle, options.progressMessage || 'Traitement en cours — ne quittez pas cette page.');
+    } else {
+      render();
+    }
+    try {
+      const result = await fn();
+      state.loading = false;
+      if (options && options.successTitle) ScopeFeedback.success(options.successTitle, options.successMessage || '');
+      else render();
+      return result;
+    } catch (error) {
+      state.loading = false;
+      const info = friendlyActionError(error);
+      ScopeFeedback.error(info.title, info.message, { errors: info.errors, conflict: info.conflict, okta: info.okta });
+      return null;
+    }
+  }
 
   async function withLoading(fn) {
     state.loading = true;
@@ -360,7 +439,9 @@
       .map((part) => {
         const m = part.match(/^([A-Z]+)_(.+)$/i);
         if (!m) return '';
-        return L.niveauAffiche ? L.niveauAffiche(m[1].toUpperCase(), m[2]) : m[2];
+        const domaine = m[1].toUpperCase();
+        if (!['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC', 'PR', 'AUTO'].includes(domaine)) return '';
+        return L.niveauAffiche ? L.niveauAffiche(domaine, m[2]) : m[2];
       })
       .filter(Boolean);
     const unique = [...new Set(labels)];
@@ -1417,12 +1498,13 @@
   }
 
   function sortableHeader(table, key, label, sort) {
-    const s = L.sortHeaderState ? L.sortHeaderState(sort, key) : { className: '', ariaSort: 'none', indicator: '↕' };
+    const s = L.sortHeaderState ? L.sortHeaderState(sort, key) : { className: '', ariaSort: 'none', indicator: '' };
     const attr = table === 'personnel' ? 'data-personnel-sort' : `data-scope-sort="${table}" data-sort-key`;
     const data = table === 'personnel'
       ? `data-sort="${escapeHtml(key)}" ${attr}="${escapeHtml(key)}"`
       : `${attr}="${escapeHtml(key)}"`;
-    return `<th ${data} class="scope-table-sort-header scope-sortable ${s.className}" aria-sort="${s.ariaSort}" scope="col"><button type="button" class="scope-table-sort-control scope-sort-button"><span class="scope-table-sort-label">${escapeHtml(label)}</span><span class="scope-table-sort-indicator scope-sort-indicator" aria-hidden="true">${escapeHtml(s.indicator)}</span></button></th>`;
+    const indicator = s.indicator ? `<span class="scope-table-sort-indicator scope-sort-indicator" aria-hidden="true">${escapeHtml(s.indicator)}</span>` : '';
+    return `<th ${data} class="scope-table-sort-header scope-sortable ${s.className}" aria-sort="${s.ariaSort}" scope="col"><button type="button" class="scope-table-sort-control scope-sort-button"><span class="scope-table-sort-label">${escapeHtml(label)}</span>${indicator}</button></th>`;
   }
 
   function personnelSortHeader(key, label) {
@@ -2551,7 +2633,6 @@
     if (!fiche) return `<div class="scope-main"><div class="scope-empty">Événement introuvable.</div></div>`;
     const ev = fiche.evenement;
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
-    const c = counters();
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
     const filteredRaw = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
     const filtered = sortSaisieRows(filteredRaw);
@@ -2564,14 +2645,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
           <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</p>
-          <div class="scope-kpis">
-            <div class="scope-kpi"><strong>${c.present}</strong><span>Présents</span></div>
-            <div class="scope-kpi"><strong>${c.formateur || 0}</strong><span>Formateurs</span></div>
-            <div class="scope-kpi"><strong>${c.excuse}</strong><span>Excusés</span></div>
-            <div class="scope-kpi"><strong>${c.absent}</strong><span>Absents</span></div>
-            <div class="scope-kpi"><strong>${c.dispense}</strong><span>Dispensés</span></div>
-            <div class="scope-kpi"><strong>${c.open}</strong><span>À renseigner</span></div>
-          </div>
+          ${renderPresenceKpis(niveaux)}
           ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
           <div class="scope-actions">
             <button type="button" class="scope-btn" id="all-present">Tout présent</button>
@@ -2608,6 +2682,60 @@
         })()}
       </div>
     `;
+  }
+
+  function rowsForCible(label) {
+    return (state.saisie || []).filter((row) => row && (row.cible === label || (row.cibles || []).includes(label)));
+  }
+
+  function countStatuses(rows) {
+    const c = { present: 0, excuse: 0, absent: 0, dispense: 0, open: 0 };
+    (rows || []).forEach((row) => {
+      if (!row || row.inclus === false) return;
+      if (row.statut === 'PRESENT') c.present += 1;
+      else if (row.statut === 'ABSENT_EXCUSE') c.excuse += 1;
+      else if (row.statut === 'ABSENT_NON_EXCUSE') c.absent += 1;
+      else if (row.statut === 'DISPENSE') c.dispense += 1;
+      else c.open += 1;
+    });
+    return c;
+  }
+
+  function renderKpiCard(kind, value, label) {
+    return `<div class="scope-kpi-card is-${escapeHtml(kind)}"><strong>${escapeHtml(String(value || 0))}</strong><span>${escapeHtml(label)}</span></div>`;
+  }
+
+  function renderPresenceKpis(niveaux) {
+    const labels = niveaux && niveaux.length ? niveaux : ['Population'];
+    const groups = labels.map((label) => {
+      const rows = label === 'Population' ? state.saisie : rowsForCible(label);
+      const c = countStatuses(rows);
+      return `<section class="scope-kpi-group scope-kpi-target">
+        <h3>${escapeHtml(label)}</h3>
+        <div class="scope-kpi-strip">
+          ${renderKpiCard('present', c.present, 'Présents')}
+          ${renderKpiCard('excuse', c.excuse, 'Excusés')}
+          ${renderKpiCard('absent', c.absent, 'Absents')}
+          ${renderKpiCard('dispense', c.dispense, 'Dispensés')}
+          ${renderKpiCard('open', c.open, 'À renseigner')}
+        </div>
+      </section>`;
+    }).join('');
+    const global = countStatuses(state.saisie || []);
+    const enc = (state.fiche && state.fiche.encadrement) || [];
+    const encCount = (role) => enc.filter((p) => p && p.role === role).length;
+    return `<div class="scope-kpi-board">
+      ${groups}
+      <p class="scope-kpi-global-dedup">Vue globale dédupliquée par personne : ${escapeHtml(String(global.present))} présents, ${escapeHtml(String(global.excuse))} excusés, ${escapeHtml(String(global.absent))} absents, ${escapeHtml(String(global.dispense))} dispensés, ${escapeHtml(String(global.open))} à renseigner.</p>
+      <section class="scope-kpi-group scope-kpi-encadrement">
+        <h3>Encadrement</h3>
+        <div class="scope-kpi-strip">
+          ${renderKpiCard('trainer', encCount('FORMATEUR'), 'Formateurs')}
+          ${renderKpiCard('watcher', encCount('SURVEILLANT'), 'Surveillants')}
+          ${renderKpiCard('helper', encCount('AUXILIAIRE'), 'Auxiliaires')}
+        </div>
+      </section>
+    </div>`;
   }
 
   function sortSaisieRows(rows) {
@@ -2684,9 +2812,9 @@
             return `<section class="scope-enc-group">
               <h4>${escapeHtml(L.ROLE_LABELS[role] || role)}</h4>
               <div class="scope-enc-people">${rows.map((p) => `<div class="scope-enc-person">
+                <button type="button" class="scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(personLine(p))}" title="Retirer">×</button>
                 <span>${escapeHtml(personLine(p))}</span>
                 <small>${escapeHtml(p.nip || '')}</small>
-                <button type="button" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(personLine(p))}">×</button>
               </div>`).join('')}</div>
             </section>`;
           }).join('') || '<p class="scope-enc-empty">Aucun encadrement</p>'}
@@ -2772,7 +2900,7 @@
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">`
         : '';
       const manual = row.manual
-        ? `<span class="scope-row-manual-badge">Ajout manuel</span><button type="button" class="scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel">×</button>`
+        ? `<button type="button" class="scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">×</button>`
         : '';
       const historicalTrainer = row.role === 'FORMATEUR' ? '<span class="scope-mode-hint">Formateur historique</span>' : '';
       return [motif, comment, manual, historicalTrainer].filter(Boolean).join('');
@@ -3465,6 +3593,35 @@
     });
   }
 
+  function renderScopeFeedback() {
+    const fb = state.feedback;
+    if (!fb) return '';
+    const kind = fb.kind || 'info';
+    const title = fb.title || '';
+    const message = fb.message || '';
+    const mark = kind === 'success' ? '✓'
+      : kind === 'error' ? '!'
+        : kind === 'warning' || kind === 'confirm' ? '!'
+          : kind === 'progress' ? ''
+            : 'i';
+    const progress = fb.progress ? '<div class="scope-feedback-progress" aria-hidden="true"></div>' : '';
+    const errors = Array.isArray(fb.errors) && fb.errors.length
+      ? `<ul class="scope-feedback-errors">${fb.errors.slice(0, 5).map((e) => `<li>${escapeHtml(e.message || e.code || String(e))}</li>`).join('')}</ul>`
+      : '';
+    const actions = kind === 'confirm'
+      ? `<div class="scope-feedback-actions"><button type="button" class="scope-btn" id="scope-feedback-cancel">${escapeHtml(fb.cancelText || 'Annuler')}</button><button type="button" class="scope-btn scope-btn-primary" id="scope-feedback-confirm">${escapeHtml(fb.confirmText || 'Confirmer')}</button></div>`
+      : fb.closeable === false ? '' : `<div class="scope-feedback-actions"><button type="button" class="scope-btn scope-btn-primary" id="scope-feedback-close">OK</button></div>`;
+    return `<div class="scope-feedback-overlay is-${escapeHtml(kind)}" role="${kind === 'confirm' || kind === 'error' ? 'dialog' : 'status'}" aria-modal="${kind === 'confirm' || kind === 'error' ? 'true' : 'false'}">
+      <div class="scope-feedback-card">
+        ${progress || `<div class="scope-feedback-mark" aria-hidden="true">${escapeHtml(mark)}</div>`}
+        <h2>${escapeHtml(title)}</h2>
+        ${message ? `<p>${escapeHtml(message)}</p>` : ''}
+        ${errors}
+        ${actions}
+      </div>
+    </div>`;
+  }
+
   function render() {
     const r = route();
     const body = r.screen === 'accueil' ? renderAccueil()
@@ -3486,7 +3643,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -3495,6 +3652,15 @@
   }
 
   function bind() {
+    document.getElementById('scope-feedback-close')?.addEventListener('click', () => ScopeFeedback.clear());
+    document.getElementById('scope-feedback-cancel')?.addEventListener('click', () => ScopeFeedback.clear());
+    document.getElementById('scope-feedback-confirm')?.addEventListener('click', async () => {
+      const action = state.feedbackAction;
+      state.feedback = null;
+      state.feedbackAction = null;
+      render();
+      if (typeof action === 'function') await action();
+    });
     document.getElementById('scope-confirm-live')?.addEventListener('click', () => {
       try { sessionStorage.setItem('scope-live-confirmed', '1'); } catch (_error) {}
       const params = new URLSearchParams(location.search.replace(/^\?/, ''));
@@ -3922,11 +4088,19 @@
     });
     document.getElementById('reset-saisie')?.addEventListener('click', () => {
       if (L.needsConfirmReset && L.needsConfirmReset(state.saisie)) {
-        state.modal = 'reset-saisie';
-        render();
+        ScopeFeedback.confirm({
+          title: 'Réinitialiser la saisie',
+          message: 'Les statuts saisis seront remis à zéro. L’encadrement existant est conservé.',
+          confirmText: 'Réinitialiser',
+          cancelText: 'Annuler'
+        }, () => {
+          resetSaisie();
+          ScopeFeedback.success('Saisie réinitialisée', 'Les champs temporaires de recherche ont aussi été vidés.');
+        });
         return;
       }
       resetSaisie();
+      ScopeFeedback.success('Saisie réinitialisée', 'Les champs temporaires de recherche ont aussi été vidés.');
     });
     document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); });
     document.getElementById('all-present-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
@@ -3976,12 +4150,19 @@
     document.getElementById('save-part')?.addEventListener('click', saveParticipations);
     document.getElementById('cloturer')?.addEventListener('click', () => {
       const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0 };
-      if (blockers.open > 0 && blockers.incompleteExcuses === 0) {
-        state.modal = 'cloture-incomplete';
-        render();
+      if (blockers.incompleteExcuses > 0) {
+        ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif pour chaque absence excusée avant la clôture.');
         return;
       }
-      cloturer();
+      const open = Number(blockers.open || 0);
+      ScopeFeedback.confirm({
+        title: open > 0 ? 'Clôturer avec des participations non renseignées' : 'Clôturer l’événement',
+        message: open > 0
+          ? `${open} personnes restent sans statut. Elles resteront non renseignées après clôture.`
+          : 'La saisie sera enregistrée et l’événement marqué comme réalisé.',
+        confirmText: open > 0 ? 'Clôturer quand même' : 'Clôturer',
+        cancelText: 'Annuler'
+      }, cloturer);
     });
     document.getElementById('cloture-incomplete-ok')?.addEventListener('click', () => { state.modal = null; cloturer(); });
     document.getElementById('cloture-incomplete-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
@@ -4005,7 +4186,15 @@
       btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-manual-add')));
     });
     root.querySelectorAll('[data-manual-remove]').forEach((btn) => {
-      btn.addEventListener('click', () => removeManualParticipant(btn.getAttribute('data-manual-remove')));
+      btn.addEventListener('click', () => {
+        const personneId = btn.getAttribute('data-manual-remove');
+        ScopeFeedback.confirm({
+          title: 'Retirer l’ajout manuel',
+          message: 'Cette personne sera retirée uniquement de la population de cet événement.',
+          confirmText: 'Retirer',
+          cancelText: 'Annuler'
+        }, () => removeManualParticipant(personneId));
+      });
     });
     bindReports();
     bindPersonnelSync();
@@ -4437,7 +4626,23 @@
       motifAbsence: '',
       commentaire: ''
     }));
+    clearPresenceSearchState();
     render();
+  }
+
+  function clearPresenceSearchState() {
+    state.encQuery = '';
+    state.encHits = [];
+    state.manualPersonQuery = '';
+    state.manualPersonHits = [];
+    state.scopeSearchTokens.encadrement = (state.scopeSearchTokens.encadrement || 0) + 1;
+    state.scopeSearchTokens.manual = (state.scopeSearchTokens.manual || 0) + 1;
+    clearTimeout(state.scopeSearchTimers.encadrement);
+    clearTimeout(state.scopeSearchTimers.manual);
+    const enc = document.getElementById('enc-suggestions');
+    const manual = document.getElementById('manual-person-suggestions');
+    if (enc) enc.innerHTML = '';
+    if (manual) manual.innerHTML = '';
   }
 
   function searchPersonnes(value, kind) {
@@ -4509,17 +4714,24 @@
         motif_absence: r.motifAbsence || null,
         commentaire: r.commentaire || null
       }));
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Enregistrement des présences',
+      successTitle: 'Présences enregistrées',
+      successMessage: 'Les participations ont été enregistrées.'
+    }, async () => {
       const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
       await loadFiche(id);
-      toast('success', 'Enregistré', 'Les participations ont été enregistrées.');
       state.fiche.evenement.version = res.version;
     });
   }
 
   function cloturer() {
     const id = route().id;
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Clôture de l’événement',
+      successTitle: 'Événement clôturé',
+      successMessage: 'La saisie est enregistrée et l’événement est marqué comme réalisé.'
+    }, async () => {
       await client.cloturer(id, state.fiche.evenement.version);
       await loadFiche(id);
       go(`#/exercices/${id}`);
@@ -4529,46 +4741,58 @@
   function addEncadrement(personneId) {
     const id = route().id;
     const role = state.encRole || document.getElementById('enc-role')?.value || 'FORMATEUR';
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Ajout à l’encadrement',
+      successTitle: 'Encadrement ajouté',
+      successMessage: 'La personne est hors du taux principal.'
+    }, async () => {
       await client.ajouterEncadrement(id, { personneId, role }, state.fiche.evenement.version);
       state.encQuery = '';
       state.encHits = [];
       await loadFiche(id);
-      toast('success', 'Encadrement ajouté', 'La personne est hors du taux principal.');
     });
   }
 
   function removeEncadrement(personneId) {
     const id = route().id;
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Retrait de l’encadrement',
+      successTitle: 'Encadrement retiré',
+      successMessage: 'La personne peut être sélectionnée de nouveau.'
+    }, async () => {
       await client.retirerEncadrement(id, { personneId }, state.fiche.evenement.version);
       await loadFiche(id);
-      toast('success', 'Encadrement retiré', 'La personne peut être sélectionnée de nouveau.');
     });
   }
 
   function addManualParticipant(personneId) {
     const id = route().id;
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Ajout du participant',
+      successTitle: 'Personne ajoutée',
+      successMessage: 'Ajout nominatif propre à cet événement.'
+    }, async () => {
       await client.ajouterException(id, { personneId, role: 'PARTICIPANT' }, state.fiche.evenement.version);
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
       await loadFiche(id);
-      toast('success', 'Personne ajoutée', 'Ajout nominatif propre à cet événement.');
     });
   }
 
   function removeManualParticipant(personneId) {
     const row = state.saisie.find((item) => item.personneId === personneId);
     if (!row || !row.manual) {
-      toast('error', 'Retrait refusé', 'Seuls les ajouts manuels sont retirables ici.');
+      ScopeFeedback.error('Retrait refusé', 'Seuls les ajouts manuels sont retirables ici.');
       return;
     }
     const id = route().id;
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Retrait du participant',
+      successTitle: 'Ajout retiré',
+      successMessage: 'La personne reste dans le référentiel SCOPE.'
+    }, async () => {
       await client.retirerAttendu(id, { personneId }, state.fiche.evenement.version);
       await loadFiche(id);
-      toast('success', 'Ajout retiré', 'La personne reste dans le référentiel SCOPE.');
     });
   }
 

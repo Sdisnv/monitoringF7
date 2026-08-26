@@ -1104,12 +1104,14 @@ function createScopeService(repo){
         throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
       }
       if(existing && !ROLES_ENCADREMENT.has(existing.role)){
-        throw new HttpError(422, 'doublon', 'Une participation existe déjà pour cette personne.');
+        const residualEncadrement = String(existing.statut || '') === 'NON_CONCERNE';
+        if(!residualEncadrement){
+          throw new HttpError(422, 'doublon', 'Une participation existe déjà pour cette personne.');
+        }
       }
       await tx.upsertParticipation({
-        evenement_id: eventId,
-        personne_id: personneId,
-        statut: existing?.statut && existing.statut !== 'NON_RENSEIGNE' ? existing.statut : 'NON_CONCERNE',
+        ...(existing || { evenement_id: eventId, personne_id: personneId }),
+        statut: 'NON_CONCERNE',
         role,
         source: 'ENCADREMENT',
         auteur_id: actorId(actor)

@@ -272,6 +272,13 @@ function part(personne, statut, extra){
     }, { sub: 'presence-test' });
     fiche = await ctx.service.lireEvenement(ctx.eventId);
     assert.strictEqual(fiche.encadrement.length, 0);
+    await ctx.repo.upsertParticipation({
+      evenement_id: ctx.eventId,
+      personne_id: extra.personne_id,
+      statut: 'NON_CONCERNE',
+      role: 'PARTICIPANT',
+      source: 'SAISIE'
+    });
     await ctx.service.ajouterEncadrement(ctx.eventId, {
       baseVersion: removed.version,
       personneId: extra.personne_id,
@@ -373,44 +380,60 @@ function part(personne, statut, extra){
     assert.strictEqual(second.version, first.version + 1);
   });
 
-  await record('UI — 1R2 Orion, ajout manuel dédié, clôture incomplète confirmée', async () => {
+  await record('UI — 1R3 Orion, feedback central, KPI par cible et ajout manuel propre', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    const logicSource = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
     const saisieRows = ui.slice(ui.indexOf('function renderSaisieRows'), ui.indexOf('function renderRealise'));
     assert.ok(!saisieRows.includes("['FORMATEUR', 'Formateur']"));
     assert.ok(!saisieRows.includes('data-status="FORMATEUR"'));
     assert.ok(ui.includes('data-motif'));
-    assert.ok(ui.includes("state.modal = 'reset-saisie'"));
-    assert.ok(ui.includes("state.modal = 'cloture-incomplete'"));
-    assert.ok(ui.includes('cloture-incomplete-ok'));
+    assert.ok(ui.includes('const ScopeFeedback'));
+    assert.ok(ui.includes('function renderScopeFeedback'));
+    assert.ok(ui.includes('scope-feedback-overlay'));
+    assert.ok(ui.includes('scope-feedback-progress'));
+    assert.ok(ui.includes('Réinitialiser la saisie'));
+    assert.ok(ui.includes('Clôturer l’événement'));
+    assert.ok(ui.includes('Clôturer avec des participations non renseignées'));
     assert.ok(ui.includes('Clôturer quand même'));
     assert.ok(ui.includes('data-enc-remove'));
+    assert.ok(ui.includes('class="scope-enc-remove"'));
     assert.ok(ui.includes('data-manual-add'));
     assert.ok(ui.includes('data-manual-remove'));
     assert.ok(ui.includes('function renderManualParticipantBlock'));
     assert.ok(ui.includes('Ajouter un participant à cet événement'));
     assert.ok(ui.includes('id="manual-person-suggestions"'));
     assert.ok(ui.includes('scope-row-manual'));
-    assert.ok(ui.includes('scope-row-manual-badge'));
+    assert.ok(!ui.includes('scope-row-manual-badge'));
+    assert.ok(!saisieRows.includes('Ajout manuel</span>'));
     assert.ok(ui.includes('<th>Justificatif</th>'));
     assert.ok(!saisieRows.includes('<th>Action</th>'));
     assert.ok(ui.includes('cibleLabelFromAttendu'));
+    assert.ok(ui.includes('scope-kpi-board'));
+    assert.ok(ui.includes('scope-kpi-target'));
+    assert.ok(ui.includes('scope-kpi-encadrement'));
+    assert.ok(ui.includes('Vue globale dédupliquée par personne'));
     assert.ok(ui.includes('scope-presence-warning'));
     assert.ok(ui.includes('scope-cloture-reason'));
     assert.ok(ui.includes("row.role = 'PARTICIPANT'"));
     assert.ok(ui.includes('scopeSearchTimers'));
     assert.ok(ui.includes('scopeSearchTokens'));
+    assert.ok(ui.includes('clearPresenceSearchState'));
     assert.ok(ui.includes('setTimeout'));
     assert.ok(ui.includes('renderSuggestionList'));
+    assert.ok(logicSource.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : ''"));
     assert.ok(css.includes('.scope-status-row button[aria-pressed="true"]'));
     assert.ok(!css.includes('.scope-enc-grid'));
     assert.ok(css.includes('.scope-enc-groups'));
     assert.ok(css.includes('.scope-enc-group'));
+    assert.ok(css.includes('grid-template-columns: 24px minmax(0, 1fr) auto'));
     assert.ok(css.includes('grid-template-rows: repeat(4'));
     assert.ok(css.includes('.scope-person-suggestions'));
     assert.ok(css.includes('tbody tr:nth-child(even){background:#f4f6f8;}'));
     assert.ok(css.includes('.scope-table thead th{background:#f6f7f9;}'));
-    assert.ok(css.includes('border-radius: 4px;'));
+    assert.ok(css.includes('border-radius: 3px;'));
+    assert.ok(css.includes('.scope-kpi-card.is-present'));
+    assert.ok(css.includes('.scope-feedback-overlay'));
     assert.ok(css.includes('.scope-presence-warning'));
     assert.ok(logic.hasIncompleteExcuse([{ statut: 'ABSENT_EXCUSE', motifAbsence: '', inclus: true }]));
     assert.ok(!logic.hasIncompleteExcuse([{ statut: 'ABSENT_EXCUSE', motifAbsence: 'PRIVE', inclus: true }]));

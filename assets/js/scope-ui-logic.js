@@ -725,7 +725,7 @@
       active: Boolean(active),
       className: active ? (sort.dir === 'desc' ? 'is-desc' : 'is-asc') : '',
       ariaSort: active ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none',
-      indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : '↕'
+      indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : ''
     };
   }
 

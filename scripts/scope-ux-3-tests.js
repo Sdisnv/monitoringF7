@@ -240,7 +240,7 @@ function record(name, fn) {
     assert.ok(ui.includes('class="scope-table-sort-control scope-sort-button"'));
     assert.ok(ui.includes('class="scope-table-sort-label"'));
     assert.ok(ui.includes('class="scope-table-sort-indicator scope-sort-indicator"'));
-    assert.ok(logicSrc.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : '↕'"));
+    assert.ok(logicSrc.includes("indicator: active ? (sort.dir === 'desc' ? '▼' : '▲') : ''"));
     assert.ok(css.includes('.scope-table-sort-header'));
     assert.ok(css.includes('.scope-table-sort-header:hover'));
     assert.ok(css.includes('.scope-table-sort-control:focus-visible'));

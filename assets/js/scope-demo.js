@@ -169,9 +169,13 @@
           prenom: personne.prenom,
           cibles: [],
           origine: 'REGLE',
-          motifInclusion: 'affectation_valide'
+          motifInclusion: ''
         };
         current.cibles.push({ cibleId: aff.cible_id, niveauCode: cible && cible.niveau_code, domaineCode: cible && cible.domaine_code });
+        current.motifInclusion = current.cibles
+          .map((c) => `${c.domaineCode}_${c.niveauCode}`)
+          .filter((value) => value && !value.includes('undefined'))
+          .join('|') || 'affectation_valide';
         byPersonne.set(aff.personne_id, current);
       }
       const list = [...byPersonne.values()];
@@ -364,6 +368,9 @@
         if (existing && ['FORMATEUR', 'SURVEILLANT', 'AUXILIAIRE'].includes(existing.role)) {
           throw new ScopeApiError(422, { error: 'deja_encadrement', message: 'Cette personne est déjà ajoutée à l’encadrement.' });
         }
+        if (existing && existing.statut !== 'NON_CONCERNE') {
+          throw new ScopeApiError(422, { error: 'doublon', message: 'Une participation existe déjà pour cette personne.' });
+        }
         participations.set(key(id, personneId), {
           evenement_id: id,
           personne_id: personneId,
@@ -401,8 +408,8 @@
         const errors = [];
         att.forEach((a) => {
           const p = participations.get(key(id, a.personne_id));
-          if (!p || p.statut === 'NON_RENSEIGNE') {
-            errors.push({ code: 'non_renseigne', personne_id: a.personne_id, message: 'Une personne attendue est encore à renseigner.' });
+          if (p && p.statut === 'ABSENT_EXCUSE' && !p.motif_absence) {
+            errors.push({ code: 'motif_absence_obligatoire', personne_id: a.personne_id, message: 'Une absence excusée doit avoir un motif.' });
           }
         });
         if (errors.length) {
