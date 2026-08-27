@@ -3,6 +3,7 @@ const db = require('./_postgres');
 const { ensureScopeSchema } = require('./_scope-schema');
 const { isoDate } = require('./_scope-rules');
 const { periodFromPersonneRow } = require('./_scope-personnel');
+const { pgCibleJoinCondition } = require('./_scope-target-resolution');
 
 function dateOnly(value){
   if(!value) return null;
@@ -141,15 +142,7 @@ const AFFECTATION_SELECT = `
   a.updated_at
 `;
 
-function cibleJoinCondition(alias = 'a'){
-  return `c.domaine_code = ${alias}.domaine
-    and (
-      c.niveau_code = ${alias}.cible
-      or c.libelle = concat(${alias}.domaine, ' ', ${alias}.cible)
-      or (${alias}.domaine = 'JSP' and c.niveau_code = replace(${alias}.cible, 'JSP ', ''))
-      or (${alias}.domaine in ('PR','AUTO','FOSPEC') and c.niveau_code = 'GEN')
-    )`;
-}
+const cibleJoinCondition = pgCibleJoinCondition;
 
 function normalizeAffectationInput(row = {}, cible){
   const domaine = row.domaine || row.domaine_code || (cible && cible.domaine_code) || null;
