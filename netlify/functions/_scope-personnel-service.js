@@ -975,6 +975,9 @@ async function commitImport(payload, actorSubject){
         ...mutations.assignmentInserts.map((row) => row.nip),
         ...mutations.assignmentClosures.map((row) => row.nip)
       ].filter(Boolean))],
+      analysedNips: [...new Set((preview.lines || [])
+        .map((line) => line.normalized && line.normalized.nip)
+        .filter(Boolean))],
       personsTouched,
       assignmentsCreated,
       closures,

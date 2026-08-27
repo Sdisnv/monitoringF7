@@ -503,6 +503,7 @@ async function commitPersonnelSync(repo, body, actor){
       filename: body.filename || null,
       summary,
       applied,
+      analysedNips: [...new Set((preview.rows || []).map((row) => row.nip).filter(Boolean))],
       auteur: actorLabel(actor)
     };
     const key = idempotencyKey || preview.importId;

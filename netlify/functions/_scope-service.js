@@ -1158,13 +1158,16 @@ function createScopeService(repo){
 
   async function commitPersonnelSync(body, actor){
     const rapport = await personnelSync.commitPersonnelSync(repo, body || {}, actor);
-    const touchedNips = normalizeIdList((rapport.applied || []).map((row) => row.nip));
+    const touchedNips = normalizeIdList([
+      ...(rapport.applied || []).map((row) => row.nip),
+      ...(rapport.analysedNips || rapport.analysed_nips || [])
+    ]);
     const touchedIds = [];
     for(const nip of touchedNips){
       const personne = repo.getPersonneByNip ? await repo.getPersonneByNip(nip) : null;
       if(personne?.personne_id) touchedIds.push(personne.personne_id);
     }
-    rapport.synchronisationPopulation = await syncExpectedPopulationForPersonnes(touchedIds, actor, { reason: 'IMPORT_PERSONNEL' });
+    rapport.synchronisationPopulation = await syncExpectedPopulationForPersonnes(touchedIds, actor, { reason: 'IMPORT_PERSONNEL_COHERENCE' });
     return rapport;
   }
 

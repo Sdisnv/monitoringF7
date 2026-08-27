@@ -29,7 +29,10 @@ exports.handler = async function(event){
     const body = parseBody(event);
     if(!body || !(body.fileText || body.csvText)) return response(400, { ok:false, error:'missing_file_text' });
     const rapport = await personnel.commitImport(Object.assign({}, body, { confirmed:true }), claims.sub || claims.email || claims.nip || '');
-    rapport.synchronisationPopulation = await syncExpectedPopulationFromNips(rapport.touchedNips || [], claims);
+    rapport.synchronisationPopulation = await syncExpectedPopulationFromNips([
+      ...(rapport.touchedNips || []),
+      ...(rapport.analysedNips || rapport.analysed_nips || [])
+    ], claims);
     return response(200, rapport);
   }catch(error){
     return response(409, { ok:false, error:'scope_personnel_import_commit_failed', message:String(error.message || error) });
