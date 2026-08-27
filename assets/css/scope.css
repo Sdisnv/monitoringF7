@@ -2008,18 +2008,94 @@ html, body {
 
 .scope-inline-fields {
   display: grid;
-  grid-template-columns: minmax(132px, .35fr) auto minmax(180px, 1fr);
+  grid-template-columns: minmax(132px, .25fr) minmax(240px, .5fr) minmax(180px, 1fr);
   gap: 8px;
   align-items: center;
 }
 
-.scope-inline-check {
-  display: inline-flex;
+.scope-serie-toggle {
+  min-height: 38px;
+  width: 100%;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--scope-border);
+  border-radius: 8px;
+  background: #fff;
   color: var(--scope-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.scope-serie-toggle:hover,
+.scope-serie-toggle:focus-visible {
+  border-color: var(--scope-accent);
+}
+
+.scope-serie-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--scope-accent) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.scope-serie-toggle.is-on {
+  border-color: var(--scope-accent);
+  background: color-mix(in srgb, var(--scope-accent) 8%, #fff);
+  color: var(--scope-text);
+}
+
+.scope-switch-track {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: #d1d5db;
+  position: relative;
+  transition: background .16s ease;
+}
+
+.scope-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .24);
+  transition: transform .16s ease;
+}
+
+.scope-serie-toggle.is-on .scope-switch-track {
+  background: var(--scope-accent);
+}
+
+.scope-serie-toggle.is-on .scope-switch-thumb {
+  transform: translateX(16px);
+}
+
+.scope-serie-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.scope-serie-label {
+  color: var(--scope-text);
   font-size: 13px;
+  font-weight: 650;
+}
+
+.scope-serie-help,
+.scope-serie-range {
+  color: var(--scope-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.scope-serie-range {
+  color: var(--scope-accent);
+  font-weight: 650;
 }
 
 .scope-person-lookup {

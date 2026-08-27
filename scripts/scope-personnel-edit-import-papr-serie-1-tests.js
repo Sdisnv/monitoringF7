@@ -199,7 +199,7 @@ function previewOf({ file, persons, assignments, contexte = 'FOBA_1' }){
 
   await record('H — UX expose série, retrait explicite, Tous présents et breadcrumb informatif', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('Fait toute la série'));
+    assert.ok(ui.includes('Formateur pour toute la série'));
     assert.ok(ui.includes('Retirer de cette session'));
     assert.ok(ui.includes('Retirer de toute la série'));
     assert.ok(ui.includes('Tous présents'));

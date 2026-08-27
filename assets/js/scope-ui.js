@@ -312,6 +312,19 @@
     return /\b\d+\.1$/.test(label);
   }
 
+  function prSeriesLabels(fiche) {
+    const raw = (fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionLabels) || [];
+    const labels = raw.length ? raw : [prSessionLabelFromEvent(fiche && fiche.evenement)].filter(Boolean);
+    return L.uniqueSortedPrSessionLabels ? L.uniqueSortedPrSessionLabels(labels) : labels;
+  }
+
+  function prSeriesScopeText(fiche) {
+    const labels = prSeriesLabels(fiche);
+    if (!labels.length) return '';
+    const formatted = L.formatPrSessionList ? L.formatPrSessionList(labels) : labels.join(', ');
+    return `Toute la série — sessions PR ${formatted}`;
+  }
+
   function formateurSeriesLabelsFor(personneId) {
     const fiche = state.fiche;
     const attendu = ((fiche && fiche.attendus) || []).find((row) => String(row.personne_id) === String(personneId));
@@ -3258,7 +3271,14 @@
               <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
               <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
             </select>
-            ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<label class="scope-inline-check"><input id="enc-serie-complete" type="checkbox" ${state.encSerieComplete ? 'checked' : ''}> Fait toute la série</label>` : ''}
+            ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}">
+              <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
+              <span class="scope-serie-copy">
+                <span class="scope-serie-label">Formateur pour toute la série</span>
+                <span class="scope-serie-help">Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.</span>
+                ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(prSeriesScopeText(fiche))}</span>` : ''}
+              </span>
+            </button>` : ''}
             <input id="enc-q" type="search" placeholder="Rechercher par nom, prénom ou NIP..." value="${escapeHtml(state.encQuery)}" autocomplete="off">
           </div>
           <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
@@ -4679,8 +4699,8 @@
       if (state.encRole !== 'FORMATEUR') state.encSerieComplete = false;
       render();
     });
-    document.getElementById('enc-serie-complete')?.addEventListener('change', (e) => {
-      state.encSerieComplete = Boolean(e.target.checked);
+    document.getElementById('enc-serie-complete')?.addEventListener('click', () => {
+      state.encSerieComplete = !state.encSerieComplete;
       render();
     });
     document.getElementById('enc-q')?.addEventListener('input', (e) => {

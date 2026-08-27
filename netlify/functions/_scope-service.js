@@ -1675,6 +1675,10 @@ function createScopeService(repo){
           personnes: cyclePersonnesById,
           currentEventId: eventId
         });
+        prExerciseParticipation.sessionLabels = cycleEvents
+          .filter((row) => !prExerciseParticipation.groupKey || row.pr_exercise_group_key === prExerciseParticipation.groupKey)
+          .map((row) => prSessionLabel(row))
+          .filter(Boolean);
         attendus = attendus.map((row) => {
           const state = prExerciseParticipation.byPersonneId[String(row.personne_id)];
           return state
