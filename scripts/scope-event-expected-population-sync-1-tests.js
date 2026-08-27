@@ -90,10 +90,12 @@ async function seedPerson(repo, spec){
     const beforeFiche = await service.lireEvenement(before.evenement.evenement_id);
     const insideFiche = await service.lireEvenement(inside.evenement.evenement_id);
     const afterFiche = await service.lireEvenement(after.evenement.evenement_id);
-    assert.strictEqual(beforeFiche.attendus.find((row) => row.personne_id === person.personne_id).inclus, false);
+    assert.strictEqual(beforeFiche.attendus.some((row) => row.personne_id === person.personne_id), false);
+    assert.strictEqual(beforeFiche.attendusExclus.find((row) => row.personne_id === person.personne_id).inclus, false);
     assert.strictEqual(beforeFiche.participations.find((row) => row.personne_id === person.personne_id).statut, 'NON_CONCERNE');
     assert.strictEqual(insideFiche.attendus.find((row) => row.personne_id === person.personne_id).inclus, true);
-    assert.strictEqual(afterFiche.attendus.find((row) => row.personne_id === person.personne_id).inclus, false);
+    assert.strictEqual(afterFiche.attendus.some((row) => row.personne_id === person.personne_id), false);
+    assert.strictEqual(afterFiche.attendusExclus.find((row) => row.personne_id === person.personne_id).inclus, false);
     const preserved = afterFiche.participations.find((row) => row.personne_id === person.personne_id);
     assert.strictEqual(preserved.statut, 'PRESENT');
     assert.strictEqual(preserved.commentaire, 'Saisie conservée');
@@ -179,7 +181,12 @@ async function seedPerson(repo, spec){
       version += 1;
     }
     const after = await service.lireEvenement(fiche.evenement.evenement_id);
-    const expected = people.slice().sort((a, b) => refs.compareGrades(a.grade, b.grade)
+    const rank = (grade) => {
+      const code = refs.canonicalGradeCode(grade);
+      const row = refs.GRADES.find((item) => item.code === code);
+      return row ? row.rang : -1;
+    };
+    const expected = people.slice().sort((a, b) => (rank(b.grade) - rank(a.grade))
       || String(a.nom).localeCompare(String(b.nom), 'fr', { sensitivity: 'base', numeric: true })
       || String(a.prenom).localeCompare(String(b.prenom), 'fr', { sensitivity: 'base', numeric: true }))
       .map((p) => p.nip);

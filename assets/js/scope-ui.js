@@ -707,7 +707,18 @@
     const ref = window.ScopePersonnelReferentials;
     const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
     return (rows || []).slice().sort((a, b) => {
-      const grade = ref && ref.compareGrades ? ref.compareGrades(a.grade, b.grade) : collator.compare(a.grade || '', b.grade || '');
+      const rankOf = (value) => {
+        const code = ref && ref.canonicalGradeCode ? ref.canonicalGradeCode(value) : String(value || '').trim();
+        const row = ref && Array.isArray(ref.GRADES) ? ref.GRADES.find((item) => item.code === code) : null;
+        return row ? Number(row.rang) : null;
+      };
+      const ra = rankOf(a.grade);
+      const rb = rankOf(b.grade);
+      let grade = 0;
+      if (ra !== null && rb !== null && ra !== rb) grade = rb - ra;
+      else if (ra !== null && rb === null) grade = -1;
+      else if (ra === null && rb !== null) grade = 1;
+      else if (ra === null && rb === null) grade = collator.compare(a.grade || '', b.grade || '');
       return grade
         || collator.compare(a.nom || '', b.nom || '')
         || collator.compare(a.prenom || '', b.prenom || '')
@@ -3236,12 +3247,10 @@
 
   function renderEncadrementBlock() {
     const fiche = state.fiche || {};
-    const roleOrder = encadrementRoleOrder();
     const encRows = sortPeopleForEncadrement((fiche.encadrement || []).map((p) => {
       const person = personOf(fiche, p.personne_id) || {};
       return Object.assign({}, p, person, { personne_id: p.personne_id, role: p.role });
     }));
-    const byRole = new Map(roleOrder.map((role) => [role, encRows.filter((p) => p.role === role)]));
     const used = usedEncadrementIds();
     const expected = expectedIds();
     return `
@@ -3274,18 +3283,16 @@
           <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
         </div>
         <div class="scope-enc-groups">
-          ${roleOrder.map((role) => {
-            const rows = byRole.get(role) || [];
-            if (!rows.length) return '';
-            return `<section class="scope-enc-group">
-              <h4>${escapeHtml(L.ROLE_LABELS[role] || role)}</h4>
-              <div class="scope-enc-people">${rows.map((p) => `<div class="scope-enc-person">
+          ${encRows.length ? `<section class="scope-enc-group scope-enc-group-global">
+            <div class="scope-enc-people">${encRows.map((p) => {
+              const role = p.role || 'ENCADREMENT';
+              return `<div class="scope-enc-person">
                 <button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml((L.ROLE_LABELS[role] || role).toLowerCase())} ${escapeHtml(personLine(p))}">${trashIcon()}</button>
                 <span>${escapeHtml(personLine(p))}</span>
-                <small>${escapeHtml(p.nip || '')}</small>
-              </div>`).join('')}</div>
-            </section>`;
-          }).join('') || '<p class="scope-enc-empty">Aucun encadrement</p>'}
+                <small>${escapeHtml(L.ROLE_LABELS[role] || role)} · ${escapeHtml(p.nip || '')}</small>
+              </div>`;
+            }).join('')}</div>
+          </section>` : '<p class="scope-enc-empty">Aucun encadrement</p>'}
         </div>
       </div>
     `;

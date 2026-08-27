@@ -129,9 +129,20 @@ async function bumpOrConflict(repo, eventId, baseVersion, patch){
 
 function createScopeService(repo){
   function comparePeopleByGradeName(a, b){
-    const grade = referentialDisplay.compareGrades
-      ? referentialDisplay.compareGrades(a?.grade, b?.grade)
-      : String(a?.grade || '').localeCompare(String(b?.grade || ''), 'fr', { sensitivity: 'base', numeric: true });
+    const rankOf = (value) => {
+      const code = referentialDisplay.canonicalGradeCode ? referentialDisplay.canonicalGradeCode(value) : String(value || '').trim();
+      const row = (referentialDisplay.GRADES || []).find((item) => item.code === code);
+      return row ? Number(row.rang) : null;
+    };
+    const ra = rankOf(a?.grade);
+    const rb = rankOf(b?.grade);
+    let grade = 0;
+    if(ra !== null && rb !== null && ra !== rb) grade = rb - ra;
+    else if(ra !== null && rb === null) grade = -1;
+    else if(ra === null && rb !== null) grade = 1;
+    else if(ra === null && rb === null){
+      grade = String(a?.grade || '').localeCompare(String(b?.grade || ''), 'fr', { sensitivity: 'base', numeric: true });
+    }
     return grade
       || String(a?.nom || '').localeCompare(String(b?.nom || ''), 'fr', { sensitivity: 'base', numeric: true })
       || String(a?.prenom || '').localeCompare(String(b?.prenom || ''), 'fr', { sensitivity: 'base', numeric: true })
@@ -2016,10 +2027,14 @@ function createScopeService(repo){
         tauxJeunes: computeTaux(participations.filter((row) => jeuneIds.has(String(row.personne_id))), jeunes)
       };
     }
+    const attendusExclus = attendus.filter((row) => row.inclus === false);
+    const attendusActifs = attendus.filter((row) => row.inclus !== false);
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi },
       cibles,
-      attendus,
+      attendus: attendusActifs,
+      attendusExclus,
+      attendus_exclus: attendusExclus,
       participations,
       encadrement,
       personnes,
