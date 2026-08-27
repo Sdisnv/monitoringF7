@@ -196,10 +196,11 @@ async function record(name, fn) {
     assert.ok(css.includes('min-height: 44px'));
   });
 
-  await record('24 — DEMO vers LIVE R1-R1 conservé', async () => {
-    assert.ok(ui.includes('scope-start-live'));
+  await record('24 — accès production R1-R1 conservé sans CTA technique', async () => {
+    assert.ok(!ui.includes('scope-start-live'));
     assert.ok(ui.includes('?mode=live'));
-    assert.ok(ui.includes('Aucun jeton'));
+    assert.ok(!ui.includes('Aucun jeton'));
+    assert.ok(ui.includes('scope-confirm-live'));
   });
 
   await record('25 — tableau Personnel métier définitif', async () => {

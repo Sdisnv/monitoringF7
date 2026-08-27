@@ -3,6 +3,16 @@
   --scope-red: #DE000A;
   --scope-red-dark: #8c000b;
   --scope-red-soft: #fde8ea;
+  --scope-blue: #171C8F;
+  --scope-yellow: #FFA300;
+  --scope-green: #1f7a3a;
+  --scope-gray-50: #f8fafc;
+  --scope-gray-100: #f1f5f9;
+  --scope-gray-200: #e2e8f0;
+  --scope-gray-300: #cbd5e1;
+  --scope-gray-500: #64748b;
+  --scope-gray-700: #334155;
+  --scope-gray-900: #0f172a;
   --scope-ink: #1f2730;
   --scope-muted: #6b7785;
   --scope-line: #e3e7ec;
@@ -34,8 +44,23 @@
   --scope-chart-sante: var(--scope-chart-secondary);
   --scope-radius: 6px;
   --scope-radius-sm: 4px;
+  --scope-radius-md: 8px;
   --scope-shadow: 0 1px 2px rgba(20, 30, 50, 0.06);
+  --scope-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --scope-shadow-md: 0 12px 32px rgba(15, 23, 42, 0.14);
   --scope-field-h: 40px;
+  --scope-control-h: 40px;
+  --scope-control-h-compact: 34px;
+  --scope-space-1: 4px;
+  --scope-space-2: 8px;
+  --scope-space-3: 12px;
+  --scope-space-4: 16px;
+  --scope-space-5: 20px;
+  --scope-space-6: 24px;
+  --scope-z-header: 60;
+  --scope-z-modal: 80;
+  --scope-z-toast: 90;
+  --scope-focus-ring: 0 0 0 3px rgba(23, 28, 143, 0.16);
   --scope-fs-body: 15px;
   --scope-fs-h1: 24px;
   --scope-fs-h2: 20px;
@@ -70,6 +95,60 @@ html, body {
 .scope-app-shell {
   min-height: 100vh;
   display: block;
+}
+
+.scope-ui-card {
+  background: var(--scope-card);
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  box-shadow: var(--scope-shadow-sm);
+}
+
+.scope-empty-state,
+.scope-info-box {
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  padding: var(--scope-space-4);
+  background: var(--scope-gray-50);
+  color: var(--scope-gray-700);
+}
+
+.scope-info-box {
+  border-left: 4px solid var(--scope-blue);
+}
+
+.scope-loader {
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-secondary);
+}
+
+.scope-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--scope-space-3);
+  flex-wrap: wrap;
+  padding: var(--scope-space-3) 0 0;
+}
+
+.scope-pagination-group,
+.scope-pagination-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--scope-space-2);
+  flex-wrap: wrap;
+}
+
+.scope-page-size,
+.scope-page-status {
+  min-height: var(--scope-control-h-compact);
+  display: inline-flex;
+  align-items: center;
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-secondary);
 }
 
 .scope-workspace {

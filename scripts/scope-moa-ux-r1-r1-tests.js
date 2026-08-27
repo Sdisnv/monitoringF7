@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// SCOPE-MOA-UX-R1-R1 — accès LIVE / Okta visible depuis DEMO.
+// SCOPE-MOA-UX-R1-R1 — acces production et connexion sans vocabulaire technique visible.
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -52,21 +52,24 @@ const env = {
     assert.strictEqual(logic.resolveClientMode({ search: '', sessionLive: false }), 'demo');
   });
 
-  await record('02 — CTA LIVE visible en DEMO', async () => {
-    assert.ok(ui.includes('id="scope-start-live"'));
-    assert.ok(ui.includes('Passer en mode LIVE'));
+  await record('02 — pas de CTA technique LIVE/DEMO visible', async () => {
+    assert.ok(!ui.includes('id="scope-start-live"'));
+    assert.ok(!ui.includes('Passer en mode LIVE'));
+    assert.ok(!ui.includes('Mode démonstration'));
+    assert.ok(!ui.includes('Mode LIVE — PostgreSQL Monitoring'));
   });
 
-  await record('03 — CTA LIVE construit ?mode=live sans URL manuelle', async () => {
-    assert.ok(ui.includes('const liveHref'));
+  await record('03 — connexion construit ?mode=live sans URL manuelle', async () => {
     assert.ok(ui.includes('?mode=live'));
-    assert.ok(ui.includes("location.hash || '#/accueil'"));
+    assert.ok(ui.includes("L.oktaLoginHref('/scope.html?mode=live')"));
   });
 
-  await record('04 — confirmation LIVE existante conservée', async () => {
+  await record('04 — confirmation d’accès conservée sans wording technique', async () => {
     assert.strictEqual(logic.resolveClientMode({ search: '?mode=live', sessionLive: false }), 'gate');
-    assert.ok(ui.includes('Connexion live demandée'));
+    assert.ok(ui.includes('Connexion requise'));
     assert.ok(ui.includes('scope-confirm-live'));
+    assert.ok(!ui.includes('Connexion live demandée'));
+    assert.ok(!ui.includes('PostgreSQL Monitoring'));
   });
 
   await record('05 — /auth/oidc/start accessible', async () => {
@@ -94,18 +97,18 @@ const env = {
     assert.ok(ui.includes("L.oktaLoginHref('/scope.html?mode=live')"));
   });
 
-  await record('08 — header DEMO différent de LIVE', async () => {
-    assert.ok(ui.includes("${mode === 'live' ? 'LIVE' : 'DEMO'}"));
-    assert.ok(ui.includes("mode === 'live'"));
+  await record('08 — header sans badge de mode technique', async () => {
+    assert.ok(!ui.includes('scope-mode-pill">${mode'));
+    assert.ok(ui.includes('scope-include-qual'));
   });
 
-  await record('09 — utilisateur LIVE affiché', async () => {
+  await record('09 — utilisateur affiché', async () => {
     assert.ok(ui.includes('userLabel()'));
     assert.ok(ui.includes('roleLabel()'));
     assert.ok(ui.includes('scope-user-avatar'));
   });
 
-  await record('10 — logout LIVE présent', async () => {
+  await record('10 — déconnexion présente en production', async () => {
     assert.ok(ui.includes('/auth/logout?returnTo=/'));
     assert.ok(ui.includes('Déconnexion'));
   });
@@ -120,13 +123,16 @@ const env = {
     assert.ok(cookies.includes('Max-Age=0'));
   });
 
-  await record('12 — DEMO jamais bloquant', async () => {
-    assert.ok(ui.includes('scope-start-live'));
+  await record('12 — fallback interne sans vocabulaire démonstration', async () => {
+    assert.ok(!ui.includes('scope-start-live'));
     assert.ok(!ui.includes('Déconnexion DEMO'));
+    assert.ok(!ui.includes('Démonstration'));
   });
 
-  await record('13 — pas de modification URL manuelle nécessaire', async () => {
-    assert.ok(ui.includes('<a class="scope-btn scope-btn-primary" id="scope-start-live"'));
+  await record('13 — pas de jargon session visible', async () => {
+    assert.ok(!ui.includes('Aucun jeton'));
+    assert.ok(!ui.includes('Session Okta'));
+    assert.ok(ui.includes('Connectez-vous avec votre compte institutionnel'));
   });
 
   await record('14 — UX-R1 non régressé', async () => {

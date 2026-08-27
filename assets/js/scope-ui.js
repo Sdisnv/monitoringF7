@@ -7,6 +7,8 @@
 
   const LIVE_KEY = 'scope-live-confirmed';
   const QUAL_KEY = 'scope-include-qualification';
+  const SCOPE_SEARCH_MIN_CHARS = 3;
+  const SCOPE_SEARCH_DEBOUNCE_MS = 280;
 
   function liveConfirmed() {
     try { return sessionStorage.getItem(LIVE_KEY) === '1'; } catch (_error) { return false; }
@@ -789,19 +791,19 @@
 
   function roleLabel() {
     const roles = (state.session && (state.session.roles || [])) || [];
-    if (mode !== 'live') return 'Démonstration';
+    if (mode !== 'live') return 'Profil SCOPE';
     if (state.session && state.session.roleLabel) return state.session.roleLabel;
     if (roles.includes('ADMINISTRATEUR')) return 'Administrateur';
     if (roles.includes('GESTIONNAIRE')) return 'Gestionnaire';
     if (roles.includes('UTILISATEUR')) return 'Utilisateur';
     if (roles[0]) return String(roles[0]);
-    return state.session ? 'Session live' : 'Session requise';
+    return state.session ? 'Profil SCOPE' : 'Connexion requise';
   }
 
   function userLabel() {
-    if (mode !== 'live') return 'Démonstration';
+    if (mode !== 'live') return 'SCOPE';
     if (state.session && state.session.displayName) return state.session.displayName;
-    return 'LIVE Monitoring';
+    return 'Connexion requise';
   }
 
   function userInitials() {
@@ -937,7 +939,7 @@
       ? `<a class="scope-btn scope-btn-ghost" href="/auth/logout?returnTo=/">Déconnexion</a>`
       : '';
     return `
-      <header class="scope-header${mode === 'live' ? ' live-mode' : ''}">
+      <header class="scope-header">
         <div class="scope-header-inner">
           <button type="button" class="scope-nav-toggle" id="scope-nav-toggle" aria-expanded="${state.navOpen ? 'true' : 'false'}" aria-controls="scope-sidebar">
             <span aria-hidden="true"></span>
@@ -949,7 +951,6 @@
           </div>
           <div class="scope-header-spacer"></div>
           <div class="scope-header-tools">
-            <span class="scope-mode-pill">${mode === 'live' ? 'LIVE' : 'DEMO'}</span>
             <label class="scope-qual-toggle">
               <input type="checkbox" id="scope-include-qual" ${state.includeQualification ? 'checked' : ''}>
               Inclure les données de qualification
@@ -974,39 +975,28 @@
   function bannerHtml() {
     const bits = [];
     const params = new URLSearchParams(location.search.replace(/^\?/, ''));
-    const liveHref = `?mode=live${location.hash || '#/accueil'}`;
     if (params.get('authError') === '1') {
       const reason = params.get('reason') || 'callback';
       bits.push(`<div class="scope-banner warning" role="alert">
-        <strong>Connexion Okta interrompue</strong>
-        <div>Le callback SCOPE n’a pas pu créer la session (raison : ${escapeHtml(reason)}). Réessayez « Se connecter avec Okta ». Aucun jeton n’est injecté.</div>
+        <strong>Connexion interrompue</strong>
+        <div>La session SCOPE n’a pas pu être ouverte (raison : ${escapeHtml(reason)}). Réessayez de vous connecter.</div>
       </div>`);
     }
     if (liveGate) {
       bits.push(`<div class="scope-banner warning" role="alertdialog">
-        <strong>Connexion live demandée</strong>
-        <div>Le paramètre URL ne suffit pas. Confirmez pour écrire dans PostgreSQL Monitoring. Les données de démonstration ne doivent pas être envoyées en production.</div>
+        <strong>Connexion requise</strong>
+        <div>Confirmez l’ouverture de SCOPE pour accéder aux données de production.</div>
         <div class="scope-actions">
-          <button type="button" class="scope-btn scope-btn-primary" id="scope-confirm-live">Confirmer le mode live</button>
-          <button type="button" class="scope-btn" id="scope-stay-demo">Rester en démonstration</button>
+          <button type="button" class="scope-btn scope-btn-primary" id="scope-confirm-live">Continuer</button>
+          <button type="button" class="scope-btn" id="scope-stay-demo">Annuler</button>
         </div>
       </div>`);
     } else if (mode === 'live' && state.needOkta) {
       bits.push(`<div class="scope-banner warning" role="alertdialog">
-        <strong>Session Okta requise</strong>
-        <div>Le mode LIVE s’appuie sur la session institutionnelle du navigateur (cookie HttpOnly). Aucun jeton technique n’est injecté.</div>
+        <strong>Connexion requise</strong>
+        <div>Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.</div>
         <div class="scope-actions">
-          <a class="scope-btn scope-btn-primary" id="scope-okta-login" href="${escapeHtml(L.oktaLoginHref('/scope.html?mode=live'))}">Se connecter avec Okta</a>
-        </div>
-      </div>`);
-    } else if (mode === 'live') {
-      bits.push(`<div class="scope-banner live">Mode LIVE — PostgreSQL Monitoring, session Okta. Toute saisie est réelle.</div>`);
-    } else {
-      bits.push(`<div class="scope-banner demo">
-        <strong>Mode démonstration</strong>
-        <div>Mode démonstration — aucune écriture dans PostgreSQL Monitoring. Le personnel affiché est local et fictif.</div>
-        <div class="scope-actions">
-          <a class="scope-btn scope-btn-primary" id="scope-start-live" href="${escapeHtml(liveHref)}">Passer en mode LIVE</a>
+          <a class="scope-btn scope-btn-primary" id="scope-okta-login" href="${escapeHtml(L.oktaLoginHref('/scope.html?mode=live'))}">Se connecter</a>
         </div>
       </div>`);
     }
@@ -2229,7 +2219,7 @@
     if (!live) {
       return `<div class="scope-card">
         <h2 style="margin-top:0">Personnel</h2>
-        <p class="scope-mode-hint">SCOPE-PERSON-1 — fiche individuelle nominative. La liste et les taux individuels sont disponibles en mode LIVE uniquement. Aucun nominatif n’est inventé en démonstration.</p>
+        <p class="scope-mode-hint">Connectez-vous pour consulter l’annuaire et les fiches nominatives.</p>
       </div>`;
     }
     if (!canRead) {
@@ -2378,7 +2368,7 @@
           <h2 style="margin-top:0">Import du personnel</h2>
           <p class="scope-mode-hint">Analyse comparative par NIP uniquement. Sélection, lecture et analyse ne modifient pas la base. La validation DB nécessite une action distincte.</p>
           ${live && state.personCount != null ? `<p><strong>${state.personCount}</strong> personne(s) nominative(s) en base SCOPE.</p>` : ''}
-          ${!live ? '<p class="scope-empty">L’import du personnel est disponible en mode LIVE uniquement.</p>' : ''}
+          ${!live ? '<p class="scope-empty">Connectez-vous pour importer le personnel.</p>' : ''}
           ${live && !canManagePersonnel() ? '<p class="scope-empty">L’import personnel est réservé aux profils habilités (personnel:manage).</p>' : ''}
           ${allowed ? `
           <div id="scope-sync-drop" class="scope-import-drop ${state.personnelSync.drag ? 'is-drag' : ''}">
@@ -2490,7 +2480,7 @@
     const identite = fiche && fiche.identite;
     if (!live) {
       return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
-        <div class="scope-main"><div class="scope-card"><p class="scope-empty">La fiche individuelle nominative est disponible en mode LIVE uniquement. Aucun événement nominatif n’est inventé en démonstration.</p></div></div>`;
+        <div class="scope-main"><div class="scope-card"><p class="scope-empty">Connectez-vous pour consulter la fiche individuelle nominative.</p></div></div>`;
     }
     if (!canReadPersonnel()) {
       return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
@@ -2703,7 +2693,7 @@
         <div class="scope-card">
           <h2 style="margin-top:0">Rapports</h2>
           <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
-          ${demo ? `<p class="scope-mode-hint">La génération PDF est disponible en mode LIVE uniquement.</p>` : ''}
+          ${demo ? `<p class="scope-mode-hint">Connectez-vous pour générer le PDF.</p>` : ''}
           <div class="scope-report-grid">
             <div class="scope-field"><label>Type de rapport</label>
               <select id="report-kind">
@@ -3234,7 +3224,7 @@
   function renderPersonSuggestions(kind, rows) {
     const action = kind === 'encadrement' ? 'data-enc-add' : 'data-manual-add';
     const query = kind === 'encadrement' ? state.encQuery : state.manualPersonQuery;
-    if (!String(query || '').trim() || String(query || '').trim().length < 2) return '';
+    if (!String(query || '').trim() || String(query || '').trim().length < SCOPE_SEARCH_MIN_CHARS) return '';
     if (!rows.length) return `<div class="scope-lookup-empty">${escapeHtml(L.emptyMessage('personnes'))}</div>`;
     return `<div class="scope-person-suggestions" role="listbox">
       ${rows.map((p) => `<button type="button" ${action}="${escapeHtml(p.personne_id)}" role="option">
@@ -3896,9 +3886,9 @@
         ${pageHeaderHtml({ eyebrow: 'Réglages / Importation', title: 'Import des événements', context: 'Programme CSV', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme d’événements</h2>
-          <p>Ce parcours recommandé alimente le programme SCOPE. Après import, PostgreSQL reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
+          <p>Ce parcours recommandé alimente le programme SCOPE. Après import, la base SCOPE reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
           <p class="scope-mode-hint">Trois formats : <strong>événements standard</strong> avec CODE COURS, <strong>programme SCOPE</strong> (date ; domaine ; cibles ; libellé ; mode) ou <strong>historique Monitoring F7</strong> (22 colonnes). Le fichier est reconnu à l’en-tête.</p>
-          ${live ? '' : '<p class="scope-empty">L’écriture d’import est disponible en mode LIVE uniquement.</p>'}
+          ${live ? '' : '<p class="scope-empty">Connectez-vous pour valider l’import.</p>'}
           <p><a class="scope-btn" href="assets/csv/SCOPE_Programme_Exercices_Exemple.csv" download>Télécharger un exemple SCOPE</a></p>
           <div id="scope-import-drop" class="scope-import-drop ${state.importFile.drag ? 'is-drag' : ''}">
             <p>Glissez un fichier CSV ici ou</p>
@@ -3942,15 +3932,15 @@
     return `
       <div class="scope-crumb">Réglages / Utilisateurs</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages / Paramètres', title: 'Utilisateurs', context: 'Okta / RBAC', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Réglages / Paramètres', title: 'Utilisateurs', context: 'Accès et rôles', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Utilisateurs</h2>
-          <p>SCOPE utilise la session institutionnelle Okta/OIDC et le RBAC serveur. La source de vérité des comptes reste l’identité institutionnelle ; cette page n’invente pas de gestion utilisateur locale.</p>
+          <p>SCOPE s’appuie sur les comptes institutionnels. Cette page expose les droits disponibles sans recréer une gestion utilisateur locale.</p>
           <dl class="scope-meta">
-            <div><dt>Okta / OIDC</dt><dd>Disponible via `/auth/me`, `/auth/oidc/start`, `/auth/logout`.</dd></div>
-            <div><dt>Rôles</dt><dd>admin, commandement, chef-formation, formation, instructeur, user, readonly.</dd></div>
-            <div><dt>Administration</dt><dd>${canAdmin ? 'Permission users:admin détectée.' : 'Non visible sans users:admin.'}</dd></div>
-            <div><dt>Gestion serveur</dt><dd>Fonctions admin-users présentes, hors création décorative dans ce lot.</dd></div>
+            <div><dt>Comptes</dt><dd>identité institutionnelle</dd></div>
+            <div><dt>Rôles</dt><dd>Administration, commandement, formation, instruction, consultation.</dd></div>
+            <div><dt>Administration</dt><dd>${canAdmin ? 'Droits d’administration détectés.' : 'Non visible avec votre profil actuel.'}</dd></div>
+            <div><dt>Gestion</dt><dd>Fonctions d’administration disponibles pour les profils habilités.</dd></div>
           </dl>
         </div>
       </div>
@@ -3981,7 +3971,7 @@
     return `
       <div class="scope-crumb">Réglages / À propos</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages', title: 'À propos', context: mode === 'live' ? 'LIVE' : 'DEMO', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Réglages', title: 'À propos', context: 'Application', logo: true })}
         <div class="scope-card scope-about-hero">
           <img src="assets/img/logo-scope-blanc.png" alt="SCOPE">
           <p class="scope-eyebrow">Suivi et analyse de l’activité</p>
@@ -3993,9 +3983,9 @@
           <div class="scope-about-inst"><img src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois"><span>SDIS régional du Nord vaudois</span></div>
           <dl class="scope-meta">
             <div><dt>Application</dt><dd>SCOPE</dd></div>
-            <div><dt>Environnement</dt><dd>${mode === 'live' ? 'LIVE' : 'DEMO'}</dd></div>
-            <div><dt>Déploiement</dt><dd>Netlify scope-sdisnv</dd></div>
-            <div><dt>Version source</dt><dd>SCOPE-QUAL-FINISH-1 · 197119c</dd></div>
+            <div><dt>Périmètre</dt><dd>Activité, participation, objectifs, personnel et rapports</dd></div>
+            <div><dt>Accès</dt><dd>Réservé aux profils habilités</dd></div>
+            <div><dt>Institution</dt><dd>SDIS régional du Nord vaudois</dd></div>
           </dl>
         </div>
       </div>
@@ -4572,7 +4562,7 @@
     document.getElementById('preview-q')?.addEventListener('input', (e) => {
       state.personQuery = e.target.value;
       const q = state.personQuery.trim();
-      if (q.length < 2) { state.personHits = []; render(); return; }
+      if (q.length < SCOPE_SEARCH_MIN_CHARS) { state.personHits = []; render(); return; }
       withLoading(async () => {
         const data = await client.listPersonnes(q);
         state.personHits = data.personnes || [];
@@ -5249,7 +5239,7 @@
     clearTimeout(state.scopeSearchTimers[kind]);
     const targetId = kind === 'encadrement' ? 'enc-suggestions' : 'manual-person-suggestions';
     const target = document.getElementById(targetId);
-    if (q.length < 2) {
+    if (q.length < SCOPE_SEARCH_MIN_CHARS) {
       if (target) target.innerHTML = '';
       return;
     }
@@ -5276,7 +5266,7 @@
         const info = L.friendlyError(error);
         toast(info.tone, info.title, info.message);
       });
-    }, 240);
+    }, SCOPE_SEARCH_DEBOUNCE_MS);
   }
 
   function renderSuggestionList(kind, rows) {
