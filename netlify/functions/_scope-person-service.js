@@ -65,6 +65,62 @@ function principalOi(affectations, ciblesById, date){
   return enriched.find((row) => row.principal) || enriched[0] || null;
 }
 
+async function plannedExpectedEvents(repo, personneId, period, affectations, ciblesById){
+  if(!repo.listEvenements) return [];
+  const events = (await repo.listEvenements({ statut: 'PLANIFIE' }) || [])
+    .filter((event) => event && event.date >= period.from && event.date <= period.to);
+  if(!events.length) return [];
+  const ids = events.map((event) => event.evenement_id).filter(Boolean);
+  const [attendusRows, participationsRows, ciblesRows] = await Promise.all([
+    repo.listAttendusForEvents ? repo.listAttendusForEvents(ids) : [],
+    repo.listParticipationsForEvents ? repo.listParticipationsForEvents(ids) : [],
+    repo.listEventCiblesForEvents ? repo.listEventCiblesForEvents(ids) : []
+  ]);
+  const expectedEvents = new Set((attendusRows || [])
+    .filter((row) => String(row.personne_id) === String(personneId) && row.inclus !== false)
+    .map((row) => String(row.evenement_id)));
+  if(!expectedEvents.size) return [];
+  const participationsByEvent = new Map();
+  for(const row of participationsRows || []){
+    if(String(row.personne_id) === String(personneId)) participationsByEvent.set(String(row.evenement_id), row);
+  }
+  const ciblesByEvent = new Map();
+  for(const row of ciblesRows || []){
+    const eventId = String(row.evenement_id);
+    if(!ciblesByEvent.has(eventId)) ciblesByEvent.set(eventId, []);
+    ciblesByEvent.get(eventId).push(row.cible_id);
+  }
+  return events
+    .filter((event) => expectedEvents.has(String(event.evenement_id)))
+    .map((event) => {
+      const eventCibles = (ciblesByEvent.get(String(event.evenement_id)) || [])
+        .map((cid) => labelOi(ciblesById.get(cid)))
+        .filter(Boolean);
+      const part = participationsByEvent.get(String(event.evenement_id));
+      return {
+        evenementId: event.evenement_id,
+        date: event.date,
+        libelle: event.libelle,
+        domaine: event.domaine_code,
+        sousDomaine: event.sous_domaine_code || null,
+        cibles: eventCibles,
+        oiAtDate: (principalOi(affectations, ciblesById, event.date) || {}).label || null,
+        oiAccueil: null,
+        permutation: false,
+        statutEvenement: event.statut,
+        statutParticipation: part ? part.statut : 'NON_RENSEIGNE',
+        motif: part && part.motif_absence ? part.motif_absence : null,
+        href: `#/exercices/${event.evenement_id}`,
+        volumes: null,
+        numerator: 0,
+        denominator: 0,
+        percentage: null,
+        appliedObjective: null,
+        planned: true
+      };
+    });
+}
+
 function openRows(periodes, types){
   return (periodes || []).filter((row) => types.includes(row.type) && !row.date_fin);
 }
@@ -376,6 +432,11 @@ function createScopePersonService(repo){
         appliedObjective: row.appliedObjective || null
       };
     }).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
+    const planned = await plannedExpectedEvents(repo, personneId, snap.summary.period, affectations, ciblesById);
+    const plannedById = new Map(planned.map((row) => [String(row.evenementId), row]));
+    for(const row of included) plannedById.delete(String(row.evenementId));
+    const ficheEvents = included.concat([...plannedById.values()])
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
 
     const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });
     const graphs = personGraphs(evaluated, snap.timeseries, snap.explain);
@@ -473,7 +534,7 @@ function createScopePersonService(repo){
         },
         message: 'Aucune alerte individuelle active. Le seuil d’absences répétées n’est pas validé par la MOA.'
       },
-      evenements: included,
+      evenements: ficheEvents,
       domaines,
       jsp: {
         role: jspRole,

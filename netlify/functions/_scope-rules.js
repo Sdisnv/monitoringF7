@@ -42,8 +42,8 @@ function isoDate(value){
 
 function isAffectationValide(affectation, dateEvenement){
   const date = isoDate(dateEvenement);
-  const debut = isoDate(affectation.date_debut || affectation.dateDebut);
-  const fin = affectation.date_fin || affectation.dateFin || null;
+  const debut = isoDate(affectation.date_debut || affectation.dateDebut || affectation.date_actif || affectation.dateActif);
+  const fin = affectation.date_fin || affectation.dateFin || affectation.date_inactif || affectation.dateInactif || null;
   if(!date || !debut) return false;
   if(debut > date) return false;
   if(fin && isoDate(fin) < date) return false;

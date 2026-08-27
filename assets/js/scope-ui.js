@@ -1783,7 +1783,8 @@
     if (row.statut === 'ABSENT_DU_FICHIER' || row.statut === 'ABSENT_DU_NOUVEL_IMPORT') {
       options = [
         ['CONSERVER', 'Conserver'],
-        ['CLOTURER', 'Clôturer'],
+        ['CLOTURER', 'Clôturer l’affectation absente'],
+        ['ARCHIVER_SORTI', 'Démission SDIS'],
         ['IGNORER', 'Ne rien faire']
       ];
     } else if (row.statut === 'ARCHIVE_RETROUVE') {
@@ -2323,7 +2324,7 @@
         ? window.ScopePersonnelDisplay.formatPersonnelDate(plan.dernierJourActif)
         : plan.dernierJourActif)
       : '—';
-    return `<div class="scope-modal-backdrop" id="scope-inactivate-modal">
+    return `<div class="scope-modal-backdrop scope-modal-backdrop-inactivate" id="scope-inactivate-modal">
       <div class="scope-modal scope-modal-inactivate" role="dialog" aria-labelledby="scope-inactivate-title">
         <h3 id="scope-inactivate-title">${modal.mode === 'correct' ? 'Corriger l’inactivité' : 'Rendre la personne inactive'}</h3>
         <dl class="scope-inactivate-identity">
@@ -2337,7 +2338,7 @@
         <p class="scope-mode-hint">Premier jour où cette personne ne sera plus considérée comme active.</p>
         <p class="scope-inactivate-last">Dernier jour actif : <strong>${escapeHtml(lastActive)}</strong></p>
         <label for="scope-inactivate-comment">Commentaire</label>
-        <input id="scope-inactivate-comment" type="text" value="${escapeHtml(modal.comment || '')}" placeholder="Facultatif">
+        <textarea id="scope-inactivate-comment" rows="3" placeholder="Facultatif">${escapeHtml(modal.comment || '')}</textarea>
         <div class="scope-modal-actions">
           <button type="button" class="scope-btn" id="scope-inactivate-cancel">Annuler</button>
           <button type="button" class="scope-btn scope-inactivate-confirm" id="scope-inactivate-confirm">Confirmer l’inactivation</button>
@@ -2643,7 +2644,7 @@
                 <td data-label="Sous-domaine">${escapeHtml(ev.sousDomaine || '—')}</td>
                 <td data-label="OI à la date">${escapeHtml(ev.oiAtDate || '—')}${ev.permutation && ev.oiAccueil ? `<small>Accueil ${escapeHtml(ev.oiAccueil)}</small>` : ''}</td>
                 <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
-                <td data-label="Statut">${escapeHtml(L.participationStatutLabel(ev.statutParticipation))}${ev.permutation ? ' · permutation' : ''}</td>
+                <td data-label="Statut">${ev.planned ? '<span class="scope-status-pill PLANIFIE">Planifié</span> ' : ''}${escapeHtml(L.participationStatutLabel(ev.statutParticipation))}${ev.permutation ? ' · permutation' : ''}</td>
                 <td data-label="Motif">${escapeHtml(ev.motif || '—')}</td>
                 <td data-label="Action"><a class="scope-btn" href="${escapeHtml(ev.href)}">Événement</a></td>
               </tr>`).join('') || '<tr><td colspan="8">Aucun événement nominatif sur la période.</td></tr>'}

@@ -3176,8 +3176,27 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-modal-identity strong { display:block; font-size:16px; }
 .scope-modal-help { margin:6px 0 0; color:#6b7280; font-size:13px; }
 .scope-modal-computed { margin:10px 0 0; padding:10px 12px; background:#eef2f7; border-radius:8px; font-size:14px; }
+.scope-modal-backdrop-inactivate { align-items:center; justify-content:center; padding:18px; overflow:auto; }
+.scope-modal-inactivate { position:static; inset:auto; display:block; width:min(560px, 100%); max-height:calc(100vh - 36px); overflow:auto; border-radius:8px; }
+.scope-inactivate-identity { display:grid; grid-template-columns:minmax(88px, max-content) 1fr; gap:6px 14px; margin:0 0 14px; padding:12px 14px; background:#f4f6f9; border-radius:8px; }
+.scope-inactivate-identity dt { font-size:12px; font-weight:700; color:#4b5563; text-transform:uppercase; }
+.scope-inactivate-identity dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+.scope-inactivate-last { margin:8px 0 0; padding:10px 12px; border:1px solid #dbe3ee; background:#f8fafc; border-radius:8px; }
+.scope-modal-inactivate textarea { resize:vertical; min-height:84px; }
+@media (max-width: 560px){
+  .scope-modal-backdrop-inactivate { align-items:flex-start; padding:10px; }
+  .scope-modal-inactivate { width:100%; max-height:calc(100vh - 20px); padding:18px 16px; }
+  .scope-inactivate-identity { grid-template-columns:1fr; gap:2px; }
+  .scope-modal-inactivate .scope-modal-actions { flex-direction:column-reverse; align-items:stretch; }
+  .scope-modal-inactivate .scope-btn { width:100%; }
+}
 .scope-inactivate-confirm { background:#8b1e1e; color:#fff; border-color:#8b1e1e; }
 .scope-inactivate-identity { display:grid; grid-template-columns:120px 1fr; gap:6px 12px; margin:0 0 16px; padding:12px 14px; background:#f4f6f9; border-radius:8px; }
+.scope-modal-inactivate .scope-inactivate-identity { grid-template-columns:minmax(88px, max-content) 1fr; gap:6px 14px; margin:0 0 14px; }
+.scope-modal-inactivate .scope-inactivate-identity dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+@media (max-width: 560px){
+  .scope-modal-inactivate .scope-inactivate-identity { grid-template-columns:1fr; gap:2px; }
+}
 .scope-inactivate-identity dt { margin:0; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#6b7280; }
 .scope-inactivate-identity dd { margin:0; font-size:16px; font-weight:600; }
 .scope-inactivate-last { margin:10px 0 0; padding:10px 12px; background:#eef2f7; border-radius:8px; font-size:14px; }
