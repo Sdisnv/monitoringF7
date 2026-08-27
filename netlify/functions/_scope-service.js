@@ -35,6 +35,7 @@ const {
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { computePrExerciseParticipationState, prSessionLabel } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
+const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -127,6 +128,16 @@ async function bumpOrConflict(repo, eventId, baseVersion, patch){
 }
 
 function createScopeService(repo){
+  function comparePeopleByGradeName(a, b){
+    const grade = referentialDisplay.compareGrades
+      ? referentialDisplay.compareGrades(a?.grade, b?.grade)
+      : String(a?.grade || '').localeCompare(String(b?.grade || ''), 'fr', { sensitivity: 'base', numeric: true });
+    return grade
+      || String(a?.nom || '').localeCompare(String(b?.nom || ''), 'fr', { sensitivity: 'base', numeric: true })
+      || String(a?.prenom || '').localeCompare(String(b?.prenom || ''), 'fr', { sensitivity: 'base', numeric: true })
+      || String(a?.nip || '').localeCompare(String(b?.nip || ''), 'fr', { sensitivity: 'base', numeric: true });
+  }
+
   async function referentiels(){
     const [domaines, cibles, suivi] = await Promise.all([
       repo.listDomaines(),
@@ -405,6 +416,248 @@ function createScopeService(repo){
     return { count: personnes.length, personnes };
   }
 
+  function cibleMotifFromPopulationPerson(person){
+    const parts = (person?.cibles || [])
+      .map((c) => `${c.domaineCode || c.domaine_code}_${c.niveauCode || c.niveau_code}`)
+      .filter(Boolean);
+    return parts.length ? parts.join('|') : (person?.motifInclusion || 'affectation_valide_a_date');
+  }
+
+  function normalizeIdList(ids){
+    return [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  }
+
+  function participationHasBusinessTrace(participation){
+    if(!participation) return false;
+    const role = String(participation.role || 'PARTICIPANT').toUpperCase();
+    const statut = String(participation.statut || 'NON_RENSEIGNE').toUpperCase();
+    if(ROLES_ENCADREMENT.has(role)) return true;
+    if(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION'].includes(statut)) return true;
+    if(participation.motif_absence || participation.commentaire) return true;
+    const source = String(participation.source || '').toUpperCase();
+    return source && !['GENERATION', 'SYNC_POPULATION'].includes(source);
+  }
+
+  async function eventPopulationCibleIds(dbx, eventId, ciblesByEvent){
+    if(ciblesByEvent && ciblesByEvent.has(eventId)){
+      return ciblesByEvent.get(eventId).map((row) => row.cible_id).filter(Boolean);
+    }
+    return dbx.listEventCibleIds ? dbx.listEventCibleIds(eventId) : [];
+  }
+
+  async function resolveExpectedByPersonForEvent(dbx, evenement, cibleIds){
+    const population = await resolveEligiblePopulation({
+      eventDate: evenement.date,
+      domaineCode: evenement.domaine_code,
+      sousDomaineCode: evenement.sous_domaine_code,
+      cibleIds,
+      store: previewPopulationStore(dbx)
+    });
+    return new Map((population.personnes || []).map((person) => [String(person.personneId), person]));
+  }
+
+  function eventCiblesMatchAffected(rows, affectedCibleIds, affectedDomaines){
+    for(const row of rows || []){
+      const cibleId = String(row.cible_id || '');
+      const domaine = String(row.domaine_code || '').toUpperCase();
+      const niveau = String(row.niveau_code || '').toUpperCase();
+      if(affectedCibleIds.has(cibleId)) return true;
+      if(niveau === 'GEN' && affectedDomaines.has(domaine)) return true;
+    }
+    return false;
+  }
+
+  async function syncExpectedPopulationForEvents(dbx, events, actor, options = {}){
+    const touchedIds = new Set(normalizeIdList(options.personneIds || options.personne_ids));
+    const summary = {
+      ok: true,
+      scope: 'EXPECTED_POPULATION',
+      personnes: touchedIds.size,
+      eventsScanned: (events || []).length,
+      eventsRecalculated: 0,
+      attendusAdded: 0,
+      attendusRemoved: 0,
+      reclassifiedManual: 0,
+      participationsCreated: 0,
+      participationsPreserved: 0,
+      skippedClosed: 0,
+      skippedQuantitatif: 0,
+      skippedUnfrozen: 0
+    };
+    for(const evenement of events || []){
+      if(!evenement) continue;
+      if(evenement.statut !== 'PLANIFIE'){
+        summary.skippedClosed += 1;
+        continue;
+      }
+      if(evenement.origine === 'LEGACY_AGGREGATED' || isQuantitatif(evenement)){
+        summary.skippedQuantitatif += 1;
+        continue;
+      }
+      if(!evenement.population_figee){
+        summary.skippedUnfrozen += 1;
+        continue;
+      }
+      const eventId = evenement.evenement_id;
+      const cibleIds = await eventPopulationCibleIds(dbx, eventId, options.ciblesByEvent);
+      const expectedByPerson = await resolveExpectedByPersonForEvent(dbx, evenement, cibleIds);
+      const attendus = options.attendusByEvent?.get(eventId) || (dbx.listAttendus ? await dbx.listAttendus(eventId) : []);
+      const participations = options.participationsByEvent?.get(eventId) || (dbx.listParticipations ? await dbx.listParticipations(eventId) : []);
+      const attendusByPerson = new Map(attendus.map((row) => [String(row.personne_id), row]));
+      const participationsByPerson = new Map(participations.map((row) => [String(row.personne_id), row]));
+      const candidateIds = new Set(touchedIds);
+      for(const id of expectedByPerson.keys()){
+        if(touchedIds.has(id)) candidateIds.add(id);
+      }
+      let changed = false;
+      for(const id of candidateIds){
+        const expected = expectedByPerson.get(id);
+        const attendu = attendusByPerson.get(id);
+        const participation = participationsByPerson.get(id);
+        if(expected){
+          const wasManual = attendu && attendu.origine === 'EXCEPTION_AJOUT';
+          if(!attendu || attendu.inclus === false || wasManual){
+            await dbx.upsertAttendu({
+              evenement_id: eventId,
+              personne_id: id,
+              inclus: true,
+              origine: 'REGLE',
+              origine_retrait: null,
+              motif_inclusion: cibleMotifFromPopulationPerson(expected)
+            });
+            if(wasManual) summary.reclassifiedManual += 1;
+            else summary.attendusAdded += 1;
+            if(!participation){
+              await dbx.upsertParticipation({
+                evenement_id: eventId,
+                personne_id: id,
+                statut: 'NON_RENSEIGNE',
+                role: 'PARTICIPANT',
+                source: 'GENERATION',
+                auteur_id: actorId(actor)
+              });
+              summary.participationsCreated += 1;
+            }else{
+              summary.participationsPreserved += 1;
+            }
+            changed = true;
+          }
+          continue;
+        }
+        if(attendu && attendu.inclus !== false && attendu.origine !== 'EXCEPTION_AJOUT'){
+          await dbx.upsertAttendu({
+            ...attendu,
+            inclus: false,
+            origine_retrait: participationHasBusinessTrace(participation)
+              ? 'AFFECTATION_HORS_PERIODE_HISTORIQUE'
+              : 'AFFECTATION_HORS_PERIODE'
+          });
+          if(participationHasBusinessTrace(participation)){
+            summary.participationsPreserved += 1;
+          }else if(participation){
+            await dbx.upsertParticipation({
+              ...participation,
+              statut: 'NON_CONCERNE',
+              role: participation.role || 'PARTICIPANT',
+              source: 'SYNC_POPULATION',
+              auteur_id: actorId(actor)
+            });
+          }
+          summary.attendusRemoved += 1;
+          changed = true;
+        }
+      }
+      if(changed){
+        const current = await dbx.getEvent(eventId);
+        await dbx.updateEventIfVersion(eventId, current.version, {
+          population_version: Number(current.population_version || 0) + 1
+        });
+        await dbx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'evenement',
+          entite_id: eventId,
+          action: 'SYNC_POPULATION_ATTENDUE',
+          apres: {
+            personnes: [...touchedIds],
+            attendusAdded: summary.attendusAdded,
+            attendusRemoved: summary.attendusRemoved,
+            reclassifiedManual: summary.reclassifiedManual
+          }
+        });
+        summary.eventsRecalculated += 1;
+      }
+    }
+    return summary;
+  }
+
+  async function syncExpectedPopulationForPersonnesInRepo(dbx, personneIds, actor, options = {}){
+    const ids = normalizeIdList(personneIds);
+    if(!ids.length) return { ok: true, scope: 'EXPECTED_POPULATION', personnes: 0, eventsScanned: 0, eventsRecalculated: 0 };
+    const [allEvents, allCibles] = await Promise.all([
+      dbx.listEvenements ? dbx.listEvenements({ statut: 'PLANIFIE' }) : [],
+      dbx.listCibles ? dbx.listCibles() : []
+    ]);
+    const cibleById = new Map((allCibles || []).map((row) => [String(row.cible_id), row]));
+    const affectedCibleIds = new Set();
+    const affectedDomaines = new Set();
+    for(const personneId of ids){
+      const affectations = dbx.listAffectations ? await dbx.listAffectations({ personneId }) : [];
+      for(const aff of affectations || []){
+        const cible = cibleById.get(String(aff.cible_id)) || (dbx.getCible ? await dbx.getCible(aff.cible_id) : null);
+        affectedCibleIds.add(String(aff.cible_id));
+        if(cible?.domaine_code) affectedDomaines.add(String(cible.domaine_code).toUpperCase());
+      }
+    }
+    const plannedIds = allEvents.map((event) => event.evenement_id);
+    const [eventCibles, eventAttendus, eventParticipations] = await Promise.all([
+      dbx.listEventCiblesForEvents && plannedIds.length ? dbx.listEventCiblesForEvents(plannedIds) : [],
+      dbx.listAttendusForEvents && plannedIds.length ? dbx.listAttendusForEvents(plannedIds) : [],
+      dbx.listParticipationsForEvents && plannedIds.length ? dbx.listParticipationsForEvents(plannedIds) : []
+    ]);
+    const ciblesByEvent = new Map();
+    for(const row of eventCibles || []){
+      const eventId = row.evenement_id;
+      if(!ciblesByEvent.has(eventId)) ciblesByEvent.set(eventId, []);
+      ciblesByEvent.get(eventId).push(row);
+    }
+    const attendusByEvent = new Map();
+    for(const row of eventAttendus || []){
+      const eventId = row.evenement_id;
+      if(!attendusByEvent.has(eventId)) attendusByEvent.set(eventId, []);
+      attendusByEvent.get(eventId).push(row);
+    }
+    const participationsByEvent = new Map();
+    for(const row of eventParticipations || []){
+      const eventId = row.evenement_id;
+      if(!participationsByEvent.has(eventId)) participationsByEvent.set(eventId, []);
+      participationsByEvent.get(eventId).push(row);
+    }
+    const touched = new Set(ids);
+    const candidates = allEvents.filter((event) => {
+      if(event.statut !== 'PLANIFIE' || !event.population_figee || event.origine === 'LEGACY_AGGREGATED' || isQuantitatif(event)) return false;
+      const rows = ciblesByEvent.get(event.evenement_id) || [];
+      const hasTouchedAttendu = (attendusByEvent.get(event.evenement_id) || []).some((row) => touched.has(String(row.personne_id)));
+      return hasTouchedAttendu || eventCiblesMatchAffected(rows, affectedCibleIds, affectedDomaines);
+    });
+    return syncExpectedPopulationForEvents(dbx, candidates, actor, {
+      ...options,
+      personneIds: ids,
+      ciblesByEvent,
+      attendusByEvent,
+      participationsByEvent
+    });
+  }
+
+  async function syncExpectedPopulationForPersonnes(personneIds, actor, options = {}){
+    return syncExpectedPopulationForPersonnesInRepo(repo, personneIds, actor, options);
+  }
+
+  async function isPersonExpectedForEvent(dbx, evenement, personneId){
+    const cibleIds = await eventPopulationCibleIds(dbx, evenement.evenement_id);
+    const expectedByPerson = await resolveExpectedByPersonForEvent(dbx, evenement, cibleIds);
+    return expectedByPerson.get(String(personneId)) || null;
+  }
+
   function previewPopulationStore(store){
     const base = store || repo;
     const cache = {
@@ -642,7 +895,8 @@ function createScopeService(repo){
         avant: { statut_rh: personne.statut_rh },
         apres: { periode_id: saved.periode_id, type: saved.type, date_debut: saved.date_debut }
       });
-      return { personne: next, periode: saved };
+      const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personneId], actor, { reason: 'OUVRIR_PERIODE' });
+      return { personne: next, periode: saved, synchronisationPopulation };
     });
   }
 
@@ -665,7 +919,8 @@ function createScopeService(repo){
         action: 'CLOTURER_PERIODE',
         apres: { periode_id: periodeId, date_fin: dateFin }
       });
-      return { personne: next, periode: saved };
+      const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personneId], actor, { reason: 'CLOTURER_PERIODE' });
+      return { personne: next, periode: saved, synchronisationPopulation };
     });
   }
 
@@ -687,7 +942,8 @@ function createScopeService(repo){
         const closed = await closeAllOpenAffectations(tx, personneId, openArchive.date_debut);
         await journalClotureAffectations(tx, actor, personne, closed, openArchive.date_debut);
         const next = await syncPersonneSnapshot(tx, personneId, openArchive.date_debut);
-        return { personne: next, periode: openArchive, dejaArchive: true, affectationsCloturees: closed };
+        const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personneId], actor, { reason: 'ARCHIVER_DEJA_ARCHIVE' });
+        return { personne: next, periode: openArchive, dejaArchive: true, affectationsCloturees: closed, synchronisationPopulation };
       }
       const lastActive = dayBefore(date);
       for(const row of existing){
@@ -722,7 +978,8 @@ function createScopeService(repo){
           affectationsCloturees: closed.map((item) => item.affectation_id)
         }
       });
-      return { personne: next, periode, affectationsCloturees: closed };
+      const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personneId], actor, { reason: 'ARCHIVER' });
+      return { personne: next, periode, affectationsCloturees: closed, synchronisationPopulation };
     });
   }
 
@@ -758,7 +1015,8 @@ function createScopeService(repo){
       const afterClose = await tx.listPersonnesPeriodes(personne.personne_id);
       if(afterClose.some((row) => row.type === TYPES_PERIODE.ACTIF && !row.date_fin)){
         const next = await syncPersonneSnapshot(tx, personne.personne_id, date);
-        return { personne: next, dejaActive: true };
+        const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personne.personne_id], actor, { reason: 'REACTIVER_DEJA_ACTIVE' });
+        return { personne: next, dejaActive: true, synchronisationPopulation };
       }
       const normalized = assertPeriodCompatible(afterClose, {
         type: TYPES_PERIODE.ACTIF,
@@ -795,7 +1053,8 @@ function createScopeService(repo){
           cible_id: cibleId || null
         }
       });
-      return { personne: next, periode, affectation, memeIdentite: true };
+      const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personne.personne_id], actor, { reason: 'REACTIVER' });
+      return { personne: next, periode, affectation, memeIdentite: true, synchronisationPopulation };
     });
   }
 
@@ -836,7 +1095,8 @@ function createScopeService(repo){
         action: 'CREER',
         apres: { nip: saved.nip }
       });
-      return { personne: saved };
+      const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [saved.personne_id], actor, { reason: 'CREER_PERSONNE' });
+      return { personne: saved, synchronisationPopulation };
     });
   }
 
@@ -876,7 +1136,8 @@ function createScopeService(repo){
         action: 'CHANGER_AFFECTATION',
         apres: { cible_id: cibleId, date_debut: dateDebut, domaine: cible.domaine_code }
       });
-      return { affectation: saved, cible };
+      const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [personneId], actor, { reason: 'CHANGER_AFFECTATION' });
+      return { affectation: saved, cible, synchronisationPopulation };
     });
   }
 
@@ -885,7 +1146,15 @@ function createScopeService(repo){
   }
 
   async function commitPersonnelSync(body, actor){
-    return personnelSync.commitPersonnelSync(repo, body || {}, actor);
+    const rapport = await personnelSync.commitPersonnelSync(repo, body || {}, actor);
+    const touchedNips = normalizeIdList((rapport.applied || []).map((row) => row.nip));
+    const touchedIds = [];
+    for(const nip of touchedNips){
+      const personne = repo.getPersonneByNip ? await repo.getPersonneByNip(nip) : null;
+      if(personne?.personne_id) touchedIds.push(personne.personne_id);
+    }
+    rapport.synchronisationPopulation = await syncExpectedPopulationForPersonnes(touchedIds, actor, { reason: 'IMPORT_PERSONNEL' });
+    return rapport;
   }
 
   async function figerPopulation(eventId, body, actor){
@@ -967,29 +1236,37 @@ function createScopeService(repo){
           message: 'Cette personne appartient déjà à l’effectif.'
         };
       }
+      const expected = await isPersonExpectedForEvent(tx, evenement, personneId);
+      const origine = expected ? 'REGLE' : 'EXCEPTION_AJOUT';
+      const motifInclusion = expected
+        ? cibleMotifFromPopulationPerson(expected)
+        : (body.motifInclusion || body.motif_inclusion || 'exception_ajout');
       await tx.upsertAttendu({
         evenement_id: eventId,
         personne_id: personneId,
         inclus: true,
-        origine: 'EXCEPTION_AJOUT',
+        origine,
         origine_retrait: null,
-        motif_inclusion: body.motifInclusion || body.motif_inclusion || 'exception_ajout'
+        motif_inclusion: motifInclusion
       });
-      await tx.upsertParticipation({
-        evenement_id: eventId,
-        personne_id: personneId,
-        statut: 'NON_RENSEIGNE',
-        role: 'PARTICIPANT',
-        source: 'EXCEPTION',
-        auteur_id: actorId(actor)
-      });
+      const participation = await tx.getParticipation(eventId, personneId);
+      if(!participation){
+        await tx.upsertParticipation({
+          evenement_id: eventId,
+          personne_id: personneId,
+          statut: 'NON_RENSEIGNE',
+          role: 'PARTICIPANT',
+          source: expected ? 'GENERATION' : 'EXCEPTION',
+          auteur_id: actorId(actor)
+        });
+      }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {});
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'EXCEPTION_AJOUT',
-        apres: { personneId, role },
+        action: expected ? 'ATTENDU_CIBLE_AJOUT' : 'EXCEPTION_AJOUT',
+        apres: { personneId, role, origine },
         commentaire: body.commentaire || null
       });
       return { evenement: next, version: next.version };
@@ -1639,12 +1916,15 @@ function createScopeService(repo){
     let attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
     const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
-    const encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
+    let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
     const taux = computeTaux(participations, attendus);
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id)
     ]);
+    encadrement = encadrement
+      .map((row) => Object.assign({}, personnes[String(row.personne_id)] || personnes[row.personne_id] || {}, row))
+      .sort(comparePeopleByGradeName);
     let prExerciseParticipation = { byPersonneId: {}, kpis: null };
     if((evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
       const cycle = evenement.cycle_id && repo.getCycle
@@ -2657,6 +2937,7 @@ function createScopeService(repo){
     changerAffectation,
     previewPersonnelSync,
     commitPersonnelSync,
+    syncExpectedPopulationForPersonnes,
     assertNoAffectationOverlap,
     assertNoAffectationOverlapInDomain,
     computeTaux

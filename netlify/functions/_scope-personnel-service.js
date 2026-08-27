@@ -969,6 +969,12 @@ async function commitImport(payload, actorSubject){
       ok: true,
       batchId,
       wrote: true,
+      touchedNips: [...new Set([
+        ...mutations.personInserts.map((row) => row.nip),
+        ...mutations.personUpdates.map((row) => row.nip),
+        ...mutations.assignmentInserts.map((row) => row.nip),
+        ...mutations.assignmentClosures.map((row) => row.nip)
+      ].filter(Boolean))],
       personsTouched,
       assignmentsCreated,
       closures,
