@@ -480,10 +480,13 @@ function createScopeService(repo){
 
   async function syncExpectedPopulationForEvents(dbx, events, actor, options = {}){
     const touchedIds = new Set(normalizeIdList(options.personneIds || options.personne_ids));
+    const allPersons = options.allPersons === true || options.all_persons === true;
+    const dryRun = options.dryRun === true || options.dry_run === true;
     const summary = {
       ok: true,
       scope: 'EXPECTED_POPULATION',
       personnes: touchedIds.size,
+      dryRun,
       eventsScanned: (events || []).length,
       eventsRecalculated: 0,
       attendusAdded: 0,
@@ -493,7 +496,8 @@ function createScopeService(repo){
       participationsPreserved: 0,
       skippedClosed: 0,
       skippedQuantitatif: 0,
-      skippedUnfrozen: 0
+      skippedUnfrozen: 0,
+      details: []
     };
     for(const evenement of events || []){
       if(!evenement) continue;
@@ -516,11 +520,26 @@ function createScopeService(repo){
       const participations = options.participationsByEvent?.get(eventId) || (dbx.listParticipations ? await dbx.listParticipations(eventId) : []);
       const attendusByPerson = new Map(attendus.map((row) => [String(row.personne_id), row]));
       const participationsByPerson = new Map(participations.map((row) => [String(row.personne_id), row]));
-      const candidateIds = new Set(touchedIds);
-      for(const id of expectedByPerson.keys()){
-        if(touchedIds.has(id)) candidateIds.add(id);
+      const candidateIds = allPersons ? new Set() : new Set(touchedIds);
+      if(allPersons){
+        for(const id of expectedByPerson.keys()) candidateIds.add(id);
+        for(const id of attendusByPerson.keys()) candidateIds.add(id);
+      }else{
+        for(const id of expectedByPerson.keys()){
+          if(touchedIds.has(id)) candidateIds.add(id);
+        }
       }
       let changed = false;
+      const eventDetails = {
+        eventId,
+        date: evenement.date,
+        libelle: evenement.libelle,
+        domaine: evenement.domaine_code,
+        added: [],
+        reclassified: [],
+        removed: [],
+        preserved: []
+      };
       for(const id of candidateIds){
         const expected = expectedByPerson.get(id);
         const attendu = attendusByPerson.get(id);
@@ -528,77 +547,119 @@ function createScopeService(repo){
         if(expected){
           const wasManual = attendu && attendu.origine === 'EXCEPTION_AJOUT';
           if(!attendu || attendu.inclus === false || wasManual){
-            await dbx.upsertAttendu({
-              evenement_id: eventId,
-              personne_id: id,
-              inclus: true,
-              origine: 'REGLE',
-              origine_retrait: null,
-              motif_inclusion: cibleMotifFromPopulationPerson(expected)
-            });
-            if(wasManual) summary.reclassifiedManual += 1;
-            else summary.attendusAdded += 1;
-            if(!participation){
-              await dbx.upsertParticipation({
+            const motifInclusion = cibleMotifFromPopulationPerson(expected);
+            if(!dryRun){
+              await dbx.upsertAttendu({
                 evenement_id: eventId,
                 personne_id: id,
-                statut: 'NON_RENSEIGNE',
-                role: 'PARTICIPANT',
-                source: 'GENERATION',
-                auteur_id: actorId(actor)
+                inclus: true,
+                origine: 'REGLE',
+                origine_retrait: null,
+                motif_inclusion: motifInclusion
               });
+            }
+            const detail = {
+              personneId: id,
+              nip: expected.nip || null,
+              nom: expected.nom || null,
+              prenom: expected.prenom || null,
+              motifInclusion
+            };
+            if(wasManual) summary.reclassifiedManual += 1;
+            else summary.attendusAdded += 1;
+            if(wasManual) eventDetails.reclassified.push(detail);
+            else eventDetails.added.push(detail);
+            if(!participation){
+              if(!dryRun){
+                await dbx.upsertParticipation({
+                  evenement_id: eventId,
+                  personne_id: id,
+                  statut: 'NON_RENSEIGNE',
+                  role: 'PARTICIPANT',
+                  source: 'GENERATION',
+                  auteur_id: actorId(actor)
+                });
+              }
               summary.participationsCreated += 1;
             }else{
               summary.participationsPreserved += 1;
+              eventDetails.preserved.push({ personneId: id, reason: 'participation_existante' });
             }
             changed = true;
           }
           continue;
         }
         if(attendu && attendu.inclus !== false && attendu.origine !== 'EXCEPTION_AJOUT'){
-          await dbx.upsertAttendu({
-            ...attendu,
-            inclus: false,
-            origine_retrait: participationHasBusinessTrace(participation)
-              ? 'AFFECTATION_HORS_PERIODE_HISTORIQUE'
-              : 'AFFECTATION_HORS_PERIODE'
-          });
+          const origineRetrait = participationHasBusinessTrace(participation)
+            ? 'AFFECTATION_HORS_PERIODE_HISTORIQUE'
+            : 'AFFECTATION_HORS_PERIODE';
+          if(!dryRun){
+            await dbx.upsertAttendu({
+              ...attendu,
+              inclus: false,
+              origine_retrait: origineRetrait
+            });
+          }
+          eventDetails.removed.push({ personneId: id, origineRetrait });
           if(participationHasBusinessTrace(participation)){
             summary.participationsPreserved += 1;
+            eventDetails.preserved.push({ personneId: id, reason: 'historique_participation' });
           }else if(participation){
-            await dbx.upsertParticipation({
-              ...participation,
-              statut: 'NON_CONCERNE',
-              role: participation.role || 'PARTICIPANT',
-              source: 'SYNC_POPULATION',
-              auteur_id: actorId(actor)
-            });
+            if(!dryRun){
+              await dbx.upsertParticipation({
+                ...participation,
+                statut: 'NON_CONCERNE',
+                role: participation.role || 'PARTICIPANT',
+                source: 'SYNC_POPULATION',
+                auteur_id: actorId(actor)
+              });
+            }
           }
           summary.attendusRemoved += 1;
           changed = true;
         }
       }
       if(changed){
-        const current = await dbx.getEvent(eventId);
-        await dbx.updateEventIfVersion(eventId, current.version, {
-          population_version: Number(current.population_version || 0) + 1
-        });
-        await dbx.appendJournal({
-          auteur_id: actorId(actor),
-          entite: 'evenement',
-          entite_id: eventId,
-          action: 'SYNC_POPULATION_ATTENDUE',
-          apres: {
-            personnes: [...touchedIds],
-            attendusAdded: summary.attendusAdded,
-            attendusRemoved: summary.attendusRemoved,
-            reclassifiedManual: summary.reclassifiedManual
-          }
-        });
+        if(!dryRun){
+          const current = await dbx.getEvent(eventId);
+          await dbx.updateEventIfVersion(eventId, current.version, {
+            population_version: Number(current.population_version || 0) + 1
+          });
+          await dbx.appendJournal({
+            auteur_id: actorId(actor),
+            entite: 'evenement',
+            entite_id: eventId,
+            action: allPersons ? 'BACKFILL_POPULATION_ATTENDUE' : 'SYNC_POPULATION_ATTENDUE',
+            apres: {
+              personnes: [...touchedIds],
+              allPersons,
+              attendusAdded: eventDetails.added.length,
+              attendusRemoved: eventDetails.removed.length,
+              reclassifiedManual: eventDetails.reclassified.length
+            }
+          });
+        }
         summary.eventsRecalculated += 1;
+        summary.details.push(eventDetails);
       }
     }
     return summary;
+  }
+
+  async function reconcileExpectedPopulation(options = {}, actor = {}){
+    const annee = options.annee || options.year || null;
+    const domaine = options.domaine || options.domaineCode || options.domaine_code || null;
+    const events = repo.listEvenements ? await repo.listEvenements({ annee, domaine }) : [];
+    const selected = (events || []).filter((event) => {
+      if(options.eventIds && Array.isArray(options.eventIds) && !options.eventIds.includes(event.evenement_id)) return false;
+      if(options.statut && event.statut !== options.statut) return false;
+      return true;
+    });
+    return repo.withTransaction(async (tx) => syncExpectedPopulationForEvents(tx, selected, actor, {
+      allPersons: true,
+      dryRun: options.dryRun === true || options.dry_run === true,
+      reason: options.reason || 'BACKFILL_POPULATION_ATTENDUE'
+    }));
   }
 
   async function syncExpectedPopulationForPersonnesInRepo(dbx, personneIds, actor, options = {}){
@@ -2956,6 +3017,7 @@ function createScopeService(repo){
     previewPersonnelSync,
     commitPersonnelSync,
     syncExpectedPopulationForPersonnes,
+    reconcileExpectedPopulation,
     assertNoAffectationOverlap,
     assertNoAffectationOverlapInDomain,
     computeTaux
