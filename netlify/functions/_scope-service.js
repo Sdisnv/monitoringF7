@@ -590,17 +590,17 @@ function createScopeService(repo){
           continue;
         }
         if(attendu && attendu.inclus !== false && attendu.origine !== 'EXCEPTION_AJOUT'){
-          const origineRetrait = participationHasBusinessTrace(participation)
+          const motifRetrait = participationHasBusinessTrace(participation)
             ? 'AFFECTATION_HORS_PERIODE_HISTORIQUE'
             : 'AFFECTATION_HORS_PERIODE';
           if(!dryRun){
             await dbx.upsertAttendu({
               ...attendu,
               inclus: false,
-              origine_retrait: origineRetrait
+              origine_retrait: 'EXCEPTION_RETRAIT'
             });
           }
-          eventDetails.removed.push({ personneId: id, origineRetrait });
+          eventDetails.removed.push({ personneId: id, origineRetrait: 'EXCEPTION_RETRAIT', motifRetrait });
           if(participationHasBusinessTrace(participation)){
             summary.participationsPreserved += 1;
             eventDetails.preserved.push({ personneId: id, reason: 'historique_participation' });

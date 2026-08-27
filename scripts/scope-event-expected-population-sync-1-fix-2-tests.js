@@ -84,7 +84,8 @@ function encadrementCompare(a, b){
     fiche = await service.lireEvenement(fiche.evenement.evenement_id);
     assert.strictEqual(fiche.attendus.some((row) => row.personne_id === a.personne_id), false);
     assert.strictEqual(fiche.attendusExclus.filter((row) => row.personne_id === a.personne_id).length, 1);
-    assert.strictEqual(fiche.attendusExclus[0].origine_retrait, 'AFFECTATION_HORS_PERIODE_HISTORIQUE');
+    assert.strictEqual(fiche.attendusExclus[0].origine_retrait, 'EXCEPTION_RETRAIT');
+    assert.strictEqual(sync.details[0].removed[0].motifRetrait, 'AFFECTATION_HORS_PERIODE_HISTORIQUE');
     assert.strictEqual(fiche.compteurs.numerator, 0);
     assert.strictEqual(fiche.compteurs.denominator, 0);
     assert.strictEqual(fiche.compteurs.percentage, null);
