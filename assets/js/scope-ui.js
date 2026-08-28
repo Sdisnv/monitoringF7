@@ -2085,24 +2085,53 @@
     menu.style.left = `${Math.round(left)}px`;
   }
 
+  function personnelActivityReturnFocus(node) {
+    if (!node || typeof node.focus !== 'function') return;
+    try { node.focus(); } catch (_error) { /* ignore */ }
+  }
+
+  function personnelOiMeta(person, identite, assignments) {
+    if (assignments && assignments[0] && assignments[0].label) return assignments[0].label;
+    const first = (assignments && assignments[0]) || (personnelOpenAssignments(person) || [])[0];
+    if (first) return personnelAssignmentLabel(first);
+    const oi = identite && (identite.oiPrincipal || identite.oiActuel);
+    if (oi && typeof oi === 'object') return oi.label || '';
+    return oi || '';
+  }
+
+  function closePersonnelActivityModal() {
+    if (!state.personnelInactivate) return;
+    if (state.personnelInactivate.busy) return;
+    const restore = state.personnelInactivate.focusNode;
+    const api = personnelActivityModalApi();
+    state.personnelInactivate = api && api.close ? api.close() : null;
+    render();
+    personnelActivityReturnFocus(restore);
+  }
+
   function openPersonnelActivityModal(person, options) {
     const opts = options || {};
     const identite = person && (person.identite || person);
     closePersonnelRowMenu();
+    const affectations = (opts.affectations || personnelOpenAssignments(person)).map((aff) => ({
+      id: aff.affectationId || aff.id,
+      label: personnelAssignmentLabel(aff)
+    }));
     state.personnelInactivate = {
       id: identite.personneId || identite.id || person.personneId || person.id,
       nip: identite.nip || '',
       label: personnelIdentityLabel(identite),
+      oiLabel: opts.oiLabel || personnelOiMeta(person, identite, affectations),
       mode: opts.mode || 'manage',
       operation: opts.operation || '',
       affectationId: opts.affectationId || '',
-      affectations: (opts.affectations || personnelOpenAssignments(person)).map((aff) => ({
-        id: aff.affectationId || aff.id,
-        label: personnelAssignmentLabel(aff)
-      })),
+      affectations,
       date: '',
       comment: '',
-      source: opts.source || 'directory'
+      source: opts.source || 'directory',
+      busy: false,
+      error: '',
+      focusNode: (typeof document !== 'undefined' && document.activeElement) || null
     };
     render();
   }
@@ -2372,7 +2401,6 @@
       </div>
       ${renderPersonnelHistoryPanel()}
       ${renderPersonnelRowMenu()}
-      ${renderPersonnelInactivateModal()}
     </div>`;
   }
 
@@ -2421,63 +2449,15 @@
     </div>`;
   }
 
+  function personnelActivityModalApi(){
+    return (typeof window !== 'undefined' && window.ScopePersonnelActivityModal)
+      || (typeof require === 'function' ? require('./scope-personnel-activity-modal.js') : null);
+  }
+
   function renderPersonnelInactivateModal(){
-    const modal = state.personnelInactivate;
-    if(!modal) return '';
-    if(modal.mode === 'correct'){
-      return `<div class="scope-modal-backdrop scope-modal-backdrop-inactivate" id="scope-inactivate-modal">
-        <div class="scope-modal scope-modal-inactivate" role="dialog" aria-modal="true" aria-labelledby="scope-inactivate-title">
-          <h3 id="scope-inactivate-title">Corriger l’inactivité</h3>
-          <dl class="scope-inactivate-identity">
-            <dt>Personne</dt>
-            <dd>${escapeHtml(modal.label || '—')}</dd>
-            <dt>NIP</dt>
-            <dd>${escapeHtml(modal.nip || '—')}</dd>
-          </dl>
-          <label for="scope-inactivate-date">Date d’effet</label>
-          <input id="scope-inactivate-date" type="date" required value="${escapeHtml(modal.date || '')}">
-          <p class="scope-activity-hint">À partir de cette date, la personne ne sera plus comptée dans les effectifs concernés.</p>
-          <label for="scope-inactivate-comment">Commentaire</label>
-          <textarea id="scope-inactivate-comment" rows="3" placeholder="Facultatif">${escapeHtml(modal.comment || '')}</textarea>
-          <div class="scope-modal-actions">
-            <button type="button" class="scope-btn" id="scope-inactivate-cancel">Annuler</button>
-            <button type="button" class="scope-btn scope-inactivate-confirm" id="scope-inactivate-confirm">Confirmer</button>
-          </div>
-        </div>
-      </div>`;
-    }
-    const assignments = modal.affectations || [];
-    const showAssignments = modal.operation === 'assignment' && assignments.length > 1;
-    const selectedAssignment = assignments.find((row) => String(row.id) === String(modal.affectationId)) || (assignments.length === 1 ? assignments[0] : null);
-    return `<div class="scope-modal-backdrop scope-modal-backdrop-inactivate" id="scope-inactivate-modal">
-      <div class="scope-modal scope-modal-inactivate" role="dialog" aria-modal="true" aria-labelledby="scope-inactivate-title">
-        <h3 id="scope-inactivate-title">Gérer l’activité</h3>
-        <dl class="scope-inactivate-identity">
-          <dt>Personne</dt>
-          <dd>${escapeHtml(modal.label || '—')}</dd>
-          <dt>NIP</dt>
-          <dd>${escapeHtml(modal.nip || '—')}</dd>
-        </dl>
-        <p class="scope-modal-section-label">Action</p>
-        <div class="scope-activity-ops">
-          <label><input type="radio" name="scope-activity-op" value="assignment" ${modal.operation === 'assignment' ? 'checked' : ''}> Clôturer une affectation</label>
-          <label><input type="radio" name="scope-activity-op" value="resignation" ${modal.operation === 'resignation' ? 'checked' : ''}> Démission du SDIS</label>
-        </div>
-        ${modal.operation === 'resignation' ? `<p class="scope-activity-hint">Cette opération met fin à l’activité générale de la personne et clôt les affectations concernées.</p>` : ''}
-        ${modal.operation === 'assignment' && !assignments.length ? `<p class="scope-activity-hint">Aucune affectation active à clôturer.</p>` : ''}
-        ${showAssignments ? `<div class="scope-activity-assignments">${assignments.map((aff) => `<label><input type="radio" name="scope-activity-aff" value="${escapeHtml(aff.id)}" ${String(modal.affectationId) === String(aff.id) ? 'checked' : ''}> ${escapeHtml(aff.label)}</label>`).join('')}</div>` : ''}
-        ${modal.operation === 'assignment' && assignments.length === 1 ? `<p class="scope-activity-hint">Affectation concernée : ${escapeHtml(selectedAssignment.label)}</p>` : ''}
-        <label for="scope-inactivate-date">Date d’effet</label>
-        <input id="scope-inactivate-date" type="date" required value="${escapeHtml(modal.date || '')}">
-        <p class="scope-activity-hint">À partir de cette date, la personne ne sera plus comptée dans les effectifs concernés.</p>
-        <label for="scope-inactivate-comment">Commentaire</label>
-        <textarea id="scope-inactivate-comment" rows="3" placeholder="Facultatif">${escapeHtml(modal.comment || '')}</textarea>
-        <div class="scope-modal-actions">
-          <button type="button" class="scope-btn" id="scope-inactivate-cancel">Annuler</button>
-          <button type="button" class="scope-btn scope-inactivate-confirm" id="scope-inactivate-confirm">Confirmer</button>
-        </div>
-      </div>
-    </div>`;
+    const api = personnelActivityModalApi();
+    if(!api || !api.render) return '';
+    return api.render(state.personnelInactivate);
   }
 
   function renderPersonneActivityCard(fiche, identite){
@@ -2733,9 +2713,6 @@
         </header>
         ${editBlock}
         ${renderPersonneActivityCard(fiche, identite)}
-        ${renderPersonnelInactivateModal()}
-        ${renderPersonneActivityCard(fiche, identite)}
-        ${renderPersonnelInactivateModal()}
         <div class="scope-kpis scope-person-kpis">
           <article class="scope-kpi scope-kpi-main">
             <strong>${escapeHtml(tauxText)}</strong>
@@ -4311,7 +4288,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderModalAllPresent()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -5152,37 +5129,6 @@
     };
     document.getElementById('scope-quit-personnel-asof')?.addEventListener('click', quitAsOf);
     document.getElementById('scope-quit-personnel-asof-history')?.addEventListener('click', quitAsOf);
-    document.getElementById('scope-inactivate-date')?.addEventListener('change', (e) => {
-      if(state.personnelInactivate){
-        state.personnelInactivate.date = e.target.value;
-      }
-    });
-    document.getElementById('scope-inactivate-comment')?.addEventListener('input', (e) => {
-      if(state.personnelInactivate){
-        state.personnelInactivate.comment = e.target.value;
-      }
-    });
-    root.querySelectorAll('input[name="scope-activity-op"]').forEach((input) => {
-      input.addEventListener('change', () => {
-        if(!state.personnelInactivate) return;
-        state.personnelInactivate.operation = input.value;
-        if(input.value === 'assignment'){
-          const only = (state.personnelInactivate.affectations || [])[0];
-          if(only && (state.personnelInactivate.affectations || []).length === 1){
-            state.personnelInactivate.affectationId = only.id;
-          }
-        } else {
-          state.personnelInactivate.affectationId = '';
-        }
-        render();
-      });
-    });
-    root.querySelectorAll('input[name="scope-activity-aff"]').forEach((input) => {
-      input.addEventListener('change', () => {
-        if(!state.personnelInactivate) return;
-        state.personnelInactivate.affectationId = input.value;
-      });
-    });
     document.getElementById('personnel-period-mode')?.addEventListener('change', (e) => {
       const mode = e.target.value;
       if (mode === 'YEAR') {
@@ -5254,58 +5200,6 @@
         openPersonnelActivityModal(person || { personneId: id, id }, { mode: 'correct', source: 'directory' });
       });
     });
-    document.getElementById('scope-inactivate-cancel')?.addEventListener('click', () => {
-      state.personnelInactivate = null;
-      render();
-    });
-    document.getElementById('scope-inactivate-modal')?.addEventListener('click', (event) => {
-      if(event.target && event.target.id === 'scope-inactivate-modal'){
-        state.personnelInactivate = null;
-        render();
-      }
-    });
-    document.getElementById('scope-inactivate-confirm')?.addEventListener('click', () => {
-      const date = document.getElementById('scope-inactivate-date')?.value || (state.personnelInactivate && state.personnelInactivate.date);
-      const comment = document.getElementById('scope-inactivate-comment')?.value || '';
-      const modal = state.personnelInactivate;
-      if(!modal) return;
-      if(modal.mode !== 'correct' && !modal.operation){
-        toast('error', 'Action obligatoire', 'Choisissez de clôturer une affectation ou de déclarer une démission.');
-        return;
-      }
-      if(modal.mode !== 'correct' && modal.operation === 'assignment'){
-        const assignments = modal.affectations || [];
-        const affectationId = modal.affectationId || (assignments.length === 1 ? assignments[0].id : '');
-        if(!affectationId){
-          toast('error', 'Affectation obligatoire', 'Sélectionnez l’affectation à clôturer.');
-          return;
-        }
-        modal.affectationId = affectationId;
-      }
-      if(!date){ toast('error', 'Date obligatoire', 'La date d’effet est obligatoire.'); return; }
-      withLoading(async () => {
-        const resignation = modal.mode !== 'correct' && modal.operation === 'resignation';
-        await client.inactivatePersonne({
-          personneId: modal.id,
-          dateInactivite: date,
-          dateEffet: date,
-          commentaire: comment,
-          action: modal.mode === 'correct' ? 'correct' : (resignation ? 'inactivate' : 'close_assignment'),
-          operation: modal.mode === 'correct' ? '' : (resignation ? 'RESIGNATION' : 'ASSIGNMENT'),
-          affectationId: resignation || modal.mode === 'correct' ? undefined : modal.affectationId
-        });
-        const source = modal.source;
-        const personneId = modal.id;
-        state.personnelInactivate = null;
-        state.personnelRowMenuId = null;
-        if(source === 'fiche' || (route().screen === 'personne' && route().personneId)){
-          await reloadPersonneFiche(personneId);
-          await refreshAlertCounts();
-        } else {
-          await loadPersonnelDirectory();
-        }
-      });
-    });
     if(state.personnelRowMenuId){
       requestAnimationFrame(positionPersonnelRowMenu);
     }
@@ -5372,13 +5266,90 @@
     });
   }
 
+  async function submitPersonnelActivityModal() {
+    const api = personnelActivityModalApi();
+    const modal = state.personnelInactivate;
+    if (!api || !modal || modal.busy) return;
+    const dateEl = document.getElementById('scope-activity-date');
+    const commentEl = document.getElementById('scope-activity-comment');
+    if (dateEl) modal.date = dateEl.value;
+    if (commentEl) modal.comment = commentEl.value;
+    const body = api.confirmBody(modal);
+    if (!body) return;
+    state.personnelInactivate = api.beginSubmit(modal);
+    if (!state.personnelInactivate || !state.personnelInactivate.busy) return;
+    render();
+    try {
+      await client.inactivatePersonne(body);
+      const source = state.personnelInactivate.source;
+      const personneId = state.personnelInactivate.id;
+      state.personnelInactivate = api.close();
+      state.personnelRowMenuId = null;
+      if (source === 'fiche' || (route().screen === 'personne' && route().personneId)) {
+        await reloadPersonneFiche(personneId);
+        await refreshAlertCounts();
+      } else {
+        await loadPersonnelDirectory();
+        render();
+      }
+    } catch (error) {
+      const info = L.friendlyError(error);
+      state.personnelInactivate = api.failSubmit(state.personnelInactivate, info.message || info.title);
+      render();
+    }
+  }
+
   function bindPersonnelActivityChrome() {
     document.addEventListener('click', (event) => {
-      if (!state.personnelRowMenuId) return;
       const target = event.target;
-      if (target && target.closest && (target.closest('[data-personnel-more]') || target.closest('#scope-personnel-row-menu'))) return;
+      if (!target || !target.closest) return;
+      if (target.closest('[data-activity-cancel]')) {
+        event.preventDefault();
+        closePersonnelActivityModal();
+        return;
+      }
+      if (target.hasAttribute && target.hasAttribute('data-activity-overlay')) {
+        closePersonnelActivityModal();
+        return;
+      }
+      const op = target.closest('[data-activity-op]');
+      if (op && state.personnelInactivate && !state.personnelInactivate.busy) {
+        event.preventDefault();
+        const api = personnelActivityModalApi();
+        state.personnelInactivate = api.selectOperation(state.personnelInactivate, op.getAttribute('data-activity-op'));
+        render();
+        return;
+      }
+      if (target.closest('[data-activity-confirm]')) {
+        event.preventDefault();
+        submitPersonnelActivityModal();
+        return;
+      }
+      if (!state.personnelRowMenuId) return;
+      if (target.closest('[data-personnel-more]') || target.closest('#scope-personnel-row-menu') || target.closest('[data-activity-overlay]')) return;
       state.personnelRowMenuId = null;
       render();
+    });
+    document.addEventListener('change', (event) => {
+      const target = event.target;
+      if (!target || !state.personnelInactivate || state.personnelInactivate.busy) return;
+      if (target.id === 'scope-activity-date') {
+        state.personnelInactivate.date = target.value;
+        render();
+        document.getElementById('scope-activity-date')?.focus();
+        return;
+      }
+      if (target.name === 'scope-activity-aff') {
+        state.personnelInactivate.affectationId = target.value;
+        render();
+      }
+    });
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!target || !state.personnelInactivate) return;
+      if (target.id === 'scope-activity-comment') {
+        state.personnelInactivate.comment = target.value;
+      }
     });
     window.addEventListener('resize', () => {
       if (state.personnelRowMenuId) positionPersonnelRowMenu();
@@ -5758,8 +5729,7 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (state.personnelInactivate) {
-        state.personnelInactivate = null;
-        render();
+        closePersonnelActivityModal();
         return;
       }
       if (state.personnelRowMenuId) {

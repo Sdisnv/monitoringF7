@@ -220,18 +220,19 @@ assert.deepStrictEqual(display.filterPersonnelRows(mixed, { statut: 'inactifs' }
 assert.strictEqual(display.filterPersonnelRows(mixed, { statut: 'tous' }).length, 2);
 
 const ui = fs.readFileSync(path.join(__dirname, '../assets/js/scope-ui.js'), 'utf8');
+const activityModal = fs.readFileSync(path.join(__dirname, '../assets/js/scope-personnel-activity-modal.js'), 'utf8');
 assert.ok(ui.includes("['inactifs', 'Inactifs']"));
 assert.ok(!ui.includes("['archives', 'Archivés']"));
 assert.ok(!ui.includes('Agrégat batch'));
 assert.ok(ui.includes('Gérer l’activité') || ui.includes("Gérer l'activité"));
-assert.ok(ui.includes('Démission du SDIS'));
-assert.ok(ui.includes('Clôturer une affectation'));
-assert.ok(ui.includes('Date d’effet') || ui.includes("Date d'effet"));
+assert.ok(activityModal.includes('Démission du SDIS'));
+assert.ok(activityModal.includes('Clôturer une affectation'));
+assert.ok(activityModal.includes('Date d’effet') || activityModal.includes("Date d'effet"));
 assert.ok(ui.includes('positionPersonnelRowMenu'));
 assert.ok(ui.includes('data-personnel-more'));
 assert.ok(!ui.includes('<details class="scope-row-more">'));
 assert.ok(!ui.includes('Rendre inactif'));
-assert.ok(ui.includes('À partir de cette date, la personne ne sera plus comptée dans les effectifs concernés.'));
+assert.ok(activityModal.includes('À partir de cette date, la personne ne sera plus comptée dans les effectifs concernés.'));
 assert.ok(ui.includes('Situation historique'));
 assert.ok(ui.includes('Quitter la situation historique'));
 assert.ok(ui.includes('Afficher l’historique') || ui.includes("Afficher l'historique") || ui.includes('Afficher l’historique'));
