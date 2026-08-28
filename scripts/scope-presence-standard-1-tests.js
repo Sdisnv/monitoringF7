@@ -580,7 +580,7 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('scope-row-manual'));
     assert.ok(!ui.includes('scope-row-manual-badge'));
     assert.ok(!saisieRows.includes('Ajout manuel</span>'));
-    assert.ok(ui.includes('<th>Justificatif</th>'));
+    assert.ok(ui.includes('<th>Motif / information</th>'));
     assert.ok(!saisieRows.includes('<th>Action</th>'));
     assert.ok(ui.includes('cibleLabelFromAttendu'));
     assert.ok(ui.includes('scope-kpi-board'));
@@ -589,7 +589,8 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('Vue globale dédupliquée par personne'));
     assert.ok(ui.includes('scope-presence-warning'));
     assert.ok(ui.includes('scope-cloture-reason'));
-    assert.ok(ui.includes("row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT'"));
+    assert.ok(ui.includes('applyParticipationStatus'));
+    assert.ok(!ui.includes("row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT'"));
     assert.ok(ui.includes('scopeSearchTimers'));
     assert.ok(ui.includes('scopeSearchTokens'));
     assert.ok(ui.includes('clearPresenceSearchState'));

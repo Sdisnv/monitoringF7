@@ -180,19 +180,17 @@ function attendu(detail, personneId){
   await record('I — Motif exclusif badge cliquable puis select', () => {
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
     const css = fs.readFileSync('assets/css/scope.css', 'utf8');
-    assert.ok(ui.includes('const motifSelect = !selectedMotif || row.editMotif'));
+    const logicSrc = fs.readFileSync('assets/js/scope-ui-logic.js', 'utf8');
     assert.ok(ui.includes('data-motif-edit='));
-    assert.ok(ui.includes('row.editMotif = true'));
-    assert.ok(ui.includes('row.editMotif = false'));
-    assert.ok(!ui.includes('</select>${selectedMotif ? `<span class="scope-motif-selected"'));
-    assert.ok(css.includes('height: 40px'));
-    assert.ok(css.includes('.scope-motif-selected:hover'));
+    assert.ok(ui.includes('data-motif-chip'));
+    assert.ok(logicSrc.includes('editMotif: true') || logicSrc.includes('next.editMotif = true'));
+    assert.ok(css.includes('.scope-motif-chip'));
   });
 
   await record('J — Couleurs boutons présence par statut et disabled lisible', () => {
     const css = fs.readFileSync('assets/css/scope.css', 'utf8');
     assert.ok(css.includes('button[data-status="PRESENT"]'));
-    assert.ok(css.includes('background: #eef6ff'));
+    assert.ok(css.includes('background: #eef2ff'));
     assert.ok(css.includes('button[data-status="ABSENT_EXCUSE"]'));
     assert.ok(css.includes('button[data-status="DISPENSE"]'));
     assert.ok(css.includes('button[data-status="ABSENT_NON_EXCUSE"][aria-pressed="true"]'));

@@ -508,8 +508,7 @@
     let dispense = 0;
     let open = 0;
     for (const row of rows || []) {
-      if (row.inclus === false) continue;
-      if (row.role && ROLES_ENCADREMENT.has(row.role) && row.inclus !== true) continue;
+      if (!countsInSaisieTaux(row)) continue;
       const s = row.statut;
       if (s === 'PRESENT' || s === 'PERMUTATION') {
         present += 1;
@@ -521,6 +520,98 @@
       else if (s === 'NON_RENSEIGNE' || !s) open += 1;
     }
     return { present, formateur, excuse, absent, dispense, open };
+  }
+
+  function countsInSaisieTaux(row) {
+    if (!row || row.inclus === false) return false;
+    if (row.alreadyCountedInSession) return false;
+    const jsp = String(row.jspRole || row.jsp_role || '').toUpperCase();
+    if (jsp === 'MONITEUR') return false;
+    const role = String(row.role || '').toUpperCase();
+    if (role === 'AUXILIAIRE' || role === 'MONITEUR') return false;
+    if (ROLES_ENCADREMENT.has(role) && row.inclus !== true) return false;
+    return true;
+  }
+
+  function participationStatusesForDomaine(domaine) {
+    const raw = String(domaine || '').toUpperCase();
+    const d = raw === 'PR' ? 'PAPR' : raw;
+    const list = [
+      ['PRESENT', 'Présent'],
+      ['ABSENT_EXCUSE', 'Excusé'],
+      ['ABSENT_NON_EXCUSE', 'Absent']
+    ];
+    if (d !== 'JSP') list.push(['DISPENSE', 'Dispensé']);
+    if (d === 'DAP') list.push(['PERMUTATION', 'Permutation']);
+    return list;
+  }
+
+  function preserveParticipationRole(role) {
+    const r = String(role || 'PARTICIPANT').toUpperCase();
+    return ROLES_ENCADREMENT.has(r) ? r : 'PARTICIPANT';
+  }
+
+  function statusLockedForRole(role) {
+    const r = String(role || '').toUpperCase();
+    return r === 'FORMATEUR' || r === 'MONITEUR' || r === 'AUXILIAIRE';
+  }
+
+  function applyParticipationStatus(row, statut) {
+    const next = Object.assign({}, row);
+    next.role = preserveParticipationRole(row && row.role);
+    if (statusLockedForRole(next.role)) {
+      next.presenceEdited = true;
+      return next;
+    }
+    const wasActive = row && row.statut === statut;
+    if (wasActive) {
+      next.statut = 'NON_RENSEIGNE';
+      next.motifAbsence = '';
+      next.commentaire = '';
+      next.editMotif = false;
+    } else {
+      next.statut = statut;
+      if (statut !== 'ABSENT_EXCUSE') {
+        next.motifAbsence = '';
+        next.commentaire = '';
+        next.editMotif = false;
+      } else if (!next.motifAbsence) {
+        next.editMotif = true;
+      }
+    }
+    next.presenceEdited = true;
+    return next;
+  }
+
+  function applyExcuseMotif(row, motif) {
+    const next = Object.assign({}, row, {
+      statut: 'ABSENT_EXCUSE',
+      motifAbsence: motif,
+      editMotif: false,
+      presenceEdited: true,
+      role: preserveParticipationRole(row && row.role)
+    });
+    if (motif !== 'AUTRE') next.commentaire = row && row.motifAbsence === 'AUTRE' ? '' : (row.commentaire || '');
+    return next;
+  }
+
+  function buildPresenceSavePayload(rows, encadrementIds) {
+    const lockedEncadrement = encadrementIds || new Set();
+    return (rows || [])
+      .filter((r) => {
+        if (r.inclus === false || r.alreadyCountedInSession) return false;
+        const role = preserveParticipationRole(r.role);
+        if (role === 'AUXILIAIRE' || role === 'MONITEUR') return false;
+        const locked = lockedEncadrement.has(String(r.personneId));
+        return !locked || (role === 'SURVEILLANT' && r.presenceEdited);
+      })
+      .map((r) => ({
+        personneId: r.personneId,
+        statut: r.statut,
+        role: preserveParticipationRole(r.role),
+        motif_absence: r.motifAbsence || null,
+        commentaire: r.commentaire || null
+      }));
   }
 
   function excuseBreakdown(rows) {
@@ -981,6 +1072,13 @@
     modeLabel,
     volumesEquality,
     liveCounters,
+    countsInSaisieTaux,
+    participationStatusesForDomaine,
+    preserveParticipationRole,
+    statusLockedForRole,
+    applyParticipationStatus,
+    applyExcuseMotif,
+    buildPresenceSavePayload,
     excuseBreakdown,
     clotureDisabled,
     needsConfirmAllPresent,

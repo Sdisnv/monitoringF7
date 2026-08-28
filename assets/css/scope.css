@@ -1560,10 +1560,11 @@ html, body {
   font-weight: 800;
 }
 
-.scope-kpi-card.is-present { border-left-color: #23845f; background: #eef8f4; }
-.scope-kpi-card.is-excuse { border-left-color: #d9822b; background: #fff6eb; }
-.scope-kpi-card.is-absent { border-left-color: var(--scope-red); background: #fff0f1; }
-.scope-kpi-card.is-dispense { border-left-color: #5f7591; background: #f0f4f8; }
+.scope-kpi-card.is-attendus { border-left-color: var(--scope-blue); background: #f4f5fb; }
+.scope-kpi-card.is-present { border-left-color: var(--scope-blue); background: #eef2ff; }
+.scope-kpi-card.is-excuse { border-left-color: #64748b; background: #f1f5f9; }
+.scope-kpi-card.is-absent { border-left-color: #111827; background: #e8eaed; }
+.scope-kpi-card.is-dispense { border-left-color: #b45309; background: #fff8db; }
 .scope-kpi-card.is-open { border-left-color: #7b8794; background: #f5f6f8; }
 .scope-kpi-card.is-trainer { border-left-color: #171c8f; background: #f1f2ff; }
 .scope-kpi-card.is-monitor { border-left-color: #2f7d8c; background: #edf8fa; }
@@ -1804,114 +1805,162 @@ html, body {
 .scope-status-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
-.scope-status-row button {
-  height: 40px;
-  min-height: 40px;
-  padding: 0 12px;
-  border-radius: var(--scope-radius-sm);
-  border: 1px solid var(--scope-line);
+.scope-status-chip,
+.scope-status-row button,
+.scope-motif-chip {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #d7dee8;
   background: #fff;
   color: #1f2937;
-  font-size: 14px;
+  font-size: 12.5px;
+  font-weight: 650;
   cursor: pointer;
   font-family: inherit;
-  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+  line-height: 1;
+}
+
+.scope-status-chip.is-convoque {
+  background: #f3f4f6;
+  border-color: #c5ccd6;
+  color: #4b5563;
+  cursor: default;
 }
 
 .scope-status-row button[data-status="PRESENT"] {
-  background: #eef6ff;
-  border-color: #0b4f86;
-  color: #0b3f6f;
+  background: #eef2ff;
+  border-color: var(--scope-blue);
+  color: var(--scope-blue);
 }
 
 .scope-status-row button[data-status="ABSENT_EXCUSE"] {
-  background: #fff1f2;
-  border-color: #ef4444;
-  color: #9f1239;
+  background: #f8fafc;
+  border-color: #64748b;
+  color: #334155;
 }
 
 .scope-status-row button[data-status="DISPENSE"] {
   background: #fff8db;
-  border-color: #9a6b00;
-  color: #4a3600;
+  border-color: #b45309;
+  color: #7c4a03;
 }
 
 .scope-status-row button[data-status="ABSENT_NON_EXCUSE"] {
-  background: #fff;
+  background: #f3f4f6;
   border-color: #111827;
   color: #111827;
 }
 
+.scope-status-row button[data-status="PERMUTATION"] {
+  background: #eef2ff;
+  border-color: #3b4bc4;
+  color: var(--scope-blue);
+}
+
 .scope-status-row button:hover {
-  background: #f7f8fa;
-  border-color: #cfd6df;
+  filter: brightness(0.98);
 }
 
 .scope-status-row button[data-status="PRESENT"]:hover {
-  background: #dbeeff;
-  border-color: #073b66;
+  background: #e0e7ff;
 }
 
 .scope-status-row button[data-status="ABSENT_EXCUSE"]:hover {
-  background: #ffe4e6;
-  border-color: #dc2626;
+  background: #eef2f7;
 }
 
 .scope-status-row button[data-status="DISPENSE"]:hover {
   background: #fff0b8;
-  border-color: #7a5200;
 }
 
 .scope-status-row button[data-status="ABSENT_NON_EXCUSE"]:hover {
-  background: #111827;
-  border-color: #111827;
-  color: #fff;
+  background: #e5e7eb;
 }
 
-.scope-status-row button:focus-visible {
-  outline: 2px solid rgba(222, 0, 10, .34);
+.scope-status-row button:focus-visible,
+.scope-motif-chip:focus-visible {
+  outline: 2px solid rgba(23, 28, 143, .35);
   outline-offset: 2px;
 }
 
 .scope-status-row button[data-status="PRESENT"][aria-pressed="true"] {
-  background: #0b4f86;
-  border-color: #062f52;
-  color: #fff;
-  box-shadow: 0 0 0 2px rgba(11, 79, 134, .18);
+  background: #eef2ff;
+  border-color: var(--scope-blue);
+  color: var(--scope-blue);
+  box-shadow: inset 0 0 0 1px var(--scope-blue);
 }
 
 .scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"] {
-  background: #ef4444;
-  border-color: #b91c1c;
-  color: #fff;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, .18);
+  background: #e8eef5;
+  border-color: #334155;
+  color: #1e293b;
+  box-shadow: inset 0 0 0 1px #334155;
 }
 
 .scope-status-row button[data-status="DISPENSE"][aria-pressed="true"] {
-  background: #d69b00;
-  border-color: #7a5200;
-  color: #1f1600;
-  box-shadow: 0 0 0 2px rgba(154, 107, 0, .18);
+  background: #fff3c4;
+  border-color: #92400e;
+  color: #78350f;
+  box-shadow: inset 0 0 0 1px #92400e;
 }
 
 .scope-status-row button[data-status="ABSENT_NON_EXCUSE"][aria-pressed="true"] {
   background: #111827;
   border-color: #111827;
   color: #fff;
-  box-shadow: 0 0 0 2px rgba(17, 24, 39, .18);
+}
+
+.scope-status-row button[data-status="PERMUTATION"][aria-pressed="true"] {
+  background: #e0e7ff;
+  border-color: var(--scope-blue);
+  color: var(--scope-blue);
+  box-shadow: inset 0 0 0 1px var(--scope-blue);
 }
 
 .scope-status-row button:disabled,
 .scope-status-row button[aria-disabled="true"] {
   cursor: not-allowed;
-  color: #7d8794;
-  background: #eef3fb;
-  border-color: #d7e3f4;
+  opacity: .45;
   box-shadow: none;
+}
+
+.scope-motif-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.scope-motif-chip.is-selected {
+  background: #e8eef5;
+  border-color: #334155;
+  color: #1e293b;
+}
+.scope-role-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f1f2ff;
+  border: 1px solid #c7cbe8;
+  color: var(--scope-blue);
+  font-size: 12px;
+  font-weight: 650;
+}
+.scope-saisie-person { font-weight: 650; }
+.scope-saisie-open { margin: 0 0 10px; font-size: 14px; font-weight: 650; color: #334155; }
+.scope-saisie-dirty { margin: 0 0 10px; font-size: 13px; font-weight: 650; color: #92400e; }
+.scope-saisie-table td, .scope-saisie-table th { vertical-align: middle; }
+.scope-saisie-table tr.is-present td { background: #f7f8ff; }
+.scope-saisie-table tr.is-absent td { background: #eceff3; }
+.scope-saisie-table tr.is-excuse td { background: #f8fafc; }
+.scope-saisie-table tr.is-dispense td { background: #fffbeb; }
+.scope-saisie-table tr.is-open td { background: inherit; }
+.scope-excuse-comment { margin-top: 6px; height: 32px; width: min(220px, 100%); }
+@media (max-width: 768px) {
+  .scope-saisie-table { min-width: 0; }
+  .scope-status-row { max-width: 100%; }
 }
 
 .scope-status-row select,

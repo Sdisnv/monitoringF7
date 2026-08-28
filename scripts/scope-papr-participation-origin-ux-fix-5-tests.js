@@ -167,17 +167,15 @@ function attendu(detail, personneId){
     assert.ok(!attendu(pr5, 'b').alreadyCountedInSession);
   });
 
-  await record('8 — Tooltip chronologique frontend et couleur Excusé rouge', () => {
+  await record('8 — Tooltip chronologique frontend et couleur Excusé distincte', () => {
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
     const css = fs.readFileSync('assets/css/scope.css', 'utf8');
     assert.ok(ui.includes("relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'"));
     assert.ok(ui.includes('à la session PR ${referenceLabel} en qualité de ${referenceQuality}.'));
     assert.ok(css.includes('button[data-status="ABSENT_EXCUSE"]'));
-    assert.ok(css.includes('background: #fff1f2'));
-    assert.ok(css.includes('border-color: #ef4444'));
-    assert.ok(css.includes('color: #9f1239'));
     assert.ok(css.includes('button[data-status="DISPENSE"]'));
     assert.ok(css.includes('background: #fff8db'));
+    assert.ok(css.includes('button[data-status="ABSENT_NON_EXCUSE"]'));
   });
 
   for(const result of results){

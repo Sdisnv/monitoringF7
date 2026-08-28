@@ -86,6 +86,8 @@
     encRetrait: null,
     encQuery: '',
     encHits: [],
+    saisieDirty: false,
+    presenceSaveBusy: false,
     scopeSearchTimers: {},
     scopeSearchTokens: { encadrement: 0, manual: 0 },
     manualPersonQuery: '',
@@ -601,20 +603,7 @@
   }
 
   function buildPresenceSavePayload(rows, encadrementIds) {
-    const lockedEncadrement = encadrementIds || new Set();
-    return (rows || [])
-      .filter((r) => {
-        if (r.inclus === false || r.alreadyCountedInSession) return false;
-        const locked = lockedEncadrement.has(String(r.personneId));
-        return !locked || (r.role === 'SURVEILLANT' && r.presenceEdited);
-      })
-      .map((r) => ({
-        personneId: r.personneId,
-        statut: r.statut,
-        role: ['FORMATEUR', 'SURVEILLANT'].includes(r.role) ? r.role : 'PARTICIPANT',
-        motif_absence: r.motifAbsence || null,
-        commentaire: r.commentaire || null
-      }));
+    return L.buildPresenceSavePayload(rows, encadrementIds);
   }
 
   function volumesFromFiche() {
@@ -3230,12 +3219,17 @@
           <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
           <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</p>
           ${renderPresenceKpis(niveaux, fiche)}
+          ${(() => {
+            const c = L.liveCounters(state.saisie);
+            return `<p class="scope-saisie-open" role="status">${escapeHtml(String(c.open))} présence${c.open === 1 ? '' : 's'} à renseigner</p>`;
+          })()}
+          ${state.saisieDirty ? '<p class="scope-saisie-dirty" role="status">Modifications non enregistrées.</p>' : ''}
           ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
           <div class="scope-actions">
             <a class="scope-btn" href="#/exercices">Retour aux événements</a>
             <button type="button" class="scope-btn" id="all-present">Tous présents</button>
             <button type="button" class="scope-btn" id="reset-saisie">Réinitialiser la saisie</button>
-            <button type="button" class="scope-btn scope-btn-primary" id="save-part">Enregistrer</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
             <button type="button" class="scope-btn" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
           </div>
           ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
@@ -3269,16 +3263,7 @@
   }
 
   function countStatuses(rows) {
-    const c = { present: 0, excuse: 0, absent: 0, dispense: 0, open: 0 };
-    (rows || []).forEach((row) => {
-      if (!row || row.inclus === false) return;
-      if (row.statut === 'PRESENT') c.present += 1;
-      else if (row.statut === 'ABSENT_EXCUSE') c.excuse += 1;
-      else if (row.statut === 'ABSENT_NON_EXCUSE') c.absent += 1;
-      else if (row.statut === 'DISPENSE') c.dispense += 1;
-      else c.open += 1;
-    });
-    return c;
+    return L.liveCounters(rows);
   }
 
   function renderExcuseBreakdown(rows) {
@@ -3314,10 +3299,11 @@
       return `<section class="scope-kpi-group scope-kpi-target">
         <h3>${escapeHtml(label)}</h3>
         <div class="scope-kpi-strip">
+          ${renderKpiCard('attendus', (rows || []).filter((row) => row && row.inclus !== false && !row.alreadyCountedInSession && String(row.jspRole || '').toUpperCase() !== 'MONITEUR' && String(row.role || '') !== 'AUXILIAIRE').length, 'Attendus')}
           ${renderKpiCard('present', c.present, 'Présents')}
           ${renderKpiCard('excuse', c.excuse, 'Excusés', { detailHtml: renderExcuseBreakdown(rows) })}
           ${renderKpiCard('absent', c.absent, 'Absents')}
-          ${renderKpiCard('dispense', c.dispense, 'Dispensés')}
+          ${c.dispense || (state.fiche && state.fiche.evenement && String(state.fiche.evenement.domaine_code).toUpperCase() !== 'JSP') ? renderKpiCard('dispense', c.dispense, 'Dispensés') : ''}
           ${renderKpiCard('open', c.open, 'À renseigner')}
         </div>
       </section>`;
@@ -3501,64 +3487,72 @@
   }
 
   function renderSaisieRows(rows) {
-    const isDap = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code === 'DAP';
-    const statuses = [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
-    if (isDap) statuses.push(['PERMUTATION', 'Permutation']);
-    const statusPressed = (row, value) => {
-      if (value === 'PRESENT') return row.statut === 'PRESENT';
-      return row.statut === value;
-    };
+    const domaine = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code;
+    const statuses = L.participationStatusesForDomaine ? L.participationStatusesForDomaine(domaine) : [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
+    const statusPressed = (row, value) => row.statut === value;
     const justificatifCell = (row) => {
       const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
       const selectedMotif = motifs.find((m) => m.value === row.motifAbsence);
-      const motifSelect = !selectedMotif || row.editMotif;
-      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control">${motifSelect ? `<select data-motif aria-label="Motif d’excuse">
-        <option value="">Motif</option>
-        ${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}
-      </select>` : `<button type="button" class="scope-motif-selected" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selectedMotif.label)}</button>`}</div>` : '';
+      const showChips = row.statut === 'ABSENT_EXCUSE' && (!selectedMotif || row.editMotif);
+      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control">${showChips ? `<div class="scope-motif-chips" role="group" aria-label="Motif d’excuse">${motifs.map((m) => `<button type="button" class="scope-motif-chip${row.motifAbsence === m.value ? ' is-selected' : ''}" data-motif-chip="${escapeHtml(m.value)}">${escapeHtml(m.label)}</button>`).join('')}</div>` : `<button type="button" class="scope-motif-chip is-selected" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selectedMotif.label)}</button>`}</div>` : '';
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
-        ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" style="margin-top:6px;height:36px;width:100%">`
+        ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
+      const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : (row.alreadyCountedTooltip ? `<span class="scope-muted-inline">Déjà compté en session</span>` : '');
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
         : '';
-      const historicalTrainer = row.role === 'FORMATEUR' ? '<span class="scope-mode-hint">Formateur historique</span>' : '';
-      return [motif, comment, manual, historicalTrainer].filter(Boolean).join('');
+      return [motif, comment, why, manual].filter(Boolean).join('');
+    };
+    const roleCell = (row) => {
+      const role = String(row.role || '').toUpperCase();
+      if (L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) {
+        return `<span class="scope-role-chip">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
+      }
+      return '<span class="scope-muted-inline">—</span>';
+    };
+    const rowTone = (row) => {
+      if (row.statut === 'PRESENT' || row.statut === 'PERMUTATION') return 'is-present';
+      if (row.statut === 'ABSENT_EXCUSE') return 'is-excuse';
+      if (row.statut === 'ABSENT_NON_EXCUSE') return 'is-absent';
+      if (row.statut === 'DISPENSE') return 'is-dispense';
+      return 'is-open';
     };
     return `
       <div class="scope-table-wrap scope-saisie-desktop">
-        <table class="scope-table">
+        <table class="scope-table scope-saisie-table">
           <thead><tr>
-            ${sortableHeader('event-personnel', 'nom', 'Nom', state.eventPersonnelSort)}
-            ${sortableHeader('event-personnel', 'prenom', 'Prénom', state.eventPersonnelSort)}
-            ${sortableHeader('event-personnel', 'grade', 'Grade', state.eventPersonnelSort)}
+            ${sortableHeader('event-personnel', 'nom', 'Personne', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)}
-            ${sortableHeader('event-personnel', 'presence', 'Présence', state.eventPersonnelSort)}
-            <th>Justificatif</th>
+            ${sortableHeader('event-personnel', 'presence', 'Statut', state.eventPersonnelSort)}
+            <th>Motif / information</th>
+            <th>Encadrement</th>
           </tr></thead>
           <tbody>
             ${rows.map((row) => {
               const blocked = Boolean(row.alreadyCountedInSession);
+              const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
-              const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : ''].filter(Boolean).join(' ');
+              const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : '', rowTone(row)].filter(Boolean).join(' ');
               const blockedAttrs = blocked
                 ? ` tabindex="0" aria-describedby="${tooltipId}"`
                 : '';
+              const personLabel = [row.grade, row.prenom, row.nomFamille || row.nom].filter(Boolean).join(' ');
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
-              <td data-label="Nom">${escapeHtml(row.nomFamille || row.nom)}${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
-              <td data-label="Prénom">${escapeHtml(row.prenom || '—')}</td>
-              <td data-label="Grade">${escapeHtml(row.grade || '—')}</td>
+              <td data-label="Personne"><span class="scope-saisie-person">${escapeHtml(personLabel || row.nom)}</span>${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
               <td data-label="Cible">${escapeHtml(row.cible)}</td>
-              <td data-label="Présence">
-                <div class="scope-status-row">
+              <td data-label="Statut">
+                <div class="scope-status-row" role="group" aria-label="Statut de participation">
+                  ${(!row.statut || row.statut === 'NON_RENSEIGNE') ? '<span class="scope-status-chip is-convoque">Convoqué</span>' : ''}
                   ${statuses.map(([v, l]) => `
-                    <button type="button" data-status="${v}" aria-pressed="${statusPressed(row, v)}"${blocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>
+                    <button type="button" class="scope-status-chip" data-status="${v}" aria-pressed="${statusPressed(row, v)}"${blocked || roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>
                   `).join('')}
                 </div>
               </td>
-              <td data-label="Justificatif" class="scope-justificatif-cell">${justificatifCell(row) || '<span class="scope-muted-inline">—</span>'}</td>
+              <td data-label="Motif / information" class="scope-justificatif-cell">${justificatifCell(row) || '<span class="scope-muted-inline">—</span>'}</td>
+              <td data-label="Encadrement">${roleCell(row)}</td>
             </tr>`;
             }).join('')}
           </tbody>
@@ -4746,6 +4740,7 @@
         return;
       }
       applyPresent();
+      state.saisieDirty = true;
     });
     document.getElementById('reset-saisie')?.addEventListener('click', () => {
       if (L.needsConfirmReset && L.needsConfirmReset(state.saisie, (state.fiche && state.fiche.encadrement) || [])) {
@@ -4759,7 +4754,7 @@
       }
       resetSaisie();
     });
-    document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); });
+    document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); state.saisieDirty = true; });
     document.getElementById('all-present-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('reset-saisie-ok')?.addEventListener('click', () => { state.modal = null; resetSaisie(); });
     document.getElementById('reset-saisie-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
@@ -4767,23 +4762,21 @@
       btn.addEventListener('click', () => {
         const pid = btn.closest('[data-pid]').getAttribute('data-pid');
         const statut = btn.getAttribute('data-status');
-        const row = state.saisie.find((r) => r.personneId === pid);
+        const idx = state.saisie.findIndex((r) => r.personneId === pid);
+        const row = idx >= 0 ? state.saisie[idx] : null;
         if (!row || row.alreadyCountedInSession) return;
-        const wasActive = row.statut === statut;
-        if (wasActive) {
-          row.statut = 'NON_RENSEIGNE';
-          row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT';
-          row.motifAbsence = '';
-          row.commentaire = '';
-          row.editMotif = false;
-          row.presenceEdited = true;
-          render();
-          return;
-        }
-        row.statut = statut;
-        row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT';
-        row.presenceEdited = true;
-        if (statut !== 'ABSENT_EXCUSE') { row.motifAbsence = ''; row.commentaire = ''; row.editMotif = false; }
+        state.saisie[idx] = L.applyParticipationStatus(row, statut);
+        state.saisieDirty = true;
+        render();
+      });
+    });
+    root.querySelectorAll('[data-motif-chip]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const pid = btn.closest('[data-pid]').getAttribute('data-pid');
+        const idx = state.saisie.findIndex((r) => r.personneId === pid);
+        if (idx < 0) return;
+        state.saisie[idx] = L.applyExcuseMotif(state.saisie[idx], btn.getAttribute('data-motif-chip'));
+        state.saisieDirty = true;
         render();
       });
     });
@@ -4791,7 +4784,7 @@
       sel.addEventListener('change', () => {
         const pid = sel.closest('[data-pid]').getAttribute('data-pid');
         const row = state.saisie.find((r) => r.personneId === pid);
-        if (row) { row.motifAbsence = sel.value; row.editMotif = false; render(); }
+        if (row) { row.motifAbsence = sel.value; row.editMotif = false; state.saisieDirty = true; render(); }
       });
     });
     root.querySelectorAll('[data-motif-edit]').forEach((btn) => {
@@ -5520,17 +5513,24 @@
   }
 
   function saveParticipations() {
+    if (state.presenceSaveBusy) return;
     const id = route().id;
     const encadrementIds = usedEncadrementIds();
     const payload = buildPresenceSavePayload(state.saisie, encadrementIds);
+    state.presenceSaveBusy = true;
     withFeedbackAction({
       progressTitle: 'Enregistrement des présences',
       successTitle: 'Présences enregistrées',
       successMessage: 'Les participations ont été enregistrées.'
     }, async () => {
-      const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
-      const fresh = await reloadFicheFromServer(id);
-      if (fresh && state.fiche && state.fiche.evenement && res.version) state.fiche.evenement.version = res.version;
+      try {
+        const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
+        const fresh = await reloadFicheFromServer(id);
+        if (fresh && state.fiche && state.fiche.evenement && res.version) state.fiche.evenement.version = res.version;
+        state.saisieDirty = false;
+      } finally {
+        state.presenceSaveBusy = false;
+      }
     });
   }
 

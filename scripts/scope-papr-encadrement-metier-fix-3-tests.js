@@ -182,16 +182,17 @@ function extractFunction(source, name){
   });
 
   await record('G — Payload frontend n’émet aucun PARTICIPANT pour encadrants courants', () => {
+    const logic = require('../assets/js/scope-ui-logic.js');
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
-    const buildPresenceSavePayload = new Function(`${extractFunction(ui, 'buildPresenceSavePayload')}; return buildPresenceSavePayload;`)();
+    assert.ok(ui.includes('L.buildPresenceSavePayload'));
     const rows = [
       { personneId: 'a', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'FORMATEUR' },
       { personneId: 'b', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'SURVEILLANT' },
       { personneId: 'b2', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'SURVEILLANT', presenceEdited: true },
       { personneId: 'c', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'PARTICIPANT' }
     ];
-    const before = buildPresenceSavePayload(rows, new Set()).map((row) => [row.personneId, row.role]);
-    const after = buildPresenceSavePayload(rows, new Set(['a', 'b'])).map((row) => [row.personneId, row.role]);
+    const before = logic.buildPresenceSavePayload(rows, new Set()).map((row) => [row.personneId, row.role]);
+    const after = logic.buildPresenceSavePayload(rows, new Set(['a', 'b'])).map((row) => [row.personneId, row.role]);
     assert.deepStrictEqual(before, [['a', 'FORMATEUR'], ['b', 'SURVEILLANT'], ['b2', 'SURVEILLANT'], ['c', 'PARTICIPANT']]);
     assert.deepStrictEqual(after, [['b2', 'SURVEILLANT'], ['c', 'PARTICIPANT']]);
   });
@@ -199,11 +200,11 @@ function extractFunction(source, name){
   await record('H — UX Motif hauteur alignée et encart visuel compact', () => {
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
     const css = fs.readFileSync('assets/css/scope.css', 'utf8');
-    assert.ok(ui.includes('scope-motif-selected'));
-    assert.ok(css.includes('.scope-justificatif-cell select[data-motif]'));
-    assert.ok(css.includes('min-height: 40px'));
-    assert.ok(css.includes('background: #fff1f2'));
-    assert.ok(css.includes('color: #9f1239'));
+    assert.ok(ui.includes('data-motif-chip') || ui.includes('data-motif-edit'));
+    assert.ok(css.includes('.scope-motif-chip'));
+    assert.ok(css.includes('min-height: 28px'));
+    assert.ok(css.includes('button[data-status="PRESENT"]'));
+    assert.ok(css.includes('button[data-status="ABSENT_NON_EXCUSE"]'));
   });
 
   for(const result of results){
