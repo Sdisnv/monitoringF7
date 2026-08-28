@@ -250,7 +250,18 @@
               libelleStatut: (personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at) ? 'Personnel inactif' : 'Personnel actif'
             },
             period: params || {},
-            historiqueRh: {},
+            historiqueRh: {
+              periodes: personne.periodes || [],
+              affectations: affectations.map((aff) => ({
+                affectationId: aff.id || aff.affectationId,
+                dateDebut: aff.dateActif || aff.date_actif || aff.dateDebut,
+                dateFin: aff.dateInactif || aff.date_inactif || aff.dateFin,
+                label: display && display.formatAssignment ? display.formatAssignment(aff) : [aff.domaine, aff.cible].filter(Boolean).join(' '),
+                domaineCode: aff.domaine,
+                niveauCode: aff.cible,
+                categorie: aff.categorie
+              }))
+            },
             kpi: { volumes: {}, analyticStatus: 'NON_EVALUABLE', percentage: null },
             explain: {},
             graphs: {},

@@ -1228,11 +1228,83 @@ function computeEffectifsFromAssignments(assignments, date){
 }
 
 
-async function inactivatePersonne(id, body, actor){
+function assignmentRecordId(assignment){
+  return assignment && (assignment.id || assignment.affectationId || assignment.affectation_id);
+}
+
+async function applyAssignmentClosures(tx, toClose){
+  for(const item of toClose){
+    const aff = item.assignment;
+    const affId = assignmentRecordId(aff);
+    if(!affId) continue;
+    await tx.query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [affId, item.dateInactif]);
+  }
+}
+
+async function closePersonneAffectation(id, body, actor){
   await ensureScopeSchema();
   const dateEffet = temporal.iso(body && (body.dateInactivite || body.date || body.dateEffet));
   if(!dateEffet){
-    const error = new Error('La date d’inactivité est obligatoire.');
+    const error = new Error('La date d’effet est obligatoire.');
+    error.statusCode = 400;
+    throw error;
+  }
+  const affectationId = clean(body && (body.affectationId || body.affectation_id));
+  if(!affectationId){
+    const error = new Error('Sélectionnez l’affectation à clôturer.');
+    error.statusCode = 400;
+    throw error;
+  }
+  const plan = temporal.planInactivation(dateEffet);
+  const existing = await getPersonne(id, { asOf: plan.dernierJourActif || dateEffet });
+  if(!existing){
+    const error = new Error('Personne introuvable.');
+    error.statusCode = 404;
+    throw error;
+  }
+  const target = (existing.affectations || []).find((row) => assignmentRecordId(row) === affectationId);
+  if(!target){
+    const error = new Error('Affectation introuvable.');
+    error.statusCode = 404;
+    throw error;
+  }
+  const closures = temporal.planSingleAssignmentClosure(target, dateEffet);
+  if(!closures.canProceed){
+    const error = new Error('Cette affectation ne peut pas être clôturée à cette date d’effet.');
+    error.statusCode = 422;
+    throw error;
+  }
+  const toClose = closures.close.concat(closures.sameDay);
+  await getDb().transaction(async (tx) => {
+    await applyAssignmentClosures(tx, toClose);
+    await tx.query(
+      `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
+       values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8)`,
+      [
+        rid(), actor && (actor.sub || actor.id || actor.email) || null,
+        'affectation', String(affectationId), 'CLOTURER_AFFECTATION',
+        JSON.stringify({ affectation: target, statutTemporel: existing.statutTemporel }),
+        JSON.stringify({
+          dateEffet,
+          dernierJourActif: plan.dernierJourActif,
+          affectationsCloturees: toClose.map((item) => assignmentRecordId(item.assignment))
+        }),
+        (body && body.commentaire) || 'Clôture d’affectation'
+      ]
+    );
+  });
+  return getPersonne(id, { asOf: dateEffet });
+}
+
+async function inactivatePersonne(id, body, actor){
+  await ensureScopeSchema();
+  const operation = String((body && (body.operation || body.kind)) || '').toUpperCase();
+  if(operation === 'ASSIGNMENT' || operation === 'CLOTURE_AFFECTATION' || operation === 'CLOTURE' || (body && body.affectationId && operation !== 'RESIGNATION' && operation !== 'DEMISSION')){
+    return closePersonneAffectation(id, body, actor);
+  }
+  const dateEffet = temporal.iso(body && (body.dateInactivite || body.date || body.dateEffet));
+  if(!dateEffet){
+    const error = new Error('La date d’effet est obligatoire.');
     error.statusCode = 400;
     throw error;
   }
@@ -1245,16 +1317,14 @@ async function inactivatePersonne(id, body, actor){
   }
   const closures = temporal.planAssignmentClosures(existing.affectations || [], dateEffet);
   if(!closures.canProceed){
-    const error = new Error('Aucune affectation ouverte ne peut être clôturée à cette date d’inactivité. Des affectations commencent après cette date ; elles sont laissées intactes.');
+    const error = new Error('Aucune affectation ouverte ne peut être clôturée à cette date d’effet. Des affectations commencent après cette date ; elles sont laissées intactes.');
     error.statusCode = 422;
     throw error;
   }
   const toClose = closures.close.concat(closures.sameDay);
+  const commentaire = clean(body && body.commentaire) || 'Démission du SDIS';
   await getDb().transaction(async (tx) => {
-    for(const item of toClose){
-      const aff = item.assignment;
-      await tx.query(`update scope_affectations set date_inactif=$2::date, updated_at=now() where id=$1`, [aff.id, item.dateInactif]);
-    }
+    await applyAssignmentClosures(tx, toClose);
     const openPeriodes = await tx.query(
       `select * from scope_personne_periodes where personne_id=$1 and date_fin is null and type in ('ACTIF','INDISPONIBLE')`,
       [id]
@@ -1268,7 +1338,7 @@ async function inactivatePersonne(id, body, actor){
     await tx.query(
       `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
        values ($1,$2,'SORTI',$3::date,null,$4,'MANUEL')`,
-      [rid(), id, dateEffet, (body && body.commentaire) || 'Inactivation manuelle']
+      [rid(), id, dateEffet, commentaire]
     );
     await tx.query(
       `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
@@ -1278,12 +1348,13 @@ async function inactivatePersonne(id, body, actor){
         'personne', String(id), 'INACTIVER',
         JSON.stringify({ affectations: existing.affectations, statutTemporel: existing.statutTemporel }),
         JSON.stringify({
+          kind: 'DEMISSION_SDIS',
           dateEffet,
           dernierJourActif: plan.dernierJourActif,
-          affectationsCloturees: toClose.map((item) => item.assignment.id),
-          affectationsFuturesConservees: closures.future.map((item) => item.assignment.id)
+          affectationsCloturees: toClose.map((item) => assignmentRecordId(item.assignment)),
+          affectationsFuturesConservees: closures.future.map((item) => assignmentRecordId(item.assignment))
         }),
-        (body && body.commentaire) || 'Inactivation manuelle'
+        commentaire
       ]
     );
   });
@@ -1457,6 +1528,7 @@ module.exports = {
   updatePersonne,
   updateAffectation,
   inactivatePersonne,
+  closePersonneAffectation,
   correctPersonneInactivation,
   correctAffectationPeriod,
   listPersonnelImportHistory,

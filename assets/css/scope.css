@@ -3104,8 +3104,8 @@ body.scope-pdf-open { overflow: hidden; }
   color: #1e3a8a;
 }
 .scope-history-item:hover { text-decoration: underline; }
-.scope-row-more { position: relative; }
-.scope-row-more summary {
+.scope-row-more { position: relative; display: inline-flex; }
+.scope-row-more-trigger {
   list-style: none;
   cursor: pointer;
   width: 32px;
@@ -3120,18 +3120,17 @@ body.scope-pdf-open { overflow: hidden; }
   font-size: 16px;
   line-height: 1;
 }
-.scope-row-more summary::-webkit-details-marker { display: none; }
+.scope-row-more-trigger[aria-expanded="true"] { border-color: #9ca3af; background: #f9fafb; }
 .scope-row-more-menu {
-  position: absolute;
-  right: 0;
-  top: 36px;
-  min-width: 180px;
+  position: fixed;
+  min-width: 196px;
   background: #fff;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(15,23,42,.12);
   padding: 6px;
-  z-index: 8;
+  z-index: 50;
+  margin: 0;
 }
 .scope-row-more-menu button {
   display: block;
@@ -3145,6 +3144,30 @@ body.scope-pdf-open { overflow: hidden; }
   font: inherit;
 }
 .scope-row-more-menu button:hover { background: #f3f4f6; }
+.scope-modal-inactivate {
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.scope-modal-section-label { margin: 16px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #4b5563; }
+.scope-activity-ops label,
+.scope-activity-assignments label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #111827;
+  cursor: pointer;
+}
+.scope-activity-ops input,
+.scope-activity-assignments input { width: auto; min-height: 0; margin-top: 3px; }
+.scope-activity-hint { font-size: 13px; color: #4b5563; margin: 8px 0 0; }
+.scope-person-activity-list { list-style: none; padding: 0; margin: 8px 0 12px; }
+.scope-person-activity-list li { padding: 6px 0; border-bottom: 1px solid #eef0f3; }
+.scope-person-activity-list .is-closed { color: #6b7280; }
 @media (max-width: 1024px) {
   .scope-personnel-toolbar { grid-template-columns: 1fr 1fr; }
   .scope-personnel-import-action { justify-self: start; }

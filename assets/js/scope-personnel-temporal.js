@@ -245,6 +245,10 @@
     };
   }
 
+  function planSingleAssignmentClosure(assignment, effectDate){
+    return planAssignmentClosures(assignment ? [assignment] : [], effectDate);
+  }
+
   function appliesToFrozenEventPopulation(){
     return false;
   }
@@ -268,6 +272,7 @@
     evaluateStatus,
     planInactivation,
     planAssignmentClosures,
+    planSingleAssignmentClosure,
     isOpenAssignment,
     appliesToFrozenEventPopulation,
     SOURCE_METIER: 'scope_affectations.date_actif/date_inactif'

@@ -21,13 +21,19 @@ exports.handler = async function(event){
     const body = parseBody(event) || {};
     const id = body.personneId || body.id || (event.queryStringParameters || {}).id;
     const action = String(body.action || 'inactivate').toLowerCase();
-    const personne = action === 'correct' || action === 'reactivate'
+    const operation = String(body.operation || body.kind || '').toUpperCase();
+    const isCorrect = action === 'correct' || action === 'reactivate';
+    const isAssignmentClose = action === 'close_assignment' || action === 'cloture'
+      || operation === 'ASSIGNMENT' || operation === 'CLOTURE_AFFECTATION' || operation === 'CLOTURE';
+    const personne = isCorrect
       ? await personnel.correctPersonneInactivation(id, body, claims)
-      : await personnel.inactivatePersonne(id, body, claims);
+      : isAssignmentClose
+        ? await personnel.closePersonneAffectation(id, body, claims)
+        : await personnel.inactivatePersonne(id, body, claims);
     const synchronisationPopulation = await syncExpectedPopulationForPersonne(
       personne,
       claims,
-      action === 'correct' || action === 'reactivate' ? 'CORRIGER_INACTIVATION' : 'INACTIVER_PERSONNE'
+      isCorrect ? 'CORRIGER_INACTIVATION' : (isAssignmentClose ? 'CLOTURER_AFFECTATION' : 'INACTIVER_PERSONNE')
     );
     return response(200, { ok:true, personne, synchronisationPopulation });
   }catch(error){
