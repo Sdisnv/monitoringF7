@@ -149,7 +149,7 @@ async function record(name, fn) {
     assert.ok(css.includes('height: 83px'));
     assert.ok(html.includes('scope-ui-logic.js?v=scope-event-participation-ux-1'));
     assert.ok(html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-event-participation-ux-1'));
+    assert.ok(html.includes('scope.css?v=scope-ds-1'));
     assert.ok(html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
     assert.ok(html.includes('scope-personnel-activity-modal.js?v=scope-personnel-status-ux-2a'));
     assert.ok(html.includes('scope-ui.js?v=scope-event-participation-ux-1'));
