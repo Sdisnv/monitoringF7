@@ -9,6 +9,30 @@ const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeService } = require('./_scope-service');
 const { ROOT_DOMAINES } = require('./_scope-graphs');
+const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
+
+const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
+
+function reportGradeRank(grade){
+  const code = PersonnelRefs.canonicalGradeCode(grade);
+  const row = (PersonnelRefs.GRADES || []).find((item) => item.code === code);
+  return row ? Number(row.rang) : -1;
+}
+
+function comparePersonName(a, b){
+  return `${a.nom || ''} ${a.prenom || ''}`.localeCompare(`${b.nom || ''} ${b.prenom || ''}`, 'fr', { sensitivity: 'base' });
+}
+
+function sortByGradeThenName(a, b){
+  const gradeDelta = reportGradeRank(b.grade) - reportGradeRank(a.grade);
+  if (gradeDelta) return gradeDelta;
+  return comparePersonName(a, b);
+}
+
+function roleGroupRank(role){
+  const idx = ENC_GROUP_ORDER.indexOf(String(role || '').toUpperCase());
+  return idx >= 0 ? idx : 99;
+}
 
 const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT']);
 
@@ -124,6 +148,7 @@ function nominativeRows(fiche){
     const part = parts.find((p) => p.personne_id === pid && !ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase())) || {};
     const cible = cibleById[a.cible_id] || {};
     return {
+      grade: person.grade || '',
       nom: person.nom || '',
       prenom: person.prenom || '',
       nip: person.nip || '',
@@ -134,7 +159,7 @@ function nominativeRows(fiche){
       motifLabel: part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : '',
       permutation: part.statut === 'PERMUTATION'
     };
-  }).sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+  }).sort(sortByGradeThenName);
 }
 
 function encadrementRows(fiche){
@@ -142,11 +167,16 @@ function encadrementRows(fiche){
   return (fiche.encadrement || []).map((p) => {
     const person = personnes[p.personne_id] || {};
     return {
+      grade: person.grade || '',
       nom: person.nom || '',
       prenom: person.prenom || '',
       nip: person.nip || '',
       role: p.role
     };
+  }).sort((a, b) => {
+    const roleDelta = roleGroupRank(a.role) - roleGroupRank(b.role);
+    if (roleDelta) return roleDelta;
+    return sortByGradeThenName(a, b);
   });
 }
 

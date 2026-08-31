@@ -431,7 +431,11 @@ async function gen(repo, body, claims){
     const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
     assert.ok(html.includes('scope-pdf-viewer.js'));
     assert.ok(ui.includes('data-pdf-prev') && ui.includes('data-pdf-next'));
-    assert.ok(ui.includes('#page='));
+    assert.ok(ui.includes('scope-pdf-canvas'));
+    assert.ok(ui.includes('getDocument'));
+    assert.ok(ui.includes('standardFontDataUrl'));
+    assert.ok(!ui.includes('#page='));
+    assert.ok(!ui.includes('iframe'));
     assert.ok(ui.includes('data-pdf-close'));
   });
 

@@ -378,12 +378,12 @@ class ScopePdfRenderer {
       this.heading('Liste nominative', 12);
       this.para(`${m.nominatif.length} participant(s) attendu(s). Les dispensés restent hors du dénominateur du taux officiel.`);
       this.table(
-        ['Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif / perm.'],
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif'],
         m.nominatif.map((r) => [
-          r.nom, r.prenom, r.nip, r.oi, r.statutLabel,
+          r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.statutLabel,
           r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
         ]),
-        [90, 80, 70, 40, 80, 100]
+        [50, 78, 70, 58, 40, 70, 90]
       );
     } else if(m.event && m.quantitative){
       this.para('Suivi quantitatif : aucun nom n’est inventé.');
@@ -392,11 +392,27 @@ class ScopePdfRenderer {
     if(m.encadrement && m.encadrement.length){
       this.heading('Encadrement (hors taux)', 12);
       this.para('Ces personnes ne rentrent pas dans le dénominateur du taux officiel.');
-      this.table(
-        ['Nom', 'Prénom', 'NIP', 'Rôle'],
-        m.encadrement.map((r) => [r.nom, r.prenom, r.nip, r.role]),
-        [120, 100, 90, 140]
-      );
+      const roleLabels = {
+        FORMATEUR: 'Formateurs',
+        SURVEILLANT: 'Surveillants',
+        MONITEUR: 'Moniteurs',
+        AUXILIAIRE: 'Auxiliaires'
+      };
+      const groups = [];
+      m.encadrement.forEach((r) => {
+        const role = String(r.role || '').toUpperCase();
+        const last = groups[groups.length - 1];
+        if (!last || last.role !== role) groups.push({ role, rows: [r] });
+        else last.rows.push(r);
+      });
+      groups.forEach((group) => {
+        this.heading(roleLabels[group.role] || group.role, 11);
+        this.table(
+          ['Grade', 'Nom', 'Prénom', 'NIP'],
+          group.rows.map((r) => [r.grade || '', r.nom, r.prenom, r.nip]),
+          [60, 140, 120, 80]
+        );
+      });
     }
   }
 

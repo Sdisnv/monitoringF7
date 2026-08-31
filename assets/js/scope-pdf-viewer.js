@@ -1,39 +1,55 @@
-/* SCOPE-REPORT-1 — aperçu PDF intégré. Le blob aperçu est le fichier téléchargé. */
+/* SCOPE-UX-EVENT-2 — aperçu PDF canvas (PDF.js). Le blob aperçu est le fichier téléchargé. */
 (function (root) {
   'use strict';
 
+  function viewerScriptSrc() {
+    const scripts = root.document ? root.document.getElementsByTagName('script') : [];
+    for (let i = scripts.length - 1; i >= 0; i -= 1) {
+      const src = scripts[i].src || '';
+      if (src.indexOf('scope-pdf-viewer.js') !== -1) return src;
+    }
+    return '';
+  }
+
+  function workerSrc() {
+    const src = viewerScriptSrc();
+    if (src) return new URL('../vendor/pdfjs/pdf.worker.min.js', src).href;
+    return 'assets/vendor/pdfjs/pdf.worker.min.js';
+  }
+
+  function standardFontDataUrl() {
+    const src = viewerScriptSrc();
+    if (src) return new URL('../vendor/pdfjs/standard_fonts/', src).href;
+    return 'assets/vendor/pdfjs/standard_fonts/';
+  }
+
   let overlay = null;
-  let objectUrl = null;
   let current = { blob: null, filename: 'SCOPE_Rapport.pdf', pages: 1, sha256: '' };
+  let pdfDoc = null;
+  let renderTask = null;
   let page = 1;
   let zoom = 'page-width';
 
-  function revoke() {
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
-      objectUrl = null;
+  function pdfjs() {
+    return root.pdfjsLib;
+  }
+
+  function cancelRender() {
+    if (!renderTask) return;
+    try { renderTask.cancel(); } catch (_error) { /* ignore */ }
+    renderTask = null;
+  }
+
+  function destroyDoc() {
+    cancelRender();
+    if (pdfDoc && typeof pdfDoc.destroy === 'function') {
+      try { pdfDoc.destroy(); } catch (_error) { /* ignore */ }
     }
-  }
-
-  function srcFor(pageNum, zoomLevel) {
-    if (!objectUrl) objectUrl = URL.createObjectURL(current.blob);
-    return `${objectUrl}#page=${pageNum}&zoom=${zoomLevel}`;
-  }
-
-  function sync() {
-    if (!overlay) return;
-    const frame = overlay.querySelector('.scope-pdf-frame');
-    const label = overlay.querySelector('.scope-pdf-page-label');
-    const prev = overlay.querySelector('[data-pdf-prev]');
-    const next = overlay.querySelector('[data-pdf-next]');
-    if (label) label.textContent = `Page ${page} / ${current.pages || 1}`;
-    if (frame) frame.src = srcFor(page, zoom);
-    if (prev) prev.disabled = page <= 1;
-    if (next) next.disabled = page >= (current.pages || 1);
+    pdfDoc = null;
   }
 
   function close() {
-    revoke();
+    destroyDoc();
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
     overlay = null;
     document.body.classList.remove('scope-pdf-open');
@@ -49,6 +65,69 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function syncButtons() {
+    if (!overlay) return;
+    const label = overlay.querySelector('.scope-pdf-page-label');
+    const prev = overlay.querySelector('[data-pdf-prev]');
+    const next = overlay.querySelector('[data-pdf-next]');
+    const pages = (pdfDoc && pdfDoc.numPages) || current.pages || 1;
+    if (label) label.textContent = `Page ${page} / ${pages}`;
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= pages;
+  }
+
+  async function paint() {
+    if (!overlay || !pdfDoc) return;
+    const canvas = overlay.querySelector('.scope-pdf-canvas');
+    const stage = overlay.querySelector('.scope-pdf-stage');
+    if (!canvas || !stage) return;
+    cancelRender();
+    const pageObj = await pdfDoc.getPage(page);
+    const unscaled = pageObj.getViewport({ scale: 1 });
+    const available = Math.max(240, stage.clientWidth - 32);
+    const fit = available / unscaled.width;
+    const scale = zoom === 'page-width' ? fit : (zoom === '100' ? 1 : 1.25);
+    const viewport = pageObj.getViewport({ scale });
+    const context = canvas.getContext('2d', { alpha: false });
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    canvas.style.width = `${canvas.width}px`;
+    canvas.style.height = `${canvas.height}px`;
+    renderTask = pageObj.render({
+      canvasContext: context,
+      viewport,
+      background: 'rgb(255,255,255)'
+    });
+    try {
+      await renderTask.promise;
+    } catch (error) {
+      if (error && error.name === 'RenderingCancelledException') return;
+      throw error;
+    } finally {
+      renderTask = null;
+    }
+    syncButtons();
+  }
+
+  async function loadDocument() {
+    const lib = pdfjs();
+    if (!lib) {
+      const stage = overlay && overlay.querySelector('.scope-pdf-stage');
+      if (stage) stage.innerHTML = '<p class="scope-pdf-error">Aperçu PDF indisponible (PDF.js manquant).</p>';
+      return;
+    }
+    lib.GlobalWorkerOptions.workerSrc = workerSrc();
+    const data = new Uint8Array(await current.blob.arrayBuffer());
+    destroyDoc();
+    pdfDoc = await lib.getDocument({
+      data,
+      standardFontDataUrl: standardFontDataUrl()
+    }).promise;
+    current.pages = pdfDoc.numPages || 1;
+    page = 1;
+    await paint();
   }
 
   function open(payload) {
@@ -81,20 +160,36 @@
           </div>
         </div>
         <div class="scope-pdf-stage">
-          <iframe class="scope-pdf-frame" title="Aperçu PDF SCOPE"></iframe>
+          <canvas class="scope-pdf-canvas" aria-label="Page du rapport PDF"></canvas>
         </div>
       </div>
     `;
-    overlay.querySelector('[data-pdf-prev]').addEventListener('click', () => { if (page > 1) { page -= 1; sync(); } });
-    overlay.querySelector('[data-pdf-next]').addEventListener('click', () => { if (page < current.pages) { page += 1; sync(); } });
-    overlay.querySelector('[data-pdf-zoom-in]').addEventListener('click', () => { zoom = zoom === 'page-width' ? '100' : '125'; sync(); });
-    overlay.querySelector('[data-pdf-zoom-out]').addEventListener('click', () => { zoom = 'page-width'; sync(); });
+    overlay.querySelector('[data-pdf-prev]').addEventListener('click', () => {
+      if (page > 1) { page -= 1; paint(); }
+    });
+    overlay.querySelector('[data-pdf-next]').addEventListener('click', () => {
+      const pages = (pdfDoc && pdfDoc.numPages) || current.pages || 1;
+      if (page < pages) { page += 1; paint(); }
+    });
+    overlay.querySelector('[data-pdf-zoom-in]').addEventListener('click', () => {
+      zoom = zoom === 'page-width' ? '100' : '125';
+      paint();
+    });
+    overlay.querySelector('[data-pdf-zoom-out]').addEventListener('click', () => {
+      zoom = 'page-width';
+      paint();
+    });
     overlay.querySelector('[data-pdf-download]').addEventListener('click', download);
     overlay.querySelector('[data-pdf-close]').addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     document.body.appendChild(overlay);
     document.body.classList.add('scope-pdf-open');
-    sync();
+    syncButtons();
+    if (!current.blob) return;
+    loadDocument().catch((error) => {
+      const stage = overlay && overlay.querySelector('.scope-pdf-stage');
+      if (stage) stage.innerHTML = `<p class="scope-pdf-error">Impossible d’afficher le PDF. Utilisez Télécharger. ${String(error && error.message || '')}</p>`;
+    });
   }
 
   document.addEventListener('keydown', (e) => {

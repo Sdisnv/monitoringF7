@@ -299,7 +299,8 @@ function part(personne, statut, extra){
     assert.ok(build.includes('fiche.attendus'));
     assert.ok(!build.includes('personnelOpenAssignments'));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'Personne'"));
-    assert.ok(ui.includes('<th>Encadrement</th>'));
+    assert.ok(ui.includes('scope-enc-role-flag'));
+    assert.ok(!ui.includes('<th>Encadrement</th>'));
     assert.ok(ui.includes('presenceSaveBusy'));
     assert.ok(ui.includes('saisieDirty'));
   });
