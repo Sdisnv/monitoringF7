@@ -270,7 +270,7 @@ function part(personne, statut, extra){
     assert.strictEqual(c.open, 1);
   });
 
-  await record('15 — Convoqué restant à renseigner', async () => {
+  await record('15 — Présences à renseigner, sans bouton Convoqué', async () => {
     const c = logic.liveCounters([
       { inclus: true, role: 'PARTICIPANT', statut: 'NON_RENSEIGNE' },
       { inclus: true, role: 'PARTICIPANT', statut: 'NON_RENSEIGNE' },
@@ -281,14 +281,15 @@ function part(personne, statut, extra){
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
     assert.ok(ui.includes('présence'));
     assert.ok(ui.includes('à renseigner'));
-    assert.ok(ui.includes('is-convoque'));
-    assert.ok(ui.includes('data-motif-chip'));
-    assert.ok(ui.includes('scope-role-chip'));
+    assert.ok(!/is-convoque/.test(ui) || !ui.includes('>Convoqué<'));
+    assert.ok(!ui.includes('>Convoqué<'));
+    assert.ok(ui.includes('data-motif'));
+    assert.ok(ui.includes('scope-enc-role-flag') || ui.includes('ROLE_LABELS'));
     assert.ok(!ui.includes('function renderSaisieRows') || ui.includes('attendance') || true);
     assert.ok(ui.includes('buildSaisieFromFiche'));
     assert.ok(!ui.includes('assignations.filter') || true);
     assert.ok(css.includes('overflow-x: hidden') || css.includes('.scope-saisie-table'));
-    assert.ok(css.includes('.scope-status-chip') || css.includes('button[data-status="PRESENT"]'));
+    assert.ok(css.includes('button[data-status="PRESENT"]'));
     assert.ok(logic.applyExcuseMotif({ statut: 'ABSENT_EXCUSE', role: 'PARTICIPANT' }, 'PROFESSIONNEL').motifAbsence === 'PROFESSIONNEL');
   });
 

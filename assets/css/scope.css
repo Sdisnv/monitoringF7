@@ -3816,6 +3816,334 @@ body.scope-pdf-open { overflow: hidden; }
   color: #fff;
 }
 
+/* === UX-EVENT-1 — fiche + saisie + encadrement === */
+.scope-event-saisie,
+.scope-event-fiche {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scope-event-identity {
+  margin: 0;
+}
+
+.scope-event-title {
+  margin: 0;
+  font-size: var(--scope-type-h1);
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.scope-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 0;
+  margin: 4px 0 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+
+.scope-event-meta-sep {
+  margin: 0 8px;
+  color: var(--scope-border);
+}
+
+.scope-event-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+
+.scope-save-state {
+  margin: 0;
+  font-size: var(--scope-type-secondary);
+  color: var(--scope-muted);
+}
+
+.scope-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
+.scope-section-title {
+  margin: 0;
+  font-size: var(--scope-type-label);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scope-muted);
+}
+
+.scope-section-sub {
+  margin: 10px 0 6px;
+  font-size: var(--scope-type-h3);
+  font-weight: 700;
+}
+
+.scope-saisie-open {
+  margin: 0;
+  font-size: var(--scope-type-label);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scope-navy);
+}
+
+.scope-presence-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.scope-presence-add {
+  position: relative;
+  min-width: 260px;
+  flex: 1 1 240px;
+}
+
+.scope-encadrement-block {
+  margin: 0;
+}
+
+.scope-enc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  max-width: none;
+}
+
+.scope-enc-role {
+  min-width: 140px;
+}
+
+.scope-enc-toolbar #enc-q {
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+.scope-enc-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  margin-top: 8px;
+}
+
+.scope-enc-group h3.scope-enc-role-title,
+.scope-enc-role-title {
+  margin: 0 0 4px;
+  font-size: var(--scope-type-label);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scope-navy);
+}
+
+.scope-enc-people {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  grid-auto-flow: unset;
+  grid-template-rows: none;
+}
+
+.scope-enc-person {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 4px 0;
+}
+
+.scope-enc-name {
+  font-weight: 650;
+}
+
+.scope-enc-nip {
+  color: var(--scope-muted);
+}
+
+.scope-enc-empty {
+  margin: 0;
+  padding: 2px 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+
+.scope-event-saisie .scope-kpi-strip.is-line {
+  margin: 0;
+  padding: 4px 0;
+}
+
+.scope-kpi-sep {
+  color: var(--scope-border);
+}
+
+.scope-event-saisie .scope-table thead th {
+  height: 28px;
+  padding: 6px 8px;
+  font-size: var(--scope-type-label);
+}
+
+.scope-event-saisie .scope-table tbody td {
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.scope-event-saisie .scope-table tbody tr {
+  height: 38px;
+}
+
+.scope-event-saisie .scope-table tbody tr:hover,
+.scope-event-saisie .scope-table tbody tr:hover td {
+  background: #f7f8fa;
+}
+
+.scope-event-saisie .scope-status-row.scope-segmented {
+  flex-wrap: nowrap;
+  gap: 0;
+  height: var(--scope-h-compact);
+}
+
+.scope-event-saisie .scope-status-row button {
+  border-radius: var(--scope-radius-xs);
+  height: var(--scope-h-compact);
+  min-height: var(--scope-h-compact);
+  padding: 0 10px;
+  background: var(--scope-surface);
+  border: 0;
+  border-right: 1px solid var(--scope-border);
+  color: var(--scope-text);
+  font-weight: 650;
+}
+
+.scope-event-saisie .scope-status-row button:last-child {
+  border-right: 0;
+}
+
+.scope-event-saisie .scope-status-row button[data-status="PRESENT"],
+.scope-event-saisie .scope-status-row button[data-status="ABSENT_EXCUSE"],
+.scope-event-saisie .scope-status-row button[data-status="DISPENSE"],
+.scope-event-saisie .scope-status-row button[data-status="ABSENT_NON_EXCUSE"],
+.scope-event-saisie .scope-status-row button[data-status="PERMUTATION"] {
+  background: var(--scope-surface);
+  border-color: var(--scope-border);
+  color: var(--scope-text);
+}
+
+.scope-event-saisie .scope-status-row button[data-status="PRESENT"][aria-pressed="true"],
+.scope-event-saisie .scope-status-row button[data-status="PRESENT"][aria-checked="true"] {
+  background: #eef2ff;
+  color: var(--scope-navy);
+}
+
+.scope-event-saisie .scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"],
+.scope-event-saisie .scope-status-row button[data-status="ABSENT_EXCUSE"][aria-checked="true"] {
+  background: var(--scope-warning-soft);
+  color: var(--scope-warning);
+}
+
+.scope-event-saisie .scope-status-row button[data-status="ABSENT_NON_EXCUSE"][aria-pressed="true"],
+.scope-event-saisie .scope-status-row button[data-status="ABSENT_NON_EXCUSE"][aria-checked="true"] {
+  background: #111827;
+  color: #fff;
+}
+
+.scope-event-saisie .scope-status-row button[data-status="DISPENSE"][aria-pressed="true"],
+.scope-event-saisie .scope-status-row button[data-status="DISPENSE"][aria-checked="true"] {
+  background: var(--scope-amber-soft);
+  color: #7a4d00;
+}
+
+.scope-event-saisie .scope-status-row button[data-status="PERMUTATION"][aria-pressed="true"],
+.scope-event-saisie .scope-status-row button[data-status="PERMUTATION"][aria-checked="true"] {
+  background: #f3f5f8;
+  color: var(--scope-navy);
+}
+
+.scope-motif-select {
+  height: var(--scope-h-field-compact);
+  max-height: 32px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--scope-border);
+  border-radius: var(--scope-radius-xs);
+  background: var(--scope-surface);
+  font: inherit;
+  font-size: var(--scope-type-secondary);
+}
+
+.scope-enc-role-flag {
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+
+@media (min-width: 1024px) {
+  .scope-enc-groups {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 1023px) {
+  .scope-event-toolbar {
+    flex-wrap: wrap;
+  }
+  .scope-enc-groups {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .scope-event-saisie .scope-enc-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .scope-event-saisie .scope-table thead {
+    display: table-header-group;
+  }
+  .scope-event-saisie .scope-table,
+  .scope-event-saisie .scope-table tbody,
+  .scope-event-saisie .scope-table tr,
+  .scope-event-saisie .scope-table td,
+  .scope-event-saisie .scope-table th {
+    display: revert;
+    width: auto;
+  }
+  .scope-event-saisie .scope-table {
+    display: table;
+    width: 100%;
+  }
+  .scope-event-saisie .scope-table tbody {
+    display: table-row-group;
+  }
+  .scope-event-saisie .scope-table tr {
+    display: table-row;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    margin: 0;
+    padding: 0;
+  }
+  .scope-event-saisie .scope-table td {
+    display: table-cell;
+    border: 0;
+    padding: 6px 8px;
+  }
+  .scope-event-saisie .scope-table td::before {
+    content: none;
+    display: none;
+  }
+}
+
 /* UX-CLEANUP-1 — remaining inline styles in scope-ui.js (~95). This lot did not migrate page titles, report KPI blocks, or form margin-top helpers. */
-/* Legacy divergences kept on purpose: .scope-person-table zebra #d7dee8; .scope-chips / .scope-import-pill / .scope-status-pill / .scope-mode-pill 999px; table-as-card @media 800px; personnel filters still use .scope-btn-primary when selected. */
+/* Legacy divergences kept on purpose: .scope-person-table zebra #d7dee8; .scope-chips / .scope-import-pill / .scope-status-pill / .scope-mode-pill 999px; table-as-card @media 800px except .scope-event-saisie; personnel filters still use .scope-btn-primary when selected. */
 /* === /UX-DS-1 === */

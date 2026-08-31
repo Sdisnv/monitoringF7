@@ -88,6 +88,7 @@
     encHits: [],
     saisieDirty: false,
     presenceSaveBusy: false,
+    presenceSaveStatus: 'idle',
     scopeSearchTimers: {},
     scopeSearchTokens: { encadrement: 0, manual: 0 },
     manualPersonQuery: '',
@@ -132,7 +133,7 @@
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
     eventSort: { key: 'date', dir: 'asc' },
-    eventPersonnelSort: { key: 'nom', dir: 'asc' },
+    eventPersonnelSort: { key: 'grade', dir: 'desc' },
     personneFiche: null,
     personneEdit: null,
     personneEventFilter: 'tout',
@@ -668,6 +669,48 @@
     return [person.grade, person.nom, person.prenom].filter(Boolean).join(' ') || person.nip || 'Personne';
   }
 
+  function eventPersonLabel(person) {
+    return [person.grade, person.prenom, person.nomFamille || person.nom].filter(Boolean).join(' ') || person.nip || 'Personne';
+  }
+
+  function gradeRank(value) {
+    const ref = window.ScopePersonnelReferentials;
+    const code = ref && ref.canonicalGradeCode ? ref.canonicalGradeCode(value) : String(value || '').trim();
+    const row = ref && Array.isArray(ref.GRADES) ? ref.GRADES.find((item) => item.code === code) : null;
+    return row ? Number(row.rang) : -1;
+  }
+
+  function encadrementRolesForEvent(fiche) {
+    const d = String((fiche && fiche.evenement && (fiche.evenement.domaine_code || fiche.evenement.domaineCode)) || '').toUpperCase();
+    const present = new Set(((fiche && fiche.encadrement) || []).map((p) => String(p.role || '').toUpperCase()));
+    const roles = ['FORMATEUR'];
+    if (d === 'JSP' || present.has('MONITEUR')) roles.push('MONITEUR');
+    if (d === 'PR' || d === 'PAPR' || present.has('SURVEILLANT')) roles.push('SURVEILLANT');
+    roles.push('AUXILIAIRE');
+    encadrementRoleOrder().forEach((role) => {
+      if (!roles.includes(role) && present.has(role)) roles.push(role);
+    });
+    return roles;
+  }
+
+  function encadrementRoleHeading(role, count) {
+    const labels = {
+      FORMATEUR: 'Formateurs',
+      MONITEUR: 'Moniteurs',
+      SURVEILLANT: 'Surveillants',
+      AUXILIAIRE: 'Auxiliaires'
+    };
+    return `${labels[role] || (L.ROLE_LABELS[role] || role)} (${count})`;
+  }
+
+  function presenceSaveLabel() {
+    if (state.presenceSaveBusy) return 'Enregistrement…';
+    if (state.saisieDirty) return 'Non enregistré';
+    if (state.presenceSaveStatus === 'error') return 'Erreur';
+    if (state.presenceSaveStatus === 'saved') return 'Enregistré';
+    return '';
+  }
+
   function personSubLine(person) {
     const cible = person.oiActuel || person.oi || person.affectation || person.cible || '';
     return [`NIP ${person.nip || '—'}`, cible].filter(Boolean).join(' · ');
@@ -694,23 +737,17 @@
   }
 
   function sortPeopleForEncadrement(rows) {
-    const ref = window.ScopePersonnelReferentials;
     const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
     return (rows || []).slice().sort((a, b) => {
-      const rankOf = (value) => {
-        const code = ref && ref.canonicalGradeCode ? ref.canonicalGradeCode(value) : String(value || '').trim();
-        const row = ref && Array.isArray(ref.GRADES) ? ref.GRADES.find((item) => item.code === code) : null;
-        return row ? Number(row.rang) : null;
-      };
-      const ra = rankOf(a.grade);
-      const rb = rankOf(b.grade);
+      const ra = gradeRank(a.grade);
+      const rb = gradeRank(b.grade);
       let grade = 0;
-      if (ra !== null && rb !== null && ra !== rb) grade = rb - ra;
-      else if (ra !== null && rb === null) grade = -1;
-      else if (ra === null && rb !== null) grade = 1;
-      else if (ra === null && rb === null) grade = collator.compare(a.grade || '', b.grade || '');
+      if (ra >= 0 && rb >= 0 && ra !== rb) grade = rb - ra;
+      else if (ra >= 0 && rb < 0) grade = -1;
+      else if (ra < 0 && rb >= 0) grade = 1;
+      else if (ra < 0 && rb < 0) grade = collator.compare(a.grade || '', b.grade || '');
       return grade
-        || collator.compare(a.nom || '', b.nom || '')
+        || collator.compare(a.nomFamille || a.nom || '', b.nomFamille || b.nom || '')
         || collator.compare(a.prenom || '', b.prenom || '')
         || collator.compare(a.nip || '', b.nip || '');
     });
@@ -3073,6 +3110,29 @@
       </div>`;
   }
 
+  function eventIdentityBand(ev, fiche, options) {
+    const preview = options && options.preview;
+    const mode = eventMode(ev);
+    const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
+    const horaire = [ev.heure_debut, ev.heure_fin].filter(Boolean).join('–');
+    const bits = [
+      L.formatDate(ev.date),
+      horaire,
+      domaineLabel(ev.domaine_code),
+      L.ciblesLabel(ciblesOf(fiche)),
+      L.modeLabel(mode)
+    ].filter(Boolean);
+    if (isLegacy) bits.push('Aucune population (legacy)');
+    else if (mode !== 'QUANTITATIF' && ev.population_figee) bits.push('Population figée');
+    else if (mode !== 'QUANTITATIF' && preview) bits.push('Preview prête');
+    return `<header class="scope-event-identity">
+      <p class="scope-event-title">${escapeHtml(ev.libelle)}</p>
+      <p class="scope-event-meta">${bits.map((bit) => `<span>${escapeHtml(bit)}</span>`).join('<span class="scope-event-meta-sep" aria-hidden="true">·</span>')}
+        ${isLegacy ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>' : statutBadge(ev.statut)}
+      </p>
+    </header>`;
+  }
+
   function renderFiche() {
     const fiche = state.fiche;
     if (!fiche) {
@@ -3107,23 +3167,14 @@
     const qty = mode === 'QUANTITATIF';
     const saisie = fiche.saisieQuantitative;
     const extraActions = qty && ev.statut === 'PLANIFIE'
-      ? '<button type="button" class="scope-btn" id="convert-nominatif">Passer en nominatif</button>'
+      ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="convert-nominatif">Passer en nominatif</button>'
       : '';
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
-      <div class="scope-main">
-        <div class="scope-card">
-          <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
-          <dl class="scope-meta">
-            <div><dt>Date</dt><dd>${escapeHtml(L.formatDate(ev.date))}</dd></div>
-            <div><dt>Domaine</dt><dd>${escapeHtml(domaineLabel(ev.domaine_code))}</dd></div>
-            <div><dt>Cible(s)</dt><dd>${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</dd></div>
-            <div><dt>Statut</dt><dd>${isLegacy ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>' : statutBadge(ev.statut)}</dd></div>
-            <div><dt>Mode</dt><dd>${escapeHtml(L.modeLabel(mode))}</dd></div>
-            <div><dt>Version</dt><dd>${escapeHtml(String(ev.version))}</dd></div>
-            ${qty ? '' : `<div><dt>Population</dt><dd>${isLegacy ? 'Aucune (legacy)' : (ev.population_figee ? 'Figée' : (state.preview ? 'Preview prête' : 'Non générée'))}</dd></div>`}
-          </dl>
-          ${cta ? `<div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn" id="cancel-event">Annuler l’événement</button>' : ''}${reportButton(ev.evenement_id)}</div>` : `<div class="scope-actions">${!isLegacy && ev.statut !== 'ANNULE' ? `${extraActions}<button type="button" class="scope-btn" id="cancel-event">Annuler l’événement</button>` : ''}${reportButton(ev.evenement_id)}</div>`}
+      <div class="scope-main scope-event-fiche">
+        <div class="scope-event-head">
+          ${eventIdentityBand(ev, fiche, { preview: state.preview })}
+          ${cta ? `<div class="scope-actions scope-event-toolbar">${cta ? `<button type="button" class="scope-btn scope-btn-primary scope-btn-compact" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>` : ''}${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="cancel-event">Annuler l’événement</button>' : ''}${reportButton(ev.evenement_id)}</div>` : `<div class="scope-actions scope-event-toolbar">${!isLegacy && ev.statut !== 'ANNULE' ? `${extraActions}<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="cancel-event">Annuler l’événement</button>` : ''}${reportButton(ev.evenement_id)}</div>`}
         </div>
         ${qty && saisie ? volumesBlock(saisie, { taux: fiche.compteurs, officiel: false }) : ''}
         ${legacyBlock}
@@ -3212,48 +3263,49 @@
     const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
     const disabledCloture = hasIncompleteExcuse;
     const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
+    const openCount = L.liveCounters(state.saisie).open;
+    const saveState = presenceSaveLabel();
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
-      <div class="scope-main">
-        <div class="scope-card">
-          <h2 style="margin-top:0">${escapeHtml(ev.libelle)}</h2>
-          <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))}</p>
-          ${renderPresenceKpis(niveaux, fiche)}
-          ${(() => {
-            const c = L.liveCounters(state.saisie);
-            return `<p class="scope-saisie-open" role="status">${escapeHtml(String(c.open))} présence${c.open === 1 ? '' : 's'} à renseigner</p>`;
-          })()}
-          ${state.saisieDirty ? '<p class="scope-saisie-dirty" role="status">Modifications non enregistrées.</p>' : ''}
-          ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
-          <div class="scope-actions">
-            <a class="scope-btn" href="#/exercices">Retour aux événements</a>
-            <button type="button" class="scope-btn" id="all-present">Tous présents</button>
-            <button type="button" class="scope-btn" id="reset-saisie">Réinitialiser la saisie</button>
-            <button type="button" class="scope-btn scope-btn-primary" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
-            <button type="button" class="scope-btn" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
-          </div>
-          ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
+      <div class="scope-main scope-event-saisie">
+        ${eventIdentityBand(ev, fiche)}
+        ${renderPresenceKpis(niveaux, fiche)}
+        ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
+        <div class="scope-actions scope-event-toolbar">
+          <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present">Tous présents</button>
+          <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
+          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="reset-saisie">Réinitialiser la saisie</button>
+          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
         </div>
-        ${niveaux.length > 1 ? `<div class="scope-chips scope-segmented">
-          <button type="button" data-cible-filter="tous" aria-pressed="${state.cibleFilter === 'tous'}">Tous</button>
-          ${niveaux.map((n) => `<button type="button" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
-        </div>` : ''}
+        ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
+        ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
         ${renderEncadrementBlock()}
-        ${renderManualParticipantBlock()}
+        <section class="scope-presence-section">
+          <div class="scope-section-header">
+            <h2 class="scope-section-title">Présences</h2>
+            <p class="scope-saisie-open" role="status">${escapeHtml(String(openCount))} présence${openCount === 1 ? '' : 's'} à renseigner</p>
+          </div>
+          <div class="scope-presence-toolbar">
+            ${renderManualParticipantBlock()}
+            ${niveaux.length > 1 ? `<div class="scope-segmented" role="group" aria-label="Filtrer par cible">
+              <button type="button" class="scope-segmented-item" data-cible-filter="tous" aria-pressed="${state.cibleFilter === 'tous'}">Tous</button>
+              ${niveaux.map((n) => `<button type="button" class="scope-segmented-item" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
+            </div>` : ''}
+          </div>
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
           const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
           const autres = filtered.filter((row) => row.jspRole !== 'JEUNE' && row.jspRole !== 'MONITEUR');
           if (!isJsp || !jeunes.length) {
-            return `<div class="scope-card" style="margin-top:12px">${filtered.length ? renderSaisieRows(filtered) : `<div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div>`}</div>`;
+            return filtered.length ? renderSaisieRows(filtered) : `<div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div>`;
           }
           return `
-        <div class="scope-card" style="margin-top:12px">
-          <h3 style="margin-top:0">JEUNES JSP · ${jeunes.length}</h3>
+          <h3 class="scope-section-sub">Jeunes JSP · ${jeunes.length}</h3>
           ${jeunes.length ? renderSaisieRows(jeunes) : `<div class="scope-empty">Aucun jeune attendu.</div>`}
-        </div>
-        ${autres.length ? `<div class="scope-card" style="margin-top:12px"><h3 style="margin-top:0">Autres attendus · ${autres.length}</h3>${renderSaisieRows(autres)}</div>` : ''}`;
+          ${autres.length ? `<h3 class="scope-section-sub">Autres attendus · ${autres.length}</h3>${renderSaisieRows(autres)}` : ''}`;
         })()}
+        </section>
       </div>
     `;
   }
@@ -3283,33 +3335,9 @@
 
   function renderPresenceKpis(niveaux, fiche) {
     const prKpis = fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.kpis;
-    const labels = niveaux && niveaux.length ? niveaux : ['Population'];
-    const groups = labels.map((label) => {
-      const rows = label === 'Population' ? state.saisie : rowsForCible(label);
-      const local = countStatuses(rows);
-      const c = (prKpis && (label === 'Population' || labels.length === 1))
-        ? {
-          present: Number(prKpis.presents || 0),
-          excuse: Number(prKpis.excuses || 0),
-          absent: Number(prKpis.absents || 0),
-          dispense: Number(prKpis.dispenses || 0),
-          open: Number(prKpis.open || 0)
-        }
-        : local;
-      return `<section class="scope-kpi-group scope-kpi-target">
-        <h3>${escapeHtml(label)}</h3>
-        <div class="scope-kpi-strip">
-          ${renderKpiCard('attendus', (rows || []).filter((row) => row && row.inclus !== false && !row.alreadyCountedInSession && String(row.jspRole || '').toUpperCase() !== 'MONITEUR' && String(row.role || '') !== 'AUXILIAIRE').length, 'Attendus')}
-          ${renderKpiCard('present', c.present, 'Présents')}
-          ${renderKpiCard('excuse', c.excuse, 'Excusés', { detailHtml: renderExcuseBreakdown(rows) })}
-          ${renderKpiCard('absent', c.absent, 'Absents')}
-          ${c.dispense || (state.fiche && state.fiche.evenement && String(state.fiche.evenement.domaine_code).toUpperCase() !== 'JSP') ? renderKpiCard('dispense', c.dispense, 'Dispensés') : ''}
-          ${renderKpiCard('open', c.open, 'À renseigner')}
-        </div>
-      </section>`;
-    }).join('');
-    const localGlobal = countStatuses(state.saisie || []);
-    const global = prKpis
+    const rows = state.saisie || [];
+    const local = countStatuses(rows);
+    const c = prKpis
       ? {
         present: Number(prKpis.presents || 0),
         excuse: Number(prKpis.excuses || 0),
@@ -3317,21 +3345,24 @@
         dispense: Number(prKpis.dispenses || 0),
         open: Number(prKpis.open || 0)
       }
-      : localGlobal;
-    const enc = (fiche && fiche.encadrement) || (state.fiche && state.fiche.encadrement) || [];
-    const encCount = (role) => enc.filter((p) => p && p.role === role).length;
-    return `<div class="scope-kpi-board">
-      ${groups}
-      <p class="scope-kpi-global-dedup">Vue globale dédupliquée par personne : ${escapeHtml(String(global.present))} présents, ${escapeHtml(String(global.excuse))} excusés, ${escapeHtml(String(global.absent))} absents, ${escapeHtml(String(global.dispense))} dispensés, ${escapeHtml(String(global.open))} à renseigner.</p>
-      <section class="scope-kpi-group scope-kpi-encadrement">
-        <h3>Encadrement</h3>
-        <div class="scope-kpi-strip">
-          ${renderKpiCard('trainer', encCount('FORMATEUR'), 'Formateurs')}
-          ${renderKpiCard('monitor', encCount('MONITEUR'), 'Moniteurs')}
-          ${renderKpiCard('watcher', encCount('SURVEILLANT'), 'Surveillants')}
-          ${renderKpiCard('helper', encCount('AUXILIAIRE'), 'Auxiliaires')}
-        </div>
-      </section>
+      : local;
+    const attendus = rows.filter((row) => row && row.inclus !== false && !row.alreadyCountedInSession && String(row.jspRole || '').toUpperCase() !== 'MONITEUR' && String(row.role || '') !== 'AUXILIAIRE').length;
+    const domaine = String((fiche && fiche.evenement && fiche.evenement.domaine_code) || '').toUpperCase();
+    const showDispense = Boolean(c.dispense) || domaine !== 'JSP';
+    const excuseDetail = renderExcuseBreakdown(rows);
+    const excuseTitle = String(excuseDetail).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const item = (label, value, extra) => `<span class="scope-kpi-strip-item"${extra || ''}><span class="scope-kpi-strip-label">${escapeHtml(label)}</span> <span class="scope-kpi-strip-value">${escapeHtml(String(value || 0))}</span></span>`;
+    return `<div class="scope-kpi-strip is-line" role="group" aria-label="Compteurs de présence">
+      ${item('Attendus', attendus)}
+      <span class="scope-kpi-sep" aria-hidden="true">|</span>
+      ${item('Présents', c.present)}
+      <span class="scope-kpi-sep" aria-hidden="true">|</span>
+      ${item('Excusés', c.excuse, ` title="${escapeHtml(excuseTitle)}" tabindex="0"`)}
+      <span class="scope-kpi-sep" aria-hidden="true">|</span>
+      ${item('Absents', c.absent)}
+      ${showDispense ? `<span class="scope-kpi-sep" aria-hidden="true">|</span>${item('Dispensés', c.dispense)}` : ''}
+      <span class="scope-kpi-sep" aria-hidden="true">|</span>
+      ${item('À renseigner', c.open, Number(c.open) > 0 ? ' data-emphasis="open"' : '')}
     </div>`;
   }
 
@@ -3347,7 +3378,7 @@
         { key: 'grade', type: 'text', value: (row) => row && row.grade },
         { key: 'nip', type: 'text', value: (row) => row && row.nip }
       ] },
-      { key: 'grade', type: 'text', value: (row) => row && row.grade, tieBreakers: [
+      { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [
         { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom) },
         { key: 'prenom', type: 'text', value: (row) => row && row.prenom },
         { key: 'nip', type: 'text', value: (row) => row && row.nip }
@@ -3374,71 +3405,71 @@
 
   function renderEncadrementBlock() {
     const fiche = state.fiche || {};
-    const encRows = sortPeopleForEncadrement((fiche.encadrement || []).map((p) => {
+    const enc = (fiche && fiche.encadrement) || (state.fiche && state.fiche.encadrement) || [];
+    const encCount = (role) => enc.filter((p) => p && p.role === role).length;
+    const encRows = sortPeopleForEncadrement(enc.map((p) => {
       const person = personOf(fiche, p.personne_id) || {};
       return Object.assign({}, p, person, { personne_id: p.personne_id, role: p.role });
     }));
-    const used = usedEncadrementIds();
-    const expected = expectedIds();
+    const byRole = new Map();
+    encRows.forEach((p) => {
+      const role = String(p.role || '').toUpperCase() || 'ENCADREMENT';
+      if (!byRole.has(role)) byRole.set(role, []);
+      byRole.get(role).push(p);
+    });
+    const roles = encadrementRolesForEvent(fiche);
     return `
-      <div class="scope-card scope-encadrement-card">
-        <div class="scope-section-head">
-          <div>
-            <h3>Encadrement</h3>
-            <p>Hors taux principal. Rôles séparés, retrait possible sans supprimer la personne.</p>
-          </div>
+      <section class="scope-encadrement-block">
+        <div class="scope-section-header">
+          <h2 class="scope-section-title">Encadrement</h2>
         </div>
-        <div class="scope-field scope-person-lookup scope-enc-search">
-          <label>Ajouter à l’encadrement</label>
-          <div class="scope-inline-fields">
-            <select id="enc-role">
-              <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
-              <option value="MONITEUR" ${state.encRole === 'MONITEUR' ? 'selected' : ''}>Moniteur</option>
-              <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
-              <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
-            </select>
-            ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}">
-              <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
-              <span class="scope-serie-copy">
-                <span class="scope-serie-label">Formateur pour toute la série</span>
-                <span class="scope-serie-help">Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.</span>
-                ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(prSeriesScopeText(fiche))}</span>` : ''}
-              </span>
-            </button>` : ''}
-            <input id="enc-q" type="search" placeholder="Rechercher par nom, prénom ou NIP..." value="${escapeHtml(state.encQuery)}" autocomplete="off">
-          </div>
+        <div class="scope-enc-toolbar scope-person-lookup scope-enc-search">
+          <label class="visually-hidden" for="enc-role">Rôle d’encadrement</label>
+          <select id="enc-role" class="scope-field is-compact scope-enc-role" aria-label="Rôle d’encadrement">
+            <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
+            <option value="MONITEUR" ${state.encRole === 'MONITEUR' ? 'selected' : ''}>Moniteur</option>
+            <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
+            <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
+          </select>
+          ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}">
+            <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
+            <span class="scope-serie-copy">
+              <span class="scope-serie-label">Formateur pour toute la série</span>
+              <span class="scope-serie-help">Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.</span>
+              ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(prSeriesScopeText(fiche))}</span>` : ''}
+            </span>
+          </button>` : ''}
+          <input id="enc-q" class="scope-field is-compact" type="search" placeholder="Rechercher nom, prénom ou NIP..." value="${escapeHtml(state.encQuery)}" autocomplete="off">
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add">Ajouter</button>
           <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
         </div>
         <div class="scope-enc-groups">
-          ${encRows.length ? `<section class="scope-enc-group scope-enc-group-global">
-            <div class="scope-enc-people">${encRows.map((p) => {
-              const role = p.role || 'ENCADREMENT';
-              return `<div class="scope-enc-person">
-                <button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml((L.ROLE_LABELS[role] || role).toLowerCase())} ${escapeHtml(personLine(p))}">${trashIcon()}</button>
-                <span>${escapeHtml(personLine(p))}</span>
-                <small>${escapeHtml(L.ROLE_LABELS[role] || role)} · ${escapeHtml(p.nip || '')}</small>
-              </div>`;
-            }).join('')}</div>
-          </section>` : '<p class="scope-enc-empty">Aucun encadrement</p>'}
+          ${roles.map((role) => {
+            const people = byRole.get(role) || [];
+            const count = role === 'MONITEUR' ? encCount('MONITEUR') : people.length;
+            return `<section class="scope-enc-group" data-enc-role="${escapeHtml(role)}">
+              <h3 class="scope-enc-role-title">${escapeHtml(encadrementRoleHeading(role, count))}</h3>
+              <div class="scope-enc-people">${people.length ? people.map((p) => {
+                const label = eventPersonLabel(p);
+                return `<div class="scope-enc-person">
+                  <span class="scope-enc-name">${escapeHtml(label)}</span>
+                  <small class="scope-enc-nip">${p.nip ? `NIP ${escapeHtml(p.nip)}` : ''}</small>
+                  <button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(L.ROLE_LABELS[role] || role)} ${escapeHtml(label)}">${trashIcon()}</button>
+                </div>`;
+              }).join('') : '<p class="scope-enc-empty">Aucun</p>'}</div>
+            </section>`;
+          }).join('')}
         </div>
-      </div>
+      </section>
     `;
   }
 
   function renderManualParticipantBlock() {
     return `
-      <div class="scope-card scope-manual-participant-card">
-        <div class="scope-section-head">
-          <div>
-            <h3>Ajouter un participant à cet événement</h3>
-            <p>Ajout ponctuel à cet événement uniquement.</p>
-          </div>
-        </div>
-        <div class="scope-field scope-person-lookup">
-          <label for="manual-person-q">Participant</label>
-          <input id="manual-person-q" type="search" placeholder="Rechercher par nom, prénom ou NIP..." value="${escapeHtml(state.manualPersonQuery)}" autocomplete="off">
-          <div id="manual-person-suggestions" class="scope-suggestion-anchor"></div>
-        </div>
+      <div class="scope-presence-add scope-person-lookup">
+        <label class="visually-hidden" for="manual-person-q">Ajouter un participant à cet événement</label>
+        <input id="manual-person-q" class="scope-field is-compact" type="search" placeholder="Rechercher une personne à ajouter..." value="${escapeHtml(state.manualPersonQuery)}" autocomplete="off" aria-label="Ajouter un participant à cet événement">
+        <div id="manual-person-suggestions" class="scope-suggestion-anchor"></div>
       </div>
     `;
   }
@@ -3490,11 +3521,16 @@
     const domaine = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code;
     const statuses = L.participationStatusesForDomaine ? L.participationStatusesForDomaine(domaine) : [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
     const statusPressed = (row, value) => row.statut === value;
+    const statusVariant = {
+      PRESENT: 'is-present',
+      ABSENT_EXCUSE: 'is-excused',
+      ABSENT_NON_EXCUSE: 'is-absent',
+      DISPENSE: 'is-exempt',
+      PERMUTATION: 'is-permutation'
+    };
     const justificatifCell = (row) => {
       const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
-      const selectedMotif = motifs.find((m) => m.value === row.motifAbsence);
-      const showChips = row.statut === 'ABSENT_EXCUSE' && (!selectedMotif || row.editMotif);
-      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control">${showChips ? `<div class="scope-motif-chips" role="group" aria-label="Motif d’excuse">${motifs.map((m) => `<button type="button" class="scope-motif-chip${row.motifAbsence === m.value ? ' is-selected' : ''}" data-motif-chip="${escapeHtml(m.value)}">${escapeHtml(m.label)}</button>`).join('')}</div>` : `<button type="button" class="scope-motif-chip is-selected" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selectedMotif.label)}</button>`}</div>` : '';
+      const motif = row.statut === 'ABSENT_EXCUSE' ? `<div class="scope-motif-control"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif d’excuse</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-motif aria-label="Motif d’excuse">${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>` : '';
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
@@ -3507,19 +3543,12 @@
     const roleCell = (row) => {
       const role = String(row.role || '').toUpperCase();
       if (L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) {
-        return `<span class="scope-role-chip">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
+        return `<span class="scope-enc-role-flag">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
       }
-      return '<span class="scope-muted-inline">—</span>';
-    };
-    const rowTone = (row) => {
-      if (row.statut === 'PRESENT' || row.statut === 'PERMUTATION') return 'is-present';
-      if (row.statut === 'ABSENT_EXCUSE') return 'is-excuse';
-      if (row.statut === 'ABSENT_NON_EXCUSE') return 'is-absent';
-      if (row.statut === 'DISPENSE') return 'is-dispense';
-      return 'is-open';
+      return '';
     };
     return `
-      <div class="scope-table-wrap scope-saisie-desktop">
+      <div class="scope-table-scroll">
         <table class="scope-table scope-saisie-table">
           <thead><tr>
             ${sortableHeader('event-personnel', 'nom', 'Personne', state.eventPersonnelSort)}
@@ -3534,24 +3563,25 @@
               const blocked = Boolean(row.alreadyCountedInSession);
               const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
-              const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : '', rowTone(row)].filter(Boolean).join(' ');
+              const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : ''].filter(Boolean).join(' ');
               const blockedAttrs = blocked
                 ? ` tabindex="0" aria-describedby="${tooltipId}"`
                 : '';
-              const personLabel = [row.grade, row.prenom, row.nomFamille || row.nom].filter(Boolean).join(' ');
+              const personLabel = eventPersonLabel(row);
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
               <td data-label="Personne"><span class="scope-saisie-person">${escapeHtml(personLabel || row.nom)}</span>${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
               <td data-label="Cible">${escapeHtml(row.cible)}</td>
               <td data-label="Statut">
-                <div class="scope-status-row" role="group" aria-label="Statut de participation">
-                  ${(!row.statut || row.statut === 'NON_RENSEIGNE') ? '<span class="scope-status-chip is-convoque">Convoqué</span>' : ''}
-                  ${statuses.map(([v, l]) => `
-                    <button type="button" class="scope-status-chip" data-status="${v}" aria-pressed="${statusPressed(row, v)}"${blocked || roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>
-                  `).join('')}
+                <div class="scope-status-row scope-segmented scope-status-control-group" role="radiogroup" aria-label="Statut de participation">
+                  ${statuses.map(([v, l]) => {
+                    const on = statusPressed(row, v);
+                    const variant = on ? (statusVariant[v] || '') : '';
+                    return `<button type="button" role="radio" class="scope-segmented-item scope-status-control${on ? ` is-selected ${variant}` : ''}" data-status="${v}" aria-checked="${on}" aria-pressed="${on}"${blocked || roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>`;
+                  }).join('')}
                 </div>
               </td>
-              <td data-label="Motif / information" class="scope-justificatif-cell">${justificatifCell(row) || '<span class="scope-muted-inline">—</span>'}</td>
+              <td data-label="Motif / information" class="scope-justificatif-cell">${justificatifCell(row)}</td>
               <td data-label="Encadrement">${roleCell(row)}</td>
             </tr>`;
             }).join('')}
@@ -4783,8 +4813,13 @@
     root.querySelectorAll('[data-motif]').forEach((sel) => {
       sel.addEventListener('change', () => {
         const pid = sel.closest('[data-pid]').getAttribute('data-pid');
-        const row = state.saisie.find((r) => r.personneId === pid);
-        if (row) { row.motifAbsence = sel.value; row.editMotif = false; state.saisieDirty = true; render(); }
+        const idx = state.saisie.findIndex((r) => r.personneId === pid);
+        const row = idx >= 0 ? state.saisie[idx] : null;
+        if (row) {
+          state.saisie[idx] = L.applyExcuseMotif(row, sel.value);
+          state.saisieDirty = true;
+          render();
+        }
       });
     });
     root.querySelectorAll('[data-motif-edit]').forEach((btn) => {
@@ -4829,6 +4864,9 @@
       state.encRole = e.target.value || 'FORMATEUR';
       if (state.encRole !== 'FORMATEUR') state.encSerieComplete = false;
       render();
+    });
+    document.getElementById('enc-add')?.addEventListener('click', () => {
+      if (state.encHits.length === 1) addEncadrement(state.encHits[0].personne_id);
     });
     document.getElementById('enc-serie-complete')?.addEventListener('click', () => {
       state.encSerieComplete = !state.encSerieComplete;
@@ -5528,6 +5566,10 @@
         const fresh = await reloadFicheFromServer(id);
         if (fresh && state.fiche && state.fiche.evenement && res.version) state.fiche.evenement.version = res.version;
         state.saisieDirty = false;
+        state.presenceSaveStatus = 'saved';
+      } catch (error) {
+        state.presenceSaveStatus = 'error';
+        throw error;
       } finally {
         state.presenceSaveBusy = false;
       }

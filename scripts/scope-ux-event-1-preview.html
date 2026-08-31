@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SCOPE UX-EVENT-1 — recette visuelle locale</title>
+<link rel="stylesheet" href="../assets/css/scope.css?v=scope-ux-event-1"/>
+<style>
+  body { margin: 0; background: var(--scope-bg); }
+  .preview-page { padding: 16px 20px 40px; }
+  .preview-label { margin: 24px 0 8px; font: 11px/1.2 sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #667; }
+</style>
+</head>
+<body>
+<div class="scope-app preview-page">
+
+<p class="preview-label">1 — FOBA population importante · desktop</p>
+<div class="scope-main scope-event-saisie">
+  <header class="scope-event-identity">
+    <p class="scope-event-title">FOBA chef d’agrès 2026-03</p>
+    <p class="scope-event-meta"><span>12/03/2026</span><span class="scope-event-meta-sep">·</span><span>08:00–12:00</span><span class="scope-event-meta-sep">·</span><span>FOBA</span><span class="scope-event-meta-sep">·</span><span>EQ / CA</span><span class="scope-event-meta-sep">·</span><span>Nominatif</span><span class="scope-badge">Planifié</span></p>
+  </header>
+  <div class="scope-kpi-strip is-line">
+    <span class="scope-kpi-strip-item"><span class="scope-kpi-strip-label">Attendus</span> <span class="scope-kpi-strip-value">24</span></span>
+    <span class="scope-kpi-sep">|</span>
+    <span class="scope-kpi-strip-item"><span class="scope-kpi-strip-label">Présents</span> <span class="scope-kpi-strip-value">18</span></span>
+    <span class="scope-kpi-sep">|</span>
+    <span class="scope-kpi-strip-item"><span class="scope-kpi-strip-label">Excusés</span> <span class="scope-kpi-strip-value">2</span></span>
+    <span class="scope-kpi-sep">|</span>
+    <span class="scope-kpi-strip-item"><span class="scope-kpi-strip-label">Absents</span> <span class="scope-kpi-strip-value">1</span></span>
+    <span class="scope-kpi-sep">|</span>
+    <span class="scope-kpi-strip-item"><span class="scope-kpi-strip-label">Dispensés</span> <span class="scope-kpi-strip-value">0</span></span>
+    <span class="scope-kpi-sep">|</span>
+    <span class="scope-kpi-strip-item"><span class="scope-kpi-strip-label">À renseigner</span> <span class="scope-kpi-strip-value">3</span></span>
+  </div>
+  <div class="scope-actions scope-event-toolbar">
+    <button type="button" class="scope-btn scope-btn-primary scope-btn-compact">Enregistrer</button>
+    <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact">Tous présents</button>
+    <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#">Retour aux événements</a>
+    <button type="button" class="scope-btn scope-btn-danger scope-btn-compact">Réinitialiser la saisie</button>
+    <button type="button" class="scope-btn scope-btn-danger scope-btn-compact">Clôturer</button>
+  </div>
+  <section class="scope-encadrement-block">
+    <div class="scope-section-header"><h2 class="scope-section-title">Encadrement</h2></div>
+    <div class="scope-enc-toolbar">
+      <select class="scope-field is-compact scope-enc-role" aria-label="Rôle d’encadrement"><option>Formateur</option></select>
+      <input class="scope-field is-compact" type="search" placeholder="Rechercher nom, prénom ou NIP...">
+      <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact">Ajouter</button>
+    </div>
+    <div class="scope-enc-groups">
+      <section class="scope-enc-group">
+        <h3 class="scope-enc-role-title">Formateurs (1)</h3>
+        <div class="scope-enc-people"><div class="scope-enc-person"><span class="scope-enc-name">Cap Thierry Grünig</span><small class="scope-enc-nip">NIP 7647</small><button type="button" class="scope-remove-action scope-enc-remove" aria-label="Retirer Formateur Cap Thierry Grünig">×</button></div></div>
+      </section>
+      <section class="scope-enc-group">
+        <h3 class="scope-enc-role-title">Auxiliaires (1)</h3>
+        <div class="scope-enc-people"><div class="scope-enc-person"><span class="scope-enc-name">Lt instr Fabienne Manzi</span><small class="scope-enc-nip">NIP 23989</small><button type="button" class="scope-remove-action scope-enc-remove" aria-label="Retirer Auxiliaire Lt instr Fabienne Manzi">×</button></div></div>
+      </section>
+    </div>
+  </section>
+  <section class="scope-presence-section">
+    <div class="scope-section-header"><h2 class="scope-section-title">Présences</h2><p class="scope-saisie-open">3 présences à renseigner</p></div>
+    <div class="scope-table-scroll">
+      <table class="scope-table scope-saisie-table">
+        <thead><tr><th>Personne</th><th>NIP</th><th>Cible</th><th>Statut</th><th>Motif / information</th><th>Encadrement</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Cch Pierre Dupont</td><td>1001</td><td>EQ</td>
+            <td><div class="scope-status-row scope-segmented" role="radiogroup">
+              <button type="button" class="scope-segmented-item scope-status-control is-selected is-present" data-status="PRESENT" aria-pressed="true">Présent</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="ABSENT_EXCUSE" aria-pressed="false">Excusé</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="ABSENT_NON_EXCUSE" aria-pressed="false">Absent</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="DISPENSE" aria-pressed="false">Dispensé</button>
+            </div></td>
+            <td></td><td></td>
+          </tr>
+          <tr>
+            <td>Sap Marie Martin</td><td>1002</td><td>EQ</td>
+            <td><div class="scope-status-row scope-segmented" role="radiogroup">
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="PRESENT" aria-pressed="false">Présent</button>
+              <button type="button" class="scope-segmented-item scope-status-control is-selected is-excused" data-status="ABSENT_EXCUSE" aria-pressed="true">Excusé</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="ABSENT_NON_EXCUSE" aria-pressed="false">Absent</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="DISPENSE" aria-pressed="false">Dispensé</button>
+            </div></td>
+            <td><select class="scope-motif-select" aria-label="Motif d’excuse"><option selected>Privé</option><option>Professionnel</option><option>Armée</option><option>Accident/Maladie</option></select></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Cap Thierry Grünig</td><td>7647</td><td>CA</td>
+            <td><div class="scope-status-row scope-segmented" role="radiogroup">
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="PRESENT" aria-pressed="false">Présent</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="ABSENT_EXCUSE" aria-pressed="false">Excusé</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="ABSENT_NON_EXCUSE" aria-pressed="false">Absent</button>
+              <button type="button" class="scope-segmented-item scope-status-control" data-status="DISPENSE" aria-pressed="false">Dispensé</button>
+            </div></td>
+            <td></td><td><span class="scope-enc-role-flag">Formateur</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<p class="preview-label">2 — PAPR/PR · surveillant</p>
+<div class="scope-main scope-event-saisie">
+  <header class="scope-event-identity"><p class="scope-event-title">PAPR session 1</p><p class="scope-event-meta"><span>PR</span><span class="scope-event-meta-sep">·</span><span>Nominatif</span></p></header>
+  <div class="scope-enc-groups">
+    <section class="scope-enc-group"><h3 class="scope-enc-role-title">Formateurs (1)</h3><div class="scope-enc-people"><div class="scope-enc-person"><span class="scope-enc-name">Lt Paul Formateur</span><small class="scope-enc-nip">NIP 11</small></div></div></section>
+    <section class="scope-enc-group"><h3 class="scope-enc-role-title">Surveillants (1)</h3><div class="scope-enc-people"><div class="scope-enc-person"><span class="scope-enc-name">Sap Léa Surveillant</span><small class="scope-enc-nip">NIP 22</small></div></div></section>
+    <section class="scope-enc-group"><h3 class="scope-enc-role-title">Auxiliaires (0)</h3><p class="scope-enc-empty">Aucun</p></section>
+  </div>
+</div>
+
+<p class="preview-label">3 — JSP · moniteur</p>
+<div class="scope-main scope-event-saisie">
+  <header class="scope-event-identity"><p class="scope-event-title">JSP manœuvre</p><p class="scope-event-meta"><span>JSP</span></p></header>
+  <div class="scope-enc-groups">
+    <section class="scope-enc-group"><h3 class="scope-enc-role-title">Formateurs (0)</h3><p class="scope-enc-empty">Aucun</p></section>
+    <section class="scope-enc-group"><h3 class="scope-enc-role-title">Moniteurs (1)</h3><div class="scope-enc-people"><div class="scope-enc-person"><span class="scope-enc-name">Sgt Luc Moniteur</span><small class="scope-enc-nip">NIP 33</small></div></div></section>
+    <section class="scope-enc-group"><h3 class="scope-enc-role-title">Auxiliaires (0)</h3><p class="scope-enc-empty">Aucun</p></section>
+  </div>
+</div>
+
+<p class="preview-label">4 — DAP · Permutation</p>
+<div class="scope-main scope-event-saisie">
+  <header class="scope-event-identity"><p class="scope-event-title">DAP garde</p><p class="scope-event-meta"><span>DAP</span></p></header>
+  <div class="scope-table-scroll">
+    <table class="scope-table scope-saisie-table">
+      <thead><tr><th>Personne</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Adj Nina Permut</td>
+          <td><div class="scope-status-row scope-segmented" role="radiogroup">
+            <button type="button" class="scope-segmented-item scope-status-control">Présent</button>
+            <button type="button" class="scope-segmented-item scope-status-control">Excusé</button>
+            <button type="button" class="scope-segmented-item scope-status-control">Absent</button>
+            <button type="button" class="scope-segmented-item scope-status-control">Dispensé</button>
+            <button type="button" class="scope-segmented-item scope-status-control is-selected is-permutation" aria-pressed="true">Permutation</button>
+          </div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

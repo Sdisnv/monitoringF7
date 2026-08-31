@@ -221,7 +221,7 @@ function record(name, fn) {
   });
 
   await record('table personnel événement triable sans mutation de saisie', async () => {
-    assert.ok(ui.includes("eventPersonnelSort: { key: 'nom', dir: 'asc' }"));
+    assert.ok(ui.includes("eventPersonnelSort: { key: 'grade', dir: 'desc' }"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'Personne', state.eventPersonnelSort)"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)"));

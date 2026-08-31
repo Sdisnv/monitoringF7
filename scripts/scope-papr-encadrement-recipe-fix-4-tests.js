@@ -177,14 +177,15 @@ function attendu(detail, personneId){
     assert.strictEqual(pr1.attendus.filter((row) => row.inclus !== false).length, 3);
   });
 
-  await record('I — Motif exclusif badge cliquable puis select', () => {
+  await record('I — Motif select compact sur la ligne, sans chips', () => {
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
     const css = fs.readFileSync('assets/css/scope.css', 'utf8');
     const logicSrc = fs.readFileSync('assets/js/scope-ui-logic.js', 'utf8');
-    assert.ok(ui.includes('data-motif-edit='));
-    assert.ok(ui.includes('data-motif-chip'));
+    assert.ok(ui.includes('data-motif'));
+    assert.ok(ui.includes('scope-motif-select'));
+    assert.ok(!ui.includes('data-motif-chip="'));
     assert.ok(logicSrc.includes('editMotif: true') || logicSrc.includes('next.editMotif = true'));
-    assert.ok(css.includes('.scope-motif-chip'));
+    assert.ok(css.includes('.scope-motif-select'));
   });
 
   await record('J — Couleurs boutons présence par statut et disabled lisible', () => {

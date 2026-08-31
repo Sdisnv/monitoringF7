@@ -146,11 +146,12 @@ function encadrementCompare(a, b){
     ]);
   });
 
-  await record('UI encadrement conserve un tri global et affiche le rôle sans regrouper par rôle', async () => {
+  await record('UI encadrement groupe les personnes par rôle, tri grade/nom/prénom dans chaque groupe', async () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('scope-enc-group-global'));
+    assert.ok(ui.includes('const byRole = new Map'));
+    assert.ok(ui.includes('encadrementRoleHeading'));
+    assert.ok(ui.includes('sortPeopleForEncadrement'));
     assert.ok(ui.includes('ROLE_LABELS[role]'));
-    assert.ok(!ui.includes('const byRole = new Map'));
   });
 
   for(const result of results){

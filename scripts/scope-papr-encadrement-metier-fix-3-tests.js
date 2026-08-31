@@ -200,8 +200,8 @@ function extractFunction(source, name){
   await record('H — UX Motif hauteur alignée et encart visuel compact', () => {
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
     const css = fs.readFileSync('assets/css/scope.css', 'utf8');
-    assert.ok(ui.includes('data-motif-chip') || ui.includes('data-motif-edit'));
-    assert.ok(css.includes('.scope-motif-chip'));
+    assert.ok(ui.includes('data-motif') || ui.includes('data-motif-edit'));
+    assert.ok(css.includes('.scope-motif-select') || css.includes('.scope-motif-chip'));
     assert.ok(css.includes('min-height: 28px'));
     assert.ok(css.includes('button[data-status="PRESENT"]'));
     assert.ok(css.includes('button[data-status="ABSENT_NON_EXCUSE"]'));

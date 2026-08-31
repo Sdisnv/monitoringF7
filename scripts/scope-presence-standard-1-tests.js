@@ -583,10 +583,9 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('<th>Motif / information</th>'));
     assert.ok(!saisieRows.includes('<th>Action</th>'));
     assert.ok(ui.includes('cibleLabelFromAttendu'));
-    assert.ok(ui.includes('scope-kpi-board'));
-    assert.ok(ui.includes('scope-kpi-target'));
-    assert.ok(ui.includes('scope-kpi-encadrement'));
-    assert.ok(ui.includes('Vue globale dédupliquée par personne'));
+    assert.ok(ui.includes('scope-kpi-strip is-line'));
+    assert.ok(ui.includes('À renseigner'));
+    assert.ok(!ui.includes('Vue globale dédupliquée par personne'));
     assert.ok(ui.includes('scope-presence-warning'));
     assert.ok(ui.includes('scope-cloture-reason'));
     assert.ok(ui.includes('applyParticipationStatus'));
