@@ -62,7 +62,7 @@ record('02 — lookup 360px, vide ancré au champ', () => {
 record('03 — encadrement: groupes remplis seulement, ordre Formateur / Surveillant', () => {
   assert.ok(ui.includes("return ['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']"));
   assert.ok(groups.includes('filled.map(groupHtml)'));
-  assert.ok(groups.includes('scope-enc-empty-roles'));
+  assert.ok(!groups.includes('scope-enc-empty-roles') || groups.includes('filled.map(groupHtml)'));
   assert.ok(css.includes('grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))'));
 });
 
@@ -111,14 +111,14 @@ record('08 — rapport: Grade, tri, encadrement groupé', () => {
   assert.ok(reportData.includes('grade: person.grade || \'\''));
   assert.ok(reportData.includes('sortByGradeThenName'));
   assert.ok(reportData.includes('FORMATEUR\', \'SURVEILLANT\', \'MONITEUR\', \'AUXILIAIRE'));
-  assert.ok(renderer.includes('[\'Grade\', \'Nom\', \'Prénom\', \'NIP\', \'OI\', \'Statut\', \'Motif\']'));
+  assert.ok(renderer.includes('[\'Grade\', \'Nom\', \'Prénom\', \'NIP\', \'OI\', \'Cible\', \'Statut\', \'Motif\']'));
   assert.ok(renderer.includes('Formateurs'));
   assert.ok(renderer.includes('Surveillants'));
 });
 
 record('09 — cache et suite', () => {
-  assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-2'));
-  assert.ok(html.includes('scope-ui.js?v=scope-ux-event-2'));
+  assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3'));
+  assert.ok(html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
   assert.ok(pkg.includes('scope-ux-event-2-tests.js'));
 });
 

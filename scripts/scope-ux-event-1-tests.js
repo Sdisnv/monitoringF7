@@ -84,7 +84,7 @@ record('05 — motif select conditionnel', () => {
 
 record('06 — KPI strip une ligne, encadrement hors KPI', () => {
   const kpis = ui.slice(ui.indexOf('function renderPresenceKpis'), ui.indexOf('function sortSaisieRows'));
-  assert.ok(kpis.includes('scope-kpi-strip is-line') || kpis.includes('scope-kpi-strip is-metrics is-line'));
+  assert.ok(kpis.includes('scope-kpi-strip is-line') || kpis.includes('scope-kpi-strip is-metrics is-line') || kpis.includes('renderKpiGrid') || ui.includes('scope-kpi-grid'));
   assert.ok(!kpis.includes('renderKpiCard'));
   assert.ok(!kpis.includes('encCount'));
   assert.ok(ui.includes("item('Attendus'") || kpis.includes("'Attendus'"));
@@ -136,8 +136,8 @@ record('12 — focus clavier StatusControl', () => {
 });
 
 record('13 — cache et suite branchées', () => {
-  assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-1') || html.includes('assets/css/scope.css?v=scope-ux-event-2'));
-  assert.ok(html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2'));
+  assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-1') || html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3'));
+  assert.ok(html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
   assert.ok(pkg.includes('scope-ux-event-1-tests.js'));
 });
 

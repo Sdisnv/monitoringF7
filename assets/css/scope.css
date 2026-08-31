@@ -4423,6 +4423,248 @@ body.scope-pdf-open { overflow: hidden; }
   }
 }
 
+/* === UX-EVENT-3 — hiérarchie ORION, KPI units, rows non clippées === */
+.scope-event-saisie,
+.scope-event-realise,
+.scope-event-fiche {
+  gap: var(--scope-space-4);
+}
+
+.scope-event-saisie .scope-event-identity,
+.scope-event-realise .scope-event-identity {
+  margin-bottom: 0;
+}
+
+.scope-kpi-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--scope-space-3);
+  align-items: stretch;
+}
+
+.scope-kpi-unit {
+  flex: 1 1 128px;
+  min-width: 118px;
+  max-width: 220px;
+  padding: 12px 14px;
+  border: 1px solid var(--scope-border);
+  border-radius: var(--scope-radius-sm);
+  background: var(--scope-surface);
+  box-shadow: var(--scope-shadow-sm);
+}
+
+.scope-kpi-unit.is-featured {
+  flex: 1.35 1 168px;
+  border-top: 3px solid var(--scope-navy);
+}
+
+.scope-kpi-unit.is-open {
+  border-top: 3px solid var(--scope-navy);
+  background: var(--scope-navy-soft);
+}
+
+.scope-kpi-unit-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--scope-muted);
+}
+
+.scope-kpi-unit-value {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--scope-text);
+}
+
+.scope-event-saisie .scope-event-toolbar,
+.scope-event-realise .scope-event-toolbar {
+  margin-top: var(--scope-space-1);
+}
+
+.scope-event-realise .scope-kpi-grid {
+  margin-top: var(--scope-space-3);
+}
+
+.scope-event-realise .scope-event-toolbar {
+  margin-top: var(--scope-space-4);
+}
+
+.scope-event-realise .scope-presence-section {
+  margin-top: var(--scope-space-6);
+  padding-top: var(--scope-space-4);
+}
+
+.scope-enc-role-title {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  margin: 0 0 6px;
+}
+
+.scope-enc-people {
+  border: 1px solid var(--scope-border);
+  border-radius: var(--scope-radius-sm);
+  background: var(--scope-surface);
+}
+
+.scope-enc-person {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--scope-border);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+}
+
+.scope-enc-person:last-child {
+  border-bottom: 0;
+}
+
+.scope-enc-name,
+.scope-saisie-person {
+  font-weight: 500;
+}
+
+.scope-lookup-field {
+  width: 360px;
+}
+
+.scope-enc-role {
+  width: 188px;
+  min-width: 180px;
+  max-width: 200px;
+  flex: 0 0 188px;
+}
+
+.scope-serie-toggle {
+  gap: 8px;
+  max-width: none;
+}
+
+.scope-serie-help {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.scope-info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--scope-radius-xs);
+  color: var(--scope-muted);
+  font-size: 12px;
+  cursor: help;
+}
+
+.scope-tooltip {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--scope-border);
+  border-radius: var(--scope-radius-sm);
+  background: var(--scope-surface);
+  color: var(--scope-text);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: var(--scope-shadow);
+  white-space: normal;
+}
+
+.scope-info-tip:hover .scope-tooltip,
+.scope-info-tip:focus .scope-tooltip,
+.scope-info-tip:focus-visible .scope-tooltip,
+.scope-serie-toggle:focus-visible .scope-tooltip {
+  display: block;
+}
+
+.scope-presence-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--scope-space-3) var(--scope-space-4);
+}
+
+.scope-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scope-filter-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scope-muted);
+}
+
+.scope-presence-toolbar .scope-segmented {
+  height: 32px;
+}
+
+.scope-presence-toolbar .scope-segmented-item {
+  height: 32px;
+  min-height: 32px;
+}
+
+.scope-event-saisie .scope-table tbody tr,
+.scope-event-realise .scope-table tbody tr {
+  height: auto;
+  min-height: 40px;
+}
+
+.scope-event-saisie .scope-table tbody td,
+.scope-event-realise .scope-table tbody td {
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.scope-status-cluster {
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 32px;
+}
+
+.scope-event-saisie .scope-table-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.scope-realise-filters {
+  gap: var(--scope-space-3);
+}
+
+.scope-realise-filters #realise-q {
+  width: 320px;
+}
+
+.scope-event-meta-sep {
+  margin: 0 2px;
+  color: var(--scope-muted);
+}
+
+@media (min-width: 1200px) {
+  .scope-kpi-unit {
+    flex: 1 1 140px;
+  }
+}
+
 /* UX-CLEANUP-1 — remaining inline styles in scope-ui.js (~95). This lot did not migrate page titles, report KPI blocks, or form margin-top helpers. */
 /* Legacy divergences kept on purpose: .scope-person-table zebra #d7dee8; .scope-chips / .scope-import-pill / .scope-status-pill / .scope-mode-pill 999px; table-as-card @media 800px except .scope-event-saisie; personnel filters still use .scope-btn-primary when selected. */
 /* === /UX-DS-1 === */

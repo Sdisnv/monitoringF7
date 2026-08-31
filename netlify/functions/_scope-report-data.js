@@ -153,6 +153,7 @@ function nominativeRows(fiche){
       prenom: person.prenom || '',
       nip: person.nip || '',
       oi: cible.niveau_code || '',
+      cible: cible.libelle || cible.niveau_code || '',
       statut: part.statut || 'NON_RENSEIGNE',
       statutLabel: STATUT_LABELS[part.statut] || part.statut || 'Non renseigné',
       motif: part.motif_absence || null,

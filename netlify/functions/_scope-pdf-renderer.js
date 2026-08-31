@@ -46,6 +46,30 @@ function periodLabel(period){
   return `${period.from} → ${period.to} (${preset})`;
 }
 
+function formatDisplayDate(value){
+  const text = String(value || '');
+  const day = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(day) return `${day[3]}.${day[2]}.${day[1]}`;
+  return text || '—';
+}
+
+function formatDisplayDateTime(value){
+  if(!value) return '';
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return formatDisplayDate(value);
+  const parts = new Intl.DateTimeFormat('fr-CH', {
+    timeZone: 'Europe/Zurich',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+  const pick = (type) => (parts.find((p) => p.type === type) || {}).value || '';
+  return `${pick('day')}.${pick('month')}.${pick('year')} à ${pick('hour')}:${pick('minute')}`;
+}
+
 function hasLogo(file){
   try { return fs.existsSync(file); } catch { return false; }
 }
@@ -70,6 +94,20 @@ class ScopePdfRenderer {
     });
     this.doc.on('pageAdded', () => this.drawChrome());
     this.drawChrome();
+    this.doc.y = HEADER_H + 18;
+    const origAddPage = this.doc.addPage.bind(this.doc);
+    this.doc.addPage = (opts) => {
+      if (this._lockPages && !this._forcePage) return this.doc;
+      return origAddPage(opts);
+    };
+    this._lockPages = true;
+    this._forcePage = false;
+  }
+
+  nextPage(){
+    this._forcePage = true;
+    this.doc.addPage();
+    this._forcePage = false;
     this.doc.y = HEADER_H + 18;
   }
 
@@ -100,7 +138,7 @@ class ScopePdfRenderer {
       doc.moveTo(MARGIN, PAGE_H - FOOTER_H).lineTo(PAGE_W - MARGIN, PAGE_H - FOOTER_H)
         .strokeColor(rgb(INSTITUTION.line)).lineWidth(0.6).stroke();
       doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7)
-        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${date}  ·  SCOPE`, MARGIN, PAGE_H - FOOTER_H + 6, { width: 320 });
+        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, PAGE_H - FOOTER_H + 6, { width: 360 });
       doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, PAGE_H - FOOTER_H + 18, { width: PAGE_W - 2 * MARGIN });
       doc.restore();
     }
@@ -108,8 +146,7 @@ class ScopePdfRenderer {
 
   ensure(h){
     if(this.doc.y + h > CONTENT_BOTTOM){
-      this.doc.addPage();
-      this.doc.y = HEADER_H + 18;
+      this.nextPage();
     }
   }
 
@@ -155,8 +192,19 @@ class ScopePdfRenderer {
     this.doc.y += 36;
   }
 
-  kpiOfficial(officiel){
+  kpiOfficial(officiel, options){
     const o = officiel || {};
+    if(options && options.event){
+      const v = o.volumes || {};
+      this.kv([
+        { label: 'Taux officiel', value: formatTaux(o.percentage) },
+        { label: 'Présents', value: String(v.presents || 0) },
+        { label: 'Excusés', value: String(v.excuses || 0) },
+        { label: 'Absents', value: String(v.nonExcuses || 0) },
+        { label: 'Dispensés', value: String(v.dispenses || 0) }
+      ]);
+      return;
+    }
     const homogeneous = !(o.objectiveContext && o.objectiveContext.homogeneous === false);
     const objText = homogeneous && o.objective && o.objective.thresholdPct != null
       ? formatTaux(o.objective.thresholdPct)
@@ -187,7 +235,7 @@ class ScopePdfRenderer {
     }
   }
 
-  motifs(officiel){
+  motifs(officiel, options){
     const v = (officiel && officiel.volumes) || {};
     const rows = [
       ['Privé', v.excusesPrive],
@@ -196,8 +244,10 @@ class ScopePdfRenderer {
       ['Accident / maladie', v.excusesAccidentMaladie]
     ];
     if(Number(v.excusesNonPrecise || 0) > 0) rows.push(['Non précisé (historique)', v.excusesNonPrecise]);
+    const hasAny = rows.some((r) => Number(r[1] || 0) > 0);
+    if(!hasAny && options && options.skipEmpty) return;
     this.heading('Motifs d’excuse', 11);
-    if(!rows.some((r) => Number(r[1] || 0) > 0)){
+    if(!hasAny){
       this.para('Aucun motif d’excuse sur cette période.');
       return;
     }
@@ -226,35 +276,41 @@ class ScopePdfRenderer {
   table(headers, rows, widths){
     const width = PAGE_W - 2 * MARGIN;
     const cols = widths || headers.map(() => width / headers.length);
-    const rowH = 16;
-    const headerH = 18;
+    const rowH = 18;
+    const headerH = 16;
+    const paintRow = (cells, y, { header, zebra }) => {
+      if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
+      else if(zebra) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
+      let x = MARGIN;
+      const h = header ? headerH : rowH;
+      cells.forEach((cell, i) => {
+        this.doc.fillColor(rgb(INSTITUTION.ink))
+          .font(header ? 'Helvetica-Bold' : 'Helvetica')
+          .fontSize(header ? 7 : 8)
+          .text(String(cell == null ? '' : cell), x + 2, y + 4, {
+            width: cols[i] - 4,
+            height: h - 5,
+            ellipsis: true,
+            lineBreak: false
+          });
+        x += cols[i];
+        this.doc.y = y;
+      });
+      this.doc.y = y + h;
+    };
     const drawHeader = () => {
       this.ensure(headerH + rowH);
-      let x = MARGIN;
-      this.doc.rect(MARGIN, this.doc.y, width, headerH).fill(rgb('#f4f5f8'));
-      headers.forEach((h, i) => {
-        this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(7)
-          .text(h, x + 2, this.doc.y + 5, { width: cols[i] - 4 });
-        x += cols[i];
-      });
-      this.doc.y += headerH;
+      paintRow(headers, this.doc.y, { header: true });
     };
     drawHeader();
-    rows.forEach((row) => {
+    rows.forEach((row, idx) => {
       if(this.doc.y + rowH > CONTENT_BOTTOM){
-        this.doc.addPage();
-        this.doc.y = HEADER_H + 18;
+        this.nextPage();
         drawHeader();
       }
-      let x = MARGIN;
-      row.forEach((cell, i) => {
-        this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(7)
-          .text(String(cell == null ? '' : cell), x + 2, this.doc.y + 3, { width: cols[i] - 4, height: rowH - 2, ellipsis: true });
-        x += cols[i];
-      });
-      this.doc.y += rowH;
+      paintRow(row, this.doc.y, { zebra: idx % 2 === 1 });
     });
-    this.doc.moveDown(0.4);
+    this.doc.y += 8;
   }
 
   eventsTable(events){
@@ -284,14 +340,80 @@ class ScopePdfRenderer {
     p1.forEach((a) => this.para(`P1 — ${a.title || a.code || ''} : ${a.message || ''}`));
   }
 
+  renderEncadrement(m){
+    if(!m.encadrement || !m.encadrement.length) return;
+    this.heading('Encadrement (hors taux)', 12);
+    const roleLabels = {
+      FORMATEUR: 'Formateurs',
+      SURVEILLANT: 'Surveillants',
+      MONITEUR: 'Moniteurs',
+      AUXILIAIRE: 'Auxiliaires'
+    };
+    const groups = [];
+    m.encadrement.forEach((r) => {
+      const role = String(r.role || '').toUpperCase();
+      const last = groups[groups.length - 1];
+      if (!last || last.role !== role) groups.push({ role, rows: [r] });
+      else last.rows.push(r);
+    });
+    groups.forEach((group) => {
+      this.heading(roleLabels[group.role] || group.role, 11);
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP'],
+        group.rows.map((r) => [r.grade || '', r.nom, r.prenom, r.nip]),
+        [60, 140, 120, 80]
+      );
+    });
+  }
+
+  renderEventBody(m){
+    const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
+    const identity = [
+      { label: 'Date de l’exercice', value: formatDisplayDate(m.event.date) },
+      { label: 'Statut', value: m.event.statutLabel },
+      { label: 'Mode de suivi', value: m.event.modeLabel },
+      { label: 'Domaine', value: domaineLabel(m.event.parentDomaine || m.event.domaine) },
+      { label: 'Cible(s) / OI', value: (m.event.cibles || []).map((c) => c.code).join(', ') || '—' }
+    ];
+    if(m.event.sousDomaine) identity.splice(4, 0, { label: 'Sous-domaine', value: domaineLabel(m.event.sousDomaine) });
+    this.kv(identity);
+    this.heading('Synthèse', 12);
+    this.kpiOfficial(m.officiel, { event: true });
+    if(dap){
+      const v = (m.officiel && m.officiel.volumes) || {};
+      this.para(`dont permutations : ${Number(v.permutations || 0)}  (sous-ensemble des présents, jamais additionnées)`);
+    }
+    this.motifs(m.officiel, { skipEmpty: true });
+    this.renderEncadrement(m);
+    if(m.nominatif && m.nominatif.length){
+      this.heading('Liste nominative', 12);
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Cible', 'Statut', 'Motif'],
+        m.nominatif.map((r) => [
+          r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '',
+          r.statutLabel,
+          r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
+        ]),
+        [42, 78, 68, 48, 36, 48, 64, 75]
+      );
+    } else if(m.quantitative){
+      this.para('Suivi quantitatif : aucun nom n’est inventé.');
+    }
+  }
+
   render(){
     const m = this.model;
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(16)
       .text(m.title, MARGIN, this.doc.y, { width: PAGE_W - 2 * MARGIN });
     this.doc.moveDown(0.2);
-    this.para(`Période : ${periodLabel(m.period)}`);
-    this.para(`Périmètre : ${m.subtitle}`);
-    this.para(`Auteur : ${this.meta.authorLabel || 'session SCOPE'}  ·  ${this.meta.generatedAt || ''}`);
+    if(m.kind === 'EVENT' && m.event){
+      this.para(m.subtitle || '');
+      this.para(`Établi le ${formatDisplayDateTime(this.meta.generatedAt) || formatDisplayDate(m.event.date)}`);
+    } else {
+      this.para(`Période : ${periodLabel(m.period)}`);
+      this.para(`Périmètre : ${m.subtitle}`);
+      this.para(`Auteur : ${this.meta.authorLabel || 'session SCOPE'}  ·  ${formatDisplayDateTime(this.meta.generatedAt) || this.meta.generatedAt || ''}`);
+    }
     this.doc.moveDown(0.3);
 
     if(m.isLegacy){
@@ -303,6 +425,11 @@ class ScopePdfRenderer {
         { label: 'Liste nominative', value: 'Aucune — non nominatif' }
       ]);
       this.para('Ce document ne présente pas un taux officiel SCOPE et n’applique aucun objectif officiel.');
+      return;
+    }
+
+    if(m.kind === 'EVENT' && m.event){
+      this.renderEventBody(m);
       return;
     }
 
@@ -328,8 +455,7 @@ class ScopePdfRenderer {
     const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
     if(m.kind === 'PERIOD'){
       if(m.graphs) this.chart('Évolution', m.graphs.evolution);
-      this.doc.addPage();
-      this.doc.y = HEADER_H + 18;
+      this.nextPage();
       this.heading('Domaines', 12);
       if(m.domaines && m.domaines.length){
         this.table(
@@ -346,8 +472,7 @@ class ScopePdfRenderer {
         );
       }
       if(m.graphs) this.chart('Domaines', m.graphs.domaines);
-      this.doc.addPage();
-      this.doc.y = HEADER_H + 18;
+      this.nextPage();
       this.heading('Détail', 12);
       this.volumes(m.officiel, { dap: false });
       this.motifs(m.officiel);
@@ -378,41 +503,13 @@ class ScopePdfRenderer {
       this.heading('Liste nominative', 12);
       this.para(`${m.nominatif.length} participant(s) attendu(s). Les dispensés restent hors du dénominateur du taux officiel.`);
       this.table(
-        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif'],
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Cible', 'Statut', 'Motif'],
         m.nominatif.map((r) => [
-          r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.statutLabel,
+          r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '', r.statutLabel,
           r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
         ]),
-        [50, 78, 70, 58, 40, 70, 90]
+        [42, 78, 68, 48, 36, 48, 64, 75]
       );
-    } else if(m.event && m.quantitative){
-      this.para('Suivi quantitatif : aucun nom n’est inventé.');
-    }
-
-    if(m.encadrement && m.encadrement.length){
-      this.heading('Encadrement (hors taux)', 12);
-      this.para('Ces personnes ne rentrent pas dans le dénominateur du taux officiel.');
-      const roleLabels = {
-        FORMATEUR: 'Formateurs',
-        SURVEILLANT: 'Surveillants',
-        MONITEUR: 'Moniteurs',
-        AUXILIAIRE: 'Auxiliaires'
-      };
-      const groups = [];
-      m.encadrement.forEach((r) => {
-        const role = String(r.role || '').toUpperCase();
-        const last = groups[groups.length - 1];
-        if (!last || last.role !== role) groups.push({ role, rows: [r] });
-        else last.rows.push(r);
-      });
-      groups.forEach((group) => {
-        this.heading(roleLabels[group.role] || group.role, 11);
-        this.table(
-          ['Grade', 'Nom', 'Prénom', 'NIP'],
-          group.rows.map((r) => [r.grade || '', r.nom, r.prenom, r.nip]),
-          [60, 140, 120, 80]
-        );
-      });
     }
   }
 

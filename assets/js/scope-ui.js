@@ -709,7 +709,7 @@
       SURVEILLANT: 'Surveillants',
       AUXILIAIRE: 'Auxiliaires'
     };
-    return `${labels[role] || (L.ROLE_LABELS[role] || role)} (${count})`;
+    return `${labels[role] || (L.ROLE_LABELS[role] || role)} · ${count}`;
   }
 
   function renderEncadrementGroups(fiche, options) {
@@ -720,7 +720,6 @@
       : (role) => ((fiche && fiche.encadrement) || []).filter((p) => p && p.role === role).length;
     const roles = (options && options.roles) || encadrementRolesForEvent(fiche);
     const filled = roles.filter((role) => (byRole.get(role) || []).length);
-    const empty = roles.filter((role) => !(byRole.get(role) || []).length);
     const groupHtml = (role) => {
       const people = byRole.get(role) || [];
       const count = role === 'MONITEUR' ? encCount('MONITEUR') : people.length;
@@ -741,7 +740,6 @@
       <div class="scope-enc-groups" data-count="${filled.length}">
         ${filled.map(groupHtml).join('')}
       </div>
-      ${empty.length ? `<p class="scope-enc-empty-roles">${empty.map((role) => escapeHtml(encadrementRoleHeading(role, 0))).join(' · ')}</p>` : ''}
     `;
   }
 
@@ -3169,7 +3167,7 @@
     else if (mode !== 'QUANTITATIF' && preview) bits.push('Preview prête');
     return `<header class="scope-event-identity">
       <h1 class="scope-event-title">${escapeHtml(ev.libelle)}</h1>
-      <p class="scope-event-meta">${bits.map((bit) => `<span class="scope-event-meta-item">${escapeHtml(bit)}</span>`).join('')}
+      <p class="scope-event-meta">${bits.map((bit) => `<span class="scope-event-meta-item">${escapeHtml(bit)}</span>`).join('<span class="scope-event-meta-sep">·</span>')}
         ${isLegacy ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>' : statutBadge(ev.statut)}
       </p>
     </header>`;
@@ -3320,6 +3318,12 @@
           <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="reset-saisie">Réinitialiser la saisie</button>
           <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
         </div>
+          <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present">Tous présents</button>
+          <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
+          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="reset-saisie">Réinitialiser la saisie</button>
+          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
+        </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
         ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
         ${renderEncadrementBlock()}
@@ -3330,10 +3334,12 @@
           </div>
           <div class="scope-presence-toolbar">
             ${renderManualParticipantBlock()}
-            ${niveaux.length > 1 ? `<div class="scope-segmented" role="group" aria-label="Filtrer par cible">
+            ${niveaux.length > 1 ? `<div class="scope-filter-group">
+              <span class="scope-filter-label" id="cible-filter-label">Cible</span>
+              <div class="scope-segmented" role="group" aria-labelledby="cible-filter-label">
               <button type="button" class="scope-segmented-item" data-cible-filter="tous" aria-pressed="${state.cibleFilter === 'tous'}">Tous</button>
               ${niveaux.map((n) => `<button type="button" class="scope-segmented-item" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
-            </div>` : ''}
+            </div></div>` : ''}
           </div>
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
@@ -3375,6 +3381,13 @@
     return `<div class="scope-kpi-card is-${escapeHtml(kind)}${detail ? ' has-detail' : ''}"${tab}${hint}><strong>${escapeHtml(String(value || 0))}</strong><span>${escapeHtml(label)}${marker}</span>${detail}</div>`;
   }
 
+  function renderKpiGrid(items, ariaLabel) {
+    return `<div class="scope-kpi-grid" role="group" aria-label="${escapeHtml(ariaLabel)}">${(items || []).filter(Boolean).map((it) => `<article class="scope-kpi-unit${it.featured ? ' is-featured' : ''}${it.emphasis ? ' is-open' : ''}"${it.title ? ` title="${escapeHtml(it.title)}" tabindex="0"` : ''}>
+        <span class="scope-kpi-unit-label">${escapeHtml(it.label)}</span>
+        <span class="scope-kpi-unit-value">${escapeHtml(String(it.value ?? 0))}</span>
+      </article>`).join('')}</div>`;
+  }
+
   function renderPresenceKpis(niveaux, fiche) {
     const prKpis = fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.kpis;
     const rows = state.saisie || [];
@@ -3393,15 +3406,14 @@
     const showDispense = Boolean(c.dispense) || domaine !== 'JSP';
     const excuseDetail = renderExcuseBreakdown(rows);
     const excuseTitle = String(excuseDetail).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const item = (label, value, extra) => `<div class="scope-kpi-metric"${extra || ''}><span class="scope-kpi-strip-label">${escapeHtml(label)}</span><span class="scope-kpi-strip-value">${escapeHtml(String(value || 0))}</span></div>`;
-    return `<div class="scope-kpi-strip is-metrics is-line" role="group" aria-label="Compteurs de présence">
-      ${item('Attendus', attendus)}
-      ${item('Présents', c.present)}
-      ${item('Excusés', c.excuse, ` title="${escapeHtml(excuseTitle)}" tabindex="0"`)}
-      ${item('Absents', c.absent)}
-      ${showDispense ? item('Dispensés', c.dispense) : ''}
-      ${item('À renseigner', c.open, Number(c.open) > 0 ? ' data-emphasis="open"' : '')}
-    </div>`;
+    return renderKpiGrid([
+      { label: 'Attendus', value: attendus },
+      { label: 'Présents', value: c.present },
+      { label: 'Excusés', value: c.excuse, title: excuseTitle },
+      { label: 'Absents', value: c.absent },
+      showDispense ? { label: 'Dispensés', value: c.dispense } : null,
+      { label: 'À renseigner', value: c.open, emphasis: Number(c.open) > 0 }
+    ], 'Compteurs de présence');
   }
 
   function sortSaisieRows(rows) {
@@ -3474,13 +3486,11 @@
             <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
           </div>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add">Ajouter</button>
-          ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}">
+          ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}" title="Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.">
             <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
-            <span class="scope-serie-copy">
-              <span class="scope-serie-label">Formateur pour toute la série</span>
-              <span class="scope-serie-help">Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.</span>
-              ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(prSeriesScopeText(fiche))}</span>` : ''}
-            </span>
+            <span class="scope-serie-label">Formateur pour toute la série</span>
+            <span class="scope-info-tip" tabindex="0" aria-describedby="enc-serie-help">ⓘ<span id="enc-serie-help" class="scope-tooltip" role="tooltip">Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.</span></span>
+            ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(prSeriesScopeText(fiche))}</span>` : ''}
           </button>` : ''}
         </div>
         ${renderEncadrementGroups(fiche, { readOnly: false, byRole, roles, encCount })}
@@ -3670,22 +3680,21 @@
 
   function renderRealiseKpis(fiche, rows) {
     const t = (fiche && fiche.compteurs) || {};
-    const metric = (label, value) => `<div class="scope-kpi-metric"><span class="scope-kpi-strip-label">${escapeHtml(label)}</span><span class="scope-kpi-strip-value">${escapeHtml(String(value ?? 0))}</span></div>`;
-    return `<div class="scope-kpi-strip is-metrics is-line" role="group" aria-label="Taux et compteurs">
-      <div class="scope-kpi-taux"><span class="scope-kpi-strip-label">Taux officiel</span><span class="scope-kpi-taux-value">${escapeHtml(L.formatTaux(t.percentage))}</span></div>
-      ${metric('Présents', t.presents)}
-      ${metric('Excusés', t.excuses)}
-      ${metric('Absents', t.nonExcuses)}
-      ${metric('Dispensés', t.dispenses)}
-    </div>${fiche && fiche.jsp && fiche.jsp.tauxJeunes ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes.percentage))}</p>` : ''}`;
+    return `${renderKpiGrid([
+      { label: 'Taux officiel', value: L.formatTaux(t.percentage), featured: true },
+      { label: 'Présents', value: t.presents },
+      { label: 'Excusés', value: t.excuses },
+      { label: 'Absents', value: t.nonExcuses },
+      { label: 'Dispensés', value: t.dispenses }
+    ], 'Taux et compteurs')}${fiche && fiche.jsp && fiche.jsp.tauxJeunes ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes.percentage))}</p>` : ''}`;
   }
 
   function renderRealiseToolbar(ev) {
     return `<div class="scope-actions scope-event-toolbar">
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="reopen">Réouvrir</button>
-      <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cancel-event">Annuler l’événement</button>
       ${reportButton(ev.evenement_id)}
+      <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cancel-event">Annuler l’événement</button>
     </div>`;
   }
 
@@ -3751,9 +3760,9 @@
       return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
-        ${renderRealiseToolbar(ev)}
         ${eventIdentityBand(ev, fiche)}
         ${renderRealiseKpis(fiche, rows)}
+        ${renderRealiseToolbar(ev)}
         ${volumesBlock(saisie, { taux: t, officiel: true })}
       </div>
       ${state.modal === 'reopen' ? reopenQuantitatif : ''}
@@ -3768,9 +3777,9 @@
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
-        ${renderRealiseToolbar(ev)}
         ${eventIdentityBand(ev, fiche)}
         ${renderRealiseKpis(fiche, rows)}
+        ${renderRealiseToolbar(ev)}
         <section class="scope-presence-section">
           <div class="scope-section-header">
             <h2 class="scope-section-title">Liste nominative</h2>
