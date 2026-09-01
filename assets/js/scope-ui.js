@@ -143,6 +143,7 @@
     eventListPage: 1,
     eventListPageSize: 12,
     eventPersonnelSort: { key: 'grade', dir: 'desc' },
+    previewSort: { key: 'grade', dir: 'asc' },
     personneFiche: null,
     personneEdit: null,
     personneEventFilter: 'tout',
@@ -1581,7 +1582,7 @@
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
         <td data-label="Événement"><a class="scope-events-libelle" href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a></td>
-        <td data-label="Domaine"><span class="scope-badge scope-events-domain">${escapeHtml(domaineLabel(ev.domaine_code))}</span></td>
+        <td data-label="Domaine"><span class="scope-events-domain">${escapeHtml(domaineLabel(ev.domaine_code))}</span></td>
         <td data-label="Public / OI">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Effectif">${effectifHtml}</td>
         <td data-label="État">${statutHtml}</td>
@@ -3464,6 +3465,95 @@
     </header>`;
   }
 
+  function renderFicheIdentity(ev, fiche) {
+    const mode = eventMode(ev);
+    const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
+    const horaire = [ev.heure_debut, ev.heure_fin].filter(Boolean).join(' – ');
+    const publicOi = L.ciblesLabel(ciblesOf(fiche));
+    const meta = [
+      L.formatDate(ev.date),
+      horaire || null,
+      domaineLabel(ev.domaine_code),
+      publicOi && publicOi !== '—' ? publicOi : null
+    ].filter(Boolean);
+    const tech = [isLegacy ? L.modeLabel('LEGACY') : L.modeLabel(mode)];
+    if (!isLegacy && mode !== 'QUANTITATIF' && ev.population_figee) tech.push('Population figée');
+    return `<header class="scope-fiche-identity">
+      <div>
+        <p class="scope-page-eyebrow">Événement</p>
+        <h1>${escapeHtml(ev.libelle)}</h1>
+        <p class="scope-fiche-meta-line">${meta.map((bit) => `<span>${escapeHtml(bit)}</span>`).join('<span class="scope-event-meta-sep">·</span>')}</p>
+        <div class="scope-fiche-identity-status">
+          ${eventBusinessStateBadge(fiche)}
+          ${tech.map((item) => `<span class="scope-fiche-tech">${escapeHtml(item)}</span>`).join('')}
+        </div>
+      </div>
+    </header>`;
+  }
+
+  function renderFicheSummary(fiche, ev, mode, previewCount, jeunesCount) {
+    const items = [];
+    const qty = mode === 'QUANTITATIF' ? fiche.saisieQuantitative : null;
+    const c = (fiche && fiche.compteurs) || {};
+    const legacy = fiche && fiche.legacy;
+    if (qty) {
+      items.push({ label: 'Attendus', value: qty.nb_attendus ?? '—' });
+      items.push({ label: 'Présents', value: qty.nb_presents ?? '—' });
+      if (qty.nb_excuses != null && qty.nb_excuses !== '') items.push({ label: 'Excusés', value: qty.nb_excuses });
+      if (qty.nb_non_excuses != null && qty.nb_non_excuses !== '') items.push({ label: 'Non excusés', value: qty.nb_non_excuses });
+      if (qty.nb_dispenses != null && qty.nb_dispenses !== '') items.push({ label: 'Dispensés', value: qty.nb_dispenses });
+      if (c.percentage != null && c.percentage !== '') items.push({ label: 'Aperçu du taux', value: L.formatTaux(c.percentage) });
+    } else if (ev.origine === 'LEGACY_AGGREGATED' && legacy) {
+      const att = (legacy.payload_v67 && legacy.payload_v67.total_attendu) || legacy.nb_convoques;
+      items.push({ label: 'Présents', value: legacy.nb_presents ?? '—' });
+      if (att != null && att !== '') items.push({ label: 'Attendus', value: att });
+      items.push({ label: 'Taux historique', value: L.formatTaux(L.legacyTauxFromRow(legacy)) });
+    } else {
+      if (previewCount != null) items.push({ label: 'Attendus', value: previewCount });
+      if (jeunesCount) items.push({ label: 'Jeunes JSP', value: jeunesCount });
+      if (c.presents != null && c.presents !== '') items.push({ label: 'Présents', value: c.presents });
+      if (c.open != null && c.open !== '') items.push({ label: 'À renseigner', value: c.open, emphasis: Number(c.open) > 0 });
+    }
+    if (!items.length) return '';
+    let extra = '';
+    if (qty && (Number(qty.nb_excuses_prive) || Number(qty.nb_excuses_professionnel) || Number(qty.nb_excuses_armee) || Number(qty.nb_excuses_accident_maladie) || Number(qty.nb_excuses_non_precise) || Number(qty.nb_permutations))) {
+      extra = `<p class="scope-fiche-tech-note">${[
+        Number(qty.nb_excuses_prive) ? `Privé ${qty.nb_excuses_prive}` : '',
+        Number(qty.nb_excuses_professionnel) ? `Professionnel ${qty.nb_excuses_professionnel}` : '',
+        Number(qty.nb_excuses_armee) ? `Armée ${qty.nb_excuses_armee}` : '',
+        Number(qty.nb_excuses_accident_maladie) ? `Accident/maladie ${qty.nb_excuses_accident_maladie}` : '',
+        Number(qty.nb_excuses_non_precise) ? `Non précisé ${qty.nb_excuses_non_precise}` : '',
+        Number(qty.nb_permutations) ? `Permutations ${qty.nb_permutations}` : ''
+      ].filter(Boolean).join(' · ')}</p>`;
+    }
+    if (ev.origine === 'LEGACY_AGGREGATED' && legacy) {
+      extra += `<p class="scope-fiche-tech-note">Historique non nominatif, hors taux SCOPE.${legacy.payload_v67 && legacy.payload_v67.a_comptabiliser != null ? ` Comptabilisé : ${legacy.payload_v67.a_comptabiliser ? 'oui' : 'non'}.` : ''}${legacy.payload_v67 && legacy.payload_v67.nb_permutation != null ? ` Permutations : ${legacy.payload_v67.nb_permutation}.` : ''}</p>`;
+    }
+    return `<section class="scope-card scope-fiche-section">
+      <div class="scope-section-header"><h2 class="scope-section-title">Synthèse</h2></div>
+      ${renderKpiGrid(items, 'Synthèse de l’événement')}
+      ${extra}
+    </section>`;
+  }
+
+  function renderFichePrimaryAction(cta) {
+    if (!cta) return '';
+    return `<section class="scope-card scope-fiche-section scope-fiche-primary">
+      <div class="scope-section-header"><h2 class="scope-section-title">Action</h2></div>
+      <button type="button" class="scope-btn scope-btn-primary scope-fiche-cta" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>
+    </section>`;
+  }
+
+  function renderFicheSecondaryActions(ev, extraActions, isLegacy) {
+    const cancel = !isLegacy && ev.statut !== 'ANNULE'
+      ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler l’événement</button>'
+      : '';
+    return `<section class="scope-card scope-fiche-section scope-fiche-secondary">
+      <div class="scope-section-header"><h2 class="scope-section-title">Autres actions</h2></div>
+      <div class="scope-actions scope-event-toolbar scope-fiche-secondary-actions">${extraActions || ''}${reportButton(ev.evenement_id)}${cancel}</div>
+    </section>`;
+  }
+
   function renderFiche() {
     const fiche = state.fiche;
     if (!fiche) {
@@ -3480,36 +3570,26 @@
       origine: ev.origine,
       modeSuivi: mode
     });
-    const previewBlock = mode === 'QUANTITATIF' ? '' : (state.preview ? renderPreviewList() : '');
     const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
-    const legacy = fiche.legacy;
-    const legacyPct = L.legacyTauxFromRow(legacy);
-    const legacyBlock = isLegacy && legacy ? `
-        <div class="scope-card" style="margin-top:12px">
-          <h3 style="margin-top:0">Historique agrégé</h3>
-          <p style="margin:0 0 8px;color:var(--scope-muted)">Non nominatif — ces chiffres ne sont jamais mélangés au taux SCOPE.</p>
-          <dl class="scope-meta">
-            <div><dt>Présents</dt><dd>${escapeHtml(String(legacy.nb_presents ?? '—'))} / ${escapeHtml(String((legacy.payload_v67 && legacy.payload_v67.total_attendu) || legacy.nb_convoques || '—'))}</dd></div>
-            <div><dt>Taux legacy</dt><dd>${escapeHtml(L.formatTaux(legacyPct))}</dd></div>
-            <div><dt>Comptabilisé</dt><dd>${legacy.payload_v67 && legacy.payload_v67.a_comptabiliser ? 'Oui' : 'Non'}</dd></div>
-            <div><dt>Permutation</dt><dd>${escapeHtml(String((legacy.payload_v67 && legacy.payload_v67.nb_permutation) ?? '—'))}</dd></div>
-          </dl>
-        </div>` : '';
     const qty = mode === 'QUANTITATIF';
-    const saisie = fiche.saisieQuantitative;
+    const previewPeople = (!qty && state.preview)
+      ? (state.preview.personnes || []).filter((p) => !state.pendingRetraits.includes(p.personneId))
+      : [];
+    const previewCount = (!qty && state.preview) ? previewPeople.length + ((state.pendingExceptions || []).length) : null;
+    const jeunesCount = (!qty && state.preview)
+      ? (((state.preview.jeunes) || previewPeople.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId))).length
+      : 0;
     const extraActions = qty && ev.statut === 'PLANIFIE'
       ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="convert-nominatif">Passer en nominatif</button>'
       : '';
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main scope-event-fiche">
-        <div class="scope-event-head">
-          ${eventIdentityBand(ev, fiche, { preview: state.preview })}
-          ${cta ? `<div class="scope-actions scope-event-toolbar">${cta ? `<button type="button" class="scope-btn scope-btn-primary scope-btn-compact" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>` : ''}${extraActions}${ev.statut !== 'ANNULE' ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="cancel-event">Annuler l’événement</button>' : ''}${reportButton(ev.evenement_id)}</div>` : `<div class="scope-actions scope-event-toolbar">${!isLegacy && ev.statut !== 'ANNULE' ? `${extraActions}<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="cancel-event">Annuler l’événement</button>` : ''}${reportButton(ev.evenement_id)}</div>`}
-        </div>
-        ${qty && saisie ? volumesBlock(saisie, { taux: fiche.compteurs, officiel: false }) : ''}
-        ${legacyBlock}
-        ${previewBlock}
+        ${renderFicheIdentity(ev, fiche)}
+        ${renderFicheSummary(fiche, ev, mode, previewCount, jeunesCount)}
+        ${renderFichePrimaryAction(cta)}
+        ${qty || !state.preview ? '' : renderPreviewList()}
+        ${renderFicheSecondaryActions(ev, extraActions, isLegacy)}
       </div>
       ${state.modal === 'convert-nominatif' ? `<div class="scope-modal"><div class="scope-card">
         <h3>Passer en nominatif</h3>
@@ -3522,16 +3602,80 @@
     `;
   }
 
+  function previewPersonFields(p) {
+    const fromFiche = personOf(state.fiche, p && (p.personneId || p.personne_id)) || {};
+    return {
+      grade: (p && p.grade) || fromFiche.grade || '',
+      nom: (p && (p.nomFamille || p.nom)) || fromFiche.nomFamille || fromFiche.nom || '',
+      prenom: (p && p.prenom) || fromFiche.prenom || ''
+    };
+  }
+
+  function previewInclusionLabel(p) {
+    if (p.motifInclusion === 'exception_ajout') return 'Ajout manuel';
+    if (p.jspRole === 'MONITEUR') return 'Moniteur JSP';
+    if (p.jspRole === 'JEUNE') return 'Jeune JSP';
+    return 'Affectation';
+  }
+
+  function previewCibleLabel(p) {
+    return (p.cibles || []).map((c) => c.niveauCode || c).join(' · ') || 'Exception';
+  }
+
+  function previewSortColumns() {
+    return [
+      { key: 'grade', type: 'number', value: (p) => gradeRank(previewPersonFields(p).grade), tieBreakers: [
+        { key: 'nom', type: 'text', value: (p) => previewPersonFields(p).nom },
+        { key: 'prenom', type: 'text', value: (p) => previewPersonFields(p).prenom },
+        { key: 'nip', type: 'text', value: (p) => p && p.nip }
+      ] },
+      { key: 'nom', type: 'text', value: (p) => previewPersonFields(p).nom, tieBreakers: [
+        { key: 'prenom', type: 'text', value: (p) => previewPersonFields(p).prenom },
+        { key: 'grade', type: 'number', value: (p) => gradeRank(previewPersonFields(p).grade) },
+        { key: 'nip', type: 'text', value: (p) => p && p.nip }
+      ] },
+      { key: 'prenom', type: 'text', value: (p) => previewPersonFields(p).prenom, tieBreakers: [
+        { key: 'nom', type: 'text', value: (p) => previewPersonFields(p).nom },
+        { key: 'grade', type: 'number', value: (p) => gradeRank(previewPersonFields(p).grade) },
+        { key: 'nip', type: 'text', value: (p) => p && p.nip }
+      ] },
+      { key: 'nip', type: 'text', value: (p) => p && p.nip },
+      { key: 'cible', type: 'text', value: (p) => previewCibleLabel(p) },
+      { key: 'motif', type: 'text', value: (p) => previewInclusionLabel(p) }
+    ];
+  }
+
   function previewRowsHtml(rows) {
-    return rows.length ? rows.map((p) => `
-      <tr>
-        <td data-label="Nom">${escapeHtml(`${p.nom} ${p.prenom}`)}</td>
+    const sorted = L.sortRows ? L.sortRows(rows || [], state.previewSort, previewSortColumns()) : (rows || []).slice();
+    return sorted.length ? sorted.map((p) => {
+      const id = previewPersonFields(p);
+      return `<tr>
+        <td data-label="Grade">${escapeHtml(id.grade || '—')}</td>
+        <td data-label="Nom">${escapeHtml(id.nom || '—')}</td>
+        <td data-label="Prénom">${escapeHtml(id.prenom || '—')}</td>
         <td data-label="NIP">${escapeHtml(p.nip)}</td>
-        <td data-label="Cible">${escapeHtml((p.cibles || []).map((c) => c.niveauCode || c).join(' · ') || 'Exception')}</td>
-        <td data-label="Motif">${escapeHtml(p.motifInclusion === 'exception_ajout' ? 'Ajout manuel' : (p.jspRole === 'MONITEUR' ? 'Moniteur JSP' : p.jspRole === 'JEUNE' ? 'Jeune JSP' : 'Affectation'))}</td>
-        <td data-label="Action"><button type="button" class="scope-btn" data-retrait="${p.personneId}">Retirer</button></td>
-      </tr>
-    `).join('') : `<tr><td colspan="5"><div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div></td></tr>`;
+        <td data-label="Cible">${escapeHtml(previewCibleLabel(p))}</td>
+        <td data-label="Motif d’inclusion">${escapeHtml(previewInclusionLabel(p))}</td>
+        <td data-label="Action"><button type="button" class="scope-remove-action scope-icon-action" data-retrait="${p.personneId}" aria-label="Retirer" title="Retirer">${trashIcon()}</button></td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="7"><div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div></td></tr>`;
+  }
+
+  function previewTableHtml(rows) {
+    return `<div class="scope-table-wrap scope-fiche-preview-wrap">
+      <table class="scope-table scope-fiche-preview-table">
+        <thead><tr>
+          ${sortableHeader('event-preview', 'grade', 'Grade', state.previewSort)}
+          ${sortableHeader('event-preview', 'nom', 'Nom', state.previewSort)}
+          ${sortableHeader('event-preview', 'prenom', 'Prénom', state.previewSort)}
+          ${sortableHeader('event-preview', 'nip', 'NIP', state.previewSort)}
+          ${sortableHeader('event-preview', 'cible', 'Cible', state.previewSort)}
+          ${sortableHeader('event-preview', 'motif', 'Motif d’inclusion', state.previewSort)}
+          <th>Action</th>
+        </tr></thead>
+        <tbody>${previewRowsHtml(rows)}</tbody>
+      </table>
+    </div>`;
   }
 
   function renderPreviewList() {
@@ -3540,43 +3684,31 @@
     const rows = people.concat(extras);
     const jeunes = ((state.preview && state.preview.jeunes) || people.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId));
     const splitJsp = Boolean(jeunes.length);
-    const body = previewRowsHtml(rows);
+    const hitLabel = (p) => [p.grade, p.nomFamille || p.nom, p.prenom].filter(Boolean).join(' ');
     return `
-      <div class="scope-card" style="margin-top:12px">
-        <h3 style="margin-top:0">Attendus générés · ${rows.length}${splitJsp ? ` · jeunes ${jeunes.length}` : ''}</h3>
-        <div class="scope-toolbar">
-          <div class="scope-field" style="min-width:220px">
-            <label>Ajouter une personne</label>
-            <input id="preview-q" type="search" placeholder="Nom ou NIP" value="${escapeHtml(state.personQuery)}">
+      <section class="scope-card scope-fiche-section scope-fiche-preview">
+        <div class="scope-section-header">
+          <h2 class="scope-section-title">Population attendue</h2>
+          <p class="scope-fiche-preview-count">${rows.length} personne${rows.length > 1 ? 's' : ''}${splitJsp ? ` · ${jeunes.length} jeune${jeunes.length > 1 ? 's' : ''}` : ''}</p>
+        </div>
+        <div class="scope-toolbar scope-fiche-preview-toolbar">
+          <div class="scope-field">
+            <label for="preview-q">Ajouter une personne</label>
+            <input id="preview-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personQuery)}" autocomplete="off">
           </div>
         </div>
-        ${state.personHits.length ? `<div class="scope-card" style="margin-bottom:8px">${state.personHits.map((p) => `
-          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--scope-line)">
-            <span>${escapeHtml(p.nom)} ${escapeHtml(p.prenom)} · ${escapeHtml(p.nip)}</span>
-            <button type="button" class="scope-btn" data-add-ex="${p.personne_id}">Ajouter</button>
+        ${state.personHits.length ? `<div class="scope-fiche-hits">${state.personHits.map((p) => `
+          <div class="scope-fiche-hit">
+            <span>${escapeHtml(hitLabel(p) || 'Personne')} · ${escapeHtml(p.nip)}</span>
+            <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-add-ex="${p.personne_id}">Ajouter</button>
           </div>`).join('')}</div>` : (state.personQuery ? `<div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div>` : '')}
         ${splitJsp ? `
-        <h3 style="margin-top:16px">JEUNES JSP · ${jeunes.length}</h3>
-        <div class="scope-table-wrap">
-          <table class="scope-table">
-            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
-            <tbody>${previewRowsHtml(jeunes)}</tbody>
-          </table>
-        </div>
-        ${extras.length ? `<h3 style="margin-top:16px">Ajouts manuels · ${extras.length}</h3>
-        <div class="scope-table-wrap">
-          <table class="scope-table">
-            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
-            <tbody>${previewRowsHtml(extras)}</tbody>
-          </table>
-        </div>` : ''}` : `<div class="scope-table-wrap">
-          <table class="scope-table">
-            <thead><tr><th>Nom</th><th>NIP</th><th>Cible</th><th>Inclusion</th><th></th></tr></thead>
-            <tbody>${body}</tbody>
-          </table>
-        </div>`}
-        <p style="color:var(--scope-muted);font-size:12px">Le gel calcule la population côté serveur. Les ajouts et retraits préparés ici sont appliqués ensuite, sans envoyer une liste nominative comme source de vérité. Les taux jeunes JSP et moniteurs JSP restent distincts.</p>
-      </div>
+        <h3 class="scope-section-sub">Jeunes JSP · ${jeunes.length}</h3>
+        ${previewTableHtml(jeunes)}
+        ${extras.length ? `<h3 class="scope-section-sub">Ajouts manuels · ${extras.length}</h3>
+        ${previewTableHtml(extras)}` : ''}` : previewTableHtml(rows)}
+        <p class="scope-fiche-tech-note">Les ajouts et retraits préparés ici sont appliqués au figer. Les taux jeunes JSP et moniteurs JSP restent distincts.</p>
+      </section>
     `;
   }
 
@@ -5617,6 +5749,10 @@
         if (table === 'event-realise') {
           const initial = key === 'grade' ? 'desc' : 'asc';
           state.realiseSort = L.nextSort ? L.nextSort(state.realiseSort, key, initial) : { key, dir: initial };
+          render();
+        }
+        if (table === 'event-preview') {
+          state.previewSort = L.nextSort ? L.nextSort(state.previewSort, key, 'asc') : { key, dir: 'asc' };
           render();
         }
       });

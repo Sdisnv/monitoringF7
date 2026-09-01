@@ -1109,7 +1109,7 @@ html, body {
   white-space: nowrap;
 }
 .scope-events-libelle {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--scope-ink);
   text-decoration: none;
 }
@@ -1122,7 +1122,12 @@ html, body {
   outline-offset: 2px;
 }
 .scope-events-domain {
-  font-weight: 650;
+  font-weight: 600;
+  color: var(--scope-ink);
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
 }
 .scope-events-effectif-main {
   display: block;
@@ -5132,6 +5137,170 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-event-realise .scope-presence-section {
   margin-top: var(--scope-space-6);
   padding-top: var(--scope-space-4);
+}
+
+/* === SCOPE-EVENT-DESIGN-B — fiche événement === */
+.scope-fiche-identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 4px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid var(--scope-line);
+  border-left: 4px solid var(--scope-red);
+  border-radius: var(--scope-radius);
+  box-shadow: var(--scope-shadow-sm);
+}
+.scope-fiche-identity h1 {
+  margin: 2px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--scope-ink);
+}
+.scope-fiche-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  color: var(--scope-ink);
+  font-size: var(--scope-type-secondary);
+  font-weight: 500;
+}
+.scope-fiche-identity-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+}
+.scope-fiche-tech {
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.scope-fiche-section {
+  margin: 0;
+  padding: 14px 16px 16px;
+}
+.scope-fiche-section .scope-kpi-grid {
+  margin-top: 2px;
+}
+.scope-fiche-tech-note {
+  margin: 10px 0 0;
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.scope-fiche-primary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.scope-btn.scope-fiche-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--scope-h-control);
+  height: var(--scope-h-control);
+  padding: 0 16px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1;
+}
+.scope-fiche-secondary-actions {
+  gap: 8px;
+}
+.scope-btn.scope-fiche-cancel {
+  background: #fff;
+  color: var(--scope-red);
+  border: 1px solid var(--scope-red);
+  white-space: nowrap;
+}
+.scope-btn.scope-fiche-cancel:hover {
+  background: var(--scope-red-soft);
+  color: var(--scope-red);
+}
+.scope-fiche-preview-count {
+  margin: 0;
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.scope-fiche-preview-toolbar {
+  margin: 0 0 10px;
+  align-items: end;
+}
+.scope-fiche-preview-toolbar .scope-field {
+  min-width: 16rem;
+  flex: 1 1 16rem;
+}
+.scope-fiche-hits {
+  margin: 0 0 12px;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  background: var(--scope-gray-50);
+}
+.scope-fiche-hit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--scope-line);
+}
+.scope-fiche-hit:last-child {
+  border-bottom: 0;
+}
+.scope-fiche-hit .scope-btn {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.scope-fiche-preview-table th:last-child,
+.scope-fiche-preview-table td:last-child {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.scope-fiche-preview-wrap {
+  overflow-x: visible;
+}
+
+@media (max-width: 800px) {
+  .scope-fiche-identity {
+    padding: 14px 14px;
+  }
+  .scope-fiche-preview-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .scope-fiche-preview-toolbar .scope-field {
+    min-width: 0;
+  }
+  .scope-btn.scope-fiche-cta,
+  .scope-fiche-secondary-actions .scope-btn {
+    white-space: nowrap;
+    width: auto;
+    max-width: 100%;
+  }
+  .scope-fiche-preview-table th:nth-child(n),
+  .scope-fiche-preview-table td:nth-child(n) {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+  .scope-fiche-preview-table td[data-label="Action"] {
+    text-align: left;
+  }
 }
 
 .scope-enc-role-title {
