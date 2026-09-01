@@ -3562,7 +3562,7 @@
   }
 
   function renderFicheSecondaryActions(ev, extraActions, isLegacy) {
-    const cancel = !isLegacy && ev.statut !== 'ANNULE'
+    const cancel = !isLegacy && ev.statut !== 'ANNULE' && ev.statut !== 'REALISE'
       ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler l’événement</button>'
       : '';
     return `<section class="scope-card scope-fiche-section scope-fiche-secondary">
@@ -3850,7 +3850,32 @@
     ], 'Compteurs de présence').replace('<div class="scope-kpi-grid"', '<div class="scope-kpi-grid scope-saisie-kpis"');
   }
 
+  function sortIdentityTieBreak(a, b) {
+    const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+    const txt = (value) => String(value == null ? '' : value);
+    const nom = collator.compare(txt(a && (a.nomFamille || a.nom)), txt(b && (b.nomFamille || b.nom)));
+    if (nom) return nom;
+    const prenom = collator.compare(txt(a && a.prenom), txt(b && b.prenom));
+    if (prenom) return prenom;
+    const oi = collator.compare(txt(a && a.cible), txt(b && b.cible));
+    if (oi) return oi;
+    return collator.compare(txt(a && a.nip), txt(b && b.nip));
+  }
+
+  function sortByGradeHierarchy(rows, dir) {
+    const factor = dir === 'desc' ? -1 : 1;
+    return (rows || []).slice().sort((a, b) => {
+      const ga = gradeRank(a && a.grade);
+      const gb = gradeRank(b && b.grade);
+      if (ga !== gb) return (ga - gb) * factor;
+      return sortIdentityTieBreak(a, b);
+    });
+  }
+
   function sortSaisieRows(rows) {
+    if (state.eventPersonnelSort && state.eventPersonnelSort.key === 'grade') {
+      return sortByGradeHierarchy(rows, state.eventPersonnelSort.dir);
+    }
     const columns = [
       { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom), tieBreakers: [
         { key: 'prenom', type: 'text', value: (row) => row && row.prenom },
@@ -3904,7 +3929,7 @@
     });
     const roles = encadrementRolesForEvent(fiche);
     return `
-      <section class="scope-encadrement-block">
+      <section class="scope-encadrement-block" data-enc-editable="true">
         <div class="scope-section-header">
           <h2 class="scope-section-heading">Encadrement</h2>
         </div>
@@ -4098,6 +4123,9 @@
   }
 
   function sortRealiseRows(rows) {
+    if (state.realiseSort && state.realiseSort.key === 'grade') {
+      return sortByGradeHierarchy(rows, state.realiseSort.dir);
+    }
     const columns = [
       { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [
         { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom) },
@@ -4134,7 +4162,6 @@
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="reopen">Réouvrir</button>
       ${reportButton(ev.evenement_id)}
-      <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler l’événement</button>
     </div>`;
   }
 
@@ -4151,7 +4178,7 @@
       if (!byRole.has(role)) byRole.set(role, []);
       byRole.get(role).push(p);
     });
-    return `<section class="scope-encadrement-block is-readonly">
+    return `<section class="scope-encadrement-block is-readonly" data-enc-readonly="true">
       <div class="scope-section-header"><h2 class="scope-section-heading">Encadrement</h2></div>
       ${renderEncadrementGroups(fiche, { readOnly: true, byRole, roles: encadrementRolesForEvent(fiche), encCount })}
       <p class="scope-fiche-tech-note">L’encadrement est affiché séparément de l’effectif participant selon les règles du domaine.</p>
@@ -4159,22 +4186,13 @@
   }
 
   function renderRealiseModals() {
-    return `${state.modal === 'reopen' ? `<div class="scope-modal"><div class="scope-card">
+    return `      ${state.modal === 'reopen' ? `<div class="scope-modal"><div class="scope-card">
         <h3>Réouvrir l’événement</h3>
         <p>La séance redevient planifiée et sort du KPI tant qu’elle n’est pas reclôturée.</p>
         <div class="scope-field"><label>Motif</label><textarea id="reopen-motif"></textarea></div>
         <div class="scope-actions">
           <button type="button" class="scope-btn scope-btn-primary" id="reopen-ok">Confirmer</button>
           <button type="button" class="scope-btn" id="reopen-cancel">Annuler</button>
-        </div>
-      </div></div>` : ''}
-      ${state.modal === 'cancel-event' ? `<div class="scope-modal"><div class="scope-card">
-        <h3>Annuler l’événement</h3>
-        <p>L’événement passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
-        <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
-        <div class="scope-actions">
-          <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
-          <button type="button" class="scope-btn" id="cancel-dismiss">Retour</button>
         </div>
       </div></div>` : ''}`;
   }
@@ -4207,7 +4225,6 @@
         ${volumesBlock(saisie, { taux: t, officiel: true })}
       </div>
       ${state.modal === 'reopen' ? reopenQuantitatif : ''}
-      ${state.modal === 'cancel-event' ? renderRealiseModals() : ''}
     `;
     }
     const filtered = sortRealiseRows(filterRealiseRows(rows));

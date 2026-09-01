@@ -4816,9 +4816,8 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-enc-toolbar #enc-q {
-  width: 100%;
-  min-width: 0;
-  flex: none;
+  min-width: 220px;
+  flex: 1 1 220px;
 }
 
 .scope-enc-toolbar .scope-serie-toggle {
@@ -5530,10 +5529,20 @@ body.scope-pdf-open { overflow: hidden; }
 }
 .scope-enc-toolbar.scope-toolbar {
   display: grid;
-  grid-template-columns: minmax(8.5rem, 0.7fr) minmax(14rem, 1.6fr) auto;
+  grid-template-columns: minmax(8.5rem, 0.7fr) minmax(16rem, 1.6fr) auto;
   gap: 10px;
   align-items: end;
   margin: 0 0 12px;
+}
+.scope-enc-toolbar.scope-toolbar .scope-lookup-field {
+  width: auto;
+  min-width: 16rem;
+  max-width: none;
+}
+.scope-enc-toolbar.scope-toolbar #enc-add {
+  white-space: nowrap;
+  min-width: 6.75rem;
+  height: var(--scope-h-control);
 }
 .scope-enc-id {
   min-width: 0;
