@@ -785,15 +785,16 @@ html, body {
 .scope-treat-all:hover { text-decoration: underline; }
 .scope-treat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 .scope-treat-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 92px;
-  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  min-height: 88px;
+  padding: 12px 12px 12px 14px;
   border: 1px solid var(--scope-line);
   border-radius: var(--scope-radius);
   background: var(--scope-gray-50);
@@ -804,15 +805,43 @@ html, body {
   border-color: var(--scope-gray-300);
   background: #fff;
 }
+.scope-treat-ico {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--scope-slate);
+}
+.scope-treat-ico .scope-home-ico {
+  width: 22px;
+  height: 22px;
+}
+.scope-treat-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.scope-treat-domain {
+  color: var(--scope-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
 .scope-treat-card strong {
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.1;
   color: var(--scope-red);
 }
-.scope-treat-card span {
+.scope-treat-label {
   color: var(--scope-muted);
-  font-size: var(--scope-fs-secondary);
+  font-size: 12px;
   font-weight: 650;
+}
+.scope-treat-chev {
+  color: var(--scope-muted);
+  font-size: 22px;
+  line-height: 1;
+  justify-self: end;
 }
 .scope-treat-empty {
   margin: 0;
@@ -837,12 +866,29 @@ html, body {
   font-weight: 750;
 }
 .scope-activity-cell {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: start;
   padding: 16px 18px 20px;
   border-right: 1px solid var(--scope-line);
 }
 .scope-activity-cell:last-child { border-right: 0; }
-.scope-activity-cell span {
+.scope-activity-ico {
+  grid-row: 1 / span 3;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+}
+.scope-activity-ico .scope-home-ico {
+  width: 28px;
+  height: 28px;
+}
+.scope-activity-cell span:not(.scope-activity-ico) {
   display: block;
+  grid-column: 2;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -851,6 +897,7 @@ html, body {
 }
 .scope-activity-cell strong {
   display: block;
+  grid-column: 2;
   margin-top: 6px;
   font-size: 30px;
   line-height: 1.1;
@@ -858,6 +905,7 @@ html, body {
 }
 .scope-activity-cell em {
   display: block;
+  grid-column: 2;
   margin-top: 6px;
   font-style: normal;
   color: var(--scope-muted);
@@ -865,19 +913,49 @@ html, body {
   min-height: 1.2em;
 }
 .scope-activity-cell.is-taux { border-top: 3px solid var(--scope-slate); }
-.scope-activity-cell.is-taux strong { color: var(--scope-ink); }
+.scope-activity-cell.is-taux .scope-activity-ico,
+.scope-activity-cell.is-taux strong { color: var(--scope-slate); }
 .scope-activity-cell.is-excuses { border-top: 3px solid var(--scope-yellow); }
-.scope-activity-cell.is-excuses strong { color: #8a5a00; }
+.scope-activity-cell.is-excuses .scope-activity-ico,
+.scope-activity-cell.is-excuses strong { color: var(--scope-yellow); }
 .scope-activity-cell.is-dispenses { border-top: 3px solid var(--scope-blue); }
+.scope-activity-cell.is-dispenses .scope-activity-ico,
 .scope-activity-cell.is-dispenses strong { color: var(--scope-blue); }
 .scope-activity-cell.is-absences { border-top: 3px solid var(--scope-red); }
+.scope-activity-cell.is-absences .scope-activity-ico,
 .scope-activity-cell.is-absences strong { color: var(--scope-red); }
 .scope-home-charts.scope-dash-split {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  align-items: stretch;
   margin-bottom: 16px;
+}
+.scope-home-charts .scope-graph-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 360px;
+  margin: 0;
+  padding: 14px 16px;
 }
 .scope-home-charts .scope-graph-card.is-wide {
   grid-column: auto;
+}
+.scope-home-charts .scope-graph-head {
+  min-height: 36px;
+  margin-bottom: 8px;
+}
+.scope-home-charts .scope-chart-frame {
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 220px;
+  overflow: visible;
+}
+.scope-home-charts .scope-chart {
+  max-height: 240px;
+  width: 100%;
+}
+.scope-chart-frame.is-columns {
+  max-height: none;
+  overflow: visible;
 }
 .scope-chart-frame.is-donut {
   max-height: none;
@@ -893,6 +971,45 @@ html, body {
   background: var(--scope-chart-primary);
   background-image: none;
 }
+.scope-home-charts .scope-chart-legend i.prive { background: var(--scope-red); }
+.scope-home-charts .scope-chart-legend i.professionnel { background: var(--scope-blue); }
+.scope-home-charts .scope-chart-legend i.armee { background: var(--scope-yellow); }
+.scope-home-charts .scope-chart-legend i.sante { background: var(--scope-slate); }
+.scope-home-charts .scope-chart-legend i.nonPrecise { background: var(--scope-gray-500); }
+.scope-home-events {
+  background: #fff;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  box-shadow: var(--scope-shadow-sm);
+  padding: 14px 16px 12px;
+  margin-bottom: 16px;
+}
+.scope-home-events-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.scope-home-events-head h2 {
+  margin: 0;
+  font-size: var(--scope-fs-h3);
+  font-weight: 750;
+}
+.scope-home-events-empty {
+  margin: 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-body);
+}
+.scope-home-events-table {
+  font-size: 13px;
+}
+.scope-home-events-table .scope-btn {
+  min-height: 32px;
+  height: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+}
 .scope-quick {
   margin-top: 4px;
 }
@@ -907,10 +1024,10 @@ html, body {
 }
 .scope-quick-grid a {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  grid-template-columns: 44px minmax(0, 1fr) 16px;
   align-items: center;
   gap: 10px;
-  min-height: 76px;
+  min-height: 88px;
   padding: 12px 14px;
   background: #fff;
   border: 1px solid var(--scope-line);
@@ -935,15 +1052,19 @@ html, body {
   font-size: 12px;
 }
 .scope-quick-ico {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: 1px solid var(--scope-line);
   border-radius: var(--scope-radius-sm);
   color: var(--scope-slate);
 }
-.scope-quick-ico .scope-nav-icon { width: 18px; height: 18px; }
+.scope-quick-ico .scope-nav-icon,
+.scope-quick-ico .scope-home-ico {
+  width: 26px;
+  height: 26px;
+}
 .scope-quick-chev {
   color: var(--scope-muted);
   font-size: 22px;
@@ -2916,7 +3037,12 @@ html, body {
   }
   .scope-app.is-nav-open { overflow: hidden; }
   .scope-dash-split { grid-template-columns: 1fr; }
-  .scope-home-charts.scope-dash-split { grid-template-columns: 1fr; }
+  .scope-home-charts.scope-dash-split {
+    grid-template-columns: 1fr 1fr;
+  }
+  .scope-home-charts.scope-dash-split > :last-child {
+    grid-column: 1 / -1;
+  }
   .scope-treat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scope-activity-board { grid-template-columns: 1fr 1fr; }
   .scope-quick-grid { grid-template-columns: 1fr 1fr; }
@@ -2969,8 +3095,10 @@ html, body {
   .scope-chart { max-height: 148px; }
   .scope-chart-frame.is-bar,
   .scope-chart-frame.is-stacked,
+  .scope-chart-frame.is-columns,
   .scope-chart-bar,
-  .scope-chart-stacked { max-height: none; }
+  .scope-chart-stacked,
+  .scope-chart-columns { max-height: none; }
   .scope-table thead { display: none; }
   .scope-table, .scope-table tbody, .scope-table tr, .scope-table td {
     display: block;
@@ -3031,6 +3159,16 @@ html, body {
   .scope-quick-grid,
   .scope-home-links {
     grid-template-columns: 1fr;
+  }
+  .scope-home-charts.scope-dash-split {
+    grid-template-columns: 1fr;
+  }
+  .scope-home-charts.scope-dash-split > :last-child {
+    grid-column: auto;
+  }
+  .scope-home-events-head {
+    align-items: stretch;
+    flex-direction: column;
   }
   .scope-activity-cell { border-right: 0; border-bottom: 1px solid var(--scope-line); }
   .scope-activity-cell:last-child { border-bottom: 0; }

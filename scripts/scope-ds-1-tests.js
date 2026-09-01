@@ -180,7 +180,7 @@ record('08 — primitives DS disponibles sans nouvelle saisie présence', () => 
 });
 
 record('09 — pas de logique métier dans le lot DS', () => {
-  assert.ok(html.includes('assets/css/scope.css?v=scope-ds-1') || html.includes('assets/css/scope.css?v=scope-ux-event-1') || html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3') || html.includes('assets/css/scope.css?v=scope-design-2'));
+  assert.ok(html.includes('assets/css/scope.css?v=scope-ds-1') || html.includes('assets/css/scope.css?v=scope-ux-event-1') || html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3') || html.includes('assets/css/scope.css?v=scope-design-2') || html.includes('assets/css/scope.css?v=scope-design-2b'));
   assert.ok(pkg.includes('scope-ds-1-tests.js'));
   assert.ok(!ui.includes('function computeTaux'));
 });

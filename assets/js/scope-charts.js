@@ -111,14 +111,15 @@
     return unique.length === 1 && Number.isFinite(unique[0]) ? unique[0] : null;
   }
 
-  function renderLineChart(dataset, size) {
+  function renderLineChart(dataset, size, extras) {
+    const hideLegacy = extras && extras.hideLegacy;
     const width = (size && size.width) || 640;
     const height = (size && size.height) || 128;
-    const pad = { l: 36, r: 12, t: 10, b: 22 };
+    const pad = { l: 40, r: 14, t: 14, b: 28 };
     const series = (dataset && dataset.series) || [];
     const official = ((series.find((s) => s.id === 'officiel') || {}).points || [])
       .filter((p) => p && p.label);
-    const legacy = ((series.find((s) => s.id === 'legacy') || {}).points || [])
+    const legacy = hideLegacy ? [] : ((series.find((s) => s.id === 'legacy') || {}).points || [])
       .filter((p) => p && p.value != null);
     if (!official.length && !legacy.length) return emptyState(dataset && dataset.emptyReason);
     const months = [...new Set([
@@ -146,13 +147,13 @@
     }).join('');
     const monthLabels = months.map((m) => `<text x="${xOf(m)}" y="${height - 4}" font-size="11" text-anchor="middle" fill="#6b7785">${escapeHtml(String(m).slice(5))}</text>`).join('');
     const officialMark = polyline.length > 1
-      ? `<polyline fill="none" stroke="${TOKENS.primary}" stroke-width="2.4" points="${polyline.join(' ')}" />`
+      ? `<polyline fill="none" stroke="${TOKENS.primary}" stroke-width="2.8" points="${polyline.join(' ')}" />`
       : (polyline.length === 1
-        ? `<circle cx="${polyline[0].split(',')[0]}" cy="${polyline[0].split(',')[1]}" r="4" fill="${TOKENS.primary}" />`
+        ? `<circle cx="${polyline[0].split(',')[0]}" cy="${polyline[0].split(',')[1]}" r="5" fill="${TOKENS.primary}" />`
         : '');
     const officialDots = officialPts.map((p) => {
       const title = `${p.label} · ${formatPct(p.value)}${p.numerator != null ? ` · ${p.numerator}/${p.denominator}` : ''}`;
-      return `<circle cx="${xOf(p.label)}" cy="${yOf(p.value)}" r="3" fill="${TOKENS.primary}"><title>${escapeHtml(title)}</title></circle>`;
+      return `<circle cx="${xOf(p.label)}" cy="${yOf(p.value)}" r="4" fill="${TOKENS.primary}"><title>${escapeHtml(title)}</title></circle>`;
     }).join('');
     const legacyDots = legacy.map((p) => {
       const title = `LEGACY ${p.id || p.label} · ${formatPct(p.value)} · hors KPI officiel`;
@@ -237,30 +238,82 @@
     <p class="scope-chart-legend">${labels}</p>`;
   }
 
-  function renderPlot(dataset, size, variant) {
+  function renderPlot(dataset, size, variant, extras) {
     if (!dataset) return emptyState('AUCUNE_DONNEE');
-    if (variant === 'donut') return renderDonutChart(dataset, size);
-    if (dataset.type === 'line') return renderLineChart(dataset, size);
+    if (variant === 'donut') return renderDonutChart(dataset, size, extras);
+    if (variant === 'columns') return renderColumnChart(dataset, size, extras);
+    if (dataset.type === 'line') return renderLineChart(dataset, size, extras);
     if (dataset.type === 'stacked') return renderStackedBar(dataset, size);
     return renderBarChart(dataset, size);
   }
 
-  function renderDonutChart(dataset, size) {
+  function renderColumnChart(dataset, size, extras) {
+    const order = (extras && extras.order) || [];
+    const colors = (extras && extras.colors) || {};
+    const raw = ((dataset && dataset.series && dataset.series[0]) || {}).points || [];
+    const byId = {};
+    raw.forEach((p) => { byId[String(p.id || p.label).toUpperCase()] = p; });
+    const points = (order.length ? order.map((id) => byId[id] || { id, label: id, value: null }) : raw);
+    if (!points.length) return emptyState(dataset && dataset.emptyReason);
+    const width = (size && size.width) || 640;
+    const height = (size && size.height) || 220;
+    const pad = { l: 36, r: 12, t: 18, b: 36 };
+    const innerW = width - pad.l - pad.r;
+    const innerH = height - pad.t - pad.b;
+    const slot = innerW / points.length;
+    const barW = Math.min(36, slot * 0.48);
+    const ticks = [0, 50, 100].map((v) => {
+      const y = pad.t + innerH * (1 - v / 100);
+      return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="4" y="${y + 4}" font-size="11" fill="#6b7785">${v}</text>`;
+    }).join('');
+    const bars = points.map((p, i) => {
+      const evaluable = p.value != null && Number.isFinite(Number(p.value));
+      const x = pad.l + slot * i + (slot - barW) / 2;
+      const h = evaluable ? Math.max(2, (Number(p.value) / 100) * innerH) : 0;
+      const y = pad.t + innerH - h;
+      const fill = colors[String(p.id || '').toUpperCase()] || TOKENS.primary;
+      const obj = p.objective && p.objective.thresholdPct != null ? Number(p.objective.thresholdPct) : null;
+      const objY = obj != null ? pad.t + innerH * (1 - obj / 100) : null;
+      const label = p.label || p.id;
+      const valueText = evaluable ? formatPct(p.value) : '—';
+      const objText = obj != null ? `obj. ${obj} %` : '';
+      const title = `${label} · ${valueText}${objText ? ` · ${objText}` : ''}`;
+      return `<g>
+        <title>${escapeHtml(title)}</title>
+        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" fill="${fill}" rx="2"/>
+        ${objY != null ? `<line x1="${(x - 4).toFixed(1)}" x2="${(x + barW + 4).toFixed(1)}" y1="${objY}" y2="${objY}" stroke="${TOKENS.warning}" stroke-dasharray="3 3" stroke-width="2"/>` : ''}
+        <text x="${(x + barW / 2).toFixed(1)}" y="${height - 18}" font-size="11" text-anchor="middle" fill="#1f2730">${escapeHtml(String(label))}</text>
+        <text x="${(x + barW / 2).toFixed(1)}" y="${(evaluable ? y - 6 : pad.t + innerH - 8).toFixed(1)}" font-size="10" text-anchor="middle" fill="#6b7785">${escapeHtml(valueText)}</text>
+      </g>`;
+    }).join('');
+    return `<svg class="scope-chart scope-chart-columns" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Participation par domaine')}">
+      ${ticks}
+      ${bars}
+    </svg>`;
+  }
+
+  function renderDonutChart(dataset, size, extras) {
+    const extrasSafe = extras || {};
     const points = ((dataset && dataset.series && dataset.series[0]) || {}).points || [];
     const usable = points.filter((p) => Number(p.value || 0) > 0);
     if (!usable.length) return emptyState(dataset && dataset.emptyReason);
-    const palette = Object.freeze({
+    const palette = extrasSafe.palette || Object.freeze({
       present: TOKENS.neutral,
       excuse: TOKENS.warning,
       dispense: TOKENS.primary,
-      nonExcuse: TOKENS.secondary
+      nonExcuse: TOKENS.secondary,
+      prive: TOKENS.secondary,
+      professionnel: TOKENS.primary,
+      armee: TOKENS.warning,
+      sante: TOKENS.neutral,
+      nonPrecise: '#8a8e92'
     });
     const width = (size && size.width) || 280;
     const height = (size && size.height) || 220;
     const cx = width / 2;
-    const cy = height / 2 - 8;
-    const r = Math.min(width, height) / 2 - 28;
-    const rInner = r * 0.58;
+    const cy = height / 2 - 18;
+    const r = Math.min(width, height) / 2 - 36;
+    const rInner = r * 0.62;
     const total = usable.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
     let angle = -Math.PI / 2;
     const tau = Math.PI * 2;
@@ -281,13 +334,23 @@
       const start = angle;
       const end = angle + Math.max(slice, 0.01);
       angle = end;
-      const fill = palette[p.token] || colorOf(p.token);
-      const title = `${p.label} : ${p.value}`;
+      const fill = palette[p.token] || palette[p.id] || colorOf(p.token);
+      const share = `${(100 * Number(p.value || 0) / total).toFixed(1).replace('.', ',')} %`;
+      const title = `${p.label} : ${p.value} · ${share}`;
       return `<path d="${arc(start, end)}" fill="${fill}"><title>${escapeHtml(title)}</title></path>`;
     }).join('');
-    const labels = usable.map((p) => `<span><i class="${escapeHtml(p.token || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value))}</span>`).join('');
+    const showCenter = extrasSafe.centerLabel || extrasSafe.centerValue != null;
+    const centerValue = extrasSafe.centerValue != null ? extrasSafe.centerValue : total;
+    const centerLabel = extrasSafe.centerLabel || '';
+    const center = showCenter ? `<text x="${cx}" y="${cy - 2}" font-size="22" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(centerValue))}</text>
+      ${centerLabel ? `<text x="${cx}" y="${cy + 16}" font-size="11" text-anchor="middle" fill="#6b7785">${escapeHtml(centerLabel)}</text>` : ''}` : '';
+    const labels = usable.map((p) => {
+      const share = `${(100 * Number(p.value || 0) / total).toFixed(0)} %`;
+      return `<span><i class="${escapeHtml(p.token || p.id || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value))} · ${escapeHtml(share)}</span>`;
+    }).join('');
     return `<svg class="scope-chart scope-chart-donut" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Répartition')}">
       ${slices}
+      ${center}
     </svg>
     <p class="scope-chart-legend">${labels}</p>`;
   }
@@ -296,23 +359,37 @@
     const opts = options || {};
     if (!dataset) return '';
     if (HIDDEN_REASONS.includes(dataset.emptyReason)) return '';
-    const wide = opts.wide || (opts.variant !== 'donut' && (dataset.type === 'bar' || dataset.id === 'evolution'));
+    const extras = {
+      hideLegacy: opts.hideLegacy,
+      order: opts.order,
+      colors: opts.colors,
+      palette: opts.palette,
+      centerValue: opts.centerValue,
+      centerLabel: opts.centerLabel
+    };
+    const wide = opts.wide === false
+      ? false
+      : (opts.wide || (opts.variant !== 'donut' && opts.variant !== 'columns' && (dataset.type === 'bar' || dataset.id === 'evolution')));
     const mode = dataset.emptyReason === 'AUCUNE_SERIE_OFFICIELLE' ? 'empty'
       : (dataset.emptyReason === 'UNIQUEMENT_LEGACY' ? 'legacy' : 'full');
-    const plot = renderPlot(dataset, opts.size, opts.variant);
+    const plot = renderPlot(dataset, opts.size, opts.variant, extras);
+    const lineLegend = [
+      { className: 'off', label: 'Taux officiel (mensuel, somme / somme)' },
+      { className: 'obj', label: 'Objectif lorsqu’il est unique' }
+    ];
+    if (!opts.hideLegacy) lineLegend.push({ className: 'legacy', label: 'LEGACY historique, hors KPI' });
     const legend = dataset.type === 'line' && opts.variant !== 'donut'
-      ? legendHtml([
-          { className: 'off', label: 'Taux officiel (mensuel, somme / somme)' },
-          { className: 'obj', label: 'Objectif lorsqu’il est unique' },
-          { className: 'legacy', label: 'LEGACY historique, hors KPI' }
-        ])
-      : (dataset.type === 'bar' ? legendHtml([
+      ? legendHtml(lineLegend)
+      : (opts.variant === 'columns' ? legendHtml([
+          { className: 'off', label: 'Taux officiel' },
+          { className: 'obj', label: 'Objectif du domaine, s’il est défini' }
+        ]) : (dataset.type === 'bar' ? legendHtml([
           { className: 'off', label: 'Taux officiel' },
           { className: 'obj', label: 'Objectif résolu, si unique' }
-        ]) : '');
+        ]) : ''));
     const explainBtn = opts.explain === false ? '' : `<button type="button" class="linkish scope-graph-explain-btn" data-graph-explain="${escapeHtml(dataset.id)}">Comprendre ce graphique</button>`;
     const heading = opts.title || dataset.question;
-    const frameType = opts.variant === 'donut' ? 'donut' : dataset.type;
+    const frameType = opts.variant === 'donut' ? 'donut' : (opts.variant === 'columns' ? 'columns' : dataset.type);
     return `<div class="scope-card scope-chart-card scope-graph-card is-${escapeHtml(mode)}${wide ? ' is-wide' : ''}" data-graph="${escapeHtml(dataset.id)}">
       <div class="scope-graph-head">
         <h2>${escapeHtml(heading)}</h2>
@@ -361,6 +438,7 @@
     renderBarChart,
     renderStackedBar,
     renderDonutChart,
+    renderColumnChart,
     renderChartCard,
     renderGraphExplain
   };

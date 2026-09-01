@@ -1178,29 +1178,118 @@
     return `<span class="scope-badge scope-state-badge"><span class="scope-dot ${escapeHtml(etat.code)}"></span>${escapeHtml(etat.label)}</span>`;
   }
 
-  function treatCardsHtml(alerts) {
-    const p0 = (alerts || []).filter((a) => a.level === 'P0');
-    const grouped = {};
-    p0.forEach((alert) => {
-      const key = alert.actionLabel || alert.levelLabel || 'À traiter';
-      if (!grouped[key]) grouped[key] = { title: key, count: 0 };
-      grouped[key].count += 1;
+  function homePilotIcon(kind) {
+    const icons = {
+      shield: '<path d="M12 3 20 6.5v6.2c0 4.4-3.2 7.6-8 9.3-4.8-1.7-8-4.9-8-9.3V6.5Z"/>',
+      flag: '<path d="M5 21V4h10l-1.4 4.2L16 12H5"/>',
+      star: '<path d="M12 3.8 14.1 9h5.4l-4.4 3.3 1.7 5.2L12 14.6 7.2 17.5 8.9 12.3 4.5 9h5.4Z"/>',
+      building: '<path d="M4 21V8l8-4 8 4v13H4Z"/><path d="M9 21v-6h6v6"/>',
+      layers: '<path d="M12 4 20 8l-8 4L4 8l8-4Z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/>',
+      bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
+      gauge: '<path d="M5.2 16.2a8 8 0 1 1 13.6 0"/><path d="M12 12l4-3"/><circle cx="12" cy="12" r="1.4"/>',
+      calendar: '<rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+      person: '<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.4 3.1-5 7-5s7 1.6 7 5"/>',
+      absent: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.2 2.6-5 6-5 1.1 0 2.1.2 3 .6"/><path d="M15.2 14.8 21 20.5M21 14.8l-5.8 5.7"/>',
+      events: '<rect x="3" y="5" width="18" height="16" rx="1.8"/><path d="M3 10h18M8 3v4M16 3v4M8 14h4M8 17h8"/>',
+      presence: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.2 2.6-5 6-5 1.2 0 2.3.2 3.2.6"/><path d="M14.2 16.2 16.5 18.5 21 14"/>',
+      people: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M21.5 20c0-2.5-1.8-4-4.5-4"/>',
+      analyses: '<path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/><path d="M14.5 7.5 17 5l3 2"/>',
+      report: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
+      objectifs: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.4"/>'
+    };
+    return `<svg class="scope-home-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[kind] || icons.shield}</svg>`;
+  }
+
+  function homeTreatDomainKey(code) {
+    const raw = String(code || '').toUpperCase();
+    if (raw === 'PR' || raw === 'AUTO') return 'FOSPEC';
+    return ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'].indexOf(raw) >= 0 ? raw : null;
+  }
+
+  function homeEventEffectif(alert) {
+    const id = alert && alert.eventId;
+    if (!id) return '—';
+    const item = (state.list || []).find((row) => {
+      const ev = row && row.evenement;
+      return ev && String(ev.evenement_id || ev.id) === String(id);
     });
-    let rows = Object.values(grouped).sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'fr'));
-    if (rows.length > 4) {
-      const rest = rows.slice(3);
-      rows = rows.slice(0, 3).concat([{
-        title: 'Autres actions',
-        count: rest.reduce((sum, row) => sum + row.count, 0)
-      }]);
-    }
+    if (!item || item.attendusInclus == null || item.attendusInclus === '') return '—';
+    return String(item.attendusInclus);
+  }
+
+  function homeEventPublic(alert) {
+    const cibles = (alert.metadata && alert.metadata.cibles) || [];
+    const label = L.ciblesLabel(cibles);
+    return label && label !== '—' ? label : '—';
+  }
+
+  function homeEventEtat(alert) {
+    const id = alert && alert.eventId;
+    const item = id ? (state.list || []).find((row) => {
+      const ev = row && row.evenement;
+      return ev && String(ev.evenement_id || ev.id) === String(id);
+    }) : null;
+    if (item) return eventBusinessState(item);
+    const code = (alert.metadata && alert.metadata.statut) || '';
+    return { code, label: code ? L.statutLabel(code) : '—' };
+  }
+
+  function homeEventsTableHtml(alerts) {
+    const rows = (alerts || []).filter((a) => a.level === 'P0').slice(0, 5);
     if (!rows.length) {
-      return '<p class="scope-treat-empty">Aucune action prioritaire aujourd’hui.</p>';
+      return '<p class="scope-home-events-empty">Aucun événement à traiter.</p>';
     }
-    return `<div class="scope-treat-grid">${rows.map((row) => `<a class="scope-treat-card" href="#/vue">
-      <strong>${escapeHtml(String(row.count))}</strong>
-      <span>${escapeHtml(row.title)}</span>
-    </a>`).join('')}</div>`;
+    const body = rows.map((alert) => {
+      const etat = homeEventEtat(alert);
+      const href = alert.actionHref || '#/vue';
+      const action = alert.actionLabel || 'Ouvrir';
+      const domainKey = homeTreatDomainKey(alert.domainCode) || alert.domainCode;
+      return `<tr>
+        <td data-label="Date">${escapeHtml(L.formatDate(alert.eventDate) || '—')}</td>
+        <td data-label="Événement">${escapeHtml(alert.title || '—')}</td>
+        <td data-label="Domaine">${escapeHtml(domainKey ? domaineLabel(domainKey) : '—')}</td>
+        <td data-label="Public / OI">${escapeHtml(homeEventPublic(alert))}</td>
+        <td data-label="Effectif">${escapeHtml(homeEventEffectif(alert))}</td>
+        <td data-label="État"><span class="scope-badge"><span class="scope-dot ${escapeHtml(etat.code)}"></span>${escapeHtml(etat.label)}</span></td>
+        <td data-label="Action"><a class="scope-btn scope-btn-primary" href="${escapeHtml(href)}">${escapeHtml(action)}</a></td>
+      </tr>`;
+    }).join('');
+    return `<div class="scope-table-wrap"><table class="scope-table scope-home-events-table">
+      <thead><tr>
+        <th>Date</th>
+        <th>Événement</th>
+        <th>Domaine</th>
+        <th>Public / OI</th>
+        <th>Effectif</th>
+        <th>État</th>
+        <th>Action</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>`;
+  }
+
+  function treatCardsHtml(alerts) {
+    const HOME_DOMAIN_ORDER = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
+    const counts = {};
+    HOME_DOMAIN_ORDER.forEach((code) => { counts[code] = 0; });
+    (alerts || []).filter((a) => a.level === 'P0').forEach((alert) => {
+      const key = homeTreatDomainKey(alert.domainCode);
+      if (key) counts[key] += 1;
+    });
+    const iconByDomain = { DPS: 'shield', DAP: 'flag', JSP: 'star', FOBA: 'building', FOCA: 'layers', FOSPEC: 'bolt' };
+    return `<div class="scope-treat-grid">${HOME_DOMAIN_ORDER.map((code) => {
+      const count = counts[code];
+      const short = count === 0 ? 'Aucune action' : (count === 1 ? 'Action prioritaire' : 'Actions prioritaires');
+      return `<a class="scope-treat-card" href="#/vue/${encodeURIComponent(code)}">
+        <span class="scope-treat-ico" aria-hidden="true">${homePilotIcon(iconByDomain[code])}</span>
+        <span class="scope-treat-body">
+          <span class="scope-treat-domain">${escapeHtml(domaineLabel(code))}</span>
+          <strong>${escapeHtml(String(count))}</strong>
+          <span class="scope-treat-label">${escapeHtml(short)}</span>
+        </span>
+        <span class="scope-treat-chev" aria-hidden="true">›</span>
+      </a>`;
+    }).join('')}</div>`;
   }
 
   function volumeCell(value) {
@@ -1236,18 +1325,47 @@
     const p0Count = Number((dash.alerts && dash.alerts.counts && dash.alerts.counts.p0) || 0);
     const graphs = dash.graphs || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
+    const HOME_DOMAIN_ORDER = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
+    const HOME_DOMAIN_COLORS = {
+      DPS: '#DE000A',
+      DAP: '#171C8F',
+      JSP: '#FFA300',
+      FOBA: '#54585A',
+      FOCA: '#8a8e92',
+      FOSPEC: '#3d4470'
+    };
+    const chartSize = { width: 640, height: 220 };
     const evolutionCard = homeChartCard(C, graphs.evolution, {
-      size: { width: 640, height: 128 },
+      size: chartSize,
+      wide: false,
+      hideLegacy: true,
       title: 'Évolution du taux de participation'
     }) || '<div class="scope-card scope-chart-card is-empty"><h2>Évolution du taux de participation</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>';
     const domainesCard = homeChartCard(C, graphs.domaines, {
+      size: chartSize,
+      wide: false,
+      variant: 'columns',
+      order: HOME_DOMAIN_ORDER,
+      colors: HOME_DOMAIN_COLORS,
       title: 'Participation par domaine'
     }) || '<div class="scope-card scope-chart-card is-empty"><h2>Participation par domaine</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>';
-    const compositionCard = homeChartCard(C, graphs.composition, {
+    const motifPoints = ((graphs.motifs && graphs.motifs.series && graphs.motifs.series[0]) || {}).points || [];
+    const motifTotal = motifPoints.reduce((sum, p) => sum + Number(p.value || 0), 0);
+    const excusesCard = homeChartCard(C, graphs.motifs, {
       variant: 'donut',
       size: { width: 280, height: 220 },
-      title: 'Répartition des statuts'
-    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Répartition des statuts</h2><p class="scope-empty scope-chart-empty">Aucune composition officielle à afficher.</p></div>';
+      wide: false,
+      title: 'Répartition des excuses',
+      palette: {
+        prive: '#DE000A',
+        professionnel: '#171C8F',
+        armee: '#FFA300',
+        sante: '#54585A',
+        nonPrecise: '#8a8e92'
+      },
+      centerValue: motifTotal,
+      centerLabel: 'Excusés'
+    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Répartition des excuses</h2><p class="scope-empty scope-chart-empty">Aucun motif d’excuse sur cette période.</p></div>';
     return `
       <div class="scope-crumb">Accueil</div>
       <div class="scope-main scope-home">
@@ -1272,21 +1390,25 @@
         <section class="scope-activity-board" aria-label="Synthèse de l’activité">
           <h2 class="scope-activity-title">Synthèse de l’activité</h2>
           <article class="scope-activity-cell is-taux">
-            <span>Taux global</span>
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('gauge')}</span>
+            <span>Taux de participation global</span>
             <strong>${escapeHtml(taux)}</strong>
             <em>${escapeHtml(obj.title === 'Aucun objectif défini' || obj.title === 'Période non homogène' ? obj.title : (obj.title ? `Objectif ${obj.title}` : ''))}</em>
           </article>
           <article class="scope-activity-cell is-excuses">
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('calendar')}</span>
             <span>Excusés</span>
             <strong>${escapeHtml(volumeCell(volumes.excuses))}</strong>
             <em>${escapeHtml(volumeShare(volumes.excuses, attendus))}</em>
           </article>
           <article class="scope-activity-cell is-dispenses">
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('person')}</span>
             <span>Dispensés</span>
             <strong>${escapeHtml(volumeCell(volumes.dispenses))}</strong>
             <em>${escapeHtml(volumeShare(volumes.dispenses, attendus))}</em>
           </article>
           <article class="scope-activity-cell is-absences">
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('absent')}</span>
             <span>Absences non excusées</span>
             <strong>${escapeHtml(volumeCell((dash.absencesNonExcusees && dash.absencesNonExcusees.count) != null ? dash.absencesNonExcusees.count : volumes.nonExcuses))}</strong>
             <em>${escapeHtml(volumeShare((dash.absencesNonExcusees && dash.absencesNonExcusees.count) != null ? dash.absencesNonExcusees.count : volumes.nonExcuses, attendus))}</em>
@@ -1295,17 +1417,24 @@
         <section class="scope-home-charts scope-dash-split" aria-label="Graphiques">
           ${evolutionCard}
           ${domainesCard}
-          ${compositionCard}
+          ${excusesCard}
+        </section>
+        <section class="scope-home-events" aria-labelledby="scope-home-events-title">
+          <div class="scope-home-events-head">
+            <h2 id="scope-home-events-title">Événements à traiter</h2>
+            <a class="scope-treat-all" href="#/vue">Voir tous les événements à traiter${p0Count ? ` · ${escapeHtml(String(p0Count))}` : ''}</a>
+          </div>
+          ${homeEventsTableHtml((dash.alerts && dash.alerts.alerts) || [])}
         </section>
         <section class="scope-quick" aria-label="Accès rapides">
           <h2>Accès rapides</h2>
           <div class="scope-quick-grid">
-            <a href="#/evenements"><span class="scope-quick-ico">${navIcon('events')}</span><span><b>Événements</b><small>Programme, saisie et clôture</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
-            <a href="#/reglages/suivi"><span class="scope-quick-ico">${navIcon('cycles')}</span><span><b>Présences</b><small>Suivi nominatif des participations</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
-            <a href="#/personnel"><span class="scope-quick-ico">${navIcon('people')}</span><span><b>Personnel</b><small>Annuaire et fiches individuelles</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
-            <a href="#/statistiques"><span class="scope-quick-ico">${navIcon('stats')}</span><span><b>Analyses</b><small>Statistiques et graphiques de période</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
-            <a href="#/rapports"><span class="scope-quick-ico">${navIcon('report')}</span><span><b>Rapports</b><small>Exports institutionnels</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
-            <a href="#/reglages/objectifs"><span class="scope-quick-ico">${navIcon('folder')}</span><span><b>Objectifs</b><small>Seuils de participation</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/evenements"><span class="scope-quick-ico">${homePilotIcon('events')}</span><span><b>Événements</b><small>Programme, saisie et clôture</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/reglages/suivi"><span class="scope-quick-ico">${homePilotIcon('presence')}</span><span><b>Présences</b><small>Suivi nominatif des participations</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/personnel"><span class="scope-quick-ico">${homePilotIcon('people')}</span><span><b>Personnel</b><small>Annuaire et fiches individuelles</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/statistiques"><span class="scope-quick-ico">${homePilotIcon('analyses')}</span><span><b>Analyses</b><small>Statistiques et graphiques de période</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/rapports"><span class="scope-quick-ico">${homePilotIcon('report')}</span><span><b>Rapports</b><small>Exports institutionnels</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/reglages/objectifs"><span class="scope-quick-ico">${homePilotIcon('objectifs')}</span><span><b>Objectifs</b><small>Seuils de participation</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
           </div>
         </section>
       </div>
