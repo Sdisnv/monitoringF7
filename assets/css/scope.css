@@ -1068,6 +1068,118 @@ html, body {
   width: 1%;
   white-space: nowrap;
 }
+
+.scope-events-pilot.scope-toolbar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.5fr) minmax(8.5rem, 0.7fr) minmax(8.5rem, 0.7fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+.scope-events-pilot.scope-toolbar .scope-btn-primary {
+  margin-left: 0;
+  white-space: nowrap;
+  height: var(--scope-h-control);
+}
+.scope-events-list-wrap {
+  overflow-x: visible;
+}
+.scope-events-list-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.scope-events-list-table th:nth-child(1),
+.scope-events-list-table td:nth-child(1) { width: 7.25rem; }
+.scope-events-list-table th:nth-child(2),
+.scope-events-list-table td:nth-child(2) { width: auto; }
+.scope-events-list-table th:nth-child(3),
+.scope-events-list-table td:nth-child(3) { width: 7.5rem; }
+.scope-events-list-table th:nth-child(4),
+.scope-events-list-table td:nth-child(4) { width: 18%; }
+.scope-events-list-table th:nth-child(5),
+.scope-events-list-table td:nth-child(5) { width: 7rem; }
+.scope-events-list-table th:nth-child(6),
+.scope-events-list-table td:nth-child(6) { width: 10.5rem; }
+.scope-events-list-table th:nth-child(7),
+.scope-events-list-table td:nth-child(7) {
+  width: 7.25rem;
+  min-width: 7.25rem;
+  max-width: 7.25rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.scope-events-libelle {
+  font-weight: 700;
+  color: var(--scope-ink);
+  text-decoration: none;
+}
+.scope-events-libelle:hover {
+  color: var(--scope-red);
+  text-decoration: underline;
+}
+.scope-events-libelle:focus-visible {
+  outline: 2px solid var(--scope-red);
+  outline-offset: 2px;
+}
+.scope-events-domain {
+  font-weight: 650;
+}
+.scope-events-effectif-main {
+  display: block;
+  font-weight: 650;
+}
+.scope-events-effectif-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.scope-events-mode {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.scope-btn.scope-events-list-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 6.75rem;
+  min-width: 6.75rem;
+  max-width: 6.75rem;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  background: #fff;
+  color: var(--scope-red);
+  border: 1px solid var(--scope-red);
+  border-radius: var(--scope-radius);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  text-align: center;
+}
+.scope-btn.scope-events-list-action:hover {
+  background: var(--scope-red-soft);
+  border-color: var(--scope-red);
+  color: var(--scope-red);
+  box-shadow: none;
+}
+.scope-btn.scope-events-list-action:focus-visible {
+  outline: 2px solid var(--scope-red);
+  outline-offset: 2px;
+}
+.scope-events-list-wrap .scope-pagination {
+  padding: 10px 4px 4px;
+}
 .scope-quick {
   margin-top: 4px;
 }
@@ -1395,6 +1507,7 @@ html, body {
 
 .scope-table-wrap,
 .scope-table-scroll { width: 100%; overflow-x: auto; }
+.scope-table-wrap.scope-events-list-wrap { overflow-x: visible; }
 
 .scope-table {
   width: 100%;
@@ -3265,6 +3378,27 @@ html, body {
     margin-left: 0;
     width: 100%;
   }
+  .scope-events-pilot.scope-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .scope-btn.scope-events-list-action {
+    width: 6.75rem;
+    min-width: 6.75rem;
+    max-width: 6.75rem;
+    height: 32px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+  .scope-events-list-table th:nth-child(n),
+  .scope-events-list-table td:nth-child(n) {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+  .scope-events-list-table td[data-label="Action"] {
+    text-align: left;
+    white-space: nowrap;
+  }
   .scope-period-context,
   .scope-home-hero,
   .scope-pilot-head,
@@ -4850,6 +4984,13 @@ body.scope-pdf-open { overflow: hidden; }
 @media (min-width: 1024px) {
   .scope-enc-groups {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+@media (max-width: 1023px) and (min-width: 801px) {
+  .scope-events-pilot.scope-toolbar {
+    grid-template-columns: minmax(10rem, 1fr) minmax(7.5rem, 0.65fr) minmax(7.5rem, 0.65fr) auto;
+    gap: 8px;
   }
 }
 

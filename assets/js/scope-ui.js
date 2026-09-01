@@ -139,6 +139,9 @@
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
     eventSort: { key: 'date', dir: 'asc' },
+    eventListQuery: '',
+    eventListPage: 1,
+    eventListPageSize: 12,
     eventPersonnelSort: { key: 'grade', dir: 'desc' },
     personneFiche: null,
     personneEdit: null,
@@ -1467,35 +1470,88 @@
     `;
   }
 
+  const EVENT_LIST_PAGE_SIZES = [12, 24, 48, 60];
+
+  function eventListPageSize() {
+    const n = Number(state.eventListPageSize);
+    return EVENT_LIST_PAGE_SIZES.indexOf(n) >= 0 ? n : 12;
+  }
+
+  function eventListMatches(item, query) {
+    if (!query) return true;
+    const ev = item && item.evenement;
+    if (!ev) return false;
+    const hay = normalizeSearchText([
+      ev.libelle,
+      ev.code_cours,
+      ev.identifiant_externe,
+      ev.domaine_code,
+      domaineLabel(ev.domaine_code),
+      L.ciblesLabel(item.cibles)
+    ].filter(Boolean).join(' '));
+    return hay.includes(query);
+  }
+
+  function renderEventListPagination(total, page, pageSize) {
+    if (!total) return '';
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const sizeOpts = EVENT_LIST_PAGE_SIZES.map((n) => `<option value="${n}" ${n === pageSize ? 'selected' : ''}>${n}</option>`).join('');
+    const pager = totalPages > 1
+      ? `<div class="scope-pagination-controls">
+          <button type="button" class="scope-btn scope-btn-compact" id="event-page-prev" ${page <= 1 ? 'disabled' : ''}>Précédent</button>
+          <button type="button" class="scope-btn scope-btn-compact" id="event-page-next" ${page >= totalPages ? 'disabled' : ''}>Suivant</button>
+        </div>`
+      : '';
+    return `<nav class="scope-pagination" aria-label="Pagination des événements">
+      <p class="scope-page-status">${total} événement${total > 1 ? 's' : ''}${totalPages > 1 ? ` · page ${page} / ${totalPages}` : ''}</p>
+      <div class="scope-pagination-group">
+        ${pager}
+        <label class="scope-page-size" for="event-page-size">Lignes
+          <select id="event-page-size" class="scope-select-control">${sizeOpts}</select>
+        </label>
+      </div>
+    </nav>`;
+  }
+
   function renderListe() {
     const eventColumns = [
       { key: 'date', type: 'date', value: (item) => item && item.evenement && item.evenement.date, tieBreakers: [
         { key: 'heure', type: 'time', value: (item) => item && item.evenement && item.evenement.heure_debut },
         { key: 'libelle', type: 'text', value: (item) => item && item.evenement && item.evenement.libelle }
       ] },
-      { key: 'heure', type: 'time', value: (item) => item && item.evenement && item.evenement.heure_debut },
-      { key: 'code', type: 'text', value: (item) => item && item.evenement && (item.evenement.code_cours || item.evenement.identifiant_externe || '') },
       { key: 'libelle', type: 'text', value: (item) => item && item.evenement && item.evenement.libelle },
       { key: 'domaine', type: 'text', value: (item) => item && item.evenement && domaineLabel(item.evenement.domaine_code) },
       { key: 'public', type: 'text', value: (item) => L.ciblesLabel(item && item.cibles) },
       { key: 'effectif', type: 'number', value: (item) => item && item.attendusInclus },
       { key: 'etat', type: 'status', value: (item) => eventBusinessState(item).code }
     ];
-    const rows = L.sortRows ? L.sortRows(state.list, state.eventSort, eventColumns) : state.list;
+    const source = state.list || [];
     const view = L.listViewState({
       ready: state.listReady,
       error: state.listError,
-      count: rows.length
+      count: source.length
     });
+    const pageSize = eventListPageSize();
+    const query = normalizeSearchText(String(state.eventListQuery || '').replace(/\s+/g, ' ').trim());
+    let pagination = '';
     let body;
     if (view === 'error') {
-      body = `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.listError || L.errorMessage('exercices'))}</div></td></tr>`;
+      body = `<tr><td colspan="7"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.listError || L.errorMessage('exercices'))}</div></td></tr>`;
     } else if (view === 'loading') {
-      body = `<tr><td colspan="9"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('exercices'))}</div></td></tr>`;
+      body = `<tr><td colspan="7"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('exercices'))}</div></td></tr>`;
     } else if (view === 'empty') {
-      body = `<tr><td colspan="9"><div class="scope-empty">${escapeHtml(L.emptyMessage('exercices'))}</div></td></tr>`;
+      body = `<tr><td colspan="7"><div class="scope-empty">Aucun événement sur la période choisie.</div></td></tr>`;
     } else {
-      body = rows.map((item) => {
+      const searched = source.filter((item) => eventListMatches(item, query));
+      if (!searched.length) {
+        body = '<tr><td colspan="7"><div class="scope-empty">Aucun événement ne correspond à la recherche.</div></td></tr>';
+      } else {
+        const rows = L.sortRows ? L.sortRows(searched, state.eventSort, eventColumns) : searched;
+        const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+        const page = Math.min(Math.max(1, Number(state.eventListPage) || 1), totalPages);
+        pagination = renderEventListPagination(rows.length, page, pageSize);
+        const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
+        body = pageRows.map((item) => {
       const ev = item.evenement;
       const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
       const mode = L.modeSuiviOf(ev);
@@ -1512,25 +1568,27 @@
         : `#/exercices/${ev.evenement_id}`;
       const statutHtml = isLegacy
         ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
-        : `${eventBusinessStateBadge(item)}<span class="scope-mode-hint">${escapeHtml(L.modeLabel(mode))}</span>`;
+        : `${eventBusinessStateBadge(item)}<span class="scope-events-mode">${escapeHtml(L.modeLabel(mode))}</span>`;
       const attenduLegacy = item.legacy && ((item.legacy.payload_v67 && item.legacy.payload_v67.total_attendu) || item.legacy.nb_convoques);
       const presents = isLegacy && item.legacy
         ? `${item.legacy.nb_presents} / ${attenduLegacy}`
         : (ev.statut === 'REALISE' ? (item.compteurs.presents ?? '—') : '—');
       const attendusCell = isLegacy ? '—' : (mode === 'QUANTITATIF' ? (item.attendusInclus || '—') : (ev.population_figee ? item.attendusInclus : '—'));
-      const horaire = [ev.heure_debut, ev.heure_fin].filter(Boolean).join('–') || '—';
+      const effectifBits = [];
+      if (presents !== '—') effectifBits.push(String(presents));
+      if (taux !== '—') effectifBits.push(String(taux));
+      const effectifHtml = `<span class="scope-events-effectif-main">${escapeHtml(String(attendusCell))}</span>${effectifBits.length ? `<small class="scope-events-effectif-sub">${escapeHtml(effectifBits.join(' · '))}</small>` : ''}`;
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-        <td data-label="Heure">${escapeHtml(horaire)}</td>
-        <td data-label="Code">${escapeHtml(ev.code_cours || ev.identifiant_externe || '—')}</td>
-        <td data-label="Événement">${escapeHtml(ev.libelle)}</td>
-        <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine_code))}</td>
-        <td data-label="Public">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
-        <td data-label="Effectif">${attendusCell}${presents !== '—' ? ` · ${escapeHtml(String(presents))}` : ''}${taux !== '—' ? ` · ${escapeHtml(taux)}` : ''}</td>
+        <td data-label="Événement"><a class="scope-events-libelle" href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a></td>
+        <td data-label="Domaine"><span class="scope-badge scope-events-domain">${escapeHtml(domaineLabel(ev.domaine_code))}</span></td>
+        <td data-label="Public / OI">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
+        <td data-label="Effectif">${effectifHtml}</td>
         <td data-label="État">${statutHtml}</td>
-        <td data-label="Actions"><a class="scope-btn" href="${href}">${action}</a></td>
+        <td data-label="Action"><a class="scope-btn scope-events-list-action" href="${href}">${escapeHtml(action)}</a></td>
       </tr>`;
-      }).join('');
+        }).join('');
+      }
     }
 
     return `
@@ -1538,7 +1596,11 @@
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Activité', title: 'Événements', context: state.year, description: 'Liste opérationnelle des événements planifiés, réalisés, reportés ou annulés.', logo: true })}
         ${periodContextHtml()}
-        <div class="scope-toolbar">
+        <div class="scope-toolbar scope-events-pilot">
+          <div class="scope-field scope-events-search">
+            <label for="event-list-q">Recherche</label>
+            <input id="event-list-q" type="search" placeholder="Rechercher un événement…" value="${escapeHtml(state.eventListQuery || '')}" autocomplete="off">
+          </div>
           <div class="scope-field">
             <label>Statut</label>
             <select id="filter-statut">
@@ -1559,16 +1621,14 @@
           <button type="button" class="scope-btn scope-btn-primary" id="scope-new">Nouvel événement</button>
         </div>
         <p class="scope-mode-hint">La création manuelle reste disponible pour un événement ponctuel. Les imports sont regroupés dans Réglages → Importation.</p>
-        <div class="scope-card scope-table-wrap">
-          <table class="scope-table">
+        <div class="scope-card scope-table-wrap scope-events-list-wrap">
+          <table class="scope-table scope-events-list-table">
             <thead>
               <tr>
                 ${sortableHeader('events', 'date', 'Date', state.eventSort)}
-                ${sortableHeader('events', 'heure', 'Heure', state.eventSort)}
-                ${sortableHeader('events', 'code', 'Code', state.eventSort)}
                 ${sortableHeader('events', 'libelle', 'Événement', state.eventSort)}
                 ${sortableHeader('events', 'domaine', 'Domaine', state.eventSort)}
-                ${sortableHeader('events', 'public', 'Public', state.eventSort)}
+                ${sortableHeader('events', 'public', 'Public / OI', state.eventSort)}
                 ${sortableHeader('events', 'effectif', 'Effectif', state.eventSort)}
                 ${sortableHeader('events', 'etat', 'État', state.eventSort)}
                 <th>Actions</th>
@@ -1576,6 +1636,7 @@
             </thead>
             <tbody>${body}</tbody>
           </table>
+          ${pagination}
         </div>
       </div>
     `;
@@ -4817,10 +4878,12 @@
     });
     document.getElementById('filter-statut')?.addEventListener('change', (e) => {
       state.statut = e.target.value;
+      state.eventListPage = 1;
       withLoading(loadList);
     });
     document.getElementById('filter-domaine')?.addEventListener('change', (e) => {
       state.domaine = e.target.value;
+      state.eventListPage = 1;
       withLoading(loadList);
     });
     document.getElementById('cycle-filter-domaine')?.addEventListener('change', (e) => {
@@ -4926,6 +4989,35 @@
       });
     });
     document.getElementById('scope-new')?.addEventListener('click', () => go('#/exercices/nouveau'));
+    const eventListSearch = document.getElementById('event-list-q');
+    if (eventListSearch) {
+      eventListSearch.addEventListener('input', (e) => {
+        const el = e.target;
+        const pos = el.selectionStart;
+        state.eventListQuery = el.value;
+        state.eventListPage = 1;
+        render();
+        const next = document.getElementById('event-list-q');
+        if (next) {
+          next.focus();
+          try { next.setSelectionRange(pos, pos); } catch (_err) {}
+        }
+      });
+    }
+    document.getElementById('event-page-size')?.addEventListener('change', (e) => {
+      const n = Number(e.target.value);
+      state.eventListPageSize = EVENT_LIST_PAGE_SIZES.indexOf(n) >= 0 ? n : 12;
+      state.eventListPage = 1;
+      render();
+    });
+    document.getElementById('event-page-prev')?.addEventListener('click', () => {
+      state.eventListPage = Math.max(1, (Number(state.eventListPage) || 1) - 1);
+      render();
+    });
+    document.getElementById('event-page-next')?.addEventListener('click', () => {
+      state.eventListPage = (Number(state.eventListPage) || 1) + 1;
+      render();
+    });
     document.getElementById('scope-import-preview')?.addEventListener('click', () => {
       withLoading(async () => {
         state.importRapport = null;
