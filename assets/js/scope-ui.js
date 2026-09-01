@@ -1179,17 +1179,17 @@
   }
 
   function homePilotIcon(kind) {
+    const filled = {
+      peopleDuo: '<path d="M8.1 4.6a3.3 3.3 0 1 1 0 6.6 3.3 3.3 0 0 1 0-6.6Zm8.05 1.35a2.65 2.65 0 1 1 0 5.3 2.65 2.65 0 0 1 0-5.3ZM1.7 20.6c.25-3.55 2.95-5.85 6.4-5.85s6.15 2.3 6.4 5.85H1.7Zm11.35 0c.2-2.35 1.7-4.05 4.1-4.05 2.35 0 3.9 1.7 4.1 4.05h-8.2Z"/>',
+      donut: '<path fill-rule="evenodd" d="M12 3.2a8.8 8.8 0 1 1 0 17.6 8.8 8.8 0 0 1 0-17.6Zm0 3.4a5.4 5.4 0 1 0 0 10.8 5.4 5.4 0 0 0 0-10.8Z"/><path d="M12 3.2a8.8 8.8 0 0 1 7.7 4.55L16.4 9.5A5.4 5.4 0 0 0 12 6.6V3.2Z"/>',
+      peopleBan: '<path d="M7.6 4.8a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm7.6 1.3a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8ZM2.1 19.6c.2-3.1 2.6-5.15 5.5-5.15s5.3 2.05 5.5 5.15H2.1Zm10.2 0c.15-2 1.45-3.5 3.5-3.5 2 0 3.35 1.5 3.5 3.5h-7Z"/><circle cx="16.6" cy="16.6" r="5.1" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M13.2 20 20 13.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+      peopleX: '<path d="M7.8 4.7a3.1 3.1 0 1 1 0 6.2 3.1 3.1 0 0 1 0-6.2Zm7.7 1.35a2.45 2.45 0 1 1 0 4.9 2.45 2.45 0 0 1 0-4.9ZM2 20.2c.22-3.25 2.7-5.4 5.8-5.4s5.58 2.15 5.8 5.4H2Z"/><path d="M15.1 14.2 21 20.1M21 14.2l-5.9 5.9" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>'
+    };
+    if (filled[kind]) {
+      return `<svg class="scope-home-ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${filled[kind]}</svg>`;
+    }
     const icons = {
-      shield: '<path d="M12 3 20 6.5v6.2c0 4.4-3.2 7.6-8 9.3-4.8-1.7-8-4.9-8-9.3V6.5Z"/>',
-      flag: '<path d="M5 21V4h10l-1.4 4.2L16 12H5"/>',
-      star: '<path d="M12 3.8 14.1 9h5.4l-4.4 3.3 1.7 5.2L12 14.6 7.2 17.5 8.9 12.3 4.5 9h5.4Z"/>',
-      building: '<path d="M4 21V8l8-4 8 4v13H4Z"/><path d="M9 21v-6h6v6"/>',
-      layers: '<path d="M12 4 20 8l-8 4L4 8l8-4Z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/>',
-      bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
-      gauge: '<path d="M5.2 16.2a8 8 0 1 1 13.6 0"/><path d="M12 12l4-3"/><circle cx="12" cy="12" r="1.4"/>',
       calendar: '<rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-      person: '<circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.4 3.1-5 7-5s7 1.6 7 5"/>',
-      absent: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.2 2.6-5 6-5 1.1 0 2.1.2 3 .6"/><path d="M15.2 14.8 21 20.5M21 14.8l-5.8 5.7"/>',
       events: '<rect x="3" y="5" width="18" height="16" rx="1.8"/><path d="M3 10h18M8 3v4M16 3v4M8 14h4M8 17h8"/>',
       presence: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.2 2.6-5 6-5 1.2 0 2.3.2 3.2.6"/><path d="M14.2 16.2 16.5 18.5 21 14"/>',
       people: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M21.5 20c0-2.5-1.8-4-4.5-4"/>',
@@ -1197,7 +1197,7 @@
       report: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
       objectifs: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.4"/>'
     };
-    return `<svg class="scope-home-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[kind] || icons.shield}</svg>`;
+    return `<svg class="scope-home-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[kind] || icons.people}</svg>`;
   }
 
   function homeTreatDomainKey(code) {
@@ -1276,11 +1276,11 @@
       const key = homeTreatDomainKey(alert.domainCode);
       if (key) counts[key] += 1;
     });
-    const iconByDomain = { DPS: 'shield', DAP: 'flag', JSP: 'star', FOBA: 'building', FOCA: 'layers', FOSPEC: 'bolt' };
+    const iconByDomain = { DPS: 'peopleDuo', DAP: 'peopleDuo', JSP: 'peopleDuo', FOBA: 'peopleDuo', FOCA: 'peopleDuo', FOSPEC: 'peopleDuo' };
     return `<div class="scope-treat-grid">${HOME_DOMAIN_ORDER.map((code) => {
       const count = counts[code];
       const short = count === 0 ? 'Aucune action' : (count === 1 ? 'Action prioritaire' : 'Actions prioritaires');
-      return `<a class="scope-treat-card" href="#/vue/${encodeURIComponent(code)}">
+      return `<a class="scope-treat-card is-${escapeHtml(code.toLowerCase())}" href="#/vue/${encodeURIComponent(code)}">
         <span class="scope-treat-ico" aria-hidden="true">${homePilotIcon(iconByDomain[code])}</span>
         <span class="scope-treat-body">
           <span class="scope-treat-domain">${escapeHtml(domaineLabel(code))}</span>
@@ -1331,8 +1331,8 @@
       DAP: '#171C8F',
       JSP: '#FFA300',
       FOBA: '#54585A',
-      FOCA: '#8a8e92',
-      FOSPEC: '#3d4470'
+      FOCA: '#64748b',
+      FOSPEC: '#1F3A93'
     };
     const chartSize = { width: 640, height: 220 };
     const evolutionCard = homeChartCard(C, graphs.evolution, {
@@ -1390,25 +1390,25 @@
         <section class="scope-activity-board" aria-label="Synthèse de l’activité">
           <h2 class="scope-activity-title">Synthèse de l’activité</h2>
           <article class="scope-activity-cell is-taux">
-            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('gauge')}</span>
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('donut')}</span>
             <span>Taux de participation global</span>
             <strong>${escapeHtml(taux)}</strong>
             <em>${escapeHtml(obj.title === 'Aucun objectif défini' || obj.title === 'Période non homogène' ? obj.title : (obj.title ? `Objectif ${obj.title}` : ''))}</em>
           </article>
           <article class="scope-activity-cell is-excuses">
-            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('calendar')}</span>
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('peopleDuo')}</span>
             <span>Excusés</span>
             <strong>${escapeHtml(volumeCell(volumes.excuses))}</strong>
             <em>${escapeHtml(volumeShare(volumes.excuses, attendus))}</em>
           </article>
           <article class="scope-activity-cell is-dispenses">
-            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('person')}</span>
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('peopleBan')}</span>
             <span>Dispensés</span>
             <strong>${escapeHtml(volumeCell(volumes.dispenses))}</strong>
             <em>${escapeHtml(volumeShare(volumes.dispenses, attendus))}</em>
           </article>
           <article class="scope-activity-cell is-absences">
-            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('absent')}</span>
+            <span class="scope-activity-ico" aria-hidden="true">${homePilotIcon('peopleX')}</span>
             <span>Absences non excusées</span>
             <strong>${escapeHtml(volumeCell((dash.absencesNonExcusees && dash.absencesNonExcusees.count) != null ? dash.absencesNonExcusees.count : volumes.nonExcuses))}</strong>
             <em>${escapeHtml(volumeShare((dash.absencesNonExcusees && dash.absencesNonExcusees.count) != null ? dash.absencesNonExcusees.count : volumes.nonExcuses, attendus))}</em>

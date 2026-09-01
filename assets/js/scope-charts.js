@@ -257,7 +257,7 @@
     if (!points.length) return emptyState(dataset && dataset.emptyReason);
     const width = (size && size.width) || 640;
     const height = (size && size.height) || 220;
-    const pad = { l: 36, r: 12, t: 18, b: 36 };
+    const pad = { l: 36, r: 12, t: 14, b: 52 };
     const innerW = width - pad.l - pad.r;
     const innerH = height - pad.t - pad.b;
     const slot = innerW / points.length;
@@ -282,7 +282,8 @@
         <title>${escapeHtml(title)}</title>
         <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" fill="${fill}" rx="2"/>
         ${objY != null ? `<line x1="${(x - 4).toFixed(1)}" x2="${(x + barW + 4).toFixed(1)}" y1="${objY}" y2="${objY}" stroke="${TOKENS.warning}" stroke-dasharray="3 3" stroke-width="2"/>` : ''}
-        <text x="${(x + barW / 2).toFixed(1)}" y="${height - 18}" font-size="11" text-anchor="middle" fill="#1f2730">${escapeHtml(String(label))}</text>
+        <rect x="${(x + barW / 2 - 12).toFixed(1)}" y="${height - 14}" width="24" height="3" rx="1" fill="${fill}"/>
+        <text x="${(x + barW / 2).toFixed(1)}" y="${height - 20}" font-size="14" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(label))}</text>
         <text x="${(x + barW / 2).toFixed(1)}" y="${(evaluable ? y - 6 : pad.t + innerH - 8).toFixed(1)}" font-size="10" text-anchor="middle" fill="#6b7785">${escapeHtml(valueText)}</text>
       </g>`;
     }).join('');
@@ -311,7 +312,7 @@
     const width = (size && size.width) || 280;
     const height = (size && size.height) || 220;
     const cx = width / 2;
-    const cy = height / 2 - 18;
+    const cy = height / 2 - 28;
     const r = Math.min(width, height) / 2 - 36;
     const rInner = r * 0.62;
     const total = usable.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;

@@ -719,7 +719,7 @@ html, body {
   max-width: 150px;
   object-fit: contain;
   flex: 0 0 auto;
-  background: #fff;
+  background: transparent;
 }
 
 .scope-home-hero {
@@ -796,6 +796,7 @@ html, body {
   min-height: 88px;
   padding: 12px 12px 12px 14px;
   border: 1px solid var(--scope-line);
+  border-left-width: 3px;
   border-radius: var(--scope-radius);
   background: var(--scope-gray-50);
   text-decoration: none;
@@ -805,6 +806,24 @@ html, body {
   border-color: var(--scope-gray-300);
   background: #fff;
 }
+.scope-treat-card.is-dps { border-left-color: var(--scope-red); }
+.scope-treat-card.is-dps .scope-treat-ico,
+.scope-treat-card.is-dps strong { color: var(--scope-red); }
+.scope-treat-card.is-dap { border-left-color: var(--scope-blue); }
+.scope-treat-card.is-dap .scope-treat-ico,
+.scope-treat-card.is-dap strong { color: var(--scope-blue); }
+.scope-treat-card.is-jsp { border-left-color: var(--scope-yellow); }
+.scope-treat-card.is-jsp .scope-treat-ico,
+.scope-treat-card.is-jsp strong { color: var(--scope-yellow); }
+.scope-treat-card.is-foba { border-left-color: var(--scope-slate); }
+.scope-treat-card.is-foba .scope-treat-ico,
+.scope-treat-card.is-foba strong { color: var(--scope-slate); }
+.scope-treat-card.is-foca { border-left-color: var(--scope-gray-500); }
+.scope-treat-card.is-foca .scope-treat-ico,
+.scope-treat-card.is-foca strong { color: var(--scope-gray-500); }
+.scope-treat-card.is-fospec { border-left-color: #1F3A93; }
+.scope-treat-card.is-fospec .scope-treat-ico,
+.scope-treat-card.is-fospec strong { color: #1F3A93; }
 .scope-treat-ico {
   width: 36px;
   height: 36px;
@@ -813,8 +832,8 @@ html, body {
   color: var(--scope-slate);
 }
 .scope-treat-ico .scope-home-ico {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
 }
 .scope-treat-body {
   min-width: 0;
@@ -824,8 +843,9 @@ html, body {
 }
 .scope-treat-domain {
   color: var(--scope-ink);
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 .scope-treat-card strong {
   font-size: 24px;
@@ -912,18 +932,18 @@ html, body {
   font-size: var(--scope-fs-label);
   min-height: 1.2em;
 }
-.scope-activity-cell.is-taux { border-top: 3px solid var(--scope-slate); }
+.scope-activity-cell.is-taux { border-top: 3px solid var(--scope-blue); }
 .scope-activity-cell.is-taux .scope-activity-ico,
-.scope-activity-cell.is-taux strong { color: var(--scope-slate); }
-.scope-activity-cell.is-excuses { border-top: 3px solid var(--scope-yellow); }
+.scope-activity-cell.is-taux strong { color: var(--scope-blue); }
+.scope-activity-cell.is-excuses { border-top: 3px solid var(--scope-red); }
 .scope-activity-cell.is-excuses .scope-activity-ico,
-.scope-activity-cell.is-excuses strong { color: var(--scope-yellow); }
-.scope-activity-cell.is-dispenses { border-top: 3px solid var(--scope-blue); }
+.scope-activity-cell.is-excuses strong { color: var(--scope-red); }
+.scope-activity-cell.is-dispenses { border-top: 3px solid var(--scope-yellow); }
 .scope-activity-cell.is-dispenses .scope-activity-ico,
-.scope-activity-cell.is-dispenses strong { color: var(--scope-blue); }
-.scope-activity-cell.is-absences { border-top: 3px solid var(--scope-red); }
+.scope-activity-cell.is-dispenses strong { color: var(--scope-yellow); }
+.scope-activity-cell.is-absences { border-top: 3px solid var(--scope-slate); }
 .scope-activity-cell.is-absences .scope-activity-ico,
-.scope-activity-cell.is-absences strong { color: var(--scope-red); }
+.scope-activity-cell.is-absences strong { color: var(--scope-slate); }
 .scope-home-charts.scope-dash-split {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.9fr);
   align-items: stretch;
@@ -976,6 +996,25 @@ html, body {
 .scope-home-charts .scope-chart-legend i.armee { background: var(--scope-yellow); }
 .scope-home-charts .scope-chart-legend i.sante { background: var(--scope-slate); }
 .scope-home-charts .scope-chart-legend i.nonPrecise { background: var(--scope-gray-500); }
+.scope-home-charts [data-graph="motifs"] .scope-chart-frame {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-bottom: 20px;
+}
+.scope-home-charts [data-graph="motifs"] .scope-chart-donut {
+  margin-bottom: 0;
+}
+.scope-home-charts [data-graph="motifs"] .scope-chart-legend {
+  margin-top: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+}
+.scope-home-charts [data-graph="motifs"] .scope-chart-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
 .scope-home-events {
   background: #fff;
   border: 1px solid var(--scope-line);
@@ -1058,7 +1097,7 @@ html, body {
   place-items: center;
   border: 1px solid var(--scope-line);
   border-radius: var(--scope-radius-sm);
-  color: var(--scope-slate);
+  color: var(--scope-red);
 }
 .scope-quick-ico .scope-nav-icon,
 .scope-quick-ico .scope-home-ico {
