@@ -1251,7 +1251,7 @@
         <td data-label="Public / OI">${escapeHtml(homeEventPublic(alert))}</td>
         <td data-label="Effectif">${escapeHtml(homeEventEffectif(alert))}</td>
         <td data-label="État"><span class="scope-badge"><span class="scope-dot ${escapeHtml(etat.code)}"></span>${escapeHtml(etat.label)}</span></td>
-        <td data-label="Action"><a class="scope-btn scope-btn-primary" href="${escapeHtml(href)}">${escapeHtml(action)}</a></td>
+        <td data-label="Action"><a class="scope-btn scope-home-action" href="${escapeHtml(href)}">${escapeHtml(action)}</a></td>
       </tr>`;
     }).join('');
     return `<div class="scope-table-wrap"><table class="scope-table scope-home-events-table">
@@ -1306,7 +1306,7 @@
 
   function homeChartCard(C, dataset, options) {
     if (!C || !dataset) return '';
-    return C.renderChartCard(dataset, Object.assign({ explain: false }, options || {}));
+    return C.renderChartCard(dataset, Object.assign({ explain: false, homeLayout: true }, options || {}));
   }
 
   function renderAccueil() {
@@ -1334,13 +1334,13 @@
       FOCA: '#64748b',
       FOSPEC: '#1F3A93'
     };
-    const chartSize = { width: 640, height: 220 };
+    const chartSize = { width: 640, height: 280 };
     const evolutionCard = homeChartCard(C, graphs.evolution, {
       size: chartSize,
       wide: false,
       hideLegacy: true,
       title: 'Évolution du taux de participation'
-    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Évolution du taux de participation</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>';
+    }) || '<div class="scope-card scope-chart-card scope-graph-card is-empty is-home-plot"><div class="scope-graph-head"><h2>Évolution du taux de participation</h2></div><div class="scope-chart-frame"><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div><div class="scope-chart-legend-slot"><p class="scope-chart-legend"></p></div></div>';
     const domainesCard = homeChartCard(C, graphs.domaines, {
       size: chartSize,
       wide: false,
@@ -1348,12 +1348,12 @@
       order: HOME_DOMAIN_ORDER,
       colors: HOME_DOMAIN_COLORS,
       title: 'Participation par domaine'
-    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Participation par domaine</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>';
+    }) || '<div class="scope-card scope-chart-card scope-graph-card is-empty is-home-plot"><div class="scope-graph-head"><h2>Participation par domaine</h2></div><div class="scope-chart-frame"><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div><div class="scope-chart-legend-slot"><p class="scope-chart-legend"></p></div></div>';
     const motifPoints = ((graphs.motifs && graphs.motifs.series && graphs.motifs.series[0]) || {}).points || [];
     const motifTotal = motifPoints.reduce((sum, p) => sum + Number(p.value || 0), 0);
     const excusesCard = homeChartCard(C, graphs.motifs, {
       variant: 'donut',
-      size: { width: 280, height: 220 },
+      size: { width: 320, height: 280 },
       wide: false,
       title: 'Répartition des excuses',
       palette: {
@@ -1365,7 +1365,7 @@
       },
       centerValue: motifTotal,
       centerLabel: 'Excusés'
-    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Répartition des excuses</h2><p class="scope-empty scope-chart-empty">Aucun motif d’excuse sur cette période.</p></div>';
+    }) || '<div class="scope-card scope-chart-card scope-graph-card is-empty is-home-plot"><div class="scope-graph-head"><h2>Répartition des excuses</h2></div><div class="scope-chart-frame"><p class="scope-empty scope-chart-empty">Aucun motif d’excuse sur cette période.</p></div><div class="scope-chart-legend-slot"><p class="scope-chart-legend"></p></div></div>';
     return `
       <div class="scope-crumb">Accueil</div>
       <div class="scope-main scope-home">

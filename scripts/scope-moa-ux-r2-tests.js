@@ -148,11 +148,11 @@ async function record(name, fn) {
   await record('16 — logo SCOPE agrandi R2', async () => {
     assert.ok(css.includes('height: 48px'));
     assert.ok(html.includes('scope-ui-logic.js?v=scope-event-participation-ux-1'));
-    assert.ok(html.includes('scope-charts.js?v=scope-design-2c') || html.includes('scope-charts.js?v=scope-design-2b') || html.includes('scope-charts.js?v=scope-design-2') || html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-design-2c') || html.includes('scope.css?v=scope-design-2b') || html.includes('scope.css?v=scope-design-2') || html.includes('scope.css?v=scope-ux-event-1') || html.includes('scope.css?v=scope-ux-event-2') || html.includes('scope.css?v=scope-ux-event-3'));
+    assert.ok(html.includes('scope-charts.js?v=scope-design-2d') || html.includes('scope-charts.js?v=scope-design-2c') || html.includes('scope-charts.js?v=scope-design-2b') || html.includes('scope-charts.js?v=scope-design-2') || html.includes('scope-charts.js?v=scope-moa-ux-r2'));
+    assert.ok(html.includes('scope.css?v=scope-design-2d') || html.includes('scope.css?v=scope-design-2c') || html.includes('scope.css?v=scope-design-2b') || html.includes('scope.css?v=scope-design-2') || html.includes('scope.css?v=scope-ux-event-1') || html.includes('scope.css?v=scope-ux-event-2') || html.includes('scope.css?v=scope-ux-event-3'));
     assert.ok(html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
     assert.ok(html.includes('scope-personnel-activity-modal.js?v=scope-personnel-status-ux-2a'));
-    assert.ok(html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
+    assert.ok(html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
   });
 
   await record('17 — période hors header', async () => {

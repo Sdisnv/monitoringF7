@@ -949,29 +949,45 @@ html, body {
   align-items: stretch;
   margin-bottom: 16px;
 }
-.scope-home-charts .scope-graph-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 360px;
+.scope-home-charts .scope-graph-card,
+.scope-home-charts .scope-graph-card.is-home-plot {
+  display: grid;
+  grid-template-rows: 40px minmax(248px, 1fr) 100px;
+  min-height: 396px;
+  height: 100%;
   margin: 0;
-  padding: 14px 16px;
+  padding: 12px 16px 4px;
 }
 .scope-home-charts .scope-graph-card.is-wide {
   grid-column: auto;
 }
 .scope-home-charts .scope-graph-head {
   min-height: 36px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+  align-self: start;
 }
 .scope-home-charts .scope-chart-frame {
-  flex: 1 1 auto;
+  min-height: 0;
   max-height: none;
-  min-height: 220px;
-  overflow: visible;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+.scope-home-charts.scope-dash-split .scope-chart-frame,
+.scope-home-charts .scope-chart-frame.is-line,
+.scope-home-charts .scope-chart-frame.is-donut,
+.scope-home-charts .scope-chart-frame.is-columns {
+  max-height: none;
+  overflow: hidden;
 }
 .scope-home-charts .scope-chart {
-  max-height: 240px;
+  max-height: none;
   width: 100%;
+  height: 100%;
+}
+.scope-home-charts .scope-chart-empty {
+  margin: 0;
 }
 .scope-chart-frame.is-columns {
   max-height: none;
@@ -981,8 +997,15 @@ html, body {
   max-height: none;
   overflow: visible;
 }
+.scope-home-charts .scope-chart-frame.is-donut,
+.scope-home-charts .scope-chart-frame.is-columns {
+  overflow: hidden;
+}
 .scope-chart-donut {
   max-height: 220px;
+}
+.scope-home-charts .scope-chart-donut {
+  max-height: none;
 }
 .scope-chart-frame.is-donut .scope-chart-legend i.present {
   background: var(--scope-chart-neutral);
@@ -991,25 +1014,22 @@ html, body {
   background: var(--scope-chart-primary);
   background-image: none;
 }
+.scope-home-charts .scope-chart-legend-slot {
+  min-height: 0;
+  padding: 8px 0 18px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+}
+.scope-home-charts .scope-chart-legend-slot .scope-chart-legend {
+  margin: 0;
+  padding: 0;
+}
 .scope-home-charts .scope-chart-legend i.prive { background: var(--scope-red); }
 .scope-home-charts .scope-chart-legend i.professionnel { background: var(--scope-blue); }
 .scope-home-charts .scope-chart-legend i.armee { background: var(--scope-yellow); }
 .scope-home-charts .scope-chart-legend i.sante { background: var(--scope-slate); }
 .scope-home-charts .scope-chart-legend i.nonPrecise { background: var(--scope-gray-500); }
-.scope-home-charts [data-graph="motifs"] .scope-chart-frame {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding-bottom: 20px;
-}
-.scope-home-charts [data-graph="motifs"] .scope-chart-donut {
-  margin-bottom: 0;
-}
-.scope-home-charts [data-graph="motifs"] .scope-chart-legend {
-  margin-top: 4px;
-  margin-bottom: 12px;
-  padding-bottom: 4px;
-}
 .scope-home-charts [data-graph="motifs"] .scope-chart-legend i {
   width: 8px;
   height: 8px;
@@ -1043,11 +1063,10 @@ html, body {
 .scope-home-events-table {
   font-size: 13px;
 }
-.scope-home-events-table .scope-btn {
-  min-height: 32px;
-  height: auto;
-  padding: 5px 10px;
-  font-size: 12px;
+.scope-home-events-table td[data-label="Action"] {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
 }
 .scope-quick {
   margin-top: 4px;
@@ -1288,6 +1307,42 @@ html, body {
   background: var(--scope-red);
   border-color: var(--scope-red);
   color: #fff;
+}
+
+.scope-btn.scope-home-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 11.75rem;
+  min-width: 11.75rem;
+  max-width: 11.75rem;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  background: #fff;
+  color: var(--scope-red);
+  border: 1px solid var(--scope-red);
+  border-radius: var(--scope-radius);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  text-align: center;
+}
+.scope-btn.scope-home-action:hover {
+  background: var(--scope-red-soft);
+  border-color: var(--scope-red);
+  color: var(--scope-red);
+  box-shadow: none;
+}
+.scope-btn.scope-home-action:focus-visible {
+  outline: 2px solid var(--scope-red);
+  outline-offset: 2px;
 }
 
 .scope-btn-primary:hover {
@@ -1724,12 +1779,18 @@ html, body {
 .scope-graph-card[data-graph="domaines"] {
   padding: 12px 14px;
 }
+.scope-home-charts .scope-graph-card[data-graph="domaines"] {
+  padding: 12px 16px 4px;
+}
 .scope-graph-card[data-graph="domaines"] .scope-graph-head {
   margin-bottom: 4px;
 }
 .scope-graph-card[data-graph="domaines"] .scope-chart-legend {
   margin-top: 4px;
   gap: 8px 14px;
+}
+.scope-home-charts .scope-graph-card[data-graph="domaines"] .scope-chart-legend {
+  margin-top: 0;
 }
 .scope-chart-frame {
   max-height: 188px;
@@ -1738,6 +1799,10 @@ html, body {
 .scope-dash-split .scope-chart-frame,
 .scope-chart-frame.is-line {
   max-height: 140px;
+}
+.scope-home-charts.scope-dash-split .scope-chart-frame,
+.scope-home-charts .scope-chart-frame.is-line {
+  max-height: none;
 }
 .scope-chart-frame.is-bar,
 .scope-chart-frame.is-stacked {
@@ -1748,6 +1813,11 @@ html, body {
 .scope-chart-card.is-legacy .scope-chart-frame,
 .scope-chart-card.is-sparse .scope-chart-frame {
   max-height: 140px;
+}
+.scope-home-charts .scope-chart-card.is-empty .scope-chart-frame,
+.scope-home-charts .scope-chart-card.is-legacy .scope-chart-frame,
+.scope-home-charts .scope-chart-card.is-sparse .scope-chart-frame {
+  max-height: none;
 }
 .scope-graph-grid {
   display: grid;
@@ -2194,6 +2264,13 @@ html, body {
   display: block;
 }
 .scope-chart-line { max-height: 140px; }
+.scope-home-charts .scope-chart,
+.scope-home-charts .scope-chart-line,
+.scope-home-charts .scope-chart-donut,
+.scope-home-charts .scope-chart-columns {
+  max-height: none;
+  height: 100%;
+}
 .scope-chart-bar,
 .scope-chart-stacked {
   max-height: none;
@@ -3132,6 +3209,8 @@ html, body {
   .scope-graph-head { flex-direction: column; align-items: stretch; }
   .scope-chart-frame,
   .scope-chart { max-height: 148px; }
+  .scope-home-charts .scope-chart-frame,
+  .scope-home-charts .scope-chart { max-height: none; }
   .scope-chart-frame.is-bar,
   .scope-chart-frame.is-stacked,
   .scope-chart-frame.is-columns,

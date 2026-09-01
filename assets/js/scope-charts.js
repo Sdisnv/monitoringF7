@@ -115,7 +115,9 @@
     const hideLegacy = extras && extras.hideLegacy;
     const width = (size && size.width) || 640;
     const height = (size && size.height) || 128;
-    const pad = { l: 40, r: 14, t: 14, b: 28 };
+    const pad = extras && extras.homePlot
+      ? { l: 40, r: 12, t: 8, b: 24 }
+      : { l: 40, r: 14, t: 14, b: 28 };
     const series = (dataset && dataset.series) || [];
     const official = ((series.find((s) => s.id === 'officiel') || {}).points || [])
       .filter((p) => p && p.label);
@@ -261,7 +263,7 @@
     const innerW = width - pad.l - pad.r;
     const innerH = height - pad.t - pad.b;
     const slot = innerW / points.length;
-    const barW = Math.min(36, slot * 0.48);
+    const barW = extras && extras.homePlot ? Math.min(52, slot * 0.62) : Math.min(36, slot * 0.48);
     const ticks = [0, 50, 100].map((v) => {
       const y = pad.t + innerH * (1 - v / 100);
       return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="4" y="${y + 4}" font-size="11" fill="#6b7785">${v}</text>`;
@@ -311,9 +313,10 @@
     });
     const width = (size && size.width) || 280;
     const height = (size && size.height) || 220;
+    const homePlot = extrasSafe.homePlot;
     const cx = width / 2;
-    const cy = height / 2 - 28;
-    const r = Math.min(width, height) / 2 - 36;
+    const cy = homePlot ? height / 2 : height / 2 - 28;
+    const r = homePlot ? Math.min(width, height) / 2 - 18 : Math.min(width, height) / 2 - 36;
     const rInner = r * 0.62;
     const total = usable.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
     let angle = -Math.PI / 2;
@@ -349,11 +352,23 @@
       const share = `${(100 * Number(p.value || 0) / total).toFixed(0)} %`;
       return `<span><i class="${escapeHtml(p.token || p.id || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value))} · ${escapeHtml(share)}</span>`;
     }).join('');
+    const legend = extrasSafe.omitLegend ? '' : `<p class="scope-chart-legend">${labels}</p>`;
     return `<svg class="scope-chart scope-chart-donut" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Répartition')}">
       ${slices}
       ${center}
-    </svg>
-    <p class="scope-chart-legend">${labels}</p>`;
+    </svg>${legend}`;
+  }
+
+  function donutLegendHtml(dataset) {
+    const points = ((dataset && dataset.series && dataset.series[0]) || {}).points || [];
+    const usable = points.filter((p) => Number(p.value || 0) > 0);
+    if (!usable.length) return '<p class="scope-chart-legend"></p>';
+    const total = usable.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
+    const labels = usable.map((p) => {
+      const share = `${(100 * Number(p.value || 0) / total).toFixed(0)} %`;
+      return `<span><i class="${escapeHtml(p.token || p.id || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value))} · ${escapeHtml(share)}</span>`;
+    }).join('');
+    return `<p class="scope-chart-legend">${labels}</p>`;
   }
 
   function renderChartCard(dataset, options) {
@@ -366,7 +381,9 @@
       colors: opts.colors,
       palette: opts.palette,
       centerValue: opts.centerValue,
-      centerLabel: opts.centerLabel
+      centerLabel: opts.centerLabel,
+      omitLegend: Boolean(opts.homeLayout),
+      homePlot: Boolean(opts.homeLayout)
     };
     const wide = opts.wide === false
       ? false
@@ -391,13 +408,19 @@
     const explainBtn = opts.explain === false ? '' : `<button type="button" class="linkish scope-graph-explain-btn" data-graph-explain="${escapeHtml(dataset.id)}">Comprendre ce graphique</button>`;
     const heading = opts.title || dataset.question;
     const frameType = opts.variant === 'donut' ? 'donut' : (opts.variant === 'columns' ? 'columns' : dataset.type);
-    return `<div class="scope-card scope-chart-card scope-graph-card is-${escapeHtml(mode)}${wide ? ' is-wide' : ''}" data-graph="${escapeHtml(dataset.id)}">
+    const homeLayout = opts.homeLayout;
+    let legendBlock = dataset.type === 'stacked' || (opts.variant === 'donut' && !homeLayout) ? '' : legend;
+    if (homeLayout && opts.variant === 'donut') legendBlock = donutLegendHtml(dataset);
+    const legendSlot = homeLayout
+      ? `<div class="scope-chart-legend-slot">${legendBlock || '<p class="scope-chart-legend"></p>'}</div>`
+      : legendBlock;
+    return `<div class="scope-card scope-chart-card scope-graph-card is-${escapeHtml(mode)}${wide ? ' is-wide' : ''}${homeLayout ? ' is-home-plot' : ''}" data-graph="${escapeHtml(dataset.id)}">
       <div class="scope-graph-head">
         <h2>${escapeHtml(heading)}</h2>
         ${explainBtn}
       </div>
       <div class="scope-chart-frame is-${escapeHtml(frameType)}">${plot}</div>
-      ${dataset.type === 'stacked' || opts.variant === 'donut' ? '' : legend}
+      ${legendSlot}
     </div>`;
   }
 
