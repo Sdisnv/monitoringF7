@@ -5828,10 +5828,10 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-personnel-list-table td:nth-child(9) { width: 7.25rem; min-width: 6.5rem; white-space: nowrap; }
 .scope-personnel-list-table th:nth-child(10),
 .scope-personnel-list-table td:nth-child(10) {
-  width: 8.5rem;
-  min-width: 8.5rem;
+  width: 1%;
+  min-width: 9rem;
   white-space: nowrap;
-  text-align: right;
+  text-align: center;
   position: sticky;
   right: 0;
   z-index: 1;
@@ -5901,9 +5901,10 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-personnel-list-table .scope-row-actions {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 6px;
   flex-wrap: nowrap;
+  width: 100%;
 }
 .scope-personnel-list-wrap .scope-pagination {
   padding: 10px 4px 4px;

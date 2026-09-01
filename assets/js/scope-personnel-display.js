@@ -36,6 +36,14 @@
     return String(value == null ? '' : value).trim();
   }
 
+  function foldSearchText(value){
+    return String(value == null ? '' : value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
   function valuesEqual(a, b){
     return clean(a).toUpperCase() === clean(b).toUpperCase();
   }
@@ -784,11 +792,11 @@
   }
 
   function personMatchesQuery(person, query){
-    const q = clean(query).toLowerCase();
+    const q = foldSearchText(query);
     if(!q) return true;
     const oi = primaryOperationalOiLabel(person);
     const specs = formatSpecializations(personAssignments(person)).text;
-    const hay = [person.nip, person.nom, person.prenom, person.grade, oi, specs].map((v) => clean(v).toLowerCase());
+    const hay = [person.nip, person.nom, person.prenom, person.grade, oi, specs].map(foldSearchText);
     return hay.some((value) => value.indexOf(q) !== -1);
   }
 
