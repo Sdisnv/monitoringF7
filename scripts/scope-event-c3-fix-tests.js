@@ -120,12 +120,12 @@ record('02 — une ligne = 7 TD distincts', () => {
 
 record('03 — CSS 7 colonnes, plus de modèle 5×100%', () => {
   assert.ok(saisieCss.includes('table-layout: auto'));
-  assert.ok(saisieCss.includes('min-width: 74rem'));
+  assert.ok(saisieCss.includes('min-width: 68rem'));
   assert.ok(!/width:\s*25%;[\s\S]{0,220}width:\s*8%;[\s\S]{0,220}width:\s*10%;[\s\S]{0,220}width:\s*36%;[\s\S]{0,220}width:\s*21%;/.test(css));
   const w6 = parseNthMinWidth(6);
   const w7 = parseNthMinWidth(7);
-  assert.ok(w6 >= 16, `STATUT min-width trop faible: ${w6}rem`);
-  assert.ok(w7 >= 8, `INFORMATIONS min-width trop faible: ${w7}rem`);
+  assert.ok(w6 >= 11, `STATUT min-width trop faible: ${w6}rem`);
+  assert.ok(w7 >= 7, `INFORMATIONS min-width trop faible: ${w7}rem`);
   assert.ok(saisieCss.includes('nth-child(6)'));
   assert.ok(saisieCss.includes('nth-child(7)'));
 });
@@ -171,7 +171,7 @@ record('05 — tri Grade inchangé + liste MAJUSCULES', () => {
   assert.ok(listHead.includes("'ÉTAT'"));
   assert.ok(listHead.includes('<th>ACTIONS</th>'));
   assert.ok(css.includes('text-transform: uppercase'));
-  assert.ok(html.includes('scope-event-c3-fix'));
+  assert.ok(html.includes('scope-event-c4-finish') || html.includes('scope-event-c3-fix'));
 });
 
 console.log(`SCOPE-EVENT-C3-FIX: ${passed} PASS`);

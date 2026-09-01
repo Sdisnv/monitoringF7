@@ -4083,23 +4083,6 @@
       DISPENSE: 'is-exempt',
       PERMUTATION: 'is-permutation'
     };
-    const justificatifCell = (row) => {
-      const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
-        ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
-        : '';
-      const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : (row.alreadyCountedTooltip ? `<span class="scope-muted-inline">Déjà compté en session</span>` : '');
-      const manual = row.manual
-        ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
-        : '';
-      return [comment, why, manual].filter(Boolean).join('');
-    };
-    const roleFlag = (row) => {
-      const role = String(row.role || '').toUpperCase();
-      if (L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) {
-        return `<span class="scope-enc-role-flag">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
-      }
-      return '';
-    };
     const motifControl = (row) => {
       if (row.statut !== 'ABSENT_EXCUSE') return '';
       const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
@@ -4108,6 +4091,23 @@
         return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selected.label)}</button></div>`;
       }
       return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif d’excuse</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-motif aria-label="Motif d’excuse">${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
+    };
+    const justificatifCell = (row) => {
+      const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
+        ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
+        : '';
+      const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : (row.alreadyCountedTooltip ? `<span class="scope-muted-inline">Déjà compté en session</span>` : '');
+      const manual = row.manual
+        ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
+        : '';
+      return [motifControl(row), comment, why, manual].filter(Boolean).join('');
+    };
+    const roleFlag = (row) => {
+      const role = String(row.role || '').toUpperCase();
+      if (L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) {
+        return `<span class="scope-enc-role-flag">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
+      }
+      return '';
     };
     const statusFilled = (row) => Boolean(row && row.statut && row.statut !== 'NON_RENSEIGNE');
     return `
@@ -4148,7 +4148,6 @@
                       return `<button type="button" role="radio" class="scope-segmented-item scope-status-control${on ? ` is-selected ${variant}` : ''}" data-status="${v}" aria-checked="${on}" aria-pressed="${on}"${blocked || roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>`;
                     }).join('')}
                   </div>
-                  ${motifControl(row)}
                 </div>
               </td>
               <td data-label="INFORMATIONS" class="scope-justificatif-cell">${justificatifCell(row)}</td>
