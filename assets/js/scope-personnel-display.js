@@ -851,6 +851,118 @@
     return text ? '9999-12-31' : '';
   }
 
+  function ficheStatutLabel(identite, personne){
+    const archived = Boolean(
+      (identite && identite.archivee)
+      || (personne && (personne.archivedAt || personne.archived_at))
+    );
+    const raw = String(
+      (identite && (identite.statutRh || identite.statut))
+      || (personne && (personne.statutTemporel || personne.temporalStatus))
+      || ''
+    ).toUpperCase();
+    if(archived || raw === 'INACTIF' || raw.indexOf('INACT') === 0) return 'Inactif';
+    if(!identite && !personne) return '—';
+    return 'Actif';
+  }
+
+  function ficheIdentityView(identite, personne){
+    const id = identite || {};
+    const p = personne || {};
+    return {
+      grade: clean(id.grade || p.grade) || '—',
+      nom: clean(id.nom || p.nom) || '—',
+      prenom: clean(id.prenom || p.prenom) || '—',
+      nip: clean(id.nip || p.nip) || '—',
+      statut: ficheStatutLabel(id, p),
+      dateEntreeSdis: id.dateEntreeSdis || id.date_entree_sdis || p.dateEntreeSdis || p.date_entree_sdis || p.dateEntree || p.date_entree || null,
+      dateInactivite: id.dateInactif || id.date_inactif || p.dateInactif || p.date_inactif || p.archivedAt || p.archived_at || null
+    };
+  }
+
+  function assignmentRoleKind(assignment){
+    const role = String(assignment && (assignment.role_domaine || assignment.roleDomaine || '')).toUpperCase();
+    if(role === 'PRINCIPAL') return 'principale';
+    if(role === 'SECONDAIRE') return 'secondaire';
+    return '';
+  }
+
+  function ficheIncorporationRows(assignments, period){
+    const temporal = (typeof require === 'function' ? require('./scope-personnel-temporal.js') : (root && root.ScopePersonnelTemporal)) || {};
+    const source = (assignments || []).filter(isOperationalOiAssignment);
+    return source.filter((row) => {
+      if(!period || !temporal.assignmentOverlapsPeriod) return true;
+      return temporal.assignmentOverlapsPeriod(row, period);
+    }).map((row) => {
+      const bounds = temporal.assignmentBounds ? temporal.assignmentBounds(row) : {
+        from: row.dateActif || row.dateDebut || '',
+        to: row.dateInactif || row.dateFin || ''
+      };
+      return {
+        label: operationalOiLabel(row) || formatAssignment(row),
+        role: assignmentRoleKind(row),
+        actifDepuis: bounds.from || '',
+        inactifDepuis: bounds.to || '',
+        closed: Boolean(bounds.to)
+      };
+    }).sort((a, b) => compareOiLabel(a.label, b.label) || String(a.role).localeCompare(String(b.role)));
+  }
+
+  function ficheSpecializationView(assignments){
+    const formatted = formatSpecializations(assignments, { withPriorityNote: false });
+    return {
+      labels: formatted.labels.slice(),
+      text: formatted.text,
+      empty: !formatted.labels.length
+    };
+  }
+
+  function ficheParticipationIsOfficial(kpi){
+    if(!kpi) return false;
+    const vol = kpi.volumes || {};
+    if(Object.prototype.hasOwnProperty.call(vol, 'attendus')) return true;
+    if(kpi.denominator != null) return true;
+    return Boolean(kpi.analyticStatus && kpi.analyticStatus !== 'NON_EVALUABLE' && kpi.percentage != null);
+  }
+
+  function ficheEventStatutLabel(row){
+    const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
+    if(s === 'PRESENT') return 'Présent';
+    if(s === 'PERMUTATION') return 'Permutation';
+    if(s === 'ABSENT_EXCUSE' || s === 'EXCUSE') return 'Excusé';
+    if(s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT') return 'Absent';
+    if(s === 'DISPENSE') return 'Dispensé';
+    if(s === 'NON_RENSEIGNE') return 'Non renseigné';
+    if(s === 'NON_CONCERNE') return 'Non concerné';
+    if(s === 'PLANIFIE') return 'Planifié';
+    return s ? s : '—';
+  }
+
+  function ficheExcuseMotifLabel(code){
+    const raw = String(code || '').trim();
+    if(!raw || raw === '—') return '';
+    if(raw === 'prive') return 'Privé';
+    if(raw === 'professionnel') return 'Professionnel';
+    if(raw === 'armee') return 'Armée';
+    if(raw === 'accidentMaladie' || raw === 'accident/maladie' || raw === 'Accident/Maladie') return 'Accident/Maladie';
+    if(raw === 'nonPrecise') return 'Non précisé';
+    if(raw === 'Privé' || raw === 'Professionnel' || raw === 'Armée' || raw === 'Accident/Maladie') return raw;
+    return raw;
+  }
+
+  function ficheEventInformations(row){
+    const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
+    if(s !== 'ABSENT_EXCUSE' && s !== 'EXCUSE') return '—';
+    return ficheExcuseMotifLabel(row && (row.motif || row.motifAbsence)) || '—';
+  }
+
+  function ficheEventCible(row){
+    if(!row) return '—';
+    if(row.oiAtDate) return row.oiAtDate;
+    if(Array.isArray(row.cibles) && row.cibles.length) return row.cibles.filter(Boolean).join(', ') || '—';
+    return clean(row.sousDomaine) || '—';
+  }
+
   function primaryOperationalOiLabel(person){
     const assignments = personAssignments(person).filter((row) => isOperationalOiAssignment(row) && isAssignmentActiveAt(row));
     const principal = assignments.find((row) => {
@@ -1037,6 +1149,15 @@
     nextPersonnelSort,
     formatPersonnelDate,
     primaryOperationalOiLabel,
+    ficheIdentityView,
+    ficheStatutLabel,
+    ficheIncorporationRows,
+    ficheSpecializationView,
+    ficheParticipationIsOfficial,
+    ficheEventStatutLabel,
+    ficheEventInformations,
+    ficheEventCible,
+    ficheExcuseMotifLabel,
     personMatchesOiFilter,
     personMatchesSpecializationFilter,
     isOperationalOiAssignment,

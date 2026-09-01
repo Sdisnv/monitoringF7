@@ -66,7 +66,7 @@ record('03 — ACTIONS largeur et alignement cohérents, Fiche et … visibles',
   assert.ok(directory.includes('data-personnel-more'));
   assert.ok(aCss.includes('overflow: visible'));
   assert.ok(aCss.includes('white-space: nowrap'));
-  assert.ok(html.includes('scope-personnel-design-a2'));
+  assert.ok(/scope-personnel-design-a2|scope-personnel-design-b/.test(html));
 });
 
 console.log(`SCOPE-PERSONNEL-DESIGN-A2: ${passed} PASS`);

@@ -1151,7 +1151,7 @@
     return `<header class="scope-page-head">
       <div>
         ${o.eyebrow ? `<p class="scope-page-eyebrow">${escapeHtml(o.eyebrow)}</p>` : ''}
-        <h1>${escapeHtml(o.title || 'SCOPE')}</h1>
+        <h1>${o.titleHtml || escapeHtml(o.title || 'SCOPE')}</h1>
         ${o.context ? `<p class="scope-page-context">${escapeHtml(o.context)}</p>` : ''}
         ${o.description ? `<p class="scope-page-desc">${escapeHtml(o.description)}</p>` : ''}
       </div>
@@ -2456,7 +2456,8 @@
         label: row.label,
         dateDebut: row.dateDebut,
         dateFin: row.dateFin,
-        categorie: row.categorie
+        categorie: row.categorie,
+        roleDomaine: row.roleDomaine || row.role_domaine
       })).filter(Boolean);
     }
     const personne = fiche && (fiche.personne || fiche);
@@ -2900,28 +2901,10 @@
   }
 
   function renderPersonneActivityCard(fiche, identite){
-    const assignments = ficheActivityAssignments(fiche);
-    const temporal = window.ScopePersonnelTemporal;
-    const display = personnelDisplay();
-    const open = assignments.filter(isPersonnelAssignmentOpen);
-    const closed = assignments.filter((row) => !isPersonnelAssignmentOpen(row));
+    if (!canManagePersonnel()) return '';
     const statut = identite.statutRh || (identite.archivee ? 'INACTIF' : 'ACTIF');
-    const formatDate = (value) => (display && display.formatPersonnelDate)
-      ? display.formatPersonnelDate(value)
-      : (temporal && temporal.formatSwiss ? temporal.formatSwiss(value) : String(value || '').slice(0, 10));
-    const item = (row, closedRow) => {
-      const start = formatDate(row.dateDebut || row.dateActif);
-      const end = formatDate(row.dateFin || row.dateInactif);
-      return `<li class="${closedRow ? 'is-closed' : ''}"><strong>${escapeHtml(personnelAssignmentLabel(row))}</strong> · ${escapeHtml(start || '—')}${closedRow ? ` – ${escapeHtml(end || '—')}` : ' → en cours'}</li>`;
-    };
-    return `<div class="scope-card scope-person-activity">
-      <h2>Activité</h2>
-      <p>Statut général : <strong>${escapeHtml(statut === 'INACTIF' ? 'Inactif' : 'Actif')}</strong></p>
-      <h3>Affectations actives</h3>
-      <ul class="scope-person-activity-list">${open.length ? open.map((row) => item(row, false)).join('') : '<li>Aucune affectation active.</li>'}</ul>
-      <h3>Affectations terminées</h3>
-      <ul class="scope-person-activity-list">${closed.length ? closed.map((row) => item(row, true)).join('') : '<li>Aucune affectation terminée.</li>'}</ul>
-      ${canManagePersonnel() ? `<div class="scope-actions"><button type="button" class="scope-btn" id="scope-person-manage-activity">${identite.archivee || statut === 'INACTIF' ? 'Corriger la période' : 'Gérer l’activité'}</button></div>` : ''}
+    return `<div class="scope-fiche-toolbar">
+      <button type="button" class="scope-btn" id="scope-person-manage-activity">${identite.archivee || statut === 'INACTIF' ? 'Corriger la période' : 'Gérer l’activité'}</button>
     </div>`;
   }
 
@@ -3056,10 +3039,11 @@
         const codes = domaine === 'FOSPEC' ? ['FOSPEC', 'PR', 'AUTO'] : [domaine];
         if (!codes.includes(row.domaine)) return false;
       }
-      if (statut === 'presents') return row.statutParticipation === 'PRESENT' || row.statutParticipation === 'PERMUTATION';
-      if (statut === 'excuses') return row.statutParticipation === 'ABSENT_EXCUSE';
-      if (statut === 'non_excuses') return row.statutParticipation === 'ABSENT_NON_EXCUSE';
-      if (statut === 'dispenses') return row.statutParticipation === 'DISPENSE';
+      const s = String(row.statutParticipation || row.statut || '').toUpperCase();
+      if (statut === 'presents') return s === 'PRESENT' || s === 'PERMUTATION';
+      if (statut === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
+      if (statut === 'non_excuses') return s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT';
+      if (statut === 'dispenses') return s === 'DISPENSE';
       return true;
     });
   }
@@ -3080,47 +3064,55 @@
       return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
         <div class="scope-main"><div class="scope-card"><p>Chargement de la fiche…</p></div></div>`;
     }
+    const display = personnelDisplay();
+    const identity = display && display.ficheIdentityView
+      ? display.ficheIdentityView(identite, fiche.personne)
+      : {
+          grade: identite.grade || '—',
+          nom: identite.nom || '—',
+          prenom: identite.prenom || '—',
+          nip: identite.nip || '—',
+          statut: identite.archivee || identite.statutRh === 'INACTIF' ? 'Inactif' : 'Actif',
+          dateEntreeSdis: identite.dateEntreeSdis,
+          dateInactivite: identite.dateInactif
+        };
+    const fmtDate = (value) => {
+      if (!value) return '—';
+      const text = display && display.formatPersonnelDate ? display.formatPersonnelDate(value) : L.formatDate(value);
+      return text || '—';
+    };
+    const assignments = (fiche.personne && fiche.personne.affectations && fiche.personne.affectations.length)
+      ? fiche.personne.affectations
+      : ficheActivityAssignments(fiche);
+    const incorporations = display && display.ficheIncorporationRows
+      ? display.ficheIncorporationRows(assignments, fiche.period)
+      : [];
+    const specs = display && display.ficheSpecializationView
+      ? display.ficheSpecializationView(assignments)
+      : { labels: [], empty: true };
     const kpi = fiche.kpi || {};
     const vol = kpi.volumes || {};
+    const official = display && display.ficheParticipationIsOfficial
+      ? display.ficheParticipationIsOfficial(kpi)
+      : Boolean(vol && Object.prototype.hasOwnProperty.call(vol, 'attendus'));
     const status = kpi.analyticStatus || 'NON_EVALUABLE';
-    const tauxText = status === 'NON_EVALUABLE' && kpi.percentage == null
-      ? 'Non évaluable'
-      : L.formatTaux(kpi.percentage);
-    const numDen = kpi.denominator
-      ? `${kpi.numerator ?? 0} / ${kpi.denominator}`
-      : 'Aucune donnée nominative sur la période';
-    const obj = fiche.objectif || {};
-    const explain = fiche.explain || {};
-    const exclusions = explain.exclusions || {};
-    const graphs = fiche.graphs || {};
-    const C = (typeof window !== 'undefined' && window.ScopeCharts)
-      || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
-    const evolutionCard = C ? C.renderChartCard(graphs.evolution, { size: { width: 640, height: 128 } }) : '';
-    const domainChart = C ? C.renderChartCard(graphs.domaines) : '';
-    const childrenChart = C ? C.renderChartCard(graphs.children) : '';
-    const compositionChart = C ? C.renderChartCard(graphs.composition) : '';
-    const motifsChart = C ? C.renderChartCard(graphs.motifs) : '';
-    const permutationChart = (C && vol.permutations && L.shouldRenderPermutations('DAP', graphs.permutations))
-      ? C.renderChartCard(graphs.permutations)
-      : '';
+    const kpiCell = (value) => official && value != null && value !== '' ? String(value) : '—';
+    const tauxText = !official
+      ? '—'
+      : (status === 'NON_EVALUABLE' && kpi.percentage == null ? 'Non évaluable' : L.formatTaux(kpi.percentage));
     const events = personEventsFiltered(fiche);
     const eventFilters = [
       ['tout', 'Tout'],
       ['presents', 'Présents'],
       ['excuses', 'Excusés'],
-      ['non_excuses', 'Non excusés'],
+      ['non_excuses', 'Absents'],
       ['dispenses', 'Dispensés']
     ];
-    const permNote = (vol.permutations && L.shouldRenderPermutations('DAP', graphs.permutations))
-      ? `Présences : ${vol.presents} · dont permutations : ${vol.permutations}`
-      : '';
-    const motifs = kpi.motifs || {};
-    const motifSum = Object.values(motifs).reduce((s, n) => s + Number(n || 0), 0);
-    const rh = fiche.historiqueRh || {};
-    const openGraph = state.graphExplainId && graphs[state.graphExplainId];
-    const graphExplainHtml = C && openGraph ? C.renderGraphExplain(openGraph, explain) : '';
+    const domainCodes = Array.from(new Set((fiche.evenements || []).map((row) => row.domaine).filter(Boolean)));
+    const eventStatut = (row) => (display && display.ficheEventStatutLabel ? display.ficheEventStatutLabel(row) : L.participationStatutLabel(row.statutParticipation));
+    const eventInfo = (row) => (display && display.ficheEventInformations ? display.ficheEventInformations(row) : (row.motif || '—'));
+    const eventCible = (row) => (display && display.ficheEventCible ? display.ficheEventCible(row) : (row.oiAtDate || row.sousDomaine || '—'));
     const edit = state.personneEdit;
-    const dateEntreeSdis = identite.dateEntreeSdis || identite.date_entree_sdis || identite.dateEntree || identite.date_entree || '';
     const editBlock = canManagePersonnel() ? (edit ? `
         <div class="scope-card scope-person-edit">
           <h2>Modifier l’identité</h2>
@@ -3135,124 +3127,99 @@
             <button type="button" class="scope-btn scope-btn-primary" id="person-edit-save">Enregistrer</button>
             <button type="button" class="scope-btn" id="person-edit-cancel">Annuler</button>
           </div>
-        </div>` : `
-        <div class="scope-actions scope-person-edit-actions">
-          <button type="button" class="scope-btn" id="person-edit-open">Modifier</button>
-        </div>`) : '';
+        </div>` : '') : '';
+    const identityField = (label, value) => `<div class="scope-fiche-field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    const titleHtml = `${escapeHtml(identity.grade === '—' ? '' : identity.grade)}${identity.grade !== '—' ? ' ' : ''}${escapeHtml(identity.prenom === '—' ? '' : identity.prenom)} <span class="scope-person-nom">${escapeHtml(identity.nom)}</span>`.replace(/^\s+/, '');
+    const specHtml = specs.empty
+      ? '<p class="scope-fiche-empty">Aucune spécialisation</p>'
+      : `<p class="scope-fiche-specs">${escapeHtml(specs.labels.join(' · '))}</p>`;
+    const incHtml = incorporations.length
+      ? `<ul class="scope-fiche-oi">${incorporations.map((row) => {
+          const role = row.role === 'principale' ? 'Incorporation principale' : (row.role === 'secondaire' ? 'Incorporation secondaire' : '');
+          const dates = [
+            row.actifDepuis ? `Actif depuis ${fmtDate(row.actifDepuis)}` : '',
+            row.inactifDepuis ? `${row.closed ? 'Inactif depuis' : 'Jusqu’au'} ${fmtDate(row.inactifDepuis)}` : ''
+          ].filter(Boolean).join(' · ');
+          return `<li><strong>${escapeHtml(row.label)}</strong>${role ? `<small>${escapeHtml(role)}</small>` : ''}${dates ? `<span>${escapeHtml(dates)}</span>` : ''}</li>`;
+        }).join('')}</ul>`
+      : '<p class="scope-fiche-empty">—</p>';
+    const permKpi = official && vol.permutations
+      ? `<article class="scope-kpi"><strong>${escapeHtml(String(vol.permutations))}</strong><span>Permutations</span></article>`
+      : '';
 
     return `
       <div class="scope-crumb"><a href="#/personnel">Personnel</a> · ${escapeHtml(identite.prenom)} ${escapeHtml(identite.nom)}</div>
-      <div class="scope-main">
-        <header class="scope-person-head">
-          <h1>${escapeHtml(identite.prenom)} ${escapeHtml(identite.nom)}</h1>
-          <p class="scope-person-meta">${escapeHtml(identite.nip || '—')} · ${escapeHtml(identite.grade || '—')} · ${escapeHtml((identite.oiActuel && identite.oiActuel.label) || '—')} · ${escapeHtml(identite.statutRh || '—')}${dateEntreeSdis ? ` · Entrée ${escapeHtml(L.formatDate(dateEntreeSdis))}` : ''}</p>
-          <p class="scope-person-period">Période analysée : ${escapeHtml(periodLabel(fiche.period))}</p>
-          ${identite.archivee ? `<p class="scope-person-banner is-archive">${escapeHtml(identite.libelleStatut)}</p>` : ''}
-          ${identite.conge ? `<p class="scope-person-banner is-conge">${escapeHtml(identite.conge.libelle)}</p>` : ''}
-        </header>
+      <div class="scope-main scope-fiche-personnel">
+        ${pageHeaderHtml({
+          eyebrow: 'Personnel',
+          titleHtml,
+          context: `NIP ${identity.nip}`,
+          logo: true
+        })}
+        <p class="scope-person-back"><a class="scope-person-back-link" href="#/personnel">← Retour au personnel</a></p>
+        <section class="scope-fiche-block scope-fiche-identity">
+          ${identityField('GRADE', identity.grade)}
+          ${identityField('NOM', identity.nom)}
+          ${identityField('PRÉNOM', identity.prenom)}
+          ${identityField('NIP', identity.nip)}
+          ${identityField('STATUT', identity.statut)}
+          ${identityField('DATE D’ENTRÉE SDIS', fmtDate(identity.dateEntreeSdis))}
+          ${identityField('DATE D’INACTIVITÉ', identity.statut === 'Inactif' ? fmtDate(identity.dateInactivite) : '—')}
+        </section>
+        <div class="scope-fiche-toolbar-row">
+          ${renderPersonneActivityCard(fiche, identite)}
+          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-edit-open">Modifier</button>` : ''}
+        </div>
         ${editBlock}
-        ${renderPersonneActivityCard(fiche, identite)}
-        <div class="scope-kpis scope-person-kpis">
-          <article class="scope-kpi scope-kpi-main">
-            <strong>${escapeHtml(tauxText)}</strong>
-            <span>Taux de participation</span>
-            <em>${escapeHtml(numDen)}</em>
-            <small>Nominatif uniquement · QUANTITATIF et LEGACY exclus</small>
-            <span class="scope-status-pill ${escapeHtml(status)}">${escapeHtml(L.analyticStatusLabel(status))}</span>
-            <button type="button" class="linkish" id="scope-explain-toggle">Comprendre ce chiffre</button>
-          </article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(vol.attendus || 0))}</strong><span>Attendus</span></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(vol.presents || 0))}</strong><span>Présents</span>${permNote ? `<small>${escapeHtml(permNote)}</small>` : ''}</article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(vol.excuses || 0))}</strong><span>Excusés</span></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(vol.nonExcuses || 0))}</strong><span>Non excusés</span><small>Volume factuel — pas une alerte</small></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(vol.dispenses || 0))}</strong><span>Dispensés</span><small>Hors dénominateur</small></article>
-        </div>
-        ${fiche.jsp && fiche.jsp.role ? `<div class="scope-card" style="margin-top:12px">
-          <h2>${fiche.jsp.role === 'JEUNE' ? 'Participation JSP' : 'Participation comme moniteur JSP'}</h2>
-          <p class="scope-mode-hint">${fiche.jsp.role === 'JEUNE'
-            ? 'Taux calculé uniquement sur les événements JSP où cette personne était attendue comme jeune.'
-            : 'Taux calculé uniquement sur les événements JSP où cette personne était attendue comme moniteur. Les exercices DPS/DAP n’y figurent pas.'}</p>
-          <div class="scope-kpis">
-            <article class="scope-kpi"><strong>${escapeHtml(fiche.jsp.participationJsp && fiche.jsp.participationJsp.rate != null ? `${fiche.jsp.participationJsp.rate} %` : '—')}</strong><span>Taux JSP</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.expected) || 0))}</strong><span>Attendus</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.present) || 0))}</strong><span>Présents</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.excused) || 0))}</strong><span>Excusés</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String((fiche.jsp.participationJsp && fiche.jsp.participationJsp.absent) || 0))}</strong><span>Absents</span></article>
+        <section class="scope-fiche-block">
+          <h2>INCORPORATIONS</h2>
+          ${incHtml}
+        </section>
+        <section class="scope-fiche-block">
+          <h2>SPÉCIALISATIONS</h2>
+          ${specHtml}
+        </section>
+        <section class="scope-fiche-block scope-fiche-participation">
+          <h2>PARTICIPATION</h2>
+          <div class="scope-kpis scope-person-kpis">
+            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.attendus))}</strong><span>Événements attendus</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.presents))}</strong><span>Présents</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.excuses))}</strong><span>Excusés</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.nonExcuses))}</strong><span>Absents</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.dispenses))}</strong><span>Dispensés</span></article>
+            ${permKpi}
+            <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(tauxText)}</strong><span>Taux de participation</span></article>
           </div>
-        </div>` : ''}
-        ${state.explainOpen ? `<div class="scope-card scope-explain" id="scope-explain">
-          <h2>Comprendre ce chiffre</h2>
-          <dl>
-            <dt>Période</dt><dd>${escapeHtml(fiche.period.from)} → ${escapeHtml(fiche.period.to)} (${escapeHtml(fiche.period.preset || 'YEAR')})</dd>
-            <dt>Modes inclus</dt><dd>${escapeHtml(explain.modesInclus || 'NOMINATIF uniquement')}</dd>
-            <dt>Événements inclus</dt><dd>${escapeHtml(String((explain.includedEvents || []).length))} nominatif(s) réalisé(s)</dd>
-            <dt>Numérateur</dt><dd>${escapeHtml(String(kpi.numerator ?? 0))} (présents, permutations comprises)</dd>
-            <dt>Dénominateur</dt><dd>${escapeHtml(String(kpi.denominator ?? 0))} (présents + excusés + non excusés)</dd>
-            <dt>Dispensés exclus</dt><dd>${escapeHtml(String(vol.dispenses || exclusions.dispenses || 0))}</dd>
-            <dt>Non renseignés</dt><dd>${escapeHtml(String(vol.nonRenseignes || 0))} — non présentés comme absences</dd>
-            <dt>QUANTITATIF / LEGACY</dt><dd>Jamais attribués à cette personne</dd>
-            <dt>Objectif</dt><dd>${escapeHtml(obj.message || 'Aucun objectif défini.')}</dd>
-            <dt>Statut analytique</dt><dd>${escapeHtml(status)}${kpi.analyticStatusReason ? ` · ${escapeHtml(kpi.analyticStatusReason)}` : ''}</dd>
-          </dl>
-        </div>` : ''}
-        <div class="scope-person-split">
-          ${evolutionCard || `<div class="scope-card scope-chart-card is-empty"><h2>La participation de cette personne évolue-t-elle ?</h2><p class="scope-empty">Aucune série nominative sur cette période.</p></div>`}
-          ${domainChart || ''}
-        </div>
-        ${graphExplainHtml}
-        ${childrenChart || ''}
-        <div class="scope-card scope-panel">
-          <h2>Participation par domaine</h2>
-          <div class="scope-domain-pills">
-            ${(fiche.domaines || []).map((d) => `<button type="button" class="scope-btn ${state.personneDomainFilter === d.code ? 'scope-btn-primary' : ''}" data-person-domaine="${escapeHtml(d.code)}">${escapeHtml(d.libelle)} · ${d.eventCount ? escapeHtml(L.formatTaux(d.percentage)) : 'Non évaluable'}</button>`).join('')}
-            ${state.personneDomainFilter ? '<button type="button" class="scope-btn" data-person-domaine="">Tous les domaines</button>' : ''}
+        </section>
+        <section class="scope-fiche-block scope-fiche-history">
+          <h2>HISTORIQUE DES ÉVÉNEMENTS</h2>
+          <div class="scope-fiche-filters">
+            <label class="scope-field">DOMAINE
+              <select id="scope-fiche-domaine">
+                <option value="">Tous</option>
+                ${domainCodes.map((code) => `<option value="${escapeHtml(code)}" ${state.personneDomainFilter === code ? 'selected' : ''}>${escapeHtml(domaineLabel(code))}</option>`).join('')}
+              </select>
+            </label>
+            <div class="scope-sync-filters" role="group" aria-label="Statut">
+              ${eventFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personneEventFilter === id ? 'scope-btn-primary' : ''}" data-person-events="${id}">${escapeHtml(label)}</button>`).join('')}
+            </div>
           </div>
-        </div>
-        <div class="scope-card scope-table-wrap scope-panel">
-          <h2>Historique des événements</h2>
-          <p class="scope-mode-hint">Plus récent d’abord — lecture métier de la période courante, pas une chronologie RH.</p>
-          <div class="scope-sync-filters">
-            ${eventFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personneEventFilter === id ? 'scope-btn-primary' : ''}" data-person-events="${id}">${escapeHtml(label)}</button>`).join('')}
+          <div class="scope-table-wrap scope-fiche-table-wrap">
+            <table class="scope-table scope-fiche-events-table">
+              <thead><tr><th>DATE</th><th>ÉVÉNEMENT</th><th>DOMAINE</th><th>CIBLE / OI</th><th>STATUT</th><th>INFORMATIONS</th></tr></thead>
+              <tbody>
+                ${events.map((ev) => `<tr>
+                  <td data-label="DATE">${escapeHtml(L.formatDate(ev.date) || '—')}</td>
+                  <td data-label="ÉVÉNEMENT">${ev.href ? `<a class="scope-events-libelle" href="${escapeHtml(ev.href)}">${escapeHtml(ev.libelle || '—')}</a>` : escapeHtml(ev.libelle || '—')}</td>
+                  <td data-label="DOMAINE">${escapeHtml(domaineLabel(ev.domaine))}</td>
+                  <td data-label="CIBLE / OI">${escapeHtml(eventCible(ev))}</td>
+                  <td data-label="STATUT">${escapeHtml(eventStatut(ev))}</td>
+                  <td data-label="INFORMATIONS">${escapeHtml(eventInfo(ev))}</td>
+                </tr>`).join('') || '<tr><td colspan="6">Aucun événement nominatif sur la période.</td></tr>'}
+              </tbody>
+            </table>
           </div>
-          <table class="scope-table">
-            <thead><tr><th>Date</th><th>Domaine</th><th>Sous-domaine</th><th>OI à la date</th><th>Libellé</th><th>Statut</th><th>Motif</th><th></th></tr></thead>
-            <tbody>
-              ${events.map((ev) => `<tr>
-                <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-                <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine))}</td>
-                <td data-label="Sous-domaine">${escapeHtml(ev.sousDomaine || '—')}</td>
-                <td data-label="OI à la date">${escapeHtml(ev.oiAtDate || '—')}${ev.permutation && ev.oiAccueil ? `<small>Accueil ${escapeHtml(ev.oiAccueil)}</small>` : ''}</td>
-                <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
-                <td data-label="Statut">${ev.planned ? '<span class="scope-status-pill PLANIFIE">Planifié</span> ' : ''}${escapeHtml(L.participationStatutLabel(ev.statutParticipation))}${ev.permutation ? ' · permutation' : ''}</td>
-                <td data-label="Motif">${escapeHtml(ev.motif || '—')}</td>
-                <td data-label="Action"><a class="scope-btn" href="${escapeHtml(ev.href)}">Événement</a></td>
-              </tr>`).join('') || '<tr><td colspan="8">Aucun événement nominatif sur la période.</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-        ${compositionChart || motifsChart ? `<div class="scope-graph-grid">${compositionChart || ''}${motifsChart || ''}</div>` : ''}
-        ${permutationChart || ''}
-        <div class="scope-card">
-          <h2>Motifs d’excuse</h2>
-          <p>${motifSum ? Object.entries(motifs).filter(([, n]) => Number(n) > 0).map(([k, n]) => `${motifLabel(k)} : ${n}`).join(' · ') : 'Aucun motif d’excuse sur la période.'}</p>
-          ${motifSum && vol.excuses != null ? `<p class="scope-mode-hint">Somme des motifs : ${motifSum} · absences excusées : ${vol.excuses}</p>` : ''}
-        </div>
-        <div class="scope-card scope-person-alerts">
-          <h2>Alertes individuelles</h2>
-          <p>Absences non excusées : <strong>${escapeHtml(String(vol.nonExcuses || 0))}</strong></p>
-          <p class="scope-mode-hint">${escapeHtml((fiche.alertesPersonne && fiche.alertesPersonne.message) || 'Aucune alerte individuelle active.')}</p>
-        </div>
-        <details class="scope-card scope-details" ${state.personneRhOpen ? 'open' : ''} id="scope-person-rh">
-          <summary>Historique administratif / affectations</summary>
-          <p class="scope-mode-hint">Historique RH distinct des absences aux événements.</p>
-          <ul class="scope-rh-list">
-            ${(rh.periodes || []).map((row) => `<li><strong>${escapeHtml(L.formatDate(row.date_debut))}${row.date_fin ? ` – ${escapeHtml(L.formatDate(row.date_fin))}` : ' → en cours'}</strong> · ${escapeHtml(rhTypeLabel(row.type, row.motif))}${row.motif && row.type !== 'INDISPONIBLE' ? ` · ${escapeHtml(row.motif)}` : ''}</li>`).join('') || '<li>Aucune période RH.</li>'}
-          </ul>
-          <h3>Affectations</h3>
-          <ul class="scope-rh-list">
-            ${(rh.affectations || []).map((row) => `<li><strong>${escapeHtml(L.formatDate(row.dateDebut))}${row.dateFin ? ` – ${escapeHtml(L.formatDate(row.dateFin))}` : ' → en cours'}</strong> · ${escapeHtml(row.label || '—')}</li>`).join('') || '<li>Aucune affectation.</li>'}
-          </ul>
-        </details>
+        </section>
       </div>
     `;
   }
@@ -6110,6 +6077,10 @@
         state.personneEventFilter = btn.getAttribute('data-person-events');
         render();
       });
+    });
+    document.getElementById('scope-fiche-domaine')?.addEventListener('change', (e) => {
+      state.personneDomainFilter = e.target.value || null;
+      render();
     });
     root.querySelectorAll('[data-person-domaine]').forEach((btn) => {
       btn.addEventListener('click', () => {

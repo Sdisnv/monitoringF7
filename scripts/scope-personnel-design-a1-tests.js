@@ -65,7 +65,7 @@ record('03 — filtres / tri / temporalité inchangés', () => {
   assert.strictEqual(display.filterPersonnelRows(rows, { q: 'Dupont' }).length, 1);
   const period = temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' });
   assert.ok(period && period.from);
-  assert.ok(html.includes('scope-ui.js?v=scope-personnel-design-a1'));
+  assert.ok(/scope-ui\.js\?v=scope-personnel-design-a1|scope-ui\.js\?v=scope-personnel-design-b/.test(html));
 });
 
 console.log(`SCOPE-PERSONNEL-DESIGN-A1: ${passed} PASS`);

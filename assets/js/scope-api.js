@@ -223,6 +223,25 @@
       updatePersonne(id, body) { return request('PATCH', `/personnel/${encodeURIComponent(id)}`, body || {}); },
       async getPersonneFiche(id, params) {
         const payload = await directRequest('GET', `/.netlify/functions/scope-personnel-detail${queryString(Object.assign({}, params || {}, { id }))}`);
+        let analytics = null;
+        try {
+          analytics = await request('GET', `/personnel/${encodeURIComponent(id)}${queryString(params || {})}`);
+        } catch (_error) {
+          analytics = null;
+        }
+        const analyticsSlice = analytics && (analytics.kpi || analytics.evenements)
+          ? {
+              kpi: analytics.kpi,
+              evenements: analytics.evenements || [],
+              domaines: analytics.domaines,
+              jsp: analytics.jsp,
+              explain: analytics.explain,
+              graphs: analytics.graphs || {},
+              objectif: analytics.objectif,
+              alertesPersonne: analytics.alertesPersonne,
+              period: analytics.period
+            }
+          : null;
         if (payload && payload.personne && !payload.identite) {
           const personne = payload.personne;
           const affectations = personne.affectations || [];
@@ -244,12 +263,13 @@
               nom: personne.nom,
               prenom: personne.prenom,
               dateEntreeSdis: personne.dateEntreeSdis || personne.date_entree_sdis || personne.dateEntree || personne.date_entree || null,
+              dateInactif: personne.dateInactif || personne.date_inactif || null,
               oiActuel: primary ? { label } : null,
               statutRh: (personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at) ? 'INACTIF' : 'ACTIF',
               archivee: Boolean(personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at),
               libelleStatut: (personne.statutTemporel === 'inactif' || personne.archivedAt || personne.archived_at) ? 'Personnel inactif' : 'Personnel actif'
             },
-            period: params || {},
+            period: (analyticsSlice && analyticsSlice.period) || params || {},
             historiqueRh: {
               periodes: personne.periodes || [],
               affectations: affectations.map((aff) => ({
@@ -259,15 +279,17 @@
                 label: display && display.formatAssignment ? display.formatAssignment(aff) : [aff.domaine, aff.cible].filter(Boolean).join(' '),
                 domaineCode: aff.domaine,
                 niveauCode: aff.cible,
-                categorie: aff.categorie
+                categorie: aff.categorie,
+                roleDomaine: aff.roleDomaine || aff.role_domaine
               }))
             },
             kpi: { volumes: {}, analyticStatus: 'NON_EVALUABLE', percentage: null },
             explain: {},
             graphs: {},
             evenements: []
-          });
+          }, analyticsSlice || {});
         }
+        if (payload && payload.identite && analyticsSlice) return Object.assign({}, payload, analyticsSlice);
         return payload;
       },
       personnelEffectifAtDate(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-effectif-at-date${queryString(params || {})}`); },
