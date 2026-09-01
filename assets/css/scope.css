@@ -3680,6 +3680,7 @@ body.scope-pdf-open { overflow: hidden; }
 }
 .scope-table-sort-label{
   min-width: 0;
+  text-transform: uppercase;
 }
 .scope-table-sort-indicator,
 .scope-sort-indicator{
@@ -4938,20 +4939,25 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-saisie-table {
-  table-layout: fixed;
+  table-layout: auto;
   width: 100%;
+  min-width: 74rem;
 }
 
 .scope-saisie-table th:nth-child(1),
-.scope-saisie-table td:nth-child(1) { width: 25%; }
+.scope-saisie-table td:nth-child(1) { width: 5.5rem; min-width: 4.75rem; white-space: nowrap; }
 .scope-saisie-table th:nth-child(2),
-.scope-saisie-table td:nth-child(2) { width: 8%; }
+.scope-saisie-table td:nth-child(2) { width: 10rem; min-width: 8.5rem; }
 .scope-saisie-table th:nth-child(3),
-.scope-saisie-table td:nth-child(3) { width: 10%; }
+.scope-saisie-table td:nth-child(3) { width: 9rem; min-width: 7.5rem; }
 .scope-saisie-table th:nth-child(4),
-.scope-saisie-table td:nth-child(4) { width: 36%; }
+.scope-saisie-table td:nth-child(4) { width: 6rem; min-width: 5rem; white-space: nowrap; }
 .scope-saisie-table th:nth-child(5),
-.scope-saisie-table td:nth-child(5) { width: 21%; }
+.scope-saisie-table td:nth-child(5) { width: 7rem; min-width: 6rem; white-space: nowrap; }
+.scope-saisie-table th:nth-child(6),
+.scope-saisie-table td:nth-child(6) { width: 20rem; min-width: 18rem; }
+.scope-saisie-table th:nth-child(7),
+.scope-saisie-table td:nth-child(7) { width: 12rem; min-width: 10rem; }
 
 .scope-status-cluster {
   display: flex;

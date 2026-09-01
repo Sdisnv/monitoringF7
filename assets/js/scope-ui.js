@@ -1643,13 +1643,13 @@
           <table class="scope-table scope-events-list-table">
             <thead>
               <tr>
-                ${sortableHeader('events', 'date', 'Date', state.eventSort)}
-                ${sortableHeader('events', 'libelle', 'Événement', state.eventSort)}
-                ${sortableHeader('events', 'domaine', 'Domaine', state.eventSort)}
-                ${sortableHeader('events', 'public', 'Public / OI', state.eventSort)}
-                ${sortableHeader('events', 'effectif', 'Effectif', state.eventSort)}
-                ${sortableHeader('events', 'etat', 'État', state.eventSort)}
-                <th>Actions</th>
+                ${sortableHeader('events', 'date', 'DATE', state.eventSort)}
+                ${sortableHeader('events', 'libelle', 'ÉVÉNEMENT', state.eventSort)}
+                ${sortableHeader('events', 'domaine', 'DOMAINE', state.eventSort)}
+                ${sortableHeader('events', 'public', 'PUBLIC / OI', state.eventSort)}
+                ${sortableHeader('events', 'effectif', 'EFFECTIF', state.eventSort)}
+                ${sortableHeader('events', 'etat', 'ÉTAT', state.eventSort)}
+                <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody>${body}</tbody>
@@ -3872,10 +3872,65 @@
     });
   }
 
-  function sortSaisieRows(rows) {
-    if (state.eventPersonnelSort && state.eventPersonnelSort.key === 'grade') {
-      return sortByGradeHierarchy(rows, state.eventPersonnelSort.dir);
+  function presenceRank(row) {
+    const code = String((row && row.statut) || 'NON_RENSEIGNE').toUpperCase();
+    const order = {
+      PRESENT: 1,
+      ABSENT_EXCUSE: 2,
+      ABSENT_NON_EXCUSE: 3,
+      DISPENSE: 4,
+      PERMUTATION: 5,
+      NON_RENSEIGNE: 6
+    };
+    return order[code] || 6;
+  }
+
+  function sortSaisieIdentityAfter(a, b, extra) {
+    const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+    const txt = (value) => String(value == null ? '' : value);
+    const nom = collator.compare(txt(a && (a.nomFamille || a.nom)), txt(b && (b.nomFamille || b.nom)));
+    if (nom) return nom;
+    const prenom = collator.compare(txt(a && a.prenom), txt(b && b.prenom));
+    if (prenom) return prenom;
+    if (extra === 'grade-first') {
+      const g = gradeRank(a && a.grade) - gradeRank(b && b.grade);
+      if (g) return g;
+      const cible = collator.compare(txt(a && a.cible), txt(b && b.cible));
+      if (cible) return cible;
+    } else if (extra === 'cible-first') {
+      const g = gradeRank(a && a.grade) - gradeRank(b && b.grade);
+      if (g) return g;
     }
+    return collator.compare(txt(a && a.nip), txt(b && b.nip));
+  }
+
+  function sortByPresenceStatus(rows, dir) {
+    const factor = dir === 'desc' ? -1 : 1;
+    return (rows || []).slice().sort((a, b) => {
+      const ra = presenceRank(a);
+      const rb = presenceRank(b);
+      if (ra !== rb) return (ra - rb) * factor;
+      return sortSaisieIdentityAfter(a, b, 'grade-first');
+    });
+  }
+
+  function sortByCible(rows, dir) {
+    const factor = dir === 'desc' ? -1 : 1;
+    const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+    const txt = (value) => String(value == null ? '' : value);
+    return (rows || []).slice().sort((a, b) => {
+      const cmp = collator.compare(txt(a && a.cible), txt(b && b.cible));
+      if (cmp) return cmp * factor;
+      return sortSaisieIdentityAfter(a, b, 'cible-first');
+    });
+  }
+
+  function sortSaisieRows(rows) {
+    const key = state.eventPersonnelSort && state.eventPersonnelSort.key;
+    const dir = state.eventPersonnelSort && state.eventPersonnelSort.dir;
+    if (key === 'grade') return sortByGradeHierarchy(rows, dir);
+    if (key === 'presence') return sortByPresenceStatus(rows, dir);
+    if (key === 'cible') return sortByCible(rows, dir);
     const columns = [
       { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom), tieBreakers: [
         { key: 'prenom', type: 'text', value: (row) => row && row.prenom },

@@ -118,7 +118,7 @@ record('04 — tri Grade: hiérarchie inversée, Nom ASC dans le grade', () => {
     'Flm 1 Albert',
     'Flm 1 Bernard'
   ]);
-  assert.ok(html.includes('scope-event-design-c1') || html.includes('scope-event-design-c2'));
+    assert.ok(html.includes('scope-event-design-c1') || html.includes('scope-event-design-c2') || html.includes('scope-event-c3-fix'));
 });
 
 console.log(`SCOPE-EVENT-DESIGN-C1: ${passed} PASS`);

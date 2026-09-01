@@ -107,7 +107,7 @@ record('04 — liste: Nouvel événement présent, cache C2', () => {
   assert.ok(ui.includes('id="scope-new"'));
   assert.ok(ui.includes('Nouvel événement'));
   assert.ok(css.includes('.scope-events-new'));
-  assert.ok(html.includes('scope-event-design-c2'));
+  assert.ok(html.includes('scope-event-design-c2') || html.includes('scope-event-c3-fix'));
 });
 
 console.log(`SCOPE-EVENT-DESIGN-C2: ${passed} PASS`);
