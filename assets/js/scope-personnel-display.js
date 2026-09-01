@@ -851,7 +851,26 @@
     return text ? '9999-12-31' : '';
   }
 
-  function ficheStatutLabel(identite, personne){
+  function resolveFicheSabbatical(identite, personne, sabbatical){
+    return sabbatical
+      || (personne && personne.sabbatical)
+      || (identite && identite.sabbatical)
+      || null;
+  }
+
+  function ficheSabbaticalActive(sabbatical){
+    return Boolean(sabbatical && sabbatical.active === true);
+  }
+
+  function ficheSabbaticalRange(sabbatical){
+    if(!ficheSabbaticalActive(sabbatical)) return '';
+    const from = formatPersonnelDate(sabbatical.dateDebut || sabbatical.date_debut);
+    const to = formatPersonnelDate(sabbatical.dateFin || sabbatical.date_fin);
+    if(from && to) return `Du ${from} au ${to}`;
+    return from || to || '';
+  }
+
+  function ficheStatutLabel(identite, personne, sabbatical){
     const archived = Boolean(
       (identite && identite.archivee)
       || (personne && (personne.archivedAt || personne.archived_at))
@@ -862,19 +881,23 @@
       || ''
     ).toUpperCase();
     if(archived || raw === 'INACTIF' || raw.indexOf('INACT') === 0) return 'Inactif';
+    if(ficheSabbaticalActive(resolveFicheSabbatical(identite, personne, sabbatical))) return 'Congé sabbatique';
     if(!identite && !personne) return '—';
     return 'Actif';
   }
 
-  function ficheIdentityView(identite, personne){
+  function ficheIdentityView(identite, personne, sabbatical){
     const id = identite || {};
     const p = personne || {};
+    const leave = resolveFicheSabbatical(id, p, sabbatical);
     return {
       grade: clean(id.grade || p.grade) || '—',
       nom: clean(id.nom || p.nom) || '—',
       prenom: clean(id.prenom || p.prenom) || '—',
       nip: clean(id.nip || p.nip) || '—',
-      statut: ficheStatutLabel(id, p),
+      statut: ficheStatutLabel(id, p, leave),
+      sabbatical: leave,
+      sabbaticalRange: ficheSabbaticalRange(leave),
       dateEntreeSdis: id.dateEntreeSdis || id.date_entree_sdis || p.dateEntreeSdis || p.date_entree_sdis || p.dateEntree || p.date_entree || null,
       dateInactivite: id.dateInactif || id.date_inactif || p.dateInactif || p.date_inactif || p.archivedAt || p.archived_at || null
     };
@@ -1149,8 +1172,12 @@
     nextPersonnelSort,
     formatPersonnelDate,
     primaryOperationalOiLabel,
+    parseOperationalOiLabel,
+    assignmentParts,
     ficheIdentityView,
     ficheStatutLabel,
+    ficheSabbaticalActive,
+    ficheSabbaticalRange,
     ficheIncorporationRows,
     ficheSpecializationView,
     ficheParticipationIsOfficial,

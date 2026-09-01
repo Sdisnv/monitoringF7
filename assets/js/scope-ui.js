@@ -134,6 +134,7 @@
     personnelSituationApplied: false,
     personnelListSeq: 0,
     personnelInactivate: null,
+    personnelAssignment: null,
     personnelRowMenuId: null,
     personnelOi: '',
     personnelSpecialization: '',
@@ -2531,6 +2532,9 @@
       affectationId: opts.affectationId || '',
       affectations,
       date: '',
+      dateDebut: '',
+      dateFin: '',
+      sabbatical: opts.sabbatical || person.sabbatical || (person.personne && person.personne.sabbatical) || null,
       comment: '',
       source: opts.source || 'directory',
       busy: false,
@@ -2900,6 +2904,163 @@
     return api.render(state.personnelInactivate);
   }
 
+  const PERSONNEL_OI_CIBLES = Object.freeze({
+    DPS: ['DPS G1', 'DPS C1', 'DPS B1', 'DPS B2'],
+    DAP: ['DAP Y1', 'DAP Y2', 'DAP Y3', 'DAP Y4'],
+    JSP: ['JSP G1', 'JSP C1', 'JSP B1']
+  });
+  const PERSONNEL_SPEC_OPTIONS = Object.freeze(['PAPR', 'cond VL', 'cond PL', 'FOBA 1', 'FOBA 2', 'FOBA 3']);
+
+  function closePersonnelAssignmentModal() {
+    state.personnelAssignment = null;
+    render();
+  }
+
+  function openPersonnelAssignmentModal(personneId) {
+    state.personnelAssignment = {
+      personneId,
+      categorie: '',
+      domaine: '',
+      cible: '',
+      roleDomaine: '',
+      specialization: '',
+      dateActif: '',
+      busy: false,
+      error: ''
+    };
+    render();
+  }
+
+  function personnelAssignmentCanConfirm(modal) {
+    if (!modal || modal.busy) return false;
+    if (!modal.dateActif) return false;
+    if (modal.categorie === 'OI') {
+      return Boolean(modal.domaine && modal.cible && (modal.roleDomaine === 'PRINCIPAL' || modal.roleDomaine === 'SECONDAIRE'));
+    }
+    if (modal.categorie === 'SPECIALISATION') {
+      return Boolean(modal.specialization);
+    }
+    return false;
+  }
+
+  function personnelAssignmentConfirmBody(modal) {
+    if (!personnelAssignmentCanConfirm(modal)) return null;
+    const display = personnelDisplay();
+    if (modal.categorie === 'OI') {
+      const parsed = display && display.parseOperationalOiLabel
+        ? display.parseOperationalOiLabel(modal.cible)
+        : null;
+      const domaine = (parsed && parsed.domaine) || modal.domaine;
+      const cible = parsed ? parsed.niveau : String(modal.cible || '').replace(/^(DPS|DAP|JSP)\s+/i, '');
+      return {
+        personneId: modal.personneId,
+        categorie: 'OI',
+        domaine,
+        cible,
+        roleDomaine: modal.roleDomaine,
+        dateActif: modal.dateActif
+      };
+    }
+    const parts = display && display.assignmentParts
+      ? display.assignmentParts(modal.specialization)
+      : { domaine: '', cible: '' };
+    return {
+      personneId: modal.personneId,
+      categorie: 'SPECIALISATION',
+      domaine: parts.domaine,
+      cible: parts.cible,
+      dateActif: modal.dateActif
+    };
+  }
+
+  function renderPersonnelAssignmentModal() {
+    const modal = state.personnelAssignment;
+    if (!modal) return '';
+    const busy = Boolean(modal.busy);
+    const confirmEnabled = personnelAssignmentCanConfirm(modal);
+    const error = modal.error
+      ? `<p class="scope-activity-error" role="alert">${escapeHtml(modal.error)}</p>`
+      : '';
+    const option = (value, label, selected) => `<option value="${escapeHtml(value)}" ${selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    const cibles = PERSONNEL_OI_CIBLES[modal.domaine] || [];
+    const oiFields = modal.categorie !== 'OI' ? '' : `<div class="scope-activity-fields">
+      <label for="scope-assign-domaine">DOMAINE</label>
+      <select id="scope-assign-domaine" ${busy ? 'disabled' : ''}>
+        ${option('', 'Choisir', !modal.domaine)}
+        ${['DPS', 'DAP', 'JSP'].map((code) => option(code, code, modal.domaine === code)).join('')}
+      </select>
+      <label for="scope-assign-cible">CIBLE</label>
+      <select id="scope-assign-cible" ${busy || !modal.domaine ? 'disabled' : ''}>
+        ${option('', 'Choisir', !modal.cible)}
+        ${cibles.map((label) => option(label, label, modal.cible === label)).join('')}
+      </select>
+      <label for="scope-assign-role">RÔLE</label>
+      <select id="scope-assign-role" ${busy ? 'disabled' : ''}>
+        ${option('', 'Choisir', !modal.roleDomaine)}
+        ${option('PRINCIPAL', 'Principal', modal.roleDomaine === 'PRINCIPAL')}
+        ${option('SECONDAIRE', 'Secondaire', modal.roleDomaine === 'SECONDAIRE')}
+      </select>
+      <label for="scope-assign-date">DATE ACTIF</label>
+      <input id="scope-assign-date" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateActif || '')}" ${busy ? 'disabled' : ''}>
+    </div>`;
+    const specFields = modal.categorie !== 'SPECIALISATION' ? '' : `<div class="scope-activity-fields">
+      <label for="scope-assign-spec">SPÉCIALISATION</label>
+      <select id="scope-assign-spec" ${busy ? 'disabled' : ''}>
+        ${option('', 'Choisir', !modal.specialization)}
+        ${PERSONNEL_SPEC_OPTIONS.map((label) => option(label, label, modal.specialization === label)).join('')}
+      </select>
+      <label for="scope-assign-date">DATE ACTIF</label>
+      <input id="scope-assign-date" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateActif || '')}" ${busy ? 'disabled' : ''}>
+    </div>`;
+    return `<div class="scope-activity-overlay" id="scope-assignment-modal" data-assignment-overlay>
+      <div class="scope-activity-dialog" role="dialog" aria-modal="true" aria-labelledby="scope-assignment-title">
+        <header class="scope-activity-head">
+          <h3 id="scope-assignment-title">Ajouter une affectation</h3>
+          <button type="button" class="scope-activity-x" data-assignment-cancel aria-label="Fermer">×</button>
+        </header>
+        <div class="scope-activity-fields">
+          <label for="scope-assign-type">TYPE</label>
+          <select id="scope-assign-type" ${busy ? 'disabled' : ''}>
+            ${option('', 'Choisir', !modal.categorie)}
+            ${option('OI', 'Incorporation / OI', modal.categorie === 'OI')}
+            ${option('SPECIALISATION', 'Spécialisation', modal.categorie === 'SPECIALISATION')}
+          </select>
+        </div>
+        ${oiFields}${specFields}
+        ${error}
+        <footer class="scope-activity-footer">
+          <button type="button" class="scope-btn" data-assignment-cancel ${busy ? 'disabled' : ''}>Annuler</button>
+          <button type="button" class="scope-btn scope-btn-primary" data-assignment-confirm ${confirmEnabled ? '' : 'disabled'}>${busy ? 'Enregistrement…' : 'Enregistrer'}</button>
+        </footer>
+      </div>
+    </div>`;
+  }
+
+  async function submitPersonnelAssignmentModal() {
+    const modal = state.personnelAssignment;
+    if (!modal || modal.busy) return;
+    const body = personnelAssignmentConfirmBody(modal);
+    if (!body) return;
+    state.personnelAssignment = Object.assign({}, modal, { busy: true, error: '' });
+    render();
+    try {
+      await client.createPersonnelAffectation(body);
+      const personneId = state.personnelAssignment.personneId;
+      state.personnelAssignment = null;
+      await reloadPersonneFiche(personneId);
+      await refreshAlertCounts();
+      ScopeFeedback.success('Affectation ajoutée', 'L’affectation a été enregistrée.');
+    } catch (error) {
+      const info = L.friendlyError(error);
+      state.personnelAssignment = Object.assign({}, state.personnelAssignment || modal, {
+        busy: false,
+        error: info.message || info.title || 'L’affectation n’a pas pu être enregistrée.'
+      });
+      ScopeFeedback.error(info.title || 'Action refusée', info.message || '', { errors: info.errors });
+      render();
+    }
+  }
+
   function renderPersonneActivityCard(fiche, identite){
     if (!canManagePersonnel()) return '';
     const statut = identite.statutRh || (identite.archivee ? 'INACTIF' : 'ACTIF');
@@ -3065,14 +3226,16 @@
         <div class="scope-main"><div class="scope-card"><p>Chargement de la fiche…</p></div></div>`;
     }
     const display = personnelDisplay();
+    const ficheSabbatical = fiche.sabbatical || (fiche.personne && fiche.personne.sabbatical) || null;
     const identity = display && display.ficheIdentityView
-      ? display.ficheIdentityView(identite, fiche.personne)
+      ? display.ficheIdentityView(identite, fiche.personne, ficheSabbatical)
       : {
           grade: identite.grade || '—',
           nom: identite.nom || '—',
           prenom: identite.prenom || '—',
           nip: identite.nip || '—',
           statut: identite.archivee || identite.statutRh === 'INACTIF' ? 'Inactif' : 'Actif',
+          sabbaticalRange: '',
           dateEntreeSdis: identite.dateEntreeSdis,
           dateInactivite: identite.dateInactif
         };
@@ -3128,7 +3291,10 @@
             <button type="button" class="scope-btn" id="person-edit-cancel">Annuler</button>
           </div>
         </div>` : '') : '';
-    const identityField = (label, value) => `<div class="scope-fiche-field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    const identityField = (label, value, extra) => `<div class="scope-fiche-field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${extra || ''}</div>`;
+    const statutExtra = identity.statut === 'Congé sabbatique' && identity.sabbaticalRange
+      ? `<em class="scope-fiche-sabbatical-range">${escapeHtml(identity.sabbaticalRange)}</em>`
+      : '';
     const titleHtml = `${escapeHtml(identity.grade === '—' ? '' : identity.grade)}${identity.grade !== '—' ? ' ' : ''}${escapeHtml(identity.prenom === '—' ? '' : identity.prenom)} <span class="scope-person-nom">${escapeHtml(identity.nom)}</span>`.replace(/^\s+/, '');
     const specHtml = specs.empty
       ? '<p class="scope-fiche-empty">Aucune spécialisation</p>'
@@ -3162,15 +3328,17 @@
           ${identityField('NOM', identity.nom)}
           ${identityField('PRÉNOM', identity.prenom)}
           ${identityField('NIP', identity.nip)}
-          ${identityField('STATUT', identity.statut)}
+          ${identityField('STATUT', identity.statut, statutExtra)}
           ${identityField('DATE D’ENTRÉE SDIS', fmtDate(identity.dateEntreeSdis))}
           ${identityField('DATE D’INACTIVITÉ', identity.statut === 'Inactif' ? fmtDate(identity.dateInactivite) : '—')}
         </section>
         <div class="scope-fiche-toolbar-row">
           ${renderPersonneActivityCard(fiche, identite)}
+          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-add-assignment">Ajouter une affectation</button>` : ''}
           ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-edit-open">Modifier</button>` : ''}
         </div>
         ${editBlock}
+        <div class="scope-fiche-split">
         <section class="scope-fiche-block">
           <h2>INCORPORATIONS</h2>
           ${incHtml}
@@ -3179,6 +3347,7 @@
           <h2>SPÉCIALISATIONS</h2>
           ${specHtml}
         </section>
+        </div>
         <section class="scope-fiche-block scope-fiche-participation">
           <h2>PARTICIPATION</h2>
           <div class="scope-kpis scope-person-kpis">
@@ -5018,7 +5187,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -6048,7 +6217,8 @@
       openPersonnelActivityModal(Object.assign({}, identite, { affectations: assignments }), {
         mode: inactive ? 'correct' : 'manage',
         source: 'fiche',
-        affectations: assignments.filter(isPersonnelAssignmentOpen)
+        affectations: assignments.filter(isPersonnelAssignmentOpen),
+        sabbatical: fiche.sabbatical || (fiche.personne && fiche.personne.sabbatical) || null
       });
     });
     root.querySelectorAll('[data-correct-person]').forEach((btn) => {
@@ -6092,6 +6262,12 @@
       state.personneRhOpen = e.target.open;
     });
     document.getElementById('person-edit-open')?.addEventListener('click', beginPersonneEdit);
+    document.getElementById('person-add-assignment')?.addEventListener('click', () => {
+      const fiche = state.personneFiche;
+      const identite = fiche && fiche.identite;
+      if (!identite) return;
+      openPersonnelAssignmentModal(identite.personneId || identite.id);
+    });
     document.getElementById('person-edit-cancel')?.addEventListener('click', cancelPersonneEdit);
     document.getElementById('person-edit-save')?.addEventListener('click', () => {
       const fiche = state.personneFiche;
@@ -6135,8 +6311,12 @@
     const modal = state.personnelInactivate;
     if (!api || !modal || modal.busy) return;
     const dateEl = document.getElementById('scope-activity-date');
+    const fromEl = document.getElementById('scope-activity-date-from');
+    const toEl = document.getElementById('scope-activity-date-to');
     const commentEl = document.getElementById('scope-activity-comment');
     if (dateEl) modal.date = dateEl.value;
+    if (fromEl) modal.dateDebut = fromEl.value;
+    if (toEl) modal.dateFin = toEl.value;
     if (commentEl) modal.comment = commentEl.value;
     const body = api.confirmBody(modal);
     if (!body) return;
@@ -6144,9 +6324,15 @@
     if (!state.personnelInactivate || !state.personnelInactivate.busy) return;
     render();
     try {
-      await client.inactivatePersonne(body);
+      const submit = body.action === 'sabbatical' && typeof client.createPersonnelSabbatical === 'function'
+        ? client.createPersonnelSabbatical(body)
+        : body.action === 'end_sabbatical' && typeof client.endPersonnelSabbatical === 'function'
+          ? client.endPersonnelSabbatical(body)
+          : client.inactivatePersonne(body);
+      await submit;
       const source = state.personnelInactivate.source;
       const personneId = state.personnelInactivate.id;
+      const action = body.action;
       state.personnelInactivate = api.close();
       state.personnelRowMenuId = null;
       if (source === 'fiche' || (route().screen === 'personne' && route().personneId)) {
@@ -6156,9 +6342,16 @@
         await loadPersonnelDirectory();
         render();
       }
+      const success = action === 'sabbatical'
+        ? ['Congé enregistré', 'Le congé sabbatique a été enregistré.']
+        : action === 'end_sabbatical'
+          ? ['Congé terminé', 'Le congé sabbatique a été clôturé.']
+          : ['Activité mise à jour', 'L’opération a été enregistrée.'];
+      ScopeFeedback.success(success[0], success[1]);
     } catch (error) {
       const info = L.friendlyError(error);
       state.personnelInactivate = api.failSubmit(state.personnelInactivate, info.message || info.title);
+      ScopeFeedback.error(info.title || 'Action refusée', info.message || '', { errors: info.errors });
       render();
     }
   }
@@ -6189,6 +6382,20 @@
         submitPersonnelActivityModal();
         return;
       }
+      if (target.closest('[data-assignment-cancel]')) {
+        event.preventDefault();
+        closePersonnelAssignmentModal();
+        return;
+      }
+      if (target.hasAttribute && target.hasAttribute('data-assignment-overlay')) {
+        closePersonnelAssignmentModal();
+        return;
+      }
+      if (target.closest('[data-assignment-confirm]')) {
+        event.preventDefault();
+        submitPersonnelAssignmentModal();
+        return;
+      }
       if (!state.personnelRowMenuId) return;
       if (target.closest('[data-personnel-more]') || target.closest('#scope-personnel-row-menu') || target.closest('[data-activity-overlay]')) return;
       state.personnelRowMenuId = null;
@@ -6196,11 +6403,66 @@
     });
     document.addEventListener('change', (event) => {
       const target = event.target;
+      if (target && state.personnelAssignment && !state.personnelAssignment.busy) {
+        if (target.id === 'scope-assign-type') {
+          state.personnelAssignment.categorie = target.value;
+          state.personnelAssignment.domaine = '';
+          state.personnelAssignment.cible = '';
+          state.personnelAssignment.roleDomaine = '';
+          state.personnelAssignment.specialization = '';
+          render();
+          document.getElementById('scope-assign-type')?.focus();
+          return;
+        }
+        if (target.id === 'scope-assign-domaine') {
+          state.personnelAssignment.domaine = target.value;
+          state.personnelAssignment.cible = '';
+          render();
+          document.getElementById('scope-assign-domaine')?.focus();
+          return;
+        }
+        if (target.id === 'scope-assign-cible') {
+          state.personnelAssignment.cible = target.value;
+          render();
+          document.getElementById('scope-assign-cible')?.focus();
+          return;
+        }
+        if (target.id === 'scope-assign-role') {
+          state.personnelAssignment.roleDomaine = target.value;
+          render();
+          document.getElementById('scope-assign-role')?.focus();
+          return;
+        }
+        if (target.id === 'scope-assign-spec') {
+          state.personnelAssignment.specialization = target.value;
+          render();
+          document.getElementById('scope-assign-spec')?.focus();
+          return;
+        }
+        if (target.id === 'scope-assign-date') {
+          state.personnelAssignment.dateActif = target.value;
+          render();
+          document.getElementById('scope-assign-date')?.focus();
+          return;
+        }
+      }
       if (!target || !state.personnelInactivate || state.personnelInactivate.busy) return;
       if (target.id === 'scope-activity-date') {
         state.personnelInactivate.date = target.value;
         render();
         document.getElementById('scope-activity-date')?.focus();
+        return;
+      }
+      if (target.id === 'scope-activity-date-from') {
+        state.personnelInactivate.dateDebut = target.value;
+        render();
+        document.getElementById('scope-activity-date-from')?.focus();
+        return;
+      }
+      if (target.id === 'scope-activity-date-to') {
+        state.personnelInactivate.dateFin = target.value;
+        render();
+        document.getElementById('scope-activity-date-to')?.focus();
         return;
       }
       if (target.name === 'scope-activity-aff') {
@@ -6619,6 +6881,10 @@
     if (e.key === 'Escape') {
       if (state.personnelInactivate) {
         closePersonnelActivityModal();
+        return;
+      }
+      if (state.personnelAssignment) {
+        closePersonnelAssignmentModal();
         return;
       }
       if (state.personnelRowMenuId) {

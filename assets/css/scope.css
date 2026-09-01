@@ -4014,6 +4014,16 @@ body.scope-pdf-open { overflow: hidden; }
   background: #f4f5fb;
   box-shadow: inset 3px 0 0 var(--scope-blue);
 }
+.scope-activity-card-danger {
+  border-color: #e8c4c4;
+}
+.scope-activity-card-danger.is-selected {
+  border-color: var(--scope-error, #b42318);
+  box-shadow: inset 3px 0 0 var(--scope-error, #b42318);
+}
+.scope-activity-card-end-leave {
+  border-color: #c5ccd6;
+}
 .scope-activity-card:disabled { opacity: .55; cursor: not-allowed; }
 .scope-activity-card-radio {
   flex: 0 0 auto;
@@ -6060,11 +6070,27 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-fiche-personnel .scope-person-kpis {
   margin: 0;
 }
+.scope-fiche-field em.scope-fiche-sabbatical-range {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #6b7280;
+}
+.scope-fiche-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 0 0 18px;
+}
+.scope-fiche-split .scope-fiche-block { margin: 0; }
 @media (max-width: 900px) {
   .scope-fiche-identity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .scope-fiche-identity { grid-template-columns: 1fr; }
+  .scope-fiche-split { grid-template-columns: 1fr; }
   .scope-fiche-filters { flex-direction: column; align-items: stretch; }
 }
 

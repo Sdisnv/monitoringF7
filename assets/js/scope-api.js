@@ -218,6 +218,17 @@
       },
       listPersonnelDirectory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-list${queryString(params || {})}`); },
       inactivatePersonne(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-inactivate', body); },
+      createPersonnelSabbatical(body) {
+        return directRequest('POST', '/.netlify/functions/scope-personnel-inactivate', Object.assign({}, body || {}, { action: 'sabbatical' }));
+      },
+      endPersonnelSabbatical(body) {
+        return directRequest('POST', '/.netlify/functions/scope-personnel-inactivate', Object.assign({}, body || {}, { action: 'end_sabbatical' }));
+      },
+      createPersonnelAffectation(body) {
+        const payload = Object.assign({}, body || {}, { action: 'create_affectation' });
+        const id = payload.personneId || payload.id;
+        return directRequest('POST', `/.netlify/functions/scope-personnel-detail${queryString({ id })}`, payload);
+      },
       listPersonnelHistory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-history${queryString(params || {})}`); },
       correctPersonnelPeriod(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-correct-period', body); },
       updatePersonne(id, body) { return request('PATCH', `/personnel/${encodeURIComponent(id)}`, body || {}); },
@@ -256,6 +267,7 @@
               ? (primary.domaine || primary.cible)
               : [primary.domaine, primary.cible].filter(Boolean).join(' ')) : '');
           return Object.assign({}, payload, {
+            sabbatical: payload.sabbatical || personne.sabbatical || null,
             identite: {
               personneId: personne.id || id,
               nip: personne.nip,
@@ -289,7 +301,9 @@
             evenements: []
           }, analyticsSlice || {});
         }
-        if (payload && payload.identite && analyticsSlice) return Object.assign({}, payload, analyticsSlice);
+        const sabbatical = payload && (payload.sabbatical || (payload.personne && payload.personne.sabbatical) || null);
+        if (payload && payload.identite && analyticsSlice) return Object.assign({}, payload, analyticsSlice, { sabbatical });
+        if (payload && sabbatical && !payload.sabbatical) return Object.assign({}, payload, { sabbatical });
         return payload;
       },
       personnelEffectifAtDate(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-effectif-at-date${queryString(params || {})}`); },
