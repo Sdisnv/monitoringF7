@@ -14,13 +14,29 @@ async function syncExpectedPopulationForPersonne(personne, claims){
 
 exports.handler = async function(event){
   let claims;
-  try{ claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, event.httpMethod === 'GET' ? 'dashboard:read' : 'effectifs:manage'); }
-  catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
+  try{
+    const perm = event.httpMethod === 'GET'
+      ? 'dashboard:read'
+      : (event.httpMethod === 'POST' ? 'personnel:manage' : 'effectifs:manage');
+    claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, perm);
+  } catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
   try{
     const params = event.queryStringParameters || {};
     if(event.httpMethod === 'GET'){
       const personne = await personnel.getPersonne(params.id);
       return personne ? response(200, { ok:true, personne }) : response(404, { ok:false, error:'not_found' });
+    }
+    if(event.httpMethod === 'POST'){
+      const body = parseBody(event);
+      if(!body) return response(400, { ok:false, error:'invalid_json' });
+      const action = String(body.action || 'create_affectation').toLowerCase();
+      if(action !== 'create_affectation' && action !== 'createaffectation'){
+        return response(400, { ok:false, error:'invalid_action', message:'Action POST non supportée.' });
+      }
+      const id = body.personneId || body.id || params.id;
+      const personne = await personnel.createAffectation(id, body, claims);
+      const synchronisationPopulation = await syncExpectedPopulationForPersonne(personne, claims);
+      return response(200, { ok:true, personne, synchronisationPopulation });
     }
     if(event.httpMethod === 'PUT'){
       const body = parseBody(event);
@@ -34,6 +50,6 @@ exports.handler = async function(event){
     }
     return response(405, { ok:false, error:'method_not_allowed' });
   }catch(error){
-    return response(500, { ok:false, error:'scope_personnel_detail_failed', message:String(error.message || error) });
+    return response(error.statusCode || 500, { ok:false, error:'scope_personnel_detail_failed', message:String(error.message || error) });
   }
 };

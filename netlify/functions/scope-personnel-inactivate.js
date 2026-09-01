@@ -23,18 +23,33 @@ exports.handler = async function(event){
     const action = String(body.action || 'inactivate').toLowerCase();
     const operation = String(body.operation || body.kind || '').toUpperCase();
     const isCorrect = action === 'correct' || action === 'reactivate';
-    const isAssignmentClose = action === 'close_assignment' || action === 'cloture'
-      || operation === 'ASSIGNMENT' || operation === 'CLOTURE_AFFECTATION' || operation === 'CLOTURE';
+    const isSabbatical = action === 'sabbatical';
+    const isEndSabbatical = action === 'end_sabbatical' || action === 'end-sabbatical';
+    const isAssignmentClose = !isSabbatical && !isEndSabbatical && (
+      action === 'close_assignment' || action === 'cloture'
+      || operation === 'ASSIGNMENT' || operation === 'CLOTURE_AFFECTATION' || operation === 'CLOTURE'
+    );
     const personne = isCorrect
       ? await personnel.correctPersonneInactivation(id, body, claims)
-      : isAssignmentClose
-        ? await personnel.closePersonneAffectation(id, body, claims)
-        : await personnel.inactivatePersonne(id, body, claims);
-    const synchronisationPopulation = await syncExpectedPopulationForPersonne(
-      personne,
-      claims,
-      isCorrect ? 'CORRIGER_INACTIVATION' : (isAssignmentClose ? 'CLOTURER_AFFECTATION' : 'INACTIVER_PERSONNE')
-    );
+      : isSabbatical
+        ? await personnel.openSabbatical(id, body, claims)
+        : isEndSabbatical
+          ? await personnel.endSabbatical(id, body, claims)
+          : isAssignmentClose
+            ? await personnel.closePersonneAffectation(id, body, claims)
+            : await personnel.inactivatePersonne(id, body, claims);
+    const syncReason = isCorrect
+      ? 'CORRIGER_INACTIVATION'
+      : isSabbatical
+        ? 'PERSONNEL_SABBATICAL_CREATE'
+        : isEndSabbatical
+          ? 'PERSONNEL_SABBATICAL_END'
+          : isAssignmentClose
+            ? 'CLOTURER_AFFECTATION'
+            : 'INACTIVER_PERSONNE';
+    const synchronisationPopulation = (isSabbatical || isEndSabbatical)
+      ? { ok: true, skipped: true, reason: syncReason }
+      : await syncExpectedPopulationForPersonne(personne, claims, syncReason);
     return response(200, { ok:true, personne, synchronisationPopulation });
   }catch(error){
     return response(error.statusCode || 500, { ok:false, error:'scope_personnel_inactivate_failed', message:String(error.message || error) });

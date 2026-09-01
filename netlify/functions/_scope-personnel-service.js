@@ -10,6 +10,12 @@ function rid(){
 }
 
 function clean(value){ return String(value || '').trim(); }
+
+function httpError(statusCode, message){
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
 function normalizeNip(value){ return clean(value).toUpperCase().replace(/[^A-Z0-9]+/g, ''); }
 function monitoringStart(year){ return `${Number(year) || new Date().getFullYear()}-01-01`; }
 function lastDayOfPreviousYear(year){
@@ -1123,7 +1129,8 @@ async function getPersonne(id, opts = {}){
     temporalStatus: statutTemporel,
     dateActif: window.from || '',
     dateInactif: window.to || '',
-    period
+    period,
+    sabbatical: sabbaticalPayload(periodes, opts.asOf)
   });
 }
 
@@ -1457,6 +1464,214 @@ async function correctAffectationPeriod(affectationId, body, actor){
   return getPersonne(row.personne_id, {});
 }
 
+function isSabbaticalPeriode(row){
+  return String(row && row.type || '').toUpperCase() === 'INDISPONIBLE'
+    && String(row && row.motif || '').toUpperCase() === 'CONGE_SABBATIQUE';
+}
+
+function periodeBounds(row){
+  return {
+    from: temporal.iso(row && (row.date_debut || row.dateDebut)),
+    to: temporal.iso(row && (row.date_fin || row.dateFin)) || ''
+  };
+}
+
+function periodeCoversDay(row, date){
+  const day = temporal.iso(date);
+  const b = periodeBounds(row);
+  if(!day || !b.from) return false;
+  if(b.from > day) return false;
+  if(b.to && b.to < day) return false;
+  return true;
+}
+
+function sabbaticalPayload(periodes, asOf){
+  const day = temporal.iso(asOf) || temporal.iso(new Date().toISOString());
+  const leaves = (periodes || []).filter(isSabbaticalPeriode);
+  const covering = leaves.find((row) => periodeCoversDay(row, day));
+  if(!covering){
+    return { id: null, dateDebut: null, dateFin: null, active: false };
+  }
+  const b = periodeBounds(covering);
+  return {
+    id: covering.periode_id || covering.id || null,
+    dateDebut: b.from || null,
+    dateFin: b.to || null,
+    active: true
+  };
+}
+
+async function openSabbatical(id, body, actor){
+  await ensureScopeSchema();
+  const personneId = clean(id || (body && (body.personneId || body.id)));
+  if(!personneId) throw httpError(400, 'L’identifiant de la personne est obligatoire.');
+  const dateDebut = temporal.iso(body && (body.dateDebut || body.date_debut || body.from));
+  const dateFin = temporal.iso(body && (body.dateFin || body.date_fin || body.to));
+  if(!dateDebut || !dateFin) throw httpError(400, 'Les dates DU et AU du congé sabbatique sont obligatoires.');
+  if(dateFin < dateDebut) throw httpError(422, 'La date de fin du congé ne peut pas précéder la date de début.');
+  const existing = await getPersonne(personneId, {});
+  if(!existing) throw httpError(404, 'Personne introuvable.');
+  const current = (existing.periodes || []).filter(isSabbaticalPeriode);
+  for(const row of current){
+    const b = periodeBounds(row);
+    if(temporal.rangesOverlap(b.from, b.to, dateDebut, dateFin)){
+      throw httpError(422, 'Un congé sabbatique chevauche déjà cette période.');
+    }
+  }
+  const periodeId = rid();
+  await getDb().transaction(async (tx) => {
+    await tx.query(
+      `insert into scope_personne_periodes(periode_id, personne_id, type, date_debut, date_fin, motif, source)
+       values ($1,$2,'INDISPONIBLE',$3::date,$4::date,'CONGE_SABBATIQUE','MANUEL')`,
+      [periodeId, personneId, dateDebut, dateFin]
+    );
+    await tx.query(
+      `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
+       values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8)`,
+      [
+        rid(), actor && (actor.sub || actor.id || actor.email) || null,
+        'personne', String(personneId), 'PERSONNEL_SABBATICAL_CREATE',
+        JSON.stringify({ affectations: existing.affectations, periodes: existing.periodes }),
+        JSON.stringify({ periodeId, type: 'INDISPONIBLE', motif: 'CONGE_SABBATIQUE', dateDebut, dateFin }),
+        (body && body.commentaire) || 'Congé sabbatique'
+      ]
+    );
+  });
+  return getPersonne(personneId, {});
+}
+
+async function endSabbatical(id, body, actor){
+  await ensureScopeSchema();
+  const personneId = clean(id || (body && (body.personneId || body.id)));
+  if(!personneId) throw httpError(400, 'L’identifiant de la personne est obligatoire.');
+  const periodeId = clean(body && (body.periodeId || body.periode_id || body.idPeriode));
+  if(!periodeId) throw httpError(400, 'L’identifiant de la période de congé est obligatoire.');
+  const dateFin = temporal.iso(body && (body.dateFin || body.date_fin || body.dateEffet || body.date));
+  if(!dateFin) throw httpError(400, 'La date de fin du congé est obligatoire.');
+  const existing = await getPersonne(personneId, {});
+  if(!existing) throw httpError(404, 'Personne introuvable.');
+  const current = (existing.periodes || []).find((row) => String(row.periode_id || row.id) === String(periodeId));
+  if(!current) throw httpError(404, 'Période introuvable.');
+  if(!isSabbaticalPeriode(current)) throw httpError(422, 'Cette période n’est pas un congé sabbatique.');
+  const dateDebut = periodeBounds(current).from;
+  if(dateFin < dateDebut) throw httpError(422, 'La date de fin du congé ne peut pas précéder la date de début.');
+  await getDb().transaction(async (tx) => {
+    await tx.query(
+      `update scope_personne_periodes set date_fin=$2::date, updated_at=now() where periode_id=$1`,
+      [periodeId, dateFin]
+    );
+    await tx.query(
+      `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
+       values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8)`,
+      [
+        rid(), actor && (actor.sub || actor.id || actor.email) || null,
+        'personne', String(personneId), 'PERSONNEL_SABBATICAL_END',
+        JSON.stringify({ periodeId, dateDebut, dateFin: periodeBounds(current).to }),
+        JSON.stringify({ periodeId, dateDebut, dateFin }),
+        (body && body.commentaire) || 'Fin du congé sabbatique'
+      ]
+    );
+  });
+  return getPersonne(personneId, {});
+}
+
+function resolveCreateAssignmentInput(body){
+  const categorie = String((body && body.categorie) || '').toUpperCase();
+  if(categorie !== 'OI' && categorie !== 'SPECIALISATION'){
+    throw httpError(400, 'La catégorie d’affectation doit être OI ou SPECIALISATION.');
+  }
+  let domaine = clean(body && body.domaine);
+  let cible = clean(body && (body.cible || body.niveauCode || body.niveau_code));
+  if(categorie === 'SPECIALISATION'){
+    const code = (display.specializationCode && (
+      display.specializationCode({ categorie, domaine, cible })
+      || display.specializationCode(domaine)
+      || display.specializationCode(cible)
+    )) || '';
+    if(code === 'PAPR'){ domaine = 'PR'; cible = 'PR'; }
+    else if(code === 'AUTO_VL_DPS'){ domaine = 'AUTO'; cible = 'VL_DPS'; }
+    else if(code === 'AUTO_VL_DAP'){ domaine = 'AUTO'; cible = 'VL_DAP'; }
+    else if(code === 'AUTO_PL'){ domaine = 'AUTO'; cible = 'PL'; }
+    else if(code.indexOf('FOBA_') === 0){ domaine = 'FOBA'; cible = code.slice(5); }
+    const upper = `${domaine} ${cible}`.toUpperCase();
+    if(upper.indexOf('PAPR') >= 0 || (String(domaine).toUpperCase() === 'PR')){
+      domaine = 'PR';
+      cible = cible || 'PR';
+    }
+  } else {
+    domaine = domaine.toUpperCase();
+  }
+  if(!domaine || !cible) throw httpError(400, 'Le domaine et la cible sont obligatoires.');
+  let role = String((body && (body.roleDomaine || body.role_domaine)) || '').toUpperCase() || null;
+  if(categorie === 'OI'){
+    if(role !== 'PRINCIPAL' && role !== 'SECONDAIRE'){
+      throw httpError(400, 'Le rôle d’incorporation doit être PRINCIPAL ou SECONDAIRE.');
+    }
+  } else if(role !== 'PRINCIPAL' && role !== 'SECONDAIRE'){
+    role = null;
+  }
+  const dateActif = temporal.iso(body && (body.dateActif || body.date_actif || body.dateDebut));
+  if(!dateActif) throw httpError(400, 'La date d’actif de l’affectation est obligatoire.');
+  const dateInactif = temporal.iso(body && (body.dateInactif || body.date_inactif)) || null;
+  if(dateInactif && dateInactif < dateActif){
+    throw httpError(422, 'La date d’inactif ne peut pas précéder la date d’actif.');
+  }
+  return { categorie, domaine, cible, roleDomaine: role, dateActif, dateInactif };
+}
+
+function assignmentsOverlap(aFrom, aTo, bFrom, bTo){
+  return temporal.rangesOverlap(aFrom, aTo || '', bFrom, bTo || '');
+}
+
+async function createAffectation(id, body, actor){
+  await ensureScopeSchema();
+  const personneId = clean(id || (body && (body.personneId || body.id)));
+  if(!personneId) throw httpError(400, 'L’identifiant de la personne est obligatoire.');
+  const spec = resolveCreateAssignmentInput(body || {});
+  const existing = await getPersonne(personneId, {});
+  if(!existing) throw httpError(404, 'Personne introuvable.');
+  const others = existing.affectations || [];
+  for(const row of others){
+    const sameIdentity = String(row.categorie || '').toUpperCase() === spec.categorie
+      && String(row.domaine || '').toUpperCase() === String(spec.domaine).toUpperCase()
+      && String(row.cible || '') === String(spec.cible)
+      && String(row.roleDomaine || row.role_domaine || '') === String(spec.roleDomaine || '');
+    if(sameIdentity && assignmentsOverlap(row.dateActif, row.dateInactif, spec.dateActif, spec.dateInactif)){
+      throw httpError(422, 'Une affectation active identique existe déjà.');
+    }
+    if(
+      spec.categorie === 'OI'
+      && spec.roleDomaine === 'PRINCIPAL'
+      && String(row.categorie || '').toUpperCase() === 'OI'
+      && String(row.domaine || '').toUpperCase() === String(spec.domaine).toUpperCase()
+      && String(row.roleDomaine || row.role_domaine || '') === 'PRINCIPAL'
+      && assignmentsOverlap(row.dateActif, row.dateInactif, spec.dateActif, spec.dateInactif)
+    ){
+      throw httpError(422, 'Un OI principal existe déjà pour ce domaine.');
+    }
+  }
+  const affectationId = rid();
+  await getDb().transaction(async (tx) => {
+    await tx.query(
+      `insert into scope_affectations(id, personne_id, categorie, domaine, cible, role_domaine, date_actif, date_inactif)
+       values ($1,$2,$3,$4,$5,$6,$7::date,$8::date)`,
+      [affectationId, personneId, spec.categorie, spec.domaine, spec.cible, spec.roleDomaine, spec.dateActif, spec.dateInactif]
+    );
+    await tx.query(
+      `insert into scope_journal_metier(journal_id, auteur_id, entite, entite_id, action, avant, apres, commentaire)
+       values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8)`,
+      [
+        rid(), actor && (actor.sub || actor.id || actor.email) || null,
+        'affectation', String(affectationId), 'PERSONNEL_ASSIGNMENT_CREATE',
+        JSON.stringify({ personneId, affectations: others.length }),
+        JSON.stringify(spec),
+        (body && body.commentaire) || 'Création d’affectation'
+      ]
+    );
+  });
+  return getPersonne(personneId, {});
+}
+
 function importTypeLabel(type, extra){
   const raw = String(type || '').toUpperCase();
   try {
@@ -1531,6 +1746,10 @@ module.exports = {
   closePersonneAffectation,
   correctPersonneInactivation,
   correctAffectationPeriod,
+  openSabbatical,
+  endSabbatical,
+  createAffectation,
+  sabbaticalPayload,
   listPersonnelImportHistory,
   getPersonnelImportBatch,
   situationAtDate,
