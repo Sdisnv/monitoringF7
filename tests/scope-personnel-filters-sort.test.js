@@ -125,9 +125,12 @@ assert.deepStrictEqual(display.nextPersonnelSort({ key: 'nom', dir: 'asc' }, 'no
 assert.deepStrictEqual(display.nextPersonnelSort({ key: 'nom', dir: 'desc' }, 'nom'), { key: 'nom', dir: 'asc' });
 
 const ui = fs.readFileSync(path.join(__dirname, '../assets/js/scope-ui.js'), 'utf8');
-assert.ok(ui.includes('for="personnel-oi">OI<'));
+assert.ok(ui.includes('for="personnel-oi">OI / Incorporation<'));
 assert.ok(ui.includes('personnel-specialization'));
 assert.ok(ui.includes("personnelSortHeader('nip', 'NIP')"));
+assert.ok(ui.includes("personnelSortHeader('grade', 'GRADE')"));
+assert.ok(ui.includes("personnelSortHeader('nom', 'NOM')"));
+assert.ok(ui.includes("personnelSortHeader('prenom', 'PRÉNOM')"));
 assert.ok(!ui.includes('OI principal'));
 assert.ok(!ui.includes('OI PRINCIPAL'));
 assert.ok(ui.includes('<optgroup'));

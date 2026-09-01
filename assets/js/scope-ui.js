@@ -138,6 +138,8 @@
     personnelOi: '',
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
+    personnelListPage: 1,
+    personnelListPageSize: 12,
     eventSort: { key: 'date', dir: 'asc' },
     eventListQuery: '',
     eventListPage: 1,
@@ -2297,6 +2299,32 @@
     return filtered;
   }
 
+  function personnelListPageSize() {
+    const n = Number(state.personnelListPageSize);
+    return EVENT_LIST_PAGE_SIZES.indexOf(n) >= 0 ? n : 12;
+  }
+
+  function renderPersonnelListPagination(total, page, pageSize) {
+    if (!total) return '';
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const sizeOpts = EVENT_LIST_PAGE_SIZES.map((n) => `<option value="${n}" ${n === pageSize ? 'selected' : ''}>${n}</option>`).join('');
+    const pager = totalPages > 1
+      ? `<div class="scope-pagination-controls">
+          <button type="button" class="scope-btn scope-btn-compact" id="personnel-page-prev" ${page <= 1 ? 'disabled' : ''}>Précédent</button>
+          <button type="button" class="scope-btn scope-btn-compact" id="personnel-page-next" ${page >= totalPages ? 'disabled' : ''}>Suivant</button>
+        </div>`
+      : '';
+    return `<nav class="scope-pagination" aria-label="Pagination du personnel">
+      <p class="scope-page-status">${total} personne${total > 1 ? 's' : ''}${totalPages > 1 ? ` · page ${page} / ${totalPages}` : ''}</p>
+      <div class="scope-pagination-group">
+        ${pager}
+        <label class="scope-page-size" for="personnel-page-size">Lignes
+          <select id="personnel-page-size" class="scope-select-control">${sizeOpts}</select>
+        </label>
+      </div>
+    </nav>`;
+  }
+
   function sortableHeader(table, key, label, sort) {
     const s = L.sortHeaderState ? L.sortHeaderState(sort, key) : { className: '', ariaSort: 'none', indicator: '' };
     const attr = table === 'personnel' ? 'data-personnel-sort' : `data-scope-sort="${table}" data-sort-key`;
@@ -2393,7 +2421,7 @@
 
   function personnelIdentityLabel(person) {
     if (!person) return '';
-    return [person.grade, person.prenom, person.nom].filter(Boolean).join(' ');
+    return [person.grade, person.nom, person.prenom].filter(Boolean).join(' ');
   }
 
   function isPersonnelAssignmentOpen(assignment) {
@@ -2536,7 +2564,34 @@
 
   function personnelOtherAffectationsHtml(labels) {
     if (!labels.length) return '—';
-    return escapeHtml(labels.join(', '));
+    return `<span class="scope-personnel-specs">${escapeHtml(labels.join(', '))}</span>`;
+  }
+
+  function personnelSecondaryOiHtml(personne, primaryLabel) {
+    const display = personnelDisplay();
+    const seen = new Set([String(primaryLabel || '').toUpperCase()].filter(Boolean));
+    const labels = [];
+    (personne.affectationsOuvertes || personne.affectations || []).forEach((aff) => {
+      if (display && display.isOperationalOiAssignment && !display.isOperationalOiAssignment(aff)) return;
+      const label = (display && display.operationalOiLabel)
+        ? display.operationalOiLabel(aff)
+        : formatPersonnelAffectationLabel(aff);
+      const key = String(label || '').toUpperCase();
+      if (!label || seen.has(key)) return;
+      seen.add(key);
+      labels.push(label);
+    });
+    if (!labels.length) return '';
+    return `<small class="scope-personnel-oi-secondary">${escapeHtml(labels.join(', '))}</small>`;
+  }
+
+  function personnelStatutCell(personne) {
+    const display = personnelDisplay();
+    const code = display && display.personTemporalStatut
+      ? display.personTemporalStatut(personne)
+      : (String(personne.statutTemporel || '').toLowerCase() === 'inactif' ? 'inactif' : 'actif');
+    const inactive = code === 'inactif';
+    return `<span class="scope-personnel-statut${inactive ? ' is-inactive' : ''}">${inactive ? 'Inactif' : 'Actif'}</span>`;
   }
 
   function personnelImportContextOptions() {
@@ -2679,19 +2734,29 @@
     const live = mode === 'live';
     const canRead = canReadPersonnel();
     const dir = state.personnelDirectory;
-    const people = visiblePersonnelRows();
+    const allPeople = visiblePersonnelRows();
     const personnelView = L.listViewState({
       ready: state.personnelReady,
       error: state.personnelError,
-      count: people.length
+      count: allPeople.length
     });
+    const pageSize = personnelListPageSize();
+    const page = personnelView === 'ready' && allPeople.length
+      ? Math.min(Math.max(1, Number(state.personnelListPage) || 1), Math.max(1, Math.ceil(allPeople.length / pageSize)))
+      : 1;
+    const people = personnelView === 'ready' ? allPeople.slice((page - 1) * pageSize, page * pageSize) : [];
+    const pagination = personnelView === 'ready' && allPeople.length
+      ? renderPersonnelListPagination(allPeople.length, page, pageSize)
+      : '';
     let peopleBody;
     if (personnelView === 'error') {
-      peopleBody = `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="10"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
     } else if (personnelView === 'loading') {
-      peopleBody = `<tr><td colspan="9"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="10"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
     } else if (personnelView === 'empty') {
-      peopleBody = `<tr><td colspan="9"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="10"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
+    } else if (!allPeople.length) {
+      peopleBody = `<tr><td colspan="10"><div class="scope-empty">Aucune personne ne correspond à la recherche.</div></td></tr>`;
     } else {
       peopleBody = people.map((p) => {
         const primary = personnelPrimaryAffectation(p);
@@ -2704,16 +2769,18 @@
           : personnelOtherAffectations(p, primary);
         const dateActif = p.dateActif || (primary && primary.dateDebut) || '';
         const dateInactif = p.dateInactif || (primary && primary.dateFin) || '';
+        const oiSecondary = personnelSecondaryOiHtml(p, oiLabel);
         return `<tr>
-              <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
               <td data-label="GRADE">${escapeHtml(p.grade || '—')}</td>
               <td data-label="NOM">${escapeHtml(p.nom || '—')}</td>
               <td data-label="PRÉNOM">${escapeHtml(p.prenom || '—')}</td>
-              <td data-label="OI">${escapeHtml(oiLabel || '—')}</td>
-              <td data-label="SPÉCIALISATIONS">${personnelOtherAffectationsHtml(specLabels)}</td>
-              <td data-label="ACTIF">${escapeHtml(formatPersonnelDateCell(dateActif))}</td>
-              <td data-label="INACTIF">${escapeHtml(formatPersonnelDateCell(dateInactif))}</td>
-              <td data-label="ACTIONS"><div class="scope-row-actions"><a class="scope-btn scope-btn-small" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a>${canManagePersonnel() ? `<span class="scope-row-more"><button type="button" class="scope-row-more-trigger" data-personnel-more="${escapeHtml(p.personneId)}" aria-label="Autres actions" aria-haspopup="menu" aria-expanded="${state.personnelRowMenuId === p.personneId ? 'true' : 'false'}">⋯</button></span>` : ''}</div></td>
+              <td data-label="NIP">${escapeHtml(p.nip || '—')}</td>
+              <td data-label="OI / INCORPORATION">${oiLabel ? `<span class="scope-personnel-oi-main">${escapeHtml(oiLabel)}</span>${oiSecondary}` : '—'}</td>
+              <td data-label="SPÉCIALISATION">${personnelOtherAffectationsHtml(specLabels)}</td>
+              <td data-label="STATUT">${personnelStatutCell(p)}</td>
+              <td data-label="DATE ACTIF">${escapeHtml(formatPersonnelDateCell(dateActif))}</td>
+              <td data-label="DATE INACTIF">${escapeHtml(formatPersonnelDateCell(dateInactif))}</td>
+              <td data-label="ACTIONS"><div class="scope-row-actions"><a class="scope-btn scope-personnel-list-action" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a>${canManagePersonnel() ? `<span class="scope-row-more"><button type="button" class="scope-row-more-trigger" data-personnel-more="${escapeHtml(p.personneId)}" aria-label="Autres actions" aria-haspopup="menu" aria-expanded="${state.personnelRowMenuId === p.personneId ? 'true' : 'false'}">⋯</button></span>` : ''}</div></td>
             </tr>`;
       }).join('');
     }
@@ -2722,7 +2789,6 @@
       ['inactifs', 'Inactifs'],
       ['tous', 'Tous']
     ];
-    const oiOptions = oiFilterOptions();
     const specOptions = specializationFilterOptions();
     if (!live) {
       return `<div class="scope-card">
@@ -2736,43 +2802,41 @@
         <p class="scope-empty">La consultation des fiches individuelles exige la permission personnel:read. Le rôle en lecture agrégée n’y a pas accès.</p>
       </div>`;
     }
-    return `<div class="scope-card scope-personnel-page">
-      <header class="scope-personnel-head">
-        <h2>Personnel</h2>
-        <p>Annuaire nominatif. Les taux individuels restent dans la fiche.</p>
-      </header>
+    return `<div class="scope-personnel-page">
       ${personnelPeriodControlsHtml()}
       ${personnelContextBannerHtml()}
-      <div class="scope-personnel-toolbar">
-        <div class="scope-field scope-personnel-search"><label for="personnel-q">Recherche</label>
-          <input id="personnel-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personnelQuery)}">
+      <div class="scope-toolbar scope-personnel-pilot">
+        <div class="scope-field scope-personnel-search">
+          <label for="personnel-q">Recherche</label>
+          <input id="personnel-q" type="search" placeholder="Rechercher une personne…" value="${escapeHtml(state.personnelQuery)}" autocomplete="off">
         </div>
-        <div class="scope-personnel-filters">
-          <div class="scope-field"><label for="personnel-oi">OI</label>
-            ${oiFilterSelectHtml()}
-          </div>
-          <div class="scope-field"><label for="personnel-specialization">Spécialisation</label>
-            <select id="personnel-specialization">
-              <option value="">Toutes</option>
-              ${specOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelSpecialization === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
-            </select>
-          </div>
+        <div class="scope-field">
+          <label for="personnel-oi">OI / Incorporation</label>
+          ${oiFilterSelectHtml()}
         </div>
-        <div class="scope-personnel-status" role="tablist" aria-label="Statut">
-          ${statutFilters.map(([id, label]) => `<button type="button" class="scope-btn ${state.personnelStatut === id ? 'scope-btn-primary' : ''}" data-personnel-statut="${id}">${escapeHtml(label)}</button>`).join('')}
+        <div class="scope-field">
+          <label for="personnel-specialization">Spécialisation</label>
+          <select id="personnel-specialization">
+            <option value="">Toutes</option>
+            ${specOptions.map((label) => `<option value="${escapeHtml(label)}" ${state.personnelSpecialization === label ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+          </select>
         </div>
-        <div class="scope-personnel-import-action">
-          <button type="button" class="scope-btn" id="scope-open-personnel-import">Importer du personnel</button>
+        <div class="scope-field">
+          <label for="personnel-statut">Statut</label>
+          <select id="personnel-statut">
+            ${statutFilters.map(([id, label]) => `<option value="${escapeHtml(id)}" ${state.personnelStatut === id ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+          </select>
         </div>
+        <button type="button" class="scope-btn" id="scope-open-personnel-import">Importer du personnel</button>
       </div>
-      <p class="scope-personnel-count">${personnelView === 'loading' ? 'Chargement…' : (people.length + ' personne(s)')}${state.personnelSituationApplied ? ' — situation à la date' : ''}</p>
-      <div class="scope-table-wrap">
-        <table class="scope-table scope-person-table">
-          <thead><tr>${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('oi', 'OI')}${personnelSortHeader('specializations', 'SPÉCIALISATIONS')}${personnelSortHeader('actif', 'ACTIF')}${personnelSortHeader('inactif', 'INACTIF')}<th>ACTIONS</th></tr></thead>
+      <div class="scope-card scope-table-wrap scope-personnel-list-wrap">
+        <table class="scope-table scope-person-table scope-personnel-list-table">
+          <thead><tr>${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('oi', 'OI / INCORPORATION')}${personnelSortHeader('specializations', 'SPÉCIALISATION')}${personnelSortHeader('statut', 'STATUT')}${personnelSortHeader('actif', 'DATE ACTIF')}${personnelSortHeader('inactif', 'DATE INACTIF')}<th>ACTIONS</th></tr></thead>
           <tbody>
             ${peopleBody}
           </tbody>
         </table>
+        ${pagination}
       </div>
       ${renderPersonnelHistoryPanel()}
       ${renderPersonnelRowMenu()}
@@ -2887,7 +2951,7 @@
     return `
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: importMode ? 'Réglages / Importation' : 'Personnel', title: importMode ? 'Import du personnel' : 'Personnel', context: importMode ? 'Synchronisation CSV' : 'Annuaire et fiches individuelles', logo: true })}
+        ${pageHeaderHtml({ eyebrow: importMode ? 'Réglages / Importation' : 'Personnel', title: importMode ? 'Import du personnel' : 'Personnel', context: importMode ? 'Synchronisation CSV' : 'Annuaire nominatif', description: importMode ? '' : 'Annuaire nominatif. Les taux individuels restent dans la fiche.', logo: true })}
         ${''}
         ${renderPersonnelDirectory()}
         ${showImportPanel ? `<div class="scope-card" style="margin-top:12px" id="scope-personnel-import-panel">
@@ -5842,24 +5906,59 @@
     });
     const personnelSearch = document.getElementById('personnel-q');
     if (personnelSearch) {
+      personnelSearch.addEventListener('input', (e) => {
+        const el = e.target;
+        const pos = el.selectionStart;
+        state.personnelQuery = el.value;
+        state.personnelListPage = 1;
+        render();
+        const next = document.getElementById('personnel-q');
+        if (next) {
+          next.focus();
+          try { next.setSelectionRange(pos, pos); } catch (_err) {}
+        }
+      });
       personnelSearch.addEventListener('change', () => {
         state.personnelQuery = personnelSearch.value.trim();
+        state.personnelListPage = 1;
         withLoading(loadPersonnelDirectory);
       });
       personnelSearch.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
           state.personnelQuery = personnelSearch.value.trim();
+          state.personnelListPage = 1;
           withLoading(loadPersonnelDirectory);
         }
       });
     }
     document.getElementById('personnel-oi')?.addEventListener('change', (e) => {
       state.personnelOi = e.target.value;
+      state.personnelListPage = 1;
       render();
     });
     document.getElementById('personnel-specialization')?.addEventListener('change', (e) => {
       state.personnelSpecialization = e.target.value;
+      state.personnelListPage = 1;
+      render();
+    });
+    document.getElementById('personnel-statut')?.addEventListener('change', (e) => {
+      state.personnelStatut = e.target.value || 'actifs';
+      state.personnelListPage = 1;
+      withLoading(loadPersonnelDirectory);
+    });
+    document.getElementById('personnel-page-size')?.addEventListener('change', (e) => {
+      const n = Number(e.target.value);
+      state.personnelListPageSize = EVENT_LIST_PAGE_SIZES.indexOf(n) >= 0 ? n : 12;
+      state.personnelListPage = 1;
+      render();
+    });
+    document.getElementById('personnel-page-prev')?.addEventListener('click', () => {
+      state.personnelListPage = Math.max(1, (Number(state.personnelListPage) || 1) - 1);
+      render();
+    });
+    document.getElementById('personnel-page-next')?.addEventListener('click', () => {
+      state.personnelListPage = (Number(state.personnelListPage) || 1) + 1;
       render();
     });
     root.querySelectorAll('[data-personnel-sort]').forEach((th) => {
@@ -5869,6 +5968,7 @@
         state.personnelSort = display && display.nextPersonnelSort
           ? display.nextPersonnelSort(state.personnelSort, key)
           : { key, dir: state.personnelSort && state.personnelSort.key === key && state.personnelSort.dir === 'asc' ? 'desc' : 'asc' };
+        state.personnelListPage = 1;
         render();
       });
     });

@@ -3741,7 +3741,7 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-person-table tbody tr:nth-child(even) {
-  background: #d7dee8;
+  background: #f4f6f8;
 }
 
 .scope-person-table tbody tr:nth-child(odd) {
@@ -5770,6 +5770,185 @@ body.scope-pdf-open { overflow: hidden; }
   outline-offset: 2px;
 }
 
+/* === SCOPE-PERSONNEL-DESIGN-A — liste personnel === */
+.scope-personnel-pilot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--scope-space-3) var(--scope-space-4);
+  margin: 0 0 12px;
+}
+.scope-personnel-pilot .scope-personnel-search {
+  flex: 1 1 18rem;
+  min-width: 16rem;
+}
+.scope-personnel-pilot .scope-field {
+  flex: 0 1 12rem;
+  min-width: 10rem;
+}
+.scope-personnel-pilot .scope-field label {
+  white-space: nowrap;
+}
+.scope-personnel-pilot select,
+.scope-personnel-pilot input[type="search"] {
+  height: var(--scope-h-control);
+  min-height: var(--scope-h-control);
+  width: 100%;
+}
+.scope-personnel-pilot #scope-open-personnel-import {
+  white-space: nowrap;
+  height: var(--scope-h-control);
+  min-height: var(--scope-h-control);
+}
+.scope-personnel-list-wrap {
+  overflow-x: auto;
+}
+.scope-personnel-list-table {
+  table-layout: auto;
+  width: 100%;
+  min-width: 72rem;
+}
+.scope-personnel-list-table th:nth-child(1),
+.scope-personnel-list-table td:nth-child(1) { width: 5.5rem; min-width: 4.75rem; white-space: nowrap; }
+.scope-personnel-list-table th:nth-child(2),
+.scope-personnel-list-table td:nth-child(2) { width: 10rem; min-width: 8rem; }
+.scope-personnel-list-table th:nth-child(3),
+.scope-personnel-list-table td:nth-child(3) { width: 9rem; min-width: 7.5rem; }
+.scope-personnel-list-table th:nth-child(4),
+.scope-personnel-list-table td:nth-child(4) { width: 5.5rem; min-width: 4.75rem; white-space: nowrap; }
+.scope-personnel-list-table th:nth-child(5),
+.scope-personnel-list-table td:nth-child(5) { width: 10rem; min-width: 8rem; }
+.scope-personnel-list-table th:nth-child(6),
+.scope-personnel-list-table td:nth-child(6) { width: 11rem; min-width: 8rem; }
+.scope-personnel-list-table th:nth-child(7),
+.scope-personnel-list-table td:nth-child(7) { width: 6rem; min-width: 5.5rem; white-space: nowrap; }
+.scope-personnel-list-table th:nth-child(8),
+.scope-personnel-list-table td:nth-child(8),
+.scope-personnel-list-table th:nth-child(9),
+.scope-personnel-list-table td:nth-child(9) { width: 7.25rem; min-width: 6.5rem; white-space: nowrap; }
+.scope-personnel-list-table th:nth-child(10),
+.scope-personnel-list-table td:nth-child(10) {
+  width: 8.5rem;
+  min-width: 8.5rem;
+  white-space: nowrap;
+  text-align: right;
+  position: sticky;
+  right: 0;
+  z-index: 1;
+}
+.scope-personnel-list-table thead th:nth-child(10) { background: #f6f7f9; }
+.scope-personnel-list-table tbody tr:nth-child(odd) td:nth-child(10) { background: #fff; }
+.scope-personnel-list-table tbody tr:nth-child(even) td:nth-child(10) { background: #f4f6f8; }
+.scope-personnel-list-table tbody td {
+  vertical-align: middle;
+  padding: 8px 10px;
+}
+.scope-personnel-oi-main {
+  display: block;
+  font-weight: 500;
+}
+.scope-personnel-oi-secondary {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.scope-personnel-specs {
+  color: var(--scope-ink);
+  font-weight: 400;
+}
+.scope-personnel-statut {
+  color: var(--scope-ink);
+  font-weight: 500;
+}
+.scope-personnel-statut.is-inactive {
+  color: var(--scope-muted);
+  font-weight: 400;
+}
+.scope-btn.scope-personnel-list-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 5.5rem;
+  height: 32px;
+  padding: 0 10px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: visible;
+  background: #fff;
+  color: var(--scope-text);
+  border: 1px solid #2f343b;
+  border-radius: var(--scope-radius-xs);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.scope-btn.scope-personnel-list-action:hover {
+  background: #f4f5f8;
+  border-color: #2f343b;
+  color: var(--scope-text);
+}
+.scope-btn.scope-personnel-list-action:visited {
+  color: var(--scope-text);
+}
+.scope-btn.scope-personnel-list-action:focus-visible {
+  outline: 2px solid var(--scope-red);
+  outline-offset: 2px;
+}
+.scope-personnel-list-table .scope-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.scope-personnel-list-wrap .scope-pagination {
+  padding: 10px 4px 4px;
+}
+@media (max-width: 800px) {
+  .scope-personnel-pilot .scope-field,
+  .scope-personnel-pilot .scope-personnel-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .scope-personnel-list-table thead {
+    display: table-header-group;
+  }
+  .scope-personnel-list-table,
+  .scope-personnel-list-table tbody,
+  .scope-personnel-list-table tr,
+  .scope-personnel-list-table td,
+  .scope-personnel-list-table th {
+    display: revert;
+    width: auto;
+  }
+  .scope-personnel-list-table {
+    display: table;
+    width: 100%;
+  }
+  .scope-personnel-list-table tbody { display: table-row-group; }
+  .scope-personnel-list-table tr {
+    display: table-row;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    margin: 0;
+    padding: 0;
+  }
+  .scope-personnel-list-table td {
+    display: table-cell;
+    border: 0;
+  }
+  .scope-personnel-list-table td::before { content: none; }
+  .scope-btn.scope-personnel-list-action {
+    min-height: 32px;
+    height: 32px;
+  }
+}
+
 /* UX-CLEANUP-1 — remaining inline styles in scope-ui.js (~95). This lot did not migrate page titles, report KPI blocks, or form margin-top helpers. */
-/* Legacy divergences kept on purpose: .scope-person-table zebra #d7dee8; .scope-chips / .scope-import-pill / .scope-status-pill / .scope-mode-pill 999px; table-as-card @media 800px except .scope-event-saisie; personnel filters still use .scope-btn-primary when selected. */
+/* Legacy divergences kept on purpose: .scope-chips / .scope-import-pill / .scope-status-pill / .scope-mode-pill 999px; table-as-card @media 800px except .scope-event-saisie. */
 /* === /UX-DS-1 === */

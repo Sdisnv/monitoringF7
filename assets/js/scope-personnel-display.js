@@ -786,7 +786,9 @@
   function personMatchesQuery(person, query){
     const q = clean(query).toLowerCase();
     if(!q) return true;
-    const hay = [person.nip, person.nom, person.prenom].map((v) => clean(v).toLowerCase());
+    const oi = primaryOperationalOiLabel(person);
+    const specs = formatSpecializations(personAssignments(person)).text;
+    const hay = [person.nip, person.nom, person.prenom, person.grade, oi, specs].map((v) => clean(v).toLowerCase());
     return hay.some((value) => value.indexOf(q) !== -1);
   }
 
@@ -900,17 +902,55 @@
     }
     const factor = dir === 'desc' ? -1 : 1;
     list.sort((a, b) => {
-      let cmp = 0;
-      if(key === 'nip') cmp = compareNip(a.nip, b.nip);
-      else if(key === 'grade') cmp = compareGrade(a.grade, b.grade);
-      else if(key === 'nom') cmp = comparePersonnelIdentity(a, b);
-      else if(key === 'prenom') cmp = FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom)) || FR_COLLATOR.compare(clean(a.nom), clean(b.nom)) || compareGrade(a.grade, b.grade) || compareNip(a.nip, b.nip);
-      else if(key === 'oi') cmp = compareOiLabel(primaryOperationalOiLabel(a), primaryOperationalOiLabel(b));
-      else if(key === 'specializations') cmp = compareSpecializationKey(specializationSortKey(a), specializationSortKey(b));
-      else if(key === 'actif') cmp = String(personnelDateSortValue(a.dateActif || a.date_actif)).localeCompare(String(personnelDateSortValue(b.dateActif || b.date_actif)));
-      else if(key === 'inactif') cmp = String(personnelDateSortValue(a.dateInactif || a.date_inactif)).localeCompare(String(personnelDateSortValue(b.dateInactif || b.date_inactif)));
-      else cmp = comparePersonnelIdentity(a, b);
-      if(cmp) return cmp * factor;
+      if(key === 'nip'){
+        const cmp = compareNip(a.nip, b.nip);
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
+      if(key === 'grade'){
+        const cmp = compareGrade(a.grade, b.grade);
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
+      if(key === 'nom'){
+        const cmp = FR_COLLATOR.compare(clean(a.nom), clean(b.nom));
+        if(cmp) return cmp * factor;
+        return FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom))
+          || compareGrade(a.grade, b.grade)
+          || compareNip(a.nip, b.nip);
+      }
+      if(key === 'prenom'){
+        const cmp = FR_COLLATOR.compare(clean(a.prenom), clean(b.prenom));
+        if(cmp) return cmp * factor;
+        return FR_COLLATOR.compare(clean(a.nom), clean(b.nom))
+          || compareGrade(a.grade, b.grade)
+          || compareNip(a.nip, b.nip);
+      }
+      if(key === 'oi'){
+        const cmp = compareOiLabel(primaryOperationalOiLabel(a), primaryOperationalOiLabel(b));
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
+      if(key === 'specializations'){
+        const cmp = compareSpecializationKey(specializationSortKey(a), specializationSortKey(b));
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
+      if(key === 'statut'){
+        const cmp = FR_COLLATOR.compare(personTemporalStatut(a), personTemporalStatut(b));
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
+      if(key === 'actif'){
+        const cmp = String(personnelDateSortValue(a.dateActif || a.date_actif)).localeCompare(String(personnelDateSortValue(b.dateActif || b.date_actif)));
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
+      if(key === 'inactif'){
+        const cmp = String(personnelDateSortValue(a.dateInactif || a.date_inactif)).localeCompare(String(personnelDateSortValue(b.dateInactif || b.date_inactif)));
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
       return comparePersonnelIdentity(a, b);
     });
     return list;
