@@ -65,7 +65,7 @@ function persistInactivation(source, effectDate){
 
 const year2025 = temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2025' });
 const year2026 = temporal.resolveAnalyzedPeriod({ preset: 'YEAR', year: '2026' });
-const officialAsc = ['Civ','JSP','Flm 1','Flm 2','Flm 3','Rec','Sap','App','Cpl','Sgt','Sgt instr','Sgt chef','Sgt chef instr','Sgtm','Four','Adj','Lt','Lt instr','Plt','Plt instr','Of spéc','Cap','Cap instr','Cap adj','Maj','Maj instr'];
+const officialAsc = ['Civ','Rec','Flm 3','Flm 2','Flm 1','JSP','Sap','App','Cpl','Sgt','Sgt instr','Sgt chef','Sgt chef instr','Sgtm','Four','Adj','Lt','Lt instr','Plt','Plt instr','Of spéc','Cap','Cap instr','Cap adj','Maj','Maj instr'];
 
 // TEMP-01 Date PostgreSQL (UTC midnight) → normalisation
 assert.strictEqual(temporal.iso(new Date('2026-01-01T00:00:00.000Z')), '2026-01-01');
@@ -186,12 +186,12 @@ assert.strictEqual(temporal.appliesToFrozenEventPopulation({ populationFigee: tr
 // TEMP-12 / TEMP-13 / TEMP-14 grades
 assert.deepStrictEqual(refs.GRADE_CODES_ASC.slice(), officialAsc);
 assert.strictEqual(officialAsc.slice().sort((a,b) => refs.compareGrades(b,a))[0], 'Maj instr');
-assert.ok(refs.compareGrades('Flm 3', 'Rec') < 0);
-assert.ok(refs.compareGrades('Civ', 'JSP') < 0);
-assert.ok(refs.compareGrades('JSP', 'Flm 1') < 0);
-assert.ok(refs.compareGrades('Flm 1', 'Flm 2') < 0);
-assert.ok(refs.compareGrades('Flm 2', 'Flm 3') < 0);
-assert.ok(refs.compareGrades('Flm 3', 'Rec') < 0);
+assert.ok(refs.compareGrades('Rec', 'Flm 3') < 0);
+assert.ok(refs.compareGrades('Flm 3', 'Flm 2') < 0);
+assert.ok(refs.compareGrades('Flm 2', 'Flm 1') < 0);
+assert.ok(refs.compareGrades('Flm 1', 'JSP') < 0);
+assert.ok(refs.compareGrades('JSP', 'Sap') < 0);
+assert.ok(refs.compareGrades('Civ', 'Rec') < 0);
 assert.ok(refs.compareGrades('Inconnu', 'Maj instr') > 0);
 
 const gradeRows = officialAsc.map((grade, i) => person([], { nip: String(i+1), grade }));

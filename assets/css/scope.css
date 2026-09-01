@@ -2686,7 +2686,7 @@ html, body {
 .scope-enc-person {
   min-width: 0;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 24px;
   gap: 2px 6px;
   align-items: center;
   padding: 4px 6px;
@@ -4591,7 +4591,7 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-enc-person {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   padding: 4px 0;
 }
 
@@ -5320,7 +5320,7 @@ body.scope-pdf-open { overflow: hidden; }
   min-height: 36px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--scope-border);
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) 24px;
   align-items: center;
 }
 
@@ -5466,6 +5466,135 @@ body.scope-pdf-open { overflow: hidden; }
 @media (min-width: 1200px) {
   .scope-kpi-unit {
     flex: 1 1 140px;
+  }
+}
+
+/* === SCOPE-EVENT-DESIGN-C — saisie / réalisé / encadrement === */
+.scope-section-heading {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--scope-ink);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.scope-section-header .scope-section-heading {
+  margin-bottom: 0;
+}
+.scope-presence-section,
+.scope-encadrement-block {
+  background: #fff;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  box-shadow: var(--scope-shadow-sm);
+  padding: 16px 18px 18px;
+}
+.scope-encadrement-block {
+  margin-top: 4px;
+}
+.scope-realise-pilot.scope-toolbar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.5fr) repeat(4, minmax(7.25rem, 0.7fr));
+  gap: 10px;
+  align-items: end;
+  margin: 0 0 12px;
+}
+.scope-realise-pilot.scope-toolbar .scope-btn {
+  white-space: nowrap;
+  height: var(--scope-h-control);
+}
+.scope-realise-pilot select,
+.scope-realise-pilot input,
+.scope-enc-toolbar select,
+.scope-enc-toolbar input {
+  height: var(--scope-h-control);
+  min-height: var(--scope-h-control);
+  width: 100%;
+}
+.scope-saisie-toolbar,
+.scope-realise-toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scope-saisie-toolbar .scope-btn,
+.scope-realise-toolbar .scope-btn {
+  white-space: nowrap;
+  overflow: visible;
+}
+.scope-kpi-grid.scope-saisie-kpis,
+.scope-event-saisie .scope-kpi-grid,
+.scope-event-realise .scope-kpi-grid {
+  gap: 10px;
+  margin: 0 0 4px;
+}
+.scope-enc-toolbar.scope-toolbar {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 0.7fr) minmax(14rem, 1.6fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 0 0 12px;
+}
+.scope-enc-id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.scope-enc-person .scope-enc-name,
+.scope-enc-person .scope-enc-nip {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.scope-enc-person .scope-enc-nip {
+  white-space: nowrap;
+  font-weight: 400;
+}
+.scope-btn.scope-realise-fiche-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 5.5rem;
+  height: 32px;
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: visible;
+}
+.scope-realise-table th:last-child,
+.scope-realise-table td:last-child {
+  white-space: nowrap;
+  text-align: right;
+  position: sticky;
+  right: 0;
+  background: #fff;
+  z-index: 1;
+}
+.scope-realise-table tbody tr:nth-child(even) td:last-child {
+  background: var(--scope-gray-50);
+}
+
+@media (max-width: 1023px) {
+  .scope-realise-pilot.scope-toolbar {
+    grid-template-columns: minmax(10rem, 1fr) minmax(7.5rem, 0.7fr) minmax(7.5rem, 0.7fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .scope-realise-pilot.scope-toolbar,
+  .scope-enc-toolbar.scope-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .scope-enc-person .scope-enc-name {
+    white-space: normal;
+  }
+  .scope-saisie-toolbar .scope-btn,
+  .scope-realise-toolbar .scope-btn,
+  .scope-btn.scope-realise-fiche-action {
+    white-space: nowrap;
+    width: auto;
+    max-width: 100%;
   }
 }
 

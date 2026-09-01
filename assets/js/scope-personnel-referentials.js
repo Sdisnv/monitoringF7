@@ -31,17 +31,22 @@
   ]);
 
   const JSP_GRADES = Object.freeze([
-    { code: 'JSP', libelle: 'JSP', rang: 101, famille: 'JSP' },
-    { code: 'Flm 1', libelle: 'Flamme 1', rang: 102, famille: 'JSP' },
-    { code: 'Flm 2', libelle: 'Flamme 2', rang: 103, famille: 'JSP' },
-    { code: 'Flm 3', libelle: 'Flamme 3', rang: 104, famille: 'JSP' }
+    { code: 'Flm 3', libelle: 'Flamme 3', famille: 'JSP' },
+    { code: 'Flm 2', libelle: 'Flamme 2', famille: 'JSP' },
+    { code: 'Flm 1', libelle: 'Flamme 1', famille: 'JSP' },
+    { code: 'JSP', libelle: 'JSP', famille: 'JSP' }
   ]);
 
   const CIVIL_GRADES = Object.freeze([
-    { code: 'Civ', libelle: 'Civil', rang: 201, famille: 'CIVIL' }
+    { code: 'Civ', libelle: 'Civil', famille: 'CIVIL' }
   ]);
 
-  const GRADES = Object.freeze(CIVIL_GRADES.concat(JSP_GRADES, SDIS_GRADES));
+  const GRADE_SEQUENCE = CIVIL_GRADES.concat(
+    SDIS_GRADES.slice(0, 1),
+    JSP_GRADES,
+    SDIS_GRADES.slice(1)
+  );
+  const GRADES = Object.freeze(GRADE_SEQUENCE.map((row, index) => Object.freeze(Object.assign({}, row, { rang: index }))));
   const GRADE_CODES_ASC = Object.freeze(GRADES.map((row) => row.code));
   const UNKNOWN_GRADE_BASE = 1000;
   const FR = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });

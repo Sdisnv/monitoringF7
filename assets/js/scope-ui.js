@@ -687,18 +687,29 @@
   }
 
   function personLine(person) {
-    return [person.grade, person.nom, person.prenom].filter(Boolean).join(' ') || person.nip || 'Personne';
+    return eventPersonLabel(person);
   }
 
   function eventPersonLabel(person) {
-    return [person.grade, person.prenom, person.nomFamille || person.nom].filter(Boolean).join(' ') || person.nip || 'Personne';
+    if (!person) return 'Personne';
+    return [person.grade, person.nomFamille || person.nom, person.prenom].filter(Boolean).join(' ') || person.nip || 'Personne';
   }
 
   function gradeRank(value) {
     const ref = window.ScopePersonnelReferentials;
+    if (ref && typeof ref.gradeRank === 'function') return ref.gradeRank(value);
     const code = ref && ref.canonicalGradeCode ? ref.canonicalGradeCode(value) : String(value || '').trim();
     const row = ref && Array.isArray(ref.GRADES) ? ref.GRADES.find((item) => item.code === code) : null;
-    return row ? Number(row.rang) : -1;
+    return row ? Number(row.rang) : 1000;
+  }
+
+  function displayIncorporation(value, domaineCode) {
+    const raw = String(value || '').trim();
+    if (!raw || raw === '—') return raw;
+    if (/^(DPS|DAP|JSP|FOBA|FOCA|FOSPEC|PAPR|AUTO)\b/i.test(raw)) return raw;
+    const domaine = String(domaineCode || '').toUpperCase();
+    if (domaine === 'JSP' && /^(G1|C1|B1)$/i.test(raw)) return `JSP ${raw.toUpperCase()}`;
+    return raw;
   }
 
   function encadrementGroupOrder() {
@@ -743,8 +754,10 @@
           const label = eventPersonLabel(p);
           const remove = readOnly ? '' : `<button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(L.ROLE_LABELS[role] || role)} ${escapeHtml(label)}">${trashIcon()}</button>`;
           return `<div class="scope-enc-person">
-            <span class="scope-enc-name">${escapeHtml(label)}</span>
-            <small class="scope-enc-nip">${p.nip ? `NIP ${escapeHtml(p.nip)}` : ''}</small>
+            <div class="scope-enc-id">
+              <span class="scope-enc-name">${escapeHtml(label)}</span>
+              <small class="scope-enc-nip">${p.nip ? `NIP ${escapeHtml(p.nip)}` : ''}</small>
+            </div>
             ${remove}
           </div>`;
         }).join('')}</div>
@@ -793,8 +806,12 @@
   function sortPeopleForEncadrement(rows) {
     const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
     return (rows || []).slice().sort((a, b) => {
-      const ra = gradeRank(a.grade);
-      const rb = gradeRank(b.grade);
+      const rankOf = (value) => {
+        const r = gradeRank(value);
+        return r >= 1000 ? -1 : r;
+      };
+      const ra = rankOf(a.grade);
+      const rb = rankOf(b.grade);
       let grade = 0;
       if (ra >= 0 && rb >= 0 && ra !== rb) grade = rb - ra;
       else if (ra >= 0 && rb < 0) grade = -1;
@@ -3734,25 +3751,19 @@
         ${eventIdentityBand(ev, fiche)}
         ${renderPresenceKpis(niveaux, fiche)}
         ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
-        <div class="scope-actions scope-event-toolbar">
+        <div class="scope-actions scope-event-toolbar scope-saisie-toolbar">
           <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present">Tous présents</button>
           <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
-          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="reset-saisie">Réinitialiser la saisie</button>
-          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
-        </div>
-          <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
-          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present">Tous présents</button>
-          <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
-          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="reset-saisie">Réinitialiser la saisie</button>
-          <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie">Réinitialiser la saisie</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
         </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
         ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
         ${renderEncadrementBlock()}
         <section class="scope-presence-section">
           <div class="scope-section-header">
-            <h2 class="scope-section-title">Présences</h2>
+            <h2 class="scope-section-heading">Présences</h2>
             <p class="scope-saisie-open" role="status">${escapeHtml(String(openCount))} présence${openCount === 1 ? '' : 's'} à renseigner</p>
           </div>
           <div class="scope-presence-toolbar">
@@ -3836,7 +3847,7 @@
       { label: 'Absents', value: c.absent },
       showDispense ? { label: 'Dispensés', value: c.dispense } : null,
       { label: 'À renseigner', value: c.open, emphasis: Number(c.open) > 0 }
-    ], 'Compteurs de présence');
+    ], 'Compteurs de présence').replace('<div class="scope-kpi-grid"', '<div class="scope-kpi-grid scope-saisie-kpis"');
   }
 
   function sortSaisieRows(rows) {
@@ -3854,6 +3865,7 @@
       { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [
         { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom) },
         { key: 'prenom', type: 'text', value: (row) => row && row.prenom },
+        { key: 'oi', type: 'text', value: (row) => row && row.cible },
         { key: 'nip', type: 'text', value: (row) => row && row.nip }
       ] },
       { key: 'nip', type: 'text', value: (row) => row && row.nip },
@@ -3894,18 +3906,21 @@
     return `
       <section class="scope-encadrement-block">
         <div class="scope-section-header">
-          <h2 class="scope-section-title">Encadrement</h2>
+          <h2 class="scope-section-heading">Encadrement</h2>
         </div>
-        <div class="scope-enc-toolbar">
-          <label class="visually-hidden" for="enc-role">Rôle d’encadrement</label>
-          <select id="enc-role" class="scope-field is-compact scope-enc-role" aria-label="Rôle d’encadrement">
-            <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
-            <option value="MONITEUR" ${state.encRole === 'MONITEUR' ? 'selected' : ''}>Moniteur</option>
-            <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
-            <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
-          </select>
-          <div class="scope-lookup-field scope-person-lookup">
-            <input id="enc-q" class="scope-field is-compact" type="search" placeholder="Rechercher nom, prénom ou NIP..." value="${escapeHtml(state.encQuery)}" autocomplete="off">
+        <div class="scope-toolbar scope-enc-toolbar">
+          <div class="scope-field">
+            <label for="enc-role">Rôle</label>
+            <select id="enc-role" class="scope-enc-role" aria-label="Rôle d’encadrement">
+              <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
+              <option value="MONITEUR" ${state.encRole === 'MONITEUR' ? 'selected' : ''}>Moniteur</option>
+              <option value="SURVEILLANT" ${state.encRole === 'SURVEILLANT' ? 'selected' : ''}>Surveillant</option>
+              <option value="AUXILIAIRE" ${state.encRole === 'AUXILIAIRE' ? 'selected' : ''}>Auxiliaire</option>
+            </select>
+          </div>
+          <div class="scope-field scope-lookup-field scope-person-lookup">
+            <label for="enc-q">Recherche</label>
+            <input id="enc-q" type="search" placeholder="Rechercher nom, prénom ou NIP..." value="${escapeHtml(state.encQuery)}" autocomplete="off">
             <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
           </div>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add">Ajouter</button>
@@ -3917,6 +3932,7 @@
           </button>` : ''}
         </div>
         ${renderEncadrementGroups(fiche, { readOnly: false, byRole, roles, encCount })}
+        <p class="scope-fiche-tech-note">L’encadrement est affiché séparément de l’effectif participant selon les règles du domaine.</p>
       </section>
     `;
   }
@@ -4017,7 +4033,7 @@
             ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'presence', 'Statut', state.eventPersonnelSort)}
-            <th>Motif / information</th>
+            <th>Informations</th>
           </tr></thead>
           <tbody>
             ${rows.map((row) => {
@@ -4033,7 +4049,7 @@
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
               <td data-label="Personne"><div class="scope-saisie-identity"><span class="scope-saisie-person">${escapeHtml(personLabel || row.nom)}</span>${role}${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</div></td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
-              <td data-label="Cible">${escapeHtml(row.cible)}</td>
+              <td data-label="Cible">${escapeHtml(displayIncorporation(row.cible, domaine))}</td>
               <td data-label="Statut">
                 <div class="scope-status-cluster">
                   <div class="scope-status-row scope-segmented scope-status-control-group" role="radiogroup" aria-label="Statut de participation">
@@ -4046,7 +4062,7 @@
                   ${motifControl(row)}
                 </div>
               </td>
-              <td data-label="Motif / information" class="scope-justificatif-cell">${justificatifCell(row)}</td>
+              <td data-label="Informations" class="scope-justificatif-cell">${justificatifCell(row)}</td>
             </tr>`;
             }).join('')}
           </tbody>
@@ -4086,6 +4102,7 @@
       { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [
         { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom) },
         { key: 'prenom', type: 'text', value: (row) => row && row.prenom },
+        { key: 'oi', type: 'text', value: (row) => row && row.cible },
         { key: 'nip', type: 'text', value: (row) => row && row.nip }
       ] },
       { key: 'nom', type: 'text', value: (row) => row && (row.nomFamille || row.nom), tieBreakers: [
@@ -4113,11 +4130,11 @@
   }
 
   function renderRealiseToolbar(ev) {
-    return `<div class="scope-actions scope-event-toolbar">
+    return `<div class="scope-actions scope-event-toolbar scope-realise-toolbar">
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="reopen">Réouvrir</button>
       ${reportButton(ev.evenement_id)}
-      <button type="button" class="scope-btn scope-btn-danger scope-btn-compact" id="cancel-event">Annuler l’événement</button>
+      <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler l’événement</button>
     </div>`;
   }
 
@@ -4135,8 +4152,9 @@
       byRole.get(role).push(p);
     });
     return `<section class="scope-encadrement-block is-readonly">
-      <div class="scope-section-header"><h2 class="scope-section-title">Encadrement</h2></div>
+      <div class="scope-section-header"><h2 class="scope-section-heading">Encadrement</h2></div>
       ${renderEncadrementGroups(fiche, { readOnly: true, byRole, roles: encadrementRolesForEvent(fiche), encCount })}
+      <p class="scope-fiche-tech-note">L’encadrement est affiché séparément de l’effectif participant selon les règles du domaine.</p>
     </section>`;
   }
 
@@ -4197,35 +4215,51 @@
     const cibles = uniqueFilterValues(rows, (row) => row.cible);
     const statuts = uniqueFilterValues(rows, (row) => row.statut);
     const filtersActive = Boolean(state.realiseQuery || state.realiseGrade || state.realiseOi || state.realiseCible || state.realiseStatut);
+    const domaineCode = ev.domaine_code || ev.domaineCode;
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev)}
-        <section class="scope-presence-section">
+        <section class="scope-presence-section scope-realise-participants">
           <div class="scope-section-header">
-            <h2 class="scope-section-title">Liste nominative</h2>
+            <h2 class="scope-section-heading">Participants</h2>
           </div>
-          <div class="scope-realise-filters">
-            <input id="realise-q" class="scope-field is-compact" type="search" placeholder="Recherche nom, prénom ou NIP" value="${escapeHtml(state.realiseQuery)}" autocomplete="off">
-            <select id="realise-grade" class="scope-field is-compact" aria-label="Filtrer par grade">
-              <option value="">Grade</option>
-              ${grades.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseGrade === g ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('')}
-            </select>
-            <select id="realise-oi" class="scope-field is-compact" aria-label="Filtrer par OI">
-              <option value="">OI</option>
-              ${cibles.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseOi === g ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('')}
-            </select>
-            <select id="realise-cible" class="scope-field is-compact" aria-label="Filtrer par cible">
-              <option value="">Cible</option>
-              ${cibles.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseCible === g ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('')}
-            </select>
-            <select id="realise-statut" class="scope-field is-compact" aria-label="Filtrer par statut">
-              <option value="">Statut</option>
-              ${statuts.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseStatut === g ? 'selected' : ''}>${escapeHtml(realiseStatutLabel({ statut: g }))}</option>`).join('')}
-            </select>
-            ${filtersActive ? '<button type="button" class="scope-btn scope-btn-tertiary scope-btn-compact" id="realise-filters-reset">Réinitialiser les filtres</button>' : ''}
+          <div class="scope-toolbar scope-realise-pilot">
+            <div class="scope-field">
+              <label for="realise-q">Recherche</label>
+              <input id="realise-q" type="search" placeholder="Rechercher une personne…" value="${escapeHtml(state.realiseQuery)}" autocomplete="off">
+            </div>
+            <div class="scope-field">
+              <label for="realise-grade">Grade</label>
+              <select id="realise-grade">
+                <option value="">Tous</option>
+                ${grades.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseGrade === g ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="scope-field">
+              <label for="realise-oi">Incorporation</label>
+              <select id="realise-oi">
+                <option value="">Toutes</option>
+                ${cibles.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseOi === g ? 'selected' : ''}>${escapeHtml(displayIncorporation(g, domaineCode))}</option>`).join('')}
+              </select>
+            </div>
+            <div class="scope-field">
+              <label for="realise-cible">Cible</label>
+              <select id="realise-cible">
+                <option value="">Toutes</option>
+                ${cibles.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseCible === g ? 'selected' : ''}>${escapeHtml(displayIncorporation(g, domaineCode))}</option>`).join('')}
+              </select>
+            </div>
+            <div class="scope-field">
+              <label for="realise-statut">Statut</label>
+              <select id="realise-statut">
+                <option value="">Tous</option>
+                ${statuts.map((g) => `<option value="${escapeHtml(g)}" ${state.realiseStatut === g ? 'selected' : ''}>${escapeHtml(realiseStatutLabel({ statut: g }))}</option>`).join('')}
+              </select>
+            </div>
+            ${filtersActive ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="realise-filters-reset">Réinitialiser les filtres</button>' : ''}
           </div>
           ${filtered.length ? `<div class="scope-table-scroll"><table class="scope-table scope-realise-table">
             <thead><tr>
@@ -4233,10 +4267,10 @@
               ${sortableHeader('event-realise', 'nom', 'Nom', state.realiseSort)}
               ${sortableHeader('event-realise', 'prenom', 'Prénom', state.realiseSort)}
               ${sortableHeader('event-realise', 'nip', 'NIP', state.realiseSort)}
-              ${sortableHeader('event-realise', 'oi', 'OI / incorporation', state.realiseSort)}
-              ${sortableHeader('event-realise', 'cible', 'Cible / spécialisation', state.realiseSort)}
+              ${sortableHeader('event-realise', 'oi', 'Incorporation', state.realiseSort)}
+              ${sortableHeader('event-realise', 'cible', 'Cible', state.realiseSort)}
               ${sortableHeader('event-realise', 'statut', 'Statut', state.realiseSort)}
-              <th>Motif / information</th>
+              <th>Informations</th>
               <th>Action</th>
             </tr></thead>
             <tbody>
@@ -4245,11 +4279,11 @@
                 <td data-label="Nom">${escapeHtml(r.nomFamille || r.nom || '')}</td>
                 <td data-label="Prénom">${escapeHtml(r.prenom || '')}</td>
                 <td data-label="NIP">${escapeHtml(r.nip || '')}</td>
-                <td data-label="OI / incorporation">${escapeHtml(r.cible && r.cible !== '—' ? r.cible : '')}</td>
-                <td data-label="Cible / spécialisation">${escapeHtml(r.cible && r.cible !== '—' ? r.cible : '')}</td>
+                <td data-label="Incorporation">${escapeHtml(displayIncorporation(r.cible && r.cible !== '—' ? r.cible : '', domaineCode))}</td>
+                <td data-label="Cible">${escapeHtml(displayIncorporation(r.cible && r.cible !== '—' ? r.cible : '', domaineCode))}</td>
                 <td data-label="Statut">${escapeHtml(realiseStatutLabel(r))}</td>
-                <td data-label="Motif / information">${escapeHtml(r.statut === 'ABSENT_EXCUSE' ? ((L.motifsForRow ? L.motifsForRow(r) : L.MOTIFS).find((m) => m.value === r.motifAbsence) || { label: r.motifAbsence || '' }).label : '')}</td>
-                <td data-label="Action">${canReadPersonnel() && r.personneId ? `<a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/personnel/${escapeHtml(r.personneId)}">Fiche</a>` : ''}</td>
+                <td data-label="Informations">${escapeHtml(r.statut === 'ABSENT_EXCUSE' ? ((L.motifsForRow ? L.motifsForRow(r) : L.MOTIFS).find((m) => m.value === r.motifAbsence) || { label: r.motifAbsence || '' }).label : '')}</td>
+                <td data-label="Action">${canReadPersonnel() && r.personneId ? `<a class="scope-btn scope-btn-secondary scope-btn-compact scope-realise-fiche-action" href="#/personnel/${escapeHtml(r.personneId)}">Fiche</a>` : ''}</td>
               </tr>`).join('')}
             </tbody>
           </table></div>` : `<div class="scope-empty">${escapeHtml(L.emptyMessage('resultats'))}</div>`}
