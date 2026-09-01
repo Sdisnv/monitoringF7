@@ -119,7 +119,7 @@ grep -q "scope-sidebar" assets/js/scope-ui.js
 grep -q "scope-select-control" assets/js/scope-ui.js
 grep -q "Dont permutations" assets/js/scope-ui.js
 grep -q "Comprendre ce chiffre" assets/js/scope-ui.js
-grep -q "height: 83px" assets/css/scope.css
+grep -q "height: 48px" assets/css/scope.css
 grep -q "SCOPE-GRAPH-1" netlify/functions/_scope-graphs.js
 grep -q "/analytics/graphs" netlify/functions/scope.js
 grep -q "scope-charts.js" scope.html

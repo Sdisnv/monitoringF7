@@ -117,8 +117,8 @@ record('08 — rapport: Grade, tri, encadrement groupé', () => {
 });
 
 record('09 — cache et suite', () => {
-  assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3'));
-  assert.ok(html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
+  assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-2') || html.includes('assets/css/scope.css?v=scope-ux-event-3') || html.includes('assets/css/scope.css?v=scope-design-2'));
+  assert.ok(html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3') || html.includes('scope-ui.js?v=scope-design-2'));
   assert.ok(pkg.includes('scope-ux-event-2-tests.js'));
 });
 

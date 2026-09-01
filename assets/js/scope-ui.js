@@ -232,8 +232,18 @@
   };
   window.ScopeFeedback = ScopeFeedback;
 
+  function presentFriendlyError(info) {
+    if (info && info.okta) {
+      return Object.assign({}, info, {
+        title: 'Connexion requise',
+        message: 'Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.'
+      });
+    }
+    return info;
+  }
+
   function friendlyActionError(error) {
-    const info = L.friendlyError(error);
+    const info = presentFriendlyError(L.friendlyError(error));
     state.conflict = Boolean(info.conflict);
     if (info.okta) state.needOkta = true;
     return info;
@@ -266,7 +276,7 @@
     try {
       await fn();
     } catch (error) {
-      const info = L.friendlyError(error);
+      const info = presentFriendlyError(L.friendlyError(error));
       state.conflict = Boolean(info.conflict);
       if (info.okta) state.needOkta = true;
       toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors, okta: info.okta });
@@ -899,12 +909,17 @@
     return permissions.includes(permission);
   }
 
+  function periodRangeText(period) {
+    const from = (period && period.from) || state.from;
+    const to = (period && period.to) || state.to;
+    return `${L.formatDate(from)} → ${L.formatDate(to)}`;
+  }
+
   function periodContextHtml() {
     return `<section class="scope-period-context" aria-label="Période analysée">
       <div>
         <span>Période analysée</span>
-        <strong>${escapeHtml(periodLabel({ preset: state.preset, from: state.from, to: state.to }))}</strong>
-        <em class="scope-period-range">${escapeHtml((window.ScopePersonnelTemporal && window.ScopePersonnelTemporal.periodLabel({ preset: state.preset, year: state.year, month: state.month, quarter: state.quarter, from: state.from, to: state.to })) || '')}</em>
+        <strong>${escapeHtml(periodRangeText({ from: state.from, to: state.to }))}</strong>
       </div>
       <div class="scope-period-controls">
         ${periodSelect('scope-preset', `
@@ -917,6 +932,7 @@
         ${state.preset === 'QUARTER' ? periodSelect('scope-quarter', [1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')) : ''}
         ${state.preset === 'MONTH' ? periodSelect('scope-month', ['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')) : ''}
         ${state.preset === 'CUSTOM' ? `<label class="scope-period-date">Du <input id="scope-from" type="date" value="${escapeHtml(state.from)}"></label><label class="scope-period-date">Au <input id="scope-to" type="date" value="${escapeHtml(state.to)}"></label>` : ''}
+        <label class="scope-qual-toggle" for="scope-include-qual">Inclure les données de qualification</label>
       </div>
     </section>`;
   }
@@ -926,6 +942,20 @@
       <span class="visually-hidden">${id === 'scope-preset' ? 'Type de période' : id === 'scope-year' ? 'Année' : id === 'scope-quarter' ? 'Trimestre' : 'Mois'}</span>
       <select id="${id}" class="scope-select-control">${optionsHtml}</select>
     </label>`;
+  }
+
+  function navIcon(name) {
+    const paths = {
+      home: '<path d="M3 10.5 12 3l9 7.5V21H14V14H10v7H3Z"/>',
+      events: '<rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+      cycles: '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/>',
+      stats: '<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
+      people: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M21.5 20c0-2.5-1.8-4-4.5-4"/>',
+      report: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
+      folder: '<path d="M3 7.5 5.5 5h5l2 2.5H21v12H3Z"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3V21M4.8 6.5l1.6 1.6M17.6 16l1.6 1.6M3.5 12h2.2M18.3 12H21M4.8 17.5l1.6-1.6M17.6 8l1.6-1.6"/>'
+    };
+    return `<svg class="scope-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${paths[name] || paths.folder}</svg>`;
   }
 
   function closeNav() {
@@ -938,13 +968,13 @@
       L.normalizeNavArbre(state.referentiels.arbre, state.referentiels.domaines, state.referentiels.cibles),
       r
     );
-    const link = (item, currentPage) => `<a class="scope-nav-link" href="${item.href}" ${currentPage ? 'aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`;
+    const link = (item, currentPage) => `<a class="scope-nav-link" href="${item.href}" ${currentPage ? 'aria-current="page"' : ''}>${item.icon ? navIcon(item.icon) : ''}<span>${escapeHtml(item.label)}</span></a>`;
     const navSubsection = (label, items) => items.length ? `<div class="scope-nav-subsection">
       <p>${escapeHtml(label)}</p>
       ${items.map((item) => link(item, item.current)).join('')}
     </div>` : '';
     const section = (label) => `<p class="scope-nav-section">${escapeHtml(label)}</p>`;
-    const primaryLink = (href, label, current) => link({ href, label }, current);
+    const primaryLink = (href, label, current, icon) => link({ href, label, icon }, current);
     const reglagesOpen = state.openGroups.reglages === true || r.nav === 'reglages';
     const domainBlocks = model.domains.map((d) => {
       const expanded = state.openGroups[d.id] != null ? state.openGroups[d.id] : d.expanded;
@@ -952,6 +982,7 @@
       const overview = `<a class="scope-nav-link" href="${d.href}" ${isCurrent ? 'aria-current="page"' : ''}>Vue d’ensemble</a>`;
       return `<div class="scope-nav-group${expanded ? '' : ' is-collapsed'}">
         <button type="button" class="scope-nav-group-head${isCurrent ? ' is-current' : ''}" data-nav-group="${escapeHtml(d.id)}" aria-expanded="${expanded ? 'true' : 'false'}">
+          ${navIcon('folder')}
           <span>${escapeHtml(d.label)}</span>
         </button>
         <div class="scope-nav-sub">${overview}${d.children.map((c) => {
@@ -976,6 +1007,7 @@
           ${section('Réglages')}
           <div class="scope-nav-group${reglagesOpen ? '' : ' is-collapsed'}">
             <button type="button" class="scope-nav-group-head${r.nav === 'reglages' ? ' is-current' : ''}" data-nav-group="reglages" aria-expanded="${reglagesOpen ? 'true' : 'false'}">
+              ${navIcon('settings')}
               <span>Réglages</span>
             </button>
             <div class="scope-nav-sub">
@@ -994,13 +1026,13 @@
         </div>
         <nav class="scope-nav-scroll">
           ${section('Accueil')}
-          ${primaryLink('#/accueil', 'Accueil', r.screen === 'accueil')}
+          ${primaryLink('#/accueil', 'Accueil', r.screen === 'accueil', 'home')}
           ${section('Activité')}
-          ${primaryLink('#/evenements', 'Événements', r.nav === 'exercices')}
-          ${primaryLink('#/cycles', 'Cycles', r.nav === 'cycles')}
-          ${primaryLink('#/statistiques', 'Statistiques', r.screen === 'statistiques')}
-          ${hasScopePermission('personnel:read') ? primaryLink('#/personnel', 'Personnel', r.nav === 'personnel') : ''}
-          ${primaryLink('#/rapports', 'Rapports', r.nav === 'rapports')}
+          ${primaryLink('#/evenements', 'Événements', r.nav === 'exercices', 'events')}
+          ${primaryLink('#/cycles', 'Cycles', r.nav === 'cycles', 'cycles')}
+          ${primaryLink('#/statistiques', 'Statistiques', r.screen === 'statistiques', 'stats')}
+          ${hasScopePermission('personnel:read') ? primaryLink('#/personnel', 'Personnel', r.nav === 'personnel', 'people') : ''}
+          ${primaryLink('#/rapports', 'Rapports', r.nav === 'rapports', 'report')}
           ${section('Domaines')}
           ${domainBlocks}
           ${settingsBlock}
@@ -1029,13 +1061,7 @@
           </div>
           <div class="scope-header-spacer"></div>
           <div class="scope-header-tools">
-            <label class="scope-qual-toggle">
-              <input type="checkbox" id="scope-include-qual" ${state.includeQualification ? 'checked' : ''}>
-              Inclure les données de qualification
-            </label>
-            ${(state.alertCounts && Number(state.alertCounts.p0) > 0)
-              ? `<a class="scope-alerts-count" href="#/vue" aria-label="À traiter, ${Number(state.alertCounts.p0)}">${escapeHtml(`À traiter · ${Number(state.alertCounts.p0)}`)}</a>`
-              : ''}
+            <input type="checkbox" class="visually-hidden" id="scope-include-qual" ${state.includeQualification ? 'checked' : ''} aria-label="Inclure les données de qualification">
             <div class="scope-user-block">
               <span class="scope-user-avatar" aria-hidden="true">${escapeHtml(userInitials())}</span>
               <div class="scope-user-text">
@@ -1152,6 +1178,48 @@
     return `<span class="scope-badge scope-state-badge"><span class="scope-dot ${escapeHtml(etat.code)}"></span>${escapeHtml(etat.label)}</span>`;
   }
 
+  function treatCardsHtml(alerts) {
+    const p0 = (alerts || []).filter((a) => a.level === 'P0');
+    const grouped = {};
+    p0.forEach((alert) => {
+      const key = alert.actionLabel || alert.levelLabel || 'À traiter';
+      if (!grouped[key]) grouped[key] = { title: key, count: 0 };
+      grouped[key].count += 1;
+    });
+    let rows = Object.values(grouped).sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'fr'));
+    if (rows.length > 4) {
+      const rest = rows.slice(3);
+      rows = rows.slice(0, 3).concat([{
+        title: 'Autres actions',
+        count: rest.reduce((sum, row) => sum + row.count, 0)
+      }]);
+    }
+    if (!rows.length) {
+      return '<p class="scope-treat-empty">Aucune action prioritaire aujourd’hui.</p>';
+    }
+    return `<div class="scope-treat-grid">${rows.map((row) => `<a class="scope-treat-card" href="#/vue">
+      <strong>${escapeHtml(String(row.count))}</strong>
+      <span>${escapeHtml(row.title)}</span>
+    </a>`).join('')}</div>`;
+  }
+
+  function volumeCell(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? String(n) : '0';
+  }
+
+  function volumeShare(value, attendus) {
+    const n = Number(value);
+    const den = Number(attendus);
+    if (!Number.isFinite(n) || !Number.isFinite(den) || den <= 0) return '';
+    return `${n} / ${den}`;
+  }
+
+  function homeChartCard(C, dataset, options) {
+    if (!C || !dataset) return '';
+    return C.renderChartCard(dataset, Object.assign({ explain: false }, options || {}));
+  }
+
   function renderAccueil() {
     const dash = state.dashboard;
     if (state.dashboardError) {
@@ -1161,51 +1229,84 @@
       return `<div class="scope-crumb">Accueil</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'SCOPE', title: 'Centre de pilotage', context: 'Accueil', logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     const o = dash.officiel || {};
+    const volumes = o.volumes || {};
+    const attendus = volumes.attendus;
     const taux = o.analyticStatus === 'NON_EVALUABLE' && o.percentage == null ? 'Non évaluable' : L.formatTaux(o.percentage);
-    const alerts = ((dash.alerts && dash.alerts.alerts) || []).filter((a) => a.level === 'P0').slice(0, 4);
+    const obj = L.objectiveKpiLabel(o);
+    const p0Count = Number((dash.alerts && dash.alerts.counts && dash.alerts.counts.p0) || 0);
     const graphs = dash.graphs || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
-    const evolutionCard = C ? C.renderChartCard(graphs.evolution, { size: { width: 640, height: 118 } }) : '';
-    const planned = (state.list || []).filter((item) => item.evenement && item.evenement.statut === 'PLANIFIE').length;
+    const evolutionCard = homeChartCard(C, graphs.evolution, {
+      size: { width: 640, height: 128 },
+      title: 'Évolution du taux de participation'
+    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Évolution du taux de participation</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>';
+    const domainesCard = homeChartCard(C, graphs.domaines, {
+      title: 'Participation par domaine'
+    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Participation par domaine</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>';
+    const compositionCard = homeChartCard(C, graphs.composition, {
+      variant: 'donut',
+      size: { width: 280, height: 220 },
+      title: 'Répartition des statuts'
+    }) || '<div class="scope-card scope-chart-card is-empty"><h2>Répartition des statuts</h2><p class="scope-empty scope-chart-empty">Aucune composition officielle à afficher.</p></div>';
     return `
       <div class="scope-crumb">Accueil</div>
       <div class="scope-main scope-home">
-        ${pageHeaderHtml({ eyebrow: 'SCOPE', title: 'Centre de pilotage', context: periodLabel(dash.period), logo: true })}
-        ${periodContextHtml()}
-        <section class="scope-home-hero">
+        <header class="scope-pilot-head">
           <div>
-            <p class="scope-eyebrow">Centre de pilotage</p>
-            <h1>À traiter aujourd’hui</h1>
-            <p>SCOPE présente les alertes métier, la période analysée et les accès principaux sans recalculer les KPI dans le navigateur.</p>
+            <p class="scope-eyebrow">SCOPE</p>
+            <h1>Centre de pilotage</h1>
           </div>
-          <div class="scope-home-status">
-            <strong>${escapeHtml(String((dash.alerts && dash.alerts.counts && dash.alerts.counts.p0) || 0))}</strong>
-            <span>action(s) P0</span>
+          <img class="scope-page-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="150" height="45">
+        </header>
+        ${periodContextHtml()}
+        <section class="scope-treat" aria-labelledby="scope-treat-title">
+          <div class="scope-treat-head">
+            <div>
+              <p class="scope-eyebrow">Centre de pilotage</p>
+              <h2 id="scope-treat-title">À traiter aujourd’hui</h2>
+            </div>
+            <a class="scope-treat-all" href="#/vue">Voir toutes les actions${p0Count ? ` · ${escapeHtml(String(p0Count))}` : ''}</a>
           </div>
+          ${treatCardsHtml((dash.alerts && dash.alerts.alerts) || [])}
         </section>
-        <div class="scope-dash-split">
-          <div class="scope-card scope-inbox">
-            <h2>Centre de pilotage</h2>
-            ${alerts.length ? `<div class="scope-alert-list">${alerts.map((alert) => alertCardHtml(alert, { ack: false })).join('')}</div>` : '<div class="scope-empty">Aucune action prioritaire.</div>'}
-          </div>
-          ${evolutionCard || '<div class="scope-card scope-chart-card is-empty"><h2>Évolution du taux de participation</h2><p class="scope-empty scope-chart-empty">Aucune série officielle sur cette période.</p></div>'}
-        </div>
-        <section class="scope-card">
-          <h2>Synthèse de l’activité</h2>
-          <div class="scope-kpis">
-            <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(taux)}</strong><span>Taux de participation</span><em>${escapeHtml(periodLabel(dash.period))}</em></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String(o.eventCount || 0))}</strong><span>Événements réalisés</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String(planned))}</strong><span>Événements planifiés</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(String((dash.absencesNonExcusees && dash.absencesNonExcusees.count) || 0))}</strong><span>Absences non excusées</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(L.formatGap(o.gapPct) || 'Non évaluable')}</strong><span>Objectif / écart</span></article>
-          </div>
+        <section class="scope-activity-board" aria-label="Synthèse de l’activité">
+          <h2 class="scope-activity-title">Synthèse de l’activité</h2>
+          <article class="scope-activity-cell is-taux">
+            <span>Taux global</span>
+            <strong>${escapeHtml(taux)}</strong>
+            <em>${escapeHtml(obj.title === 'Aucun objectif défini' || obj.title === 'Période non homogène' ? obj.title : (obj.title ? `Objectif ${obj.title}` : ''))}</em>
+          </article>
+          <article class="scope-activity-cell is-excuses">
+            <span>Excusés</span>
+            <strong>${escapeHtml(volumeCell(volumes.excuses))}</strong>
+            <em>${escapeHtml(volumeShare(volumes.excuses, attendus))}</em>
+          </article>
+          <article class="scope-activity-cell is-dispenses">
+            <span>Dispensés</span>
+            <strong>${escapeHtml(volumeCell(volumes.dispenses))}</strong>
+            <em>${escapeHtml(volumeShare(volumes.dispenses, attendus))}</em>
+          </article>
+          <article class="scope-activity-cell is-absences">
+            <span>Absences non excusées</span>
+            <strong>${escapeHtml(volumeCell((dash.absencesNonExcusees && dash.absencesNonExcusees.count) != null ? dash.absencesNonExcusees.count : volumes.nonExcuses))}</strong>
+            <em>${escapeHtml(volumeShare((dash.absencesNonExcusees && dash.absencesNonExcusees.count) != null ? dash.absencesNonExcusees.count : volumes.nonExcuses, attendus))}</em>
+          </article>
         </section>
-        <section class="scope-home-links">
-          <a href="#/evenements">Événements</a>
-          <a href="#/statistiques">Statistiques</a>
-          <a href="#/personnel">Personnel</a>
-          <a href="#/rapports">Rapports</a>
-          <a href="#/reglages/objectifs">Objectifs</a>
+        <section class="scope-home-charts scope-dash-split" aria-label="Graphiques">
+          ${evolutionCard}
+          ${domainesCard}
+          ${compositionCard}
+        </section>
+        <section class="scope-quick" aria-label="Accès rapides">
+          <h2>Accès rapides</h2>
+          <div class="scope-quick-grid">
+            <a href="#/evenements"><span class="scope-quick-ico">${navIcon('events')}</span><span><b>Événements</b><small>Programme, saisie et clôture</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/reglages/suivi"><span class="scope-quick-ico">${navIcon('cycles')}</span><span><b>Présences</b><small>Suivi nominatif des participations</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/personnel"><span class="scope-quick-ico">${navIcon('people')}</span><span><b>Personnel</b><small>Annuaire et fiches individuelles</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/statistiques"><span class="scope-quick-ico">${navIcon('stats')}</span><span><b>Analyses</b><small>Statistiques et graphiques de période</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/rapports"><span class="scope-quick-ico">${navIcon('report')}</span><span><b>Rapports</b><small>Exports institutionnels</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/reglages/objectifs"><span class="scope-quick-ico">${navIcon('folder')}</span><span><b>Objectifs</b><small>Seuils de participation</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+          </div>
         </section>
       </div>
     `;

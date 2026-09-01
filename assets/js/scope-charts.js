@@ -237,22 +237,70 @@
     <p class="scope-chart-legend">${labels}</p>`;
   }
 
-  function renderPlot(dataset, size) {
+  function renderPlot(dataset, size, variant) {
     if (!dataset) return emptyState('AUCUNE_DONNEE');
+    if (variant === 'donut') return renderDonutChart(dataset, size);
     if (dataset.type === 'line') return renderLineChart(dataset, size);
     if (dataset.type === 'stacked') return renderStackedBar(dataset, size);
     return renderBarChart(dataset, size);
+  }
+
+  function renderDonutChart(dataset, size) {
+    const points = ((dataset && dataset.series && dataset.series[0]) || {}).points || [];
+    const usable = points.filter((p) => Number(p.value || 0) > 0);
+    if (!usable.length) return emptyState(dataset && dataset.emptyReason);
+    const palette = Object.freeze({
+      present: TOKENS.neutral,
+      excuse: TOKENS.warning,
+      dispense: TOKENS.primary,
+      nonExcuse: TOKENS.secondary
+    });
+    const width = (size && size.width) || 280;
+    const height = (size && size.height) || 220;
+    const cx = width / 2;
+    const cy = height / 2 - 8;
+    const r = Math.min(width, height) / 2 - 28;
+    const rInner = r * 0.58;
+    const total = usable.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
+    let angle = -Math.PI / 2;
+    const tau = Math.PI * 2;
+    function arc(start, end) {
+      const large = end - start > Math.PI ? 1 : 0;
+      const x1 = cx + r * Math.cos(start);
+      const y1 = cy + r * Math.sin(start);
+      const x2 = cx + r * Math.cos(end);
+      const y2 = cy + r * Math.sin(end);
+      const ix1 = cx + rInner * Math.cos(end);
+      const iy1 = cy + rInner * Math.sin(end);
+      const ix2 = cx + rInner * Math.cos(start);
+      const iy2 = cy + rInner * Math.sin(start);
+      return `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} L ${ix1.toFixed(1)} ${iy1.toFixed(1)} A ${rInner} ${rInner} 0 ${large} 0 ${ix2.toFixed(1)} ${iy2.toFixed(1)} Z`;
+    }
+    const slices = usable.map((p) => {
+      const slice = (Number(p.value || 0) / total) * tau;
+      const start = angle;
+      const end = angle + Math.max(slice, 0.01);
+      angle = end;
+      const fill = palette[p.token] || colorOf(p.token);
+      const title = `${p.label} : ${p.value}`;
+      return `<path d="${arc(start, end)}" fill="${fill}"><title>${escapeHtml(title)}</title></path>`;
+    }).join('');
+    const labels = usable.map((p) => `<span><i class="${escapeHtml(p.token || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value))}</span>`).join('');
+    return `<svg class="scope-chart scope-chart-donut" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Répartition')}">
+      ${slices}
+    </svg>
+    <p class="scope-chart-legend">${labels}</p>`;
   }
 
   function renderChartCard(dataset, options) {
     const opts = options || {};
     if (!dataset) return '';
     if (HIDDEN_REASONS.includes(dataset.emptyReason)) return '';
-    const wide = opts.wide || dataset.type === 'bar' || dataset.id === 'evolution';
+    const wide = opts.wide || (opts.variant !== 'donut' && (dataset.type === 'bar' || dataset.id === 'evolution'));
     const mode = dataset.emptyReason === 'AUCUNE_SERIE_OFFICIELLE' ? 'empty'
       : (dataset.emptyReason === 'UNIQUEMENT_LEGACY' ? 'legacy' : 'full');
-    const plot = renderPlot(dataset, opts.size);
-    const legend = dataset.type === 'line'
+    const plot = renderPlot(dataset, opts.size, opts.variant);
+    const legend = dataset.type === 'line' && opts.variant !== 'donut'
       ? legendHtml([
           { className: 'off', label: 'Taux officiel (mensuel, somme / somme)' },
           { className: 'obj', label: 'Objectif lorsqu’il est unique' },
@@ -262,14 +310,16 @@
           { className: 'off', label: 'Taux officiel' },
           { className: 'obj', label: 'Objectif résolu, si unique' }
         ]) : '');
-    const explainBtn = `<button type="button" class="linkish scope-graph-explain-btn" data-graph-explain="${escapeHtml(dataset.id)}">Comprendre ce graphique</button>`;
+    const explainBtn = opts.explain === false ? '' : `<button type="button" class="linkish scope-graph-explain-btn" data-graph-explain="${escapeHtml(dataset.id)}">Comprendre ce graphique</button>`;
+    const heading = opts.title || dataset.question;
+    const frameType = opts.variant === 'donut' ? 'donut' : dataset.type;
     return `<div class="scope-card scope-chart-card scope-graph-card is-${escapeHtml(mode)}${wide ? ' is-wide' : ''}" data-graph="${escapeHtml(dataset.id)}">
       <div class="scope-graph-head">
-        <h2>${escapeHtml(dataset.question)}</h2>
+        <h2>${escapeHtml(heading)}</h2>
         ${explainBtn}
       </div>
-      <div class="scope-chart-frame is-${escapeHtml(dataset.type)}">${plot}</div>
-      ${dataset.type === 'stacked' ? '' : legend}
+      <div class="scope-chart-frame is-${escapeHtml(frameType)}">${plot}</div>
+      ${dataset.type === 'stacked' || opts.variant === 'donut' ? '' : legend}
     </div>`;
   }
 
@@ -310,6 +360,7 @@
     renderLineChart,
     renderBarChart,
     renderStackedBar,
+    renderDonutChart,
     renderChartCard,
     renderGraphExplain
   };

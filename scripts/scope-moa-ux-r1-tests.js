@@ -153,13 +153,14 @@ async function record(name, fn) {
     assert.ok(!/scope-header[\s\S]{0,260}scope-select-control/.test(ui));
   });
 
-  await record('25 — bouton qualification conservé en header', async () => {
+  await record('25 — bascule qualification conservée hors bandeau principal', async () => {
     assert.ok(ui.includes('scope-qual-toggle'));
     assert.ok(ui.includes('scope-include-qual'));
+    assert.ok(!/function headerHtml[\s\S]*scope-qual-toggle/.test(ui));
   });
 
   await record('26 — logo SCOPE agrandi', async () => {
-    assert.ok(css.includes('height: 83px'));
+    assert.ok(css.includes('height: 48px'));
     assert.ok(ui.includes('assets/img/logo-scope-blanc.png'));
   });
 
