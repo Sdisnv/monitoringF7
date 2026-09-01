@@ -2741,11 +2741,11 @@
       count: allPeople.length
     });
     const pageSize = personnelListPageSize();
-    const page = personnelView === 'ready' && allPeople.length
+    const page = personnelView === 'content' && allPeople.length
       ? Math.min(Math.max(1, Number(state.personnelListPage) || 1), Math.max(1, Math.ceil(allPeople.length / pageSize)))
       : 1;
-    const people = personnelView === 'ready' ? allPeople.slice((page - 1) * pageSize, page * pageSize) : [];
-    const pagination = personnelView === 'ready' && allPeople.length
+    const people = personnelView === 'content' ? allPeople.slice((page - 1) * pageSize, page * pageSize) : [];
+    const pagination = personnelView === 'content' && allPeople.length
       ? renderPersonnelListPagination(allPeople.length, page, pageSize)
       : '';
     let peopleBody;
