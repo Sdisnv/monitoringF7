@@ -1081,6 +1081,23 @@ html, body {
   white-space: nowrap;
   height: var(--scope-h-control);
 }
+.scope-events-pilot #scope-new.scope-events-new {
+  height: var(--scope-h-control);
+  min-height: var(--scope-h-control);
+  padding: 0 14px;
+  background: #fff;
+  color: var(--scope-red);
+  border: 1px solid var(--scope-red);
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.scope-events-pilot #scope-new.scope-events-new:hover {
+  background: var(--scope-red-soft);
+  border-color: var(--scope-red);
+  color: var(--scope-red);
+}
 .scope-events-list-wrap {
   overflow-x: visible;
 }
@@ -4624,6 +4641,11 @@ body.scope-pdf-open { overflow: hidden; }
   height: 28px;
   padding: 6px 8px;
   font-size: var(--scope-type-label);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--scope-muted);
+  background: #f6f7f9;
 }
 
 .scope-event-saisie .scope-table tbody td,
@@ -5560,6 +5582,23 @@ body.scope-pdf-open { overflow: hidden; }
   white-space: nowrap;
   font-weight: 400;
 }
+.scope-realise-toolbar .scope-btn {
+  background: #fff;
+  color: var(--scope-text);
+  border: 1px solid #2f343b;
+  border-radius: var(--scope-radius-xs);
+  box-shadow: none;
+  height: var(--scope-h-control);
+  min-height: var(--scope-h-control);
+  padding: 0 12px;
+  white-space: nowrap;
+  font-weight: 650;
+}
+.scope-realise-toolbar .scope-btn:hover {
+  background: #f4f5f8;
+  border-color: #2f343b;
+  color: var(--scope-text);
+}
 .scope-btn.scope-realise-fiche-action {
   display: inline-flex;
   align-items: center;
@@ -5570,6 +5609,17 @@ body.scope-pdf-open { overflow: hidden; }
   padding: 0 10px;
   white-space: nowrap;
   overflow: visible;
+  background: #fff;
+  color: var(--scope-text);
+  border: 1px solid #2f343b;
+  border-radius: var(--scope-radius-xs);
+  box-shadow: none;
+  font-weight: 650;
+}
+.scope-btn.scope-realise-fiche-action:hover {
+  background: #f4f5f8;
+  border-color: #2f343b;
+  color: var(--scope-text);
 }
 .scope-realise-table th:last-child,
 .scope-realise-table td:last-child {
@@ -5577,11 +5627,43 @@ body.scope-pdf-open { overflow: hidden; }
   text-align: right;
   position: sticky;
   right: 0;
-  background: #fff;
   z-index: 1;
+}
+.scope-realise-table thead th:last-child {
+  background: #f6f7f9;
+}
+.scope-realise-table tbody td:last-child {
+  background: #fff;
 }
 .scope-realise-table tbody tr:nth-child(even) td:last-child {
   background: var(--scope-gray-50);
+}
+.scope-status-control-group.is-compact .scope-status-control:not(.is-selected) {
+  display: none;
+}
+.scope-status-control-group.is-compact:hover .scope-status-control,
+.scope-status-control-group.is-compact:focus-within .scope-status-control,
+.scope-status-control-group.is-open .scope-status-control {
+  display: inline-flex;
+}
+.scope-motif-compact {
+  display: inline-flex;
+  align-items: center;
+  height: var(--scope-h-compact);
+  padding: 0 10px;
+  border: 1px solid #ead9b5;
+  border-radius: var(--scope-radius-xs);
+  background: var(--scope-warning-soft);
+  color: var(--scope-warning);
+  font: inherit;
+  font-size: var(--scope-type-secondary);
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.scope-motif-compact:hover,
+.scope-motif-compact:focus-visible {
+  background: #fff6e4;
 }
 
 @media (max-width: 1023px) {

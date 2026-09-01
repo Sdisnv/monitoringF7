@@ -75,8 +75,8 @@ record('04 — saisie: pas de colonne Encadrement, motif à côté du statut', (
 
 record('05 — réalisé: identité, KPI, table, filtres, Retour, pas d’historique UI', () => {
   assert.ok(realise.includes('Retour aux événements'));
-  assert.ok(realise.includes('sortableHeader(\'event-realise\', \'grade\', \'Grade\''));
-  assert.ok(realise.includes('sortableHeader(\'event-realise\', \'prenom\', \'Prénom\''));
+  assert.ok(realise.includes('sortableHeader(\'event-realise\', \'grade\', \'GRADE\''));
+  assert.ok(realise.includes('sortableHeader(\'event-realise\', \'prenom\', \'PRÉNOM\''));
   assert.ok(realise.includes('id="realise-grade"'));
   assert.ok(realise.includes('id="realise-oi"'));
   assert.ok(realise.includes('renderRealiseEncadrement'));
