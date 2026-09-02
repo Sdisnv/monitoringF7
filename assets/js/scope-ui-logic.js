@@ -38,6 +38,38 @@
     return MOTIFS_DISPENSE.some((m) => m.value === String(value || ''));
   }
 
+  function motifShortLabel(code) {
+    const value = String(code || '');
+    if (!value) return '';
+    const hit = MOTIFS.concat(MOTIFS_DISPENSE, MOTIFS_HISTORIQUES).find((m) => m.value === value);
+    if (!hit) return value;
+    return String(hit.label || '').replace(/\s*\(historique\)\s*$/i, '');
+  }
+
+  function informationMotifLabel(row) {
+    const statut = String((row && (row.statut || row.statutParticipation)) || '').toUpperCase();
+    if (statut !== 'ABSENT_EXCUSE' && statut !== 'EXCUSE' && statut !== 'DISPENSE') return '';
+    return motifShortLabel(row && (row.motifAbsence || row.motif_absence || row.sessionMotif || row.motif));
+  }
+
+  function sessionExplainTooltip(row) {
+    if (!row) return '';
+    if (row.sessionMessage) return String(row.sessionMessage);
+    const name = [row.prenom, row.nomFamille || row.nom].filter(Boolean).join(' ') || 'Cette personne';
+    const motif = informationMotifLabel(row);
+    const exercise = String(row.sessionExerciseLabel || '').trim();
+    const statut = String(row.statut || '').toUpperCase();
+    if (statut === 'ABSENT_EXCUSE' || statut === 'EXCUSE' || row.sessionExcuse) {
+      const motifBit = motif ? ` pour motif ${motif}` : '';
+      const sessionBit = exercise ? ` lors de la session d’exercice ${exercise}` : '';
+      return `${name} a été excusé${motifBit}${sessionBit}.`;
+    }
+    if (statut === 'DISPENSE' || row.sessionDispense) {
+      return `${name} est dispensé de cet exercice pour la raison suivante : ${motif || '—'}.`;
+    }
+    return String(row.alreadyCountedTooltip || '');
+  }
+
   const STATUT_LABELS = {
     PLANIFIE: 'Planifié',
     SAISIE_EN_COURS: 'Saisie en cours',
@@ -1124,7 +1156,9 @@
     motifsForRow,
     motifsDispenseForRow,
     isDispenseMotif,
-    motifsForRow,
+    motifShortLabel,
+    informationMotifLabel,
+    sessionExplainTooltip,
     STATUT_LABELS,
     ROLE_LABELS,
     ENCADREMENT_ROLE_ORDER,

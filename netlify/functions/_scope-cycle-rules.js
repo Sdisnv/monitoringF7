@@ -519,7 +519,12 @@ function computePrExerciseParticipationState(input = {}){
         sessionDispense: false,
         sessionExcuse: true,
         sessionExerciseLabel: exerciseLabel,
-        sessionMessage: `${personDisplayName(person)} a été excusé lors de la session d’exercice ${exerciseLabel}.`,
+        sessionMessage: (() => {
+          const motif = motifExcuseLabel(reference.motif);
+          return motif
+            ? `${personDisplayName(person)} a été excusé pour motif ${motif} lors de la session d’exercice ${exerciseLabel}.`
+            : `${personDisplayName(person)} a été excusé lors de la session d’exercice ${exerciseLabel}.`;
+        })(),
         sessionSummary: motifExcuseLabel(reference.motif)
       };
     }

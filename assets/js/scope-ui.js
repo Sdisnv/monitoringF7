@@ -866,7 +866,11 @@
           : (part.motif_absence || '');
         const alreadyCountedTooltip = alreadyCountedInSession && !sessionExcuse && !sessionDispense
           ? (formateurTooltip || `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`)
-          : (sessionMessage || '');
+          : '';
+        const sessionExerciseLabel = a.sessionExerciseLabel || a.session_exercise_label
+          || (fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionExerciseLabel)
+          || (fiche.sessionParticipation && fiche.sessionParticipation.sessionExerciseLabel)
+          || '';
         return {
           personneId: a.personne_id,
           nom: displayPerson(fiche, a.personne_id),
@@ -890,7 +894,8 @@
           sessionExcuse,
           sessionDispense,
           sessionMessage,
-          sessionSummary
+          sessionSummary,
+          sessionExerciseLabel
         };
       });
   }
@@ -4474,15 +4479,16 @@
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
-      const why = row.manual
-        ? '<span class="scope-muted-inline">Ajout ponctuel</span>'
-        : (row.sessionMessage
-          ? `<span class="scope-session-info">${row.sessionSummary ? `<strong>${escapeHtml(row.sessionSummary)}</strong> ` : ''}${escapeHtml(row.sessionMessage)}</span>`
-          : (row.alreadyCountedTooltip ? `<span class="scope-session-info">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''));
+      const locked = Boolean(row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense);
+      const shortMotif = (L.informationMotifLabel ? L.informationMotifLabel(row) : '') || '';
+      const motifOnly = locked && shortMotif
+        ? `<span class="scope-session-info">${escapeHtml(shortMotif)}</span>`
+        : '';
+      const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : '';
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
         : '';
-      return [motifControl(row), comment, why, manual].filter(Boolean).join('');
+      return [locked ? motifOnly : motifControl(row), comment, why, manual].filter(Boolean).join('');
     };
     const roleFlag = (row) => {
       const role = String(row.role || '').toUpperCase();
@@ -4509,19 +4515,21 @@
               const blocked = Boolean(row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense);
               const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
+              const tooltipText = (L.sessionExplainTooltip ? L.sessionExplainTooltip(row) : (row.sessionMessage || row.alreadyCountedTooltip || '')) || '';
               const rowClass = [
                 row.manual ? 'scope-row-manual' : '',
                 blocked && row.sessionExcuse ? 'scope-row-session-excuse' : '',
                 blocked && row.sessionDispense ? 'scope-row-session-dispense' : '',
-                blocked && !row.sessionExcuse && !row.sessionDispense ? 'scope-row-session-counted' : ''
+                blocked && !row.sessionExcuse && !row.sessionDispense ? 'scope-row-session-counted' : '',
+                tooltipText ? 'scope-row-has-tooltip' : ''
               ].filter(Boolean).join(' ');
-              const blockedAttrs = blocked
+              const blockedAttrs = tooltipText
                 ? ` tabindex="0" aria-describedby="${tooltipId}"`
                 : '';
               const role = roleFlag(row);
               const filled = statusFilled(row);
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
-              <td data-label="GRADE">${escapeHtml(row.grade || '')}${blocked && row.alreadyCountedTooltip ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
+              <td data-label="GRADE">${escapeHtml(row.grade || '')}${tooltipText ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(tooltipText)}</span>` : ''}</td>
               <td data-label="NOM">${escapeHtml(row.nomFamille || row.nom || '')}${role}</td>
               <td data-label="PRÉNOM">${escapeHtml(row.prenom || '')}</td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
@@ -4749,7 +4757,7 @@
                 <td data-label="INCORPORATION">${escapeHtml(displayIncorporation(r.cible && r.cible !== '—' ? r.cible : '', domaineCode))}</td>
                 <td data-label="CIBLE">${escapeHtml(displayIncorporation(r.cible && r.cible !== '—' ? r.cible : '', domaineCode))}</td>
                 <td data-label="STATUT">${escapeHtml(realiseStatutLabel(r))}</td>
-                <td data-label="INFORMATIONS">${escapeHtml(r.statut === 'ABSENT_EXCUSE' ? ((L.motifsForRow ? L.motifsForRow(r) : L.MOTIFS).find((m) => m.value === r.motifAbsence) || { label: r.motifAbsence || '' }).label : '')}</td>
+                <td data-label="INFORMATIONS">${escapeHtml((L.informationMotifLabel && L.informationMotifLabel(r)) || '')}</td>
                 <td data-label="ACTION">${canReadPersonnel() && r.personneId ? `<a class="scope-btn scope-realise-fiche-action" href="#/personnel/${escapeHtml(r.personneId)}">Fiche</a>` : ''}</td>
               </tr>`).join('')}
             </tbody>

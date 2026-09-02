@@ -125,7 +125,8 @@ function attendu(detail, personneId){
     };
     assert.ok(logic.sessionLocked(row));
     assert.ok(css.includes('scope-row-session-excuse'));
-    assert.ok(css.includes('#fff6cc'));
+    assert.ok(css.includes('#fde8ea'));
+    assert.ok(!css.includes('#fff6cc'));
   });
 
   await record('04 — Dispensé : 4 motifs', () => {

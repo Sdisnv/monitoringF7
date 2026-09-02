@@ -3,7 +3,7 @@
 
 const { DOMAINES_MODEL_2, SOUS_DOMAINES } = require('./_scope-schema');
 const { parsePeriod } = require('./_scope-period');
-const { HttpError, ROLES_ENCADREMENT } = require('./_scope-rules');
+const { HttpError } = require('./_scope-rules');
 const { KINDS } = require('./_scope-analytics');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
@@ -151,7 +151,7 @@ function nominativeRows(fiche){
   return attendus.map((a) => {
     const pid = a.personne_id;
     const person = personnes[pid] || {};
-    const part = parts.find((p) => p.personne_id === pid && !ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase())) || {};
+    const part = parts.find((p) => String(p.personne_id) === String(pid)) || {};
     const cible = cibleById[a.cible_id] || {};
     return {
       grade: person.grade || '',
@@ -400,5 +400,6 @@ module.exports = {
   buildFilename,
   periodSlug,
   collectReport,
+  nominativeRows,
   SOUS_DOMAINES
 };

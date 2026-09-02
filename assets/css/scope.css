@@ -1604,7 +1604,7 @@ html, body {
 .scope-table tbody tr.scope-row-session-excuse:nth-child(even) td,
 .scope-table tbody tr.scope-row-session-excuse:hover,
 .scope-table tbody tr.scope-row-session-excuse:hover td {
-  background: #fff6cc;
+  background: #fde8ea;
 }
 
 .scope-table tbody tr.scope-row-session-dispense,
@@ -1626,24 +1626,37 @@ html, body {
 .scope-session-counted-tooltip {
   position: absolute;
   z-index: 12;
-  max-width: min(360px, 82vw);
-  margin: 24px 0 0 0;
+  left: 8px;
+  top: 100%;
+  max-width: min(28rem, 82vw);
+  margin: 4px 0 0 0;
   padding: 8px 10px;
   border-radius: var(--scope-radius-sm);
   background: #162033;
   color: #fff;
   box-shadow: var(--scope-shadow);
   font-size: 12px;
-  line-height: 1.35;
+  line-height: 1.4;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-3px);
   transition: opacity .14s ease, transform .14s ease;
 }
 
+.scope-saisie-table tbody tr {
+  position: relative;
+}
+
 .scope-row-session-counted:hover .scope-session-counted-tooltip,
 .scope-row-session-counted:focus .scope-session-counted-tooltip,
-.scope-row-session-counted:focus-within .scope-session-counted-tooltip {
+.scope-row-session-counted:focus-within .scope-session-counted-tooltip,
+.scope-row-has-tooltip:hover .scope-session-counted-tooltip,
+.scope-row-has-tooltip:focus .scope-session-counted-tooltip,
+.scope-row-has-tooltip:focus-within .scope-session-counted-tooltip {
   opacity: 1;
   transform: translateY(0);
 }
@@ -2567,10 +2580,10 @@ html, body {
 }
 
 .scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"] {
-  background: #e8eef5;
-  border-color: #334155;
-  color: #1e293b;
-  box-shadow: inset 0 0 0 1px #334155;
+  background: #fde8ea;
+  border-color: #e8b4b8;
+  color: #8c000b;
+  box-shadow: inset 0 0 0 1px #e8b4b8;
 }
 
 .scope-status-row button[data-status="DISPENSE"][aria-pressed="true"] {
@@ -4161,7 +4174,7 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-table tbody tr.scope-row-session-excuse,
 .scope-table tbody tr.scope-row-session-excuse td,
 .scope-table tbody tr.scope-row-session-excuse:hover,
-.scope-table tbody tr.scope-row-session-excuse:hover td { background: #fff6cc; }
+.scope-table tbody tr.scope-row-session-excuse:hover td { background: #fde8ea; }
 .scope-table tbody tr.scope-row-session-dispense,
 .scope-table tbody tr.scope-row-session-dispense td,
 .scope-table tbody tr.scope-row-session-dispense:hover,
@@ -4409,9 +4422,9 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-status-control.is-excused {
-  background: var(--scope-warning-soft);
-  border-color: #ead9b5;
-  color: var(--scope-warning);
+  background: #fde8ea;
+  border-color: #f0c4c8;
+  color: #8c000b;
 }
 
 .scope-status-control.is-absent {
@@ -4756,8 +4769,8 @@ body.scope-pdf-open { overflow: hidden; }
 
 .scope-event-saisie .scope-status-row button[data-status="ABSENT_EXCUSE"][aria-pressed="true"],
 .scope-event-saisie .scope-status-row button[data-status="ABSENT_EXCUSE"][aria-checked="true"] {
-  background: var(--scope-warning-soft);
-  color: var(--scope-warning);
+  background: #fde8ea;
+  color: #8c000b;
 }
 
 .scope-event-saisie .scope-status-row button[data-status="ABSENT_NON_EXCUSE"][aria-pressed="true"],
