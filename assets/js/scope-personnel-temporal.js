@@ -119,6 +119,15 @@
     return true;
   }
 
+  function ficheConsultationDate(period, asOf, today){
+    const explicit = iso(asOf);
+    if(explicit) return explicit;
+    const p = resolveAnalyzedPeriod(period || {});
+    const now = iso(today) || iso(new Date());
+    if(now && p.from && p.to && now >= p.from && now <= p.to) return now;
+    return p.to || now || '';
+  }
+
   function personActiveInPeriod(person, period){
     const p = resolveAnalyzedPeriod(period || {});
     const assignments = (person && (person.affectations || person.assignments || [])) || [];
@@ -288,6 +297,7 @@
     rangesOverlap,
     assignmentOverlapsPeriod,
     assignmentCoversDate,
+    ficheConsultationDate,
     personActiveInPeriod,
     personRelevantInPeriod,
     personActiveAtDate,

@@ -14,6 +14,8 @@ const {
   pointFromPack,
   evolutionDataset,
   compositionDataset,
+  personRepartitionDataset,
+  domainesAnneesDataset,
   motifsDataset,
   permutationsDataset
 } = require('./_scope-graphs');
@@ -212,8 +214,9 @@ function identityPayload(personne, periodes, affectations, ciblesById, today, pe
   };
 }
 
-function personGraphs(evaluated, series, explain){
+function personGraphs(evaluated, series, explain, careerEvents){
   const included = evaluated.includedEvents || [];
+  const career = careerEvents || included;
   const evolution = evolutionDataset({
     officiel: (series && series.officiel) || [],
     legacy: []
@@ -247,6 +250,7 @@ function personGraphs(evaluated, series, explain){
       emptyReason: hasDomain ? null : 'NON_EVALUABLE',
       explain: explain ? { period: explain.period, totals: explain.totals } : null
     },
+    domainesAnnees: domainesAnneesDataset(career, explain),
     children: {
       id: 'children',
       question: 'Selon quel OI la personne était-elle affectée à la date de l’événement ?',
@@ -256,6 +260,7 @@ function personGraphs(evaluated, series, explain){
       emptyReason: oiPoints.length ? null : 'NON_EVALUABLE'
     },
     composition: compositionDataset(evaluated.officiel, explain),
+    repartition: personRepartitionDataset(evaluated.officiel, explain),
     motifs: motifsDataset(evaluated.officiel, explain),
     permutations: permutationsDataset(evaluated.officiel, dapEvents.length ? 'DAP' : null, explain)
   };
@@ -439,7 +444,19 @@ function createScopePersonService(repo){
       .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
 
     const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });
-    const graphs = personGraphs(evaluated, snap.timeseries, snap.explain);
+    const entry = isoDate(personne.date_entree_sdis || personne.date_entree) || snap.summary.period.from;
+    const careerFrom = `${String(entry).slice(0, 4)}-01-01`;
+    let careerEvents = included;
+    if(careerFrom < snap.summary.period.from){
+      const careerSnap = await analytics.snapshot(Object.assign({}, query, {
+        personneId,
+        from: careerFrom,
+        to: snap.summary.period.to,
+        preset: 'CUSTOM'
+      }));
+      careerEvents = (careerSnap.evaluated && careerSnap.evaluated.includedEvents) || included;
+    }
+    const graphs = personGraphs(evaluated, snap.timeseries, snap.explain, careerEvents);
     const officiel = snap.summary.officiel || {};
     const ctx = officiel.objectiveContext || {};
     let objectifMessage = 'Aucun objectif défini.';
@@ -550,7 +567,7 @@ function createScopePersonService(repo){
       timeseries: snap.timeseries,
       graphs,
       exclusions: snap.explain.exclusions,
-      rapportPersonne: { disponible: false, lotFutur: 'REPORT-1-R1' }
+      rapportPersonne: { disponible: true, kind: 'PERSON' }
     };
   }
 

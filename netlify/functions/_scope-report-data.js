@@ -34,7 +34,7 @@ function roleGroupRank(role){
   return idx >= 0 ? idx : 99;
 }
 
-const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT']);
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON']);
 
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
@@ -73,7 +73,8 @@ function normalizeKind(raw){
     PERIOD: 'PERIOD', PERIODE: 'PERIOD', SDIS: 'PERIOD',
     DOMAIN: 'DOMAIN', DOMAINE: 'DOMAIN',
     TARGET: 'TARGET', CIBLE: 'TARGET', OI: 'TARGET',
-    EVENT: 'EVENT', EVENEMENT: 'EVENT', EXERCICE: 'EVENT'
+    EVENT: 'EVENT', EVENEMENT: 'EVENT', EXERCICE: 'EVENT',
+    PERSON: 'PERSON', PERSONNE: 'PERSON', FICHE: 'PERSON'
   };
   const kind = map[text];
   if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
@@ -124,6 +125,7 @@ function buildFilename(kind, ctx){
   if(kind === 'PERIOD') return sanitizeFilename(`SCOPE_Rapport_SDIS_${year}.pdf`);
   if(kind === 'DOMAIN') return sanitizeFilename(`SCOPE_${ctx.domaine}_${year}.pdf`);
   if(kind === 'TARGET') return sanitizeFilename(`SCOPE_${ctx.domaine}_${ctx.cible}_${year}.pdf`);
+  if(kind === 'PERSON') return sanitizeFilename(`SCOPE_Fiche_${ctx.nip || 'personne'}_${year}.pdf`);
   const date = ctx.eventDate || '';
   const oi = ctx.cible || 'GEN';
   return sanitizeFilename(`SCOPE_Exercice_${ctx.domaine || 'SCOPE'}_${oi}_${date}.pdf`);
@@ -187,6 +189,79 @@ async function collectReport(repo, query, options){
   const analytics = createScopeAnalyticsService(repo);
   const dashboard = createScopeDashboardService(repo);
   const scope = createScopeService(repo);
+
+  if(kind === 'PERSON'){
+    const personneId = query.personneId || query.personne_id || query.id;
+    if(!personneId) throw new HttpError(400, 'personne_requise', 'Le rapport individuel exige un identifiant de personne.');
+    const { createScopePersonService } = require('./_scope-person-service');
+    const display = require('../../assets/js/scope-personnel-display.js');
+    const temporal = require('../../assets/js/scope-personnel-temporal.js');
+    const persons = createScopePersonService(repo);
+    const fiche = await persons.fiche(personneId, query);
+    const period = fiche.period;
+    const consult = temporal.ficheConsultationDate(period, query.asOf || query.date);
+    const assignments = ((fiche.historiqueRh && fiche.historiqueRh.affectations) || []).map((row) => ({
+      id: row.affectationId,
+      categorie: row.categorie,
+      domaine: row.domaineCode,
+      cible: row.niveauCode,
+      roleDomaine: row.roleDomaine,
+      dateActif: row.dateDebut,
+      dateInactif: row.dateFin
+    }));
+    const identity = fiche.identite || {};
+    const leave = fiche.identite && fiche.identite.conge;
+    const sabbaticalRange = leave && String(leave.motif || '').toUpperCase() === 'CONGE_SABBATIQUE'
+      ? [leave.dateDebut, leave.dateFin].filter(Boolean).map((d) => String(d).slice(0, 10)).join(' → ')
+      : '';
+    const officiel = {
+      percentage: fiche.kpi && fiche.kpi.percentage,
+      numerator: fiche.kpi && fiche.kpi.numerator,
+      denominator: fiche.kpi && fiche.kpi.denominator,
+      eventCount: fiche.kpi && fiche.kpi.eventCount,
+      analyticStatus: fiche.kpi && fiche.kpi.analyticStatus,
+      volumes: (fiche.kpi && fiche.kpi.volumes) || {},
+      objective: fiche.objectif && fiche.objectif.objective,
+      objectiveContext: fiche.objectif && fiche.objectif.objectiveContext,
+      gapPct: fiche.objectif && fiche.objectif.gapPct
+    };
+    return {
+      kind: 'PERSON',
+      period,
+      domaine: null,
+      cible: null,
+      title: 'Fiche individuelle SCOPE',
+      subtitle: [identity.grade, identity.prenom, identity.nom].filter(Boolean).join(' '),
+      filename: buildFilename('PERSON', { period, nip: identity.nip }),
+      event: null,
+      officiel,
+      graphs: fiche.graphs || {},
+      explain: fiche.explain,
+      nominatif: [],
+      encadrement: [],
+      quantitative: false,
+      isLegacy: false,
+      alerts: { p0: [], p1: [], p2: [] },
+      events: [],
+      evenements: fiche.evenements || [],
+      incorporations: display.ficheIncorporationRows(assignments, period, consult),
+      specializations: display.ficheSpecializationView(assignments, consult).labels,
+      personne: {
+        grade: identity.grade,
+        nom: identity.nom,
+        prenom: identity.prenom,
+        nip: identity.nip,
+        statut: display.ficheIdentityView(identity, null, identity.conge && identity.conge.motif === 'CONGE_SABBATIQUE' ? {
+          active: true,
+          dateDebut: identity.conge.dateDebut,
+          dateFin: identity.conge.dateFin
+        } : null).statut,
+        dateEntreeSdis: identity.dateEntreeSdis,
+        dateInactivite: identity.dateInactif,
+        sabbaticalRange: sabbaticalRange ? `Du ${sabbaticalRange.replace(' → ', ' au ')}` : '—'
+      }
+    };
+  }
 
   if(kind === 'EVENT'){
     const evenementId = query.evenementId || query.evenement_id || query.id;

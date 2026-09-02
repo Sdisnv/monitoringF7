@@ -258,7 +258,7 @@ async function freezeEvent(service, cible, date, libelle){
     const submitFn = ui.slice(ui.indexOf('async function submitPersonnelAssignmentModal'), ui.indexOf('function renderPersonneActivityCard'));
     assert.ok(submitFn.includes('personnelMutationError'));
     assert.ok(!submitFn.includes('ScopeFeedback.error'));
-    assert.ok(html.includes('scope-personnel-design-b3-r1') || html.includes('scope-personnel-design-b3-r2'));
+    assert.ok(html.includes('scope-personnel-design-b3-r1') || html.includes('scope-personnel-design-b3-r2') || html.includes('scope-personnel-design-b4'));
     assert.ok(sync.eventsRecalculated >= 1);
   });
 

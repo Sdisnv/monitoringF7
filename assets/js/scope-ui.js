@@ -152,6 +152,7 @@
     personneEdit: null,
     personneEventFilter: 'tout',
     personneDomainFilter: null,
+    personneEventSort: { key: 'date', dir: 'desc' },
     personneRhOpen: false,
     domaineForm: 'DPS',
     dateForm: '2026-03-12',
@@ -3268,10 +3269,24 @@
     return type || '—';
   }
 
+  function personEventColumns() {
+    const display = personnelDisplay();
+    return [
+      { key: 'date', type: 'date', value: (row) => row && row.date, tieBreakers: [
+        { key: 'libelle', type: 'text', value: (row) => row && row.libelle }
+      ] },
+      { key: 'libelle', type: 'text', value: (row) => row && row.libelle },
+      { key: 'domaine', type: 'text', value: (row) => domaineLabel(row && row.domaine) },
+      { key: 'cible', type: 'text', value: (row) => display && display.ficheEventCible ? display.ficheEventCible(row) : (row && (row.oiAtDate || row.sousDomaine)) },
+      { key: 'statut', type: 'text', value: (row) => display && display.ficheEventStatutLabel ? display.ficheEventStatutLabel(row) : (row && row.statutParticipation) },
+      { key: 'informations', type: 'text', value: (row) => display && display.ficheEventInformations ? display.ficheEventInformations(row) : (row && row.motif) }
+    ];
+  }
+
   function personEventsFiltered(fiche) {
     const statut = state.personneEventFilter || 'tout';
     const domaine = state.personneDomainFilter;
-    return (fiche.evenements || []).filter((row) => {
+    const filtered = (fiche.evenements || []).filter((row) => {
       if (domaine) {
         const codes = domaine === 'FOSPEC' ? ['FOSPEC', 'PR', 'AUTO'] : [domaine];
         if (!codes.includes(row.domaine)) return false;
@@ -3283,6 +3298,7 @@
       if (statut === 'dispenses') return s === 'DISPENSE';
       return true;
     });
+    return L.sortRows ? L.sortRows(filtered, state.personneEventSort, personEventColumns()) : filtered;
   }
 
   function renderPersonne() {
@@ -3323,11 +3339,19 @@
     const assignments = (fiche.personne && fiche.personne.affectations && fiche.personne.affectations.length)
       ? fiche.personne.affectations
       : ficheActivityAssignments(fiche);
+    const temporal = (typeof window !== 'undefined' && window.ScopePersonnelTemporal)
+      || (typeof globalThis !== 'undefined' && globalThis.ScopePersonnelTemporal);
+    const consultDate = temporal && temporal.ficheConsultationDate
+      ? temporal.ficheConsultationDate(
+        fiche.period,
+        state.personnelSituationApplied ? state.personnelSituationDate : ''
+      )
+      : (state.personnelSituationDate || '');
     const incorporations = display && display.ficheIncorporationRows
-      ? display.ficheIncorporationRows(assignments, fiche.period)
+      ? display.ficheIncorporationRows(assignments, fiche.period, consultDate)
       : [];
     const specs = display && display.ficheSpecializationView
-      ? display.ficheSpecializationView(assignments)
+      ? display.ficheSpecializationView(assignments, consultDate)
       : { labels: [], empty: true };
     const kpi = fiche.kpi || {};
     const vol = kpi.volumes || {};
@@ -3388,6 +3412,19 @@
     const permKpi = official && vol.permutations
       ? `<article class="scope-kpi"><strong>${escapeHtml(String(vol.permutations))}</strong><span>Permutations</span></article>`
       : '';
+    const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
+    const graphs = fiche.graphs || {};
+    const domainYearChart = C ? C.renderChartCard(graphs.domainesAnnees, {
+      title: 'Participation par domaine et par année',
+      explain: false,
+      size: { width: 640, height: 228 }
+    }) : '';
+    const repartitionChart = C ? C.renderChartCard(graphs.repartition || graphs.composition, {
+      title: 'Répartition des participations',
+      variant: 'donut',
+      explain: false,
+      size: { width: 320, height: 240 }
+    }) : '';
 
     return `
       <div class="scope-crumb"><a href="#/personnel">Personnel</a> · ${escapeHtml(identite.prenom)} ${escapeHtml(identite.nom)}</div>
@@ -3398,7 +3435,15 @@
           context: `NIP ${identity.nip}`,
           logo: true
         })}
-        <p class="scope-person-back"><a class="scope-person-back-link" href="#/personnel">← Retour au personnel</a></p>
+        ${periodContextHtml()}
+        <div class="scope-fiche-toolbar-row">
+          <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/personnel">Retour au personnel</a>
+          ${renderPersonneActivityCard(fiche, identite)}
+          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-add-assignment">Gérer les affectations</button>` : ''}
+          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-edit-open">Modifier</button>` : ''}
+          ${canReadPersonnel() ? `<button type="button" class="scope-btn scope-btn-secondary" id="person-export-pdf">Exporter en PDF</button>` : ''}
+        </div>
+        ${editBlock}
         <section class="scope-fiche-block scope-fiche-identity">
           ${identityField('GRADE', identity.grade)}
           ${identityField('NOM', identity.nom)}
@@ -3408,12 +3453,6 @@
           ${identityField('DATE D’ENTRÉE SDIS', fmtDate(identity.dateEntreeSdis))}
           ${identityField('DATE D’INACTIVITÉ', identity.statut === 'Inactif' ? fmtDate(identity.dateInactivite) : '—')}
         </section>
-        <div class="scope-fiche-toolbar-row">
-          ${renderPersonneActivityCard(fiche, identite)}
-          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-add-assignment">Gérer les affectations</button>` : ''}
-          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-edit-open">Modifier</button>` : ''}
-        </div>
-        ${editBlock}
         <div class="scope-fiche-split">
         <section class="scope-fiche-block">
           <h2>INCORPORATIONS</h2>
@@ -3436,6 +3475,11 @@
             <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(tauxText)}</strong><span>Taux de participation</span></article>
           </div>
         </section>
+        <section class="scope-fiche-block scope-fiche-analyse">
+          <h2>ANALYSE INDIVIDUELLE</h2>
+          <div class="scope-graph-stack">${domainYearChart}</div>
+          <div class="scope-graph-grid">${repartitionChart}</div>
+        </section>
         <section class="scope-fiche-block scope-fiche-history">
           <h2>HISTORIQUE DES ÉVÉNEMENTS</h2>
           <div class="scope-fiche-filters">
@@ -3451,7 +3495,7 @@
           </div>
           <div class="scope-table-wrap scope-fiche-table-wrap">
             <table class="scope-table scope-fiche-events-table">
-              <thead><tr><th>DATE</th><th>ÉVÉNEMENT</th><th>DOMAINE</th><th>CIBLE / OI</th><th>STATUT</th><th>INFORMATIONS</th></tr></thead>
+              <thead><tr>${sortableHeader('personne-events', 'date', 'DATE', state.personneEventSort)}${sortableHeader('personne-events', 'libelle', 'ÉVÉNEMENT', state.personneEventSort)}${sortableHeader('personne-events', 'domaine', 'DOMAINE', state.personneEventSort)}${sortableHeader('personne-events', 'cible', 'CIBLE / OI', state.personneEventSort)}${sortableHeader('personne-events', 'statut', 'STATUT', state.personneEventSort)}${sortableHeader('personne-events', 'informations', 'INFORMATIONS', state.personneEventSort)}</tr></thead>
               <tbody>
                 ${events.map((ev) => `<tr>
                   <td data-label="DATE">${escapeHtml(L.formatDate(ev.date) || '—')}</td>
@@ -6198,6 +6242,11 @@
           state.eventSort = L.nextSort ? L.nextSort(state.eventSort, key, initial) : { key, dir: 'asc' };
           render();
         }
+        if (table === 'personne-events') {
+          const initial = key === 'date' ? 'desc' : 'asc';
+          state.personneEventSort = L.nextSort ? L.nextSort(state.personneEventSort, key, initial) : { key, dir: initial };
+          render();
+        }
         if (table === 'event-personnel') {
           state.eventPersonnelSort = L.nextSort ? L.nextSort(state.eventPersonnelSort, key, 'asc') : { key, dir: 'asc' };
           render();
@@ -6343,6 +6392,16 @@
       state.personneRhOpen = e.target.open;
     });
     document.getElementById('person-edit-open')?.addEventListener('click', beginPersonneEdit);
+    document.getElementById('person-export-pdf')?.addEventListener('click', () => {
+      const fiche = state.personneFiche;
+      const identite = fiche && fiche.identite;
+      const id = (identite && (identite.personneId || identite.id)) || (route() && route().personneId);
+      if (!id) return;
+      openReport(Object.assign({
+        kind: 'PERSON',
+        personneId: id
+      }, periodQuery()));
+    });
     document.getElementById('person-add-assignment')?.addEventListener('click', () => {
       const fiche = state.personneFiche;
       const identite = fiche && fiche.identite;

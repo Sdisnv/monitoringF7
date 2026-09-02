@@ -244,9 +244,61 @@
     if (!dataset) return emptyState('AUCUNE_DONNEE');
     if (variant === 'donut') return renderDonutChart(dataset, size, extras);
     if (variant === 'columns') return renderColumnChart(dataset, size, extras);
+    if (dataset.type === 'grouped') return renderGroupedChart(dataset, size);
     if (dataset.type === 'line') return renderLineChart(dataset, size, extras);
     if (dataset.type === 'stacked') return renderStackedBar(dataset, size);
     return renderBarChart(dataset, size);
+  }
+
+  function groupedPalette(index) {
+    const keys = ['primary', 'secondary', 'warning', 'neutral'];
+    return TOKENS[keys[index % keys.length]];
+  }
+
+  function renderGroupedChart(dataset, size) {
+    const series = (dataset && dataset.series) || [];
+    const categories = (dataset.categories && dataset.categories.length)
+      ? dataset.categories.slice()
+      : [...new Set(series.flatMap((s) => (s.points || []).map((p) => p.label)))];
+    if (!series.length || !categories.length) return emptyState(dataset && dataset.emptyReason);
+    const width = (size && size.width) || 640;
+    const height = (size && size.height) || 228;
+    const pad = { l: 36, r: 12, t: 16, b: 36 };
+    const innerW = width - pad.l - pad.r;
+    const innerH = height - pad.t - pad.b;
+    const groupW = innerW / categories.length;
+    const barW = Math.min(16, Math.max(6, (groupW * 0.72) / series.length));
+    const ticks = [0, 50, 100].map((v) => {
+      const y = pad.t + innerH * (1 - v / 100);
+      return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="4" y="${y + 4}" font-size="11" fill="#6b7785">${v}</text>`;
+    }).join('');
+    const bars = categories.map((cat, ci) => {
+      const gx = pad.l + groupW * ci + (groupW - barW * series.length) / 2;
+      return series.map((s, si) => {
+        const point = (s.points || []).find((p) => String(p.label) === String(cat));
+        const evaluable = point && point.value != null && Number.isFinite(Number(point.value));
+        if (!evaluable) return '';
+        const h = Math.max(2, (Number(point.value) / 100) * innerH);
+        const x = gx + si * barW;
+        const y = pad.t + innerH - h;
+        const title = `${s.label} · ${cat} · ${formatPct(point.value)}`;
+        return `<g>
+          <title>${escapeHtml(title)}</title>
+          <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW - 1}" height="${h.toFixed(1)}" fill="${groupedPalette(si)}" rx="1"/>
+          <text x="${(x + (barW - 1) / 2).toFixed(1)}" y="${(y - 4).toFixed(1)}" font-size="9" text-anchor="middle" fill="#1f2730">${escapeHtml(formatPct(point.value))}</text>
+        </g>`;
+      }).join('');
+    }).join('');
+    const labels = categories.map((cat, ci) => {
+      const x = pad.l + groupW * ci + groupW / 2;
+      return `<text x="${x.toFixed(1)}" y="${height - 8}" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(cat))}</text>`;
+    }).join('');
+    const legend = `<p class="scope-chart-legend">${series.map((s, i) => `<span><i style="background:${groupedPalette(i)}"></i>${escapeHtml(s.label)}</span>`).join('')}</p>`;
+    return `<svg class="scope-chart scope-chart-grouped" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Participation par domaine et par année')}">
+      ${ticks}
+      ${bars}
+      ${labels}
+    </svg>${legend}`;
   }
 
   function renderColumnChart(dataset, size, extras) {
@@ -407,9 +459,9 @@
         ]) : ''));
     const explainBtn = opts.explain === false ? '' : `<button type="button" class="linkish scope-graph-explain-btn" data-graph-explain="${escapeHtml(dataset.id)}">Comprendre ce graphique</button>`;
     const heading = opts.title || dataset.question;
-    const frameType = opts.variant === 'donut' ? 'donut' : (opts.variant === 'columns' ? 'columns' : dataset.type);
+    const frameType = opts.variant === 'donut' ? 'donut' : (opts.variant === 'columns' ? 'columns' : (dataset.type === 'grouped' ? 'grouped' : dataset.type));
     const homeLayout = opts.homeLayout;
-    let legendBlock = dataset.type === 'stacked' || (opts.variant === 'donut' && !homeLayout) ? '' : legend;
+    let legendBlock = dataset.type === 'stacked' || dataset.type === 'grouped' || (opts.variant === 'donut' && !homeLayout) ? '' : legend;
     if (homeLayout && opts.variant === 'donut') legendBlock = donutLegendHtml(dataset);
     const legendSlot = homeLayout
       ? `<div class="scope-chart-legend-slot">${legendBlock || '<p class="scope-chart-legend"></p>'}</div>`

@@ -159,7 +159,7 @@ function attenduNips(fiche){
     assert.ok(attenduNips(foba2After).includes(NIP));
     assert.ok(attenduNips(dpsAfter).includes(NIP));
     assert.ok(dpsAff && foba2Aff);
-    assert.ok(html.includes('scope-personnel-design-b3-r2'));
+    assert.ok(html.includes('scope-personnel-design-b3-r2') || html.includes('scope-personnel-design-b4'));
   });
 
   await record('03 — matching exact FOBA : 2 n’alimente pas 3', async () => {

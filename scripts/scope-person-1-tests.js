@@ -615,7 +615,8 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
     assert.ok(fiche.explain.modesInclus.includes('NOMINATIF'));
     assert.ok(fiche.explain.modesInclus.includes('QUANTITATIF'));
     assert.ok(fiche.explain.totals.numerator === 1);
-    assert.ok(fiche.rapportPersonne.lotFutur === 'REPORT-1-R1');
+    assert.ok(fiche.rapportPersonne.disponible === true);
+    assert.strictEqual(fiche.rapportPersonne.kind, 'PERSON');
   });
 
   await record('31 — timeseries', async () => {

@@ -196,7 +196,7 @@ record('15 — responsive mobile 1 colonne', () => {
 });
 
 record('16 — cache-bust DESIGN-B2', () => {
-  assert.ok(/scope-personnel-design-b[23]/.test(html));
+  assert.ok(/scope-personnel-design-b[2-4]/.test(html));
   assert.ok(!html.includes('netlify/functions'));
 });
 

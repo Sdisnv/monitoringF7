@@ -97,12 +97,16 @@ record('07 — Dispensé correctement présenté', () => {
 });
 
 record('08 — période respectée', () => {
-  const inPeriod = display.ficheIncorporationRows([
+  const rows = [
     aff({ domaine: 'DPS', cible: 'G1', dateActif: '2026-01-01', dateInactif: '2026-03-31' }),
     aff({ domaine: 'DAP', cible: 'Y2', dateActif: '2027-01-01', dateInactif: null })
-  ], { from: '2026-01-01', to: '2026-12-31', year: '2026', preset: 'YEAR' });
-  assert.strictEqual(inPeriod.length, 1);
-  assert.strictEqual(inPeriod[0].label, 'DPS G1');
+  ];
+  const period = { from: '2026-01-01', to: '2026-12-31', year: '2026', preset: 'YEAR' };
+  const during = display.ficheIncorporationRows(rows, period, '2026-03-01');
+  assert.strictEqual(during.length, 1);
+  assert.strictEqual(during[0].label, 'DPS G1');
+  const after = display.ficheIncorporationRows(rows, period, '2026-12-31');
+  assert.strictEqual(after.length, 0);
   assert.ok(ui.includes('periodQuery()'));
   assert.ok(ui.includes('loadPersonneFiche'));
 });

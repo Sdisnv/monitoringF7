@@ -5975,20 +5975,16 @@ body.scope-pdf-open { overflow: hidden; }
   font-weight: 750;
   letter-spacing: 0.02em;
 }
-.scope-person-back {
+.scope-fiche-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
   margin: 0 0 16px;
-  font-size: 14px;
 }
-.scope-person-back-link,
-.scope-person-back-link:link,
-.scope-person-back-link:visited {
-  color: var(--scope-ink);
-  text-decoration: none;
-}
-.scope-person-back-link:hover,
-.scope-person-back-link:focus-visible {
-  color: var(--scope-red);
-  text-decoration: none;
+.scope-fiche-analyse .scope-graph-stack,
+.scope-fiche-analyse .scope-graph-grid {
+  margin-top: 8px;
 }
 .scope-fiche-block {
   margin: 0 0 18px;

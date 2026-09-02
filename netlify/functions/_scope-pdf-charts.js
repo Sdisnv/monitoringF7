@@ -156,12 +156,111 @@ function drawStackedBar(doc, dataset, box){
   return ly;
 }
 
+function groupedPalette(index){
+  const keys = ['primary', 'secondary', 'warning', 'neutral'];
+  return CHART_TOKENS[keys[index % keys.length]];
+}
+
+function drawGroupedChart(doc, dataset, box){
+  const series = (dataset && dataset.series) || [];
+  const categories = (dataset.categories && dataset.categories.length)
+    ? dataset.categories.slice()
+    : [...new Set(series.flatMap((s) => (s.points || []).map((p) => p.label)))];
+  const x = box.x;
+  const y = box.y;
+  const w = box.w;
+  const h = box.h;
+  if(!series.length || !categories.length){
+    doc.fillColor(rgb(INSTITUTION.muted)).fontSize(9)
+      .text('Non évaluable — aucune série officielle.', x, y + h / 2 - 6, { width: w, align: 'center' });
+    return y + h;
+  }
+  const pad = { l: 28, r: 8, t: 8, b: 28 };
+  const innerW = w - pad.l - pad.r;
+  const innerH = h - pad.t - pad.b;
+  const groupW = innerW / categories.length;
+  const barW = Math.min(14, Math.max(5, (groupW * 0.72) / series.length));
+  doc.save();
+  doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.6).stroke();
+  [0, 50, 100].forEach((v) => {
+    const yy = y + pad.t + innerH * (1 - v / 100);
+    doc.strokeColor(rgb(INSTITUTION.line)).lineWidth(0.4).moveTo(x + pad.l, yy).lineTo(x + w - pad.r, yy).stroke();
+    doc.fillColor(rgb(INSTITUTION.muted)).fontSize(7).text(String(v), x + 2, yy - 4, { width: 24 });
+  });
+  categories.forEach((cat, ci) => {
+    const gx = x + pad.l + groupW * ci + (groupW - barW * series.length) / 2;
+    series.forEach((s, si) => {
+      const point = (s.points || []).find((p) => String(p.label) === String(cat));
+      if(!point || point.value == null || !Number.isFinite(Number(point.value))) return;
+      const bh = Math.max(2, (Number(point.value) / 100) * innerH);
+      const bx = gx + si * barW;
+      const by = y + pad.t + innerH - bh;
+      doc.rect(bx, by, barW - 1, bh).fill(rgb(groupedPalette(si)));
+    });
+    doc.fillColor(rgb(INSTITUTION.ink)).fontSize(8).font('Helvetica-Bold')
+      .text(String(cat), x + pad.l + groupW * ci, y + h - 16, { width: groupW, align: 'center' });
+  });
+  let lx = x + pad.l;
+  const ly = y + h + 4;
+  series.forEach((s, i) => {
+    doc.rect(lx, ly, 8, 8).fill(rgb(groupedPalette(i)));
+    doc.fillColor(rgb(INSTITUTION.ink)).fontSize(7).font('Helvetica').text(s.label, lx + 10, ly, { width: 70 });
+    lx += 84;
+  });
+  doc.restore();
+  return ly + 14;
+}
+
+function drawDonutChart(doc, dataset, box){
+  const points = ((((dataset && dataset.series) || [])[0] || {}).points || [])
+    .filter((p) => Number(p.value || 0) > 0);
+  const x = box.x;
+  const y = box.y;
+  const w = box.w;
+  const h = box.h;
+  if(!points.length){
+    doc.fillColor(rgb(INSTITUTION.muted)).fontSize(9)
+      .text('Non évaluable — données insuffisantes.', x, y + h / 2 - 6, { width: w, align: 'center' });
+    return y + 28;
+  }
+  const cx = x + Math.min(w * 0.38, 120);
+  const cy = y + h / 2;
+  const r = Math.min(h / 2 - 8, 58);
+  const rInner = r * 0.62;
+  const total = points.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
+  let angle = -Math.PI / 2;
+  points.forEach((p) => {
+    const sweep = (Number(p.value || 0) / total) * Math.PI * 2;
+    const start = angle;
+    const end = angle + sweep;
+    const fill = rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token));
+    doc.save();
+    doc.moveTo(cx, cy);
+    doc.path(`M ${cx} ${cy} L ${cx + r * Math.cos(start)} ${cy + r * Math.sin(start)} A ${r} ${r} 0 ${sweep > Math.PI ? 1 : 0} 1 ${cx + r * Math.cos(end)} ${cy + r * Math.sin(end)} Z`)
+      .fill(fill);
+    doc.restore();
+    angle = end;
+  });
+  doc.circle(cx, cy, rInner).fill('#ffffff');
+  let ly = y + 8;
+  const lx = cx + r + 24;
+  points.forEach((p) => {
+    doc.rect(lx, ly, 8, 8).fill(rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token)));
+    doc.fillColor(rgb(INSTITUTION.ink)).fontSize(8)
+      .text(`${p.label} ${p.value}`, lx + 12, ly, { width: w - (lx - x) - 12 });
+    ly += 14;
+  });
+  return Math.max(y + h, ly);
+}
+
 function chartHeight(dataset){
   if(!dataset) return 0;
+  if(dataset.type === 'grouped') return 132;
+  if(dataset.type === 'donut') return 120;
   if(dataset.type === 'line') return 92;
   if(dataset.type === 'stacked') return 64;
   const n = (((dataset.series && dataset.series[0]) || {}).points || []).length;
   return Math.max(24, n * 16 + 8);
 }
 
-module.exports = { drawLineChart, drawBarChart, drawStackedBar, chartHeight };
+module.exports = { drawLineChart, drawBarChart, drawStackedBar, drawGroupedChart, drawDonutChart, chartHeight };

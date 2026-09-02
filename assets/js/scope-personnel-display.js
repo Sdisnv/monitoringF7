@@ -923,10 +923,14 @@
     return '';
   }
 
-  function ficheIncorporationRows(assignments, period){
+  function ficheIncorporationRows(assignments, period, asOf){
     const temporal = (typeof require === 'function' ? require('./scope-personnel-temporal.js') : (root && root.ScopePersonnelTemporal)) || {};
     const source = (assignments || []).filter(isOperationalOiAssignment);
+    const consult = temporal.ficheConsultationDate
+      ? temporal.ficheConsultationDate(period, asOf)
+      : (asOf || '');
     return source.filter((row) => {
+      if(consult && temporal.assignmentCoversDate) return temporal.assignmentCoversDate(row, consult);
       if(!period || !temporal.assignmentOverlapsPeriod) return true;
       return temporal.assignmentOverlapsPeriod(row, period);
     }).map((row) => {
@@ -944,8 +948,8 @@
     }).sort((a, b) => compareOiLabel(a.label, b.label) || String(a.role).localeCompare(String(b.role)));
   }
 
-  function ficheSpecializationView(assignments){
-    const formatted = formatSpecializations(assignments, { withPriorityNote: false });
+  function ficheSpecializationView(assignments, date){
+    const formatted = formatSpecializations(assignments, { withPriorityNote: false, date });
     return {
       labels: formatted.labels.slice(),
       text: formatted.text,

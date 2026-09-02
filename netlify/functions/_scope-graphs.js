@@ -110,6 +110,7 @@ function dataset(spec){
     kind: spec.kind || KINDS.OFFICIEL,
     grain: spec.grain || null,
     series: spec.series || [],
+    categories: spec.categories || null,
     emptyReason: spec.emptyReason || null,
     explain: spec.explain || null
   };
@@ -252,6 +253,70 @@ function permutationsDataset(officiel, domaineCode, explain){
     emptyReason,
     explain: explainSlice(explain, { note: 'PERMUTATION ⊂ présents. Jamais additionnée une seconde fois, jamais une absence.' }),
     series: [{ id: 'dap', kind: KINDS.OFFICIEL, label: 'Présents DAP', points }]
+  });
+}
+
+function personRepartitionDataset(officiel, explain){
+  const base = compositionDataset(officiel, explain);
+  const points = ((((base.series || [])[0] || {}).points) || []).map((point) => (
+    point.id === 'nonExcuses' ? Object.assign({}, point, { label: 'Absents' }) : point
+  ));
+  return dataset({
+    id: 'repartition',
+    question: 'Répartition des participations',
+    type: 'stacked',
+    emptyReason: base.emptyReason === 'AUCUNE_COMPOSITION' ? 'NON_EVALUABLE' : base.emptyReason,
+    explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. Non renseigné n’est pas transformé en absence.' }),
+    series: [{ id: 'volumes', kind: KINDS.OFFICIEL, label: 'Volumes officiels', points: base.emptyReason ? [] : points }]
+  });
+}
+
+function domainesAnneesDataset(events, explain){
+  const buckets = new Map();
+  for(const row of events || []){
+    const year = String(row.date || '').slice(0, 4);
+    if(!/^\d{4}$/.test(year)) continue;
+    const root = ROOT_DOMAINES.find((code) => familyCodes(code).includes(row.domaine)) || null;
+    if(!root) continue;
+    const key = `${year}|${root}`;
+    if(!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(row);
+  }
+  const years = [...new Set([...buckets.keys()].map((key) => key.split('|')[0]))].sort();
+  const series = ROOT_DOMAINES.map((code) => {
+    const points = years.map((year) => {
+      const pack = packFromEvents(buckets.get(`${year}|${code}`) || []);
+      const evaluable = pack.denominator > 0 && pack.percentage != null;
+      return {
+        id: `${code}-${year}`,
+        label: year,
+        value: evaluable ? pack.percentage : null,
+        numerator: pack.numerator,
+        denominator: pack.denominator,
+        percentage: evaluable ? pack.percentage : null,
+        eventCount: pack.eventCount,
+        analyticStatus: pack.analyticStatus
+      };
+    });
+    if(!points.some((point) => point.value != null)) return null;
+    return {
+      id: code,
+      kind: KINDS.OFFICIEL,
+      label: code === 'FOSPEC' ? 'FOSPEC / PR / AUTO' : code,
+      points
+    };
+  }).filter(Boolean);
+  const has = series.length > 0;
+  return dataset({
+    id: 'domainesAnnees',
+    question: 'Participation par domaine et par année',
+    type: 'grouped',
+    emptyReason: has ? null : 'NON_EVALUABLE',
+    explain: explainSlice(explain, {
+      note: 'Une combinaison domaine/année sans dénominateur officiel n’est pas affichée à 0 %.'
+    }),
+    series: has ? series : [],
+    categories: years
   });
 }
 
@@ -449,6 +514,8 @@ module.exports = {
   pointFromPack,
   evolutionDataset,
   compositionDataset,
+  personRepartitionDataset,
+  domainesAnneesDataset,
   motifsDataset,
   permutationsDataset,
   buildScopeGraphs,

@@ -14,7 +14,8 @@ const ALLOWED_KEYS = new Set([
   'cible', 'cibleId',
   'year', 'annee', 'preset', 'month', 'quarter', 'from', 'to',
   'nominatif', 'includeNominatif',
-  'includeQualification', 'include_qualification'
+  'includeQualification', 'include_qualification',
+  'personneId', 'personne_id', 'asOf', 'date'
 ]);
 
 const FORBIDDEN_KEYS = new Set([
@@ -53,7 +54,9 @@ function sanitizeQuery(body){
     nominatif: raw.nominatif === true || raw.nominatif === 'true' || raw.includeNominatif === true || raw.includeNominatif === 'true',
     includeQualification: raw.includeQualification != null && raw.includeQualification !== ''
       ? raw.includeQualification
-      : (raw.include_qualification != null && raw.include_qualification !== '' ? raw.include_qualification : undefined)
+      : (raw.include_qualification != null && raw.include_qualification !== '' ? raw.include_qualification : undefined),
+    personneId: raw.personneId || raw.personne_id || raw.id || null,
+    asOf: raw.asOf || raw.date || null
   };
 }
 
@@ -74,6 +77,9 @@ async function generateReport(repo, body, claims, options){
     throw new HttpError(403, 'forbidden', 'La consultation des rapports exige dashboard:read.');
   }
   const query = sanitizeQuery(body);
+  if(query.kind === 'PERSON' && !hasPermission(claims, 'personnel:read')){
+    throw new HttpError(403, 'forbidden', 'La fiche PDF individuelle exige personnel:read.');
+  }
   const wantsNominatif = query.nominatif;
   if(wantsNominatif && !hasPermission(claims, 'reports:nominatif')){
     throw new HttpError(403, 'forbidden_nominatif', 'Le rapport nominatif est réservé aux profils habilités. Les droits agrégés ne suffisent pas.');
