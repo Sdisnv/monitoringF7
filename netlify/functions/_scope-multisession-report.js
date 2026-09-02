@@ -106,56 +106,27 @@ function specializationForDomaine(domaine){
   return displayDomaineCode(domaine) === 'PR' ? 'PAPR' : '';
 }
 
-function readingNotesFor(domaine, typeCycle){
-  const d = displayDomaineCode(domaine);
-  const type = String(typeCycle || '').toUpperCase();
-  const notes = [{
-    id: 'FORMATEUR',
-    title: 'Formateur',
-    text: 'Le personnel engagé comme formateur est affiché séparément de l’effectif participant selon les règles du domaine. Lorsqu’un formateur appartient également à la population évaluée et possède un statut de participation valable, il ne doit pas être compté deux fois.'
-  }];
-  if(d === 'PR'){
-    notes.push({
-      id: 'SURVEILLANT',
-      title: 'Surveillant',
-      text: 'Pour PR : le Surveillant est une fonction d’encadrement exercée par un participant PAPR ; il ne constitue pas une personne supplémentaire dans l’effectif.'
-    });
-  }
-  if(d === 'PR' || d === 'AUTO' || d === 'FOBA' || d === 'FOCA' || type.includes('FORMATION')){
-    notes.push({
-      id: 'AUXILIAIRE',
-      title: 'Auxiliaire',
-      text: 'Un auxiliaire est une fonction d’appui. Il ne doit pas être intégré aux effectifs de participation statistique.'
-    });
-  }
-  if(d === 'JSP'){
-    notes.push({
-      id: 'MONITEUR',
-      title: 'Moniteur',
-      text: 'Pour JSP, le moniteur est informatif : il n’entre ni dans la population suivie des jeunes ni dans le taux officiel.'
-    });
-  }
-  notes.push(
+function readingNotesFor(){
+  return [
     {
       id: 'EXCUSE',
-      title: 'Excusé',
-      text: 'Une personne excusée n’a pas participé à l’exercice. Son absence est documentée par un motif reconnu.'
-    },
-    {
-      id: 'DISPENSE',
-      title: 'Dispensé',
-      text: 'Une personne dispensée est exclue de l’obligation de participation à la séance concernée selon un motif reconnu. Elle n’est pas traitée comme absente dans le taux officiel : le moteur SCOPE l’exclut du dénominateur.'
+      title: 'EXCUSÉ',
+      text: 'Une personne excusée n’a pas participé à l’exercice. Son absence est justifiée par un motif reconnu et enregistré dans SCOPE.'
     },
     {
       id: 'ABSENT',
-      title: 'Absent',
-      text: 'Une personne absente n’a pas participé et ne dispose pas d’un motif d’excuse ou de dispense reconnu.'
+      title: 'ABSENT',
+      text: 'Une personne absente n’a pas participé à l’exercice et ne dispose d’aucun motif d’excuse ou de dispense reconnu.'
+    },
+    {
+      id: 'DISPENSE',
+      title: 'DISPENSÉ',
+      text: 'Une personne dispensée est libérée de l’obligation de participer à la séance concernée pour un motif reconnu. Conformément aux règles de calcul SCOPE, elle n’est pas considérée comme absente et est exclue du dénominateur du taux de participation.'
     }
-  );
-  return notes;
+  ];
 }
 
-const TAUX_EXPLANATION = 'Le taux de participation compare le nombre de personnes ayant effectivement participé à l’exercice avec le nombre de personnes statistiquement attendues. Les personnes dispensées sont exclues du calcul lorsque la règle métier prévoit qu’elles ne sont pas soumises à l’obligation de participation. Les personnes excusées et absentes restent prises en compte dans le dénominateur conformément aux règles SCOPE. Une personne participant à plusieurs séances d’un même exercice n’est comptée qu’une seule fois dans le bilan global.';
+const TAUX_EXPLANATION = 'Le taux de participation mesure la proportion du personnel ayant effectivement participé à l’exercice parmi le personnel soumis à l’obligation de participation. Les personnes excusées et absentes restent intégrées à la population de référence. Les personnes dispensées en sont exclues. Dans le cadre d’un exercice composé de plusieurs séances, une personne ayant participé à au moins une séance n’est comptabilisée qu’une seule fois dans le bilan global.';
 
 function formatPctFr(value){
   if(value == null || !Number.isFinite(Number(value))) return null;
@@ -179,15 +150,16 @@ function buildConclusion({ percentage, objectiveThreshold, domaine, nonParticipa
     if(gap === 0){
       paragraphs.push(`Le taux atteint l’objectif fixé à ${objText} %.`);
     } else if(gap < 0){
-      paragraphs.push(`Il se situe ${formatPctFr(Math.abs(gap))} points de pourcentage en dessous de l’objectif de participation fixé à ${objText} %. Des mesures seront prises afin d’améliorer le taux de participation aux exercices.`);
+      paragraphs.push(`Il se situe ${formatPctFr(Math.abs(gap))} points de pourcentage en dessous de l’objectif de participation fixé.`);
+      paragraphs.push('Des mesures seront prises afin de favoriser une amélioration du taux de participation aux exercices.');
     } else {
-      paragraphs.push(`Le taux de participation global se situe ${formatPctFr(gap)} points de pourcentage au-dessus de l’objectif fixé à ${objText} %. L’ensemble du personnel assigné est remercié pour son engagement au profit du SDIS régional du Nord vaudois.`);
+      paragraphs.push(`Le taux de participation global se situe ${formatPctFr(gap)} points de pourcentage au-dessus de l’objectif fixé.`);
+      paragraphs.push('L’ensemble du personnel assigné est remercié pour son engagement au profit du SDIS régional du Nord vaudois.');
     }
   }
   const prSuspension = displayDomaineCode(domaine) === 'PR' && nonParticipants && nonParticipants.length
-    ? 'Le personnel suivant n’ayant pas participé à cet exercice est suspendu, avec effet dès la fin de la dernière séance de l’exercice, de l’engagement opérationnel en qualité de porteur d’appareil de protection respiratoire (PAPR), jusqu’à sa prochaine participation à un exercice PR :'
+    ? 'Le personnel suivant, n’ayant participé à aucune des séances composant cet exercice, est suspendu, avec effet dès la fin de la dernière séance de l’exercice, de l’engagement opérationnel en qualité de porteur d’appareil de protection respiratoire (PAPR), jusqu’à sa prochaine participation à un exercice PR :'
     : '';
-  if(prSuspension) paragraphs.push(prSuspension);
   return { paragraphs, prSuspension };
 }
 
@@ -228,12 +200,13 @@ function seanceDisplayLabel(event){
   return raw || event.libelle || eventId(event);
 }
 
-function compareNomPrenomGrade(a, b){
+function compareGradeNomPrenom(a, b){
+  const refs = require('../../assets/js/scope-personnel-referentials');
+  const grade = refs.compareGrades(b.grade, a.grade);
+  if(grade) return grade;
   const nom = String(a.nom || '').localeCompare(String(b.nom || ''), 'fr', { sensitivity: 'base' });
   if(nom) return nom;
-  const prenom = String(a.prenom || '').localeCompare(String(b.prenom || ''), 'fr', { sensitivity: 'base' });
-  if(prenom) return prenom;
-  return String(a.grade || '').localeCompare(String(b.grade || ''), 'fr', { sensitivity: 'base' });
+  return String(a.prenom || '').localeCompare(String(b.prenom || ''), 'fr', { sensitivity: 'base' });
 }
 
 function officialFromVolumes(volumes, eventCount){
@@ -387,12 +360,12 @@ function buildSessionDataset(bundle){
   const nonParticipants = classified
     .filter((row) => row.decision === 'ABSENT_EXCUSE' || row.decision === 'ABSENT_NON_EXCUSE')
     .map((row) => mapNominativeRow(row, eventsById, attendus, ciblesById))
-    .sort(compareNomPrenomGrade);
+    .sort(compareGradeNomPrenom);
 
   const dispensesList = classified
     .filter((row) => row.decision === 'DISPENSE')
     .map((row) => mapNominativeRow(row, eventsById, attendus, ciblesById))
-    .sort(compareNomPrenomGrade);
+    .sort(compareGradeNomPrenom);
 
   const domaineCode = displayDomaineCode(current.domaine_code || current.domaineCode);
   const exerciseLabel = state.sessionExerciseLabel || sessionExerciseLabel(events, state.groupKey);
@@ -467,7 +440,8 @@ function buildSessionDataset(bundle){
       },
       volumesSeances: {
         id: 'session-volumes',
-        type: 'grouped',
+        type: 'lines',
+        mode: 'lines',
         question: 'Volumes par statut et par séance',
         categories: seanceLabels,
         series: [
@@ -476,8 +450,7 @@ function buildSessionDataset(bundle){
           { label: 'Absents', token: 'nonExcuse', points: seances.map((s) => ({ label: s.label, value: share(s.absents, s.populationRenseignee) })) },
           { label: 'Dispensés', token: 'dispense', points: seances.map((s) => ({ label: s.label, value: share(s.dispenses, s.populationRenseignee) })) }
         ]
-      },
-      historique: null
+      }
     },
     coverage: state.coverage,
     parasiteNonRenseigne: seances.every((s) => s.nonRenseignes === 0)
@@ -511,90 +484,6 @@ function subsetBundle(bundle, events){
   };
 }
 
-function historiqueDataset(points){
-  const years = points.map((p) => String(p.year));
-  return {
-    id: 'session-historique',
-    type: 'grouped',
-    question: 'Évolution / comparaison historique',
-    categories: years,
-    series: [
-      { label: 'Taux de participation', token: 'present', points: points.map((p) => ({ label: String(p.year), value: p.participation })) },
-      { label: 'Taux Excusés', token: 'excuse', points: points.map((p) => ({ label: String(p.year), value: p.excuses })) },
-      { label: 'Taux Absents', token: 'nonExcuse', points: points.map((p) => ({ label: String(p.year), value: p.absents })) },
-      { label: 'Taux Dispensés', token: 'dispense', points: points.map((p) => ({ label: String(p.year), value: p.dispenses })) }
-    ]
-  };
-}
-
-async function collectHistoricalPoints(repo, { domaine, canonicalKey, currentYear, currentRates }){
-  if(!canonicalKey || !currentYear) return [];
-  const candidates = typeof repo.listEvenements === 'function'
-    ? await repo.listEvenements({ domaine })
-    : [];
-  const peers = (candidates || []).filter((event) => {
-    const year = Number(String(event.date || '').slice(0, 4));
-    if(!Number.isFinite(year) || year > Number(currentYear)) return false;
-    return canonicalExerciseKey(event) === canonicalKey;
-  });
-  const years = [...new Set(peers.map((event) => String(event.date).slice(0, 4)))].sort();
-  const ids = peers.filter((event) => String(event.date).slice(0, 4) !== String(currentYear)).map(eventId);
-  let attendus = [];
-  let participations = [];
-  let personnes = [];
-  let cibles = [];
-  if(ids.length){
-    [attendus, participations, personnes, cibles] = await Promise.all([
-      repo.listAttendusForEvents ? repo.listAttendusForEvents(ids) : [],
-      repo.listParticipationsForEvents ? repo.listParticipationsForEvents(ids) : [],
-      repo.listPersonnes ? repo.listPersonnes({}) : [],
-      repo.listCibles ? repo.listCibles() : []
-    ]);
-  }
-  const points = [];
-  for(const year of years){
-    if(year === String(currentYear)){
-      points.push({
-        year,
-        participation: currentRates.participation,
-        excuses: currentRates.excuses,
-        absents: currentRates.absents,
-        dispenses: currentRates.dispenses
-      });
-      continue;
-    }
-    const events = sortSessionEvents(peers.filter((event) => String(event.date).slice(0, 4) === year));
-    if(!events.length) continue;
-    const yearIds = new Set(events.map(eventId));
-    const dataset = buildSessionDataset({
-      current: events[0],
-      events,
-      attendus: attendus.filter((row) => yearIds.has(eventId(row))),
-      participations: participations.filter((row) => yearIds.has(eventId(row))),
-      personnes,
-      cibles,
-      cycle: {},
-      state: computeSessionParticipationState({
-        evenements: events,
-        currentEventId: eventId(events[0]),
-        currentEvent: events[0],
-        attendus: attendus.filter((row) => yearIds.has(eventId(row))),
-        participations: participations.filter((row) => yearIds.has(eventId(row))),
-        personnes,
-        cycle: {}
-      })
-    });
-    points.push({
-      year,
-      participation: dataset.rates.participation,
-      excuses: dataset.rates.excuses,
-      absents: dataset.rates.absents,
-      dispenses: dataset.rates.dispenses
-    });
-  }
-  return points;
-}
-
 async function collectMultisessionReport(repo, evenementId, options = {}){
   const bundle = await loadSessionBundle(repo, evenementId);
   const currentDate = bundle.current && bundle.current.date;
@@ -606,21 +495,15 @@ async function collectMultisessionReport(repo, evenementId, options = {}){
     : (bundle.events || []).filter((event) => dateInPeriod(event.date, defaultPeriod));
   const primary = subsetBundle(bundle, primaryEvents.length ? primaryEvents : [bundle.current]);
   const dataset = buildSessionDataset(primary);
+  dataset.sessionDates = dataset.period;
   dataset.period = period;
   dataset.periodStrict = {
     from: period.from,
     to: period.to,
     eventDates: (primary.events || []).map((event) => String(event.date).slice(0, 10))
   };
-  const currentYear = String((period && period.to) || currentDate || '').slice(0, 4);
-  const historyPoints = await collectHistoricalPoints(repo, {
-    domaine: dataset.domaine,
-    canonicalKey: dataset.canonicalKey,
-    currentYear,
-    currentRates: dataset.rates
-  });
-  dataset.graphs.historique = historyPoints.length ? historiqueDataset(historyPoints) : null;
-  dataset.historyYears = historyPoints.map((p) => p.year);
+  dataset.historyYears = [];
+  if(dataset.graphs) delete dataset.graphs.historique;
   const { resolveObjective } = require('./_scope-objectives');
   const objectives = typeof repo.listObjectifs === 'function' ? await repo.listObjectifs({ actif: true }) : [];
   const last = primary.events[primary.events.length - 1];
@@ -639,7 +522,7 @@ async function collectMultisessionReport(repo, evenementId, options = {}){
   });
   dataset.conclusion = conclusion.paragraphs;
   dataset.prSuspensionText = conclusion.prSuspension;
-  dataset.readingNotes = readingNotesFor(dataset.domaine, primary.cycle && (primary.cycle.type_cycle || primary.cycle.typeCycle));
+  dataset.readingNotes = readingNotesFor();
   dataset.tauxExplanation = TAUX_EXPLANATION;
   let signer = null;
   if(displayDomaineCode(dataset.domaine) === 'PR' && typeof repo.getPersonneByNip === 'function'){

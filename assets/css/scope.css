@@ -1532,6 +1532,8 @@ html, body {
 .scope-table-scroll { width: 100%; overflow-x: auto; }
 .scope-table-wrap.scope-events-list-wrap { overflow-x: visible; }
 
+.scope-domain-sep { color: var(--scope-gray-500); letter-spacing: 0.08em; }
+
 .scope-table {
   width: 100%;
   border-collapse: collapse;

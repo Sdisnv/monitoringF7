@@ -19,6 +19,7 @@
     "assets/img/logo-scope-blanc.png",
     "assets/img/LogoSDISblanc.png",
     "assets/img/LogoSDISseulnoir.png",
+    "assets/img/MCE_Signature.png",
     "netlify/functions/data/**",
     "node_modules/pdfkit/js/data/**"
   ]

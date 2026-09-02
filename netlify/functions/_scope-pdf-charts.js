@@ -183,7 +183,7 @@ function drawGroupedChart(doc, dataset, box){
   const pad = { l: 22, r: 6, t: 6, b: 22 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
-  const useLines = categories.length > 6;
+  const useLines = dataset.mode === 'lines' || dataset.type === 'lines' || dataset.type === 'line-series' || categories.length > 6;
   doc.save();
   doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.6).stroke();
   [0, 50, 100].forEach((v) => {
@@ -261,14 +261,16 @@ function drawDonutChart(doc, dataset, box){
     return y + 28;
   }
   const legendBelow = dataset && dataset.legendPlacement === 'bottom';
+  const skipLegend = dataset && (dataset.legendPlacement === 'none' || dataset.skipLegend);
   const legend = allPoints.length ? allPoints : points;
-  const plotH = legendBelow ? Math.max(72, h - 56) : h;
-  const plotW = legendBelow
+  const plotH = legendBelow && !skipLegend ? Math.max(72, h - 40) : h;
+  const centered = legendBelow || skipLegend;
+  const plotW = centered
     ? Math.min(w, 220)
     : Math.min(Math.max(w * 0.38, 140), 210);
-  const cx = legendBelow ? x + w / 2 : x + plotW / 2;
+  const cx = centered ? x + w / 2 : x + plotW / 2;
   const cy = y + plotH / 2;
-  const r = Math.min(plotH / 2 - 4, (legendBelow ? 58 : plotW / 2 - 10), 56);
+  const r = Math.min(plotH / 2 - 4, (centered ? 58 : plotW / 2 - 10), 56);
   const rInner = r * 0.62;
   const total = points.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
   if(points.length === 1){
@@ -295,6 +297,7 @@ function drawDonutChart(doc, dataset, box){
     });
     doc.circle(cx, cy, rInner).fill('#ffffff');
   }
+  if(skipLegend) return y + plotH;
   if(legendBelow){
     const colW = w / Math.min(legend.length, 4);
     legend.forEach((p, i) => {
@@ -325,7 +328,7 @@ function drawDonutChart(doc, dataset, box){
 
 function chartHeight(dataset){
   if(!dataset) return 0;
-  if(dataset.type === 'grouped' || dataset.type === 'year-series') return 138;
+  if(dataset.type === 'grouped' || dataset.type === 'year-series' || dataset.type === 'lines' || dataset.type === 'line-series') return 138;
   if(dataset.type === 'donut') return dataset.legendPlacement === 'bottom' ? 148 : 120;
   if(dataset.type === 'line') return 92;
   if(dataset.type === 'stacked') return 64;

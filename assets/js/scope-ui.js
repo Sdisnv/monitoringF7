@@ -1666,7 +1666,11 @@
             <label>Domaine</label>
             <select id="filter-domaine">
               <option value="tous">Tous</option>
-              ${state.referentiels.domaines.map((d) => `<option value="${d.code}">${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}
+              ${L.eventDomainFilterItems(state.referentiels.domaines).map((item) => (
+                item.type === 'separator'
+                  ? '<option disabled class="scope-domain-sep">────────</option>'
+                  : `<option value="${escapeHtml(item.code)}">${escapeHtml(item.label)}</option>`
+              )).join('')}
             </select>
           </div>
           <button type="button" class="scope-btn scope-btn-primary scope-events-new" id="scope-new">Nouvel événement</button>

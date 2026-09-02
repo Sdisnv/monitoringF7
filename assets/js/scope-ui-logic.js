@@ -352,6 +352,43 @@
     }));
   }
 
+  const EVENT_DOMAIN_GROUPS = Object.freeze([
+    ['AUTO', 'PR'],
+    ['DPS', 'DAP', 'JSP'],
+    ['FOBA', 'FOCA']
+  ]);
+
+  function eventDomainFilterItems(domaines) {
+    const list = (domaines || []).filter((d) => {
+      const code = String((d && d.code) || '').toUpperCase();
+      return code && code !== 'PAPR';
+    });
+    const byCode = new Map(list.map((d) => [String(d.code).toUpperCase(), d]));
+    const used = new Set();
+    const items = [];
+    const labelOf = (d, code) => {
+      if (code === 'PR' || String((d && (d.libelleAffiche || d.libelle_affiche)) || '').toUpperCase() === 'PAPR') return 'PR';
+      return (d && (d.libelleAffiche || d.libelle_affiche || d.libelle)) || code;
+    };
+    EVENT_DOMAIN_GROUPS.forEach((group, gi) => {
+      if (gi > 0) items.push({ type: 'separator', id: `sep-${gi}` });
+      group.forEach((code) => {
+        const d = byCode.get(code);
+        items.push({ type: 'domain', code, label: labelOf(d, code) });
+        used.add(code);
+      });
+    });
+    const rest = list.filter((d) => !used.has(String(d.code).toUpperCase()));
+    if (rest.length) {
+      items.push({ type: 'separator', id: 'sep-rest' });
+      rest.forEach((d) => {
+        const code = String(d.code).toUpperCase();
+        items.push({ type: 'domain', code, label: labelOf(d, code) });
+      });
+    }
+    return items;
+  }
+
   function buildSidebarNav(arbre, route) {
     const r = route || {};
     const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
@@ -1208,6 +1245,8 @@
     sousDomaineNavLabel,
     navParentCode,
     normalizeNavArbre,
+    EVENT_DOMAIN_GROUPS,
+    eventDomainFilterItems,
     buildSidebarNav,
     currentYear,
     periodParams,

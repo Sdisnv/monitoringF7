@@ -311,6 +311,8 @@ async function collectReport(repo, query, options){
         exerciseLabel: session.exerciseLabel,
         year
       }),
+      exerciseLabel: session.exerciseLabel,
+      sessionDates: session.sessionDates,
       event: session.event,
       population: session.population,
       officiel: session.officiel,
@@ -394,7 +396,8 @@ async function collectReport(repo, query, options){
         libelle: fiche.evenement.libelle,
         domaine: displayDomaineCode(fiche.evenement.domaine_code),
         sousDomaine: (DOMAINES_MODEL_2[fiche.evenement.domaine_code] || {}).parentCode ? fiche.evenement.domaine_code : null,
-        parentDomaine: (DOMAINES_MODEL_2[fiche.evenement.domaine_code] || {}).parentCode || null,
+        parentDomaine: null,
+        specialization: domaineCode === 'PR' ? 'PAPR' : '',
         cibles: cibles.map((c) => ({ code: c.niveau_code, libelle: c.libelle })),
         modeSuivi: fiche.modeSuivi,
         statut: fiche.evenement.statut,

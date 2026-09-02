@@ -209,24 +209,19 @@ async function seedCurrent(){
     assert.ok(!model.periodStrict.eventDates.some((d) => d.startsWith('2025')));
     assert.strictEqual(model.population, 4);
     assert.strictEqual(model.officiel.volumes.presents, 1);
-    assert.ok((model.historyYears || []).includes('2025'));
-    assert.ok((model.historyYears || []).includes('2026'));
-    const cats = (model.graphs.historique && model.graphs.historique.categories) || [];
-    assert.ok(cats.includes('2025') && cats.includes('2026'));
-    assert.ok(model.graphs.historique.question.includes('historique'));
+    assert.ok(!(model.graphs && model.graphs.historique));
+    assert.ok(!(model.historyYears || []).includes('2025'));
   });
 
   await record('13-18 — légendes, icônes, notes métier, explication taux', async () => {
     const prNotes = readingNotesFor('PR');
-    assert.ok(prNotes.some((n) => n.id === 'FORMATEUR'));
-    assert.ok(prNotes.some((n) => n.id === 'SURVEILLANT'));
-    assert.ok(prNotes.some((n) => n.id === 'AUXILIAIRE'));
-    const autoNotes = readingNotesFor('AUTO');
-    assert.ok(!autoNotes.some((n) => n.id === 'SURVEILLANT'));
-    const dpsNotes = readingNotesFor('DPS');
-    assert.ok(!dpsNotes.some((n) => n.id === 'SURVEILLANT'));
-    assert.ok(!dpsNotes.some((n) => n.id === 'AUXILIAIRE'));
-    assert.ok(TAUX_EXPLANATION.includes('dispensées sont exclues'));
+    assert.ok(!prNotes.some((n) => n.id === 'FORMATEUR'));
+    assert.ok(!prNotes.some((n) => n.id === 'SURVEILLANT'));
+    assert.ok(!prNotes.some((n) => n.id === 'AUXILIAIRE'));
+    assert.ok(prNotes.some((n) => n.id === 'EXCUSE'));
+    assert.ok(prNotes.some((n) => n.id === 'ABSENT'));
+    assert.ok(prNotes.some((n) => n.id === 'DISPENSE'));
+    assert.ok(TAUX_EXPLANATION.includes('dispensées en sont exclues'));
     assert.ok(TAUX_EXPLANATION.includes('excusées et absentes'));
     assert.ok(TAUX_EXPLANATION.includes('une seule fois'));
     assert.ok(renderer.includes('iconHeading'));
@@ -239,7 +234,8 @@ async function seedCurrent(){
     assert.ok(under.paragraphs.some((p) => /70/.test(p)));
     assert.ok(under.paragraphs.some((p) => /points de pourcentage en dessous/.test(p)));
     const over = buildConclusion({ percentage: 92, objectiveThreshold: 80, domaine: 'AUTO', nonParticipants: [] });
-    assert.ok(over.paragraphs.some((p) => /au-dessus/.test(p) && /remerci/.test(p)));
+    assert.ok(over.paragraphs.some((p) => /au-dessus/.test(p)));
+    assert.ok(over.paragraphs.some((p) => /remerci/.test(p)));
     const eq = buildConclusion({ percentage: 80, objectiveThreshold: 80, domaine: 'AUTO', nonParticipants: [] });
     assert.ok(eq.paragraphs.some((p) => /atteint l’objectif/.test(p)));
     const none = buildConclusion({ percentage: 75, objectiveThreshold: null, domaine: 'AUTO', nonParticipants: [] });
@@ -350,7 +346,7 @@ async function seedCurrent(){
     const rules = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(html.includes('scope-multisession-report-1-r1'));
+    assert.ok(/scope-multisession-report-1-r[12]/.test(html));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');
