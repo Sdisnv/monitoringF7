@@ -832,8 +832,10 @@
     const fiche = state.fiche;
     if (!fiche) { state.saisie = []; return; }
     const parts = new Map((fiche.participations || []).map((p) => [p.personne_id, p]));
-    state.saisie = (fiche.attendus || [])
-      .filter((a) => a.inclus !== false)
+    const attendus = L.saisieAttendusFromFiche
+      ? L.saisieAttendusFromFiche(fiche)
+      : (fiche.attendus || []).filter((a) => a.inclus !== false);
+    state.saisie = attendus
       .map((a) => {
         const part = parts.get(a.personne_id) || {};
         const person = personOf(fiche, a.personne_id) || {};
@@ -3124,7 +3126,7 @@
       await refreshAlertCounts();
       ScopeFeedback.success(closeBody ? 'Affectation clôturée' : 'Affectation ajoutée', closeBody ? 'L’affectation a été clôturée.' : 'L’affectation a été enregistrée.');
     } catch (error) {
-      const info = L.friendlyError(error);
+      const info = L.personnelMutationError ? L.personnelMutationError(error) : L.friendlyError(error);
       state.personnelAssignment = Object.assign({}, state.personnelAssignment || modal, {
         busy: false,
         error: info.message || info.title || 'L’opération n’a pas pu être enregistrée.'
@@ -6429,7 +6431,7 @@
           : ['Activité mise à jour', 'L’opération a été enregistrée.'];
       ScopeFeedback.success(success[0], success[1]);
     } catch (error) {
-      const info = L.friendlyError(error);
+      const info = L.personnelMutationError ? L.personnelMutationError(error) : L.friendlyError(error);
       state.personnelInactivate = api.failSubmit(state.personnelInactivate, info.message || info.title);
       render();
     }

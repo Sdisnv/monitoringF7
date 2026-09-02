@@ -336,12 +336,15 @@ function createMemoryRepo(){
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
       return { ...item, already_exists: false };
     },
-    async listEvenements({ annee, statut, domaine } = {}){
+    async listEvenements({ annee, statut, domaine, from, to } = {}){
       return [...evenements.values()]
         .filter((item) => {
           if(annee && String(item.date).slice(0, 4) !== String(annee)) return false;
           if(statut && item.statut !== statut) return false;
           if(domaine && item.domaine_code !== domaine) return false;
+          const day = dateOnly(item.date);
+          if(from && day && day < isoDate(from)) return false;
+          if(to && day && day > isoDate(to)) return false;
           return true;
         })
         .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.libelle).localeCompare(String(b.libelle)))

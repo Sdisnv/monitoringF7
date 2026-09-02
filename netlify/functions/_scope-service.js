@@ -457,7 +457,82 @@ function createScopeService(repo){
     return dbx.listEventCibleIds ? dbx.listEventCibleIds(eventId) : [];
   }
 
-  async function resolveExpectedByPersonForEvent(dbx, evenement, cibleIds){
+  async function expandEventCibleIds(dbx, cibleIds){
+    const ids = Array.isArray(cibleIds) ? cibleIds.filter(Boolean) : [];
+    const allCibles = dbx.listCibles ? await dbx.listCibles() : [];
+    const requested = ids.map((id) => allCibles.find((c) => String(c.cible_id) === String(id))).filter(Boolean);
+    const expanded = new Set(ids.map((id) => String(id)));
+    for(const cible of requested){
+      const domaine = String(cible.domaine_code || '').toUpperCase();
+      if(cible.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP'].includes(domaine)){
+        allCibles
+          .filter((c) => c.domaine_code === domaine && c.niveau_code !== 'GEN')
+          .forEach((c) => expanded.add(String(c.cible_id)));
+      }
+    }
+    return { expanded, allCibles };
+  }
+
+  async function evaluatePersonExpectedForEvent(dbx, evenement, cibleIds, personneId){
+    const date = isoDate(evenement && evenement.date);
+    if(!date || !personneId) return null;
+    const personne = dbx.getPersonne ? await dbx.getPersonne(personneId) : null;
+    if(!personne) return null;
+    const periodes = dbx.listPersonnesPeriodes ? await dbx.listPersonnesPeriodes(personneId) : [];
+    const eligibility = evaluateEligibility(personne, periodes, date);
+    if(!eligibility.eligible) return null;
+    const { expanded, allCibles } = await expandEventCibleIds(dbx, cibleIds);
+    const affs = dbx.listAffectations ? await dbx.listAffectations({ personneId, date }) : [];
+    const matched = [];
+    const seen = new Set();
+    for(const aff of affs || []){
+      if(!isAffectationValide(aff, date)) continue;
+      const cibleId = aff.cible_id ? String(aff.cible_id) : '';
+      let hit = cibleId && expanded.has(cibleId)
+        ? allCibles.find((c) => String(c.cible_id) === cibleId)
+        : null;
+      if(!hit){
+        const domaine = String(aff.domaine_code || aff.domaine || '').toUpperCase();
+        const niveau = String(aff.niveau_code || aff.cible || '')
+          .toUpperCase()
+          .replace(/^(DPS|DAP|JSP|FOBA)\s+/, '');
+        hit = allCibles.find((c) =>
+          expanded.has(String(c.cible_id))
+          && String(c.domaine_code || '').toUpperCase() === domaine
+          && String(c.niveau_code || '').toUpperCase() === niveau
+        );
+      }
+      if(!hit || seen.has(String(hit.cible_id))) continue;
+      seen.add(String(hit.cible_id));
+      matched.push({
+        cibleId: hit.cible_id,
+        niveauCode: hit.niveau_code,
+        domaineCode: hit.domaine_code
+      });
+    }
+    if(!matched.length) return null;
+    return {
+      personneId: personne.personne_id || personneId,
+      nip: personne.nip,
+      nom: personne.nom,
+      prenom: personne.prenom,
+      cibles: matched,
+      origine: 'REGLE',
+      motifInclusion: 'affectation_valide_a_date',
+      eligibility
+    };
+  }
+
+  async function resolveExpectedByPersonForEvent(dbx, evenement, cibleIds, onlyPersonneIds){
+    const scoped = normalizeIdList(onlyPersonneIds);
+    if(scoped.length){
+      const map = new Map();
+      for(const pid of scoped){
+        const expected = await evaluatePersonExpectedForEvent(dbx, evenement, cibleIds, pid);
+        if(expected) map.set(String(pid), expected);
+      }
+      return map;
+    }
     const population = await resolveEligiblePopulation({
       eventDate: evenement.date,
       domaineCode: evenement.domaine_code,
@@ -516,7 +591,12 @@ function createScopeService(repo){
       }
       const eventId = evenement.evenement_id;
       const cibleIds = await eventPopulationCibleIds(dbx, eventId, options.ciblesByEvent);
-      const expectedByPerson = await resolveExpectedByPersonForEvent(dbx, evenement, cibleIds);
+      const expectedByPerson = await resolveExpectedByPersonForEvent(
+        dbx,
+        evenement,
+        cibleIds,
+        allPersons ? [] : [...touchedIds]
+      );
       const attendus = options.attendusByEvent?.get(eventId) || (dbx.listAttendus ? await dbx.listAttendus(eventId) : []);
       const participations = options.participationsByEvent?.get(eventId) || (dbx.listParticipations ? await dbx.listParticipations(eventId) : []);
       const attendusByPerson = new Map(attendus.map((row) => [String(row.personne_id), row]));
@@ -677,7 +757,11 @@ function createScopeService(repo){
     const ids = normalizeIdList(personneIds);
     if(!ids.length) return { ok: true, scope: 'EXPECTED_POPULATION', personnes: 0, eventsScanned: 0, eventsRecalculated: 0 };
     const [listedEvents, allCibles] = await Promise.all([
-      dbx.listEvenements ? dbx.listEvenements({ statut: 'PLANIFIE' }) : [],
+      dbx.listEvenements ? dbx.listEvenements({
+        statut: 'PLANIFIE',
+        from: options.from || null,
+        to: options.to || null
+      }) : [],
       dbx.listCibles ? dbx.listCibles() : []
     ]);
     const allEvents = (listedEvents || []).filter((event) => eventDateInSyncWindow(event.date, options.from, options.to));
@@ -718,10 +802,12 @@ function createScopeService(repo){
       participationsByEvent.get(eventId).push(row);
     }
     const touched = new Set(ids);
+    const removeOnly = String(options.reason || '') === 'PERSONNEL_SABBATICAL_CREATE';
     const candidates = allEvents.filter((event) => {
       if(event.statut !== 'PLANIFIE' || !event.population_figee || event.origine === 'LEGACY_AGGREGATED' || isQuantitatif(event)) return false;
       const rows = ciblesByEvent.get(event.evenement_id) || [];
       const hasTouchedAttendu = (attendusByEvent.get(event.evenement_id) || []).some((row) => touched.has(String(row.personne_id)));
+      if(removeOnly) return hasTouchedAttendu;
       return hasTouchedAttendu || eventCiblesMatchAffected(rows, affectedCibleIds, affectedDomaines);
     });
     return syncExpectedPopulationForEvents(dbx, candidates, actor, {
@@ -739,8 +825,7 @@ function createScopeService(repo){
 
   async function isPersonExpectedForEvent(dbx, evenement, personneId){
     const cibleIds = await eventPopulationCibleIds(dbx, evenement.evenement_id);
-    const expectedByPerson = await resolveExpectedByPersonForEvent(dbx, evenement, cibleIds);
-    return expectedByPerson.get(String(personneId)) || null;
+    return evaluatePersonExpectedForEvent(dbx, evenement, cibleIds, personneId);
   }
 
   function previewPopulationStore(store){
@@ -2002,6 +2087,22 @@ function createScopeService(repo){
     const allCibles = await repo.listCibles();
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
     let attendus = await repo.listAttendus(eventId);
+    if(String(evenement.statut || '').toUpperCase() === 'PLANIFIE'){
+      const periodesByPersonne = new Map();
+      const personneIds = [...new Set((attendus || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean))];
+      await Promise.all(personneIds.map(async (pid) => {
+        periodesByPersonne.set(pid, repo.listPersonnesPeriodes ? await repo.listPersonnesPeriodes(pid) : []);
+      }));
+      const eligible = new Set(
+        filterAttendusEligibleAtDate(attendus, periodesByPersonne, evenement.date)
+          .map((row) => String(row.personne_id || row.personneId))
+      );
+      attendus = (attendus || []).map((row) => (
+        eligible.has(String(row.personne_id || row.personneId))
+          ? row
+          : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
+      ));
+    }
     const participations = await repo.listParticipations(eventId);
     const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
     let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));

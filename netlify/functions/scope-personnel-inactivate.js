@@ -53,7 +53,9 @@ exports.handler = async function(event){
       ? { from: dateDebut, to: dateFin }
       : isEndSabbatical
         ? { from: dateFin }
-        : null;
+        : isAssignmentClose
+          ? { from: dateFin }
+          : (isCorrect ? null : { from: dateFin });
     const synchronisationPopulation = await syncExpectedPopulationForPersonne(personne, claims, syncReason, syncWindow);
     return response(200, { ok:true, personne, synchronisationPopulation });
   }catch(error){

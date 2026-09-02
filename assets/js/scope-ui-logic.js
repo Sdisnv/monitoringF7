@@ -724,6 +724,31 @@
     });
   }
 
+  function saisieAttendusFromFiche(fiche) {
+    return ((fiche && fiche.attendus) || []).filter((row) => row && row.inclus !== false);
+  }
+
+  function personnelMutationError(error) {
+    const info = friendlyError(error);
+    const status = Number(error && (error.status || error.statusCode));
+    const raw = `${(info && info.title) || ''} ${(info && info.message) || ''} ${(error && error.message) || ''}`;
+    if (status === 422 || status === 400 || status === 404) {
+      return {
+        tone: 'error',
+        title: info.title || 'Action refusée',
+        message: (error && error.message) || info.message
+      };
+    }
+    if (/<html[\s>]|inactivity timeout|timed?\s*out|timeout|délai d’exécution|delai d.execution|netlify|sql\b/i.test(raw)) {
+      return {
+        tone: 'error',
+        title: 'Enregistrement impossible',
+        message: 'L’opération n’a pas pu être enregistrée. Vérifiez la saisie et réessayez.'
+      };
+    }
+    return info;
+  }
+
   function friendlyError(error) {
     const status = Number(error && error.status);
     const code = error && (error.error || error.code);
@@ -1088,6 +1113,8 @@
     closureBlockers,
     resetSaisie,
     needsConfirmReset,
+    saisieAttendusFromFiche,
+    personnelMutationError,
     friendlyError,
     ciblesLabel,
     displayTauxForList,

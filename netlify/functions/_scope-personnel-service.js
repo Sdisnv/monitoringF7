@@ -1270,7 +1270,7 @@ async function closePersonneAffectation(id, body, actor){
     throw error;
   }
   const plan = temporal.planInactivation(dateEffet);
-  const existing = await getPersonne(id, { asOf: plan.dernierJourActif || dateEffet });
+  const existing = await getPersonne(id, {});
   if(!existing){
     const error = new Error('Personne introuvable.');
     error.statusCode = 404;
@@ -1282,7 +1282,19 @@ async function closePersonneAffectation(id, body, actor){
     error.statusCode = 404;
     throw error;
   }
+  if(target.dateInactif || target.date_inactif){
+    const error = new Error('Cette affectation est déjà clôturée.');
+    error.statusCode = 422;
+    throw error;
+  }
   const closures = temporal.planSingleAssignmentClosure(target, dateEffet);
+  const start = temporal.iso(target.dateActif || target.date_actif || target.dateDebut);
+  const lastActive = plan.dernierJourActif;
+  if(start && lastActive && lastActive < start && start !== dateEffet){
+    const error = new Error('Le dernier jour actif ne peut pas précéder le début de l’affectation.');
+    error.statusCode = 422;
+    throw error;
+  }
   if(!closures.canProceed){
     const error = new Error('Cette affectation ne peut pas être clôturée à cette date d’effet.');
     error.statusCode = 422;

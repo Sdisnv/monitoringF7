@@ -545,7 +545,7 @@ function createPgRepo(client){
       }
       return mapEvent(result.rows[0]);
     },
-    async listEvenements({ annee, statut, domaine } = {}){
+    async listEvenements({ annee, statut, domaine, from, to } = {}){
       const clauses = [];
       const params = [];
       let i = 1;
@@ -562,6 +562,16 @@ function createPgRepo(client){
       if(domaine){
         clauses.push(`domaine_code = $${i}`);
         params.push(String(domaine));
+        i += 1;
+      }
+      if(from){
+        clauses.push(`date >= $${i}::date`);
+        params.push(isoDate(from));
+        i += 1;
+      }
+      if(to){
+        clauses.push(`date <= $${i}::date`);
+        params.push(isoDate(to));
         i += 1;
       }
       const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
