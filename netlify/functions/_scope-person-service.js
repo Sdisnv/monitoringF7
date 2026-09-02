@@ -16,6 +16,7 @@ const {
   compositionDataset,
   personRepartitionDataset,
   domainesAnneesDataset,
+  specialisationsAnneesDataset,
   motifsDataset,
   permutationsDataset
 } = require('./_scope-graphs');
@@ -214,7 +215,7 @@ function identityPayload(personne, periodes, affectations, ciblesById, today, pe
   };
 }
 
-function personGraphs(evaluated, series, explain, careerEvents){
+function personGraphs(evaluated, series, explain, careerEvents, ciblesById){
   const included = evaluated.includedEvents || [];
   const career = careerEvents || included;
   const evolution = evolutionDataset({
@@ -251,6 +252,7 @@ function personGraphs(evaluated, series, explain, careerEvents){
       explain: explain ? { period: explain.period, totals: explain.totals } : null
     },
     domainesAnnees: domainesAnneesDataset(career, explain),
+    specialisationsAnnees: specialisationsAnneesDataset(career, ciblesById, explain),
     children: {
       id: 'children',
       question: 'Selon quel OI la personne était-elle affectée à la date de l’événement ?',
@@ -446,7 +448,7 @@ function createScopePersonService(repo){
     const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });
     const entry = isoDate(personne.date_entree_sdis || personne.date_entree) || snap.summary.period.from;
     const careerFrom = `${String(entry).slice(0, 4)}-01-01`;
-    let careerEvents = included;
+    let careerEvents = snap.evaluated.includedEvents || [];
     if(careerFrom < snap.summary.period.from){
       const careerSnap = await analytics.snapshot(Object.assign({}, query, {
         personneId,
@@ -454,9 +456,9 @@ function createScopePersonService(repo){
         to: snap.summary.period.to,
         preset: 'CUSTOM'
       }));
-      careerEvents = (careerSnap.evaluated && careerSnap.evaluated.includedEvents) || included;
+      careerEvents = (careerSnap.evaluated && careerSnap.evaluated.includedEvents) || careerEvents;
     }
-    const graphs = personGraphs(evaluated, snap.timeseries, snap.explain, careerEvents);
+    const graphs = personGraphs(evaluated, snap.timeseries, snap.explain, careerEvents, ciblesById);
     const officiel = snap.summary.officiel || {};
     const ctx = officiel.objectiveContext || {};
     let objectifMessage = 'Aucun objectif défini.';

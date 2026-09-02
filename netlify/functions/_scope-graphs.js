@@ -258,37 +258,54 @@ function permutationsDataset(officiel, domaineCode, explain){
 
 function personRepartitionDataset(officiel, explain){
   const base = compositionDataset(officiel, explain);
-  const points = ((((base.series || [])[0] || {}).points) || []).map((point) => (
-    point.id === 'nonExcuses' ? Object.assign({}, point, { label: 'Absents' }) : point
-  ));
-  return dataset({
-    id: 'repartition',
-    question: 'Répartition des participations',
-    type: 'stacked',
-    emptyReason: base.emptyReason === 'AUCUNE_COMPOSITION' ? 'NON_EVALUABLE' : base.emptyReason,
-    explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. Non renseigné n’est pas transformé en absence.' }),
-    series: [{ id: 'volumes', kind: KINDS.OFFICIEL, label: 'Volumes officiels', points: base.emptyReason ? [] : points }]
-  });
+    const points = ((((base.series || [])[0] || {}).points) || []).map((point) => (
+      point.id === 'nonExcuses' ? Object.assign({}, point, { label: 'Absents' }) : point
+    ));
+    const hasVolume = points.some((point) => Number(point.value || 0) > 0);
+    return dataset({
+      id: 'repartition',
+      question: 'Répartition des participations',
+      type: 'stacked',
+      emptyReason: hasVolume ? null : 'NON_EVALUABLE',
+      explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. Non renseigné n’est pas transformé en absence.' }),
+      series: [{ id: 'volumes', kind: KINDS.OFFICIEL, label: 'Volumes officiels', points: hasVolume ? points : [] }]
+    });
 }
 
-function domainesAnneesDataset(events, explain){
+const PERSON_DOMAIN_KEYS = Object.freeze(['FOBA', 'FOCA', 'DPS', 'DAP', 'JSP', 'PR', 'AUTO', 'FOSPEC']);
+
+function personDomainKey(domaine){
+  const code = String(domaine || '').toUpperCase();
+  if(PERSON_DOMAIN_KEYS.includes(code)) return code;
+  const parent = ROOT_DOMAINES.find((row) => familyCodes(row).includes(code));
+  return parent || null;
+}
+
+function yearSeriesDataset(id, question, events, keyOf, labelOf, explain){
   const buckets = new Map();
   for(const row of events || []){
     const year = String(row.date || '').slice(0, 4);
     if(!/^\d{4}$/.test(year)) continue;
-    const root = ROOT_DOMAINES.find((code) => familyCodes(code).includes(row.domaine)) || null;
-    if(!root) continue;
-    const key = `${year}|${root}`;
-    if(!buckets.has(key)) buckets.set(key, []);
-    buckets.get(key).push(row);
+    const key = keyOf(row);
+    if(!key) continue;
+    const mapKey = `${year}|${key}`;
+    if(!buckets.has(mapKey)) buckets.set(mapKey, []);
+    buckets.get(mapKey).push(row);
   }
-  const years = [...new Set([...buckets.keys()].map((key) => key.split('|')[0]))].sort();
-  const series = ROOT_DOMAINES.map((code) => {
+  const rawYears = [...new Set([...buckets.keys()].map((item) => item.split('|')[0]))].sort();
+  const years = [];
+  if(rawYears.length){
+    const start = Number(rawYears[0]);
+    const end = Number(rawYears[rawYears.length - 1]);
+    for(let y = start; y <= end; y += 1) years.push(String(y));
+  }
+  const keys = [...new Set([...buckets.keys()].map((item) => item.split('|').slice(1).join('|')))];
+  const series = keys.map((key) => {
     const points = years.map((year) => {
-      const pack = packFromEvents(buckets.get(`${year}|${code}`) || []);
+      const pack = packFromEvents(buckets.get(`${year}|${key}`) || []);
       const evaluable = pack.denominator > 0 && pack.percentage != null;
       return {
-        id: `${code}-${year}`,
+        id: `${key}-${year}`,
         label: year,
         value: evaluable ? pack.percentage : null,
         numerator: pack.numerator,
@@ -300,24 +317,62 @@ function domainesAnneesDataset(events, explain){
     });
     if(!points.some((point) => point.value != null)) return null;
     return {
-      id: code,
+      id: key,
       kind: KINDS.OFFICIEL,
-      label: code === 'FOSPEC' ? 'FOSPEC / PR / AUTO' : code,
+      label: labelOf ? labelOf(key) : key,
       points
     };
   }).filter(Boolean);
   const has = series.length > 0;
   return dataset({
-    id: 'domainesAnnees',
-    question: 'Participation par domaine et par année',
-    type: 'grouped',
+    id,
+    question,
+    type: 'year-series',
     emptyReason: has ? null : 'NON_EVALUABLE',
     explain: explainSlice(explain, {
-      note: 'Une combinaison domaine/année sans dénominateur officiel n’est pas affichée à 0 %.'
+      note: 'Une combinaison sans dénominateur officiel n’est pas affichée à 0 %.'
     }),
     series: has ? series : [],
     categories: years
   });
+}
+
+function domainesAnneesDataset(events, explain){
+  return yearSeriesDataset(
+    'domainesAnnees',
+    'Participation par domaine et par année',
+    events,
+    (row) => personDomainKey(row.domaine),
+    (key) => (key === 'PR' ? 'PR' : key),
+    explain
+  );
+}
+
+function specialisationsAnneesDataset(events, ciblesById, explain){
+  const display = require('../../assets/js/scope-personnel-display.js');
+  const map = ciblesById instanceof Map ? ciblesById : new Map();
+  return yearSeriesDataset(
+    'specialisationsAnnees',
+    'Participation par spécialisation et par année',
+    events,
+    (row) => {
+      const domaine = String(row.domaine || '').toUpperCase();
+      const cibles = (row.cibleIds || []).map((id) => map.get(id) || map.get(String(id))).filter(Boolean);
+      const sample = cibles[0] || {};
+      if(domaine === 'FOBA' || domaine === 'FOCA'){
+        const cible = cibles.find((item) => String(item.domaine_code || '').toUpperCase() === domaine) || sample;
+        const code = display.specializationCode({ domaine, cible: cible.niveau_code || row.sousDomaine });
+        return code || null;
+      }
+      if(domaine === 'PR' || domaine === 'PAPR') return 'PAPR';
+      if(domaine === 'AUTO'){
+        return display.specializationCode({ domaine: 'AUTO', cible: sample.niveau_code || row.sousDomaine }) || null;
+      }
+      return null;
+    },
+    (key) => display.specializationUserLabel(key) || key,
+    explain
+  );
 }
 
 function comparisonDataset(id, question, points, explain, grain, emptyReason){
@@ -516,6 +571,7 @@ module.exports = {
   compositionDataset,
   personRepartitionDataset,
   domainesAnneesDataset,
+  specialisationsAnneesDataset,
   motifsDataset,
   permutationsDataset,
   buildScopeGraphs,

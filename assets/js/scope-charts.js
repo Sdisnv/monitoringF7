@@ -244,7 +244,7 @@
     if (!dataset) return emptyState('AUCUNE_DONNEE');
     if (variant === 'donut') return renderDonutChart(dataset, size, extras);
     if (variant === 'columns') return renderColumnChart(dataset, size, extras);
-    if (dataset.type === 'grouped') return renderGroupedChart(dataset, size);
+    if (dataset.type === 'grouped' || dataset.type === 'year-series') return renderYearSeriesChart(dataset, size);
     if (dataset.type === 'line') return renderLineChart(dataset, size, extras);
     if (dataset.type === 'stacked') return renderStackedBar(dataset, size);
     return renderBarChart(dataset, size);
@@ -255,48 +255,73 @@
     return TOKENS[keys[index % keys.length]];
   }
 
-  function renderGroupedChart(dataset, size) {
+  function renderYearSeriesChart(dataset, size) {
     const series = (dataset && dataset.series) || [];
     const categories = (dataset.categories && dataset.categories.length)
       ? dataset.categories.slice()
       : [...new Set(series.flatMap((s) => (s.points || []).map((p) => p.label)))];
     if (!series.length || !categories.length) return emptyState(dataset && dataset.emptyReason);
-    const width = (size && size.width) || 640;
-    const height = (size && size.height) || 228;
-    const pad = { l: 36, r: 12, t: 16, b: 36 };
+    const width = (size && size.width) || 520;
+    const height = (size && size.height) || 200;
+    const pad = { l: 32, r: 10, t: 12, b: 28 };
     const innerW = width - pad.l - pad.r;
     const innerH = height - pad.t - pad.b;
-    const groupW = innerW / categories.length;
-    const barW = Math.min(16, Math.max(6, (groupW * 0.72) / series.length));
+    const yOf = (pct) => pad.t + innerH * (1 - Number(pct) / 100);
     const ticks = [0, 50, 100].map((v) => {
-      const y = pad.t + innerH * (1 - v / 100);
-      return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="4" y="${y + 4}" font-size="11" fill="#6b7785">${v}</text>`;
+      const y = yOf(v);
+      return `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y}" y2="${y}" stroke="#e3e7ec"/><text x="2" y="${y + 4}" font-size="10" fill="#6b7785">${v}</text>`;
     }).join('');
-    const bars = categories.map((cat, ci) => {
-      const gx = pad.l + groupW * ci + (groupW - barW * series.length) / 2;
-      return series.map((s, si) => {
-        const point = (s.points || []).find((p) => String(p.label) === String(cat));
-        const evaluable = point && point.value != null && Number.isFinite(Number(point.value));
-        if (!evaluable) return '';
-        const h = Math.max(2, (Number(point.value) / 100) * innerH);
-        const x = gx + si * barW;
-        const y = pad.t + innerH - h;
-        const title = `${s.label} · ${cat} · ${formatPct(point.value)}`;
-        return `<g>
-          <title>${escapeHtml(title)}</title>
-          <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW - 1}" height="${h.toFixed(1)}" fill="${groupedPalette(si)}" rx="1"/>
-          <text x="${(x + (barW - 1) / 2).toFixed(1)}" y="${(y - 4).toFixed(1)}" font-size="9" text-anchor="middle" fill="#1f2730">${escapeHtml(formatPct(point.value))}</text>
-        </g>`;
+    const useLines = categories.length > 6;
+    let plot = '';
+    if (useLines) {
+      const xOf = (i) => categories.length === 1
+        ? pad.l + innerW / 2
+        : pad.l + (i / (categories.length - 1)) * innerW;
+      plot = series.map((s, si) => {
+        const pts = categories.map((cat, i) => {
+          const point = (s.points || []).find((p) => String(p.label) === String(cat));
+          if (!point || point.value == null || !Number.isFinite(Number(point.value))) return null;
+          return { x: xOf(i), y: yOf(point.value), cat, value: point.value };
+        }).filter(Boolean);
+        if (!pts.length) return '';
+        const line = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+        const dots = pts.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="${groupedPalette(si)}"><title>${escapeHtml(`${s.label} · ${p.cat} · ${formatPct(p.value)}`)}</title></circle>`).join('');
+        const poly = pts.length > 1
+          ? `<polyline fill="none" stroke="${groupedPalette(si)}" stroke-width="2" points="${line}" />`
+          : '';
+        return `${poly}${dots}`;
       }).join('');
-    }).join('');
+    } else {
+      const groupW = innerW / categories.length;
+      const barW = Math.min(14, Math.max(5, (groupW * 0.7) / series.length));
+      plot = categories.map((cat, ci) => {
+        const gx = pad.l + groupW * ci + (groupW - barW * series.length) / 2;
+        return series.map((s, si) => {
+          const point = (s.points || []).find((p) => String(p.label) === String(cat));
+          const evaluable = point && point.value != null && Number.isFinite(Number(point.value));
+          if (!evaluable) return '';
+          const h = Math.max(2, (Number(point.value) / 100) * innerH);
+          const x = gx + si * barW;
+          const y = pad.t + innerH - h;
+          return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1, barW - 1)}" height="${h.toFixed(1)}" fill="${groupedPalette(si)}" rx="1"><title>${escapeHtml(`${s.label} · ${cat} · ${formatPct(point.value)}`)}</title></rect>`;
+        }).join('');
+      }).join('');
+    }
+    const step = categories.length > 8 ? Math.ceil(categories.length / 6) : 1;
     const labels = categories.map((cat, ci) => {
-      const x = pad.l + groupW * ci + groupW / 2;
-      return `<text x="${x.toFixed(1)}" y="${height - 8}" font-size="12" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(cat))}</text>`;
+      if (ci % step !== 0 && ci !== categories.length - 1) return '';
+      const x = categories.length === 1
+        ? pad.l + innerW / 2
+        : pad.l + (ci / Math.max(1, categories.length - (useLines ? 1 : 0))) * (useLines ? innerW : innerW);
+      const gx = useLines
+        ? (categories.length === 1 ? pad.l + innerW / 2 : pad.l + (ci / (categories.length - 1)) * innerW)
+        : pad.l + (innerW / categories.length) * ci + (innerW / categories.length) / 2;
+      return `<text x="${gx.toFixed(1)}" y="${height - 8}" font-size="10" text-anchor="middle" fill="#1f2730">${escapeHtml(String(cat))}</text>`;
     }).join('');
     const legend = `<p class="scope-chart-legend">${series.map((s, i) => `<span><i style="background:${groupedPalette(i)}"></i>${escapeHtml(s.label)}</span>`).join('')}</p>`;
-    return `<svg class="scope-chart scope-chart-grouped" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Participation par domaine et par année')}">
+    return `<svg class="scope-chart scope-chart-year-series" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Participation par année')}">
       ${ticks}
-      ${bars}
+      ${plot}
       ${labels}
     </svg>${legend}`;
   }
@@ -353,9 +378,9 @@
     const usable = points.filter((p) => Number(p.value || 0) > 0);
     if (!usable.length) return emptyState(dataset && dataset.emptyReason);
     const palette = extrasSafe.palette || Object.freeze({
-      present: TOKENS.neutral,
+      present: extrasSafe.personLayout ? TOKENS.primary : TOKENS.neutral,
       excuse: TOKENS.warning,
-      dispense: TOKENS.primary,
+      dispense: TOKENS.neutral,
       nonExcuse: TOKENS.secondary,
       prive: TOKENS.secondary,
       professionnel: TOKENS.primary,
@@ -366,14 +391,15 @@
     const width = (size && size.width) || 280;
     const height = (size && size.height) || 220;
     const homePlot = extrasSafe.homePlot;
-    const cx = width / 2;
-    const cy = homePlot ? height / 2 : height / 2 - 28;
-    const r = homePlot ? Math.min(width, height) / 2 - 18 : Math.min(width, height) / 2 - 36;
+    const legendRight = extrasSafe.legendRight || extrasSafe.personLayout;
+    const plotW = legendRight ? Math.min(width * 0.55, 220) : width;
+    const cx = legendRight ? plotW / 2 : width / 2;
+    const cy = homePlot ? height / 2 : height / 2;
+    const r = Math.min(plotW, height) / 2 - (homePlot ? 18 : 16);
     const rInner = r * 0.62;
     const total = usable.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
-    let angle = -Math.PI / 2;
     const tau = Math.PI * 2;
-    function arc(start, end) {
+    function ringPath(start, end) {
       const large = end - start > Math.PI ? 1 : 0;
       const x1 = cx + r * Math.cos(start);
       const y1 = cy + r * Math.sin(start);
@@ -385,24 +411,37 @@
       const iy2 = cy + rInner * Math.sin(start);
       return `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} L ${ix1.toFixed(1)} ${iy1.toFixed(1)} A ${rInner} ${rInner} 0 ${large} 0 ${ix2.toFixed(1)} ${iy2.toFixed(1)} Z`;
     }
-    const slices = usable.map((p) => {
-      const slice = (Number(p.value || 0) / total) * tau;
-      const start = angle;
-      const end = angle + Math.max(slice, 0.01);
-      angle = end;
-      const fill = palette[p.token] || palette[p.id] || colorOf(p.token);
-      const share = `${(100 * Number(p.value || 0) / total).toFixed(1).replace('.', ',')} %`;
-      const title = `${p.label} : ${p.value} · ${share}`;
-      return `<path d="${arc(start, end)}" fill="${fill}"><title>${escapeHtml(title)}</title></path>`;
-    }).join('');
-    const showCenter = extrasSafe.centerLabel || extrasSafe.centerValue != null;
-    const centerValue = extrasSafe.centerValue != null ? extrasSafe.centerValue : total;
-    const centerLabel = extrasSafe.centerLabel || '';
-    const center = showCenter ? `<text x="${cx}" y="${cy - 2}" font-size="22" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(centerValue))}</text>
-      ${centerLabel ? `<text x="${cx}" y="${cy + 16}" font-size="11" text-anchor="middle" fill="#6b7785">${escapeHtml(centerLabel)}</text>` : ''}` : '';
-    const labels = usable.map((p) => {
+    let slices;
+    if (usable.length === 1) {
+      const fill = palette[usable[0].token] || palette[usable[0].id] || colorOf(usable[0].token);
+      slices = `<path class="scope-donut-full" d="${ringPath(-Math.PI / 2, Math.PI / 2)}" fill="${fill}"></path>
+        <path class="scope-donut-full" d="${ringPath(Math.PI / 2, Math.PI * 1.5)}" fill="${fill}"></path>`;
+    } else {
+      let angle = -Math.PI / 2;
+      slices = usable.map((p) => {
+        const slice = (Number(p.value || 0) / total) * tau;
+        const start = angle;
+        const end = angle + Math.max(slice, 0.01);
+        angle = end;
+        const fill = palette[p.token] || palette[p.id] || colorOf(p.token);
+        return `<path d="${ringPath(start, end)}" fill="${fill}"><title>${escapeHtml(`${p.label} : ${p.value}`)}</title></path>`;
+      }).join('');
+    }
+    const dominant = usable.length === 1 ? usable[0] : null;
+    const autoCenter = Boolean(dominant) || extrasSafe.personLayout;
+    const centerValue = extrasSafe.centerValue != null
+      ? extrasSafe.centerValue
+      : (dominant ? '100 %' : (autoCenter ? formatPct(100 * Number((usable.find((p) => p.id === 'presents' || p.token === 'present') || {}).value || 0) / total) : null));
+    const centerLabel = extrasSafe.centerLabel != null
+      ? extrasSafe.centerLabel
+      : (dominant ? dominant.label : '');
+    const showCenter = extrasSafe.centerLabel || extrasSafe.centerValue != null || autoCenter;
+    const center = showCenter && centerValue != null ? `<text x="${cx}" y="${cy - 4}" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(centerValue))}</text>
+      ${centerLabel ? `<text x="${cx}" y="${cy + 14}" font-size="11" text-anchor="middle" fill="#6b7280">${escapeHtml(centerLabel)}</text>` : ''}` : '';
+    const legendPoints = points.length ? points : usable;
+    const labels = legendPoints.map((p) => {
       const share = `${(100 * Number(p.value || 0) / total).toFixed(0)} %`;
-      return `<span><i class="${escapeHtml(p.token || p.id || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value))} · ${escapeHtml(share)}</span>`;
+      return `<span><i class="${escapeHtml(p.token || p.id || 'off')}"></i>${escapeHtml(p.label)} ${escapeHtml(String(p.value || 0))} — ${escapeHtml(share)}</span>`;
     }).join('');
     const legend = extrasSafe.omitLegend ? '' : `<p class="scope-chart-legend">${labels}</p>`;
     return `<svg class="scope-chart scope-chart-donut" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml((dataset && dataset.question) || 'Répartition')}">
@@ -435,7 +474,8 @@
       centerValue: opts.centerValue,
       centerLabel: opts.centerLabel,
       omitLegend: Boolean(opts.homeLayout),
-      homePlot: Boolean(opts.homeLayout)
+      homePlot: Boolean(opts.homeLayout),
+      personLayout: Boolean(opts.personLayout)
     };
     const wide = opts.wide === false
       ? false
@@ -459,9 +499,9 @@
         ]) : ''));
     const explainBtn = opts.explain === false ? '' : `<button type="button" class="linkish scope-graph-explain-btn" data-graph-explain="${escapeHtml(dataset.id)}">Comprendre ce graphique</button>`;
     const heading = opts.title || dataset.question;
-    const frameType = opts.variant === 'donut' ? 'donut' : (opts.variant === 'columns' ? 'columns' : (dataset.type === 'grouped' ? 'grouped' : dataset.type));
+    const frameType = opts.variant === 'donut' ? 'donut' : (opts.variant === 'columns' ? 'columns' : (dataset.type === 'grouped' || dataset.type === 'year-series' ? 'grouped' : dataset.type));
     const homeLayout = opts.homeLayout;
-    let legendBlock = dataset.type === 'stacked' || dataset.type === 'grouped' || (opts.variant === 'donut' && !homeLayout) ? '' : legend;
+    let legendBlock = dataset.type === 'stacked' || dataset.type === 'grouped' || dataset.type === 'year-series' || (opts.variant === 'donut' && !homeLayout) ? '' : legend;
     if (homeLayout && opts.variant === 'donut') legendBlock = donutLegendHtml(dataset);
     const legendSlot = homeLayout
       ? `<div class="scope-chart-legend-slot">${legendBlock || '<p class="scope-chart-legend"></p>'}</div>`
@@ -514,6 +554,7 @@
     renderBarChart,
     renderStackedBar,
     renderDonutChart,
+    renderYearSeriesChart,
     renderColumnChart,
     renderChartCard,
     renderGraphExplain

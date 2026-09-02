@@ -5970,7 +5970,7 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 /* === SCOPE-PERSONNEL-DESIGN-B — fiche individuelle === */
-.scope-fiche-personnel { max-width: 1100px; }
+.scope-fiche-personnel { max-width: 1280px; }
 .scope-fiche-personnel .scope-person-nom {
   font-weight: 750;
   letter-spacing: 0.02em;
@@ -6001,10 +6001,28 @@ body.scope-pdf-open { overflow: hidden; }
   text-transform: uppercase;
   color: #4b5563;
 }
-.scope-fiche-identity {
+.scope-fiche-top {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px 16px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.scope-fiche-top .scope-fiche-block { margin: 0; }
+.scope-fiche-identity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.scope-fiche-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+.scope-fiche-chart-donut { grid-column: 1 / -1; }
+.scope-fiche-analyse .scope-chart-card {
+  margin: 0;
+  height: 100%;
 }
 .scope-fiche-field span {
   display: block;
@@ -6073,7 +6091,20 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-fiche-events-table tbody tr:nth-child(odd) { background: #fff; }
 .scope-fiche-events-table tbody tr:nth-child(even) { background: #f4f6f8; }
 .scope-fiche-personnel .scope-person-kpis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
   margin: 0;
+}
+.scope-fiche-personnel .scope-person-kpis .scope-kpi {
+  min-height: 88px;
+  margin: 0;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.scope-fiche-personnel .scope-person-kpis .scope-kpi strong {
+  font-size: 26px;
 }
 .scope-fiche-field em.scope-fiche-sabbatical-range {
   display: block;
@@ -6090,13 +6121,20 @@ body.scope-pdf-open { overflow: hidden; }
   margin: 0 0 18px;
 }
 .scope-fiche-split .scope-fiche-block { margin: 0; }
+@media (max-width: 1100px) {
+  .scope-fiche-personnel .scope-person-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (max-width: 900px) {
-  .scope-fiche-identity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scope-fiche-top,
+  .scope-fiche-charts { grid-template-columns: 1fr; }
+  .scope-fiche-chart-donut { grid-column: auto; }
+  .scope-fiche-identity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .scope-fiche-identity { grid-template-columns: 1fr; }
+  .scope-fiche-identity-grid { grid-template-columns: 1fr; }
   .scope-fiche-split { grid-template-columns: 1fr; }
   .scope-fiche-filters { flex-direction: column; align-items: stretch; }
+  .scope-fiche-personnel .scope-person-kpis { grid-template-columns: 1fr 1fr; }
 }
 
 /* UX-CLEANUP-1 — remaining inline styles in scope-ui.js (~95). This lot did not migrate page titles, report KPI blocks, or form margin-top helpers. */

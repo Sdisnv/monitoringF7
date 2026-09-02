@@ -3384,7 +3384,7 @@
             <div class="scope-field"><label for="person-edit-grade">Grade</label><input id="person-edit-grade" value="${escapeHtml(edit.grade || '')}"></div>
             <div class="scope-field"><label for="person-edit-nom">Nom</label><input id="person-edit-nom" value="${escapeHtml(edit.nom || '')}"></div>
             <div class="scope-field"><label for="person-edit-prenom">Prénom</label><input id="person-edit-prenom" value="${escapeHtml(edit.prenom || '')}"></div>
-            <div class="scope-field"><label for="person-edit-entree">Date d’entrée SDIS</label><input id="person-edit-entree" type="date" value="${escapeHtml(edit.dateEntreeSdis || '')}"></div>
+            <div class="scope-field"><label for="person-edit-entree">Date de début de l’analyse</label><input id="person-edit-entree" type="date" value="${escapeHtml(edit.dateEntreeSdis || '')}"></div>
           </div>
           <div class="scope-actions">
             <button type="button" class="scope-btn scope-btn-primary" id="person-edit-save">Enregistrer</button>
@@ -3409,21 +3409,29 @@
           return `<li><strong>${escapeHtml(row.label)}</strong>${role ? `<small>${escapeHtml(role)}</small>` : ''}${dates ? `<span>${escapeHtml(dates)}</span>` : ''}</li>`;
         }).join('')}</ul>`
       : '<p class="scope-fiche-empty">—</p>';
-    const permKpi = official && vol.permutations
-      ? `<article class="scope-kpi"><strong>${escapeHtml(String(vol.permutations))}</strong><span>Permutations</span></article>`
-      : '';
+    const period = fiche.period || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
     const graphs = fiche.graphs || {};
     const domainYearChart = C ? C.renderChartCard(graphs.domainesAnnees, {
       title: 'Participation par domaine et par année',
       explain: false,
-      size: { width: 640, height: 228 }
+      personLayout: true,
+      wide: true,
+      size: { width: 560, height: 210 }
+    }) : '';
+    const specYearChart = C ? C.renderChartCard(graphs.specialisationsAnnees, {
+      title: 'Participation par spécialisation et par année',
+      explain: false,
+      personLayout: true,
+      wide: true,
+      size: { width: 560, height: 210 }
     }) : '';
     const repartitionChart = C ? C.renderChartCard(graphs.repartition || graphs.composition, {
       title: 'Répartition des participations',
       variant: 'donut',
       explain: false,
-      size: { width: 320, height: 240 }
+      personLayout: true,
+      size: { width: 420, height: 210 }
     }) : '';
 
     return `
@@ -3444,15 +3452,27 @@
           ${canReadPersonnel() ? `<button type="button" class="scope-btn scope-btn-secondary" id="person-export-pdf">Exporter en PDF</button>` : ''}
         </div>
         ${editBlock}
+        <div class="scope-fiche-top">
         <section class="scope-fiche-block scope-fiche-identity">
+          <h2>Identité</h2>
+          <div class="scope-fiche-identity-grid">
           ${identityField('GRADE', identity.grade)}
           ${identityField('NOM', identity.nom)}
           ${identityField('PRÉNOM', identity.prenom)}
           ${identityField('NIP', identity.nip)}
           ${identityField('STATUT', identity.statut, statutExtra)}
-          ${identityField('DATE D’ENTRÉE SDIS', fmtDate(identity.dateEntreeSdis))}
-          ${identityField('DATE D’INACTIVITÉ', identity.statut === 'Inactif' ? fmtDate(identity.dateInactivite) : '—')}
+          </div>
         </section>
+        <section class="scope-fiche-block scope-fiche-situation">
+          <h2>Situation / périmètre analysé</h2>
+          <div class="scope-fiche-identity-grid">
+          ${identityField('DATE DE DÉBUT DE L’ANALYSE', fmtDate(identity.dateEntreeSdis))}
+          ${identityField('DATE D’INACTIVITÉ', identity.statut === 'Inactif' ? fmtDate(identity.dateInactivite) : '—')}
+          ${identityField('CONGÉ SABBATIQUE', identity.sabbaticalRange || '—')}
+          ${identityField('PÉRIMÈTRE ANALYSÉ', `${fmtDate(period.from)} — ${fmtDate(period.to)}`)}
+          </div>
+        </section>
+        </div>
         <div class="scope-fiche-split">
         <section class="scope-fiche-block">
           <h2>INCORPORATIONS</h2>
@@ -3464,21 +3484,23 @@
         </section>
         </div>
         <section class="scope-fiche-block scope-fiche-participation">
-          <h2>PARTICIPATION</h2>
+          <h2>SYNTHÈSE PARTICIPATION</h2>
           <div class="scope-kpis scope-person-kpis">
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.attendus))}</strong><span>Événements attendus</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.presents))}</strong><span>Présents</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.excuses))}</strong><span>Excusés</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.nonExcuses))}</strong><span>Absents</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.dispenses))}</strong><span>Dispensés</span></article>
-            ${permKpi}
             <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(tauxText)}</strong><span>Taux de participation</span></article>
           </div>
         </section>
         <section class="scope-fiche-block scope-fiche-analyse">
           <h2>ANALYSE INDIVIDUELLE</h2>
-          <div class="scope-graph-stack">${domainYearChart}</div>
-          <div class="scope-graph-grid">${repartitionChart}</div>
+          <div class="scope-fiche-charts">
+            <div class="scope-fiche-chart-year">${domainYearChart}</div>
+            <div class="scope-fiche-chart-year">${specYearChart}</div>
+            <div class="scope-fiche-chart-donut">${repartitionChart}</div>
+          </div>
         </section>
         <section class="scope-fiche-block scope-fiche-history">
           <h2>HISTORIQUE DES ÉVÉNEMENTS</h2>

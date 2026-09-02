@@ -232,6 +232,7 @@ async function collectReport(repo, query, options){
       cible: null,
       title: 'Fiche individuelle SCOPE',
       subtitle: [identity.grade, identity.prenom, identity.nom].filter(Boolean).join(' '),
+      summaryLabel: 'Synthèse de participation',
       filename: buildFilename('PERSON', { period, nip: identity.nip }),
       event: null,
       officiel,

@@ -183,6 +183,84 @@ class ScopePdfRenderer {
     this.doc.y = y + 32;
   }
 
+  personPanel(title, x, y, w, h, rows, body){
+    const doc = this.doc;
+    doc.save();
+    doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.6).stroke();
+    doc.rect(x, y, w, 14).fill(rgb(INSTITUTION.redDark));
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
+      .text(String(title || '').toUpperCase(), x + 6, y + 3.5, { width: w - 12 });
+    if(rows && rows.length){
+      const colW = (w - 16) / 2;
+      rows.forEach((row, i) => {
+        const cx = x + 6 + (i % 2) * colW;
+        const cy = y + 20 + Math.floor(i / 2) * 22;
+        doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6)
+          .text(row[0], cx, cy, { width: colW - 6 });
+        doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+          .text(String(row[1] == null || row[1] === '' ? '—' : row[1]), cx, cy + 8, { width: colW - 6 });
+      });
+    } else {
+      doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(8)
+        .text(body || '—', x + 6, y + 20, { width: w - 12, height: h - 26 });
+    }
+    doc.restore();
+  }
+
+  personKpiStrip(m){
+    const v = (m.officiel && m.officiel.volumes) || {};
+    const cells = [
+      ['Événements attendus', String(v.attendus != null ? v.attendus : (m.officiel && m.officiel.eventCount) || 0)],
+      ['Présents', String(v.presents || 0)],
+      ['Excusés', String(v.excuses || 0)],
+      ['Absents', String(v.nonExcuses || 0)],
+      ['Dispensés', String(v.dispenses || 0)],
+      ['Taux de participation', formatTaux(m.officiel && m.officiel.percentage)]
+    ];
+    const gap = 5;
+    const w = (PAGE_W - 2 * MARGIN - gap * 5) / 6;
+    const h = 42;
+    const y = this.doc.y;
+    cells.forEach((cell, i) => {
+      const x = MARGIN + i * (w + gap);
+      this.doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.5).stroke();
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
+        .text(cell[1], x + 3, y + 6, { width: w - 6, align: 'center' });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6)
+        .text(cell[0], x + 3, y + 24, { width: w - 6, align: 'center' });
+    });
+    this.doc.y = y + h + 8;
+  }
+
+  personCharts(m){
+    const innerW = PAGE_W - 2 * MARGIN;
+    const gap = 8;
+    const colW = (innerW - gap) / 2;
+    const h = 118;
+    let y = this.doc.y;
+    const left = m.graphs && m.graphs.domainesAnnees;
+    const right = m.graphs && m.graphs.specialisationsAnnees;
+    if(left){
+      this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(8)
+        .text(left.question || 'Participation par domaine et par année', MARGIN, y, { width: colW });
+      drawGroupedChart(this.doc, left, { x: MARGIN, y: y + 12, w: colW, h });
+    }
+    if(right){
+      this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(8)
+        .text(right.question || 'Participation par spécialisation et par année', MARGIN + colW + gap, y, { width: colW });
+      drawGroupedChart(this.doc, right, { x: MARGIN + colW + gap, y: y + 12, w: colW, h });
+    }
+    this.doc.y = y + 12 + h + 18;
+    if(m.graphs && m.graphs.repartition){
+      const donut = Object.assign({}, m.graphs.repartition, { type: 'donut' });
+      this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(8)
+        .text(donut.question || 'Répartition des participations', MARGIN, this.doc.y, { width: innerW });
+      const boxY = this.doc.y + 12;
+      const endY = drawDonutChart(this.doc, donut, { x: MARGIN, y: boxY, w: innerW, h: 108 });
+      this.doc.y = Math.max(boxY + 108, endY) + 6;
+    }
+  }
+
   banner(text, tone){
     this.ensure(36);
     const fill = tone === 'legacy' ? CHART_TOKENS.neutral : INSTITUTION.red;
@@ -261,7 +339,7 @@ class ScopePdfRenderer {
     this.heading(dataset.question || title, 11);
     const box = { x: MARGIN, y: this.doc.y, w: PAGE_W - 2 * MARGIN, h: chartHeight(dataset) };
     if(dataset.type === 'line') drawLineChart(this.doc, dataset, box);
-    else if(dataset.type === 'grouped'){
+    else if(dataset.type === 'grouped' || dataset.type === 'year-series'){
       const endY = drawGroupedChart(this.doc, dataset, box);
       this.doc.y = Math.max(box.y + box.h, endY) + 6;
       return;
@@ -377,42 +455,41 @@ class ScopePdfRenderer {
   renderPersonBody(m){
     const display = require('../../assets/js/scope-personnel-display.js');
     const p = m.personne || {};
-    this.heading('Identité', 12);
-    this.kv([
-      { label: 'Grade', value: p.grade || '—' },
-      { label: 'Nom', value: p.nom || '—' },
-      { label: 'Prénom', value: p.prenom || '—' },
-      { label: 'NIP', value: p.nip || '—' },
-      { label: 'Statut', value: p.statut || '—' },
-      { label: 'Date d’entrée SDIS', value: formatDisplayDate(p.dateEntreeSdis) },
-      { label: 'Date d’inactivité', value: p.dateInactivite ? formatDisplayDate(p.dateInactivite) : '—' },
-      { label: 'Congé sabbatique', value: p.sabbaticalRange || '—' }
+    const innerW = PAGE_W - 2 * MARGIN;
+    const gap = 8;
+    let y = this.doc.y;
+    const col1 = Math.floor((innerW - gap) * 0.44);
+    const col2 = innerW - col1 - gap;
+    const hId = 112;
+    this.personPanel('Identité', MARGIN, y, col1, hId, [
+      ['Grade', p.grade || '—'],
+      ['Nom', p.nom || '—'],
+      ['Prénom', p.prenom || '—'],
+      ['NIP', p.nip || '—'],
+      ['Statut', p.statut || '—']
     ]);
-    this.heading('Incorporations', 12);
-    if(m.incorporations && m.incorporations.length){
-      m.incorporations.forEach((row) => {
-        const extra = [row.role, row.actifDepuis ? `actif ${formatDisplayDate(row.actifDepuis)}` : '', row.inactifDepuis ? `inactif ${formatDisplayDate(row.inactifDepuis)}` : '']
-          .filter(Boolean).join(' · ');
-        this.para(`${row.label}${extra ? ` — ${extra}` : ''}`);
-      });
-    } else this.para('—');
-    this.heading('Spécialisations', 12);
-    this.para((m.specializations && m.specializations.length) ? m.specializations.join(' · ') : 'Aucune spécialisation');
-    this.heading('Synthèse participation', 12);
-    const v = (m.officiel && m.officiel.volumes) || {};
-    this.kv([
-      { label: 'Événements attendus', value: String(v.attendus != null ? v.attendus : (m.officiel && m.officiel.eventCount) || 0) },
-      { label: 'Présents', value: String(v.presents || 0) },
-      { label: 'Excusés', value: String(v.excuses || 0) },
-      { label: 'Absents', value: String(v.nonExcuses || 0) },
-      { label: 'Dispensés', value: String(v.dispenses || 0) },
-      { label: 'Taux de participation', value: formatTaux(m.officiel && m.officiel.percentage) }
+    this.personPanel('Situation / périmètre analysé', MARGIN + col1 + gap, y, col2, hId, [
+      ['Date de début de l’analyse', formatDisplayDate(p.dateEntreeSdis)],
+      ['Date d’inactivité', p.dateInactivite ? formatDisplayDate(p.dateInactivite) : '—'],
+      ['Congé sabbatique', p.sabbaticalRange && p.sabbaticalRange !== '—' ? p.sabbaticalRange : '—'],
+      ['Périmètre analysé', `${formatDisplayDate(m.period && m.period.from)} — ${formatDisplayDate(m.period && m.period.to)}`]
     ]);
-    if(m.graphs && m.graphs.domainesAnnees) this.chart('Participation par domaine et par année', m.graphs.domainesAnnees);
-    if(m.graphs && m.graphs.repartition){
-      const donut = Object.assign({}, m.graphs.repartition, { type: 'donut' });
-      this.chart('Répartition des participations', donut);
-    }
+    y += hId + gap;
+    const hSit = 64;
+    const inc = (m.incorporations || []).map((row) => {
+      const extra = [row.role, row.actifDepuis ? `actif ${formatDisplayDate(row.actifDepuis)}` : '']
+        .filter(Boolean).join(' · ');
+      return extra ? `${row.label} — ${extra}` : row.label;
+    }).join('\n') || '—';
+    this.personPanel('Incorporations', MARGIN, y, col1, hSit, null, inc);
+    this.personPanel('Spécialisations', MARGIN + col1 + gap, y, col2, hSit, null,
+      (m.specializations && m.specializations.length) ? m.specializations.join(' · ') : 'Aucune spécialisation');
+    this.doc.y = y + hSit + 10;
+    this.heading('Synthèse participation', 11);
+    this.personKpiStrip(m);
+    this.heading('Analyse individuelle', 11);
+    this.personCharts(m);
+    this.nextPage();
     this.heading('Historique des événements', 12);
     const rows = (m.evenements || []).map((row) => [
       formatDisplayDate(row.date),
@@ -477,6 +554,7 @@ class ScopePdfRenderer {
       this.para(`Établi le ${formatDisplayDateTime(this.meta.generatedAt) || formatDisplayDate(m.event.date)}`);
     } else if(m.kind === 'PERSON'){
       this.para(m.subtitle || 'Fiche individuelle');
+      this.para('Synthèse de participation');
       this.para(`Période analysée : ${formatDisplayDate(m.period && m.period.from)} → ${formatDisplayDate(m.period && m.period.to)}`);
       this.para(`Auteur : ${this.meta.authorLabel || 'session SCOPE'}  ·  ${formatDisplayDateTime(this.meta.generatedAt) || this.meta.generatedAt || ''}`);
     } else {
