@@ -27,10 +27,17 @@ const MOTIFS_HISTORIQUES = Object.freeze({
   NON_PRECISE: 'NON_PRECISE'
 });
 
+const MOTIFS_DISPENSE = Object.freeze({
+  JOKER: 'JOKER',
+  FORMATEUR_PR: 'FORMATEUR_PR',
+  FORMATION_HORS_SDIS: 'FORMATION_HORS_SDIS',
+  PAS_CONCERNE: 'PAS_CONCERNE'
+});
 const MOTIFS_SAISIE_NOUVELLE = new Set(Object.values(MOTIFS_CANONIQUES));
 const MOTIFS_ACCEPTES = new Set([
   ...Object.values(MOTIFS_CANONIQUES),
-  ...Object.values(MOTIFS_HISTORIQUES)
+  ...Object.values(MOTIFS_HISTORIQUES),
+  ...Object.values(MOTIFS_DISPENSE)
 ]);
 
 const STATUT_PERMUTATION = 'PERMUTATION';
@@ -177,6 +184,7 @@ function canPhysicallyDeletePersonne({ attendusCount, participationsCount, journ
 module.exports = {
   MOTIFS_CANONIQUES,
   MOTIFS_HISTORIQUES,
+  MOTIFS_DISPENSE,
   MOTIFS_SAISIE_NOUVELLE,
   MOTIFS_ACCEPTES,
   STATUT_PERMUTATION,

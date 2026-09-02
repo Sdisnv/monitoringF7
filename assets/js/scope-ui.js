@@ -66,6 +66,7 @@
     pendingExceptions: [],
     saisie: [],
     cibleFilter: 'tous',
+    saisieOpenFilter: false,
     encadrementOpen: false,
     toast: null,
     feedback: null,
@@ -228,7 +229,8 @@
       this.show('confirm', options.title, options.message, {
         confirmText: options.confirmText || 'Confirmer',
         cancelText: options.cancelText || 'Annuler',
-        tone: options.tone || 'warning'
+        tone: options.tone || 'warning',
+        errors: options.errors || []
       });
     },
     clear() {
@@ -850,9 +852,21 @@
         const formateurTooltip = referenceQuality === 'Formateur PR' && formateurSessions.length && L.formatFormateurPrTooltip
           ? L.formatFormateurPrTooltip(fullName, nipOf(fiche, a.personne_id), formateurSessions)
           : '';
-        const alreadyCountedTooltip = alreadyCountedInSession
+        const sessionExcuse = Boolean(a.sessionExcuse || a.session_excuse);
+        const sessionDispense = Boolean(a.sessionDispense || a.session_dispense);
+        const sessionMessage = a.sessionMessage || a.session_message || '';
+        const sessionSummary = a.sessionSummary || a.session_summary || '';
+        const sessionMotif = a.sessionMotif || a.session_motif || '';
+        const locked = alreadyCountedInSession || sessionExcuse || sessionDispense;
+        const displayStatut = sessionExcuse
+          ? 'ABSENT_EXCUSE'
+          : (sessionDispense ? 'DISPENSE' : (part.statut || 'NON_RENSEIGNE'));
+        const displayMotif = sessionExcuse || sessionDispense
+          ? (sessionMotif || part.motif_absence || '')
+          : (part.motif_absence || '');
+        const alreadyCountedTooltip = alreadyCountedInSession && !sessionExcuse && !sessionDispense
           ? (formateurTooltip || `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`)
-          : '';
+          : (sessionMessage || '');
         return {
           personneId: a.personne_id,
           nom: displayPerson(fiche, a.personne_id),
@@ -862,8 +876,8 @@
           nip: nipOf(fiche, a.personne_id),
           cible: cibleLabel,
           cibles: cibleLabel === '—' ? [] : cibleLabel.split(' · '),
-          statut: part.statut || 'NON_RENSEIGNE',
-          motifAbsence: part.motif_absence || '',
+          statut: displayStatut,
+          motifAbsence: displayMotif,
           commentaire: part.commentaire || '',
           source: part.source || '',
           inclus: true,
@@ -871,8 +885,12 @@
           origine: a.origine,
           manual: a.origine === 'EXCEPTION_AJOUT',
           jspRole: a.jspRole || a.jsp_role || null,
-          alreadyCountedInSession,
-          alreadyCountedTooltip
+          alreadyCountedInSession: locked,
+          alreadyCountedTooltip,
+          sessionExcuse,
+          sessionDispense,
+          sessionMessage,
+          sessionSummary
         };
       });
   }
@@ -4080,10 +4098,12 @@
     const ev = fiche.evenement;
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
-    const filteredRaw = state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter));
+    const filteredRaw = (state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter)))
+      .filter((r) => !state.saisieOpenFilter || (L.isOpenSaisieRow ? L.isOpenSaisieRow(r) : (!r.statut || r.statut === 'NON_RENSEIGNE')));
     const filtered = sortSaisieRows(filteredRaw);
     const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
-    const disabledCloture = hasIncompleteExcuse;
+    const hasIncompleteDispense = L.hasIncompleteDispense ? L.hasIncompleteDispense(state.saisie) : false;
+    const disabledCloture = hasIncompleteExcuse || hasIncompleteDispense;
     const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
     const openCount = L.liveCounters(state.saisie).open;
     const saveState = presenceSaveLabel();
@@ -4093,6 +4113,7 @@
         ${eventIdentityBand(ev, fiche)}
         ${renderPresenceKpis(niveaux, fiche)}
         ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
+        ${hasIncompleteDispense ? '<p class="scope-presence-warning">Choisissez un motif pour chaque dispense avant la clôture.</p>' : ''}
         <div class="scope-actions scope-event-toolbar scope-saisie-toolbar">
           <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present">Tous présents</button>
@@ -4110,6 +4131,13 @@
           </div>
           <div class="scope-presence-toolbar">
             ${renderManualParticipantBlock()}
+            <div class="scope-filter-group">
+              <span class="scope-filter-label" id="saisie-open-filter-label">Présences</span>
+              <div class="scope-segmented" role="group" aria-labelledby="saisie-open-filter-label">
+                <button type="button" class="scope-segmented-item" data-saisie-open-filter="all" aria-pressed="${!state.saisieOpenFilter}">Tous</button>
+                <button type="button" class="scope-segmented-item" data-saisie-open-filter="open" aria-pressed="${Boolean(state.saisieOpenFilter)}">Personnel non renseigné</button>
+              </div>
+            </div>
             ${niveaux.length > 1 ? `<div class="scope-filter-group">
               <span class="scope-filter-label" id="cible-filter-label">Cible</span>
               <div class="scope-segmented" role="group" aria-labelledby="cible-filter-label">
@@ -4426,6 +4454,14 @@
       PERMUTATION: 'is-permutation'
     };
     const motifControl = (row) => {
+      if (row.statut === 'DISPENSE') {
+        const motifs = L.motifsDispenseForRow ? L.motifsDispenseForRow(row) : [];
+        const selected = motifs.find((m) => m.value === row.motifAbsence);
+        if (selected && !row.editMotif) {
+          return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif de dispense">${escapeHtml(selected.label)}</button></div>`;
+        }
+        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense">${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
+      }
       if (row.statut !== 'ABSENT_EXCUSE') return '';
       const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
       const selected = motifs.find((m) => m.value === row.motifAbsence);
@@ -4438,7 +4474,11 @@
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
-      const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : (row.alreadyCountedTooltip ? `<span class="scope-muted-inline">Déjà compté en session</span>` : '');
+      const why = row.manual
+        ? '<span class="scope-muted-inline">Ajout ponctuel</span>'
+        : (row.sessionMessage
+          ? `<span class="scope-session-info">${row.sessionSummary ? `<strong>${escapeHtml(row.sessionSummary)}</strong> ` : ''}${escapeHtml(row.sessionMessage)}</span>`
+          : (row.alreadyCountedTooltip ? `<span class="scope-session-info">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''));
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
         : '';
@@ -4466,17 +4506,22 @@
           </tr></thead>
           <tbody>
             ${rows.map((row) => {
-              const blocked = Boolean(row.alreadyCountedInSession);
+              const blocked = Boolean(row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense);
               const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
-              const rowClass = [row.manual ? 'scope-row-manual' : '', blocked ? 'scope-row-session-counted' : ''].filter(Boolean).join(' ');
+              const rowClass = [
+                row.manual ? 'scope-row-manual' : '',
+                blocked && row.sessionExcuse ? 'scope-row-session-excuse' : '',
+                blocked && row.sessionDispense ? 'scope-row-session-dispense' : '',
+                blocked && !row.sessionExcuse && !row.sessionDispense ? 'scope-row-session-counted' : ''
+              ].filter(Boolean).join(' ');
               const blockedAttrs = blocked
                 ? ` tabindex="0" aria-describedby="${tooltipId}"`
                 : '';
               const role = roleFlag(row);
               const filled = statusFilled(row);
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
-              <td data-label="GRADE">${escapeHtml(row.grade || '')}${blocked ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
+              <td data-label="GRADE">${escapeHtml(row.grade || '')}${blocked && row.alreadyCountedTooltip ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(row.alreadyCountedTooltip)}</span>` : ''}</td>
               <td data-label="NOM">${escapeHtml(row.nomFamille || row.nom || '')}${role}</td>
               <td data-label="PRÉNOM">${escapeHtml(row.prenom || '')}</td>
               <td data-label="NIP">${escapeHtml(row.nip)}</td>
@@ -5895,6 +5940,19 @@
         }
       });
     });
+    root.querySelectorAll('[data-dispense-motif]').forEach((sel) => {
+      sel.addEventListener('change', () => {
+        const pid = sel.closest('[data-pid]').getAttribute('data-pid');
+        const idx = state.saisie.findIndex((r) => r.personneId === pid);
+        const row = idx >= 0 ? state.saisie[idx] : null;
+        if (row && L.applyDispenseMotif) {
+          state.saisie[idx] = L.applyDispenseMotif(row, sel.value);
+          if (state.saisie[idx]) state.saisie[idx].editMotif = false;
+          state.saisieDirty = true;
+          render();
+        }
+      });
+    });
     root.querySelectorAll('[data-motif-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const row = state.saisie.find((r) => r.personneId === btn.getAttribute('data-motif-edit'));
@@ -5914,11 +5972,42 @@
         render();
       });
     });
+    root.querySelectorAll('[data-saisie-open-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.saisieOpenFilter = btn.getAttribute('data-saisie-open-filter') === 'open';
+        render();
+      });
+    });
     document.getElementById('save-part')?.addEventListener('click', saveParticipations);
     document.getElementById('cloturer')?.addEventListener('click', () => {
-      const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0 };
-      if (blockers.incompleteExcuses > 0) {
-        ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif pour chaque absence excusée avant la clôture.');
+      const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0, incompleteDispenses: 0 };
+      if (blockers.incompleteExcuses > 0 || blockers.incompleteDispenses > 0) {
+        ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif avant la clôture.');
+        return;
+      }
+      const session = (state.fiche && (state.fiche.prExerciseParticipation || state.fiche.sessionParticipation)) || {};
+      const multi = Boolean(session.isMultiSession);
+      const last = Boolean(session.isLastSession);
+      if (multi && !last) {
+        ScopeFeedback.confirm({
+          title: 'Clôturer la séance',
+          message: 'La séance sera clôturée. Les personnes non renseignées restent disponibles pour les séances suivantes.',
+          confirmText: 'Clôturer'
+        }, cloturer);
+        return;
+      }
+      if (multi && last) {
+        const missing = session.unfilledPeople || [];
+        ScopeFeedback.confirm({
+          title: 'Clôturer l’exercice',
+          message: missing.length
+            ? 'Des personnes n’ont reçu aucun statut valable sur l’ensemble de la session.'
+            : 'La session complète sera clôturée.',
+          confirmText: 'Clôturer l’exercice',
+          errors: missing.map((p) => ({
+            message: [p.grade, p.nom, p.prenom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' ')
+          }))
+        }, cloturer);
         return;
       }
       const open = Number(blockers.open || 0);

@@ -1,6 +1,8 @@
 const {
   MOTIFS_CANONIQUES,
   MOTIFS_HISTORIQUES,
+  MOTIFS_DISPENSE,
+  MOTIFS_ACCEPTES: MOTIFS_LECTURE,
   STATUT_PERMUTATION,
   normalizeMotifKey,
   emptyExcuseBreakdown
@@ -13,7 +15,7 @@ const MOTIFS = new Set([
   'ACCIDENT',
   'AUTRE'
 ]);
-const MOTIFS_LECTURE = new Set([...MOTIFS, MOTIFS_HISTORIQUES.NON_PRECISE]);
+const MOTIFS_DISPENSE_SET = new Set(Object.values(MOTIFS_DISPENSE));
 const STATUTS_PARTICIPATION = new Set([
   'NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'NON_CONCERNE',
   STATUT_PERMUTATION
@@ -228,6 +230,17 @@ function validateParticipationPatch(item, ctx = {}){
       cible_suivie_id: cibleSuivie || null
     };
   }
+  if(statut === 'DISPENSE'){
+    if(motif && !MOTIFS_DISPENSE_SET.has(String(motif))){
+      throw new HttpError(422, 'motif_dispense_invalide', 'Le motif de dispense doit appartenir au référentiel (Joker, Formateur PR, Formation hors SDIS, Pas concerné).');
+    }
+    return {
+      statut,
+      motif_absence: motif ? String(motif) : null,
+      commentaire: commentaire ? String(commentaire) : null,
+      cible_suivie_id: null
+    };
+  }
   if(statut === 'ABSENT_EXCUSE'){
     if(!motif || !MOTIFS.has(String(motif))){
       throw new HttpError(422, 'motif_obligatoire', 'Une absence excusée exige un motif du référentiel (privé, professionnel, armée, accident/maladie).');
@@ -238,7 +251,7 @@ function validateParticipationPatch(item, ctx = {}){
   }
   return {
     statut,
-    motif_absence: statut === 'ABSENT_EXCUSE' ? String(motif) : null,
+    motif_absence: statut === 'ABSENT_EXCUSE' || statut === 'DISPENSE' ? String(motif) : null,
     commentaire: commentaire ? String(commentaire) : null,
     cible_suivie_id: null
   };
@@ -286,6 +299,7 @@ module.exports = {
   STATUTS_TAUX,
   MOTIFS,
   MOTIFS_LECTURE,
+  MOTIFS_DISPENSE: MOTIFS_DISPENSE_SET,
   STATUTS_PARTICIPATION,
   ROLES_ENCADREMENT,
   ENCADREMENT_ROLE_ORDER,

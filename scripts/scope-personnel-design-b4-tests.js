@@ -235,7 +235,7 @@ async function closeWith(service, eventId, people, statuses){
     assert.deepStrictEqual(specs.labels, ['FOBA 2']);
     assert.ok(oi.some((row) => row.label === 'DPS B1'));
     assert.ok(!specs.labels.includes('FOBA 3'));
-    assert.ok(html.includes('scope-personnel-design-b4'));
+    assert.ok(html.includes('scope-personnel-design-b4') || html.includes('scope-events-multisession-1'));
     assert.ok(ui.includes('Retour au personnel'));
     assert.ok(ui.includes('person-export-pdf'));
     assert.ok(ui.includes('ANALYSE INDIVIDUELLE'));

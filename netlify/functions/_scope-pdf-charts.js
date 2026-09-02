@@ -255,9 +255,10 @@ function drawDonutChart(doc, dataset, box){
       .text('Non évaluable — données insuffisantes.', x, y + h / 2 - 6, { width: w, align: 'center' });
     return y + 28;
   }
-  const cx = x + Math.min(w * 0.32, 110);
+  const plotW = Math.min(Math.max(w * 0.38, 140), 210);
+  const cx = x + plotW / 2;
   const cy = y + h / 2;
-  const r = Math.min(h / 2 - 6, 48);
+  const r = Math.min(h / 2 - 4, plotW / 2 - 10, 56);
   const rInner = r * 0.62;
   const total = points.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
   if(points.length === 1){
@@ -284,17 +285,21 @@ function drawDonutChart(doc, dataset, box){
     });
     doc.circle(cx, cy, rInner).fill('#ffffff');
   }
-  let ly = y + 8;
-  const lx = cx + r + 20;
   const legend = allPoints.length ? allPoints : points;
-  legend.forEach((p) => {
+  const legendX = x + plotW + 12;
+  const legendW = Math.max(80, w - plotW - 16);
+  const colW = legend.length > 2 ? legendW / 2 : legendW;
+  legend.forEach((p, i) => {
+    const col = legend.length > 2 ? i % 2 : 0;
+    const row = legend.length > 2 ? Math.floor(i / 2) : i;
+    const lx = legendX + col * colW;
+    const ly = y + 18 + row * 22;
     const share = `${Math.round(100 * Number(p.value || 0) / total)} %`;
-    doc.rect(lx, ly, 7, 7).fill(rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token)));
-    doc.fillColor(rgb(INSTITUTION.ink)).fontSize(7)
-      .text(`${p.label} ${p.value || 0} — ${share}`, lx + 11, ly, { width: w - (lx - x) - 12 });
-    ly += 12;
+    doc.rect(lx, ly, 8, 8).fill(rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token)));
+    doc.fillColor(rgb(INSTITUTION.ink)).fontSize(8)
+      .text(`${p.label}  ${p.value || 0} — ${share}`, lx + 12, ly, { width: colW - 16 });
   });
-  return Math.max(y + h, ly);
+  return y + h;
 }
 
 function chartHeight(dataset){

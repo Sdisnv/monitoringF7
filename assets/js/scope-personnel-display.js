@@ -981,6 +981,12 @@
   function ficheExcuseMotifLabel(code){
     const raw = String(code || '').trim();
     if(!raw || raw === '—') return '';
+    const map = {
+      PRIVE: 'Privé', PROFESSIONNEL: 'Professionnel', ARMEE: 'Armée', ACCIDENT_MALADIE: 'Accident/Maladie',
+      prive: 'Privé', professionnel: 'Professionnel', armee: 'Armée',
+      JOKER: 'Joker', FORMATEUR_PR: 'Formateur PR', FORMATION_HORS_SDIS: 'Formation hors SDIS', PAS_CONCERNE: 'Pas concerné'
+    };
+    if(map[raw]) return map[raw];
     if(raw === 'prive') return 'Privé';
     if(raw === 'professionnel') return 'Professionnel';
     if(raw === 'armee') return 'Armée';
@@ -992,7 +998,7 @@
 
   function ficheEventInformations(row){
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
-    if(s !== 'ABSENT_EXCUSE' && s !== 'EXCUSE') return '—';
+    if(s !== 'ABSENT_EXCUSE' && s !== 'EXCUSE' && s !== 'DISPENSE') return '—';
     return ficheExcuseMotifLabel(row && (row.motif || row.motifAbsence)) || '—';
   }
 

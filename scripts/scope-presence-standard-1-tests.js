@@ -580,7 +580,7 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('scope-row-manual'));
     assert.ok(!ui.includes('scope-row-manual-badge'));
     assert.ok(!saisieRows.includes('Ajout manuel</span>'));
-    assert.ok(ui.includes('<th>Motif / information</th>'));
+    assert.ok(ui.includes('<th>INFORMATIONS</th>') || ui.includes('<th>Motif / information</th>'));
     assert.ok(!saisieRows.includes('<th>Action</th>'));
     assert.ok(ui.includes('cibleLabelFromAttendu'));
     assert.ok(ui.includes('scope-kpi-strip is-line') || ui.includes('scope-kpi-strip is-metrics is-line') || ui.includes('scope-kpi-grid'));
@@ -624,7 +624,7 @@ function part(personne, statut, extra){
     assert.ok(!css.includes('.scope-enc-grid'));
     assert.ok(css.includes('.scope-enc-groups'));
     assert.ok(css.includes('.scope-enc-group'));
-    assert.ok(css.includes('grid-template-columns: 24px minmax(0, 1fr) auto'));
+    assert.ok(css.includes('grid-template-columns: minmax(0, 1fr) auto') || css.includes('grid-template-columns: 24px minmax(0, 1fr) auto'));
     assert.ok(css.includes('grid-template-rows: repeat(4'));
     assert.ok(css.includes('.scope-person-suggestions'));
     assert.ok(css.includes('tbody tr:nth-child(even){background:#f4f6f8;}'));

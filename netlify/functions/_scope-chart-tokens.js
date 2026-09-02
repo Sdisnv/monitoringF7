@@ -27,6 +27,7 @@ const TOKEN_BY_KEY = Object.freeze({
 const INSTITUTION = Object.freeze({
   red: '#DE000A',
   redDark: '#8c000b',
+  anthracite: '#2c3038',
   ink: '#1f2730',
   muted: '#6b7785',
   line: '#e3e7ec'

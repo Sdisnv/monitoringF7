@@ -150,9 +150,10 @@ class ScopePdfRenderer {
     }
   }
 
-  heading(text, size){
+  heading(text, size, tone){
     this.ensure(22);
-    this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(size || 13)
+    const color = tone === 'ink' ? INSTITUTION.ink : (tone === 'anthracite' ? INSTITUTION.anthracite : INSTITUTION.redDark);
+    this.doc.fillColor(rgb(color)).font('Helvetica-Bold').fontSize(size || 13)
       .text(text, MARGIN, this.doc.y, { width: PAGE_W - 2 * MARGIN });
     this.doc.moveDown(0.35);
   }
@@ -187,7 +188,7 @@ class ScopePdfRenderer {
     const doc = this.doc;
     doc.save();
     doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.6).stroke();
-    doc.rect(x, y, w, 14).fill(rgb(INSTITUTION.redDark));
+    doc.rect(x, y, w, 14).fill(rgb(INSTITUTION.anthracite));
     doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7)
       .text(String(title || '').toUpperCase(), x + 6, y + 3.5, { width: w - 12 });
     if(rows && rows.length){
@@ -241,23 +242,23 @@ class ScopePdfRenderer {
     const left = m.graphs && m.graphs.domainesAnnees;
     const right = m.graphs && m.graphs.specialisationsAnnees;
     if(left){
-      this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(8)
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(left.question || 'Participation par domaine et par année', MARGIN, y, { width: colW });
       drawGroupedChart(this.doc, left, { x: MARGIN, y: y + 12, w: colW, h });
     }
     if(right){
-      this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(8)
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(right.question || 'Participation par spécialisation et par année', MARGIN + colW + gap, y, { width: colW });
       drawGroupedChart(this.doc, right, { x: MARGIN + colW + gap, y: y + 12, w: colW, h });
     }
     this.doc.y = y + 12 + h + 18;
     if(m.graphs && m.graphs.repartition){
       const donut = Object.assign({}, m.graphs.repartition, { type: 'donut' });
-      this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(8)
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(donut.question || 'Répartition des participations', MARGIN, this.doc.y, { width: innerW });
       const boxY = this.doc.y + 12;
-      const endY = drawDonutChart(this.doc, donut, { x: MARGIN, y: boxY, w: innerW, h: 108 });
-      this.doc.y = Math.max(boxY + 108, endY) + 6;
+      const endY = drawDonutChart(this.doc, donut, { x: MARGIN, y: boxY, w: innerW, h: 122 });
+      this.doc.y = Math.max(boxY + 122, endY) + 6;
     }
   }
 
@@ -485,9 +486,9 @@ class ScopePdfRenderer {
     this.personPanel('Spécialisations', MARGIN + col1 + gap, y, col2, hSit, null,
       (m.specializations && m.specializations.length) ? m.specializations.join(' · ') : 'Aucune spécialisation');
     this.doc.y = y + hSit + 10;
-    this.heading('Synthèse participation', 11);
+    this.heading('Synthèse de participation', 11, 'ink');
     this.personKpiStrip(m);
-    this.heading('Analyse individuelle', 11);
+    this.heading('Analyse individuelle', 11, 'ink');
     this.personCharts(m);
     this.nextPage();
     this.heading('Historique des événements', 12);

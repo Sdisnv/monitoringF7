@@ -298,7 +298,7 @@ function part(personne, statut, extra){
     const build = ui.slice(ui.indexOf('function buildSaisieFromFiche'), ui.indexOf('function counters()'));
     assert.ok(build.includes('fiche.attendus'));
     assert.ok(!build.includes('personnelOpenAssignments'));
-    assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'Personne'"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'NOM'") || ui.includes("sortableHeader('event-personnel', 'nom', 'Personne'"));
     assert.ok(ui.includes('scope-enc-role-flag'));
     assert.ok(!ui.includes('<th>Encadrement</th>'));
     assert.ok(ui.includes('presenceSaveBusy'));

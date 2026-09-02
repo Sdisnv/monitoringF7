@@ -1591,7 +1591,7 @@ function createScopeService(repo){
           skippedEncadrement += 1;
           continue;
         }
-        if(isPrParticipantContribution(patch.statut, participationRole) && (evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
+        if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents && patch.statut !== 'NON_RENSEIGNE'){
           const cycle = evenement.cycle_id && tx.getCycle
             ? await tx.getCycle(evenement.cycle_id)
             : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
@@ -1617,7 +1617,13 @@ function createScopeService(repo){
             currentEventId: eventId
           });
           if(prState.byPersonneId[String(personneId)]){
-            throw new HttpError(409, 'pr_exercise_participation_deja_comptee', 'Cette personne a déjà une contribution comptabilisante dans cet Exercice PR.', { personneId, prExerciseGroupKey: prState.groupKey });
+            const lock = prState.byPersonneId[String(personneId)];
+            const message = lock.sessionExcuse
+              ? 'Cette personne est déjà excusée dans cette session d’exercice.'
+              : (lock.sessionDispense || lock.countedStatut === 'DISPENSE'
+                ? 'Cette personne est déjà dispensée de cet exercice.'
+                : 'Cette personne a déjà une contribution comptabilisante dans cet Exercice PR.');
+            throw new HttpError(409, 'pr_exercise_participation_deja_comptee', message, { personneId, prExerciseGroupKey: prState.groupKey });
           }
         }
         await tx.upsertParticipation({
@@ -2158,7 +2164,13 @@ function createScopeService(repo){
               sessionReferenceLabel: state.referenceSessionLabel,
               sessionReferenceQuality: state.referenceQuality,
               sessionReferenceRelation: state.referenceRelation,
-              sessionFormateurSessions: state.formateurSessionLabels || []
+              sessionFormateurSessions: state.formateurSessionLabels || [],
+              sessionExcuse: Boolean(state.sessionExcuse),
+              sessionDispense: Boolean(state.sessionDispense),
+              sessionExerciseLabel: state.sessionExerciseLabel || '',
+              sessionMessage: state.sessionMessage || '',
+              sessionSummary: state.sessionSummary || '',
+              sessionMotif: state.countedMotif || null
             })
             : row;
         });

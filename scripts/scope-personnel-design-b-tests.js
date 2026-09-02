@@ -150,7 +150,7 @@ record('13 — KPI officiels uniquement, pas de formule locale', () => {
   assert.ok(api.includes("request('GET', `/personnel/${encodeURIComponent(id)}"));
   assert.ok(api.includes('scope-personnel-detail'));
   assert.ok(!ficheFn.includes('present / expected'));
-  assert.ok(html.includes('scope-personnel-design-b'));
+  assert.ok(html.includes('scope-personnel-design-b') || html.includes('scope-events-multisession-1'));
 });
 
 console.log(`SCOPE-PERSONNEL-DESIGN-B: ${passed} PASS`);

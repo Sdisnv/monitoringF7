@@ -596,7 +596,8 @@ async function migrateModel2(){
   await db.query(`
     alter table scope_participations add constraint scope_participations_motif_val_chk check (
       motif_absence is null or motif_absence in (
-        'PRIVE','PROFESSIONNEL','ARMEE','ACCIDENT_MALADIE','MALADIE','ACCIDENT','AUTRE','NON_PRECISE'
+        'PRIVE','PROFESSIONNEL','ARMEE','ACCIDENT_MALADIE','MALADIE','ACCIDENT','AUTRE','NON_PRECISE',
+        'JOKER','FORMATEUR_PR','FORMATION_HORS_SDIS','PAS_CONCERNE'
       )
     )
   `);

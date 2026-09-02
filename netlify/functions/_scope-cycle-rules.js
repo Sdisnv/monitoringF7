@@ -6,6 +6,19 @@ const STATUTS_PRESENTS = new Set(['PRESENT', STATUT_PERMUTATION]);
 const STATUTS_ABSENCE = new Set(['ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
 const SESSION_COUNTING_ROLES = new Set(['PARTICIPANT', 'FORMATEUR', 'SURVEILLANT']);
 const STATUTS_PR_EXERCISE_RECONNUS = new Set(['PRESENT', STATUT_PERMUTATION, 'DISPENSE']);
+const STATUTS_SESSION_VALIDES = new Set(['PRESENT', STATUT_PERMUTATION, 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE']);
+const MOTIF_DISPENSE_LABELS = Object.freeze({
+  JOKER: 'Joker',
+  FORMATEUR_PR: 'Formateur PR',
+  FORMATION_HORS_SDIS: 'Formation hors SDIS',
+  PAS_CONCERNE: 'Pas concerné'
+});
+const MOTIF_EXCUSE_LABELS = Object.freeze({
+  PRIVE: 'Privé',
+  PROFESSIONNEL: 'Professionnel',
+  ARMEE: 'Armée',
+  ACCIDENT_MALADIE: 'Accident/Maladie'
+});
 
 function normalizeText(value){
   return String(value || '').trim();
@@ -182,6 +195,52 @@ function prSessionLabel(event){
   return keyMatch ? keyMatch[1] : normalizeText(event && (event.code_cours || event.codeCours)) || normalizeText(eventId(event));
 }
 
+function parseSessionOrder(event){
+  const label = prSessionLabel(event);
+  const m = String(label || '').match(/^(\d+)(?:\.(\d+))?$/);
+  if(!m) return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, String(event && event.date || ''), String(event && (event.libelle || ''))];
+  return [Number(m[1]), m[2] == null ? 0 : Number(m[2]), String(event && event.date || ''), String(event && (event.libelle || ''))];
+}
+
+function sortSessionEvents(events){
+  return (events || []).slice().sort((a, b) => {
+    const left = parseSessionOrder(a);
+    const right = parseSessionOrder(b);
+    for(let i = 0; i < left.length; i += 1){
+      if(left[i] < right[i]) return -1;
+      if(left[i] > right[i]) return 1;
+    }
+    return 0;
+  });
+}
+
+function sessionExerciseLabel(events, groupKey){
+  const first = (events && events[0]) || {};
+  const libelle = normalizeText(first.libelle || first.label);
+  const pr = libelle.match(/exercice\s+pr\s+(\d+)/i);
+  if(pr) return `PR ${pr[1]}`;
+  const trimmed = libelle.replace(/\s*\|.*$/, '').trim();
+  if(trimmed) return trimmed;
+  const key = normalizeText(groupKey);
+  const keyMatch = key.match(/PR:(\d+)/);
+  if(keyMatch) return `PR ${keyMatch[1]}`;
+  return trimmed || 'session';
+}
+
+function personDisplayName(person){
+  return [normalizeText(person && person.prenom), normalizeText(person && person.nom)].filter(Boolean).join(' ') || 'Cette personne';
+}
+
+function motifExcuseLabel(code){
+  const key = normalizeUpper(code);
+  return MOTIF_EXCUSE_LABELS[key] || normalizeText(code);
+}
+
+function motifDispenseLabel(code){
+  const key = normalizeUpper(code);
+  return MOTIF_DISPENSE_LABELS[key] || normalizeText(code);
+}
+
 function prExerciseEvents(input = {}){
   const events = input.evenements || input.events || [];
   const currentId = normalizeText(input.currentEventId || input.current_event_id);
@@ -193,7 +252,7 @@ function prExerciseEvents(input = {}){
   return {
     current,
     groupKey,
-    events: events.filter((event) => prExerciseGroupKey(event) === groupKey)
+    events: sortSessionEvents(events.filter((event) => prExerciseGroupKey(event) === groupKey))
   };
 }
 
@@ -353,7 +412,8 @@ function computePrExerciseParticipationState(input = {}){
       personneId: personneId(participation),
       role: normalizeUpper(participation.role || 'PARTICIPANT'),
       statut: normalizeUpper(participation.statut || 'NON_RENSEIGNE'),
-      source: normalizeUpper(participation.source)
+      source: normalizeUpper(participation.source),
+      motif: normalizeUpper(participation.motif_absence || participation.motifAbsence || participation.motif)
     });
     countedByPerson.set(key, rows);
   }
@@ -385,40 +445,139 @@ function computePrExerciseParticipationState(input = {}){
     for(const person of personnesById.values()){
       const id = personneId(person);
       if(!id || dedupeKey(person, personnesById) !== key) continue;
+      const exerciseLabel = sessionExerciseLabel(events, group.groupKey);
+      const sessionDispense = reference.statut === 'DISPENSE';
+      const motif = normalizeUpper(reference.motif || '');
       byPersonneId[id] = {
         alreadyCountedInSession: true,
         countedEventId: reference.eventId,
         countedRole: reference.role,
         countedStatut: reference.statut,
         countedSource: reference.source,
+        countedMotif: motif || null,
         referenceEventId: reference.eventId,
         referenceSessionLabel: prSessionLabel(referenceEvent),
         referenceQuality: reference.role === 'FORMATEUR' ? 'Formateur PR' : 'PAPR',
         referenceRelation: relation,
-        formateurSessionLabels
+        formateurSessionLabels,
+        sessionDispense,
+        sessionExcuse: false,
+        sessionExerciseLabel: exerciseLabel,
+        sessionMessage: sessionDispense
+          ? `${personDisplayName(person)} est dispensé de cet exercice pour la raison suivante : ${motifDispenseLabel(motif) || '—'}.`
+          : '',
+        sessionSummary: sessionDispense ? `Dispensé de l’exercice ${exerciseLabel}` : ''
       };
     }
   }
+
+  const excuseByPerson = new Map();
+  for(const participation of input.participations || []){
+    const eid = eventId(participation);
+    if(!groupEventIds.has(eid)) continue;
+    if(normalizeUpper(participation.statut) !== 'ABSENT_EXCUSE') continue;
+    const key = dedupeKey(participation, personnesById);
+    if(!key) continue;
+    const rows = excuseByPerson.get(key) || [];
+    rows.push({
+      eventId: eid,
+      personneId: personneId(participation),
+      motif: normalizeUpper(participation.motif_absence || participation.motifAbsence || participation.motif),
+      statut: 'ABSENT_EXCUSE'
+    });
+    excuseByPerson.set(key, rows);
+  }
+  const excuseKeys = new Set();
+  for(const [key, rows] of excuseByPerson.entries()){
+    rows.sort((a, b) => (eventOrder.get(a.eventId) ?? 9999) - (eventOrder.get(b.eventId) ?? 9999));
+    const reference = rows[0] || {};
+    const outsideCurrent = currentEventId ? rows.filter((row) => row.eventId !== currentEventId) : rows;
+    if(!outsideCurrent.length) continue;
+    excuseKeys.add(key);
+    const referenceEvent = eventsById.get(reference.eventId) || {};
+    const exerciseLabel = sessionExerciseLabel(events, group.groupKey);
+    const referenceOrder = eventOrder.get(reference.eventId);
+    const relation = currentOrder != null && referenceOrder != null && currentOrder < referenceOrder
+      ? 'BEFORE_REFERENCE'
+      : 'AFTER_REFERENCE';
+    for(const person of personnesById.values()){
+      const id = personneId(person);
+      if(!id || dedupeKey(person, personnesById) !== key) continue;
+      if(byPersonneId[id] && !byPersonneId[id].sessionExcuse) continue;
+      byPersonneId[id] = {
+        alreadyCountedInSession: true,
+        countedEventId: reference.eventId,
+        countedRole: 'PARTICIPANT',
+        countedStatut: 'ABSENT_EXCUSE',
+        countedSource: 'SAISIE',
+        countedMotif: reference.motif || null,
+        referenceEventId: reference.eventId,
+        referenceSessionLabel: prSessionLabel(referenceEvent),
+        referenceQuality: 'PAPR',
+        referenceRelation: relation,
+        formateurSessionLabels: [],
+        sessionDispense: false,
+        sessionExcuse: true,
+        sessionExerciseLabel: exerciseLabel,
+        sessionMessage: `${personDisplayName(person)} a été excusé lors de la session d’exercice ${exerciseLabel}.`,
+        sessionSummary: motifExcuseLabel(reference.motif)
+      };
+    }
+  }
+
+  const validByPerson = new Map();
+  for(const participation of input.participations || []){
+    const eid = eventId(participation);
+    if(!groupEventIds.has(eid)) continue;
+    const key = dedupeKey(participation, personnesById);
+    if(!key) continue;
+    const statut = normalizeUpper(participation.statut);
+    if(!STATUTS_SESSION_VALIDES.has(statut)) continue;
+    const set = validByPerson.get(key) || new Set();
+    set.add(statut);
+    validByPerson.set(key, set);
+  }
+  const unfilledKeys = [...population].filter((key) => !validByPerson.has(key));
+  const unfilledPeople = [];
+  const seenUnfilled = new Set();
+  for(const person of personnesById.values()){
+    const key = dedupeKey(person, personnesById);
+    if(!unfilledKeys.includes(key) || seenUnfilled.has(key)) continue;
+    seenUnfilled.add(key);
+    unfilledPeople.push({
+      personneId: personneId(person),
+      grade: person.grade || '',
+      nom: person.nom || '',
+      prenom: person.prenom || '',
+      nip: person.nip || ''
+    });
+  }
+  const lastEventId = events.length ? eventId(events[events.length - 1]) : '';
+  const resolvedKeys = new Set([...countedKeys, ...excuseKeys, ...validByPerson.keys()]);
 
   return {
     groupKey: group.groupKey || null,
     sessionKey: prSessionKey(group.current) || null,
     eventIds: [...groupEventIds],
+    isMultiSession: events.length > 1,
+    isLastSession: Boolean(currentEventId && lastEventId && currentEventId === lastEventId),
+    sessionExerciseLabel: sessionExerciseLabel(events, group.groupKey),
+    unfilledPeople,
     byPersonneId,
     kpis: {
       population: population.size,
       presents: presentKeys.size,
       dispenses: dispenseKeys.size,
-      excuses: 0,
+      excuses: excuseByPerson.size,
       absents: 0,
-      open: Math.max(0, population.size - countedKeys.size)
+      open: Math.max(0, population.size - resolvedKeys.size)
     },
     details: {
       population: sortedValues(population),
       counted: sortedValues(countedKeys),
       presents: sortedValues(presentKeys),
       dispenses: sortedValues(dispenseKeys),
-      open: sortedValues(new Set([...population].filter((key) => !countedKeys.has(key)))),
+      open: sortedValues(new Set(unfilledKeys)),
       attendusByPerson: Object.fromEntries(attendusByPerson.entries())
     }
   };
@@ -456,6 +615,10 @@ module.exports = {
   prExerciseGroupKey,
   prSessionKey,
   prSessionLabel,
+  prExerciseEvents,
+  sortSessionEvents,
+  sessionExerciseLabel,
+  MOTIF_DISPENSE_LABELS,
   computePrExerciseParticipationState,
   computeSessionParticipationState,
   computeStandardEventMetricsUnchanged

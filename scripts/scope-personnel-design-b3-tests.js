@@ -277,7 +277,7 @@ function sauserBundle(periodes){
     assert.ok(inactivate.includes('{ from: dateFin }'));
     assert.ok(detail.includes('from: body.dateActif'));
     assert.ok(serviceSrc.includes('function eventDateInSyncWindow'));
-    assert.ok(html.includes('scope-personnel-design-b3') || html.includes('scope-personnel-design-b4'));
+    assert.ok(html.includes('scope-personnel-design-b3') || html.includes('scope-personnel-design-b4') || html.includes('scope-events-multisession-1'));
     assert.ok(!ui.includes('if sabbatical => display:none'));
     assert.ok(!ui.includes('display:none') || !/sabbatical[\s\S]{0,80}display:\s*none/.test(ui));
   });

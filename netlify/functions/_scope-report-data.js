@@ -58,7 +58,11 @@ const MOTIF_LABELS = Object.freeze({
   NON_PRECISE: 'Non précisé (historique)',
   MALADIE: 'Maladie (historique)',
   ACCIDENT: 'Accident (historique)',
-  AUTRE: 'Autre (historique)'
+  AUTRE: 'Autre (historique)',
+  JOKER: 'Joker',
+  FORMATEUR_PR: 'Formateur PR',
+  FORMATION_HORS_SDIS: 'Formation hors SDIS',
+  PAS_CONCERNE: 'Pas concerné'
 });
 
 const MODE_LABELS = Object.freeze({

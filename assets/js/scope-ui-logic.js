@@ -12,6 +12,12 @@
     { value: 'ARMEE', label: 'Armée' },
     { value: 'ACCIDENT_MALADIE', label: 'Accident/Maladie' }
   ];
+  const MOTIFS_DISPENSE = [
+    { value: 'JOKER', label: 'Joker' },
+    { value: 'FORMATEUR_PR', label: 'Formateur PR' },
+    { value: 'FORMATION_HORS_SDIS', label: 'Formation hors SDIS' },
+    { value: 'PAS_CONCERNE', label: 'Pas concerné' }
+  ];
   const MOTIFS_HISTORIQUES = [
     { value: 'MALADIE', label: 'Maladie (historique)' },
     { value: 'ACCIDENT', label: 'Accident (historique)' },
@@ -22,6 +28,14 @@
   function motifsForRow(row) {
     const extra = MOTIFS_HISTORIQUES.filter((m) => row && row.motifAbsence === m.value);
     return MOTIFS.concat(extra);
+  }
+
+  function motifsDispenseForRow() {
+    return MOTIFS_DISPENSE.slice();
+  }
+
+  function isDispenseMotif(value) {
+    return MOTIFS_DISPENSE.some((m) => m.value === String(value || ''));
   }
 
   const STATUT_LABELS = {
@@ -517,7 +531,7 @@
       else if (s === 'ABSENT_EXCUSE') excuse += 1;
       else if (s === 'ABSENT_NON_EXCUSE') absent += 1;
       else if (s === 'DISPENSE') dispense += 1;
-      else if (s === 'NON_RENSEIGNE' || !s) open += 1;
+      else if ((s === 'NON_RENSEIGNE' || !s) && !sessionLocked(row)) open += 1;
     }
     return { present, formateur, excuse, absent, dispense, open };
   }
@@ -571,12 +585,21 @@
       next.editMotif = false;
     } else {
       next.statut = statut;
-      if (statut !== 'ABSENT_EXCUSE') {
+      if (statut === 'ABSENT_EXCUSE') {
+        if (!next.motifAbsence || isDispenseMotif(next.motifAbsence)) {
+          next.motifAbsence = '';
+          next.editMotif = true;
+        }
+      } else if (statut === 'DISPENSE') {
+        if (!isDispenseMotif(next.motifAbsence)) {
+          next.motifAbsence = '';
+          next.commentaire = '';
+          next.editMotif = true;
+        }
+      } else {
         next.motifAbsence = '';
         next.commentaire = '';
         next.editMotif = false;
-      } else if (!next.motifAbsence) {
-        next.editMotif = true;
       }
     }
     next.presenceEdited = true;
@@ -593,6 +616,17 @@
     });
     if (motif !== 'AUTRE') next.commentaire = row && row.motifAbsence === 'AUTRE' ? '' : (row.commentaire || '');
     return next;
+  }
+
+  function applyDispenseMotif(row, motif) {
+    return Object.assign({}, row, {
+      statut: 'DISPENSE',
+      motifAbsence: motif,
+      editMotif: false,
+      presenceEdited: true,
+      commentaire: '',
+      role: preserveParticipationRole(row && row.role)
+    });
   }
 
   function buildPresenceSavePayload(rows, encadrementIds) {
@@ -628,24 +662,46 @@
     return false;
   }
 
+  function sessionLocked(row) {
+    return Boolean(row && (row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense));
+  }
+
+  function isOpenSaisieRow(row) {
+    if (!row || row.inclus === false) return false;
+    if (sessionLocked(row)) return false;
+    return !row.statut || row.statut === 'NON_RENSEIGNE';
+  }
+
+  function hasIncompleteDispense(rows) {
+    return (rows || []).some((row) =>
+      row
+      && row.inclus !== false
+      && !sessionLocked(row)
+      && row.statut === 'DISPENSE'
+      && !isDispenseMotif(row.motifAbsence)
+    );
+  }
   function hasIncompleteExcuse(rows) {
     return (rows || []).some((row) =>
       row
       && row.inclus !== false
+      && !sessionLocked(row)
       && row.statut === 'ABSENT_EXCUSE'
       && !row.motifAbsence
     );
   }
 
   function closureBlockers(rows) {
-    const out = { open: 0, incompleteExcuses: 0, message: '' };
+    const out = { open: 0, incompleteExcuses: 0, incompleteDispenses: 0, message: '' };
     (rows || []).forEach((row) => {
-      if (!row || row.inclus === false) return;
+      if (!row || row.inclus === false || sessionLocked(row)) return;
       if (!row.statut || row.statut === 'NON_RENSEIGNE') out.open += 1;
       if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
+      if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) out.incompleteDispenses += 1;
     });
     const parts = [];
     if (out.incompleteExcuses) parts.push(`${out.incompleteExcuses} absence${out.incompleteExcuses > 1 ? 's excusées sans motif' : ' excusée sans motif'}`);
+    if (out.incompleteDispenses) parts.push(`${out.incompleteDispenses} dispense${out.incompleteDispenses > 1 ? 's sans motif' : ' sans motif'}`);
     out.message = parts.length ? `Clôture impossible : ${parts.join(' ; ')}.` : '';
     return out;
   }
@@ -1064,6 +1120,10 @@
 
   return {
     MOTIFS,
+    MOTIFS_DISPENSE,
+    motifsForRow,
+    motifsDispenseForRow,
+    isDispenseMotif,
     motifsForRow,
     STATUT_LABELS,
     ROLE_LABELS,
@@ -1103,6 +1163,7 @@
     statusLockedForRole,
     applyParticipationStatus,
     applyExcuseMotif,
+    applyDispenseMotif,
     buildPresenceSavePayload,
     excuseBreakdown,
     clotureDisabled,
@@ -1110,6 +1171,9 @@
     applyAllPresent,
     applyAllPresentFiltered,
     hasIncompleteExcuse,
+    hasIncompleteDispense,
+    sessionLocked,
+    isOpenSaisieRow,
     closureBlockers,
     resetSaisie,
     needsConfirmReset,
