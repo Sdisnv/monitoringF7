@@ -220,7 +220,7 @@ function attendu(detail, personneId){
     assert.ok(detail.includes("'personnel:manage'"));
     assert.ok(personnelSrc.includes('PERSONNEL_MANUAL_CREATE'));
     assert.ok(personnelSrc.includes('PERSONNEL_ASSIGNMENT_CREATE'));
-    assert.ok(html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1-r4'));
+    assert.ok(html.includes('scope-objectifs-participation-1') || html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1-r4'));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

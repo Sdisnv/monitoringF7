@@ -34,6 +34,10 @@ const TYPE = Object.freeze({
   ink: 'anthracite'
 });
 const PDF_SHIFT_08_CM = 22.68;
+const SIGNATURE_TEXT_LINE_COUNT = 3;
+const SIGNATURE_TEXT_TOP_GAP = TYPE.body * 1.2 * SIGNATURE_TEXT_LINE_COUNT;
+const SIGNATURE_IMAGE_RELATIVE_Y = 8;
+const SIGNATURE_FUNCTION_RELATIVE_Y = 36;
 const SIGNATURE_FIT = Object.freeze([336, 96]);
 
 function resolveSignaturePrPath(options){
@@ -773,31 +777,32 @@ class ScopePdfRenderer {
     } else if(m.quantitative){
       this.para('Suivi quantitatif : aucun nom n’est inventé.');
     }
-    this.drawDomainSignature(m, { spaceBefore: 14 });
+    this.drawDomainSignature(m);
   }
 
-  drawDomainSignature(m, options){
-    if(options && options.spaceBefore) this.doc.y += options.spaceBefore;
-    this.doc.y -= PDF_SHIFT_08_CM;
+  drawDomainSignature(m){
+    const contentEndY = this.doc.y;
+    const identityY = contentEndY + SIGNATURE_TEXT_TOP_GAP;
+    const functionY = identityY + SIGNATURE_FUNCTION_RELATIVE_Y;
+    const signatureImageY = identityY + SIGNATURE_IMAGE_RELATIVE_Y - PDF_SHIFT_08_CM;
     const isPr = m.domaine === 'PR' || (m.event && m.event.domaine === 'PR');
     if(isPr && m.signatureImage){
       const person = m.signaturePerson || {};
       const name = [person.grade, person.prenom, person.nom].filter(Boolean).join(' ') || '—';
       this.ensure(86);
-      const y = this.doc.y;
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
-        .text(name, MARGIN, y, { width: 320 });
-      const functionY = y + 36;
+        .text(name, MARGIN, identityY, { width: 320 });
       const signaturePath = resolveSignaturePrPath({ required: process.env.NODE_ENV !== 'production' });
-      this.doc.image(signaturePath, MARGIN, y + 8, { fit: SIGNATURE_FIT });
+      this.doc.image(signaturePath, MARGIN, signatureImageY, { fit: SIGNATURE_FIT });
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
         .text(m.signatureFunction || 'CHEF PROTECTION RESPIRATOIRE', MARGIN, functionY, { width: 320 });
-      this.doc.y = Math.max(functionY + 16, y + 78);
+      this.doc.y = Math.max(functionY + 16, identityY + 78);
       return;
     }
     this.ensure(48);
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10)
-      .text(m.signatureFunction || m.signatureRole || 'Responsable de domaine', MARGIN, this.doc.y);
+      .text(m.signatureFunction || m.signatureRole || 'Responsable de domaine', MARGIN, identityY);
+    this.doc.y = identityY;
     this.doc.moveDown(1.15);
     this.doc.font('Helvetica').fontSize(11).text('____________________________', MARGIN, this.doc.y);
   }
@@ -963,11 +968,8 @@ class ScopePdfRenderer {
       this.para(m.prSuspensionText, { size: TYPE.body, align: 'justify' });
       this.doc.moveDown(0.55);
       m.nonParticipants.forEach((r) => this.drawPrPersonLine(r));
-      this.doc.moveDown(2);
-    } else {
-      this.doc.moveDown(1.15);
     }
-    this.drawDomainSignature(m, { spaceBefore: 0 });
+    this.drawDomainSignature(m);
   }
 
   render(){
@@ -1118,4 +1120,8 @@ function renderReportPdf(model, meta){
   return renderer.finalize();
 }
 
-module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE, PDF_SHIFT_08_CM, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W };
+module.exports = {
+  renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE,
+  PDF_SHIFT_08_CM, SIGNATURE_TEXT_TOP_GAP, SIGNATURE_TEXT_LINE_COUNT, SIGNATURE_IMAGE_RELATIVE_Y,
+  SIGNATURE_FUNCTION_RELATIVE_Y, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W
+};

@@ -6,7 +6,8 @@ const {
   addDays,
   periodsOverlap,
   scopeKey,
-  mapObjective
+  mapObjective,
+  resolveObjective
 } = require('./_scope-objectives');
 
 function actorId(actor){
@@ -59,7 +60,7 @@ function createScopeObjectivesService(repo){
         throw new HttpError(
           422,
           'chevauchement_objectif',
-          'Cette période chevauche un objectif déjà défini pour la même portée. Clôturez d’abord la période précédente.'
+          'Un objectif existe déjà pour ce périmètre sur tout ou partie de cette période.'
         );
       }
     }
@@ -111,7 +112,7 @@ function createScopeObjectivesService(repo){
       : isoDate(body.dateFin || body.date_fin);
     if(body.dateFin && !dateFin) throw new HttpError(400, 'date_fin_invalide', 'Date de fin invalide.');
     if(dateFin && dateFin < dateDebut){
-      throw new HttpError(422, 'dates_incoherentes', 'La date de fin ne peut pas être antérieure au début.');
+      throw new HttpError(422, 'dates_incoherentes', 'La date de fin doit être postérieure à la date de début.');
     }
     const seuilPct = parseSeuil(body.seuilPct ?? body.seuil_pct);
     const commentaire = body.commentaire != null ? String(body.commentaire) : null;
@@ -175,7 +176,7 @@ function createScopeObjectivesService(repo){
     const dateFin = isoDate(body.dateFin || body.date_fin);
     if(!dateFin) throw new HttpError(400, 'date_fin_obligatoire', 'Indiquez la date de clôture.');
     if(dateFin < isoDate(current.date_debut)){
-      throw new HttpError(422, 'dates_incoherentes', 'La date de fin ne peut pas être antérieure au début.');
+      throw new HttpError(422, 'dates_incoherentes', 'La date de fin doit être postérieure à la date de début.');
     }
     const candidate = { ...current, date_fin: dateFin };
     await assertNoOverlap(candidate, id);
@@ -247,6 +248,23 @@ function createScopeObjectivesService(repo){
     return { objectif: summarize(saved) };
   }
 
+  async function resolveObjectif(query = {}){
+    const date = isoDate(query.date);
+    if(!date) throw new HttpError(400, 'date_obligatoire', 'Indiquez une date pour l’aperçu de l’objectif effectif.');
+    const domaineCode = query.domaineCode || query.domaine_code || query.domaine || null;
+    const cibleId = query.cibleId || query.cible_id || null;
+    const rows = await repo.listObjectifs({ actif: true });
+    const analysisGrain = cibleId ? 'CIBLE' : (domaineCode ? 'DOMAINE' : 'GLOBAL');
+    const objectif = resolveObjective({
+      date,
+      domaineCode,
+      cibleId,
+      analysisGrain,
+      objectives: rows
+    });
+    return { objectif };
+  }
+
   return {
     listObjectifs,
     getObjectif,
@@ -254,7 +272,8 @@ function createScopeObjectivesService(repo){
     patchObjectif,
     cloturerObjectif,
     nouvellePeriode,
-    desactiverObjectif
+    desactiverObjectif,
+    resolveObjectif
   };
 }
 

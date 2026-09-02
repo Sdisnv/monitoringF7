@@ -321,7 +321,7 @@ function attendu(detail, personneId){
   });
 
   await record('19-20 — Non-régression UI / cache / PDF anthracite', () => {
-    assert.ok(html.includes('scope-multisession-report-1-r1') || html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1'));
+    assert.ok(html.includes('scope-objectifs-participation-1') || html.includes('scope-multisession-report-1-r1') || html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1'));
     assert.ok(css.includes('repeat(3, minmax(0, 1fr))'));
     assert.ok(pdfRenderer.includes('anthracite'));
     assert.ok(pdfRenderer.includes("heading('Synthèse de participation', 11, 'ink')"));

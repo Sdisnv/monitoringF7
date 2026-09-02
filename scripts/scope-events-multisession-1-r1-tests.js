@@ -237,7 +237,7 @@ async function setupSession(personCount = 2){
   await record('warning motifsForRow unique', () => {
     const matches = logicSrc.match(/^\s*motifsForRow,/gm) || [];
     assert.strictEqual(matches.length, 1);
-    assert.ok(html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1-r4') || html.includes('scope-events-multisession-1-r3'));
+    assert.ok(html.includes('scope-objectifs-participation-1') || html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1-r4') || html.includes('scope-events-multisession-1-r3'));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

@@ -324,6 +324,7 @@
       listAlerts(params) { return request('GET', `/alerts${queryString(params || {})}`); },
       acquitterAlerte(body) { return request('POST', '/alerts/acquitter', body); },
       listObjectifs(params) { return request('GET', `/objectifs${queryString(params || {})}`); },
+      resolveObjectif(params) { return request('GET', `/objectifs/resolution${queryString(params || {})}`); },
       createObjectif(body) { return request('POST', '/objectifs', body); },
       patchObjectif(id, body) { return request('PATCH', `/objectifs/${encodeURIComponent(id)}`, body); },
       cloturerObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/cloturer`, body); },

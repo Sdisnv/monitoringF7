@@ -312,7 +312,7 @@ const PRESENT_13_15 = [
     await objectifs.createObjectif({ portee: 'GLOBAL', seuilPct: 80, dateDebut: '2026-01-01' }, { sub: 't' });
     await createClosedNominatif(repo, service, {
       date: '2026-04-01', domaine: 'DPS', niveau: 'G1', libelle: 'Zero', prefix: 'Z0',
-      statuses: [{ statut: 'DISPENSE', motif_absence: 'AUTRE' }]
+      statuses: [{ statut: 'DISPENSE', motif_absence: 'PAS_CONCERNE' }]
     });
     const summary = await analytics.summary({ from: '2026-01-01', to: '2026-12-31' });
     assert.strictEqual(summary.officiel.denominator, 0);
@@ -435,7 +435,7 @@ const PRESENT_13_15 = [
     assert.strictEqual(logic.parseHash('#/reglages/objectifs').nav, 'reglages');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('#/reglages/objectifs'));
-    assert.ok(ui.includes('Objectifs de participation'));
+    assert.ok(ui.includes('OBJECTIFS DE PARTICIPATION'));
     assert.ok(ui.includes('scope-sidebar'));
     assert.ok(ui.includes('Vue d’ensemble'));
     assert.ok(ui.includes('Événements'));

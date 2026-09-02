@@ -173,7 +173,8 @@ async function seedJsp(id, count, libelle){
   await record('01-07 — constante, signature unique, taille, NIP, fonction', () => {
     assert.strictEqual(PDF_SHIFT_08_CM, 22.68);
     assert.ok(renderer.includes('const PDF_SHIFT_08_CM = 22.68'));
-    assert.ok(renderer.includes('this.doc.y -= PDF_SHIFT_08_CM'));
+    assert.ok(renderer.includes('signatureImageY = identityY + SIGNATURE_IMAGE_RELATIVE_Y - PDF_SHIFT_08_CM'));
+    assert.ok(renderer.includes('identityY = contentEndY + SIGNATURE_TEXT_TOP_GAP'));
     assert.ok(sessionSrc.includes('drawDomainSignature(m'));
     assert.deepStrictEqual([...SIGNATURE_FIT], [336, 96]);
     assert.ok(!renderer.includes('[168, 48]'));
@@ -240,7 +241,7 @@ async function seedJsp(id, count, libelle){
     const ctx = await seedEventDisplay();
     const model = await collectReport(ctx.repo, { kind: 'EVENT', evenementId: 'r5e-s1' }, { includeNominatif: true });
     assert.strictEqual(model.signaturePerson.nip, '1506');
-    assert.ok(html.includes('scope-multisession-report-1-r5'));
+    assert.ok(html.includes('scope-objectifs-participation-1'));
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
     assert.ok(sessionEngine.includes('computeTaux('));

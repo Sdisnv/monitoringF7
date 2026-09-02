@@ -779,6 +779,23 @@
       async listObjectifs() {
         return { ok: true, objectifs: [...objectifs.values()] };
       },
+      async resolveObjectif(params) {
+        const date = String((params && params.date) || '').slice(0, 10);
+        const domaine = (params && (params.domaine || params.domaineCode)) || null;
+        const cibleId = (params && params.cibleId) || null;
+        const rows = [...objectifs.values()].filter((row) => row.actif !== false);
+        const covers = (row) => row.dateDebut <= date && (!row.dateFin || row.dateFin >= date);
+        const find = (pred) => rows.find((row) => covers(row) && pred(row));
+        let row = null;
+        if (!domaine && !cibleId) row = find((item) => item.scope === 'GLOBAL');
+        else if (!cibleId) row = find((item) => item.scope === 'DOMAINE' && item.domaineCode === domaine) || find((item) => item.scope === 'GLOBAL');
+        else {
+          row = find((item) => item.scope === 'CIBLE' && item.cibleId === cibleId)
+            || find((item) => item.scope === 'DOMAINE' && item.domaineCode === domaine)
+            || find((item) => item.scope === 'GLOBAL');
+        }
+        return { ok: true, objectif: row || null };
+      },
       async createObjectif(body) {
         const portee = String(body.portee || '').toUpperCase();
         const seuilPct = Number(body.seuilPct);
@@ -792,7 +809,7 @@
         const dateFin = body.dateFin ? String(body.dateFin).slice(0, 10) : null;
         if (!dateDebut) throw new ScopeApiError(400, { error: 'date_debut_obligatoire', message: 'La date de début est obligatoire.' });
         if (dateFin && dateFin < dateDebut) {
-          throw new ScopeApiError(422, { error: 'dates_incoherentes', message: 'La date de fin ne peut pas être antérieure au début.' });
+          throw new ScopeApiError(422, { error: 'dates_incoherentes', message: 'La date de fin doit être postérieure à la date de début.' });
         }
         const row = {
           objectifId: uid(),
@@ -814,7 +831,7 @@
           const aEnd = existing.dateFin || '9999-12-31';
           const bEnd = row.dateFin || '9999-12-31';
           if (existing.dateDebut <= bEnd && dateDebut <= aEnd) {
-            throw new ScopeApiError(422, { error: 'chevauchement_objectif', message: 'Cette période chevauche un objectif déjà défini pour la même portée.' });
+            throw new ScopeApiError(422, { error: 'chevauchement_objectif', message: 'Un objectif existe déjà pour ce périmètre sur tout ou partie de cette période.' });
           }
         }
         objectifs.set(row.objectifId, row);

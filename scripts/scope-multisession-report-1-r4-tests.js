@@ -152,7 +152,7 @@ async function seedEventDisplay(){
   const eventSrc = renderer.slice(renderer.indexOf('renderEventBody'), renderer.indexOf('drawDomainSignature'));
 
   await record('01 — préflight contractuel', () => {
-    assert.ok(/scope-multisession-report-1-r[45]/.test(html));
+    assert.ok(/scope-objectifs-participation-1|scope-multisession-report-1-r[45]/.test(html));
     assert.ok(toml.includes('assets/img/MCE_Signature.png'));
     assert.strictEqual(TYPE.section, 16);
     assert.strictEqual(TYPE.conclusion, 14);
@@ -194,13 +194,13 @@ async function seedEventDisplay(){
   });
 
   await record('09-11 — signature commune, NIP 1506, espacement', async () => {
-    assert.ok(renderer.includes('drawDomainSignature(m, { spaceBefore: 14 })'));
-    assert.ok(sessionSrc.includes('drawDomainSignature(m, { spaceBefore: 0 })'));
+    assert.ok(renderer.includes('this.drawDomainSignature(m);'));
+    assert.ok(sessionSrc.includes('this.drawDomainSignature(m);'));
     assert.deepStrictEqual([...SIGNATURE_FIT], [336, 96]);
     const ctx = await seedEventDisplay();
     const model = await collectReport(ctx.repo, { kind: 'EVENT', evenementId: 'r4e-s1' }, { includeNominatif: true });
     assert.strictEqual(model.signaturePerson.nip, '1506');
-    assert.ok(renderer.includes('functionY = y + 36'));
+    assert.ok(renderer.includes('functionY = identityY + SIGNATURE_FUNCTION_RELATIVE_Y'));
   });
 
   await record('12, 38 — exercice pagination fixture', async () => {
@@ -251,7 +251,7 @@ async function seedEventDisplay(){
     assert.ok(renderer.includes('Helvetica-Bold'));
     assert.ok(renderer.includes('row.nip'));
     assert.ok(sessionEngine.includes('compareGradeNomPrenom'));
-    assert.ok(sessionSrc.includes('moveDown(2)'));
+    assert.ok(renderer.includes('SIGNATURE_TEXT_TOP_GAP'));
     assert.strictEqual(SIGNATURE_FIT[0], 336);
     const repo = createMemoryRepo();
     await repo.insertCycle({ cycle_id: 'c-auto', cycle_key: 'AUTO-1', annee: 2026, domaine_code: 'AUTO', type_cycle: 'AUTO', libelle: 'AUTO' });

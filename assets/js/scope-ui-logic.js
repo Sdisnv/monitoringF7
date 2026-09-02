@@ -355,8 +355,98 @@
   const EVENT_DOMAIN_GROUPS = Object.freeze([
     ['AUTO', 'PR'],
     ['DPS', 'DAP', 'JSP'],
-    ['FOBA', 'FOCA']
+    ['FOBA', 'FOCA', 'FOSPEC']
   ]);
+
+  const OBJECTIF_PORTEE_LABELS = Object.freeze({
+    GLOBAL: 'Ensemble SCOPE',
+    DOMAINE: 'Domaine',
+    CIBLE: 'Cible / spécialisation'
+  });
+
+  function yearToObjectifPeriod(year) {
+    const y = String(year || '').replace(/\D/g, '').slice(0, 4);
+    if (y.length !== 4) return { dateDebut: '', dateFin: '' };
+    return { dateDebut: `${y}-01-01`, dateFin: `${y}-12-31` };
+  }
+
+  function objectifOverlapsYear(row, year) {
+    const y = String(year || '').replace(/\D/g, '').slice(0, 4);
+    if (!y) return true;
+    const start = `${y}-01-01`;
+    const end = `${y}-12-31`;
+    const aStart = String((row && (row.dateDebut || row.date_debut)) || '').slice(0, 10);
+    const aEnd = String((row && (row.dateFin || row.date_fin)) || '9999-12-31').slice(0, 10);
+    if (!aStart) return false;
+    return aStart <= end && start <= aEnd;
+  }
+
+  function objectifLifecycleStatus(row, todayIso) {
+    if (!row || row.actif === false) return 'TERMINE';
+    const today = String(todayIso || '').slice(0, 10);
+    const debut = String(row.dateDebut || row.date_debut || '').slice(0, 10);
+    const fin = String(row.dateFin || row.date_fin || '').slice(0, 10);
+    if (debut && today && debut > today) return 'FUTUR';
+    if (fin && today && fin < today) return 'TERMINE';
+    return 'ACTIF';
+  }
+
+  function objectifLifecycleLabel(status) {
+    if (status === 'ACTIF') return 'Actif';
+    if (status === 'FUTUR') return 'Futur';
+    return 'Terminé';
+  }
+
+  function objectifPeriodLabel(row) {
+    const debut = String((row && row.dateDebut) || '').slice(0, 10);
+    const fin = String((row && row.dateFin) || '').slice(0, 10);
+    if (/^\d{4}-01-01$/.test(debut) && /^\d{4}-12-31$/.test(fin) && debut.slice(0, 4) === fin.slice(0, 4)) {
+      return debut.slice(0, 4);
+    }
+    if (/^\d{4}-01-01$/.test(debut) && !fin) return `${debut.slice(0, 4)} (ouverte)`;
+    return [debut, fin].filter(Boolean).join(' → ') || '—';
+  }
+
+  function filterObjectifs(rows, filters, todayIso) {
+    const f = filters || {};
+    return (rows || []).filter((row) => {
+      if (String(row.domaineCode || '').toUpperCase() === 'PAPR') return false;
+      if (f.portee && String(row.scope || row.portee || '').toUpperCase() !== String(f.portee).toUpperCase()) return false;
+      if (f.domaine && String(row.domaineCode || '').toUpperCase() !== String(f.domaine).toUpperCase()) return false;
+      if (f.statut && objectifLifecycleStatus(row, todayIso) !== f.statut) return false;
+      if (f.annee && !objectifOverlapsYear(row, f.annee)) return false;
+      return true;
+    });
+  }
+
+  function sortObjectifsDefault(rows, todayIso) {
+    const rank = { ACTIF: 0, FUTUR: 1, TERMINE: 2 };
+    return (rows || []).slice().sort((a, b) => {
+      const ra = rank[objectifLifecycleStatus(a, todayIso)] ?? 9;
+      const rb = rank[objectifLifecycleStatus(b, todayIso)] ?? 9;
+      if (ra !== rb) return ra - rb;
+      return String(b.dateDebut || '').localeCompare(String(a.dateDebut || ''));
+    });
+  }
+
+  function sortObjectifs(rows, sort, todayIso) {
+    const source = (rows || []).slice();
+    if (!sort || !sort.key) return sortObjectifsDefault(source, todayIso);
+    return sortRows(source, sort, [
+      { key: 'periode', type: 'text', value: (r) => objectifPeriodLabel(r) },
+      { key: 'portee', type: 'text', value: (r) => r.scope || '' },
+      { key: 'domaine', type: 'text', value: (r) => r.domaineCode || '' },
+      { key: 'cible', type: 'text', value: (r) => r.cibleId || '' },
+      { key: 'objectif', type: 'number', value: (r) => Number(r.thresholdPct) },
+      { key: 'debut', type: 'date', value: (r) => r.dateDebut },
+      { key: 'fin', type: 'date', value: (r) => r.dateFin || '' },
+      { key: 'statut', type: 'text', value: (r) => objectifLifecycleStatus(r, todayIso) }
+    ]);
+  }
+
+  function objectifDomainOptions(domaines) {
+    return eventDomainFilterItems(domaines).filter((item) => item.type === 'domain');
+  }
 
   function eventDomainFilterItems(domaines) {
     const list = (domaines || []).filter((d) => {
@@ -1247,6 +1337,16 @@
     normalizeNavArbre,
     EVENT_DOMAIN_GROUPS,
     eventDomainFilterItems,
+    OBJECTIF_PORTEE_LABELS,
+    yearToObjectifPeriod,
+    objectifOverlapsYear,
+    objectifLifecycleStatus,
+    objectifLifecycleLabel,
+    objectifPeriodLabel,
+    filterObjectifs,
+    sortObjectifsDefault,
+    sortObjectifs,
+    objectifDomainOptions,
     buildSidebarNav,
     currentYear,
     periodParams,

@@ -316,6 +316,9 @@ exports.handler = async function(event){
     if(method === 'GET' && path === '/objectifs'){
       return response(200, { ok:true, ...(await objectives.listObjectifs(queryOf(event))) });
     }
+    if(method === 'GET' && path === '/objectifs/resolution'){
+      return response(200, { ok:true, ...(await objectives.resolveObjectif(queryOf(event))) });
+    }
     if(method === 'POST' && path === '/objectifs'){
       if(!hasPermission(claims, 'references:manage')){
         return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });

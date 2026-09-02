@@ -347,7 +347,7 @@ async function seedCurrent(){
     const rules = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(/scope-multisession-report-1-r[12345]/.test(html));
+    assert.ok(/scope-objectifs-participation-1|scope-multisession-report-1-r[12345]/.test(html));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

@@ -168,13 +168,17 @@
     objectifs: [],
     objectifForm: {
       portee: 'GLOBAL',
-      domaineCode: 'DPS',
+      domaineCode: 'PR',
       cibleId: '',
+      annee: '2026',
       seuilPct: '',
       dateDebut: '2026-01-01',
-      dateFin: '',
+      dateFin: '2026-12-31',
       commentaire: ''
     },
+    objectifFilters: { annee: '', portee: '', domaine: '', statut: '' },
+    objectifSort: { key: null, dir: null },
+    objectifPreview: { date: '2026-06-15', domaine: 'PR', cibleId: '', result: null },
     objectifAction: null,
     reportForm: { kind: 'PERIOD', domaine: 'DAP', cible: 'Y4', evenementId: '' },
     objectifFocusId: null,
@@ -3819,100 +3823,199 @@
     `;
   }
 
+  function todayIso() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   function objectifPorteeLabel(row) {
-    if (row.scope === 'GLOBAL') return 'Global';
-    if (row.scope === 'DOMAINE') return `Domaine ${domaineLabel(row.domaineCode)}`;
-    const cible = state.referentiels.cibles.find((c) => c.cibleId === row.cibleId);
-    if (cible) return `${domaineLabel(cible.domaineCode)} / ${cible.niveauCode}`;
-    return row.cibleId ? `Cible ${row.cibleId.slice(0, 8)}` : 'Cible';
+    return (L.OBJECTIF_PORTEE_LABELS && L.OBJECTIF_PORTEE_LABELS[row.scope]) || row.scope || '—';
+  }
+
+  function objectifCibleLabel(row) {
+    if (!row || !row.cibleId) return '—';
+    const cible = (state.referentiels.cibles || []).find((c) => c.cibleId === row.cibleId);
+    if (cible) return L.niveauAffiche(cible.domaineCode, cible.niveauCode);
+    return row.cibleId.slice(0, 8);
+  }
+
+  function objectifResolvedSource(resolved) {
+    if (!resolved) return '';
+    const debut = L.formatDate(resolved.dateDebut);
+    const fin = resolved.dateFin ? L.formatDate(resolved.dateFin) : 'ouverte';
+    if (resolved.scope === 'CIBLE') {
+      return `${objectifCibleLabel(resolved)} — ${debut} au ${fin}`;
+    }
+    if (resolved.scope === 'DOMAINE') {
+      return `${domaineLabel(resolved.domaineCode)} — ${debut} au ${fin}`;
+    }
+    return `Objectif global — ${debut} au ${fin}`;
   }
 
   function renderObjectifs() {
     const form = state.objectifForm;
-    const cibles = state.referentiels.cibles.filter((c) => c.domaineCode === form.domaineCode);
-    const rows = state.objectifs || [];
+    const filters = state.objectifFilters || {};
+    const preview = state.objectifPreview || {};
+    const today = todayIso();
+    const domainOpts = L.objectifDomainOptions(state.referentiels.domaines);
+    const formCibles = (state.referentiels.cibles || []).filter((c) => c.domaineCode === form.domaineCode);
+    const previewCibles = (state.referentiels.cibles || []).filter((c) => c.domaineCode === preview.domaine);
+    const filtered = L.filterObjectifs(state.objectifs || [], filters, today);
+    const rows = L.sortObjectifs(filtered, state.objectifSort, today);
     const action = state.objectifAction;
-    const focus = rows.find((row) => row.objectifId === state.objectifFocusId);
-    return `
-      <div class="scope-crumb">Réglages / Objectifs</div>
-      <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages / Application', title: 'Objectifs', context: 'Référentiel temporel', logo: true })}
-        <div class="scope-card">
-          <h2 style="margin-top:0">Objectifs de participation</h2>
-          <p class="scope-mode-hint">Référentiel temporel du KPI officiel SCOPE (nominatif + quantitatif réalisé). Un changement de seuil ouvre une nouvelle période : l’historique n’est pas réécrit. Aucun objectif réel du SDIS n’est proposé ici.</p>
-          <div class="scope-actions" style="margin:12px 0">
-            <button type="button" class="scope-btn scope-btn-primary" id="obj-add">Ajouter</button>
-          </div>
-          <div class="scope-table-wrap">
-            <table class="scope-table">
-              <thead><tr><th>Portée</th><th>Seuil</th><th>Début</th><th>Fin</th><th>Statut</th><th></th></tr></thead>
-              <tbody>
-                ${rows.map((row) => `
-                  <tr>
-                    <td data-label="Portée">${escapeHtml(objectifPorteeLabel(row))}</td>
-                    <td data-label="Seuil">${escapeHtml(L.formatTaux(row.thresholdPct))}</td>
-                    <td data-label="Début">${escapeHtml(L.formatDate(row.dateDebut))}</td>
-                    <td data-label="Fin">${row.dateFin ? escapeHtml(L.formatDate(row.dateFin)) : 'Ouverte'}</td>
-                    <td data-label="Statut">${escapeHtml(row.statut === 'NEUTRALISE' ? 'Neutralisé' : row.statut === 'CLOTURE' ? 'Clôturé' : 'Ouvert')}</td>
-                    <td data-label="Actions">
-                      ${row.actif && !row.dateFin ? `<button type="button" class="scope-btn" data-obj-cloturer="${row.objectifId}">Clôturer</button>` : ''}
-                      ${row.actif ? `<button type="button" class="scope-btn" data-obj-periode="${row.objectifId}">Nouvelle période</button>` : ''}
-                      ${row.actif ? `<button type="button" class="scope-btn" data-obj-neutraliser="${row.objectifId}">Neutraliser</button>` : ''}
-                    </td>
-                  </tr>
-                `).join('') || `<tr><td colspan="6">${escapeHtml(L.emptyMessage('objectifs'))}</td></tr>`}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        ${action === 'create' ? `
-        <div class="scope-card" style="margin-top:16px;max-width:640px">
-          <h3 style="margin-top:0">Ajouter un objectif</h3>
+    const focus = (state.objectifs || []).find((row) => row.objectifId === state.objectifFocusId);
+    const canWrite = hasScopePermission('references:manage');
+    const years = Array.from({ length: 8 }, (_, i) => String(2024 + i));
+    const domainSelect = (id, value, emptyLabel) => `<select id="${id}">
+              ${emptyLabel ? `<option value="">${escapeHtml(emptyLabel)}</option>` : ''}
+              ${domainOpts.map((d) => `<option value="${escapeHtml(d.code)}" ${d.code === value ? 'selected' : ''}>${escapeHtml(d.label)}</option>`).join('')}
+            </select>`;
+    const modal = action === 'create' ? `<div class="scope-modal"><div class="scope-card">
+          <h3>Nouvel objectif</h3>
           <div class="scope-field"><label>Portée</label>
             <select id="obj-portee">
-              <option value="GLOBAL" ${form.portee === 'GLOBAL' ? 'selected' : ''}>Global</option>
+              <option value="GLOBAL" ${form.portee === 'GLOBAL' ? 'selected' : ''}>Ensemble SCOPE</option>
               <option value="DOMAINE" ${form.portee === 'DOMAINE' ? 'selected' : ''}>Domaine</option>
-              <option value="CIBLE" ${form.portee === 'CIBLE' ? 'selected' : ''}>Cible</option>
+              <option value="CIBLE" ${form.portee === 'CIBLE' ? 'selected' : ''}>Cible / spécialisation</option>
             </select>
           </div>
-          ${form.portee !== 'GLOBAL' ? `<div class="scope-field" style="margin-top:8px"><label>Domaine</label>
-            <select id="obj-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === form.domaineCode ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
+          ${form.portee !== 'GLOBAL' ? `<div class="scope-field" style="margin-top:8px"><label>Domaine</label>${domainSelect('obj-domaine', form.domaineCode)}</div>` : ''}
+          ${form.portee === 'CIBLE' ? `<div class="scope-field" style="margin-top:8px"><label>Cible / spécialisation</label>
+            <select id="obj-cible">${formCibles.map((c) => `<option value="${c.cibleId}" ${c.cibleId === form.cibleId ? 'selected' : ''}>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</option>`).join('')}</select>
           </div>` : ''}
-          ${form.portee === 'CIBLE' ? `<div class="scope-field" style="margin-top:8px"><label>Cible</label>
-            <select id="obj-cible">${cibles.map((c) => `<option value="${c.cibleId}" ${c.cibleId === form.cibleId ? 'selected' : ''}>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</option>`).join('')}</select>
-          </div>` : ''}
-          <div class="scope-field" style="margin-top:8px"><label>Seuil %</label><input id="obj-seuil" type="number" min="0" max="100" step="0.1" value="${escapeHtml(form.seuilPct)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Année</label>
+            <select id="obj-annee">${years.map((y) => `<option value="${y}" ${form.annee === y ? 'selected' : ''}>${y}</option>`).join('')}</select>
+          </div>
           <div class="scope-field" style="margin-top:8px"><label>Date de début</label><input id="obj-debut" type="date" value="${escapeHtml(form.dateDebut)}"></div>
-          <div class="scope-field" style="margin-top:8px"><label>Date de fin (facultative)</label><input id="obj-fin" type="date" value="${escapeHtml(form.dateFin)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Date de fin</label><input id="obj-fin" type="date" value="${escapeHtml(form.dateFin)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Objectif de participation (%)</label><input id="obj-seuil" type="number" min="0" max="100" step="0.1" value="${escapeHtml(form.seuilPct)}"></div>
           <div class="scope-field" style="margin-top:8px"><label>Commentaire</label><textarea id="obj-commentaire">${escapeHtml(form.commentaire)}</textarea></div>
           <div class="scope-actions">
-            <button type="button" class="scope-btn scope-btn-primary" id="obj-save">Enregistrer</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-save">Enregistrer l’objectif</button>
             <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
           </div>
-        </div>` : ''}
-        ${action === 'cloturer' && focus ? `
-        <div class="scope-card" style="margin-top:16px;max-width:640px">
-          <h3 style="margin-top:0">Clôturer la période</h3>
+        </div></div>` : '';
+    const clotureModal = action === 'cloturer' && focus ? `<div class="scope-modal"><div class="scope-card">
+          <h3>Clôturer l’objectif</h3>
           <p>${escapeHtml(objectifPorteeLabel(focus))} · ${escapeHtml(L.formatTaux(focus.thresholdPct))}</p>
-          <div class="scope-field"><label>Date de fin</label><input id="obj-cloture-date" type="date" value="${escapeHtml(form.dateFin || form.dateDebut)}"></div>
+          <div class="scope-field"><label>Dernier jour d’application</label><input id="obj-cloture-date" type="date" value="${escapeHtml(form.dateFin || form.dateDebut)}"></div>
           <div class="scope-actions">
             <button type="button" class="scope-btn scope-btn-primary" id="obj-cloture-save">Clôturer</button>
             <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
           </div>
-        </div>` : ''}
-        ${action === 'periode' && focus ? `
-        <div class="scope-card" style="margin-top:16px;max-width:640px">
-          <h3 style="margin-top:0">Préparer une nouvelle période</h3>
-          <p>La période précédente sera clôturée la veille. L’historique conserve l’ancien seuil.</p>
+        </div></div>` : '';
+    const periodeModal = action === 'periode' && focus ? `<div class="scope-modal"><div class="scope-card">
+          <h3>Nouvelle période</h3>
+          <p>La période précédente est clôturée la veille. L’historique conserve l’ancien seuil.</p>
           <div class="scope-field"><label>Nouveau début</label><input id="obj-periode-debut" type="date" value="${escapeHtml(form.dateDebut)}"></div>
           <div class="scope-field" style="margin-top:8px"><label>Nouveau seuil %</label><input id="obj-periode-seuil" type="number" min="0" max="100" step="0.1" value="${escapeHtml(form.seuilPct)}"></div>
-          <div class="scope-field" style="margin-top:8px"><label>Fin (facultative)</label><input id="obj-periode-fin" type="date" value="${escapeHtml(form.dateFin)}"></div>
+          <div class="scope-field" style="margin-top:8px"><label>Fin</label><input id="obj-periode-fin" type="date" value="${escapeHtml(form.dateFin)}"></div>
           <div class="scope-actions">
-            <button type="button" class="scope-btn scope-btn-primary" id="obj-periode-save">Créer la période</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-periode-save">Enregistrer l’objectif</button>
             <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
           </div>
-        </div>` : ''}
+        </div></div>` : '';
+    return `
+      <div class="scope-crumb">Réglages / Objectifs</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({
+          eyebrow: 'Réglages / Application',
+          title: 'OBJECTIFS DE PARTICIPATION',
+          context: 'Référentiel temporel',
+          description: 'Définissez les seuils de participation utilisés par les analyses et rapports SCOPE.',
+          logo: true
+        })}
+        <div class="scope-toolbar">
+          <div class="scope-field">
+            <label>Période / année</label>
+            <select id="obj-filter-annee">
+              <option value="">Toutes</option>
+              ${years.map((y) => `<option value="${y}" ${filters.annee === y ? 'selected' : ''}>${y}</option>`).join('')}
+            </select>
+          </div>
+          <div class="scope-field">
+            <label>Portée</label>
+            <select id="obj-filter-portee">
+              <option value="">Toutes</option>
+              <option value="GLOBAL" ${filters.portee === 'GLOBAL' ? 'selected' : ''}>Ensemble SCOPE</option>
+              <option value="DOMAINE" ${filters.portee === 'DOMAINE' ? 'selected' : ''}>Domaine</option>
+              <option value="CIBLE" ${filters.portee === 'CIBLE' ? 'selected' : ''}>Cible / spécialisation</option>
+            </select>
+          </div>
+          <div class="scope-field">
+            <label>Domaine</label>
+            <select id="obj-filter-domaine">
+              <option value="">Tous</option>
+              ${domainOpts.map((d) => `<option value="${escapeHtml(d.code)}" ${filters.domaine === d.code ? 'selected' : ''}>${escapeHtml(d.label)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="scope-field">
+            <label>Statut</label>
+            <select id="obj-filter-statut">
+              <option value="">Tous</option>
+              <option value="ACTIF" ${filters.statut === 'ACTIF' ? 'selected' : ''}>Actif</option>
+              <option value="FUTUR" ${filters.statut === 'FUTUR' ? 'selected' : ''}>Futur</option>
+              <option value="TERMINE" ${filters.statut === 'TERMINE' ? 'selected' : ''}>Terminé</option>
+            </select>
+          </div>
+          ${canWrite ? '<button type="button" class="scope-btn scope-btn-primary" id="obj-add">Nouvel objectif</button>' : ''}
+        </div>
+        <div class="scope-card">
+          <p class="scope-mode-hint">Lorsqu’un objectif spécifique existe pour une cible, il est prioritaire sur l’objectif du domaine, lui-même prioritaire sur l’objectif global.</p>
+          <div class="scope-table-wrap">
+            <table class="scope-table" id="obj-table">
+              <thead><tr>
+                ${sortableHeader('objectifs', 'periode', 'PÉRIODE', state.objectifSort)}
+                ${sortableHeader('objectifs', 'portee', 'PORTÉE', state.objectifSort)}
+                ${sortableHeader('objectifs', 'domaine', 'DOMAINE', state.objectifSort)}
+                ${sortableHeader('objectifs', 'cible', 'CIBLE / SPÉCIALISATION', state.objectifSort)}
+                ${sortableHeader('objectifs', 'objectif', 'OBJECTIF', state.objectifSort)}
+                ${sortableHeader('objectifs', 'debut', 'DÉBUT', state.objectifSort)}
+                ${sortableHeader('objectifs', 'fin', 'FIN', state.objectifSort)}
+                ${sortableHeader('objectifs', 'statut', 'STATUT', state.objectifSort)}
+                <th>ACTIONS</th>
+              </tr></thead>
+              <tbody>
+                ${rows.map((row) => {
+                  const life = L.objectifLifecycleStatus(row, today);
+                  return `<tr>
+                    <td data-label="Période">${escapeHtml(L.objectifPeriodLabel(row))}</td>
+                    <td data-label="Portée">${escapeHtml(objectifPorteeLabel(row))}</td>
+                    <td data-label="Domaine">${row.domaineCode ? escapeHtml(domaineLabel(row.domaineCode)) : '—'}</td>
+                    <td data-label="Cible">${escapeHtml(objectifCibleLabel(row))}</td>
+                    <td data-label="Objectif">${escapeHtml(L.formatTaux(row.thresholdPct))}</td>
+                    <td data-label="Début">${escapeHtml(L.formatDate(row.dateDebut))}</td>
+                    <td data-label="Fin">${row.dateFin ? escapeHtml(L.formatDate(row.dateFin)) : 'Ouverte'}</td>
+                    <td data-label="Statut">${escapeHtml(L.objectifLifecycleLabel(life))}</td>
+                    <td data-label="Actions">
+                      ${canWrite && row.actif && !row.dateFin ? `<button type="button" class="scope-btn" data-obj-cloturer="${row.objectifId}">Clôturer</button>` : ''}
+                      ${canWrite && row.actif ? `<button type="button" class="scope-btn" data-obj-periode="${row.objectifId}">Nouvelle période</button>` : ''}
+                    </td>
+                  </tr>`;
+                }).join('') || `<tr><td colspan="9">${escapeHtml(L.emptyMessage('objectifs'))}</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="scope-card" style="margin-top:16px">
+          <h2>Aperçu de l’objectif effectif</h2>
+          <p class="scope-mode-hint">Le seuil affiché est celui résolu par le moteur OBJECTIVES-1 (aucune formule parallèle).</p>
+          <div class="scope-toolbar">
+            <div class="scope-field"><label>Date</label><input id="obj-preview-date" type="date" value="${escapeHtml(preview.date || '')}"></div>
+            <div class="scope-field"><label>Domaine</label>${domainSelect('obj-preview-domaine', preview.domaine, 'Ensemble SCOPE')}</div>
+            <div class="scope-field"><label>Cible / spécialisation</label>
+              <select id="obj-preview-cible">
+                <option value="">Aucune</option>
+                ${previewCibles.map((c) => `<option value="${c.cibleId}" ${c.cibleId === preview.cibleId ? 'selected' : ''}>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</option>`).join('')}
+              </select>
+            </div>
+            <button type="button" class="scope-btn scope-btn-primary" id="obj-preview">Aperçu</button>
+          </div>
+          ${preview.result ? `<p><strong>Objectif appliqué : ${escapeHtml(L.formatTaux(preview.result.thresholdPct))}</strong></p>
+            <p>Source : ${escapeHtml(objectifResolvedSource(preview.result))}</p>` : (preview.looked ? '<p>Aucun objectif n’est défini pour ce périmètre à cette date.</p>' : '')}
+        </div>
       </div>
+      ${modal}${clotureModal}${periodeModal}
     `;
   }
 
@@ -5742,8 +5845,10 @@
       withLoading(loadCycles);
     });
     document.getElementById('obj-add')?.addEventListener('click', () => {
+      const period = L.yearToObjectifPeriod(state.objectifForm.annee || String(state.year || '2026'));
       state.objectifAction = 'create';
       state.objectifFocusId = null;
+      state.objectifForm = Object.assign({}, state.objectifForm, period, { seuilPct: '', commentaire: '', cibleId: '' });
       render();
     });
     document.getElementById('obj-cancel')?.addEventListener('click', () => {
@@ -5759,6 +5864,42 @@
       state.objectifForm.domaineCode = e.target.value;
       state.objectifForm.cibleId = '';
       render();
+    });
+    document.getElementById('obj-annee')?.addEventListener('change', (e) => {
+      state.objectifForm.annee = e.target.value;
+      Object.assign(state.objectifForm, L.yearToObjectifPeriod(e.target.value));
+      render();
+    });
+    ['obj-filter-annee', 'obj-filter-portee', 'obj-filter-domaine', 'obj-filter-statut'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('change', (e) => {
+        const key = id.replace('obj-filter-', '');
+        state.objectifFilters[key] = e.target.value;
+        render();
+      });
+    });
+    document.getElementById('obj-preview-domaine')?.addEventListener('change', (e) => {
+      state.objectifPreview.domaine = e.target.value;
+      state.objectifPreview.cibleId = '';
+      state.objectifPreview.result = null;
+      state.objectifPreview.looked = false;
+      render();
+    });
+    document.getElementById('obj-preview')?.addEventListener('click', () => {
+      const date = (document.getElementById('obj-preview-date') || {}).value;
+      const domaine = (document.getElementById('obj-preview-domaine') || {}).value;
+      const cibleId = (document.getElementById('obj-preview-cible') || {}).value;
+      state.objectifPreview.date = date;
+      state.objectifPreview.domaine = domaine;
+      state.objectifPreview.cibleId = cibleId;
+      withLoading(async () => {
+        const data = await client.resolveObjectif({
+          date,
+          domaine: domaine || undefined,
+          cibleId: cibleId || undefined
+        });
+        state.objectifPreview.result = data.objectif || null;
+        state.objectifPreview.looked = true;
+      });
     });
     root.querySelectorAll('[data-obj-cloturer]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -5780,33 +5921,46 @@
         render();
       });
     });
-    root.querySelectorAll('[data-obj-neutraliser]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-obj-neutraliser');
-        withLoading(async () => {
-          await client.desactiverObjectif(id, { motif: 'Neutralisation TEST / hors MOA' });
-          await loadObjectifs();
-          toast('success', 'Objectif neutralisé', 'Il ne s’applique plus, y compris à l’historique.');
-        });
-      });
-    });
     document.getElementById('obj-save')?.addEventListener('click', () => {
       const portee = (document.getElementById('obj-portee') || {}).value;
       const domaineCode = (document.getElementById('obj-domaine') || {}).value;
       const cibleId = (document.getElementById('obj-cible') || {}).value;
+      const seuilPct = Number((document.getElementById('obj-seuil') || {}).value);
+      const dateDebut = (document.getElementById('obj-debut') || {}).value;
+      const dateFin = (document.getElementById('obj-fin') || {}).value || null;
+      if (!Number.isFinite(seuilPct) || seuilPct < 0 || seuilPct > 100) {
+        toast('error', 'Action refusée', 'L’objectif de participation doit être compris entre 0 et 100 %.');
+        return;
+      }
+      if (!dateDebut) {
+        toast('error', 'Action refusée', 'La date de début est obligatoire.');
+        return;
+      }
+      if (dateFin && dateFin < dateDebut) {
+        toast('error', 'Action refusée', 'La date de fin doit être postérieure à la date de début.');
+        return;
+      }
+      if (portee !== 'GLOBAL' && !domaineCode) {
+        toast('error', 'Action refusée', 'Le domaine est obligatoire pour cette portée.');
+        return;
+      }
+      if (portee === 'CIBLE' && !cibleId) {
+        toast('error', 'Action refusée', 'La cible / spécialisation est obligatoire pour cette portée.');
+        return;
+      }
       withLoading(async () => {
         await client.createObjectif({
           portee,
           domaineCode: portee === 'GLOBAL' ? null : domaineCode,
           cibleId: portee === 'CIBLE' ? cibleId : null,
-          seuilPct: document.getElementById('obj-seuil').value,
-          dateDebut: document.getElementById('obj-debut').value,
-          dateFin: document.getElementById('obj-fin').value || null,
-          commentaire: document.getElementById('obj-commentaire').value
+          seuilPct,
+          dateDebut,
+          dateFin,
+          commentaire: (document.getElementById('obj-commentaire') || {}).value
         });
         state.objectifAction = null;
         await loadObjectifs();
-        toast('success', 'Objectif enregistré', 'La nouvelle période est active pour le KPI officiel.');
+        toast('success', 'Objectif enregistré', 'La nouvelle période est active pour les analyses et rapports SCOPE.');
       });
     });
     document.getElementById('obj-cloture-save')?.addEventListener('click', () => {
@@ -6602,6 +6756,10 @@
         }
         if (table === 'event-preview') {
           state.previewSort = L.nextSort ? L.nextSort(state.previewSort, key, 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'objectifs') {
+          state.objectifSort = L.nextSort ? L.nextSort(state.objectifSort, key, key === 'debut' || key === 'fin' ? 'desc' : 'asc') : { key, dir: 'asc' };
           render();
         }
       });

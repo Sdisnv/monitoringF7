@@ -327,7 +327,7 @@ function uniqueNips(people){
     assert.ok(ui.includes("specialization = 'PAPR'") || ui.includes("PERSONNEL_SPEC_OPTIONS"));
     assert.ok(ui.includes("'PAPR'"));
     assert.ok(ui.includes('Date de début de l’analyse') || ui.includes('DATE DE DÉBUT DE L’ANALYSE'));
-    assert.ok(html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1-r4') || html.includes('scope-events-multisession-1-r3'));
+    assert.ok(html.includes('scope-objectifs-participation-1') || html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1-r4') || html.includes('scope-events-multisession-1-r3'));
   });
 
   await record('21b — NIP unique côté service mémoire', async () => {

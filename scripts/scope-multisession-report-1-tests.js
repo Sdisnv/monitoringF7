@@ -307,7 +307,7 @@ async function collectSession(repo, eventId){
     assert.ok(css.includes('.scope-personnel-pilot #scope-open-personnel-manual-add.scope-events-new'));
     assert.ok(css.includes('.scope-events-pilot #scope-new.scope-events-new'));
     assert.ok(ui.includes('Ajouter une personne / affectation'));
-    assert.ok(html.includes('scope-multisession-report-1'));
+    assert.ok(html.includes('scope-objectifs-participation-1') || html.includes('scope-multisession-report-1'));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

@@ -155,7 +155,7 @@ async function seedCurrent(){
     assert.deepStrictEqual(items.filter((i) => i.type === 'domain').slice(2, 5).map((i) => i.code), ['DPS', 'DAP', 'JSP']);
     const afterJsp = items.findIndex((i) => i.code === 'JSP');
     assert.strictEqual(items[afterJsp + 1].type, 'separator');
-    assert.deepStrictEqual(items.filter((i) => i.type === 'domain').slice(5, 7).map((i) => i.code), ['FOBA', 'FOCA']);
+    assert.deepStrictEqual(items.filter((i) => i.type === 'domain').slice(5, 8).map((i) => i.code), ['FOBA', 'FOCA', 'FOSPEC']);
     assert.ok(!codes.includes('PAPR'));
     assert.ok(items.some((i) => i.code === 'PR' && i.label === 'PR'));
     assert.ok(ui.includes('eventDomainFilterItems'));
@@ -316,7 +316,7 @@ async function seedCurrent(){
   await record('48 — R4 non modifié', () => {
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(html.includes('scope-multisession-report-1-r5'));
+    assert.ok(html.includes('scope-objectifs-participation-1'));
   });
 
   const failed = results.filter((r) => r.status === 'NOK');
