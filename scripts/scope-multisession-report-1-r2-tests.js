@@ -316,7 +316,7 @@ async function seedCurrent(){
   await record('48 — R4 non modifié', () => {
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(html.includes('scope-multisession-report-1-r4'));
+    assert.ok(html.includes('scope-multisession-report-1-r5'));
   });
 
   const failed = results.filter((r) => r.status === 'NOK');

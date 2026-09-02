@@ -33,6 +33,7 @@ const TYPE = Object.freeze({
   blockShift: 28,
   ink: 'anthracite'
 });
+const PDF_SHIFT_08_CM = 22.68;
 const SIGNATURE_FIT = Object.freeze([336, 96]);
 
 function resolveSignaturePrPath(options){
@@ -571,19 +572,28 @@ class ScopePdfRenderer {
       const h = header ? headerH : rowH;
       if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
       else if(zebra) this.doc.rect(MARGIN, y, width, h).fill(rgb('#f7f8fa'));
+      const padY = 2;
       let x = MARGIN;
       cells.forEach((cell, i) => {
         const align = header ? (aligns[i] || 'left') : (aligns[i] || 'left');
-        this.doc.fillColor(rgb(INSTITUTION.ink))
-          .font(header ? 'Helvetica-Bold' : 'Helvetica')
-          .fontSize(header ? 7 : 8)
-          .text(String(cell == null ? '' : cell), x + 2, y + 4, {
-            width: cols[i] - 4,
-            height: h - 5,
-            align,
-            ellipsis: !wrap[i],
-            lineBreak: Boolean(wrap[i])
-          });
+        const font = header ? 'Helvetica-Bold' : 'Helvetica';
+        const fontSize = header ? 7 : 8;
+        const text = String(cell == null ? '' : cell);
+        const boxW = cols[i] - 4;
+        this.doc.fillColor(rgb(INSTITUTION.ink)).font(font).fontSize(fontSize);
+        const allowWrap = Boolean(wrap[i]) && !header;
+        const textH = allowWrap
+          ? this.doc.heightOfString(text, { width: boxW })
+          : this.doc.currentLineHeight();
+        const usedH = Math.min(Math.max(textH, this.doc.currentLineHeight()), h - padY * 2);
+        const textY = y + ((h - usedH) / 2);
+        this.doc.text(text, x + 2, textY, {
+          width: boxW,
+          height: Math.max(usedH, this.doc.currentLineHeight()),
+          align,
+          ellipsis: !allowWrap,
+          lineBreak: allowWrap
+        });
         x += cols[i];
         this.doc.y = y;
       });
@@ -768,6 +778,7 @@ class ScopePdfRenderer {
 
   drawDomainSignature(m, options){
     if(options && options.spaceBefore) this.doc.y += options.spaceBefore;
+    this.doc.y -= PDF_SHIFT_08_CM;
     const isPr = m.domaine === 'PR' || (m.event && m.event.domaine === 'PR');
     if(isPr && m.signatureImage){
       const person = m.signaturePerson || {};
@@ -805,7 +816,7 @@ class ScopePdfRenderer {
       { label: 'Statut', value: (m.event && m.event.statutLabel) || '—' },
       { label: 'Année analysée', value: String((m.period && m.period.from) || '').slice(0, 4) || '—' }
     ], { rowH: 24 });
-    this.doc.y += TYPE.section + TYPE.sectionGap;
+    this.doc.y += TYPE.section + TYPE.sectionGap - PDF_SHIFT_08_CM;
     this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { spaceBefore: TYPE.blockShift, after: TYPE.sectionGap });
     const gap = 5;
     const cells = [
@@ -937,7 +948,7 @@ class ScopePdfRenderer {
     });
 
     this.iconHeading('plain', 'Méthodologie de calcul du taux de participation', TYPE.section, { spaceBefore: 8, after: TYPE.notesGap });
-    this.para(m.tauxExplanation || '', { size: TYPE.body });
+    this.para(m.tauxExplanation || '', { size: TYPE.body, align: 'justify' });
 
     while(this._pageIndex < 3) this.nextPage();
     this.doc.y += TYPE.conclusionTop;
@@ -1107,4 +1118,4 @@ function renderReportPdf(model, meta){
   return renderer.finalize();
 }
 
-module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W };
+module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE, PDF_SHIFT_08_CM, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W };

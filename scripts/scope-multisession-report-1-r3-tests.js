@@ -286,7 +286,7 @@ async function seedEventDisplay(){
     assert.ok(rules.includes('canCloseLastSession'));
     const items = logic.eventDomainFilterItems([{ code: 'PR' }, { code: 'PAPR' }, { code: 'AUTO' }]);
     assert.ok(!items.some((i) => i.code === 'PAPR' && i.type === 'domain'));
-    assert.ok(/scope-multisession-report-1-r[34]/.test(html));
+    assert.ok(/scope-multisession-report-1-r[345]/.test(html));
     const notes = readingNotesFor();
     assert.ok(notes.some((n) => n.id === 'ABSENT'));
   });

@@ -152,7 +152,7 @@ async function seedEventDisplay(){
   const eventSrc = renderer.slice(renderer.indexOf('renderEventBody'), renderer.indexOf('drawDomainSignature'));
 
   await record('01 — préflight contractuel', () => {
-    assert.ok(html.includes('scope-multisession-report-1-r4'));
+    assert.ok(/scope-multisession-report-1-r[45]/.test(html));
     assert.ok(toml.includes('assets/img/MCE_Signature.png'));
     assert.strictEqual(TYPE.section, 16);
     assert.strictEqual(TYPE.conclusion, 14);
