@@ -203,6 +203,20 @@ function periodFromPersonneRow(personne){
   return [{ type, date_debut: debut, date_fin: null, motif: null, source: 'BACKFILL' }];
 }
 
+function filterAttendusEligibleAtDate(attendus, periodesByPersonne, date){
+  const map = periodesByPersonne instanceof Map
+    ? periodesByPersonne
+    : new Map(Object.entries(periodesByPersonne || {}));
+  return (attendus || []).filter((row) => {
+    if(row && row.inclus === false) return false;
+    const pid = String(row.personne_id || row.personneId || '');
+    const periodes = map.get(pid) || [];
+    if(!periodes.length) return true;
+    const eligibility = evaluateEligibility({ actif: true }, periodes, date);
+    return eligibility.reason !== 'indisponible';
+  });
+}
+
 module.exports = {
   TYPES_PERIODE,
   MOTIFS_INDISPONIBLE,
@@ -214,5 +228,6 @@ module.exports = {
   deriveStatutCourant,
   periodFromPersonneRow,
   closeAllOpenAffectations,
-  inconsistentSortiWithOpenAffectations
+  inconsistentSortiWithOpenAffectations,
+  filterAttendusEligibleAtDate
 };

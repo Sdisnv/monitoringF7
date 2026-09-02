@@ -4,12 +4,12 @@ const personnel = require('./_scope-personnel-service');
 const { getPgRepo } = require('./_scope-pg');
 const { createScopeService } = require('./_scope-service');
 
-async function syncExpectedPopulationForPersonne(personne, claims){
+async function syncExpectedPopulationForPersonne(personne, claims, window){
   const id = personne?.personne_id || personne?.id || personne?.personneId;
   if(!id) return { ok: true, scope: 'EXPECTED_POPULATION', personnes: 0, eventsScanned: 0, eventsRecalculated: 0 };
   const repo = await getPgRepo();
   const service = createScopeService(repo);
-  return service.syncExpectedPopulationForPersonnes([id], claims, { reason: 'MODIFIER_AFFECTATION_LEGACY' });
+  return service.syncExpectedPopulationForPersonnes([id], claims, Object.assign({ reason: 'MODIFIER_AFFECTATION_LEGACY' }, window || {}));
 }
 
 exports.handler = async function(event){
@@ -35,7 +35,10 @@ exports.handler = async function(event){
       }
       const id = body.personneId || body.id || params.id;
       const personne = await personnel.createAffectation(id, body, claims);
-      const synchronisationPopulation = await syncExpectedPopulationForPersonne(personne, claims);
+      const synchronisationPopulation = await syncExpectedPopulationForPersonne(personne, claims, {
+        from: body.dateActif || body.date_actif || body.dateDebut || null,
+        to: body.dateInactif || body.date_inactif || null
+      });
       return response(200, { ok:true, personne, synchronisationPopulation });
     }
     if(event.httpMethod === 'PUT'){

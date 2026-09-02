@@ -4,12 +4,12 @@ const personnel = require('./_scope-personnel-service');
 const { getPgRepo } = require('./_scope-pg');
 const { createScopeService } = require('./_scope-service');
 
-async function syncExpectedPopulationForPersonne(personne, claims, reason){
+async function syncExpectedPopulationForPersonne(personne, claims, reason, window){
   const id = personne?.personne_id || personne?.id || personne?.personneId;
   if(!id) return { ok: true, scope: 'EXPECTED_POPULATION', personnes: 0, eventsScanned: 0, eventsRecalculated: 0 };
   const repo = await getPgRepo();
   const service = createScopeService(repo);
-  return service.syncExpectedPopulationForPersonnes([id], claims, { reason });
+  return service.syncExpectedPopulationForPersonnes([id], claims, Object.assign({ reason }, window || {}));
 }
 
 exports.handler = async function(event){
@@ -47,9 +47,14 @@ exports.handler = async function(event){
           : isAssignmentClose
             ? 'CLOTURER_AFFECTATION'
             : 'INACTIVER_PERSONNE';
-    const synchronisationPopulation = (isSabbatical || isEndSabbatical)
-      ? { ok: true, skipped: true, reason: syncReason }
-      : await syncExpectedPopulationForPersonne(personne, claims, syncReason);
+    const dateDebut = body.dateDebut || body.date_debut || (personne && personne.sabbatical && personne.sabbatical.dateDebut) || null;
+    const dateFin = body.dateFin || body.date_fin || body.dateEffet || body.date || (personne && personne.sabbatical && personne.sabbatical.dateFin) || null;
+    const syncWindow = isSabbatical
+      ? { from: dateDebut, to: dateFin }
+      : isEndSabbatical
+        ? { from: dateFin }
+        : null;
+    const synchronisationPopulation = await syncExpectedPopulationForPersonne(personne, claims, syncReason, syncWindow);
     return response(200, { ok:true, personne, synchronisationPopulation });
   }catch(error){
     return response(error.statusCode || 500, { ok:false, error:'scope_personnel_inactivate_failed', message:String(error.message || error) });

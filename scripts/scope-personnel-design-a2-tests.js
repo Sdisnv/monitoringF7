@@ -13,7 +13,7 @@ const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 
 const directory = ui.slice(ui.indexOf('function renderPersonnelDirectory'), ui.indexOf('function renderPersonnelHistoryPanel'));
 const aCss = css.slice(css.indexOf('SCOPE-PERSONNEL-DESIGN-A'));
-const col10 = aCss.match(/\.scope-personnel-list-table th:nth-child\(10\),[\s\S]*?\.scope-personnel-list-table td:nth-child\(10\) \{([^}]+)\}/);
+const colActions = aCss.match(/\.scope-personnel-list-table th:nth-child\(11\),[\s\S]*?\.scope-personnel-list-table td:nth-child\(11\) \{([^}]+)\}/);
 
 function person(overrides) {
   return Object.assign({
@@ -56,10 +56,10 @@ record('02 — affichage conserve les accents', () => {
 });
 
 record('03 — ACTIONS largeur et alignement cohérents, Fiche et … visibles', () => {
-  assert.ok(col10, 'règle colonne 10 manquante');
-  assert.ok(col10[1].includes('width: 1%'));
-  assert.ok(col10[1].includes('min-width: 9rem'));
-  assert.ok(col10[1].includes('text-align: center'));
+  assert.ok(colActions, 'règle colonne ACTIONS manquante');
+  assert.ok(colActions[1].includes('width: 1%'));
+  assert.ok(colActions[1].includes('min-width: 9rem'));
+  assert.ok(colActions[1].includes('text-align: center'));
   assert.ok(aCss.includes('justify-content: center'));
   assert.ok(directory.includes('scope-personnel-list-action'));
   assert.ok(directory.includes('>Fiche</a>'));

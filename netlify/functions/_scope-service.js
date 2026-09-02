@@ -16,7 +16,8 @@ const {
   evaluateEligibility,
   assertPeriodCompatible,
   deriveStatutCourant,
-  closeAllOpenAffectations
+  closeAllOpenAffectations,
+  filterAttendusEligibleAtDate
 } = require('./_scope-personnel');
 const personnelSync = require('./_scope-personnel-sync');
 const csvImport = require('./_scope-csv-import');
@@ -662,13 +663,24 @@ function createScopeService(repo){
     }));
   }
 
+  function eventDateInSyncWindow(date, from, to){
+    const day = isoDate(date);
+    if(!day) return true;
+    const start = isoDate(from);
+    const end = isoDate(to);
+    if(start && day < start) return false;
+    if(end && day > end) return false;
+    return true;
+  }
+
   async function syncExpectedPopulationForPersonnesInRepo(dbx, personneIds, actor, options = {}){
     const ids = normalizeIdList(personneIds);
     if(!ids.length) return { ok: true, scope: 'EXPECTED_POPULATION', personnes: 0, eventsScanned: 0, eventsRecalculated: 0 };
-    const [allEvents, allCibles] = await Promise.all([
+    const [listedEvents, allCibles] = await Promise.all([
       dbx.listEvenements ? dbx.listEvenements({ statut: 'PLANIFIE' }) : [],
       dbx.listCibles ? dbx.listCibles() : []
     ]);
+    const allEvents = (listedEvents || []).filter((event) => eventDateInSyncWindow(event.date, options.from, options.to));
     const cibleById = new Map((allCibles || []).map((row) => [String(row.cible_id), row]));
     const affectedCibleIds = new Set();
     const affectedDomaines = new Set();
@@ -676,8 +688,9 @@ function createScopeService(repo){
       const affectations = dbx.listAffectations ? await dbx.listAffectations({ personneId }) : [];
       for(const aff of affectations || []){
         const cible = cibleById.get(String(aff.cible_id)) || (dbx.getCible ? await dbx.getCible(aff.cible_id) : null);
-        affectedCibleIds.add(String(aff.cible_id));
-        if(cible?.domaine_code) affectedDomaines.add(String(cible.domaine_code).toUpperCase());
+        if(aff.cible_id) affectedCibleIds.add(String(aff.cible_id));
+        const domaine = String((cible && cible.domaine_code) || aff.domaine_code || aff.domaine || '').toUpperCase();
+        if(domaine) affectedDomaines.add(domaine);
       }
     }
     const plannedIds = allEvents.map((event) => event.evenement_id);

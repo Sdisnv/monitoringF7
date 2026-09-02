@@ -4063,8 +4063,12 @@ body.scope-pdf-open { overflow: hidden; }
   text-transform: uppercase;
   color: #4b5563;
 }
+.scope-activity-fields select {
+  width: 100%;
+  min-height: 38px;
+}
 .scope-activity-date {
-  width: min(11.5rem, 100%);
+  width: min(14rem, 100%);
   min-height: 38px;
 }
 .scope-activity-fields textarea {
@@ -5833,11 +5837,13 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-personnel-list-table th:nth-child(7),
 .scope-personnel-list-table td:nth-child(7) { width: 6rem; min-width: 5.5rem; white-space: nowrap; }
 .scope-personnel-list-table th:nth-child(8),
-.scope-personnel-list-table td:nth-child(8),
+.scope-personnel-list-table td:nth-child(8) { width: 7.25rem; min-width: 6.5rem; white-space: nowrap; }
 .scope-personnel-list-table th:nth-child(9),
-.scope-personnel-list-table td:nth-child(9) { width: 7.25rem; min-width: 6.5rem; white-space: nowrap; }
+.scope-personnel-list-table td:nth-child(9),
 .scope-personnel-list-table th:nth-child(10),
-.scope-personnel-list-table td:nth-child(10) {
+.scope-personnel-list-table td:nth-child(10) { width: 7.25rem; min-width: 6.5rem; white-space: nowrap; }
+.scope-personnel-list-table th:nth-child(11),
+.scope-personnel-list-table td:nth-child(11) {
   width: 1%;
   min-width: 9rem;
   white-space: nowrap;
@@ -5846,9 +5852,9 @@ body.scope-pdf-open { overflow: hidden; }
   right: 0;
   z-index: 1;
 }
-.scope-personnel-list-table thead th:nth-child(10) { background: #f6f7f9; }
-.scope-personnel-list-table tbody tr:nth-child(odd) td:nth-child(10) { background: #fff; }
-.scope-personnel-list-table tbody tr:nth-child(even) td:nth-child(10) { background: #f4f6f8; }
+.scope-personnel-list-table thead th:nth-child(11) { background: #f6f7f9; }
+.scope-personnel-list-table tbody tr:nth-child(odd) td:nth-child(11) { background: #fff; }
+.scope-personnel-list-table tbody tr:nth-child(even) td:nth-child(11) { background: #f4f6f8; }
 .scope-personnel-list-table tbody td {
   vertical-align: middle;
   padding: 8px 10px;
@@ -5875,6 +5881,9 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-personnel-statut.is-inactive {
   color: var(--scope-muted);
   font-weight: 400;
+}
+.scope-personnel-statut.is-sabbatical {
+  font-weight: 650;
 }
 .scope-btn.scope-personnel-list-action {
   display: inline-flex;

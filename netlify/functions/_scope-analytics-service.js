@@ -20,6 +20,7 @@ const {
   collectObjectiveContext
 } = require('./_scope-objectives');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
+const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 
 function truthy(value){
   const text = String(value == null ? '' : value).toLowerCase();
@@ -181,6 +182,18 @@ function createScopeAnalyticsService(repo){
       }
       bundle.personneId = personneId;
     }
+    if(typeof repo.listAllPeriodes === 'function'){
+      const periodes = await repo.listAllPeriodes();
+      const periodesByPersonne = new Map();
+      for(const row of periodes || []){
+        const pid = String(row.personne_id || row.personneId || '');
+        if(!periodesByPersonne.has(pid)) periodesByPersonne.set(pid, []);
+        periodesByPersonne.get(pid).push(row);
+      }
+      bundle.periodesByPersonne = periodesByPersonne;
+    } else {
+      bundle.periodesByPersonne = new Map();
+    }
     if(!wantsQualification(query)){
       bundle.events = (bundle.events || []).filter((event) => !isQualificationEvenement(event));
     }
@@ -212,10 +225,10 @@ function createScopeAnalyticsService(repo){
       return { include: true, reason: null, mode, official };
     }
 
-    let attendusUse = attendus;
+    let attendusUse = filterAttendusEligibleAtDate(attendus, bundle.periodesByPersonne, event.date);
     let partsUse = participations;
     if(personneId){
-      attendusUse = attendus.filter((a) => String(a.personne_id) === String(personneId));
+      attendusUse = attendusUse.filter((a) => String(a.personne_id) === String(personneId));
       partsUse = participations.filter((p) => String(p.personne_id) === String(personneId));
       if(!attendusUse.length) return { include: false, reason: 'personne_hors_attendus', mode };
     }
@@ -457,7 +470,7 @@ function createScopeAnalyticsService(repo){
       for(const part of parts){
         byPid.set(String(part.personne_id || part.personneId), part);
       }
-      for(const attendu of attendus){
+      for(const attendu of filterAttendusEligibleAtDate(attendus, bundle.periodesByPersonne, event.date)){
         if(attendu.inclus === false) continue;
         const pid = String(attendu.personne_id || attendu.personneId);
         const part = byPid.get(pid);

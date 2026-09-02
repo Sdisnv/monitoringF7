@@ -1071,12 +1071,19 @@ async function listPersonnel({ q='', domaine='', cible='', statut='', from='', t
       ? (temporal.personRelevantAtDate ? temporal.personRelevantAtDate(bundle, asOfDay) : true)
       : (temporal.personRelevantInPeriod ? temporal.personRelevantInPeriod(bundle, period) : true);
     const window = temporal.activityWindow(bundle, period, asOfDay);
+    const sabbaticalHit = temporal.sabbaticalIntersectingPeriod
+      ? temporal.sabbaticalIntersectingPeriod(bundle, period)
+      : null;
     return Object.assign(bundle, {
       statutTemporel,
       temporalStatus: statutTemporel,
       relevantTemporel,
       dateActif: window.from || '',
       dateInactif: window.to || '',
+      sabbatical: sabbaticalPayload(personPeriodes, asOfDay || period.to),
+      sabbaticalRange: sabbaticalHit
+        ? [temporal.formatSwiss(sabbaticalHit.date_debut || sabbaticalHit.dateDebut), temporal.formatSwiss(sabbaticalHit.date_fin || sabbaticalHit.dateFin)].filter(Boolean).join(' → ')
+        : '',
       period,
       viewMode: asOfDay ? 'asof' : 'period',
       asOf: asOfDay || ''
@@ -1087,7 +1094,7 @@ async function listPersonnel({ q='', domaine='', cible='', statut='', from='', t
     if(status === 'tous' || status === 'all') return true;
     if(status === 'inactifs' || status === 'inactif' || status === 'inactive') return person.statutTemporel === 'inactif';
     if(status === 'archives' || status === 'archived') return person.statutTemporel === 'inactif';
-    return person.statutTemporel === 'actif';
+    return person.statutTemporel === 'actif' || person.statutTemporel === 'conge_sabbatique';
   });
   filtered._period = period;
   return filtered;
@@ -1619,6 +1626,20 @@ function resolveCreateAssignmentInput(body){
   return { categorie, domaine, cible, roleDomaine: role, dateActif, dateInactif };
 }
 
+function assignmentIdentityKey(row){
+  const categorie = String((row && row.categorie) || '').toUpperCase();
+  if(categorie === 'SPECIALISATION' || (display.specializationCode && display.specializationCode(row))){
+    const code = display.specializationCode ? display.specializationCode(row) : '';
+    return code ? `SPEC:${code}` : `SPEC:${String(row.domaine || '').toUpperCase()}:${String(row.cible || '')}`;
+  }
+  const domaine = String((row && row.domaine) || '').toUpperCase();
+  const niveau = display.operationalOiLevel
+    ? display.operationalOiLevel(domaine, row && row.cible)
+    : String((row && row.cible) || '').replace(/^(DPS|DAP|JSP)\s+/i, '');
+  const role = String((row && (row.roleDomaine || row.role_domaine)) || '').toUpperCase();
+  return `OI:${domaine}:${String(niveau || '').toUpperCase()}:${role}`;
+}
+
 function assignmentsOverlap(aFrom, aTo, bFrom, bTo){
   return temporal.rangesOverlap(aFrom, aTo || '', bFrom, bTo || '');
 }
@@ -1631,11 +1652,9 @@ async function createAffectation(id, body, actor){
   const existing = await getPersonne(personneId, {});
   if(!existing) throw httpError(404, 'Personne introuvable.');
   const others = existing.affectations || [];
+  const specKey = assignmentIdentityKey(spec);
   for(const row of others){
-    const sameIdentity = String(row.categorie || '').toUpperCase() === spec.categorie
-      && String(row.domaine || '').toUpperCase() === String(spec.domaine).toUpperCase()
-      && String(row.cible || '') === String(spec.cible)
-      && String(row.roleDomaine || row.role_domaine || '') === String(spec.roleDomaine || '');
+    const sameIdentity = assignmentIdentityKey(row) === specKey;
     if(sameIdentity && assignmentsOverlap(row.dateActif, row.dateInactif, spec.dateActif, spec.dateInactif)){
       throw httpError(422, 'Une affectation active identique existe déjà.');
     }

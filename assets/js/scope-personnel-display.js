@@ -806,6 +806,7 @@
 
   function personTemporalStatut(person){
     const raw = clean(person && (person.statutTemporel || person.temporalStatus || person.statutRh || '')).toLowerCase();
+    if(raw === 'conge_sabbatique' || raw === 'congé sabbatique' || raw === 'conge sabbatique') return 'conge_sabbatique';
     if(raw === 'actif' || raw === 'active' || raw === 'actifs') return 'actif';
     if(raw === 'inactif' || raw === 'inactive' || raw === 'inactifs') return 'inactif';
     return 'actif';
@@ -817,7 +818,7 @@
     const temporal = personTemporalStatut(person);
     if(wanted === 'inactifs' || wanted === 'inactif' || wanted === 'inactive') return temporal === 'inactif';
     if(wanted === 'archives' || wanted === 'archived') return temporal === 'inactif';
-    return temporal === 'actif';
+    return temporal === 'actif' || temporal === 'conge_sabbatique';
   }
 
   function filterPersonnelRows(rows, filters){
@@ -830,6 +831,18 @@
       && personMatchesOiFilter(person, f.oi, atDate, period)
       && personMatchesSpecializationFilter(person, f.specialization || f.specialisation)
     );
+  }
+
+  function sabbaticalColumnLabel(person, period){
+    const temporal = (typeof require === 'function' ? require('./scope-personnel-temporal.js') : (root && root.ScopePersonnelTemporal)) || {};
+    const leave = temporal.sabbaticalIntersectingPeriod
+      ? temporal.sabbaticalIntersectingPeriod(person, period || (person && person.period) || {})
+      : null;
+    if(!leave) return '—';
+    const from = formatPersonnelDate(leave.date_debut || leave.dateDebut);
+    const to = formatPersonnelDate(leave.date_fin || leave.dateFin);
+    if(from && to) return `${from} → ${to}`;
+    return from || to || '—';
   }
 
   function formatPersonnelDate(value){
@@ -1084,6 +1097,11 @@
         if(cmp) return cmp * factor;
         return comparePersonnelIdentity(a, b);
       }
+      if(key === 'sabbatical'){
+        const cmp = FR_COLLATOR.compare(sabbaticalColumnLabel(a), sabbaticalColumnLabel(b));
+        if(cmp) return cmp * factor;
+        return comparePersonnelIdentity(a, b);
+      }
       if(key === 'actif'){
         const cmp = String(personnelDateSortValue(a.dateActif || a.date_actif)).localeCompare(String(personnelDateSortValue(b.dateActif || b.date_actif)));
         if(cmp) return cmp * factor;
@@ -1163,6 +1181,7 @@
     GRADE_SORT_MODE,
     JSP_GRADE_SORT_ORDER,
     personTemporalStatut,
+    sabbaticalColumnLabel,
     compareGrade,
     operationalOiOptions,
     operationalOiGroups,
@@ -1188,6 +1207,7 @@
     personMatchesOiFilter,
     personMatchesSpecializationFilter,
     isOperationalOiAssignment,
-    operationalOiLabel
+    operationalOiLabel,
+    operationalOiLevel
   };
 });

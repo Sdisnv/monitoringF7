@@ -96,7 +96,7 @@ assert.ok(ui.includes('api.failSubmit'));
 assert.ok(!ui.includes("getElementById('scope-inactivate-cancel')"));
 assert.ok(!ui.includes('withLoading(async () => {\n        const resignation'));
 assert.ok(html.includes('scope-personnel-activity-modal.js'));
-assert.ok(/scope-personnel-activity-modal\.js\?v=scope-personnel-status-ux-2a|scope-personnel-activity-modal\.js\?v=scope-personnel-design-b2/.test(html));
+assert.ok(/scope-personnel-activity-modal\.js\?v=scope-personnel-status-ux-2a|scope-personnel-activity-modal\.js\?v=scope-personnel-design-b[23]/.test(html));
 
 const fixture = {
   id: 'fixture-1',

@@ -137,9 +137,9 @@ record('08 — appel end_sabbatical', () => {
   assert.ok(!modalApi.canConfirm(tooEarly));
 });
 
-record('09 — bouton Ajouter une affectation', () => {
+record('09 — bouton Gérer les affectations', () => {
   assert.ok(ficheFn.includes('person-add-assignment'));
-  assert.ok(ficheFn.includes('Ajouter une affectation'));
+  assert.ok(ficheFn.includes('Gérer les affectations'));
   assert.ok(ficheFn.includes('person-edit-open'));
   assert.ok(ui.includes('scope-person-manage-activity'));
 });
@@ -196,7 +196,7 @@ record('15 — responsive mobile 1 colonne', () => {
 });
 
 record('16 — cache-bust DESIGN-B2', () => {
-  assert.ok(html.includes('scope-personnel-design-b2'));
+  assert.ok(/scope-personnel-design-b[23]/.test(html));
   assert.ok(!html.includes('netlify/functions'));
 });
 

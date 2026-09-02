@@ -142,6 +142,28 @@
     return periodes.filter((row) => rangesOverlap(row.date_debut || row.dateDebut, row.date_fin || row.dateFin, day, day));
   }
 
+  function isSabbaticalPeriode(row){
+    return String(row && row.type || '').toUpperCase() === 'INDISPONIBLE'
+      && String(row && row.motif || '').toUpperCase() === 'CONGE_SABBATIQUE';
+  }
+
+  function sabbaticalOnDate(person, date){
+    const day = iso(date);
+    if(!day) return null;
+    return coveringPeriodes(person, day).find(isSabbaticalPeriode) || null;
+  }
+
+  function sabbaticalIntersectingPeriod(person, period){
+    const p = resolveAnalyzedPeriod(period || {});
+    const leaves = ((person && person.periodes) || []).filter(isSabbaticalPeriode);
+    return leaves.find((row) => rangesOverlap(
+      row.date_debut || row.dateDebut,
+      row.date_fin || row.dateFin,
+      p.from,
+      p.to
+    )) || null;
+  }
+
   function personActiveAtDate(person, date){
     const day = iso(date);
     if(!day) return false;
@@ -200,7 +222,10 @@
 
   function evaluateStatus(person, period, asOf){
     const day = iso(asOf);
-    if(day) return personActiveAtDate(person, day) ? 'actif' : 'inactif';
+    if(day){
+      if(sabbaticalOnDate(person, day)) return 'conge_sabbatique';
+      return personActiveAtDate(person, day) ? 'actif' : 'inactif';
+    }
     return temporalStatus(person, period);
   }
 
@@ -267,6 +292,9 @@
     personRelevantInPeriod,
     personActiveAtDate,
     personRelevantAtDate,
+    isSabbaticalPeriode,
+    sabbaticalOnDate,
+    sabbaticalIntersectingPeriod,
     activityWindow,
     temporalStatus,
     evaluateStatus,

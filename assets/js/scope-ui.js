@@ -133,6 +133,7 @@
     personnelSituationDate: '',
     personnelSituationApplied: false,
     personnelListSeq: 0,
+    personnelSearchTimer: null,
     personnelInactivate: null,
     personnelAssignment: null,
     personnelRowMenuId: null,
@@ -2037,7 +2038,6 @@
           })
         : { from: state.from, to: state.to, preset: state.preset, year: state.year };
       const payload = await client.listPersonnelDirectory({
-        q: state.personnelQuery,
         statut: state.personnelStatut === 'tous' ? 'all' : state.personnelStatut,
         from: period.from,
         to: period.to,
@@ -2595,6 +2595,9 @@
     const code = display && display.personTemporalStatut
       ? display.personTemporalStatut(personne)
       : (String(personne.statutTemporel || '').toLowerCase() === 'inactif' ? 'inactif' : 'actif');
+    if (code === 'conge_sabbatique') {
+      return `<span class="scope-personnel-statut is-sabbatical">Congé sabbatique</span>`;
+    }
     const inactive = code === 'inactif';
     return `<span class="scope-personnel-statut${inactive ? ' is-inactive' : ''}">${inactive ? 'Inactif' : 'Actif'}</span>`;
   }
@@ -2739,6 +2742,10 @@
     const live = mode === 'live';
     const canRead = canReadPersonnel();
     const dir = state.personnelDirectory;
+    const temporal = window.ScopePersonnelTemporal;
+    const period = temporal && temporal.resolveAnalyzedPeriod
+      ? temporal.resolveAnalyzedPeriod({ preset: state.preset, year: state.year, from: state.from, to: state.to })
+      : { from: state.from, to: state.to, preset: state.preset, year: state.year };
     const allPeople = visiblePersonnelRows();
     const personnelView = L.listViewState({
       ready: state.personnelReady,
@@ -2755,13 +2762,13 @@
       : '';
     let peopleBody;
     if (personnelView === 'error') {
-      peopleBody = `<tr><td colspan="10"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="11"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.personnelError || L.errorMessage('personnel'))}</div></td></tr>`;
     } else if (personnelView === 'loading') {
-      peopleBody = `<tr><td colspan="10"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="11"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`;
     } else if (personnelView === 'empty') {
-      peopleBody = `<tr><td colspan="10"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
+      peopleBody = `<tr><td colspan="11"><div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div></td></tr>`;
     } else if (!allPeople.length) {
-      peopleBody = `<tr><td colspan="10"><div class="scope-empty">Aucune personne ne correspond à la recherche.</div></td></tr>`;
+      peopleBody = `<tr><td colspan="11"><div class="scope-empty">Aucune personne ne correspond à la recherche.</div></td></tr>`;
     } else {
       peopleBody = people.map((p) => {
         const primary = personnelPrimaryAffectation(p);
@@ -2775,6 +2782,9 @@
         const dateActif = p.dateActif || (primary && primary.dateDebut) || '';
         const dateInactif = p.dateInactif || (primary && primary.dateFin) || '';
         const oiSecondary = personnelSecondaryOiHtml(p, oiLabel);
+        const sabbaticalText = (display && display.sabbaticalColumnLabel)
+          ? display.sabbaticalColumnLabel(p, period || p.period)
+          : (p.sabbaticalRange || '—');
         return `<tr>
               <td data-label="GRADE">${escapeHtml(p.grade || '—')}</td>
               <td data-label="NOM">${escapeHtml(p.nom || '—')}</td>
@@ -2783,6 +2793,7 @@
               <td data-label="OI / INCORPORATION">${oiLabel ? `<span class="scope-personnel-oi-main">${escapeHtml(oiLabel)}</span>${oiSecondary}` : '—'}</td>
               <td data-label="SPÉCIALISATION">${personnelOtherAffectationsHtml(specLabels)}</td>
               <td data-label="STATUT">${personnelStatutCell(p)}</td>
+              <td data-label="CONGÉ SABBATIQUE">${escapeHtml(sabbaticalText || '—')}</td>
               <td data-label="DATE ACTIF">${escapeHtml(formatPersonnelDateCell(dateActif))}</td>
               <td data-label="DATE INACTIF">${escapeHtml(formatPersonnelDateCell(dateInactif))}</td>
               <td data-label="ACTIONS"><div class="scope-row-actions"><a class="scope-btn scope-personnel-list-action" href="#/personnel/${escapeHtml(p.personneId)}">Fiche</a>${canManagePersonnel() ? `<span class="scope-row-more"><button type="button" class="scope-row-more-trigger" data-personnel-more="${escapeHtml(p.personneId)}" aria-label="Autres actions" aria-haspopup="menu" aria-expanded="${state.personnelRowMenuId === p.personneId ? 'true' : 'false'}">⋯</button></span>` : ''}</div></td>
@@ -2836,7 +2847,7 @@
       </div>
       <div class="scope-card scope-table-wrap scope-personnel-list-wrap">
         <table class="scope-table scope-person-table scope-personnel-list-table">
-          <thead><tr>${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('oi', 'OI / INCORPORATION')}${personnelSortHeader('specializations', 'SPÉCIALISATION')}${personnelSortHeader('statut', 'STATUT')}${personnelSortHeader('actif', 'DATE ACTIF')}${personnelSortHeader('inactif', 'DATE INACTIF')}<th>ACTIONS</th></tr></thead>
+          <thead><tr>${personnelSortHeader('grade', 'GRADE')}${personnelSortHeader('nom', 'NOM')}${personnelSortHeader('prenom', 'PRÉNOM')}${personnelSortHeader('nip', 'NIP')}${personnelSortHeader('oi', 'OI / INCORPORATION')}${personnelSortHeader('specializations', 'SPÉCIALISATION')}${personnelSortHeader('statut', 'STATUT')}${personnelSortHeader('sabbatical', 'CONGÉ SABBATIQUE')}${personnelSortHeader('actif', 'DATE ACTIF')}${personnelSortHeader('inactif', 'DATE INACTIF')}<th>ACTIONS</th></tr></thead>
           <tbody>
             ${peopleBody}
           </tbody>
@@ -2916,15 +2927,37 @@
     render();
   }
 
-  function openPersonnelAssignmentModal(personneId) {
+  function assignmentModalCards(modal, busy){
+    const card = (id, title, hint, selected) => `<button type="button" class="scope-activity-card${selected ? ' is-selected' : ''}" data-assignment-op="${escapeHtml(id)}" role="radio" aria-checked="${selected ? 'true' : 'false'}" ${busy ? 'disabled' : ''}>
+      <span class="scope-activity-card-radio" aria-hidden="true"></span>
+      <span class="scope-activity-card-text">
+        <strong>${escapeHtml(title)}</strong>
+        <em>${escapeHtml(hint)}</em>
+      </span>
+    </button>`;
+    return `${card('add', 'Ajouter une affectation', 'Ajouter une nouvelle incorporation ou spécialisation.', modal.operation === 'add')}
+      ${card('close', 'Clôturer une affectation', 'Mettre fin à une affectation existante sans quitter le SDIS.', modal.operation === 'close')}`;
+  }
+
+  function openPersonnelAssignmentModal(personneId, assignments) {
     state.personnelAssignment = {
       personneId,
+      operation: '',
       categorie: '',
       domaine: '',
       cible: '',
       roleDomaine: '',
       specialization: '',
       dateActif: '',
+      affectationId: '',
+      dateLastActive: '',
+      assignments: (assignments || []).map((aff) => ({
+        id: aff.affectationId || aff.id,
+        label: personnelAssignmentLabel(aff),
+        type: String(aff.categorie || '').toUpperCase() === 'SPECIALISATION' ? 'Spécialisation' : 'Incorporation',
+        role: aff.roleDomaine || aff.role_domaine || '',
+        dateActif: aff.dateActif || aff.date_actif || aff.dateDebut || aff.date_debut || ''
+      })),
       busy: false,
       error: ''
     };
@@ -2932,7 +2965,10 @@
   }
 
   function personnelAssignmentCanConfirm(modal) {
-    if (!modal || modal.busy) return false;
+    if (!modal || modal.busy || !modal.operation) return false;
+    if (modal.operation === 'close') {
+      return Boolean(modal.affectationId && modal.dateLastActive);
+    }
     if (!modal.dateActif) return false;
     if (modal.categorie === 'OI') {
       return Boolean(modal.domaine && modal.cible && (modal.roleDomaine === 'PRINCIPAL' || modal.roleDomaine === 'SECONDAIRE'));
@@ -2973,6 +3009,20 @@
     };
   }
 
+  function personnelAssignmentCloseBody(modal) {
+    if (!personnelAssignmentCanConfirm(modal) || modal.operation !== 'close') return null;
+    const temporal = window.ScopePersonnelTemporal;
+    const last = modal.dateLastActive;
+    const dateEffet = temporal && temporal.addDays ? temporal.addDays(last, 1) : last;
+    return {
+      personneId: modal.personneId,
+      action: 'close_assignment',
+      affectationId: modal.affectationId,
+      dateInactivite: dateEffet,
+      dateEffet
+    };
+  }
+
   function renderPersonnelAssignmentModal() {
     const modal = state.personnelAssignment;
     if (!modal) return '';
@@ -2983,7 +3033,12 @@
       : '';
     const option = (value, label, selected) => `<option value="${escapeHtml(value)}" ${selected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     const cibles = PERSONNEL_OI_CIBLES[modal.domaine] || [];
-    const oiFields = modal.categorie !== 'OI' ? '' : `<div class="scope-activity-fields">
+    const fmt = (value) => {
+      const display = personnelDisplay();
+      return display && display.formatPersonnelDate ? (display.formatPersonnelDate(value) || '—') : (value || '—');
+    };
+    const roleLabel = (role) => String(role || '').toUpperCase() === 'PRINCIPAL' ? 'Principal' : (String(role || '').toUpperCase() === 'SECONDAIRE' ? 'Secondaire' : '');
+    const oiFields = modal.operation !== 'add' || modal.categorie !== 'OI' ? '' : `<div class="scope-activity-fields">
       <label for="scope-assign-domaine">DOMAINE</label>
       <select id="scope-assign-domaine" ${busy ? 'disabled' : ''}>
         ${option('', 'Choisir', !modal.domaine)}
@@ -3003,7 +3058,7 @@
       <label for="scope-assign-date">DATE ACTIF</label>
       <input id="scope-assign-date" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateActif || '')}" ${busy ? 'disabled' : ''}>
     </div>`;
-    const specFields = modal.categorie !== 'SPECIALISATION' ? '' : `<div class="scope-activity-fields">
+    const specFields = modal.operation !== 'add' || modal.categorie !== 'SPECIALISATION' ? '' : `<div class="scope-activity-fields">
       <label for="scope-assign-spec">SPÉCIALISATION</label>
       <select id="scope-assign-spec" ${busy ? 'disabled' : ''}>
         ${option('', 'Choisir', !modal.specialization)}
@@ -3012,25 +3067,40 @@
       <label for="scope-assign-date">DATE ACTIF</label>
       <input id="scope-assign-date" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateActif || '')}" ${busy ? 'disabled' : ''}>
     </div>`;
+    const typeField = modal.operation !== 'add' ? '' : `<div class="scope-activity-fields">
+      <label for="scope-assign-type">TYPE</label>
+      <select id="scope-assign-type" ${busy ? 'disabled' : ''}>
+        ${option('', 'Choisir', !modal.categorie)}
+        ${option('OI', 'Incorporation / OI', modal.categorie === 'OI')}
+        ${option('SPECIALISATION', 'Spécialisation', modal.categorie === 'SPECIALISATION')}
+      </select>
+    </div>`;
+    const closeFields = modal.operation !== 'close' ? '' : `<div class="scope-activity-fields">
+      <fieldset class="scope-activity-affs">
+        <legend>AFFECTATION</legend>
+        ${(modal.assignments || []).length
+          ? (modal.assignments || []).map((aff) => `<label class="scope-activity-aff"><input type="radio" name="scope-assign-aff" value="${escapeHtml(aff.id)}" ${String(modal.affectationId) === String(aff.id) ? 'checked' : ''} ${busy ? 'disabled' : ''}> ${escapeHtml(aff.label)} · ${escapeHtml(aff.type)}${roleLabel(aff.role) ? ` · ${escapeHtml(roleLabel(aff.role))}` : ''} · ${escapeHtml(fmt(aff.dateActif))}</label>`).join('')
+          : '<p class="scope-activity-hint">Aucune affectation ouverte à clôturer.</p>'}
+      </fieldset>
+      <label for="scope-assign-last-active">DERNIER JOUR ACTIF</label>
+      <input id="scope-assign-last-active" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateLastActive || '')}" ${busy ? 'disabled' : ''}>
+    </div>`;
+    const cta = modal.operation === 'close' ? 'Clôturer l’affectation' : (modal.operation === 'add' ? 'Ajouter l’affectation' : 'Confirmer');
     return `<div class="scope-activity-overlay" id="scope-assignment-modal" data-assignment-overlay>
       <div class="scope-activity-dialog" role="dialog" aria-modal="true" aria-labelledby="scope-assignment-title">
         <header class="scope-activity-head">
-          <h3 id="scope-assignment-title">Ajouter une affectation</h3>
+          <h3 id="scope-assignment-title">Gérer les affectations</h3>
           <button type="button" class="scope-activity-x" data-assignment-cancel aria-label="Fermer">×</button>
         </header>
-        <div class="scope-activity-fields">
-          <label for="scope-assign-type">TYPE</label>
-          <select id="scope-assign-type" ${busy ? 'disabled' : ''}>
-            ${option('', 'Choisir', !modal.categorie)}
-            ${option('OI', 'Incorporation / OI', modal.categorie === 'OI')}
-            ${option('SPECIALISATION', 'Spécialisation', modal.categorie === 'SPECIALISATION')}
-          </select>
+        <p class="scope-activity-question" id="scope-assignment-question">Que souhaitez-vous faire ?</p>
+        <div class="scope-activity-cards" role="radiogroup" aria-labelledby="scope-assignment-question">
+          ${assignmentModalCards(modal, busy)}
         </div>
-        ${oiFields}${specFields}
+        ${typeField}${oiFields}${specFields}${closeFields}
         ${error}
         <footer class="scope-activity-footer">
           <button type="button" class="scope-btn" data-assignment-cancel ${busy ? 'disabled' : ''}>Annuler</button>
-          <button type="button" class="scope-btn scope-btn-primary" data-assignment-confirm ${confirmEnabled ? '' : 'disabled'}>${busy ? 'Enregistrement…' : 'Enregistrer'}</button>
+          <button type="button" class="scope-btn scope-btn-primary" data-assignment-confirm ${confirmEnabled ? '' : 'disabled'}>${busy ? 'Enregistrement…' : escapeHtml(cta)}</button>
         </footer>
       </div>
     </div>`;
@@ -3039,24 +3109,26 @@
   async function submitPersonnelAssignmentModal() {
     const modal = state.personnelAssignment;
     if (!modal || modal.busy) return;
-    const body = personnelAssignmentConfirmBody(modal);
+    const closeBody = modal.operation === 'close' ? personnelAssignmentCloseBody(modal) : null;
+    const addBody = modal.operation === 'add' ? personnelAssignmentConfirmBody(modal) : null;
+    const body = closeBody || addBody;
     if (!body) return;
     state.personnelAssignment = Object.assign({}, modal, { busy: true, error: '' });
     render();
     try {
-      await client.createPersonnelAffectation(body);
+      if (closeBody) await client.inactivatePersonne(closeBody);
+      else await client.createPersonnelAffectation(addBody);
       const personneId = state.personnelAssignment.personneId;
       state.personnelAssignment = null;
       await reloadPersonneFiche(personneId);
       await refreshAlertCounts();
-      ScopeFeedback.success('Affectation ajoutée', 'L’affectation a été enregistrée.');
+      ScopeFeedback.success(closeBody ? 'Affectation clôturée' : 'Affectation ajoutée', closeBody ? 'L’affectation a été clôturée.' : 'L’affectation a été enregistrée.');
     } catch (error) {
       const info = L.friendlyError(error);
       state.personnelAssignment = Object.assign({}, state.personnelAssignment || modal, {
         busy: false,
-        error: info.message || info.title || 'L’affectation n’a pas pu être enregistrée.'
+        error: info.message || info.title || 'L’opération n’a pas pu être enregistrée.'
       });
-      ScopeFeedback.error(info.title || 'Action refusée', info.message || '', { errors: info.errors });
       render();
     }
   }
@@ -3334,7 +3406,7 @@
         </section>
         <div class="scope-fiche-toolbar-row">
           ${renderPersonneActivityCard(fiche, identite)}
-          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-add-assignment">Ajouter une affectation</button>` : ''}
+          ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-add-assignment">Gérer les affectations</button>` : ''}
           ${canManagePersonnel() && !edit ? `<button type="button" class="scope-btn" id="person-edit-open">Modifier</button>` : ''}
         </div>
         ${editBlock}
@@ -6042,10 +6114,8 @@
     });
     const personnelSearch = document.getElementById('personnel-q');
     if (personnelSearch) {
-      personnelSearch.addEventListener('input', (e) => {
-        const el = e.target;
-        const pos = el.selectionStart;
-        state.personnelQuery = el.value;
+      const applyPersonnelSearch = (value, pos) => {
+        state.personnelQuery = value;
         state.personnelListPage = 1;
         render();
         const next = document.getElementById('personnel-q');
@@ -6053,18 +6123,25 @@
           next.focus();
           try { next.setSelectionRange(pos, pos); } catch (_err) {}
         }
+      };
+      personnelSearch.addEventListener('input', (e) => {
+        const el = e.target;
+        const pos = el.selectionStart;
+        if (state.personnelSearchTimer) window.clearTimeout(state.personnelSearchTimer);
+        if (!String(el.value || '').trim()) {
+          applyPersonnelSearch('', pos);
+          return;
+        }
+        state.personnelSearchTimer = window.setTimeout(() => applyPersonnelSearch(el.value, pos), 80);
       });
-      personnelSearch.addEventListener('change', () => {
-        state.personnelQuery = personnelSearch.value.trim();
-        state.personnelListPage = 1;
-        withLoading(loadPersonnelDirectory);
+      personnelSearch.addEventListener('search', (e) => {
+        applyPersonnelSearch(e.target.value, e.target.selectionStart);
       });
       personnelSearch.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          state.personnelQuery = personnelSearch.value.trim();
-          state.personnelListPage = 1;
-          withLoading(loadPersonnelDirectory);
+          if (state.personnelSearchTimer) window.clearTimeout(state.personnelSearchTimer);
+          applyPersonnelSearch(personnelSearch.value, personnelSearch.selectionStart);
         }
       });
     }
@@ -6266,7 +6343,10 @@
       const fiche = state.personneFiche;
       const identite = fiche && fiche.identite;
       if (!identite) return;
-      openPersonnelAssignmentModal(identite.personneId || identite.id);
+      openPersonnelAssignmentModal(
+        identite.personneId || identite.id,
+        (ficheActivityAssignments(fiche) || []).filter(isPersonnelAssignmentOpen)
+      );
     });
     document.getElementById('person-edit-cancel')?.addEventListener('click', cancelPersonneEdit);
     document.getElementById('person-edit-save')?.addEventListener('click', () => {
@@ -6351,7 +6431,6 @@
     } catch (error) {
       const info = L.friendlyError(error);
       state.personnelInactivate = api.failSubmit(state.personnelInactivate, info.message || info.title);
-      ScopeFeedback.error(info.title || 'Action refusée', info.message || '', { errors: info.errors });
       render();
     }
   }
@@ -6389,6 +6468,14 @@
       }
       if (target.hasAttribute && target.hasAttribute('data-assignment-overlay')) {
         closePersonnelAssignmentModal();
+        return;
+      }
+      const assignOp = target.closest('[data-assignment-op]');
+      if (assignOp && state.personnelAssignment && !state.personnelAssignment.busy) {
+        event.preventDefault();
+        state.personnelAssignment.operation = assignOp.getAttribute('data-assignment-op');
+        state.personnelAssignment.error = '';
+        render();
         return;
       }
       if (target.closest('[data-assignment-confirm]')) {
@@ -6443,6 +6530,17 @@
           state.personnelAssignment.dateActif = target.value;
           render();
           document.getElementById('scope-assign-date')?.focus();
+          return;
+        }
+        if (target.id === 'scope-assign-last-active') {
+          state.personnelAssignment.dateLastActive = target.value;
+          render();
+          document.getElementById('scope-assign-last-active')?.focus();
+          return;
+        }
+        if (target.name === 'scope-assign-aff') {
+          state.personnelAssignment.affectationId = target.value;
+          render();
           return;
         }
       }
