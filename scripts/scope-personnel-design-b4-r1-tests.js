@@ -251,7 +251,7 @@ function specMap(){
     assert.ok(!ui.includes('DATE D’ENTRÉE SDIS'));
     assert.ok(ui.includes('scope-fiche-charts'));
     assert.ok(ui.includes('specialisationsAnnees'));
-    assert.ok(html.includes('scope-personnel-design-b4-r1') || html.includes('scope-events-multisession-1'));
+    assert.ok(html.includes('scope-personnel-design-b4-r1') || html.includes('scope-events-multisession-1') || html.includes('scope-multisession-report-1'));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

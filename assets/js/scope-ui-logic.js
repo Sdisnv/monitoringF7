@@ -115,10 +115,10 @@
   const ROLES_ENCADREMENT = new Set(ENCADREMENT_ROLE_ORDER);
 
   function domaineAffiche(code) {
-    const value = String(code || '');
-    if (value === 'PR') return 'PAPR';
+    const value = String(code || '').toUpperCase();
+    if (value === 'PAPR' || value === 'PR') return 'PR';
     if (value === 'GEN') return 'Général';
-    return value;
+    return String(code || '');
   }
 
   function niveauAffiche(domaineCode, niveauCode) {
@@ -335,7 +335,7 @@
       return {
         code,
         libelle: d.libelle,
-        libelleAffiche: d.libelleAffiche || d.libelle_affiche || (code === 'PR' ? 'PAPR' : code),
+        libelleAffiche: (code === 'PR' || code === 'PAPR' || String(d.libelleAffiche || d.libelle_affiche || '').toUpperCase() === 'PAPR') ? 'PR' : (d.libelleAffiche || d.libelle_affiche || code),
         nature: d.nature || (inferredParent ? 'SOUS_DOMAINE' : 'DOMAINE'),
         parentCode: inferredParent
       };

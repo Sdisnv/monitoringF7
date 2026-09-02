@@ -42,10 +42,18 @@ const MOTIFS_ACCEPTES = new Set([
 
 const STATUT_PERMUTATION = 'PERMUTATION';
 
+function displayDomaineCode(code){
+  const value = String(code || '').toUpperCase();
+  if(value === 'PAPR') return 'PR';
+  return value;
+}
+
 function domaineAffiche(code, domaine){
-  if(domaine && domaine.libelle_affiche) return domaine.libelle_affiche;
-  if(code === 'PR') return 'PAPR';
-  return String((domaine && domaine.libelle) || code || '');
+  const canon = displayDomaineCode(code || (domaine && (domaine.code || domaine.domaine_code)));
+  const affiche = domaine && (domaine.libelle_affiche || domaine.libelleAffiche);
+  if(canon === 'PR' || String(affiche || '').toUpperCase() === 'PAPR') return 'PR';
+  if(affiche) return affiche;
+  return String((domaine && domaine.libelle) || canon || '');
 }
 
 function domaineCodesForFilter(code){
@@ -188,6 +196,7 @@ module.exports = {
   MOTIFS_SAISIE_NOUVELLE,
   MOTIFS_ACCEPTES,
   STATUT_PERMUTATION,
+  displayDomaineCode,
   domaineAffiche,
   domaineCodesForFilter,
   isSousDomaineFospec,

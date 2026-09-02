@@ -305,8 +305,10 @@
   }
 
   function domaineLabel(code) {
-    const d = state.referentiels.domaines.find((x) => x.code === code);
-    return d ? (d.libelleAffiche || L.domaineAffiche(code)) : L.domaineAffiche(code);
+    const canon = String(code || '').toUpperCase() === 'PAPR' ? 'PR' : code;
+    const d = state.referentiels.domaines.find((x) => x.code === code || x.code === canon);
+    const raw = d ? (d.libelleAffiche || L.domaineAffiche(canon || code)) : L.domaineAffiche(canon || code);
+    return String(raw).toUpperCase() === 'PAPR' ? 'PR' : raw;
   }
 
   function ciblesOf(fiche) {
@@ -1747,7 +1749,7 @@
             <label>Domaine</label>
             <select id="cycle-filter-domaine">
               <option value="tous">Tous</option>
-              <option value="PR">PAPR / PR</option>
+              <option value="PR">PR</option>
               <option value="AUTO">AUTO</option>
             </select>
           </div>
@@ -2873,7 +2875,7 @@
           </select>
         </div>
         <button type="button" class="scope-btn" id="scope-open-personnel-import">Importer du personnel</button>
-        ${canManagePersonnel() ? '<button type="button" class="scope-btn scope-btn-primary" id="scope-open-personnel-manual-add">Ajouter une personne / affectation</button>' : ''}
+        ${canManagePersonnel() ? '<button type="button" class="scope-btn scope-btn-primary scope-events-new" id="scope-open-personnel-manual-add">Ajouter une personne / affectation</button>' : ''}
       </div>
       <div class="scope-card scope-table-wrap scope-personnel-list-wrap">
         <table class="scope-table scope-person-table scope-personnel-list-table">
@@ -4811,11 +4813,13 @@
     ], 'Taux et compteurs')}${fiche && fiche.jsp && fiche.jsp.tauxJeunes ? `<p class="scope-mode-hint">Jeunes JSP : ${escapeHtml(L.formatTaux(fiche.jsp.tauxJeunes.percentage))}</p>` : ''}`;
   }
 
-  function renderRealiseToolbar(ev) {
+  function renderRealiseToolbar(ev, fiche) {
+    const multi = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isMultiSession);
     return `<div class="scope-actions scope-event-toolbar scope-realise-toolbar">
       <a class="scope-btn" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
       <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}">Générer le rapport</button>
+      ${multi ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}">Rapport détaillé</button>` : ''}
     </div>`;
   }
 
@@ -4875,7 +4879,7 @@
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
         ${renderRealiseKpis(fiche, rows)}
-        ${renderRealiseToolbar(ev)}
+        ${renderRealiseToolbar(ev, fiche)}
         ${volumesBlock(saisie, { taux: t, officiel: true })}
       </div>
       ${state.modal === 'reopen' ? reopenQuantitatif : ''}
@@ -4892,7 +4896,7 @@
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
         ${renderRealiseKpis(fiche, rows)}
-        ${renderRealiseToolbar(ev)}
+        ${renderRealiseToolbar(ev, fiche)}
         <section class="scope-presence-section scope-realise-participants">
           <div class="scope-section-header">
             <h2 class="scope-section-heading">Participants</h2>
@@ -6376,6 +6380,9 @@
     root.querySelectorAll('[data-report-event]').forEach((btn) => {
       btn.addEventListener('click', () => generateEventReport(btn.getAttribute('data-report-event')));
     });
+    root.querySelectorAll('[data-report-session]').forEach((btn) => {
+      btn.addEventListener('click', () => generateSessionReport(btn.getAttribute('data-report-session')));
+    });
   }
 
   function bindPersonnelSync() {
@@ -7017,6 +7024,17 @@
   function generateEventReport(evenementId) {
     const body = Object.assign(reportPeriodPayload(), {
       kind: 'EVENT',
+      evenementId,
+      nominatif: canNominatif()
+    });
+    delete body.domaine;
+    delete body.cible;
+    openReport(body);
+  }
+
+  function generateSessionReport(evenementId) {
+    const body = Object.assign(reportPeriodPayload(), {
+      kind: 'SESSION',
       evenementId,
       nominatif: canNominatif()
     });

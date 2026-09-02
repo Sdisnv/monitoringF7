@@ -9,6 +9,8 @@ const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeService } = require('./_scope-service');
 const { ROOT_DOMAINES } = require('./_scope-graphs');
+const { displayDomaineCode } = require('./_scope-model');
+const { collectMultisessionReport } = require('./_scope-multisession-report');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 
 const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
@@ -34,7 +36,7 @@ function roleGroupRank(role){
   return idx >= 0 ? idx : 99;
 }
 
-const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON']);
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION']);
 
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
@@ -78,7 +80,9 @@ function normalizeKind(raw){
     DOMAIN: 'DOMAIN', DOMAINE: 'DOMAIN',
     TARGET: 'TARGET', CIBLE: 'TARGET', OI: 'TARGET',
     EVENT: 'EVENT', EVENEMENT: 'EVENT', EXERCICE: 'EVENT',
-    PERSON: 'PERSON', PERSONNE: 'PERSON', FICHE: 'PERSON'
+    PERSON: 'PERSON', PERSONNE: 'PERSON', FICHE: 'PERSON',
+    SESSION: 'SESSION', MULTISESSION: 'SESSION', PARTICIPATION: 'SESSION',
+    DETAIL: 'SESSION', EXERCISE_DETAIL: 'SESSION', RAPPORT_DETAILLE: 'SESSION'
   };
   const kind = map[text];
   if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
@@ -86,10 +90,13 @@ function normalizeKind(raw){
 }
 
 function domaineLabel(code){
-  const meta = DOMAINES_MODEL_2[code];
-  if(!meta) return code || '';
-  if(code === 'PR') return 'Protection respiratoire';
-  return meta.libelleAffiche || meta.libelle || code;
+  const canon = displayDomaineCode(code);
+  if(!canon) return '';
+  if(canon === 'PR') return 'PR';
+  const meta = DOMAINES_MODEL_2[canon] || DOMAINES_MODEL_2[code];
+  if(!meta) return canon;
+  const affiche = meta.libelleAffiche || meta.libelle || canon;
+  return String(affiche).toUpperCase() === 'PAPR' ? 'PR' : affiche;
 }
 
 function perimeterTitle(kind, { domaine, cible, event }){
@@ -130,6 +137,11 @@ function buildFilename(kind, ctx){
   if(kind === 'DOMAIN') return sanitizeFilename(`SCOPE_${ctx.domaine}_${year}.pdf`);
   if(kind === 'TARGET') return sanitizeFilename(`SCOPE_${ctx.domaine}_${ctx.cible}_${year}.pdf`);
   if(kind === 'PERSON') return sanitizeFilename(`SCOPE_Fiche_${ctx.nip || 'personne'}_${year}.pdf`);
+  if(kind === 'SESSION'){
+    const year = String((ctx.period && ctx.period.from) || ctx.year || '').slice(0, 4);
+    const slug = String(ctx.exerciseLabel || '').replace(/^PR\s+/i, '').replace(/\s+/g, '_');
+    return sanitizeFilename(`SCOPE_Rapport_participation_${ctx.domaine || 'SCOPE'}_${slug}_${year}.pdf`);
+  }
   const date = ctx.eventDate || '';
   const oi = ctx.cible || 'GEN';
   return sanitizeFilename(`SCOPE_Exercice_${ctx.domaine || 'SCOPE'}_${oi}_${date}.pdf`);
@@ -271,6 +283,45 @@ async function collectReport(repo, query, options){
     };
   }
 
+  if(kind === 'SESSION'){
+    const evenementId = query.evenementId || query.evenement_id || query.id;
+    const session = await collectMultisessionReport(repo, evenementId);
+    const year = session.period && session.period.from ? String(session.period.from).slice(0, 4) : '';
+    return {
+      kind: 'SESSION',
+      period: session.period,
+      domaine: session.domaine,
+      cible: null,
+      title: 'RAPPORT DE PARTICIPATION',
+      subtitle: session.exerciseLabel,
+      summaryLabel: 'Synthèse de participation',
+      filename: buildFilename('SESSION', {
+        period: session.period,
+        domaine: session.domaine,
+        exerciseLabel: session.exerciseLabel,
+        year
+      }),
+      event: session.event,
+      population: session.population,
+      officiel: session.officiel,
+      rates: session.rates,
+      seances: session.seances,
+      nonParticipants: includeNominatif ? session.nonParticipants : [],
+      signatureRole: session.signatureRole,
+      graphs: session.graphs,
+      explain: null,
+      nominatif: [],
+      encadrement: [],
+      quantitative: false,
+      isLegacy: false,
+      alerts: { p0: [], p1: [], p2: [] },
+      events: [],
+      sessionCount: session.sessionCount,
+      isMultiSession: session.isMultiSession,
+      parasiteNonRenseigne: session.parasiteNonRenseigne
+    };
+  }
+
   if(kind === 'EVENT'){
     const evenementId = query.evenementId || query.evenement_id || query.id;
     if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport événement exige un identifiant.');
@@ -296,13 +347,13 @@ async function collectReport(repo, query, options){
     return {
       kind,
       period,
-      domaine: fiche.evenement.domaine_code,
+      domaine: displayDomaineCode(fiche.evenement.domaine_code),
       cible: cibles[0] && cibles[0].niveau_code,
       title: isLegacy ? 'Rapport d’exercice — historique agrégé' : 'Rapport d’exercice',
       subtitle: perimeterTitle(kind, { event: { ...fiche.evenement, cibles } }),
       filename: buildFilename(kind, {
         period,
-        domaine: fiche.evenement.domaine_code,
+        domaine: displayDomaineCode(fiche.evenement.domaine_code),
         cible: cibles[0] && cibles[0].niveau_code,
         eventDate: date
       }),
@@ -310,7 +361,7 @@ async function collectReport(repo, query, options){
         id: fiche.evenement.evenement_id,
         date,
         libelle: fiche.evenement.libelle,
-        domaine: fiche.evenement.domaine_code,
+        domaine: displayDomaineCode(fiche.evenement.domaine_code),
         sousDomaine: (DOMAINES_MODEL_2[fiche.evenement.domaine_code] || {}).parentCode ? fiche.evenement.domaine_code : null,
         parentDomaine: (DOMAINES_MODEL_2[fiche.evenement.domaine_code] || {}).parentCode || null,
         cibles: cibles.map((c) => ({ code: c.niveau_code, libelle: c.libelle })),

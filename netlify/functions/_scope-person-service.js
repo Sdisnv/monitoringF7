@@ -228,7 +228,7 @@ function personGraphs(evaluated, series, explain, careerEvents, ciblesById){
     const codes = familyCodes(code);
     const events = included.filter((row) => codes.includes(row.domaine));
     const pack = packFromEvents(events);
-    return pointFromPack(code, code === 'PR' ? 'PAPR' : code, pack, null);
+    return pointFromPack(code, code === 'PR' ? 'PR' : code, pack, null);
   });
   const hasDomain = domainPoints.some((p) => p.eventCount > 0);
   const oiBuckets = new Map();
@@ -478,7 +478,7 @@ function createScopePersonService(repo){
       const pack = packFromEvents(events);
       return {
         code,
-        libelle: code === 'PR' ? 'PAPR' : code,
+        libelle: code === 'PR' ? 'PR' : code,
         percentage: pack.percentage,
         numerator: pack.numerator,
         denominator: pack.denominator,

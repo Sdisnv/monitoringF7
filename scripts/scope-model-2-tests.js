@@ -427,7 +427,7 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
     assert.strictEqual(evenement.mode_suivi, 'NOMINATIF');
     const refs = await service.referentiels();
     assert.ok(refs.arbre.some((d) => d.code === 'FOSPEC' && d.sousDomaines.some((s) => s.code === 'PR')));
-    assert.strictEqual(domaineAffiche('PR'), 'PAPR');
+    assert.strictEqual(domaineAffiche('PR'), 'PR');
   });
 
   await record('20 — mode existant non changé silencieusement', async () => {

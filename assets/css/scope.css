@@ -1081,7 +1081,8 @@ html, body {
   white-space: nowrap;
   height: var(--scope-h-control);
 }
-.scope-events-pilot #scope-new.scope-events-new {
+.scope-events-pilot #scope-new.scope-events-new,
+.scope-personnel-pilot #scope-open-personnel-manual-add.scope-events-new {
   height: var(--scope-h-control);
   min-height: var(--scope-h-control);
   padding: 0 14px;
@@ -1093,7 +1094,8 @@ html, body {
   font-weight: 650;
   white-space: nowrap;
 }
-.scope-events-pilot #scope-new.scope-events-new:hover {
+.scope-events-pilot #scope-new.scope-events-new:hover,
+.scope-personnel-pilot #scope-open-personnel-manual-add.scope-events-new:hover {
   background: var(--scope-red-soft);
   border-color: var(--scope-red);
   color: var(--scope-red);

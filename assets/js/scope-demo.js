@@ -242,7 +242,7 @@
       async referentiels() {
         return {
           ok: true,
-          domaines: DOMAINES.map((d) => ({ code: d.code, libelle: d.libelle, libelleAffiche: d.code === 'PR' ? 'PAPR' : d.code, actif: true })),
+          domaines: DOMAINES.map((d) => ({ code: d.code, libelle: d.libelle, libelleAffiche: d.code === 'PR' ? 'PR' : d.code, actif: true })),
           cibles: cibles.map((c) => ({ cibleId: c.cible_id, domaineCode: c.domaine_code, niveauCode: c.niveau_code, libelle: c.libelle, actif: true }))
         };
       },
@@ -706,7 +706,7 @@
           domaines: DOMAINES.map((d) => ({
             code: d.code,
             libelle: d.libelle,
-            libelleAffiche: d.code === 'PR' ? 'PAPR' : d.code,
+            libelleAffiche: d.code === 'PR' ? 'PR' : d.code,
             officiel: Object.assign({}, empty)
           })),
           cibles: [],

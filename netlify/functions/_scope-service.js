@@ -160,7 +160,7 @@ function createScopeService(repo){
     const mappedDomaines = domaines.map(d => ({
       code: d.code,
       libelle: d.libelle,
-      libelleAffiche: d.libelle_affiche || domaineAffiche(d.code, d),
+      libelleAffiche: domaineAffiche(d.code, d),
       nature: d.nature || (d.parent_code ? 'SOUS_DOMAINE' : 'DOMAINE'),
       parentCode: d.parent_code || d.parentCode || null,
       actif: d.actif !== false

@@ -545,12 +545,118 @@ class ScopePdfRenderer {
     }
   }
 
+  renderSessionBody(m){
+    const v = (m.officiel && m.officiel.volumes) || {};
+    const rates = m.rates || {};
+    this.heading('Identité de l’exercice', 12);
+    this.kv([
+      { label: 'Domaine', value: domaineLabel(m.domaine) || '—' },
+      { label: 'Exercice / session', value: m.subtitle || (m.event && m.event.libelle) || '—' },
+      { label: 'Période', value: `${formatDisplayDate(m.period && m.period.from)} → ${formatDisplayDate(m.period && m.period.to)}` },
+      { label: 'Population attendue', value: String(m.population != null ? m.population : 0) },
+      { label: 'Nombre de séances', value: String(m.sessionCount || (m.seances || []).length || 0) },
+      { label: 'Statut de l’exercice', value: (m.event && m.event.statutLabel) || '—' }
+    ]);
+    this.heading('Synthèse de participation', 12);
+    const innerW = PAGE_W - 2 * MARGIN;
+    const gap = 5;
+    const cells = [
+      ['Population attendue', String(m.population != null ? m.population : 0)],
+      ['Participants', String(v.presents || 0)],
+      ['Taux de participation', formatTaux(rates.participation != null ? rates.participation : (m.officiel && m.officiel.percentage))],
+      ['Excusés', `${v.excuses || 0}${rates.excuses != null ? `  (${formatTaux(rates.excuses)})` : ''}`],
+      ['Absents', `${v.nonExcuses || 0}${rates.absents != null ? `  (${formatTaux(rates.absents)})` : ''}`],
+      ['Dispensés', `${v.dispenses || 0}${rates.dispenses != null ? `  (${formatTaux(rates.dispenses)})` : ''}`]
+    ];
+    const w = (innerW - gap * 5) / 6;
+    const h = 46;
+    let y = this.doc.y;
+    cells.forEach((cell, i) => {
+      const x = MARGIN + i * (w + gap);
+      this.doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.5).stroke();
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+        .text(cell[1], x + 3, y + 6, { width: w - 6, align: 'center' });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6)
+        .text(cell[0], x + 3, y + 28, { width: w - 6, align: 'center' });
+    });
+    this.doc.y = y + h + 10;
+    this.para('Les volumes globaux sont dédupliqués au niveau personne. Les dispensés restent hors du dénominateur du taux officiel.');
+    this.heading('Analyse graphique', 12);
+    const colGap = 10;
+    const colW = (innerW - colGap) / 2;
+    const chartH = 128;
+    y = this.doc.y;
+    if(m.graphs && m.graphs.repartition){
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+        .text(m.graphs.repartition.question, MARGIN, y, { width: colW });
+      drawDonutChart(this.doc, m.graphs.repartition, { x: MARGIN, y: y + 12, w: colW, h: chartH });
+    }
+    if(m.graphs && m.graphs.tauxSeances){
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+        .text(m.graphs.tauxSeances.question, MARGIN + colW + colGap, y, { width: colW });
+      drawBarChart(this.doc, m.graphs.tauxSeances, { x: MARGIN + colW + colGap, y: y + 12, w: colW, h: chartH });
+    }
+    this.doc.y = y + 12 + chartH + 16;
+    if(m.graphs && m.graphs.volumesSeances && (m.seances || []).length){
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+        .text(m.graphs.volumesSeances.question, MARGIN, this.doc.y, { width: innerW });
+      const boxY = this.doc.y + 12;
+      const endY = drawGroupedChart(this.doc, m.graphs.volumesSeances, { x: MARGIN, y: boxY, w: innerW, h: 118 });
+      this.doc.y = Math.max(boxY + 118, endY) + 8;
+    }
+
+    this.nextPage();
+    this.heading('Détail par séance', 12);
+    this.table(
+      ['Séance', 'Date', 'Libellé', 'Pop. renseignée', 'Présents', 'Excusés', 'Absents', 'Dispensés', 'Taux'],
+      (m.seances || []).map((s) => [
+        s.label || '',
+        formatDisplayDate(s.date),
+        s.libelle || '',
+        String(s.populationRenseignee || 0),
+        String(s.presents || 0),
+        String(s.excuses || 0),
+        String(s.absents || 0),
+        String(s.dispenses || 0),
+        formatTaux(s.percentage)
+      ]),
+      [58, 52, 110, 58, 48, 48, 48, 52, 46]
+    );
+
+    this.heading('Personnel n’ayant pas participé à l’exercice', 12);
+    this.para('Liste destinée au commandement. Elle ne décide pas d’une suspension opérationnelle.');
+    if(m.nonParticipants && m.nonParticipants.length){
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif', 'Séance'],
+        m.nonParticipants.map((r) => [
+          r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
+          r.statutLabel || '', r.motifLabel || '', r.seanceLabel || ''
+        ]),
+        [42, 78, 68, 48, 40, 54, 80, 50]
+      );
+    } else {
+      this.para('Aucune personne absente ou excusée sur l’exercice.');
+    }
+
+    this.ensure(72);
+    this.heading('Validation', 12);
+    this.para('Pour validation / transmission,');
+    this.doc.moveDown(0.4);
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
+      .text(m.signatureRole || 'Responsable de domaine', MARGIN, this.doc.y);
+    this.doc.moveDown(1.6);
+    this.doc.font('Helvetica').fontSize(11).text('____________________________', MARGIN, this.doc.y);
+  }
+
   render(){
     const m = this.model;
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(16)
       .text(m.title, MARGIN, this.doc.y, { width: PAGE_W - 2 * MARGIN });
     this.doc.moveDown(0.2);
-    if(m.kind === 'EVENT' && m.event){
+    if(m.kind === 'SESSION'){
+      this.para(m.subtitle || '');
+      this.para(`Établi le ${formatDisplayDateTime(this.meta.generatedAt) || ''}`);
+    } else if(m.kind === 'EVENT' && m.event){
       this.para(m.subtitle || '');
       this.para(`Établi le ${formatDisplayDateTime(this.meta.generatedAt) || formatDisplayDate(m.event.date)}`);
     } else if(m.kind === 'PERSON'){
@@ -579,6 +685,11 @@ class ScopePdfRenderer {
 
     if(m.kind === 'PERSON'){
       this.renderPersonBody(m);
+      return;
+    }
+
+    if(m.kind === 'SESSION'){
+      this.renderSessionBody(m);
       return;
     }
 
