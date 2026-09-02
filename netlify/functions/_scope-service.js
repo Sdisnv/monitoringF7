@@ -33,6 +33,7 @@ const {
   isSousDomaineFospec,
   resolveSuiviNominatif
 } = require('./_scope-model');
+const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { computePrExerciseParticipationState, prSessionLabel } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
@@ -488,20 +489,10 @@ function createScopeService(repo){
     for(const aff of affs || []){
       if(!isAffectationValide(aff, date)) continue;
       const cibleId = aff.cible_id ? String(aff.cible_id) : '';
-      let hit = cibleId && expanded.has(cibleId)
+      const hit = (cibleId && expanded.has(cibleId)
         ? allCibles.find((c) => String(c.cible_id) === cibleId)
-        : null;
-      if(!hit){
-        const domaine = String(aff.domaine_code || aff.domaine || '').toUpperCase();
-        const niveau = String(aff.niveau_code || aff.cible || '')
-          .toUpperCase()
-          .replace(/^(DPS|DAP|JSP|FOBA)\s+/, '');
-        hit = allCibles.find((c) =>
-          expanded.has(String(c.cible_id))
-          && String(c.domaine_code || '').toUpperCase() === domaine
-          && String(c.niveau_code || '').toUpperCase() === niveau
-        );
-      }
+        : null)
+        || allCibles.find((c) => expanded.has(String(c.cible_id)) && matchesAssignmentToEventTarget(aff, c));
       if(!hit || seen.has(String(hit.cible_id))) continue;
       seen.add(String(hit.cible_id));
       matched.push({

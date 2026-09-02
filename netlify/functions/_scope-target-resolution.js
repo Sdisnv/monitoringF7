@@ -13,7 +13,7 @@ function normalizeTargetCode(domaine, cible){
     ? upper.slice(domain.length).trim()
     : upper;
   if(domain === 'FOBA' || domain === 'FOCA'){
-    const m = withoutDomain.match(/^([123])\b/);
+    const m = (withoutDomain || upper).match(/([123])/);
     return m ? m[1] : value;
   }
   if(domain === 'DPS'){
@@ -57,7 +57,7 @@ function matchesAssignmentToEventTarget(assignment, eventTarget){
 function pgNormalizeExpression(domaineSql, cibleSql){
   return `case
     when upper(${domaineSql}) in ('FOBA','FOCA')
-      then regexp_replace(upper(replace(${cibleSql}, '/', ' ')), '^(FOBA|FOCA)\\s+', '')
+      then coalesce((regexp_match(upper(replace(${cibleSql}, '/', ' ')), '([123])'))[1], upper(${cibleSql}))
     when upper(${domaineSql}) = 'JSP'
       then regexp_replace(upper(replace(${cibleSql}, '/', ' ')), '^JSP\\s+', '')
     when upper(${domaineSql}) in ('DPS','DAP','PR')

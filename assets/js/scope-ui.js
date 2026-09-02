@@ -2449,6 +2449,9 @@
   }
 
   function ficheActivityAssignments(fiche) {
+    const personne = fiche && (fiche.personne || fiche);
+    const fromPersonne = ((personne && personne.affectations) || []).map(normalizePersonnelAffectation).filter(Boolean);
+    if (fromPersonne.length) return fromPersonne;
     const rh = (fiche && fiche.historiqueRh && fiche.historiqueRh.affectations) || [];
     if (rh.length) {
       return rh.map((row) => normalizePersonnelAffectation({
@@ -2463,8 +2466,7 @@
         roleDomaine: row.roleDomaine || row.role_domaine
       })).filter(Boolean);
     }
-    const personne = fiche && (fiche.personne || fiche);
-    return ((personne && personne.affectations) || []).map(normalizePersonnelAffectation).filter(Boolean);
+    return [];
   }
 
   function closePersonnelRowMenu() {

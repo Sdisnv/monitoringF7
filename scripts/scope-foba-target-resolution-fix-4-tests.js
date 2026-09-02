@@ -253,6 +253,16 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
   await record('Résolution canonique — formes FOBA/AUTO/PR/DPS/DAP/JSP', async () => {
     assert.strictEqual(normalizeTargetCode('FOBA', 'FOBA 1'), '1');
     assert.strictEqual(normalizeTargetCode('FOBA', 'FOBA/2'), '2');
+    assert.strictEqual(normalizeTargetCode('FOBA', 'FOBA_3'), '3');
+    assert.strictEqual(normalizeTargetCode('FOBA', '3'), '3');
+    assert.ok(matchesAssignmentToEventTarget(
+      { domaine: 'FOBA', cible: 'FOBA_3' },
+      { domaine_code: 'FOBA', niveau_code: '3' }
+    ));
+    assert.ok(!matchesAssignmentToEventTarget(
+      { domaine: 'FOBA', cible: '2' },
+      { domaine_code: 'FOBA', niveau_code: '3' }
+    ));
     assert.strictEqual(normalizeTargetCode('AUTO', 'Cond PL'), 'PL');
     assert.strictEqual(normalizeTargetCode('AUTO', 'Cond VL DPS'), 'VL');
     assert.strictEqual(normalizeTargetCode('PR', 'PAPR G1'), 'G1');
@@ -266,6 +276,7 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
     assert.ok(sql.includes('upper(c.libelle) = upper(a.cible)'));
     assert.ok(sql.includes('regexp_replace'));
     assert.ok(sql.includes("upper(c.niveau_code)"));
+    assert.ok(sql.includes('([123])'));
   });
 
   for(const result of results){
