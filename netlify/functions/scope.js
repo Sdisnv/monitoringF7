@@ -403,6 +403,14 @@ exports.handler = async function(event){
         serverVersion: error.details?.serverVersion
       });
     }
-    return response(500, { ok:false, error:'scope_internal', message:String(error.message || error) });
+    const raw = String(error && error.message || error || '');
+    const leaksSql = /column .+ of relation|relation .+ does not exist|duplicate key value|violates .+ constraint|syntax error at or near|ECONNREFUSED|password authentication failed/i.test(raw);
+    return response(500, {
+      ok:false,
+      error:'scope_internal',
+      message: leaksSql
+        ? 'Le service SCOPE n’a pas pu terminer cette action. Réessayez. Si le problème continue, contactez l’administrateur.'
+        : (raw || 'Une erreur interne SCOPE est survenue.')
+    });
   }
 };

@@ -377,7 +377,6 @@ async function migrateObjectives1(){
       seuil_pct numeric(5,1) not null,
       actif boolean not null default true,
       commentaire text,
-      auteur_id text,
       created_at timestamptz not null default now(),
       updated_at timestamptz not null default now(),
       constraint scope_objectifs_portee_chk check (portee in ('GLOBAL','DOMAINE','CIBLE')),

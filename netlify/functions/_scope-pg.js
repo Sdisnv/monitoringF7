@@ -1209,8 +1209,8 @@ function createPgRepo(client){
     async insertObjectif(row){
       const result = await q(
         `insert into scope_objectifs(
-           objectif_id, portee, domaine_code, cible_id, date_debut, date_fin, seuil_pct, actif, commentaire, auteur_id
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
+           objectif_id, portee, domaine_code, cible_id, date_debut, date_fin, seuil_pct, actif, commentaire
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
         [
           row.objectif_id,
           row.portee,
@@ -1220,8 +1220,7 @@ function createPgRepo(client){
           isoDate(row.date_fin),
           row.seuil_pct,
           row.actif !== false,
-          row.commentaire || null,
-          row.auteur_id || null
+          row.commentaire || null
         ]
       );
       return mapObjectif(result.rows[0]);

@@ -125,8 +125,7 @@ function createScopeObjectivesService(repo){
       date_fin: dateFin,
       seuil_pct: seuilPct,
       actif: true,
-      commentaire,
-      auteur_id: actorId(actor)
+      commentaire
     };
     await assertNoOverlap(row);
     const saved = await repo.insertObjectif(row);

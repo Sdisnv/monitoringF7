@@ -1037,6 +1037,13 @@
         errors: details
       };
     }
+    if (/column .+ of relation|relation .+ does not exist|duplicate key value|violates .+ constraint|syntax error at or near|postgres|pg_/i.test(raw)) {
+      return {
+        tone: 'error',
+        title: 'Action impossible',
+        message: 'Le service SCOPE n’a pas pu terminer cette action. Réessayez. Si le problème continue, contactez l’administrateur.'
+      };
+    }
     return { tone: 'error', title: 'Impossible de continuer', message: (error && error.message) || 'Une erreur est survenue.' };
   }
 
