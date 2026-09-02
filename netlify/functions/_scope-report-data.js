@@ -143,6 +143,7 @@ function pickAlerts(alertsPayload){
 }
 
 function nominativeRows(fiche){
+  const { isValidSessionStatut } = require('./_scope-cycle-rules');
   const attendus = (fiche.attendus || []).filter((a) => a.inclus !== false);
   const parts = fiche.participations || [];
   const personnes = fiche.personnes || {};
@@ -153,6 +154,10 @@ function nominativeRows(fiche){
     const person = personnes[pid] || {};
     const part = parts.find((p) => String(p.personne_id) === String(pid)) || {};
     const cible = cibleById[a.cible_id] || {};
+    const statut = part.statut || 'NON_RENSEIGNE';
+    if((a.sessionHasValidStatus || a.session_has_valid_status) && !isValidSessionStatut(statut)){
+      return null;
+    }
     return {
       grade: person.grade || '',
       nom: person.nom || '',
@@ -160,13 +165,13 @@ function nominativeRows(fiche){
       nip: person.nip || '',
       oi: cible.niveau_code || '',
       cible: cible.libelle || cible.niveau_code || '',
-      statut: part.statut || 'NON_RENSEIGNE',
+      statut,
       statutLabel: STATUT_LABELS[part.statut] || part.statut || 'Non renseigné',
       motif: part.motif_absence || null,
       motifLabel: part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : '',
       permutation: part.statut === 'PERMUTATION'
     };
-  }).sort(sortByGradeThenName);
+  }).filter(Boolean).sort(sortByGradeThenName);
 }
 
 function encadrementRows(fiche){

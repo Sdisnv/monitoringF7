@@ -126,7 +126,7 @@ function attendu(detail, personneId){
     assert.ok(logic.sessionLocked(row));
     assert.ok(css.includes('scope-row-session-excuse'));
     assert.ok(css.includes('#fde8ea'));
-    assert.ok(!css.includes('#fff6cc'));
+    assert.ok(css.includes('#fff6cc'));
   });
 
   await record('04 — Dispensé : 4 motifs', () => {
@@ -155,6 +155,7 @@ function attendu(detail, personneId){
     assert.ok(String(a1.sessionSummary).includes('Dispensé de l’exercice'));
     assert.ok(String(a1.sessionMessage).includes('Joker'));
     assert.ok(css.includes('scope-row-session-dispense'));
+    assert.ok(css.includes('#fff6cc'));
     assert.ok(css.includes('#fde8ea'));
     assert.ok(css.includes('scope-session-info'));
     assert.ok(ui.includes('Personnel non renseigné'));

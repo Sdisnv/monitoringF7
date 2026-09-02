@@ -130,6 +130,7 @@ exports.handler = async function(event){
       return response(200, { ok:true, ...(await persons.fiche(params.id, queryOf(event))) });
     }
     if(method === 'POST' && path === '/personnes'){
+      if(!hasPermission(claims, 'personnel:manage')) return forbiddenPersonnel();
       return response(201, { ok:true, ...(await service.createPersonne(body, claims)) });
     }
     if(method === 'POST' && path === '/personnes/reactiver'){

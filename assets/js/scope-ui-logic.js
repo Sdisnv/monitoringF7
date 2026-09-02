@@ -70,6 +70,27 @@
     return String(row.alreadyCountedTooltip || '');
   }
 
+  function placeSessionTooltip(anchor, tooltip, viewport) {
+    const vp = viewport || { width: (typeof window !== 'undefined' && window.innerWidth) || 1024, height: (typeof window !== 'undefined' && window.innerHeight) || 768 };
+    const row = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : (anchor || { left: 0, right: 240, top: 0, bottom: 44 });
+    const tw = Math.min(360, Math.max(160, vp.width - 16));
+    const th = (tooltip && tooltip.offsetHeight) || 72;
+    let left = Number(row.right || 0) + 8;
+    if (left + tw > vp.width - 8) left = Number(row.left || 0) - tw - 8;
+    if (left < 8) left = 8;
+    let top = Number(row.top || 0);
+    if (top + th > vp.height - 8) top = Math.max(8, Number(row.top || 0) - th - 8);
+    if (tooltip && tooltip.style) {
+      tooltip.style.position = 'fixed';
+      tooltip.style.left = `${Math.round(left)}px`;
+      tooltip.style.top = `${Math.round(top)}px`;
+      tooltip.style.width = `${Math.round(tw)}px`;
+      tooltip.style.visibility = 'visible';
+      tooltip.style.opacity = '1';
+    }
+    return { left, top, width: tw };
+  }
+
   const STATUT_LABELS = {
     PLANIFIE: 'Planifié',
     SAISIE_EN_COURS: 'Saisie en cours',
@@ -563,7 +584,7 @@
       else if (s === 'ABSENT_EXCUSE') excuse += 1;
       else if (s === 'ABSENT_NON_EXCUSE') absent += 1;
       else if (s === 'DISPENSE') dispense += 1;
-      else if ((s === 'NON_RENSEIGNE' || !s) && !sessionLocked(row)) open += 1;
+      else if ((s === 'NON_RENSEIGNE' || !s) && !sessionLocked(row) && !row.sessionHasValidStatus) open += 1;
     }
     return { present, formateur, excuse, absent, dispense, open };
   }
@@ -698,9 +719,15 @@
     return Boolean(row && (row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense));
   }
 
+  function isValidSessionStatut(statut) {
+    const value = String(statut || '').toUpperCase();
+    return value === 'PRESENT' || value === 'PERMUTATION' || value === 'ABSENT_EXCUSE' || value === 'ABSENT_NON_EXCUSE' || value === 'DISPENSE';
+  }
+
   function isOpenSaisieRow(row) {
     if (!row || row.inclus === false) return false;
-    if (sessionLocked(row)) return false;
+    if (sessionLocked(row) || row.sessionHasValidStatus) return false;
+    if (isValidSessionStatut(row.statut)) return false;
     return !row.statut || row.statut === 'NON_RENSEIGNE';
   }
 
@@ -1159,6 +1186,7 @@
     motifShortLabel,
     informationMotifLabel,
     sessionExplainTooltip,
+    placeSessionTooltip,
     STATUT_LABELS,
     ROLE_LABELS,
     ENCADREMENT_ROLE_ORDER,
@@ -1206,6 +1234,7 @@
     applyAllPresentFiltered,
     hasIncompleteExcuse,
     hasIncompleteDispense,
+    isValidSessionStatut,
     sessionLocked,
     isOpenSaisieRow,
     closureBlockers,

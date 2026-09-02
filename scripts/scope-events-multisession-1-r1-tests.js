@@ -196,9 +196,11 @@ async function setupSession(personCount = 2){
 
   await record('12 — Excusé fond rouge clair', () => {
     assert.ok(css.includes('scope-row-session-excuse'));
-    assert.ok(!css.includes('#fff6cc'));
-    const block = css.slice(css.indexOf('scope-row-session-excuse'));
-    assert.ok(block.includes('#fde8ea'));
+    assert.ok(css.includes('#fde8ea'));
+    assert.ok(css.includes('#fff6cc'));
+    assert.ok(css.includes('scope-row-session-dispense'));
+    const excuseBlock = css.slice(css.indexOf('.scope-table tbody tr.scope-row-session-excuse:hover td'));
+    assert.ok(excuseBlock.includes('#fde8ea'));
     assert.ok(css.includes('.scope-status-control.is-excused'));
   });
 
@@ -235,7 +237,7 @@ async function setupSession(personCount = 2){
   await record('warning motifsForRow unique', () => {
     const matches = logicSrc.match(/^\s*motifsForRow,/gm) || [];
     assert.strictEqual(matches.length, 1);
-    assert.ok(html.includes('scope-events-multisession-1-r1'));
+    assert.ok(html.includes('scope-events-multisession-1-r3'));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

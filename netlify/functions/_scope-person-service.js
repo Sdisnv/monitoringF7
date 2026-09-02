@@ -119,7 +119,8 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
         denominator: 0,
         percentage: null,
         appliedObjective: null,
-        planned: true
+        planned: true,
+        prExerciseGroupKey: event.pr_exercise_group_key || event.prExerciseGroupKey || null
       };
     });
 }
@@ -436,13 +437,15 @@ function createScopePersonService(repo){
         numerator: row.numerator,
         denominator: row.denominator,
         percentage: row.percentage,
-        appliedObjective: row.appliedObjective || null
+        appliedObjective: row.appliedObjective || null,
+        prExerciseGroupKey: row.prExerciseGroupKey || row.pr_exercise_group_key || null
       };
     }).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
     const planned = await plannedExpectedEvents(repo, personneId, snap.summary.period, affectations, ciblesById);
     const plannedById = new Map(planned.map((row) => [String(row.evenementId), row]));
     for(const row of included) plannedById.delete(String(row.evenementId));
-    const ficheEvents = included.concat([...plannedById.values()])
+    const { collapsePersonSessionHistory } = require('./_scope-cycle-rules');
+    const ficheEvents = collapsePersonSessionHistory(included.concat([...plannedById.values()]))
       .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
 
     const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });

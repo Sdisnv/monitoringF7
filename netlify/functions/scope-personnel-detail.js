@@ -14,15 +14,19 @@ async function syncExpectedPopulationForPersonne(personne, claims, window){
 
 exports.handler = async function(event){
   let claims;
+  const params = event.queryStringParameters || {};
   try{
     const perm = event.httpMethod === 'GET'
-      ? 'dashboard:read'
+      ? ((params.nip && !params.id) ? 'personnel:read' : 'dashboard:read')
       : (event.httpMethod === 'POST' ? 'personnel:manage' : 'effectifs:manage');
     claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, perm);
   } catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
   try{
-    const params = event.queryStringParameters || {};
     if(event.httpMethod === 'GET'){
+      if(params.nip && !params.id){
+        const personne = await personnel.getPersonneByNip(params.nip);
+        return personne ? response(200, { ok:true, personne }) : response(404, { ok:false, error:'not_found', message:'NIP introuvable.' });
+      }
       const personne = await personnel.getPersonne(params.id);
       return personne ? response(200, { ok:true, personne }) : response(404, { ok:false, error:'not_found' });
     }
@@ -30,6 +34,10 @@ exports.handler = async function(event){
       const body = parseBody(event);
       if(!body) return response(400, { ok:false, error:'invalid_json' });
       const action = String(body.action || 'create_affectation').toLowerCase();
+      if(action === 'create_personne' || action === 'createpersonne' || action === 'create_manual_personne'){
+        const personne = await personnel.createManualPersonne(body, claims);
+        return response(201, { ok:true, personne });
+      }
       if(action !== 'create_affectation' && action !== 'createaffectation'){
         return response(400, { ok:false, error:'invalid_action', message:'Action POST non supportée.' });
       }

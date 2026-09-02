@@ -1615,7 +1615,7 @@ html, body {
 .scope-table tbody tr.scope-row-session-dispense:nth-child(even) td,
 .scope-table tbody tr.scope-row-session-dispense:hover,
 .scope-table tbody tr.scope-row-session-dispense:hover td {
-  background: #fde8ea;
+  background: #fff6cc;
 }
 
 .scope-table tbody tr.scope-row-session-counted:focus-visible {
@@ -1624,12 +1624,12 @@ html, body {
 }
 
 .scope-session-counted-tooltip {
-  position: absolute;
-  z-index: 12;
-  left: 8px;
-  top: 100%;
-  max-width: min(28rem, 82vw);
-  margin: 4px 0 0 0;
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  top: 0;
+  max-width: min(28rem, calc(100vw - 16px));
+  margin: 0;
   padding: 8px 10px;
   border-radius: var(--scope-radius-sm);
   background: #162033;
@@ -1643,8 +1643,7 @@ html, body {
   word-break: break-word;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-3px);
-  transition: opacity .14s ease, transform .14s ease;
+  visibility: hidden;
 }
 
 .scope-saisie-table tbody tr {
@@ -1658,7 +1657,7 @@ html, body {
 .scope-row-has-tooltip:focus .scope-session-counted-tooltip,
 .scope-row-has-tooltip:focus-within .scope-session-counted-tooltip {
   opacity: 1;
-  transform: translateY(0);
+  visibility: visible;
 }
 
 .scope-badge {
@@ -4178,7 +4177,7 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-table tbody tr.scope-row-session-dispense,
 .scope-table tbody tr.scope-row-session-dispense td,
 .scope-table tbody tr.scope-row-session-dispense:hover,
-.scope-table tbody tr.scope-row-session-dispense:hover td { background: #fde8ea; }
+.scope-table tbody tr.scope-row-session-dispense:hover td { background: #fff6cc; }
 .scope-session-info {
   display: block;
   white-space: normal;

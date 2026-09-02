@@ -1108,6 +1108,56 @@ async function appendPersonnelJournal({ auteurId, entite, entiteId, action, avan
   );
 }
 
+async function getPersonneByNip(nip, opts = {}){
+  await ensureScopeSchema();
+  const value = String(nip || '').trim();
+  if(!value) return null;
+  const found = await getDb().query(`select * from scope_personnes where nip=$1`, [value]);
+  if(!found.rows[0]) return null;
+  return getPersonne(found.rows[0].id, opts);
+}
+
+async function createManualPersonne(body, actor){
+  await ensureScopeSchema();
+  const nip = String((body && body.nip) || '').trim();
+  const nom = String((body && body.nom) || '').trim();
+  const prenom = String((body && body.prenom) || '').trim();
+  const grade = String((body && body.grade) || '').trim();
+  const dateEntree = (body && (body.dateEntreeSdis || body.date_entree_sdis || body.dateDebutAnalyse || body.date_entree)) || null;
+  if(!nip){
+    const err = new Error('Le NIP est obligatoire.');
+    err.statusCode = 400;
+    throw err;
+  }
+  if(!nom || !prenom){
+    const err = new Error('Nom et prénom sont obligatoires.');
+    err.statusCode = 400;
+    throw err;
+  }
+  const existing = await getDb().query(`select id from scope_personnes where nip=$1`, [nip]);
+  if(existing.rows[0]){
+    const err = new Error('Ce NIP existe déjà.');
+    err.statusCode = 409;
+    err.code = 'nip_existant';
+    throw err;
+  }
+  const id = rid();
+  await getDb().query(
+    `insert into scope_personnes(id, nip, grade, nom, prenom, date_entree_sdis) values ($1,$2,$3,$4,$5,$6::date)`,
+    [id, nip, grade || null, nom, prenom, dateEntree || null]
+  );
+  await appendPersonnelJournal({
+    auteurId: actor && (actor.sub || actor.id || actor.email) || null,
+    entite: 'personne',
+    entiteId: id,
+    action: 'PERSONNEL_MANUAL_CREATE',
+    avant: null,
+    apres: { nip, nom, prenom, grade, dateEntreeSdis: dateEntree },
+    commentaire: 'Création manuelle de personne'
+  });
+  return getPersonne(id, {});
+}
+
 async function getPersonne(id, opts = {}){
   await ensureScopeSchema();
   const person = await getDb().query(`select * from scope_personnes where id=$1`, [id]);
@@ -1771,6 +1821,8 @@ module.exports = {
   commitImport,
   listPersonnel,
   getPersonne,
+  getPersonneByNip,
+  createManualPersonne,
   updatePersonne,
   updateAffectation,
   inactivatePersonne,

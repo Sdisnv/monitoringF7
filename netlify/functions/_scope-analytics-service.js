@@ -21,6 +21,7 @@ const {
 } = require('./_scope-objectives');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
+const { isValidSessionStatut } = require('./_scope-cycle-rules');
 
 function truthy(value){
   const text = String(value == null ? '' : value).toLowerCase();
@@ -231,6 +232,12 @@ function createScopeAnalyticsService(repo){
       attendusUse = attendusUse.filter((a) => String(a.personne_id) === String(personneId));
       partsUse = participations.filter((p) => String(p.personne_id) === String(personneId));
       if(!attendusUse.length) return { include: false, reason: 'personne_hors_attendus', mode };
+      if(event.pr_exercise_group_key || event.prExerciseGroupKey){
+        const statut = partsUse[0] && partsUse[0].statut;
+        if(!isValidSessionStatut(statut)){
+          return { include: false, reason: 'session_sans_statut_valable', mode };
+        }
+      }
     }
     const official = officialFromTaux(computeTaux(partsUse, attendusUse));
     return { include: true, reason: null, mode, official, attendus: attendusUse, participations: partsUse };
@@ -273,7 +280,7 @@ function createScopeAnalyticsService(repo){
         else if(classified.reason === 'reporte') exclusions.reportes += 1;
         else if(classified.reason === 'planifie') exclusions.planifies += 1;
         else if(classified.reason === 'quantitatif_sans_volumes') exclusions.quantitatifSansVolumes += 1;
-        else if(classified.reason === 'personne_non_nominatif' || classified.reason === 'personne_hors_attendus'){
+        else if(classified.reason === 'personne_non_nominatif' || classified.reason === 'personne_hors_attendus' || classified.reason === 'session_sans_statut_valable'){
           exclusions.horsPerimetre += 1;
         }
         excludedEvents.push({
@@ -316,7 +323,8 @@ function createScopeAnalyticsService(repo){
         appliedObjective,
         statutParticipation: part ? part.statut : null,
         motif: part && part.motif_absence ? part.motif_absence : null,
-        cibleSuivieId: part && (part.cible_suivie_id || part.cibleSuivieId) ? (part.cible_suivie_id || part.cibleSuivieId) : null
+        cibleSuivieId: part && (part.cible_suivie_id || part.cibleSuivieId) ? (part.cible_suivie_id || part.cibleSuivieId) : null,
+        prExerciseGroupKey: event.pr_exercise_group_key || event.prExerciseGroupKey || null
       });
     }
 

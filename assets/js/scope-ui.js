@@ -137,6 +137,7 @@
     personnelSearchTimer: null,
     personnelInactivate: null,
     personnelAssignment: null,
+    personnelManualAdd: null,
     personnelRowMenuId: null,
     personnelOi: '',
     personnelSpecialization: '',
@@ -893,6 +894,7 @@
           alreadyCountedTooltip,
           sessionExcuse,
           sessionDispense,
+          sessionHasValidStatus: Boolean(a.sessionHasValidStatus || a.session_has_valid_status) || locked,
           sessionMessage,
           sessionSummary,
           sessionExerciseLabel
@@ -2872,6 +2874,7 @@
           </select>
         </div>
         <button type="button" class="scope-btn" id="scope-open-personnel-import">Importer du personnel</button>
+        ${canManagePersonnel() ? '<button type="button" class="scope-btn scope-btn-primary" id="scope-open-personnel-manual-add">Ajouter une personne / affectation</button>' : ''}
       </div>
       <div class="scope-card scope-table-wrap scope-personnel-list-wrap">
         <table class="scope-table scope-person-table scope-personnel-list-table">
@@ -2953,6 +2956,152 @@
   function closePersonnelAssignmentModal() {
     state.personnelAssignment = null;
     render();
+  }
+
+  function personnelGradeOptions() {
+    const ref = (typeof window !== 'undefined' && window.ScopePersonnelReferentials)
+      || (typeof require === 'function' ? require('./scope-personnel-referentials.js') : null);
+    return (ref && Array.isArray(ref.GRADES) ? ref.GRADES : []).map((row) => row.code || row.libelle).filter(Boolean);
+  }
+
+  function closePersonnelManualAddModal() {
+    state.personnelManualAdd = null;
+    render();
+  }
+
+  function openPersonnelManualAddModal() {
+    state.personnelManualAdd = {
+      step: 'search',
+      nip: '',
+      busy: false,
+      error: '',
+      found: null,
+      unknown: false,
+      grade: '',
+      nom: '',
+      prenom: '',
+      dateDebutAnalyse: ''
+    };
+    render();
+  }
+
+  function personnelManualAddAssignmentLabels(person) {
+    const display = personnelDisplay();
+    const assignments = (person && (person.affectations || person.assignments)) || [];
+    const oiList = assignments.filter((a) => String(a.categorie || '').toUpperCase() === 'OI');
+    const specList = assignments.filter((a) => String(a.categorie || '').toUpperCase() === 'SPECIALISATION');
+    const oi = display && display.formatAssignmentList ? display.formatAssignmentList(oiList) : oiList.map((a) => `${a.domaine || ''} ${a.cible || ''}`.trim()).join(' · ');
+    const spec = display && display.formatSpecializations ? display.formatSpecializations(specList, { withPriorityNote: false }).text : specList.map((a) => a.cible || a.domaine || '').join(' · ');
+    return { oi: oi || '—', spec: spec || '—' };
+  }
+
+  function renderPersonnelManualAddModal() {
+    const modal = state.personnelManualAdd;
+    if (!modal) return '';
+    const busy = Boolean(modal.busy);
+    const error = modal.error ? `<p class="scope-activity-error" role="alert">${escapeHtml(modal.error)}</p>` : '';
+    const grades = personnelGradeOptions();
+    const found = modal.found;
+    const labels = found ? personnelManualAddAssignmentLabels(found) : null;
+    const foundBlock = found ? `<div class="scope-activity-fields">
+      <p><strong>${escapeHtml([found.prenom, found.nom].filter(Boolean).join(' '))}</strong> · NIP ${escapeHtml(found.nip || '')} · ${escapeHtml(found.grade || '')}</p>
+      <p>Incorporations : ${escapeHtml(labels.oi)}</p>
+      <p>Spécialisations : ${escapeHtml(labels.spec)}</p>
+      <p class="scope-activity-hint">La personne existe déjà. Aucun doublon ne sera créé. Ajoutez une affectation (OI ou PAPR) sans réimport CSV.</p>
+    </div>` : '';
+    const createFields = modal.unknown ? `<div class="scope-activity-fields">
+      <label for="scope-manual-grade">GRADE</label>
+      ${grades.length
+        ? `<select id="scope-manual-grade" ${busy ? 'disabled' : ''}>
+            <option value="">Choisir</option>
+            ${grades.map((code) => `<option value="${escapeHtml(code)}" ${modal.grade === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')}
+          </select>`
+        : `<input id="scope-manual-grade" value="${escapeHtml(modal.grade || '')}" ${busy ? 'disabled' : ''}>`}
+      <label for="scope-manual-nom">NOM</label>
+      <input id="scope-manual-nom" value="${escapeHtml(modal.nom || '')}" ${busy ? 'disabled' : ''}>
+      <label for="scope-manual-prenom">PRÉNOM</label>
+      <input id="scope-manual-prenom" value="${escapeHtml(modal.prenom || '')}" ${busy ? 'disabled' : ''}>
+      <label for="scope-manual-date">DATE DE DÉBUT DE L’ANALYSE</label>
+      <input id="scope-manual-date" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateDebutAnalyse || '')}" ${busy ? 'disabled' : ''}>
+    </div>` : '';
+    const cta = found
+      ? 'Ajouter une affectation'
+      : (modal.unknown ? 'Créer la personne' : 'Rechercher');
+    return `<div class="scope-activity-overlay" id="scope-manual-add-modal" data-manual-add-overlay>
+      <div class="scope-activity-dialog" role="dialog" aria-modal="true" aria-labelledby="scope-manual-add-title">
+        <header class="scope-activity-head">
+          <h3 id="scope-manual-add-title">Ajouter une personne / affectation</h3>
+          <button type="button" class="scope-activity-x" data-manual-add-cancel aria-label="Fermer">×</button>
+        </header>
+        <p class="scope-activity-question">Recherche par NIP. Si le NIP existe, ajoutez une affectation. Sinon, créez la personne.</p>
+        <div class="scope-activity-fields">
+          <label for="scope-manual-nip">NIP</label>
+          <input id="scope-manual-nip" value="${escapeHtml(modal.nip || '')}" ${busy ? 'disabled' : ''} autocomplete="off">
+        </div>
+        ${foundBlock}${createFields}
+        ${error}
+        <footer class="scope-activity-actions">
+          <button type="button" class="scope-btn" data-manual-add-cancel ${busy ? 'disabled' : ''}>Annuler</button>
+          <button type="button" class="scope-btn scope-btn-primary" id="scope-manual-add-confirm" ${busy ? 'disabled' : ''}>${escapeHtml(cta)}</button>
+        </footer>
+      </div>
+    </div>`;
+  }
+
+  async function submitPersonnelManualAdd() {
+    const modal = state.personnelManualAdd;
+    if (!modal || modal.busy) return;
+    const nipEl = document.getElementById('scope-manual-nip');
+    const nip = String((nipEl && nipEl.value) || modal.nip || '').trim();
+    state.personnelManualAdd = Object.assign({}, modal, { nip, busy: true, error: '' });
+    render();
+    try {
+      if (modal.found) {
+        const person = modal.found;
+        const id = person.id || person.personneId || person.personne_id;
+        state.personnelManualAdd = null;
+        openPersonnelAssignmentModal(id, person.affectations || person.assignments || []);
+        return;
+      }
+      if (modal.unknown) {
+        const grade = document.getElementById('scope-manual-grade')?.value || '';
+        const nom = document.getElementById('scope-manual-nom')?.value || '';
+        const prenom = document.getElementById('scope-manual-prenom')?.value || '';
+        const dateDebutAnalyse = document.getElementById('scope-manual-date')?.value || '';
+        const payload = await client.createManualPersonne({
+          nip,
+          grade,
+          nom,
+          prenom,
+          dateEntreeSdis: dateDebutAnalyse,
+          dateDebutAnalyse
+        });
+        const person = payload.personne || payload;
+        const id = person.id || person.personneId || person.personne_id;
+        state.personnelManualAdd = null;
+        await loadPersonnelDirectory();
+        openPersonnelAssignmentModal(id, person.affectations || []);
+        return;
+      }
+      try {
+        const payload = await client.lookupPersonneByNip(nip);
+        const person = payload.personne || payload;
+        state.personnelManualAdd = Object.assign({}, modal, { nip, busy: false, found: person, unknown: false, error: '' });
+      } catch (error) {
+        const status = Number(error && (error.status || error.statusCode || (error.body && error.body.status)));
+        const code = error && (error.error || error.code || (error.body && error.body.error));
+        if (status === 404 || code === 'not_found') {
+          state.personnelManualAdd = Object.assign({}, modal, { nip, busy: false, found: null, unknown: true, error: '' });
+        } else {
+          throw error;
+        }
+      }
+      render();
+    } catch (error) {
+      const info = L.personnelMutationError ? L.personnelMutationError(error) : L.friendlyError(error);
+      state.personnelManualAdd = Object.assign({}, modal, { nip, busy: false, error: info.message || info.title || String(error) });
+      render();
+    }
   }
 
   function assignmentModalCards(modal, busy){
@@ -4210,6 +4359,10 @@
         open: Number(prKpis.open || 0)
       }
       : local;
+    const multi = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isMultiSession);
+    const last = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isLastSession);
+    const openVal = multi && last && prKpis ? Number(prKpis.open || 0) : local.open;
+    const openLabel = !multi ? 'À renseigner' : (last ? 'À renseigner (session)' : 'À renseigner (séance)');
     const attendus = rows.filter((row) => row && row.inclus !== false && !row.alreadyCountedInSession && String(row.jspRole || '').toUpperCase() !== 'MONITEUR' && String(row.role || '') !== 'AUXILIAIRE').length;
     const domaine = String((fiche && fiche.evenement && fiche.evenement.domaine_code) || '').toUpperCase();
     const showDispense = Boolean(c.dispense) || domaine !== 'JSP';
@@ -4221,7 +4374,7 @@
       { label: 'Excusés', value: c.excuse, title: excuseTitle },
       { label: 'Absents', value: c.absent },
       showDispense ? { label: 'Dispensés', value: c.dispense } : null,
-      { label: 'À renseigner', value: c.open, emphasis: Number(c.open) > 0 }
+      { label: openLabel, value: openVal, emphasis: Number(openVal) > 0 }
     ], 'Compteurs de présence').replace('<div class="scope-kpi-grid"', '<div class="scope-kpi-grid scope-saisie-kpis"');
   }
 
@@ -4568,6 +4721,8 @@
   function filterRealiseRows(rows) {
     const q = normalizeSearchText(state.realiseQuery);
     return (rows || []).filter((row) => {
+      const localValid = L.isValidSessionStatut ? L.isValidSessionStatut(row.statut) : (row.statut && row.statut !== 'NON_RENSEIGNE');
+      if (row.sessionHasValidStatus && !localValid && !row.sessionExcuse && !row.sessionDispense) return false;
       if (q) {
         const hay = normalizeSearchText([row.grade, row.nomFamille, row.prenom, row.nom, row.nip].join(' '));
         if (!hay.includes(q)) return false;
@@ -5382,7 +5537,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderPersonnelManualAddModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
     bind();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
@@ -5986,6 +6141,15 @@
         render();
       });
     });
+    root.querySelectorAll('tr.scope-row-has-tooltip').forEach((row) => {
+      const tip = row.querySelector('.scope-session-counted-tooltip');
+      if (!tip || !L.placeSessionTooltip) return;
+      const place = () => L.placeSessionTooltip(row, tip);
+      row.addEventListener('mouseenter', place);
+      row.addEventListener('focusin', place);
+      row.addEventListener('mouseleave', () => { tip.style.visibility = ''; });
+      row.addEventListener('focusout', () => { tip.style.visibility = ''; });
+    });
     document.getElementById('save-part')?.addEventListener('click', saveParticipations);
     document.getElementById('cloturer')?.addEventListener('click', () => {
       const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0, incompleteDispenses: 0 };
@@ -6562,7 +6726,15 @@
       const trigger = event.target && event.target.closest
         ? event.target.closest('#scope-open-personnel-import')
         : null;
-      if (!trigger) return;
+      if (!trigger) {
+        const add = event.target && event.target.closest
+          ? event.target.closest('#scope-open-personnel-manual-add')
+          : null;
+        if (!add) return;
+        event.preventDefault();
+        openPersonnelManualAddModal();
+        return;
+      }
       event.preventDefault();
       openPersonnelImportPanel();
     });
@@ -6641,6 +6813,20 @@
       if (target.closest('[data-activity-confirm]')) {
         event.preventDefault();
         submitPersonnelActivityModal();
+        return;
+      }
+      if (target.closest('[data-manual-add-cancel]')) {
+        event.preventDefault();
+        closePersonnelManualAddModal();
+        return;
+      }
+      if (target.hasAttribute && target.hasAttribute('data-manual-add-overlay')) {
+        closePersonnelManualAddModal();
+        return;
+      }
+      if (target.closest('#scope-manual-add-confirm')) {
+        event.preventDefault();
+        submitPersonnelManualAdd();
         return;
       }
       if (target.closest('[data-assignment-cancel]')) {

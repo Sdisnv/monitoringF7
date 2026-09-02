@@ -35,7 +35,7 @@ const {
 } = require('./_scope-model');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computePrExerciseParticipationState, prSessionLabel } = require('./_scope-cycle-rules');
+const { computePrExerciseParticipationState, prSessionLabel, isValidSessionStatut } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -1253,7 +1253,7 @@ function createScopeService(repo){
         auteur_id: actorId(actor),
         entite: 'personne',
         entite_id: saved.personne_id,
-        action: 'CREER',
+        action: 'PERSONNEL_MANUAL_CREATE',
         apres: { nip: saved.nip }
       });
       const synchronisationPopulation = await syncExpectedPopulationForPersonnesInRepo(tx, [saved.personne_id], actor, { reason: 'CREER_PERSONNE' });
@@ -1618,12 +1618,15 @@ function createScopeService(repo){
           });
           if(prState.byPersonneId[String(personneId)]){
             const lock = prState.byPersonneId[String(personneId)];
-            const message = lock.sessionExcuse
-              ? 'Cette personne est déjà excusée dans cette session d’exercice.'
-              : (lock.sessionDispense || lock.countedStatut === 'DISPENSE'
-                ? 'Cette personne est déjà dispensée de cet exercice.'
-                : 'Cette personne a déjà une contribution comptabilisante dans cet Exercice PR.');
-            throw new HttpError(409, 'pr_exercise_participation_deja_comptee', message, { personneId, prExerciseGroupKey: prState.groupKey });
+            const existingValid = isValidSessionStatut(existing && existing.statut);
+            if(lock.alreadyCountedInSession || (lock.sessionHasValidStatus && !existingValid)){
+              const message = lock.sessionExcuse
+                ? 'Cette personne est déjà excusée dans cette session d’exercice.'
+                : (lock.sessionDispense || lock.countedStatut === 'DISPENSE'
+                  ? 'Cette personne est déjà dispensée de cet exercice.'
+                  : 'Cette personne a déjà un statut valable dans cette session d’exercice.');
+              throw new HttpError(409, 'pr_exercise_participation_deja_comptee', message, { personneId, prExerciseGroupKey: prState.groupKey });
+            }
           }
         }
         await tx.upsertParticipation({
@@ -2149,8 +2152,9 @@ function createScopeService(repo){
           const state = prExerciseParticipation.byPersonneId[String(row.personne_id)];
           return state
             ? Object.assign({}, row, {
-              already_counted_in_session: true,
-              alreadyCountedInSession: true,
+              already_counted_in_session: Boolean(state.alreadyCountedInSession),
+              alreadyCountedInSession: Boolean(state.alreadyCountedInSession),
+              sessionHasValidStatus: Boolean(state.sessionHasValidStatus),
               session_counted_event_id: state.countedEventId,
               session_counted_role: state.countedRole,
               session_counted_statut: state.countedStatut,

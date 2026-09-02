@@ -229,6 +229,12 @@
         const id = payload.personneId || payload.id;
         return directRequest('POST', `/.netlify/functions/scope-personnel-detail${queryString({ id })}`, payload);
       },
+      lookupPersonneByNip(nip) {
+        return directRequest('GET', `/.netlify/functions/scope-personnel-detail${queryString({ nip })}`);
+      },
+      createManualPersonne(body) {
+        return directRequest('POST', '/.netlify/functions/scope-personnel-detail', Object.assign({}, body || {}, { action: 'create_personne' }));
+      },
       listPersonnelHistory(params) { return directRequest('GET', `/.netlify/functions/scope-personnel-history${queryString(params || {})}`); },
       correctPersonnelPeriod(body) { return directRequest('POST', '/.netlify/functions/scope-personnel-correct-period', body); },
       updatePersonne(id, body) { return request('PATCH', `/personnel/${encodeURIComponent(id)}`, body || {}); },
