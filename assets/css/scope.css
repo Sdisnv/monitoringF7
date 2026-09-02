@@ -4099,12 +4099,14 @@ body.scope-pdf-open { overflow: hidden; }
   text-transform: uppercase;
   color: #4b5563;
 }
+.scope-activity-fields input,
 .scope-activity-fields select {
   width: 100%;
   min-height: 38px;
+  box-sizing: border-box;
 }
 .scope-activity-date {
-  width: min(14rem, 100%);
+  width: 100%;
   min-height: 38px;
 }
 .scope-activity-fields textarea {

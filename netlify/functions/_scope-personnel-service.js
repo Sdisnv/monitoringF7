@@ -1110,16 +1110,25 @@ async function appendPersonnelJournal({ auteurId, entite, entiteId, action, avan
 
 async function getPersonneByNip(nip, opts = {}){
   await ensureScopeSchema();
-  const value = String(nip || '').trim();
+  const value = normalizeNip(nip);
   if(!value) return null;
-  const found = await getDb().query(`select * from scope_personnes where nip=$1`, [value]);
-  if(!found.rows[0]) return null;
-  return getPersonne(found.rows[0].id, opts);
+  const found = await getDb().query(
+    `select * from scope_personnes
+     where nip = $1
+        or regexp_replace(upper(btrim(coalesce(nip,''))), '[^A-Z0-9]+', '', 'g') = $1
+     limit 8`,
+    [value]
+  );
+  const rows = (found.rows || []).filter((row) => normalizeNip(row.nip) === value);
+  if(!rows.length) return null;
+  const typed = clean(nip);
+  const exact = rows.find((row) => String(row.nip) === typed) || rows[0];
+  return getPersonne(exact.id, opts);
 }
 
 async function createManualPersonne(body, actor){
   await ensureScopeSchema();
-  const nip = String((body && body.nip) || '').trim();
+  const nip = normalizeNip((body && body.nip) || '');
   const nom = String((body && body.nom) || '').trim();
   const prenom = String((body && body.prenom) || '').trim();
   const grade = String((body && body.grade) || '').trim();
@@ -1823,6 +1832,7 @@ module.exports = {
   getPersonne,
   getPersonneByNip,
   createManualPersonne,
+  normalizeNip,
   updatePersonne,
   updateAffectation,
   inactivatePersonne,

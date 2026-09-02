@@ -853,20 +853,19 @@
         const formateurTooltip = referenceQuality === 'Formateur PR' && formateurSessions.length && L.formatFormateurPrTooltip
           ? L.formatFormateurPrTooltip(fullName, nipOf(fiche, a.personne_id), formateurSessions)
           : '';
-        const sessionExcuse = Boolean(a.sessionExcuse || a.session_excuse);
-        const sessionDispense = Boolean(a.sessionDispense || a.session_dispense);
-        const sessionMessage = a.sessionMessage || a.session_message || '';
-        const sessionSummary = a.sessionSummary || a.session_summary || '';
-        const sessionMotif = a.sessionMotif || a.session_motif || '';
-        const locked = alreadyCountedInSession || sessionExcuse || sessionDispense;
-        const displayStatut = sessionExcuse
-          ? 'ABSENT_EXCUSE'
-          : (sessionDispense ? 'DISPENSE' : (part.statut || 'NON_RENSEIGNE'));
-        const displayMotif = sessionExcuse || sessionDispense
-          ? (sessionMotif || part.motif_absence || '')
-          : (part.motif_absence || '');
-        const alreadyCountedTooltip = alreadyCountedInSession && !sessionExcuse && !sessionDispense
-          ? (formateurTooltip || `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`)
+        const sessionHasValidStatus = Boolean(a.sessionHasValidStatus || a.session_has_valid_status);
+        const localStatut = part.statut || 'NON_RENSEIGNE';
+        const localValid = L.isValidSessionStatut ? L.isValidSessionStatut(localStatut) : (localStatut && localStatut !== 'NON_RENSEIGNE');
+        const sessionExcuse = localStatut === 'ABSENT_EXCUSE';
+        const sessionDispense = localStatut === 'DISPENSE';
+        const coveredElsewhere = (sessionHasValidStatus || alreadyCountedInSession) && !localValid;
+        const locked = coveredElsewhere;
+        const displayStatut = localStatut;
+        const displayMotif = part.motif_absence || '';
+        const alreadyCountedTooltip = coveredElsewhere
+          ? (formateurTooltip || (referenceQuality === 'Formateur PR'
+            ? `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`
+            : `${fullName} (${nipOf(fiche, a.personne_id)}) est déjà compté dans cette session d’exercice.`))
           : '';
         const sessionExerciseLabel = a.sessionExerciseLabel || a.session_exercise_label
           || (fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionExerciseLabel)
@@ -894,9 +893,9 @@
           alreadyCountedTooltip,
           sessionExcuse,
           sessionDispense,
-          sessionHasValidStatus: Boolean(a.sessionHasValidStatus || a.session_has_valid_status) || locked,
-          sessionMessage,
-          sessionSummary,
+          sessionHasValidStatus: sessionHasValidStatus || locked,
+          sessionMessage: localValid ? (a.sessionMessage || a.session_message || '') : alreadyCountedTooltip,
+          sessionSummary: localValid ? (a.sessionSummary || a.session_summary || '') : '',
           sessionExerciseLabel
         };
       });
@@ -2995,19 +2994,46 @@
     return { oi: oi || '—', spec: spec || '—' };
   }
 
+  function normalizeManualNip(value) {
+    return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '');
+  }
+
+  function readPersonnelManualAddForm(modal) {
+    const current = modal || {};
+    return {
+      nip: String(document.getElementById('scope-manual-nip')?.value || current.nip || '').trim(),
+      grade: String(document.getElementById('scope-manual-grade')?.value || current.grade || '').trim(),
+      nom: String(document.getElementById('scope-manual-nom')?.value || current.nom || '').trim(),
+      prenom: String(document.getElementById('scope-manual-prenom')?.value || current.prenom || '').trim(),
+      dateDebutAnalyse: String(document.getElementById('scope-manual-date')?.value || current.dateDebutAnalyse || '').trim()
+    };
+  }
+
   function renderPersonnelManualAddModal() {
     const modal = state.personnelManualAdd;
     if (!modal) return '';
     const busy = Boolean(modal.busy);
     const error = modal.error ? `<p class="scope-activity-error" role="alert">${escapeHtml(modal.error)}</p>` : '';
+    const fieldError = (key) => modal.fieldErrors && modal.fieldErrors[key]
+      ? `<p class="scope-activity-error" role="alert">${escapeHtml(modal.fieldErrors[key])}</p>`
+      : '';
     const grades = personnelGradeOptions();
     const found = modal.found;
     const labels = found ? personnelManualAddAssignmentLabels(found) : null;
     const foundBlock = found ? `<div class="scope-activity-fields">
-      <p><strong>${escapeHtml([found.prenom, found.nom].filter(Boolean).join(' '))}</strong> · NIP ${escapeHtml(found.nip || '')} · ${escapeHtml(found.grade || '')}</p>
-      <p>Incorporations : ${escapeHtml(labels.oi)}</p>
-      <p>Spécialisations : ${escapeHtml(labels.spec)}</p>
-      <p class="scope-activity-hint">La personne existe déjà. Aucun doublon ne sera créé. Ajoutez une affectation (OI ou PAPR) sans réimport CSV.</p>
+      <label>GRADE</label>
+      <input value="${escapeHtml(found.grade || '')}" disabled>
+      <label>NOM</label>
+      <input value="${escapeHtml(found.nom || '')}" disabled>
+      <label>PRÉNOM</label>
+      <input value="${escapeHtml(found.prenom || '')}" disabled>
+      <label>NIP</label>
+      <input value="${escapeHtml(found.nip || '')}" disabled>
+      <label>INCORPORATIONS</label>
+      <input value="${escapeHtml(labels.oi)}" disabled>
+      <label>SPÉCIALISATIONS</label>
+      <input value="${escapeHtml(labels.spec)}" disabled>
+      <p class="scope-activity-hint">Cette personne existe déjà. Aucun doublon ne sera créé.</p>
     </div>` : '';
     const createFields = modal.unknown ? `<div class="scope-activity-fields">
       <label for="scope-manual-grade">GRADE</label>
@@ -3017,12 +3043,16 @@
             ${grades.map((code) => `<option value="${escapeHtml(code)}" ${modal.grade === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')}
           </select>`
         : `<input id="scope-manual-grade" value="${escapeHtml(modal.grade || '')}" ${busy ? 'disabled' : ''}>`}
+      ${fieldError('grade')}
       <label for="scope-manual-nom">NOM</label>
-      <input id="scope-manual-nom" value="${escapeHtml(modal.nom || '')}" ${busy ? 'disabled' : ''}>
+      <input id="scope-manual-nom" value="${escapeHtml(modal.nom || '')}" ${busy ? 'disabled' : ''} autocomplete="family-name">
+      ${fieldError('nom')}
       <label for="scope-manual-prenom">PRÉNOM</label>
-      <input id="scope-manual-prenom" value="${escapeHtml(modal.prenom || '')}" ${busy ? 'disabled' : ''}>
+      <input id="scope-manual-prenom" value="${escapeHtml(modal.prenom || '')}" ${busy ? 'disabled' : ''} autocomplete="given-name">
+      ${fieldError('prenom')}
       <label for="scope-manual-date">DATE DE DÉBUT DE L’ANALYSE</label>
       <input id="scope-manual-date" class="scope-activity-date" type="date" value="${escapeHtml(modal.dateDebutAnalyse || '')}" ${busy ? 'disabled' : ''}>
+      ${fieldError('dateDebutAnalyse')}
     </div>` : '';
     const cta = found
       ? 'Ajouter une affectation'
@@ -3033,14 +3063,15 @@
           <h3 id="scope-manual-add-title">Ajouter une personne / affectation</h3>
           <button type="button" class="scope-activity-x" data-manual-add-cancel aria-label="Fermer">×</button>
         </header>
-        <p class="scope-activity-question">Recherche par NIP. Si le NIP existe, ajoutez une affectation. Sinon, créez la personne.</p>
+        <p class="scope-activity-question">Recherchez un NIP exact. S’il existe, ajoutez une affectation. Sinon, créez la personne.</p>
         <div class="scope-activity-fields">
           <label for="scope-manual-nip">NIP</label>
-          <input id="scope-manual-nip" value="${escapeHtml(modal.nip || '')}" ${busy ? 'disabled' : ''} autocomplete="off">
+          <input id="scope-manual-nip" value="${escapeHtml(modal.nip || '')}" ${busy || found ? 'disabled' : ''} autocomplete="off">
+          ${fieldError('nip')}
         </div>
         ${foundBlock}${createFields}
         ${error}
-        <footer class="scope-activity-actions">
+        <footer class="scope-activity-footer">
           <button type="button" class="scope-btn" data-manual-add-cancel ${busy ? 'disabled' : ''}>Annuler</button>
           <button type="button" class="scope-btn scope-btn-primary" id="scope-manual-add-confirm" ${busy ? 'disabled' : ''}>${escapeHtml(cta)}</button>
         </footer>
@@ -3051,9 +3082,19 @@
   async function submitPersonnelManualAdd() {
     const modal = state.personnelManualAdd;
     if (!modal || modal.busy) return;
-    const nipEl = document.getElementById('scope-manual-nip');
-    const nip = String((nipEl && nipEl.value) || modal.nip || '').trim();
-    state.personnelManualAdd = Object.assign({}, modal, { nip, busy: true, error: '' });
+    const form = readPersonnelManualAddForm(modal);
+    const fieldErrors = {};
+    if (!normalizeManualNip(form.nip)) fieldErrors.nip = 'Le NIP est obligatoire.';
+    if (modal.unknown) {
+      if (!form.nom) fieldErrors.nom = 'Le nom est obligatoire.';
+      if (!form.prenom) fieldErrors.prenom = 'Le prénom est obligatoire.';
+    }
+    if (Object.keys(fieldErrors).length) {
+      state.personnelManualAdd = Object.assign({}, modal, form, { fieldErrors, error: '', busy: false });
+      render();
+      return;
+    }
+    state.personnelManualAdd = Object.assign({}, modal, form, { busy: true, error: '', fieldErrors: {} });
     render();
     try {
       if (modal.found) {
@@ -3064,17 +3105,13 @@
         return;
       }
       if (modal.unknown) {
-        const grade = document.getElementById('scope-manual-grade')?.value || '';
-        const nom = document.getElementById('scope-manual-nom')?.value || '';
-        const prenom = document.getElementById('scope-manual-prenom')?.value || '';
-        const dateDebutAnalyse = document.getElementById('scope-manual-date')?.value || '';
         const payload = await client.createManualPersonne({
-          nip,
-          grade,
-          nom,
-          prenom,
-          dateEntreeSdis: dateDebutAnalyse,
-          dateDebutAnalyse
+          nip: form.nip,
+          grade: form.grade,
+          nom: form.nom,
+          prenom: form.prenom,
+          dateEntreeSdis: form.dateDebutAnalyse,
+          dateDebutAnalyse: form.dateDebutAnalyse
         });
         const person = payload.personne || payload;
         const id = person.id || person.personneId || person.personne_id;
@@ -3084,14 +3121,18 @@
         return;
       }
       try {
-        const payload = await client.lookupPersonneByNip(nip);
+        const payload = await client.lookupPersonneByNip(form.nip);
         const person = payload.personne || payload;
-        state.personnelManualAdd = Object.assign({}, modal, { nip, busy: false, found: person, unknown: false, error: '' });
+        const foundNip = normalizeManualNip(person && person.nip);
+        if (!person || foundNip !== normalizeManualNip(form.nip)) {
+          throw Object.assign(new Error('NIP introuvable.'), { status: 404, error: 'not_found' });
+        }
+        state.personnelManualAdd = Object.assign({}, modal, form, { busy: false, found: person, unknown: false, error: '', fieldErrors: {} });
       } catch (error) {
-        const status = Number(error && (error.status || error.statusCode || (error.body && error.body.status)));
-        const code = error && (error.error || error.code || (error.body && error.body.error));
+        const status = Number(error && (error.status || error.statusCode));
+        const code = error && (error.error || error.code || (error.payload && error.payload.error));
         if (status === 404 || code === 'not_found') {
-          state.personnelManualAdd = Object.assign({}, modal, { nip, busy: false, found: null, unknown: true, error: '' });
+          state.personnelManualAdd = Object.assign({}, modal, form, { busy: false, found: null, unknown: true, error: '', fieldErrors: {} });
         } else {
           throw error;
         }
@@ -3099,7 +3140,7 @@
       render();
     } catch (error) {
       const info = L.personnelMutationError ? L.personnelMutationError(error) : L.friendlyError(error);
-      state.personnelManualAdd = Object.assign({}, modal, { nip, busy: false, error: info.message || info.title || String(error) });
+      state.personnelManualAdd = Object.assign({}, modal, form, { busy: false, error: info.message || info.title || String(error) });
       render();
     }
   }
@@ -4632,7 +4673,7 @@
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
-      const locked = Boolean(row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense);
+      const locked = Boolean(row.alreadyCountedInSession || (row.sessionHasValidStatus && !(L.isValidSessionStatut && L.isValidSessionStatut(row.statut))));
       const shortMotif = (L.informationMotifLabel ? L.informationMotifLabel(row) : '') || '';
       const motifOnly = locked && shortMotif
         ? `<span class="scope-session-info">${escapeHtml(shortMotif)}</span>`
@@ -4665,15 +4706,15 @@
           </tr></thead>
           <tbody>
             ${rows.map((row) => {
-              const blocked = Boolean(row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense);
+              const blocked = Boolean(row.alreadyCountedInSession || (row.sessionHasValidStatus && !(L.isValidSessionStatut && L.isValidSessionStatut(row.statut))));
               const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
               const tooltipText = (L.sessionExplainTooltip ? L.sessionExplainTooltip(row) : (row.sessionMessage || row.alreadyCountedTooltip || '')) || '';
               const rowClass = [
                 row.manual ? 'scope-row-manual' : '',
-                blocked && row.sessionExcuse ? 'scope-row-session-excuse' : '',
-                blocked && row.sessionDispense ? 'scope-row-session-dispense' : '',
-                blocked && !row.sessionExcuse && !row.sessionDispense ? 'scope-row-session-counted' : '',
+                row.statut === 'ABSENT_EXCUSE' ? 'scope-row-session-excuse' : '',
+                row.statut === 'DISPENSE' ? 'scope-row-session-dispense' : '',
+                blocked && row.statut !== 'ABSENT_EXCUSE' && row.statut !== 'DISPENSE' ? 'scope-row-session-counted' : '',
                 tooltipText ? 'scope-row-has-tooltip' : ''
               ].filter(Boolean).join(' ');
               const blockedAttrs = tooltipText
@@ -4722,7 +4763,7 @@
     const q = normalizeSearchText(state.realiseQuery);
     return (rows || []).filter((row) => {
       const localValid = L.isValidSessionStatut ? L.isValidSessionStatut(row.statut) : (row.statut && row.statut !== 'NON_RENSEIGNE');
-      if (row.sessionHasValidStatus && !localValid && !row.sessionExcuse && !row.sessionDispense) return false;
+      if (!localValid) return false;
       if (q) {
         const hay = normalizeSearchText([row.grade, row.nomFamille, row.prenom, row.nom, row.nip].join(' '));
         if (!hay.includes(q)) return false;
@@ -5498,11 +5539,11 @@
             : 'i';
     const progress = fb.progress ? '<div class="scope-feedback-progress" aria-hidden="true"></div>' : '';
     const errors = Array.isArray(fb.errors) && fb.errors.length
-      ? `<ul class="scope-feedback-errors">${fb.errors.slice(0, 5).map((e) => `<li>${escapeHtml(e.message || e.code || String(e))}</li>`).join('')}</ul>`
+      ? `<ul class="scope-feedback-errors">${fb.errors.slice(0, Number(fb.errorsMax || 5)).map((e) => `<li>${escapeHtml(e.message || e.code || String(e))}</li>`).join('')}</ul>`
       : '';
     const actions = kind === 'confirm'
       ? `<div class="scope-feedback-actions"><button type="button" class="scope-btn" id="scope-feedback-cancel">${escapeHtml(fb.cancelText || 'Annuler')}</button><button type="button" class="scope-btn scope-btn-primary" id="scope-feedback-confirm">${escapeHtml(fb.confirmText || 'Confirmer')}</button></div>`
-      : fb.closeable === false ? '' : `<div class="scope-feedback-actions"><button type="button" class="scope-btn scope-btn-primary" id="scope-feedback-close">OK</button></div>`;
+      : fb.closeable === false ? '' : `<div class="scope-feedback-actions"><button type="button" class="scope-btn scope-btn-primary" id="scope-feedback-close">${escapeHtml(fb.closeText || 'OK')}</button></div>`;
     return `<div class="scope-feedback-overlay is-${escapeHtml(kind)}" role="${kind === 'confirm' || kind === 'error' ? 'dialog' : 'status'}" aria-modal="${kind === 'confirm' || kind === 'error' ? 'true' : 'false'}">
       <div class="scope-feedback-card">
         ${progress || `<div class="scope-feedback-mark" aria-hidden="true">${escapeHtml(mark)}</div>`}
@@ -6170,15 +6211,24 @@
       }
       if (multi && last) {
         const missing = session.unfilledPeople || [];
+        if (missing.length) {
+          ScopeFeedback.error(
+            'Clôture impossible',
+            'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.',
+            {
+              closeText: 'Retour à la saisie',
+              errorsMax: 200,
+              errors: missing.map((p) => ({
+                message: [p.grade, p.nom, p.prenom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' ')
+              }))
+            }
+          );
+          return;
+        }
         ScopeFeedback.confirm({
           title: 'Clôturer l’exercice',
-          message: missing.length
-            ? 'Des personnes n’ont reçu aucun statut valable sur l’ensemble de la session.'
-            : 'La session complète sera clôturée.',
-          confirmText: 'Clôturer l’exercice',
-          errors: missing.map((p) => ({
-            message: [p.grade, p.nom, p.prenom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' ')
-          }))
+          message: 'La session complète sera clôturée.',
+          confirmText: 'Clôturer l’exercice'
         }, cloturer);
         return;
       }

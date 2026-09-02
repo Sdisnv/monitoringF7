@@ -155,9 +155,7 @@ function nominativeRows(fiche){
     const part = parts.find((p) => String(p.personne_id) === String(pid)) || {};
     const cible = cibleById[a.cible_id] || {};
     const statut = part.statut || 'NON_RENSEIGNE';
-    if((a.sessionHasValidStatus || a.session_has_valid_status) && !isValidSessionStatut(statut)){
-      return null;
-    }
+    if(!isValidSessionStatut(statut)) return null;
     return {
       grade: person.grade || '',
       nom: person.nom || '',

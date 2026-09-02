@@ -100,7 +100,7 @@ function attendu(detail, personneId){
 }
 
 (async () => {
-  await record('01-03 — Excusé séance 2 visible 1 et 3, jaune, motif', async () => {
+  await record('01-03 — Excusé séance 2 non recopié visuellement, couvert en session', async () => {
     const ctx = await setupSession(2);
     await save(ctx.service, ctx.repo, 'ms2', [{
       personneId: ctx.people[0].personne_id,
@@ -109,21 +109,19 @@ function attendu(detail, personneId){
       role: 'PARTICIPANT'
     }]);
     const s1 = await ctx.service.lireEvenement('ms1');
+    const s2 = await ctx.service.lireEvenement('ms2');
     const s3 = await ctx.service.lireEvenement('ms3');
     const a1 = attendu(s1, ctx.people[0].personne_id);
+    const a2 = attendu(s2, ctx.people[0].personne_id);
     const a3 = attendu(s3, ctx.people[0].personne_id);
-    assert.strictEqual(a1.sessionExcuse, true);
-    assert.strictEqual(a3.sessionExcuse, true);
+    assert.strictEqual(a1.sessionExcuse, false);
+    assert.strictEqual(a3.sessionExcuse, false);
+    assert.ok(a1.sessionHasValidStatus);
+    assert.ok(a3.sessionHasValidStatus);
     assert.ok(a1.alreadyCountedInSession);
-    assert.ok(String(a1.sessionMessage).includes('Léa Martin'));
-    assert.ok(String(a1.sessionMessage).includes('PR 1'));
-    assert.strictEqual(a1.sessionMotif, 'PRIVE');
-    const row = {
-      alreadyCountedInSession: true,
-      sessionExcuse: true,
-      sessionMessage: a1.sessionMessage
-    };
-    assert.ok(logic.sessionLocked(row));
+    const part2 = (s2.participations || []).find((row) => row.personne_id === ctx.people[0].personne_id);
+    assert.strictEqual(part2.statut, 'ABSENT_EXCUSE');
+    assert.ok(!logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true, sessionHasValidStatus: true }));
     assert.ok(css.includes('scope-row-session-excuse'));
     assert.ok(css.includes('#fde8ea'));
     assert.ok(css.includes('#fff6cc'));
@@ -141,7 +139,7 @@ function attendu(detail, personneId){
     assert.ok(Object.values(MOTIFS_DISPENSE).includes('PAS_CONCERNE'));
   });
 
-  await record('05-08 — Dispensé multi-session rouge + messages lisibles', async () => {
+  await record('05-08 — Dispensé local uniquement, couverture session sans overlay', async () => {
     const ctx = await setupSession(1);
     await save(ctx.service, ctx.repo, 'ms2', [{
       personneId: ctx.people[0].personne_id,
@@ -150,10 +148,14 @@ function attendu(detail, personneId){
       role: 'PARTICIPANT'
     }]);
     const s1 = await ctx.service.lireEvenement('ms1');
+    const s2 = await ctx.service.lireEvenement('ms2');
     const a1 = attendu(s1, ctx.people[0].personne_id);
-    assert.strictEqual(a1.sessionDispense, true);
-    assert.ok(String(a1.sessionSummary).includes('Dispensé de l’exercice'));
-    assert.ok(String(a1.sessionMessage).includes('Joker'));
+    const a2 = attendu(s2, ctx.people[0].personne_id);
+    assert.strictEqual(a1.sessionDispense, false);
+    assert.ok(a1.sessionHasValidStatus);
+    const part2 = (s2.participations || []).find((row) => row.personne_id === ctx.people[0].personne_id);
+    assert.strictEqual(part2.statut, 'DISPENSE');
+    assert.strictEqual(part2.motif_absence, 'JOKER');
     assert.ok(css.includes('scope-row-session-dispense'));
     assert.ok(css.includes('#fff6cc'));
     assert.ok(css.includes('#fde8ea'));

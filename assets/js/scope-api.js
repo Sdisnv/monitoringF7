@@ -230,7 +230,7 @@
         return directRequest('POST', `/.netlify/functions/scope-personnel-detail${queryString({ id })}`, payload);
       },
       lookupPersonneByNip(nip) {
-        return directRequest('GET', `/.netlify/functions/scope-personnel-detail${queryString({ nip })}`);
+        return directRequest('POST', '/.netlify/functions/scope-personnel-detail', { action: 'lookup_nip', nip });
       },
       createManualPersonne(body) {
         return directRequest('POST', '/.netlify/functions/scope-personnel-detail', Object.assign({}, body || {}, { action: 'create_personne' }));

@@ -34,6 +34,12 @@ exports.handler = async function(event){
       const body = parseBody(event);
       if(!body) return response(400, { ok:false, error:'invalid_json' });
       const action = String(body.action || 'create_affectation').toLowerCase();
+      if(action === 'lookup_nip' || action === 'lookupnip'){
+        const personne = await personnel.getPersonneByNip(body.nip);
+        return personne
+          ? response(200, { ok:true, personne })
+          : response(404, { ok:false, error:'not_found', message:'NIP introuvable.' });
+      }
       if(action === 'create_personne' || action === 'createpersonne' || action === 'create_manual_personne'){
         const personne = await personnel.createManualPersonne(body, claims);
         return response(201, { ok:true, personne });

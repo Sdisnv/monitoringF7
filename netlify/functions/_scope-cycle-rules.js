@@ -446,7 +446,6 @@ function computePrExerciseParticipationState(input = {}){
       const id = personneId(person);
       if(!id || dedupeKey(person, personnesById) !== key) continue;
       const exerciseLabel = sessionExerciseLabel(events, group.groupKey);
-      const sessionDispense = reference.statut === 'DISPENSE';
       const motif = normalizeUpper(reference.motif || '');
       byPersonneId[id] = {
         alreadyCountedInSession: true,
@@ -460,13 +459,11 @@ function computePrExerciseParticipationState(input = {}){
         referenceQuality: reference.role === 'FORMATEUR' ? 'Formateur PR' : 'PAPR',
         referenceRelation: relation,
         formateurSessionLabels,
-        sessionDispense,
+        sessionDispense: false,
         sessionExcuse: false,
         sessionExerciseLabel: exerciseLabel,
-        sessionMessage: sessionDispense
-          ? `${personDisplayName(person)} est dispensé de cet exercice pour la raison suivante : ${motifDispenseLabel(motif) || '—'}.`
-          : '',
-        sessionSummary: sessionDispense ? `Dispensé de l’exercice ${exerciseLabel}` : '',
+        sessionMessage: '',
+        sessionSummary: '',
         sessionHasValidStatus: true
       };
     }
@@ -518,15 +515,10 @@ function computePrExerciseParticipationState(input = {}){
         referenceRelation: relation,
         formateurSessionLabels: [],
         sessionDispense: false,
-        sessionExcuse: true,
+        sessionExcuse: false,
         sessionExerciseLabel: exerciseLabel,
-        sessionMessage: (() => {
-          const motif = motifExcuseLabel(reference.motif);
-          return motif
-            ? `${personDisplayName(person)} a été excusé pour motif ${motif} lors de la session d’exercice ${exerciseLabel}.`
-            : `${personDisplayName(person)} a été excusé lors de la session d’exercice ${exerciseLabel}.`;
-        })(),
-        sessionSummary: motifExcuseLabel(reference.motif),
+        sessionMessage: '',
+        sessionSummary: '',
         sessionHasValidStatus: true
       };
     }
@@ -657,6 +649,11 @@ function isValidSessionDecision(participation){
   return true;
 }
 
+function canCloseLastSession(state){
+  if(!state || !state.isMultiSession || !state.isLastSession) return true;
+  return (state.unfilledPeople || []).length === 0;
+}
+
 function personHasValidStatusInSession(input = {}){
   const state = computePrExerciseParticipationState(input);
   const id = personneId({ personne_id: input.personneId || input.personne_id });
@@ -703,6 +700,7 @@ module.exports = {
   MOTIF_DISPENSE_LABELS,
   isValidSessionStatut,
   isValidSessionDecision,
+  canCloseLastSession,
   personHasValidStatusInSession,
   collapsePersonSessionHistory,
   computePrExerciseParticipationState,

@@ -35,7 +35,7 @@ const {
 } = require('./_scope-model');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computePrExerciseParticipationState, prSessionLabel, isValidSessionStatut } = require('./_scope-cycle-rules');
+const { computePrExerciseParticipationState, prSessionLabel, isValidSessionStatut, canCloseLastSession } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -1819,6 +1819,36 @@ function createScopeService(repo){
       const attendus = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
       validateCloture(evenement, attendus, participations);
+      if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
+        const cycle = evenement.cycle_id && tx.getCycle
+          ? await tx.getCycle(evenement.cycle_id)
+          : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
+        const cycleEvents = evenement.cycle_id && tx.listCycleEvents
+          ? await tx.listCycleEvents(evenement.cycle_id)
+          : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+        const cyclePersonnes = evenement.cycle_id && tx.listCyclePersonnes ? await tx.listCyclePersonnes(evenement.cycle_id) : [];
+        const cycleParticipations = cycleEvents.length ? await tx.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
+        const cycleAttendus = tx.listAttendusForEvents && cycleEvents.length ? await tx.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id)) : attendus;
+        const personnes = await hydratePersonnes([
+          ...cyclePersonnes.map((row) => row.personne_id),
+          ...cycleParticipations.map((row) => row.personne_id),
+          ...cycleAttendus.map((row) => row.personne_id)
+        ]);
+        const prState = computePrExerciseParticipationState({
+          cycle,
+          evenements: cycleEvents,
+          cyclePersonnes,
+          attendus: cycleAttendus,
+          participations: cycleParticipations,
+          personnes,
+          currentEventId: eventId
+        });
+        if(!canCloseLastSession(prState)){
+          throw new HttpError(422, 'session_incomplete', 'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.', {
+            unfilledPeople: prState.unfilledPeople || []
+          });
+        }
+      }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {
         statut: 'REALISE',
         cloture_at: new Date().toISOString(),

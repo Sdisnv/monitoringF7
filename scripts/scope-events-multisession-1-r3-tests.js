@@ -104,8 +104,8 @@ async function markOn(ctx, personne, sessionIndex, statut, motif){
   await save(ctx.service, ctx.repo, `r3s${sessionIndex}`, [body]);
 }
 
-async function closeAll(ctx){
-  for(let i = 1; i <= 6; i += 1){
+async function closeUntilLast(ctx){
+  for(let i = 1; i <= 5; i += 1){
     const id = `r3s${i}`;
     const ev = await ctx.repo.getEvent(id);
     if(ev.statut !== 'REALISE'){
@@ -204,7 +204,7 @@ function uniqueNips(people){
   await record('10-12 — Fiche personnelle : seule la séance au statut valable', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
-    await closeAll(ctx);
+    await closeUntilLast(ctx);
     const persons = createScopePersonService(ctx.repo);
     const fiche = await persons.fiche(ctx.people[0].personne_id, { from: '2026-09-01', to: '2026-09-30', preset: 'CUSTOM' });
     const rows = fiche.evenements || [];
@@ -218,7 +218,7 @@ function uniqueNips(people){
   await record('11b — Fiche Excusé en 1.3 uniquement', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 3, 'ABSENT_EXCUSE', 'PROFESSIONNEL');
-    await closeAll(ctx);
+    await closeUntilLast(ctx);
     const persons = createScopePersonService(ctx.repo);
     const fiche = await persons.fiche(ctx.people[0].personne_id, { from: '2026-09-01', to: '2026-09-30', preset: 'CUSTOM' });
     const prRows = (fiche.evenements || []).filter((row) => String(row.prExerciseGroupKey || '') === 'cycle-pr-r3:PR:1');
@@ -230,7 +230,7 @@ function uniqueNips(people){
   await record('13 — Analytics sans faux non renseigné de session', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
-    await closeAll(ctx);
+    await closeUntilLast(ctx);
     const analytics = createScopeAnalyticsService(ctx.repo);
     const snap = await analytics.snapshot({
       personneId: ctx.people[0].personne_id,
@@ -249,7 +249,7 @@ function uniqueNips(people){
   await record('14 — Rapport réalisé sans faux Non renseigné', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
-    await closeAll(ctx);
+    await closeUntilLast(ctx);
     const s1 = await ctx.service.lireEvenement('r3s1');
     const s5 = await ctx.service.lireEvenement('r3s5');
     const rows1 = nominativeRows(s1);
@@ -327,7 +327,7 @@ function uniqueNips(people){
     assert.ok(ui.includes("specialization = 'PAPR'") || ui.includes("PERSONNEL_SPEC_OPTIONS"));
     assert.ok(ui.includes("'PAPR'"));
     assert.ok(ui.includes('Date de début de l’analyse') || ui.includes('DATE DE DÉBUT DE L’ANALYSE'));
-    assert.ok(html.includes('scope-events-multisession-1-r3'));
+    assert.ok(html.includes('scope-events-multisession-1-r4') || html.includes('scope-events-multisession-1-r3'));
   });
 
   await record('21b — NIP unique côté service mémoire', async () => {
