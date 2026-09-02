@@ -288,7 +288,7 @@ async function seedCurrent(){
     fs.writeFileSync(path.join(OUT, 'SCOPE_Exercice_PR_GEN_2026-03-03.pdf'), eventPdf.buffer);
     const sessionSrc = renderer.slice(renderer.indexOf('renderSessionBody'));
     assert.ok(!sessionSrc.includes("iconHeading('sign', 'Validation'"));
-    assert.ok(sessionSrc.includes('drawDomainSignature(m)'));
+    assert.ok(sessionSrc.includes('drawDomainSignature(m'));
   });
 
   await record('46-47 — période bornée, KPI stables', async () => {
@@ -316,7 +316,7 @@ async function seedCurrent(){
   await record('48 — R4 non modifié', () => {
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(html.includes('scope-multisession-report-1-r3'));
+    assert.ok(html.includes('scope-multisession-report-1-r4'));
   });
 
   const failed = results.filter((r) => r.status === 'NOK');

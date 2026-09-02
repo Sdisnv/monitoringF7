@@ -28,6 +28,7 @@ const TYPE = Object.freeze({
   body: 11,
   conclusion: 14,
   conclusionGap: 14,
+  conclusionTop: 12,
   legend: 8,
   blockShift: 28,
   ink: 'anthracite'
@@ -315,14 +316,14 @@ class ScopePdfRenderer {
     this.ensure(size * 3);
     const match = String(text || '').match(/(\d+,\d+\s*%|\d+\s*%)/);
     if(!match){
-      this.para(text, { size });
+      this.para(text, { size, align: 'justify' });
       return;
     }
     const idx = match.index;
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(size)
-      .text(text.slice(0, idx), MARGIN, this.doc.y, { width, continued: true });
-    this.doc.font('Helvetica-Bold').text(match[0], { continued: true });
-    this.doc.font('Helvetica').text(text.slice(idx + match[0].length), { continued: false, width });
+      .text(text.slice(0, idx), MARGIN, this.doc.y, { width, continued: true, align: 'justify' });
+    this.doc.font('Helvetica-Bold').text(match[0], { continued: true, align: 'justify' });
+    this.doc.font('Helvetica').text(text.slice(idx + match[0].length), { continued: false, width, align: 'justify' });
   }
 
   drawPrPersonLine(row){
@@ -728,7 +729,6 @@ class ScopePdfRenderer {
 
   renderEventBody(m){
     const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
-    this.iconHeading('identity', 'Détail de l’exercice', TYPE.section, { after: TYPE.sectionGap });
     this.kv([
       { label: 'Date de l’exercice', value: formatDisplayDate(m.event.date) },
       { label: 'Statut', value: m.event.statutLabel },
@@ -743,7 +743,6 @@ class ScopePdfRenderer {
       const v = (m.officiel && m.officiel.volumes) || {};
       this.para(`dont permutations : ${Number(v.permutations || 0)}  (sous-ensemble des présents, jamais additionnées)`);
     }
-    this.motifs(m.officiel, { skipEmpty: true, compact: true });
     this.renderEncadrement(m);
     if(m.nominatif && m.nominatif.length){
       this.iconHeading('people', 'Liste nominative', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
@@ -764,29 +763,31 @@ class ScopePdfRenderer {
     } else if(m.quantitative){
       this.para('Suivi quantitatif : aucun nom n’est inventé.');
     }
-    this.drawDomainSignature(m);
+    this.drawDomainSignature(m, { spaceBefore: 14 });
   }
 
-  drawDomainSignature(m){
-    this.ensure(118);
+  drawDomainSignature(m, options){
+    if(options && options.spaceBefore) this.doc.y += options.spaceBefore;
     const isPr = m.domaine === 'PR' || (m.event && m.event.domaine === 'PR');
     if(isPr && m.signatureImage){
       const person = m.signaturePerson || {};
       const name = [person.grade, person.prenom, person.nom].filter(Boolean).join(' ') || '—';
-      const y = this.doc.y + 2;
+      this.ensure(86);
+      const y = this.doc.y;
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
         .text(name, MARGIN, y, { width: 320 });
+      const functionY = y + 36;
       const signaturePath = resolveSignaturePrPath({ required: process.env.NODE_ENV !== 'production' });
-      this.doc.image(signaturePath, MARGIN, y + 10, { fit: SIGNATURE_FIT });
+      this.doc.image(signaturePath, MARGIN, y + 8, { fit: SIGNATURE_FIT });
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
-        .text(m.signatureFunction || 'CHEF PROTECTION RESPIRATOIRE', MARGIN, y + 96, { width: 320 });
-      this.doc.y = y + 118;
+        .text(m.signatureFunction || 'CHEF PROTECTION RESPIRATOIRE', MARGIN, functionY, { width: 320 });
+      this.doc.y = Math.max(functionY + 16, y + 78);
       return;
     }
-    this.doc.moveDown(0.3);
+    this.ensure(48);
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10)
       .text(m.signatureFunction || m.signatureRole || 'Responsable de domaine', MARGIN, this.doc.y);
-    this.doc.moveDown(1.2);
+    this.doc.moveDown(1.15);
     this.doc.font('Helvetica').fontSize(11).text('____________________________', MARGIN, this.doc.y);
   }
 
@@ -794,7 +795,6 @@ class ScopePdfRenderer {
     const v = (m.officiel && m.officiel.volumes) || {};
     const rates = m.rates || {};
     const innerW = PAGE_W - 2 * MARGIN;
-    this.iconHeading('identity', 'Détail de l’exercice', TYPE.section, { after: TYPE.sectionGap });
     this.kv([
       { label: 'Domaine', value: domaineLabel(m.domaine) || '—' },
       { label: 'Spécialisation', value: m.specialization || '—' },
@@ -805,6 +805,7 @@ class ScopePdfRenderer {
       { label: 'Statut', value: (m.event && m.event.statutLabel) || '—' },
       { label: 'Année analysée', value: String((m.period && m.period.from) || '').slice(0, 4) || '—' }
     ], { rowH: 24 });
+    this.doc.y += TYPE.section + TYPE.sectionGap;
     this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { spaceBefore: TYPE.blockShift, after: TYPE.sectionGap });
     const gap = 5;
     const cells = [
@@ -851,9 +852,10 @@ class ScopePdfRenderer {
     this.doc.y = chartRowY + 12 + chartH + 8;
     const donutPoints = ((((m.graphs && m.graphs.repartition && m.graphs.repartition.series) || [])[0] || {}).points) || [];
     if(donutPoints.length){
-      this.doc.y = this.drawDonutLegend(donutPoints, leftX, this.doc.y, colW) + 6;
+      this.doc.y = this.drawDonutLegend(donutPoints, leftX, this.doc.y, colW);
     }
     if(m.graphs && m.graphs.volumesSeances && (m.seances || []).length){
+      this.doc.y += TYPE.blockShift;
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(m.graphs.volumesSeances.question, MARGIN, this.doc.y, { width: innerW });
       const boxY = this.doc.y + 10;
@@ -938,20 +940,23 @@ class ScopePdfRenderer {
     this.para(m.tauxExplanation || '', { size: TYPE.body });
 
     while(this._pageIndex < 3) this.nextPage();
+    this.doc.y += TYPE.conclusionTop;
     this.iconHeading('plain', 'CONCLUSION', TYPE.conclusion, { after: TYPE.conclusionGap });
     (m.conclusion || []).forEach((paragraph, i) => {
       if(i === 0) this.paraWithBoldRate(paragraph);
-      else this.para(paragraph, { size: TYPE.body });
+      else this.para(paragraph, { size: TYPE.body, align: 'justify' });
       this.doc.moveDown(0.55);
     });
     if(m.prSuspensionText && m.nonParticipants && m.nonParticipants.length){
       this.doc.moveDown(0.35);
-      this.para(m.prSuspensionText, { size: TYPE.body });
+      this.para(m.prSuspensionText, { size: TYPE.body, align: 'justify' });
       this.doc.moveDown(0.55);
       m.nonParticipants.forEach((r) => this.drawPrPersonLine(r));
+      this.doc.moveDown(2);
+    } else {
+      this.doc.moveDown(1.15);
     }
-    this.doc.moveDown(1.1);
-    this.drawDomainSignature(m);
+    this.drawDomainSignature(m, { spaceBefore: 0 });
   }
 
   render(){
@@ -962,8 +967,8 @@ class ScopePdfRenderer {
     if(m.kind === 'SESSION'){
       this.para(`Établi le ${formatDisplayDateTime(this.meta.generatedAt) || ''}`);
     } else if(m.kind === 'EVENT' && m.event){
-      this.para(m.subtitle || '');
-      this.para(`Établi le ${formatDisplayDateTime(this.meta.generatedAt) || formatDisplayDate(m.event.date)}`);
+      this.para(`Établi le : ${formatDisplayDate(this.meta.generatedAt) || formatDisplayDate(m.event.date)}`);
+      this.doc.moveDown(0.55);
     } else if(m.kind === 'PERSON'){
       this.para(m.subtitle || 'Fiche individuelle');
       this.para('Synthèse de participation');

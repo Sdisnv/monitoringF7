@@ -36,6 +36,12 @@ function roleGroupRank(role){
   return idx >= 0 ? idx : 99;
 }
 
+function exerciseReportTitle(event){
+  const libelle = String((event && event.libelle) || '').replace(/\s+/g, ' ').trim();
+  const core = libelle || 'Exercice';
+  return `RAPPORT — ${core.toLocaleUpperCase('fr-CH')}`;
+}
+
 const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION']);
 
 const STATUT_LABELS = Object.freeze({
@@ -382,7 +388,7 @@ async function collectReport(repo, query, options){
       period,
       domaine: displayDomaineCode(fiche.evenement.domaine_code),
       cible: cibles[0] && cibles[0].niveau_code,
-      title: isLegacy ? 'Rapport d’exercice — historique agrégé' : 'Rapport d’exercice',
+      title: isLegacy ? 'Rapport d’exercice — historique agrégé' : exerciseReportTitle(fiche.evenement),
       subtitle: perimeterTitle(kind, { event: { ...fiche.evenement, cibles } }),
       filename: buildFilename(kind, {
         period,
@@ -493,5 +499,6 @@ module.exports = {
   periodSlug,
   collectReport,
   nominativeRows,
+  exerciseReportTitle,
   SOUS_DOMAINES
 };

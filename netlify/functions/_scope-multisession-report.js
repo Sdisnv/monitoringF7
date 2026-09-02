@@ -126,7 +126,7 @@ function readingNotesFor(){
   ];
 }
 
-const TAUX_EXPLANATION = 'Le taux de participation mesure la proportion du personnel ayant effectivement participé à l’exercice parmi le personnel soumis à l’obligation de participation. Les personnes excusées et absentes restent intégrées à la population de référence. Les personnes dispensées en sont exclues. Dans le cadre d’un exercice composé de plusieurs séances, une personne ayant participé à au moins une séance n’est comptabilisée qu’une seule fois dans le bilan global.';
+const TAUX_EXPLANATION = 'Le taux de participation mesure la proportion du personnel ayant effectivement participé à l’exercice parmi le personnel soumis à l’obligation de participation. Les présents comptent comme participation. Les personnes excusées et absentes restent intégrées à la population de référence. Les personnes dispensées en sont exclues. Dans le cadre d’un exercice composé de plusieurs séances, une personne n’est comptabilisée qu’une seule fois dans le bilan global : une participation à l’une des séances couvre la personne au niveau de la session, conformément aux règles R4.';
 
 function formatPctFr(value){
   if(value == null || !Number.isFinite(Number(value))) return null;
@@ -141,7 +141,7 @@ function buildConclusion({ percentage, objectiveThreshold, domaine, nonParticipa
   if(tauxText == null){
     paragraphs.push('L’analyse des présences ne permet pas d’établir un taux de participation global évaluable.');
   } else if(objectiveThreshold == null || !Number.isFinite(Number(objectiveThreshold))){
-    paragraphs.push(`L’analyse des présences démontre un taux de participation global de ${tauxText} %. Aucun objectif de participation n’est configuré pour ce périmètre dans SCOPE.`);
+    paragraphs.push(`L’analyse des présences démontre un taux de participation global de ${tauxText} %. Aucun objectif de participation n’est actuellement défini pour ce périmètre et cette période.`);
   } else {
     const obj = Number(objectiveThreshold);
     const gap = round1(Number(percentage) - obj);

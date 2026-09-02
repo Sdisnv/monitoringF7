@@ -162,7 +162,7 @@ async function seedCurrent(){
     assert.ok(String(model.title).includes('PR 1'));
     assert.ok(!/cycle-pr-r1/.test(model.title));
     assert.strictEqual(model.sessionCountLabel, '6 séances');
-    assert.ok(renderer.includes("iconHeading('identity'"));
+    assert.ok(renderer.includes('iconHeading'));
     assert.ok(renderer.includes('Helvetica-Bold'));
     assert.ok(renderer.includes("align: ['left', 'left', 'right', 'right', 'right', 'right', 'right']"));
     const pdf = await generateReport(ctx.repo, { kind: 'SESSION', evenementId: 'r1-s1', nominatif: true, year: 2026 }, ACTOR);
@@ -331,7 +331,7 @@ async function seedCurrent(){
   await record('36-38 — rapport exercice design, sans graphique, présence conservée', async () => {
     const ctx = await seedCurrent();
     const eventModel = await collectReport(ctx.repo, { kind: 'EVENT', evenementId: 'r1-s5' }, { includeNominatif: true });
-    assert.ok(/Rapport d’exercice|Rapport d'exercice/.test(eventModel.title));
+    assert.ok(/RAPPORT — /.test(eventModel.title));
     const bodyStart = renderer.indexOf('renderEventBody');
     const bodyEnd = renderer.indexOf('drawDomainSignature');
     const eventBody = renderer.slice(bodyStart, bodyEnd);
@@ -347,7 +347,7 @@ async function seedCurrent(){
     const rules = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(/scope-multisession-report-1-r[123]/.test(html));
+    assert.ok(/scope-multisession-report-1-r[1234]/.test(html));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

@@ -230,7 +230,7 @@ async function seedEventDisplay(){
     assert.strictEqual(SIGNATURE_FIT[1], 96);
     assert.ok(renderer.includes('{ fit: SIGNATURE_FIT }'));
     assert.ok(!renderer.includes('[168, 48]'));
-    assert.ok(eventSrc.includes('drawDomainSignature(m)') || renderer.includes('this.drawDomainSignature(m)'));
+    assert.ok(eventSrc.includes('drawDomainSignature(m') || renderer.includes('this.drawDomainSignature(m'));
   });
 
   await record('28-31 — motifs complets, Absent, pas Non excusé exercice', async () => {
@@ -286,7 +286,7 @@ async function seedEventDisplay(){
     assert.ok(rules.includes('canCloseLastSession'));
     const items = logic.eventDomainFilterItems([{ code: 'PR' }, { code: 'PAPR' }, { code: 'AUTO' }]);
     assert.ok(!items.some((i) => i.code === 'PAPR' && i.type === 'domain'));
-    assert.ok(html.includes('scope-multisession-report-1-r3'));
+    assert.ok(/scope-multisession-report-1-r[34]/.test(html));
     const notes = readingNotesFor();
     assert.ok(notes.some((n) => n.id === 'ABSENT'));
   });
