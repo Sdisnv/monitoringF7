@@ -158,7 +158,7 @@ function buildConclusion({ percentage, objectiveThreshold, domaine, nonParticipa
     }
   }
   const prSuspension = displayDomaineCode(domaine) === 'PR' && nonParticipants && nonParticipants.length
-    ? 'Le personnel suivant, n’ayant participé à aucune des séances composant cet exercice, est suspendu, avec effet dès la fin de la dernière séance de l’exercice, de l’engagement opérationnel en qualité de porteur d’appareil de protection respiratoire (PAPR), jusqu’à sa prochaine participation à un exercice PR :'
+    ? 'Pour le personnel suivant, n’ayant participé à aucune des séances composant cet exercice, le Chef protection respiratoire prendra les mesures nécessaires conformément à l’ordre de service 7.01, article 7.3 « Retrait de compétence à la suite d’un manquement aux exercices », et informera individuellement chaque personne de la suite à donner.'
     : '';
   return { paragraphs, prSuspension };
 }

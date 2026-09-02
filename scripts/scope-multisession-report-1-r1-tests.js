@@ -262,12 +262,13 @@ async function seedCurrent(){
   await record('24-26 — PR suspension texte, sans dispensé', async () => {
     const ctx = await seedCurrent();
     const model = await collectMultisessionReport(ctx.repo, 'r1-s1');
-    assert.ok(model.prSuspensionText.includes('suspendu'));
-    assert.ok(model.prSuspensionText.includes('PAPR'));
+    assert.ok(model.prSuspensionText.includes('ordre de service 7.01'));
+    assert.ok(model.prSuspensionText.includes('article 7.3'));
+    assert.ok(!model.prSuspensionText.includes('suspendu'));
     assert.ok(!model.nonParticipants.some((r) => r.statut === 'DISPENSE'));
     const pdf = await generateReport(ctx.repo, { kind: 'SESSION', evenementId: 'r1-s1', nominatif: true, year: 2026 }, ACTOR);
     const text = pdfText(pdf.buffer);
-    assert.ok(/porteur d/.test(text) || /PAPR/.test(text));
+    assert.ok(/ordre de service 7\.01/.test(text) || /7\.3/.test(text) || /PAPR/.test(text));
     assert.ok(!/a \u00e9t\u00e9 techniquement appliqu/.test(text));
   });
 
@@ -346,7 +347,7 @@ async function seedCurrent(){
     const rules = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
     assert.ok(rules.includes('sessionHasValidStatus'));
     assert.ok(rules.includes('canCloseLastSession'));
-    assert.ok(/scope-multisession-report-1-r[12]/.test(html));
+    assert.ok(/scope-multisession-report-1-r[123]/.test(html));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

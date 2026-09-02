@@ -180,7 +180,8 @@ function drawGroupedChart(doc, dataset, box){
       .text('Non évaluable — aucune série officielle.', x, y + h / 2 - 6, { width: w, align: 'center' });
     return y + h;
   }
-  const pad = { l: 22, r: 6, t: 6, b: 22 };
+  const skipLegend = box.legend === 'external' || box.skipLegend;
+  const pad = { l: 22, r: 6, t: 6, b: skipLegend ? 20 : 22 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
   const useLines = dataset.mode === 'lines' || dataset.type === 'lines' || dataset.type === 'line-series' || categories.length > 6;
@@ -237,6 +238,10 @@ function drawGroupedChart(doc, dataset, box){
     doc.fillColor(rgb(INSTITUTION.ink)).fontSize(6).font('Helvetica')
       .text(String(cat), gx - 16, y + h - 14, { width: 32, align: 'center' });
   });
+  if(skipLegend){
+    doc.restore();
+    return y + h;
+  }
   let lx = x + pad.l;
   const ly = y + h + 2;
   series.forEach((s, i) => {

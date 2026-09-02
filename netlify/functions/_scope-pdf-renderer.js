@@ -21,6 +21,19 @@ const HEADER_H = 58;
 const FOOTER_H = 36;
 const CONTENT_BOTTOM = PAGE_H - FOOTER_H - 6;
 
+const TYPE = Object.freeze({
+  section: 16,
+  sectionGap: 14,
+  notesGap: 18,
+  body: 11,
+  conclusion: 14,
+  conclusionGap: 14,
+  legend: 8,
+  blockShift: 28,
+  ink: 'anthracite'
+});
+const SIGNATURE_FIT = Object.freeze([336, 96]);
+
 function resolveSignaturePrPath(options){
   const required = !options || options.required !== false;
   for(const candidate of SIGNATURE_CANDIDATES){
@@ -150,12 +163,14 @@ class ScopePdfRenderer {
     };
     this._lockPages = true;
     this._forcePage = false;
+    this._pageIndex = 1;
   }
 
   nextPage(){
     this._forcePage = true;
     this.doc.addPage();
     this._forcePage = false;
+    this._pageIndex += 1;
     this.doc.y = HEADER_H + 18;
   }
 
@@ -211,35 +226,120 @@ class ScopePdfRenderer {
 
   iconHeading(kind, text, size, opts){
     if(opts && opts.spaceBefore) this.doc.y += opts.spaceBefore;
-    this.ensure(20);
-    const y = this.doc.y;
+    const fontSize = size || TYPE.section;
+    const after = opts && opts.after != null ? opts.after : TYPE.sectionGap;
+    const plain = !kind || kind === 'plain' || kind === 'none';
+    this.ensure(fontSize + after + 4);
+    const startY = this.doc.y;
+    this.doc.font('Helvetica-Bold').fontSize(fontSize);
+    const lineH = this.doc.currentLineHeight();
+    const iconCy = startY + lineH / 2;
     const x = MARGIN;
-    this.doc.save();
-    if(kind === 'identity'){
-      this.doc.circle(x + 5, y + 6, 5).fill(rgb(INSTITUTION.red));
-    } else if(kind === 'chart'){
-      this.doc.rect(x, y + 2, 10, 10).fill(rgb(CHART_TOKENS.primary));
-    } else if(kind === 'people'){
-      this.doc.circle(x + 4, y + 5, 3.5).fill(rgb(INSTITUTION.anthracite));
-      this.doc.rect(x + 1, y + 9, 6, 4).fill(rgb(INSTITUTION.anthracite));
-    } else if(kind === 'notes'){
-      this.doc.rect(x + 1, y + 2, 8, 10).strokeColor(rgb(INSTITUTION.red)).lineWidth(0.8).stroke();
-    } else if(kind === 'sign'){
-      this.doc.moveTo(x, y + 10).lineTo(x + 12, y + 10).strokeColor(rgb(INSTITUTION.red)).lineWidth(1).stroke();
-    } else {
-      this.doc.rect(x + 1, y + 3, 9, 9).fill(rgb(INSTITUTION.red));
+    if(!plain){
+      this.doc.save();
+      if(kind === 'identity'){
+        this.doc.circle(x + 4.5, iconCy, 4.5).fill(rgb(INSTITUTION.red));
+      } else if(kind === 'chart'){
+        this.doc.rect(x + 1, iconCy - 4.5, 9, 9).fill(rgb(CHART_TOKENS.primary));
+      } else if(kind === 'people'){
+        this.doc.circle(x + 4.5, iconCy - 2.2, 3.2).fill(rgb(INSTITUTION.anthracite));
+        this.doc.rect(x + 1.5, iconCy + 1.4, 6, 3.2).fill(rgb(INSTITUTION.anthracite));
+      } else if(kind === 'kpi'){
+        this.doc.rect(x + 1, iconCy - 4.5, 9, 9).fill(rgb(INSTITUTION.red));
+      } else {
+        this.doc.rect(x + 1, iconCy - 4.5, 9, 9).fill(rgb(INSTITUTION.anthracite));
+      }
+      this.doc.restore();
     }
-    this.doc.restore();
-    this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(size || 12)
-      .text(text, x + 16, y, { width: PAGE_W - 2 * MARGIN - 16 });
-    this.doc.moveDown(0.18);
+    const textX = plain ? x : x + 16;
+    this.doc.fillColor(rgb(INSTITUTION.anthracite || INSTITUTION.ink)).font('Helvetica-Bold').fontSize(fontSize)
+      .text(text, textX, startY, { width: PAGE_W - textX - MARGIN, lineBreak: false });
+    this.doc.y = startY + lineH + after;
   }
 
   para(text, opts){
     const width = PAGE_W - 2 * MARGIN;
-    this.ensure(14);
-    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(8.5)
-      .text(text, MARGIN, this.doc.y, Object.assign({ width }, opts || {}));
+    const size = (opts && opts.size) || 8.5;
+    const rest = Object.assign({}, opts || {});
+    delete rest.size;
+    delete rest.bold;
+    this.ensure(size + 6);
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font((opts && opts.bold) ? 'Helvetica-Bold' : 'Helvetica').fontSize(size)
+      .text(text, MARGIN, this.doc.y, Object.assign({ width }, rest));
+  }
+
+  eventStatutLabel(row){
+    if(!row) return '';
+    if(row.statut === 'ABSENT_NON_EXCUSE' || row.statutLabel === 'Non excusé') return 'Absent';
+    return row.statutLabel || '';
+  }
+
+  drawDonutLegend(points, x, y, w){
+    const size = TYPE.legend;
+    const rowH = 12;
+    const sw = 8;
+    const labelW = 92;
+    const volW = 36;
+    const pctW = Math.max(36, w - sw - 10 - labelW - volW);
+    const total = (points || []).reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
+    (points || []).forEach((p, i) => {
+      const ly = y + i * rowH;
+      this.doc.rect(x, ly + 2, sw, sw).fill(rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token)));
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(size)
+        .text(String(p.label || ''), x + sw + 6, ly, { width: labelW, lineBreak: false });
+      this.doc.text(String(p.value || 0), x + sw + 6 + labelW, ly, { width: volW, align: 'right', lineBreak: false });
+      this.doc.text(`${Math.round(100 * Number(p.value || 0) / total)} %`, x + sw + 6 + labelW + volW, ly, {
+        width: pctW, align: 'right', lineBreak: false
+      });
+    });
+    return y + (points || []).length * rowH;
+  }
+
+  drawLineSeriesLegend(series, x, y, w){
+    const size = TYPE.legend;
+    const items = series || [];
+    const col = items.length ? w / items.length : w;
+    items.forEach((s, i) => {
+      const lx = x + i * col;
+      const fill = s.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(s.token);
+      this.doc.rect(lx, y + 2, 8, 8).fill(rgb(fill));
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(size)
+        .text(s.label || '', lx + 12, y, { width: col - 16, lineBreak: false });
+    });
+    return y + 14;
+  }
+
+  paraWithBoldRate(text){
+    const size = TYPE.body;
+    const width = PAGE_W - 2 * MARGIN;
+    this.ensure(size * 3);
+    const match = String(text || '').match(/(\d+,\d+\s*%|\d+\s*%)/);
+    if(!match){
+      this.para(text, { size });
+      return;
+    }
+    const idx = match.index;
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(size)
+      .text(text.slice(0, idx), MARGIN, this.doc.y, { width, continued: true });
+    this.doc.font('Helvetica-Bold').text(match[0], { continued: true });
+    this.doc.font('Helvetica').text(text.slice(idx + match[0].length), { continued: false, width });
+  }
+
+  drawPrPersonLine(row){
+    const width = PAGE_W - 2 * MARGIN;
+    this.ensure(TYPE.body + 6);
+    const y = this.doc.y;
+    const name = [row.grade, row.prenom, row.nom].filter(Boolean).join(' ');
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(TYPE.body);
+    const bulletW = this.doc.widthOfString('·  ');
+    this.doc.text('·  ', MARGIN, y, { lineBreak: false });
+    this.doc.font('Helvetica-Bold').fontSize(TYPE.body);
+    const nameW = this.doc.widthOfString(name);
+    const xName = MARGIN + bulletW;
+    this.doc.text(name, xName, y, { lineBreak: false });
+    this.doc.font('Helvetica').fontSize(TYPE.body)
+      .text(` (${row.nip || ''})`, xName + nameW, y, { width: Math.max(48, width - bulletW - nameW) });
+    this.doc.y = y + TYPE.body + 4;
   }
 
   kv(rows, options){
@@ -421,7 +521,7 @@ class ScopePdfRenderer {
     if(options && options.compact){
       this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7)
         .text('Motifs d’excuse', MARGIN, this.doc.y, { width: PAGE_W - 2 * MARGIN });
-      this.para(rows.map((r) => `${r[0]} ${Number(r[1] || 0)}`).join('  ·  '));
+      this.para(rows.map((r) => `${r[0]} : ${Number(r[1] || 0)}`).join('   '), { size: 8 });
       return;
     }
     this.heading('Motifs d’excuse', 11);
@@ -543,7 +643,7 @@ class ScopePdfRenderer {
 
   renderEncadrement(m){
     if(!m.encadrement || !m.encadrement.length) return;
-    this.heading('Encadrement (hors taux)', 11);
+    this.iconHeading('people', 'Encadrement (hors taux)', TYPE.section, { after: TYPE.sectionGap });
     const roleLabels = {
       FORMATEUR: 'Formateurs',
       SURVEILLANT: 'Surveillants',
@@ -628,7 +728,7 @@ class ScopePdfRenderer {
 
   renderEventBody(m){
     const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
-    this.iconHeading('identity', 'Détail de l’exercice', 11);
+    this.iconHeading('identity', 'Détail de l’exercice', TYPE.section, { after: TYPE.sectionGap });
     this.kv([
       { label: 'Date de l’exercice', value: formatDisplayDate(m.event.date) },
       { label: 'Statut', value: m.event.statutLabel },
@@ -636,8 +736,8 @@ class ScopePdfRenderer {
       { label: 'Domaine', value: domaineLabel(m.event.domaine) || domaineLabel(m.domaine) || '—' },
       { label: 'Spécialisation', value: m.event.specialization || ((m.event.domaine === 'PR' || m.domaine === 'PR') ? 'PAPR' : '—') },
       { label: 'Cible(s) / OI', value: (m.event.cibles || []).map((c) => c.code).join(', ') || '—' }
-    ], { cols: 3, rowH: 26 });
-    this.iconHeading('kpi', 'Synthèse de participation', 11);
+    ], { cols: 3, rowH: 22 });
+    this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { after: TYPE.sectionGap });
     this.kpiOfficial(m.officiel, { event: true });
     if(dap){
       const v = (m.officiel && m.officiel.volumes) || {};
@@ -646,16 +746,20 @@ class ScopePdfRenderer {
     this.motifs(m.officiel, { skipEmpty: true, compact: true });
     this.renderEncadrement(m);
     if(m.nominatif && m.nominatif.length){
-      this.iconHeading('people', 'Liste nominative', 11, { spaceBefore: 6 });
+      this.iconHeading('people', 'Liste nominative', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Cible', 'Statut', 'Motif'],
         m.nominatif.map((r) => [
           r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '',
-          r.statutLabel,
+          this.eventStatutLabel(r),
           r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
         ]),
-        [40, 82, 70, 48, 40, 46, 68, 65],
-        { align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'], rowH: 14 }
+        [38, 72, 62, 42, 36, 42, 52, 155],
+        {
+          align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'],
+          rowH: 13,
+          wrap: [false, false, false, false, false, false, false, true]
+        }
       );
     } else if(m.quantitative){
       this.para('Suivi quantitatif : aucun nom n’est inventé.');
@@ -664,19 +768,19 @@ class ScopePdfRenderer {
   }
 
   drawDomainSignature(m){
-    this.ensure(70);
+    this.ensure(118);
     const isPr = m.domaine === 'PR' || (m.event && m.event.domaine === 'PR');
     if(isPr && m.signatureImage){
       const person = m.signaturePerson || {};
       const name = [person.grade, person.prenom, person.nom].filter(Boolean).join(' ') || '—';
-      const y = this.doc.y + 4;
+      const y = this.doc.y + 2;
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
-        .text(name, MARGIN, y, { width: 280 });
+        .text(name, MARGIN, y, { width: 320 });
       const signaturePath = resolveSignaturePrPath({ required: process.env.NODE_ENV !== 'production' });
-      this.doc.image(signaturePath, MARGIN, y + 4, { fit: [168, 48] });
+      this.doc.image(signaturePath, MARGIN, y + 10, { fit: SIGNATURE_FIT });
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
-        .text(m.signatureFunction || 'CHEF PROTECTION RESPIRATOIRE', MARGIN, y + 46, { width: 320 });
-      this.doc.y = y + 64;
+        .text(m.signatureFunction || 'CHEF PROTECTION RESPIRATOIRE', MARGIN, y + 96, { width: 320 });
+      this.doc.y = y + 118;
       return;
     }
     this.doc.moveDown(0.3);
@@ -690,7 +794,7 @@ class ScopePdfRenderer {
     const v = (m.officiel && m.officiel.volumes) || {};
     const rates = m.rates || {};
     const innerW = PAGE_W - 2 * MARGIN;
-    this.iconHeading('identity', 'Détail de l’exercice', 11);
+    this.iconHeading('identity', 'Détail de l’exercice', TYPE.section, { after: TYPE.sectionGap });
     this.kv([
       { label: 'Domaine', value: domaineLabel(m.domaine) || '—' },
       { label: 'Spécialisation', value: m.specialization || '—' },
@@ -700,8 +804,8 @@ class ScopePdfRenderer {
       { label: 'Population attendue', value: String(m.population != null ? m.population : 0) },
       { label: 'Statut', value: (m.event && m.event.statutLabel) || '—' },
       { label: 'Année analysée', value: String((m.period && m.period.from) || '').slice(0, 4) || '—' }
-    ], { rowH: 26 });
-    this.iconHeading('kpi', 'Synthèse de participation', 11);
+    ], { rowH: 24 });
+    this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { spaceBefore: TYPE.blockShift, after: TYPE.sectionGap });
     const gap = 5;
     const cells = [
       ['Population attendue', String(m.population != null ? m.population : 0)],
@@ -725,10 +829,10 @@ class ScopePdfRenderer {
     this.doc.y = y + h + 4;
     this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7.5)
       .text('Les volumes globaux sont dédupliqués au niveau personne. Les dispensés restent hors du dénominateur du taux officiel.', MARGIN, this.doc.y, { width: innerW });
-    this.iconHeading('chart', 'Analyse graphique', 11, { spaceBefore: 10 });
+    this.iconHeading('chart', 'Analyse graphique', TYPE.section, { spaceBefore: TYPE.blockShift, after: TYPE.sectionGap });
     const colGap = 18;
     const colW = (innerW - colGap) / 2;
-    const chartH = 118;
+    const chartH = 102;
     const chartRowY = this.doc.y;
     const leftX = MARGIN;
     const rightX = MARGIN + colW + colGap;
@@ -744,31 +848,25 @@ class ScopePdfRenderer {
         .text(m.graphs.tauxSeances.question, rightX, chartRowY, { width: colW });
       drawBarChart(this.doc, m.graphs.tauxSeances, { x: rightX, y: chartRowY + 12, w: colW, h: chartH });
     }
-    this.doc.y = chartRowY + 12 + chartH + 6;
+    this.doc.y = chartRowY + 12 + chartH + 8;
     const donutPoints = ((((m.graphs && m.graphs.repartition && m.graphs.repartition.series) || [])[0] || {}).points) || [];
     if(donutPoints.length){
-      const total = donutPoints.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
-      const col = innerW / donutPoints.length;
-      donutPoints.forEach((p, i) => {
-        const lx = MARGIN + i * col;
-        const ly = this.doc.y;
-        const share = `${Math.round(100 * Number(p.value || 0) / total)} %`;
-        this.doc.rect(lx, ly, 7, 7).fill(rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token)));
-        this.doc.fillColor(rgb(INSTITUTION.ink)).fontSize(8).font('Helvetica')
-          .text(`${p.label}  ${p.value || 0} — ${share}`, lx + 11, ly - 1, { width: col - 14, lineBreak: false });
-      });
-      this.doc.y += 16;
+      this.doc.y = this.drawDonutLegend(donutPoints, leftX, this.doc.y, colW) + 6;
     }
     if(m.graphs && m.graphs.volumesSeances && (m.seances || []).length){
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(m.graphs.volumesSeances.question, MARGIN, this.doc.y, { width: innerW });
       const boxY = this.doc.y + 10;
-      const endY = drawGroupedChart(this.doc, m.graphs.volumesSeances, { x: MARGIN, y: boxY, w: innerW, h: 108 });
-      this.doc.y = Math.max(boxY + 108, endY) + 4;
+      const volH = 92;
+      const endY = drawGroupedChart(this.doc, m.graphs.volumesSeances, {
+        x: MARGIN, y: boxY, w: innerW, h: volH, legend: 'external'
+      });
+      this.doc.y = Math.max(boxY + volH, endY) + 16;
+      this.doc.y = this.drawLineSeriesLegend(m.graphs.volumesSeances.series, MARGIN, this.doc.y, innerW);
     }
 
     this.nextPage();
-    this.iconHeading('kpi', 'Détail par séance', 11);
+    this.iconHeading('kpi', 'Détail par séance', TYPE.section, { after: TYPE.sectionGap });
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10)
       .text(`Taux de participation global : ${formatTaux(rates.participation != null ? rates.participation : (m.officiel && m.officiel.percentage))}`, MARGIN, this.doc.y, { width: innerW });
     this.doc.moveDown(0.35);
@@ -787,7 +885,7 @@ class ScopePdfRenderer {
       { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right'], rowH: 15 }
     );
 
-    this.iconHeading('people', 'Personnel dispensé', 11, { spaceBefore: 10 });
+    this.iconHeading('people', 'Personnel dispensé', TYPE.section, { spaceBefore: 10, after: TYPE.sectionGap });
     if(m.dispenses && m.dispenses.length){
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Motif de dispense', 'Séance'],
@@ -795,49 +893,64 @@ class ScopePdfRenderer {
           r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
           r.motifLabel || '', r.seanceLabel || ''
         ]),
-        [42, 78, 68, 48, 40, 110, 73],
-        { align: ['left', 'left', 'left', 'left', 'left', 'left', 'left'], rowH: 15 }
+        [40, 72, 64, 44, 36, 130, 73],
+        {
+          align: ['left', 'left', 'left', 'left', 'left', 'left', 'left'],
+          rowH: 14,
+          wrap: [false, false, false, false, false, true, false]
+        }
       );
     } else {
       this.para('Aucune personne dispensée sur l’exercice.');
     }
 
-    this.iconHeading('people', 'Personnel n’ayant pas participé à l’exercice', 11, { spaceBefore: 10 });
+    this.iconHeading('people', 'Personnel n’ayant pas participé à l’exercice', TYPE.section, { spaceBefore: 10, after: TYPE.sectionGap });
     this.para('Les personnes ci-dessous n’ont participé à aucune des séances composant l’exercice et sont identifiées selon leur statut final enregistré dans SCOPE.');
     if(m.nonParticipants && m.nonParticipants.length){
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif', 'Séance'],
         m.nonParticipants.map((r) => [
           r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
-          r.statutLabel || '', r.motifLabel || '', r.seanceLabel || ''
+          r.statutLabel === 'Non excusé' ? 'Absent' : (r.statutLabel || ''),
+          r.motifLabel || '', r.seanceLabel || ''
         ]),
-        [42, 78, 68, 48, 40, 54, 80, 49],
-        { align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'], rowH: 15 }
+        [40, 70, 62, 44, 36, 52, 100, 55],
+        {
+          align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'],
+          rowH: 14,
+          wrap: [false, false, false, false, false, false, true, false]
+        }
       );
     } else {
       this.para('Aucune personne absente ou excusée sur l’exercice.');
     }
 
-    this.iconHeading('notes', 'Information évaluation du personnel', 11, { spaceBefore: 8 });
+    this.iconHeading('plain', 'Information évaluation du personnel', TYPE.section, { spaceBefore: 8, after: TYPE.notesGap });
     (m.readingNotes || []).forEach((note) => {
-      this.doc.moveDown(0.15);
-      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
+      this.doc.moveDown(0.35);
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(TYPE.body)
         .text(note.title, MARGIN, this.doc.y, { width: innerW });
-      this.para(note.text);
+      this.para(note.text, { size: TYPE.body });
+      this.doc.moveDown(0.45);
     });
 
-    this.iconHeading('notes', 'Méthodologie de calcul du taux de participation', 11, { spaceBefore: 8 });
-    this.para(m.tauxExplanation || '');
+    this.iconHeading('plain', 'Méthodologie de calcul du taux de participation', TYPE.section, { spaceBefore: 8, after: TYPE.notesGap });
+    this.para(m.tauxExplanation || '', { size: TYPE.body });
 
-    this.iconHeading('sign', 'Conclusion', 11, { spaceBefore: 8 });
-    (m.conclusion || []).forEach((paragraph) => this.para(paragraph));
+    while(this._pageIndex < 3) this.nextPage();
+    this.iconHeading('plain', 'CONCLUSION', TYPE.conclusion, { after: TYPE.conclusionGap });
+    (m.conclusion || []).forEach((paragraph, i) => {
+      if(i === 0) this.paraWithBoldRate(paragraph);
+      else this.para(paragraph, { size: TYPE.body });
+      this.doc.moveDown(0.55);
+    });
     if(m.prSuspensionText && m.nonParticipants && m.nonParticipants.length){
-      this.para(m.prSuspensionText);
-      m.nonParticipants.forEach((r) => {
-        this.para(`· ${[r.grade, r.prenom, r.nom].filter(Boolean).join(' ')} (${r.nip || ''})`);
-      });
+      this.doc.moveDown(0.35);
+      this.para(m.prSuspensionText, { size: TYPE.body });
+      this.doc.moveDown(0.55);
+      m.nonParticipants.forEach((r) => this.drawPrPersonLine(r));
     }
-    this.doc.moveDown(0.4);
+    this.doc.moveDown(1.1);
     this.drawDomainSignature(m);
   }
 
@@ -989,4 +1102,4 @@ function renderReportPdf(model, meta){
   return renderer.finalize();
 }
 
-module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W };
+module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W };
