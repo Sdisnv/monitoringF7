@@ -16,7 +16,8 @@
     { value: 'JOKER', label: 'Joker' },
     { value: 'FORMATEUR_PR', label: 'Formateur PR' },
     { value: 'FORMATION_HORS_SDIS', label: 'Formation hors SDIS' },
-    { value: 'PAS_CONCERNE', label: 'Pas concerné' }
+    { value: 'PAS_CONCERNE', label: 'Pas concerné' },
+    { value: 'DEMISSION_EN_COURS', label: 'Démission en cours' }
   ];
   const MOTIFS_HISTORIQUES = [
     { value: 'MALADIE', label: 'Maladie (historique)' },

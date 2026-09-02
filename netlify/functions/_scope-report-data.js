@@ -64,7 +64,8 @@ const MOTIF_LABELS = Object.freeze({
   JOKER: 'Joker',
   FORMATEUR_PR: 'Formateur PR',
   FORMATION_HORS_SDIS: 'Formation hors SDIS',
-  PAS_CONCERNE: 'Pas concerné'
+  PAS_CONCERNE: 'Pas concerné',
+  DEMISSION_EN_COURS: 'Démission en cours'
 });
 
 const MODE_LABELS = Object.freeze({
@@ -285,15 +286,24 @@ async function collectReport(repo, query, options){
 
   if(kind === 'SESSION'){
     const evenementId = query.evenementId || query.evenement_id || query.id;
-    const session = await collectMultisessionReport(repo, evenementId);
+    let period = null;
+    try {
+      if(query.year || query.annee || query.from || query.to || query.preset){
+        period = parsePeriod(query);
+      }
+    } catch (_err) {
+      period = null;
+    }
+    const session = await collectMultisessionReport(repo, evenementId, { period });
     const year = session.period && session.period.from ? String(session.period.from).slice(0, 4) : '';
+    const exerciseName = session.exerciseLabel || (session.event && session.event.libelle) || 'exercice';
     return {
       kind: 'SESSION',
       period: session.period,
       domaine: session.domaine,
       cible: null,
-      title: 'RAPPORT DE PARTICIPATION',
-      subtitle: session.exerciseLabel,
+      title: `RAPPORT DE PARTICIPATION — EXERCICE ${exerciseName}`,
+      subtitle: exerciseName,
       summaryLabel: 'Synthèse de participation',
       filename: buildFilename('SESSION', {
         period: session.period,
@@ -307,7 +317,20 @@ async function collectReport(repo, query, options){
       rates: session.rates,
       seances: session.seances,
       nonParticipants: includeNominatif ? session.nonParticipants : [],
+      dispenses: includeNominatif ? (session.dispenses || []) : [],
       signatureRole: session.signatureRole,
+      signaturePerson: session.signaturePerson,
+      signatureImage: session.signatureImage,
+      signatureFunction: session.signatureFunction,
+      specialization: session.specialization,
+      sessionCountLabel: session.sessionCountLabel,
+      objective: session.objective,
+      conclusion: session.conclusion,
+      prSuspensionText: session.prSuspensionText,
+      readingNotes: session.readingNotes,
+      tauxExplanation: session.tauxExplanation,
+      periodStrict: session.periodStrict,
+      historyYears: session.historyYears,
       graphs: session.graphs,
       explain: null,
       nominatif: [],
@@ -342,6 +365,14 @@ async function collectReport(repo, query, options){
       series,
       explain
     });
+    const { signatureRoleForExercise } = require('./_scope-multisession-report');
+    const domaineCode = displayDomaineCode(fiche.evenement.domaine_code);
+    const signatureRole = signatureRoleForExercise({ domaineCode, libelle: fiche.evenement.libelle });
+    let signaturePerson = null;
+    if(domaineCode === 'PR' && typeof repo.getPersonneByNip === 'function'){
+      const signer = await repo.getPersonneByNip('1506');
+      signaturePerson = signer ? { grade: signer.grade || '', prenom: signer.prenom || '', nom: signer.nom || '', nip: signer.nip } : { grade: '', prenom: '', nom: '', nip: '1506' };
+    }
     const isLegacy = fiche.evenement.origine === 'LEGACY_AGGREGATED' || fiche.modeSuivi === 'LEGACY';
     const cibles = fiche.cibles || [];
     return {
@@ -386,6 +417,10 @@ async function collectReport(repo, query, options){
       encadrement: includeNominatif && fiche.modeSuivi === 'NOMINATIF' && !isLegacy ? encadrementRows(fiche) : [],
       quantitative: fiche.modeSuivi === 'QUANTITATIF',
       isLegacy,
+      signatureRole,
+      signaturePerson,
+      signatureImage: domaineCode === 'PR' ? 'MCE_Signature.png' : null,
+      signatureFunction: domaineCode === 'PR' ? 'CHEF PROTECTION RESPIRATOIRE' : signatureRole,
       alerts: { p0: [], p1: [], p2: [] },
       events: [],
       domaines: ROOT_DOMAINES

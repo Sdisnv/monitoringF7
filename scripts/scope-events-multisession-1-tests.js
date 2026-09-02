@@ -129,7 +129,7 @@ function attendu(detail, personneId){
 
   await record('04 — Dispensé : 4 motifs', () => {
     assert.deepStrictEqual(logic.MOTIFS_DISPENSE.map((m) => m.value), [
-      'JOKER', 'FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'PAS_CONCERNE'
+      'JOKER', 'FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'PAS_CONCERNE', 'DEMISSION_EN_COURS'
     ]);
     const next = logic.applyParticipationStatus({ statut: 'NON_RENSEIGNE', role: 'PARTICIPANT' }, 'DISPENSE');
     assert.strictEqual(next.statut, 'DISPENSE');
@@ -321,7 +321,7 @@ function attendu(detail, personneId){
   });
 
   await record('19-20 — Non-régression UI / cache / PDF anthracite', () => {
-    assert.ok(html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1'));
+    assert.ok(html.includes('scope-multisession-report-1-r1') || html.includes('scope-multisession-report-1') || html.includes('scope-events-multisession-1'));
     assert.ok(css.includes('repeat(3, minmax(0, 1fr))'));
     assert.ok(pdfRenderer.includes('anthracite'));
     assert.ok(pdfRenderer.includes("heading('Synthèse de participation', 11, 'ink')"));

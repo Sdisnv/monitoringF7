@@ -10,6 +10,7 @@ const { domaineLabel } = require('./_scope-report-data');
 
 const LOGO_SCOPE = path.join(__dirname, '../../assets/img/logo-scope-blanc.png');
 const LOGO_SDIS = path.join(__dirname, '../../assets/img/LogoSDISblanc.png');
+const SIGNATURE_PR = path.join(__dirname, '../../assets/img/MCE_Signature.png');
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
 const MARGIN = 48;
@@ -136,7 +137,7 @@ class ScopePdfRenderer {
       doc.switchToPage(i);
       doc.save();
       doc.moveTo(MARGIN, PAGE_H - FOOTER_H).lineTo(PAGE_W - MARGIN, PAGE_H - FOOTER_H)
-        .strokeColor(rgb(INSTITUTION.line)).lineWidth(0.6).stroke();
+        .strokeColor(rgb(INSTITUTION.red)).lineWidth(1.2).stroke();
       doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7)
         .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, PAGE_H - FOOTER_H + 6, { width: 360 });
       doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, PAGE_H - FOOTER_H + 18, { width: PAGE_W - 2 * MARGIN });
@@ -158,6 +159,31 @@ class ScopePdfRenderer {
     this.doc.moveDown(0.35);
   }
 
+  iconHeading(kind, text, size){
+    this.ensure(24);
+    const y = this.doc.y;
+    const x = MARGIN;
+    this.doc.save();
+    if(kind === 'identity'){
+      this.doc.circle(x + 5, y + 6, 5).fill(rgb(INSTITUTION.red));
+    } else if(kind === 'chart'){
+      this.doc.rect(x, y + 2, 10, 10).fill(rgb(CHART_TOKENS.primary));
+    } else if(kind === 'people'){
+      this.doc.circle(x + 4, y + 5, 3.5).fill(rgb(INSTITUTION.anthracite));
+      this.doc.rect(x + 1, y + 9, 6, 4).fill(rgb(INSTITUTION.anthracite));
+    } else if(kind === 'notes'){
+      this.doc.rect(x + 1, y + 2, 8, 10).strokeColor(rgb(INSTITUTION.red)).lineWidth(0.8).stroke();
+    } else if(kind === 'sign'){
+      this.doc.moveTo(x, y + 10).lineTo(x + 12, y + 10).strokeColor(rgb(INSTITUTION.red)).lineWidth(1).stroke();
+    } else {
+      this.doc.rect(x + 1, y + 3, 9, 9).fill(rgb(INSTITUTION.red));
+    }
+    this.doc.restore();
+    this.doc.fillColor(rgb(INSTITUTION.redDark)).font('Helvetica-Bold').fontSize(size || 12)
+      .text(text, x + 16, y, { width: PAGE_W - 2 * MARGIN - 16 });
+    this.doc.moveDown(0.3);
+  }
+
   para(text, opts){
     const width = PAGE_W - 2 * MARGIN;
     this.ensure(16);
@@ -171,17 +197,17 @@ class ScopePdfRenderer {
     let y = this.doc.y;
     rows.forEach((row, i) => {
       if(i > 0 && i % 2 === 0){
-        y += 28;
+        y += 32;
         x = MARGIN;
       } else if(i % 2 === 1){
         x = MARGIN + col;
       }
-      this.ensure(32);
+      this.ensure(36);
       if(this.doc.y > y && i % 2 === 0) y = this.doc.y;
       this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7).text(row.label, x, y, { width: col - 8 });
-      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10).text(String(row.value), x, y + 10, { width: col - 8 });
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10).text(String(row.value), x, y + 11, { width: col - 8 });
     });
-    this.doc.y = y + 32;
+    this.doc.y = y + 36;
   }
 
   personPanel(title, x, y, w, h, rows, body){
@@ -360,42 +386,57 @@ class ScopePdfRenderer {
     this.doc.y = box.y + box.h + 8;
   }
 
-  table(headers, rows, widths){
+  table(headers, rows, widths, options){
     const width = PAGE_W - 2 * MARGIN;
     const cols = widths || headers.map(() => width / headers.length);
-    const rowH = 18;
+    const aligns = (options && options.align) || [];
+    const wrap = (options && options.wrap) || [];
     const headerH = 16;
-    const paintRow = (cells, y, { header, zebra }) => {
-      if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
-      else if(zebra) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
-      let x = MARGIN;
+    const baseRowH = (options && options.rowH) || 18;
+    const paintRow = (cells, y, { header, zebra, rowH }) => {
       const h = header ? headerH : rowH;
+      if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
+      else if(zebra) this.doc.rect(MARGIN, y, width, h).fill(rgb('#f7f8fa'));
+      let x = MARGIN;
       cells.forEach((cell, i) => {
+        const align = header ? (aligns[i] || 'left') : (aligns[i] || 'left');
         this.doc.fillColor(rgb(INSTITUTION.ink))
           .font(header ? 'Helvetica-Bold' : 'Helvetica')
           .fontSize(header ? 7 : 8)
           .text(String(cell == null ? '' : cell), x + 2, y + 4, {
             width: cols[i] - 4,
             height: h - 5,
-            ellipsis: true,
-            lineBreak: false
+            align,
+            ellipsis: !wrap[i],
+            lineBreak: Boolean(wrap[i])
           });
         x += cols[i];
         this.doc.y = y;
       });
       this.doc.y = y + h;
     };
+    const measureRowH = (cells) => {
+      let h = baseRowH;
+      cells.forEach((cell, i) => {
+        if(!wrap[i]) return;
+        this.doc.font('Helvetica').fontSize(8);
+        const textH = this.doc.heightOfString(String(cell == null ? '' : cell), { width: cols[i] - 4 });
+        h = Math.max(h, Math.min(52, textH + 8));
+      });
+      return h;
+    };
     const drawHeader = () => {
-      this.ensure(headerH + rowH);
-      paintRow(headers, this.doc.y, { header: true });
+      this.ensure(headerH + baseRowH);
+      paintRow(headers, this.doc.y, { header: true, rowH: headerH });
     };
     drawHeader();
     rows.forEach((row, idx) => {
+      const rowH = measureRowH(row);
       if(this.doc.y + rowH > CONTENT_BOTTOM){
         this.nextPage();
         drawHeader();
       }
-      paintRow(row, this.doc.y, { zebra: idx % 2 === 1 });
+      paintRow(row, this.doc.y, { zebra: idx % 2 === 1, rowH });
     });
     this.doc.y += 8;
   }
@@ -491,7 +532,7 @@ class ScopePdfRenderer {
     this.heading('Analyse individuelle', 11, 'ink');
     this.personCharts(m);
     this.nextPage();
-    this.heading('Historique des événements', 12);
+    this.heading('Historique des événements évalués', 12);
     const rows = (m.evenements || []).map((row) => [
       formatDisplayDate(row.date),
       row.libelle || '—',
@@ -505,23 +546,24 @@ class ScopePdfRenderer {
       this.table(
         ['Date', 'Événement', 'Domaine', 'Cible / OI', 'Statut', 'Informations'],
         rows,
-        [62, 130, 58, 70, 62, 70]
+        [52, 178, 50, 62, 58, 59],
+        { wrap: [false, true, false, false, false, true], align: ['left', 'left', 'left', 'left', 'left', 'left'] }
       );
     }
   }
 
   renderEventBody(m){
     const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
-    const identity = [
+    this.iconHeading('identity', 'Détail de l’exercice', 12);
+    this.kv([
       { label: 'Date de l’exercice', value: formatDisplayDate(m.event.date) },
       { label: 'Statut', value: m.event.statutLabel },
       { label: 'Mode de suivi', value: m.event.modeLabel },
       { label: 'Domaine', value: domaineLabel(m.event.parentDomaine || m.event.domaine) },
+      { label: 'Spécialisation', value: (m.event.domaine === 'PR' || m.domaine === 'PR') ? 'PAPR' : '—' },
       { label: 'Cible(s) / OI', value: (m.event.cibles || []).map((c) => c.code).join(', ') || '—' }
-    ];
-    if(m.event.sousDomaine) identity.splice(4, 0, { label: 'Sous-domaine', value: domaineLabel(m.event.sousDomaine) });
-    this.kv(identity);
-    this.heading('Synthèse', 12);
+    ]);
+    this.iconHeading('kpi', 'Synthèse de participation', 12);
     this.kpiOfficial(m.officiel, { event: true });
     if(dap){
       const v = (m.officiel && m.officiel.volumes) || {};
@@ -530,7 +572,7 @@ class ScopePdfRenderer {
     this.motifs(m.officiel, { skipEmpty: true });
     this.renderEncadrement(m);
     if(m.nominatif && m.nominatif.length){
-      this.heading('Liste nominative', 12);
+      this.iconHeading('people', 'Liste nominative', 12);
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Cible', 'Statut', 'Motif'],
         m.nominatif.map((r) => [
@@ -538,28 +580,57 @@ class ScopePdfRenderer {
           r.statutLabel,
           r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
         ]),
-        [42, 78, 68, 48, 36, 48, 64, 75]
+        [42, 78, 68, 48, 36, 48, 64, 75],
+        { align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'] }
       );
     } else if(m.quantitative){
       this.para('Suivi quantitatif : aucun nom n’est inventé.');
     }
+    this.drawDomainSignature(m);
+  }
+
+  drawDomainSignature(m){
+    this.ensure(88);
+    this.iconHeading('sign', 'Validation', 12);
+    this.para('Pour validation / transmission,');
+    if(m.signatureImage && (m.domaine === 'PR' || (m.event && m.event.domaine === 'PR'))){
+      const person = m.signaturePerson || {};
+      const name = [person.grade, person.prenom, person.nom].filter(Boolean).join(' ') || '—';
+      const y = this.doc.y;
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
+        .text(name, MARGIN, y, { width: 260 });
+      if(hasLogo(SIGNATURE_PR)){
+        this.doc.image(SIGNATURE_PR, MARGIN, y + 6, { fit: [150, 52] });
+      }
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
+        .text(m.signatureFunction || 'CHEF PROTECTION RESPIRATOIRE', MARGIN, y + 50, { width: 280 });
+      this.doc.y = y + 72;
+      return;
+    }
+    this.doc.moveDown(0.4);
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
+      .text(m.signatureFunction || m.signatureRole || 'Responsable de domaine', MARGIN, this.doc.y);
+    this.doc.moveDown(1.6);
+    this.doc.font('Helvetica').fontSize(11).text('____________________________', MARGIN, this.doc.y);
   }
 
   renderSessionBody(m){
     const v = (m.officiel && m.officiel.volumes) || {};
     const rates = m.rates || {};
-    this.heading('Identité de l’exercice', 12);
+    const innerW = PAGE_W - 2 * MARGIN;
+    this.iconHeading('identity', 'Détail de l’exercice', 12);
     this.kv([
       { label: 'Domaine', value: domaineLabel(m.domaine) || '—' },
-      { label: 'Exercice / session', value: m.subtitle || (m.event && m.event.libelle) || '—' },
-      { label: 'Période', value: `${formatDisplayDate(m.period && m.period.from)} → ${formatDisplayDate(m.period && m.period.to)}` },
+      { label: 'Spécialisation', value: m.specialization || '—' },
+      { label: 'Nom de l’exercice', value: m.subtitle || (m.event && m.event.libelle) || '—' },
+      { label: 'Période / dates', value: `${formatDisplayDate(m.period && m.period.from)} → ${formatDisplayDate(m.period && m.period.to)}` },
+      { label: 'Nombre de séances', value: m.sessionCountLabel || `${m.sessionCount || 0} séances` },
       { label: 'Population attendue', value: String(m.population != null ? m.population : 0) },
-      { label: 'Nombre de séances', value: String(m.sessionCount || (m.seances || []).length || 0) },
-      { label: 'Statut de l’exercice', value: (m.event && m.event.statutLabel) || '—' }
+      { label: 'Statut', value: (m.event && m.event.statutLabel) || '—' },
+      { label: 'Année analysée', value: String((m.period && m.period.from) || '').slice(0, 4) || '—' }
     ]);
-    this.heading('Synthèse de participation', 12);
-    const innerW = PAGE_W - 2 * MARGIN;
-    const gap = 5;
+    this.iconHeading('kpi', 'Synthèse de participation', 12);
+    const gap = 6;
     const cells = [
       ['Population attendue', String(m.population != null ? m.population : 0)],
       ['Participants', String(v.presents || 0)],
@@ -569,7 +640,7 @@ class ScopePdfRenderer {
       ['Dispensés', `${v.dispenses || 0}${rates.dispenses != null ? `  (${formatTaux(rates.dispenses)})` : ''}`]
     ];
     const w = (innerW - gap * 5) / 6;
-    const h = 46;
+    const h = 48;
     let y = this.doc.y;
     cells.forEach((cell, i) => {
       const x = MARGIN + i * (w + gap);
@@ -579,52 +650,78 @@ class ScopePdfRenderer {
       this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6)
         .text(cell[0], x + 3, y + 28, { width: w - 6, align: 'center' });
     });
-    this.doc.y = y + h + 10;
+    this.doc.y = y + h + 12;
     this.para('Les volumes globaux sont dédupliqués au niveau personne. Les dispensés restent hors du dénominateur du taux officiel.');
-    this.heading('Analyse graphique', 12);
-    const colGap = 10;
+    this.iconHeading('chart', 'Analyse graphique', 12);
+    const colGap = 16;
     const colW = (innerW - colGap) / 2;
-    const chartH = 128;
+    const chartH = 150;
     y = this.doc.y;
     if(m.graphs && m.graphs.repartition){
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(m.graphs.repartition.question, MARGIN, y, { width: colW });
-      drawDonutChart(this.doc, m.graphs.repartition, { x: MARGIN, y: y + 12, w: colW, h: chartH });
+      const endDonut = drawDonutChart(this.doc, m.graphs.repartition, { x: MARGIN, y: y + 14, w: colW, h: chartH });
+      y = Math.max(y, endDonut - 14);
     }
     if(m.graphs && m.graphs.tauxSeances){
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
-        .text(m.graphs.tauxSeances.question, MARGIN + colW + colGap, y, { width: colW });
-      drawBarChart(this.doc, m.graphs.tauxSeances, { x: MARGIN + colW + colGap, y: y + 12, w: colW, h: chartH });
+        .text(m.graphs.tauxSeances.question, MARGIN + colW + colGap, this.doc.y < y + 14 ? y : this.doc.y, { width: colW });
+      drawBarChart(this.doc, m.graphs.tauxSeances, { x: MARGIN + colW + colGap, y: y + 14, w: colW, h: chartH });
     }
-    this.doc.y = y + 12 + chartH + 16;
+    this.doc.y = y + 14 + chartH + 18;
     if(m.graphs && m.graphs.volumesSeances && (m.seances || []).length){
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
         .text(m.graphs.volumesSeances.question, MARGIN, this.doc.y, { width: innerW });
       const boxY = this.doc.y + 12;
-      const endY = drawGroupedChart(this.doc, m.graphs.volumesSeances, { x: MARGIN, y: boxY, w: innerW, h: 118 });
-      this.doc.y = Math.max(boxY + 118, endY) + 8;
+      const endY = drawGroupedChart(this.doc, m.graphs.volumesSeances, { x: MARGIN, y: boxY, w: innerW, h: 122 });
+      this.doc.y = Math.max(boxY + 122, endY) + 10;
+    }
+    if(m.graphs && m.graphs.historique){
+      this.ensure(150);
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+        .text(m.graphs.historique.question, MARGIN, this.doc.y, { width: innerW });
+      const boxY = this.doc.y + 12;
+      const endY = drawGroupedChart(this.doc, m.graphs.historique, { x: MARGIN, y: boxY, w: innerW, h: 128 });
+      this.doc.y = Math.max(boxY + 128, endY) + 10;
     }
 
     this.nextPage();
-    this.heading('Détail par séance', 12);
+    this.iconHeading('kpi', 'Détail par séance', 12);
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10)
+      .text(`Taux de participation global : ${formatTaux(rates.participation != null ? rates.participation : (m.officiel && m.officiel.percentage))}`, MARGIN, this.doc.y, { width: innerW });
+    this.doc.moveDown(0.5);
     this.table(
-      ['Séance', 'Date', 'Libellé', 'Pop. renseignée', 'Présents', 'Excusés', 'Absents', 'Dispensés', 'Taux'],
+      ['Date', 'Séance', 'Présents', 'Excusés', 'Absents', 'Dispensés', 'Taux'],
       (m.seances || []).map((s) => [
-        s.label || '',
         formatDisplayDate(s.date),
-        s.libelle || '',
-        String(s.populationRenseignee || 0),
+        s.label || '',
         String(s.presents || 0),
         String(s.excuses || 0),
         String(s.absents || 0),
         String(s.dispenses || 0),
         formatTaux(s.percentage)
       ]),
-      [58, 52, 110, 58, 48, 48, 48, 52, 46]
+      [70, 90, 58, 58, 58, 62, 63],
+      { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right'] }
     );
 
-    this.heading('Personnel n’ayant pas participé à l’exercice', 12);
-    this.para('Liste destinée au commandement. Elle ne décide pas d’une suspension opérationnelle.');
+    this.iconHeading('people', 'Personnel dispensé', 12);
+    if(m.dispenses && m.dispenses.length){
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Motif de dispense', 'Séance'],
+        m.dispenses.map((r) => [
+          r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
+          r.motifLabel || '', r.seanceLabel || ''
+        ]),
+        [42, 78, 68, 48, 40, 110, 73],
+        { align: ['left', 'left', 'left', 'left', 'left', 'left', 'left'] }
+      );
+    } else {
+      this.para('Aucune personne dispensée sur l’exercice.');
+    }
+
+    this.iconHeading('people', 'Personnel n’ayant pas participé à l’exercice', 12);
+    this.para('Les personnes ci-dessous n’ont participé à aucune des séances composant l’exercice et sont identifiées selon leur statut final enregistré dans SCOPE.');
     if(m.nonParticipants && m.nonParticipants.length){
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif', 'Séance'],
@@ -632,20 +729,31 @@ class ScopePdfRenderer {
           r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
           r.statutLabel || '', r.motifLabel || '', r.seanceLabel || ''
         ]),
-        [42, 78, 68, 48, 40, 54, 80, 50]
+        [42, 78, 68, 48, 40, 54, 80, 49],
+        { align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'] }
       );
     } else {
       this.para('Aucune personne absente ou excusée sur l’exercice.');
     }
 
-    this.ensure(72);
-    this.heading('Validation', 12);
-    this.para('Pour validation / transmission,');
-    this.doc.moveDown(0.4);
-    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(11)
-      .text(m.signatureRole || 'Responsable de domaine', MARGIN, this.doc.y);
-    this.doc.moveDown(1.6);
-    this.doc.font('Helvetica').fontSize(11).text('____________________________', MARGIN, this.doc.y);
+    this.iconHeading('notes', 'Notes et principes de lecture', 12);
+    (m.readingNotes || []).forEach((note) => {
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
+        .text(note.title, MARGIN, this.doc.y, { width: innerW });
+      this.para(note.text);
+    });
+
+    this.iconHeading('notes', 'Comment est calculé le taux de participation ?', 12);
+    this.para(m.tauxExplanation || '');
+
+    this.iconHeading('sign', 'Conclusion', 12);
+    (m.conclusion || []).forEach((paragraph) => this.para(paragraph));
+    if(m.prSuspensionText && m.nonParticipants && m.nonParticipants.length){
+      m.nonParticipants.forEach((r) => {
+        this.para(`· ${[r.grade, r.prenom, r.nom].filter(Boolean).join(' ')} — NIP ${r.nip || '—'}`);
+      });
+    }
+    this.drawDomainSignature(m);
   }
 
   render(){
@@ -797,4 +905,4 @@ function renderReportPdf(model, meta){
   return renderer.finalize();
 }
 
-module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS };
+module.exports = { renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, MARGIN };

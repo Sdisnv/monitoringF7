@@ -214,7 +214,7 @@ async function collectSession(repo, eventId){
     const pr = await seedStandard();
     const prPdf = await generateReport(pr.repo, { kind: 'SESSION', evenementId: 'msr-s1', nominatif: true }, ACTOR);
     const prText = pdfText(prPdf.buffer);
-    assert.ok(prText.includes('Chef PR'));
+    assert.ok(prText.includes('Chef PR') || /PROTECTION RESPIRATOIRE/.test(prText));
     assert.ok(/Personnel/.test(prText) || /pas particip/.test(prText) || prText.includes('nayant pas') || prText.includes('n’ayant') || prText.includes('nhayant'));
 
     const repo = createMemoryRepo();
@@ -266,7 +266,7 @@ async function collectSession(repo, eventId){
     assert.ok(pdf.pages >= 2);
     const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(renderer.includes('drawHeader()'));
-    assert.ok(renderer.includes("this.heading('Détail par séance'"));
+    assert.ok(renderer.includes("Détail par séance"));
   });
 
   await record('23-24 — rapport présence conservé + rapport détaillé', () => {

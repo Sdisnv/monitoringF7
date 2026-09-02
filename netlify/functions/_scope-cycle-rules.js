@@ -11,7 +11,8 @@ const MOTIF_DISPENSE_LABELS = Object.freeze({
   JOKER: 'Joker',
   FORMATEUR_PR: 'Formateur PR',
   FORMATION_HORS_SDIS: 'Formation hors SDIS',
-  PAS_CONCERNE: 'Pas concerné'
+  PAS_CONCERNE: 'Pas concerné',
+  DEMISSION_EN_COURS: 'Démission en cours'
 });
 const MOTIF_EXCUSE_LABELS = Object.freeze({
   PRIVE: 'Privé',

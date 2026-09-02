@@ -161,6 +161,11 @@ function groupedPalette(index){
   return CHART_TOKENS[keys[index % keys.length]];
 }
 
+function seriesColor(series, index){
+  if(series && series.token) return series.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(series.token);
+  return groupedPalette(index);
+}
+
 function drawGroupedChart(doc, dataset, box){
   const series = (dataset && dataset.series) || [];
   const categories = (dataset.categories && dataset.categories.length)
@@ -198,14 +203,14 @@ function drawGroupedChart(doc, dataset, box){
         return { x: xOf(i), y: yOf(point.value) };
       }).filter(Boolean);
       if(!pts.length) return;
-      doc.strokeColor(rgb(groupedPalette(si))).lineWidth(1.4);
+      doc.strokeColor(rgb(seriesColor(s, si))).lineWidth(1.4);
       pts.forEach((pt, i) => {
         if(i === 0) doc.moveTo(pt.x, pt.y);
         else doc.lineTo(pt.x, pt.y);
       });
       if(pts.length > 1) doc.stroke();
       pts.forEach((pt) => {
-        doc.circle(pt.x, pt.y, 2).fill(rgb(groupedPalette(si)));
+        doc.circle(pt.x, pt.y, 2).fill(rgb(seriesColor(s, si)));
       });
     });
   } else {
@@ -219,7 +224,7 @@ function drawGroupedChart(doc, dataset, box){
         const bh = Math.max(2, (Number(point.value) / 100) * innerH);
         const bx = gx + si * barW;
         const by = y + pad.t + innerH - bh;
-        doc.rect(bx, by, barW - 1, bh).fill(rgb(groupedPalette(si)));
+        doc.rect(bx, by, barW - 1, bh).fill(rgb(seriesColor(s, si)));
       });
     });
   }
@@ -235,7 +240,7 @@ function drawGroupedChart(doc, dataset, box){
   let lx = x + pad.l;
   const ly = y + h + 2;
   series.forEach((s, i) => {
-    doc.rect(lx, ly, 6, 6).fill(rgb(groupedPalette(i)));
+    doc.rect(lx, ly, 6, 6).fill(rgb(seriesColor(s, i)));
     doc.fillColor(rgb(INSTITUTION.ink)).fontSize(6).font('Helvetica').text(s.label, lx + 8, ly, { width: 64 });
     lx += 72;
   });
@@ -255,10 +260,15 @@ function drawDonutChart(doc, dataset, box){
       .text('Non évaluable — données insuffisantes.', x, y + h / 2 - 6, { width: w, align: 'center' });
     return y + 28;
   }
-  const plotW = Math.min(Math.max(w * 0.38, 140), 210);
-  const cx = x + plotW / 2;
-  const cy = y + h / 2;
-  const r = Math.min(h / 2 - 4, plotW / 2 - 10, 56);
+  const legendBelow = dataset && dataset.legendPlacement === 'bottom';
+  const legend = allPoints.length ? allPoints : points;
+  const plotH = legendBelow ? Math.max(72, h - 56) : h;
+  const plotW = legendBelow
+    ? Math.min(w, 220)
+    : Math.min(Math.max(w * 0.38, 140), 210);
+  const cx = legendBelow ? x + w / 2 : x + plotW / 2;
+  const cy = y + plotH / 2;
+  const r = Math.min(plotH / 2 - 4, (legendBelow ? 58 : plotW / 2 - 10), 56);
   const rInner = r * 0.62;
   const total = points.reduce((sum, p) => sum + Number(p.value || 0), 0) || 1;
   if(points.length === 1){
@@ -285,7 +295,18 @@ function drawDonutChart(doc, dataset, box){
     });
     doc.circle(cx, cy, rInner).fill('#ffffff');
   }
-  const legend = allPoints.length ? allPoints : points;
+  if(legendBelow){
+    const colW = w / Math.min(legend.length, 4);
+    legend.forEach((p, i) => {
+      const lx = x + i * colW;
+      const ly = y + plotH + 8;
+      const share = `${Math.round(100 * Number(p.value || 0) / total)} %`;
+      doc.rect(lx, ly, 8, 8).fill(rgb(p.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(p.token)));
+      doc.fillColor(rgb(INSTITUTION.ink)).fontSize(8).font('Helvetica')
+        .text(`${p.label}  ${p.value || 0} — ${share}`, lx + 12, ly - 1, { width: colW - 16, lineBreak: false });
+    });
+    return y + plotH + 28;
+  }
   const legendX = x + plotW + 12;
   const legendW = Math.max(80, w - plotW - 16);
   const colW = legend.length > 2 ? legendW / 2 : legendW;
@@ -305,7 +326,7 @@ function drawDonutChart(doc, dataset, box){
 function chartHeight(dataset){
   if(!dataset) return 0;
   if(dataset.type === 'grouped' || dataset.type === 'year-series') return 138;
-  if(dataset.type === 'donut') return 120;
+  if(dataset.type === 'donut') return dataset.legendPlacement === 'bottom' ? 148 : 120;
   if(dataset.type === 'line') return 92;
   if(dataset.type === 'stacked') return 64;
   const n = (((dataset.series && dataset.series[0]) || {}).points || []).length;
