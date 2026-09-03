@@ -300,6 +300,7 @@ grep -q "scope-personnel-import-ux.test.js" package.json
 grep -q "scope-personnel-import-ux-order.test.js" package.json
 grep -q "scope-import-prabc-1-r1-tests.js" package.json
 grep -q "scope-events-safe-close-1-tests.js" package.json
+grep -q "scope-events-safe-close-1-r1-tests.js" package.json
 grep -q "scope-jsp-populations.test.js" package.json
 grep -q "scope-ds-1-tests.js" package.json
 grep -q "scope-ux-event-1-tests.js" package.json

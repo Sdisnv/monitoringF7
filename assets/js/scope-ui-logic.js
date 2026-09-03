@@ -122,9 +122,17 @@
     return String(code || '');
   }
 
+  function isPrDomaine(code) {
+    const value = String(code || '').toUpperCase();
+    return value === 'PR' || value === 'PAPR';
+  }
+
   function niveauAffiche(domaineCode, niveauCode) {
     const domaine = String(domaineCode || '');
     const niveau = String(niveauCode || '');
+    const compactNiveau = niveau.toUpperCase().replace(/[\s/_-]+/g, '');
+    if (isPrDomaine(domaine) && (niveau === 'GEN' || compactNiveau === 'GEN')) return 'Général / PAPR';
+    if (isPrDomaine(domaine) && (compactNiveau === 'ABC' || compactNiveau === 'PRABC')) return 'PR-ABC';
     if (niveau === 'GEN') return 'Général';
     if (domaine === 'FOBA' && /^[123]$/.test(niveau)) return `FOBA ${niveau}`;
     if (domaine === 'FOCA') {
@@ -1332,6 +1340,25 @@
     }).join(' · ');
   }
 
+  function sortCiblesForEventForm(cibles) {
+    const rank = (niveau) => {
+      const code = String(niveau || '').toUpperCase();
+      if (code === 'GEN') return 0;
+      if (code === 'ABC') return 1;
+      return 10;
+    };
+    return (cibles || []).slice().sort((a, b) => {
+      const da = String(a.domaineCode || a.domaine_code || '');
+      const db = String(b.domaineCode || b.domaine_code || '');
+      if (da !== db) return da.localeCompare(db, 'fr');
+      const na = String(a.niveauCode || a.niveau_code || '');
+      const nb = String(b.niveauCode || b.niveau_code || '');
+      const diff = rank(na) - rank(nb);
+      if (diff) return diff;
+      return na.localeCompare(nb, 'fr');
+    });
+  }
+
   function displayTauxForList(statut, officiel, percentage, extra) {
     if (extra && extra.origine === 'LEGACY_AGGREGATED') {
       const label = formatTaux(percentage);
@@ -1682,6 +1709,7 @@
     personnelMutationError,
     friendlyError,
     ciblesLabel,
+    sortCiblesForEventForm,
     displayTauxForList,
     legacyTauxFromRow,
     emptyMessage,

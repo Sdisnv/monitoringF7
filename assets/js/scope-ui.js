@@ -4174,10 +4174,15 @@
 
   function renderNouveau() {
     const domaine = state.domaineForm || 'DPS';
-    const cibles = state.referentiels.cibles.filter((c) => c.domaineCode === domaine);
+    const cibles = L.sortCiblesForEventForm
+      ? L.sortCiblesForEventForm(state.referentiels.cibles.filter((c) => c.domaineCode === domaine))
+      : state.referentiels.cibles.filter((c) => c.domaineCode === domaine);
     const suggestion = state.modeSuggestion;
     const chosen = state.modeChoice;
     const requireExplicit = Boolean(suggestion && suggestion.requireExplicit);
+    const prHint = domaine === 'PR'
+      ? '<p class="scope-mode-hint">Général / PAPR = tous les PAPR actifs à la date, y compris PR-ABC. PR-ABC = uniquement les personnes PR-ABC actives. Le ciblage est stocké sur la cible, jamais déduit du libellé.</p>'
+      : '';
     return `
       <div class="scope-crumb">Événements / Nouvel événement</div>
       <div class="scope-main">
@@ -4188,6 +4193,7 @@
             <select id="new-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === domaine ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
           </div>
           <div class="scope-field" style="margin-top:8px"><label>Cible(s)</label>
+            ${prHint}
             <div id="new-cibles" class="scope-chips">
               ${cibles.map((c) => `<label style="display:inline-flex;gap:6px;align-items:center;font-size:13px">
                 <input type="checkbox" value="${c.cibleId}" ${state.cibleForm.includes(c.cibleId) ? 'checked' : ''}> ${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}
@@ -4413,9 +4419,14 @@
     const jeunesCount = (!qty && state.preview)
       ? (((state.preview.jeunes) || previewPeople.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId))).length
       : 0;
-    const extraActions = qty && ev.statut === 'PLANIFIE'
-      ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="convert-nominatif">Passer en nominatif</button>'
-      : '';
+    const extraActions = [
+      qty && ev.statut === 'PLANIFIE'
+        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="convert-nominatif">Passer en nominatif</button>'
+        : '',
+      !isLegacy && !qty && ev.statut === 'PLANIFIE'
+        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="retarget-cible">Modifier la cible</button>'
+        : ''
+    ].join('');
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main scope-event-fiche">
@@ -4433,6 +4444,7 @@
           <button type="button" class="scope-btn" id="convert-cancel">Annuler</button>
         </div>
       </div></div>` : ''}
+      ${state.modal === 'retarget-cible' ? renderRetargetCibleModal(ev, fiche) : ''}
     `;
   }
 
@@ -4453,7 +4465,36 @@
   }
 
   function previewCibleLabel(p) {
-    return (p.cibles || []).map((c) => c.niveauCode || c).join(' · ') || 'Exception';
+    return (p.cibles || []).map((c) => {
+      if (c && typeof c === 'object') {
+        return L.niveauAffiche(c.domaineCode || c.domaine_code, c.niveauCode || c.niveau_code);
+      }
+      return c;
+    }).filter(Boolean).join(' · ') || 'Exception';
+  }
+
+  function renderRetargetCibleModal(ev, fiche) {
+    const domaine = String(ev.domaine_code || ev.domaineCode || '');
+    const cibles = L.sortCiblesForEventForm
+      ? L.sortCiblesForEventForm((state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine))
+      : (state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine);
+    const selected = new Set(state.retargetCibleForm || []);
+    const prHint = domaine === 'PR'
+      ? '<p>Choisissez explicitement Général / PAPR ou PR-ABC. La population attendue est recalculée uniquement parce que l’événement est encore planifié.</p>'
+      : '<p>La cible est stockée sur l’événement. Le libellé n’est pas utilisé pour le ciblage.</p>';
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>Modifier la cible</h3>
+      ${prHint}
+      <div id="retarget-cibles" class="scope-chips">
+        ${cibles.map((c) => `<label style="display:inline-flex;gap:6px;align-items:center;font-size:13px">
+          <input type="checkbox" value="${escapeHtml(c.cibleId)}" ${selected.has(c.cibleId) ? 'checked' : ''}> ${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}
+        </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
+      </div>
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="retarget-ok">Enregistrer la cible</button>
+        <button type="button" class="scope-btn" id="retarget-cancel">Annuler</button>
+      </div>
+    </div></div>`;
   }
 
   function previewSortColumns() {
@@ -4566,6 +4607,7 @@
     const saveBusy = Boolean(state.presenceSaveBusy);
     const closeBusy = state.presenceCloseBusy;
     const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : 'Clôturer');
+    const saveState = presenceSaveLabel();
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main scope-event-saisie">
@@ -6505,6 +6547,31 @@
         state.modal = null;
         await loadFiche(id);
         toast('success', 'Mode nominatif', 'Les volumes ont été supprimés. Vous pouvez générer la population.');
+      });
+    });
+    document.getElementById('retarget-cible')?.addEventListener('click', () => {
+      state.retargetCibleForm = ciblesOf(state.fiche).map((c) => c.cible_id || c.cibleId).filter(Boolean);
+      state.modal = 'retarget-cible';
+      render();
+    });
+    document.getElementById('retarget-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('retarget-cibles')?.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        state.retargetCibleForm = [...document.getElementById('retarget-cibles').querySelectorAll('input:checked')].map((el) => el.value);
+      });
+    });
+    document.getElementById('retarget-ok')?.addEventListener('click', () => {
+      const id = route().id;
+      const cibleIds = state.retargetCibleForm || [];
+      if (!cibleIds.length) {
+        toast('error', 'Cible obligatoire', 'Choisissez au moins une cible.');
+        return;
+      }
+      withLoading(async () => {
+        await client.patchEvenement(id, { cibleIds }, state.fiche.evenement.version);
+        state.modal = null;
+        await loadFiche(id);
+        toast('success', 'Cible mise à jour', 'La population attendue a été recalculée pour cet événement planifié.');
       });
     });
     bindQuantitatifSaisie();

@@ -285,6 +285,9 @@
         const evenement = getEvent(id);
         requireVersion(evenement, baseVersion);
         if (body.libelle) evenement.libelle = String(body.libelle).trim();
+        if (body.cibleIds || body.cible_ids) {
+          eventCibles.set(id, [...(body.cibleIds || body.cible_ids)]);
+        }
         bump(evenement);
         return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
       },

@@ -327,8 +327,11 @@ function createScopeService(repo){
     const wantsDate = body.date !== undefined;
     const wantsDomaine = body.domaineCode !== undefined || body.domaine_code !== undefined;
     const wantsCibles = body.cibleIds !== undefined || body.cible_ids !== undefined;
-    if(evenement.population_figee && (wantsDate || wantsDomaine || wantsCibles)){
-      throw new HttpError(422, 'population_figee_immutable', 'Date, domaine et cibles ne peuvent plus être modifiés après gel. Une régénération n’est pas exposée dans ce lot.');
+    if(evenement.population_figee && (wantsDate || wantsDomaine)){
+      throw new HttpError(422, 'population_figee_immutable', 'Date et domaine ne peuvent plus être modifiés après gel.');
+    }
+    if(wantsCibles && evenement.statut !== 'PLANIFIE'){
+      throw new HttpError(422, 'cible_immutable_cloture', 'La cible d’un événement réalisé n’est pas modifiable.');
     }
     if(wantsDate){
       const date = isoDate(body.date);
@@ -348,22 +351,32 @@ function createScopeService(repo){
     if(body.responsable !== undefined) patch.responsable = String(body.responsable || '').trim() || null;
     const next = await repo.withTransaction(async (tx) => {
       const updated = await bumpOrConflict(tx, eventId, baseVersion, patch);
-      if(wantsCibles && !evenement.population_figee){
+      let current = updated;
+      if(wantsCibles){
         const cibleIds = body.cibleIds || body.cible_ids;
         if(!Array.isArray(cibleIds) || !cibleIds.length){
           throw new HttpError(400, 'cibles_obligatoires', 'Au moins une cible est obligatoire.');
         }
         await tx.setEventCibles(eventId, cibleIds);
+        if(evenement.population_figee){
+          await syncExpectedPopulationForEvents(tx, [await tx.getEvent(eventId)], actor, { allPersons: true });
+          current = await tx.getEvent(eventId);
+        }
       }
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'MODIFIER',
+        action: wantsCibles && evenement.population_figee ? 'RETARGET_CIBLES' : 'MODIFIER',
         avant: { version: evenement.version },
-        apres: { version: updated.version, patch }
+        apres: {
+          version: current.version,
+          patch,
+          cibleIds: wantsCibles ? (body.cibleIds || body.cible_ids) : undefined,
+          populationResynced: Boolean(wantsCibles && evenement.population_figee)
+        }
       });
-      return updated;
+      return current;
     });
     return { evenement: next, version: next.version };
   }
