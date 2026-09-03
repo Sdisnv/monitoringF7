@@ -71,7 +71,7 @@ const oiOptions = display.operationalOiOptions([
 ]);
 assert.deepStrictEqual(oiOptions, ['DPS G1', 'DPS C1', 'DAP Y2', 'JSP G1']);
 assert.ok(!oiOptions.some((label) => label.includes('/') || /AUTO|FOBA|FOCA|FOSPEC|^PR$/.test(label)));
-assert.deepStrictEqual(display.specializationFilterOptions(), ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP']);
+assert.deepStrictEqual(display.specializationFilterOptions(), ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'JSP']);
 
 assert.strictEqual(ids(display.filterPersonnelRows(rows, { oi: 'DPS G1', statut: 'tous' })), '10,100,4,5,6');
 assert.strictEqual(ids(display.filterPersonnelRows(rows, { oi: 'DPS G1', statut: 'actifs' })), '10,100,4,5');

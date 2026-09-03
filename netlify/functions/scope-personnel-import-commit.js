@@ -29,12 +29,25 @@ exports.handler = async function(event){
     const body = parseBody(event);
     if(!body || !(body.fileText || body.csvText)) return response(400, { ok:false, error:'missing_file_text' });
     const rapport = await personnel.commitImport(Object.assign({}, body, { confirmed:true }), claims.sub || claims.email || claims.nip || '');
-    rapport.synchronisationPopulation = await syncExpectedPopulationFromNips([
-      ...(rapport.touchedNips || []),
-      ...(rapport.analysedNips || rapport.analysed_nips || [])
-    ], claims);
+    try{
+      rapport.synchronisationPopulation = await syncExpectedPopulationFromNips([
+        ...(rapport.touchedNips || []),
+        ...(rapport.analysedNips || rapport.analysed_nips || [])
+      ], claims);
+    }catch(syncError){
+      rapport.synchronisationPopulation = {
+        ok: false,
+        error: String(syncError && syncError.message || syncError)
+      };
+    }
     return response(200, rapport);
   }catch(error){
-    return response(409, { ok:false, error:'scope_personnel_import_commit_failed', message:String(error.message || error) });
+    const status = Number(error.statusCode || error.status || 400);
+    const safeStatus = status === 409 ? 409 : (status >= 400 && status < 600 ? status : 400);
+    return response(safeStatus, {
+      ok: false,
+      error: error.error || (safeStatus === 409 ? 'personnel_stale' : 'scope_personnel_import_commit_failed'),
+      message: String(error.message || error)
+    });
   }
 };

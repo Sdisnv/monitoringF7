@@ -708,12 +708,17 @@ async function loadPopulation(resolved, siteJsp){
 
 function defaultDecision(line, decisions){
   const rowId = String(line.lineNumber);
-  const found = (decisions || []).find((item) => String(item.rowId) === rowId || (item.nip && item.nip === line.normalized.nip));
+  const nip = line.normalized && line.normalized.nip;
+  const found = (decisions || []).find((item) =>
+    String(item.rowId) === rowId
+    || (nip && item.nip && item.nip === nip)
+    || String(item.rowId) === `nip:${nip}`
+  );
   if(found && found.decision) return found;
   if(line.status === 'ABSENT_DU_NOUVEL_IMPORT') return { decision: 'CONSERVER', dateEffet: line.dateEffet };
   if(line.status === 'NEW_PERSON' || line.status === 'NEW_JSP') return { decision: 'CREER' };
   if(line.status === 'MODIFIED') return { decision: 'EXAMINER' };
-  if(line.status === 'IDENTICAL') return { decision: 'APPLIQUER' };
+  if(line.status === 'IDENTICAL' || line.status === 'ERROR') return { decision: 'IGNORER' };
   return { decision: 'APPLIQUER' };
 }
 
@@ -855,6 +860,16 @@ function jsonParam(value){
   return JSON.stringify(value || {});
 }
 
+function mutationOutcome(mutations){
+  const skipped = (mutations && mutations.skipped) || [];
+  return {
+    ignored: skipped.filter((row) => String(row.decision || '').toUpperCase() === 'IGNORER').length,
+    alreadyExisting: skipped.filter((row) => row.status === 'IDENTICAL').length,
+    skippedCount: skipped.length,
+    errors: skipped.filter((row) => row.status === 'ERROR').length
+  };
+}
+
 async function commitImport(payload, actorSubject){
   if(typeof payload === 'string'){
     throw new Error('Commit refusé: le preview n’est plus persisté. Renvoyer le fichier et le contexte après validation explicite.');
@@ -867,10 +882,16 @@ async function commitImport(payload, actorSubject){
   const preview = input._preview || await analyzeImport(input);
   const resolved = ctx.resolveImportContext(preview.contexte || input.contexte || input.importType || 'GENERAL');
   if(resolved.requireDateEffet && !(temporal.iso(input.dateEffet || input.dateActif || input.dateDebut || input.dateEffetGlobale) || preview.dateActif)){
-    throw new Error('La date d’effet PR-ABC est obligatoire.');
+    const error = new Error('La date d’effet PR-ABC est obligatoire.');
+    error.statusCode = 400;
+    error.error = 'scope_personnel_import_commit_failed';
+    throw error;
   }
   if((preview.lines || []).some((line) => line.status === 'ERROR')){
-    throw new Error('Import refuse: corriger les lignes en erreur avant commit.');
+    const error = new Error('Import refuse: corriger les lignes en erreur avant commit.');
+    error.statusCode = 400;
+    error.error = 'scope_personnel_import_commit_failed';
+    throw error;
   }
   const unresolved = unresolvedRequiredDecisions(preview, input.decisions || []);
   if(unresolved.length){
@@ -881,6 +902,7 @@ async function commitImport(payload, actorSubject){
   const mutationCount = mutations.personInserts.length + mutations.personUpdates.length
     + mutations.assignmentInserts.length + mutations.assignmentClosures.length;
   if(!mutationCount){
+    const outcome = mutationOutcome(mutations);
     return {
       ok: true,
       wrote: false,
@@ -889,7 +911,17 @@ async function commitImport(payload, actorSubject){
       personsTouched: 0,
       assignmentsCreated: 0,
       closures: 0,
-      summary: { mutations: 0, personsTouched: 0, assignmentsCreated: 0, closures: 0 }
+      ignored: outcome.ignored,
+      alreadyExisting: outcome.alreadyExisting,
+      errors: outcome.errors,
+      summary: {
+        mutations: 0,
+        personsTouched: 0,
+        assignmentsCreated: 0,
+        closures: 0,
+        ignored: outcome.ignored,
+        alreadyExisting: outcome.alreadyExisting
+      }
     };
   }
   await ensureScopeSchema();
@@ -999,6 +1031,7 @@ async function commitImport(payload, actorSubject){
       );
       closures++;
     }
+    const outcome = mutationOutcome(mutations);
     return {
       ok: true,
       batchId,
@@ -1015,6 +1048,9 @@ async function commitImport(payload, actorSubject){
       personsTouched,
       assignmentsCreated,
       closures,
+      ignored: outcome.ignored,
+      alreadyExisting: outcome.alreadyExisting,
+      errors: outcome.errors,
       contexte: preview.contexte,
       siteJsp: preview.siteJsp,
       populationLabel: preview.populationLabel,
@@ -1022,7 +1058,9 @@ async function commitImport(payload, actorSubject){
         mutations: personsTouched + assignmentsCreated + closures,
         personsTouched,
         assignmentsCreated,
-        closures
+        closures,
+        ignored: outcome.ignored,
+        alreadyExisting: outcome.alreadyExisting
       }
     };
   });

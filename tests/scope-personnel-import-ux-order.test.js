@@ -87,7 +87,7 @@ function identicalPreview(n){
 }
 
 function run(){
-  assert.deepStrictEqual(display.SPECIALIZATION_DISPLAY_ORDER, ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP']);
+  assert.deepStrictEqual(display.SPECIALIZATION_DISPLAY_ORDER, ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'JSP']);
   assert.strictEqual(display.formatSpecializations([
     { domaine:'AUTO', cible:'PL' },
     { domaine:'PR', cible:'PR' },

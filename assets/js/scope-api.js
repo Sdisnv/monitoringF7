@@ -176,32 +176,28 @@
           importType: (body && (body.importType || body.contexte || body.context)) || 'GENERAL',
           contexte: (body && (body.contexte || body.importType || body.context)) || 'GENERAL',
           siteJsp: body && (body.siteJsp || body.site),
-          anneeMonitoring: body && (body.anneeMonitoring || body.annee)
+          anneeMonitoring: body && (body.anneeMonitoring || body.annee),
+          dateEffet: body && (body.dateEffet || body.dateEffetGlobale || body.dateActif),
+          dateActif: body && (body.dateActif || body.dateEffet || body.dateEffetGlobale),
+          dateEffetGlobale: body && (body.dateEffetGlobale || body.dateEffet)
         }));
         const result = payload && (payload.result || payload);
-        const lines = (result && result.lines) || [];
-        return Object.assign({}, result, {
+        const display = (typeof window !== 'undefined' && window.ScopePersonnelDisplay)
+          || (typeof require === 'function' ? require('./scope-personnel-display.js') : null);
+        const decorated = display && display.decoratePersonnelImportPreview
+          ? display.decoratePersonnelImportPreview(result)
+          : result;
+        const lines = (decorated && decorated.lines) || [];
+        return Object.assign({}, decorated, {
           wrote: false,
-          rows: lines.map((line) => Object.assign({
-            rowId: String(line.lineNumber || line.id || (line.normalized && line.normalized.nip) || line.nip || ''),
-            statut: line.status === 'NEW_JSP' ? 'NOUVEAU' : (line.status === 'ABSENT_DU_NOUVEL_IMPORT' ? 'ABSENT_DU_FICHIER' : line.status),
-            statusLabel: line.statusLabel,
-            nip: (line.normalized && line.normalized.nip) || line.nip,
-            decision: line.status === 'NEW_PERSON' || line.status === 'NEW_JSP'
-              ? 'CREER'
-              : (line.status === 'ABSENT_DU_NOUVEL_IMPORT'
-                ? 'CONSERVER'
-                : (line.status === 'MODIFIED'
-                  ? 'EXAMINER'
-                  : (line.status === 'IDENTICAL' ? 'IGNORER' : 'APPLIQUER')))
-          }, line)),
-          fingerprint: result && (result.fingerprint || [result.contexte, result.siteJsp, result.anneeMonitoring, result.filename].filter(Boolean).join('|')),
-          importId: result && (result.importId || result.batchId || null),
-          summary: (result && result.counts) || {},
-          importSummary: Object.assign({}, result && result.counts, {
-            contextLabel: result && result.contextLabel,
-            siteJspLabel: result && result.siteJspLabel,
-            anneeMonitoring: result && result.anneeMonitoring
+          rows: lines,
+          fingerprint: decorated && (decorated.fingerprint || [decorated.contexte, decorated.siteJsp, decorated.anneeMonitoring, decorated.filename].filter(Boolean).join('|')),
+          importId: decorated && (decorated.importId || decorated.batchId || null),
+          summary: (decorated && decorated.counts) || {},
+          importSummary: Object.assign({}, decorated && decorated.counts, {
+            contextLabel: decorated && decorated.contextLabel,
+            siteJspLabel: decorated && decorated.siteJspLabel,
+            anneeMonitoring: decorated && decorated.anneeMonitoring
           })
         });
       },
@@ -215,7 +211,10 @@
           siteJsp: body && (body.siteJsp || body.site),
           anneeMonitoring: body && (body.anneeMonitoring || body.annee),
           decisions: body && body.decisions,
-          confirmed: true
+          confirmed: true,
+          dateEffet: body && (body.dateEffet || body.dateEffetGlobale || body.dateActif),
+          dateActif: body && (body.dateActif || body.dateEffet || body.dateEffetGlobale),
+          dateEffetGlobale: body && (body.dateEffetGlobale || body.dateEffet)
         }).then((payload) => Object.assign({}, payload, {
           summary: Object.assign({}, payload && payload.summary, {
             mutations: payload && payload.summary && payload.summary.mutations != null

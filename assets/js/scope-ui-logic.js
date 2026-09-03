@@ -1176,6 +1176,21 @@
     if (status === 403) {
       return { tone: 'error', title: 'Action non autorisée', message: 'Votre profil ne permet pas cette modification.' };
     }
+    if (code === 'personnel_stale') {
+      return {
+        tone: 'warning',
+        title: 'Import du personnel',
+        message: payloadMessage || message || 'Les données du personnel ont été modifiées depuis l’analyse. Rechargez et analysez à nouveau le fichier avant de poursuivre.',
+        conflict: true
+      };
+    }
+    if (code === 'scope_personnel_import_commit_failed') {
+      return {
+        tone: 'error',
+        title: 'Import du personnel',
+        message: payloadMessage || message || 'L’import du personnel n’a pas pu être validé.'
+      };
+    }
     if (status === 409 || code === 'conflict') {
       return {
         tone: 'warning',

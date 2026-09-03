@@ -409,6 +409,117 @@
     return String((row && (row.statut || row.status)) || '');
   }
 
+  function personnelImportRowId(row){
+    if(!row) return '';
+    if(row.rowId != null && row.rowId !== '') return String(row.rowId);
+    if(row.lineNumber != null && row.lineNumber !== '') return String(row.lineNumber);
+    const nip = (row.normalized && row.normalized.nip) || row.nip;
+    return nip ? `nip:${nip}` : '';
+  }
+
+  function personnelImportDefaultDecision(row){
+    const status = previewStatus(row).toUpperCase();
+    if(status === 'ERROR' || status === 'ERREUR' || status === 'CONFLIT') return 'IGNORER';
+    if(status === 'IDENTICAL' || status === 'INCHANGE') return 'IGNORER';
+    if(status === 'ABSENT_DU_NOUVEL_IMPORT' || status === 'ABSENT_DU_FICHIER') return 'CONSERVER';
+    if(status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU') return 'CREER';
+    if(status === 'MODIFIED' || status === 'MODIFICATION_IDENTITE'){
+      const person = row.diff && row.diff.person;
+      if(person && (person.nom || person.prenom)) return 'EXAMINER';
+      return 'APPLIQUER';
+    }
+    if(status === 'NEW_ASSIGNMENT' || status === 'EXISTING_ASSIGNMENT') return 'APPLIQUER';
+    return 'APPLIQUER';
+  }
+
+  function personnelImportIsMassApplyable(row){
+    const status = previewStatus(row).toUpperCase();
+    if(status === 'ERROR' || status === 'ERREUR' || status === 'CONFLIT') return false;
+    if(status === 'IDENTICAL' || status === 'INCHANGE') return false;
+    const decision = personnelImportDefaultDecision(row);
+    return decision === 'APPLIQUER' || decision === 'CREER';
+  }
+
+  function personnelImportIsMassIgnorable(row){
+    const status = previewStatus(row).toUpperCase();
+    if(status === 'ERROR' || status === 'ERREUR') return false;
+    if(status === 'IDENTICAL' || status === 'INCHANGE') return false;
+    return true;
+  }
+
+  function decoratePersonnelImportPreview(preview){
+    const source = previewSourceRows(preview);
+    const rows = source.map((line) => {
+      const rowId = personnelImportRowId(line);
+      return Object.assign({}, line, {
+        rowId,
+        statut: line.statut || (line.status === 'NEW_JSP'
+          ? 'NOUVEAU'
+          : (line.status === 'ABSENT_DU_NOUVEL_IMPORT' ? 'ABSENT_DU_FICHIER' : line.status)),
+        decision: line.decision || personnelImportDefaultDecision(line)
+      });
+    });
+    return Object.assign({}, preview, { rows, lines: rows });
+  }
+
+  function seedPersonnelImportDecisions(preview, existing, globalDate){
+    const next = Object.assign({}, existing || {});
+    ((preview && (preview.rows || preview.lines)) || []).forEach((row) => {
+      const id = personnelImportRowId(row);
+      if(!id || next[id]) return;
+      next[id] = {
+        decision: personnelImportDefaultDecision(row),
+        dateEffet: row.dateEffet || globalDate || '',
+        nip: row.nip || (row.normalized && row.normalized.nip) || null
+      };
+    });
+    return next;
+  }
+
+  function applyMassPersonnelImportDecision(preview, existing, decision, globalDate){
+    const next = Object.assign({}, existing || {});
+    const apply = String(decision || '').toUpperCase();
+    ((preview && (preview.rows || preview.lines)) || []).forEach((row) => {
+      if(apply === 'IGNORER' && !personnelImportIsMassIgnorable(row)) return;
+      if(apply !== 'IGNORER' && !personnelImportIsMassApplyable(row)) return;
+      const id = personnelImportRowId(row);
+      if(!id) return;
+      next[id] = {
+        decision: apply === 'IGNORER' ? 'IGNORER' : personnelImportDefaultDecision(row),
+        dateEffet: (next[id] && next[id].dateEffet) || row.dateEffet || globalDate || '',
+        nip: row.nip || (row.normalized && row.normalized.nip) || null
+      };
+    });
+    return next;
+  }
+
+  function personnelImportCommitDecisions(preview, decisionMap, globalDate){
+    return ((preview && (preview.rows || preview.lines)) || []).map((row) => {
+      const id = personnelImportRowId(row);
+      const patch = (decisionMap && (decisionMap[id] || decisionMap[String(row.lineNumber)])) || {};
+      return {
+        rowId: id,
+        nip: row.nip || (row.normalized && row.normalized.nip) || null,
+        decision: patch.decision || row.decision || personnelImportDefaultDecision(row),
+        dateEffet: patch.dateEffet || row.dateEffet || globalDate || undefined
+      };
+    }).filter((row) => row.rowId || row.nip);
+  }
+
+  function personnelImportAppliedMutationCount(preview, decisionMap, globalDate){
+    const decisions = personnelImportCommitDecisions(preview, decisionMap, globalDate);
+    const byId = new Map(((preview && (preview.rows || preview.lines)) || []).map((row) => [personnelImportRowId(row), row]));
+    return decisions.filter((item) => {
+      const row = byId.get(item.rowId);
+      const status = previewStatus(row).toUpperCase();
+      if(status === 'IDENTICAL' || status === 'INCHANGE' || status === 'ERROR' || status === 'ERREUR') return false;
+      const decision = String(item.decision || '').toUpperCase();
+      if(decision !== 'APPLIQUER' && decision !== 'CREER') return false;
+      const news = (row && row.diff && row.diff.newAssignments) || [];
+      return news.length > 0;
+    }).length;
+  }
+
   function hasAnomaly(row){
     if(!row) return false;
     if((row.errors || []).length) return true;
@@ -540,6 +651,7 @@
     if(kind === 'info') return 'Information';
     if(kind === 'action'){
       const status = previewStatus(row);
+      if(status === 'NEW_ASSIGNMENT') return 'Nouvelle affectation';
       if(status === 'NEW_PERSON' || status === 'NEW_JSP' || status === 'NOUVEAU') return 'À traiter';
       if(status === 'ABSENT_DU_NOUVEL_IMPORT' || status === 'ABSENT_DU_FICHIER') return 'À traiter';
       return 'À traiter';
@@ -1189,6 +1301,15 @@
     isStrictlyIdenticalPreviewRow,
     previewDetailRows,
     previewRowKind,
+    personnelImportRowId,
+    personnelImportDefaultDecision,
+    personnelImportIsMassApplyable,
+    personnelImportIsMassIgnorable,
+    decoratePersonnelImportPreview,
+    seedPersonnelImportDecisions,
+    applyMassPersonnelImportDecision,
+    personnelImportCommitDecisions,
+    personnelImportAppliedMutationCount,
     filterPreviewRows,
     importFilterButtons,
     importHasMutations,

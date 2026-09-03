@@ -126,6 +126,7 @@
       siteJsp: '',
       anneeMonitoring: String(new Date().getFullYear()),
       decisions: {},
+      commitPayload: null,
       openRow: null
     },
     personnelDirectory: null,
@@ -2156,12 +2157,19 @@
 
   function personnelPreviewSourceRows(preview) {
     if (!preview) return [];
-    if (preview.lines) return preview.lines;
-    return preview.rows || (preview.lignes || []).concat(preview.absents || []) || [];
+    if (preview.rows && preview.rows.length) return preview.rows;
+    if (preview.lines && preview.lines.length) return preview.lines;
+    return (preview.lignes || []).concat(preview.absents || []) || [];
   }
 
   function personnelDisplay() {
     return window.ScopePersonnelDisplay || null;
+  }
+
+  function personnelRowId(row) {
+    const display = personnelDisplay();
+    if (display && display.personnelImportRowId) return display.personnelImportRowId(row);
+    return String((row && (row.rowId || row.lineNumber)) || '');
   }
 
   function personnelVisibleRows(preview) {
@@ -2185,12 +2193,18 @@
   }
 
   function personnelDecisionOf(row) {
-    const patch = state.personnelSync.decisions[row.rowId];
-    return (patch && patch.decision) || row.decision || 'IGNORER';
+    const id = personnelRowId(row);
+    const patch = state.personnelSync.decisions[id];
+    if (patch && patch.decision) return patch.decision;
+    if (row && row.decision) return row.decision;
+    const display = personnelDisplay();
+    if (display && display.personnelImportDefaultDecision) return display.personnelImportDefaultDecision(row);
+    return 'IGNORER';
   }
 
   function personnelDateOf(row) {
-    const patch = state.personnelSync.decisions[row.rowId];
+    const id = personnelRowId(row);
+    const patch = state.personnelSync.decisions[id];
     return (patch && patch.dateEffet) || row.dateEffet || state.personnelSync.dateEffet || '';
   }
 
@@ -2238,12 +2252,12 @@
       ];
     } else if (row.statut === 'NOUVEAU' || row.statut === 'NEW_PERSON' || row.statut === 'NEW_JSP') {
       options = [['CREER', 'Créer'], ['IGNORER', 'Ignorer']];
-    } else if (row.statut === 'INCHANGE' || row.statut === 'IDENTICAL') {
-      options = [['IGNORER', 'Aucune']];
+    } else if (row.statut === 'INCHANGE' || row.statut === 'IDENTICAL' || row.status === 'IDENTICAL') {
+      return '<span class="scope-sync-decision-none">Aucune</span>';
     } else {
       options = [['APPLIQUER', 'Appliquer'], ['IGNORER', 'Ignorer'], ['EXAMINER', 'Examiner']];
     }
-    return `<select class="scope-sync-decision" data-sync-decision="${escapeHtml(row.rowId)}">
+    return `<select class="scope-sync-decision" data-sync-decision="${escapeHtml(personnelRowId(row))}">
       ${options.map(([value, label]) => `<option value="${value}" ${current === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
     </select>`;
   }
@@ -3464,6 +3478,10 @@
           <div class="scope-sync-filters" role="tablist">
             ${filters.map((item) => `<button type="button" class="scope-btn ${state.personnelSync.filter === item.id ? 'scope-btn-primary' : ''}" data-sync-filter="${item.id}">${escapeHtml(item.label)}${item.id !== 'CHANGEMENTS' && item.id !== 'TOUS' && item.count != null ? ` (${item.count})` : ''}</button>`).join('')}
           </div>
+          <div class="scope-actions" style="margin:8px 0 12px">
+            <button type="button" class="scope-btn" id="scope-sync-apply-all">Appliquer à tous</button>
+            <button type="button" class="scope-btn" id="scope-sync-ignore-all">Ignorer tous</button>
+          </div>
           <div class="scope-table-wrap scope-sync-table-wrap">
             <table class="scope-table scope-sync-table">
               <thead><tr><th>NIP</th><th>Personne</th><th>Modification</th><th>Affectation</th><th>Situation</th><th>Action</th><th>Date d’effet</th></tr></thead>
@@ -3476,7 +3494,7 @@
                     <td data-label="Affectation">${escapeHtml(personnelLineAffectation(row))}</td>
                     <td data-label="Situation"><span class="scope-import-pill ${personnelPillClass(row.statut, row)}">${escapeHtml(personnelLineSituation(row))}</span></td>
                     <td data-label="Action">${personnelDecisionSelect(row)}</td>
-                    <td data-label="Date d’effet"><input type="date" class="scope-sync-row-date" data-sync-date="${escapeHtml(row.rowId)}" value="${escapeHtml(personnelDateOf(row))}" ${row.statut === 'INCHANGE' || row.statut === 'IDENTICAL' ? 'disabled' : ''}></td>
+                    <td data-label="Date d’effet"><input type="date" class="scope-sync-row-date" data-sync-date="${escapeHtml(personnelRowId(row))}" value="${escapeHtml(personnelDateOf(row))}" ${row.statut === 'INCHANGE' || row.statut === 'IDENTICAL' || row.status === 'IDENTICAL' ? 'disabled' : ''}></td>
                   </tr>
                   ${row.infos && row.infos.length && personnelLineModification(row).indexOf(row.infos[0]) < 0 ? `<tr class="scope-sync-detail"><td colspan="7">${escapeHtml((row.infos || []).join(' · '))}</td></tr>` : ''}
                 `).join('') || `<tr><td colspan="7"><div class="scope-import-empty"><h4>${escapeHtml((emptyState && emptyState.title) || 'Aucune ligne dans ce filtre')}</h4><p>${escapeHtml((emptyState && emptyState.text) || '')}</p></div></td></tr>`}
@@ -3485,8 +3503,8 @@
           </div>
         </div>` : ''}
         ${showImportPanel && rapport ? `<div class="scope-card" style="margin-top:12px">
-          <h3 style="margin-top:0">Import terminé</h3>
-          <p>${rapport.summary ? `${rapport.summary.analysed || 0} lignes analysées · ${rapport.summary.mutations || 0} mutation(s)` : `${rapport.personsTouched || 0} personne(s) touchée(s) · ${rapport.assignmentsCreated || 0} affectation(s) créée(s)`}</p>
+          <h3 style="margin-top:0">IMPORT TERMINÉ</h3>
+          <p>${escapeHtml(rapport.successMessage || (rapport.summary ? `${rapport.summary.analysed || 0} lignes analysées · ${rapport.summary.mutations || 0} mutation(s)` : `${rapport.personsTouched || 0} personne(s) touchée(s) · ${rapport.assignmentsCreated || 0} affectation(s) créée(s)`))}</p>
         </div>` : ''}
       </div>
     `;
@@ -5238,11 +5256,21 @@
   function renderModalPersonnelSync() {
     if (state.modal !== 'personnel-sync') return '';
     const preview = state.personnelSync.preview;
+    const pending = state.personnelSync.commitPayload || {};
     const summary = (preview && (preview.importSummary || preview.summary)) || {};
+    const applied = pending.appliedCount != null
+      ? pending.appliedCount
+      : (summary.countNewAssignments || 0);
+    const createdPersons = pending.createdPersons != null
+      ? pending.createdPersons
+      : (summary.countNewPersons || summary.nouveaux || 0);
+    const modified = pending.modifiedPersons != null
+      ? pending.modifiedPersons
+      : (summary.countModified || summary.changementsOi || 0);
     return `<div class="scope-modal"><div class="scope-card">
       <h3>Confirmer l’import</h3>
       <p>Confirmer l’import de ces modifications dans SCOPE ? Cette action écrira en base. L’analyse et la prévisualisation n’ont effectué aucune écriture.</p>
-      <p>${summary.countNewPersons || summary.nouveaux || 0} nouvelle(s) personne(s) · ${summary.countModified || summary.changementsOi || 0} personne(s) modifiée(s) · ${summary.countNewAssignments || 0} nouvelle(s) affectation(s) · ${summary.countErrors || summary.conflits || 0} erreur(s).</p>
+      <p>${createdPersons} nouvelle(s) personne(s) · ${modified} personne(s) modifiée(s) · ${applied} nouvelle(s) affectation(s) · ${summary.countErrors || summary.conflits || 0} erreur(s).</p>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="scope-sync-commit-ok">Valider l’import</button>
         <button type="button" class="scope-btn" id="scope-sync-commit-cancel">Annuler</button>
@@ -6831,11 +6859,51 @@
         state.personnelSync.filter = display && display.defaultImportFilter
           ? display.defaultImportFilter(state.personnelSync.preview)
           : 'CHANGEMENTS';
-        state.personnelSync.decisions = {};
+        state.personnelSync.decisions = display && display.seedPersonnelImportDecisions
+          ? display.seedPersonnelImportDecisions(state.personnelSync.preview, {}, state.personnelSync.dateEffet)
+          : {};
+        state.personnelSync.commitPayload = null;
         toast('success', 'Analyse terminée', 'Prévisualisation disponible. Aucune écriture DB effectuée.');
       });
     });
+    document.getElementById('scope-sync-apply-all')?.addEventListener('click', () => {
+      const display = personnelDisplay();
+      if (display && display.applyMassPersonnelImportDecision) {
+        state.personnelSync.decisions = display.applyMassPersonnelImportDecision(
+          state.personnelSync.preview,
+          state.personnelSync.decisions,
+          'APPLIQUER',
+          state.personnelSync.dateEffet
+        );
+      }
+      render();
+    });
+    document.getElementById('scope-sync-ignore-all')?.addEventListener('click', () => {
+      const display = personnelDisplay();
+      if (display && display.applyMassPersonnelImportDecision) {
+        state.personnelSync.decisions = display.applyMassPersonnelImportDecision(
+          state.personnelSync.preview,
+          state.personnelSync.decisions,
+          'IGNORER',
+          state.personnelSync.dateEffet
+        );
+      }
+      render();
+    });
     document.getElementById('scope-sync-commit')?.addEventListener('click', () => {
+      const preview = state.personnelSync.preview;
+      const display = personnelDisplay();
+      const date = state.personnelSync.dateEffet || '';
+      const decisions = display && display.personnelImportCommitDecisions
+        ? display.personnelImportCommitDecisions(preview, state.personnelSync.decisions, date)
+        : [];
+      const appliedCount = display && display.personnelImportAppliedMutationCount
+        ? display.personnelImportAppliedMutationCount(preview, state.personnelSync.decisions, date)
+        : decisions.filter((item) => {
+          const d = String(item.decision || '').toUpperCase();
+          return d === 'APPLIQUER' || d === 'CREER';
+        }).length;
+      state.personnelSync.commitPayload = { decisions, appliedCount };
       state.modal = 'personnel-sync';
       render();
     });
@@ -6845,35 +6913,35 @@
     });
     document.getElementById('scope-sync-commit-ok')?.addEventListener('click', () => {
       const preview = state.personnelSync.preview;
-      const decisions = Object.keys(state.personnelSync.decisions).map((rowId) => Object.assign({ rowId }, state.personnelSync.decisions[rowId]));
-      personnelPreviewSourceRows(preview).forEach((row) => {
-        const date = personnelDateOf(row);
-        const decision = personnelDecisionOf(row);
-        if (decision !== row.decision || (date && date !== row.dateEffet)) {
-          if (!decisions.some((d) => d.rowId === row.rowId)) {
-            decisions.push({ rowId: row.rowId, nip: row.nip, decision, dateEffet: date || undefined });
-          }
-        }
-      });
+      const decisions = (state.personnelSync.commitPayload && state.personnelSync.commitPayload.decisions) || [];
       withLoading(async () => {
         toast('info', 'Import en cours…', 'Écriture DB SCOPE après confirmation explicite.');
-        state.personnelSync.rapport = await client.commitPersonnelSync({
+        const rapport = await client.commitPersonnelSync({
           csvText: state.personnelSync.csvText,
           filename: state.personnelSync.filename,
           contexte: state.personnelSync.contexte,
           importType: state.personnelSync.contexte,
           siteJsp: state.personnelSync.siteJsp || undefined,
           anneeMonitoring: Number(state.personnelSync.anneeMonitoring) || new Date().getFullYear(),
-          fingerprint: preview.fingerprint,
-          importId: preview.importId,
+          fingerprint: preview && preview.fingerprint,
+          importId: preview && preview.importId,
+          dateEffet: state.personnelSync.dateEffet || undefined,
           dateEffetGlobale: state.personnelSync.dateEffet || undefined,
-          idempotencyKey: preview.importId,
+          idempotencyKey: preview && preview.importId,
           decisions
         });
+        const created = Number(rapport && (rapport.assignmentsCreated || (rapport.summary && rapport.summary.assignmentsCreated)) || 0);
+        const ctx = String(state.personnelSync.contexte || '').toUpperCase();
+        const successMessage = ctx === 'PR_ABC'
+          ? `Import PR-ABC terminé — ${created} affectation(s) créée(s).`
+          : `Import terminé — ${created} affectation(s) créée(s).`;
         state.modal = null;
-        const people = await client.listPersonnes();
-        state.personCount = (people.personnes || []).length;
-        toast('success', 'Import terminé', `${(state.personnelSync.rapport.summary && state.personnelSync.rapport.summary.mutations) || 0} mutation(s).`);
+        state.personnelSync.preview = null;
+        state.personnelSync.decisions = {};
+        state.personnelSync.commitPayload = null;
+        state.personnelSync.rapport = Object.assign({}, rapport, { successMessage });
+        if (typeof loadPersonnelDirectory === 'function') await loadPersonnelDirectory();
+        toast('success', 'IMPORT TERMINÉ', successMessage);
       });
     });
     document.getElementById('scope-sync-file')?.addEventListener('change', (e) => {
