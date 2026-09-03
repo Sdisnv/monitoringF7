@@ -88,8 +88,11 @@
     encQuery: '',
     encHits: [],
     saisieDirty: false,
+    hasUnsavedChanges: false,
     presenceSaveBusy: false,
+    presenceCloseBusy: null,
     presenceSaveStatus: 'idle',
+    saisieGuard: { stayHash: '', pendingHash: '', restoring: false, allowLeave: false },
     realiseQuery: '',
     realiseGrade: '',
     realiseOi: '',
@@ -310,7 +313,31 @@
   function route() { return L.parseHash(location.hash); }
 
   function go(hash) {
+    const next = L.parseHash(hash);
+    if (L.hasUnsavedPresenceChanges && L.hasUnsavedPresenceChanges(state)
+      && L.isLeavingSaisieRoute && L.isLeavingSaisieRoute(route(), next)
+      && !(state.saisieGuard && state.saisieGuard.allowLeave)) {
+      requestLeaveSaisie(hash);
+      return;
+    }
     location.hash = hash;
+  }
+
+  function setUnsavedPresenceChanges(dirty) {
+    state.saisieDirty = Boolean(dirty);
+    state.hasUnsavedChanges = state.saisieDirty;
+  }
+
+  function requestLeaveSaisie(hash) {
+    if (!L.hasUnsavedPresenceChanges(state)) {
+      location.hash = hash;
+      return;
+    }
+    const plan = L.planSaisieLeave(state);
+    state.saisieGuard.pendingHash = hash;
+    state.modal = 'unsaved-saisie-leave';
+    state.saisieLeaveCopy = plan;
+    render();
   }
 
   function domaineLabel(code) {
@@ -572,6 +599,7 @@
     state.encSerieComplete = false;
     state.encRetrait = null;
     buildSaisieFromFiche();
+    setUnsavedPresenceChanges(false);
     state.volumes = volumesFromFiche();
     state.qtyPreview = null;
     return data;
@@ -624,6 +652,7 @@
     state.conflict = false;
     state.encRetrait = null;
     buildSaisieFromFiche();
+    setUnsavedPresenceChanges(false);
     state.volumes = volumesFromFiche();
     state.qtyPreview = null;
     return data;
@@ -4534,7 +4563,9 @@
     const disabledCloture = hasIncompleteExcuse || hasIncompleteDispense;
     const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
     const openCount = L.liveCounters(state.saisie).open;
-    const saveState = presenceSaveLabel();
+    const saveBusy = Boolean(state.presenceSaveBusy);
+    const closeBusy = state.presenceCloseBusy;
+    const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : 'Clôturer');
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main scope-event-saisie">
@@ -4543,11 +4574,11 @@
         ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
         ${hasIncompleteDispense ? '<p class="scope-presence-warning">Choisissez un motif pour chaque dispense avant la clôture.</p>' : ''}
         <div class="scope-actions scope-event-toolbar scope-saisie-toolbar">
-          <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${state.presenceSaveBusy ? 'disabled' : ''}>${state.presenceSaveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
-          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present">Tous présents</button>
-          <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/exercices">Retour aux événements</a>
-          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie">Réinitialiser la saisie</button>
-          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${disabledCloture ? 'disabled' : ''}>Clôturer</button>
+          <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${saveBusy ? 'disabled' : ''}>${saveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present" ${saveBusy ? 'disabled' : ''}>Tous présents</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="scope-saisie-back">Retour aux événements</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie" ${saveBusy ? 'disabled' : ''}>Réinitialiser la saisie</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${disabledCloture || saveBusy || closeBusy ? 'disabled' : ''}>${escapeHtml(closeLabel)}</button>
         </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
         ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
@@ -5253,6 +5284,20 @@
     </div></div>`;
   }
 
+  function renderModalUnsavedSaisie() {
+    if (state.modal !== 'unsaved-saisie-leave') return '';
+    const copy = state.saisieLeaveCopy || (L.planSaisieLeave ? L.planSaisieLeave(state) : {});
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>${escapeHtml(copy.title || 'MODIFICATIONS NON ENREGISTRÉES')}</h3>
+      <p>${escapeHtml(copy.message || 'Des modifications n’ont pas encore été enregistrées.')}</p>
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="scope-saisie-leave-save">Enregistrer et quitter</button>
+        <button type="button" class="scope-btn" id="scope-saisie-leave-stay">Rester sur la saisie</button>
+      </div>
+      <p class="scope-mode-hint" style="margin-top:12px"><button type="button" class="scope-btn scope-btn-compact" id="scope-saisie-leave-discard">Quitter sans enregistrer</button></p>
+    </div></div>`;
+  }
+
   function renderModalPersonnelSync() {
     if (state.modal !== 'personnel-sync') return '';
     const preview = state.personnelSync.preview;
@@ -5823,7 +5868,7 @@
                 : r.screen === 'import' ? renderImport()
                   : renderListe();
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
-    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderPersonnelManualAddModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
+    root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderPersonnelManualAddModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalUnsavedSaisie()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
     bind();
     if (state.objectifMenuId) positionObjectifRowMenu();
     const statutSel = document.getElementById('filter-statut');
@@ -6502,7 +6547,7 @@
         return;
       }
       applyPresent();
-      state.saisieDirty = true;
+      setUnsavedPresenceChanges(true);
     });
     document.getElementById('reset-saisie')?.addEventListener('click', () => {
       if (L.needsConfirmReset && L.needsConfirmReset(state.saisie, (state.fiche && state.fiche.encadrement) || [])) {
@@ -6516,7 +6561,7 @@
       }
       resetSaisie();
     });
-    document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); state.saisieDirty = true; });
+    document.getElementById('all-present-ok')?.addEventListener('click', () => { state.modal = null; applyPresent(); setUnsavedPresenceChanges(true); });
     document.getElementById('all-present-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('reset-saisie-ok')?.addEventListener('click', () => { state.modal = null; resetSaisie(); });
     document.getElementById('reset-saisie-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
@@ -6552,7 +6597,7 @@
         if (!row || row.alreadyCountedInSession) return;
         state.saisie[idx] = L.applyParticipationStatus(row, statut);
         if (state.saisie[idx]) state.saisie[idx].editMotif = false;
-        state.saisieDirty = true;
+        setUnsavedPresenceChanges(true);
         render();
       });
     });
@@ -6562,7 +6607,7 @@
         const idx = state.saisie.findIndex((r) => r.personneId === pid);
         if (idx < 0) return;
         state.saisie[idx] = L.applyExcuseMotif(state.saisie[idx], btn.getAttribute('data-motif-chip'));
-        state.saisieDirty = true;
+        setUnsavedPresenceChanges(true);
         render();
       });
     });
@@ -6574,7 +6619,7 @@
         if (row) {
           state.saisie[idx] = L.applyExcuseMotif(row, sel.value);
           if (state.saisie[idx]) state.saisie[idx].editMotif = false;
-          state.saisieDirty = true;
+          setUnsavedPresenceChanges(true);
           render();
         }
       });
@@ -6587,7 +6632,7 @@
         if (row && L.applyDispenseMotif) {
           state.saisie[idx] = L.applyDispenseMotif(row, sel.value);
           if (state.saisie[idx]) state.saisie[idx].editMotif = false;
-          state.saisieDirty = true;
+          setUnsavedPresenceChanges(true);
           render();
         }
       });
@@ -6602,7 +6647,10 @@
       inp.addEventListener('change', () => {
         const pid = inp.closest('[data-pid]').getAttribute('data-pid');
         const row = state.saisie.find((r) => r.personneId === pid);
-        if (row) row.commentaire = inp.value;
+        if (row) {
+          row.commentaire = inp.value;
+          setUnsavedPresenceChanges(true);
+        }
       });
     });
     root.querySelectorAll('[data-cible-filter]').forEach((btn) => {
@@ -6626,64 +6674,25 @@
       row.addEventListener('mouseleave', () => { tip.style.visibility = ''; });
       row.addEventListener('focusout', () => { tip.style.visibility = ''; });
     });
-    document.getElementById('save-part')?.addEventListener('click', saveParticipations);
-    document.getElementById('cloturer')?.addEventListener('click', () => {
-      const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0, incompleteDispenses: 0 };
-      if (blockers.incompleteExcuses > 0 || blockers.incompleteDispenses > 0) {
-        ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif avant la clôture.');
-        return;
-      }
-      const session = (state.fiche && (state.fiche.prExerciseParticipation || state.fiche.sessionParticipation)) || {};
-      const multi = Boolean(session.isMultiSession);
-      const last = Boolean(session.isLastSession);
-      if (multi && !last) {
-        ScopeFeedback.confirm({
-          title: 'Clôturer la séance',
-          message: 'La séance sera clôturée. Les personnes non renseignées restent disponibles pour les séances suivantes.',
-          confirmText: 'Clôturer'
-        }, cloturer);
-        return;
-      }
-      if (multi && last) {
-        const missing = session.unfilledPeople || [];
-        if (missing.length) {
-          ScopeFeedback.error(
-            'Clôture impossible',
-            'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.',
-            {
-              closeText: 'Retour à la saisie',
-              errorsMax: 200,
-              errors: missing.map((p) => ({
-                message: [p.grade, p.nom, p.prenom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' ')
-              }))
-            }
-          );
-          return;
-        }
-        ScopeFeedback.confirm({
-          title: 'Clôturer l’exercice',
-          message: 'La session complète sera clôturée.',
-          confirmText: 'Clôturer l’exercice'
-        }, cloturer);
-        return;
-      }
-      const open = Number(blockers.open || 0);
-      if (!multi && open > 0) {
-        ScopeFeedback.error(
-          'Clôture impossible',
-          'Chaque personne attendue sans statut valable doit être renseignée avant clôture.'
-        );
-        return;
-      }
-      ScopeFeedback.confirm({
-        title: open > 0 ? 'Clôturer avec des participations non renseignées' : 'Clôturer l’événement',
-        message: open > 0
-          ? `${open} personnes restent sans statut. Elles resteront non renseignées après clôture.`
-          : 'La saisie sera enregistrée et l’événement marqué comme réalisé.',
-        confirmText: open > 0 ? 'Clôturer quand même' : 'Clôturer',
-        cancelText: 'Annuler'
-      }, cloturer);
+    document.getElementById('save-part')?.addEventListener('click', () => saveParticipations());
+    document.getElementById('scope-saisie-back')?.addEventListener('click', () => requestLeaveSaisie('#/exercices'));
+    document.getElementById('scope-saisie-leave-stay')?.addEventListener('click', () => {
+      state.modal = null;
+      state.saisieGuard.pendingHash = '';
+      render();
     });
+    document.getElementById('scope-saisie-leave-discard')?.addEventListener('click', () => {
+      const target = state.saisieGuard.pendingHash || '#/exercices';
+      setUnsavedPresenceChanges(false);
+      state.modal = null;
+      state.saisieGuard.allowLeave = true;
+      state.saisieGuard.pendingHash = '';
+      location.hash = target;
+    });
+    document.getElementById('scope-saisie-leave-save')?.addEventListener('click', () => {
+      finishLeaveSaisie('save');
+    });
+    document.getElementById('cloturer')?.addEventListener('click', () => onCloturerClick());
     document.getElementById('cloture-incomplete-ok')?.addEventListener('click', () => { state.modal = null; cloturer(); });
     document.getElementById('cloture-incomplete-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('enc-role')?.addEventListener('change', (e) => {
@@ -7681,42 +7690,177 @@
     });
   }
 
-  function saveParticipations() {
-    if (state.presenceSaveBusy) return;
+  async function persistParticipations() {
+    if (state.presenceSaveBusy) return { ok: false, reason: 'in_flight' };
+    if (!L.hasUnsavedPresenceChanges(state)) {
+      return { ok: true, skipped: true, version: state.fiche && state.fiche.evenement && state.fiche.evenement.version };
+    }
     const id = route().id;
     const encadrementIds = usedEncadrementIds();
     const payload = buildPresenceSavePayload(state.saisie, encadrementIds);
     state.presenceSaveBusy = true;
+    render();
+    try {
+      const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
+      await reloadFicheFromServer(id);
+      const version = (res && res.version) || (state.fiche && state.fiche.evenement && state.fiche.evenement.version);
+      if (version && state.fiche && state.fiche.evenement) state.fiche.evenement.version = version;
+      setUnsavedPresenceChanges(false);
+      state.presenceSaveStatus = 'saved';
+      return { ok: true, version };
+    } catch (error) {
+      state.presenceSaveStatus = 'error';
+      return { ok: false, reason: 'save_failed', error, status: error && error.status, conflict: Boolean(error && error.status === 409) };
+    } finally {
+      state.presenceSaveBusy = false;
+      render();
+    }
+  }
+
+  function saveParticipations() {
+    if (!L.canStartPresenceSave(state)) return;
     withFeedbackAction({
       progressTitle: 'Enregistrement des présences',
       successTitle: 'Présences enregistrées',
       successMessage: 'Les participations ont été enregistrées.'
     }, async () => {
-      try {
-        const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
-        const fresh = await reloadFicheFromServer(id);
-        if (fresh && state.fiche && state.fiche.evenement && res.version) state.fiche.evenement.version = res.version;
-        state.saisieDirty = false;
-        state.presenceSaveStatus = 'saved';
-      } catch (error) {
-        state.presenceSaveStatus = 'error';
-        throw error;
-      } finally {
-        state.presenceSaveBusy = false;
+      const saved = await persistParticipations();
+      if (!saved.ok) {
+        if (saved.reason === 'in_flight') return;
+        throw saved.error || new Error(saved.reason);
       }
     });
   }
 
+  function confirmClotureAfterSave() {
+    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0, incompleteDispenses: 0 };
+    if (blockers.incompleteExcuses > 0 || blockers.incompleteDispenses > 0) {
+      ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif avant la clôture.');
+      return;
+    }
+    const session = (state.fiche && (state.fiche.prExerciseParticipation || state.fiche.sessionParticipation)) || {};
+    const multi = Boolean(session.isMultiSession);
+    const last = Boolean(session.isLastSession);
+    if (multi && !last) {
+      ScopeFeedback.confirm({
+        title: 'Clôturer la séance',
+        message: 'La séance sera clôturée. Les personnes non renseignées restent disponibles pour les séances suivantes.',
+        confirmText: 'Clôturer'
+      }, cloturer);
+      return;
+    }
+    if (multi && last) {
+      const missing = session.unfilledPeople || [];
+      if (missing.length) {
+        ScopeFeedback.error(
+          'Clôture impossible',
+          'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.',
+          {
+            closeText: 'Retour à la saisie',
+            errorsMax: 200,
+            errors: missing.map((p) => ({
+              message: [p.grade, p.nom, p.prenom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' ')
+            }))
+          }
+        );
+        return;
+      }
+      ScopeFeedback.confirm({
+        title: 'Clôturer l’exercice',
+        message: 'La session complète sera clôturée.',
+        confirmText: 'Clôturer l’exercice'
+      }, cloturer);
+      return;
+    }
+    const open = Number(blockers.open || 0);
+    if (!multi && open > 0) {
+      ScopeFeedback.error(
+        'Clôture impossible',
+        'Chaque personne attendue sans statut valable doit être renseignée avant clôture.'
+      );
+      return;
+    }
+    ScopeFeedback.confirm({
+      title: open > 0 ? 'Clôturer avec des participations non renseignées' : 'Clôturer l’événement',
+      message: open > 0
+        ? `${open} personnes restent sans statut. Elles resteront non renseignées après clôture.`
+        : 'La saisie sera enregistrée et l’événement marqué comme réalisé.',
+      confirmText: open > 0 ? 'Clôturer quand même' : 'Clôturer',
+      cancelText: 'Annuler'
+    }, cloturer);
+  }
+
+  async function onCloturerClick() {
+    if (state.presenceSaveBusy || state.presenceCloseBusy) return;
+    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { incompleteExcuses: 0, incompleteDispenses: 0 };
+    if (blockers.incompleteExcuses > 0 || blockers.incompleteDispenses > 0) {
+      ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif avant la clôture.');
+      return;
+    }
+    if (L.hasUnsavedPresenceChanges(state)) {
+      state.presenceCloseBusy = 'save';
+      render();
+      const saved = await persistParticipations();
+      state.presenceCloseBusy = null;
+      if (!saved.ok) {
+        const info = saved.error ? L.friendlyError(saved.error) : {};
+        if (info.conflict || saved.conflict) {
+          ScopeFeedback.error(info.title || 'Séance modifiée ailleurs', info.message || 'Cette séance a été modifiée ailleurs. Rechargez les données avant de poursuivre.', { conflict: true });
+        } else {
+          ScopeFeedback.error('Saisie non enregistrée', L.PRESENCE_SAVE_FAILED_CLOSE_MESSAGE || 'La saisie n’a pas pu être enregistrée. L’événement n’a pas été clôturé.');
+        }
+        render();
+        return;
+      }
+    }
+    confirmClotureAfterSave();
+  }
+
+  async function finishLeaveSaisie(choice) {
+    const target = state.saisieGuard.pendingHash || '#/exercices';
+    const result = await L.orchestrateLeaveSaisie({
+      dirty: L.hasUnsavedPresenceChanges(state),
+      saisieDirty: state.saisieDirty,
+      choice,
+      saveInFlight: state.presenceSaveBusy,
+      save: persistParticipations
+    });
+    if (choice === 'stay' || result.navigated === false && result.ok) {
+      state.modal = null;
+      state.saisieGuard.pendingHash = '';
+      render();
+      return;
+    }
+    if (!result.ok) {
+      state.modal = null;
+      ScopeFeedback.error('Saisie non enregistrée', result.message || 'La saisie n’a pas pu être enregistrée.');
+      render();
+      return;
+    }
+    if (result.discarded) setUnsavedPresenceChanges(false);
+    state.modal = null;
+    state.saisieGuard.allowLeave = true;
+    state.saisieGuard.pendingHash = '';
+    location.hash = target;
+  }
+
   function cloturer() {
     const id = route().id;
+    state.presenceCloseBusy = 'close';
     withFeedbackAction({
-      progressTitle: 'Clôture de l’événement',
+      progressTitle: 'Clôture…',
       successTitle: 'Événement clôturé',
       successMessage: 'La saisie est enregistrée et l’événement est marqué comme réalisé.'
     }, async () => {
-      await client.cloturer(id, state.fiche.evenement.version);
-      await loadFiche(id);
-      go(`#/exercices/${id}`);
+      try {
+        await client.cloturer(id, state.fiche.evenement.version);
+        setUnsavedPresenceChanges(false);
+        await loadFiche(id);
+        state.saisieGuard.allowLeave = true;
+        go(`#/exercices/${id}`);
+      } finally {
+        state.presenceCloseBusy = null;
+      }
     });
   }
 
@@ -7857,6 +8001,27 @@
   }
 
   async function onRoute() {
+    if (state.saisieGuard && state.saisieGuard.restoring) {
+      state.saisieGuard.restoring = false;
+      return;
+    }
+    const incoming = route();
+    const stay = L.parseHash(state.saisieGuard && state.saisieGuard.stayHash);
+    if (
+      L.hasUnsavedPresenceChanges(state)
+      && stay.screen === 'saisie'
+      && L.isLeavingSaisieRoute(stay, incoming)
+      && !(state.saisieGuard && state.saisieGuard.allowLeave)
+    ) {
+      state.saisieGuard.pendingHash = location.hash;
+      state.saisieGuard.restoring = true;
+      state.modal = 'unsaved-saisie-leave';
+      state.saisieLeaveCopy = L.planSaisieLeave(state);
+      location.hash = state.saisieGuard.stayHash;
+      render();
+      return;
+    }
+    if (state.saisieGuard) state.saisieGuard.allowLeave = false;
     if (mode === 'live' && state.needOkta) {
       render();
       return;
@@ -7914,9 +8079,20 @@
       if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) await loadFiche(r.id);
       await refreshAlertCounts();
     });
+    if (r.screen === 'saisie' && r.id) {
+      state.saisieGuard.stayHash = `#/exercices/${r.id}/saisie`;
+    } else if (r.screen !== 'saisie') {
+      state.saisieGuard.stayHash = '';
+    }
   }
 
   window.addEventListener('hashchange', onRoute);
+  window.addEventListener('beforeunload', (event) => {
+    if (L.shouldWarnBeforeUnload && L.shouldWarnBeforeUnload(state, route())) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (state.personnelInactivate) {

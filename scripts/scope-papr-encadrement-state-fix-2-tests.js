@@ -71,9 +71,9 @@ const merge = extractFunction('mergeEditableSaisieState');
 assert.ok(merge.includes('encadrementIds.has(String(row.personneId))'), 'les lignes encadrement doivent rester serveur');
 assert.ok(!/role\s*:\s*prior\.role/.test(merge), 'la fusion ne doit jamais réinjecter role depuis le snapshot stale');
 
-const save = extractFunction('saveParticipations');
-assert.ok(save.includes('usedEncadrementIds()'), 'saveParticipations doit consulter les encadrants courants');
-assert.ok(save.includes('buildPresenceSavePayload(state.saisie, encadrementIds)'), 'saveParticipations doit utiliser le builder filtrant');
+const save = extractFunction('persistParticipations');
+assert.ok(save.includes('usedEncadrementIds()'), 'persistParticipations doit consulter les encadrants courants');
+assert.ok(save.includes('buildPresenceSavePayload(state.saisie, encadrementIds)'), 'persistParticipations doit utiliser le builder filtrant');
 assert.ok(extractFunction('buildPresenceSavePayload').includes('L.buildPresenceSavePayload'), 'UI doit déléguer le payload à la logique unique');
 
 console.log('PASS — SCOPE-PAPR-ENCADREMENT-STATE-FIX-2 frontend payload');

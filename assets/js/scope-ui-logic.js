@@ -766,6 +766,109 @@
     return statut || '—';
   }
 
+  const PRESENCE_SAVE_FAILED_CLOSE_MESSAGE = 'La saisie n’a pas pu être enregistrée. L’événement n’a pas été clôturé.';
+
+  function hasUnsavedPresenceChanges(stateLike) {
+    return Boolean(stateLike && (stateLike.hasUnsavedChanges || stateLike.saisieDirty));
+  }
+
+  function canStartPresenceSave(stateLike) {
+    return !Boolean(stateLike && (stateLike.saveInFlight || stateLike.presenceSaveBusy));
+  }
+
+  function nextEventVersionAfterSave(saveResult, previousVersion) {
+    if (saveResult && saveResult.version != null) return saveResult.version;
+    if (saveResult && saveResult.evenement && saveResult.evenement.version != null) return saveResult.evenement.version;
+    return previousVersion;
+  }
+
+  function isLeavingSaisieRoute(current, next) {
+    if (!current || current.screen !== 'saisie') return false;
+    if (!next) return true;
+    if (next.screen === 'saisie' && String(next.id) === String(current.id)) return false;
+    return true;
+  }
+
+  function shouldWarnBeforeUnload(stateLike, routeLike) {
+    return hasUnsavedPresenceChanges(stateLike) && Boolean(routeLike && routeLike.screen === 'saisie');
+  }
+
+  function planSaisieLeave(stateLike) {
+    if (!hasUnsavedPresenceChanges(stateLike)) {
+      return { action: 'LEAVE', title: '', message: '' };
+    }
+    return {
+      action: 'PROMPT',
+      title: 'MODIFICATIONS NON ENREGISTRÉES',
+      message: 'Des modifications n’ont pas encore été enregistrées.'
+    };
+  }
+
+  async function orchestrateClosePresence(ctx) {
+    const context = ctx || {};
+    const order = [];
+    if (context.saveInFlight || context.presenceSaveBusy) {
+      return { ok: false, reason: 'in_flight', closed: false, order };
+    }
+    let version = context.version;
+    if (hasUnsavedPresenceChanges(context) || context.dirty) {
+      order.push('save');
+      if (typeof context.save !== 'function') {
+        return { ok: false, reason: 'save_failed', closed: false, order, message: PRESENCE_SAVE_FAILED_CLOSE_MESSAGE, dirty: true };
+      }
+      const saved = await context.save();
+      if (!saved || saved.ok === false) {
+        const conflict = Boolean(saved && (saved.conflict || saved.status === 409 || (saved.error && saved.error.status === 409)));
+        return {
+          ok: false,
+          reason: conflict ? 'conflict' : 'save_failed',
+          closed: false,
+          order,
+          dirty: true,
+          conflict,
+          message: conflict
+            ? (saved.message || 'Cette séance a été modifiée ailleurs. Rechargez les données avant de poursuivre.')
+            : PRESENCE_SAVE_FAILED_CLOSE_MESSAGE
+        };
+      }
+      version = nextEventVersionAfterSave(saved, version);
+    }
+    if (context.isLastSession && typeof context.unfilledAfterSave === 'function') {
+      order.push('unfilled');
+      const missing = await context.unfilledAfterSave(version) || [];
+      if (missing.length) {
+        return { ok: false, reason: 'unfilled', closed: false, order, version, unfilled: missing, dirty: false };
+      }
+    }
+    order.push('close');
+    if (typeof context.close === 'function') await context.close(version);
+    return { ok: true, closed: true, order, version, dirty: false };
+  }
+
+  async function orchestrateLeaveSaisie(ctx) {
+    const context = ctx || {};
+    if (!hasUnsavedPresenceChanges(context) && !context.dirty) {
+      return { ok: true, navigated: true, saved: false, discarded: false };
+    }
+    const choice = String(context.choice || 'save');
+    if (choice === 'stay') return { ok: true, navigated: false, saved: false };
+    if (choice === 'discard') return { ok: true, navigated: true, discarded: true, dirty: false };
+    if (context.saveInFlight || context.presenceSaveBusy) {
+      return { ok: false, reason: 'in_flight', navigated: false };
+    }
+    const saved = typeof context.save === 'function' ? await context.save() : { ok: false };
+    if (!saved || saved.ok === false) {
+      return {
+        ok: false,
+        reason: 'save_failed',
+        navigated: false,
+        dirty: true,
+        message: 'La saisie n’a pas pu être enregistrée.'
+      };
+    }
+    return { ok: true, navigated: true, saved: true, dirty: false, version: nextEventVersionAfterSave(saved, context.version) };
+  }
+
   function parseHash(hash) {
     const raw = String(hash || '').replace(/^#/, '');
     const path = raw.split('?')[0];
@@ -1600,6 +1703,15 @@
     importPreviewFilterCount,
     buildImportPreviewFilters,
     defaultImportPreviewFilter,
-    oktaLoginHref
+    oktaLoginHref,
+    hasUnsavedPresenceChanges,
+    canStartPresenceSave,
+    nextEventVersionAfterSave,
+    isLeavingSaisieRoute,
+    shouldWarnBeforeUnload,
+    planSaisieLeave,
+    orchestrateClosePresence,
+    orchestrateLeaveSaisie,
+    PRESENCE_SAVE_FAILED_CLOSE_MESSAGE
   };
 });
