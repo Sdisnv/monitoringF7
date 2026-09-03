@@ -121,7 +121,7 @@ function attendu(detail, personneId){
     assert.ok(a1.alreadyCountedInSession);
     const part2 = (s2.participations || []).find((row) => row.personne_id === ctx.people[0].personne_id);
     assert.strictEqual(part2.statut, 'ABSENT_EXCUSE');
-    assert.ok(!logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true, sessionHasValidStatus: true }));
+    assert.ok(logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true, sessionHasValidStatus: true }));
     assert.ok(css.includes('scope-row-session-excuse'));
     assert.ok(css.includes('#fde8ea'));
     assert.ok(css.includes('#fff6cc'));
@@ -166,11 +166,10 @@ function attendu(detail, personneId){
 
   await record('09-10 — Clôture séance intermédiaire avec non renseignés', async () => {
     const ctx = await setupSession(2);
-    await save(ctx.service, ctx.repo, 'ms1', [{
-      personneId: ctx.people[0].personne_id,
-      statut: 'PRESENT',
-      role: 'PARTICIPANT'
-    }]);
+    await save(ctx.service, ctx.repo, 'ms1', [
+      { personneId: ctx.people[0].personne_id, statut: 'PRESENT', role: 'PARTICIPANT' },
+      { personneId: ctx.people[1].personne_id, statut: 'ABSENT_NON_EXCUSE', role: 'PARTICIPANT' }
+    ]);
     const s1 = await ctx.service.lireEvenement('ms1');
     assert.strictEqual(s1.prExerciseParticipation.isLastSession, false);
     assert.strictEqual(s1.prExerciseParticipation.isMultiSession, true);
@@ -200,7 +199,7 @@ function attendu(detail, personneId){
     const locked = { statut: 'NON_RENSEIGNE', inclus: true, alreadyCountedInSession: true, sessionExcuse: true };
     const present = { statut: 'PRESENT', inclus: true };
     assert.ok(logic.isOpenSaisieRow(open));
-    assert.ok(!logic.isOpenSaisieRow(locked));
+    assert.ok(logic.isOpenSaisieRow(locked));
     assert.ok(!logic.isOpenSaisieRow(present));
     assert.ok(ui.includes('data-saisie-open-filter="open"'));
   });
@@ -285,26 +284,22 @@ function attendu(detail, personneId){
       statut: 'PRESENT',
       role: 'PARTICIPANT'
     }]);
-    let blocked = false;
-    try {
-      await save(ctx.service, ctx.repo, 'ms1', [{
-        personneId: ctx.people[0].personne_id,
-        statut: 'PRESENT',
-        role: 'PARTICIPANT'
-      }]);
-    } catch (error) {
-      blocked = error && error.status === 409;
-    }
-    assert.ok(blocked);
-    const s1 = await ctx.service.lireEvenement('ms1');
-    assert.ok(attendu(s1, ctx.people[0].personne_id).alreadyCountedInSession);
+    await save(ctx.service, ctx.repo, 'ms1', [{
+      personneId: ctx.people[0].personne_id,
+      statut: 'PRESENT',
+      role: 'PARTICIPANT'
+    }]);
+    const s3 = await ctx.service.lireEvenement('ms3');
+    assert.strictEqual((await ctx.repo.getParticipation('ms1', ctx.people[0].personne_id)).statut, 'PRESENT');
+    assert.strictEqual((await ctx.repo.getParticipation('ms2', ctx.people[0].personne_id)).statut, 'PRESENT');
+    assert.ok(attendu(s3, ctx.people[0].personne_id).alreadyCountedInSession);
   });
 
   await record('18 — Réalisés non réécrits', async () => {
     const ctx = await setupSession(1);
     await save(ctx.service, ctx.repo, 'ms1', [{
       personneId: ctx.people[0].personne_id,
-      statut: 'NON_RENSEIGNE',
+      statut: 'PRESENT',
       role: 'PARTICIPANT'
     }]);
     await ctx.service.cloturer('ms1', { baseVersion: await version(ctx.repo, 'ms1') }, ACTOR);

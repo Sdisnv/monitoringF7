@@ -146,7 +146,7 @@ function part(personne, statut, extra){
       { inclus: true, role: 'FORMATEUR', statut: 'PRESENT', alreadyCountedInSession: true }
     ];
     const c = logic.liveCounters(rows);
-    assert.strictEqual(c.present, 1);
+    assert.strictEqual(c.present, 2);
   });
 
   await record('8 — Moniteur JSP hors effectif', async () => {
@@ -263,11 +263,11 @@ function part(personne, statut, extra){
       { inclus: true, role: 'AUXILIAIRE', statut: 'PRESENT' },
       { inclus: true, role: 'PARTICIPANT', statut: 'PRESENT', alreadyCountedInSession: true }
     ]);
-    assert.strictEqual(c.present, 2);
+    assert.strictEqual(c.present, 3);
     assert.strictEqual(c.excuse, 1);
     assert.strictEqual(c.absent, 1);
-    assert.strictEqual(c.dispense, 1);
-    assert.strictEqual(c.open, 1);
+    assert.strictEqual(c.dispense, 0);
+    assert.strictEqual(c.open, 2);
   });
 
   await record('15 — Présences à renseigner, sans bouton Convoqué', async () => {

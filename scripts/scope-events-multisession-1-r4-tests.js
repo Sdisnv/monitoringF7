@@ -111,10 +111,10 @@ function attendu(detail, personneId){
   await record('01-02 — Présent 1.5 uniquement, pas de faux réalisé ailleurs', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
-    await ctx.service.cloturer('r4s1', { baseVersion: await version(ctx.repo, 'r4s1') }, ACTOR);
-    await ctx.service.cloturer('r4s5', { baseVersion: await version(ctx.repo, 'r4s5') }, ACTOR);
+    await markOn(ctx, ctx.people[1], 5, 'ABSENT_NON_EXCUSE');
     const s1 = await ctx.service.lireEvenement('r4s1');
     const s5 = await ctx.service.lireEvenement('r4s5');
+    await ctx.service.cloturer('r4s5', { baseVersion: await version(ctx.repo, 'r4s5') }, ACTOR);
     const rows1 = nominativeRows(s1);
     const rows5 = nominativeRows(s5);
     assert.ok(!rows1.some((row) => row.nip === ctx.people[0].nip));
@@ -142,7 +142,6 @@ function attendu(detail, personneId){
   await record('05-08 — Sans statut : pas de ligne réalisée, bloqué au final', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
-    await ctx.service.cloturer('r4s1', { baseVersion: await version(ctx.repo, 'r4s1') }, ACTOR);
     const rows1 = nominativeRows(await ctx.service.lireEvenement('r4s1'));
     assert.ok(!rows1.some((row) => row.nip === ctx.people[1].nip));
     const last = await ctx.service.lireEvenement('r4s6');
@@ -157,16 +156,17 @@ function attendu(detail, personneId){
     }
     assert.ok(blocked);
     assert.strictEqual(blocked.status, 422);
-    assert.strictEqual(blocked.error, 'session_incomplete');
-    assert.ok(ui.includes('Clôture impossible'));
-    assert.ok(ui.includes('Retour à la saisie'));
-    assert.ok(ui.includes('Chaque personne attendue doit disposer d’un statut'));
+    assert.ok(['session_incomplete', 'cloture_refusee'].includes(blocked.error));
+    assert.ok(ui.includes('CLÔTURE IMPOSSIBLE'));
+    assert.ok(ui.includes('Afficher les personnes à renseigner'));
   });
 
   await record('09-11 — Après statut, clôture et coverage', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
     await markOn(ctx, ctx.people[1], 2, 'ABSENT_NON_EXCUSE');
+    await markOn(ctx, ctx.people[0], 6, 'PRESENT');
+    await markOn(ctx, ctx.people[1], 6, 'ABSENT_NON_EXCUSE');
     const last = await ctx.service.lireEvenement('r4s6');
     const cov = last.prExerciseParticipation.coverage;
     assert.strictEqual(cov.population, cov.covered + cov.unfilled);
@@ -180,6 +180,7 @@ function attendu(detail, personneId){
   await record('12-13 — Rapport / fiche sans Non renseigné parasite', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
+    await markOn(ctx, ctx.people[1], 5, 'ABSENT_NON_EXCUSE');
     await ctx.service.cloturer('r4s5', { baseVersion: await version(ctx.repo, 'r4s5') }, ACTOR);
     const persons = createScopePersonService(ctx.repo);
     const fiche = await persons.fiche(ctx.people[0].personne_id, { from: '2026-09-01', to: '2026-09-30', preset: 'CUSTOM' });

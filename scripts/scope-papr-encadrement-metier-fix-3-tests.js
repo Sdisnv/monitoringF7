@@ -131,10 +131,12 @@ function extractFunction(source, name){
     assert.strictEqual((await ctx.repo.getParticipation('pr2', 'a')).role, 'PARTICIPANT');
   });
 
-  await record('C — Formateur PAPR verrouille toujours une saisie participant ailleurs', async () => {
+  await record('C — Formateur PAPR n’empêche plus une saisie participant ailleurs', async () => {
     const ctx = await setup();
     await addEnc(ctx, 'pr1', 'a', 'FORMATEUR');
-    await expectHttpError(() => save(ctx, 'pr2', [{ personneId: 'a', statut: 'PRESENT' }]), 409, 'pr_exercise_participation_deja_comptee');
+    await save(ctx, 'pr2', [{ personneId: 'a', statut: 'PRESENT' }]);
+    assert.strictEqual((await ctx.repo.getParticipation('pr2', 'a')).statut, 'PRESENT');
+    assert.strictEqual((await ctx.repo.getParticipation('pr1', 'a')).role, 'FORMATEUR');
   });
 
   await record('D — Auxiliaire ne contribue pas aux KPI PAPR et disparaît au reset', async () => {

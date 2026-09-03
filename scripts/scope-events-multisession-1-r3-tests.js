@@ -104,13 +104,17 @@ async function markOn(ctx, personne, sessionIndex, statut, motif){
   await save(ctx.service, ctx.repo, `r3s${sessionIndex}`, [body]);
 }
 
+const { incompleteExpectedParticipations } = require('../netlify/functions/_scope-rules');
+
 async function closeUntilLast(ctx){
   for(let i = 1; i <= 5; i += 1){
     const id = `r3s${i}`;
     const ev = await ctx.repo.getEvent(id);
-    if(ev.statut !== 'REALISE'){
-      await ctx.service.cloturer(id, { baseVersion: ev.version }, ACTOR);
-    }
+    if(ev.statut === 'REALISE') continue;
+    const attendus = await ctx.repo.listAttendus(id);
+    const parts = await ctx.repo.listParticipations(id);
+    if(incompleteExpectedParticipations(attendus, parts).length) continue;
+    await ctx.service.cloturer(id, { baseVersion: ev.version }, ACTOR);
   }
 }
 
@@ -141,7 +145,7 @@ function uniqueNips(people){
       personneId: ctx.people[0].personne_id
     }));
     assert.ok(last.prExerciseParticipation.byPersonneId[ctx.people[0].personne_id].sessionHasValidStatus);
-    assert.ok(!logic.isOpenSaisieRow({
+    assert.ok(logic.isOpenSaisieRow({
       statut: 'NON_RENSEIGNE',
       inclus: true,
       sessionHasValidStatus: true
@@ -195,6 +199,8 @@ function uniqueNips(people){
     const ctx = await setupPr16(2);
     const s1 = await ctx.service.lireEvenement('r3s1');
     assert.strictEqual(s1.prExerciseParticipation.isLastSession, false);
+    await markOn(ctx, ctx.people[0], 1, 'PRESENT');
+    await markOn(ctx, ctx.people[1], 1, 'ABSENT_NON_EXCUSE');
     const closed = await ctx.service.cloturer('r3s1', { baseVersion: await version(ctx.repo, 'r3s1') }, ACTOR);
     assert.strictEqual(closed.evenement.statut, 'REALISE');
     assert.ok(ui.includes('Clôturer la séance'));
@@ -230,7 +236,8 @@ function uniqueNips(people){
   await record('13 — Analytics sans faux non renseigné de session', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
-    await closeUntilLast(ctx);
+    await markOn(ctx, ctx.people[1], 5, 'ABSENT_NON_EXCUSE');
+    await ctx.service.cloturer('r3s5', { baseVersion: await version(ctx.repo, 'r3s5') }, ACTOR);
     const analytics = createScopeAnalyticsService(ctx.repo);
     const snap = await analytics.snapshot({
       personneId: ctx.people[0].personne_id,
@@ -243,7 +250,7 @@ function uniqueNips(people){
     assert.strictEqual(pr.length, 1);
     const volumes = (snap.summary && snap.summary.officiel && snap.summary.officiel.volumes) || {};
     assert.ok(Number(volumes.nonRenseignes || 0) === 0);
-    assert.ok(Number((snap.summary.officiel || {}).denominator || 0) <= 1);
+    assert.ok(Number((snap.summary.officiel || {}).denominator || 0) <= 2);
   });
 
   await record('14 — Rapport réalisé sans faux Non renseigné', async () => {

@@ -36,7 +36,7 @@ const {
 } = require('./_scope-model');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computePrExerciseParticipationState, prSessionLabel, isValidSessionStatut, canCloseLastSession } = require('./_scope-cycle-rules');
+const { computePrExerciseParticipationState, prSessionLabel, canCloseLastSession } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -1626,44 +1626,6 @@ function createScopeService(repo){
           skippedEncadrement += 1;
           continue;
         }
-        if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents && patch.statut !== 'NON_RENSEIGNE'){
-          const cycle = evenement.cycle_id && tx.getCycle
-            ? await tx.getCycle(evenement.cycle_id)
-            : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
-          const cycleEvents = evenement.cycle_id && tx.listCycleEvents
-            ? await tx.listCycleEvents(evenement.cycle_id)
-            : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
-          const cycleParticipations = cycleEvents.length ? await tx.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
-          const cycleAttendus = tx.listAttendusForEvents && cycleEvents.length ? await tx.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
-          const cyclePersonnes = evenement.cycle_id && tx.listCyclePersonnes ? await tx.listCyclePersonnes(evenement.cycle_id) : [];
-          const personnes = await hydratePersonnes([
-            personneId,
-            ...cyclePersonnes.map((row) => row.personne_id),
-            ...cycleParticipations.map((row) => row.personne_id),
-            ...cycleAttendus.map((row) => row.personne_id)
-          ]);
-          const prState = computePrExerciseParticipationState({
-            cycle,
-            evenements: cycleEvents,
-            cyclePersonnes,
-            attendus: cycleAttendus,
-            participations: cycleParticipations,
-            personnes,
-            currentEventId: eventId
-          });
-          if(prState.byPersonneId[String(personneId)]){
-            const lock = prState.byPersonneId[String(personneId)];
-            const existingValid = isValidSessionStatut(existing && existing.statut);
-            if(lock.alreadyCountedInSession || (lock.sessionHasValidStatus && !existingValid)){
-              const message = lock.sessionExcuse
-                ? 'Cette personne est déjà excusée dans cette session d’exercice.'
-                : (lock.sessionDispense || lock.countedStatut === 'DISPENSE'
-                  ? 'Cette personne est déjà dispensée de cet exercice.'
-                  : 'Cette personne a déjà un statut valable dans cette session d’exercice.');
-              throw new HttpError(409, 'pr_exercise_participation_deja_comptee', message, { personneId, prExerciseGroupKey: prState.groupKey });
-            }
-          }
-        }
         await tx.upsertParticipation({
           ...(existing || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
           ...patch,
@@ -1867,8 +1829,7 @@ function createScopeService(repo){
           ? row
           : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
       ));
-      const isPrMulti = Boolean(evenement.cycle_id || evenement.pr_exercise_group_key);
-      validateCloture(evenement, attendus, participations, { requireExpectedFilled: !isPrMulti });
+      validateCloture(evenement, attendus, participations, { requireExpectedFilled: true });
       if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
         const cycle = evenement.cycle_id && tx.getCycle
           ? await tx.getCycle(evenement.cycle_id)

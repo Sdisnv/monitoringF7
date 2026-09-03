@@ -79,6 +79,9 @@
   function sessionExplainTooltip(row) {
     if (!row) return '';
     if (row.sessionMessage) return String(row.sessionMessage);
+    if (coveredInGlobalBilan(row)) {
+      return String(row.alreadyCountedTooltip || 'Déjà comptabilisé dans le bilan global');
+    }
     const name = [row.prenom, row.nomFamille || row.nom].filter(Boolean).join(' ') || 'Cette personne';
     const motif = informationMotifLabel(row);
     const exercise = String(row.sessionExerciseLabel || '').trim();
@@ -1016,13 +1019,29 @@
 
   function countsInSaisieTaux(row) {
     if (!row || row.inclus === false) return false;
-    if (row.alreadyCountedInSession) return false;
     const jsp = String(row.jspRole || row.jsp_role || '').toUpperCase();
     if (jsp === 'MONITEUR') return false;
     const role = String(row.role || '').toUpperCase();
     if (role === 'AUXILIAIRE' || role === 'MONITEUR') return false;
     if (ROLES_ENCADREMENT.has(role) && row.inclus !== true) return false;
     return true;
+  }
+
+  function sessionPresenceKpis(rows) {
+    const counters = liveCounters(rows);
+    let attendus = 0;
+    for (const row of rows || []) {
+      if (countsInSaisieTaux(row)) attendus += 1;
+    }
+    return Object.assign({ attendus }, counters);
+  }
+
+  function coveredInGlobalBilan(row) {
+    return Boolean(row && (
+      row.coveredInGlobalBilan
+      || row.alreadyCountedInSession
+      || row.already_counted_in_session
+    ));
   }
 
   function participationStatusesForDomaine(domaine) {
@@ -1111,7 +1130,7 @@
     const lockedEncadrement = encadrementIds || new Set();
     return (rows || [])
       .filter((r) => {
-        if (r.inclus === false || r.alreadyCountedInSession) return false;
+        if (r.inclus === false) return false;
         const role = preserveParticipationRole(r.role);
         if (role === 'AUXILIAIRE' || role === 'MONITEUR') return false;
         const locked = lockedEncadrement.has(String(r.personneId));
@@ -1142,7 +1161,7 @@
   }
 
   function sessionLocked(row) {
-    return Boolean(row && (row.alreadyCountedInSession || row.sessionExcuse || row.sessionDispense));
+    return Boolean(row && statusLockedForRole(row.role));
   }
 
   function isValidSessionStatut(statut) {
@@ -1152,8 +1171,8 @@
 
   function isIncompleteClosureRow(row) {
     if (!row || row.inclus === false) return false;
-    if (sessionLocked(row) || row.sessionHasValidStatus) return false;
     if (!countsInSaisieTaux(row)) return false;
+    if (statusLockedForRole(row.role)) return false;
     if (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE') return true;
     if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) return true;
     if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) return true;
@@ -1181,7 +1200,7 @@
     return (rows || []).some((row) =>
       row
       && row.inclus !== false
-      && !sessionLocked(row)
+      && !statusLockedForRole(row.role)
       && row.statut === 'DISPENSE'
       && !isDispenseMotif(row.motifAbsence)
     );
@@ -1190,7 +1209,7 @@
     return (rows || []).some((row) =>
       row
       && row.inclus !== false
-      && !sessionLocked(row)
+      && !statusLockedForRole(row.role)
       && row.statut === 'ABSENT_EXCUSE'
       && !row.motifAbsence
     );
@@ -1199,7 +1218,7 @@
   function closureBlockers(rows) {
     const out = { open: 0, incompleteExcuses: 0, incompleteDispenses: 0, message: '' };
     (rows || []).forEach((row) => {
-      if (!row || row.inclus === false || sessionLocked(row) || !countsInSaisieTaux(row)) return;
+      if (!row || row.inclus === false || statusLockedForRole(row.role) || !countsInSaisieTaux(row)) return;
       if (isIncompleteClosureRow(row) && (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE')) out.open += 1;
       if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
       if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) out.incompleteDispenses += 1;
@@ -1735,6 +1754,8 @@
     modeLabel,
     volumesEquality,
     liveCounters,
+    sessionPresenceKpis,
+    coveredInGlobalBilan,
     countsInSaisieTaux,
     participationStatusesForDomaine,
     preserveParticipationRole,

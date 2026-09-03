@@ -153,11 +153,12 @@ async function runPrGlobalRegression(client, service, repo){
   assert(fiche2.prExerciseParticipation.kpis.presents === 1, 'KPI PR global présent incorrect');
   const attenduA = fiche2.attendus.find((row) => row.personne_id === personA.personne_id);
   assert(attenduA && attenduA.already_counted_in_session === true, 'Ligne bleue PR globale absente');
-  await expectHttpError(() => service.enregistrerParticipations(session2, {
+  await service.enregistrerParticipations(session2, {
     baseVersion: fiche2.evenement.version,
     participations: [{ personneId: personA.personne_id, statut: 'PRESENT', role: 'PARTICIPANT' }]
-  }, { sub: 'forensic-test' }), 409, 'pr_exercise_participation_deja_comptee');
-  await service.ajouterEncadrement(session2, { personneId: personA.personne_id, role: 'FORMATEUR', baseVersion: fiche2.evenement.version }, { sub: 'forensic-test' });
+  }, { sub: 'forensic-test' });
+  assert.strictEqual((await service.lireEvenement(session2)).participations.find((row) => row.personne_id === personA.personne_id).statut, 'PRESENT');
+  await service.ajouterEncadrement(session2, { personneId: personA.personne_id, role: 'FORMATEUR', baseVersion: (await service.lireEvenement(session2)).evenement.version }, { sub: 'forensic-test' });
   const enc = await dbParticipation(client, session2, personA.personne_id);
   assert(enc && enc.role === 'FORMATEUR', 'Encadrement non sélectionnable après verrou PR global');
 }

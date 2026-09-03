@@ -299,7 +299,6 @@ function hasValidClosureStatus(participation){
 
 function incompleteClosureReason(attendu, participation){
   if(!countsInEventEffectif(attendu, participation)) return null;
-  if(sessionLockedRow(attendu) || sessionLockedRow(participation)) return null;
   if(!participation || isUnsetExpectedStatut(participation.statut)) return 'unset';
   return null;
 }

@@ -898,14 +898,13 @@
         const localValid = L.isValidSessionStatut ? L.isValidSessionStatut(localStatut) : (localStatut && localStatut !== 'NON_RENSEIGNE');
         const sessionExcuse = localStatut === 'ABSENT_EXCUSE';
         const sessionDispense = localStatut === 'DISPENSE';
-        const coveredElsewhere = (sessionHasValidStatus || alreadyCountedInSession) && !localValid;
-        const locked = coveredElsewhere;
+        const coveredInGlobalBilan = Boolean(alreadyCountedInSession || (sessionHasValidStatus && !localValid));
         const displayStatut = localStatut;
         const displayMotif = part.motif_absence || '';
-        const alreadyCountedTooltip = coveredElsewhere
+        const alreadyCountedTooltip = coveredInGlobalBilan
           ? (formateurTooltip || (referenceQuality === 'Formateur PR'
             ? `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`
-            : `${fullName} (${nipOf(fiche, a.personne_id)}) est déjà compté dans cette session d’exercice.`))
+            : 'Déjà comptabilisé dans le bilan global'))
           : '';
         const sessionExerciseLabel = a.sessionExerciseLabel || a.session_exercise_label
           || (fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionExerciseLabel)
@@ -930,12 +929,13 @@
           origine: a.origine,
           manual: a.origine === 'EXCEPTION_AJOUT',
           jspRole: a.jspRole || a.jsp_role || null,
-          alreadyCountedInSession: locked,
+          alreadyCountedInSession,
+          coveredInGlobalBilan,
           alreadyCountedTooltip,
           sessionExcuse,
           sessionDispense,
-          sessionHasValidStatus: sessionHasValidStatus || locked,
-          sessionMessage: localValid ? (a.sessionMessage || a.session_message || '') : alreadyCountedTooltip,
+          sessionHasValidStatus: localValid,
+          sessionMessage: alreadyCountedTooltip || (localValid ? (a.sessionMessage || a.session_message || '') : ''),
           sessionSummary: localValid ? (a.sessionSummary || a.session_summary || '') : '',
           sessionExerciseLabel
         };
@@ -4696,23 +4696,12 @@
   }
 
   function renderPresenceKpis(niveaux, fiche) {
-    const prKpis = fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.kpis;
     const rows = state.saisie || [];
-    const local = countStatuses(rows);
-    const c = prKpis
-      ? {
-        present: Number(prKpis.presents || 0),
-        excuse: Number(prKpis.excuses || 0),
-        absent: Number(prKpis.absents || 0),
-        dispense: Number(prKpis.dispenses || 0),
-        open: Number(prKpis.open || 0)
-      }
-      : local;
+    const c = L.sessionPresenceKpis ? L.sessionPresenceKpis(rows) : Object.assign({ attendus: 0 }, countStatuses(rows));
     const multi = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isMultiSession);
-    const last = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isLastSession);
-    const openVal = multi && last && prKpis ? Number(prKpis.open || 0) : local.open;
-    const openLabel = !multi ? 'À renseigner' : (last ? 'À renseigner (session)' : 'À renseigner (séance)');
-    const attendus = rows.filter((row) => row && row.inclus !== false && !row.alreadyCountedInSession && String(row.jspRole || '').toUpperCase() !== 'MONITEUR' && String(row.role || '') !== 'AUXILIAIRE').length;
+    const openVal = c.open;
+    const openLabel = multi ? 'À renseigner (séance)' : 'À renseigner';
+    const attendus = c.attendus;
     const domaine = String((fiche && fiche.evenement && fiche.evenement.domaine_code) || '').toUpperCase();
     const showDispense = Boolean(c.dispense) || domaine !== 'JSP';
     const excuseDetail = renderExcuseBreakdown(rows);
@@ -4981,16 +4970,14 @@
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
-      const locked = Boolean(row.alreadyCountedInSession || (row.sessionHasValidStatus && !(L.isValidSessionStatut && L.isValidSessionStatut(row.statut))));
-      const shortMotif = (L.informationMotifLabel ? L.informationMotifLabel(row) : '') || '';
-      const motifOnly = locked && shortMotif
-        ? `<span class="scope-session-info">${escapeHtml(shortMotif)}</span>`
+      const coveredHint = (L.coveredInGlobalBilan && L.coveredInGlobalBilan(row))
+        ? '<span class="scope-session-info">Déjà comptabilisé dans le bilan global</span>'
         : '';
       const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : '';
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
         : '';
-      return [locked ? motifOnly : motifControl(row), comment, why, manual].filter(Boolean).join('');
+      return [motifControl(row), coveredHint, comment, why, manual].filter(Boolean).join('');
     };
     const roleFlag = (row) => {
       const role = String(row.role || '').toUpperCase();
@@ -5014,7 +5001,7 @@
           </tr></thead>
           <tbody>
             ${rows.map((row) => {
-              const blocked = Boolean(row.alreadyCountedInSession || (row.sessionHasValidStatus && !(L.isValidSessionStatut && L.isValidSessionStatut(row.statut))));
+              const coveredGlobally = Boolean(L.coveredInGlobalBilan && L.coveredInGlobalBilan(row));
               const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
               const tooltipText = (L.sessionExplainTooltip ? L.sessionExplainTooltip(row) : (row.sessionMessage || row.alreadyCountedTooltip || '')) || '';
@@ -5022,7 +5009,7 @@
                 row.manual ? 'scope-row-manual' : '',
                 row.statut === 'ABSENT_EXCUSE' ? 'scope-row-session-excuse' : '',
                 row.statut === 'DISPENSE' ? 'scope-row-session-dispense' : '',
-                blocked && row.statut !== 'ABSENT_EXCUSE' && row.statut !== 'DISPENSE' ? 'scope-row-session-counted' : '',
+                coveredGlobally ? 'scope-row-session-counted' : '',
                 tooltipText ? 'scope-row-has-tooltip' : ''
               ].filter(Boolean).join(' ');
               const blockedAttrs = tooltipText
@@ -5038,11 +5025,11 @@
               <td data-label="CIBLE">${escapeHtml(displayIncorporation(row.cible, domaine))}</td>
               <td data-label="STATUT">
                 <div class="scope-status-cluster">
-                  <div class="scope-status-row scope-segmented scope-status-control-group ${filled ? 'is-compact' : 'is-open'}" data-status-group role="radiogroup" aria-label="Statut de participation"${filled && !blocked && !roleLocked ? ' tabindex="0"' : ''}>
+                  <div class="scope-status-row scope-segmented scope-status-control-group ${filled ? 'is-compact' : 'is-open'}" data-status-group role="radiogroup" aria-label="Statut de participation"${filled && !roleLocked ? ' tabindex="0"' : ''}>
                     ${statuses.map(([v, l]) => {
                       const on = statusPressed(row, v);
                       const variant = on ? (statusVariant[v] || '') : '';
-                      return `<button type="button" role="radio" class="scope-segmented-item scope-status-control${on ? ` is-selected ${variant}` : ''}" data-status="${v}" aria-checked="${on}" aria-pressed="${on}"${blocked || roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>`;
+                      return `<button type="button" role="radio" class="scope-segmented-item scope-status-control${on ? ` is-selected ${variant}` : ''}" data-status="${v}" aria-checked="${on}" aria-pressed="${on}"${roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>`;
                     }).join('')}
                   </div>
                 </div>
@@ -6665,7 +6652,7 @@
         const statut = btn.getAttribute('data-status');
         const idx = state.saisie.findIndex((r) => r.personneId === pid);
         const row = idx >= 0 ? state.saisie[idx] : null;
-        if (!row || row.alreadyCountedInSession) return;
+        if (!row || (L.statusLockedForRole && L.statusLockedForRole(row.role))) return;
         state.saisie[idx] = L.applyParticipationStatus(row, statut);
         if (state.saisie[idx]) state.saisie[idx].editMotif = false;
         setUnsavedPresenceChanges(true);
@@ -7654,11 +7641,8 @@
   }
 
   function applyPresent() {
-    const locked = new Set((state.saisie || []).filter((row) => row.alreadyCountedInSession).map((row) => String(row.personneId)));
-    const before = new Map((state.saisie || []).map((row) => [String(row.personneId), row]));
     if (state.cibleFilter === 'tous') state.saisie = L.applyAllPresent(state.saisie);
     else state.saisie = L.applyAllPresentFiltered(state.saisie, state.cibleFilter);
-    state.saisie = (state.saisie || []).map((row) => locked.has(String(row.personneId)) ? before.get(String(row.personneId)) : row);
     render();
   }
 

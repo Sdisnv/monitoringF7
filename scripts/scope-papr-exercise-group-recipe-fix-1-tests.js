@@ -141,12 +141,12 @@ async function expectHttpError(fn, status, error){
     assert.ok(css.includes('scope-row-session-counted'));
   });
 
-  await record('C — double API participant refusé en 409', async () => {
+  await record('C — double API participant persistée en 1.2', async () => {
     const ctx = await setup();
     await savePresence(ctx, 's1', 'p1');
-    await expectHttpError(() => savePresence(ctx, 's2', 'p1'), 409, 'pr_exercise_participation_deja_comptee');
+    await savePresence(ctx, 's2', 'p1');
     const parts = await ctx.repo.listParticipationsForEvents(['s1', 's2']);
-    assert.strictEqual(parts.filter((p) => p.personne_id === 'p1' && p.statut === 'PRESENT' && p.role === 'PARTICIPANT').length, 1);
+    assert.strictEqual(parts.filter((p) => p.personne_id === 'p1' && p.statut === 'PRESENT' && p.role === 'PARTICIPANT').length, 2);
   });
 
   await record('D — 12 présents en 1.1 donnent 12/65 dans 1.2 à 1.6', async () => {
