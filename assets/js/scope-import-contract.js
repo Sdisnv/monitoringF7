@@ -223,6 +223,10 @@
     return `${stat}${who}.${end}`;
   }
 
+  /* Planning annuel : CODE = STAT.COM + '.' + numéro de ligne (ex. 010JB1.445, 073F56.5).
+     Forme SCOPE avec QUI : STAT.COM + QUI + '.' + numéro (ex. 010JB1JSP.445).
+     010JB1 seul est le STAT.COM / la cible, pas l’identité événement. */
+
   function splitCompactCodePrefix(prefix) {
     const text = normalizeCodeComponent(prefix).replace(/\.+$/, '');
     if (!text) return null;
