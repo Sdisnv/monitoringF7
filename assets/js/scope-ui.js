@@ -5154,12 +5154,15 @@
   }
 
   function renderRealiseToolbar(ev, fiche) {
-    const multi = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isMultiSession);
+    const session = fiche && (fiche.prExerciseParticipation || fiche.sessionParticipation);
+    const multi = Boolean(session && session.isMultiSession);
+    const sessionReportAvailable = !multi || Boolean(session && session.allSessionsClosed);
+    const sessionReportTooltip = 'Disponible lorsque toutes les séances sont clôturées.';
     return `<div class="scope-actions scope-event-toolbar scope-realise-toolbar">
       <a class="scope-btn" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
       <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}">Générer le rapport</button>
-      ${multi ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}">Rapport détaillé</button>` : ''}
+      ${multi ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}" ${sessionReportAvailable ? '' : `disabled aria-disabled="true" title="${escapeHtml(sessionReportTooltip)}"`}>Rapport détaillé</button>` : ''}
     </div>`;
   }
 

@@ -1903,7 +1903,8 @@ function createScopeService(repo){
     const existingStatut = String(existing?.statut || '').toUpperCase();
     const existingSource = String(existing?.source || '').toUpperCase();
     const presenceDejaSaisie = attenduInclus && existingStatut === 'PRESENT' && existingSource !== 'ENCADREMENT';
-    const statutEncadrement = attenduInclus && (role === 'FORMATEUR' || presenceDejaSaisie)
+    const keepParticipantPresence = role === 'FORMATEUR' && presenceDejaSaisie;
+    const statutEncadrement = attenduInclus && role === 'FORMATEUR'
       ? 'PRESENT'
       : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE');
     await tx.upsertParticipation({
@@ -1912,7 +1913,7 @@ function createScopeService(repo){
       motif_absence: null,
       commentaire: null,
       role,
-      source: presenceDejaSaisie ? existing.source : 'ENCADREMENT',
+      source: keepParticipantPresence ? existing.source : 'ENCADREMENT',
       auteur_id: actorId(actor)
     });
     return { changed: true };

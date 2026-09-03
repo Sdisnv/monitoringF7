@@ -461,6 +461,20 @@ function buildSessionDataset(bundle){
   };
 }
 
+function assertAllReportSessionsClosed(bundle){
+  const events = bundle && Array.isArray(bundle.events) ? bundle.events : [];
+  if(events.length <= 1) return;
+  const open = events.filter((event) => String(event && event.statut || '').toUpperCase() !== 'REALISE');
+  if(!open.length) return;
+  throw new HttpError(422, 'rapport_session_incomplete', 'Le rapport détaillé sera disponible lorsque toutes les séances seront clôturées.', {
+    openSessions: open.map((event) => ({
+      eventId: eventId(event),
+      label: seanceDisplayLabel(event),
+      statut: event.statut || ''
+    }))
+  });
+}
+
 function subsetBundle(bundle, events){
   const ids = new Set(events.map(eventId));
   const attendus = (bundle.attendus || []).filter((row) => ids.has(eventId(row)));
@@ -489,6 +503,7 @@ function subsetBundle(bundle, events){
 
 async function collectMultisessionReport(repo, evenementId, options = {}){
   const bundle = await loadSessionBundle(repo, evenementId);
+  assertAllReportSessionsClosed(bundle);
   const currentDate = bundle.current && bundle.current.date;
   const defaultPeriod = yearBoundsFromDate(currentDate);
   const period = options.period || defaultPeriod;
@@ -552,6 +567,7 @@ module.exports = {
   buildConclusion,
   TAUX_EXPLANATION,
   collectMultisessionReport,
+  assertAllReportSessionsClosed,
   buildSessionDataset,
   loadSessionBundle
 };

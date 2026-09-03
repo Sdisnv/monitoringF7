@@ -643,6 +643,7 @@ function computePrExerciseParticipationState(input = {}){
     });
   }
   const lastEventId = events.length ? eventId(events[events.length - 1]) : '';
+  const allSessionsClosed = events.every((event) => normalizeUpper(event && event.statut) === 'REALISE');
   const resolvedKeys = new Set([...countedKeys, ...excuseKeys, ...validByPerson.keys()]);
   const coverageBalanced = population.size === validByPerson.size + unfilledKeys.length;
 
@@ -652,6 +653,7 @@ function computePrExerciseParticipationState(input = {}){
     eventIds: [...groupEventIds],
     isMultiSession: events.length > 1,
     isLastSession: Boolean(currentEventId && lastEventId && currentEventId === lastEventId),
+    allSessionsClosed,
     sessionExerciseLabel: sessionExerciseLabel(events, group.groupKey),
     unfilledPeople,
     byPersonneId,

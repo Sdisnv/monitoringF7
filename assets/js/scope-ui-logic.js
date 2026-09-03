@@ -1384,6 +1384,13 @@
         message: payloadMessage || message || 'L’import du personnel n’a pas pu être validé.'
       };
     }
+    if (code === 'rapport_session_incomplete') {
+      return {
+        tone: 'error',
+        title: 'Rapport détaillé indisponible',
+        message: payloadMessage || message || 'Le rapport détaillé sera disponible lorsque toutes les séances seront clôturées.'
+      };
+    }
     if (status === 409 || code === 'conflict') {
       return {
         tone: 'warning',
