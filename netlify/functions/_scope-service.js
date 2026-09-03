@@ -2018,7 +2018,8 @@ function createScopeService(repo){
           });
         });
       }
-      validateCloture(evenement, attendus, participations, { requireExpectedFilled: true });
+      const requireExpectedFilled = !(prState && prState.isMultiSession);
+      validateCloture(evenement, attendus, participations, { requireExpectedFilled });
       if(prState && !canCloseLastSession(prState)){
         throw new HttpError(422, 'session_incomplete', 'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.', {
           unfilledPeople: prState.unfilledPeople || []
@@ -2153,18 +2154,14 @@ function createScopeService(repo){
   }
 
   function hasNominativeBusinessInput(participations, attendus){
-    const expectedOrigins = new Map((attendus || []).map((row) => [String(row.personne_id), String(row.origine || '').toUpperCase()]));
     return (participations || []).some((row) => {
       const statut = String(row.statut || '').toUpperCase();
       const role = String(row.role || 'PARTICIPANT').toUpperCase();
       const source = String(row.source || '').toUpperCase();
-      const motif = String(row.motif_absence || '').trim();
-      const commentaire = String(row.commentaire || '').trim();
-      if(ROLES_ENCADREMENT.has(role)) return true;
-      if(motif || commentaire) return true;
-      if(expectedOrigins.get(String(row.personne_id)) === 'EXCEPTION_AJOUT') return true;
+      if(ROLES_ENCADREMENT.has(role)){
+        return role === 'SURVEILLANT' && source === 'SAISIE' && statut && !['NON_RENSEIGNE', 'NON_CONCERNE'].includes(statut);
+      }
       if(statut && !['NON_RENSEIGNE', 'NON_CONCERNE'].includes(statut)) return true;
-      if(source && !['GENERATION', 'RESET'].includes(source) && statut !== 'NON_RENSEIGNE') return true;
       return false;
     });
   }
@@ -2173,15 +2170,10 @@ function createScopeService(repo){
     if(String(evenement.statut || '').toUpperCase() === 'REALISE'){
       return { code: 'TRAITE', label: 'Traité' };
     }
-    const date = String(evenement.date || '').slice(0, 10);
-    const today = String(context.today || new Date().toISOString().slice(0, 10)).slice(0, 10);
-    if(date && /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today){
-      return { code: 'A_TRAITER', label: 'À traiter' };
-    }
     const started = hasNominativeBusinessInput(context.participations, context.attendus)
       || hasQuantitativeBusinessInput(context.saisie);
     if(started) return { code: 'SAISIE_EN_COURS', label: 'Saisie en cours' };
-    return { code: 'PLANIFIE', label: 'Planifié' };
+    return { code: 'A_TRAITER', label: 'À traiter' };
   }
 
   async function summarizeEvenements(evenements, options = {}){
@@ -2373,11 +2365,15 @@ function createScopeService(repo){
               session_counted_source: state.countedSource,
               session_reference_event_id: state.referenceEventId,
               session_reference_label: state.referenceSessionLabel,
+              session_reference_event_label: state.referenceEventLabel,
+              session_reference_event_date: state.referenceEventDate,
               session_reference_quality: state.referenceQuality,
               session_reference_relation: state.referenceRelation,
               session_formateur_sessions: state.formateurSessionLabels || [],
               sessionReferenceEventId: state.referenceEventId,
               sessionReferenceLabel: state.referenceSessionLabel,
+              sessionReferenceEventLabel: state.referenceEventLabel,
+              sessionReferenceEventDate: state.referenceEventDate,
               sessionReferenceQuality: state.referenceQuality,
               sessionReferenceRelation: state.referenceRelation,
               sessionFormateurSessions: state.formateurSessionLabels || [],

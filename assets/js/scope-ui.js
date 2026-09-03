@@ -875,14 +875,19 @@
   function buildSaisieFromFiche() {
     const fiche = state.fiche;
     if (!fiche) { state.saisie = []; return; }
-    const parts = new Map((fiche.participations || []).map((p) => [p.personne_id, p]));
+    const parts = new Map();
+    (fiche.participations || []).forEach((p) => {
+      const id = p && (p.personne_id || p.personneId);
+      if (id) parts.set(String(id), p);
+    });
     const attendus = L.saisieAttendusFromFiche
       ? L.saisieAttendusFromFiche(fiche)
       : (fiche.attendus || []).filter((a) => a.inclus !== false);
     state.saisie = attendus
       .map((a) => {
-        const part = parts.get(a.personne_id) || {};
-        const person = personOf(fiche, a.personne_id) || {};
+        const personneId = a.personne_id || a.personneId;
+        const part = parts.get(String(personneId)) || {};
+        const person = personOf(fiche, personneId) || {};
         const cibleLabel = cibleLabelFromAttendu(a);
         const alreadyCountedInSession = Boolean(a.alreadyCountedInSession || a.already_counted_in_session);
         const sessionHasValidStatus = Boolean(a.sessionHasValidStatus || a.session_has_valid_status);
@@ -898,12 +903,12 @@
           || (fiche.sessionParticipation && fiche.sessionParticipation.sessionExerciseLabel)
           || '';
         return {
-          personneId: a.personne_id,
-          nom: displayPerson(fiche, a.personne_id),
+          personneId,
+          nom: displayPerson(fiche, personneId),
           nomFamille: person.nom || '',
           prenom: person.prenom || '',
           grade: person.grade || '',
-          nip: nipOf(fiche, a.personne_id),
+          nip: nipOf(fiche, personneId),
           cible: cibleLabel,
           cibles: cibleLabel === '—' ? [] : cibleLabel.split(' · '),
           statut: displayStatut,
@@ -924,6 +929,9 @@
           sessionHasValidStatus: localValid,
           sessionMessage: localValid ? (a.sessionMessage || a.session_message || '') : '',
           sessionSummary: localValid ? (a.sessionSummary || a.session_summary || '') : '',
+          sessionReferenceEventLabel: a.sessionReferenceEventLabel || a.session_reference_event_label || '',
+          sessionReferenceEventDate: a.sessionReferenceEventDate || a.session_reference_event_date || '',
+          sessionReferenceLabel: a.sessionReferenceLabel || a.session_reference_label || '',
           sessionExerciseLabel
         };
       });
@@ -5229,6 +5237,7 @@
         ${eventIdentityBand(ev, fiche)}
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev, fiche)}
+        ${renderRealiseEncadrement(fiche)}
         <section class="scope-presence-section scope-realise-participants">
           <div class="scope-section-header">
             <h2 class="scope-section-heading">Participants</h2>
@@ -5295,7 +5304,6 @@
             </tbody>
           </table></div>` : `<div class="scope-empty">${escapeHtml(L.emptyMessage('resultats'))}</div>`}
         </section>
-        ${renderRealiseEncadrement(fiche)}
       </div>
       ${renderRealiseModals()}
     `;
@@ -5347,7 +5355,7 @@
     const rows = people.map((p) => `<li>${escapeHtml(L.formatIncompletePersonLabel ? L.formatIncompletePersonLabel(p) : [p.grade, p.prenom, p.nomFamille || p.nom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' — '))}</li>`).join('');
     return `<div class="scope-modal"><div class="scope-card">
       <h3>CLÔTURE IMPOSSIBLE</h3>
-      <p>${escapeHtml(String(count))} présence${count > 1 ? 's' : ''} doivent encore être renseignée${count > 1 ? 's' : ''} avant de clôturer l’événement.</p>
+      <p>Certaines personnes restent à renseigner pour finaliser l'exercice.</p>
       <ul class="scope-feedback-errors">${rows}</ul>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="cloture-incomplete-show">Afficher les personnes à renseigner</button>

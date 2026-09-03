@@ -79,6 +79,11 @@
   function sessionExplainTooltip(row) {
     if (!row) return '';
     if (row.sessionMessage) return String(row.sessionMessage);
+    if (coveredInGlobalBilan(row)) {
+      const reference = String(row.sessionReferenceEventLabel || row.session_reference_event_label || row.referenceEventLabel || row.sessionReferenceLabel || row.session_reference_label || '').trim();
+      const date = String(row.sessionReferenceEventDate || row.session_reference_event_date || row.referenceEventDate || '').trim();
+      if (reference) return `Déjà comptabilisé lors de ${reference}${date ? ` — ${formatDate(date)}` : ''}.`;
+    }
     const name = [row.prenom, row.nomFamille || row.nom].filter(Boolean).join(' ') || 'Cette personne';
     const motif = informationMotifLabel(row);
     const exercise = String(row.sessionExerciseLabel || '').trim();
