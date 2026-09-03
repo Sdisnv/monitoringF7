@@ -97,7 +97,14 @@
       return matchingOiAssignments(person, 'JSP', cible, date).length > 0;
     }
     if(domaine === 'PR' || domaine === 'PAPR'){
-      return assignments.some((row) => display.specializationCode(row) === 'PAPR' && display.isAssignmentActiveAt(row, date));
+      const abc = display.isPrAbcCible ? display.isPrAbcCible(cible) : /^(ABC|PR-?ABC)$/i.test(clean(cible));
+      if(abc){
+        return assignments.some((row) => display.specializationCode(row) === 'PR_ABC' && display.isAssignmentActiveAt(row, date));
+      }
+      return assignments.some((row) => {
+        const code = display.specializationCode(row);
+        return (code === 'PAPR' || code === 'PR_ABC') && display.isAssignmentActiveAt(row, date);
+      });
     }
     if(domaine === 'AUTO'){
       const code = populationAutoCode(cible);
@@ -121,7 +128,14 @@
       return matchingOiAssignments(person, domaine === 'JSP' ? 'JSP' : domaine, cible, date);
     }
     if(domaine === 'PR' || domaine === 'PAPR'){
-      return assignments.filter((row) => display.specializationCode(row) === 'PAPR' && display.isAssignmentActiveAt(row, date));
+      const abc = display.isPrAbcCible ? display.isPrAbcCible(cible) : /^(ABC|PR-?ABC)$/i.test(clean(cible));
+      if(abc){
+        return assignments.filter((row) => display.specializationCode(row) === 'PR_ABC' && display.isAssignmentActiveAt(row, date));
+      }
+      return assignments.filter((row) => {
+        const code = display.specializationCode(row);
+        return (code === 'PAPR' || code === 'PR_ABC') && display.isAssignmentActiveAt(row, date);
+      });
     }
     if(domaine === 'AUTO'){
       const code = populationAutoCode(cible);
@@ -153,7 +167,10 @@
           ? 'OI_PRINCIPAL_ET_SECONDAIRE'
           : 'OI_PRINCIPAL';
     } else if(domaine === 'PR' || domaine === 'PAPR'){
-      kind = 'SPECIALISATION_PAPR';
+      const cible = clean(query.cible);
+      kind = (display.isPrAbcCible && display.isPrAbcCible(cible)) || /^(ABC|PR-?ABC)$/i.test(cible)
+        ? 'SPECIALISATION_PR_ABC'
+        : 'SPECIALISATION_PAPR';
     } else if(domaine === 'AUTO'){
       kind = 'SPECIALISATION_AUTO';
     } else if(domaine === 'FOBA'){

@@ -48,6 +48,7 @@ const CIBLES = [
   ['PR', 'B1', 'PAPR B1'],
   ['PR', 'B2', 'PAPR B2'],
   ['PR', 'GEN', 'PAPR GEN'],
+  ['PR', 'ABC', 'PR-ABC'],
   ['AUTO', 'VL', 'AUTO VL'],
   ['AUTO', 'PL', 'AUTO PL'],
   ['FOSPEC', 'GEN', 'FOSPEC'],

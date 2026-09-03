@@ -869,7 +869,7 @@
       else if (s === 'ABSENT_EXCUSE') excuse += 1;
       else if (s === 'ABSENT_NON_EXCUSE') absent += 1;
       else if (s === 'DISPENSE') dispense += 1;
-      else if ((s === 'NON_RENSEIGNE' || !s) && !sessionLocked(row) && !row.sessionHasValidStatus) open += 1;
+      else if ((s === 'NON_RENSEIGNE' || s === 'NON_CONCERNE' || !s) && !sessionLocked(row) && !row.sessionHasValidStatus) open += 1;
     }
     return { present, formateur, excuse, absent, dispense, open };
   }
@@ -1013,7 +1013,7 @@
     if (!row || row.inclus === false) return false;
     if (sessionLocked(row) || row.sessionHasValidStatus) return false;
     if (isValidSessionStatut(row.statut)) return false;
-    return !row.statut || row.statut === 'NON_RENSEIGNE';
+    return !row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE';
   }
 
   function hasIncompleteDispense(rows) {
@@ -1039,7 +1039,7 @@
     const out = { open: 0, incompleteExcuses: 0, incompleteDispenses: 0, message: '' };
     (rows || []).forEach((row) => {
       if (!row || row.inclus === false || sessionLocked(row)) return;
-      if (!row.statut || row.statut === 'NON_RENSEIGNE') out.open += 1;
+      if (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE') out.open += 1;
       if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
       if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) out.incompleteDispenses += 1;
     });

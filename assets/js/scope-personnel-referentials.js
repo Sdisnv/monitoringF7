@@ -120,7 +120,7 @@
   ]);
 
   const SPECIALIZATION_ORDER = Object.freeze([
-    'FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP'
+    'FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'JSP'
   ]);
 
   return {

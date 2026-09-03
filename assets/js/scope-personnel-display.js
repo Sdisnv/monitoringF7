@@ -16,7 +16,7 @@
     : (root && root.ScopeUiLogic) || {});
 
   const SPECIALIZATION_SEPARATOR = ', ';
-  const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP']);
+  const SPECIALIZATION_ORDER = Object.freeze(['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'JSP']);
   const SPECIALIZATION_DISPLAY_ORDER = SPECIALIZATION_ORDER;
   const SPECIALIZATION_CODE_LABELS = Object.freeze({
     FOBA_1: 'FOBA 1',
@@ -24,6 +24,7 @@
     FOBA_3: 'FOBA 3',
     PAPR: 'PAPR',
     PR: 'PAPR',
+    PR_ABC: 'PR-ABC',
     AUTO_VL_DPS: 'cond VL',
     AUTO_VL_DAP: 'cond VL',
     AUTO_PL: 'cond PL',
@@ -56,6 +57,7 @@
       if(SPECIALIZATION_CODE_LABELS[compact]){
         const mapped = compact === 'PR' ? 'PAPR' : compact;
         if(mapped.indexOf('FOBA_') === 0) return { domaine: 'FOBA', cible: mapped.slice(5) };
+        if(mapped === 'PR_ABC') return { domaine: 'PR', cible: 'ABC' };
         if(mapped === 'PAPR') return { domaine: 'PR', cible: 'PR' };
         if(mapped === 'AUTO_VL_DPS') return { domaine: 'AUTO', cible: 'VL_DPS' };
         if(mapped === 'AUTO_VL_DAP') return { domaine: 'AUTO', cible: 'VL_DAP' };
@@ -63,6 +65,9 @@
         if(mapped === 'JSP') return { domaine: 'JSP', cible: '' };
       }
       const upper = raw.toUpperCase();
+      if(upper === 'PR-ABC' || upper === 'PR ABC' || compact === 'PRABC'){
+        return { domaine: 'PR', cible: 'ABC' };
+      }
       if(upper === 'COND VL' || upper === 'COND VL — DPS' || upper === 'COND VL - DPS' || upper === 'COND VL DPS'){
         return { domaine: 'AUTO', cible: 'VL_DPS' };
       }
@@ -93,10 +98,17 @@
     return match ? match[1] : clean(cible);
   }
 
+  function isPrAbcCible(cible){
+    const raw = clean(cible).toUpperCase().replace(/[\s/_-]+/g, '');
+    return raw === 'ABC' || raw === 'PRABC';
+  }
+
   function specializationCode(assignment){
     const parts = assignmentParts(assignment);
     const domaine = parts.domaine.toUpperCase();
-    if(domaine === 'PR' || domaine === 'PAPR') return 'PAPR';
+    if(domaine === 'PR' || domaine === 'PAPR'){
+      return isPrAbcCible(parts.cible) ? 'PR_ABC' : 'PAPR';
+    }
     if(domaine === 'AUTO'){
       const cible = normalizeAutoCible(parts.cible);
       if(cible === 'VL_DPS') return 'AUTO_VL_DPS';
@@ -782,6 +794,9 @@
     if(wanted === 'JSP'){
       return classifyJspRole(person, assignments) != null || hasActiveDomainOi(assignments, 'JSP');
     }
+    if(wanted === 'PR-ABC' || wanted === 'PR_ABC'){
+      return assignments.some((row) => isAssignmentActiveAt(row) && specializationCode(row) === 'PR_ABC');
+    }
     if(wanted === 'cond VL'){
       return assignments.some((row) => isAssignmentActiveAt(row) && (isAutoVlDps(row) || isAutoVlDap(row)));
     }
@@ -972,8 +987,7 @@
     if(s === 'ABSENT_EXCUSE' || s === 'EXCUSE') return 'Excusé';
     if(s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT') return 'Absent';
     if(s === 'DISPENSE') return 'Dispensé';
-    if(s === 'NON_RENSEIGNE') return 'Non renseigné';
-    if(s === 'NON_CONCERNE') return 'Non concerné';
+    if(s === 'NON_RENSEIGNE' || s === 'NON_CONCERNE') return 'Non renseigné';
     if(s === 'PLANIFIE') return 'Planifié';
     return s ? s : '—';
   }
@@ -1142,6 +1156,7 @@
     formatOtherAffectations,
     specializationUserLabel,
     specializationCode,
+    isPrAbcCible,
     isAutoVlDps,
     isAutoVlDap,
     isAutoPl,

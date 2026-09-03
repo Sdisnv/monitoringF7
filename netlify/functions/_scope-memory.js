@@ -248,10 +248,15 @@ function createMemoryRepo(){
       });
     },
     async insertAffectation(row){
+      const cibleRow = row.cible_id ? cibles.find((c) => c.cible_id === row.cible_id) : null;
       const item = {
         affectation_id: row.affectation_id || randomUUID(),
         personne_id: row.personne_id,
         cible_id: row.cible_id,
+        domaine: row.domaine || cibleRow?.domaine_code || null,
+        cible: row.cible || cibleRow?.niveau_code || null,
+        domaine_code: row.domaine_code || cibleRow?.domaine_code || null,
+        niveau_code: row.niveau_code || cibleRow?.niveau_code || null,
         date_debut: isoDate(row.date_debut),
         date_fin: isoDate(row.date_fin),
         source: row.source || 'MANUEL',

@@ -32,6 +32,21 @@ const IMPORT_CONTEXTS = Object.freeze({
     newPersonStatus: 'NEW_PERSON',
     newPersonLabel: 'Nouvelle personne'
   },
+  PR_ABC: {
+    code: 'PR_ABC',
+    label: 'PR-ABC',
+    family: 'SPECIALISATION',
+    specialization: { categorie: 'SPECIALISATION', domaine: 'PR', cible: 'ABC', role_domaine: null },
+    persistOi: false,
+    allowCreatePerson: false,
+    requiresPapr: true,
+    requireDateEffet: true,
+    skipMissingFromFile: true,
+    identityOptional: true,
+    unknownNipMessage: 'NIP inconnu — personne à créer/importer dans le personnel avant affectation PR-ABC.',
+    newPersonStatus: 'NEW_ASSIGNMENT',
+    newPersonLabel: 'Nouvelle affectation PR-ABC'
+  },
   AUTO_VL_DPS: {
     code: 'AUTO_VL_DPS',
     label: 'cond VL — DPS',
@@ -127,6 +142,9 @@ const CONTEXT_ALIASES = Object.freeze({
   GENERAL: 'GENERAL',
   PR: 'PAPR',
   PAPR: 'PAPR',
+  PR_ABC: 'PR_ABC',
+  PRABC: 'PR_ABC',
+  'PR-ABC': 'PR_ABC',
   AUTO_VL_DPS: 'AUTO_VL_DPS',
   AUTO_VL_DAP: 'AUTO_VL_DAP',
   AUTO_PL: 'AUTO_PL',

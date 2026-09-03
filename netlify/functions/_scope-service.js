@@ -6,6 +6,7 @@ const {
   computeTaux,
   validateParticipationPatch,
   validateCloture,
+  expectedPopulationCoherence,
   rangesOverlap,
   ROLES_ENCADREMENT
 } = require('./_scope-rules');
@@ -377,7 +378,7 @@ function createScopeService(repo){
     const expanded = new Set(ids);
     for(const cible of requestedCibles){
       const domaine = String(cible.domaine_code || '').toUpperCase();
-      if(cible.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP'].includes(domaine)){
+      if(cible.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP', 'PR'].includes(domaine)){
         allCibles
           .filter((c) => c.domaine_code === domaine && c.niveau_code !== 'GEN')
           .forEach((c) => expanded.add(c.cible_id));
@@ -448,7 +449,15 @@ function createScopeService(repo){
     if(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION'].includes(statut)) return true;
     if(participation.motif_absence || participation.commentaire) return true;
     const source = String(participation.source || '').toUpperCase();
-    return source && !['GENERATION', 'SYNC_POPULATION'].includes(source);
+    return source && !['GENERATION', 'SYNC_POPULATION', 'RESET'].includes(source);
+  }
+
+  function isStaleNonConcerneForExpected(participation){
+    if(!participation) return false;
+    const role = String(participation.role || 'PARTICIPANT').toUpperCase();
+    if(ROLES_ENCADREMENT.has(role)) return false;
+    return String(participation.statut || '').toUpperCase() === 'NON_CONCERNE'
+      && !participationHasBusinessTrace(Object.assign({}, participation, { statut: 'NON_RENSEIGNE' }));
   }
 
   async function eventPopulationCibleIds(dbx, eventId, ciblesByEvent){
@@ -465,7 +474,7 @@ function createScopeService(repo){
     const expanded = new Set(ids.map((id) => String(id)));
     for(const cible of requested){
       const domaine = String(cible.domaine_code || '').toUpperCase();
-      if(cible.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP'].includes(domaine)){
+      if(cible.niveau_code === 'GEN' && ['DPS', 'DAP', 'JSP', 'PR'].includes(domaine)){
         allCibles
           .filter((c) => c.domaine_code === domaine && c.niveau_code !== 'GEN')
           .forEach((c) => expanded.add(String(c.cible_id)));
@@ -641,23 +650,36 @@ function createScopeService(repo){
             else summary.attendusAdded += 1;
             if(wasManual) eventDetails.reclassified.push(detail);
             else eventDetails.added.push(detail);
-            if(!participation){
-              if(!dryRun){
-                await dbx.upsertParticipation({
-                  evenement_id: eventId,
-                  personne_id: id,
-                  statut: 'NON_RENSEIGNE',
-                  role: 'PARTICIPANT',
-                  source: 'GENERATION',
-                  auteur_id: actorId(actor)
-                });
-              }
-              summary.participationsCreated += 1;
-            }else{
-              summary.participationsPreserved += 1;
-              eventDetails.preserved.push({ personneId: id, reason: 'participation_existante' });
-            }
             changed = true;
+          }
+          if(!participation){
+            if(!dryRun){
+              await dbx.upsertParticipation({
+                evenement_id: eventId,
+                personne_id: id,
+                statut: 'NON_RENSEIGNE',
+                role: 'PARTICIPANT',
+                source: 'GENERATION',
+                auteur_id: actorId(actor)
+              });
+            }
+            summary.participationsCreated += 1;
+            changed = true;
+          }else if(isStaleNonConcerneForExpected(participation)){
+            if(!dryRun){
+              await dbx.upsertParticipation({
+                ...participation,
+                statut: 'NON_RENSEIGNE',
+                role: participation.role || 'PARTICIPANT',
+                source: 'SYNC_POPULATION',
+                auteur_id: actorId(actor)
+              });
+            }
+            eventDetails.reclassified.push({ personneId: id, reason: 'non_concerne_residuel' });
+            changed = true;
+          }else if(!attendu || attendu.inclus === false || wasManual){
+            summary.participationsPreserved += 1;
+            eventDetails.preserved.push({ personneId: id, reason: 'participation_existante' });
           }
           continue;
         }
@@ -1818,7 +1840,8 @@ function createScopeService(repo){
       }
       const attendus = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
-      validateCloture(evenement, attendus, participations);
+      const isPrMulti = Boolean(evenement.cycle_id || evenement.pr_exercise_group_key);
+      validateCloture(evenement, attendus, participations, { requireExpectedFilled: !isPrMulti });
       if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
         const cycle = evenement.cycle_id && tx.getCycle
           ? await tx.getCycle(evenement.cycle_id)
@@ -2133,8 +2156,15 @@ function createScopeService(repo){
           : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
       ));
     }
-    const participations = await repo.listParticipations(eventId);
+    const participationsRaw = await repo.listParticipations(eventId);
     const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map(a => String(a.personne_id)));
+    const participations = String(evenement.statut || '').toUpperCase() === 'PLANIFIE'
+      ? (participationsRaw || []).map((row) => {
+        if(!attenduIds.has(String(row.personne_id))) return row;
+        if(!isStaleNonConcerneForExpected(row)) return row;
+        return Object.assign({}, row, { statut: 'NON_RENSEIGNE' });
+      })
+      : participationsRaw;
     let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
     const taux = computeTaux(participations, attendus);
     const personnes = await hydratePersonnes([
@@ -2244,6 +2274,9 @@ function createScopeService(repo){
     }
     const attendusExclus = attendus.filter((row) => row.inclus === false);
     const attendusActifs = attendus.filter((row) => row.inclus !== false);
+    const coherenceAttendus = String(evenement.domaine_code || '').toUpperCase() === 'JSP'
+      ? (jsp.jeunes || []).filter((row) => row.inclus !== false)
+      : attendusActifs;
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi },
       cibles,
@@ -2261,6 +2294,7 @@ function createScopeService(repo){
       modeSuivi,
       legacy,
       jsp,
+      populationCoherence: expectedPopulationCoherence(coherenceAttendus, participations),
       version: evenement.version
     };
   }
@@ -3171,7 +3205,8 @@ function createScopeService(repo){
     reconcileExpectedPopulation,
     assertNoAffectationOverlap,
     assertNoAffectationOverlapInDomain,
-    computeTaux
+    computeTaux,
+    expectedPopulationCoherence
   };
 }
 

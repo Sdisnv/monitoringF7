@@ -4,6 +4,11 @@ function clean(value){
   return String(value == null ? '' : value).trim().replace(/\s+/g, ' ');
 }
 
+function isPrAbcCode(value){
+  const raw = clean(value).toUpperCase().replace(/[\s/_-]+/g, '');
+  return raw === 'ABC' || raw === 'PRABC';
+}
+
 function normalizeTargetCode(domaine, cible){
   const domain = clean(domaine).toUpperCase();
   let value = clean(cible);
@@ -34,6 +39,7 @@ function normalizeTargetCode(domaine, cible){
     return upper === 'GEN' ? 'GEN' : value;
   }
   if(domain === 'PR' || domain === 'PAPR'){
+    if(isPrAbcCode(withoutDomain) || isPrAbcCode(upper)) return 'ABC';
     const m = withoutDomain.replace(/^PAPR\s+/, '').match(/^(G1|C1|B1|B2|GEN)\b/);
     return m ? m[1] : value;
   }
@@ -51,7 +57,8 @@ function matchesAssignmentToEventTarget(assignment, eventTarget){
   const assignmentTarget = normalizeTargetCode(assignmentDomain, assignment.cible || assignment.niveau_code);
   const eventCode = normalizeTargetCode(targetDomain, eventTarget.niveau_code || eventTarget.cible);
   if(String(assignmentTarget).toUpperCase() === String(eventCode).toUpperCase()) return true;
-  return String(eventCode).toUpperCase() === 'GEN';
+  if(String(eventCode).toUpperCase() !== 'GEN') return false;
+  return true;
 }
 
 function pgNormalizeExpression(domaineSql, cibleSql){
@@ -60,6 +67,9 @@ function pgNormalizeExpression(domaineSql, cibleSql){
       then coalesce((regexp_match(upper(replace(${cibleSql}, '/', ' ')), '([123])'))[1], upper(${cibleSql}))
     when upper(${domaineSql}) = 'JSP'
       then regexp_replace(upper(replace(${cibleSql}, '/', ' ')), '^JSP\\s+', '')
+    when upper(${domaineSql}) in ('PR','PAPR')
+      and regexp_replace(upper(replace(replace(replace(${cibleSql}, '/', ''), '-', ''), '_', '')), '\\s', '', 'g') in ('ABC','PRABC')
+      then 'ABC'
     when upper(${domaineSql}) in ('DPS','DAP','PR')
       then regexp_replace(upper(replace(${cibleSql}, '/', ' ')), '^(DPS|DAP|PR|PAPR)\\s+', '')
     when upper(${domaineSql}) = 'AUTO' and upper(${cibleSql}) like '%PL%'
@@ -86,6 +96,7 @@ function pgCibleJoinCondition(alias = 'a'){
 }
 
 module.exports = {
+  isPrAbcCode,
   normalizeTargetCode,
   matchesAssignmentToEventTarget,
   pgCibleJoinCondition

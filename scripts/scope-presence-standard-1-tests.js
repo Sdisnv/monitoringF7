@@ -201,16 +201,18 @@ function part(personne, statut, extra){
     assert.strictEqual(second.version, 4);
   });
 
-  await record('CAS I/J — Clôture incomplète autorisée, NON_RENSEIGNE conservé hors taux', async () => {
+  await record('CAS I/J — Clôture impossible tant qu’un attendu n’est pas renseigné', async () => {
     const ctx = await setupEvent(2);
     const first = await ctx.service.enregistrerParticipations(ctx.eventId, {
       baseVersion: ctx.version,
       participations: [part(ctx.people[0], 'PRESENT')]
     }, { sub: 'presence-test' });
-    const closed = await ctx.service.cloturer(ctx.eventId, { baseVersion: first.version }, { sub: 'presence-test' });
-    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    await assert.rejects(
+      () => ctx.service.cloturer(ctx.eventId, { baseVersion: first.version }, { sub: 'presence-test' }),
+      (error) => error instanceof HttpError && error.error === 'cloture_refusee'
+    );
     const fiche = await ctx.service.lireEvenement(ctx.eventId);
-    assert.strictEqual(fiche.evenement.statut, 'REALISE');
+    assert.strictEqual(fiche.evenement.statut, 'PLANIFIE');
     assert.strictEqual(fiche.participations.find((row) => row.personne_id === ctx.people[1].personne_id).statut, 'NON_RENSEIGNE');
     const taux = computeTaux(fiche.participations, fiche.attendus);
     assert.strictEqual(taux.nonRenseignes, 1);

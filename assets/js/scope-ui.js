@@ -2327,7 +2327,7 @@
   function specializationFilterOptions() {
     const display = personnelDisplay();
     if (display && display.specializationFilterOptions) return display.specializationFilterOptions();
-    return ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'cond VL', 'cond PL', 'JSP'];
+    return ['FOBA 1', 'FOBA 2', 'FOBA 3', 'PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'JSP'];
   }
 
   function visiblePersonnelRows() {
@@ -2660,6 +2660,7 @@
     return [
       ['GENERAL', 'Personnel général'],
       ['PAPR', 'PAPR'],
+      ['PR_ABC', 'PR-ABC'],
       ['AUTO_VL_DPS', 'cond VL — DPS'],
       ['AUTO_VL_DAP', 'cond VL — DAP'],
       ['AUTO_PL', 'cond PL'],
@@ -2975,7 +2976,7 @@
     DAP: ['DAP Y1', 'DAP Y2', 'DAP Y3', 'DAP Y4'],
     JSP: ['JSP G1', 'JSP C1', 'JSP B1']
   });
-  const PERSONNEL_SPEC_OPTIONS = Object.freeze(['PAPR', 'cond VL', 'cond PL', 'FOBA 1', 'FOBA 2', 'FOBA 3']);
+  const PERSONNEL_SPEC_OPTIONS = Object.freeze(['PAPR', 'PR-ABC', 'cond VL', 'cond PL', 'FOBA 1', 'FOBA 2', 'FOBA 3']);
 
   function closePersonnelAssignmentModal() {
     state.personnelAssignment = null;
@@ -3398,6 +3399,7 @@
     const display = personnelDisplay();
     const previewCanCommit = Boolean(preview && preview.canCommit !== false && personnelImportCount(counts, 'countErrors', 'ERROR') === 0
       && personnelImportDecisionsComplete(preview)
+      && !(preview.dateEffetRequise && !state.personnelSync.dateEffet)
       && (display && display.importCanCommit ? display.importCanCommit(preview) : true));
     const filters = display && display.importFilterButtons ? display.importFilterButtons(preview) : [
       { id: 'CHANGEMENTS', label: 'À traiter' },
@@ -4904,7 +4906,7 @@
       }
       return '';
     };
-    const statusFilled = (row) => Boolean(row && row.statut && row.statut !== 'NON_RENSEIGNE');
+    const statusFilled = (row) => Boolean(row && L.isValidSessionStatut && L.isValidSessionStatut(row.statut));
     return `
       <div class="scope-table-scroll">
         <table class="scope-table scope-saisie-table">
@@ -6638,6 +6640,13 @@
         return;
       }
       const open = Number(blockers.open || 0);
+      if (!multi && open > 0) {
+        ScopeFeedback.error(
+          'Clôture impossible',
+          'Chaque personne attendue sans statut valable doit être renseignée avant clôture.'
+        );
+        return;
+      }
       ScopeFeedback.confirm({
         title: open > 0 ? 'Clôturer avec des participations non renseignées' : 'Clôturer l’événement',
         message: open > 0

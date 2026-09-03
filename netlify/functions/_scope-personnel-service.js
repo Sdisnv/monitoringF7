@@ -218,7 +218,7 @@ function normalizeRows(rows, contexte, siteJsp){
     const warnings = [];
     const nip = normalizeNip(row.nip);
     if(!nip) errors.push('NIP manquant');
-    if(resolved.family !== 'JSP'){
+    if(resolved.family !== 'JSP' && !resolved.identityOptional){
       if(!clean(row.nom)) errors.push('Nom vide.');
       if(!clean(row.prenom)) errors.push('Prénom vide.');
     } else {
@@ -339,6 +339,24 @@ function summarizeLine(normalizedLine, existingPerson, existingAssignments, reso
         errors.push('Moniteur JSP sans OI SDIS actif');
       }
     }
+  }
+  if(resolved.allowCreatePerson === false && !existingPerson){
+    errors.push(resolved.unknownNipMessage || 'NIP inconnu — personne à créer/importer dans le personnel avant affectation.');
+  }
+  if(resolved.identityOptional && existingPerson){
+    if(!n.nom) n.nom = clean(existingPerson.nom);
+    if(!n.prenom) n.prenom = clean(existingPerson.prenom);
+    if(!n.grade) n.grade = clean(existingPerson.grade);
+    diff.identity.nom.proposed = n.nom;
+    diff.identity.prenom.proposed = n.prenom;
+    diff.identity.grade.proposed = n.grade;
+  }
+  if(resolved.requiresPapr && existingPerson){
+    const hasPapr = (existingAssignments || []).some((row) => {
+      if(row.date_inactif && dateActif && row.date_inactif < dateActif) return false;
+      return display.specializationCode(row) === 'PAPR';
+    });
+    if(!hasPapr) errors.push('La personne n’est pas affectée PR/PAPR.');
   }
   if(errors.length){
     return {
@@ -514,8 +532,8 @@ function summarizeAnalysis(lines){
   return counts;
 }
 
-function buildPreview({ rows, existingPersons, existingAssignments, population, resolved, siteJsp, anneeMonitoring, filename }){
-  const dateActif = monitoringStart(anneeMonitoring);
+function buildPreview({ rows, existingPersons, existingAssignments, population, resolved, siteJsp, anneeMonitoring, filename, dateActif: dateActifOverride }){
+  const dateActif = dateActifOverride || (resolved && resolved.requireDateEffet ? null : monitoringStart(anneeMonitoring));
   const dateInactifProposee = lastDayOfPreviousYear(anneeMonitoring);
   const seenNips = new Set();
   const lines = [];
@@ -539,6 +557,7 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     lines.push(Object.assign({}, row, summary, { nip: row.nip || nip || (row.normalized && row.normalized.nip) }));
   });
   (population || []).forEach((person) => {
+    if(resolved && resolved.skipMissingFromFile) return;
     if(seenNips.has(person.nip)) return;
     lines.push(buildAbsentLine(person, existingAssignments.get(person.nip) || person.affectations || [], resolved, siteJsp, dateActif, dateInactifProposee));
   });
@@ -556,7 +575,8 @@ function buildPreview({ rows, existingPersons, existingAssignments, population, 
     dateActif,
     filename: filename || '',
     counts,
-    lines
+    lines,
+    dateEffetRequise: Boolean(resolved && resolved.requireDateEffet && !dateActif)
   };
   const sites = [...new Set((preview.lines || []).map((line) => line.normalized && line.normalized.siteJsp).filter(Boolean))];
   if(!preview.siteJsp && sites.length === 1){
@@ -799,7 +819,9 @@ async function analyzeImport(input = {}){
   const nips = [...new Set(parsed.map(line => line.normalized.nip).filter(Boolean))];
   const existing = input._existing || await loadExistingForNips(nips);
   let population = input._population;
-  if(!population){
+  if(resolved.skipMissingFromFile){
+    population = [];
+  } else if(!population){
     const popRows = await loadPopulation(resolved, siteJsp);
     const extraNips = popRows.map((row) => row.nip).filter((nip) => !existing.persons.has(nip));
     if(extraNips.length){
@@ -813,6 +835,7 @@ async function analyzeImport(input = {}){
       return display.countsInImportPopulation(assignments, resolved, dateActif);
     });
   }
+  const dateActif = temporal.iso(input.dateEffet || input.dateActif || input.dateDebut || input.dateEffetGlobale) || null;
   const preview = buildPreview({
     rows: parsed,
     existingPersons: existing.persons,
@@ -821,7 +844,8 @@ async function analyzeImport(input = {}){
     resolved,
     siteJsp,
     anneeMonitoring,
-    filename
+    filename,
+    dateActif
   });
   preview.wrote = false;
   return preview;
@@ -841,6 +865,10 @@ async function commitImport(payload, actorSubject){
   const fileText = input.fileText || input.csvText || '';
   if(!fileText) throw new Error('Commit refusé: fichier d’import manquant.');
   const preview = input._preview || await analyzeImport(input);
+  const resolved = ctx.resolveImportContext(preview.contexte || input.contexte || input.importType || 'GENERAL');
+  if(resolved.requireDateEffet && !(temporal.iso(input.dateEffet || input.dateActif || input.dateDebut || input.dateEffetGlobale) || preview.dateActif)){
+    throw new Error('La date d’effet PR-ABC est obligatoire.');
+  }
   if((preview.lines || []).some((line) => line.status === 'ERROR')){
     throw new Error('Import refuse: corriger les lignes en erreur avant commit.');
   }
@@ -1666,13 +1694,14 @@ function resolveCreateAssignmentInput(body){
       || display.specializationCode(domaine)
       || display.specializationCode(cible)
     )) || '';
-    if(code === 'PAPR'){ domaine = 'PR'; cible = 'PR'; }
+    if(code === 'PR_ABC'){ domaine = 'PR'; cible = 'ABC'; }
+    else if(code === 'PAPR'){ domaine = 'PR'; cible = 'PR'; }
     else if(code === 'AUTO_VL_DPS'){ domaine = 'AUTO'; cible = 'VL_DPS'; }
     else if(code === 'AUTO_VL_DAP'){ domaine = 'AUTO'; cible = 'VL_DAP'; }
     else if(code === 'AUTO_PL'){ domaine = 'AUTO'; cible = 'PL'; }
     else if(code.indexOf('FOBA_') === 0){ domaine = 'FOBA'; cible = code.slice(5); }
     const upper = `${domaine} ${cible}`.toUpperCase();
-    if(upper.indexOf('PAPR') >= 0 || (String(domaine).toUpperCase() === 'PR')){
+    if(code !== 'PR_ABC' && (upper.indexOf('PAPR') >= 0 || (String(domaine).toUpperCase() === 'PR'))){
       domaine = 'PR';
       cible = cible || 'PR';
     }
