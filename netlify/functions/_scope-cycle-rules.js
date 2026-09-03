@@ -188,6 +188,46 @@ function prExerciseGroupKey(event){
   return match ? `${cyclePart}:PR:${match[1]}` : '';
 }
 
+function reportingYearPeriodForEvent(event){
+  const date = normalizeText(event && event.date).slice(0, 10);
+  const year = date.slice(0, 4);
+  return /^\d{4}$/.test(year) ? { from: `${year}-01-01`, to: `${year}-12-31`, preset: 'YEAR' } : null;
+}
+
+function normalizeReportingPeriod(period, current){
+  if(period && period.from && period.to){
+    return { from: normalizeText(period.from).slice(0, 10), to: normalizeText(period.to).slice(0, 10), preset: period.preset || 'CUSTOM' };
+  }
+  return reportingYearPeriodForEvent(current);
+}
+
+function eventInReportingPeriod(event, period){
+  if(!period || !period.from || !period.to) return true;
+  const date = normalizeText(event && event.date).slice(0, 10);
+  return Boolean(date && date >= period.from && date <= period.to);
+}
+
+function resolveSessionReportingScope(input = {}){
+  const events = input.evenements || input.events || [];
+  const currentId = normalizeText(input.currentEventId || input.current_event_id);
+  const current = events.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
+  const groupKey = prExerciseGroupKey(current);
+  const currentCycleId = cycleId(current);
+  const period = normalizeReportingPeriod(input.reportingPeriod || input.period, current);
+  let scoped = groupKey
+    ? events.filter((event) => prExerciseGroupKey(event) === groupKey)
+    : (currentCycleId ? events.filter((event) => cycleId(event) === currentCycleId) : events.filter((event) => eventId(event) === eventId(current)));
+  if(currentCycleId) scoped = scoped.filter((event) => cycleId(event) === currentCycleId);
+  scoped = scoped.filter((event) => eventInReportingPeriod(event, period));
+  return {
+    current,
+    groupKey,
+    cycleId: currentCycleId || null,
+    period,
+    events: sortSessionEvents(scoped)
+  };
+}
+
 function prSessionKey(event){
   const explicit = normalizeText(event && (event.pr_session_key || event.prSessionKey));
   if(explicit) return explicit;
@@ -262,11 +302,7 @@ function prExerciseEvents(input = {}){
   if(!groupKey){
     return { current, groupKey: '', events: currentId ? events.filter((event) => eventId(event) === currentId) : [] };
   }
-  return {
-    current,
-    groupKey,
-    events: sortSessionEvents(events.filter((event) => prExerciseGroupKey(event) === groupKey))
-  };
+  return resolveSessionReportingScope(input);
 }
 
 function computeCycleMetrics(input = {}){
@@ -768,6 +804,9 @@ module.exports = {
   prSessionKey,
   prSessionLabel,
   prExerciseEvents,
+  resolveSessionReportingScope,
+  normalizeReportingPeriod,
+  eventInReportingPeriod,
   sortSessionEvents,
   sessionExerciseLabel,
   MOTIF_DISPENSE_LABELS,

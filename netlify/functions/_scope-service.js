@@ -36,7 +36,7 @@ const {
 } = require('./_scope-model');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computePrExerciseParticipationState, prSessionLabel, canCloseLastSession } = require('./_scope-cycle-rules');
+const { computePrExerciseParticipationState, prSessionLabel, canCloseLastSession, resolveSessionReportingScope } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -1658,9 +1658,7 @@ function createScopeService(repo){
     const rows = evenement.cycle_id && tx.listCycleEvents
       ? await tx.listCycleEvents(evenement.cycle_id)
       : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
-    const groupKey = evenement.pr_exercise_group_key || null;
-    return (rows || [])
-      .filter((row) => !groupKey || row.pr_exercise_group_key === groupKey)
+    return resolveSessionReportingScope({ evenements: rows || [], currentEvent: evenement }).events
       .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(prSessionLabel(a)).localeCompare(String(prSessionLabel(b)), 'fr', { numeric: true }));
   }
 
@@ -1749,18 +1747,25 @@ function createScopeService(repo){
     const cycleEvents = evenement.cycle_id && store.listCycleEvents
       ? await store.listCycleEvents(evenement.cycle_id)
       : (store.listPrExerciseEvents && evenement.pr_exercise_group_key ? await store.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+    const scoped = resolveSessionReportingScope({ evenements: cycleEvents, currentEvent: evenement });
+    const scopedEvents = scoped.events.length ? scoped.events : [evenement];
     const cyclePersonnes = evenement.cycle_id && store.listCyclePersonnes ? await store.listCyclePersonnes(evenement.cycle_id) : [];
-    const cycleParticipations = cycleEvents.length ? await store.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
-    const cycleAttendus = store.listAttendusForEvents && cycleEvents.length ? await store.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
+    const cycleParticipations = scopedEvents.length ? await store.listParticipationsForEvents(scopedEvents.map((row) => row.evenement_id)) : [];
+    const cycleAttendus = store.listAttendusForEvents && scopedEvents.length ? await store.listAttendusForEvents(scopedEvents.map((row) => row.evenement_id)) : [];
+    const scopedPersonneIds = new Set([
+      ...cycleParticipations.map((row) => String(row.personne_id || row.personneId || '')),
+      ...cycleAttendus.map((row) => String(row.personne_id || row.personneId || ''))
+    ].filter(Boolean));
+    const scopedCyclePersonnes = cyclePersonnes.filter((row) => scopedPersonneIds.has(String(row.personne_id || row.personneId || '')));
     const personnes = await hydratePersonnes([
-      ...cyclePersonnes.map((row) => row.personne_id),
+      ...scopedCyclePersonnes.map((row) => row.personne_id),
       ...cycleParticipations.map((row) => row.personne_id),
       ...cycleAttendus.map((row) => row.personne_id)
     ]);
     return computePrExerciseParticipationState({
       cycle,
-      evenements: cycleEvents,
-      cyclePersonnes,
+      evenements: scopedEvents,
+      cyclePersonnes: scopedCyclePersonnes,
       attendus: cycleAttendus,
       participations: cycleParticipations,
       personnes,
@@ -2328,28 +2333,41 @@ function createScopeService(repo){
         const cycleEvents = evenement.cycle_id && repo.listCycleEvents
           ? await repo.listCycleEvents(evenement.cycle_id)
           : (repo.listPrExerciseEvents && evenement.pr_exercise_group_key ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+        const scoped = resolveSessionReportingScope({ evenements: cycleEvents, currentEvent: evenement });
+        const scopedEvents = scoped.events.length ? scoped.events : [evenement];
         const cyclePersonnes = evenement.cycle_id && repo.listCyclePersonnes ? await repo.listCyclePersonnes(evenement.cycle_id) : [];
-        const cycleParticipations = cycleEvents.length
-          ? await repo.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id))
+        const cycleParticipations = scopedEvents.length
+          ? await repo.listParticipationsForEvents(scopedEvents.map((row) => row.evenement_id))
           : [];
-        const cycleAttendus = repo.listAttendusForEvents && cycleEvents.length
-          ? await repo.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id))
+        const cycleAttendus = repo.listAttendusForEvents && scopedEvents.length
+          ? await repo.listAttendusForEvents(scopedEvents.map((row) => row.evenement_id))
           : attendus;
+        const scopedPersonneIds = new Set([
+          ...cycleParticipations.map((row) => String(row.personne_id || row.personneId || '')),
+          ...cycleAttendus.map((row) => String(row.personne_id || row.personneId || ''))
+        ].filter(Boolean));
+        const scopedCyclePersonnes = cyclePersonnes.filter((row) => scopedPersonneIds.has(String(row.personne_id || row.personneId || '')));
         const cyclePersonnesById = await hydratePersonnes([
-          ...cyclePersonnes.map((row) => row.personne_id),
+          ...scopedCyclePersonnes.map((row) => row.personne_id),
           ...cycleParticipations.map((row) => row.personne_id),
           ...cycleAttendus.map((row) => row.personne_id)
         ]);
         prExerciseParticipation = computePrExerciseParticipationState({
           cycle,
-          evenements: cycleEvents,
-          cyclePersonnes,
+          evenements: scopedEvents,
+          cyclePersonnes: scopedCyclePersonnes,
           attendus: cycleAttendus,
           participations: cycleParticipations,
           personnes: cyclePersonnesById,
           currentEventId: eventId
         });
-        prExerciseParticipation.sessionLabels = cycleEvents
+        prExerciseParticipation.reportingScope = {
+          groupKey: scoped.groupKey || null,
+          cycleId: scoped.cycleId || null,
+          period: scoped.period,
+          eventIds: scopedEvents.map((row) => row.evenement_id)
+        };
+        prExerciseParticipation.sessionLabels = scopedEvents
           .filter((row) => !prExerciseParticipation.groupKey || row.pr_exercise_group_key === prExerciseParticipation.groupKey)
           .map((row) => prSessionLabel(row))
           .filter(Boolean);

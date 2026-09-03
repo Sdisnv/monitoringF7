@@ -7,6 +7,7 @@ const {
   isValidSessionDecision,
   prExerciseGroupKey,
   prSessionLabel,
+  resolveSessionReportingScope,
   sortSessionEvents,
   sessionExerciseLabel,
   MOTIF_DISPENSE_LABELS
@@ -234,7 +235,7 @@ function officialFromVolumes(volumes, eventCount){
   };
 }
 
-async function loadSessionBundle(repo, evenementId){
+async function loadSessionBundle(repo, evenementId, options = {}){
   if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport de participation exige un identifiant d’événement.');
   const current = await repo.getEvent(evenementId);
   if(!current) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
@@ -247,6 +248,12 @@ async function loadSessionBundle(repo, evenementId){
     const cycleEvents = await repo.listCycleEvents(current.cycle_id);
     if(cycleEvents && cycleEvents.length) events = sortSessionEvents(cycleEvents);
   }
+  const reportingScope = resolveSessionReportingScope({
+    evenements: events,
+    currentEvent: current,
+    reportingPeriod: options.period || null
+  });
+  events = reportingScope.events.length ? reportingScope.events : [current];
   const ids = events.map(eventId).filter(Boolean);
   const [attendus, participations, personnes, cibles, cycle] = await Promise.all([
     repo.listAttendusForEvents ? repo.listAttendusForEvents(ids) : [],
@@ -264,7 +271,7 @@ async function loadSessionBundle(repo, evenementId){
     personnes,
     cycle: cycle || {}
   });
-  return { current, events, attendus, participations, personnes, cibles, cycle, state, ids };
+  return { current, events, attendus, participations, personnes, cibles, cycle, state, ids, reportingScope };
 }
 
 function buildSessionDataset(bundle){
@@ -502,11 +509,12 @@ function subsetBundle(bundle, events){
 }
 
 async function collectMultisessionReport(repo, evenementId, options = {}){
-  const bundle = await loadSessionBundle(repo, evenementId);
+  const requestedPeriod = options.period || null;
+  const bundle = await loadSessionBundle(repo, evenementId, { period: requestedPeriod });
   assertAllReportSessionsClosed(bundle);
   const currentDate = bundle.current && bundle.current.date;
   const defaultPeriod = yearBoundsFromDate(currentDate);
-  const period = options.period || defaultPeriod;
+  const period = requestedPeriod || (bundle.reportingScope && bundle.reportingScope.period) || defaultPeriod;
   const inPeriodEvents = (bundle.events || []).filter((event) => dateInPeriod(event.date, period));
   const primaryEvents = inPeriodEvents.length
     ? inPeriodEvents
