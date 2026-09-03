@@ -173,7 +173,7 @@ const DDL = [
       statut <> 'ABSENT_EXCUSE' or motif_absence is not null
     ),
     constraint scope_participations_motif_val_chk check (
-      motif_absence is null or motif_absence in ('MALADIE','ACCIDENT','ARMEE','PROFESSIONNEL','PRIVE','AUTRE')
+      motif_absence is null or motif_absence in ('MALADIE','ACCIDENT','ARMEE','PROFESSIONNEL','PRIVE','AUTRE','ACCIDENT_MALADIE','NON_PRECISE','ACTIVITE_SCOLAIRE','ACTIVITE_EXTRA_SCOLAIRE','NON_JUSTIFIE')
     ),
     constraint scope_participations_autre_chk check (
       motif_absence is distinct from 'AUTRE'
@@ -597,6 +597,8 @@ async function migrateModel2(){
     alter table scope_participations add constraint scope_participations_motif_val_chk check (
       motif_absence is null or motif_absence in (
         'PRIVE','PROFESSIONNEL','ARMEE','ACCIDENT_MALADIE','MALADIE','ACCIDENT','AUTRE','NON_PRECISE',
+        'ACTIVITE_SCOLAIRE','ACTIVITE_EXTRA_SCOLAIRE','NON_JUSTIFIE',
+        'ACTIVITE_SCOLAIRE','ACTIVITE_EXTRA_SCOLAIRE','NON_JUSTIFIE',
         'JOKER','FORMATEUR_PR','FORMATION_HORS_SDIS','PAS_CONCERNE','DEMISSION_EN_COURS'
       )
     )

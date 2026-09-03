@@ -20,6 +20,13 @@ const MOTIFS_CANONIQUES = Object.freeze({
   ACCIDENT_MALADIE: 'ACCIDENT_MALADIE'
 });
 
+const MOTIFS_JSP = Object.freeze({
+  PRIVE: 'PRIVE',
+  ACTIVITE_SCOLAIRE: 'ACTIVITE_SCOLAIRE',
+  ACTIVITE_EXTRA_SCOLAIRE: 'ACTIVITE_EXTRA_SCOLAIRE',
+  NON_JUSTIFIE: 'NON_JUSTIFIE'
+});
+
 const MOTIFS_HISTORIQUES = Object.freeze({
   MALADIE: 'MALADIE',
   ACCIDENT: 'ACCIDENT',
@@ -37,9 +44,19 @@ const MOTIFS_DISPENSE = Object.freeze({
 const MOTIFS_SAISIE_NOUVELLE = new Set(Object.values(MOTIFS_CANONIQUES));
 const MOTIFS_ACCEPTES = new Set([
   ...Object.values(MOTIFS_CANONIQUES),
+  ...Object.values(MOTIFS_JSP),
   ...Object.values(MOTIFS_HISTORIQUES),
   ...Object.values(MOTIFS_DISPENSE)
 ]);
+
+function isJspDomaine(code){
+  return String(code || '').toUpperCase() === 'JSP';
+}
+
+function motifsSaisieForDomaine(domaineCode){
+  if(isJspDomaine(domaineCode)) return Object.values(MOTIFS_JSP);
+  return Object.values(MOTIFS_CANONIQUES);
+}
 
 const STATUT_PERMUTATION = 'PERMUTATION';
 
@@ -74,6 +91,7 @@ function normalizeMotifKey(motif){
   if(text === 'PROFESSIONNEL') return 'professionnel';
   if(text === 'ARMEE') return 'armee';
   if(text === 'ACCIDENT_MALADIE' || text === 'MALADIE' || text === 'ACCIDENT') return 'accidentMaladie';
+  if(text === 'ACTIVITE_SCOLAIRE' || text === 'ACTIVITE_EXTRA_SCOLAIRE' || text === 'NON_JUSTIFIE') return 'nonPrecise';
   return 'nonPrecise';
 }
 
@@ -192,10 +210,13 @@ function canPhysicallyDeletePersonne({ attendusCount, participationsCount, journ
 
 module.exports = {
   MOTIFS_CANONIQUES,
+  MOTIFS_JSP,
   MOTIFS_HISTORIQUES,
   MOTIFS_DISPENSE,
   MOTIFS_SAISIE_NOUVELLE,
   MOTIFS_ACCEPTES,
+  isJspDomaine,
+  motifsSaisieForDomaine,
   STATUT_PERMUTATION,
   displayDomaineCode,
   domaineAffiche,

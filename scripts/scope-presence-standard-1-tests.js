@@ -559,8 +559,8 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('La population convoquée restera inchangée.'));
     assert.ok(ui.includes('client.resetParticipations'));
     assert.ok(ui.includes('Clôturer l’événement'));
-    assert.ok(ui.includes('Clôturer avec des participations non renseignées'));
-    assert.ok(ui.includes('Clôturer quand même'));
+    assert.ok(ui.includes('CLÔTURE IMPOSSIBLE'));
+    assert.ok(ui.includes('Afficher les personnes à renseigner'));
     assert.ok(ui.includes('data-enc-remove'));
     assert.ok(ui.includes('scope-remove-action scope-enc-remove'));
     assert.ok(ui.includes('function trashIcon'));
@@ -589,7 +589,7 @@ function part(personne, statut, extra){
     assert.ok(ui.includes('À renseigner'));
     assert.ok(!ui.includes('Vue globale dédupliquée par personne'));
     assert.ok(ui.includes('scope-presence-warning'));
-    assert.ok(ui.includes('scope-cloture-reason'));
+    assert.ok(ui.includes('cloture-incomplete'));
     assert.ok(ui.includes('applyParticipationStatus'));
     assert.ok(!ui.includes("row.role = row.role === 'SURVEILLANT' ? 'SURVEILLANT' : 'PARTICIPANT'"));
     assert.ok(ui.includes('scopeSearchTimers'));

@@ -49,6 +49,17 @@ function normalizeTargetCode(domaine, cible){
   return value;
 }
 
+function resolveEventImportTarget(domaine, publicCible){
+  const domain = clean(domaine).toUpperCase();
+  const raw = clean(publicCible).toUpperCase().replace(/[\s/_-]+/g, '');
+  const resolvedDomain = domain === 'PAPR' ? 'PR' : domain;
+  if(resolvedDomain === 'PR'){
+    if(raw === 'PAPRABC' || raw === 'PRABC' || raw === 'ABC') return { domaineCode: 'PR', niveauCode: 'ABC' };
+    if(raw === 'PAPR' || raw === 'PR' || raw === 'GEN' || raw === 'PAPRGEN') return { domaineCode: 'PR', niveauCode: 'GEN' };
+  }
+  return null;
+}
+
 function matchesAssignmentToEventTarget(assignment, eventTarget){
   if(!assignment || !eventTarget) return false;
   const assignmentDomain = clean(assignment.domaine || assignment.domaine_code).toUpperCase();
@@ -98,6 +109,7 @@ function pgCibleJoinCondition(alias = 'a'){
 module.exports = {
   isPrAbcCode,
   normalizeTargetCode,
+  resolveEventImportTarget,
   matchesAssignmentToEventTarget,
   pgCibleJoinCondition
 };

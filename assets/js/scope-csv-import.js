@@ -42,6 +42,11 @@
     'PR|C1': 'C1',
     'PR|B1': 'B1',
     'PR|B2': 'B2',
+    'PR|PAPR': 'GEN',
+    'PR|PAPR-ABC': 'ABC',
+    'PR|PAPR ABC': 'ABC',
+    'PR|PR-ABC': 'ABC',
+    'PR|ABC': 'ABC',
     'PR|GEN': 'GEN',
     'AUTO|VL': 'VL',
     'AUTO|PL': 'PL',
@@ -196,7 +201,12 @@
   }
 
   function normalizePublicCible(domaine, publicCible) {
-    const key = `${String(domaine || '').trim().toUpperCase()}|${String(publicCible || '').trim().replace(/\s+/g, ' ')}`;
+    let domain = String(domaine || '').trim().toUpperCase();
+    if (domain === 'PAPR') domain = 'PR';
+    const compact = String(publicCible || '').trim().toUpperCase().replace(/[\s/_-]+/g, '');
+    if (domain === 'PR' && (compact === 'PAPRABC' || compact === 'PRABC' || compact === 'ABC')) return 'ABC';
+    if (domain === 'PR' && (compact === 'PAPR' || compact === 'PR' || compact === 'GEN' || compact === 'PAPRGEN')) return 'GEN';
+    const key = `${domain}|${String(publicCible || '').trim().replace(/\s+/g, ' ')}`;
     if (Object.prototype.hasOwnProperty.call(PUBLIC_CIBLE_MAP, key)) return PUBLIC_CIBLE_MAP[key];
     return null;
   }

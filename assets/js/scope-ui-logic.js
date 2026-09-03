@@ -12,6 +12,12 @@
     { value: 'ARMEE', label: 'Armée' },
     { value: 'ACCIDENT_MALADIE', label: 'Accident/Maladie' }
   ];
+  const MOTIFS_JSP = [
+    { value: 'PRIVE', label: 'Privé' },
+    { value: 'ACTIVITE_SCOLAIRE', label: 'Activité scolaire' },
+    { value: 'ACTIVITE_EXTRA_SCOLAIRE', label: 'Activité extra-scolaire' },
+    { value: 'NON_JUSTIFIE', label: 'Non justifié' }
+  ];
   const MOTIFS_DISPENSE = [
     { value: 'JOKER', label: 'Joker' },
     { value: 'FORMATEUR_PR', label: 'Formateur PR' },
@@ -26,9 +32,26 @@
     { value: 'NON_PRECISE', label: 'Non précisé (historique)' }
   ];
 
-  function motifsForRow(row) {
-    const extra = MOTIFS_HISTORIQUES.filter((m) => row && row.motifAbsence === m.value);
-    return MOTIFS.concat(extra);
+  function isJspDomaine(code) {
+    return String(code || '').toUpperCase() === 'JSP';
+  }
+
+  function motifsSaisieForDomaine(domaineCode) {
+    return isJspDomaine(domaineCode) ? MOTIFS_JSP.slice() : MOTIFS.slice();
+  }
+
+  function motifCatalogue() {
+    return MOTIFS.concat(MOTIFS_JSP, MOTIFS_DISPENSE, MOTIFS_HISTORIQUES);
+  }
+
+  function motifsForRow(row, domaineCode) {
+    const domaine = domaineCode || row && (row.domaineCode || row.domaine_code);
+    const base = motifsSaisieForDomaine(domaine);
+    const extra = MOTIFS.concat(MOTIFS_JSP, MOTIFS_HISTORIQUES).filter((m) => {
+      if (!row || row.motifAbsence !== m.value) return false;
+      return !base.some((item) => item.value === m.value);
+    });
+    return base.concat(extra);
   }
 
   function motifsDispenseForRow() {
@@ -42,7 +65,7 @@
   function motifShortLabel(code) {
     const value = String(code || '');
     if (!value) return '';
-    const hit = MOTIFS.concat(MOTIFS_DISPENSE, MOTIFS_HISTORIQUES).find((m) => m.value === value);
+    const hit = motifCatalogue().find((m) => m.value === value);
     if (!hit) return value;
     return String(hit.label || '').replace(/\s*\(historique\)\s*$/i, '');
   }
@@ -977,10 +1000,16 @@
         present += 1;
         if (row.role === 'FORMATEUR') formateur += 1;
       }
-      else if (s === 'ABSENT_EXCUSE') excuse += 1;
+      else if (s === 'ABSENT_EXCUSE') {
+        if (isIncompleteClosureRow(row)) open += 1;
+        else excuse += 1;
+      }
       else if (s === 'ABSENT_NON_EXCUSE') absent += 1;
-      else if (s === 'DISPENSE') dispense += 1;
-      else if ((s === 'NON_RENSEIGNE' || s === 'NON_CONCERNE' || !s) && !sessionLocked(row) && !row.sessionHasValidStatus) open += 1;
+      else if (s === 'DISPENSE') {
+        if (isIncompleteClosureRow(row)) open += 1;
+        else dispense += 1;
+      }
+      else if (isIncompleteClosureRow(row)) open += 1;
     }
     return { present, formateur, excuse, absent, dispense, open };
   }
@@ -1097,14 +1126,15 @@
       }));
   }
 
-  function excuseBreakdown(rows) {
-    const counts = Object.fromEntries(MOTIFS.map((m) => [m.value, 0]));
+  function excuseBreakdown(rows, domaineCode) {
+    const motifs = motifsSaisieForDomaine(domaineCode);
+    const counts = Object.fromEntries(motifs.map((m) => [m.value, 0]));
     for (const row of rows || []) {
       if (!row || row.inclus === false || row.statut !== 'ABSENT_EXCUSE') continue;
       const key = String(row.motifAbsence || row.motif_absence || '');
       if (Object.prototype.hasOwnProperty.call(counts, key)) counts[key] += 1;
     }
-    return MOTIFS.map((m) => ({ value: m.value, label: m.label, count: counts[m.value] || 0 }));
+    return motifs.map((m) => ({ value: m.value, label: m.label, count: counts[m.value] || 0 }));
   }
 
   function clotureDisabled(counters) {
@@ -1120,11 +1150,31 @@
     return value === 'PRESENT' || value === 'PERMUTATION' || value === 'ABSENT_EXCUSE' || value === 'ABSENT_NON_EXCUSE' || value === 'DISPENSE';
   }
 
-  function isOpenSaisieRow(row) {
+  function isIncompleteClosureRow(row) {
     if (!row || row.inclus === false) return false;
     if (sessionLocked(row) || row.sessionHasValidStatus) return false;
-    if (isValidSessionStatut(row.statut)) return false;
-    return !row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE';
+    if (!countsInSaisieTaux(row)) return false;
+    if (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE') return true;
+    if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) return true;
+    if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) return true;
+    return false;
+  }
+
+  function isOpenSaisieRow(row) {
+    return isIncompleteClosureRow(row);
+  }
+
+  function listIncompleteClosureRows(rows) {
+    return (rows || []).filter((row) => isIncompleteClosureRow(row));
+  }
+
+  function formatIncompletePersonLabel(row) {
+    const grade = String((row && row.grade) || '').trim();
+    const prenom = String((row && row.prenom) || '').trim();
+    const nom = String((row && (row.nomFamille || row.nom)) || '').trim();
+    const nip = String((row && row.nip) || '').trim();
+    const identity = [prenom, nom].filter(Boolean).join(' ') || 'Personne';
+    return [grade, identity, nip ? `NIP ${nip}` : ''].filter(Boolean).join(' — ');
   }
 
   function hasIncompleteDispense(rows) {
@@ -1149,8 +1199,8 @@
   function closureBlockers(rows) {
     const out = { open: 0, incompleteExcuses: 0, incompleteDispenses: 0, message: '' };
     (rows || []).forEach((row) => {
-      if (!row || row.inclus === false || sessionLocked(row)) return;
-      if (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE') out.open += 1;
+      if (!row || row.inclus === false || sessionLocked(row) || !countsInSaisieTaux(row)) return;
+      if (isIncompleteClosureRow(row) && (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE')) out.open += 1;
       if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
       if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) out.incompleteDispenses += 1;
     });
@@ -1616,6 +1666,7 @@
 
   return {
     MOTIFS,
+    MOTIFS_JSP,
     MOTIFS_DISPENSE,
     motifsForRow,
     motifsDispenseForRow,
@@ -1702,6 +1753,10 @@
     isValidSessionStatut,
     sessionLocked,
     isOpenSaisieRow,
+    isIncompleteClosureRow,
+    listIncompleteClosureRows,
+    formatIncompletePersonLabel,
+    motifsSaisieForDomaine,
     closureBlockers,
     resetSaisie,
     needsConfirmReset,

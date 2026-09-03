@@ -923,6 +923,7 @@
           statut: displayStatut,
           motifAbsence: displayMotif,
           commentaire: part.commentaire || '',
+          domaineCode: String((fiche.evenement && fiche.evenement.domaine_code) || ''),
           source: part.source || '',
           inclus: true,
           role: part.role || 'PARTICIPANT',
@@ -4599,13 +4600,11 @@
     const filteredRaw = (state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter)))
       .filter((r) => !state.saisieOpenFilter || (L.isOpenSaisieRow ? L.isOpenSaisieRow(r) : (!r.statut || r.statut === 'NON_RENSEIGNE')));
     const filtered = sortSaisieRows(filteredRaw);
-    const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
-    const hasIncompleteDispense = L.hasIncompleteDispense ? L.hasIncompleteDispense(state.saisie) : false;
-    const disabledCloture = hasIncompleteExcuse || hasIncompleteDispense;
-    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { message: '' };
     const openCount = L.liveCounters(state.saisie).open;
     const saveBusy = Boolean(state.presenceSaveBusy);
     const closeBusy = state.presenceCloseBusy;
+    const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
+    const hasIncompleteDispense = L.hasIncompleteDispense ? L.hasIncompleteDispense(state.saisie) : false;
     const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : 'Clôturer');
     const saveState = presenceSaveLabel();
     return `
@@ -4620,12 +4619,11 @@
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present" ${saveBusy ? 'disabled' : ''}>Tous présents</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="scope-saisie-back">Retour aux événements</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie" ${saveBusy ? 'disabled' : ''}>Réinitialiser la saisie</button>
-          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${disabledCloture || saveBusy || closeBusy ? 'disabled' : ''}>${escapeHtml(closeLabel)}</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${saveBusy || closeBusy ? 'disabled' : ''}>${escapeHtml(closeLabel)}</button>
         </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
-        ${disabledCloture && blockers.message ? `<p class="scope-cloture-reason">${escapeHtml(blockers.message)}</p>` : ''}
         ${renderEncadrementBlock()}
-        <section class="scope-presence-section">
+        <section class="scope-presence-section" id="scope-saisie-presences">
           <div class="scope-section-header">
             <h2 class="scope-section-heading">Présences</h2>
             <p class="scope-saisie-open" role="status">${escapeHtml(String(openCount))} présence${openCount === 1 ? '' : 's'} à renseigner</p>
@@ -4667,12 +4665,16 @@
     return (state.saisie || []).filter((row) => row && (row.cible === label || (row.cibles || []).includes(label)));
   }
 
+  function saisieDomaine() {
+    return String((state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code) || '').toUpperCase();
+  }
+
   function countStatuses(rows) {
     return L.liveCounters(rows);
   }
 
   function renderExcuseBreakdown(rows) {
-    const items = L.excuseBreakdown ? L.excuseBreakdown(rows) : [];
+    const items = L.excuseBreakdown ? L.excuseBreakdown(rows, saisieDomaine()) : [];
     const total = items.reduce((sum, item) => sum + Number(item.count || 0), 0);
     if (!total) return '<p>Aucune absence excusée</p>';
     return `<dl>${items.map((item) => `<div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(String(item.count || 0))}</dd></div>`).join('')}</dl>`;
@@ -4968,7 +4970,7 @@
         return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense">${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
       }
       if (row.statut !== 'ABSENT_EXCUSE') return '';
-      const motifs = L.motifsForRow ? L.motifsForRow(row) : L.MOTIFS;
+      const motifs = L.motifsForRow ? L.motifsForRow(row, saisieDomaine()) : L.MOTIFS;
       const selected = motifs.find((m) => m.value === row.motifAbsence);
       if (selected && !row.editMotif) {
         return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selected.label)}</button></div>`;
@@ -5314,13 +5316,15 @@
 
   function renderModalClotureIncomplete() {
     if (state.modal !== 'cloture-incomplete') return '';
-    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0 };
-    const open = Number(blockers.open || 0);
+    const people = state.clotureIncompletePeople || [];
+    const count = people.length;
+    const rows = people.map((p) => `<li>${escapeHtml(L.formatIncompletePersonLabel ? L.formatIncompletePersonLabel(p) : [p.grade, p.prenom, p.nomFamille || p.nom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' — '))}</li>`).join('');
     return `<div class="scope-modal"><div class="scope-card">
-      <h3>Clôturer avec saisie incomplète</h3>
-      <p>${escapeHtml(String(open))} personne${open > 1 ? 's restent' : ' reste'} sans statut. ${open > 1 ? 'Elles resteront' : 'Elle restera'} non renseignée${open > 1 ? 's' : ''} après clôture. Voulez-vous clôturer l’événement ?</p>
+      <h3>CLÔTURE IMPOSSIBLE</h3>
+      <p>${escapeHtml(String(count))} présence${count > 1 ? 's' : ''} doivent encore être renseignée${count > 1 ? 's' : ''} avant de clôturer l’événement.</p>
+      <ul class="scope-feedback-errors">${rows}</ul>
       <div class="scope-actions">
-        <button type="button" class="scope-btn scope-btn-primary" id="cloture-incomplete-ok">Clôturer quand même</button>
+        <button type="button" class="scope-btn scope-btn-primary" id="cloture-incomplete-show">Afficher les personnes à renseigner</button>
         <button type="button" class="scope-btn" id="cloture-incomplete-cancel">Annuler</button>
       </div>
     </div></div>`;
@@ -6760,8 +6764,14 @@
       finishLeaveSaisie('save');
     });
     document.getElementById('cloturer')?.addEventListener('click', () => onCloturerClick());
-    document.getElementById('cloture-incomplete-ok')?.addEventListener('click', () => { state.modal = null; cloturer(); });
-    document.getElementById('cloture-incomplete-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('cloture-incomplete-show')?.addEventListener('click', () => {
+      state.modal = null;
+      state.saisieOpenFilter = true;
+      render();
+      const target = document.getElementById('scope-saisie-presences');
+      if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView({ block: 'start' });
+    });
+    document.getElementById('cloture-incomplete-cancel')?.addEventListener('click', () => { state.modal = null; state.clotureIncompletePeople = []; render(); });
     document.getElementById('enc-role')?.addEventListener('change', (e) => {
       state.encRole = e.target.value || 'FORMATEUR';
       if (state.encRole !== 'FORMATEUR') state.encSerieComplete = false;
@@ -7800,11 +7810,7 @@
   }
 
   function confirmClotureAfterSave() {
-    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { open: 0, incompleteExcuses: 0, incompleteDispenses: 0 };
-    if (blockers.incompleteExcuses > 0 || blockers.incompleteDispenses > 0) {
-      ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif avant la clôture.');
-      return;
-    }
+    const incomplete = L.listIncompleteClosureRows ? L.listIncompleteClosureRows(state.saisie) : [];
     const session = (state.fiche && (state.fiche.prExerciseParticipation || state.fiche.sessionParticipation)) || {};
     const multi = Boolean(session.isMultiSession);
     const last = Boolean(session.isLastSession);
@@ -7816,54 +7822,34 @@
       }, cloturer);
       return;
     }
-    if (multi && last) {
-      const missing = session.unfilledPeople || [];
-      if (missing.length) {
-        ScopeFeedback.error(
-          'Clôture impossible',
-          'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.',
-          {
-            closeText: 'Retour à la saisie',
-            errorsMax: 200,
-            errors: missing.map((p) => ({
-              message: [p.grade, p.nom, p.prenom, p.nip ? `NIP ${p.nip}` : ''].filter(Boolean).join(' ')
-            }))
-          }
-        );
-        return;
-      }
-      ScopeFeedback.confirm({
-        title: 'Clôturer l’exercice',
-        message: 'La session complète sera clôturée.',
-        confirmText: 'Clôturer l’exercice'
-      }, cloturer);
-      return;
-    }
-    const open = Number(blockers.open || 0);
-    if (!multi && open > 0) {
-      ScopeFeedback.error(
-        'Clôture impossible',
-        'Chaque personne attendue sans statut valable doit être renseignée avant clôture.'
-      );
+    const missing = last && multi
+      ? (session.unfilledPeople || []).map((p) => Object.assign({
+        personneId: p.personneId || p.personne_id,
+        grade: p.grade,
+        prenom: p.prenom,
+        nomFamille: p.nom || p.nomFamille,
+        nom: p.nom,
+        nip: p.nip
+      }, p))
+      : incomplete;
+    if (missing.length) {
+      state.clotureIncompletePeople = missing;
+      state.modal = 'cloture-incomplete';
+      render();
       return;
     }
     ScopeFeedback.confirm({
-      title: open > 0 ? 'Clôturer avec des participations non renseignées' : 'Clôturer l’événement',
-      message: open > 0
-        ? `${open} personnes restent sans statut. Elles resteront non renseignées après clôture.`
+      title: last && multi ? 'Clôturer l’exercice' : 'Clôturer l’événement',
+      message: last && multi
+        ? 'La session complète sera clôturée.'
         : 'La saisie sera enregistrée et l’événement marqué comme réalisé.',
-      confirmText: open > 0 ? 'Clôturer quand même' : 'Clôturer',
+      confirmText: last && multi ? 'Clôturer l’exercice' : 'Clôturer',
       cancelText: 'Annuler'
     }, cloturer);
   }
 
   async function onCloturerClick() {
     if (state.presenceSaveBusy || state.presenceCloseBusy) return;
-    const blockers = L.closureBlockers ? L.closureBlockers(state.saisie) : { incompleteExcuses: 0, incompleteDispenses: 0 };
-    if (blockers.incompleteExcuses > 0 || blockers.incompleteDispenses > 0) {
-      ScopeFeedback.error('Clôture impossible', blockers.message || 'Choisissez un motif avant la clôture.');
-      return;
-    }
     if (L.hasUnsavedPresenceChanges(state)) {
       state.presenceCloseBusy = 'save';
       render();

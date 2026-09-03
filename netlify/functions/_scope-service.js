@@ -1851,8 +1851,22 @@ function createScopeService(repo){
         });
         return { evenement: next, version: next.version, taux };
       }
-      const attendus = await tx.listAttendus(eventId);
+      const attendusRaw = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
+      const periodesByPersonne = new Map();
+      const personneIds = [...new Set((attendusRaw || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean))];
+      await Promise.all(personneIds.map(async (pid) => {
+        periodesByPersonne.set(pid, tx.listPersonnesPeriodes ? await tx.listPersonnesPeriodes(pid) : []);
+      }));
+      const eligible = new Set(
+        filterAttendusEligibleAtDate(attendusRaw, periodesByPersonne, evenement.date)
+          .map((row) => String(row.personne_id || row.personneId))
+      );
+      const attendus = (attendusRaw || []).map((row) => (
+        eligible.has(String(row.personne_id || row.personneId))
+          ? row
+          : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
+      ));
       const isPrMulti = Boolean(evenement.cycle_id || evenement.pr_exercise_group_key);
       validateCloture(evenement, attendus, participations, { requireExpectedFilled: !isPrMulti });
       if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){

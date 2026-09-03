@@ -1109,6 +1109,7 @@
     if(!raw || raw === '—') return '';
     const map = {
       PRIVE: 'Privé', PROFESSIONNEL: 'Professionnel', ARMEE: 'Armée', ACCIDENT_MALADIE: 'Accident/Maladie',
+      ACTIVITE_SCOLAIRE: 'Activité scolaire', ACTIVITE_EXTRA_SCOLAIRE: 'Activité extra-scolaire', NON_JUSTIFIE: 'Non justifié',
       prive: 'Privé', professionnel: 'Professionnel', armee: 'Armée',
       JOKER: 'Joker', FORMATEUR_PR: 'Formateur PR', FORMATION_HORS_SDIS: 'Formation hors SDIS', PAS_CONCERNE: 'Pas concerné', DEMISSION_EN_COURS: 'Démission en cours'
     };

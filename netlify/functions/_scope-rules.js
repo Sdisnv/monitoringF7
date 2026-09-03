@@ -1,5 +1,6 @@
 const {
   MOTIFS_CANONIQUES,
+  MOTIFS_JSP,
   MOTIFS_HISTORIQUES,
   MOTIFS_DISPENSE,
   MOTIFS_ACCEPTES: MOTIFS_LECTURE,
@@ -11,9 +12,8 @@ const {
 const STATUTS_TAUX = new Set(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', STATUT_PERMUTATION]);
 const MOTIFS = new Set([
   ...Object.values(MOTIFS_CANONIQUES),
-  'MALADIE',
-  'ACCIDENT',
-  'AUTRE'
+  ...Object.values(MOTIFS_JSP),
+  ...Object.values(MOTIFS_HISTORIQUES)
 ]);
 const MOTIFS_DISPENSE_SET = new Set(Object.values(MOTIFS_DISPENSE));
 const STATUTS_PARTICIPATION = new Set([
@@ -282,6 +282,49 @@ function isUnsetExpectedStatut(statut){
   return !value || value === 'NON_RENSEIGNE' || value === 'NON_CONCERNE';
 }
 
+function motifOf(row){
+  return String((row && (row.motif_absence || row.motifAbsence || row.motif)) || '').trim();
+}
+
+function hasValidClosureStatus(participation){
+  const statut = String((participation && participation.statut) || '').toUpperCase();
+  if(statut === 'PRESENT' || statut === STATUT_PERMUTATION || statut === 'ABSENT_NON_EXCUSE') return true;
+  if(statut === 'ABSENT_EXCUSE') return MOTIFS.has(motifOf(participation));
+  if(statut === 'DISPENSE'){
+    const motif = motifOf(participation);
+    return !motif || MOTIFS_DISPENSE_SET.has(motif);
+  }
+  return false;
+}
+
+function incompleteClosureReason(attendu, participation){
+  if(!countsInEventEffectif(attendu, participation)) return null;
+  if(sessionLockedRow(attendu) || sessionLockedRow(participation)) return null;
+  if(!participation || isUnsetExpectedStatut(participation.statut)) return 'unset';
+  return null;
+}
+
+function sessionLockedRow(row){
+  return Boolean(row && (row.alreadyCountedInSession || row.already_counted_in_session || row.sessionExcuse || row.sessionDispense));
+}
+
+function incompleteExpectedParticipations(attendus, participations){
+  const byPersonne = new Map((participations || []).map((row) => [String(row.personne_id || row.personneId), row]));
+  const pending = [];
+  for(const attendu of attendus || []){
+    const participation = byPersonne.get(String(attendu.personne_id || attendu.personneId));
+    const reason = incompleteClosureReason(attendu, participation);
+    if(!reason) continue;
+    pending.push({
+      personneId: String(attendu.personne_id || attendu.personneId || ''),
+      reason,
+      attendu,
+      participation: participation || null
+    });
+  }
+  return pending;
+}
+
 function countsInEventEffectif(attendu, participation){
   if(!attendu || attendu.inclus === false) return false;
   const jsp = String(attendu.jspRole || attendu.jsp_role || '').toUpperCase();
@@ -301,7 +344,7 @@ function expectedPopulationCoherence(attendus, participations){
     const participation = byPersonne.get(String(attendu.personne_id || attendu.personneId));
     if(!countsInEventEffectif(attendu, participation)) continue;
     expected += 1;
-    if(isUnsetExpectedStatut(participation && participation.statut)){
+    if(incompleteClosureReason(attendu, participation)){
       pending += 1;
       pendingIds.push(String(attendu.personne_id || attendu.personneId));
     } else filled += 1;
@@ -323,18 +366,20 @@ function validateCloture(evenement, attendus, participations, options = {}){
     if(!evenement.population_figee) errors.push({ code: 'population_non_figee', message: 'La population n’est pas figée.' });
     if(evenement.origine === 'LEGACY_AGGREGATED') errors.push({ code: 'legacy', message: 'Un événement legacy agrégé ne peut pas être clôturé nominativement.' });
   }
-  const byPersonne = new Map((participations || []).map(p => [String(p.personne_id), p]));
-  const coherence = expectedPopulationCoherence(attendus, participations);
-  if(options.requireExpectedFilled !== false && coherence.pending > 0){
+  const byPersonne = new Map((participations || []).map(p => [String(p.personne_id || p.personneId), p]));
+  const incomplete = incompleteExpectedParticipations(attendus, participations);
+  if(options.requireExpectedFilled !== false && incomplete.length > 0){
     errors.push({
       code: 'saisie_incomplete',
       message: 'Chaque personne attendue sans statut valable doit être renseignée avant clôture.',
-      pending: coherence.pending
+      pending: incomplete.length,
+      pendingIds: incomplete.map((row) => row.personneId)
     });
   }
   for(const attendu of (attendus || []).filter(a => a.inclus !== false)){
-    const p = byPersonne.get(String(attendu.personne_id));
+    const p = byPersonne.get(String(attendu.personne_id || attendu.personneId));
     if(!p || isUnsetExpectedStatut(p.statut)) continue;
+    if(!countsInEventEffectif(attendu, p)) continue;
     try { validateParticipationPatch(p, { domaineCode: evenement && evenement.domaine_code }); }
     catch(error){
       if(error instanceof HttpError) errors.push({ code: error.error, personne_id: attendu.personne_id, message: error.message });
@@ -342,7 +387,7 @@ function validateCloture(evenement, attendus, participations, options = {}){
     }
   }
   if(errors.length){
-    throw new HttpError(422, 'cloture_refusee', 'Clôture refusée.', { errors });
+    throw new HttpError(422, 'cloture_refusee', 'Clôture refusée.', { errors, pendingPeople: incomplete });
   }
 }
 
@@ -362,6 +407,8 @@ module.exports = {
   validateParticipationPatch,
   validateCloture,
   isUnsetExpectedStatut,
+  hasValidClosureStatus,
+  incompleteExpectedParticipations,
   countsInEventEffectif,
   expectedPopulationCoherence,
   rangesOverlap,

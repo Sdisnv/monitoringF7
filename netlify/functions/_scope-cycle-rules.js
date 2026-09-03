@@ -18,7 +18,10 @@ const MOTIF_EXCUSE_LABELS = Object.freeze({
   PRIVE: 'Privé',
   PROFESSIONNEL: 'Professionnel',
   ARMEE: 'Armée',
-  ACCIDENT_MALADIE: 'Accident/Maladie'
+  ACCIDENT_MALADIE: 'Accident/Maladie',
+  ACTIVITE_SCOLAIRE: 'Activité scolaire',
+  ACTIVITE_EXTRA_SCOLAIRE: 'Activité extra-scolaire',
+  NON_JUSTIFIE: 'Non justifié'
 });
 
 function normalizeText(value){
