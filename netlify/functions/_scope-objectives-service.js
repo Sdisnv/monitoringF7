@@ -250,8 +250,16 @@ function createScopeObjectivesService(repo){
   async function resolveObjectif(query = {}){
     const date = isoDate(query.date);
     if(!date) throw new HttpError(400, 'date_obligatoire', 'Indiquez une date pour l’aperçu de l’objectif effectif.');
-    const domaineCode = query.domaineCode || query.domaine_code || query.domaine || null;
-    const cibleId = query.cibleId || query.cible_id || null;
+    let domaineCode = query.domaineCode || query.domaine_code || query.domaine || null;
+    let cibleId = query.cibleId || query.cible_id || null;
+    const cibleCode = String(query.cible || query.cibleCode || query.niveau || '').toUpperCase();
+    if(String(domaineCode || '').toUpperCase() === 'FOSPEC' && (cibleCode === 'PR' || cibleCode === 'AUTO')){
+      domaineCode = cibleCode;
+      cibleId = null;
+    } else if(!cibleId && cibleCode && domaineCode && typeof repo.findCible === 'function'){
+      const cible = await repo.findCible(String(domaineCode).toUpperCase(), cibleCode);
+      if(cible) cibleId = cible.cible_id;
+    }
     const rows = await repo.listObjectifs({ actif: true });
     const analysisGrain = cibleId ? 'CIBLE' : (domaineCode ? 'DOMAINE' : 'GLOBAL');
     const objectif = resolveObjective({

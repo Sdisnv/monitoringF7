@@ -37,9 +37,30 @@ function isoDate(value){
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value.toISOString().slice(0, 10);
   }
-  const text = String(value || '').slice(0, 10);
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
-  return text;
+  const text = String(value || '').trim();
+  const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso){
+    if(!isValidYmd(iso[1], iso[2], iso[3])) return null;
+    return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  }
+  const eu = text.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if(!eu) return null;
+  const day = eu[1].padStart(2, '0');
+  const month = eu[2].padStart(2, '0');
+  const year = eu[3];
+  if(!isValidYmd(year, month, day)) return null;
+  return `${year}-${month}-${day}`;
+}
+
+function isValidYmd(year, month, day){
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+  if(!Number.isInteger(y) || y < 1000 || y > 9999) return false;
+  if(!Number.isInteger(m) || m < 1 || m > 12) return false;
+  if(!Number.isInteger(d) || d < 1 || d > 31) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
 function isAffectationValide(affectation, dateEvenement){

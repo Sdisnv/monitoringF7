@@ -2146,6 +2146,18 @@ html, body {
   background: #f7f9fb;
 }
 
+.scope-objectif-applique {
+  margin-top: 12px;
+  border: 2px solid var(--scope-blue, #171c8f);
+  border-left-width: 6px;
+  background: #fff;
+}
+
+.scope-objectif-applique:focus {
+  outline: 2px solid rgba(23, 28, 143, 0.35);
+  outline-offset: 2px;
+}
+
 .scope-kpi-card.has-detail {
   cursor: help;
 }

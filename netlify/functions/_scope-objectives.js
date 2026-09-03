@@ -89,9 +89,20 @@ function resolveObjective(query = {}){
   const cibleId = query.cibleId || query.cible_id || null;
 
   const findGlobal = () => covering(objectives, date, (row) => String(row.portee).toUpperCase() === PORTEES.GLOBAL);
-  const findDomaine = () => domaine
-    ? covering(objectives, date, (row) => String(row.portee).toUpperCase() === PORTEES.DOMAINE && String(row.domaine_code) === String(domaine))
+  const parentDomaine = (code) => {
+    const c = String(code || '').toUpperCase();
+    // Compatibilité UX FOSPEC / PR|AUTO — pas un 4e grain (PÉRIMÈTRE hors lot).
+    return (c === 'PR' || c === 'AUTO') ? 'FOSPEC' : null;
+  };
+  const findDomaineFor = (code) => code
+    ? covering(objectives, date, (row) => String(row.portee).toUpperCase() === PORTEES.DOMAINE && String(row.domaine_code) === String(code))
     : null;
+  const findDomaine = () => {
+    if(!domaine) return null;
+    const own = findDomaineFor(domaine);
+    if(own) return own;
+    return findDomaineFor(parentDomaine(domaine));
+  };
   const findCible = () => cibleId
     ? covering(objectives, date, (row) => String(row.portee).toUpperCase() === PORTEES.CIBLE && String(row.cible_id) === String(cibleId))
     : null;

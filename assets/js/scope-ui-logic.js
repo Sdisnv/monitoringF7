@@ -359,19 +359,86 @@
   ]);
 
   const OBJECTIF_PORTEE_LABELS = Object.freeze({
-    GLOBAL: 'Ensemble SCOPE',
+    GLOBAL: 'Général',
     DOMAINE: 'Domaine',
-    CIBLE: 'Cible / spécialisation'
+    CIBLE: 'Cible'
   });
 
+  const OBJECTIF_UX_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC']);
+  const OBJECTIF_UX_CIBLES = Object.freeze({
+    DPS: ['G1', 'C1', 'B1', 'B2'],
+    DAP: ['Y1', 'Y2', 'Y3', 'Y4'],
+    JSP: ['G1', 'C1', 'B1'],
+    FOBA: ['1', '2', '3'],
+    FOCA: [],
+    FOSPEC: ['AUTO', 'PR']
+  });
+  // Niveau UX futur (hors lot) : Domaine → Cible → PÉRIMÈTRE. Non implémenté.
+  const OBJECTIF_FUTURE_LEVEL = 'PERIMETRE';
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function isValidYmd(year, month, day) {
+    const y = Number(year);
+    const m = Number(month);
+    const d = Number(day);
+    if (!Number.isInteger(y) || y < 1000 || y > 9999) return false;
+    if (!Number.isInteger(m) || m < 1 || m > 12) return false;
+    if (!Number.isInteger(d) || d < 1 || d > 31) return false;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  }
+
+  function toIsoDate(value) {
+    const text = String(value || '').trim();
+    const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso && isValidYmd(iso[1], iso[2], iso[3])) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+    const eu = text.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+    if (eu && isValidYmd(eu[3], pad2(eu[2]), pad2(eu[1]))) {
+      return `${eu[3]}-${pad2(eu[2])}-${pad2(eu[1])}`;
+    }
+    return '';
+  }
+
+  function formatUiDate(value) {
+    const iso = toIsoDate(value);
+    if (!iso) return '';
+    return `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+  }
+
+  function extractCalendarYear(value) {
+    const s = String(value || '').trim();
+    if (/^\d{4}$/.test(s)) return s;
+    const iso = s.match(/^(\d{4})-\d{2}-\d{2}$/);
+    if (iso) return iso[1];
+    const eu = s.match(/^\d{1,2}[./]\d{1,2}[./](\d{4})$/);
+    if (eu) return eu[1];
+    return '';
+  }
+
   function yearToObjectifPeriod(year) {
-    const y = String(year || '').replace(/\D/g, '').slice(0, 4);
-    if (y.length !== 4) return { dateDebut: '', dateFin: '' };
+    const y = extractCalendarYear(year);
+    if (!y) return { dateDebut: '', dateFin: '' };
     return { dateDebut: `${y}-01-01`, dateFin: `${y}-12-31` };
   }
 
+  function periodFromStart(start) {
+    const iso = toIsoDate(start);
+    const y = extractCalendarYear(iso || start);
+    if (!iso || !y) return { dateDebut: iso || '', dateFin: '' };
+    return { dateDebut: iso, dateFin: `${y}-12-31` };
+  }
+
+  function nextObjectifPeriod(row) {
+    const end = toIsoDate(row && (row.dateFin || row.date_fin)) || toIsoDate(row && (row.dateDebut || row.date_debut));
+    const y = Number(extractCalendarYear(end) || '2026') + 1;
+    return yearToObjectifPeriod(String(y));
+  }
+
   function objectifOverlapsYear(row, year) {
-    const y = String(year || '').replace(/\D/g, '').slice(0, 4);
+    const y = extractCalendarYear(year);
     if (!y) return true;
     const start = `${y}-01-01`;
     const end = `${y}-12-31`;
@@ -407,12 +474,89 @@
     return [debut, fin].filter(Boolean).join(' → ') || '—';
   }
 
-  function filterObjectifs(rows, filters, todayIso) {
+  function objectifUxFromRow(row, cibles) {
+    const scope = String((row && (row.scope || row.portee)) || '').toUpperCase();
+    const domaine = String((row && (row.domaineCode || row.domaine_code)) || '').toUpperCase();
+    const cibleId = (row && (row.cibleId || row.cible_id)) || '';
+    if (scope === 'GLOBAL' || (!scope && !domaine)) {
+      return { portee: 'GLOBAL', porteeLabel: 'Général', domaineUx: '', cibleUx: '', cibleLabel: '—' };
+    }
+    if (domaine === 'PR' || domaine === 'AUTO') {
+      return { portee: 'CIBLE', porteeLabel: 'Cible', domaineUx: 'FOSPEC', cibleUx: domaine, cibleLabel: domaine };
+    }
+    if (scope === 'CIBLE') {
+      const cible = (cibles || []).find((c) => c.cibleId === cibleId || c.cible_id === cibleId);
+      const niveau = cible ? String(cible.niveauCode || cible.niveau_code || '') : '';
+      const label = cible ? (niveauAffiche(cible.domaineCode || cible.domaine_code, niveau) || niveau) : '—';
+      const domaineUx = String((cible && (cible.domaineCode || cible.domaine_code)) || domaine).toUpperCase();
+      return { portee: 'CIBLE', porteeLabel: 'Cible', domaineUx, cibleUx: niveau, cibleLabel: label };
+    }
+    return { portee: 'DOMAINE', porteeLabel: 'Domaine', domaineUx: domaine, cibleUx: '', cibleLabel: '—' };
+  }
+
+  function objectifFormToEngine(form, cibles) {
+    const portee = String((form && form.portee) || 'GLOBAL').toUpperCase();
+    const domaine = String((form && form.domaineCode) || '').toUpperCase();
+    const cibleCode = String((form && (form.cibleCode || form.cibleId)) || '').toUpperCase();
+    if (portee === 'GLOBAL') return { portee: 'GLOBAL', domaineCode: null, cibleId: null };
+    if (portee === 'DOMAINE') return { portee: 'DOMAINE', domaineCode: domaine || null, cibleId: null };
+    if (domaine === 'FOSPEC' && (cibleCode === 'PR' || cibleCode === 'AUTO')) {
+      return { portee: 'DOMAINE', domaineCode: cibleCode, cibleId: null };
+    }
+    const row = (cibles || []).find((c) => String(c.domaineCode).toUpperCase() === domaine && String(c.niveauCode).toUpperCase() === cibleCode);
+    return { portee: 'CIBLE', domaineCode: domaine || null, cibleId: (row && row.cibleId) || null };
+  }
+
+  function objectifPreviewQuery(preview) {
+    const domaine = String((preview && preview.domaine) || '').toUpperCase();
+    const cibleCode = String((preview && preview.cibleCode) || '').toUpperCase();
+    if (!domaine) return { analysisGrain: 'GLOBAL' };
+    if (domaine === 'FOSPEC' && (cibleCode === 'PR' || cibleCode === 'AUTO')) {
+      return { domaine: cibleCode, analysisGrain: 'DOMAINE' };
+    }
+    if (cibleCode) return { domaine, cible: cibleCode, analysisGrain: 'CIBLE' };
+    return { domaine, analysisGrain: 'DOMAINE' };
+  }
+
+  function objectifCibleOptions(domaine, cibles) {
+    const code = String(domaine || '').toUpperCase();
+    const allowed = OBJECTIF_UX_CIBLES[code] || [];
+    return allowed.map((niveau) => {
+      if (code === 'FOSPEC') return { code: niveau, label: niveau, cibleId: '' };
+      const row = (cibles || []).find((c) => String(c.domaineCode).toUpperCase() === code && String(c.niveauCode) === niveau);
+      return {
+        code: niveau,
+        label: code === 'FOBA' ? `FOBA ${niveau}` : niveau,
+        cibleId: row ? row.cibleId : ''
+      };
+    });
+  }
+
+  function objectifHint(form) {
+    const portee = String((form && form.portee) || '').toUpperCase();
+    const domaine = String((form && form.domaineCode) || '').toUpperCase();
+    const cible = String((form && form.cibleCode) || '').toUpperCase();
+    if (portee === 'GLOBAL') return 'Cet objectif sera utilisé lorsqu’aucun objectif de domaine ou de cible plus précis n’existe.';
+    if (portee === 'DOMAINE' && domaine) {
+      return `Cet objectif s’appliquera à l’ensemble du domaine ${domaine} sauf lorsqu’un objectif plus précis existe pour une cible ${domaine}.`;
+    }
+    if (portee === 'CIBLE' && domaine === 'FOSPEC' && cible) {
+      return `Cet objectif s’appliquera uniquement au sous-domaine ${cible} de FOSPEC.`;
+    }
+    if (portee === 'CIBLE' && domaine && cible) {
+      const label = domaine === 'FOBA' ? `FOBA ${cible}` : `${domaine} ${cible}`;
+      return `Cet objectif s’appliquera uniquement à ${label}.`;
+    }
+    return '';
+  }
+
+  function filterObjectifs(rows, filters, todayIso, cibles) {
     const f = filters || {};
     return (rows || []).filter((row) => {
       if (String(row.domaineCode || '').toUpperCase() === 'PAPR') return false;
-      if (f.portee && String(row.scope || row.portee || '').toUpperCase() !== String(f.portee).toUpperCase()) return false;
-      if (f.domaine && String(row.domaineCode || '').toUpperCase() !== String(f.domaine).toUpperCase()) return false;
+      const ux = objectifUxFromRow(row, cibles);
+      if (f.portee && ux.portee !== String(f.portee).toUpperCase()) return false;
+      if (f.domaine && ux.domaineUx !== String(f.domaine).toUpperCase()) return false;
       if (f.statut && objectifLifecycleStatus(row, todayIso) !== f.statut) return false;
       if (f.annee && !objectifOverlapsYear(row, f.annee)) return false;
       return true;
@@ -434,9 +578,9 @@
     if (!sort || !sort.key) return sortObjectifsDefault(source, todayIso);
     return sortRows(source, sort, [
       { key: 'periode', type: 'text', value: (r) => objectifPeriodLabel(r) },
-      { key: 'portee', type: 'text', value: (r) => r.scope || '' },
-      { key: 'domaine', type: 'text', value: (r) => r.domaineCode || '' },
-      { key: 'cible', type: 'text', value: (r) => r.cibleId || '' },
+      { key: 'portee', type: 'text', value: (r) => objectifUxFromRow(r).porteeLabel },
+      { key: 'domaine', type: 'text', value: (r) => objectifUxFromRow(r).domaineUx || '' },
+      { key: 'cible', type: 'text', value: (r) => objectifUxFromRow(r).cibleLabel || '' },
       { key: 'objectif', type: 'number', value: (r) => Number(r.thresholdPct) },
       { key: 'debut', type: 'date', value: (r) => r.dateDebut },
       { key: 'fin', type: 'date', value: (r) => r.dateFin || '' },
@@ -444,8 +588,8 @@
     ]);
   }
 
-  function objectifDomainOptions(domaines) {
-    return eventDomainFilterItems(domaines).filter((item) => item.type === 'domain');
+  function objectifDomainOptions() {
+    return OBJECTIF_UX_DOMAINES.map((code) => ({ type: 'domain', code, label: code }));
   }
 
   function eventDomainFilterItems(domaines) {
@@ -1345,11 +1489,24 @@
     EVENT_DOMAIN_GROUPS,
     eventDomainFilterItems,
     OBJECTIF_PORTEE_LABELS,
+    OBJECTIF_UX_DOMAINES,
+    OBJECTIF_UX_CIBLES,
+    OBJECTIF_FUTURE_LEVEL,
+    toIsoDate,
+    formatUiDate,
+    extractCalendarYear,
     yearToObjectifPeriod,
+    periodFromStart,
+    nextObjectifPeriod,
     objectifOverlapsYear,
     objectifLifecycleStatus,
     objectifLifecycleLabel,
     objectifPeriodLabel,
+    objectifUxFromRow,
+    objectifFormToEngine,
+    objectifPreviewQuery,
+    objectifCibleOptions,
+    objectifHint,
     filterObjectifs,
     sortObjectifsDefault,
     sortObjectifs,

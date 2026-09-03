@@ -169,7 +169,8 @@ async function seedEvent(){
   await record('03 — liste objectifs', () => {
     assert.ok(ui.includes('id="obj-table"'));
     assert.ok(ui.includes('PÉRIODE'));
-    assert.ok(ui.includes('CIBLE / SPÉCIALISATION'));
+    assert.ok(ui.includes("sortableHeader('objectifs', 'cible', 'CIBLE'"));
+    assert.ok(!ui.includes('CIBLE / SPÉCIALISATION'));
     assert.ok(ui.includes('OBJECTIFS DE PARTICIPATION'));
     assert.ok(ui.includes('Définissez les seuils de participation utilisés par les analyses et rapports SCOPE.'));
   });
@@ -186,8 +187,10 @@ async function seedEvent(){
     assert.strictEqual(g.objectif.scope, 'GLOBAL');
     assert.strictEqual(d.objectif.domaineCode, 'PR');
     assert.strictEqual(c.objectif.cibleId, papr.cible_id);
-    assert.ok(ui.includes('Ensemble SCOPE'));
-    assert.ok(ui.includes('Cible / spécialisation'));
+    assert.ok(ui.includes('Général — objectif par défaut'));
+    assert.ok(ui.includes('Cible — population précise'));
+    assert.ok(!ui.includes('Ensemble SCOPE'));
+    assert.ok(!ui.includes('Cible / spécialisation'));
   });
 
   await record('07 — seuil 0–100', async () => {
@@ -234,7 +237,8 @@ async function seedEvent(){
       { scope: 'DOMAINE', domaineCode: 'AUTO', dateDebut: '2027-01-01', dateFin: '2027-12-31', actif: true }
     ];
     assert.strictEqual(logic.filterObjectifs(rows, { annee: '2026' }, '2026-09-02').length, 1);
-    assert.strictEqual(logic.filterObjectifs(rows, { domaine: 'PR' }, '2026-09-02')[0].domaineCode, 'PR');
+    assert.strictEqual(logic.filterObjectifs(rows, { domaine: 'FOSPEC' }, '2026-09-02').length, 2);
+    assert.strictEqual(logic.filterObjectifs(rows, { portee: 'CIBLE' }, '2026-09-02').length, 2);
     assert.ok(ui.includes('obj-filter-annee'));
     assert.ok(ui.includes('obj-filter-domaine'));
   });
@@ -269,8 +273,10 @@ async function seedEvent(){
     const preview = await objectifs.resolveObjectif({ date: '2026-06-01', domaine: 'PR', cibleId: papr.cible_id });
     assert.strictEqual(preview.objectif.thresholdPct, 95);
     assert.ok(ui.includes('client.resolveObjectif'));
-    assert.ok(ui.includes('Aperçu de l’objectif effectif'));
-    assert.ok(ui.includes('prioritaire sur l’objectif du domaine'));
+    assert.ok(ui.includes('OBJECTIF APPLIQUÉ'));
+    assert.ok(ui.includes('Vérifier l’objectif'));
+    assert.ok(ui.includes('Priorité : Cible → Domaine → Général'));
+    assert.ok(!ui.includes('Aperçu de l’objectif effectif'));
     assert.ok(scopeJs.includes("/objectifs/resolution"));
   });
 
