@@ -890,7 +890,7 @@
         const localValid = L.isValidSessionStatut ? L.isValidSessionStatut(localStatut) : (localStatut && localStatut !== 'NON_RENSEIGNE');
         const sessionExcuse = localStatut === 'ABSENT_EXCUSE';
         const sessionDispense = localStatut === 'DISPENSE';
-        const coveredInGlobalBilan = Boolean(alreadyCountedInSession || (sessionHasValidStatus && !localValid));
+        const coveredInGlobalBilan = Boolean(!localValid && alreadyCountedInSession);
         const displayStatut = localStatut;
         const displayMotif = part.motif_absence || '';
         const sessionExerciseLabel = a.sessionExerciseLabel || a.session_exercise_label
@@ -4725,10 +4725,21 @@
 
   function renderPresenceKpis(niveaux, fiche) {
     const rows = state.saisie || [];
-    const c = L.sessionPresenceKpis ? L.sessionPresenceKpis(rows) : Object.assign({ attendus: 0 }, countStatuses(rows));
+    const prKpis = fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.kpis;
     const multi = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isMultiSession);
+    const local = L.sessionPresenceKpis ? L.sessionPresenceKpis(rows) : Object.assign({ attendus: 0 }, countStatuses(rows));
+    const c = multi && prKpis
+      ? {
+        attendus: Number(prKpis.population || 0),
+        present: Number(prKpis.presents || 0),
+        excuse: Number(prKpis.excuses || 0),
+        absent: Number(prKpis.absents || 0),
+        dispense: Number(prKpis.dispenses || 0),
+        open: Number(prKpis.open || 0)
+      }
+      : local;
     const openVal = c.open;
-    const openLabel = multi ? 'À renseigner (séance)' : 'À renseigner';
+    const openLabel = 'À renseigner';
     const attendus = c.attendus;
     const domaine = String((fiche && fiche.evenement && fiche.evenement.domaine_code) || '').toUpperCase();
     const showDispense = Boolean(c.dispense) || domaine !== 'JSP';
@@ -5353,9 +5364,9 @@
       <p>${escapeHtml(copy.message || 'Des modifications n’ont pas encore été enregistrées.')}</p>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="scope-saisie-leave-save">Enregistrer et quitter</button>
-        <button type="button" class="scope-btn" id="scope-saisie-leave-stay">Rester sur la saisie</button>
+        <button type="button" class="scope-btn" id="scope-saisie-leave-discard">Quitter sans enregistrer</button>
+        <button type="button" class="scope-btn" id="scope-saisie-leave-cancel">Annuler</button>
       </div>
-      <p class="scope-mode-hint" style="margin-top:12px"><button type="button" class="scope-btn scope-btn-compact" id="scope-saisie-leave-discard">Quitter sans enregistrer</button></p>
     </div></div>`;
   }
 
@@ -6815,7 +6826,7 @@
     });
     document.getElementById('save-part')?.addEventListener('click', () => saveParticipations());
     document.getElementById('scope-saisie-back')?.addEventListener('click', () => requestLeaveSaisie('#/exercices'));
-    document.getElementById('scope-saisie-leave-stay')?.addEventListener('click', () => {
+    document.getElementById('scope-saisie-leave-cancel')?.addEventListener('click', () => {
       state.modal = null;
       state.saisieGuard.pendingHash = '';
       render();

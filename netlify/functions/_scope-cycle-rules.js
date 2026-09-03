@@ -85,6 +85,15 @@ function sortedValues(set){
   return [...set].sort();
 }
 
+function classifyPrGlobalSessionStatut(statuts){
+  const set = statuts instanceof Set ? statuts : new Set(statuts || []);
+  if(set.has('PRESENT') || set.has(STATUT_PERMUTATION)) return 'PRESENT';
+  if(set.has('DISPENSE')) return 'DISPENSE';
+  if(set.has('ABSENT_EXCUSE')) return 'ABSENT_EXCUSE';
+  if(set.has('ABSENT_NON_EXCUSE')) return 'ABSENT_NON_EXCUSE';
+  return null;
+}
+
 function cycleTechnicalIdentity(input = {}){
   return {
     cycleId: normalizeText(input.cycle_id || input.cycleId),
@@ -386,6 +395,9 @@ function computePrExerciseParticipationState(input = {}){
   const population = new Set();
   const countedByPerson = new Map();
   const attendusByPerson = new Map();
+  const validByPerson = new Map();
+  const validRowsByPerson = new Map();
+  const currentValidKeys = new Set();
 
   for(const attendu of input.attendus || input.expected || []){
     if(attendu && attendu.inclus === false) continue;
@@ -409,6 +421,23 @@ function computePrExerciseParticipationState(input = {}){
     if(!groupEventIds.has(eid)) continue;
     const key = dedupeKey(participation, personnesById);
     if(!key) continue;
+    if(isValidSessionDecision(participation)){
+      const statut = normalizeUpper(participation.statut);
+      const set = validByPerson.get(key) || new Set();
+      set.add(statut);
+      validByPerson.set(key, set);
+      const rows = validRowsByPerson.get(key) || [];
+      rows.push({
+        eventId: eid,
+        personneId: personneId(participation),
+        role: normalizeUpper(participation.role || 'PARTICIPANT'),
+        statut,
+        source: normalizeUpper(participation.source),
+        motif: normalizeUpper(participation.motif_absence || participation.motifAbsence || participation.motif)
+      });
+      validRowsByPerson.set(key, rows);
+      if(currentEventId && eid === currentEventId) currentValidKeys.add(key);
+    }
     if(!isSessionCountingParticipation(participation, personnesById, population)) continue;
     const rows = countedByPerson.get(key) || [];
     rows.push({
@@ -426,18 +455,23 @@ function computePrExerciseParticipationState(input = {}){
   const countedKeys = new Set(countedByPerson.keys());
   const presentKeys = new Set();
   const dispenseKeys = new Set();
-  for(const [key, rows] of countedByPerson.entries()){
-    rows.sort((a, b) => (eventOrder.get(a.eventId) ?? 9999) - (eventOrder.get(b.eventId) ?? 9999));
-    const first = rows[0] || {};
-    if(first.statut === 'DISPENSE') dispenseKeys.add(key);
-    else presentKeys.add(key);
+  const excuseKeys = new Set();
+  const absentKeys = new Set();
+  for(const [key, statuts] of validByPerson.entries()){
+    const decision = classifyPrGlobalSessionStatut(statuts);
+    if(decision === 'PRESENT') presentKeys.add(key);
+    else if(decision === 'DISPENSE') dispenseKeys.add(key);
+    else if(decision === 'ABSENT_EXCUSE') excuseKeys.add(key);
+    else if(decision === 'ABSENT_NON_EXCUSE') absentKeys.add(key);
   }
   for(const [key, rows] of countedByPerson.entries()){
-    const reference = rows[0] || {};
+    rows.sort((a, b) => (eventOrder.get(a.eventId) ?? 9999) - (eventOrder.get(b.eventId) ?? 9999));
     const outsideCurrent = currentEventId
       ? rows.filter((row) => row.eventId !== currentEventId)
       : rows;
     if(!outsideCurrent.length) continue;
+    if(currentValidKeys.has(key)) continue;
+    const reference = outsideCurrent[0] || rows[0] || {};
     const referenceOrder = eventOrder.get(reference.eventId);
     const referenceEvent = eventsById.get(reference.eventId) || {};
     const relation = currentOrder != null && referenceOrder != null && currentOrder < referenceOrder
@@ -489,13 +523,12 @@ function computePrExerciseParticipationState(input = {}){
     });
     excuseByPerson.set(key, rows);
   }
-  const excuseKeys = new Set();
   for(const [key, rows] of excuseByPerson.entries()){
     rows.sort((a, b) => (eventOrder.get(a.eventId) ?? 9999) - (eventOrder.get(b.eventId) ?? 9999));
-    const reference = rows[0] || {};
     const outsideCurrent = currentEventId ? rows.filter((row) => row.eventId !== currentEventId) : rows;
     if(!outsideCurrent.length) continue;
-    excuseKeys.add(key);
+    if(currentValidKeys.has(key)) continue;
+    const reference = outsideCurrent[0] || rows[0] || {};
     const referenceEvent = eventsById.get(reference.eventId) || {};
     const exerciseLabel = sessionExerciseLabel(events, group.groupKey);
     const referenceOrder = eventOrder.get(reference.eventId);
@@ -528,18 +561,44 @@ function computePrExerciseParticipationState(input = {}){
     }
   }
 
-  const validByPerson = new Map();
-  for(const participation of input.participations || []){
-    const eid = eventId(participation);
-    if(!groupEventIds.has(eid)) continue;
-    const key = dedupeKey(participation, personnesById);
-    if(!key) continue;
-    if(!isValidSessionDecision(participation)) continue;
-    const statut = normalizeUpper(participation.statut);
-    const set = validByPerson.get(key) || new Set();
-    set.add(statut);
-    validByPerson.set(key, set);
+  for(const [key, rows] of validRowsByPerson.entries()){
+    const outsideCurrent = currentEventId ? rows.filter((row) => row.eventId !== currentEventId) : rows;
+    if(!outsideCurrent.length) continue;
+    if(currentValidKeys.has(key)) continue;
+    outsideCurrent.sort((a, b) => (eventOrder.get(a.eventId) ?? 9999) - (eventOrder.get(b.eventId) ?? 9999));
+    const reference = outsideCurrent[0] || {};
+    const referenceEvent = eventsById.get(reference.eventId) || {};
+    const exerciseLabel = sessionExerciseLabel(events, group.groupKey);
+    const referenceOrder = eventOrder.get(reference.eventId);
+    const relation = currentOrder != null && referenceOrder != null && currentOrder < referenceOrder
+      ? 'BEFORE_REFERENCE'
+      : 'AFTER_REFERENCE';
+    for(const person of personnesById.values()){
+      const id = personneId(person);
+      if(!id || dedupeKey(person, personnesById) !== key) continue;
+      if(byPersonneId[id]) continue;
+      byPersonneId[id] = {
+        alreadyCountedInSession: true,
+        countedEventId: reference.eventId,
+        countedRole: reference.role,
+        countedStatut: reference.statut,
+        countedSource: reference.source,
+        countedMotif: reference.motif || null,
+        referenceEventId: reference.eventId,
+        referenceSessionLabel: prSessionLabel(referenceEvent),
+        referenceQuality: reference.role === 'FORMATEUR' ? 'Formateur PR' : 'PAPR',
+        referenceRelation: relation,
+        formateurSessionLabels: [],
+        sessionDispense: false,
+        sessionExcuse: false,
+        sessionExerciseLabel: exerciseLabel,
+        sessionMessage: '',
+        sessionSummary: '',
+        sessionHasValidStatus: true
+      };
+    }
   }
+
   const unfilledKeys = [...population].filter((key) => !validByPerson.has(key));
   const unfilledPeople = [];
   const seenUnfilled = new Set();
@@ -594,8 +653,8 @@ function computePrExerciseParticipationState(input = {}){
       population: population.size,
       presents: presentKeys.size,
       dispenses: dispenseKeys.size,
-      excuses: excuseByPerson.size,
-      absents: 0,
+      excuses: excuseKeys.size,
+      absents: absentKeys.size,
       open: Math.max(0, population.size - resolvedKeys.size)
     },
     details: {
@@ -603,6 +662,8 @@ function computePrExerciseParticipationState(input = {}){
       counted: sortedValues(countedKeys),
       presents: sortedValues(presentKeys),
       dispenses: sortedValues(dispenseKeys),
+      excuses: sortedValues(excuseKeys),
+      absents: sortedValues(absentKeys),
       open: sortedValues(new Set(unfilledKeys)),
       validSession: sortedValues(validByPerson),
       coverageBalanced,
