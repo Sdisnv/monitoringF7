@@ -299,12 +299,20 @@ function hasValidClosureStatus(participation){
 
 function incompleteClosureReason(attendu, participation){
   if(!countsInEventEffectif(attendu, participation)) return null;
+  if(coveredByExistingSessionState(attendu, participation)) return null;
   if(!participation || isUnsetExpectedStatut(participation.statut)) return 'unset';
   return null;
 }
 
 function sessionLockedRow(row){
   return Boolean(row && (row.alreadyCountedInSession || row.already_counted_in_session || row.sessionExcuse || row.sessionDispense));
+}
+
+function coveredByExistingSessionState(attendu, participation){
+  if(!attendu) return false;
+  if(attendu.alreadyCountedInSession || attendu.already_counted_in_session) return true;
+  const sessionHasValid = Boolean(attendu.sessionHasValidStatus || attendu.session_has_valid_status);
+  return sessionHasValid && isUnsetExpectedStatut(participation && participation.statut);
 }
 
 function incompleteExpectedParticipations(attendus, participations){
@@ -408,6 +416,7 @@ module.exports = {
   isUnsetExpectedStatut,
   hasValidClosureStatus,
   incompleteExpectedParticipations,
+  coveredByExistingSessionState,
   countsInEventEffectif,
   expectedPopulationCoherence,
   rangesOverlap,

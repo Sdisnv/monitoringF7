@@ -1071,6 +1071,7 @@
       next.presenceEdited = true;
       return next;
     }
+    if (sessionLocked(next)) return row;
     const wasActive = row && row.statut === statut;
     if (wasActive) {
       next.statut = 'NON_RENSEIGNE';
@@ -1101,6 +1102,7 @@
   }
 
   function applyExcuseMotif(row, motif) {
+    if (sessionLocked(row)) return row;
     const next = Object.assign({}, row, {
       statut: 'ABSENT_EXCUSE',
       motifAbsence: motif,
@@ -1113,6 +1115,7 @@
   }
 
   function applyDispenseMotif(row, motif) {
+    if (sessionLocked(row)) return row;
     return Object.assign({}, row, {
       statut: 'DISPENSE',
       motifAbsence: motif,
@@ -1128,6 +1131,7 @@
     return (rows || [])
       .filter((r) => {
         if (r.inclus === false) return false;
+        if (coveredInGlobalBilan(r)) return false;
         const role = preserveParticipationRole(r.role);
         if (role === 'AUXILIAIRE' || role === 'MONITEUR') return false;
         const locked = lockedEncadrement.has(String(r.personneId));
@@ -1158,7 +1162,7 @@
   }
 
   function sessionLocked(row) {
-    return Boolean(row && statusLockedForRole(row.role));
+    return coveredInGlobalBilan(row);
   }
 
   function isValidSessionStatut(statut) {
@@ -1169,6 +1173,7 @@
   function isIncompleteClosureRow(row) {
     if (!row || row.inclus === false) return false;
     if (!countsInSaisieTaux(row)) return false;
+    if (coveredInGlobalBilan(row)) return false;
     if (statusLockedForRole(row.role)) return false;
     if (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE') return true;
     if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) return true;
@@ -1197,6 +1202,7 @@
     return (rows || []).some((row) =>
       row
       && row.inclus !== false
+      && !coveredInGlobalBilan(row)
       && !statusLockedForRole(row.role)
       && row.statut === 'DISPENSE'
       && !isDispenseMotif(row.motifAbsence)
@@ -1206,6 +1212,7 @@
     return (rows || []).some((row) =>
       row
       && row.inclus !== false
+      && !coveredInGlobalBilan(row)
       && !statusLockedForRole(row.role)
       && row.statut === 'ABSENT_EXCUSE'
       && !row.motifAbsence
@@ -1215,7 +1222,7 @@
   function closureBlockers(rows) {
     const out = { open: 0, incompleteExcuses: 0, incompleteDispenses: 0, message: '' };
     (rows || []).forEach((row) => {
-      if (!row || row.inclus === false || statusLockedForRole(row.role) || !countsInSaisieTaux(row)) return;
+      if (!row || row.inclus === false || coveredInGlobalBilan(row) || statusLockedForRole(row.role) || !countsInSaisieTaux(row)) return;
       if (isIncompleteClosureRow(row) && (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE')) out.open += 1;
       if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) out.incompleteExcuses += 1;
       if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) out.incompleteDispenses += 1;
@@ -1279,6 +1286,7 @@
   function needsConfirmAllPresent(rows) {
     return (rows || []).some((row) => {
       if (row.inclus === false) return false;
+      if (coveredInGlobalBilan(row)) return false;
       if (row.role && ROLES_ENCADREMENT.has(row.role)) return false;
       return row.statut && row.statut !== 'NON_RENSEIGNE' && row.statut !== 'PRESENT';
     });
@@ -1287,6 +1295,7 @@
   function applyAllPresent(rows) {
     return (rows || []).map((row) => {
       if (row.inclus === false) return row;
+      if (coveredInGlobalBilan(row)) return row;
       if (row.role && ROLES_ENCADREMENT.has(row.role)) return row;
       return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '', role: 'PARTICIPANT' });
     });
@@ -1296,6 +1305,7 @@
     return (rows || []).map((row) => {
       if (cibleCode && row.cible !== cibleCode && !(row.cibles || []).includes(cibleCode)) return row;
       if (row.inclus === false) return row;
+      if (coveredInGlobalBilan(row)) return row;
       if (row.role && ROLES_ENCADREMENT.has(row.role)) return row;
       return Object.assign({}, row, { statut: 'PRESENT', motifAbsence: null, commentaire: '', role: 'PARTICIPANT' });
     });

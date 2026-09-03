@@ -4978,21 +4978,23 @@
       PERMUTATION: 'is-permutation'
     };
     const motifControl = (row) => {
+      const motifLocked = Boolean(L.sessionLocked && L.sessionLocked(row));
+      const lockAttr = motifLocked ? ' disabled aria-disabled="true"' : '';
       if (row.statut === 'DISPENSE') {
         const motifs = L.motifsDispenseForRow ? L.motifsDispenseForRow(row) : [];
         const selected = motifs.find((m) => m.value === row.motifAbsence);
         if (selected && !row.editMotif) {
-          return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif de dispense">${escapeHtml(selected.label)}</button></div>`;
+          return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif de dispense"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
         }
-        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense">${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
+        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
       }
       if (row.statut !== 'ABSENT_EXCUSE') return '';
       const motifs = L.motifsForRow ? L.motifsForRow(row, saisieDomaine()) : L.MOTIFS;
       const selected = motifs.find((m) => m.value === row.motifAbsence);
       if (selected && !row.editMotif) {
-        return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse">${escapeHtml(selected.label)}</button></div>`;
+        return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
       }
-      return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif d’excuse</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-motif aria-label="Motif d’excuse">${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
+      return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif d’excuse</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-motif aria-label="Motif d’excuse"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
     };
     const justificatifCell = (row) => {
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
@@ -5028,6 +5030,7 @@
             ${rows.map((row) => {
               const coveredGlobally = Boolean(L.coveredInGlobalBilan && L.coveredInGlobalBilan(row));
               const roleLocked = L.statusLockedForRole ? L.statusLockedForRole(row.role) : false;
+              const statusDisabled = Boolean(roleLocked || coveredGlobally);
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
               const tooltipText = (L.sessionExplainTooltip ? L.sessionExplainTooltip(row) : (row.sessionMessage || row.alreadyCountedTooltip || '')) || '';
               const rowClass = [
@@ -5050,11 +5053,11 @@
               <td data-label="CIBLE">${escapeHtml(displayIncorporation(row.cible, domaine))}</td>
               <td data-label="STATUT">
                 <div class="scope-status-cluster">
-                  <div class="scope-status-row scope-segmented scope-status-control-group ${filled ? 'is-compact' : 'is-open'}" data-status-group role="radiogroup" aria-label="Statut de participation"${filled && !roleLocked ? ' tabindex="0"' : ''}>
+                  <div class="scope-status-row scope-segmented scope-status-control-group ${filled ? 'is-compact' : 'is-open'}" data-status-group role="radiogroup" aria-label="Statut de participation"${filled && !statusDisabled ? ' tabindex="0"' : ''}>
                     ${statuses.map(([v, l]) => {
                       const on = statusPressed(row, v);
                       const variant = on ? (statusVariant[v] || '') : '';
-                      return `<button type="button" role="radio" class="scope-segmented-item scope-status-control${on ? ` is-selected ${variant}` : ''}" data-status="${v}" aria-checked="${on}" aria-pressed="${on}"${roleLocked ? ' disabled aria-disabled="true"' : ''}>${l}</button>`;
+                      return `<button type="button" role="radio" class="scope-segmented-item scope-status-control${on ? ` is-selected ${variant}` : ''}" data-status="${v}" aria-checked="${on}" aria-pressed="${on}"${statusDisabled ? ' disabled aria-disabled="true"' : ''}>${l}</button>`;
                     }).join('')}
                   </div>
                 </div>
@@ -6729,7 +6732,7 @@
         const statut = btn.getAttribute('data-status');
         const idx = state.saisie.findIndex((r) => r.personneId === pid);
         const row = idx >= 0 ? state.saisie[idx] : null;
-        if (!row || (L.statusLockedForRole && L.statusLockedForRole(row.role))) return;
+        if (!row || (L.statusLockedForRole && L.statusLockedForRole(row.role)) || (L.sessionLocked && L.sessionLocked(row))) return;
         state.saisie[idx] = L.applyParticipationStatus(row, statut);
         if (state.saisie[idx]) state.saisie[idx].editMotif = false;
         setUnsavedPresenceChanges(true);
@@ -6741,6 +6744,7 @@
         const pid = btn.closest('[data-pid]').getAttribute('data-pid');
         const idx = state.saisie.findIndex((r) => r.personneId === pid);
         if (idx < 0) return;
+        if (L.sessionLocked && L.sessionLocked(state.saisie[idx])) return;
         state.saisie[idx] = L.applyExcuseMotif(state.saisie[idx], btn.getAttribute('data-motif-chip'));
         setUnsavedPresenceChanges(true);
         render();
@@ -6751,7 +6755,7 @@
         const pid = sel.closest('[data-pid]').getAttribute('data-pid');
         const idx = state.saisie.findIndex((r) => r.personneId === pid);
         const row = idx >= 0 ? state.saisie[idx] : null;
-        if (row) {
+        if (row && !(L.sessionLocked && L.sessionLocked(row))) {
           state.saisie[idx] = L.applyExcuseMotif(row, sel.value);
           if (state.saisie[idx]) state.saisie[idx].editMotif = false;
           setUnsavedPresenceChanges(true);
@@ -6764,7 +6768,7 @@
         const pid = sel.closest('[data-pid]').getAttribute('data-pid');
         const idx = state.saisie.findIndex((r) => r.personneId === pid);
         const row = idx >= 0 ? state.saisie[idx] : null;
-        if (row && L.applyDispenseMotif) {
+        if (row && L.applyDispenseMotif && !(L.sessionLocked && L.sessionLocked(row))) {
           state.saisie[idx] = L.applyDispenseMotif(row, sel.value);
           if (state.saisie[idx]) state.saisie[idx].editMotif = false;
           setUnsavedPresenceChanges(true);
@@ -6775,14 +6779,14 @@
     root.querySelectorAll('[data-motif-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const row = state.saisie.find((r) => r.personneId === btn.getAttribute('data-motif-edit'));
-        if (row) { row.editMotif = true; render(); }
+        if (row && !(L.sessionLocked && L.sessionLocked(row))) { row.editMotif = true; render(); }
       });
     });
     root.querySelectorAll('[data-comment]').forEach((inp) => {
       inp.addEventListener('change', () => {
         const pid = inp.closest('[data-pid]').getAttribute('data-pid');
         const row = state.saisie.find((r) => r.personneId === pid);
-        if (row) {
+        if (row && !(L.sessionLocked && L.sessionLocked(row))) {
           row.commentaire = inp.value;
           setUnsavedPresenceChanges(true);
         }

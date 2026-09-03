@@ -1740,6 +1740,34 @@ function createScopeService(repo){
     });
   }
 
+  async function loadPrExerciseParticipationState(store, evenement, eventId){
+    if(!(evenement && (evenement.cycle_id || evenement.pr_exercise_group_key)) || !store.listParticipationsForEvents) return null;
+    const cycle = evenement.cycle_id && store.getCycle
+      ? await store.getCycle(evenement.cycle_id)
+      : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
+    if(!cycle) return null;
+    const cycleEvents = evenement.cycle_id && store.listCycleEvents
+      ? await store.listCycleEvents(evenement.cycle_id)
+      : (store.listPrExerciseEvents && evenement.pr_exercise_group_key ? await store.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+    const cyclePersonnes = evenement.cycle_id && store.listCyclePersonnes ? await store.listCyclePersonnes(evenement.cycle_id) : [];
+    const cycleParticipations = cycleEvents.length ? await store.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
+    const cycleAttendus = store.listAttendusForEvents && cycleEvents.length ? await store.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
+    const personnes = await hydratePersonnes([
+      ...cyclePersonnes.map((row) => row.personne_id),
+      ...cycleParticipations.map((row) => row.personne_id),
+      ...cycleAttendus.map((row) => row.personne_id)
+    ]);
+    return computePrExerciseParticipationState({
+      cycle,
+      evenements: cycleEvents,
+      cyclePersonnes,
+      attendus: cycleAttendus,
+      participations: cycleParticipations,
+      personnes,
+      currentEventId: eventId
+    });
+  }
+
   async function enregistrerParticipations(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const items = Array.isArray(body.participations) ? body.participations : [];
@@ -1973,41 +2001,28 @@ function createScopeService(repo){
         filterAttendusEligibleAtDate(attendusRaw, periodesByPersonne, evenement.date)
           .map((row) => String(row.personne_id || row.personneId))
       );
-      const attendus = (attendusRaw || []).map((row) => (
+      let attendus = (attendusRaw || []).map((row) => (
         eligible.has(String(row.personne_id || row.personneId))
           ? row
           : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
       ));
-      validateCloture(evenement, attendus, participations, { requireExpectedFilled: true });
-      if((evenement.cycle_id || evenement.pr_exercise_group_key) && tx.listParticipationsForEvents){
-        const cycle = evenement.cycle_id && tx.getCycle
-          ? await tx.getCycle(evenement.cycle_id)
-          : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
-        const cycleEvents = evenement.cycle_id && tx.listCycleEvents
-          ? await tx.listCycleEvents(evenement.cycle_id)
-          : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
-        const cyclePersonnes = evenement.cycle_id && tx.listCyclePersonnes ? await tx.listCyclePersonnes(evenement.cycle_id) : [];
-        const cycleParticipations = cycleEvents.length ? await tx.listParticipationsForEvents(cycleEvents.map((row) => row.evenement_id)) : [];
-        const cycleAttendus = tx.listAttendusForEvents && cycleEvents.length ? await tx.listAttendusForEvents(cycleEvents.map((row) => row.evenement_id)) : attendus;
-        const personnes = await hydratePersonnes([
-          ...cyclePersonnes.map((row) => row.personne_id),
-          ...cycleParticipations.map((row) => row.personne_id),
-          ...cycleAttendus.map((row) => row.personne_id)
-        ]);
-        const prState = computePrExerciseParticipationState({
-          cycle,
-          evenements: cycleEvents,
-          cyclePersonnes,
-          attendus: cycleAttendus,
-          participations: cycleParticipations,
-          personnes,
-          currentEventId: eventId
-        });
-        if(!canCloseLastSession(prState)){
-          throw new HttpError(422, 'session_incomplete', 'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.', {
-            unfilledPeople: prState.unfilledPeople || []
+      const prState = await loadPrExerciseParticipationState(tx, evenement, eventId);
+      if(prState && prState.byPersonneId){
+        attendus = attendus.map((row) => {
+          const state = prState.byPersonneId[String(row.personne_id || row.personneId)];
+          if(!state) return row;
+          return Object.assign({}, row, {
+            already_counted_in_session: Boolean(state.alreadyCountedInSession),
+            alreadyCountedInSession: Boolean(state.alreadyCountedInSession),
+            sessionHasValidStatus: Boolean(state.sessionHasValidStatus)
           });
-        }
+        });
+      }
+      validateCloture(evenement, attendus, participations, { requireExpectedFilled: true });
+      if(prState && !canCloseLastSession(prState)){
+        throw new HttpError(422, 'session_incomplete', 'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.', {
+          unfilledPeople: prState.unfilledPeople || []
+        });
       }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {
         statut: 'REALISE',

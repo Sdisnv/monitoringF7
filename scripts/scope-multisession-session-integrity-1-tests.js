@@ -180,16 +180,17 @@ async function seedPerson(repo, cibleId, spec){
     assert.ok(s34.prExerciseParticipation.kpis.presents <= 4);
   });
 
-  await record('05 — personne déjà couverte reste éditable', () => {
+  await record('05 — personne déjà couverte ailleurs : ligne bleue et verrouillée', () => {
     assert.ok(logic.coveredInGlobalBilan(rows34.find((row) => row.personneId === 'A')));
     assert.ok(!logic.statusLockedForRole('PARTICIPANT'));
-    assert.ok(!logic.sessionLocked(rows34.find((row) => row.personneId === 'A')));
+    assert.ok(logic.sessionLocked(rows34.find((row) => row.personneId === 'A')));
   });
 
-  await record('06 — aucun grisage bloquant', () => {
+  await record('06 — grisage disabled sur ligne déjà comptée ailleurs', () => {
     const renderRows = ui.slice(ui.indexOf('function renderSaisieRows'), ui.indexOf('function uniqueFilterValues'));
     assert.ok(!ui.includes('Déjà comptabilisé dans le bilan global'));
-    assert.ok(!renderRows.includes('blocked || roleLocked'));
+    assert.ok(renderRows.includes('statusDisabled'));
+    assert.ok(renderRows.includes("statusDisabled ? ' disabled aria-disabled=\"true\"'"));
     assert.ok(ui.includes('scope-row-session-counted'));
   });
 

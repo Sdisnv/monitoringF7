@@ -66,11 +66,12 @@ async function freezeOn(service, cible, date, libelle){
 }
 
 (async () => {
-  await record('01 — personne déjà comptée globalement reste éditable', () => {
+  await record('01 — personne déjà comptée ailleurs : verrouillée, hors à renseigner', () => {
     const row = { inclus: true, statut: 'NON_RENSEIGNE', role: 'PARTICIPANT', alreadyCountedInSession: true, coveredInGlobalBilan: true };
-    assert.ok(!logic.sessionLocked(row));
+    assert.ok(logic.sessionLocked(row));
     assert.ok(!logic.statusLockedForRole(row.role));
-    assert.ok(logic.isOpenSaisieRow(row));
+    assert.ok(!logic.isOpenSaisieRow(row));
+    assert.ok(!logic.isIncompleteClosureRow(row));
   });
 
   await record('02 — texte « Déjà comptabilisé dans le bilan global » absent', () => {
