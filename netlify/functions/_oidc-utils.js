@@ -4,6 +4,7 @@ const { normalizeRoles, permissionsForRoles } = require('./_rbac');
 
 const COOKIE_NAME = 'monitoring_f7_oidc_state';
 const ACCESS_COOKIE = 'monitoring_f7_access';
+const ACCESS_TTL_SECONDS = 3600;
 
 function base64url(input){
   return Buffer.from(input).toString('base64url');
@@ -247,17 +248,19 @@ async function oidcCallbackResponse(event){
     /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */
   }
   try { await require('./_audit-store').addAudit({ eventType:'login-okta-oidc', message:'Connexion Okta validée.', actorSubject:effectiveUser.subject || effectiveUser.nip, context:{ roles:effectiveUser.roles } }); } catch(error) {}
-  const accessToken = signToken({ typ:'access', sub:effectiveUser.subject || effectiveUser.nip, email:effectiveUser.email, nip:effectiveUser.nip, roles:effectiveUser.roles, permissions:effectiveUser.permissions, provider:'oidc', displayName:effectiveUser.displayName }, 3600);
+  const accessToken = signToken({ typ:'access', sub:effectiveUser.subject || effectiveUser.nip, email:effectiveUser.email, nip:effectiveUser.nip, roles:effectiveUser.roles, permissions:effectiveUser.permissions, provider:'oidc', displayName:effectiveUser.displayName }, ACCESS_TTL_SECONDS);
   const returnTo = sanitizeReturnTo(statePayload.returnTo || '/');
   return redirect(302, returnTo, [
     clearCookie(COOKIE_NAME),
-    secureCookie(ACCESS_COOKIE, accessToken, 3600)
+    secureCookie(ACCESS_COOKIE, accessToken, ACCESS_TTL_SECONDS)
   ]);
 }
 
 module.exports = {
   COOKIE_NAME,
   ACCESS_COOKIE,
+  ACCESS_TTL_SECONDS,
+  secureCookie,
   clearCookie,
   oidcStartResponse,
   oidcCallbackResponse,

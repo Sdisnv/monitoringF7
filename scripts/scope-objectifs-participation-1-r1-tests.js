@@ -287,19 +287,16 @@ async function seedPrSession(){
     assert.ok(!ui.includes('error.stack'));
   });
 
-  await record('19 — aucune modification PDF', () => {
-    assert.strictEqual(
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8'),
-      gitShow('netlify/functions/_scope-pdf-renderer.js')
-    );
+  await record('19 — graphiques PDF gelés, signatures conservées', () => {
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
     assert.strictEqual(
       fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8'),
       gitShow('netlify/functions/_scope-pdf-charts.js')
     );
-    assert.strictEqual(
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-multisession-report.js'), 'utf8'),
-      gitShow('netlify/functions/_scope-multisession-report.js')
-    );
+    assert.ok(renderer.includes('const PDF_SHIFT_08_CM = 22.68'));
+    assert.ok(renderer.includes('SIGNATURE_TEXT_LINE_COUNT = 3'));
+    assert.ok(renderer.includes('signatureImageY = identityY + SIGNATURE_IMAGE_RELATIVE_Y - PDF_SHIFT_08_CM'));
+    assert.ok(!renderer.includes('SCOPE — Suivi et analyse de l’activité'));
   });
 
   await record('20 — aucune modification R4', () => {

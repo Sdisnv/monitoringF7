@@ -14,6 +14,20 @@ function actorId(actor){
   return String(actor?.sub || actor?.email || actor?.nip || actor || 'systeme');
 }
 
+function historiqueProtegeMessage(){
+  return 'Cet objectif est déjà utilisé pour une période active ou passée. Pour préserver l’historique, créez une nouvelle période.';
+}
+
+function isFutureObjectif(row, today){
+  if(!row || row.actif === false) return false;
+  const debut = isoDate(row.date_debut || row.dateDebut);
+  return Boolean(debut && today && debut > today);
+}
+
+function isHistoryProtected(row, today){
+  return !isFutureObjectif(row, today);
+}
+
 function parseSeuil(value){
   if(value === undefined || value === null || value === ''){
     throw new HttpError(400, 'seuil_obligatoire', 'Le seuil de participation est obligatoire.');
@@ -142,25 +156,87 @@ function createScopeObjectivesService(repo){
   async function patchObjectif(id, body, actor){
     const current = await repo.getObjectif(id);
     if(!current) throw new HttpError(404, 'objectif_introuvable', 'Objectif introuvable.');
-    const forbidden = ['seuilPct', 'seuil_pct', 'portee', 'dateDebut', 'date_debut', 'dateFin', 'date_fin', 'domaineCode', 'cibleId'];
-    if(forbidden.some((key) => body[key] !== undefined)){
-      throw new HttpError(
-        422,
-        'historique_protege',
-        'Le seuil et les dates ne se modifient pas. Clôturez la période puis créez-en une nouvelle.'
-      );
+    const today = isoDate(new Date().toISOString().slice(0, 10));
+    const structuralKeys = ['seuilPct', 'seuil_pct', 'portee', 'dateDebut', 'date_debut', 'dateFin', 'date_fin', 'domaineCode', 'domaine_code', 'cibleId', 'cible_id'];
+    const wantsStructural = structuralKeys.some((key) => body[key] !== undefined);
+    if(wantsStructural && isHistoryProtected(current, today)){
+      throw new HttpError(422, 'historique_protege', historiqueProtegeMessage());
     }
-    const commentaire = body.commentaire !== undefined ? String(body.commentaire) : current.commentaire;
-    const saved = await repo.updateObjectif(id, { commentaire });
+    if(!wantsStructural){
+      const commentaire = body.commentaire !== undefined ? String(body.commentaire) : current.commentaire;
+      const saved = await repo.updateObjectif(id, { commentaire });
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'objectif',
+        entite_id: id,
+        action: 'MODIFIER_OBJECTIF',
+        avant: { commentaire: current.commentaire },
+        apres: { commentaire }
+      });
+      return { objectif: summarize(saved) };
+    }
+    const mergedBody = {
+      portee: body.portee || body.scope || current.portee,
+      domaineCode: body.domaineCode !== undefined ? body.domaineCode : (body.domaine_code !== undefined ? body.domaine_code : current.domaine_code),
+      cibleId: body.cibleId !== undefined ? body.cibleId : (body.cible_id !== undefined ? body.cible_id : current.cible_id),
+      dateDebut: body.dateDebut || body.date_debut || current.date_debut,
+      dateFin: body.dateFin !== undefined ? body.dateFin : (body.date_fin !== undefined ? body.date_fin : current.date_fin),
+      seuilPct: body.seuilPct !== undefined ? body.seuilPct : (body.seuil_pct !== undefined ? body.seuil_pct : current.seuil_pct),
+      commentaire: body.commentaire !== undefined ? body.commentaire : current.commentaire
+    };
+    const { portee, domaineCode, cibleId } = await normalizePortee(mergedBody);
+    const dateDebut = isoDate(mergedBody.dateDebut);
+    if(!dateDebut) throw new HttpError(400, 'date_debut_obligatoire', 'La date de début est obligatoire.');
+    const dateFin = mergedBody.dateFin === undefined || mergedBody.dateFin === null || mergedBody.dateFin === ''
+      ? null
+      : isoDate(mergedBody.dateFin);
+    if(mergedBody.dateFin && !dateFin) throw new HttpError(400, 'date_fin_invalide', 'Date de fin invalide.');
+    if(dateFin && dateFin < dateDebut){
+      throw new HttpError(422, 'dates_incoherentes', 'La date de fin doit être postérieure à la date de début.');
+    }
+    const seuilPct = parseSeuil(mergedBody.seuilPct);
+    const candidate = {
+      ...current,
+      portee,
+      domaine_code: domaineCode,
+      cible_id: cibleId,
+      date_debut: dateDebut,
+      date_fin: dateFin,
+      seuil_pct: seuilPct,
+      commentaire: mergedBody.commentaire != null ? String(mergedBody.commentaire) : null
+    };
+    await assertNoOverlap(candidate, id);
+    const saved = await repo.updateObjectif(id, candidate);
     await repo.appendJournal({
       auteur_id: actorId(actor),
       entite: 'objectif',
       entite_id: id,
       action: 'MODIFIER_OBJECTIF',
-      avant: { commentaire: current.commentaire },
-      apres: { commentaire }
+      avant: current,
+      apres: saved
     });
     return { objectif: summarize(saved) };
+  }
+
+  async function deleteObjectif(id, actor){
+    const current = await repo.getObjectif(id);
+    if(!current) throw new HttpError(404, 'objectif_introuvable', 'Objectif introuvable.');
+    const today = isoDate(new Date().toISOString().slice(0, 10));
+    if(isHistoryProtected(current, today)){
+      throw new HttpError(422, 'historique_protege', historiqueProtegeMessage());
+    }
+    if(typeof repo.deleteObjectif !== 'function'){
+      throw new HttpError(500, 'suppression_indisponible', 'La suppression d’objectif n’est pas disponible.');
+    }
+    await repo.deleteObjectif(id);
+    await repo.appendJournal({
+      auteur_id: actorId(actor),
+      entite: 'objectif',
+      entite_id: id,
+      action: 'SUPPRIMER_OBJECTIF',
+      avant: current
+    });
+    return { ok: true };
   }
 
   async function cloturerObjectif(id, body, actor){
@@ -280,6 +356,7 @@ function createScopeObjectivesService(repo){
     cloturerObjectif,
     nouvellePeriode,
     desactiverObjectif,
+    deleteObjectif,
     resolveObjectif
   };
 }

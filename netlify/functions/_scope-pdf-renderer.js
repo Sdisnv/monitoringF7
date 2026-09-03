@@ -14,6 +14,9 @@ const SIGNATURE_CANDIDATES = [
   path.join(__dirname, '../../assets/img/MCE_Signature.png'),
   path.join(process.cwd(), 'assets/img/MCE_Signature.png')
 ];
+const HEADER_TITLE = 'Suivi et analyse de l’activité';
+const SCOPE_LOGO_TOP = 11;
+const SDIS_LOGO_TOP = 8;
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
 const MARGIN = 48;
@@ -79,8 +82,22 @@ function headerLogoLayout(){
     sdisW: sdis.w,
     scopeH: scope.h,
     sdisH: sdis.h,
+    scopeTop: SCOPE_LOGO_TOP,
+    sdisTop: SDIS_LOGO_TOP,
     scopeVisualLeft: scopeX + scopePadL,
     sdisVisualRight: sdisX + sdis.w - sdisPadR
+  };
+}
+
+function headerTitleLayout(){
+  const logos = headerLogoLayout();
+  const logoCenter = logos.scopeTop + logos.scopeFit[1] / 2;
+  const titleSize = 9;
+  return {
+    title: HEADER_TITLE,
+    titleSize,
+    titleY: logoCenter - titleSize / 2,
+    logoCenter
   };
 }
 
@@ -183,20 +200,21 @@ class ScopePdfRenderer {
   drawChrome(){
     const doc = this.doc;
     const logos = headerLogoLayout();
+    const title = headerTitleLayout();
     doc.save();
     doc.rect(0, 0, PAGE_W, HEADER_H).fill(rgb(INSTITUTION.red));
     if(hasLogo(LOGO_SCOPE)){
-      doc.image(LOGO_SCOPE, logos.scopeX, 11, { fit: logos.scopeFit, valign: 'center' });
+      doc.image(LOGO_SCOPE, logos.scopeX, logos.scopeTop, { fit: logos.scopeFit, valign: 'center' });
     }
     if(hasLogo(LOGO_SDIS)){
-      doc.image(LOGO_SDIS, logos.sdisX, 8, { fit: logos.sdisFit, valign: 'center' });
+      doc.image(LOGO_SDIS, logos.sdisX, logos.sdisTop, { fit: logos.sdisFit, valign: 'center' });
     }
     const titleX = logos.scopeX + logos.scopeW + 10;
     const titleW = Math.max(160, logos.sdisX - titleX - 8);
-    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
-      .text('SCOPE — Suivi et analyse de l’activité', titleX, 16, { width: titleW });
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(title.titleSize)
+      .text(title.title, titleX, title.titleY, { width: titleW });
     doc.font('Helvetica').fontSize(8)
-      .text(this.model.kind === 'SESSION' ? '' : (this.model.subtitle || ''), titleX, 30, { width: titleW });
+      .text(this.model.kind === 'SESSION' ? '' : (this.model.subtitle || ''), titleX, title.titleY + 14, { width: titleW });
     doc.restore();
   }
 
@@ -958,9 +976,8 @@ class ScopePdfRenderer {
     while(this._pageIndex < 3) this.nextPage();
     this.doc.y += TYPE.conclusionTop;
     this.iconHeading('plain', 'CONCLUSION', TYPE.conclusion, { after: TYPE.conclusionGap });
-    (m.conclusion || []).forEach((paragraph, i) => {
-      if(i === 0) this.paraWithBoldRate(paragraph);
-      else this.para(paragraph, { size: TYPE.body, align: 'justify' });
+    (m.conclusion || []).forEach((paragraph) => {
+      this.paraWithBoldRate(paragraph);
       this.doc.moveDown(0.55);
     });
     if(m.prSuspensionText && m.nonParticipants && m.nonParticipants.length){
@@ -1123,5 +1140,6 @@ function renderReportPdf(model, meta){
 module.exports = {
   renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE,
   PDF_SHIFT_08_CM, SIGNATURE_TEXT_TOP_GAP, SIGNATURE_TEXT_LINE_COUNT, SIGNATURE_IMAGE_RELATIVE_Y,
-  SIGNATURE_FUNCTION_RELATIVE_Y, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W
+  SIGNATURE_FUNCTION_RELATIVE_Y, MARGIN, headerLogoLayout, headerTitleLayout, HEADER_TITLE, SCOPE_LOGO_TOP,
+  resolveSignaturePrPath, PAGE_W
 };

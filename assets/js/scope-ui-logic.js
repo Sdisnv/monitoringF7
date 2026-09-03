@@ -458,6 +458,19 @@
     return 'ACTIF';
   }
 
+  function objectifIsFuture(row, todayIso) {
+    return objectifLifecycleStatus(row, todayIso) === 'FUTUR';
+  }
+
+  function objectifHistoryProtected(row, todayIso) {
+    const life = objectifLifecycleStatus(row, todayIso);
+    return life === 'ACTIF' || life === 'TERMINE';
+  }
+
+  function historiqueProtegeMessage() {
+    return 'Cet objectif est déjà utilisé pour une période active ou passée. Pour préserver l’historique, créez une nouvelle période.';
+  }
+
   function objectifLifecycleLabel(status) {
     if (status === 'ACTIF') return 'Actif';
     if (status === 'FUTUR') return 'Futur';
@@ -1501,6 +1514,9 @@
     objectifOverlapsYear,
     objectifLifecycleStatus,
     objectifLifecycleLabel,
+    objectifIsFuture,
+    objectifHistoryProtected,
+    historiqueProtegeMessage,
     objectifPeriodLabel,
     objectifUxFromRow,
     objectifFormToEngine,

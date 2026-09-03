@@ -893,8 +893,39 @@
       async patchObjectif(id, body) {
         const row = objectifs.get(id);
         if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });
+        const today = new Date().toISOString().slice(0, 10);
+        const future = row.actif !== false && row.dateDebut && row.dateDebut > today;
+        const structural = ['seuilPct', 'portee', 'dateDebut', 'dateFin', 'domaineCode', 'cibleId'].some((key) => body[key] !== undefined);
+        if (structural && !future) {
+          throw new ScopeApiError(422, {
+            error: 'historique_protege',
+            message: 'Cet objectif est déjà utilisé pour une période active ou passée. Pour préserver l’historique, créez une nouvelle période.'
+          });
+        }
         if (body.commentaire !== undefined) row.commentaire = String(body.commentaire);
+        if (!structural) return { ok: true, objectif: row };
+        const portee = String(body.portee || row.scope || '').toUpperCase();
+        row.scope = portee;
+        row.thresholdPct = Number(body.seuilPct);
+        row.dateDebut = String(body.dateDebut || row.dateDebut).slice(0, 10);
+        row.dateFin = body.dateFin ? String(body.dateFin).slice(0, 10) : null;
+        row.domaineCode = portee === 'GLOBAL' ? null : (body.domaineCode || null);
+        row.cibleId = portee === 'CIBLE' ? (body.cibleId || null) : null;
         return { ok: true, objectif: row };
+      },
+      async deleteObjectif(id) {
+        const row = objectifs.get(id);
+        if (!row) throw new ScopeApiError(404, { error: 'objectif_introuvable', message: 'Objectif introuvable.' });
+        const today = new Date().toISOString().slice(0, 10);
+        const future = row.actif !== false && row.dateDebut && row.dateDebut > today;
+        if (!future) {
+          throw new ScopeApiError(422, {
+            error: 'historique_protege',
+            message: 'Cet objectif est déjà utilisé pour une période active ou passée. Pour préserver l’historique, créez une nouvelle période.'
+          });
+        }
+        objectifs.delete(id);
+        return { ok: true };
       }
     };
   }

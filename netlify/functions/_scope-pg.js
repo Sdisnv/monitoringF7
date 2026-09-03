@@ -1231,15 +1231,23 @@ function createPgRepo(client){
       const next = { ...current, ...patch };
       const result = await q(
         `update scope_objectifs set
-           date_fin = $2,
-           seuil_pct = $3,
-           actif = $4,
-           commentaire = $5,
+           portee = $2,
+           domaine_code = $3,
+           cible_id = $4,
+           date_debut = $5,
+           date_fin = $6,
+           seuil_pct = $7,
+           actif = $8,
+           commentaire = $9,
            updated_at = now()
          where objectif_id = $1
          returning *`,
         [
           id,
+          next.portee,
+          next.domaine_code || null,
+          next.cible_id || null,
+          isoDate(next.date_debut),
           isoDate(next.date_fin),
           next.seuil_pct,
           next.actif !== false,
@@ -1247,6 +1255,9 @@ function createPgRepo(client){
         ]
       );
       return mapObjectif(result.rows[0]);
+    },
+    async deleteObjectif(id){
+      await q('delete from scope_objectifs where objectif_id = $1', [id]);
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const clauses = ['e.date >= $1::date', 'e.date <= $2::date'];

@@ -41,22 +41,7 @@
       return (typeof window !== 'undefined' && window.MonitoringApiClient && window.MonitoringApiClient.getAccessToken()) || null;
     };
 
-    async function request(method, path, body) {
-      const headers = { Accept: 'application/json' };
-      if (body !== undefined) headers['Content-Type'] = 'application/json';
-      const token = getToken();
-      if (token) headers.Authorization = `Bearer ${token}`;
-      let response;
-      try {
-        response = await fetch(`${base}${path}`, {
-          method,
-          headers,
-          credentials: 'same-origin',
-          body: body !== undefined ? JSON.stringify(body) : undefined
-        });
-      } catch (error) {
-        throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
-      }
+    async function parseResponse(response) {
       let payload = null;
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
@@ -64,6 +49,42 @@
       } else {
         payload = { message: await response.text() };
       }
+      return payload;
+    }
+
+    async function fetchOnce(url, fetchOptions) {
+      const headers = Object.assign({}, fetchOptions.headers || {});
+      const token = getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+      return fetch(url, Object.assign({}, fetchOptions, { headers, credentials: 'same-origin' }));
+    }
+
+    async function fetchWithAuthRetry(url, fetchOptions) {
+      const idle = (typeof window !== 'undefined' && window.ScopeAuthIdle) || null;
+      const run = () => fetchOnce(url, fetchOptions);
+      const response = idle && typeof idle.withAuthRetry === 'function'
+        ? await idle.withAuthRetry(run, false)
+        : await run();
+      if (response && response.status === 401 && idle && typeof idle.isStarted === 'function' && idle.isStarted()) {
+        if (typeof idle.redirectToLogout === 'function') idle.redirectToLogout();
+      }
+      return response;
+    }
+
+    async function request(method, path, body) {
+      const headers = { Accept: 'application/json' };
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      let response;
+      try {
+        response = await fetchWithAuthRetry(`${base}${path}`, {
+          method,
+          headers,
+          body: body !== undefined ? JSON.stringify(body) : undefined
+        });
+      } catch (error) {
+        throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
+      }
+      const payload = await parseResponse(response);
       if (!response.ok) throw new ScopeApiError(response.status, payload || {});
       return payload;
     }
@@ -71,26 +92,17 @@
     async function directRequest(method, path, body) {
       const headers = { Accept: 'application/json' };
       if (body !== undefined) headers['Content-Type'] = 'application/json';
-      const token = getToken();
-      if (token) headers.Authorization = `Bearer ${token}`;
       let response;
       try {
-        response = await fetch(path, {
+        response = await fetchWithAuthRetry(path, {
           method,
           headers,
-          credentials: 'same-origin',
           body: body !== undefined ? JSON.stringify(body) : undefined
         });
       } catch (error) {
         throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
       }
-      let payload = null;
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        payload = await response.json();
-      } else {
-        payload = { message: await response.text() };
-      }
+      const payload = await parseResponse(response);
       if (!response.ok) throw new ScopeApiError(response.status, payload || {});
       return payload;
     }
@@ -98,18 +110,14 @@
     async function sessionMe() {
       let response;
       try {
-        response = await fetch('/auth/me', {
+        response = await fetchWithAuthRetry('/auth/me', {
           method: 'GET',
-          headers: { Accept: 'application/json' },
-          credentials: 'same-origin'
+          headers: { Accept: 'application/json' }
         });
       } catch (error) {
         throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
       }
-      let payload = null;
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) payload = await response.json();
-      else payload = { message: await response.text() };
+      const payload = await parseResponse(response);
       if (!response.ok) throw new ScopeApiError(response.status, payload || {});
       return payload;
     }
@@ -330,16 +338,15 @@
       cloturerObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/cloturer`, body); },
       nouvellePeriodeObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/nouvelle-periode`, body); },
       desactiverObjectif(id, body) { return request('POST', `/objectifs/${encodeURIComponent(id)}/desactiver`, body || {}); },
+      deleteObjectif(id) { return request('DELETE', `/objectifs/${encodeURIComponent(id)}`); },
       async generateReport(body) {
         const headers = { Accept: 'application/pdf' };
-        const token = getToken();
-        if (token) headers.Authorization = `Bearer ${token}`;
+        if (body !== undefined) headers['Content-Type'] = 'application/json';
         let response;
         try {
-          response = await fetch(`${base}/reports`, {
+          response = await fetchWithAuthRetry(`${base}/reports`, {
             method: 'POST',
-            headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-            credentials: 'same-origin',
+            headers,
             body: JSON.stringify(body || {})
           });
         } catch (error) {

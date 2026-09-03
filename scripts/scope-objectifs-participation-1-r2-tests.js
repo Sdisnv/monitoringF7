@@ -286,10 +286,15 @@ function gitShow(file){
     assert.ok(conclusion.paragraphs.some((p) => /0,7/.test(p) || /95/.test(p)));
   });
 
-  await record('33 — aucun PDF modifié', () => {
-    ['netlify/functions/_scope-pdf-renderer.js', 'netlify/functions/_scope-pdf-charts.js'].forEach((file) => {
-      assert.strictEqual(fs.readFileSync(path.join(ROOT, file), 'utf8'), gitShow(file));
-    });
+  await record('33 — graphiques PDF gelés, header/conclusion autorisés', () => {
+    assert.strictEqual(
+      fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8'),
+      gitShow('netlify/functions/_scope-pdf-charts.js')
+    );
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    assert.ok(renderer.includes('const PDF_SHIFT_08_CM = 22.68'));
+    assert.ok(renderer.includes('SIGNATURE_TEXT_LINE_COUNT = 3'));
+    assert.ok(!renderer.includes('SCOPE — Suivi et analyse de l’activité'));
   });
 
   await record('34 — OBJECTIVES-1 inchangé (même moteur)', () => {

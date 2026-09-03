@@ -103,6 +103,8 @@
     reopenMotif: '',
     session: null,
     needOkta: false,
+    idleWarn: false,
+    idleExpired: false,
     personCount: null,
     importFile: { filename: '', csvText: '', drag: false },
     importPreview: null,
@@ -179,6 +181,7 @@
     },
     objectifFilters: { annee: '', portee: '', domaine: '', statut: '' },
     objectifSort: { key: null, dir: null },
+    objectifMenuId: null,
     objectifPreview: { date: '2026-06-15', domaine: '', cibleCode: '', result: null, looked: false },
     objectifAction: null,
     reportForm: { kind: 'PERIOD', domaine: 'DAP', cible: 'Y4', evenementId: '' },
@@ -1157,9 +1160,20 @@
     } else if (mode === 'live' && state.needOkta) {
       bits.push(`<div class="scope-banner warning" role="alertdialog">
         <strong>Connexion requise</strong>
-        <div>Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.</div>
+        <div>${state.idleExpired ? 'Votre session a expiré après une période d’inactivité.' : 'Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.'}</div>
         <div class="scope-actions">
           <a class="scope-btn scope-btn-primary" id="scope-okta-login" href="${escapeHtml(L.oktaLoginHref('/scope.html?mode=live'))}">Se connecter</a>
+        </div>
+      </div>`);
+    }
+    if (state.idleWarn && !state.needOkta) {
+      bits.push(`<div class="scope-modal" id="scope-idle-warn" role="alertdialog">
+        <div class="scope-card">
+          <h3>SESSION BIENTÔT EXPIRÉE</h3>
+          <p>Votre session sera fermée dans environ 1 minute en raison de votre inactivité.</p>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" id="scope-idle-stay">Rester connecté</button>
+          </div>
         </div>
       </div>`);
     }
@@ -3868,6 +3882,56 @@
         </div>`;
   }
 
+  function fillObjectifFormFromRow(row) {
+    if (!row) return;
+    const ux = L.objectifUxFromRow(row, state.referentiels.cibles);
+    const debut = row.dateDebut || '';
+    const year = L.extractCalendarYear(debut) || String(state.year || '2026');
+    state.objectifForm = Object.assign({}, state.objectifForm, {
+      portee: ux.portee || row.scope || 'GLOBAL',
+      domaineCode: ux.domaineUx || row.domaineCode || 'DPS',
+      cibleCode: ux.cibleUx || '',
+      cibleId: row.cibleId || '',
+      annee: year,
+      seuilPct: row.thresholdPct != null ? String(row.thresholdPct) : '',
+      dateDebut: row.dateDebut || '',
+      dateFin: row.dateFin || '',
+      commentaire: row.commentaire || ''
+    });
+  }
+
+  function renderObjectifRowMenu(today) {
+    const id = state.objectifMenuId;
+    const row = (state.objectifs || []).find((item) => item.objectifId === id);
+    if (!row) return '';
+    const future = L.objectifIsFuture(row, today);
+    const actif = row.actif !== false;
+    return `<div class="scope-row-more-menu" id="scope-objectif-row-menu" role="menu">
+      ${future ? `<button type="button" role="menuitem" data-obj-edit="${escapeHtml(row.objectifId)}">Modifier</button>` : `<button type="button" role="menuitem" data-obj-protege="${escapeHtml(row.objectifId)}">Modifier</button>`}
+      ${actif ? `<button type="button" role="menuitem" data-obj-periode="${escapeHtml(row.objectifId)}">Nouvelle période</button>` : ''}
+      ${actif && !row.dateFin ? `<button type="button" role="menuitem" data-obj-cloturer="${escapeHtml(row.objectifId)}">Clôturer</button>` : ''}
+      ${future ? `<button type="button" role="menuitem" class="is-danger" data-obj-supprimer="${escapeHtml(row.objectifId)}">Supprimer</button>` : ''}
+    </div>`;
+  }
+
+  function positionObjectifRowMenu() {
+    const menu = document.getElementById('scope-objectif-row-menu');
+    const id = state.objectifMenuId;
+    if (!menu || !id) return;
+    const trigger = document.querySelector(`[data-obj-more="${CSS.escape(String(id))}"]`);
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const width = menu.offsetWidth || 196;
+    const height = menu.offsetHeight || 88;
+    let left = rect.right - width;
+    if (left < 8) left = 8;
+    if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8);
+    let top = rect.bottom - 2;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height + 2);
+    menu.style.top = `${Math.round(top)}px`;
+    menu.style.left = `${Math.round(left)}px`;
+  }
+
   function renderObjectifs() {
     const form = state.objectifForm;
     const filters = state.objectifFilters || {};
@@ -3887,8 +3951,8 @@
               ${emptyLabel ? `<option value="">${escapeHtml(emptyLabel)}</option>` : ''}
               ${domainOpts.map((d) => `<option value="${escapeHtml(d.code)}" ${d.code === value ? 'selected' : ''}>${escapeHtml(d.label)}</option>`).join('')}
             </select>`;
-    const modal = action === 'create' ? `<div class="scope-modal"><div class="scope-card">
-          <h3>Nouvel objectif</h3>
+    const modal = (action === 'create' || action === 'edit') ? `<div class="scope-modal"><div class="scope-card">
+          <h3>${action === 'edit' ? 'Modifier l’objectif' : 'Nouvel objectif'}</h3>
           <div class="scope-field"><label>Portée</label>
             <select id="obj-portee">
               <option value="GLOBAL" ${form.portee === 'GLOBAL' ? 'selected' : ''}>Général — objectif par défaut</option>
@@ -3930,6 +3994,22 @@
           <div class="scope-field" style="margin-top:8px"><label>Fin</label><input id="obj-periode-fin" type="text" inputmode="numeric" placeholder="JJ/MM/AAAA" value="${escapeHtml(L.formatUiDate(form.dateFin))}"></div>
           <div class="scope-actions">
             <button type="button" class="scope-btn scope-btn-primary" id="obj-periode-save">Enregistrer l’objectif</button>
+            <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
+          </div>
+        </div></div>` : '';
+    const deleteModal = action === 'supprimer' && focus ? `<div class="scope-modal"><div class="scope-card">
+          <h3>SUPPRIMER L’OBJECTIF ?</h3>
+          <p>Cette action supprimera définitivement cet objectif futur.</p>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-danger" id="obj-delete-confirm">Supprimer</button>
+            <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
+          </div>
+        </div></div>` : '';
+    const protectModal = action === 'protege' && focus ? `<div class="scope-modal"><div class="scope-card">
+          <h3>Historique protégé</h3>
+          <p>${escapeHtml(L.historiqueProtegeMessage())}</p>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" data-obj-periode="${focus.objectifId}">Nouvelle période</button>
             <button type="button" class="scope-btn" id="obj-cancel">Annuler</button>
           </div>
         </div></div>` : '';
@@ -4011,8 +4091,9 @@
                     <td data-label="Fin">${row.dateFin ? escapeHtml(L.formatDate(row.dateFin)) : 'Ouverte'}</td>
                     <td data-label="Statut">${escapeHtml(L.objectifLifecycleLabel(life))}</td>
                     <td data-label="Actions">
-                      ${canWrite && row.actif && !row.dateFin ? `<button type="button" class="scope-btn" data-obj-cloturer="${row.objectifId}">Clôturer</button>` : ''}
-                      ${canWrite && row.actif ? `<button type="button" class="scope-btn" data-obj-periode="${row.objectifId}">Nouvelle période</button>` : ''}
+                      ${canWrite ? `<span class="scope-row-more">
+                        <button type="button" class="scope-row-more-trigger" data-obj-more="${row.objectifId}" aria-label="Actions" aria-haspopup="menu" aria-expanded="${state.objectifMenuId === row.objectifId ? 'true' : 'false'}">⋯</button>
+                      </span>` : ''}
                     </td>
                   </tr>`;
                 }).join('') || `<tr><td colspan="9">${escapeHtml(L.emptyMessage('objectifs'))}</td></tr>`}
@@ -4037,7 +4118,8 @@
           ${preview.looked ? objectifAppliqueCard(preview.result) : ''}
         </div>
       </div>
-      ${modal}${clotureModal}${periodeModal}
+      ${modal}${clotureModal}${periodeModal}${deleteModal}${protectModal}
+      ${state.objectifMenuId ? renderObjectifRowMenu(today) : ''}
     `;
   }
 
@@ -5713,6 +5795,7 @@
     root.classList.toggle('is-nav-open', Boolean(state.navOpen));
     root.innerHTML = `<div class="scope-app-shell">${sidebarHtml(r)}<div class="scope-workspace">${headerHtml(r)}${bannerHtml()}<div class="scope-content">${body}</div></div></div>${renderPersonnelInactivateModal()}${renderModalAllPresent()}${renderPersonnelAssignmentModal()}${renderPersonnelManualAddModal()}${renderModalEncadrementRetrait()}${renderModalResetSaisie()}${renderModalClotureIncomplete()}${renderModalCancel()}${renderModalPersonnelSync()}${renderScopeFeedback()}`;
     bind();
+    if (state.objectifMenuId) positionObjectifRowMenu();
     const statutSel = document.getElementById('filter-statut');
     const domaineSel = document.getElementById('filter-domaine');
     if (statutSel) statutSel.value = state.statut;
@@ -5866,6 +5949,11 @@
       state.cyclesReady = false;
       withLoading(loadCycles);
     });
+    document.getElementById('scope-idle-stay')?.addEventListener('click', () => {
+      state.idleWarn = false;
+      if (window.ScopeAuthIdle) window.ScopeAuthIdle.stayConnected();
+      render();
+    });
     document.getElementById('obj-add')?.addEventListener('click', () => {
       const period = L.yearToObjectifPeriod(state.objectifForm.annee || String(state.year || '2026'));
       state.objectifAction = 'create';
@@ -5952,6 +6040,61 @@
         }
       });
     });
+    root.querySelectorAll('[data-obj-more]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = btn.getAttribute('data-obj-more');
+        state.objectifMenuId = state.objectifMenuId === id ? null : id;
+        render();
+      });
+    });
+    root.querySelectorAll('[data-obj-edit]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = btn.getAttribute('data-obj-edit');
+        const row = state.objectifs.find((item) => item.objectifId === id);
+        state.objectifMenuId = null;
+        state.objectifAction = 'edit';
+        state.objectifFocusId = id;
+        fillObjectifFormFromRow(row);
+        render();
+      });
+    });
+    root.querySelectorAll('[data-obj-supprimer]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = btn.getAttribute('data-obj-supprimer');
+        state.objectifMenuId = null;
+        state.objectifAction = 'supprimer';
+        state.objectifFocusId = id;
+        render();
+      });
+    });
+    root.querySelectorAll('[data-obj-protege]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = btn.getAttribute('data-obj-protege');
+        state.objectifMenuId = null;
+        state.objectifAction = 'protege';
+        state.objectifFocusId = id;
+        render();
+      });
+    });
+    document.getElementById('obj-delete-confirm')?.addEventListener('click', () => {
+      const id = state.objectifFocusId;
+      withLoading(async () => {
+        await client.deleteObjectif(id);
+        state.objectifAction = null;
+        state.objectifFocusId = null;
+        await loadObjectifs();
+        clearToast();
+        toast('success', 'Objectif supprimé', 'L’objectif futur a été retiré.');
+      });
+    });
     root.querySelectorAll('[data-obj-cloturer]').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.objectifAction = 'cloturer';
@@ -6023,17 +6166,23 @@
         toast('error', 'Action refusée', 'La cible est obligatoire pour cette portée.');
         return;
       }
+      const payload = {
+        portee: mapped.portee,
+        domaineCode: mapped.domaineCode,
+        cibleId: mapped.cibleId,
+        seuilPct,
+        dateDebut,
+        dateFin,
+        commentaire: (document.getElementById('obj-commentaire') || {}).value
+      };
       withLoading(async () => {
-        await client.createObjectif({
-          portee: mapped.portee,
-          domaineCode: mapped.domaineCode,
-          cibleId: mapped.cibleId,
-          seuilPct,
-          dateDebut,
-          dateFin,
-          commentaire: (document.getElementById('obj-commentaire') || {}).value
-        });
+        if (state.objectifAction === 'edit' && state.objectifFocusId) {
+          await client.patchObjectif(state.objectifFocusId, payload);
+        } else {
+          await client.createObjectif(payload);
+        }
         state.objectifAction = null;
+        state.objectifFocusId = null;
         await loadObjectifs();
         clearToast();
         toast('success', 'Objectif enregistré', 'La nouvelle période est active pour les analyses et rapports SCOPE.');
@@ -7164,6 +7313,12 @@
         submitPersonnelAssignmentModal();
         return;
       }
+      if (state.objectifMenuId) {
+        if (target.closest('[data-obj-more]') || target.closest('#scope-objectif-row-menu')) return;
+        state.objectifMenuId = null;
+        render();
+        return;
+      }
       if (!state.personnelRowMenuId) return;
       if (target.closest('[data-personnel-more]') || target.closest('#scope-personnel-row-menu') || target.closest('[data-activity-overlay]')) return;
       state.personnelRowMenuId = null;
@@ -7258,6 +7413,7 @@
     });
     window.addEventListener('resize', () => {
       if (state.personnelRowMenuId) positionPersonnelRowMenu();
+      if (state.objectifMenuId) positionObjectifRowMenu();
     });
     document.addEventListener('scroll', () => {
       if (!state.personnelRowMenuId) return;
@@ -7553,17 +7709,34 @@
   async function ensureLiveSession() {
     if (mode !== 'live' || typeof client.sessionMe !== 'function') return true;
     try {
+      const params = new URLSearchParams(location.search.replace(/^\?/, ''));
+      if (params.get('idle') === '1') state.idleExpired = true;
+    } catch (_err) { /* ignore */ }
+    try {
       const data = await client.sessionMe();
       state.session = data.user || null;
       window.CurrentRoles = (state.session && state.session.roles) || [];
       window.CurrentPermissions = (state.session && state.session.permissions) || [];
       document.dispatchEvent(new Event('monitoring-f7-auth-session-changed'));
       state.needOkta = false;
+      if (window.ScopeAuthIdle && typeof window.ScopeAuthIdle.start === 'function') {
+        window.ScopeAuthIdle.start({
+          onWarn() {
+            state.idleWarn = true;
+            render();
+          },
+          onExpire() {
+            state.idleExpired = true;
+            if (window.ScopeAuthIdle.redirectToLogout) window.ScopeAuthIdle.redirectToLogout();
+          }
+        });
+      }
       return true;
     } catch (error) {
       const info = L.friendlyError(error);
       state.session = null;
       state.needOkta = Boolean(info.okta) || Number(error && error.status) === 401;
+      if (window.ScopeAuthIdle) window.ScopeAuthIdle.stop();
       return false;
     }
   }
@@ -7675,6 +7848,11 @@
       }
       if (state.personnelAssignment) {
         closePersonnelAssignmentModal();
+        return;
+      }
+      if (state.objectifMenuId) {
+        state.objectifMenuId = null;
+        render();
         return;
       }
       if (state.personnelRowMenuId) {

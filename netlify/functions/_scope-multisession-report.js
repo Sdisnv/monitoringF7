@@ -146,16 +146,16 @@ function buildConclusion({ percentage, objectiveThreshold, domaine, nonParticipa
     const obj = Number(objectiveThreshold);
     const gap = round1(Number(percentage) - obj);
     const objText = formatPctFr(obj);
-    paragraphs.push(`L’analyse des présences démontre un taux de participation global de ${tauxText} %.`);
+    const taux = `L’analyse des présences démontre un taux de participation global de ${tauxText} %.`;
+    let rest = '';
     if(gap === 0){
-      paragraphs.push(`Le taux atteint l’objectif fixé à ${objText} %.`);
+      rest = `Le taux atteint l’objectif fixé à ${objText} %.`;
     } else if(gap < 0){
-      paragraphs.push(`Il se situe ${formatPctFr(Math.abs(gap))} points de pourcentage en dessous de l’objectif de participation fixé.`);
-      paragraphs.push('Des mesures seront prises afin de favoriser une amélioration du taux de participation aux exercices.');
+      rest = `Il se situe ${formatPctFr(Math.abs(gap))} points de pourcentage en dessous de l’objectif de participation fixé. Des mesures seront prises afin de favoriser une amélioration du taux de participation aux exercices.`;
     } else {
-      paragraphs.push(`Le taux de participation global se situe ${formatPctFr(gap)} points de pourcentage au-dessus de l’objectif fixé.`);
-      paragraphs.push('L’ensemble du personnel assigné est remercié pour son engagement au profit du SDIS régional du Nord vaudois.');
+      rest = `Le taux de participation global se situe ${formatPctFr(gap)} points de pourcentage au-dessus de l’objectif fixé. L’ensemble du personnel assigné est remercié pour son engagement au profit du SDIS régional du Nord vaudois.`;
     }
+    paragraphs.push(`${taux} ${rest}`);
   }
   const prSuspension = displayDomaineCode(domaine) === 'PR' && nonParticipants && nonParticipants.length
     ? 'Pour le personnel suivant, n’ayant participé à aucune des séances composant cet exercice, le Chef protection respiratoire prendra les mesures nécessaires conformément à l’ordre de service 7.01, article 7.3 « Retrait de compétence à la suite d’un manquement aux exercices », et informera individuellement chaque personne de la suite à donner.'

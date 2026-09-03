@@ -57,8 +57,8 @@ function forbiddenPersonnel(){
 }
 
 exports.handler = async function(event){
-  if(event.httpMethod === 'OPTIONS'){
-    return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS' }, body: '' };
+    if(event.httpMethod === 'OPTIONS'){
+    return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' }, body: '' };
   }
 
   let claims;
@@ -334,6 +334,12 @@ exports.handler = async function(event){
         return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
       }
       return response(200, { ok:true, ...(await objectives.patchObjectif(params.id, body, claims)) });
+    }
+    if(method === 'DELETE' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des objectifs est réservée aux profils habilités (admin, commandement, formation).' });
+      }
+      return response(200, { ok:true, ...(await objectives.deleteObjectif(params.id, claims)) });
     }
     params = match(path, '/objectifs/:id/cloturer');
     if(method === 'POST' && params){

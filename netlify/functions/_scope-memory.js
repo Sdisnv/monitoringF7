@@ -762,6 +762,9 @@ function createMemoryRepo(){
       objectifs.set(id, next);
       return { ...next };
     },
+    async deleteObjectif(id){
+      objectifs.delete(id);
+    },
     async listAcquittementsByUser(utilisateurId){
       return [...acquittements.values()].filter((row) => row.utilisateur_id === utilisateurId);
     },
