@@ -188,17 +188,18 @@ async function seedPerson(repo, cibleId, spec){
 
   await record('06 — aucun grisage bloquant', () => {
     const renderRows = ui.slice(ui.indexOf('function renderSaisieRows'), ui.indexOf('function uniqueFilterValues'));
+    assert.ok(!ui.includes('Déjà comptabilisé dans le bilan global'));
     assert.ok(!renderRows.includes('blocked || roleLocked'));
-    assert.ok(!renderRows.includes('row.alreadyCountedInSession) return'));
-    assert.ok(ui.includes('Déjà comptabilisé dans le bilan global'));
+    assert.ok(ui.includes('scope-row-session-counted'));
   });
 
   await record('07 — tooltip informatif éventuel', () => {
-    assert.ok(ui.includes('Déjà comptabilisé dans le bilan global'));
+    assert.ok(!ui.includes('Déjà comptabilisé dans le bilan global'));
     assert.strictEqual(logic.sessionExplainTooltip({
       alreadyCountedInSession: true,
-      alreadyCountedTooltip: 'Déjà comptabilisé dans le bilan global'
-    }), 'Déjà comptabilisé dans le bilan global');
+      coveredInGlobalBilan: true,
+      statut: 'NON_RENSEIGNE'
+    }), '');
   });
 
   await record('08 — KPI séance = données séance', () => {

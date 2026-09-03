@@ -79,9 +79,6 @@
   function sessionExplainTooltip(row) {
     if (!row) return '';
     if (row.sessionMessage) return String(row.sessionMessage);
-    if (coveredInGlobalBilan(row)) {
-      return String(row.alreadyCountedTooltip || 'Déjà comptabilisé dans le bilan global');
-    }
     const name = [row.prenom, row.nomFamille || row.nom].filter(Boolean).join(' ') || 'Cette personne';
     const motif = informationMotifLabel(row);
     const exercise = String(row.sessionExerciseLabel || '').trim();
@@ -94,7 +91,7 @@
     if (statut === 'DISPENSE' || row.sessionDispense) {
       return `${name} est dispensé de cet exercice pour la raison suivante : ${motif || '—'}.`;
     }
-    return String(row.alreadyCountedTooltip || '');
+    return '';
   }
 
   function placeSessionTooltip(anchor, tooltip, viewport) {

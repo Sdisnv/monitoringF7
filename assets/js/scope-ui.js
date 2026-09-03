@@ -885,14 +885,6 @@
         const person = personOf(fiche, a.personne_id) || {};
         const cibleLabel = cibleLabelFromAttendu(a);
         const alreadyCountedInSession = Boolean(a.alreadyCountedInSession || a.already_counted_in_session);
-        const fullName = [person.prenom, person.nom].filter(Boolean).join(' ') || displayPerson(fiche, a.personne_id);
-        const referenceLabel = a.sessionReferenceLabel || a.session_reference_label || '—';
-        const referenceQuality = a.sessionReferenceQuality || a.session_reference_quality || 'PAPR';
-        const relation = a.sessionReferenceRelation || a.session_reference_relation;
-        const formateurSessions = a.sessionFormateurSessions || a.session_formateur_sessions || [];
-        const formateurTooltip = referenceQuality === 'Formateur PR' && formateurSessions.length && L.formatFormateurPrTooltip
-          ? L.formatFormateurPrTooltip(fullName, nipOf(fiche, a.personne_id), formateurSessions)
-          : '';
         const sessionHasValidStatus = Boolean(a.sessionHasValidStatus || a.session_has_valid_status);
         const localStatut = part.statut || 'NON_RENSEIGNE';
         const localValid = L.isValidSessionStatut ? L.isValidSessionStatut(localStatut) : (localStatut && localStatut !== 'NON_RENSEIGNE');
@@ -901,11 +893,6 @@
         const coveredInGlobalBilan = Boolean(alreadyCountedInSession || (sessionHasValidStatus && !localValid));
         const displayStatut = localStatut;
         const displayMotif = part.motif_absence || '';
-        const alreadyCountedTooltip = coveredInGlobalBilan
-          ? (formateurTooltip || (referenceQuality === 'Formateur PR'
-            ? `${fullName} (${nipOf(fiche, a.personne_id)}) ${relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'} à la session PR ${referenceLabel} en qualité de ${referenceQuality}.`
-            : 'Déjà comptabilisé dans le bilan global'))
-          : '';
         const sessionExerciseLabel = a.sessionExerciseLabel || a.session_exercise_label
           || (fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionExerciseLabel)
           || (fiche.sessionParticipation && fiche.sessionParticipation.sessionExerciseLabel)
@@ -931,11 +918,11 @@
           jspRole: a.jspRole || a.jsp_role || null,
           alreadyCountedInSession,
           coveredInGlobalBilan,
-          alreadyCountedTooltip,
+          alreadyCountedTooltip: '',
           sessionExcuse,
           sessionDispense,
           sessionHasValidStatus: localValid,
-          sessionMessage: alreadyCountedTooltip || (localValid ? (a.sessionMessage || a.session_message || '') : ''),
+          sessionMessage: localValid ? (a.sessionMessage || a.session_message || '') : '',
           sessionSummary: localValid ? (a.sessionSummary || a.session_summary || '') : '',
           sessionExerciseLabel
         };
@@ -4970,14 +4957,11 @@
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
-      const coveredHint = (L.coveredInGlobalBilan && L.coveredInGlobalBilan(row))
-        ? '<span class="scope-session-info">Déjà comptabilisé dans le bilan global</span>'
-        : '';
       const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : '';
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
         : '';
-      return [motifControl(row), coveredHint, comment, why, manual].filter(Boolean).join('');
+      return [motifControl(row), comment, why, manual].filter(Boolean).join('');
     };
     const roleFlag = (row) => {
       const role = String(row.role || '').toUpperCase();

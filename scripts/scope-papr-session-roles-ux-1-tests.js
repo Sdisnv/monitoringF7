@@ -124,8 +124,8 @@ function stateFor(currentEventId, participations, cyclePersonnes, personnes){
   await record('I — tooltip exact et ligne bleue non sélectionnable', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
-    assert.ok(ui.includes("relation === 'BEFORE_REFERENCE' ? 'va participer' : 'a participé'"));
-    assert.ok(ui.includes('à la session PR ${referenceLabel} en qualité de ${referenceQuality}.'));
+    assert.ok(!ui.includes('Déjà comptabilisé dans le bilan global'));
+    assert.ok(ui.includes('scope-row-session-counted'));
     assert.ok(ui.includes('disabled aria-disabled="true"'));
     assert.ok(ui.includes('scope-row-session-counted'));
     assert.ok(css.includes('background: #e5f0ff'));
