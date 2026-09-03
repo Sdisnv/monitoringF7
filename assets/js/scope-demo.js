@@ -284,12 +284,23 @@
       async patchEvenement(id, body, baseVersion) {
         const evenement = getEvent(id);
         requireVersion(evenement, baseVersion);
+        if (evenement.statut === 'REALISE') {
+          throw new ScopeApiError(422, { error: 'evenement_realise_non_modifiable', message: 'Un événement réalisé doit d’abord être rouvert.' });
+        }
         if (body.libelle) evenement.libelle = String(body.libelle).trim();
+        if (body.date) evenement.date = body.date;
+        if (body.heureDebut !== undefined || body.heure_debut !== undefined) evenement.heure_debut = body.heureDebut || body.heure_debut || null;
+        if (body.heureFin !== undefined || body.heure_fin !== undefined) evenement.heure_fin = body.heureFin || body.heure_fin || null;
+        if (body.statut) evenement.statut = String(body.statut).toUpperCase();
         if (body.cibleIds || body.cible_ids) {
           eventCibles.set(id, [...(body.cibleIds || body.cible_ids)]);
         }
         bump(evenement);
-        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version };
+        return { ok: true, evenement: Object.assign({}, evenement), version: evenement.version, code_cours: evenement.code_cours };
+      },
+      async previewModifierEvenement(id) {
+        const evenement = getEvent(id);
+        return { ok: true, evenement_id: id, code_cours: evenement.code_cours, statut: evenement.statut, modifiable: evenement.statut === 'PLANIFIE' || evenement.statut === 'REPORTE', reouvertureRequise: evenement.statut === 'REALISE', impact: { horsPopulation: [] } };
       },
       async listCycles(params) {
         let list = [...cycles.values()];

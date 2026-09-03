@@ -13,9 +13,8 @@
 --     id F7 = 23a29c2b-1dfc-46a5-bf9c-78af414de808
 --     dateExercice = 2026-06-18
 --
--- 2026-08-27 N’APPARAÎT DANS AUCUNE SOURCE TECHNIQUE DU REPO.
--- NE PAS COMMITTER/EXÉCUTER l’UPDATE ci-dessous tant que le journal
--- SCOPE ne prouve pas une ancienne valeur 2026-08-27.
+-- OBSOLÈTE COMME HOTFIX : la date se corrige via patchEvenement (SCOPE-EVENT-EDIT-1).
+-- L’UPDATE commenté ci-dessous ne doit pas être exécuté.
 --
 -- NE PAS EXÉCUTER depuis Cursor. ROLLBACK par défaut.
 

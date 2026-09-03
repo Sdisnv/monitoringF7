@@ -4411,8 +4411,11 @@
       qty && ev.statut === 'PLANIFIE'
         ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="convert-nominatif">Passer en nominatif</button>'
         : '',
+      !isLegacy && !qty && (ev.statut === 'PLANIFIE' || ev.statut === 'REPORTE')
+        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="edit-event">Modifier l’événement</button>'
+        : '',
       !isLegacy && !qty && ev.statut === 'PLANIFIE'
-        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="retarget-cible">Modifier la cible</button>'
+        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="postpone-event">Reporter</button>'
         : ''
     ].join('');
     return `
@@ -4432,7 +4435,7 @@
           <button type="button" class="scope-btn" id="convert-cancel">Annuler</button>
         </div>
       </div></div>` : ''}
-      ${state.modal === 'retarget-cible' ? renderRetargetCibleModal(ev, fiche) : ''}
+      ${state.modal === 'edit-event' ? renderEditEventModal(ev, fiche) : ''}
     `;
   }
 
@@ -4461,26 +4464,64 @@
     }).filter(Boolean).join(' · ') || 'Exception';
   }
 
-  function renderRetargetCibleModal(ev, fiche) {
+  function openEditEventModal(opts) {
+    const ev = state.fiche && state.fiche.evenement;
+    if (!ev) return;
+    const heureDebut = String(ev.heure_debut || '').slice(0, 5);
+    const heureFin = String(ev.heure_fin || '').slice(0, 5);
+    state.editEventForm = {
+      libelle: ev.libelle || '',
+      date: String(ev.date || '').slice(0, 10),
+      heureDebut,
+      heureFin,
+      cibleIds: ciblesOf(state.fiche).map((c) => c.cible_id || c.cibleId).filter(Boolean),
+      statut: (opts && opts.statut) || ev.statut || 'PLANIFIE',
+      motif: '',
+      warning: '',
+      confirmed: false
+    };
+    state.modal = 'edit-event';
+    render();
+  }
+
+  function renderEditEventModal(ev, fiche) {
+    const form = state.editEventForm || {};
     const domaine = String(ev.domaine_code || ev.domaineCode || '');
     const cibles = L.sortCiblesForEventForm
       ? L.sortCiblesForEventForm((state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine))
       : (state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine);
-    const selected = new Set(state.retargetCibleForm || []);
-    const prHint = domaine === 'PR'
-      ? '<p>Choisissez explicitement Général / PAPR ou PR-ABC. La population attendue est recalculée uniquement parce que l’événement est encore planifié.</p>'
-      : '<p>La cible est stockée sur l’événement. Le libellé n’est pas utilisé pour le ciblage.</p>';
+    const selected = new Set(form.cibleIds || []);
+    const cibleDisabled = ev.statut !== 'PLANIFIE';
+    const warning = form.warning
+      ? `<p class="scope-mode-hint">${escapeHtml(form.warning)}</p>`
+      : '';
     return `<div class="scope-modal"><div class="scope-card">
-      <h3>Modifier la cible</h3>
-      ${prHint}
-      <div id="retarget-cibles" class="scope-chips">
-        ${cibles.map((c) => `<label style="display:inline-flex;gap:6px;align-items:center;font-size:13px">
-          <input type="checkbox" value="${escapeHtml(c.cibleId)}" ${selected.has(c.cibleId) ? 'checked' : ''}> ${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}
-        </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
+      <h3>Modifier l’événement</h3>
+      <p>L’identité de l’événement (code) ne change pas. Les présences déjà saisies sont conservées.</p>
+      <p class="scope-mode-hint">Code : ${escapeHtml(ev.code_cours || '—')}</p>
+      <div class="scope-field"><label>Libellé</label><input id="edit-event-libelle" type="text" value="${escapeHtml(form.libelle || '')}"></div>
+      <div class="scope-field"><label>Date</label><input id="edit-event-date" type="date" value="${escapeHtml(form.date || '')}"></div>
+      <div class="scope-field"><label>Heure de début</label><input id="edit-event-debut" type="time" value="${escapeHtml(form.heureDebut || '')}"></div>
+      <div class="scope-field"><label>Heure de fin</label><input id="edit-event-fin" type="time" value="${escapeHtml(form.heureFin || '')}"></div>
+      <div class="scope-field"><label>Domaine</label><input type="text" value="${escapeHtml(domaineLabel(domaine))}" disabled></div>
+      <div class="scope-field"><label>Cible / OI</label>
+        <div id="edit-event-cibles" class="scope-chips">
+          ${cibles.map((c) => `<label style="display:inline-flex;gap:6px;align-items:center;font-size:13px">
+            <input type="checkbox" value="${escapeHtml(c.cibleId)}" ${selected.has(c.cibleId) ? 'checked' : ''}${cibleDisabled ? ' disabled' : ''}> ${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}
+          </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
+        </div>
       </div>
+      <div class="scope-field"><label>Statut</label>
+        <select id="edit-event-statut">
+          <option value="PLANIFIE" ${form.statut === 'PLANIFIE' ? 'selected' : ''}>Planifié</option>
+          <option value="REPORTE" ${form.statut === 'REPORTE' ? 'selected' : ''}>Reporté</option>
+        </select>
+      </div>
+      <div class="scope-field"><label>Motif de modification</label><textarea id="edit-event-motif" placeholder="Obligatoire pour un report">${escapeHtml(form.motif || '')}</textarea></div>
+      ${warning}
       <div class="scope-actions">
-        <button type="button" class="scope-btn scope-btn-primary" id="retarget-ok">Enregistrer la cible</button>
-        <button type="button" class="scope-btn" id="retarget-cancel">Annuler</button>
+        <button type="button" class="scope-btn scope-btn-primary" id="edit-event-ok">${form.confirmed ? 'Confirmer et enregistrer' : 'Enregistrer les modifications'}</button>
+        <button type="button" class="scope-btn" id="edit-event-cancel">Annuler</button>
       </div>
     </div></div>`;
   }
@@ -5358,11 +5399,12 @@
       A_CREER: 'À créer', VALIDE: 'À créer', DEJA_PRESENT: 'Déjà présent', DEJA_IMPORTE: 'Déjà importé',
       ERREUR: 'Erreur', ERREUR_REFERENTIEL: 'Erreur de référentiel', ERREUR_DATE: 'Date invalide',
       ERREUR_MODE: 'Mode invalide', CONFLIT: 'Conflit', A_ARBITRER: 'À arbitrer', EXCLU: 'Exclu',
-      AVERTISSEMENT: 'Avertissement', NEW_EVENT: 'Nouveau', EXACT_MATCH: 'Reconnu',
+      AVERTISSEMENT: 'Avertissement', NEW_EVENT: 'Nouveau',       EXACT_MATCH: 'Reconnu',
+      DIVERGENCE: 'Divergence',
       PROBABLE_MATCH: 'Probable', GROUPED: 'Regroupé', REVIEW_REQUIRED: 'À contrôler'
     };
     const err = String(statut || '').indexOf('ERREUR') === 0 || statut === 'CONFLIT';
-    const warn = statut === 'A_ARBITRER' || statut === 'AVERTISSEMENT' || statut === 'DEJA_PRESENT' || statut === 'DEJA_IMPORTE';
+    const warn = statut === 'A_ARBITRER' || statut === 'AVERTISSEMENT' || statut === 'DEJA_PRESENT' || statut === 'DEJA_IMPORTE' || statut === 'DIVERGENCE';
     const cls = err ? 'err' : (warn ? 'warn' : 'ok');
     return `<span class="scope-import-pill ${cls}">${escapeHtml(labels[statut] || statut)}</span>`;
   }
@@ -6524,29 +6566,80 @@
         toast('success', 'Mode nominatif', 'Les volumes ont été supprimés. Vous pouvez générer la population.');
       });
     });
-    document.getElementById('retarget-cible')?.addEventListener('click', () => {
-      state.retargetCibleForm = ciblesOf(state.fiche).map((c) => c.cible_id || c.cibleId).filter(Boolean);
-      state.modal = 'retarget-cible';
-      render();
-    });
-    document.getElementById('retarget-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
-    document.getElementById('retarget-cibles')?.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    document.getElementById('edit-event')?.addEventListener('click', () => openEditEventModal());
+    document.getElementById('postpone-event')?.addEventListener('click', () => openEditEventModal({ statut: 'REPORTE' }));
+    document.getElementById('edit-event-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
+    document.getElementById('edit-event-cibles')?.querySelectorAll('input[type="checkbox"]').forEach((input) => {
       input.addEventListener('change', () => {
-        state.retargetCibleForm = [...document.getElementById('retarget-cibles').querySelectorAll('input:checked')].map((el) => el.value);
+        if (!state.editEventForm) return;
+        state.editEventForm.cibleIds = [...document.getElementById('edit-event-cibles').querySelectorAll('input:checked')].map((el) => el.value);
       });
     });
-    document.getElementById('retarget-ok')?.addEventListener('click', () => {
+    ['edit-event-libelle', 'edit-event-date', 'edit-event-debut', 'edit-event-fin', 'edit-event-statut', 'edit-event-motif'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('input', (e) => {
+        if (!state.editEventForm) return;
+        const map = {
+          'edit-event-libelle': 'libelle',
+          'edit-event-date': 'date',
+          'edit-event-debut': 'heureDebut',
+          'edit-event-fin': 'heureFin',
+          'edit-event-statut': 'statut',
+          'edit-event-motif': 'motif'
+        };
+        state.editEventForm[map[id]] = e.target.value;
+      });
+      document.getElementById(id)?.addEventListener('change', (e) => {
+        if (!state.editEventForm) return;
+        const map = {
+          'edit-event-libelle': 'libelle',
+          'edit-event-date': 'date',
+          'edit-event-debut': 'heureDebut',
+          'edit-event-fin': 'heureFin',
+          'edit-event-statut': 'statut',
+          'edit-event-motif': 'motif'
+        };
+        state.editEventForm[map[id]] = e.target.value;
+      });
+    });
+    document.getElementById('edit-event-ok')?.addEventListener('click', () => {
       const id = route().id;
-      const cibleIds = state.retargetCibleForm || [];
+      const form = state.editEventForm || {};
+      const cibleIds = form.cibleIds || [];
       if (!cibleIds.length) {
         toast('error', 'Cible obligatoire', 'Choisissez au moins une cible.');
         return;
       }
+      if (form.statut === 'REPORTE' && !String(form.motif || '').trim()) {
+        toast('error', 'Motif obligatoire', 'Indiquez le motif du report.');
+        return;
+      }
       withLoading(async () => {
-        await client.patchEvenement(id, { cibleIds }, state.fiche.evenement.version);
+        const payload = {
+          libelle: form.libelle,
+          date: form.date,
+          heureDebut: form.heureDebut || null,
+          heureFin: form.heureFin || null,
+          cibleIds,
+          statut: form.statut,
+          motif: form.motif,
+          confirmPopulationImpact: Boolean(form.confirmed)
+        };
+        if (client.previewModifierEvenement && !form.confirmed) {
+          const preview = await client.previewModifierEvenement(id, payload);
+          const hors = (preview.impact && preview.impact.horsPopulation) || [];
+          if (hors.length) {
+            state.editEventForm.warning = hors.length === 1
+              ? 'Une personne déjà prévue ne correspond plus à la nouvelle date ou cible. Ses présences seront conservées.'
+              : `${hors.length} personnes déjà prévues ne correspondent plus à la nouvelle date ou cible. Leurs présences seront conservées.`;
+            state.editEventForm.confirmed = true;
+            render();
+            return;
+          }
+        }
+        await client.patchEvenement(id, payload, state.fiche.evenement.version);
         state.modal = null;
         await loadFiche(id);
-        toast('success', 'Cible mise à jour', 'La population attendue a été recalculée pour cet événement planifié.');
+        toast('success', 'Événement mis à jour', 'Les modifications ont été enregistrées.');
       });
     });
     bindQuantitatifSaisie();

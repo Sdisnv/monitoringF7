@@ -62,7 +62,12 @@
     CONFLIT: 'Conflit',
     A_ARBITRER: 'À arbitrer',
     EXCLU: 'Exclu',
-    AVERTISSEMENT: 'Avertissement'
+    AVERTISSEMENT: 'Avertissement',
+    NEW_EVENT: 'Nouveau',
+    EXACT_MATCH: 'Identique',
+    DIVERGENCE: 'Divergence',
+    PROBABLE_MATCH: 'Probable',
+    REVIEW_REQUIRED: 'À contrôler'
   };
 
   function normalizeHeader(name) {
@@ -532,7 +537,7 @@
     const byExt = new Set();
     const byMode = new Set();
     const byIdentity = new Set();
-    const byCodeCours = new Set();
+    const byCodeCours = new Map();
     const byBusiness = new Map();
     const byBusinessLite = new Map();
     (context && context.evenementsExistants || []).forEach((e) => {
@@ -550,7 +555,7 @@
       const codeCours = String(e.code_cours || e.codeCours || '').trim();
       const codeParts = splitCodeCours(codeCours, e.stat_com || e.statCom, e.qui);
       if (ext) byExt.add(ext);
-      if (codeCours) byCodeCours.add(codeCours);
+      if (codeCours) byCodeCours.set(codeCours, e);
       const base = `nat:${date}|${domaine}|${sous}|${codes}|${libelle}`;
       byIdentity.add(base);
       byMode.add(`${base}|${mode}`);
@@ -578,6 +583,45 @@
       byBusinessLite.set(lite, liteList);
     });
     return { imported, byExt, byMode, byIdentity, byCodeCours, byBusiness, byBusinessLite };
+  }
+
+  function existingEventCibleCodes(event) {
+    return (event && (event.cibles || event.cibleCodes) || [])
+      .map((c) => String((c && (c.niveau_code || c.niveauCode || c)) || '').toUpperCase())
+      .filter(Boolean)
+      .sort()
+      .join('|');
+  }
+
+  function diffImportedCodeCours(existing, incoming) {
+    const diffs = [];
+    if (!existing) return diffs;
+    const avantDate = String(existing.date || '').slice(0, 10);
+    const apresDate = String(incoming.date || '').slice(0, 10);
+    if (avantDate && apresDate && avantDate !== apresDate) {
+      diffs.push({ champ: 'date', avant: avantDate, apres: apresDate });
+    }
+    const avantDebut = normalizeTime(existing.heure_debut || existing.heureDebut);
+    const apresDebut = normalizeTime(incoming.heureDebut);
+    if ((avantDebut || apresDebut) && avantDebut !== apresDebut) {
+      diffs.push({ champ: 'heure_debut', avant: avantDebut || null, apres: apresDebut || null });
+    }
+    const avantFin = normalizeTime(existing.heure_fin || existing.heureFin);
+    const apresFin = normalizeTime(incoming.heureFin);
+    if ((avantFin || apresFin) && avantFin !== apresFin) {
+      diffs.push({ champ: 'heure_fin', avant: avantFin || null, apres: apresFin || null });
+    }
+    const avantLib = normalizeLabelForMatch(existing.libelle);
+    const apresLib = normalizeLabelForMatch(incoming.libelle);
+    if (avantLib && apresLib && avantLib !== apresLib) {
+      diffs.push({ champ: 'libelle', avant: existing.libelle, apres: incoming.libelle });
+    }
+    const avantCibles = existingEventCibleCodes(existing);
+    const apresCibles = String(incoming.cibleCodes || '');
+    if (avantCibles && apresCibles && avantCibles !== apresCibles) {
+      diffs.push({ champ: 'cible', avant: avantCibles, apres: apresCibles });
+    }
+    return diffs;
   }
 
   function sha256Hex(text) {
@@ -902,6 +946,7 @@
       let matchStatus = 'NEW_EVENT';
       let statut = 'NEW_EVENT';
       let actionPrevue = 'CREER';
+      let divergences = [];
       if (errors.length) {
         if (errors.some((e) => e.reviewRequired)) {
           matchStatus = 'CONFLICT';
@@ -912,9 +957,24 @@
           actionPrevue = 'REFUSER';
         }
       } else if (maps.byCodeCours.has(codeCours)) {
-        matchStatus = 'EXACT_MATCH';
-        statut = 'EXACT_MATCH';
-        actionPrevue = 'IGNORER_IDEMPOTENT';
+        const existing = maps.byCodeCours.get(codeCours);
+        divergences = diffImportedCodeCours(existing, {
+          date: dateInfo.iso || '',
+          heureDebut,
+          heureFin,
+          libelle,
+          cibleCodes
+        });
+        if (divergences.length) {
+          matchStatus = 'DIVERGENCE';
+          statut = 'DIVERGENCE';
+          actionPrevue = 'ARBITRER';
+          warnings.push('CODE COURS déjà présent avec une date, un horaire, un libellé ou une cible différents. Aucune mise à jour automatique.');
+        } else {
+          matchStatus = 'EXACT_MATCH';
+          statut = 'EXACT_MATCH';
+          actionPrevue = 'IGNORER_IDEMPOTENT';
+        }
       } else if (businessMatches.length === 1) {
         matchStatus = 'PROBABLE_MATCH';
         statut = 'PROBABLE_MATCH';
@@ -934,6 +994,7 @@
         errors,
         erreurs: errors,
         avertissements: warnings,
+        divergences,
         codeCours,
         code_cours: codeCours,
         codeSource: codeCours,
@@ -994,7 +1055,8 @@
       group.sourceLineNos.push(line.ligneNo);
       group.cibles.push(...line.cibles);
       if (line.statut === 'REVIEW_REQUIRED' || line.matchStatus === 'AMBIGUOUS') group.statut = 'REVIEW_REQUIRED';
-      else if (line.matchStatus === 'EXACT_MATCH' && group.statut !== 'REVIEW_REQUIRED') group.statut = 'EXACT_MATCH';
+      else if (line.matchStatus === 'DIVERGENCE') group.statut = 'DIVERGENCE';
+      else if (line.matchStatus === 'EXACT_MATCH' && group.statut !== 'REVIEW_REQUIRED' && group.statut !== 'DIVERGENCE') group.statut = 'EXACT_MATCH';
       else if (line.matchStatus === 'PROBABLE_MATCH' && group.statut === 'NEW_EVENT') group.statut = 'PROBABLE_MATCH';
       groupsMap.set(line.groupKey, group);
     });
@@ -1006,7 +1068,7 @@
       group.publicCible = displayTargetLabel(group.domaineStockage, group.cibleCodes, group.cibles);
       if (group.lignes.length > 1 && group.statut === 'NEW_EVENT') group.statut = 'GROUPED';
       group.regroupementMetier = group.lignes.some((l) => l.regroupementMetier === 'TERRITORIAL_DISTINCT') ? 'TERRITORIAL_DISTINCT' : 'SPECIALISATION_REGROUPABLE';
-      group.actionPrevue = group.statut === 'REVIEW_REQUIRED' ? 'ARBITRER'
+      group.actionPrevue = group.statut === 'REVIEW_REQUIRED' || group.statut === 'DIVERGENCE' ? 'ARBITRER'
         : (group.statut === 'EXACT_MATCH' ? 'IGNORER_IDEMPOTENT' : 'CREER');
       return group;
     });
@@ -1072,6 +1134,7 @@
     detectCsvFormatFromText,
     parseCsv,
     normalizeDate,
+    diffImportedCodeCours,
     sha256Hex
   };
 });

@@ -305,6 +305,7 @@ grep -q "scope-prabc-jsp-presence-r2-tests.js" package.json
 grep -q "scope-multisession-session-integrity-1-tests.js" package.json
 grep -q "scope-event-data-integrity-1-tests.js" package.json
 grep -q "scope-event-data-integrity-1-r1-tests.js" package.json
+grep -q "scope-event-edit-1-tests.js" package.json
 grep -q "scope-jsp-populations.test.js" package.json
 grep -q "scope-ds-1-tests.js" package.json
 grep -q "scope-ux-event-1-tests.js" package.json

@@ -179,6 +179,10 @@ exports.handler = async function(event){
     if(method === 'POST' && path === '/evenements'){
       return response(201, { ok:true, ...(await service.createEvenement(body, claims)) });
     }
+    params = match(path, '/evenements/:id/preview-modifier');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.previewModifierEvenement(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/preview-attendus');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.previewAttendus(params.id)) });

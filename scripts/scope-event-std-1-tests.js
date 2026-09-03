@@ -685,7 +685,13 @@ async function commit(service, text){
     await commit(service, csv([row({ code: 'DPS.G1.410', date: '14.04.2026', libelle: 'Réimport date' })]));
     const changed = csv([row({ code: 'DPS.G1.410', date: '21.04.2026', libelle: 'Réimport date' })]);
     const preview = await service.previewImportEvenements({ csvText: changed });
-    assert.strictEqual(preview.groups[0].statut, 'EXACT_MATCH');
+    assert.strictEqual(preview.groups[0].statut, 'DIVERGENCE');
+    assert.strictEqual(preview.lignes[0].matchStatus, 'DIVERGENCE');
+    assert.ok((preview.lignes[0].divergences || []).some((d) => d.champ === 'date'));
+    await assert.rejects(
+      () => service.commitImportEvenements({ csvText: changed, filename: 'std.csv', previewToken: preview.previewToken }, ACTOR),
+      (error) => error && error.error === 'import_refuse'
+    );
     assert.strictEqual((await repo.listEvenements({ annee: 2026 })).length, 1);
   });
 

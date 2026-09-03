@@ -151,7 +151,7 @@ function part(person, statut, extra){
     const closed = await ctx.service.cloturer(frozen.eventId, { baseVersion: saved.version }, ACTOR);
     await assert.rejects(
       () => ctx.service.patchEvenement(frozen.eventId, { baseVersion: closed.version, cibleIds: [ctx.abc.cible_id] }, ACTOR),
-      (error) => error instanceof HttpError && error.error === 'cible_immutable_cloture'
+      (error) => error instanceof HttpError && error.error === 'evenement_realise_non_modifiable'
     );
   });
 

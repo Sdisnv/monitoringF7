@@ -286,7 +286,7 @@ function part(person, statut){
     assert.deepStrictEqual(ids, [ctx.abc.cible_id]);
     const ui = readUi();
     assert.ok(ui.includes('Général / PAPR'));
-    assert.ok(ui.includes('id="retarget-cible"'));
+    assert.ok(ui.includes('id="edit-event"'));
     assert.strictEqual(logic.niveauAffiche('PR', 'ABC'), 'PR-ABC');
     assert.strictEqual(logic.niveauAffiche('PR', 'GEN'), 'Général / PAPR');
   });
@@ -304,7 +304,7 @@ function part(person, statut){
         baseVersion: closed.version,
         cibleIds: [ctx.abc.cible_id]
       }, ACTOR),
-      (error) => error instanceof HttpError && error.error === 'cible_immutable_cloture'
+      (error) => error instanceof HttpError && error.error === 'evenement_realise_non_modifiable'
     );
     const fiche = await ctx.service.lireEvenement(frozen.eventId);
     assert.strictEqual(logic.saisieAttendusFromFiche(fiche).length, 76);

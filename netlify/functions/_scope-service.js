@@ -311,14 +311,94 @@ function createScopeService(repo){
     return { evenement, version: evenement.version };
   }
 
+  function normalizeHeureEvent(value){
+    if(value === undefined) return undefined;
+    if(value === null || String(value).trim() === '') return null;
+    const text = String(value).trim();
+    const m = text.match(/^(\d{1,2})[h:.]?(\d{2})?$/i);
+    if(!m) return text;
+    return `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}`;
+  }
+
+  function sameIdList(a, b){
+    const left = (a || []).map((id) => String(id)).sort();
+    const right = (b || []).map((id) => String(id)).sort();
+    return left.length === right.length && left.every((id, i) => id === right[i]);
+  }
+
+  function journalChamps(avant, apres){
+    const keys = ['date', 'heure_debut', 'heure_fin', 'libelle', 'statut'];
+    return keys
+      .filter((key) => String(avant[key] || '') !== String(apres[key] || ''))
+      .map((champ) => ({ champ, avant: avant[champ] ?? null, apres: apres[champ] ?? null }));
+  }
+
+  async function populationImpactForChange(evenement, nextDate, nextCibleIds){
+    const expected = await resolveEligiblePopulation({
+      eventDate: nextDate,
+      domaineCode: evenement.domaine_code,
+      sousDomaineCode: evenement.sous_domaine_code,
+      cibleIds: nextCibleIds
+    });
+    const expectedIds = new Set((expected.personnes || []).map((p) => String(p.personneId)));
+    const attendus = repo.listAttendus ? await repo.listAttendus(evenement.evenement_id) : [];
+    const participations = repo.listParticipations ? await repo.listParticipations(evenement.evenement_id) : [];
+    const partByPerson = new Map(participations.map((row) => [String(row.personne_id), row]));
+    const horsPopulation = [];
+    for(const att of attendus){
+      if(att.inclus === false) continue;
+      const id = String(att.personne_id);
+      if(expectedIds.has(id)) continue;
+      const personne = repo.getPersonne ? await repo.getPersonne(id) : null;
+      const participation = partByPerson.get(id);
+      horsPopulation.push({
+        personneId: id,
+        nip: personne && personne.nip,
+        conservee: participationHasBusinessTrace(participation)
+      });
+    }
+    return {
+      horsPopulation,
+      attendusActuels: attendus.filter((a) => a.inclus !== false).length,
+      attendusCalcules: expected.count,
+      tracesConservees: horsPopulation.filter((row) => row.conservee).length
+    };
+  }
+
+  async function previewModifierEvenement(eventId, body = {}){
+    const evenement = await repo.getEvent(eventId);
+    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    const currentCibles = repo.listEventCibleIds ? await repo.listEventCibleIds(eventId) : [];
+    const nextDate = body.date !== undefined ? isoDate(body.date) : isoDate(evenement.date);
+    const nextCibles = body.cibleIds || body.cible_ids || currentCibles;
+    const impact = (body.date !== undefined || body.cibleIds !== undefined || body.cible_ids !== undefined)
+      ? await populationImpactForChange(evenement, nextDate, nextCibles)
+      : { horsPopulation: [], attendusActuels: null, attendusCalcules: null, tracesConservees: 0 };
+    return {
+      evenement_id: eventId,
+      code_cours: evenement.code_cours,
+      statut: evenement.statut,
+      modifiable: evenement.statut === 'PLANIFIE' || evenement.statut === 'REPORTE',
+      reouvertureRequise: evenement.statut === 'REALISE',
+      impact
+    };
+  }
+
   async function patchEvenement(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-    const patch = {};
     if(body.codeCours !== undefined || body.code_cours !== undefined){
       throw new HttpError(422, 'code_cours_immutable', 'CODE COURS immuable après création.');
     }
+    if(evenement.statut === 'REALISE'){
+      throw new HttpError(422, 'evenement_realise_non_modifiable', 'Un événement réalisé doit d’abord être rouvert.');
+    }
+    if(evenement.statut === 'ANNULE'){
+      throw new HttpError(422, 'evenement_annule_non_modifiable', 'Un événement annulé n’est plus modifiable.');
+    }
+    const patch = {};
+    const motif = String(body.motif || body.commentaire || '').trim();
     if(body.libelle !== undefined){
       const libelle = String(body.libelle || '').trim();
       if(!libelle) throw new HttpError(400, 'libelle_vide', 'Le libellé est obligatoire.');
@@ -327,11 +407,15 @@ function createScopeService(repo){
     const wantsDate = body.date !== undefined;
     const wantsDomaine = body.domaineCode !== undefined || body.domaine_code !== undefined;
     const wantsCibles = body.cibleIds !== undefined || body.cible_ids !== undefined;
-    if(evenement.population_figee && (wantsDate || wantsDomaine)){
-      throw new HttpError(422, 'population_figee_immutable', 'Date et domaine ne peuvent plus être modifiés après gel.');
+    const wantsStatut = body.statut !== undefined;
+    if(wantsDomaine && evenement.population_figee){
+      throw new HttpError(422, 'population_figee_immutable', 'Le domaine ne peut plus être modifié après gel.');
     }
     if(wantsCibles && evenement.statut !== 'PLANIFIE'){
-      throw new HttpError(422, 'cible_immutable_cloture', 'La cible d’un événement réalisé n’est pas modifiable.');
+      throw new HttpError(422, 'cible_immutable_cloture', 'La cible n’est modifiable que sur un événement planifié.');
+    }
+    if(wantsDate && evenement.statut !== 'PLANIFIE' && evenement.statut !== 'REPORTE'){
+      throw new HttpError(422, 'date_immutable_statut', 'La date n’est modifiable que sur un événement planifié ou reporté.');
     }
     if(wantsDate){
       const date = isoDate(body.date);
@@ -342,43 +426,108 @@ function createScopeService(repo){
       patch.domaine_code = String(body.domaineCode || body.domaine_code);
     }
     if(body.heureDebut !== undefined || body.heure_debut !== undefined || body.debut !== undefined){
-      patch.heure_debut = body.heureDebut || body.heure_debut || body.debut || null;
+      patch.heure_debut = normalizeHeureEvent(body.heureDebut || body.heure_debut || body.debut);
     }
     if(body.heureFin !== undefined || body.heure_fin !== undefined || body.fin !== undefined){
-      patch.heure_fin = body.heureFin || body.heure_fin || body.fin || null;
+      patch.heure_fin = normalizeHeureEvent(body.heureFin || body.heure_fin || body.fin);
     }
     if(body.salle !== undefined) patch.salle = String(body.salle || '').trim() || null;
     if(body.responsable !== undefined) patch.responsable = String(body.responsable || '').trim() || null;
+    if(wantsStatut){
+      const statut = String(body.statut || '').toUpperCase();
+      if(!['PLANIFIE', 'REPORTE', 'ANNULE'].includes(statut)){
+        throw new HttpError(422, 'statut_invalide', 'Statut opérationnel invalide.');
+      }
+      if(statut !== evenement.statut && !motif){
+        throw new HttpError(400, 'motif_obligatoire', 'Un motif est obligatoire pour reporter ou annuler.');
+      }
+      patch.statut = statut;
+    }
+    const currentCibles = repo.listEventCibleIds ? await repo.listEventCibleIds(eventId) : [];
+    const nextCibles = wantsCibles ? (body.cibleIds || body.cible_ids) : currentCibles;
+    if(wantsCibles){
+      if(!Array.isArray(nextCibles) || !nextCibles.length){
+        throw new HttpError(400, 'cibles_obligatoires', 'Au moins une cible est obligatoire.');
+      }
+    }
+    const nextDate = patch.date || isoDate(evenement.date);
+    const needsResync = evenement.population_figee
+      && (evenement.statut === 'PLANIFIE' || patch.statut === 'PLANIFIE')
+      && (wantsDate || (wantsCibles && !sameIdList(currentCibles, nextCibles)))
+      && (patch.statut || evenement.statut) !== 'ANNULE'
+      && (patch.statut || evenement.statut) !== 'REALISE';
+    if((wantsDate || wantsCibles) && evenement.population_figee){
+      const impact = await populationImpactForChange(evenement, nextDate, nextCibles);
+      if(impact.tracesConservees && !body.confirmPopulationImpact && !body.confirm_population_impact){
+        throw new HttpError(409, 'population_impact', 'Ce changement sort des personnes déjà saisies de la population attendue. Confirmez pour conserver leurs statuts.', {
+          impact
+        });
+      }
+    }
     const next = await repo.withTransaction(async (tx) => {
       const updated = await bumpOrConflict(tx, eventId, baseVersion, patch);
       let current = updated;
       if(wantsCibles){
-        const cibleIds = body.cibleIds || body.cible_ids;
-        if(!Array.isArray(cibleIds) || !cibleIds.length){
-          throw new HttpError(400, 'cibles_obligatoires', 'Au moins une cible est obligatoire.');
-        }
-        await tx.setEventCibles(eventId, cibleIds);
-        if(evenement.population_figee){
-          await syncExpectedPopulationForEvents(tx, [await tx.getEvent(eventId)], actor, { allPersons: true });
-          current = await tx.getEvent(eventId);
-        }
+        await tx.setEventCibles(eventId, nextCibles);
       }
+      if(needsResync){
+        await syncExpectedPopulationForEvents(tx, [await tx.getEvent(eventId)], actor, {
+          allPersons: true,
+          reason: 'EVENT_EDIT_POPULATION'
+        });
+        current = await tx.getEvent(eventId);
+      }
+      const champs = journalChamps({
+        date: isoDate(evenement.date),
+        heure_debut: evenement.heure_debut || null,
+        heure_fin: evenement.heure_fin || null,
+        libelle: evenement.libelle,
+        statut: evenement.statut
+      }, {
+        date: isoDate(current.date),
+        heure_debut: current.heure_debut || null,
+        heure_fin: current.heure_fin || null,
+        libelle: current.libelle,
+        statut: current.statut
+      });
+      if(wantsCibles && !sameIdList(currentCibles, nextCibles)){
+        champs.push({ champ: 'cible', avant: currentCibles, apres: nextCibles });
+      }
+      const action = patch.statut === 'REPORTE' && evenement.statut !== 'REPORTE'
+        ? 'REPORTER'
+        : (patch.statut === 'ANNULE' ? 'ANNULER' : (wantsCibles && evenement.population_figee ? 'RETARGET_CIBLES' : 'MODIFIER'));
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: wantsCibles && evenement.population_figee ? 'RETARGET_CIBLES' : 'MODIFIER',
-        avant: { version: evenement.version },
+        action,
+        commentaire: motif || null,
+        avant: {
+          evenement_id: eventId,
+          code_cours: evenement.code_cours,
+          date: isoDate(evenement.date),
+          heure_debut: evenement.heure_debut || null,
+          heure_fin: evenement.heure_fin || null,
+          libelle: evenement.libelle,
+          statut: evenement.statut,
+          version: evenement.version
+        },
         apres: {
+          evenement_id: eventId,
+          code_cours: current.code_cours,
+          date: isoDate(current.date),
+          heure_debut: current.heure_debut || null,
+          heure_fin: current.heure_fin || null,
+          libelle: current.libelle,
+          statut: current.statut,
           version: current.version,
-          patch,
-          cibleIds: wantsCibles ? (body.cibleIds || body.cible_ids) : undefined,
-          populationResynced: Boolean(wantsCibles && evenement.population_figee)
+          champs,
+          populationResynced: Boolean(needsResync)
         }
       });
       return current;
     });
-    return { evenement: next, version: next.version };
+    return { evenement: next, version: next.version, code_cours: next.code_cours };
   }
 
   async function resolveEligiblePopulation({ eventDate, domaineCode, sousDomaineCode, cibleIds, suiviNominatif, store }){
@@ -2461,7 +2610,7 @@ function createScopeService(repo){
     );
     const groups = (preview.groups || []).filter((g) => !g.sourceLineNos.every((n) => excluded.has(n)));
     const blockingLines = preview.lignes.filter((l) => !excluded.has(l.ligneNo) && l.statut === 'ERREUR');
-    const blockingGroups = groups.filter((g) => g.statut === 'REVIEW_REQUIRED');
+    const blockingGroups = groups.filter((g) => g.statut === 'REVIEW_REQUIRED' || g.statut === 'DIVERGENCE');
     if(blockingLines.length || blockingGroups.length){
       throw new HttpError(422, 'import_refuse', 'Des lignes en erreur ou à contrôler doivent être corrigées ou exclues avant commit.', {
         erreurs: blockingLines.map((l) => ({ ligneNo: l.ligneNo, raison: l.raison })),
@@ -3158,6 +3307,7 @@ function createScopeService(repo){
     listEvenements,
     createEvenement,
     patchEvenement,
+    previewModifierEvenement,
     previewAttendus,
     resolveEligiblePopulation,
     figerPopulation,

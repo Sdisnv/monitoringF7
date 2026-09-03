@@ -14,7 +14,6 @@ const logic = require('../assets/js/scope-ui-logic.js');
 const ROOT = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
-const sql = fs.readFileSync(path.join(ROOT, 'database/ops/20260903_fix_jsp6_b1_date.sql'), 'utf8');
 const fixture = fs.readFileSync(path.join(ROOT, 'tests/fixtures/scope-jsp6-b1-planning-reference.csv'), 'utf8');
 const f7Json = fs.readFileSync(path.join(ROOT, 'assets/data/monitoring_exercices_sdis_2026_2026-04-24_1446.json'), 'utf8');
 const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;public_cible;responsable;salle;STAT.COM.';
@@ -116,10 +115,10 @@ async function seedPerson(repo, cibleId, spec){
     ]));
     const b1 = await repo.getEvent(result.created.find((c) => c.codeCours === '010JB1.445').evenementId);
     const c1 = await repo.getEvent(result.created.find((c) => c.codeCours === '010JC1JSP.1').evenementId);
-    await repo.updateEventIfVersion(b1.evenement_id, b1.version, { date: '2026-08-27' });
-    assert.strictEqual(String((await repo.getEvent(b1.evenement_id)).date).slice(0, 10), '2026-08-27');
+    const moved = await service.patchEvenement(b1.evenement_id, { baseVersion: b1.version, date: '2026-08-27' }, ACTOR);
+    assert.strictEqual(String(moved.evenement.date).slice(0, 10), '2026-08-27');
     assert.strictEqual(String((await repo.getEvent(c1.evenement_id)).date).slice(0, 10), '2026-06-01');
-    assert.strictEqual((await repo.getEvent(b1.evenement_id)).code_cours, '010JB1.445');
+    assert.strictEqual(moved.evenement.code_cours, '010JB1.445');
   });
 
   await record('05 — participations existantes protégées', async () => {
@@ -142,13 +141,15 @@ async function seedPerson(repo, cibleId, spec){
       participations: [{ personneId: person.personne_id, statut: 'PRESENT', role: 'PARTICIPANT' }]
     }, ACTOR);
     const eventId = created.evenement.evenement_id;
-    await repo.updateEventIfVersion(eventId, saved.version, { date: '2026-08-27' });
+    await service.patchEvenement(eventId, {
+      baseVersion: saved.version,
+      date: '2026-08-27',
+      confirmPopulationImpact: true
+    }, ACTOR);
     const parts = await repo.listParticipations(eventId);
     assert.strictEqual(parts.length, 1);
     assert.strictEqual(parts[0].statut, 'PRESENT');
-    assert.ok(sql.includes('Participations déjà saisies'));
-    assert.ok(!sql.includes('delete from scope_participations'));
-    assert.ok(!sql.includes('set code_cours'));
+    assert.strictEqual(String((await repo.getEvent(eventId)).code_cours), '010JB1.445');
   });
 
   await record('06 — événement RÉALISÉ non resynchronisé', async () => {
@@ -173,7 +174,7 @@ async function seedPerson(repo, cibleId, spec){
     const after = await service.lireEvenement(created.evenement.evenement_id);
     assert.strictEqual(after.evenement.statut, 'REALISE');
     assert.strictEqual(after.attendus.length, before);
-    assert.ok(sql.includes('INTERDIT si REALISE'));
+    assert.ok(ui.includes('id="edit-event"'));
   });
 
   await record('07 — événement PLANIFIÉ resync uniquement lui-même', async () => {
@@ -236,10 +237,8 @@ async function seedPerson(repo, cibleId, spec){
 
   await record('10 — R4 global non modifié', () => {
     assert.ok(rulesSrc.includes('function computePrExerciseParticipationState'));
-    assert.ok(sql.includes("set date = date '2026-08-27'"));
-    assert.ok(/rollback;/i.test(sql));
-    assert.ok(sql.includes('-- commit;'));
-    assert.ok(sql.includes('STOP si 0 ou >1 ligne'));
+    assert.ok(ui.includes('Modifier l’événement'));
+    assert.ok(!ui.includes('id="retarget-cible"'));
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

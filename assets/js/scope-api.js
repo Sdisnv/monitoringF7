@@ -132,6 +132,7 @@
       getEvenement(id) { return request('GET', `/evenements/${encodeURIComponent(id)}`); },
       createEvenement(body) { return request('POST', '/evenements', body); },
       patchEvenement(id, body, baseVersion) { return request('PATCH', `/evenements/${encodeURIComponent(id)}`, withBaseVersion(body, baseVersion)); },
+      previewModifierEvenement(id, body) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-modifier`, body || {}); },
       previewAttendus(id) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-attendus`, {}); },
       figer(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/figer`, withBaseVersion({}, baseVersion)); },
       ajouterException(id, body, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/exceptions`, withBaseVersion(body, baseVersion)); },
