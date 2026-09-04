@@ -3832,7 +3832,7 @@
 
   function renderRapports() {
     const form = state.reportForm;
-    const roots = ['FOBA', 'FOCA', 'DPS', 'DAP', 'FOSPEC', 'JSP'];
+    const domainPeriodRoots = ['DPS', 'DAP', 'JSP'];
     const targetDomaines = (state.referentiels.domaines || []).map((d) => d.code);
     const cibles = (state.referentiels.cibles || []).filter((c) => c.domaineCode === form.domaine);
     const events = (state.list || []).slice(0, 40);
@@ -3850,14 +3850,14 @@
             <div class="scope-field"><label>Type de rapport</label>
               <select id="report-kind">
                 <option value="PERIOD" ${form.kind === 'PERIOD' ? 'selected' : ''}>Période SDIS</option>
-                <option value="DOMAIN" ${form.kind === 'DOMAIN' ? 'selected' : ''}>Domaine</option>
+                <option value="DOMAIN" ${form.kind === 'DOMAIN' ? 'selected' : ''}>Domaine / période</option>
                 <option value="TARGET" ${form.kind === 'TARGET' ? 'selected' : ''}>Cible / OI</option>
                 <option value="EVENT" ${form.kind === 'EVENT' ? 'selected' : ''}>Événement</option>
               </select>
             </div>
             ${form.kind === 'DOMAIN' || form.kind === 'TARGET' ? `<div class="scope-field"><label>Domaine</label>
               <select id="report-domaine">
-                ${(form.kind === 'DOMAIN' ? roots : targetDomaines).map((code) => `<option value="${escapeHtml(code)}" ${form.domaine === code ? 'selected' : ''}>${escapeHtml(domaineLabel(code))}</option>`).join('')}
+                ${(form.kind === 'DOMAIN' ? domainPeriodRoots : targetDomaines).map((code) => `<option value="${escapeHtml(code)}" ${form.domaine === code ? 'selected' : ''}>${escapeHtml(domaineLabel(code))}</option>`).join('')}
               </select>
             </div>` : ''}
             ${form.kind === 'TARGET' ? `<div class="scope-field"><label>Cible / OI</label>
@@ -6976,6 +6976,9 @@
   function bindReports() {
     document.getElementById('report-kind')?.addEventListener('change', (e) => {
       state.reportForm.kind = e.target.value;
+      if (state.reportForm.kind === 'DOMAIN' && !['DPS', 'DAP', 'JSP'].includes(state.reportForm.domaine)) {
+        state.reportForm.domaine = 'DPS';
+      }
       render();
     });
     document.getElementById('report-domaine')?.addEventListener('change', (e) => {

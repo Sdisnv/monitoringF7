@@ -989,6 +989,77 @@ class ScopePdfRenderer {
     this.drawDomainSignature(m);
   }
 
+  renderDomainPeriodBody(m){
+    const innerW = PAGE_W - 2 * MARGIN;
+    const v = (m.officiel && m.officiel.volumes) || {};
+    this.kv([
+      { label: 'Domaine', value: domaineLabel(m.domaine) || m.domaine || '—' },
+      { label: 'Période', value: `${formatDisplayDate(m.period && m.period.from)} - ${formatDisplayDate(m.period && m.period.to)}` },
+      { label: 'Événements pertinents', value: String((m.officiel && m.officiel.eventCount) || 0) },
+      { label: 'Population / dénominateur', value: formatVolume(m.officiel) },
+      { label: 'Taux officiel', value: formatTaux(m.officiel && m.officiel.percentage) },
+      { label: 'Statut analytique', value: (m.officiel && m.officiel.analyticStatus) || 'NON_EVALUABLE' }
+    ], { cols: 3, rowH: 24 });
+
+    this.iconHeading('kpi', 'Synthèse globale du domaine', TYPE.section, { after: TYPE.sectionGap });
+    const gap = 5;
+    const cells = [
+      ['Population', String((m.officiel && m.officiel.denominator) || 0)],
+      ['Présents', String(v.presents || 0)],
+      ['Excusés', String(v.excuses || 0)],
+      ['Absents', String(v.nonExcuses || 0)],
+      ['Dispensés', String(v.dispenses || 0)],
+      ['Taux officiel', formatTaux(m.officiel && m.officiel.percentage)]
+    ];
+    const w = (innerW - gap * 5) / 6;
+    const h = 38;
+    const y = this.doc.y;
+    cells.forEach((cell, i) => {
+      const x = MARGIN + i * (w + gap);
+      this.doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.5).stroke();
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8)
+        .text(cell[1], x + 3, y + 5, { width: w - 6, align: 'center' });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6)
+        .text(cell[0], x + 3, y + 22, { width: w - 6, align: 'center' });
+    });
+    this.doc.y = y + h + 8;
+    if(m.domaine === 'DAP'){
+      this.para(`dont permutations : ${Number(v.permutations || 0)}  (sous-ensemble des présents, jamais additionnées, jamais transformées en absence)`, { size: 8 });
+    }
+
+    this.iconHeading('chart', 'Analyse graphique', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+    if(m.graphs && m.graphs.children) this.chart('Comparaison par OI', m.graphs.children);
+    if(m.graphs && m.graphs.composition) this.chart('Répartition globale des statuts', m.graphs.composition);
+
+    this.iconHeading('kpi', 'Ventilation par OI', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+    const rows = (m.domainPeriod && m.domainPeriod.oiRows) || [];
+    if(rows.length){
+      this.table(
+        ['OI', 'Population', 'Présents', 'Excusés', 'Absents', 'Dispensés', 'Taux'],
+        rows.map((row) => {
+          const o = row.officiel || {};
+          const volumes = o.volumes || {};
+          return [
+            row.label || row.code || '',
+            String(o.denominator || 0),
+            String(volumes.presents || 0),
+            String(volumes.excuses || 0),
+            String(volumes.nonExcuses || 0),
+            String(volumes.dispenses || 0),
+            formatTaux(o.percentage)
+          ];
+        }),
+        [76, 66, 58, 58, 58, 62, 81],
+        { align: ['left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+      );
+    } else {
+      this.para('Aucune OI active avec agrégat officiel sur cette période.');
+    }
+
+    if(Number(v.excuses || 0) > 0) this.motifs(m.officiel, { compact: true });
+    this.eventsTable(m.events);
+  }
+
   render(){
     const m = this.model;
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(14)
@@ -1035,6 +1106,11 @@ class ScopePdfRenderer {
 
     if(m.kind === 'EVENT' && m.event){
       this.renderEventBody(m);
+      return;
+    }
+
+    if(m.kind === 'DOMAIN' && m.domainPeriod){
+      this.renderDomainPeriodBody(m);
       return;
     }
 

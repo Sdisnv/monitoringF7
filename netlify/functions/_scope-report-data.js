@@ -14,6 +14,11 @@ const { collectMultisessionReport } = require('./_scope-multisession-report');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 
 const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
+const DOMAIN_PERIOD_OI = Object.freeze({
+  DPS: ['G1', 'C1', 'B1', 'B2'],
+  DAP: ['Y1', 'Y2', 'Y3', 'Y4'],
+  JSP: ['G1', 'C1', 'B1']
+});
 
 function reportGradeRank(grade){
   const code = PersonnelRefs.canonicalGradeCode(grade);
@@ -155,6 +160,24 @@ function buildFilename(kind, ctx){
   const date = ctx.eventDate || '';
   const oi = ctx.cible || 'GEN';
   return sanitizeFilename(`SCOPE_Exercice_${ctx.domaine || 'SCOPE'}_${oi}_${date}.pdf`);
+}
+
+function domainPeriodOiRows(dash, domaine){
+  const code = displayDomaineCode(domaine);
+  const order = DOMAIN_PERIOD_OI[code] || [];
+  const rows = (dash.cibles || [])
+    .filter((row) => row && row.officiel)
+    .filter((row) => !order.length || order.includes(String(row.niveauCode || row.niveau_code || '')))
+    .map((row) => ({
+      id: row.cibleId || row.cible_id || row.niveauCode,
+      code: row.niveauCode || row.niveau_code || '',
+      label: [code, row.niveauCode || row.niveau_code].filter(Boolean).join(' '),
+      libelle: row.libelle || '',
+      officiel: row.officiel
+    }));
+  if(!order.length) return rows;
+  const byCode = new Map(rows.map((row) => [String(row.code), row]));
+  return order.map((niveau) => byCode.get(niveau)).filter(Boolean);
 }
 
 function pickAlerts(alertsPayload){
@@ -459,7 +482,8 @@ async function collectReport(repo, query, options){
   }
   const title = kind === 'PERIOD'
     ? 'Rapport de période — commandement'
-    : (kind === 'DOMAIN' ? `Rapport de domaine — ${domaine}` : `Rapport de cible / OI — ${perimeterTitle(kind, { domaine, cible: cibleCode })}`);
+    : (kind === 'DOMAIN' ? `Rapport de participation — ${domaineLabel(domaine) || domaine}` : `Rapport de cible / OI — ${perimeterTitle(kind, { domaine, cible: cibleCode })}`);
+  const oiRows = kind === 'DOMAIN' ? domainPeriodOiRows(dash, domaine) : [];
   return {
     kind: kind === 'PERIOD' ? 'PERIOD' : kind,
     period: dash.period,
@@ -486,7 +510,14 @@ async function collectReport(repo, query, options){
     inboxCount: (dash.inbox || []).length,
     absencesNonExcusees: dash.absencesNonExcusees,
     domaines: kind === 'PERIOD' ? (dash.graphs.domaines.series[0] && dash.graphs.domaines.series[0].points) || [] : [],
-    children: (dash.graphs.children && dash.graphs.children.series[0] && dash.graphs.children.series[0].points) || []
+    children: (dash.graphs.children && dash.graphs.children.series[0] && dash.graphs.children.series[0].points) || [],
+    domainPeriod: kind === 'DOMAIN' ? {
+      supported: Boolean(DOMAIN_PERIOD_OI[displayDomaineCode(domaine)]),
+      oiRows,
+      oiOrder: DOMAIN_PERIOD_OI[displayDomaineCode(domaine)] || [],
+      eventCount: dash.officiel && dash.officiel.eventCount,
+      source: 'dashboard.dashboard -> analytics.evaluate'
+    } : null
   };
 }
 
@@ -500,6 +531,7 @@ module.exports = {
   sanitizeFilename,
   buildFilename,
   periodSlug,
+  domainPeriodOiRows,
   collectReport,
   nominativeRows,
   exerciseReportTitle,
