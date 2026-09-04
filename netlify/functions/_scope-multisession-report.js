@@ -431,7 +431,7 @@ function buildSessionDataset(bundle){
         id: 'session-repartition',
         type: 'donut',
         legendPlacement: 'bottom',
-        question: 'Répartition globale des participations',
+        question: 'Répartition de la population par statut',
         series: [{ id: 'repartition', points: donutPoints }]
       },
       tauxSeances: {
@@ -452,7 +452,7 @@ function buildSessionDataset(bundle){
         id: 'session-volumes',
         type: 'lines',
         mode: 'lines',
-        question: 'Volumes par statut et par séance',
+        question: 'Répartition des statuts par séance (%)',
         categories: seanceLabels,
         series: [
           { label: 'Présents', token: 'present', points: seances.map((s) => ({ label: s.label, value: share(s.presents, s.populationRenseignee) })) },

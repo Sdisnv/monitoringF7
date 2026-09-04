@@ -77,6 +77,7 @@ async function setupPr(year, groupSuffix, peopleSpec, sessionCount = 6){
       evenement_id: `${groupSuffix}-s${i}`,
       cycle_id: cycleId,
       domaine_code: 'PR',
+      statut: 'REALISE',
       date: `${year}-09-0${i}`,
       libelle: `Exercice PR 1.${i} | Base`,
       code_cours: `PAPR.PR1.${groupSuffix}.${i}`,

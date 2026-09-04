@@ -74,6 +74,7 @@ async function setupPr(year, groupSuffix, peopleSpec, sessionCount = 6){
       evenement_id: `${groupSuffix}-s${i}`,
       cycle_id: cycleId,
       domaine_code: 'PR',
+      statut: 'REALISE',
       date: `${year}-09-0${i}`,
       libelle: `Exercice PR 1.${i} | Base`,
       code_cours: `PAPR.PR1.${groupSuffix}.${i}`,
@@ -293,10 +294,12 @@ async function seedCurrent(){
     await repo.insertCycle({ cycle_id: 'c-auto', annee: 2026, domaine_code: 'AUTO', type_cycle: 'AUTO', libelle: 'Cycle AUTO' });
     const a1 = await repo.insertEvenement({
       evenement_id: 'auto-1', cycle_id: 'c-auto', domaine_code: 'AUTO', date: '2026-03-01',
+      statut: 'REALISE',
       libelle: 'AUTO séance 1', pr_exercise_group_key: 'c-auto:AUTO:1', pr_session_key: 'c-auto:AUTO:1.1'
     });
     const a2 = await repo.insertEvenement({
       evenement_id: 'auto-2', cycle_id: 'c-auto', domaine_code: 'AUTO', date: '2026-03-02',
+      statut: 'REALISE',
       libelle: 'AUTO séance 2', pr_exercise_group_key: 'c-auto:AUTO:1', pr_session_key: 'c-auto:AUTO:1.2'
     });
     await repo.updateEventIfVersion(a1.evenement_id, 1, { population_figee: true });

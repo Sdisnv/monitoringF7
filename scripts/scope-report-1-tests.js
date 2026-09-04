@@ -423,7 +423,9 @@ async function gen(repo, body, claims){
     assert.strictEqual(a.sha256, b.sha256);
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-pdf-viewer.js'), 'utf8');
     assert.ok(ui.includes('data-pdf-download'));
-    assert.ok(ui.includes('URL.createObjectURL(current.blob)'));
+    assert.ok(ui.includes('ensureDownloadUrl'));
+    assert.ok(ui.includes('current.blob'));
+    assert.ok(ui.includes('scheduleDownloadUrlRevoke'));
   });
 
   await record('26 — viewer pagination zoom fermer', async () => {

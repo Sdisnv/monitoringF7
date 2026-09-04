@@ -29,6 +29,9 @@
   let renderTask = null;
   let page = 1;
   let zoom = 'page-width';
+  let downloadUrl = null;
+  let downloadRevokeTimer = null;
+  const DOWNLOAD_REVOKE_DELAY_MS = 60000;
 
   function pdfjs() {
     return root.pdfjsLib;
@@ -48,8 +51,57 @@
     pdfDoc = null;
   }
 
+  function safePdfFilename(value) {
+    const raw = String(value || 'SCOPE_Rapport.pdf').trim() || 'SCOPE_Rapport.pdf';
+    const cleaned = raw.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/\s+/g, '_');
+    return /\.pdf$/i.test(cleaned) ? cleaned : `${cleaned}.pdf`;
+  }
+
+  function isSafariBrowser() {
+    const ua = String(root.navigator && root.navigator.userAgent || '');
+    return /Safari/i.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg\//i.test(ua);
+  }
+
+  function supportsDownloadAttribute() {
+    if (!root.document) return false;
+    return 'download' in root.document.createElement('a');
+  }
+
+  function revokeDownloadUrl() {
+    if (downloadRevokeTimer) clearTimeout(downloadRevokeTimer);
+    downloadRevokeTimer = null;
+    if (downloadUrl) {
+      try { URL.revokeObjectURL(downloadUrl); } catch (_error) { /* ignore */ }
+      downloadUrl = null;
+    }
+  }
+
+  function createNamedPdfBlob(blob, filename) {
+    if (typeof root.File === 'function') {
+      try {
+        return new root.File([blob], filename, { type: 'application/pdf' });
+      } catch (_error) { /* ignore */ }
+    }
+    return blob;
+  }
+
+  function ensureDownloadUrl() {
+    if (!current.blob) return '';
+    if (downloadUrl) return downloadUrl;
+    const filename = safePdfFilename(current.filename);
+    const blob = createNamedPdfBlob(current.blob, filename);
+    downloadUrl = URL.createObjectURL(blob);
+    return downloadUrl;
+  }
+
+  function scheduleDownloadUrlRevoke(delayMs) {
+    if (downloadRevokeTimer) clearTimeout(downloadRevokeTimer);
+    downloadRevokeTimer = setTimeout(revokeDownloadUrl, delayMs || DOWNLOAD_REVOKE_DELAY_MS);
+  }
+
   function close() {
     destroyDoc();
+    revokeDownloadUrl();
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
     overlay = null;
     document.body.classList.remove('scope-pdf-open');
@@ -57,14 +109,22 @@
 
   function download() {
     if (!current.blob) return;
-    const url = URL.createObjectURL(current.blob);
+    const url = ensureDownloadUrl();
+    const filename = safePdfFilename(current.filename);
+    if (isSafariBrowser() && !supportsDownloadAttribute()) {
+      const opened = root.open ? root.open(url, '_blank', 'noopener') : null;
+      if (!opened && root.location) root.location.href = url;
+      scheduleDownloadUrlRevoke();
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
-    a.download = current.filename || 'SCOPE_Rapport.pdf';
+    a.download = filename;
+    a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    setTimeout(() => { if (a.parentNode) a.remove(); }, 0);
+    scheduleDownloadUrlRevoke();
   }
 
   function syncButtons() {
@@ -134,7 +194,7 @@
     close();
     current = {
       blob: payload.blob || (payload.buffer ? new Blob([payload.buffer], { type: 'application/pdf' }) : null),
-      filename: payload.filename || 'SCOPE_Rapport.pdf',
+      filename: safePdfFilename(payload.filename),
       pages: Number(payload.pages || 1) || 1,
       sha256: payload.sha256 || ''
     };
@@ -199,5 +259,5 @@
     }
   });
 
-  root.ScopePdfViewer = { open, close, download };
+  root.ScopePdfViewer = { open, close, download, _test: { safePdfFilename, isSafariBrowser, supportsDownloadAttribute, ensureDownloadUrl, revokeDownloadUrl, scheduleDownloadUrlRevoke } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -44,6 +44,7 @@ function eventSpec(id, section, extras = {}){
     evenement_id: id,
     cycle_id: extras.cycle_id || 'cycle-pr-msr',
     domaine_code: extras.domaine_code || 'PR',
+    statut: extras.statut || 'REALISE',
     date: extras.date || `2026-09-0${section}`,
     libelle: extras.libelle || `Exercice PR 1.${section} | Base`,
     code_cours: extras.code_cours || `PAPR.PR1MSR.${section}`,
@@ -222,10 +223,12 @@ async function collectSession(repo, eventId){
     await repo.insertCycle({ cycle_id: 'c-auto', annee: 2026, domaine_code: 'AUTO', type_cycle: 'AUTO', libelle: 'Cycle AUTO' });
     const a1 = await repo.insertEvenement({
       evenement_id: 'auto-1', cycle_id: 'c-auto', domaine_code: 'AUTO', date: '2026-03-01',
+      statut: 'REALISE',
       libelle: 'AUTO séance 1', pr_exercise_group_key: 'c-auto:AUTO:1', pr_session_key: 'c-auto:AUTO:1.1'
     });
     const a2 = await repo.insertEvenement({
       evenement_id: 'auto-2', cycle_id: 'c-auto', domaine_code: 'AUTO', date: '2026-03-02',
+      statut: 'REALISE',
       libelle: 'AUTO séance 2', pr_exercise_group_key: 'c-auto:AUTO:1', pr_session_key: 'c-auto:AUTO:1.2'
     });
     await repo.updateEventIfVersion(a1.evenement_id, 1, { population_figee: true });
@@ -242,10 +245,12 @@ async function collectSession(repo, eventId){
     await repoF.insertCycle({ cycle_id: 'c-fo', annee: 2026, domaine_code: 'FOBA', type_cycle: 'FORMATION_GROUPEE', libelle: 'Formation groupée 2026' });
     const f1 = await repoF.insertEvenement({
       evenement_id: 'fo-1', cycle_id: 'c-fo', domaine_code: 'FOBA', date: '2026-04-01',
+      statut: 'REALISE',
       libelle: 'Formation groupée A', pr_exercise_group_key: 'c-fo:FOBA:1', pr_session_key: 'c-fo:FOBA:1.1'
     });
     const f2 = await repoF.insertEvenement({
       evenement_id: 'fo-2', cycle_id: 'c-fo', domaine_code: 'FOBA', date: '2026-04-02',
+      statut: 'REALISE',
       libelle: 'Formation groupée B', pr_exercise_group_key: 'c-fo:FOBA:1', pr_session_key: 'c-fo:FOBA:1.2'
     });
     await repoF.updateEventIfVersion(f1.evenement_id, 1, { population_figee: true });
