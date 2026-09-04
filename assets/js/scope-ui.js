@@ -195,6 +195,11 @@
     objectifPreview: { date: '2026-06-15', domaine: '', cibleCode: '', result: null, looked: false },
     objectifAction: null,
     reportForm: { kind: 'PERIOD', domaine: 'DAP', cible: 'Y4', evenementId: '' },
+    jspReport: null,
+    jspReportReady: false,
+    jspReportError: null,
+    jspReportSite: 'TOUS',
+    jspReportSeq: 0,
     objectifFocusId: null,
     dashboard: null,
     dashboardError: null,
@@ -343,6 +348,14 @@
     state.cycleFilter = { domaine: 'tous', statut: 'tous' };
   }
 
+  function resetJspReportFilters() {
+    state.jspReportSite = 'TOUS';
+    state.jspReport = null;
+    state.jspReportReady = false;
+    state.jspReportError = null;
+    state.jspReportSeq += 1;
+  }
+
   function clearRouteScopedFeedback() {
     clearToast();
     if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
@@ -367,6 +380,12 @@
     }
     if (previous && next && routeKey(previous) !== routeKey(next)) {
       state.modal = null;
+      if (previous.screen === 'rapport-jsp' && next.screen !== 'rapport-jsp') resetJspReportFilters();
+      if (next.screen === 'rapport-jsp') {
+        state.jspReport = null;
+        state.jspReportReady = false;
+        state.jspReportError = null;
+      }
       if (next.screen === 'cycle') {
         state.cycleDetail = null;
         state.cycleDetailReady = false;
@@ -611,6 +630,35 @@
       state.dashboard = await client.dashboard(params);
     } catch (error) {
       state.dashboardError = L.friendlyError(error).message || L.errorMessage('dashboard');
+      throw error;
+    }
+  }
+
+  async function loadJspReport() {
+    const expectedRouteKey = state.currentRouteKey;
+    const seq = (state.jspReportSeq || 0) + 1;
+    state.jspReportSeq = seq;
+    state.jspReportReady = false;
+    state.jspReport = null;
+    state.jspReportError = null;
+    if (typeof client.jspReport !== 'function') {
+      state.jspReportReady = true;
+      state.jspReportError = 'Rapport JSP indisponible dans ce mode.';
+      return null;
+    }
+    const params = Object.assign({}, periodQuery(), {
+      site: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite
+    });
+    try {
+      const payload = await client.jspReport(params);
+      if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || route().screen !== 'rapport-jsp') return null;
+      state.jspReport = payload.report || null;
+      state.jspReportReady = true;
+      return state.jspReport;
+    } catch (error) {
+      if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || route().screen !== 'rapport-jsp') return null;
+      state.jspReportError = L.friendlyError(error).message || 'Impossible de charger le rapport JSP.';
+      state.jspReportReady = true;
       throw error;
     }
   }
@@ -3932,6 +3980,13 @@
         ${pageHeaderHtml({ eyebrow: 'Production', title: 'Rapports', context: 'PDF serveur', description: 'Aperçu et téléchargement issus du même document REPORT-1.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-card">
+          <h2 style="margin-top:0">Rapport JSP</h2>
+          <p class="scope-mode-hint">Participation aux exercices JSP, avec filtre global, G1, C1 ou B1.</p>
+          <div class="scope-actions">
+            <a class="scope-btn scope-btn-secondary" href="#/rapports/jsp">Ouvrir le rapport JSP</a>
+          </div>
+        </div>
+        <div class="scope-card">
           <h2 style="margin-top:0">Rapports</h2>
           <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
           ${demo ? `<p class="scope-mode-hint">Connectez-vous pour générer le PDF.</p>` : ''}
@@ -3968,6 +4023,115 @@
             <button type="button" class="scope-btn scope-btn-primary" id="report-generate" ${demo ? 'disabled' : ''}>Générer le rapport</button>
           </div>
         </div>
+      </div>
+    `;
+  }
+
+  function jspPercent(value) {
+    return L.formatTaux(value);
+  }
+
+  function jspPersonName(row) {
+    return [row.grade, row.prenom, row.nom].filter(Boolean).join(' ') || '—';
+  }
+
+  function jspBarChart(title, rows, keys) {
+    const max = Math.max(1, ...rows.flatMap((row) => keys.map((key) => Number(row[key.id] || 0))));
+    return `<div class="scope-card scope-jsp-chart"><h3>${escapeHtml(title)}</h3>
+      <div class="scope-jsp-bars">
+        ${rows.map((row) => `<div class="scope-jsp-bar-row">
+          <span>${escapeHtml(row.label || row.site || row.date || '')}</span>
+          <div class="scope-jsp-bar-stack">
+            ${keys.map((key) => `<i class="scope-jsp-bar scope-jsp-bar-${escapeHtml(key.id)}" style="width:${Math.max(2, Math.round((Number(row[key.id] || 0) / max) * 100))}%" title="${escapeHtml(key.label)} ${escapeHtml(String(row[key.id] || 0))}"></i>`).join('')}
+          </div>
+        </div>`).join('') || '<p class="scope-mode-hint">Aucune donnée.</p>'}
+      </div>
+    </div>`;
+  }
+
+  function jspLineChart(title, points) {
+    const rows = points || [];
+    return `<div class="scope-card scope-jsp-chart"><h3>${escapeHtml(title)}</h3>
+      <div class="scope-jsp-trend">
+        ${rows.map((point) => `<div class="scope-jsp-trend-item">
+          <span class="scope-jsp-trend-date">${escapeHtml(point.label || point.date || '')}</span>
+          <b style="height:${Math.max(4, Math.round(Number(point.value || 0)))}%" title="${escapeHtml(point.exercise || '')}">${escapeHtml(jspPercent(point.value))}</b>
+        </div>`).join('') || '<p class="scope-mode-hint">Aucune donnée.</p>'}
+      </div>
+    </div>`;
+  }
+
+  function jspKpi(label, value) {
+    return `<div class="scope-mini-kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong></div>`;
+  }
+
+  function jspPersonRows(rows, variant) {
+    return (rows || []).map((row) => {
+      const absence = variant === 'watch' ? `<td>${escapeHtml(String(row.totalAbsences || 0))}</td><td>${escapeHtml(jspPercent(row.absenceRate))}</td>` : '';
+      return `<tr>
+        <td>${escapeHtml(row.grade || '')}</td><td>${escapeHtml(row.nom || '')}</td><td>${escapeHtml(row.prenom || '')}</td><td>${escapeHtml(row.site || '')}</td>
+        <td>${escapeHtml(String(row.expected || 0))}</td><td>${escapeHtml(String(row.present || 0))}</td><td>${escapeHtml(String(row.excused || 0))}</td><td>${escapeHtml(String(row.absent || 0))}</td>
+        ${absence}<td>${escapeHtml(jspPercent(row.presenceRate))}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderRapportJsp() {
+    const report = state.jspReport;
+    const site = state.jspReportSite || 'TOUS';
+    if (state.jspReportError) {
+      return `<div class="scope-crumb">Rapports / JSP</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT JSP', context: 'Participation aux exercices', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.jspReportError)}</p></div></div>`;
+    }
+    if (!state.jspReportReady || !report) {
+      return `<div class="scope-crumb">Rapports / JSP</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT JSP', context: 'Participation aux exercices', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du rapport JSP…</p></div></div>`;
+    }
+    const k = report.kpis || {};
+    const siteRows = report.siteRows || [];
+    const persons = report.persons || [];
+    const watch = report.watchlist || [];
+    const regulars = report.regulars || [];
+    const exercises = report.exercises || [];
+    const motifs = report.motifs || [];
+    const details = report.details || [];
+    const graphRows = (report.graphs && report.graphs.sites || []).map((row) => Object.assign({ label: row.label }, row));
+    const motifRows = (report.graphs && report.graphs.motifs || []).slice(0, 8).map((row) => ({ label: row.label, count: row.value }));
+    return `
+      <div class="scope-crumb">Rapports / JSP</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT JSP', context: report.subtitle || 'Participation aux exercices', logo: true })}
+        ${periodContextHtml()}
+        <div class="scope-card">
+          <div class="scope-report-grid">
+            <div class="scope-field"><label>Site</label>
+              <select id="jsp-report-site">
+                ${[['TOUS', 'Tous les sites'], ['G1', 'JSP G1'], ['C1', 'JSP C1'], ['B1', 'JSP B1']].map(([value, label]) => `<option value="${value}" ${site === value ? 'selected' : ''}>${label}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="scope-mini-kpi-grid">
+            ${jspKpi('JSP concernés', k.jeunes || 0)}
+            ${jspKpi('Exercices comptabilisés', k.exercises || 0)}
+            ${jspKpi('Participations attendues', k.expected || 0)}
+            ${jspKpi('Présents', k.present || 0)}
+            ${jspKpi('Excusés', k.excused || 0)}
+            ${jspKpi('Absents', k.absent || 0)}
+            ${jspKpi('Taux de présence', jspPercent(k.presenceRate))}
+            ${jspKpi('Taux excusés', jspPercent(k.excusedRate))}
+            ${jspKpi('Taux absences non excusées', jspPercent(k.absentRate))}
+          </div>
+          <div class="scope-actions"><button type="button" class="scope-btn scope-btn-secondary" id="jsp-report-pdf">Exporter PDF</button></div>
+        </div>
+        <div class="scope-jsp-chart-grid">
+          ${jspLineChart('Évolution du taux de présence', (report.graphs && report.graphs.evolution) || [])}
+          ${jspBarChart('Comparaison des sites', graphRows, [{ id: 'presents', label: 'Présents' }, { id: 'excuses', label: 'Excusés' }, { id: 'absents', label: 'Absents' }])}
+          ${jspBarChart('Motifs d’excuse', motifRows, [{ id: 'count', label: 'Excuses' }])}
+        </div>
+        <div class="scope-card"><h2>Analyse par site</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Site</th><th>JSP</th><th>Exercices</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${siteRows.map((row) => `<tr><td>${escapeHtml(row.site)}</td><td>${row.jeunes || 0}</td><td>${row.exercises || 0}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('')}</tbody></table></div></div>
+        <div class="scope-card"><h2>Participation à surveiller</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Absences totales</th><th>Taux d’absence</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(watch, 'watch') || '<tr><td colspan="11">Aucune situation à afficher.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Participation régulière</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(regulars, 'regular') || '<tr><td colspan="9">Aucune participation régulière à afficher.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Analyse nominative complète</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(persons, 'all') || '<tr><td colspan="9">Aucun JSP attendu sur la période.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Motifs d’excuse</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Motif</th><th>Nombre</th><th>Part des excuses</th></tr></thead><tbody>${motifs.map((row) => `<tr><td>${escapeHtml(row.motif)}</td><td>${row.count || 0}</td><td>${escapeHtml(jspPercent(row.share))}</td></tr>`).join('') || '<tr><td colspan="3">Aucun motif enregistré.</td></tr>'}</tbody></table></div><details class="scope-details"><summary>Détail motifs et absences</summary><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Exercice</th><th>Site</th><th>Jeune</th><th>Statut</th><th>Motif</th></tr></thead><tbody>${details.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.exercice)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(jspPersonName(row))}</td><td>${escapeHtml(row.statut)}</td><td>${escapeHtml(row.motif)}</td></tr>`).join('') || '<tr><td colspan="6">Aucun détail.</td></tr>'}</tbody></table></div></details></div>
+        <div class="scope-card"><h2>Analyse par exercice</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Exercice</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Écart</th><th>Taux de présence</th></tr></thead><tbody>${exercises.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.libelle)}</td><td>${escapeHtml(row.site)}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${row.gap || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('') || '<tr><td colspan="9">Aucun exercice comptabilisé.</td></tr>'}</tbody></table></div></div>
       </div>
     `;
   }
@@ -6079,6 +6243,7 @@
       : r.screen === 'personnel' ? renderPersonnel()
         : r.screen === 'personne' ? renderPersonne()
         : r.screen === 'rapports' ? renderRapports()
+          : r.screen === 'rapport-jsp' ? renderRapportJsp()
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'suivi' ? renderSuiviNominatif()
             : r.screen === 'import-evenements' ? renderImport()
@@ -7152,6 +7317,15 @@
       state.reportForm.evenementId = e.target.value;
     });
     document.getElementById('report-generate')?.addEventListener('click', () => generateCurrentReport());
+    document.getElementById('jsp-report-site')?.addEventListener('change', (e) => {
+      state.jspReportSite = e.target.value || 'TOUS';
+      state.jspReport = null;
+      state.jspReportReady = false;
+      state.jspReportError = null;
+      render();
+      loadJspReport().then(() => render()).catch(() => render());
+    });
+    document.getElementById('jsp-report-pdf')?.addEventListener('click', () => generateJspReportPdf());
     root.querySelectorAll('[data-report-event]').forEach((btn) => {
       btn.addEventListener('click', () => generateEventReport(btn.getAttribute('data-report-event')));
     });
@@ -7890,6 +8064,16 @@
     openReport(body);
   }
 
+  function generateJspReportPdf() {
+    const body = Object.assign(reportPeriodPayload(), {
+      kind: 'JSP',
+      site: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite
+    });
+    delete body.domaine;
+    delete body.cible;
+    openReport(body);
+  }
+
   function openReport(body) {
     if (typeof client.generateReport !== 'function') return;
     withLoading(async () => {
@@ -8352,6 +8536,10 @@
     if (r.screen === 'vue') {
       state.dashboardError = null;
     }
+    if (r.screen === 'rapport-jsp') {
+      state.jspReportReady = false;
+      state.jspReportError = null;
+    }
     if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id && state.activeFicheId !== String(r.id)) {
       state.activeFicheId = String(r.id);
       state.ficheReady = false;
@@ -8370,6 +8558,7 @@
         state.personCount = (people.personnes || []).length;
       }
       if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
+      if (r.screen === 'rapport-jsp') await loadJspReport();
       if (r.screen === 'cycles') await loadCycles();
       if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
@@ -8404,7 +8593,13 @@
       prepareRouteChange,
       resetEventListFilters,
       resetPersonnelFilters,
-      resetCycleFilters
+      resetCycleFilters,
+      renderRapportJspHtml(report) {
+        state.jspReport = report;
+        state.jspReportReady = true;
+        state.jspReportError = null;
+        return renderRapportJsp();
+      }
     };
     return;
   }

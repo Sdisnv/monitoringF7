@@ -7,6 +7,7 @@ const { createScopeObjectivesService } = require('./_scope-objectives-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeAlertsService } = require('./_scope-alerts-service');
 const { createScopeCycleService } = require('./_scope-cycle-service');
+const { createScopeJspReportingService } = require('./_scope-jsp-reporting');
 const { getPgRepo } = require('./_scope-pg');
 const { generateReport, pdfResponse } = require('./_scope-report-service');
 const { createScopePersonService } = require('./_scope-person-service');
@@ -88,6 +89,7 @@ exports.handler = async function(event){
     const dashboard = createScopeDashboardService(repo);
     const alerts = createScopeAlertsService(repo);
     const cycles = createScopeCycleService(repo);
+    const jspReporting = createScopeJspReportingService(repo);
     const persons = createScopePersonService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
@@ -320,6 +322,12 @@ exports.handler = async function(event){
     }
     if(method === 'GET' && path === '/dashboard'){
       return response(200, { ok:true, ...(await dashboard.dashboard(queryOf(event))) });
+    }
+    if(method === 'GET' && path === '/reporting/jsp'){
+      if(!hasPermission(claims, 'dashboard:read')){
+        return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });
+      }
+      return response(200, { ok:true, report: await jspReporting.report(queryOf(event)) });
     }
     if(method === 'GET' && path === '/alerts'){
       return response(200, { ok:true, ...(await alerts.listAlerts(queryOf(event), claims)) });

@@ -1060,6 +1060,78 @@ class ScopePdfRenderer {
     this.eventsTable(m.events);
   }
 
+  renderJspReportBody(m){
+    const jsp = m.jsp || {};
+    const k = jsp.kpis || {};
+    this.heading('Synthèse JSP', 12);
+    this.kv([
+      { label: 'Site', value: jsp.siteLabel || 'Tous les sites' },
+      { label: 'JSP concernés', value: String(k.jeunes || 0) },
+      { label: 'Exercices comptabilisés', value: String(k.exercises || 0) },
+      { label: 'Participations attendues', value: String(k.expected || 0) },
+      { label: 'Présents', value: String(k.present || 0) },
+      { label: 'Excusés', value: String(k.excused || 0) },
+      { label: 'Absents', value: String(k.absent || 0) },
+      { label: 'Taux de présence', value: formatTaux(k.presenceRate) }
+    ]);
+
+    this.heading('Analyse par site', 12);
+    this.table(
+      ['Site', 'JSP', 'Exercices', 'Attendus', 'Présents', 'Excusés', 'Absents', 'Taux'],
+      (jsp.siteRows || []).map((row) => [
+        row.site, String(row.jeunes || 0), String(row.exercises || 0), String(row.expected || 0),
+        String(row.present || 0), String(row.excused || 0), String(row.absent || 0), formatTaux(row.presenceRate)
+      ]),
+      [62, 38, 55, 55, 55, 55, 55, 62],
+      { align: ['left', 'right', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+    );
+
+    this.nextPage();
+    this.heading('Participation à surveiller', 12);
+    this.table(
+      ['Jeune', 'Site', 'Att.', 'Prés.', 'Exc.', 'Abs.', 'Absences', 'Taux abs.'],
+      (jsp.watchlist || []).slice(0, 18).map((row) => [
+        [row.grade, row.prenom, row.nom].filter(Boolean).join(' '), row.site || '',
+        String(row.expected || 0), String(row.present || 0), String(row.excused || 0),
+        String(row.absent || 0), String(row.totalAbsences || 0), formatTaux(row.absenceRate)
+      ]),
+      [116, 52, 38, 38, 38, 38, 54, 58],
+      { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+    );
+
+    this.heading('Participation régulière', 12);
+    this.table(
+      ['Jeune', 'Site', 'Att.', 'Prés.', 'Exc.', 'Abs.', 'Taux'],
+      (jsp.regulars || []).slice(0, 18).map((row) => [
+        [row.grade, row.prenom, row.nom].filter(Boolean).join(' '), row.site || '',
+        String(row.expected || 0), String(row.present || 0), String(row.excused || 0),
+        String(row.absent || 0), formatTaux(row.presenceRate)
+      ]),
+      [130, 58, 42, 42, 42, 42, 62],
+      { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+    );
+
+    this.nextPage();
+    this.heading('Motifs d’excuse', 12);
+    this.table(
+      ['Motif', 'Nombre', 'Part'],
+      (jsp.motifs || []).map((row) => [row.motif, String(row.count || 0), formatTaux(row.share)]),
+      [260, 70, 70],
+      { align: ['left', 'right', 'right'], rowH: 16 }
+    );
+
+    this.heading('Analyse par exercice', 12);
+    this.table(
+      ['Date', 'Exercice', 'Site', 'Att.', 'Prés.', 'Exc.', 'Abs.', 'Écart', 'Taux'],
+      (jsp.exercises || []).slice(0, 24).map((row) => [
+        row.date, row.libelle, row.site, String(row.expected || 0), String(row.present || 0),
+        String(row.excused || 0), String(row.absent || 0), String(row.gap || 0), formatTaux(row.presenceRate)
+      ]),
+      [52, 122, 46, 34, 34, 34, 34, 38, 48],
+      { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+    );
+  }
+
   render(){
     const m = this.model;
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(14)
@@ -1101,6 +1173,11 @@ class ScopePdfRenderer {
 
     if(m.kind === 'SESSION'){
       this.renderSessionBody(m);
+      return;
+    }
+
+    if(m.kind === 'JSP'){
+      this.renderJspReportBody(m);
       return;
     }
 

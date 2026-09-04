@@ -11,6 +11,7 @@ const { createScopeService } = require('./_scope-service');
 const { ROOT_DOMAINES } = require('./_scope-graphs');
 const { displayDomaineCode } = require('./_scope-model');
 const { collectMultisessionReport } = require('./_scope-multisession-report');
+const { createScopeJspReportingService } = require('./_scope-jsp-reporting');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 
 const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
@@ -47,7 +48,7 @@ function exerciseReportTitle(event){
   return `RAPPORT — ${core.toLocaleUpperCase('fr-CH')}`;
 }
 
-const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION']);
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP']);
 
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
@@ -99,7 +100,8 @@ function normalizeKind(raw){
     EVENT: 'EVENT', EVENEMENT: 'EVENT', EXERCICE: 'EVENT',
     PERSON: 'PERSON', PERSONNE: 'PERSON', FICHE: 'PERSON',
     SESSION: 'SESSION', MULTISESSION: 'SESSION', PARTICIPATION: 'SESSION',
-    DETAIL: 'SESSION', EXERCISE_DETAIL: 'SESSION', RAPPORT_DETAILLE: 'SESSION'
+    DETAIL: 'SESSION', EXERCISE_DETAIL: 'SESSION', RAPPORT_DETAILLE: 'SESSION',
+    JSP: 'JSP', RAPPORT_JSP: 'JSP', JSP_REPORT: 'JSP'
   };
   const kind = map[text];
   if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
@@ -378,6 +380,45 @@ async function collectReport(repo, query, options){
       sessionCount: session.sessionCount,
       isMultiSession: session.isMultiSession,
       parasiteNonRenseigne: session.parasiteNonRenseigne
+    };
+  }
+
+  if(kind === 'JSP'){
+    const jsp = await createScopeJspReportingService(repo).report(query);
+    const siteSlug = jsp.siteFilter === 'TOUS' ? 'GLOBAL' : jsp.siteFilter;
+    return {
+      kind: 'JSP',
+      period: jsp.period,
+      domaine: 'JSP',
+      cible: jsp.siteFilter === 'TOUS' ? null : jsp.siteFilter,
+      title: jsp.title,
+      subtitle: jsp.siteLabel,
+      summaryLabel: 'Participation aux exercices JSP',
+      filename: sanitizeFilename(`SCOPE_Rapport_JSP_${siteSlug}_${periodSlug(jsp.period)}.pdf`),
+      event: null,
+      officiel: {
+        percentage: jsp.kpis.presenceRate,
+        numerator: jsp.kpis.present,
+        denominator: jsp.kpis.denominator,
+        eventCount: jsp.kpis.exercises,
+        volumes: {
+          attendus: jsp.kpis.expected,
+          presents: jsp.kpis.present,
+          excuses: jsp.kpis.excused,
+          nonExcuses: jsp.kpis.absent,
+          dispenses: jsp.kpis.dispensed,
+          nonRenseignes: jsp.kpis.nonRenseigne
+        }
+      },
+      jsp,
+      graphs: jsp.graphs,
+      explain: null,
+      nominatif: [],
+      encadrement: [],
+      quantitative: false,
+      isLegacy: false,
+      alerts: { p0: [], p1: [], p2: [] },
+      events: jsp.exercises
     };
   }
 

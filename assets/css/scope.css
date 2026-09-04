@@ -3631,6 +3631,113 @@ body.scope-pdf-open { overflow: hidden; }
   max-width: 720px;
 }
 
+.scope-mini-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.scope-mini-kpi {
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  padding: 10px 12px;
+  background: var(--scope-gray-50);
+  min-height: 66px;
+}
+
+.scope-mini-kpi span {
+  display: block;
+  color: var(--scope-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.scope-mini-kpi strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--scope-ink);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.scope-jsp-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.scope-jsp-chart h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.scope-jsp-bars {
+  display: grid;
+  gap: 9px;
+}
+
+.scope-jsp-bar-row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 22px;
+}
+
+.scope-jsp-bar-row span,
+.scope-jsp-trend-date {
+  color: var(--scope-muted);
+  font-size: 12px;
+}
+
+.scope-jsp-bar-stack {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.scope-jsp-bar {
+  display: block;
+  height: 16px;
+  min-width: 3px;
+  border-radius: 2px;
+}
+
+.scope-jsp-bar-presents { background: var(--scope-blue); }
+.scope-jsp-bar-excuses { background: var(--scope-yellow); }
+.scope-jsp-bar-absents { background: var(--scope-red); }
+.scope-jsp-bar-count { background: var(--scope-slate); }
+
+.scope-jsp-trend {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  min-height: 160px;
+  overflow-x: auto;
+  padding-top: 8px;
+}
+
+.scope-jsp-trend-item {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  gap: 7px;
+  min-width: 42px;
+  height: 150px;
+}
+
+.scope-jsp-trend-item b {
+  align-self: end;
+  display: block;
+  width: 18px;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+  background: var(--scope-blue);
+  color: transparent;
+}
+
 .scope-person-head h1 {
   margin: 0 0 4px;
   font-size: var(--scope-fs-h1);
