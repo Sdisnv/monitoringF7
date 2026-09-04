@@ -199,6 +199,8 @@
     jspReportReady: false,
     jspReportError: null,
     jspReportSite: 'TOUS',
+    participationReportDomain: 'JSP',
+    participationReportBlocks: ['synthese', 'alertes', 'comparaisons', 'graphiques', 'surveillance', 'regularite', 'sous_objectif', 'nominatif', 'motifs', 'evenements'],
     jspReportSeq: 0,
     objectifFocusId: null,
     dashboard: null,
@@ -350,6 +352,7 @@
 
   function resetJspReportFilters() {
     state.jspReportSite = 'TOUS';
+    state.participationReportDomain = 'JSP';
     state.jspReport = null;
     state.jspReportReady = false;
     state.jspReportError = null;
@@ -380,8 +383,9 @@
     }
     if (previous && next && routeKey(previous) !== routeKey(next)) {
       state.modal = null;
-      if (previous.screen === 'rapport-jsp' && next.screen !== 'rapport-jsp') resetJspReportFilters();
-      if (next.screen === 'rapport-jsp') {
+      if ((previous.screen === 'rapport-jsp' || previous.screen === 'rapport-participation') && !['rapport-jsp', 'rapport-participation'].includes(next.screen)) resetJspReportFilters();
+      if (next.screen === 'rapport-jsp' || next.screen === 'rapport-participation') {
+        if (next.screen === 'rapport-jsp') state.participationReportDomain = 'JSP';
         state.jspReport = null;
         state.jspReportReady = false;
         state.jspReportError = null;
@@ -641,22 +645,25 @@
     state.jspReportReady = false;
     state.jspReport = null;
     state.jspReportError = null;
-    if (typeof client.jspReport !== 'function') {
+    const loader = client.participationReport || client.jspReport;
+    if (typeof loader !== 'function') {
       state.jspReportReady = true;
-      state.jspReportError = 'Rapport JSP indisponible dans ce mode.';
+      state.jspReportError = 'Rapport de participation indisponible dans ce mode.';
       return null;
     }
     const params = Object.assign({}, periodQuery(), {
-      site: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite
+      domaine: state.participationReportDomain || 'JSP',
+      perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
+      blocks: (state.participationReportBlocks || []).join(',')
     });
     try {
-      const payload = await client.jspReport(params);
-      if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || route().screen !== 'rapport-jsp') return null;
+      const payload = await loader.call(client, params);
+      if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || !['rapport-jsp', 'rapport-participation'].includes(route().screen)) return null;
       state.jspReport = payload.report || null;
       state.jspReportReady = true;
       return state.jspReport;
     } catch (error) {
-      if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || route().screen !== 'rapport-jsp') return null;
+      if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || !['rapport-jsp', 'rapport-participation'].includes(route().screen)) return null;
       state.jspReportError = L.friendlyError(error).message || 'Impossible de charger le rapport JSP.';
       state.jspReportReady = true;
       throw error;
@@ -1826,7 +1833,7 @@
 
     return `
       <div class="scope-crumb">Événements · ${escapeHtml(state.year)}</div>
-      <div class="scope-main">
+      <div class="scope-main" ${report.domaine === 'JSP' ? 'aria-label="RAPPORT JSP"' : ''}>
         ${pageHeaderHtml({ eyebrow: 'Activité', title: 'Événements', context: state.year, description: 'Liste opérationnelle des événements planifiés, réalisés, reportés ou annulés.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-toolbar scope-events-pilot">
@@ -3983,7 +3990,7 @@
           <h2 style="margin-top:0">Rapport JSP</h2>
           <p class="scope-mode-hint">Participation aux exercices JSP, avec filtre global, G1, C1 ou B1.</p>
           <div class="scope-actions">
-            <a class="scope-btn scope-btn-secondary" href="#/rapports/jsp">Ouvrir le rapport JSP</a>
+            <a class="scope-btn scope-btn-secondary" href="#/rapports/participation">Ouvrir le rapport de participation</a>
           </div>
         </div>
         <div class="scope-card">
@@ -4065,6 +4072,47 @@
     return `<div class="scope-mini-kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong></div>`;
   }
 
+  function participationDomainOptions() {
+    const preferred = ['DPS', 'DAP', 'JSP', 'PR', 'AUTO', 'FOBA', 'FOCA', 'FOSPEC'];
+    const present = new Set((state.referentiels.domaines || []).map((d) => d.code).filter(Boolean));
+    return preferred.filter((code) => present.has(code) || ['PR', 'AUTO'].includes(code));
+  }
+
+  function participationPerimeterOptions(domain) {
+    const code = String(domain || 'JSP').toUpperCase();
+    const rows = (state.referentiels.cibles || [])
+      .filter((c) => String(c.domaineCode || c.domaine_code || '').toUpperCase() === code)
+      .filter((c) => String(c.niveauCode || c.niveau_code || '').toUpperCase() !== 'GEN')
+      .map((c) => {
+        const value = String(c.niveauCode || c.niveau_code || '').toUpperCase();
+        return [value, L.niveauAffiche(code, value)];
+      });
+    return [['TOUS', 'Global du domaine']].concat(rows);
+  }
+
+  function participationBlockOptions() {
+    return [
+      ['synthese', 'Synthèse générale / KPI'],
+      ['alertes', 'Alertes prioritaires'],
+      ['comparaisons', 'Comparaison sites / OI / cibles'],
+      ['graphiques', 'Graphiques'],
+      ['surveillance', 'Participation à surveiller'],
+      ['regularite', 'Participation régulière'],
+      ['sous_objectif', 'Personnes sous l’objectif'],
+      ['nominatif', 'Analyse nominative'],
+      ['motifs', 'Motifs d’excuse'],
+      ['evenements', 'Analyse par événement']
+    ];
+  }
+
+  function blockEnabled(key) {
+    return (state.participationReportBlocks || []).includes(key);
+  }
+
+  function blockHtml(key, html) {
+    return blockEnabled(key) ? html : '';
+  }
+
   function jspPersonRows(rows, variant) {
     return (rows || []).map((row) => {
       const absence = variant === 'watch' ? `<td>${escapeHtml(String(row.totalAbsences || 0))}</td><td>${escapeHtml(jspPercent(row.absenceRate))}</td>` : '';
@@ -4080,10 +4128,10 @@
     const report = state.jspReport;
     const site = state.jspReportSite || 'TOUS';
     if (state.jspReportError) {
-      return `<div class="scope-crumb">Rapports / JSP</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT JSP', context: 'Participation aux exercices', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.jspReportError)}</p></div></div>`;
+      return `<div class="scope-crumb">Rapports / Participation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: 'Participation', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.jspReportError)}</p></div></div>`;
     }
     if (!state.jspReportReady || !report) {
-      return `<div class="scope-crumb">Rapports / JSP</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT JSP', context: 'Participation aux exercices', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du rapport JSP…</p></div></div>`;
+      return `<div class="scope-crumb">Rapports / Participation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: 'Participation', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du rapport de participation…</p></div></div>`;
     }
     const k = report.kpis || {};
     const siteRows = report.siteRows || [];
@@ -4096,20 +4144,28 @@
     const graphRows = (report.graphs && report.graphs.sites || []).map((row) => Object.assign({ label: row.label }, row));
     const motifRows = (report.graphs && report.graphs.motifs || []).slice(0, 8).map((row) => ({ label: row.label, count: row.value }));
     return `
-      <div class="scope-crumb">Rapports / JSP</div>
-      <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT JSP', context: report.subtitle || 'Participation aux exercices', logo: true })}
+      <div class="scope-crumb">Rapports / Participation</div>
+      <div class="scope-main" ${report.domaine === 'JSP' ? 'aria-label="RAPPORT JSP"' : ''}>
+        ${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: `${report.domaine || state.participationReportDomain} · ${report.perimeterLabel || report.siteLabel || 'Global du domaine'}`, logo: true })}
         ${periodContextHtml()}
         <div class="scope-card">
           <div class="scope-report-grid">
-            <div class="scope-field"><label>Site</label>
+            <div class="scope-field"><label>Domaine</label>
+              <select id="participation-report-domain">
+                ${participationDomainOptions().map((value) => `<option value="${escapeHtml(value)}" ${state.participationReportDomain === value ? 'selected' : ''}>${escapeHtml(domaineLabel(value))}</option>`).join('')}
+              </select>
+            </div>
+            <div class="scope-field"><label>Périmètre</label>
               <select id="jsp-report-site">
-                ${[['TOUS', 'Tous les sites'], ['G1', 'JSP G1'], ['C1', 'JSP C1'], ['B1', 'JSP B1']].map(([value, label]) => `<option value="${value}" ${site === value ? 'selected' : ''}>${label}</option>`).join('')}
+                ${participationPerimeterOptions(state.participationReportDomain).map(([value, label]) => `<option value="${escapeHtml(value)}" ${site === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
               </select>
             </div>
           </div>
+          <div class="scope-report-blocks">
+            ${participationBlockOptions().map(([value, label]) => `<label><input type="checkbox" data-participation-block="${escapeHtml(value)}" ${blockEnabled(value) ? 'checked' : ''}> ${escapeHtml(label)}</label>`).join('')}
+          </div>
           <div class="scope-mini-kpi-grid">
-            ${jspKpi('JSP concernés', k.jeunes || 0)}
+            ${jspKpi(report.domaine === 'JSP' ? 'JSP concernés' : 'Personnes concernées', k.participants || k.jeunes || 0)}
             ${jspKpi('Exercices comptabilisés', k.exercises || 0)}
             ${jspKpi('Participations attendues', k.expected || 0)}
             ${jspKpi('Présents', k.present || 0)}
@@ -4121,17 +4177,19 @@
           </div>
           <div class="scope-actions"><button type="button" class="scope-btn scope-btn-secondary" id="jsp-report-pdf">Exporter PDF</button></div>
         </div>
-        <div class="scope-jsp-chart-grid">
+        ${blockHtml('graphiques', `<div class="scope-jsp-chart-grid">
           ${jspLineChart('Évolution du taux de présence', (report.graphs && report.graphs.evolution) || [])}
           ${jspBarChart('Comparaison des sites', graphRows, [{ id: 'presents', label: 'Présents' }, { id: 'excuses', label: 'Excusés' }, { id: 'absents', label: 'Absents' }])}
           ${jspBarChart('Motifs d’excuse', motifRows, [{ id: 'count', label: 'Excuses' }])}
-        </div>
-        <div class="scope-card"><h2>Analyse par site</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Site</th><th>JSP</th><th>Exercices</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${siteRows.map((row) => `<tr><td>${escapeHtml(row.site)}</td><td>${row.jeunes || 0}</td><td>${row.exercises || 0}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('')}</tbody></table></div></div>
-        <div class="scope-card"><h2>Participation à surveiller</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Absences totales</th><th>Taux d’absence</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(watch, 'watch') || '<tr><td colspan="11">Aucune situation à afficher.</td></tr>'}</tbody></table></div></div>
-        <div class="scope-card"><h2>Participation régulière</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(regulars, 'regular') || '<tr><td colspan="9">Aucune participation régulière à afficher.</td></tr>'}</tbody></table></div></div>
-        <div class="scope-card"><h2>Analyse nominative complète</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(persons, 'all') || '<tr><td colspan="9">Aucun JSP attendu sur la période.</td></tr>'}</tbody></table></div></div>
-        <div class="scope-card"><h2>Motifs d’excuse</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Motif</th><th>Nombre</th><th>Part des excuses</th></tr></thead><tbody>${motifs.map((row) => `<tr><td>${escapeHtml(row.motif)}</td><td>${row.count || 0}</td><td>${escapeHtml(jspPercent(row.share))}</td></tr>`).join('') || '<tr><td colspan="3">Aucun motif enregistré.</td></tr>'}</tbody></table></div><details class="scope-details"><summary>Détail motifs et absences</summary><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Exercice</th><th>Site</th><th>Jeune</th><th>Statut</th><th>Motif</th></tr></thead><tbody>${details.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.exercice)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(jspPersonName(row))}</td><td>${escapeHtml(row.statut)}</td><td>${escapeHtml(row.motif)}</td></tr>`).join('') || '<tr><td colspan="6">Aucun détail.</td></tr>'}</tbody></table></div></details></div>
-        <div class="scope-card"><h2>Analyse par exercice</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Exercice</th><th>Site</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Écart</th><th>Taux de présence</th></tr></thead><tbody>${exercises.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.libelle)}</td><td>${escapeHtml(row.site)}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${row.gap || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('') || '<tr><td colspan="9">Aucun exercice comptabilisé.</td></tr>'}</tbody></table></div></div>
+        </div>`)}
+        ${blockHtml('comparaisons', `<div class="scope-card"><h2>Analyse par site</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Périmètre</th><th>Personnes</th><th>Exercices</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${siteRows.map((row) => `<tr><td>${escapeHtml(row.site)}</td><td>${row.participants || row.jeunes || 0}</td><td>${row.exercises || 0}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('')}</tbody></table></div></div>`)}
+        ${blockHtml('alertes', `<div class="scope-card"><h2>Alertes prioritaires</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Personne</th><th>Périmètre</th><th>Cause</th><th>Valeur</th><th>Objectif</th><th>Écart</th></tr></thead><tbody>${(report.alerts || []).map((row) => `<tr class="scope-row-alert"><td>${escapeHtml(jspPersonName(row))}</td><td>${escapeHtml(row.perimeter || '')}</td><td>${escapeHtml(row.cause)}</td><td>${escapeHtml(String(row.value ?? '—'))}</td><td>${escapeHtml(row.objective == null ? 'Objectif non défini' : jspPercent(row.objective))}</td><td>${escapeHtml(row.gap == null ? '—' : jspPercent(row.gap))}</td></tr>`).join('') || '<tr><td colspan="6">Aucune alerte prioritaire.</td></tr>'}</tbody></table></div></div>`)}
+        ${blockHtml('surveillance', `<div class="scope-card"><h2>Participation à surveiller</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Absences totales</th><th>Taux d’absence</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(watch, 'watch') || '<tr><td colspan="11">Aucune situation à afficher.</td></tr>'}</tbody></table></div></div>`)}
+        ${blockHtml('regularite', `<div class="scope-card"><h2>Participation régulière</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(regulars, 'regular') || '<tr><td colspan="9">Aucune participation régulière à afficher.</td></tr>'}</tbody></table></div></div>`)}
+        ${blockHtml('sous_objectif', `<div class="scope-card"><h2>Personnes sous l’objectif</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Taux</th><th>Objectif</th><th>Écart</th></tr></thead><tbody>${(report.underObjective || []).map((row) => `<tr class="scope-row-alert"><td>${escapeHtml(row.grade || '')}</td><td>${escapeHtml(row.nom || '')}</td><td>${escapeHtml(row.prenom || '')}</td><td>${escapeHtml(row.nip || '')}</td><td>${escapeHtml(row.perimeter || row.site || '')}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td><td>${escapeHtml(row.objectivePct == null ? 'Objectif non défini' : jspPercent(row.objectivePct))}</td><td>${escapeHtml(row.objectiveGap == null ? '—' : jspPercent(row.objectiveGap))}</td></tr>`).join('') || `<tr><td colspan="10">${escapeHtml(report.objective ? 'Aucune personne sous l’objectif.' : 'Objectif non défini')}</td></tr>`}</tbody></table></div></div>`)}
+        ${blockHtml('nominatif', `<div class="scope-card"><h2>Analyse nominative complète</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(persons, 'all') || '<tr><td colspan="9">Aucune personne attendue sur la période.</td></tr>'}</tbody></table></div></div>`)}
+        ${blockHtml('motifs', `<div class="scope-card"><h2>Motifs d’excuse</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Motif</th><th>Nombre</th><th>Part des excuses</th></tr></thead><tbody>${motifs.map((row) => `<tr><td>${escapeHtml(row.motif)}</td><td>${row.count || 0}</td><td>${escapeHtml(jspPercent(row.share))}</td></tr>`).join('') || '<tr><td colspan="3">Aucun motif enregistré.</td></tr>'}</tbody></table></div><details class="scope-details"><summary>Détail motifs et absences</summary><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Périmètre</th><th>Personne</th><th>Statut</th><th>Motif</th></tr></thead><tbody>${details.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.exercice)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(jspPersonName(row))}</td><td>${escapeHtml(row.statut)}</td><td>${escapeHtml(row.motif)}</td></tr>`).join('') || '<tr><td colspan="6">Aucun détail.</td></tr>'}</tbody></table></div></details></div>`)}
+        ${blockHtml('evenements', `<div class="scope-card"><h2>Analyse par exercice et événement</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Domaine</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Dispensés</th><th>À renseigner</th><th>Écart</th><th>Taux</th></tr></thead><tbody>${exercises.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.libelle)}</td><td>${escapeHtml(row.domaine || report.domaine || '')}</td><td>${escapeHtml(row.site)}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${row.dispensed || 0}</td><td>${row.nonRenseigne || 0}</td><td>${row.gap || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('') || '<tr><td colspan="12">Aucun événement comptabilisé.</td></tr>'}</tbody></table></div></div>`)}
       </div>
     `;
   }
@@ -6243,7 +6301,7 @@
       : r.screen === 'personnel' ? renderPersonnel()
         : r.screen === 'personne' ? renderPersonne()
         : r.screen === 'rapports' ? renderRapports()
-          : r.screen === 'rapport-jsp' ? renderRapportJsp()
+          : (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') ? renderRapportJsp()
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'suivi' ? renderSuiviNominatif()
             : r.screen === 'import-evenements' ? renderImport()
@@ -7317,6 +7375,15 @@
       state.reportForm.evenementId = e.target.value;
     });
     document.getElementById('report-generate')?.addEventListener('click', () => generateCurrentReport());
+    document.getElementById('participation-report-domain')?.addEventListener('change', (e) => {
+      state.participationReportDomain = e.target.value || 'JSP';
+      state.jspReportSite = 'TOUS';
+      state.jspReport = null;
+      state.jspReportReady = false;
+      state.jspReportError = null;
+      render();
+      loadJspReport().then(() => render()).catch(() => render());
+    });
     document.getElementById('jsp-report-site')?.addEventListener('change', (e) => {
       state.jspReportSite = e.target.value || 'TOUS';
       state.jspReport = null;
@@ -7324,6 +7391,16 @@
       state.jspReportError = null;
       render();
       loadJspReport().then(() => render()).catch(() => render());
+    });
+    root.querySelectorAll('[data-participation-block]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const selected = [...root.querySelectorAll('[data-participation-block]:checked')].map((node) => node.getAttribute('data-participation-block')).filter(Boolean);
+        state.participationReportBlocks = selected.length ? selected : ['synthese'];
+        state.jspReport = null;
+        state.jspReportReady = false;
+        render();
+        loadJspReport().then(() => render()).catch(() => render());
+      });
     });
     document.getElementById('jsp-report-pdf')?.addEventListener('click', () => generateJspReportPdf());
     root.querySelectorAll('[data-report-event]').forEach((btn) => {
@@ -8066,10 +8143,11 @@
 
   function generateJspReportPdf() {
     const body = Object.assign(reportPeriodPayload(), {
-      kind: 'JSP',
-      site: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite
+      kind: 'PARTICIPATION',
+      domaine: state.participationReportDomain || 'JSP',
+      perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
+      blocks: (state.participationReportBlocks || []).join(',')
     });
-    delete body.domaine;
     delete body.cible;
     openReport(body);
   }
@@ -8536,7 +8614,7 @@
     if (r.screen === 'vue') {
       state.dashboardError = null;
     }
-    if (r.screen === 'rapport-jsp') {
+    if (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') {
       state.jspReportReady = false;
       state.jspReportError = null;
     }
@@ -8558,7 +8636,7 @@
         state.personCount = (people.personnes || []).length;
       }
       if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
-      if (r.screen === 'rapport-jsp') await loadJspReport();
+      if (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') await loadJspReport();
       if (r.screen === 'cycles') await loadCycles();
       if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
@@ -8598,6 +8676,9 @@
         state.jspReport = report;
         state.jspReportReady = true;
         state.jspReportError = null;
+        if (report && report.blocks) state.participationReportBlocks = report.blocks;
+        if (report && report.domaine) state.participationReportDomain = report.domaine;
+        if (report && report.siteFilter) state.jspReportSite = report.siteFilter;
         return renderRapportJsp();
       }
     };

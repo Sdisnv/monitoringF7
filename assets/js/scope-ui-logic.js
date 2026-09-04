@@ -945,6 +945,7 @@
     if (parts[0] === 'reglages' && parts[1] === 'import-personnel') return { screen: 'import-personnel', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'utilisateurs') return { screen: 'utilisateurs', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'administration') return { screen: 'administration', nav: 'reglages' };
+    if (parts[0] === 'rapports' && parts[1] === 'participation') return { screen: 'rapport-participation', nav: 'rapports' };
     if (parts[0] === 'rapports' && parts[1] === 'jsp') return { screen: 'rapport-jsp', nav: 'rapports' };
     if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };
     if (parts[0] === 'apropos') return { screen: 'apropos', nav: 'reglages' };

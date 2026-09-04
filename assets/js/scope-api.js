@@ -330,6 +330,7 @@
       analyticsGraphs(params) { return request('GET', `/analytics/graphs${queryString(params || {})}`); },
       dashboard(params) { return request('GET', `/dashboard${queryString(params || {})}`); },
       jspReport(params) { return request('GET', `/reporting/jsp${queryString(params || {})}`); },
+      participationReport(params) { return request('GET', `/reporting/participation${queryString(params || {})}`); },
       listAlerts(params) { return request('GET', `/alerts${queryString(params || {})}`); },
       acquitterAlerte(body) { return request('POST', '/alerts/acquitter', body); },
       listObjectifs(params) { return request('GET', `/objectifs${queryString(params || {})}`); },

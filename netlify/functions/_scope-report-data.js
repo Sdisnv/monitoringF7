@@ -11,7 +11,7 @@ const { createScopeService } = require('./_scope-service');
 const { ROOT_DOMAINES } = require('./_scope-graphs');
 const { displayDomaineCode } = require('./_scope-model');
 const { collectMultisessionReport } = require('./_scope-multisession-report');
-const { createScopeJspReportingService } = require('./_scope-jsp-reporting');
+const { createScopeJspReportingService, createScopeParticipationReportingService } = require('./_scope-jsp-reporting');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 
 const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
@@ -48,7 +48,7 @@ function exerciseReportTitle(event){
   return `RAPPORT — ${core.toLocaleUpperCase('fr-CH')}`;
 }
 
-const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP']);
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP', 'PARTICIPATION']);
 
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
@@ -101,7 +101,8 @@ function normalizeKind(raw){
     PERSON: 'PERSON', PERSONNE: 'PERSON', FICHE: 'PERSON',
     SESSION: 'SESSION', MULTISESSION: 'SESSION', PARTICIPATION: 'SESSION',
     DETAIL: 'SESSION', EXERCISE_DETAIL: 'SESSION', RAPPORT_DETAILLE: 'SESSION',
-    JSP: 'JSP', RAPPORT_JSP: 'JSP', JSP_REPORT: 'JSP'
+    JSP: 'JSP', RAPPORT_JSP: 'JSP', JSP_REPORT: 'JSP',
+    PARTICIPATION: 'PARTICIPATION', RAPPORT_PARTICIPATION: 'PARTICIPATION'
   };
   const kind = map[text];
   if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
@@ -383,18 +384,23 @@ async function collectReport(repo, query, options){
     };
   }
 
-  if(kind === 'JSP'){
-    const jsp = await createScopeJspReportingService(repo).report(query);
+  if(kind === 'JSP' || kind === 'PARTICIPATION'){
+    const payload = kind === 'JSP' ? Object.assign({}, query, { domaine: 'JSP' }) : query;
+    const jsp = kind === 'JSP'
+      ? await createScopeJspReportingService(repo).report(payload)
+      : await createScopeParticipationReportingService(repo).report(payload);
     const siteSlug = jsp.siteFilter === 'TOUS' ? 'GLOBAL' : jsp.siteFilter;
     return {
-      kind: 'JSP',
+      kind: 'PARTICIPATION',
       period: jsp.period,
-      domaine: 'JSP',
+      domaine: jsp.domaine || 'JSP',
       cible: jsp.siteFilter === 'TOUS' ? null : jsp.siteFilter,
       title: jsp.title,
-      subtitle: jsp.siteLabel,
-      summaryLabel: 'Participation aux exercices JSP',
-      filename: sanitizeFilename(`SCOPE_Rapport_JSP_${siteSlug}_${periodSlug(jsp.period)}.pdf`),
+      subtitle: [jsp.domaine || 'JSP', jsp.siteLabel || jsp.perimeterLabel].filter(Boolean).join(' — '),
+      summaryLabel: 'Participation',
+      filename: sanitizeFilename(kind === 'JSP'
+        ? `SCOPE_Rapport_JSP_${siteSlug}_${periodSlug(jsp.period)}.pdf`
+        : `SCOPE_Rapport_Participation_${jsp.domaine || 'JSP'}_${siteSlug}_${periodSlug(jsp.period)}.pdf`),
       event: null,
       officiel: {
         percentage: jsp.kpis.presenceRate,

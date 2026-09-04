@@ -3638,6 +3638,28 @@ body.scope-pdf-open { overflow: hidden; }
   margin-top: 14px;
 }
 
+.scope-report-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--scope-line);
+}
+
+.scope-report-blocks label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  color: var(--scope-text);
+  font-size: 13px;
+}
+
+.scope-row-alert {
+  background: var(--scope-red-soft);
+}
+
 .scope-mini-kpi {
   border: 1px solid var(--scope-line);
   border-radius: var(--scope-radius);

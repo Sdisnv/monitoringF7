@@ -7,7 +7,7 @@ const { createScopeObjectivesService } = require('./_scope-objectives-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
 const { createScopeAlertsService } = require('./_scope-alerts-service');
 const { createScopeCycleService } = require('./_scope-cycle-service');
-const { createScopeJspReportingService } = require('./_scope-jsp-reporting');
+const { createScopeJspReportingService, createScopeParticipationReportingService } = require('./_scope-jsp-reporting');
 const { getPgRepo } = require('./_scope-pg');
 const { generateReport, pdfResponse } = require('./_scope-report-service');
 const { createScopePersonService } = require('./_scope-person-service');
@@ -90,6 +90,7 @@ exports.handler = async function(event){
     const alerts = createScopeAlertsService(repo);
     const cycles = createScopeCycleService(repo);
     const jspReporting = createScopeJspReportingService(repo);
+    const participationReporting = createScopeParticipationReportingService(repo);
     const persons = createScopePersonService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
@@ -328,6 +329,12 @@ exports.handler = async function(event){
         return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });
       }
       return response(200, { ok:true, report: await jspReporting.report(queryOf(event)) });
+    }
+    if(method === 'GET' && path === '/reporting/participation'){
+      if(!hasPermission(claims, 'dashboard:read')){
+        return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });
+      }
+      return response(200, { ok:true, report: await participationReporting.report(queryOf(event)) });
     }
     if(method === 'GET' && path === '/alerts'){
       return response(200, { ok:true, ...(await alerts.listAlerts(queryOf(event), claims)) });
