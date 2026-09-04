@@ -10,7 +10,9 @@ const {
   resolveSessionReportingScope,
   sortSessionEvents,
   sessionExerciseLabel,
-  MOTIF_DISPENSE_LABELS
+  MOTIF_DISPENSE_LABELS,
+  isEventCycleExigible,
+  isEventStatisticallyCountable
 } = require('./_scope-cycle-rules');
 const { displayDomaineCode, STATUT_PERMUTATION } = require('./_scope-model');
 
@@ -276,6 +278,8 @@ async function loadSessionBundle(repo, evenementId, options = {}){
 
 function buildSessionDataset(bundle){
   const { current, events, attendus, participations, personnes, cibles, cycle, state } = bundle;
+  const countableEvents = (events || []).filter(isEventStatisticallyCountable);
+  const countableEventIds = new Set(countableEvents.map(eventId).filter(Boolean));
   const personnesById = new Map((personnes || []).map((p) => [personId(p), p]));
   const ciblesById = new Map((cibles || []).map((c) => [String(c.cible_id || c.cibleId), c]));
   const eventsById = new Map(events.map((event) => [eventId(event), event]));
@@ -283,6 +287,7 @@ function buildSessionDataset(bundle){
   const validByKey = new Map();
   const rowsByKey = new Map();
   for(const participation of participations || []){
+    if(!countableEventIds.has(eventId(participation))) continue;
     if(!isValidSessionDecision(participation)) continue;
     const key = personKey(participation, personnesById);
     if(!key) continue;
@@ -339,7 +344,7 @@ function buildSessionDataset(bundle){
     permutations,
     nonRenseignes: 0
   };
-  const officiel = officialFromVolumes(volumes, events.length);
+  const officiel = officialFromVolumes(volumes, countableEvents.length);
   const denom = officiel.denominator;
   const population = populationKeys.size;
 
@@ -380,7 +385,8 @@ function buildSessionDataset(bundle){
   const domaineCode = displayDomaineCode(current.domaine_code || current.domaineCode);
   const exerciseLabel = state.sessionExerciseLabel || sessionExerciseLabel(events, state.groupKey);
   const dates = events.map((event) => String(event.date || '')).filter(Boolean).sort();
-  const allRealised = events.every((event) => String(event.statut).toUpperCase() === 'REALISE');
+  const exigibleEvents = events.filter(isEventCycleExigible);
+  const allRealised = exigibleEvents.length > 0 && exigibleEvents.every((event) => String(event.statut).toUpperCase() === 'REALISE');
   const signatureRole = signatureRoleForExercise({
     domaineCode,
     typeCycle: cycle && (cycle.type_cycle || cycle.typeCycle),
@@ -471,7 +477,7 @@ function buildSessionDataset(bundle){
 function assertAllReportSessionsClosed(bundle){
   const events = bundle && Array.isArray(bundle.events) ? bundle.events : [];
   if(events.length <= 1) return;
-  const open = events.filter((event) => String(event && event.statut || '').toUpperCase() !== 'REALISE');
+  const open = events.filter((event) => isEventCycleExigible(event) && !isEventStatisticallyCountable(event));
   if(!open.length) return;
   throw new HttpError(422, 'rapport_session_incomplete', 'Le rapport détaillé sera disponible lorsque toutes les séances seront clôturées.', {
     openSessions: open.map((event) => ({

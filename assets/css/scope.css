@@ -5292,6 +5292,21 @@ body.scope-pdf-open { overflow: hidden; }
   font-size: 12px;
   font-weight: 500;
 }
+.scope-fiche-cycle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 10px;
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.scope-fiche-cycle a {
+  color: var(--scope-red);
+  font-weight: 700;
+  text-decoration: none;
+}
 .scope-fiche-section {
   margin: 0;
   padding: 14px 16px 16px;

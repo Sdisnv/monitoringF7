@@ -36,7 +36,13 @@ const {
 } = require('./_scope-model');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
-const { computePrExerciseParticipationState, prSessionLabel, canCloseLastSession, resolveSessionReportingScope } = require('./_scope-cycle-rules');
+const {
+  computePrExerciseParticipationState,
+  prSessionLabel,
+  canCloseLastSession,
+  resolveSessionReportingScope,
+  resolveCycleCompletion
+} = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -2325,6 +2331,7 @@ function createScopeService(repo){
       .map((row) => Object.assign({}, personnes[String(row.personne_id)] || personnes[row.personne_id] || {}, row))
       .sort(comparePeopleByGradeName);
     let prExerciseParticipation = { byPersonneId: {}, kpis: null };
+    let cycleInfo = null;
     if((evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
       const cycle = evenement.cycle_id && repo.getCycle
         ? await repo.getCycle(evenement.cycle_id)
@@ -2333,6 +2340,23 @@ function createScopeService(repo){
         const cycleEvents = evenement.cycle_id && repo.listCycleEvents
           ? await repo.listCycleEvents(evenement.cycle_id)
           : (repo.listPrExerciseEvents && evenement.pr_exercise_group_key ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+        const cycleCompletion = resolveCycleCompletion({ cycle, evenements: cycleEvents });
+        cycleInfo = {
+          cycle_id: cycle.cycle_id || null,
+          cycle_key: cycle.cycle_key || null,
+          libelle: cycle.libelle || null,
+          domaine_code: cycle.domaine_code || evenement.domaine_code || null,
+          type_cycle: cycle.type_cycle || null,
+          annee: cycle.annee || null,
+          date_debut: cycle.date_debut || null,
+          date_fin: cycle.date_fin || null,
+          eventCount: cycleCompletion.eventCount,
+          exigibleCount: cycleCompletion.exigibleCount,
+          realisedCount: cycleCompletion.realisedCount,
+          cancelledCount: cycleCompletion.cancelledCount,
+          complete: cycleCompletion.complete,
+          statutCompletion: cycleCompletion.statut
+        };
         const scoped = resolveSessionReportingScope({ evenements: cycleEvents, currentEvent: evenement });
         const scopedEvents = scoped.events.length ? scoped.events : [evenement];
         const cyclePersonnes = evenement.cycle_id && repo.listCyclePersonnes ? await repo.listCyclePersonnes(evenement.cycle_id) : [];
@@ -2455,6 +2479,7 @@ function createScopeService(repo){
       personnes,
       prExerciseParticipation,
       sessionParticipation: prExerciseParticipation,
+      cycle: cycleInfo,
       journal,
       compteurs,
       saisieQuantitative: saisie,
@@ -2488,6 +2513,20 @@ function createScopeService(repo){
         officiel: false,
         kind: 'LEGACY',
         exclus: { nonRealise: true, legacy: true }
+      };
+    }
+    if(String(evenement.statut || '').toUpperCase() === 'ANNULE'){
+      return {
+        numerator: 0,
+        denominator: 0,
+        percentage: null,
+        presents: 0,
+        excuses: 0,
+        nonExcuses: 0,
+        dispenses: 0,
+        officiel: false,
+        kind: 'EXCLUDED',
+        exclus: { annule: true }
       };
     }
     if(isQuantitatif(evenement)){

@@ -4301,6 +4301,22 @@
     </header>`;
   }
 
+  function eventCycleSummary(fiche) {
+    const cycle = fiche && fiche.cycle;
+    if (!cycle || !cycle.cycle_id) return '';
+    const period = [cycle.date_debut, cycle.date_fin].filter(Boolean).map(L.formatDate).join(' – ') || (cycle.annee ? String(cycle.annee) : '—');
+    const progress = cycle.exigibleCount
+      ? `${cycle.realisedCount || 0}/${cycle.exigibleCount} réalisé${Number(cycle.realisedCount || 0) > 1 ? 's' : ''}`
+      : 'Aucun événement exigible';
+    const cancelled = Number(cycle.cancelledCount || 0);
+    return `<div class="scope-fiche-cycle">
+      <a href="#/cycles/${escapeHtml(cycle.cycle_id)}">${escapeHtml(cycle.libelle || 'Cycle')}</a>
+      <span>${escapeHtml(period)}</span>
+      <span>${escapeHtml(String(cycle.eventCount || 0))} événement${Number(cycle.eventCount || 0) > 1 ? 's' : ''}</span>
+      <span>${escapeHtml(progress)}${cancelled ? ` · ${cancelled} annulé${cancelled > 1 ? 's' : ''}` : ''}</span>
+    </div>`;
+  }
+
   function renderFicheIdentity(ev, fiche) {
     const mode = eventMode(ev);
     const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
@@ -4323,6 +4339,7 @@
           ${eventBusinessStateBadge(fiche)}
           ${tech.map((item) => `<span class="scope-fiche-tech">${escapeHtml(item)}</span>`).join('')}
         </div>
+        ${eventCycleSummary(fiche)}
       </div>
     </header>`;
   }
@@ -4382,7 +4399,7 @@
 
   function renderFicheSecondaryActions(ev, extraActions, isLegacy) {
     const cancel = !isLegacy && ev.statut !== 'ANNULE' && ev.statut !== 'REALISE'
-      ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler l’événement</button>'
+      ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler</button>'
       : '';
     return `<section class="scope-card scope-fiche-section scope-fiche-secondary">
       <div class="scope-section-header"><h2 class="scope-section-title">Autres actions</h2></div>
@@ -4444,6 +4461,7 @@
         </div>
       </div></div>` : ''}
       ${state.modal === 'edit-event' ? renderEditEventModal(ev, fiche) : ''}
+      ${state.modal === 'postpone-event' ? renderPostponeEventModal(ev) : ''}
     `;
   }
 
@@ -4483,7 +4501,7 @@
       heureDebut,
       heureFin,
       cibleIds: ciblesOf(state.fiche).map((c) => c.cible_id || c.cibleId).filter(Boolean),
-      statut: (opts && opts.statut) || ev.statut || 'PLANIFIE',
+      statut: ev.statut || 'PLANIFIE',
       motif: '',
       warning: '',
       confirmed: false
@@ -4519,16 +4537,31 @@
           </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
         </div>
       </div>
-      <div class="scope-field"><label>Statut</label>
-        <select id="edit-event-statut">
-          <option value="PLANIFIE" ${form.statut === 'PLANIFIE' ? 'selected' : ''}>Planifié</option>
-          <option value="REPORTE" ${form.statut === 'REPORTE' ? 'selected' : ''}>Reporté</option>
-        </select>
-      </div>
-      <div class="scope-field"><label>Motif de modification</label><textarea id="edit-event-motif" placeholder="Obligatoire pour un report">${escapeHtml(form.motif || '')}</textarea></div>
+      <div class="scope-field"><label>Motif de modification</label><textarea id="edit-event-motif">${escapeHtml(form.motif || '')}</textarea></div>
       ${warning}
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="edit-event-ok">${form.confirmed ? 'Confirmer et enregistrer' : 'Enregistrer les modifications'}</button>
+        <button type="button" class="scope-btn" id="edit-event-cancel">Annuler</button>
+      </div>
+    </div></div>`;
+  }
+
+  function renderPostponeEventModal(ev) {
+    const form = state.editEventForm || {};
+    const warning = form.warning
+      ? `<p class="scope-mode-hint">${escapeHtml(form.warning)}</p>`
+      : '';
+    return `<div class="scope-modal"><div class="scope-card">
+      <h3>Reporter</h3>
+      <p>L’événement reste le même. Le code est conservé et la nouvelle date sera utilisée par les statistiques.</p>
+      <p class="scope-mode-hint">Code : ${escapeHtml(ev.code_cours || '—')}</p>
+      <div class="scope-field"><label>Nouvelle date</label><input id="edit-event-date" type="date" value="${escapeHtml(form.date || '')}"></div>
+      <div class="scope-field"><label>Heure de début</label><input id="edit-event-debut" type="time" value="${escapeHtml(form.heureDebut || '')}"></div>
+      <div class="scope-field"><label>Heure de fin</label><input id="edit-event-fin" type="time" value="${escapeHtml(form.heureFin || '')}"></div>
+      <div class="scope-field"><label>Motif du report</label><textarea id="edit-event-motif">${escapeHtml(form.motif || '')}</textarea></div>
+      ${warning}
+      <div class="scope-actions">
+        <button type="button" class="scope-btn scope-btn-primary" id="edit-event-ok">${form.confirmed ? 'Confirmer le report' : 'Reporter'}</button>
         <button type="button" class="scope-btn" id="edit-event-cancel">Annuler</button>
       </div>
     </div></div>`;
@@ -5410,8 +5443,8 @@
     if (state.modal !== 'cancel-event') return '';
     return `<div class="scope-modal"><div class="scope-card">
       <h3>Annuler l’événement</h3>
-      <p>L’événement passera à Annulé. Les attendus et participations sont conservés. Il n’entre plus dans le taux officiel.</p>
-      <div class="scope-field"><label>Motif</label><textarea id="cancel-motif">Qualification SCOPE</textarea></div>
+      <p>L’événement sera conservé dans l’historique mais exclu des statistiques.</p>
+      <div class="scope-field"><label>Motif</label><textarea id="cancel-motif"></textarea></div>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
         <button type="button" class="scope-btn" id="cancel-dismiss">Retour</button>
@@ -6592,7 +6625,14 @@
       });
     });
     document.getElementById('edit-event')?.addEventListener('click', () => openEditEventModal());
-    document.getElementById('postpone-event')?.addEventListener('click', () => openEditEventModal({ statut: 'REPORTE' }));
+    document.getElementById('postpone-event')?.addEventListener('click', () => {
+      openEditEventModal();
+      if (state.editEventForm) {
+        state.editEventForm.statut = 'REPORTE';
+        state.modal = 'postpone-event';
+        render();
+      }
+    });
     document.getElementById('edit-event-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('edit-event-cibles')?.querySelectorAll('input[type="checkbox"]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -6639,7 +6679,14 @@
         return;
       }
       withLoading(async () => {
-        const payload = {
+        const payload = form.statut === 'REPORTE' ? {
+          date: form.date,
+          heureDebut: form.heureDebut || null,
+          heureFin: form.heureFin || null,
+          statut: 'REPORTE',
+          motif: form.motif,
+          confirmPopulationImpact: Boolean(form.confirmed)
+        } : {
           libelle: form.libelle,
           date: form.date,
           heureDebut: form.heureDebut || null,
@@ -6954,6 +7001,10 @@
     document.getElementById('cancel-dismiss')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('cancel-ok')?.addEventListener('click', () => {
       const motif = document.getElementById('cancel-motif').value;
+      if (!String(motif || '').trim()) {
+        toast('error', 'Motif obligatoire', 'Indiquez le motif de l’annulation.');
+        return;
+      }
       const id = route().id;
       withLoading(async () => {
         await client.annuler(id, motif, state.fiche.evenement.version);

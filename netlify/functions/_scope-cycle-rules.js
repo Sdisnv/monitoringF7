@@ -7,6 +7,7 @@ const STATUTS_ABSENCE = new Set(['ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
 const SESSION_COUNTING_ROLES = new Set(['PARTICIPANT', 'FORMATEUR', 'SURVEILLANT']);
 const STATUTS_PR_EXERCISE_RECONNUS = new Set(['PRESENT', STATUT_PERMUTATION, 'DISPENSE']);
 const STATUTS_SESSION_VALIDES = new Set(['PRESENT', STATUT_PERMUTATION, 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE']);
+const STATUTS_EVENT_EXIGIBLES = new Set(['PLANIFIE', 'REPORTE', 'REALISE']);
 const MOTIF_DISPENSE_LABELS = Object.freeze({
   JOKER: 'Joker',
   FORMATEUR_PR: 'Formateur PR',
@@ -170,9 +171,64 @@ function cycleEvents(input, cycle){
   return (input.evenements || input.events || []).filter((event) => eventBelongsToCycle(event, cycle));
 }
 
+function eventStatut(row){
+  return normalizeUpper(row && row.statut);
+}
+
+function eventContributionState(event){
+  const statut = eventStatut(event) || 'PLANIFIE';
+  const id = eventId(event);
+  const countable = statut === 'REALISE';
+  const exigible = STATUTS_EVENT_EXIGIBLES.has(statut);
+  return {
+    eventId: id || null,
+    statut,
+    exigible,
+    countable,
+    contributesToStatistics: countable,
+    contributesToCycleCompletion: exigible,
+    reason: statut === 'ANNULE'
+      ? 'EVENEMENT_ANNULE_NON_EXIGIBLE'
+      : (countable ? 'EVENEMENT_REALISE_COMPTABILISABLE' : 'EVENEMENT_NON_REALISE_NON_COMPTABILISABLE')
+  };
+}
+
+function isEventStatisticallyCountable(event){
+  return eventContributionState(event).countable;
+}
+
+function isEventCycleExigible(event){
+  return eventContributionState(event).exigible;
+}
+
+function resolveCycleCompletion(input = {}){
+  const cycle = input.cycle || {};
+  const events = cycleEvents(input, cycle);
+  const contributions = events.map(eventContributionState);
+  const exigibles = contributions.filter((row) => row.exigible);
+  const realised = exigibles.filter((row) => row.countable);
+  const planned = exigibles.filter((row) => row.statut === 'PLANIFIE');
+  const postponed = exigibles.filter((row) => row.statut === 'REPORTE');
+  const cancelled = contributions.filter((row) => row.statut === 'ANNULE');
+  const complete = exigibles.length > 0 && realised.length === exigibles.length;
+  return {
+    cycleId: cycleId(cycle) || null,
+    eventCount: events.length,
+    exigibleCount: exigibles.length,
+    realisedCount: realised.length,
+    cancelledCount: cancelled.length,
+    plannedCount: planned.length,
+    postponedCount: postponed.length,
+    complete,
+    statut: complete ? 'COMPLET' : 'INCOMPLET',
+    events: contributions
+  };
+}
+
 function mapEventCounts(events){
   const counts = {};
   for(const event of events){
+    if(!isEventCycleExigible(event)) continue;
     const id = eventId(event);
     if(id) counts[id] = { eventId: id, codeCours: event.code_cours || event.codeCours || null, date: event.date || null, population: 0, presents: 0 };
   }
@@ -310,6 +366,8 @@ function computeCycleMetrics(input = {}){
   const domaine = normalizeDomain(cycle.domaine_code || cycle.domaineCode || input.domaine || input.domaineCode);
   const personnesById = personneLookup(input.personnes);
   const events = cycleEvents(input, cycle);
+  const completion = resolveCycleCompletion({ cycle, evenements: events });
+  const countableEventIds = new Set(completion.events.filter((row) => row.contributesToStatistics).map((row) => row.eventId).filter(Boolean));
   const cycleEventIds = new Set(events.map(eventId).filter(Boolean));
   const population = new Set();
   const participantsReconnus = new Set();
@@ -349,7 +407,7 @@ function computeCycleMetrics(input = {}){
 
   for(const participation of input.participations || []){
     const eid = eventId(participation);
-    if(!cycleEventIds.has(eid)) continue;
+    if(!cycleEventIds.has(eid) || !countableEventIds.has(eid)) continue;
     const role = normalizeUpper(participation.role || 'PARTICIPANT');
     const statut = normalizeUpper(participation.statut || 'NON_RENSEIGNE');
     const key = addPerson(new Set(), participation, personnesById);
@@ -397,6 +455,7 @@ function computeCycleMetrics(input = {}){
       contrat: domaine === 'PR' ? 'CYCLE_PAPR_ALTERNATIF_PREPARED' : 'CYCLE_ALTERNATIF_PREPARED'
     },
     sessionCounts: Object.values(sessionCounts),
+    completion,
     distributionSessions: [...assignedByPerson.entries()].map(([personKey, assignedEventIdValue]) => ({
       personKey,
       assignedEventId: assignedEventIdValue,
@@ -422,7 +481,7 @@ function computePrExerciseParticipationState(input = {}){
   const personnesById = personneLookup(input.personnes);
   const allEvents = cycleEvents(input, cycle);
   const group = prExerciseEvents({ ...input, evenements: allEvents });
-  const events = group.events;
+  const events = group.events.filter(isEventCycleExigible);
   const groupEventIds = new Set(events.map(eventId).filter(Boolean));
   const currentEventId = normalizeText(input.currentEventId || input.current_event_id);
   const eventOrder = new Map(events.map((event, index) => [eventId(event), index]));
@@ -679,7 +738,7 @@ function computePrExerciseParticipationState(input = {}){
     });
   }
   const lastEventId = events.length ? eventId(events[events.length - 1]) : '';
-  const allSessionsClosed = events.every((event) => normalizeUpper(event && event.statut) === 'REALISE');
+  const allSessionsClosed = events.length > 0 && events.every((event) => normalizeUpper(event && event.statut) === 'REALISE');
   const resolvedKeys = new Set([...countedKeys, ...excuseKeys, ...validByPerson.keys()]);
   const coverageBalanced = population.size === validByPerson.size + unfilledKeys.length;
 
@@ -800,6 +859,10 @@ module.exports = {
   sameTechnicalCycle,
   proposeCycleLink,
   computeCycleMetrics,
+  eventContributionState,
+  isEventStatisticallyCountable,
+  isEventCycleExigible,
+  resolveCycleCompletion,
   prExerciseGroupKey,
   prSessionKey,
   prSessionLabel,
