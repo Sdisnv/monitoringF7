@@ -1067,17 +1067,33 @@ class ScopePdfRenderer {
     const k = jsp.kpis || {};
     const blocks = new Set(jsp.blocks || []);
     const enabled = (key) => !blocks.size || blocks.has(key);
-    this.heading('Synthèse de participation', 12);
-    this.kv([
-      { label: 'Périmètre', value: jsp.siteLabel || jsp.perimeterLabel || 'Global du domaine' },
-      { label: jsp.domaine === 'JSP' ? 'JSP concernés' : 'Personnes concernées', value: String(k.participants || k.jeunes || 0) },
-      { label: 'Exercices comptabilisés', value: String(k.exercises || 0) },
-      { label: 'Participations attendues', value: String(k.expected || 0) },
-      { label: 'Présents', value: String(k.present || 0) },
-      { label: 'Excusés', value: String(k.excused || 0) },
-      { label: 'Absents', value: String(k.absent || 0) },
-      { label: 'Taux de présence', value: formatTaux(k.presenceRate) }
-    ]);
+    if(enabled('synthese')){
+      this.heading('Synthèse de participation', 12);
+      this.kv([
+        { label: 'Périmètre', value: jsp.siteLabel || jsp.perimeterLabel || 'Global du domaine' },
+        { label: jsp.domaine === 'JSP' ? 'JSP concernés' : 'Personnes concernées', value: String(k.participants || k.jeunes || 0) },
+        { label: 'Exercices comptabilisés', value: String(k.exercises || 0) },
+        { label: 'Participations attendues', value: String(k.expected || 0) },
+        { label: 'Présents', value: String(k.present || 0) },
+        { label: 'Excusés', value: String(k.excused || 0) },
+        { label: 'Absents', value: String(k.absent || 0) },
+        { label: 'Taux de présence', value: formatTaux(k.presenceRate) }
+      ]);
+    }
+
+    if(enabled('graphiques')){
+      this.heading('Graphiques', 12);
+      if((jsp.graphs && jsp.graphs.sites || []).length){
+        this.table(
+          ['Périmètre', 'Présents', 'Excusés', 'Absents', 'Taux'],
+          (jsp.graphs.sites || []).map((row) => [row.label, String(row.presents || 0), String(row.excuses || 0), String(row.absents || 0), formatTaux(row.taux)]),
+          [150, 62, 62, 62, 62],
+          { align: ['left', 'right', 'right', 'right', 'right'], rowH: 16 }
+        );
+      } else {
+        this.para('Aucune donnée disponible pour la période sélectionnée.');
+      }
+    }
 
     if(enabled('comparaisons') && (jsp.siteRows || []).length){
       this.heading('Analyse par site', 12);
@@ -1092,6 +1108,22 @@ class ScopePdfRenderer {
       );
     }
 
+    if(enabled('alertes') && (jsp.alerts || []).length){
+      this.heading('Alertes prioritaires', 12);
+      this.table(
+        ['Personne', 'Périmètre', 'Cause', 'Taux constaté', 'Abs. non exc.', 'Objectif', 'Écart'],
+        (jsp.alerts || []).slice(0, 18).map((row) => [
+          [row.grade, row.prenom, row.nom].filter(Boolean).join(' '), row.perimeter || '', row.cause || '',
+          row.objective == null ? '—' : formatTaux(row.value),
+          row.objective == null ? String(row.value ?? 0) : String(row.absent || 0),
+          row.objective == null ? 'Non défini' : formatTaux(row.objective),
+          row.gap == null ? '—' : formatTaux(row.gap)
+        ]),
+        [92, 52, 104, 54, 54, 54, 42],
+        { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right'], rowH: 18, wrap: [false, false, true, false, false, false, false] }
+      );
+    }
+
     if(enabled('surveillance') && (jsp.watchlist || []).length){
       this.heading('Participation à surveiller', 12);
       this.table(
@@ -1102,7 +1134,7 @@ class ScopePdfRenderer {
           String(row.absent || 0), String(row.totalAbsences || 0), formatTaux(row.absenceRate)
         ]),
         [116, 52, 38, 38, 38, 38, 54, 58],
-        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (jsp.watchlist || []).slice(0, 18).map((row) => row.absent > 0 || row.underObjective) }
+        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
       );
     }
 
@@ -1117,7 +1149,7 @@ class ScopePdfRenderer {
           row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
         ]),
         [130, 58, 42, 42, 58, 58, 52],
-        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (jsp.underObjective || []).slice(0, 18).map(() => true) }
+        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
       );
     }
 
@@ -1197,12 +1229,16 @@ class ScopePdfRenderer {
     if((f.alerts || []).length){
       this.heading('Alertes prioritaires', 12);
       this.table(
-        ['Type', 'Élément', 'Valeur', 'Objectif', 'Écart'],
+        ['Type', 'Élément', 'Taux constaté', 'Abs. non exc.', 'Objectif', 'Écart'],
         (f.alerts || []).slice(0, 24).map((row) => [
-          row.type, row.label, row.value == null ? '—' : String(row.value), row.objective == null ? 'Non défini' : formatTaux(row.objective), row.gap == null ? '—' : formatTaux(row.gap)
+          row.type, row.label,
+          row.objective == null ? '—' : formatTaux(row.value),
+          row.objective == null ? String(row.value ?? 0) : String(row.absent || '—'),
+          row.objective == null ? 'Non défini' : formatTaux(row.objective),
+          row.gap == null ? '—' : formatTaux(row.gap)
         ]),
-        [86, 210, 54, 58, 52],
-        { align: ['left', 'left', 'right', 'right', 'right'], rowH: 18, wrap: [false, true, false, false, false], highlightRows: (f.alerts || []).slice(0, 24).map(() => true) }
+        [76, 188, 58, 58, 58, 50],
+        { align: ['left', 'left', 'right', 'right', 'right', 'right'], rowH: 18, wrap: [false, true, false, false, false, false] }
       );
     }
 
@@ -1216,7 +1252,7 @@ class ScopePdfRenderer {
           row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
         ]),
         [48, 112, 52, 34, 34, 34, 34, 46, 42],
-        { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (f.peopleToWatch || []).slice(0, 24).map((row) => row.absent > 0 || row.underObjective) }
+        { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
       );
     }
 

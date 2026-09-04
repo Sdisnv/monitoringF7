@@ -3656,6 +3656,17 @@ body.scope-pdf-open { overflow: hidden; }
   font-size: 13px;
 }
 
+.scope-report-filter-row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 18px;
+  align-items: end;
+}
+
+.scope-report-grid-filters {
+  margin-left: 0;
+}
+
 .scope-row-alert {
   background: var(--scope-red-soft);
 }
@@ -3753,7 +3764,7 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-jsp-bar-absents { background: var(--scope-red); }
 .scope-jsp-bar-count { background: var(--scope-slate); }
 .scope-jsp-bar-taux { background: var(--scope-blue); }
-.scope-jsp-bar-objectif { background: var(--scope-green); }
+.scope-jsp-bar-objectif { background: var(--scope-yellow); }
 
 .scope-jsp-trend {
   display: flex;

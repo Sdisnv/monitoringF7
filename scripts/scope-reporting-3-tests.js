@@ -94,6 +94,9 @@ async function setup(){
   await person(repo, [dapY1], { nip: 'DAP001', grade: 'Lt', nom: 'Delta', prenom: 'Dana' });
   await person(repo, [prAbc, dpsG1], { nip: 'PR001', grade: 'Sgt', nom: 'Respire', prenom: 'Rita' });
   await person(repo, [prAbc, dpsB2], { nip: 'PR002', grade: 'Sap', nom: 'Masque', prenom: 'Marc' });
+  await person(repo, [prAbc, dpsG1], { nip: 'PRF01', grade: 'Lt', nom: 'Formateur', prenom: 'Franck' });
+  await person(repo, [prAbc, dpsC1], { nip: 'PRS01', grade: 'Sgt', nom: 'Surveillant', prenom: 'Sam' });
+  await person(repo, [prAbc, dpsB1], { nip: 'PRAUX', grade: 'Sap', nom: 'Auxiliaire', prenom: 'Alex' });
   await person(repo, [autoVl], { nip: 'AUTO01', grade: 'Four', nom: 'Volant', prenom: 'Val' });
   const jspJeune = await person(repo, [jspG1], { nip: 'JSP001', grade: 'Flm 1', nom: 'Jeune', prenom: 'Jade' });
   await person(repo, [jspG1], { nip: 'JSP002', grade: 'Flm 2', nom: 'Absent', prenom: 'Ana' });
@@ -109,8 +112,22 @@ async function setup(){
   const eDpsS2 = await frozen(service, 'DPS', dpsC1, '2026-09-05', 'DPS S2');
   await realize(repo, eDpsS2, { DPS002: { statut: 'ABSENT_NON_EXCUSE' } });
   const ePr = await frozen(service, 'PR', prAbc, '2026-04-12', 'PAPR ABC');
-  await realize(repo, ePr, { PR001: { statut: 'PRESENT' }, PR002: { statut: 'ABSENT_NON_EXCUSE' } });
-  const eAuto = await frozen(service, 'AUTO', autoVl, '2026-08-20', 'AUTO VL');
+  await realize(repo, ePr, {
+    PR001: { statut: 'PRESENT' },
+    PR002: { statut: 'ABSENT_NON_EXCUSE' },
+    PRF01: { statut: 'PRESENT', role: 'FORMATEUR' },
+    PRS01: { statut: 'PRESENT', role: 'SURVEILLANT' },
+    PRAUX: { statut: 'PRESENT', role: 'AUXILIAIRE' }
+  });
+  const ePr2 = await frozen(service, 'PR', prAbc, '2026-04-13', 'PAPR ABC suite');
+  await realize(repo, ePr2, {
+    PR001: { statut: 'PRESENT' },
+    PR002: { statut: 'PRESENT' },
+    PRF01: { statut: 'PRESENT', role: 'FORMATEUR' },
+    PRS01: { statut: 'PRESENT', role: 'SURVEILLANT' },
+    PRAUX: { statut: 'PRESENT', role: 'AUXILIAIRE' }
+  });
+  const eAuto = await frozen(service, 'AUTO', autoVl, '2026-08-20', 'Conduite VL');
   await realize(repo, eAuto, { AUTO01: { statut: 'PRESENT' } });
   const eJsp = await frozen(service, 'JSP', jspG1, '2026-05-10', 'JSP G1');
   await repo.upsertAttendu({ evenement_id: eJsp, personne_id: monitor.personne_id, inclus: true, origine: 'TEST' });
@@ -157,6 +174,7 @@ function hooks(){
     eq(L.parseHash('#/rapports/participation').screen, 'rapport-participation');
     ok(html.includes('Pilotage Formation'));
     ok(html.includes('Rapport de participation configurable'));
+    ok(html.includes('href="#/rapports">Retour aux rapports') || hooks().renderRapportJspHtml({ kind: 'PARTICIPATION', domaine: 'JSP', siteFilter: 'TOUS', kpis: {}, siteRows: [], persons: [], watchlist: [], regulars: [], exercises: [], motifs: [], details: [], graphs: {}, blocks: ['synthese'] }).includes('Retour aux rapports'));
     ok(!html.includes('<h2 style="margin-top:0">Rapport JSP</h2>'));
   });
 
@@ -172,6 +190,8 @@ function hooks(){
     h.state.referentiels.cibles = [{ domaineCode: 'JSP', niveauCode: 'CAD' }];
     const html = h.renderRapportJspHtml({ kind: 'PARTICIPATION', domaine: 'JSP', siteFilter: 'TOUS', kpis: {}, siteRows: [], persons: [], watchlist: [], regulars: [], exercises: [], motifs: [], details: [], graphs: {}, blocks: ['synthese'] });
     ok(html.includes('<option value="JSP" selected>JSP</option>'));
+    ok(!html.includes('<option value="PR"'));
+    ok(!html.includes('<option value="AUTO"'));
     ok(html.includes('JSP G1'));
     ok(!html.includes('JSP CAD'));
   });
@@ -181,9 +201,21 @@ function hooks(){
     const svc = createScopeParticipationReportingService(repo);
     const r = await svc.report({ domaine: 'PR', year: 2026 });
     deep(r.siteRows.map((row) => row.code), ['G1', 'C1', 'B1', 'B2']);
-    eq(r.siteRows.find((row) => row.code === 'G1').participants, 1);
+    eq(r.siteRows.find((row) => row.code === 'G1').participants, 2);
     eq(r.siteRows.find((row) => row.code === 'B2').participants, 1);
     ok(!r.siteRows.some((row) => /^PR /.test(row.site)));
+  });
+
+  await record('04b - PR PAPR formateur surveillant auxiliaire dedupliques', async () => {
+    const { repo } = await setup();
+    const r = await createScopeParticipationReportingService(repo).report({ domaine: 'PR', year: 2026 });
+    const formateur = r.persons.find((row) => row.nip === 'PRF01');
+    ok(formateur);
+    eq(formateur.expected, 1);
+    eq(formateur.present, 1);
+    ok(!r.persons.some((row) => row.nip === 'PRS01'));
+    ok(!r.persons.some((row) => row.nip === 'PRAUX'));
+    eq(r.kpis.participants, 3);
   });
 
   await record('05 - ordre DAP institutionnel', async () => {
@@ -195,7 +227,7 @@ function hooks(){
   await record('06 - tri grade nom prenom', async () => {
     const { repo } = await setup();
     const r = await createScopeParticipationReportingService(repo).report({ domaine: 'PR', year: 2026 });
-    deep(r.persons.map((row) => row.nip), ['PR001', 'PR002']);
+    deep(r.persons.map((row) => row.nip), ['PRF01', 'PR001', 'PR002']);
   });
 
   await record('07 - S1 et S2 filtrent reellement les evenements', async () => {
@@ -239,12 +271,27 @@ function hooks(){
     ok(html.includes('Écart objectif'));
   });
 
+  await record('10b - rouge clair reserve aux tableaux mixtes', async () => {
+    const { repo } = await setup();
+    const r = await createScopeParticipationReportingService(repo).report({ domaine: 'PR', year: 2026 });
+    const html = hooks().renderRapportJspHtml(r);
+    const alertes = html.slice(html.indexOf('Alertes prioritaires'), html.indexOf('Participation à surveiller'));
+    const sousObjectif = html.slice(html.indexOf('Personnes sous l’objectif'), html.indexOf('Analyse nominative complète'));
+    const evenements = html.slice(html.indexOf('Analyse par exercice et événement'));
+    ok(!alertes.includes('scope-row-alert'));
+    ok(!sousObjectif.includes('scope-row-alert'));
+    ok(evenements.includes('scope-row-alert'));
+  });
+
   await record('11 - graphiques avec legendes et absence donnees explicite', async () => {
     const { repo } = await setup();
     const r = await createScopeParticipationReportingService(repo).report({ domaine: 'FOCA', year: 2026 });
     const html = hooks().renderRapportJspHtml(r);
     ok(html.includes('scope-chart-legend'));
     ok(html.includes('Aucune donnée disponible pour la période sélectionnée.'));
+    const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
+    ok(css.includes('.scope-jsp-bar-taux { background: var(--scope-blue); }'));
+    ok(css.includes('.scope-jsp-bar-objectif { background: var(--scope-yellow); }'));
   });
 
   await record('12 - FOSPEC libelles et evolution PR AUTO', async () => {
@@ -252,7 +299,21 @@ function hooks(){
     const r = await createScopeParticipationReportingService(repo).report({ domaine: 'FOSPEC', year: 2026 });
     deep(r.siteRows.map((row) => row.site), ['PR', 'AUTO']);
     ok(r.graphs.evolution.some((row) => row.exercise === 'PAPR ABC'));
-    ok(r.graphs.evolution.some((row) => row.exercise === 'AUTO VL'));
+    ok(r.graphs.evolution.some((row) => row.exercise === 'Conduite VL'));
+  });
+
+  await record('12b - hierarchie FOSPEC sous domaine et libelles metier', async () => {
+    const { repo } = await setup();
+    const svc = createScopeParticipationReportingService(repo);
+    const pr = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'PR', perimeter: 'ABC', year: 2026 });
+    const auto = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'AUTO', perimeter: 'VL', year: 2026 });
+    eq(pr.sousDomaine, 'PR');
+    eq(pr.perimeterLabel, 'PAPR ABC');
+    eq(auto.perimeterLabel, 'Cond VL');
+    const html = hooks().renderRapportJspHtml(auto);
+    ok(html.includes('Cond VL'));
+    ok(!html.includes('AUTO VL'));
+    ok(!html.includes('AUTO PL'));
   });
 
   await record('13 - rapport global Formation et comparaison domaines', async () => {
@@ -262,7 +323,8 @@ function hooks(){
     ok(f.domainRows.some((row) => row.label === 'DPS'));
     ok(f.domainRows.some((row) => row.label === 'PR/PAPR'));
     ok(f.graphs.domains.length >= 3);
-    eq(f.kpis.expected, f.domainRows.filter((row) => row.domaine !== 'FOSPEC').reduce((sum, row) => sum + Number(row.expected || 0), 0));
+    ok(f.kpis.expected < f.domainRows.reduce((sum, row) => sum + Number(row.expected || 0), 0));
+    ok(f.graphs.evolution.every((row) => row.exercise === 'Formation globale'));
   });
 
   await record('14 - alertes Formation personnes et evenements', async () => {
@@ -291,6 +353,20 @@ function hooks(){
     const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-report-data.js'), 'utf8');
     eq((reportSrc.match(/(^|[\s,{])PARTICIPATION:\s*'PARTICIPATION'/g) || []).length, 1);
     ok(!reportSrc.includes("PARTICIPATION: 'SESSION'"));
+  });
+
+  await record('17 - PDF blocks stricts et alertes sans valeur ambigue', async () => {
+    const pdfSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const uiSrcNow = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    ok(pdfSrc.includes("if(enabled('synthese'))"));
+    ok(pdfSrc.includes("if(enabled('graphiques'))"));
+    ok(pdfSrc.includes("if(enabled('comparaisons')"));
+    ok(pdfSrc.includes("if(enabled('alertes')"));
+    ok(pdfSrc.includes("if(enabled('surveillance')"));
+    ok(pdfSrc.includes("if(enabled('sous_objectif')"));
+    ok(pdfSrc.includes("if(enabled('evenements')"));
+    ok(!uiSrcNow.includes('<th>Valeur</th>'));
+    ok(!pdfSrc.includes("'Valeur'"));
   });
 
   for(const row of results){

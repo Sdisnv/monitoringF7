@@ -10,7 +10,7 @@ const { renderReportPdf } = require('./_scope-pdf-renderer');
 const ALLOWED_KEYS = new Set([
   'kind', 'type',
   'evenementId', 'evenement_id', 'id',
-  'domaine', 'domaineCode',
+  'domaine', 'domaineCode', 'sousDomaine', 'sous_domaine', 'subdomain',
   'cible', 'cibleId',
   'site', 'niveau', 'perimeter', 'blocks',
   'year', 'annee', 'preset', 'semester', 'semestre', 'month', 'quarter', 'from', 'to',
@@ -45,6 +45,7 @@ function sanitizeQuery(body){
     kind: normalizeKind(raw.kind || raw.type),
     evenementId: raw.evenementId || raw.evenement_id || raw.id || null,
     domaine: raw.domaineCode || raw.domaine || null,
+    sousDomaine: raw.sousDomaine || raw.sous_domaine || raw.subdomain || null,
     cible: raw.cibleId || raw.cible || null,
     site: raw.site || raw.niveau || null,
     perimeter: raw.perimeter || null,

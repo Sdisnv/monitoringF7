@@ -395,9 +395,10 @@ async function collectReport(repo, query, options){
       kind: 'PARTICIPATION',
       period: jsp.period,
       domaine: jsp.domaine || 'JSP',
+      sousDomaine: jsp.sousDomaine || null,
       cible: jsp.siteFilter === 'TOUS' ? null : jsp.siteFilter,
       title: jsp.title,
-      subtitle: [jsp.domaine || 'JSP', jsp.siteLabel || jsp.perimeterLabel].filter(Boolean).join(' — '),
+      subtitle: [jsp.domaine || 'JSP', jsp.sousDomaine, jsp.siteLabel || jsp.perimeterLabel].filter(Boolean).join(' — '),
       summaryLabel: 'Participation',
       filename: sanitizeFilename(kind === 'JSP'
         ? `SCOPE_Rapport_JSP_${siteSlug}_${periodSlug(jsp.period)}.pdf`
