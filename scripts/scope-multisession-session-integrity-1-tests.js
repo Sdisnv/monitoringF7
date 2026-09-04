@@ -180,10 +180,10 @@ async function seedPerson(repo, cibleId, spec){
     assert.ok(s34.prExerciseParticipation.kpis.presents <= 4);
   });
 
-  await record('05 — personne déjà couverte ailleurs : ligne bleue et verrouillée', () => {
-    assert.ok(logic.coveredInGlobalBilan(rows34.find((row) => row.personneId === 'A')));
+  await record('05 — séance locale non verrouillée par le bilan global', () => {
+    assert.ok(!logic.coveredInGlobalBilan(rows34.find((row) => row.personneId === 'A')));
     assert.ok(!logic.statusLockedForRole('PARTICIPANT'));
-    assert.ok(logic.sessionLocked(rows34.find((row) => row.personneId === 'A')));
+    assert.ok(!logic.sessionLocked(rows34.find((row) => row.personneId === 'A')));
   });
 
   await record('06 — grisage disabled sur ligne déjà comptée ailleurs', () => {
@@ -354,9 +354,8 @@ async function seedPerson(repo, cibleId, spec){
     assert.ok(eventRows.some((row) => row.statut === 'PRESENT' && row.nip === '81002'));
   });
 
-  await record('26 — rapport multi-session = global dédupliqué', async () => {
-    const report = await collectMultisessionReport(ctx.repo, 'pr34');
-    assert.strictEqual(report.coverage.covered, 4);
+  await record('26 — rapport multi-session détaillé bloqué tant que toutes les séances ne sont pas clôturées', async () => {
+    await assert.rejects(() => collectMultisessionReport(ctx.repo, 'pr34'), /rapport détaillé sera disponible lorsque toutes les séances seront clôturées/);
     assert.ok(canCloseLastSession(s34.prExerciseParticipation));
   });
 

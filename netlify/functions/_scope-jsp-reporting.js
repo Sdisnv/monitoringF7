@@ -4,19 +4,19 @@ const { parsePeriod, inPeriod, monthKey } = require('./_scope-period');
 const { safePercentage } = require('./_scope-analytics');
 const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 const { resolveObjective, gapAgainst } = require('./_scope-objectives');
-const display = require('../../assets/js/scope-personnel-display.js');
-const refs = require('../../assets/js/scope-personnel-referentials.js');
+const contract = require('./_scope-core-contract');
 
 const DEFAULT_SUBDIVISIONS = Object.freeze({
   DPS: ['G1', 'C1', 'B1', 'B2'],
   DAP: ['Y1', 'Y2', 'Y3', 'Y4'],
   JSP: ['G1', 'C1', 'B1'],
   PR: ['G1', 'C1', 'B1', 'B2'],
+  AUTO: ['VL', 'PL'],
   FOBA: ['1', '2', '3'],
   FOSPEC: ['PR', 'AUTO']
 });
 
-const FORMATION_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'PR', 'AUTO', 'FOBA', 'FOCA', 'FOSPEC']);
+const FORMATION_DOMAINES = contract.FORMATION_DOMAINES;
 
 const JSP_SITES = Object.freeze([
   { code: 'G1', label: 'JSP G1' },
@@ -45,7 +45,7 @@ const MOTIF_LABELS = Object.freeze({
 });
 
 function clean(value){
-  return String(value == null ? '' : value).trim();
+  return contract.clean(value);
 }
 
 function pct(num, den){
@@ -86,14 +86,11 @@ function normalizeSite(raw){
 }
 
 function normalizeDomaine(raw){
-  const text = clean(raw).toUpperCase();
-  if(text === 'PAPR') return 'PR';
-  return text || 'JSP';
+  return contract.normalizeDomaine(raw);
 }
 
 function normalizePerimeter(raw){
-  const text = clean(raw).toUpperCase().replace(/^JSP\s+/, '');
-  return text === 'TOUS' || text === 'GLOBAL' ? '' : text;
+  return contract.normalizePerimeter(raw);
 }
 
 function selectedBlocks(raw){
@@ -150,7 +147,7 @@ function siteForPersonAt(assignments, date){
 function reportSubdivisionForPersonAt(assignments, date, domaineCode, fallbackSite, sousDomaineCode){
   if(domaineCode === 'JSP') return siteForPersonAt(assignments, date) || normalizeSite(fallbackSite);
   if(domaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
-  if(domaineCode === 'FOSPEC' && sousDomaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
+  if(domaineCode === 'FOSPEC' && sousDomaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
   if(domaineCode === 'FOSPEC' && sousDomaineCode === 'AUTO') return subdivisionForPersonAt(assignments, date, 'AUTO') || fallbackSite;
   return subdivisionForPersonAt(assignments, date, domaineCode) || fallbackSite;
 }
@@ -160,7 +157,7 @@ function compareName(a, b){
 }
 
 function compareInstitutional(a, b){
-  return refs.compareGrades(b.grade, a.grade) || compareName(a, b);
+  return contract.compareInstitutional(a, b, { domain: 'DPS' });
 }
 
 function displayPerson(person){
@@ -224,8 +221,7 @@ function graphPayload(siteRows, exercises, motifs){
 }
 
 function subtypeLabel(domaineCode, code){
-  if(domaineCode === 'PR') return code === 'ABC' ? 'PAPR ABC' : 'PAPR';
-  if(domaineCode === 'AUTO') return code === 'PL' ? 'Cond PL' : 'Cond VL';
+  if(domaineCode === 'PR' || domaineCode === 'AUTO') return contract.fospecSpecialisationLabel(domaineCode, code);
   return `${domaineCode} ${code}`;
 }
 
@@ -237,7 +233,7 @@ async function subdivisionsFor(repo, domaineCode, sousDomaineCode){
       .map((row) => ({
         code: clean(row.niveau_code || row.niveauCode).toUpperCase(),
         label: `DPS ${clean(row.niveau_code || row.niveauCode).toUpperCase()}`,
-        cibleId: row.cible_id || row.cibleId
+        cibleId: null
       }))
       .filter((row) => row.code && row.code !== 'GEN');
     const byCode = new Map(rows.map((row) => [row.code, row]));
@@ -245,6 +241,18 @@ async function subdivisionsFor(repo, domaineCode, sousDomaineCode){
   }
   if(domaineCode === 'FOSPEC'){
     if(sousDomaineCode === 'PR' || sousDomaineCode === 'AUTO'){
+      if(sousDomaineCode === 'PR'){
+        const rows = (cibles || [])
+          .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === 'DPS')
+          .map((row) => ({
+            code: clean(row.niveau_code || row.niveauCode).toUpperCase(),
+            label: contract.perimeterLabel('FOSPEC', clean(row.niveau_code || row.niveauCode), { sousDomaine: 'PR' }),
+            cibleId: null
+          }))
+          .filter((row) => row.code && row.code !== 'GEN');
+        const byCode = new Map(rows.map((row) => [row.code, row]));
+        return DEFAULT_SUBDIVISIONS.PR.map((code) => byCode.get(code) || { code, label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'PR' }), cibleId: null });
+      }
       const rows = (cibles || [])
         .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === sousDomaineCode)
         .map((row) => ({
@@ -253,7 +261,7 @@ async function subdivisionsFor(repo, domaineCode, sousDomaineCode){
           cibleId: row.cible_id || row.cibleId
         }))
         .filter((row) => ['GEN', 'ABC', 'VL', 'PL'].includes(row.code));
-      const wanted = sousDomaineCode === 'PR' ? ['GEN', 'ABC'] : ['VL', 'PL'];
+      const wanted = ['VL', 'PL'];
       const byCode = new Map(rows.map((row) => [row.code, row]));
       return wanted.map((code) => byCode.get(code) || { code, label: subtypeLabel(sousDomaineCode, code), cibleId: null });
     }
@@ -290,14 +298,13 @@ function objectiveFor({ objectives, date, domaineCode, cibleId }){
 }
 
 function eventDomainsFor(domaineCode, sousDomaineCode){
-  if(domaineCode === 'FOSPEC' && (sousDomaineCode === 'PR' || sousDomaineCode === 'AUTO')) return new Set([sousDomaineCode]);
-  if(domaineCode === 'FOSPEC') return new Set(['FOSPEC', 'PR', 'AUTO']);
-  return new Set([domaineCode]);
+  return contract.acceptedEventDomains(domaineCode, sousDomaineCode);
 }
 
 function domaineLabel(code){
   const canon = normalizeDomaine(code);
-  if(canon === 'PR') return 'PR/PAPR';
+  if(canon === 'PR') return 'FOSPEC / PR';
+  if(canon === 'AUTO') return 'FOSPEC / AUTO';
   return canon;
 }
 
@@ -347,6 +354,7 @@ function createScopeParticipationReportingService(repo){
     const blocks = selectedBlocks(query.blocks);
     const wantedRaw = normalizePerimeter(query.site || query.perimeter || query.cible || query.niveau);
     const wantedPerimeter = domaineCode === 'JSP' ? normalizeSite(wantedRaw) : wantedRaw;
+    const wantedSpecialisation = clean(query.specialisation || query.specialization || '').toUpperCase();
     const siteFilter = wantedPerimeter || 'TOUS';
     const [people, assignments, eventsRaw] = await Promise.all([
       peopleById(repo),
@@ -410,6 +418,10 @@ function createScopeParticipationReportingService(repo){
     for(const event of countableEvents){
       const eventId = String(event.evenement_id || event.evenementId);
       const cibles = ciblesByEvent.get(eventId) || [];
+      const eventSpecialisation = effectiveDomaineCode === 'PR'
+        ? (eventSubdivision(event, cibles, 'PR') || 'GEN')
+        : (effectiveDomaineCode === 'AUTO' ? (eventSubdivision(event, cibles, 'AUTO') || '') : '');
+      if(wantedSpecialisation && wantedSpecialisation !== eventSpecialisation) continue;
       const fallbackSite = eventSubdivision(event, cibles, domaineCode);
       const rawAttendus = attendusByEvent.get(eventId) || [];
       const eligible = filterAttendusEligibleAtDate(rawAttendus, periodesByPersonne, event.date).filter((row) => row.inclus !== false);
@@ -419,7 +431,7 @@ function createScopeParticipationReportingService(repo){
         if(!person) continue;
         const personAssignments = assignments.get(personneId) || [];
         if(domaineCode === 'JSP'){
-          const role = display.classifyJspRole(person, personAssignments, event.date);
+          const role = contract.classifyJspRole(person, personAssignments, event.date);
           if(role !== 'JEUNE'){
             if(role === 'MONITEUR') monitorRowsIgnored += 1;
             continue;
@@ -438,7 +450,13 @@ function createScopeParticipationReportingService(repo){
           if(roleContributionSeen.has(formateurKey)) continue;
           roleContributionSeen.add(formateurKey);
         }
-        participationFacts.push({ key: `${eventId}::${pKey}`, eventId, pKey, bucket, date: event.date });
+        participationFacts.push({
+          key: contract.participationFactKey({ eventId, pKey, effectiveDomaineCode, sousDomaineCode, specialisationCode: eventSpecialisation, perimeterCode: subdivision }),
+          eventId,
+          pKey,
+          bucket,
+          date: event.date
+        });
         const subInfo = subdivisions.find((row) => row.code === subdivision) || { code: subdivision, label: `${domaineCode} ${subdivision}`, cibleId: null };
         if(!siteCounts.has(subdivision)) siteCounts.set(subdivision, Object.assign({ site: subInfo.label, code: subInfo.code, cibleId: subInfo.cibleId }, emptyCounts()));
         if(!personRows.has(pKey)){
@@ -579,6 +597,7 @@ function createScopeParticipationReportingService(repo){
       period,
       domaine: domaineCode,
       sousDomaine: sousDomaineCode || null,
+      specialisation: wantedSpecialisation || null,
       perimeter: wantedPerimeter || '',
       perimeterLabel: wantedPerimeter ? ((subdivisions.find((row) => row.code === wantedPerimeter) || {}).label || `${domaineCode} ${wantedPerimeter}`) : 'Global du domaine',
       siteFilter,

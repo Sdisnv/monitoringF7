@@ -202,6 +202,7 @@
     jspReportSite: 'TOUS',
     participationReportDomain: 'JSP',
     participationReportSubdomain: '',
+    participationReportSpecialisation: 'GEN',
     participationReportBlocks: ['synthese', 'alertes', 'comparaisons', 'graphiques', 'surveillance', 'regularite', 'sous_objectif', 'nominatif', 'motifs', 'evenements'],
     jspReportSeq: 0,
     formationReport: null,
@@ -360,6 +361,7 @@
     state.jspReportSite = 'TOUS';
     state.participationReportDomain = 'JSP';
     state.participationReportSubdomain = '';
+    state.participationReportSpecialisation = 'GEN';
     state.jspReport = null;
     state.jspReportReady = false;
     state.jspReportError = null;
@@ -399,6 +401,7 @@
       if (next.screen === 'rapport-jsp' || next.screen === 'rapport-participation') {
         if (next.screen === 'rapport-jsp') state.participationReportDomain = 'JSP';
         if (state.participationReportDomain !== 'FOSPEC') state.participationReportSubdomain = '';
+        if (state.participationReportDomain !== 'FOSPEC') state.participationReportSpecialisation = 'GEN';
         state.jspReport = null;
         state.jspReportReady = false;
         state.jspReportError = null;
@@ -673,6 +676,7 @@
     const params = Object.assign({}, periodQuery(), {
       domaine: state.participationReportDomain || 'JSP',
       sousDomaine: state.participationReportDomain === 'FOSPEC' ? state.participationReportSubdomain : '',
+      specialisation: state.participationReportDomain === 'FOSPEC' && state.participationReportSubdomain ? state.participationReportSpecialisation : '',
       perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
       blocks: (state.participationReportBlocks || []).join(',')
     });
@@ -4167,12 +4171,20 @@
       : [];
   }
 
+  function participationSpecialisationOptions(domain) {
+    const code = String(domain || '').toUpperCase();
+    const sub = String(state.participationReportSubdomain || '').toUpperCase();
+    if (code === 'FOSPEC' && sub === 'PR') return [['GEN', 'PAPR'], ['ABC', 'PAPR ABC']];
+    if (code === 'FOSPEC' && sub === 'AUTO') return [['VL', 'Cond VL'], ['PL', 'Cond PL']];
+    return [];
+  }
+
   function participationPerimeterOptions(domain) {
     const code = String(domain || 'JSP').toUpperCase();
     const sub = String(state.participationReportSubdomain || '').toUpperCase();
     if (code === 'JSP') return [['TOUS', 'Global du domaine'], ['G1', 'JSP G1'], ['C1', 'JSP C1'], ['B1', 'JSP B1']];
     if (code === 'PR') return [['TOUS', 'Global du domaine'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
-    if (code === 'FOSPEC' && sub === 'PR') return [['TOUS', 'Global PR'], ['GEN', 'PAPR'], ['ABC', 'PAPR ABC']];
+    if (code === 'FOSPEC' && sub === 'PR') return [['TOUS', 'Global'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
     if (code === 'FOSPEC' && sub === 'AUTO') return [['TOUS', 'Global AUTO'], ['VL', 'Cond VL'], ['PL', 'Cond PL']];
     if (code === 'FOSPEC') return [['TOUS', 'Global du domaine'], ['PR', 'PR'], ['AUTO', 'AUTO']];
     const rows = (state.referentiels.cibles || [])
@@ -4258,6 +4270,11 @@
                 ${participationSubdomainOptions(state.participationReportDomain).map(([value, label]) => `<option value="${escapeHtml(value)}" ${state.participationReportSubdomain === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
               </select>
             </div>` : ''}
+            ${participationSpecialisationOptions(state.participationReportDomain).length ? `<div class="scope-field"><label>Spécialisation</label>
+              <select id="participation-report-specialisation">
+                ${participationSpecialisationOptions(state.participationReportDomain).map(([value, label]) => `<option value="${escapeHtml(value)}" ${state.participationReportSpecialisation === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+              </select>
+            </div>` : ''}
             <div class="scope-field"><label>Périmètre</label>
               <select id="jsp-report-site">
                 ${participationPerimeterOptions(state.participationReportDomain).map(([value, label]) => `<option value="${escapeHtml(value)}" ${site === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
@@ -4318,6 +4335,10 @@
         ${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: periodRangeText(report.period), logo: true })}
         ${periodContextHtml()}
         <div class="scope-card">
+          <div class="scope-report-filter-row">
+            <a class="scope-btn scope-btn-secondary" href="#/rapports">Retour aux rapports</a>
+            <div></div>
+          </div>
           <div class="scope-mini-kpi-grid">
             ${jspKpi('Événements comptabilisés', k.exercises || 0)}
             ${jspKpi('Personnes distinctes', k.participants || 0)}
@@ -5239,19 +5260,8 @@
 
   function renderPresenceKpis(niveaux, fiche) {
     const rows = state.saisie || [];
-    const prKpis = fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.kpis;
-    const multi = Boolean(fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.isMultiSession);
     const local = L.sessionPresenceKpis ? L.sessionPresenceKpis(rows) : Object.assign({ attendus: 0 }, countStatuses(rows));
-    const c = multi && prKpis
-      ? {
-        attendus: Number(prKpis.population || 0),
-        present: Number(prKpis.presents || 0),
-        excuse: Number(prKpis.excuses || 0),
-        absent: Number(prKpis.absents || 0),
-        dispense: Number(prKpis.dispenses || 0),
-        open: Number(prKpis.open || 0)
-      }
-      : local;
+    const c = local;
     const openVal = c.open;
     const openLabel = 'À renseigner';
     const attendus = c.attendus;
@@ -7534,6 +7544,7 @@
     document.getElementById('participation-report-domain')?.addEventListener('change', (e) => {
       state.participationReportDomain = e.target.value || 'JSP';
       state.participationReportSubdomain = '';
+      state.participationReportSpecialisation = 'GEN';
       state.jspReportSite = 'TOUS';
       state.jspReport = null;
       state.jspReportReady = false;
@@ -7543,7 +7554,16 @@
     });
     document.getElementById('participation-report-subdomain')?.addEventListener('change', (e) => {
       state.participationReportSubdomain = e.target.value || '';
+      state.participationReportSpecialisation = state.participationReportSubdomain === 'AUTO' ? 'VL' : 'GEN';
       state.jspReportSite = 'TOUS';
+      state.jspReport = null;
+      state.jspReportReady = false;
+      state.jspReportError = null;
+      render();
+      loadJspReport().then(() => render()).catch(() => render());
+    });
+    document.getElementById('participation-report-specialisation')?.addEventListener('change', (e) => {
+      state.participationReportSpecialisation = e.target.value || '';
       state.jspReport = null;
       state.jspReportReady = false;
       state.jspReportError = null;
@@ -8314,6 +8334,7 @@
       kind: 'PARTICIPATION',
       domaine: state.participationReportDomain || 'JSP',
       sousDomaine: state.participationReportDomain === 'FOSPEC' ? state.participationReportSubdomain : '',
+      specialisation: state.participationReportDomain === 'FOSPEC' && state.participationReportSubdomain ? state.participationReportSpecialisation : '',
       perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
       blocks: (state.participationReportBlocks || []).join(',')
     });
@@ -8863,6 +8884,7 @@
         if (report && report.blocks) state.participationReportBlocks = report.blocks;
         if (report && report.domaine) state.participationReportDomain = report.domaine;
         if (report && report.sousDomaine != null) state.participationReportSubdomain = report.sousDomaine || '';
+        if (report && report.specialisation != null) state.participationReportSpecialisation = report.specialisation || 'GEN';
         if (report && report.siteFilter) state.jspReportSite = report.siteFilter;
         return renderRapportJsp();
       },

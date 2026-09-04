@@ -1267,7 +1267,7 @@ class ScopePdfRenderer {
           row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
         ]),
         [48, 48, 116, 48, 34, 34, 34, 44, 54, 42],
-        { align: ['left', 'left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, wrap: [false, false, true, false, false, false, false, false, false, false], highlightRows: (f.eventsToWatch || []).slice(0, 24).map(() => true) }
+        { align: ['left', 'left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, wrap: [false, false, true, false, false, false, false, false, false, false], highlightRows: (f.eventsToWatch || []).slice(0, 24).map((row) => row.underObjective) }
       );
     }
 

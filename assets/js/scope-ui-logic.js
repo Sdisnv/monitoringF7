@@ -1048,7 +1048,6 @@
   }
 
   function coveredInGlobalBilan(row) {
-    if (row && isValidSessionStatut(row.statut)) return false;
     return Boolean(row && (
       row.coveredInGlobalBilan
       || row.alreadyCountedInSession

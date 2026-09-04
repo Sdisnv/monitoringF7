@@ -213,7 +213,7 @@ function filterAttendusEligibleAtDate(attendus, periodesByPersonne, date){
     const periodes = map.get(pid) || [];
     if(!periodes.length) return true;
     const eligibility = evaluateEligibility({ actif: true }, periodes, date);
-    return eligibility.reason !== 'indisponible';
+    return eligibility.eligible === true;
   });
 }
 
