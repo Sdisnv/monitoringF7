@@ -11,9 +11,12 @@ const DEFAULT_SUBDIVISIONS = Object.freeze({
   DPS: ['G1', 'C1', 'B1', 'B2'],
   DAP: ['Y1', 'Y2', 'Y3', 'Y4'],
   JSP: ['G1', 'C1', 'B1'],
+  PR: ['G1', 'C1', 'B1', 'B2'],
   FOBA: ['1', '2', '3'],
   FOSPEC: ['PR', 'AUTO']
 });
+
+const FORMATION_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'PR', 'AUTO', 'FOBA', 'FOCA', 'FOSPEC']);
 
 const JSP_SITES = Object.freeze([
   { code: 'G1', label: 'JSP G1' },
@@ -117,6 +120,10 @@ function motifLabel(motif){
 function periodLabel(period){
   if(!period) return '';
   if(period.preset === 'YEAR') return String(period.from || '').slice(0, 4);
+  if(period.preset === 'SEMESTER'){
+    const semester = String(period.from || '').slice(5, 7) === '07' ? 'S2' : 'S1';
+    return `${semester} ${String(period.from || '').slice(0, 4)}`;
+  }
   return [period.from, period.to].filter(Boolean).join(' - ');
 }
 
@@ -138,6 +145,12 @@ function subdivisionForPersonAt(assignments, date, domaineCode){
 function siteForPersonAt(assignments, date){
   const site = subdivisionForPersonAt(assignments, date, 'JSP');
   return normalizeSite(site);
+}
+
+function reportSubdivisionForPersonAt(assignments, date, domaineCode, fallbackSite){
+  if(domaineCode === 'JSP') return siteForPersonAt(assignments, date) || normalizeSite(fallbackSite);
+  if(domaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
+  return subdivisionForPersonAt(assignments, date, domaineCode) || fallbackSite;
 }
 
 function compareName(a, b){
@@ -176,6 +189,10 @@ async function assignmentsByPerson(repo){
 }
 
 function eventSubdivision(event, cibles, domaineCode){
+  if(domaineCode === 'FOSPEC'){
+    const eventDomain = normalizeDomaine(event.domaine_code || event.domaineCode);
+    if(eventDomain === 'PR' || eventDomain === 'AUTO') return eventDomain;
+  }
   const hit = (cibles || []).find((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === domaineCode
     && clean(row.niveau_code || row.niveauCode || row.cible));
   return hit ? clean(hit.niveau_code || hit.niveauCode || hit.cible).toUpperCase() : '';
@@ -206,6 +223,21 @@ function graphPayload(siteRows, exercises, motifs){
 
 async function subdivisionsFor(repo, domaineCode){
   const cibles = typeof repo.listCibles === 'function' ? await repo.listCibles() : [];
+  if(domaineCode === 'PR'){
+    const rows = (cibles || [])
+      .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === 'DPS')
+      .map((row) => ({
+        code: clean(row.niveau_code || row.niveauCode).toUpperCase(),
+        label: `DPS ${clean(row.niveau_code || row.niveauCode).toUpperCase()}`,
+        cibleId: row.cible_id || row.cibleId
+      }))
+      .filter((row) => row.code && row.code !== 'GEN');
+    const byCode = new Map(rows.map((row) => [row.code, row]));
+    return DEFAULT_SUBDIVISIONS.PR.map((code) => byCode.get(code) || { code, label: `DPS ${code}`, cibleId: null });
+  }
+  if(domaineCode === 'FOSPEC'){
+    return DEFAULT_SUBDIVISIONS.FOSPEC.map((code) => ({ code, label: code, cibleId: null }));
+  }
   const rows = (cibles || [])
     .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === domaineCode)
     .map((row) => ({
@@ -234,6 +266,17 @@ function objectiveFor({ objectives, date, domaineCode, cibleId }){
     cibleId,
     analysisGrain: cibleId ? 'CIBLE' : 'DOMAINE'
   });
+}
+
+function eventDomainsFor(domaineCode){
+  if(domaineCode === 'FOSPEC') return new Set(['FOSPEC', 'PR', 'AUTO']);
+  return new Set([domaineCode]);
+}
+
+function domaineLabel(code){
+  const canon = normalizeDomaine(code);
+  if(canon === 'PR') return 'PR/PAPR';
+  return canon;
 }
 
 function emptyReport({ domaineCode, period, blocks }){
@@ -271,6 +314,7 @@ function createScopeParticipationReportingService(repo){
   async function report(query = {}){
     const period = parsePeriod(query);
     const domaineCode = normalizeDomaine(query.domaine || query.domaineCode || 'JSP');
+    const acceptedDomains = eventDomainsFor(domaineCode);
     const blocks = selectedBlocks(query.blocks);
     const wantedRaw = normalizePerimeter(query.site || query.perimeter || query.cible || query.niveau);
     const wantedPerimeter = domaineCode === 'JSP' ? normalizeSite(wantedRaw) : wantedRaw;
@@ -278,10 +322,12 @@ function createScopeParticipationReportingService(repo){
     const [people, assignments, eventsRaw] = await Promise.all([
       peopleById(repo),
       assignmentsByPerson(repo),
-      repo.listEvenements({ domaine: domaineCode, from: period.from, to: period.to })
+      domaineCode === 'FOSPEC'
+        ? repo.listEvenements({ from: period.from, to: period.to })
+        : repo.listEvenements({ domaine: domaineCode, from: period.from, to: period.to })
     ]);
     const countableEvents = (eventsRaw || [])
-      .filter((event) => clean(event.domaine_code || event.domaineCode).toUpperCase() === domaineCode)
+      .filter((event) => acceptedDomains.has(normalizeDomaine(event.domaine_code || event.domaineCode)))
       .filter((event) => inPeriod(event.date, period))
       .filter((event) => clean(event.statut).toUpperCase() === 'REALISE');
     const ids = countableEvents.map((event) => event.evenement_id || event.evenementId).filter(Boolean);
@@ -320,6 +366,7 @@ function createScopeParticipationReportingService(repo){
     const global = Object.assign({ site: 'Global du domaine', code: 'TOUS' }, emptyCounts());
     const personRows = new Map();
     const detailRows = [];
+    const participationFacts = [];
     const motifCounts = new Map();
     const exerciseMap = new Map();
     let monitorRowsIgnored = 0;
@@ -348,14 +395,13 @@ function createScopeParticipationReportingService(repo){
             continue;
           }
         }
-        const subdivision = domaineCode === 'JSP'
-          ? (siteForPersonAt(personAssignments, event.date) || normalizeSite(fallbackSite))
-          : (subdivisionForPersonAt(personAssignments, event.date, domaineCode) || fallbackSite);
+        const subdivision = reportSubdivisionForPersonAt(personAssignments, event.date, domaineCode, fallbackSite);
         if(!subdivision) continue;
         if(wantedPerimeter && subdivision !== wantedPerimeter) continue;
         const part = partsByEventPerson.get(`${eventId}::${personneId}`) || {};
         const bucket = statusBucket(part.statut);
         const pKey = personKey(person, personneId);
+        participationFacts.push({ key: `${eventId}::${pKey}`, eventId, pKey, bucket });
         const subInfo = subdivisions.find((row) => row.code === subdivision) || { code: subdivision, label: `${domaineCode} ${subdivision}`, cibleId: null };
         if(!siteCounts.has(subdivision)) siteCounts.set(subdivision, Object.assign({ site: subInfo.label, code: subInfo.code, cibleId: subInfo.cibleId }, emptyCounts()));
         if(!personRows.has(pKey)){
@@ -394,7 +440,8 @@ function createScopeParticipationReportingService(repo){
             libelle: event.libelle || `Exercice ${domaineCode}`,
             domaine: domaineCode,
             site: subInfo.label,
-            perimeter: subInfo.label
+            perimeter: subInfo.label,
+            cibleId: subInfo.cibleId
           }, emptyCounts()));
         }
         const ex = exerciseMap.get(exKey);
@@ -411,7 +458,7 @@ function createScopeParticipationReportingService(repo){
             exercice: event.libelle || `Exercice ${domaineCode}`,
             site: subInfo.label,
             perimeter: subInfo.label,
-            statut: bucket === 'excused' ? 'EXCUSÉ' : 'ABSENT',
+            statut: bucket === 'excused' ? 'Excusé' : 'Absent',
             motif
           }));
           if(bucket === 'excused'){
@@ -469,8 +516,17 @@ function createScopeParticipationReportingService(repo){
     }));
     const exercises = [...exerciseMap.values()].map((row) => {
       const done = finalizeCounts(row);
-      return Object.assign(done, { gap: Number(done.present || 0) - Number(done.expected || 0) });
+      const resolved = objectiveFor({ objectives, date: done.date || period.to, domaineCode, cibleId: done.cibleId || null });
+      const objectiveGap = gapAgainst(done.presenceRate, resolved, { homogeneous: true });
+      return Object.assign(done, {
+        gap: Number(done.present || 0) - Number(done.expected || 0),
+        objective: resolved,
+        objectivePct: resolved && resolved.thresholdPct != null ? resolved.thresholdPct : null,
+        objectiveGap,
+        underObjective: objectiveGap != null ? objectiveGap < 0 : false
+      });
     }).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.site).localeCompare(String(b.site)));
+    const eventsUnderObjective = exercises.filter((row) => row.underObjective);
     const excuseTotal = [...motifCounts.values()].reduce((sum, n) => sum + n, 0);
     const motifs = [...motifCounts.entries()].map(([motif, count]) => ({
       motif,
@@ -497,9 +553,11 @@ function createScopeParticipationReportingService(repo){
       regulars,
       underObjective,
       alerts,
+      eventsUnderObjective,
       exercises,
       motifs,
       details: detailRows.sort((a, b) => String(a.date).localeCompare(String(b.date)) || compareName(a, b)),
+      participationFacts,
       graphs: graphPayload(siteRows, exercises, motifs),
       objective,
       objectiveLabel: objective ? `${objective.thresholdPct} %` : 'Objectif non défini',
@@ -512,7 +570,86 @@ function createScopeParticipationReportingService(repo){
     };
   }
 
-  return { report };
+  async function formationReport(query = {}){
+    const period = parsePeriod(query);
+    const blocks = selectedBlocks(query.blocks);
+    const reports = [];
+    for(const code of FORMATION_DOMAINES){
+      const item = await report(Object.assign({}, query, { domaine: code, perimeter: '', site: '', blocks: [...blocks].join(',') }));
+      if((item.kpis && (item.kpis.expected || item.kpis.exercises || item.kpis.participants)) || (item.siteRows || []).some((row) => row.expected)){
+        reports.push(item);
+      }
+    }
+    const global = emptyCounts();
+    const eventIds = new Set();
+    const people = new Set();
+    const facts = new Map();
+    const domainRows = reports.map((item) => {
+      const k = item.kpis || {};
+      for(const row of item.exercises || []) if(row.evenementId) eventIds.add(String(row.evenementId));
+      for(const row of item.persons || []) if(row.nip || row.personneId) people.add(String(row.nip || row.personneId));
+      for(const fact of item.participationFacts || []) if(fact && fact.key && !facts.has(fact.key)) facts.set(fact.key, fact);
+      const gap = gapAgainst(k.presenceRate, item.objective, { homogeneous: true });
+      return {
+        domaine: item.domaine,
+        label: domaineLabel(item.domaine),
+        participants: k.participants || k.jeunes || 0,
+        exercises: k.exercises || 0,
+        expected: k.expected || 0,
+        present: k.present || 0,
+        excused: k.excused || 0,
+        absent: k.absent || 0,
+        presenceRate: k.presenceRate,
+        objectivePct: item.objective && item.objective.thresholdPct != null ? item.objective.thresholdPct : null,
+        objectiveGap: gap,
+        underObjective: gap != null ? gap < 0 : false,
+        status: gap == null ? 'Objectif non défini' : gap < 0 ? 'Sous objectif' : 'Objectif atteint'
+      };
+    });
+    for(const fact of facts.values()){
+      global.expected += 1;
+      global[fact.bucket] += 1;
+    }
+    global.participants = people;
+    global.jeunes = people;
+    global.eventIds = eventIds;
+    const kpis = finalizeCounts(global);
+    const peopleToWatch = reports.flatMap((item) => (item.watchlist || []).filter((row) => row.absent > 0 || row.underObjective).slice(0, 12).map((row) => Object.assign({}, row, { domaine: item.domaine, domaineLabel: domaineLabel(item.domaine) })))
+      .sort((a, b) => Number(b.absent || 0) - Number(a.absent || 0) || Number(a.objectiveGap ?? 0) - Number(b.objectiveGap ?? 0) || compareInstitutional(a, b));
+    const eventsToWatch = reports.flatMap((item) => (item.eventsUnderObjective || []).map((row) => Object.assign({}, row, { domaine: item.domaine, domaineLabel: domaineLabel(item.domaine) })))
+      .sort((a, b) => Number(a.objectiveGap ?? 0) - Number(b.objectiveGap ?? 0) || String(a.date).localeCompare(String(b.date)));
+    const alerts = [
+      ...domainRows.filter((row) => row.underObjective).map((row) => ({ type: 'Domaine sous objectif', label: row.label, value: row.presenceRate, objective: row.objectivePct, gap: row.objectiveGap })),
+      ...eventsToWatch.slice(0, 12).map((row) => ({ type: 'Événement sous objectif', label: `${row.domaineLabel} · ${row.libelle}`, value: row.presenceRate, objective: row.objectivePct, gap: row.objectiveGap })),
+      ...peopleToWatch.slice(0, 12).map((row) => ({ type: row.absent > 0 ? 'Absence non excusée' : 'Personne sous objectif', label: [row.domaineLabel, row.grade, row.prenom, row.nom].filter(Boolean).join(' · '), value: row.underObjective ? row.presenceRate : row.absent, objective: row.objectivePct, gap: row.objectiveGap }))
+    ];
+    const positiveDomains = domainRows.filter((row) => row.objectiveGap != null && row.objectiveGap >= 0);
+    return {
+      kind: 'FORMATION',
+      title: 'RAPPORT GLOBAL FORMATION',
+      subtitle: `Formation — ${periodLabel(period)}`,
+      period,
+      blocks: [...blocks],
+      kpis: Object.assign(kpis, {
+        domainsUnderObjective: domainRows.filter((row) => row.underObjective).length,
+        eventsUnderObjective: eventsToWatch.length,
+        peopleUnderObjective: peopleToWatch.filter((row) => row.underObjective).length
+      }),
+      domainRows,
+      reports,
+      alerts,
+      peopleToWatch,
+      eventsToWatch,
+      positiveDomains,
+      graphs: {
+        evolution: reports.flatMap((item) => (item.graphs && item.graphs.evolution || []).map((point) => Object.assign({}, point, { domaine: item.domaine, label: `${domaineLabel(item.domaine)} ${point.label || point.date || ''}` }))),
+        domains: domainRows.map((row) => ({ label: row.label, taux: row.presenceRate, objectif: row.objectivePct }))
+      },
+      source: 'moteur reporting participation SCOPE agrégé par domaine'
+    };
+  }
+
+  return { report, formationReport };
 }
 
 function createScopeJspReportingService(repo){
@@ -527,6 +664,7 @@ function createScopeJspReportingService(repo){
 module.exports = {
   JSP_SITES,
   DEFAULT_BLOCKS,
+  FORMATION_DOMAINES,
   createScopeParticipationReportingService,
   createScopeJspReportingService
 };

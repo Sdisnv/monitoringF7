@@ -588,11 +588,13 @@ class ScopePdfRenderer {
     const cols = widths || headers.map(() => width / headers.length);
     const aligns = (options && options.align) || [];
     const wrap = (options && options.wrap) || [];
+    const highlightRows = (options && options.highlightRows) || [];
     const headerH = 16;
     const baseRowH = (options && options.rowH) || 18;
-    const paintRow = (cells, y, { header, zebra, rowH }) => {
+    const paintRow = (cells, y, { header, zebra, rowH, highlight }) => {
       const h = header ? headerH : rowH;
       if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
+      else if(highlight) this.doc.rect(MARGIN, y, width, h).fill(rgb('#fde8e8'));
       else if(zebra) this.doc.rect(MARGIN, y, width, h).fill(rgb('#f7f8fa'));
       const padY = 2;
       let x = MARGIN;
@@ -642,7 +644,7 @@ class ScopePdfRenderer {
         this.nextPage();
         drawHeader();
       }
-      paintRow(row, this.doc.y, { zebra: idx % 2 === 1, rowH });
+      paintRow(row, this.doc.y, { zebra: idx % 2 === 1, rowH, highlight: Boolean(highlightRows[idx]) });
     });
     this.doc.y += 8;
   }
@@ -1100,7 +1102,22 @@ class ScopePdfRenderer {
           String(row.absent || 0), String(row.totalAbsences || 0), formatTaux(row.absenceRate)
         ]),
         [116, 52, 38, 38, 38, 38, 54, 58],
-        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (jsp.watchlist || []).slice(0, 18).map((row) => row.absent > 0 || row.underObjective) }
+      );
+    }
+
+    if(enabled('sous_objectif') && (jsp.underObjective || []).length){
+      this.heading('Personnes sous objectif', 12);
+      this.table(
+        ['Personne', 'Périmètre', 'Att.', 'Prés.', 'Taux', 'Objectif', 'Écart'],
+        (jsp.underObjective || []).slice(0, 18).map((row) => [
+          [row.grade, row.prenom, row.nom].filter(Boolean).join(' '), row.site || '',
+          String(row.expected || 0), String(row.present || 0), formatTaux(row.presenceRate),
+          row.objectivePct == null ? 'Non défini' : formatTaux(row.objectivePct),
+          row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
+        ]),
+        [130, 58, 42, 42, 58, 58, 52],
+        { align: ['left', 'left', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (jsp.underObjective || []).slice(0, 18).map(() => true) }
       );
     }
 
@@ -1131,14 +1148,96 @@ class ScopePdfRenderer {
     if(enabled('evenements') && (jsp.exercises || []).length){
       this.heading('Analyse par événement', 12);
       this.table(
-        ['Date', 'Événement', 'Périmètre', 'Att.', 'Prés.', 'Exc.', 'Abs.', 'Écart', 'Taux'],
+        ['Date', 'Événement', 'Périmètre', 'Att.', 'Prés.', 'Abs.', 'Taux', 'Objectif', 'Écart'],
         (jsp.exercises || []).slice(0, 24).map((row) => [
           row.date, row.libelle, row.site, String(row.expected || 0), String(row.present || 0),
-          String(row.excused || 0), String(row.absent || 0), String(row.gap || 0), formatTaux(row.presenceRate)
+          String(row.absent || 0), formatTaux(row.presenceRate),
+          row.objectivePct == null ? 'Non défini' : formatTaux(row.objectivePct),
+          row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
         ]),
-        [52, 122, 46, 34, 34, 34, 34, 38, 48],
-        { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16 }
+        [52, 122, 46, 34, 34, 34, 48, 54, 44],
+        { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (jsp.exercises || []).slice(0, 24).map((row) => row.underObjective) }
       );
+    }
+  }
+
+  renderFormationReportBody(m){
+    const f = m.formation || {};
+    const k = f.kpis || {};
+    this.heading('Synthèse globale', 12);
+    this.kv([
+      { label: 'Événements comptabilisés', value: String(k.exercises || 0) },
+      { label: 'Personnes distinctes', value: String(k.participants || 0) },
+      { label: 'Participations attendues', value: String(k.expected || 0) },
+      { label: 'Présents', value: String(k.present || 0) },
+      { label: 'Excusés', value: String(k.excused || 0) },
+      { label: 'Absents', value: String(k.absent || 0) },
+      { label: 'Taux global', value: formatTaux(k.presenceRate) },
+      { label: 'Domaines sous objectif', value: String(k.domainsUnderObjective || 0) },
+      { label: 'Événements sous objectif', value: String(k.eventsUnderObjective || 0) },
+      { label: 'Personnes sous objectif', value: String(k.peopleUnderObjective || 0) }
+    ]);
+
+    if((f.domainRows || []).length){
+      this.heading('Analyse par domaine', 12);
+      this.table(
+        ['Domaine', 'Pers.', 'Évén.', 'Att.', 'Prés.', 'Exc.', 'Abs.', 'Taux', 'Objectif', 'Écart', 'Statut'],
+        (f.domainRows || []).map((row) => [
+          row.label, String(row.participants || 0), String(row.exercises || 0), String(row.expected || 0),
+          String(row.present || 0), String(row.excused || 0), String(row.absent || 0), formatTaux(row.presenceRate),
+          row.objectivePct == null ? 'Non défini' : formatTaux(row.objectivePct),
+          row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap),
+          row.status || ''
+        ]),
+        [52, 34, 36, 38, 38, 34, 34, 42, 50, 42, 70],
+        { align: ['left', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'left'], rowH: 16, highlightRows: (f.domainRows || []).map((row) => row.underObjective) }
+      );
+    }
+
+    if((f.alerts || []).length){
+      this.heading('Alertes prioritaires', 12);
+      this.table(
+        ['Type', 'Élément', 'Valeur', 'Objectif', 'Écart'],
+        (f.alerts || []).slice(0, 24).map((row) => [
+          row.type, row.label, row.value == null ? '—' : String(row.value), row.objective == null ? 'Non défini' : formatTaux(row.objective), row.gap == null ? '—' : formatTaux(row.gap)
+        ]),
+        [86, 210, 54, 58, 52],
+        { align: ['left', 'left', 'right', 'right', 'right'], rowH: 18, wrap: [false, true, false, false, false], highlightRows: (f.alerts || []).slice(0, 24).map(() => true) }
+      );
+    }
+
+    if((f.peopleToWatch || []).length){
+      this.heading('Personnes à surveiller par domaine', 12);
+      this.table(
+        ['Domaine', 'Personne', 'Périmètre', 'Att.', 'Prés.', 'Exc.', 'Abs.', 'Taux', 'Écart'],
+        (f.peopleToWatch || []).slice(0, 24).map((row) => [
+          row.domaineLabel || row.domaine, [row.grade, row.prenom, row.nom].filter(Boolean).join(' '), row.site || '',
+          String(row.expected || 0), String(row.present || 0), String(row.excused || 0), String(row.absent || 0), formatTaux(row.presenceRate),
+          row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
+        ]),
+        [48, 112, 52, 34, 34, 34, 34, 46, 42],
+        { align: ['left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, highlightRows: (f.peopleToWatch || []).slice(0, 24).map((row) => row.absent > 0 || row.underObjective) }
+      );
+    }
+
+    if((f.eventsToWatch || []).length){
+      this.heading('Événements à surveiller', 12);
+      this.table(
+        ['Date', 'Domaine', 'Événement', 'Périmètre', 'Att.', 'Prés.', 'Abs.', 'Taux', 'Objectif', 'Écart'],
+        (f.eventsToWatch || []).slice(0, 24).map((row) => [
+          row.date, row.domaineLabel || row.domaine, row.libelle, row.site || '',
+          String(row.expected || 0), String(row.present || 0), String(row.absent || 0), formatTaux(row.presenceRate),
+          row.objectivePct == null ? 'Non défini' : formatTaux(row.objectivePct),
+          row.objectiveGap == null ? '—' : formatTaux(row.objectiveGap)
+        ]),
+        [48, 48, 116, 48, 34, 34, 34, 44, 54, 42],
+        { align: ['left', 'left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'], rowH: 16, wrap: [false, false, true, false, false, false, false, false, false, false], highlightRows: (f.eventsToWatch || []).slice(0, 24).map(() => true) }
+      );
+    }
+
+    if((f.positiveDomains || []).length){
+      this.heading('Lecture positive', 12);
+      this.para(`Domaines atteignant l’objectif : ${(f.positiveDomains || []).map((row) => row.label).join(', ')}.`);
     }
   }
 
@@ -1188,6 +1287,11 @@ class ScopePdfRenderer {
 
     if(m.kind === 'PARTICIPATION'){
       this.renderJspReportBody(m);
+      return;
+    }
+
+    if(m.kind === 'FORMATION'){
+      this.renderFormationReportBody(m);
       return;
     }
 

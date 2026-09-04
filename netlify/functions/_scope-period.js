@@ -1,7 +1,7 @@
 'use strict';
 const { HttpError, isoDate } = require('./_scope-rules');
 
-const PRESETS = Object.freeze(['YEAR', 'MONTH', 'QUARTER', 'CUSTOM']);
+const PRESETS = Object.freeze(['YEAR', 'SEMESTER', 'MONTH', 'QUARTER', 'CUSTOM']);
 const MAX_SPAN_DAYS = 3660;
 
 function pad2(value){
@@ -41,12 +41,25 @@ function quarterBounds(year, quarter){
   };
 }
 
+function semesterBounds(year, semester){
+  const y = Number(year);
+  const s = Number(semester);
+  const fromMonth = s === 2 ? 7 : 1;
+  const toMonth = s === 2 ? 12 : 6;
+  return {
+    from: `${y}-${pad2(fromMonth)}-01`,
+    to: `${y}-${pad2(toMonth)}-${pad2(lastDayOfMonth(y, toMonth))}`,
+    preset: 'SEMESTER'
+  };
+}
+
 function spanDays(from, to){
   return Math.round((utcDate(to) - utcDate(from)) / 86400000) + 1;
 }
 
 function parsePeriod(query){
-  const presetRaw = String(query?.preset || query?.periode || '').toUpperCase();
+  const presetInput = String(query?.preset || query?.periode || '').toUpperCase();
+  const presetRaw = presetInput === 'SEMESTRE' || presetInput === 'HALF' ? 'SEMESTER' : presetInput;
   const preset = PRESETS.includes(presetRaw) ? presetRaw : null;
   const fromHint = isoDate(query?.from || query?.date_from || query?.debut);
   const toHint = isoDate(query?.to || query?.date_to || query?.fin);
@@ -54,6 +67,8 @@ function parsePeriod(query){
   let period;
   if(fromHint && toHint){
     period = { from: fromHint, to: toHint, preset: preset || 'CUSTOM' };
+  }else if(preset === 'SEMESTER' && query?.year && (query?.semester || query?.semestre)){
+    period = semesterBounds(query.year, query.semester || query.semestre);
   }else if(preset === 'MONTH' && query?.year && query?.month){
     period = monthBounds(query.year, query.month);
   }else if(preset === 'QUARTER' && query?.year && query?.quarter){
@@ -94,6 +109,7 @@ module.exports = {
   parsePeriod,
   yearBounds,
   monthBounds,
+  semesterBounds,
   quarterBounds,
   inPeriod,
   monthKey

@@ -13,7 +13,7 @@ const ALLOWED_KEYS = new Set([
   'domaine', 'domaineCode',
   'cible', 'cibleId',
   'site', 'niveau', 'perimeter', 'blocks',
-  'year', 'annee', 'preset', 'month', 'quarter', 'from', 'to',
+  'year', 'annee', 'preset', 'semester', 'semestre', 'month', 'quarter', 'from', 'to',
   'nominatif', 'includeNominatif',
   'includeQualification', 'include_qualification',
   'personneId', 'personne_id', 'asOf', 'date'
@@ -53,6 +53,7 @@ function sanitizeQuery(body){
     preset: raw.preset || null,
     month: raw.month || null,
     quarter: raw.quarter || null,
+    semester: raw.semester || raw.semestre || null,
     from: raw.from || null,
     to: raw.to || null,
     nominatif: raw.nominatif === true || raw.nominatif === 'true' || raw.includeNominatif === true || raw.includeNominatif === 'true',

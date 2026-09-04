@@ -48,7 +48,7 @@ function exerciseReportTitle(event){
   return `RAPPORT — ${core.toLocaleUpperCase('fr-CH')}`;
 }
 
-const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP', 'PARTICIPATION']);
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP', 'PARTICIPATION', 'FORMATION']);
 
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
@@ -99,10 +99,11 @@ function normalizeKind(raw){
     TARGET: 'TARGET', CIBLE: 'TARGET', OI: 'TARGET',
     EVENT: 'EVENT', EVENEMENT: 'EVENT', EXERCICE: 'EVENT',
     PERSON: 'PERSON', PERSONNE: 'PERSON', FICHE: 'PERSON',
-    SESSION: 'SESSION', MULTISESSION: 'SESSION', PARTICIPATION: 'SESSION',
+    SESSION: 'SESSION', MULTISESSION: 'SESSION',
     DETAIL: 'SESSION', EXERCISE_DETAIL: 'SESSION', RAPPORT_DETAILLE: 'SESSION',
     JSP: 'JSP', RAPPORT_JSP: 'JSP', JSP_REPORT: 'JSP',
-    PARTICIPATION: 'PARTICIPATION', RAPPORT_PARTICIPATION: 'PARTICIPATION'
+    PARTICIPATION: 'PARTICIPATION', RAPPORT_PARTICIPATION: 'PARTICIPATION',
+    FORMATION: 'FORMATION', RAPPORT_FORMATION: 'FORMATION'
   };
   const kind = map[text];
   if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
@@ -425,6 +426,44 @@ async function collectReport(repo, query, options){
       isLegacy: false,
       alerts: { p0: [], p1: [], p2: [] },
       events: jsp.exercises
+    };
+  }
+
+  if(kind === 'FORMATION'){
+    const formation = await createScopeParticipationReportingService(repo).formationReport(query);
+    return {
+      kind: 'FORMATION',
+      period: formation.period,
+      domaine: 'FORMATION',
+      cible: null,
+      title: formation.title,
+      subtitle: formation.subtitle,
+      summaryLabel: 'Pilotage Formation',
+      filename: sanitizeFilename(`SCOPE_Rapport_Global_Formation_${periodSlug(formation.period)}.pdf`),
+      event: null,
+      officiel: {
+        percentage: formation.kpis.presenceRate,
+        numerator: formation.kpis.present,
+        denominator: formation.kpis.denominator,
+        eventCount: formation.kpis.exercises,
+        volumes: {
+          attendus: formation.kpis.expected,
+          presents: formation.kpis.present,
+          excuses: formation.kpis.excused,
+          nonExcuses: formation.kpis.absent,
+          dispenses: formation.kpis.dispensed,
+          nonRenseignes: formation.kpis.nonRenseigne
+        }
+      },
+      formation,
+      graphs: formation.graphs,
+      explain: null,
+      nominatif: [],
+      encadrement: [],
+      quantitative: false,
+      isLegacy: false,
+      alerts: { p0: [], p1: [], p2: [] },
+      events: formation.eventsToWatch || []
     };
   }
 

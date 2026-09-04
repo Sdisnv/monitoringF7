@@ -760,12 +760,10 @@
     const params = { preset, year };
     if (preset === 'MONTH') params.month = String((state && state.month) || '1');
     if (preset === 'QUARTER') params.quarter = String((state && state.quarter) || '1');
+    if (preset === 'SEMESTER') params.semester = String((state && state.semester) || '1');
     if (preset === 'CUSTOM') {
       params.from = (state && state.from) || `${year}-01-01`;
       params.to = (state && state.to) || `${year}-12-31`;
-    } else if (state && state.from && state.to) {
-      params.from = state.from;
-      params.to = state.to;
     }
     if (state && state.domaine) params.domaine = state.domaine;
     if (state && state.cible) params.cible = state.cible;
@@ -945,6 +943,7 @@
     if (parts[0] === 'reglages' && parts[1] === 'import-personnel') return { screen: 'import-personnel', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'utilisateurs') return { screen: 'utilisateurs', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'administration') return { screen: 'administration', nav: 'reglages' };
+    if (parts[0] === 'rapports' && parts[1] === 'formation') return { screen: 'rapport-formation', nav: 'rapports' };
     if (parts[0] === 'rapports' && parts[1] === 'participation') return { screen: 'rapport-participation', nav: 'rapports' };
     if (parts[0] === 'rapports' && parts[1] === 'jsp') return { screen: 'rapport-jsp', nav: 'rapports' };
     if (parts[0] === 'rapports') return { screen: 'rapports', nav: 'rapports' };

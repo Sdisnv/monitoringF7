@@ -44,6 +44,7 @@
     preset: 'YEAR',
     month: '8',
     quarter: '3',
+    semester: '2',
     from: '2026-01-01',
     to: '2026-12-31',
     statut: 'tous',
@@ -202,6 +203,10 @@
     participationReportDomain: 'JSP',
     participationReportBlocks: ['synthese', 'alertes', 'comparaisons', 'graphiques', 'surveillance', 'regularite', 'sous_objectif', 'nominatif', 'motifs', 'evenements'],
     jspReportSeq: 0,
+    formationReport: null,
+    formationReportReady: false,
+    formationReportError: null,
+    formationReportSeq: 0,
     objectifFocusId: null,
     dashboard: null,
     dashboardError: null,
@@ -384,11 +389,21 @@
     if (previous && next && routeKey(previous) !== routeKey(next)) {
       state.modal = null;
       if ((previous.screen === 'rapport-jsp' || previous.screen === 'rapport-participation') && !['rapport-jsp', 'rapport-participation'].includes(next.screen)) resetJspReportFilters();
+      if (previous.screen === 'rapport-formation' && next.screen !== 'rapport-formation') {
+        state.formationReport = null;
+        state.formationReportReady = false;
+        state.formationReportError = null;
+      }
       if (next.screen === 'rapport-jsp' || next.screen === 'rapport-participation') {
         if (next.screen === 'rapport-jsp') state.participationReportDomain = 'JSP';
         state.jspReport = null;
         state.jspReportReady = false;
         state.jspReportError = null;
+      }
+      if (next.screen === 'rapport-formation') {
+        state.formationReport = null;
+        state.formationReportReady = false;
+        state.formationReportError = null;
       }
       if (next.screen === 'cycle') {
         state.cycleDetail = null;
@@ -624,6 +639,7 @@
       year: state.year,
       month: state.month,
       quarter: state.quarter,
+      semester: state.semester,
       from: state.from,
       to: state.to,
       domaine: r.domaine,
@@ -670,6 +686,32 @@
     }
   }
 
+  async function loadFormationReport() {
+    const expectedRouteKey = state.currentRouteKey;
+    const seq = (state.formationReportSeq || 0) + 1;
+    state.formationReportSeq = seq;
+    state.formationReportReady = false;
+    state.formationReport = null;
+    state.formationReportError = null;
+    if (typeof client.formationReport !== 'function') {
+      state.formationReportReady = true;
+      state.formationReportError = 'Rapport global Formation indisponible dans ce mode.';
+      return null;
+    }
+    try {
+      const payload = await client.formationReport(periodQuery());
+      if (seq !== state.formationReportSeq || state.currentRouteKey !== expectedRouteKey || route().screen !== 'rapport-formation') return null;
+      state.formationReport = payload.report || null;
+      state.formationReportReady = true;
+      return state.formationReport;
+    } catch (error) {
+      if (seq !== state.formationReportSeq || state.currentRouteKey !== expectedRouteKey || route().screen !== 'rapport-formation') return null;
+      state.formationReportError = L.friendlyError(error).message || 'Impossible de charger le rapport global Formation.';
+      state.formationReportReady = true;
+      throw error;
+    }
+  }
+
   async function refreshAlertCounts() {
     if (typeof client.listAlerts !== 'function') return;
     const params = Object.assign(L.periodParams({
@@ -677,6 +719,7 @@
       year: state.year,
       month: state.month,
       quarter: state.quarter,
+      semester: state.semester,
       from: state.from,
       to: state.to
     }), qualQuery());
@@ -1142,8 +1185,30 @@
   }
 
   function periodRangeText(period) {
-    const from = (period && period.from) || state.from;
-    const to = (period && period.to) || state.to;
+    let from = (period && period.from) || state.from;
+    let to = (period && period.to) || state.to;
+    if (!period || (!period.from && !period.to)) {
+      if (state.preset === 'YEAR') {
+        from = `${state.year}-01-01`;
+        to = `${state.year}-12-31`;
+      } else if (state.preset === 'SEMESTER') {
+        const s2 = String(state.semester) === '2';
+        from = `${state.year}-${s2 ? '07' : '01'}-01`;
+        to = `${state.year}-${s2 ? '12-31' : '06-30'}`;
+      } else if (state.preset === 'QUARTER') {
+        const q = Math.max(1, Math.min(4, Number(state.quarter) || 1));
+        const start = (q - 1) * 3 + 1;
+        const end = start + 2;
+        const last = new Date(Number(state.year), end, 0).getDate();
+        from = `${state.year}-${String(start).padStart(2, '0')}-01`;
+        to = `${state.year}-${String(end).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
+      } else if (state.preset === 'MONTH') {
+        const m = Math.max(1, Math.min(12, Number(state.month) || 1));
+        const last = new Date(Number(state.year), m, 0).getDate();
+        from = `${state.year}-${String(m).padStart(2, '0')}-01`;
+        to = `${state.year}-${String(m).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
+      }
+    }
     return `${L.formatDate(from)} → ${L.formatDate(to)}`;
   }
 
@@ -1156,11 +1221,13 @@
       <div class="scope-period-controls">
         ${periodSelect('scope-preset', `
           <option value="YEAR" ${state.preset === 'YEAR' ? 'selected' : ''}>Année</option>
+          <option value="SEMESTER" ${state.preset === 'SEMESTER' ? 'selected' : ''}>Semestre</option>
           <option value="QUARTER" ${state.preset === 'QUARTER' ? 'selected' : ''}>Trimestre</option>
           <option value="MONTH" ${state.preset === 'MONTH' ? 'selected' : ''}>Mois</option>
           <option value="CUSTOM" ${state.preset === 'CUSTOM' ? 'selected' : ''}>Personnalisée</option>
         `)}
         ${periodSelect('scope-year', Array.from({length: 9}, (_, i) => String(Number(state.year) - 6 + i)).map((y) => `<option value="${y}" ${y === state.year ? 'selected' : ''}>${escapeHtml(y)}</option>`).join(''))}
+        ${state.preset === 'SEMESTER' ? periodSelect('scope-semester', [1, 2].map((s) => `<option value="${s}" ${String(s) === String(state.semester) ? 'selected' : ''}>S${s}</option>`).join('')) : ''}
         ${state.preset === 'QUARTER' ? periodSelect('scope-quarter', [1, 2, 3, 4].map((q) => `<option value="${q}" ${String(q) === String(state.quarter) ? 'selected' : ''}>T${q}</option>`).join('')) : ''}
         ${state.preset === 'MONTH' ? periodSelect('scope-month', ['01','02','03','04','05','06','07','08','09','10','11','12'].map((m, i) => `<option value="${i + 1}" ${String(i + 1) === String(Number(state.month)) ? 'selected' : ''}>${m}</option>`).join('')) : ''}
         ${state.preset === 'CUSTOM' ? `<label class="scope-period-date">Du <input id="scope-from" type="date" value="${escapeHtml(state.from)}"></label><label class="scope-period-date">Au <input id="scope-to" type="date" value="${escapeHtml(state.to)}"></label>` : ''}
@@ -1171,7 +1238,7 @@
 
   function periodSelect(id, optionsHtml) {
     return `<label class="scope-select">
-      <span class="visually-hidden">${id === 'scope-preset' ? 'Type de période' : id === 'scope-year' ? 'Année' : id === 'scope-quarter' ? 'Trimestre' : 'Mois'}</span>
+      <span class="visually-hidden">${id === 'scope-preset' ? 'Type de période' : id === 'scope-year' ? 'Année' : id === 'scope-semester' ? 'Semestre' : id === 'scope-quarter' ? 'Trimestre' : 'Mois'}</span>
       <select id="${id}" class="scope-select-control">${optionsHtml}</select>
     </label>`;
   }
@@ -2028,6 +2095,7 @@
   function periodLabel(period) {
     if (!period) return state.year;
     if (period.preset === 'MONTH') return `${period.from.slice(5, 7)}.${period.from.slice(0, 4)}`;
+    if (period.preset === 'SEMESTER') return `${period.from.slice(5, 7) === '07' ? 'S2' : 'S1'} ${period.from.slice(0, 4)}`;
     if (period.preset === 'QUARTER') return `${period.from.slice(0, 10)} → ${period.to.slice(0, 10)}`;
     if (period.preset === 'CUSTOM') return `${L.formatDate(period.from)} – ${L.formatDate(period.to)}`;
     return period.from ? period.from.slice(0, 4) : state.year;
@@ -2231,6 +2299,7 @@
       year: state.year,
       month: state.month,
       quarter: state.quarter,
+      semester: state.semester,
       from: state.from,
       to: state.to
     }), qualQuery());
@@ -2255,6 +2324,7 @@
             year: state.year,
             month: state.month,
             quarter: state.quarter,
+            semester: state.semester,
             from: state.from,
             to: state.to
           })
@@ -3987,14 +4057,21 @@
         ${pageHeaderHtml({ eyebrow: 'Production', title: 'Rapports', context: 'PDF serveur', description: 'Aperçu et téléchargement issus du même document REPORT-1.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-card">
-          <h2 style="margin-top:0">Rapport JSP</h2>
-          <p class="scope-mode-hint">Participation aux exercices JSP, avec filtre global, G1, C1 ou B1.</p>
+          <h2 style="margin-top:0">Pilotage Formation</h2>
+          <p class="scope-mode-hint">Vision consolidée des domaines Formation, objectifs, alertes, tendances et événements à surveiller.</p>
+          <div class="scope-actions">
+            <a class="scope-btn scope-btn-secondary" href="#/rapports/formation">Ouvrir le rapport global Formation</a>
+          </div>
+        </div>
+        <div class="scope-card">
+          <h2 style="margin-top:0">Participation</h2>
+          <p class="scope-mode-hint">Rapport de participation configurable par domaine et périmètre, avec écran et PDF fondés sur le même modèle serveur.</p>
           <div class="scope-actions">
             <a class="scope-btn scope-btn-secondary" href="#/rapports/participation">Ouvrir le rapport de participation</a>
           </div>
         </div>
         <div class="scope-card">
-          <h2 style="margin-top:0">Rapports</h2>
+          <h2 style="margin-top:0">Rapports spécialisés existants</h2>
           <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
           ${demo ? `<p class="scope-mode-hint">Connectez-vous pour générer le PDF.</p>` : ''}
           <div class="scope-report-grid">
@@ -4045,13 +4122,14 @@
   function jspBarChart(title, rows, keys) {
     const max = Math.max(1, ...rows.flatMap((row) => keys.map((key) => Number(row[key.id] || 0))));
     return `<div class="scope-card scope-jsp-chart"><h3>${escapeHtml(title)}</h3>
+      <div class="scope-chart-legend">${keys.map((key) => `<span><i class="scope-jsp-bar-${escapeHtml(key.id)}"></i>${escapeHtml(key.label)} · volume</span>`).join('')}</div>
       <div class="scope-jsp-bars">
         ${rows.map((row) => `<div class="scope-jsp-bar-row">
           <span>${escapeHtml(row.label || row.site || row.date || '')}</span>
           <div class="scope-jsp-bar-stack">
             ${keys.map((key) => `<i class="scope-jsp-bar scope-jsp-bar-${escapeHtml(key.id)}" style="width:${Math.max(2, Math.round((Number(row[key.id] || 0) / max) * 100))}%" title="${escapeHtml(key.label)} ${escapeHtml(String(row[key.id] || 0))}"></i>`).join('')}
           </div>
-        </div>`).join('') || '<p class="scope-mode-hint">Aucune donnée.</p>'}
+        </div>`).join('') || '<p class="scope-mode-hint">Aucune donnée disponible pour la période sélectionnée.</p>'}
       </div>
     </div>`;
   }
@@ -4059,11 +4137,12 @@
   function jspLineChart(title, points) {
     const rows = points || [];
     return `<div class="scope-card scope-jsp-chart"><h3>${escapeHtml(title)}</h3>
+      <div class="scope-chart-legend"><span><i class="scope-jsp-bar-presents"></i>Taux de présence · pourcentage · périmètre sélectionné</span></div>
       <div class="scope-jsp-trend">
         ${rows.map((point) => `<div class="scope-jsp-trend-item">
           <span class="scope-jsp-trend-date">${escapeHtml(point.label || point.date || '')}</span>
           <b style="height:${Math.max(4, Math.round(Number(point.value || 0)))}%" title="${escapeHtml(point.exercise || '')}">${escapeHtml(jspPercent(point.value))}</b>
-        </div>`).join('') || '<p class="scope-mode-hint">Aucune donnée.</p>'}
+        </div>`).join('') || '<p class="scope-mode-hint">Aucune donnée disponible pour la période sélectionnée.</p>'}
       </div>
     </div>`;
   }
@@ -4080,6 +4159,9 @@
 
   function participationPerimeterOptions(domain) {
     const code = String(domain || 'JSP').toUpperCase();
+    if (code === 'JSP') return [['TOUS', 'Global du domaine'], ['G1', 'JSP G1'], ['C1', 'JSP C1'], ['B1', 'JSP B1']];
+    if (code === 'PR') return [['TOUS', 'Global du domaine'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
+    if (code === 'FOSPEC') return [['TOUS', 'Global du domaine'], ['PR', 'PR'], ['AUTO', 'AUTO']];
     const rows = (state.referentiels.cibles || [])
       .filter((c) => String(c.domaineCode || c.domaine_code || '').toUpperCase() === code)
       .filter((c) => String(c.niveauCode || c.niveau_code || '').toUpperCase() !== 'GEN')
@@ -4116,7 +4198,8 @@
   function jspPersonRows(rows, variant) {
     return (rows || []).map((row) => {
       const absence = variant === 'watch' ? `<td>${escapeHtml(String(row.totalAbsences || 0))}</td><td>${escapeHtml(jspPercent(row.absenceRate))}</td>` : '';
-      return `<tr>
+      const alertClass = row.absent > 0 || row.underObjective ? ' class="scope-row-alert"' : '';
+      return `<tr${alertClass}>
         <td>${escapeHtml(row.grade || '')}</td><td>${escapeHtml(row.nom || '')}</td><td>${escapeHtml(row.prenom || '')}</td><td>${escapeHtml(row.site || '')}</td>
         <td>${escapeHtml(String(row.expected || 0))}</td><td>${escapeHtml(String(row.present || 0))}</td><td>${escapeHtml(String(row.excused || 0))}</td><td>${escapeHtml(String(row.absent || 0))}</td>
         ${absence}<td>${escapeHtml(jspPercent(row.presenceRate))}</td>
@@ -4189,7 +4272,54 @@
         ${blockHtml('sous_objectif', `<div class="scope-card"><h2>Personnes sous l’objectif</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Taux</th><th>Objectif</th><th>Écart</th></tr></thead><tbody>${(report.underObjective || []).map((row) => `<tr class="scope-row-alert"><td>${escapeHtml(row.grade || '')}</td><td>${escapeHtml(row.nom || '')}</td><td>${escapeHtml(row.prenom || '')}</td><td>${escapeHtml(row.nip || '')}</td><td>${escapeHtml(row.perimeter || row.site || '')}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td><td>${escapeHtml(row.objectivePct == null ? 'Objectif non défini' : jspPercent(row.objectivePct))}</td><td>${escapeHtml(row.objectiveGap == null ? '—' : jspPercent(row.objectiveGap))}</td></tr>`).join('') || `<tr><td colspan="10">${escapeHtml(report.objective ? 'Aucune personne sous l’objectif.' : 'Objectif non défini')}</td></tr>`}</tbody></table></div></div>`)}
         ${blockHtml('nominatif', `<div class="scope-card"><h2>Analyse nominative complète</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(persons, 'all') || '<tr><td colspan="9">Aucune personne attendue sur la période.</td></tr>'}</tbody></table></div></div>`)}
         ${blockHtml('motifs', `<div class="scope-card"><h2>Motifs d’excuse</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Motif</th><th>Nombre</th><th>Part des excuses</th></tr></thead><tbody>${motifs.map((row) => `<tr><td>${escapeHtml(row.motif)}</td><td>${row.count || 0}</td><td>${escapeHtml(jspPercent(row.share))}</td></tr>`).join('') || '<tr><td colspan="3">Aucun motif enregistré.</td></tr>'}</tbody></table></div><details class="scope-details"><summary>Détail motifs et absences</summary><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Périmètre</th><th>Personne</th><th>Statut</th><th>Motif</th></tr></thead><tbody>${details.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.exercice)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(jspPersonName(row))}</td><td>${escapeHtml(row.statut)}</td><td>${escapeHtml(row.motif)}</td></tr>`).join('') || '<tr><td colspan="6">Aucun détail.</td></tr>'}</tbody></table></div></details></div>`)}
-        ${blockHtml('evenements', `<div class="scope-card"><h2>Analyse par exercice et événement</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Domaine</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Dispensés</th><th>À renseigner</th><th>Écart</th><th>Taux</th></tr></thead><tbody>${exercises.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.libelle)}</td><td>${escapeHtml(row.domaine || report.domaine || '')}</td><td>${escapeHtml(row.site)}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${row.dispensed || 0}</td><td>${row.nonRenseigne || 0}</td><td>${row.gap || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('') || '<tr><td colspan="12">Aucun événement comptabilisé.</td></tr>'}</tbody></table></div></div>`)}
+        ${blockHtml('evenements', `<div class="scope-card"><h2>Analyse par exercice et événement</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Domaine</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Dispensés</th><th>À renseigner</th><th>Taux</th><th>Objectif</th><th>Écart objectif</th></tr></thead><tbody>${exercises.map((row) => `<tr${row.underObjective ? ' class="scope-row-alert"' : ''}><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.libelle)}</td><td>${escapeHtml(row.domaine || report.domaine || '')}</td><td>${escapeHtml(row.site)}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${row.dispensed || 0}</td><td>${row.nonRenseigne || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td><td>${escapeHtml(row.objectivePct == null ? 'Objectif non défini' : jspPercent(row.objectivePct))}</td><td>${escapeHtml(row.objectiveGap == null ? '—' : jspPercent(row.objectiveGap))}</td></tr>`).join('') || '<tr><td colspan="13">Aucun événement comptabilisé.</td></tr>'}</tbody></table></div></div>`)}
+      </div>
+    `;
+  }
+
+  function renderFormationReport() {
+    const report = state.formationReport;
+    if (state.formationReportError) {
+      return `<div class="scope-crumb">Rapports / Pilotage Formation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: 'Formation', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.formationReportError)}</p></div></div>`;
+    }
+    if (!state.formationReportReady || !report) {
+      return `<div class="scope-crumb">Rapports / Pilotage Formation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: 'Formation', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du rapport global Formation…</p></div></div>`;
+    }
+    const k = report.kpis || {};
+    const domainRows = report.domainRows || [];
+    const alerts = report.alerts || [];
+    const people = report.peopleToWatch || [];
+    const events = report.eventsToWatch || [];
+    const graphRows = (report.graphs && report.graphs.domains || []).map((row) => ({ label: row.label, taux: row.taux, objectif: row.objectif }));
+    return `
+      <div class="scope-crumb">Rapports / Pilotage Formation</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: periodRangeText(report.period), logo: true })}
+        ${periodContextHtml()}
+        <div class="scope-card">
+          <div class="scope-mini-kpi-grid">
+            ${jspKpi('Événements comptabilisés', k.exercises || 0)}
+            ${jspKpi('Personnes distinctes', k.participants || 0)}
+            ${jspKpi('Participations attendues', k.expected || 0)}
+            ${jspKpi('Présents', k.present || 0)}
+            ${jspKpi('Excusés', k.excused || 0)}
+            ${jspKpi('Absents', k.absent || 0)}
+            ${jspKpi('Taux global', jspPercent(k.presenceRate))}
+            ${jspKpi('Domaines sous objectif', k.domainsUnderObjective || 0)}
+            ${jspKpi('Événements sous objectif', k.eventsUnderObjective || 0)}
+            ${jspKpi('Personnes sous objectif', k.peopleUnderObjective || 0)}
+          </div>
+          <div class="scope-actions"><button type="button" class="scope-btn scope-btn-secondary" id="formation-report-pdf">Exporter PDF Commandement</button></div>
+        </div>
+        <div class="scope-jsp-chart-grid">
+          ${jspBarChart('Comparaison des domaines', graphRows, [{ id: 'taux', label: 'Taux réel' }, { id: 'objectif', label: 'Objectif' }])}
+          ${jspLineChart('Évolution globale Formation', (report.graphs && report.graphs.evolution) || [])}
+        </div>
+        <div class="scope-card"><h2>Analyse par domaine</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Domaine</th><th>Personnes</th><th>Événements</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux</th><th>Objectif</th><th>Écart</th><th>Statut</th></tr></thead><tbody>${domainRows.map((row) => `<tr${row.underObjective ? ' class="scope-row-alert"' : ''}><td>${escapeHtml(row.label)}</td><td>${row.participants || 0}</td><td>${row.exercises || 0}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td><td>${escapeHtml(row.objectivePct == null ? 'Objectif non défini' : jspPercent(row.objectivePct))}</td><td>${escapeHtml(row.objectiveGap == null ? '—' : jspPercent(row.objectiveGap))}</td><td>${escapeHtml(row.status || '')}</td></tr>`).join('') || '<tr><td colspan="11">Aucune donnée disponible pour la période sélectionnée.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Alertes Formation</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Type</th><th>Élément</th><th>Valeur</th><th>Objectif</th><th>Écart</th></tr></thead><tbody>${alerts.map((row) => `<tr class="scope-row-alert"><td>${escapeHtml(row.type)}</td><td>${escapeHtml(row.label)}</td><td>${escapeHtml(String(row.value ?? '—'))}</td><td>${escapeHtml(row.objective == null ? 'Objectif non défini' : jspPercent(row.objective))}</td><td>${escapeHtml(row.gap == null ? '—' : jspPercent(row.gap))}</td></tr>`).join('') || '<tr><td colspan="5">Aucune alerte prioritaire.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Personnes à surveiller par domaine</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Domaine</th><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux</th><th>Écart</th></tr></thead><tbody>${people.map((row) => `<tr${row.absent > 0 || row.underObjective ? ' class="scope-row-alert"' : ''}><td>${escapeHtml(row.domaineLabel || row.domaine || '')}</td><td>${escapeHtml(row.grade || '')}</td><td>${escapeHtml(row.nom || '')}</td><td>${escapeHtml(row.prenom || '')}</td><td>${escapeHtml(row.site || '')}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td><td>${escapeHtml(row.objectiveGap == null ? '—' : jspPercent(row.objectiveGap))}</td></tr>`).join('') || '<tr><td colspan="11">Aucune personne à surveiller.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Événements à surveiller</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Domaine</th><th>Événement</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux</th><th>Objectif</th><th>Écart</th></tr></thead><tbody>${events.map((row) => `<tr class="scope-row-alert"><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.domaineLabel || row.domaine || '')}</td><td>${escapeHtml(row.libelle)}</td><td>${escapeHtml(row.site || '')}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td><td>${escapeHtml(row.objectivePct == null ? 'Objectif non défini' : jspPercent(row.objectivePct))}</td><td>${escapeHtml(row.objectiveGap == null ? '—' : jspPercent(row.objectiveGap))}</td></tr>`).join('') || '<tr><td colspan="11">Aucun événement sous objectif.</td></tr>'}</tbody></table></div></div>
+        <div class="scope-card"><h2>Lecture positive</h2><p class="scope-mode-hint">${escapeHtml((report.positiveDomains || []).length ? `Domaines atteignant l’objectif : ${(report.positiveDomains || []).map((row) => row.label).join(', ')}.` : 'Aucun objectif de domaine atteint sur la période sélectionnée.')}</p></div>
       </div>
     `;
   }
@@ -6302,6 +6432,7 @@
         : r.screen === 'personne' ? renderPersonne()
         : r.screen === 'rapports' ? renderRapports()
           : (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') ? renderRapportJsp()
+          : r.screen === 'rapport-formation' ? renderFormationReport()
         : r.screen === 'objectifs' ? renderObjectifs()
           : r.screen === 'suivi' ? renderSuiviNominatif()
             : r.screen === 'import-evenements' ? renderImport()
@@ -6369,6 +6500,10 @@
     });
     document.getElementById('scope-month')?.addEventListener('change', (e) => {
       state.month = e.target.value;
+      reloadPeriod();
+    });
+    document.getElementById('scope-semester')?.addEventListener('change', (e) => {
+      state.semester = e.target.value;
       reloadPeriod();
     });
     document.getElementById('scope-quarter')?.addEventListener('change', (e) => {
@@ -7403,6 +7538,7 @@
       });
     });
     document.getElementById('jsp-report-pdf')?.addEventListener('click', () => generateJspReportPdf());
+    document.getElementById('formation-report-pdf')?.addEventListener('click', () => generateFormationReportPdf());
     root.querySelectorAll('[data-report-event]').forEach((btn) => {
       btn.addEventListener('click', () => generateEventReport(btn.getAttribute('data-report-event')));
     });
@@ -8093,6 +8229,7 @@
       year: state.year,
       month: state.month,
       quarter: state.quarter,
+      semester: state.semester,
       from: state.from,
       to: state.to
     });
@@ -8148,6 +8285,13 @@
       perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
       blocks: (state.participationReportBlocks || []).join(',')
     });
+    delete body.cible;
+    openReport(body);
+  }
+
+  function generateFormationReportPdf() {
+    const body = Object.assign(reportPeriodPayload(), { kind: 'FORMATION' });
+    delete body.domaine;
     delete body.cible;
     openReport(body);
   }
@@ -8618,6 +8762,10 @@
       state.jspReportReady = false;
       state.jspReportError = null;
     }
+    if (r.screen === 'rapport-formation') {
+      state.formationReportReady = false;
+      state.formationReportError = null;
+    }
     if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id && state.activeFicheId !== String(r.id)) {
       state.activeFicheId = String(r.id);
       state.ficheReady = false;
@@ -8637,6 +8785,7 @@
       }
       if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
       if (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') await loadJspReport();
+      if (r.screen === 'rapport-formation') await loadFormationReport();
       if (r.screen === 'cycles') await loadCycles();
       if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
@@ -8672,6 +8821,9 @@
       resetEventListFilters,
       resetPersonnelFilters,
       resetCycleFilters,
+      renderRapportsHtml() {
+        return renderRapports();
+      },
       renderRapportJspHtml(report) {
         state.jspReport = report;
         state.jspReportReady = true;
@@ -8680,6 +8832,12 @@
         if (report && report.domaine) state.participationReportDomain = report.domaine;
         if (report && report.siteFilter) state.jspReportSite = report.siteFilter;
         return renderRapportJsp();
+      },
+      renderFormationReportHtml(report) {
+        state.formationReport = report;
+        state.formationReportReady = true;
+        state.formationReportError = null;
+        return renderFormationReport();
       }
     };
     return;

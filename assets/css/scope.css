@@ -3694,6 +3694,27 @@ body.scope-pdf-open { overflow: hidden; }
   font-size: 15px;
 }
 
+.scope-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: -4px 0 12px;
+  color: var(--scope-muted);
+  font-size: 12px;
+}
+
+.scope-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scope-chart-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
 .scope-jsp-bars {
   display: grid;
   gap: 9px;
@@ -3731,6 +3752,8 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-jsp-bar-excuses { background: var(--scope-yellow); }
 .scope-jsp-bar-absents { background: var(--scope-red); }
 .scope-jsp-bar-count { background: var(--scope-slate); }
+.scope-jsp-bar-taux { background: var(--scope-blue); }
+.scope-jsp-bar-objectif { background: var(--scope-green); }
 
 .scope-jsp-trend {
   display: flex;

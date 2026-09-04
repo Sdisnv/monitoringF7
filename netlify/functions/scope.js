@@ -336,6 +336,12 @@ exports.handler = async function(event){
       }
       return response(200, { ok:true, report: await participationReporting.report(queryOf(event)) });
     }
+    if(method === 'GET' && path === '/reporting/formation'){
+      if(!hasPermission(claims, 'dashboard:read')){
+        return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });
+      }
+      return response(200, { ok:true, report: await participationReporting.formationReport(queryOf(event)) });
+    }
     if(method === 'GET' && path === '/alerts'){
       return response(200, { ok:true, ...(await alerts.listAlerts(queryOf(event), claims)) });
     }
