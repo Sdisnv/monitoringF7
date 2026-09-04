@@ -722,6 +722,21 @@ function createScopeService(repo){
     return false;
   }
 
+  function eventLooksPrAbc(evenement, cibles = []){
+    if(String(evenement?.domaine_code || '').toUpperCase() !== 'PR') return false;
+    const libelle = String(evenement?.libelle || '');
+    if(/\bPR[-\s]?ABC\b/i.test(libelle)) return true;
+    return (cibles || []).some((row) => {
+      const domaine = String(row.domaine_code || '').toUpperCase();
+      const niveau = String(row.niveau_code || row.niveau || '').toUpperCase();
+      return domaine === 'PR' && niveau === 'ABC';
+    });
+  }
+
+  function activeAttendusCount(rows){
+    return (rows || []).filter((row) => row.inclus !== false).length;
+  }
+
   async function syncExpectedPopulationForEvents(dbx, events, actor, options = {}){
     const touchedIds = new Set(normalizeIdList(options.personneIds || options.personne_ids));
     const allPersons = options.allPersons === true || options.all_persons === true;
@@ -769,6 +784,7 @@ function createScopeService(repo){
       const participations = options.participationsByEvent?.get(eventId) || (dbx.listParticipations ? await dbx.listParticipations(eventId) : []);
       const attendusByPerson = new Map(attendus.map((row) => [String(row.personne_id), row]));
       const participationsByPerson = new Map(participations.map((row) => [String(row.personne_id), row]));
+      const populationBefore = activeAttendusCount(attendus);
       const candidateIds = allPersons ? new Set() : new Set(touchedIds);
       if(allPersons){
         for(const id of expectedByPerson.keys()) candidateIds.add(id);
@@ -784,6 +800,8 @@ function createScopeService(repo){
         date: evenement.date,
         libelle: evenement.libelle,
         domaine: evenement.domaine_code,
+        populationBefore,
+        populationExpected: expectedByPerson.size,
         added: [],
         reclassified: [],
         removed: [],
@@ -882,6 +900,8 @@ function createScopeService(repo){
         }
       }
       if(changed){
+        eventDetails.populationAfter = expectedByPerson.size;
+        eventDetails.participationsProtected = eventDetails.preserved.length;
         if(!dryRun){
           const current = await dbx.getEvent(eventId);
           await dbx.updateEventIfVersion(eventId, current.version, {
@@ -922,6 +942,46 @@ function createScopeService(repo){
       dryRun: options.dryRun === true || options.dry_run === true,
       reason: options.reason || 'BACKFILL_POPULATION_ATTENDUE'
     }));
+  }
+
+  async function reconcilePrAbcPopulation(options = {}, actor = {}){
+    const annee = options.annee || options.year || null;
+    const dryRun = options.dryRun !== false && options.dry_run !== false;
+    const listed = repo.listEvenements ? await repo.listEvenements({ annee, domaine: 'PR', statut: 'PLANIFIE' }) : [];
+    const ids = (listed || []).map((event) => event.evenement_id);
+    const ciblesRows = repo.listEventCiblesForEvents && ids.length ? await repo.listEventCiblesForEvents(ids) : [];
+    const ciblesByEvent = new Map();
+    for(const row of ciblesRows || []){
+      const eventId = row.evenement_id;
+      if(!ciblesByEvent.has(eventId)) ciblesByEvent.set(eventId, []);
+      ciblesByEvent.get(eventId).push(row);
+    }
+    const selected = (listed || []).filter((event) => {
+      if(options.eventIds && Array.isArray(options.eventIds) && !options.eventIds.includes(event.evenement_id)) return false;
+      if(event.origine === 'LEGACY_AGGREGATED' || isQuantitatif(event) || !event.population_figee) return false;
+      return eventLooksPrAbc(event, ciblesByEvent.get(event.evenement_id) || []);
+    });
+    const summary = await repo.withTransaction(async (tx) => syncExpectedPopulationForEvents(tx, selected, actor, {
+      allPersons: true,
+      dryRun,
+      ciblesByEvent,
+      reason: 'RECONCILE_PR_ABC_POPULATION'
+    }));
+    return {
+      ...summary,
+      scope: 'PR_ABC_POPULATION_RECONCILIATION',
+      source: 'scope_affectations_pr_abc',
+      eventsConcerned: summary.eventsRecalculated,
+      protectedParticipations: summary.participationsPreserved,
+      details: summary.details.map((detail) => ({
+        ...detail,
+        before: detail.populationBefore,
+        after: detail.populationAfter,
+        addedCount: detail.added.length,
+        removedCount: detail.removed.length,
+        protectedCount: detail.participationsProtected || 0
+      }))
+    };
   }
 
   function eventDateInSyncWindow(date, from, to){
@@ -3410,6 +3470,7 @@ function createScopeService(repo){
     commitPersonnelSync,
     syncExpectedPopulationForPersonnes,
     reconcileExpectedPopulation,
+    reconcilePrAbcPopulation,
     assertNoAffectationOverlap,
     assertNoAffectationOverlapInDomain,
     computeTaux,

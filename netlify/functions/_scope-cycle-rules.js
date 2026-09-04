@@ -9,11 +9,13 @@ const STATUTS_PR_EXERCISE_RECONNUS = new Set(['PRESENT', STATUT_PERMUTATION, 'DI
 const STATUTS_SESSION_VALIDES = new Set(['PRESENT', STATUT_PERMUTATION, 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE']);
 const STATUTS_EVENT_EXIGIBLES = new Set(['PLANIFIE', 'REPORTE', 'REALISE']);
 const MOTIF_DISPENSE_LABELS = Object.freeze({
-  JOKER: 'Joker',
   FORMATEUR_PR: 'Formateur PR',
   FORMATION_HORS_SDIS: 'Formation hors SDIS',
-  PAS_CONCERNE: 'Pas concerné',
-  DEMISSION_EN_COURS: 'Démission en cours'
+  JOKER: 'Joker',
+  AUTO_RETRAIT: 'Auto-retrait',
+  DEMISSION_EN_COURS: 'Démission en cours',
+  NON_CONCERNE: 'Non concerné',
+  PAS_CONCERNE: 'Non concerné'
 });
 const MOTIF_EXCUSE_LABELS = Object.freeze({
   PRIVE: 'Privé',
@@ -565,7 +567,6 @@ function computePrExerciseParticipationState(input = {}){
       ? rows.filter((row) => row.eventId !== currentEventId)
       : rows;
     if(!outsideCurrent.length) continue;
-    if(currentValidKeys.has(key)) continue;
     const reference = outsideCurrent[0] || rows[0] || {};
     const referenceOrder = eventOrder.get(reference.eventId);
     const referenceEvent = eventsById.get(reference.eventId) || {};
@@ -575,6 +576,20 @@ function computePrExerciseParticipationState(input = {}){
     const formateurSessionLabels = rows
       .filter((row) => row.role === 'FORMATEUR')
       .map((row) => prSessionLabel(eventsById.get(row.eventId) || { evenement_id: row.eventId }));
+    if(currentValidKeys.has(key)){
+      if(formateurSessionLabels.length){
+        for(const person of personnesById.values()){
+          const id = personneId(person);
+          if(!id || dedupeKey(person, personnesById) !== key) continue;
+          byPersonneId[id] = {
+            alreadyCountedInSession: false,
+            formateurSessionLabels,
+            sessionHasValidStatus: true
+          };
+        }
+      }
+      continue;
+    }
     for(const person of personnesById.values()){
       const id = personneId(person);
       if(!id || dedupeKey(person, personnesById) !== key) continue;

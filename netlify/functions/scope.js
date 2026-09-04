@@ -34,7 +34,7 @@ function match(path, pattern){
   if(pathParts.length !== patParts.length) return null;
   const params = {};
   for(let i = 0; i < patParts.length; i += 1){
-    if(patParts[i].startsWith(':')) params[patParts[i].slice(1)] = pathParts[i];
+    if(patParts[i].startsWith(':')) params[patParts[i].slice(1)] = safeDecodePathPart(pathParts[i]);
     else if(patParts[i] !== pathParts[i]) return null;
   }
   return params;
@@ -42,6 +42,11 @@ function match(path, pattern){
 
 function queryOf(event){
   return event.queryStringParameters || {};
+}
+
+function safeDecodePathPart(value){
+  try { return decodeURIComponent(value); }
+  catch(_error){ return value; }
 }
 
 function queryWantsPersonne(query){
@@ -146,6 +151,12 @@ exports.handler = async function(event){
     }
     if(method === 'POST' && path === '/imports/personnel/commit'){
       return response(200, { ok:true, ...(await service.commitPersonnelSync(body, claims)) });
+    }
+    if(method === 'POST' && path === '/maintenance/pr-abc/reconcile'){
+      if(!hasPermission(claims, 'personnel:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La reprise PR-ABC est réservée aux profils habilités (personnel:manage).' });
+      }
+      return response(200, { ok:true, ...(await service.reconcilePrAbcPopulation(body, claims)) });
     }
     params = match(path, '/personnes/:id/affectations');
     if(method === 'GET' && params){

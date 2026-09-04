@@ -75,11 +75,13 @@ const MOTIF_LABELS = Object.freeze({
   MALADIE: 'Maladie (historique)',
   ACCIDENT: 'Accident (historique)',
   AUTRE: 'Autre (historique)',
-  JOKER: 'Joker',
   FORMATEUR_PR: 'Formateur PR',
   FORMATION_HORS_SDIS: 'Formation hors SDIS',
-  PAS_CONCERNE: 'Pas concerné',
-  DEMISSION_EN_COURS: 'Démission en cours'
+  JOKER: 'Joker',
+  AUTO_RETRAIT: 'Auto-retrait',
+  DEMISSION_EN_COURS: 'Démission en cours',
+  NON_CONCERNE: 'Non concerné',
+  PAS_CONCERNE: 'Non concerné'
 });
 
 const MODE_LABELS = Object.freeze({

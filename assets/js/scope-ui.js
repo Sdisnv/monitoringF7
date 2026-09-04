@@ -4389,21 +4389,33 @@
     </section>`;
   }
 
-  function renderFichePrimaryAction(cta) {
-    if (!cta) return '';
+  function renderFicheLifecycleActions(ev, isLegacy, qty) {
+    if (isLegacy || qty) return '';
+    const canEdit = ev.statut === 'PLANIFIE' || ev.statut === 'REPORTE';
+    const canPostpone = ev.statut === 'PLANIFIE';
+    const canCancel = ev.statut !== 'ANNULE' && ev.statut !== 'REALISE';
+    return [
+      canEdit ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="edit-event">Modifier l’événement</button>' : '',
+      canPostpone ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="postpone-event">Reporter</button>' : '',
+      canCancel ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler</button>' : ''
+    ].join('');
+  }
+
+  function renderFichePrimaryAction(cta, lifecycleActions = '') {
+    if (!cta && !lifecycleActions) return '';
     return `<section class="scope-card scope-fiche-section scope-fiche-primary">
       <div class="scope-section-header"><h2 class="scope-section-title">Action</h2></div>
-      <button type="button" class="scope-btn scope-btn-primary scope-fiche-cta" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>
+      <div class="scope-actions scope-event-toolbar scope-fiche-primary-actions">
+        ${cta ? `<button type="button" class="scope-btn scope-btn-primary scope-fiche-cta" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>` : ''}
+        ${lifecycleActions || ''}
+      </div>
     </section>`;
   }
 
   function renderFicheSecondaryActions(ev, extraActions, isLegacy) {
-    const cancel = !isLegacy && ev.statut !== 'ANNULE' && ev.statut !== 'REALISE'
-      ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler</button>'
-      : '';
     return `<section class="scope-card scope-fiche-section scope-fiche-secondary">
       <div class="scope-section-header"><h2 class="scope-section-title">Autres actions</h2></div>
-      <div class="scope-actions scope-event-toolbar scope-fiche-secondary-actions">${extraActions || ''}${reportButton(ev.evenement_id)}${cancel}</div>
+      <div class="scope-actions scope-event-toolbar scope-fiche-secondary-actions">${extraActions || ''}${reportButton(ev.evenement_id)}</div>
     </section>`;
   }
 
@@ -4435,20 +4447,15 @@
     const extraActions = [
       qty && ev.statut === 'PLANIFIE'
         ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="convert-nominatif">Passer en nominatif</button>'
-        : '',
-      !isLegacy && !qty && (ev.statut === 'PLANIFIE' || ev.statut === 'REPORTE')
-        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="edit-event">Modifier l’événement</button>'
-        : '',
-      !isLegacy && !qty && ev.statut === 'PLANIFIE'
-        ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="postpone-event">Reporter</button>'
         : ''
     ].join('');
+    const lifecycleActions = renderFicheLifecycleActions(ev, isLegacy, qty);
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main scope-event-fiche">
         ${renderFicheIdentity(ev, fiche)}
         ${renderFicheSummary(fiche, ev, mode, previewCount, jeunesCount)}
-        ${renderFichePrimaryAction(cta)}
+        ${renderFichePrimaryAction(cta, lifecycleActions)}
         ${qty || !state.preview ? '' : renderPreviewList()}
         ${renderFicheSecondaryActions(ev, extraActions, isLegacy)}
       </div>
@@ -5032,13 +5039,20 @@
     const motifControl = (row) => {
       const motifLocked = Boolean(L.sessionLocked && L.sessionLocked(row));
       const lockAttr = motifLocked ? ' disabled aria-disabled="true"' : '';
+      const motifOptions = (motifs) => {
+        const operational = (motifs || []).filter((m) => (m.group || 'operationnel') === 'operationnel');
+        const administrative = (motifs || []).filter((m) => m.group === 'administratif');
+        const render = (items) => items.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('');
+        if (!administrative.length) return render(operational);
+        return `<optgroup label="Dispenses métier">${render(operational)}</optgroup><optgroup label="Situations particulières">${render(administrative)}</optgroup>`;
+      };
       if (row.statut === 'DISPENSE') {
         const motifs = L.motifsDispenseForRow ? L.motifsDispenseForRow(row) : [];
         const selected = motifs.find((m) => m.value === row.motifAbsence);
         if (selected && !row.editMotif) {
           return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif de dispense"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
         }
-        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
+        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifOptions(motifs)}</select></div>`;
       }
       if (row.statut !== 'ABSENT_EXCUSE') return '';
       const motifs = L.motifsForRow ? L.motifsForRow(row, saisieDomaine()) : L.MOTIFS;

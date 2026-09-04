@@ -19,11 +19,15 @@
     { value: 'NON_JUSTIFIE', label: 'Non justifié' }
   ];
   const MOTIFS_DISPENSE = [
-    { value: 'JOKER', label: 'Joker' },
-    { value: 'FORMATEUR_PR', label: 'Formateur PR' },
-    { value: 'FORMATION_HORS_SDIS', label: 'Formation hors SDIS' },
-    { value: 'PAS_CONCERNE', label: 'Pas concerné' },
-    { value: 'DEMISSION_EN_COURS', label: 'Démission en cours' }
+    { value: 'FORMATEUR_PR', label: 'Formateur PR', group: 'operationnel' },
+    { value: 'FORMATION_HORS_SDIS', label: 'Formation hors SDIS', group: 'operationnel' },
+    { value: 'JOKER', label: 'Joker', group: 'operationnel' },
+    { value: 'AUTO_RETRAIT', label: 'Auto-retrait', group: 'administratif' },
+    { value: 'DEMISSION_EN_COURS', label: 'Démission en cours', group: 'administratif' },
+    { value: 'NON_CONCERNE', label: 'Non concerné', group: 'administratif' }
+  ];
+  const MOTIFS_DISPENSE_HISTORIQUES = [
+    { value: 'PAS_CONCERNE', label: 'Non concerné', group: 'administratif', legacy: true }
   ];
   const MOTIFS_HISTORIQUES = [
     { value: 'MALADIE', label: 'Maladie (historique)' },
@@ -41,7 +45,7 @@
   }
 
   function motifCatalogue() {
-    return MOTIFS.concat(MOTIFS_JSP, MOTIFS_DISPENSE, MOTIFS_HISTORIQUES);
+    return MOTIFS.concat(MOTIFS_JSP, MOTIFS_DISPENSE, MOTIFS_DISPENSE_HISTORIQUES, MOTIFS_HISTORIQUES);
   }
 
   function motifsForRow(row, domaineCode) {
@@ -54,12 +58,14 @@
     return base.concat(extra);
   }
 
-  function motifsDispenseForRow() {
-    return MOTIFS_DISPENSE.slice();
+  function motifsDispenseForRow(row) {
+    const motifs = MOTIFS_DISPENSE.slice();
+    if (row && row.motifAbsence === 'PAS_CONCERNE') motifs.push(MOTIFS_DISPENSE_HISTORIQUES[0]);
+    return motifs;
   }
 
   function isDispenseMotif(value) {
-    return MOTIFS_DISPENSE.some((m) => m.value === String(value || ''));
+    return MOTIFS_DISPENSE.concat(MOTIFS_DISPENSE_HISTORIQUES).some((m) => m.value === String(value || ''));
   }
 
   function motifShortLabel(code) {

@@ -336,6 +336,7 @@ async function ensureScopeSchema(){
     `insert into monitoring_f7_schema_migrations(version) values ('scope-jsp-grade-model-fix-1') on conflict (version) do nothing`
   );
   await migrateSpecialisationCyclesArch1();
+  await migrateMetierActivation3();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-specialisation-cycles-arch-1') on conflict (version) do nothing`
   );
@@ -598,8 +599,7 @@ async function migrateModel2(){
       motif_absence is null or motif_absence in (
         'PRIVE','PROFESSIONNEL','ARMEE','ACCIDENT_MALADIE','MALADIE','ACCIDENT','AUTRE','NON_PRECISE',
         'ACTIVITE_SCOLAIRE','ACTIVITE_EXTRA_SCOLAIRE','NON_JUSTIFIE',
-        'ACTIVITE_SCOLAIRE','ACTIVITE_EXTRA_SCOLAIRE','NON_JUSTIFIE',
-        'JOKER','FORMATEUR_PR','FORMATION_HORS_SDIS','PAS_CONCERNE','DEMISSION_EN_COURS'
+        'JOKER','FORMATEUR_PR','FORMATION_HORS_SDIS','AUTO_RETRAIT','NON_CONCERNE','PAS_CONCERNE','DEMISSION_EN_COURS'
       )
     )
   `);
@@ -983,6 +983,21 @@ async function migrateSpecialisationCyclesArch1(){
   await db.query(`
     create index if not exists scope_cycle_personnes_session_event_idx
       on scope_cycle_personnes (session_event_id)
+  `);
+}
+
+async function migrateMetierActivation3(){
+  await db.query(`
+    alter table scope_participations drop constraint if exists scope_participations_motif_val_chk
+  `);
+  await db.query(`
+    alter table scope_participations add constraint scope_participations_motif_val_chk check (
+      motif_absence is null or motif_absence in (
+        'PRIVE','PROFESSIONNEL','ARMEE','ACCIDENT_MALADIE','MALADIE','ACCIDENT','AUTRE','NON_PRECISE',
+        'ACTIVITE_SCOLAIRE','ACTIVITE_EXTRA_SCOLAIRE','NON_JUSTIFIE',
+        'JOKER','FORMATEUR_PR','FORMATION_HORS_SDIS','AUTO_RETRAIT','NON_CONCERNE','PAS_CONCERNE','DEMISSION_EN_COURS'
+      )
+    )
   `);
 }
 

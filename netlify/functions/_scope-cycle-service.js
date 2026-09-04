@@ -1,5 +1,5 @@
 const { HttpError, isoDate } = require('./_scope-rules');
-const { computeCycleMetrics, proposeCycleLink } = require('./_scope-cycle-rules');
+const { computeCycleMetrics, proposeCycleLink, resolveCycleCompletion } = require('./_scope-cycle-rules');
 
 const DOMAINES_CYCLE = new Set(['PR', 'AUTO']);
 const STATUTS_CYCLE = new Set(['PLANIFIE', 'REALISE', 'REPORTE', 'ANNULE']);
@@ -30,6 +30,69 @@ function optionalFilter(value){
   const out = text(value);
   if(!out || out.toLowerCase() === 'tous' || out.toLowerCase() === 'all') return null;
   return out;
+}
+
+function derivedCycleId(groupKey){
+  return `derived-pr-cycle:${Buffer.from(String(groupKey || ''), 'utf8').toString('base64url')}`;
+}
+
+function groupKeyFromDerivedId(cycleId){
+  const prefix = 'derived-pr-cycle:';
+  const value = String(cycleId || '');
+  if(!value.startsWith(prefix)) return null;
+  try{
+    return Buffer.from(value.slice(prefix.length), 'base64url').toString('utf8');
+  }catch(_error){
+    return null;
+  }
+}
+
+function eventId(row){
+  return String((row && (row.evenement_id || row.evenementId || row.id)) || '');
+}
+
+function dateOnly(value){
+  return String(value || '').slice(0, 10);
+}
+
+function yearOfEvent(event){
+  const y = dateOnly(event && event.date).slice(0, 4);
+  return /^\d{4}$/.test(y) ? Number(y) : null;
+}
+
+function sessionNumber(event){
+  const textValue = `${event && event.pr_session_key || ''} ${event && event.libelle || ''}`;
+  const match = textValue.match(/\b(?:PR|AUTO)?\s*(\d+)\.(\d+)\b/i);
+  return match ? { cycleNo: match[1], sessionNo: match[2] } : { cycleNo: null, sessionNo: null };
+}
+
+function cycleLabelFromEvents(groupKey, events){
+  const first = (events || [])[0] || {};
+  const parsed = sessionNumber(first);
+  const keyMatch = String(groupKey || '').match(/:(PR|AUTO):(\d+)$/i);
+  const domaine = String((first.domaine_code || (keyMatch && keyMatch[1]) || 'PR')).toUpperCase();
+  const cycleNo = parsed.cycleNo || (keyMatch && keyMatch[2]) || '';
+  const suffix = String(first.libelle || '').split('|').slice(1).join('|').trim();
+  const annee = yearOfEvent(first);
+  return [cycleNo ? `${domaine} ${cycleNo}` : domaine, suffix || 'Base', annee].filter(Boolean).join(' — ');
+}
+
+function cycleStatusFromCompletion(completion){
+  if(completion.complete) return 'REALISE';
+  if(completion.eventCount > 0 && completion.cancelledCount === completion.eventCount) return 'ANNULE';
+  if(completion.postponedCount > 0) return 'REPORTE';
+  return 'PLANIFIE';
+}
+
+async function hydratePeople(repo, ids){
+  const personnes = {};
+  for(const id of [...new Set((ids || []).map(String).filter(Boolean))]){
+    if(repo.getPersonne){
+      const p = await repo.getPersonne(id);
+      if(p) personnes[id] = { nip: p.nip, nom: p.nom, prenom: p.prenom, grade: p.grade };
+    }
+  }
+  return personnes;
 }
 
 function normalizeCyclePayload(body = {}, existing = null){
@@ -111,12 +174,113 @@ function createScopeCycleService(repo){
 
   async function detail(cycleId){
     const cycle = await repo.getCycle(cycleId);
-    if(!cycle) throw new HttpError(404, 'cycle_introuvable', 'Cycle introuvable.');
+    if(!cycle){
+      const derived = await derivedCycleDetail(cycleId);
+      if(derived) return derived;
+      throw new HttpError(404, 'cycle_introuvable', 'Cycle introuvable.');
+    }
     const [evenements, personnes] = await Promise.all([
       repo.listCycleEvents(cycleId),
       repo.listCyclePersonnes(cycleId)
     ]);
     const metrics = await cycleMetrics(cycle);
+    return { cycle, evenements, personnes, metrics };
+  }
+
+  async function derivedCycleFromEvents(groupKey, events){
+    const sorted = (events || []).slice().sort((a, b) => dateOnly(a.date).localeCompare(dateOnly(b.date)) || String(a.libelle || '').localeCompare(String(b.libelle || '')));
+    if(!groupKey || sorted.length < 2) return null;
+    const annee = yearOfEvent(sorted[0]);
+    const cycle = {
+      cycle_id: derivedCycleId(groupKey),
+      cycle_key: groupKey,
+      annee,
+      domaine_code: String(sorted[0].domaine_code || 'PR').toUpperCase(),
+      type_cycle: String(sorted[0].domaine_code || 'PR').toUpperCase() === 'PR' ? 'PAPR' : String(sorted[0].domaine_code || 'AUTO').toUpperCase(),
+      libelle: cycleLabelFromEvents(groupKey, sorted),
+      statut: 'PLANIFIE',
+      stat_com: sorted[0].stat_com || null,
+      qui: sorted[0].qui || null,
+      date_debut: dateOnly(sorted[0].date),
+      date_fin: dateOnly(sorted[sorted.length - 1].date),
+      source_type: 'IMPORT',
+      metadata: { derivedFrom: 'pr_exercise_group_key', persisted: false }
+    };
+    const completionEvents = sorted.map((event) => ({ ...event, cycle_id: cycle.cycle_id }));
+    const completion = resolveCycleCompletion({ cycle, evenements: completionEvents });
+    cycle.statut = cycleStatusFromCompletion(completion);
+    return cycle;
+  }
+
+  async function derivedCycleMetrics(cycle, evenements){
+    const scopedEvents = (evenements || []).map((event) => ({ ...event, cycle_id: cycle.cycle_id }));
+    const ids = evenements.map(eventId).filter(Boolean);
+    const [attendus, participations] = await Promise.all([
+      repo.listAttendusForEvents && ids.length ? repo.listAttendusForEvents(ids) : [],
+      repo.listParticipationsForEvents && ids.length ? repo.listParticipationsForEvents(ids) : []
+    ]);
+    const personneIds = [
+      ...attendus.map((row) => row.personne_id || row.personneId),
+      ...participations.map((row) => row.personne_id || row.personneId)
+    ].filter(Boolean);
+    const personnes = await hydratePeople(repo, personneIds);
+    const cyclePersonnes = [];
+    const seen = new Set();
+    for(const row of attendus || []){
+      if(row.inclus === false) continue;
+      const id = String(row.personne_id || row.personneId || '');
+      if(!id || seen.has(id)) continue;
+      seen.add(id);
+      cyclePersonnes.push({
+        cycle_id: cycle.cycle_id,
+        personne_id: id,
+        role_cycle: 'PARTICIPANT',
+        statut_cycle: 'ACTIF',
+        source: 'ATTENDUS',
+        ...(personnes[id] || {})
+      });
+    }
+    const metrics = computeCycleMetrics({ cycle, evenements: scopedEvents, cyclePersonnes, participations, personnes });
+    return { metrics, personnes: cyclePersonnes };
+  }
+
+  async function derivedCycles(query = {}){
+    if(!repo.listEvenements) return [];
+    const annee = query.annee || query.year || null;
+    const domaine = optionalFilter(query.domaine || query.domaineCode || query.domaine_code);
+    const events = await repo.listEvenements({
+      annee: annee ? Number(annee) : null,
+      domaine: domaine || null
+    });
+    const groups = new Map();
+    for(const event of events || []){
+      if(event.cycle_id) continue;
+      const groupKey = text(event.pr_exercise_group_key || event.prExerciseGroupKey);
+      if(!groupKey) continue;
+      const year = yearOfEvent(event);
+      if(annee && Number(annee) !== year) continue;
+      if(domaine && normalizeDomain(event.domaine_code) !== normalizeDomain(domaine)) continue;
+      const key = `${year || 'NA'}::${normalizeDomain(event.domaine_code)}::${groupKey}`;
+      const rows = groups.get(key) || [];
+      rows.push(event);
+      groups.set(key, rows);
+    }
+    const out = [];
+    for(const rows of groups.values()){
+      const cycle = await derivedCycleFromEvents(rows[0].pr_exercise_group_key || rows[0].prExerciseGroupKey, rows);
+      if(cycle) out.push(cycle);
+    }
+    return out;
+  }
+
+  async function derivedCycleDetail(cycleId){
+    const groupKey = groupKeyFromDerivedId(cycleId);
+    if(!groupKey || !repo.listPrExerciseEvents) return null;
+    const allEvents = await repo.listPrExerciseEvents(groupKey);
+    const cycle = await derivedCycleFromEvents(groupKey, allEvents || []);
+    if(!cycle) return null;
+    const evenements = (allEvents || []).filter((event) => yearOfEvent(event) === cycle.annee);
+    const { metrics, personnes } = await derivedCycleMetrics(cycle, evenements);
     return { cycle, evenements, personnes, metrics };
   }
 
@@ -134,6 +298,24 @@ function createScopeCycleService(repo){
         const metrics = await cycleMetrics(cycle);
         items.push({ ...cycle, eventCount: evenements.length, populationCount: metrics.populationDistincte, metrics, personneCount: personnes.length });
       }
+      const persistedKeys = new Set(items.map((cycle) => String(cycle.cycle_key || '')));
+      const synthetic = await derivedCycles(query);
+      for(const cycle of synthetic){
+        if(persistedKeys.has(String(cycle.cycle_key || ''))) continue;
+        const detail = await derivedCycleDetail(cycle.cycle_id);
+        if(!detail) continue;
+        const statusFilter = optionalFilter(query.statut);
+        if(statusFilter && detail.cycle.statut !== statusFilter) continue;
+        items.push({
+          ...detail.cycle,
+          eventCount: detail.evenements.length,
+          populationCount: detail.metrics.populationDistincte,
+          metrics: detail.metrics,
+          personneCount: detail.personnes.length,
+          derived: true
+        });
+      }
+      items.sort((a, b) => Number(b.annee || 0) - Number(a.annee || 0) || String(a.libelle || '').localeCompare(String(b.libelle || ''), 'fr'));
       return { cycles: items };
     },
     async getCycle(cycleId){ return detail(cycleId); },

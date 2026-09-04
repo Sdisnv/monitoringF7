@@ -1111,7 +1111,7 @@
       PRIVE: 'Privé', PROFESSIONNEL: 'Professionnel', ARMEE: 'Armée', ACCIDENT_MALADIE: 'Accident/Maladie',
       ACTIVITE_SCOLAIRE: 'Activité scolaire', ACTIVITE_EXTRA_SCOLAIRE: 'Activité extra-scolaire', NON_JUSTIFIE: 'Non justifié',
       prive: 'Privé', professionnel: 'Professionnel', armee: 'Armée',
-      JOKER: 'Joker', FORMATEUR_PR: 'Formateur PR', FORMATION_HORS_SDIS: 'Formation hors SDIS', PAS_CONCERNE: 'Pas concerné', DEMISSION_EN_COURS: 'Démission en cours'
+      JOKER: 'Joker', FORMATEUR_PR: 'Formateur PR', FORMATION_HORS_SDIS: 'Formation hors SDIS', AUTO_RETRAIT: 'Auto-retrait', NON_CONCERNE: 'Non concerné', PAS_CONCERNE: 'Non concerné', DEMISSION_EN_COURS: 'Démission en cours'
     };
     if(map[raw]) return map[raw];
     if(raw === 'prive') return 'Privé';
