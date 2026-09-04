@@ -32,16 +32,25 @@ function optionalFilter(value){
   return out;
 }
 
-function derivedCycleId(groupKey){
-  return `derived-pr-cycle:${Buffer.from(String(groupKey || ''), 'utf8').toString('base64url')}`;
+function derivedCycleId(groupKey, annee){
+  return `derived-pr-cycle:${Buffer.from(JSON.stringify({ groupKey: String(groupKey || ''), annee: Number(annee) || null }), 'utf8').toString('base64url')}`;
 }
 
-function groupKeyFromDerivedId(cycleId){
+function isDerivedCycleId(cycleId){
+  return String(cycleId || '').startsWith('derived-pr-cycle:');
+}
+
+function derivedIdentityFromId(cycleId){
   const prefix = 'derived-pr-cycle:';
   const value = String(cycleId || '');
   if(!value.startsWith(prefix)) return null;
   try{
-    return Buffer.from(value.slice(prefix.length), 'base64url').toString('utf8');
+    const decoded = Buffer.from(value.slice(prefix.length), 'base64url').toString('utf8');
+    if(decoded.startsWith('{')){
+      const parsed = JSON.parse(decoded);
+      return { groupKey: String(parsed.groupKey || ''), annee: parsed.annee ? Number(parsed.annee) : null };
+    }
+    return { groupKey: decoded, annee: null };
   }catch(_error){
     return null;
   }
@@ -78,9 +87,9 @@ function cycleLabelFromEvents(groupKey, events){
 }
 
 function cycleStatusFromCompletion(completion){
-  if(completion.complete) return 'REALISE';
+  if(completion.complete) return 'TERMINE';
   if(completion.eventCount > 0 && completion.cancelledCount === completion.eventCount) return 'ANNULE';
-  if(completion.postponedCount > 0) return 'REPORTE';
+  if(completion.realisedCount > 0 || completion.postponedCount > 0) return 'EN_COURS';
   return 'PLANIFIE';
 }
 
@@ -173,6 +182,11 @@ function createScopeCycleService(repo){
   }
 
   async function detail(cycleId){
+    if(isDerivedCycleId(cycleId)){
+      const derived = await derivedCycleDetail(cycleId);
+      if(derived) return derived;
+      throw new HttpError(404, 'cycle_introuvable', 'Cycle introuvable.');
+    }
     const cycle = await repo.getCycle(cycleId);
     if(!cycle){
       const derived = await derivedCycleDetail(cycleId);
@@ -192,7 +206,7 @@ function createScopeCycleService(repo){
     if(!groupKey || sorted.length < 2) return null;
     const annee = yearOfEvent(sorted[0]);
     const cycle = {
-      cycle_id: derivedCycleId(groupKey),
+      cycle_id: derivedCycleId(groupKey, annee),
       cycle_key: groupKey,
       annee,
       domaine_code: String(sorted[0].domaine_code || 'PR').toUpperCase(),
@@ -274,12 +288,16 @@ function createScopeCycleService(repo){
   }
 
   async function derivedCycleDetail(cycleId){
-    const groupKey = groupKeyFromDerivedId(cycleId);
+    const identity = derivedIdentityFromId(cycleId);
+    const groupKey = identity && identity.groupKey;
     if(!groupKey || !repo.listPrExerciseEvents) return null;
     const allEvents = await repo.listPrExerciseEvents(groupKey);
-    const cycle = await derivedCycleFromEvents(groupKey, allEvents || []);
+    const scoped = identity.annee
+      ? (allEvents || []).filter((event) => yearOfEvent(event) === identity.annee)
+      : (allEvents || []);
+    const cycle = await derivedCycleFromEvents(groupKey, scoped);
     if(!cycle) return null;
-    const evenements = (allEvents || []).filter((event) => yearOfEvent(event) === cycle.annee);
+    const evenements = scoped.filter((event) => yearOfEvent(event) === cycle.annee);
     const { metrics, personnes } = await derivedCycleMetrics(cycle, evenements);
     return { cycle, evenements, personnes, metrics };
   }

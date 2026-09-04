@@ -447,6 +447,9 @@ function createScopeService(repo){
       if(statut !== evenement.statut && !motif){
         throw new HttpError(400, 'motif_obligatoire', 'Un motif est obligatoire pour reporter ou annuler.');
       }
+      if(statut === 'REPORTE' && !wantsDate){
+        throw new HttpError(400, 'date_report_obligatoire', 'Une nouvelle date est obligatoire pour reporter.');
+      }
       patch.statut = statut;
     }
     const currentCibles = repo.listEventCibleIds ? await repo.listEventCibleIds(eventId) : [];
@@ -635,6 +638,20 @@ function createScopeService(repo){
     return dbx.listEventCibleIds ? dbx.listEventCibleIds(eventId) : [];
   }
 
+  function cibleLabel(row){
+    if(!row) return '';
+    return [row.domaine_code || row.domaine, row.niveau_code || row.niveau].filter(Boolean).join('/');
+  }
+
+  function targetDetails(rows){
+    return (rows || []).map((row) => ({
+      cibleId: row.cible_id || null,
+      domaine: row.domaine_code || null,
+      niveau: row.niveau_code || null,
+      label: cibleLabel(row)
+    }));
+  }
+
   async function expandEventCibleIds(dbx, cibleIds){
     const ids = Array.isArray(cibleIds) ? cibleIds.filter(Boolean) : [];
     const allCibles = dbx.listCibles ? await dbx.listCibles() : [];
@@ -773,7 +790,11 @@ function createScopeService(repo){
         continue;
       }
       const eventId = evenement.evenement_id;
-      const cibleIds = await eventPopulationCibleIds(dbx, eventId, options.ciblesByEvent);
+      if(!dryRun && typeof options.beforeSync === 'function'){
+        await options.beforeSync(evenement);
+      }
+      const cibleIds = options.overrideCibleIdsByEvent?.get(eventId)
+        || await eventPopulationCibleIds(dbx, eventId, options.ciblesByEvent);
       const expectedByPerson = await resolveExpectedByPersonForEvent(
         dbx,
         evenement,
@@ -830,7 +851,8 @@ function createScopeService(repo){
               nip: expected.nip || null,
               nom: expected.nom || null,
               prenom: expected.prenom || null,
-              motifInclusion
+              motifInclusion,
+              reason: wasManual ? 'reclassement_exception_manuelle' : 'affectation_attendue'
             };
             if(wasManual) summary.reclassifiedManual += 1;
             else summary.attendusAdded += 1;
@@ -880,7 +902,15 @@ function createScopeService(repo){
               origine_retrait: 'EXCEPTION_RETRAIT'
             });
           }
-          eventDetails.removed.push({ personneId: id, origineRetrait: 'EXCEPTION_RETRAIT', motifRetrait });
+          eventDetails.removed.push({
+            personneId: id,
+            nip: participation?.nip || null,
+            nom: participation?.nom || null,
+            prenom: participation?.prenom || null,
+            origineRetrait: 'EXCEPTION_RETRAIT',
+            motifRetrait,
+            reason: motifRetrait
+          });
           if(participationHasBusinessTrace(participation)){
             summary.participationsPreserved += 1;
             eventDetails.preserved.push({ personneId: id, reason: 'historique_participation' });
@@ -947,6 +977,8 @@ function createScopeService(repo){
   async function reconcilePrAbcPopulation(options = {}, actor = {}){
     const annee = options.annee || options.year || null;
     const dryRun = options.dryRun !== false && options.dry_run !== false;
+    const prAbc = repo.findCible ? await repo.findCible('PR', 'ABC') : null;
+    if(!prAbc) throw new HttpError(500, 'pr_abc_cible_introuvable', 'La cible PR/ABC est introuvable.');
     const listed = repo.listEvenements ? await repo.listEvenements({ annee, domaine: 'PR', statut: 'PLANIFIE' }) : [];
     const ids = (listed || []).map((event) => event.evenement_id);
     const ciblesRows = repo.listEventCiblesForEvents && ids.length ? await repo.listEventCiblesForEvents(ids) : [];
@@ -961,10 +993,27 @@ function createScopeService(repo){
       if(event.origine === 'LEGACY_AGGREGATED' || isQuantitatif(event) || !event.population_figee) return false;
       return eventLooksPrAbc(event, ciblesByEvent.get(event.evenement_id) || []);
     });
+    const targetCiblesByEvent = new Map(selected.map((event) => [event.evenement_id, [prAbc]]));
+    const targetIdsByEvent = new Map(selected.map((event) => [event.evenement_id, [prAbc.cible_id]]));
     const summary = await repo.withTransaction(async (tx) => syncExpectedPopulationForEvents(tx, selected, actor, {
+      beforeSync: dryRun ? null : async (event) => {
+        const currentTargets = ciblesByEvent.get(event.evenement_id) || [];
+        await tx.setEventCibles(event.evenement_id, [prAbc.cible_id]);
+        if(tx.appendJournal){
+          await tx.appendJournal({
+            auteur_id: actorId(actor),
+            entite: 'evenement',
+            entite_id: event.evenement_id,
+            action: 'RETARGET_PR_ABC',
+            avant: { cibles: targetDetails(currentTargets) },
+            apres: { cibles: targetDetails([prAbc]) }
+          });
+        }
+      },
       allPersons: true,
       dryRun,
-      ciblesByEvent,
+      ciblesByEvent: targetCiblesByEvent,
+      overrideCibleIdsByEvent: targetIdsByEvent,
       reason: 'RECONCILE_PR_ABC_POPULATION'
     }));
     return {
@@ -975,7 +1024,11 @@ function createScopeService(repo){
       protectedParticipations: summary.participationsPreserved,
       details: summary.details.map((detail) => ({
         ...detail,
+        evenementId: detail.eventId,
+        currentTargets: targetDetails(ciblesByEvent.get(detail.eventId) || []),
+        expectedTargets: targetDetails(targetCiblesByEvent.get(detail.eventId) || []),
         before: detail.populationBefore,
+        expected: detail.populationExpected,
         after: detail.populationAfter,
         addedCount: detail.added.length,
         removedCount: detail.removed.length,

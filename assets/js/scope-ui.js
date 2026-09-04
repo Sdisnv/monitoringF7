@@ -56,6 +56,12 @@
     cycleDetail: null,
     cycleDetailReady: false,
     cycleDetailError: null,
+    navigationSeq: 0,
+    currentRoute: null,
+    currentRouteKey: '',
+    listRequestSeq: 0,
+    cyclesRequestSeq: 0,
+    cycleDetailRequestSeq: 0,
     cycleFilter: { domaine: 'tous', statut: 'tous' },
     fiche: null,
     ficheReady: false,
@@ -312,6 +318,75 @@
 
   function route() { return L.parseHash(location.hash); }
 
+  function routeKey(r) {
+    return [r && r.screen, r && r.id, r && r.personneId, r && r.domaine, r && r.cible].filter(Boolean).join(':');
+  }
+
+  function resetEventListFilters() {
+    state.eventListQuery = '';
+    state.statut = 'tous';
+    state.domaine = 'tous';
+    state.eventListPage = 1;
+  }
+
+  function resetPersonnelFilters() {
+    state.personnelQuery = '';
+    state.personnelStatut = 'actifs';
+    state.personnelOi = '';
+    state.personnelSpecialization = '';
+    state.personnelSort = { key: '', dir: '' };
+    state.personnelListPage = 1;
+    state.personnelRowMenuId = null;
+  }
+
+  function resetCycleFilters() {
+    state.cycleFilter = { domaine: 'tous', statut: 'tous' };
+  }
+
+  function clearRouteScopedFeedback() {
+    clearToast();
+    if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
+    state.feedbackTimer = null;
+    state.feedback = null;
+    state.feedbackAction = null;
+    state.listError = null;
+    state.cyclesError = null;
+    state.cycleDetailError = null;
+    state.personnelError = null;
+    state.dashboardError = null;
+  }
+
+  function prepareRouteChange(previous, next) {
+    const prevNav = previous && previous.nav;
+    const nextNav = next && next.nav;
+    if (prevNav && prevNav !== nextNav) {
+      clearRouteScopedFeedback();
+      if (prevNav === 'exercices') resetEventListFilters();
+      if (prevNav === 'personnel') resetPersonnelFilters();
+      if (prevNav === 'cycles') resetCycleFilters();
+    }
+    if (previous && next && routeKey(previous) !== routeKey(next)) {
+      state.modal = null;
+      if (next.screen === 'cycle') {
+        state.cycleDetail = null;
+        state.cycleDetailReady = false;
+        state.cycleDetailError = null;
+      }
+      if (next.screen === 'fiche' || next.screen === 'saisie') {
+        state.fiche = null;
+        state.ficheReady = false;
+        state.preview = null;
+        state.saisie = [];
+        state.volumes = volumesFromFiche();
+        resetEventTransientUi();
+      }
+      if (next.screen === 'personne') {
+        state.personneFiche = null;
+        state.personneReady = false;
+      }
+    }
+  }
+
   function go(hash) {
     const next = L.parseHash(hash);
     if (L.hasUnsavedPresenceChanges && L.hasUnsavedPresenceChanges(state)
@@ -436,6 +511,7 @@
   }
 
   async function loadList() {
+    const token = ++state.listRequestSeq;
     state.listError = null;
     try {
       const data = await client.listEvenements(Object.assign({
@@ -443,15 +519,19 @@
         statut: state.statut,
         domaineCode: state.domaine
       }, qualQuery()));
+      if (token !== state.listRequestSeq) return null;
       state.list = data.evenements || [];
       state.listReady = true;
+      return data;
     } catch (error) {
+      if (token !== state.listRequestSeq) return null;
       state.listError = L.friendlyError(error).message || L.errorMessage('exercices');
       throw error;
     }
   }
 
   async function loadCycles() {
+    const token = ++state.cyclesRequestSeq;
     if (typeof client.listCycles !== 'function') {
       state.cycles = [];
       state.cyclesReady = true;
@@ -465,9 +545,12 @@
         domaine: state.cycleFilter.domaine,
         statut: state.cycleFilter.statut
       });
+      if (token !== state.cyclesRequestSeq || route().screen !== 'cycles') return null;
       state.cycles = data.cycles || [];
       state.cyclesReady = true;
+      return data;
     } catch (error) {
+      if (token !== state.cyclesRequestSeq || route().screen !== 'cycles') return null;
       state.cyclesError = L.friendlyError(error).message || 'Les cycles n’ont pas pu être chargés.';
       state.cyclesReady = true;
       throw error;
@@ -475,6 +558,8 @@
   }
 
   async function loadCycle(id) {
+    const expectedId = String(id);
+    const token = ++state.cycleDetailRequestSeq;
     if (typeof client.getCycle !== 'function') {
       state.cycleDetail = null;
       state.cycleDetailReady = true;
@@ -483,9 +568,13 @@
     }
     state.cycleDetailError = null;
     try {
-      state.cycleDetail = await client.getCycle(id);
+      const data = await client.getCycle(id);
+      if (token !== state.cycleDetailRequestSeq || route().screen !== 'cycle' || String(route().id) !== expectedId) return null;
+      state.cycleDetail = data;
       state.cycleDetailReady = true;
+      return data;
     } catch (error) {
+      if (token !== state.cycleDetailRequestSeq || route().screen !== 'cycle' || String(route().id) !== expectedId) return null;
       state.cycleDetailError = L.friendlyError(error).message || 'Le cycle n’a pas pu être chargé.';
       state.cycleDetailReady = true;
       throw error;
@@ -1780,7 +1869,7 @@
           <td data-label="Cycle"><a href="#/cycles/${escapeHtml(cycle.cycle_id)}">${escapeHtml(cycle.libelle)}</a></td>
           <td data-label="Spécialisation">${escapeHtml(cycle.type_cycle || cycle.domaine_code || '—')}</td>
           <td data-label="Période">${escapeHtml(period)}</td>
-          <td data-label="État">${statutBadge(cycle.statut || 'PLANIFIE')}</td>
+          <td data-label="Statut">${statutBadge(cycle.statut || 'PLANIFIE')}</td>
           <td data-label="Population">${escapeHtml(String(cycle.populationCount ?? cycleMetric(metrics, 'populationDistincte')))}</td>
           <td data-label="Présents">${escapeHtml(String(cycleMetric(metrics, 'participantsReconnusDistincts')))}</td>
           <td data-label="Sessions">${escapeHtml(String(cycle.eventCount || 0))}</td>
@@ -1807,15 +1896,15 @@
             <select id="cycle-filter-statut">
               <option value="tous">Tous</option>
               <option value="PLANIFIE">Planifié</option>
-              <option value="REALISE">Réalisé</option>
-              <option value="REPORTE">Reporté</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="TERMINE">Terminé</option>
               <option value="ANNULE">Annulé</option>
             </select>
           </div>
         </div>
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
-            <thead><tr><th>Cycle</th><th>Spécialisation</th><th>Période</th><th>État</th><th>Population</th><th>Présents</th><th>Sessions</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Cycle</th><th>Spécialisation</th><th>Période</th><th>STATUT</th><th>Population</th><th>Présents</th><th>Sessions</th><th>Actions</th></tr></thead>
             <tbody>${body}</tbody>
           </table>
         </div>
@@ -4683,11 +4772,13 @@
     const hasIncompleteDispense = L.hasIncompleteDispense ? L.hasIncompleteDispense(state.saisie) : false;
     const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : 'Clôturer');
     const saveState = presenceSaveLabel();
+    const lifecycleActions = renderFicheLifecycleActions(ev, ev.origine === 'LEGACY_AGGREGATED', false);
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main scope-event-saisie">
         ${eventIdentityBand(ev, fiche)}
         ${renderPresenceKpis(niveaux, fiche)}
+        ${lifecycleActions ? `<section class="scope-card scope-fiche-section scope-fiche-primary"><div class="scope-section-header"><h2 class="scope-section-title">Actions événement</h2></div><div class="scope-actions scope-event-toolbar scope-fiche-primary-actions">${lifecycleActions}</div></section>` : ''}
         ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
         ${hasIncompleteDispense ? '<p class="scope-presence-warning">Choisissez un motif pour chaque dispense avant la clôture.</p>' : ''}
         <div class="scope-actions scope-event-toolbar scope-saisie-toolbar">
@@ -4734,6 +4825,8 @@
         })()}
         </section>
       </div>
+      ${state.modal === 'edit-event' ? renderEditEventModal(ev, fiche) : ''}
+      ${state.modal === 'postpone-event' ? renderPostponeEventModal(ev) : ''}
     `;
   }
 
@@ -8235,6 +8328,11 @@
       return;
     }
     const r = route();
+    const previousRoute = state.currentRoute;
+    prepareRouteChange(previousRoute, r);
+    state.currentRoute = r;
+    state.currentRouteKey = routeKey(r);
+    state.navigationSeq += 1;
     if (r.screen === 'liste' || r.screen === 'rapports') {
       state.listReady = false;
       state.listError = null;
@@ -8292,6 +8390,23 @@
     } else if (r.screen !== 'saisie') {
       state.saisieGuard.stayHash = '';
     }
+  }
+
+  if (window.__SCOPE_UI_TEST_HOOKS__) {
+    window.ScopeUiTestHooks = {
+      state,
+      renderSaisieHtml(fiche, rows = []) {
+        state.fiche = fiche;
+        state.ficheReady = true;
+        state.saisie = rows;
+        return renderSaisie();
+      },
+      prepareRouteChange,
+      resetEventListFilters,
+      resetPersonnelFilters,
+      resetCycleFilters
+    };
+    return;
   }
 
   window.addEventListener('hashchange', onRoute);

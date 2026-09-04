@@ -132,6 +132,8 @@
     A_TRAITER: 'À traiter',
     TRAITE: 'Traité',
     REALISE: 'Réalisé',
+    EN_COURS: 'En cours',
+    TERMINE: 'Terminé',
     REPORTE: 'Reporté',
     ANNULE: 'Annulé',
     LEGACY_AGGREGATED: 'Historique agrégé'
