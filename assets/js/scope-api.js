@@ -37,6 +37,7 @@
 
   function createHttpClient(options) {
     const base = String((options && options.baseUrl) || '/api/scope').replace(/\/+$/, '');
+    const onUnauthorized = options && typeof options.onUnauthorized === 'function' ? options.onUnauthorized : null;
     const getToken = (options && options.getToken) || function () {
       return (typeof window !== 'undefined' && window.MonitoringApiClient && window.MonitoringApiClient.getAccessToken()) || null;
     };
@@ -66,7 +67,10 @@
         ? await idle.withAuthRetry(run, false)
         : await run();
       if (response && response.status === 401 && idle && typeof idle.isStarted === 'function' && idle.isStarted()) {
-        if (typeof idle.redirectToLogout === 'function') idle.redirectToLogout();
+        if (onUnauthorized) onUnauthorized({ status: 401, url });
+        else if (typeof idle.redirectToLogout === 'function') idle.redirectToLogout();
+      } else if (response && response.status === 401 && onUnauthorized) {
+        onUnauthorized({ status: 401, url });
       }
       return response;
     }

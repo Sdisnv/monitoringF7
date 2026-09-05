@@ -4,9 +4,17 @@ function clean(value){
   return String(value == null ? '' : value).trim();
 }
 
+function normalizeIdentityText(value){
+  return clean(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+}
+
 function isApplicationIdentity(value){
-  const text = clean(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-  return text === 'SCOPE' || text === 'APPLICATION SCOPE' || text === 'APP SCOPE';
+  const text = normalizeIdentityText(value);
+  if(!text) return true;
+  if(text === 'SCOPE' || text === 'APPLICATION SCOPE' || text === 'APP SCOPE') return true;
+  if(text === 'MONITORING F7' || text === 'CLIENT SCOPE' || text === 'OAUTH SCOPE') return true;
+  if(/^HTTPS?:\/\//.test(text)) return true;
+  return false;
 }
 
 function firstHuman(values){
@@ -17,29 +25,32 @@ function firstHuman(values){
   return '';
 }
 
-function displayNameFromClaims(claims = {}){
-  const fullFromParts = [claims.given_name, claims.family_name].map(clean).filter(Boolean).join(' ');
+function resolveHumanIdentity(input = {}){
+  const fullFromParts = [input.given_name || input.givenName, input.family_name || input.familyName].map(clean).filter(Boolean).join(' ');
   return firstHuman([
-    claims.name,
     fullFromParts,
-    claims.email,
-    claims.preferred_username,
-    claims.sub
-  ]) || 'Utilisateur institutionnel';
+    input.name,
+    input.displayName,
+    input.display_name,
+    input.preferred_username,
+    input.email,
+    input.nip,
+    input.subject,
+    input.sub,
+    input.storedDisplayName
+  ]);
+}
+
+function hasHumanIdentity(input = {}){
+  return Boolean(resolveHumanIdentity(input));
+}
+
+function displayNameFromClaims(claims = {}){
+  return resolveHumanIdentity(claims);
 }
 
 function displayNameFromUser(user = {}){
-  return firstHuman([
-    user.displayName,
-    user.name,
-    user.display_name,
-    user.email,
-    user.preferred_username,
-    user.nip,
-    user.subject,
-    user.sub,
-    user.storedDisplayName
-  ]) || 'Utilisateur institutionnel';
+  return resolveHumanIdentity(user);
 }
 
 function mergeStoredUserWithIdentity(stored, identity){
@@ -66,6 +77,8 @@ function mergeStoredUserWithIdentity(stored, identity){
 module.exports = {
   clean,
   isApplicationIdentity,
+  resolveHumanIdentity,
+  hasHumanIdentity,
   displayNameFromClaims,
   displayNameFromUser,
   mergeStoredUserWithIdentity

@@ -1,4 +1,5 @@
 const { response, verifyToken, bearerToken, publicUser, findUser } = require('./_auth-utils');
+const { hasHumanIdentity } = require('./_auth-identity');
 
 exports.handler = async function(event){
   if(event.httpMethod !== 'GET') return response(405, { ok:false, error:'method_not_allowed' });
@@ -20,6 +21,7 @@ exports.handler = async function(event){
       if(!stored) return response(403, { ok:false, error:'user_profile_missing', message:'Profil applicatif SCOPE introuvable.' });
       safeUser = stored;
     }
+    if(!hasHumanIdentity(safeUser)) return response(401, { ok:false, error:'unusable_identity', message:'Identité utilisateur indisponible.' });
     return response(200, { ok:true, user:safeUser, role:safeUser.role, roles:safeUser.roles, permissions:safeUser.permissions });
   }catch(error){
     return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) });

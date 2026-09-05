@@ -55,6 +55,19 @@
     return next;
   }
 
+  function isApplicationIdentity(value){
+    const text = String(value || '').trim().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    return !text || text === 'SCOPE' || text === 'APPLICATION SCOPE' || text === 'APP SCOPE' || /^HTTPS?:\/\//.test(text);
+  }
+
+  function humanDisplayName(values){
+    for(const value of values || []){
+      const text = String(value || '').trim();
+      if(text && !isApplicationIdentity(text)) return text;
+    }
+    return '';
+  }
+
   function clearSession(options){
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(ADMIN_LOCK_KEY);
@@ -94,7 +107,7 @@
     const permissions = Array.isArray(p.permissions) ? p.permissions : (Array.isArray(s?.permissions) ? s.permissions : []);
     const user = Object.freeze(Object.assign({}, window.CurrentUser || {}, {
       nip: p.nip || s?.nip || window.CurrentUser?.nip || '',
-      displayName: p.displayName || p.name || s?.displayName || window.CurrentUser?.displayName || 'Utilisateur SCOPE',
+      displayName: humanDisplayName([p.displayName, p.name, s?.displayName, window.CurrentUser?.displayName]),
       roles,
       permissions,
       authSource: 'okta-oidc'

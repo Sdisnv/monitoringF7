@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const { signToken } = require('./_auth-utils');
 const { normalizeRoles, permissionsForRoles } = require('./_rbac');
-const { displayNameFromClaims, mergeStoredUserWithIdentity } = require('./_auth-identity');
+const { displayNameFromClaims, hasHumanIdentity, mergeStoredUserWithIdentity } = require('./_auth-identity');
 
 const COOKIE_NAME = 'monitoring_f7_oidc_state';
 const ACCESS_COOKIE = 'monitoring_f7_access';
@@ -238,6 +238,7 @@ async function oidcCallbackResponse(event){
   const claims = await verifyIdToken(config, metadata, payload.id_token, statePayload.nonce);
   const roles = rolesFromClaims(config, claims);
   const user = publicUserFromClaims(claims, roles);
+  if(!hasHumanIdentity(user)) throw new Error('Identité OIDC humaine indisponible.');
   let effectiveUser = user;
   try {
     const userStore = require('./_user-store');
@@ -248,6 +249,7 @@ async function oidcCallbackResponse(event){
     if(String(error.message || error).includes('désactivé')) throw error;
     /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */
   }
+  if(!hasHumanIdentity(effectiveUser)) throw new Error('Identité OIDC humaine indisponible.');
   try { await require('./_audit-store').addAudit({ eventType:'login-okta-oidc', message:'Connexion Okta validée.', actorSubject:effectiveUser.subject || effectiveUser.nip, context:{ roles:effectiveUser.roles } }); } catch(error) {}
   const accessToken = signToken({ typ:'access', sub:effectiveUser.subject || effectiveUser.nip, email:effectiveUser.email, nip:effectiveUser.nip, roles:effectiveUser.roles, permissions:effectiveUser.permissions, provider:'oidc', displayName:effectiveUser.displayName }, ACCESS_TTL_SECONDS);
   const returnTo = sanitizeReturnTo(statePayload.returnTo || '/');

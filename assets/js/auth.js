@@ -27,6 +27,17 @@
   function setProfile(profile){
     return sessionManager?.setProfile?.(profile) || profile;
   }
+  function isApplicationIdentity(value){
+    const text = String(value || '').trim().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    return !text || text === 'SCOPE' || text === 'APPLICATION SCOPE' || text === 'APP SCOPE' || /^HTTPS?:\/\//.test(text);
+  }
+  function humanDisplayName(values){
+    for(const value of values || []){
+      const text = String(value || '').trim();
+      if(text && !isApplicationIdentity(text)) return text;
+    }
+    return '';
+  }
   function buildProfile(nip, source, existing, configuredUser){
     const now = new Date().toISOString();
     const previous = existing && typeof existing === 'object' ? existing : {};
@@ -51,7 +62,7 @@
     const user = payload?.user || {};
     const roles = Array.isArray(payload?.roles) ? payload.roles : (Array.isArray(user.roles) ? user.roles : []);
     const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(user.permissions) ? user.permissions : []);
-    const displayName = String(user.displayName || user.name || user.email || user.nip || 'Utilisateur SCOPE').trim();
+    const displayName = humanDisplayName([user.displayName, user.name, user.email, user.nip]);
     return {
       nip: String(user.nip || user.sub || user.email || ''),
       displayName,
@@ -93,7 +104,7 @@
     const permissions = Array.isArray(payload?.permissions) ? payload.permissions : (Array.isArray(user?.permissions) ? user.permissions : (Array.isArray(profile?.permissions) ? profile.permissions : []));
     window.CurrentUser = Object.freeze(Object.assign({}, user, {
       nip: user.nip || profile?.nip || user.email || '',
-      displayName: profile?.displayName || user.displayName || user.name || user.email || 'Utilisateur SCOPE',
+      displayName: humanDisplayName([profile?.displayName, user.displayName, user.name, user.email]),
       authSource: 'okta-oidc'
     }));
     window.CurrentRoles = Object.freeze(roles.slice());
@@ -109,7 +120,7 @@
     if(!activeOidcSession) return null;
     const user = window.CurrentUser || Object.freeze({
       nip: profile.nip || session.nip || '',
-      displayName: profile.displayName || profile.name || session.displayName || 'Utilisateur SCOPE',
+      displayName: humanDisplayName([profile.displayName, profile.name, session.displayName]),
       roles: Array.isArray(profile.roles) ? profile.roles : (Array.isArray(session.roles) ? session.roles : []),
       permissions: Array.isArray(profile.permissions) ? profile.permissions : (Array.isArray(session.permissions) ? session.permissions : []),
       authSource: 'okta-oidc'

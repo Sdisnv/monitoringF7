@@ -25,7 +25,7 @@
   function resolveMode() {
     const decision = L.resolveClientMode({ search: location.search, sessionLive: liveConfirmed() });
     if (decision === 'live' && window.ScopeApi) {
-      return { mode: 'live', client: window.ScopeApi.createHttpClient({}), gate: false };
+      return { mode: 'live', client: window.ScopeApi.createHttpClient({ onUnauthorized: handleUnauthorized }), gate: false };
     }
     return {
       mode: 'demo',
@@ -289,7 +289,7 @@
   function friendlyActionError(error) {
     const info = presentFriendlyError(L.friendlyError(error));
     state.conflict = Boolean(info.conflict);
-    if (info.okta) state.needOkta = true;
+    if (info.okta) invalidateScopeSession('action-unauthorized');
     return info;
   }
 
@@ -322,7 +322,7 @@
     } catch (error) {
       const info = presentFriendlyError(L.friendlyError(error));
       state.conflict = Boolean(info.conflict);
-      if (info.okta) state.needOkta = true;
+      if (info.okta) invalidateScopeSession('loading-unauthorized');
       toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors, okta: info.okta });
     } finally {
       state.loading = false;
@@ -1182,20 +1182,57 @@
     return label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC';
   }
 
+  function clearSensitiveSessionData() {
+    state.list = [];
+    state.cycles = [];
+    state.fiche = null;
+    state.saisie = [];
+    state.personHits = [];
+    state.encHits = [];
+    state.manualPersonHits = [];
+    state.personnelDirectory = null;
+    state.personnelHistory = null;
+    state.jspReport = null;
+    state.formationReport = null;
+    state.objectifs = [];
+    state.alertCounts = {};
+    state.personCount = null;
+    state.modal = null;
+    state.feedback = null;
+    state.feedbackAction = null;
+  }
+
   function clearLocalAuthState() {
     state.session = null;
     state.needOkta = true;
     state.idleWarn = false;
+    clearSensitiveSessionData();
     window.CurrentRoles = [];
     window.CurrentPermissions = [];
     try { sessionStorage.removeItem(LIVE_KEY); } catch (_error) { /* ignore */ }
     try { sessionStorage.removeItem(QUAL_KEY); } catch (_error) { /* ignore */ }
+    try { localStorage.removeItem('scope_auth_idle_last_activity'); } catch (_error) { /* ignore */ }
     if (window.ScopeAuthIdle && typeof window.ScopeAuthIdle.stop === 'function') window.ScopeAuthIdle.stop();
     try { document.dispatchEvent(new Event('monitoring-f7-auth-session-changed')); } catch (_error) { /* ignore */ }
   }
 
-  async function logoutScopeSession() {
+  function clearScopeSession() {
     clearLocalAuthState();
+  }
+
+  function invalidateScopeSession(_reason) {
+    clearScopeSession();
+    if (mode === 'live') liveGate = false;
+    return false;
+  }
+
+  function handleUnauthorized(info) {
+    invalidateScopeSession((info && info.url) || 'unauthorized');
+    render();
+  }
+
+  async function logoutScopeSession() {
+    invalidateScopeSession('logout');
     try {
       await fetch('/auth/logout', { method: 'POST', credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store' });
     } catch (_error) { /* redirection GET nettoie aussi les cookies HttpOnly */ }
@@ -6477,6 +6514,12 @@
   }
 
   function render() {
+    if (mode === 'live' && state.needOkta) {
+      root.classList.toggle('is-nav-open', false);
+      root.innerHTML = `<div class="scope-app-shell scope-auth-locked"><div class="scope-workspace"><div class="scope-content">${bannerHtml()}</div></div></div>`;
+      bind();
+      return;
+    }
     const r = route();
     const body = r.screen === 'accueil' ? renderAccueil()
       : r.screen === 'vue' ? renderVue()
@@ -8743,9 +8786,8 @@
       return true;
     } catch (error) {
       const info = L.friendlyError(error);
-      state.session = null;
-      state.needOkta = Boolean(info.okta) || Number(error && error.status) === 401;
-      if (window.ScopeAuthIdle) window.ScopeAuthIdle.stop();
+      if (Boolean(info.okta) || Number(error && error.status) === 401) invalidateScopeSession('bootstrap-unauthorized');
+      else clearLocalAuthState();
       return false;
     }
   }
@@ -8922,8 +8964,13 @@
         state.formationReportError = null;
         return renderFormationReport();
       },
+      render,
+      ensureLiveSession,
       userLabel,
       clearLocalAuthState,
+      clearScopeSession,
+      invalidateScopeSession,
+      handleUnauthorized,
       logoutScopeSession
     };
     return;
