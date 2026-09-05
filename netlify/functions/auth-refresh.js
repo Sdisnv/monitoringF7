@@ -1,4 +1,4 @@
-const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, findUser } = require('../lib/_auth-utils');
+const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser } = require('../lib/_auth-utils');
 const { ACCESS_COOKIE, ACCESS_TTL_SECONDS, secureCookie } = require('../lib/_oidc-utils');
 
 function claimsForAccess(claims){
@@ -23,6 +23,17 @@ exports.handler = async function(event){
       claims = { typ:'access', sub:safeUser.nip, roles:safeUser.roles };
     } else {
       claims = verifyToken(bearerToken(event), 'access');
+      if(claims.provider === 'oidc'){
+        let stored = null;
+        try{
+          stored = await require('../lib/_user-store').getUserByIdentity([claims.sub, claims.email, claims.nip]);
+        }catch(error){
+          stored = null;
+        }
+        if(stored && stored.active === false) return response(403, { ok:false, error:'user_disabled' });
+        const safeUser = stored || publicOidcUserFromClaims(claims);
+        claims = { typ:'access', sub:safeUser.subject || safeUser.nip, email:safeUser.email, nip:safeUser.nip, roles:safeUser.roles, permissions:safeUser.permissions, provider:'oidc', displayName:safeUser.displayName };
+      }
     }
     const accessToken = signToken(claimsForAccess(claims), ACCESS_TTL_SECONDS);
     const result = response(200, {

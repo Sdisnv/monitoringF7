@@ -57,8 +57,8 @@ pass('04 — import Personnel contrôlé par personnel:manage', () => {
 
 pass('05 — auth-me relit le profil DB OIDC', () => {
   assert.ok(authMeSource.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
-  assert.ok(authMeSource.includes('user_profile_missing'));
-  assert.ok(!authMeSource.includes("permissionsForRoles(roles, claims.permissions)"));
+  assert.ok(authMeSource.includes('stored || publicOidcUserFromClaims(claims)'));
+  assert.ok(!authMeSource.includes('user_profile_missing'));
 });
 
 pass('06 — callback OIDC préserve le rôle DB existant', () => {

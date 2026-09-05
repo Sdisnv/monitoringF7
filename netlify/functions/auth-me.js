@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken, publicUser, findUser } = require('../lib/_auth-utils');
+const { response, verifyToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser } = require('../lib/_auth-utils');
 const { hasHumanIdentity } = require('../lib/_auth-identity');
 
 exports.handler = async function(event){
@@ -15,11 +15,10 @@ exports.handler = async function(event){
       try{
         stored = await require('../lib/_user-store').getUserByIdentity([claims.sub, claims.email, claims.nip]);
       }catch(error){
-        return response(503, { ok:false, error:'user_profile_unavailable', message:'Profil applicatif SCOPE indisponible.' });
+        stored = null;
       }
       if(stored && stored.active === false) return response(403, { ok:false, error:'user_disabled' });
-      if(!stored) return response(403, { ok:false, error:'user_profile_missing', message:'Profil applicatif SCOPE introuvable.' });
-      safeUser = stored;
+      safeUser = stored || publicOidcUserFromClaims(claims);
     }
     if(!hasHumanIdentity(safeUser)) return response(401, { ok:false, error:'unusable_identity', message:'Identité utilisateur indisponible.' });
     return response(200, { ok:true, user:safeUser, role:safeUser.role, roles:safeUser.roles, permissions:safeUser.permissions });

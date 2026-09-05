@@ -85,10 +85,32 @@ function bearerToken(event){
 
 function publicUser(user){
   return {
+    subject: String(user.subject || user.sub || user.nip || ''),
     nip: String(user.nip || ''),
     displayName: displayNameFromUser(user),
+    email: String(user.email || ''),
     roles: normalizeRoles(user.roles),
     permissions: permissionsForRoles(user.roles, user.permissions)
+  };
+}
+
+function publicOidcUserFromClaims(claims){
+  const roles = normalizeRoles(claims.roles || []);
+  return {
+    subject: String(claims.sub || claims.subject || claims.email || claims.nip || ''),
+    nip: String(claims.nip || claims.email || claims.sub || ''),
+    email: String(claims.email || ''),
+    displayName: displayNameFromUser({
+      displayName: claims.displayName,
+      name: claims.name,
+      email: claims.email,
+      nip: claims.nip,
+      subject: claims.sub || claims.subject
+    }),
+    role: roles[0],
+    roles,
+    permissions: permissionsForRoles(roles, claims.permissions),
+    provider: 'oidc'
   };
 }
 
@@ -105,5 +127,6 @@ module.exports = {
   verifyToken,
   bearerToken,
   publicUser,
+  publicOidcUserFromClaims,
   findUser
 };

@@ -105,11 +105,11 @@ function record(name, fn){
     assert.strictEqual(info.okta, true);
     const api = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
     assert.ok(api.includes("credentials: 'same-origin'"));
-    assert.ok(api.includes("fetch('/auth/me'"));
+    assert.ok(api.includes("fetchWithAuthRetry('/auth/me'"));
     assert.ok(!api.includes('setAccessToken('));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('scope-okta-login'));
-    assert.ok(ui.includes('/auth/logout?returnTo=/'));
+    assert.ok(ui.includes("'/auth/logout?returnTo=' + encodeURIComponent('/scope.html')"));
     assert.ok(ui.includes('authError'));
     assert.ok(ui.includes('sessionMe'));
     const oidc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8');
