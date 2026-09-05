@@ -13,6 +13,8 @@ const ORDERS = Object.freeze({
 });
 
 const FORMATION_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOSPEC', 'FOBA', 'FOCA']);
+const AUTO_VL_PERIMETERS = Object.freeze(['G1', 'C1', 'B1', 'B2', 'Y1', 'Y2', 'Y3', 'Y4']);
+const AUTO_PL_PERIMETERS = Object.freeze(['G1', 'C1', 'B1', 'B2']);
 
 function clean(value){
   return String(value == null ? '' : value).trim();
@@ -43,6 +45,9 @@ function perimeterLabel(domain, code, options = {}){
   if(!value) return d === 'JSP' ? 'Tous les sites' : 'Global';
   if(d === 'JSP') return `JSP ${value}`;
   if(d === 'PR' || (d === 'FOSPEC' && clean(options.sousDomaine).toUpperCase() === 'PR')) return `DPS ${value}`;
+  if(d === 'FOSPEC' && clean(options.sousDomaine).toUpperCase() === 'AUTO'){
+    return value.startsWith('Y') ? `DAP ${value}` : `DPS ${value}`;
+  }
   if(d === 'DAP') return `DAP ${value}`;
   return `${d} ${value}`;
 }
@@ -86,6 +91,12 @@ function acceptedEventDomains(domaineCode, sousDomaineCode){
   return new Set([d]);
 }
 
+function autoPerimeterCodes(specialisationCode){
+  const spec = clean(specialisationCode).toUpperCase();
+  if(spec === 'PL') return AUTO_PL_PERIMETERS.slice();
+  return AUTO_VL_PERIMETERS.slice();
+}
+
 function participationFactKey({ eventId, pKey, effectiveDomaineCode, sousDomaineCode, specialisationCode, perimeterCode } = {}){
   const effective = effectiveFospecDomaine(effectiveDomaineCode, sousDomaineCode);
   if(effective === 'PR'){
@@ -97,6 +108,8 @@ function participationFactKey({ eventId, pKey, effectiveDomaineCode, sousDomaine
 module.exports = {
   ORDERS,
   FORMATION_DOMAINES,
+  AUTO_VL_PERIMETERS,
+  AUTO_PL_PERIMETERS,
   clean,
   normalizeDomaine,
   normalizePerimeter,
@@ -105,6 +118,7 @@ module.exports = {
   compareInstitutional,
   effectiveFospecDomaine,
   acceptedEventDomains,
+  autoPerimeterCodes,
   participationFactKey,
   classifyJspRole: display.classifyJspRole
 };

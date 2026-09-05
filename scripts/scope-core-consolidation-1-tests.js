@@ -100,8 +100,8 @@ async function setup(){
   await person(repo, [prAbc, dpsG1], { nip: 'PR-F', grade: 'Lt', nom: 'Formateur', prenom: 'Franck' });
   await person(repo, [prAbc, dpsC1], { nip: 'PR-S', grade: 'Cpl', nom: 'Surveillant', prenom: 'Sam' });
   await person(repo, [prAbc, dpsB1], { nip: 'PR-X', grade: 'Sap', nom: 'Auxiliaire', prenom: 'Alex' });
-  await person(repo, [autoVl], { nip: 'AUTO-VL', grade: 'Four', nom: 'Volant', prenom: 'Val' });
-  await person(repo, [autoPl], { nip: 'AUTO-PL', grade: 'App', nom: 'Poids', prenom: 'Pat' });
+  await person(repo, [autoVl, dpsG1], { nip: 'AUTO-VL', grade: 'Four', nom: 'Volant', prenom: 'Val' });
+  await person(repo, [autoPl, dpsB2], { nip: 'AUTO-PL', grade: 'App', nom: 'Poids', prenom: 'Pat' });
 
   await objectives.createObjectif({ portee: 'DOMAINE', domaineCode: 'DPS', seuilPct: 80, dateDebut: '2026-01-01', dateFin: '2026-12-31' }, ACTOR);
   await objectives.createObjectif({ portee: 'DOMAINE', domaineCode: 'PR', seuilPct: 75, dateDebut: '2026-01-01', dateFin: '2026-12-31' }, ACTOR);
@@ -224,8 +224,10 @@ function uiHooks(){
     const prGen = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'PR', specialisation: 'GEN', perimeter: 'G1', year: 2026 });
     eq(prGen.kpis.present, 1);
     const auto = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'AUTO', specialisation: 'VL', year: 2026 });
-    eq(auto.siteRows.find((row) => row.code === 'VL').site, 'Cond VL');
-    ok(!auto.siteRows.some((row) => row.site === 'AUTO VL' || row.site === 'VL'));
+    deep(auto.siteRows.map((row) => row.code), ['G1', 'C1', 'B1', 'B2', 'Y1', 'Y2', 'Y3', 'Y4']);
+    eq(auto.siteRows.find((row) => row.code === 'G1').site, 'DPS G1');
+    eq(auto.siteRows.find((row) => row.code === 'Y1').site, 'DAP Y1');
+    ok(!auto.siteRows.some((row) => row.site === 'AUTO VL' || row.site === 'VL' || row.site === 'Cond VL'));
   });
 
   await record('06 PR contributions consolidees roles encadrement', async () => {

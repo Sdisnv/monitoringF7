@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { normalizeRoles, permissionsForRoles } = require('./_rbac');
+const { displayNameFromUser } = require('./_auth-identity');
 
 const jsonHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -85,7 +86,7 @@ function bearerToken(event){
 function publicUser(user){
   return {
     nip: String(user.nip || ''),
-    displayName: String(user.displayName || user.name || `Utilisateur ${user.nip || ''}`).trim(),
+    displayName: displayNameFromUser(user),
     roles: normalizeRoles(user.roles),
     permissions: permissionsForRoles(user.roles, user.permissions)
   };

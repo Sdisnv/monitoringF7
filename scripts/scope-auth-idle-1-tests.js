@@ -98,7 +98,8 @@ async function setupPr(prefix){
       libelle: `Exercice PR 1.${i} | Base`,
       code_cours: `PAPR.PR1.${prefix}.${i}`,
       pr_exercise_group_key: `${cycleId}:PR:1`,
-      pr_session_key: `${cycleId}:PR:1.${i}`
+      pr_session_key: `${cycleId}:PR:1.${i}`,
+      statut: 'REALISE'
     }));
   }
   const people = [];

@@ -1,11 +1,12 @@
 const db = require('./_postgres');
 const { normalizeRoles, permissionsForRoles, dominantRole, ROLE_LABELS } = require('./_rbac');
+const { displayNameFromUser } = require('./_auth-identity');
 function subjectFor(input){ return String(input.subject || input.email || input.nip || '').trim().toLowerCase(); }
 function publicUser(row){
   const roles = normalizeRoles(row.roles || []);
   const explicitPermissions = Array.isArray(row.permissions) ? row.permissions : [];
   const role = dominantRole(roles);
-  return { subject:row.subject, nip:row.nip || row.email || row.subject, email:row.email || '', displayName:row.display_name || row.displayName || row.email || row.subject, role, roleLabel:ROLE_LABELS[role] || role, roles, permissions:permissionsForRoles(roles, explicitPermissions), explicitPermissions, active:row.active !== false, lastLoginAt:row.last_login_at || row.lastLoginAt || null, provider:row.provider || 'oidc', createdAt:row.created_at || row.createdAt || null, updatedAt:row.updated_at || row.updatedAt || null };
+  return { subject:row.subject, nip:row.nip || row.email || row.subject, email:row.email || '', displayName:displayNameFromUser(row), role, roleLabel:ROLE_LABELS[role] || role, roles, permissions:permissionsForRoles(roles, explicitPermissions), explicitPermissions, active:row.active !== false, lastLoginAt:row.last_login_at || row.lastLoginAt || null, provider:row.provider || 'oidc', createdAt:row.created_at || row.createdAt || null, updatedAt:row.updated_at || row.updatedAt || null };
 }
 async function ensureUser(user){
   await db.ensureCoreSchema();
@@ -13,10 +14,11 @@ async function ensureUser(user){
   if(!subject) return null;
   const roles = normalizeRoles(user.roles || ['UTILISATEUR']);
   const permissions = Array.isArray(user.permissions) ? user.permissions : [];
+  const displayName = displayNameFromUser(user);
   const result = await db.query(`insert into monitoring_f7_user_profiles(subject,email,display_name,nip,roles,permissions,provider,active,last_login_at,updated_at)
     values ($1,$2,$3,$4,$5,$6,$7,true,now(),now())
     on conflict (subject) do update set email=coalesce(excluded.email, monitoring_f7_user_profiles.email), display_name=coalesce(excluded.display_name, monitoring_f7_user_profiles.display_name), nip=coalesce(excluded.nip, monitoring_f7_user_profiles.nip), last_login_at=now(), updated_at=now()
-    returning *`, [subject, user.email || null, user.displayName || user.name || null, user.nip || null, roles, permissions, user.provider || 'oidc']);
+    returning *`, [subject, user.email || null, displayName || null, user.nip || null, roles, permissions, user.provider || 'oidc']);
   return publicUser(result.rows[0]);
 }
 async function listUsers(){ await db.ensureCoreSchema(); const r = await db.query('select * from monitoring_f7_user_profiles order by active desc, display_name asc, email asc'); return (r.rows || []).map(publicUser); }

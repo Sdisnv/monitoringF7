@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { signToken } = require('./_auth-utils');
 const { normalizeRoles, permissionsForRoles } = require('./_rbac');
+const { displayNameFromClaims, mergeStoredUserWithIdentity } = require('./_auth-identity');
 
 const COOKIE_NAME = 'monitoring_f7_oidc_state';
 const ACCESS_COOKIE = 'monitoring_f7_access';
@@ -172,7 +173,7 @@ function publicUserFromClaims(claims, roles){
     subject,
     nip: String(claims.preferred_username || claims.email || claims.sub || ''),
     email: String(claims.email || claims.preferred_username || ''),
-    displayName: String(claims.name || claims.email || claims.preferred_username || 'Utilisateur SCOPE'),
+    displayName: displayNameFromClaims(claims),
     roles: normalizedRoles,
     permissions: permissionsForRoles(normalizedRoles)
   };
@@ -242,7 +243,7 @@ async function oidcCallbackResponse(event){
     const userStore = require('./_user-store');
     const storedUser = await userStore.getUserByIdentity([user.subject, user.email, user.nip]) || await userStore.ensureUser(Object.assign({}, user, { provider:'oidc' }));
     if(storedUser && storedUser.active === false) throw new Error('Utilisateur désactivé.');
-    if(storedUser) effectiveUser = storedUser;
+    if(storedUser) effectiveUser = mergeStoredUserWithIdentity(storedUser, user);
   } catch(error) {
     if(String(error.message || error).includes('désactivé')) throw error;
     /* profil PostgreSQL optionnel, l'OIDC reste source de vérité */

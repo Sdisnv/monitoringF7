@@ -144,11 +144,16 @@ function siteForPersonAt(assignments, date){
   return normalizeSite(site);
 }
 
-function reportSubdivisionForPersonAt(assignments, date, domaineCode, fallbackSite, sousDomaineCode){
+function reportSubdivisionForPersonAt(assignments, date, domaineCode, fallbackSite, sousDomaineCode, specialisationCode){
   if(domaineCode === 'JSP') return siteForPersonAt(assignments, date) || normalizeSite(fallbackSite);
   if(domaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
   if(domaineCode === 'FOSPEC' && sousDomaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
-  if(domaineCode === 'FOSPEC' && sousDomaineCode === 'AUTO') return subdivisionForPersonAt(assignments, date, 'AUTO') || fallbackSite;
+  if(domaineCode === 'FOSPEC' && sousDomaineCode === 'AUTO'){
+    const dps = subdivisionForPersonAt(assignments, date, 'DPS');
+    if(dps) return dps;
+    if(String(specialisationCode || '').toUpperCase() === 'PL') return '';
+    return subdivisionForPersonAt(assignments, date, 'DAP');
+  }
   return subdivisionForPersonAt(assignments, date, domaineCode) || fallbackSite;
 }
 
@@ -225,7 +230,7 @@ function subtypeLabel(domaineCode, code){
   return `${domaineCode} ${code}`;
 }
 
-async function subdivisionsFor(repo, domaineCode, sousDomaineCode){
+async function subdivisionsFor(repo, domaineCode, sousDomaineCode, specialisationCode){
   const cibles = typeof repo.listCibles === 'function' ? await repo.listCibles() : [];
   if(domaineCode === 'PR'){
     const rows = (cibles || [])
@@ -253,17 +258,22 @@ async function subdivisionsFor(repo, domaineCode, sousDomaineCode){
         const byCode = new Map(rows.map((row) => [row.code, row]));
         return DEFAULT_SUBDIVISIONS.PR.map((code) => byCode.get(code) || { code, label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'PR' }), cibleId: null });
       }
+      const geoDomains = new Set(['DPS', 'DAP']);
       const rows = (cibles || [])
-        .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === sousDomaineCode)
-        .map((row) => ({
-          code: clean(row.niveau_code || row.niveauCode).toUpperCase(),
-          label: subtypeLabel(sousDomaineCode, clean(row.niveau_code || row.niveauCode).toUpperCase()),
-          cibleId: row.cible_id || row.cibleId
-        }))
-        .filter((row) => ['GEN', 'ABC', 'VL', 'PL'].includes(row.code));
-      const wanted = ['VL', 'PL'];
+        .filter((row) => geoDomains.has(clean(row.domaine_code || row.domaineCode).toUpperCase()))
+        .map((row) => {
+          const code = clean(row.niveau_code || row.niveauCode).toUpperCase();
+          return {
+            code,
+            label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'AUTO' }),
+            cibleId: null
+          };
+        })
+        .filter((row) => contract.autoPerimeterCodes(specialisationCode).includes(row.code));
       const byCode = new Map(rows.map((row) => [row.code, row]));
-      return wanted.map((code) => byCode.get(code) || { code, label: subtypeLabel(sousDomaineCode, code), cibleId: null });
+      return contract.autoPerimeterCodes(specialisationCode).map((code) =>
+        byCode.get(code) || { code, label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'AUTO' }), cibleId: null }
+      );
     }
     return DEFAULT_SUBDIVISIONS.FOSPEC.map((code) => ({ code, label: code, cibleId: null }));
   }
@@ -373,7 +383,7 @@ function createScopeParticipationReportingService(repo){
       repo.listAttendusForEvents(ids),
       repo.listParticipationsForEvents(ids),
       typeof repo.listAllPeriodes === 'function' ? repo.listAllPeriodes() : [],
-      subdivisionsFor(repo, domaineCode, sousDomaineCode),
+      subdivisionsFor(repo, domaineCode, sousDomaineCode, wantedSpecialisation),
       typeof repo.listObjectifs === 'function' ? repo.listObjectifs({ actif: true }) : []
     ]);
     const ciblesByEvent = new Map();
@@ -437,7 +447,7 @@ function createScopeParticipationReportingService(repo){
             continue;
           }
         }
-        const subdivision = reportSubdivisionForPersonAt(personAssignments, event.date, domaineCode, fallbackSite, sousDomaineCode);
+        const subdivision = reportSubdivisionForPersonAt(personAssignments, event.date, domaineCode, fallbackSite, sousDomaineCode, eventSpecialisation);
         if(!subdivision) continue;
         if(wantedPerimeter && subdivision !== wantedPerimeter) continue;
         const part = partsByEventPerson.get(`${eventId}::${personneId}`) || {};

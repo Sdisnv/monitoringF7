@@ -1182,6 +1182,26 @@
     return label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC';
   }
 
+  function clearLocalAuthState() {
+    state.session = null;
+    state.needOkta = true;
+    state.idleWarn = false;
+    window.CurrentRoles = [];
+    window.CurrentPermissions = [];
+    try { sessionStorage.removeItem(LIVE_KEY); } catch (_error) { /* ignore */ }
+    try { sessionStorage.removeItem(QUAL_KEY); } catch (_error) { /* ignore */ }
+    if (window.ScopeAuthIdle && typeof window.ScopeAuthIdle.stop === 'function') window.ScopeAuthIdle.stop();
+    try { document.dispatchEvent(new Event('monitoring-f7-auth-session-changed')); } catch (_error) { /* ignore */ }
+  }
+
+  async function logoutScopeSession() {
+    clearLocalAuthState();
+    try {
+      await fetch('/auth/logout', { method: 'POST', credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store' });
+    } catch (_error) { /* redirection GET nettoie aussi les cookies HttpOnly */ }
+    location.href = '/auth/logout?returnTo=' + encodeURIComponent('/scope.html');
+  }
+
   function hasScopePermission(permission) {
     if (!permission) return true;
     if (mode !== 'live') return true;
@@ -1353,7 +1373,7 @@
 
   function headerHtml(r) {
     const logout = mode === 'live'
-      ? `<a class="scope-btn scope-btn-ghost" href="/auth/logout?returnTo=/">Déconnexion</a>`
+      ? `<button type="button" class="scope-btn scope-btn-ghost" id="scope-logout">Déconnexion</button>`
       : '';
     return `
       <header class="scope-header">
@@ -4185,7 +4205,11 @@
     if (code === 'JSP') return [['TOUS', 'Global du domaine'], ['G1', 'JSP G1'], ['C1', 'JSP C1'], ['B1', 'JSP B1']];
     if (code === 'PR') return [['TOUS', 'Global du domaine'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
     if (code === 'FOSPEC' && sub === 'PR') return [['TOUS', 'Global'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
-    if (code === 'FOSPEC' && sub === 'AUTO') return [['TOUS', 'Global AUTO'], ['VL', 'Cond VL'], ['PL', 'Cond PL']];
+    if (code === 'FOSPEC' && sub === 'AUTO') {
+      const dps = [['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
+      const dap = [['Y1', 'DAP Y1'], ['Y2', 'DAP Y2'], ['Y3', 'DAP Y3'], ['Y4', 'DAP Y4']];
+      return [['TOUS', 'Global']].concat(state.participationReportSpecialisation === 'PL' ? dps : dps.concat(dap));
+    }
     if (code === 'FOSPEC') return [['TOUS', 'Global du domaine'], ['PR', 'PR'], ['AUTO', 'AUTO']];
     const rows = (state.referentiels.cibles || [])
       .filter((c) => String(c.domaineCode || c.domaine_code || '').toUpperCase() === code)
@@ -6642,6 +6666,9 @@
       if (window.ScopeAuthIdle) window.ScopeAuthIdle.stayConnected();
       render();
     });
+    document.getElementById('scope-logout')?.addEventListener('click', () => {
+      logoutScopeSession();
+    });
     document.getElementById('obj-add')?.addEventListener('click', () => {
       const period = L.yearToObjectifPeriod(state.objectifForm.annee || String(state.year || '2026'));
       state.objectifAction = 'create';
@@ -7564,6 +7591,7 @@
     });
     document.getElementById('participation-report-specialisation')?.addEventListener('change', (e) => {
       state.participationReportSpecialisation = e.target.value || '';
+      if (state.participationReportSpecialisation === 'PL' && /^Y[1-4]$/.test(String(state.jspReportSite || ''))) state.jspReportSite = 'TOUS';
       state.jspReport = null;
       state.jspReportReady = false;
       state.jspReportError = null;
@@ -8893,7 +8921,10 @@
         state.formationReportReady = true;
         state.formationReportError = null;
         return renderFormationReport();
-      }
+      },
+      userLabel,
+      clearLocalAuthState,
+      logoutScopeSession
     };
     return;
   }

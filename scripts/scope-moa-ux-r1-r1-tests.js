@@ -109,7 +109,8 @@ const env = {
   });
 
   await record('10 — déconnexion présente en production', async () => {
-    assert.ok(ui.includes('/auth/logout?returnTo=/'));
+    assert.ok(ui.includes('id="scope-logout"'));
+    assert.ok(ui.includes('logoutScopeSession()'));
     assert.ok(ui.includes('Déconnexion'));
   });
 

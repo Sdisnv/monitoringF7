@@ -97,7 +97,7 @@ async function setup(){
   await person(repo, [prAbc, dpsG1], { nip: 'PRF01', grade: 'Lt', nom: 'Formateur', prenom: 'Franck' });
   await person(repo, [prAbc, dpsC1], { nip: 'PRS01', grade: 'Sgt', nom: 'Surveillant', prenom: 'Sam' });
   await person(repo, [prAbc, dpsB1], { nip: 'PRAUX', grade: 'Sap', nom: 'Auxiliaire', prenom: 'Alex' });
-  await person(repo, [autoVl], { nip: 'AUTO01', grade: 'Four', nom: 'Volant', prenom: 'Val' });
+  await person(repo, [autoVl, dpsG1], { nip: 'AUTO01', grade: 'Four', nom: 'Volant', prenom: 'Val' });
   const jspJeune = await person(repo, [jspG1], { nip: 'JSP001', grade: 'Flm 1', nom: 'Jeune', prenom: 'Jade' });
   await person(repo, [jspG1], { nip: 'JSP002', grade: 'Flm 2', nom: 'Absent', prenom: 'Ana' });
   const monitor = await person(repo, [jspG1, dpsB1], { nip: 'MON001', grade: 'Sgt', nom: 'Moniteur', prenom: 'Max' });
@@ -306,12 +306,13 @@ function hooks(){
     const { repo } = await setup();
     const svc = createScopeParticipationReportingService(repo);
     const pr = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'PR', specialisation: 'ABC', perimeter: 'B2', year: 2026 });
-    const auto = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'AUTO', perimeter: 'VL', year: 2026 });
+    const auto = await svc.report({ domaine: 'FOSPEC', sousDomaine: 'AUTO', specialisation: 'VL', perimeter: 'G1', year: 2026 });
     eq(pr.sousDomaine, 'PR');
     eq(pr.perimeterLabel, 'DPS B2');
-    eq(auto.perimeterLabel, 'Cond VL');
+    eq(auto.perimeterLabel, 'DPS G1');
     const html = hooks().renderRapportJspHtml(auto);
     ok(html.includes('Cond VL'));
+    ok(html.includes('DPS G1'));
     ok(!html.includes('AUTO VL'));
     ok(!html.includes('AUTO PL'));
   });
