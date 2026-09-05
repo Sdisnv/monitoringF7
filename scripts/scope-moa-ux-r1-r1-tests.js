@@ -91,7 +91,7 @@ const env = {
   });
 
   await record('07 — callback revient vers le returnTo LIVE', async () => {
-    const source = fs.readFileSync(path.join(ROOT, 'netlify/functions/_oidc-utils.js'), 'utf8');
+    const source = fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8');
     assert.ok(source.includes("const returnTo = sanitizeReturnTo(statePayload.returnTo || '/')"));
     assert.ok(source.includes('redirect(302, returnTo'));
     assert.ok(ui.includes("L.oktaLoginHref('/scope.html?mode=live')"));

@@ -4,10 +4,10 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { evaluateEligibility, TYPES_PERIODE, MOTIFS_INDISPONIBLE } = require('../netlify/functions/_scope-personnel');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { evaluateEligibility, TYPES_PERIODE, MOTIFS_INDISPONIBLE } = require('../netlify/lib/_scope-personnel');
 const display = require('../assets/js/scope-personnel-display.js');
 const temporal = require('../assets/js/scope-personnel-temporal.js');
 
@@ -16,8 +16,8 @@ const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const inactivate = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope-personnel-inactivate.js'), 'utf8');
 const detail = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope-personnel-detail.js'), 'utf8');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
-const personnelSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-service.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
+const personnelSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-service.js'), 'utf8');
 
 const results = [];
 

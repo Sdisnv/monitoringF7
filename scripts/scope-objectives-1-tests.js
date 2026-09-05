@@ -4,13 +4,13 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
-const { analyticStatus, officialFromQuantitatif, STATUTS, KINDS } = require('../netlify/functions/_scope-analytics');
-const { hasPermission } = require('../netlify/functions/_rbac');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
+const { analyticStatus, officialFromQuantitatif, STATUTS, KINDS } = require('../netlify/lib/_scope-analytics');
+const { hasPermission } = require('../netlify/lib/_rbac');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -339,7 +339,7 @@ const PRESENT_13_15 = [
     const vig = analyticStatus(84, { thresholdPct: 85 }, { vigilanceMarginPct: null });
     assert.notStrictEqual(vig.status, STATUTS.VIGILANCE);
     assert.strictEqual(vig.status, STATUTS.ATTENTION);
-    const src = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-analytics.js'), 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-analytics.js'), 'utf8');
     assert.ok(!src.includes('vigilanceMarginPct: 5'));
     assert.ok(src.includes('vigilanceMarginPct'));
   });

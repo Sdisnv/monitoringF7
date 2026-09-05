@@ -2,9 +2,9 @@
 'use strict';
 
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
 
 const ACTOR = { sub: 'scope-backfill-test', roles: ['sdis-admin'] };
 const results = [];

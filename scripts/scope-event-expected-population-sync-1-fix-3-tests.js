@@ -4,9 +4,9 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
 
 const ROOT = path.join(__dirname, '..');
 const ACTOR = { sub: 'sync-fix-3-test', roles: ['sdis-admin'] };
@@ -171,7 +171,7 @@ function participationFor(fiche, personneId){
   });
 
   await record('Route legacy expose les NIP analysés au déclencheur de synchronisation', async () => {
-    const serviceFile = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-service.js'), 'utf8');
+    const serviceFile = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-service.js'), 'utf8');
     const routeFile = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope-personnel-import-commit.js'), 'utf8');
     assert.ok(serviceFile.includes('analysedNips'));
     assert.ok(routeFile.includes('rapport.analysedNips'));

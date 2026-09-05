@@ -4,9 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
 const csv = require('../assets/js/scope-csv-import.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -232,7 +232,7 @@ async function seedY4(repo){
   });
 
   await record('Wrapper CSV bundlé (require statique, pas path.join)', async () => {
-    const wrapper = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-csv-import.js'), 'utf8');
+    const wrapper = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-csv-import.js'), 'utf8');
     assert.ok(wrapper.includes("require('../../assets/js/scope-csv-import.js')"));
     assert.ok(!/path\.join/.test(wrapper));
     const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
@@ -246,7 +246,7 @@ async function seedY4(repo){
     const files = [
       'database/migrations/20260819_scope_data_5_r1.sql',
       'assets/js/scope-csv-import.js',
-      'netlify/functions/_scope-schema.js'
+      'netlify/lib/_scope-schema.js'
     ];
     for (const rel of files) {
       const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');

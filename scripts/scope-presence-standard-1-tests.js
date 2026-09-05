@@ -4,14 +4,14 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 const {
   computeTaux,
   computeEffectifEngageEvenement,
   getEncadrementContribution,
   HttpError
-} = require('../netlify/functions/_scope-rules');
+} = require('../netlify/lib/_scope-rules');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');

@@ -4,12 +4,12 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { collectReport, domaineLabel } = require('../netlify/functions/_scope-report-data');
-const { signatureRoleForExercise, classifyGlobalSessionStatut } = require('../netlify/functions/_scope-multisession-report');
-const { domaineAffiche } = require('../netlify/functions/_scope-model');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { collectReport, domaineLabel } = require('../netlify/lib/_scope-report-data');
+const { signatureRoleForExercise, classifyGlobalSessionStatut } = require('../netlify/lib/_scope-multisession-report');
+const { domaineAffiche } = require('../netlify/lib/_scope-model');
 const logic = require('../assets/js/scope-ui-logic.js');
 const display = require('../assets/js/scope-personnel-display.js');
 
@@ -269,7 +269,7 @@ async function collectSession(repo, eventId){
     const ctx = await seedStandard();
     const pdf = await generateReport(ctx.repo, { kind: 'SESSION', evenementId: 'msr-s6', nominatif: true }, ACTOR);
     assert.ok(pdf.pages >= 2);
-    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(renderer.includes('drawHeader()'));
     assert.ok(renderer.includes("Détail par séance"));
   });

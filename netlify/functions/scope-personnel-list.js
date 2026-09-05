@@ -1,6 +1,6 @@
-const { response, verifyToken, bearerToken } = require('./_auth-utils');
-const { requirePermission } = require('./_rbac');
-const personnel = require('./_scope-personnel-service');
+const { response, verifyToken, bearerToken } = require('../lib/_auth-utils');
+const { requirePermission } = require('../lib/_rbac');
+const personnel = require('../lib/_scope-personnel-service');
 
 exports.handler = async function(event){
   let claims;

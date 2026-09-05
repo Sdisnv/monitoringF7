@@ -6,7 +6,7 @@ const {
   signToken,
   publicUser,
   findUser
-} = require('./_auth-utils');
+} = require('../lib/_auth-utils');
 
 exports.handler = async function(event){
   if(event.httpMethod !== 'POST') return response(405, { ok:false, error:'method_not_allowed' });

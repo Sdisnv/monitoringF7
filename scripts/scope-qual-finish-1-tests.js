@@ -6,18 +6,18 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const { createScopeDashboardService } = require('../netlify/functions/_scope-dashboard-service');
-const { createScopeAlertsService } = require('../netlify/functions/_scope-alerts-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { permutationsDataset } = require('../netlify/functions/_scope-graphs');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { createScopeDashboardService } = require('../netlify/lib/_scope-dashboard-service');
+const { createScopeAlertsService } = require('../netlify/lib/_scope-alerts-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { permutationsDataset } = require('../netlify/lib/_scope-graphs');
 const {
   isQualificationEvenement,
   isTestPersonnelNip,
   wantsQualification
-} = require('../netlify/functions/_scope-qualification');
+} = require('../netlify/lib/_scope-qualification');
 const logic = require('../assets/js/scope-ui-logic.js');
 const charts = require('../assets/js/scope-charts.js');
 

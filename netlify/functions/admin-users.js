@@ -1,7 +1,7 @@
-const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { requirePermission, KNOWN_ROLES, ROLE_PERMISSIONS, isAdminRole, normalizeRoles } = require('./_rbac');
-const users = require('./_user-store');
-const audit = require('./_audit-store');
+const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { requirePermission, KNOWN_ROLES, ROLE_PERMISSIONS, isAdminRole, normalizeRoles } = require('../lib/_rbac');
+const users = require('../lib/_user-store');
+const audit = require('../lib/_audit-store');
 
 async function claimsFrom(event){
   const claims = verifyToken(bearerToken(event), 'access');

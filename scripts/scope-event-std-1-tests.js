@@ -4,9 +4,9 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { computeTaux } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { computeTaux } = require('../netlify/lib/_scope-rules');
 const importContract = require('../assets/js/scope-import-contract.js');
 const uiLogic = require('../assets/js/scope-ui-logic.js');
 

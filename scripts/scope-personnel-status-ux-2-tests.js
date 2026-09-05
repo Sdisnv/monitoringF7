@@ -2,8 +2,8 @@
 'use strict';
 
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 const temporal = require('../assets/js/scope-personnel-temporal.js');
 
 const ACTOR = { sub: 'scope-personnel-status-ux-2-test' };

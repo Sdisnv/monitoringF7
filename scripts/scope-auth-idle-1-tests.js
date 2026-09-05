@@ -5,10 +5,10 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { collectMultisessionReport, buildConclusion } = require('../netlify/functions/_scope-multisession-report');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { collectMultisessionReport, buildConclusion } = require('../netlify/lib/_scope-multisession-report');
 const {
   HEADER_TITLE,
   headerTitleLayout,
@@ -18,7 +18,7 @@ const {
   SIGNATURE_TEXT_TOP_GAP,
   SIGNATURE_TEXT_LINE_COUNT,
   SIGNATURE_FUNCTION_RELATIVE_Y
-} = require('../netlify/functions/_scope-pdf-renderer');
+} = require('../netlify/lib/_scope-pdf-renderer');
 const logic = require('../assets/js/scope-ui-logic.js');
 const idle = require('../assets/js/scope-auth-idle.js');
 
@@ -27,9 +27,9 @@ const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const apiSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
 const idleSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-auth-idle.js'), 'utf8');
-const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-objectives-service.js'), 'utf8');
-const engine = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-objectives.js'), 'utf8');
+const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-objectives-service.js'), 'utf8');
+const engine = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-objectives.js'), 'utf8');
 const ACTOR = { roles: ['sdis-admin'], sub: 'idle-1', displayName: 'Testeur AUTH-IDLE-1' };
 const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'scope-auth-idle-1-'));
 const results = [];

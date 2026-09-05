@@ -7,7 +7,7 @@ const path = require('path');
 const {
   computeCycleMetrics,
   computeSessionParticipationState
-} = require('../netlify/functions/_scope-cycle-rules');
+} = require('../netlify/lib/_scope-cycle-rules');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];

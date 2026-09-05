@@ -163,7 +163,7 @@ assert.strictEqual(listLike([legacyBackfill], { preset: 'YEAR', year: '2025', st
 assert.strictEqual(listLike([legacyBackfill], { preset: 'YEAR', year: '2025', statut: 'inactifs' }).count, 0);
 assert.strictEqual(listLike([legacyBackfill], { preset: 'YEAR', year: '2026', statut: 'actifs' }).count, 1);
 
-const service = fs.readFileSync(path.join(__dirname, '../netlify/functions/_scope-personnel-service.js'), 'utf8');
+const service = fs.readFileSync(path.join(__dirname, '../netlify/lib/_scope-personnel-service.js'), 'utf8');
 assert.ok(service.includes('planAssignmentClosures'));
 assert.ok(!service.includes('La date d’inactivité ne peut pas précéder le début d’une affectation ouverte'));
 assert.ok(service.includes('INACTIVER'));

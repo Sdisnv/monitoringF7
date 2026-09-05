@@ -1,5 +1,5 @@
-const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, findUser } = require('./_auth-utils');
-const { ACCESS_COOKIE, ACCESS_TTL_SECONDS, secureCookie } = require('./_oidc-utils');
+const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, findUser } = require('../lib/_auth-utils');
+const { ACCESS_COOKIE, ACCESS_TTL_SECONDS, secureCookie } = require('../lib/_oidc-utils');
 
 function claimsForAccess(claims){
   const next = Object.assign({}, claims || {});

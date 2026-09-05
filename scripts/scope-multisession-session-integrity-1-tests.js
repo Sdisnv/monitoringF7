@@ -6,12 +6,12 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { nominativeRows, collectReport } = require('../netlify/functions/_scope-report-data');
-const { collectMultisessionReport } = require('../netlify/functions/_scope-multisession-report');
-const { canCloseLastSession } = require('../netlify/functions/_scope-cycle-rules');
-const { MOTIFS_JSP, MOTIFS_CANONIQUES } = require('../netlify/functions/_scope-model');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { nominativeRows, collectReport } = require('../netlify/lib/_scope-report-data');
+const { collectMultisessionReport } = require('../netlify/lib/_scope-multisession-report');
+const { canCloseLastSession } = require('../netlify/lib/_scope-cycle-rules');
+const { MOTIFS_JSP, MOTIFS_CANONIQUES } = require('../netlify/lib/_scope-model');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -360,7 +360,7 @@ async function seedPerson(repo, cibleId, spec){
   });
 
   await record('27 — R4 inchangé', () => {
-    const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
+    const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
     assert.ok(rulesSrc.includes('function computePrExerciseParticipationState'));
     assert.ok(rulesSrc.includes('function canCloseLastSession'));
     assert.ok(ui.includes('data-report-session'));
@@ -491,7 +491,7 @@ async function seedPerson(repo, cibleId, spec){
   });
 
   await record('39 — pas de N+1 réseau', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
     assert.ok(!src.includes('pr_exercise_participation_deja_comptee'));
     assert.ok(!src.includes('hydratePersonnes([\n            personneId,'));
   });

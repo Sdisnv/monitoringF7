@@ -4,9 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
 const csv = require('../assets/js/scope-csv-import.js');
 const logic = require('../assets/js/scope-ui-logic.js');
 
@@ -259,8 +259,8 @@ async function withBasculeTest(repo){
   await record('16 — aucun impact tables monitoring_f7_*', async () => {
     const files = [
       'assets/js/scope-csv-import.js',
-      'netlify/functions/_scope-service.js',
-      'netlify/functions/_scope-pg.js',
+      'netlify/lib/_scope-service.js',
+      'netlify/lib/_scope-pg.js',
       'database/migrations/20260819_scope_data_5.sql'
     ];
     for (const rel of files) {

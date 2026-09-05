@@ -2,9 +2,9 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const svc = require('../netlify/functions/_scope-personnel-service');
-const ctx = require('../netlify/functions/_scope-personnel-import-contexts');
-const postgres = require('../netlify/functions/_postgres');
+const svc = require('../netlify/lib/_scope-personnel-service');
+const ctx = require('../netlify/lib/_scope-personnel-import-contexts');
+const postgres = require('../netlify/lib/_postgres');
 
 function csv(body){
   return `NIP;GRADE;NOM;PRENOM;OI\n${body}`;
@@ -508,7 +508,7 @@ async function run(){
   // AD no duplicate NIP
   assert.strictEqual([...jspMemory.persons.values()].filter((row) => row.nip === 'JSP009').length, 1);
 
-  const contexts = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8');
+  const contexts = fs.readFileSync(path.join(__dirname, '..', 'netlify/lib/_scope-personnel-import-contexts.js'), 'utf8');
   assert.ok(contexts.includes('AUTO_VL_DPS'));
   assert.ok(contexts.includes('AUTO_VL_DAP'));
   assert.ok(contexts.includes('JSP_NORD_VAUDOIS'));
@@ -589,8 +589,8 @@ async function run(){
   assert.strictEqual(autoPlAnalyze.lines[0].status, 'NEW_ASSIGNMENT');
   assert.strictEqual(autoPlAnalyze.lines[0].diff.newAssignments[0].cible, 'PL');
 
-  const serviceSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-personnel-service.js'), 'utf8');
-  const pgSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/functions/_scope-pg.js'), 'utf8');
+  const serviceSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/lib/_scope-personnel-service.js'), 'utf8');
+  const pgSrc = fs.readFileSync(path.join(__dirname, '..', 'netlify/lib/_scope-pg.js'), 'utf8');
   assert.ok(!/a\.niveau/.test(serviceSrc));
   assert.ok(!/coalesce\(niveau/.test(serviceSrc));
   assert.ok(!/add column if not exists niveau/.test(serviceSrc));

@@ -6,14 +6,14 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 const importContract = require('../assets/js/scope-import-contract.js');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
+const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
 const fixture = fs.readFileSync(path.join(ROOT, 'tests/fixtures/scope-jsp6-b1-planning-reference.csv'), 'utf8');
 const f7Json = fs.readFileSync(path.join(ROOT, 'assets/data/monitoring_exercices_sdis_2026_2026-04-24_1446.json'), 'utf8');
 const HEADER = 'CODE COURS;date;début;fin;événement;domaine;qui;public_cible;responsable;salle;STAT.COM.';

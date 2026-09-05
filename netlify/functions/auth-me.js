@@ -1,5 +1,5 @@
-const { response, verifyToken, bearerToken, publicUser, findUser } = require('./_auth-utils');
-const { hasHumanIdentity } = require('./_auth-identity');
+const { response, verifyToken, bearerToken, publicUser, findUser } = require('../lib/_auth-utils');
+const { hasHumanIdentity } = require('../lib/_auth-identity');
 
 exports.handler = async function(event){
   if(event.httpMethod !== 'GET') return response(405, { ok:false, error:'method_not_allowed' });
@@ -13,7 +13,7 @@ exports.handler = async function(event){
     if(!safeUser && claims.provider === 'oidc'){
       let stored = null;
       try{
-        stored = await require('./_user-store').getUserByIdentity([claims.sub, claims.email, claims.nip]);
+        stored = await require('../lib/_user-store').getUserByIdentity([claims.sub, claims.email, claims.nip]);
       }catch(error){
         return response(503, { ok:false, error:'user_profile_unavailable', message:'Profil applicatif SCOPE indisponible.' });
       }

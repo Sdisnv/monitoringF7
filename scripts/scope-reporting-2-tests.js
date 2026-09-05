@@ -7,11 +7,11 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeParticipationReportingService, createScopeJspReportingService } = require('../netlify/functions/_scope-jsp-reporting');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeParticipationReportingService, createScopeJspReportingService } = require('../netlify/lib/_scope-jsp-reporting');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 const L = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -269,7 +269,7 @@ function hooks(){
   await record('14 - API route et kind transversal declares', async () => {
     const scopeSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
     const apiSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
-    const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-report-data.js'), 'utf8');
+    const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-report-data.js'), 'utf8');
     ok(scopeSrc.includes('/reporting/participation'));
     ok(apiSrc.includes('participationReport'));
     ok(reportSrc.includes('PARTICIPATION'));

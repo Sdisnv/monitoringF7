@@ -6,13 +6,13 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 const logic = require('../assets/js/scope-ui-logic.js');
 const display = require('../assets/js/scope-personnel-display.js');
-const personnelImport = require('../netlify/functions/_scope-personnel-service');
+const personnelImport = require('../netlify/lib/_scope-personnel-service');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
@@ -377,12 +377,12 @@ async function setupEvent(count){
   await record('29 — population temporelle non régressée', () => {
     const resolved = personnelImport.resolveImportContext('PR_ABC');
     assert.strictEqual(resolved.requiresPapr, true);
-    const ui = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
+    const ui = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
     assert.ok(ui.includes('syncExpectedPopulationForPersonnes'));
   });
 
   await record('30 — événements réalisés non resync', () => {
-    const source = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
+    const source = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
     assert.ok(source.includes("event.statut !== 'PLANIFIE'"));
     const leaving = logic.isLeavingSaisieRoute({ screen: 'saisie', id: 'e1' }, { screen: 'liste' });
     assert.strictEqual(leaving, true);

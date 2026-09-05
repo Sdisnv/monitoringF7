@@ -4,11 +4,11 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const personnelImport = require('../netlify/functions/_scope-personnel-service');
-const ctx = require('../netlify/functions/_scope-personnel-import-contexts');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const personnelImport = require('../netlify/lib/_scope-personnel-service');
+const ctx = require('../netlify/lib/_scope-personnel-import-contexts');
 const logic = require('../assets/js/scope-ui-logic');
 
 const ROOT = path.join(__dirname, '..');

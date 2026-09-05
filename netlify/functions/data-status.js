@@ -1,6 +1,6 @@
-const { response, verifyToken, bearerToken } = require('./_auth-utils');
-const db = require('./_postgres');
-const { storageDriver } = require('./_data-store');
+const { response, verifyToken, bearerToken } = require('../lib/_auth-utils');
+const db = require('../lib/_postgres');
+const { storageDriver } = require('../lib/_data-store');
 
 async function count(table){
   const result = await db.query(`select count(*)::int as count from ${table}`);

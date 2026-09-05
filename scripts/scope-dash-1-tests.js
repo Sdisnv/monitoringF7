@@ -4,12 +4,12 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeDashboardService } = require('../netlify/functions/_scope-dashboard-service');
-const { classifyInboxItem } = require('../netlify/functions/_scope-inbox');
-const { STATUTS, KINDS, MODES } = require('../netlify/functions/_scope-analytics');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeDashboardService } = require('../netlify/lib/_scope-dashboard-service');
+const { classifyInboxItem } = require('../netlify/lib/_scope-inbox');
+const { STATUTS, KINDS, MODES } = require('../netlify/lib/_scope-analytics');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');

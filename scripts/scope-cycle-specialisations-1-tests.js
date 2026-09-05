@@ -9,7 +9,7 @@ const {
   proposeCycleLink,
   computeCycleMetrics,
   computeStandardEventMetricsUnchanged
-} = require('../netlify/functions/_scope-cycle-rules');
+} = require('../netlify/lib/_scope-cycle-rules');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
@@ -71,7 +71,7 @@ function sixPaprEvents(){
   });
 
   await record('AG — runtime bootstrap cycle cohérent', async () => {
-    const schema = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-schema.js'), 'utf8');
+    const schema = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-schema.js'), 'utf8');
     assert.ok(schema.includes('async function migrateSpecialisationCyclesArch1()'));
     assert.ok(schema.includes("values ('scope-specialisation-cycles-arch-1')"));
     assert.ok(schema.includes('scope_cycles'));

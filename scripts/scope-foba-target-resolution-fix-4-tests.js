@@ -2,13 +2,13 @@
 'use strict';
 
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 const {
   normalizeTargetCode,
   matchesAssignmentToEventTarget,
   pgCibleJoinCondition
-} = require('../netlify/functions/_scope-target-resolution');
+} = require('../netlify/lib/_scope-target-resolution');
 
 const ACTOR = { sub: 'scope-foba-fix-4-test', roles: ['sdis-admin'] };
 const results = [];

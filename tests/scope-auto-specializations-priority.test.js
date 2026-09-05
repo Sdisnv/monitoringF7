@@ -1,8 +1,8 @@
 'use strict';
 const assert = require('assert');
 const display = require('../assets/js/scope-personnel-display.js');
-const svc = require('../netlify/functions/_scope-personnel-service.js');
-const ctx = require('../netlify/functions/_scope-personnel-import-contexts.js');
+const svc = require('../netlify/lib/_scope-personnel-service.js');
+const ctx = require('../netlify/lib/_scope-personnel-import-contexts.js');
 
 function spec(overrides){
   return Object.assign({

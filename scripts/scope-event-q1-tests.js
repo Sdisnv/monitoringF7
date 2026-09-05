@@ -4,11 +4,11 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
-const { officialFromQuantitatif, KINDS, STATUTS, MODES } = require('../netlify/functions/_scope-analytics');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
+const { officialFromQuantitatif, KINDS, STATUTS, MODES } = require('../netlify/lib/_scope-analytics');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -418,7 +418,7 @@ const VOLUMES = { attendus: 20, presents: 17, excuses: 1, nonExcuses: 1, dispens
     assert.strictEqual(logic.principalCta({ statut: 'PLANIFIE', populationFigee: false }).action, 'generer');
     assert.ok(logic.volumesEquality(VOLUMES));
     assert.ok(!logic.volumesEquality({ attendus: 20, presents: 17, excuses: 1, nonExcuses: 1, dispenses: 0 }));
-    const schema = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-schema.js'), 'utf8');
+    const schema = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-schema.js'), 'utf8');
     assert.ok(schema.includes('scope-event-q1'));
     assert.ok(schema.includes('scope_saisies_quantitatives'));
     const api = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');

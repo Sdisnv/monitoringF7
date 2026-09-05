@@ -5,18 +5,18 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { isoDate } = require('../netlify/functions/_scope-rules');
-const { resolveObjective } = require('../netlify/functions/_scope-objectives');
-const { collectMultisessionReport, buildConclusion } = require('../netlify/functions/_scope-multisession-report');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { isoDate } = require('../netlify/lib/_scope-rules');
+const { resolveObjective } = require('../netlify/lib/_scope-objectives');
+const { collectMultisessionReport, buildConclusion } = require('../netlify/lib/_scope-multisession-report');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const uiLogic = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
-const engine = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-objectives.js'), 'utf8');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-objectives-service.js'), 'utf8');
+const engine = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-objectives.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-objectives-service.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const ACTOR = { roles: ['sdis-admin'], sub: 'obj-r2', displayName: 'Testeur R2 objectifs' };
 const results = [];
@@ -288,10 +288,10 @@ function gitShow(file){
 
   await record('33 — graphiques PDF gelés, header/conclusion autorisés', () => {
     assert.strictEqual(
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8'),
-      gitShow('netlify/functions/_scope-pdf-charts.js')
+      fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-charts.js'), 'utf8'),
+      gitShow('netlify/lib/_scope-pdf-charts.js')
     );
-    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(renderer.includes('const PDF_SHIFT_08_CM = 22.68'));
     assert.ok(renderer.includes('SIGNATURE_TEXT_LINE_COUNT = 3'));
     assert.ok(!renderer.includes('SCOPE — Suivi et analyse de l’activité'));

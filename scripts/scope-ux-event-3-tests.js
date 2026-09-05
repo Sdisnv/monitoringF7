@@ -6,9 +6,9 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 
 const ROOT = path.join(__dirname, '..');
 const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
@@ -16,7 +16,7 @@ const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const viewer = fs.readFileSync(path.join(ROOT, 'assets/js/scope-pdf-viewer.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
-const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
 const logicSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
 
 const eventCss = css.slice(Math.max(0, css.indexOf('/* === UX-EVENT-3')));

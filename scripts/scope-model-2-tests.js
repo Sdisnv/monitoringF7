@@ -4,19 +4,19 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeAlertsService } = require('../netlify/functions/_scope-alerts-service');
-const { HttpError, computeTaux, validateParticipationPatch } = require('../netlify/functions/_scope-rules');
-const { officialFromQuantitatif, parseQuantitatifInput, KINDS } = require('../netlify/functions/_scope-analytics');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeAlertsService } = require('../netlify/lib/_scope-alerts-service');
+const { HttpError, computeTaux, validateParticipationPatch } = require('../netlify/lib/_scope-rules');
+const { officialFromQuantitatif, parseQuantitatifInput, KINDS } = require('../netlify/lib/_scope-analytics');
 const {
   canPhysicallyDeletePersonne,
   resolveSuiviNominatif,
   domaineAffiche
-} = require('../netlify/functions/_scope-model');
-const { previewScopeImport } = require('../netlify/functions/_scope-import-contract');
+} = require('../netlify/lib/_scope-model');
+const { previewScopeImport } = require('../netlify/lib/_scope-import-contract');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -510,8 +510,8 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
 
   await record('25 — aucun Monitoring F7 modifié', async () => {
     const sql = fs.readFileSync(path.join(ROOT, 'database/migrations/20260820_scope_model_2.sql'), 'utf8');
-    const schema = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-schema.js'), 'utf8');
-    const model = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-model.js'), 'utf8');
+    const schema = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-schema.js'), 'utf8');
+    const model = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-model.js'), 'utf8');
     for(const text of [sql, schema, model]){
       assert.ok(!/delete from monitoring_f7_/i.test(text));
       assert.ok(!/update monitoring_f7_records/i.test(text));

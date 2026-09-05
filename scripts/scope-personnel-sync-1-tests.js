@@ -6,12 +6,12 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { previewPersonnelSync, STATUTS, parseCsv } = require('../netlify/functions/_scope-personnel-sync-contract');
-const { hasPermission } = require('../netlify/functions/_rbac');
-const { canPhysicallyDeletePersonne } = require('../netlify/functions/_scope-model');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { previewPersonnelSync, STATUTS, parseCsv } = require('../netlify/lib/_scope-personnel-sync-contract');
+const { hasPermission } = require('../netlify/lib/_rbac');
+const { canPhysicallyDeletePersonne } = require('../netlify/lib/_scope-model');
 
 const ROOT = path.join(__dirname, '..');
 const CSV_PATH = path.join(ROOT, 'tests/fixtures/personnel-dap-y4-anonymized.csv');
@@ -462,7 +462,7 @@ async function closePresent(service, eventId, people){
     assert.ok(!hasPermission({ roles: ['UTILISATEUR'] }, 'personnel:manage'));
     assert.ok(hasPermission({ roles: ['sdis-admin'] }, 'personnel:manage'));
     assert.ok(hasPermission({ roles: ['sdis-commandement'] }, 'personnel:manage'));
-    const rbac = fs.readFileSync(path.join(ROOT, 'netlify/functions/_rbac.js'), 'utf8');
+    const rbac = fs.readFileSync(path.join(ROOT, 'netlify/lib/_rbac.js'), 'utf8');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/rbac.js'), 'utf8');
     const scopeUi = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(rbac.includes('personnel:manage') && scopeUi.includes('personnel:manage'));
@@ -470,7 +470,7 @@ async function closePresent(service, eventId, people){
   });
 
   await record('30 — pas suppression réelle automatique', async () => {
-    const sync = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-sync.js'), 'utf8');
+    const sync = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-sync.js'), 'utf8');
     assert.ok(!/deletePersonne|DELETE FROM scope_personnes|delete from scope_personnes/i.test(sync));
     assert.strictEqual(canPhysicallyDeletePersonne({ attendusCount: 1, participationsCount: 0, journalCount: 0 }), false);
   });
@@ -536,14 +536,14 @@ async function closePresent(service, eventId, people){
   });
 
   await record('34 — Analytics non régressé', async () => {
-    const analytics = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-analytics.js'), 'utf8');
+    const analytics = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-analytics.js'), 'utf8');
     assert.ok(analytics.includes('officialFromNominatif') || analytics.includes('numerator'));
-    const sync = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-sync.js'), 'utf8');
+    const sync = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-sync.js'), 'utf8');
     assert.ok(!/computeTaux|officialFromNominatif/.test(sync));
   });
 
   await record('35 — Reports non régressé', async () => {
-    const reports = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-report-service.js'), 'utf8');
+    const reports = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-report-service.js'), 'utf8');
     assert.ok(reports.includes('SCOPE-REPORT-1'));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('SCOPE-REPORT-1'));
@@ -555,7 +555,7 @@ async function closePresent(service, eventId, people){
   await record('contrat HTTP + UI + pas F7/ORION', async () => {
     const f7 = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
     assert.ok(f7.includes('SCOPE-IMPL-1A'));
-    const sync = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-sync.js'), 'utf8');
+    const sync = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-sync.js'), 'utf8');
     assert.ok(!/monitoring_f7_/.test(sync));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('scope-sync-filters'));

@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { spawnSync } = require('child_process');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 const logic = require('../assets/js/scope-ui-logic.js');
 const map = require('../assets/js/scope-oi-map.js');
 
@@ -112,7 +112,7 @@ function record(name, fn){
     assert.ok(ui.includes('/auth/logout?returnTo=/'));
     assert.ok(ui.includes('authError'));
     assert.ok(ui.includes('sessionMe'));
-    const oidc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_oidc-utils.js'), 'utf8');
+    const oidc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8');
     assert.ok(oidc.includes('function queryParams'));
     assert.ok(oidc.includes('function oidcErrorReason'));
     const cb = fs.readFileSync(path.join(ROOT, 'netlify/functions/auth-oidc-callback.js'), 'utf8');

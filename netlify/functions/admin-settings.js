@@ -1,7 +1,7 @@
-const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { requirePermission } = require('./_rbac');
-const db = require('./_postgres');
-const audit = require('./_audit-store');
+const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { requirePermission } = require('../lib/_rbac');
+const db = require('../lib/_postgres');
+const audit = require('../lib/_audit-store');
 
 const ADMIN_CODE_KEY = 'admin_code_hash';
 const DEFAULT_ADMIN_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';

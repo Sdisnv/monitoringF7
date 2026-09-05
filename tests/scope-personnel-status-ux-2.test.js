@@ -54,7 +54,7 @@ assert.strictEqual(temporal.evaluateStatus(afterResign, { preset: 'YEAR', year: 
 const ui = fs.readFileSync(path.join(__dirname, '../assets/js/scope-ui.js'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '../assets/css/scope.css'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '../scope.html'), 'utf8');
-const service = fs.readFileSync(path.join(__dirname, '../netlify/functions/_scope-personnel-service.js'), 'utf8');
+const service = fs.readFileSync(path.join(__dirname, '../netlify/lib/_scope-personnel-service.js'), 'utf8');
 const handler = fs.readFileSync(path.join(__dirname, '../netlify/functions/scope-personnel-inactivate.js'), 'utf8');
 const modalSrc = fs.readFileSync(path.join(__dirname, '../assets/js/scope-personnel-activity-modal.js'), 'utf8');
 

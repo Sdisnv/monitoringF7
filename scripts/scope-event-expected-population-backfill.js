@@ -2,8 +2,8 @@
 'use strict';
 
 const { Client } = require('pg');
-const { createPgRepo } = require('../netlify/functions/_scope-pg');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createPgRepo } = require('../netlify/lib/_scope-pg');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 
 function arg(name, fallback = null){
   const prefix = `--${name}=`;

@@ -4,15 +4,15 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeDashboardService } = require('../netlify/functions/_scope-dashboard-service');
-const { createScopeAlertsService } = require('../netlify/functions/_scope-alerts-service');
-const { classifyOperationalAlert } = require('../netlify/functions/_scope-alerts');
-const { classifyInboxItem: inboxClassify } = require('../netlify/functions/_scope-inbox');
-const { todayZurichIso, isEchu, TIMEZONE } = require('../netlify/functions/_scope-calendar');
-const { STATUTS, MODES } = require('../netlify/functions/_scope-analytics');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeDashboardService } = require('../netlify/lib/_scope-dashboard-service');
+const { createScopeAlertsService } = require('../netlify/lib/_scope-alerts-service');
+const { classifyOperationalAlert } = require('../netlify/lib/_scope-alerts');
+const { classifyInboxItem: inboxClassify } = require('../netlify/lib/_scope-inbox');
+const { todayZurichIso, isEchu, TIMEZONE } = require('../netlify/lib/_scope-calendar');
+const { STATUTS, MODES } = require('../netlify/lib/_scope-analytics');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];

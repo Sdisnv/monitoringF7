@@ -4,28 +4,28 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
 const {
   collectMultisessionReport,
   readingNotesFor,
   buildConclusion,
   TAUX_EXPLANATION
-} = require('../netlify/functions/_scope-multisession-report');
-const { MOTIFS_DISPENSE } = require('../netlify/functions/_scope-model');
+} = require('../netlify/lib/_scope-multisession-report');
+const { MOTIFS_DISPENSE } = require('../netlify/lib/_scope-model');
 const logic = require('../assets/js/scope-ui-logic.js');
 const {
   SIGNATURE_PR, MARGIN, headerLogoLayout, resolveSignaturePrPath, PAGE_W
-} = require('../netlify/functions/_scope-pdf-renderer');
+} = require('../netlify/lib/_scope-pdf-renderer');
 
 const ROOT = path.join(__dirname, '..');
-const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
-const charts = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8');
+const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
+const charts = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-charts.js'), 'utf8');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const toml = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf8');
-const rules = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
+const rules = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
 const ACTOR = { roles: ['sdis-admin'], sub: 'msr1r2', displayName: 'Testeur R2 rapports' };
 const OUT = path.join(require('os').tmpdir(), 'scope-r2-pdfs');
 const results = [];

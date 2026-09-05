@@ -4,10 +4,10 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { computeTaux, HttpError } = require('../netlify/functions/_scope-rules');
-const { DOMAINES, CIBLES } = require('../netlify/functions/_scope-schema');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { computeTaux, HttpError } = require('../netlify/lib/_scope-rules');
+const { DOMAINES, CIBLES } = require('../netlify/lib/_scope-schema');
 const cachePolicy = require('../assets/js/online-cache-policy.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -249,7 +249,7 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     const scopeJs = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
     assert.ok(!/writeCollection/.test(scopeJs));
     assert.ok(!/replaceCollection/.test(scopeJs));
-    const pgStore = fs.readFileSync(path.join(ROOT, 'netlify/functions/_data-store-postgres.js'), 'utf8');
+    const pgStore = fs.readFileSync(path.join(ROOT, 'netlify/lib/_data-store-postgres.js'), 'utf8');
     assert.ok(!/scope_/.test(pgStore));
   });
 

@@ -4,13 +4,13 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
 const {
   normalizeTargetCode,
   matchesAssignmentToEventTarget,
   pgCibleJoinCondition
-} = require('../netlify/functions/_scope-target-resolution');
+} = require('../netlify/lib/_scope-target-resolution');
 const display = require('../assets/js/scope-personnel-display.js');
 const temporal = require('../assets/js/scope-personnel-temporal.js');
 

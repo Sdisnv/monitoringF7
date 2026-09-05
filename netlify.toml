@@ -3,11 +3,14 @@
 # Redirects data v67 (/records, etc.) volontairement absents.
 
 [build]
-  publish = "."
+  command = "node scripts/build-scope-static.js"
+  publish = "dist/scope"
   functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
+
+[functions."scope"]
   external_node_modules = ["pdfkit"]
   included_files = [
     "assets/js/scope-csv-import.js",
@@ -20,7 +23,7 @@
     "assets/img/LogoSDISblanc.png",
     "assets/img/LogoSDISseulnoir.png",
     "assets/img/MCE_Signature.png",
-    "netlify/functions/data/**",
+    "netlify/lib/data/**",
     "node_modules/pdfkit/js/data/**"
   ]
 

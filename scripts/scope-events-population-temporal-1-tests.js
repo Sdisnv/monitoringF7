@@ -2,14 +2,14 @@
 'use strict';
 
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { HttpError, expectedPopulationCoherence, validateCloture } = require('../netlify/functions/_scope-rules');
-const { matchesAssignmentToEventTarget } = require('../netlify/functions/_scope-target-resolution');
-const personnelImport = require('../netlify/functions/_scope-personnel-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { HttpError, expectedPopulationCoherence, validateCloture } = require('../netlify/lib/_scope-rules');
+const { matchesAssignmentToEventTarget } = require('../netlify/lib/_scope-target-resolution');
+const personnelImport = require('../netlify/lib/_scope-personnel-service');
 const display = require('../assets/js/scope-personnel-display.js');
 const logic = require('../assets/js/scope-ui-logic.js');
 

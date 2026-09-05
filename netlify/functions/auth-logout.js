@@ -1,5 +1,5 @@
-const { response } = require('./_auth-utils');
-const { ACCESS_COOKIE, COOKIE_NAME, clearCookie } = require('./_oidc-utils');
+const { response } = require('../lib/_auth-utils');
+const { ACCESS_COOKIE, COOKIE_NAME, clearCookie } = require('../lib/_oidc-utils');
 
 exports.handler = async function(event){
   if(event.httpMethod === 'GET'){

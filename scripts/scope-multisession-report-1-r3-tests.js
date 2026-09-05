@@ -4,25 +4,25 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
 const {
   collectMultisessionReport,
   readingNotesFor,
   buildConclusion
-} = require('../netlify/functions/_scope-multisession-report');
+} = require('../netlify/lib/_scope-multisession-report');
 const logic = require('../assets/js/scope-ui-logic.js');
 const {
   SIGNATURE_FIT, TYPE, MARGIN
-} = require('../netlify/functions/_scope-pdf-renderer');
+} = require('../netlify/lib/_scope-pdf-renderer');
 
 const ROOT = path.join(__dirname, '..');
-const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
-const charts = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8');
+const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
+const charts = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-charts.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
-const rules = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
-const sessionEngine = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-multisession-report.js'), 'utf8');
+const rules = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
+const sessionEngine = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-multisession-report.js'), 'utf8');
 const ACTOR = { roles: ['sdis-admin'], sub: 'msr1r3', displayName: 'Testeur R3 rapports' };
 const OUT = path.join(ROOT, 'tmp-scope-r3-pdfs');
 const results = [];

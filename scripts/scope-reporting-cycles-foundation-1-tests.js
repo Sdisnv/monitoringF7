@@ -4,17 +4,17 @@
 /** SCOPE-REPORTING-CYCLES-FOUNDATION-1 - temporal reporting scope foundation. */
 
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
 const {
   collectMultisessionReport,
   loadSessionBundle
-} = require('../netlify/functions/_scope-multisession-report');
+} = require('../netlify/lib/_scope-multisession-report');
 const {
   resolveSessionReportingScope,
   computePrExerciseParticipationState
-} = require('../netlify/functions/_scope-cycle-rules');
+} = require('../netlify/lib/_scope-cycle-rules');
 
 const ACTOR = { roles: ['sdis-admin'], sub: 'scope-reporting-cycles-foundation-1' };
 const results = [];

@@ -6,15 +6,15 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const crypto = require('crypto');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { generateReport, sanitizeQuery } = require('../netlify/functions/_scope-report-service');
-const { sanitizeFilename, buildFilename } = require('../netlify/functions/_scope-report-data');
-const { CHART_TOKENS } = require('../netlify/functions/_scope-chart-tokens');
-const { hasPermission } = require('../netlify/functions/_rbac');
-const { HttpError } = require('../netlify/functions/_scope-rules');
-const { ROOT_DOMAINES } = require('../netlify/functions/_scope-graphs');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { generateReport, sanitizeQuery } = require('../netlify/lib/_scope-report-service');
+const { sanitizeFilename, buildFilename } = require('../netlify/lib/_scope-report-data');
+const { CHART_TOKENS } = require('../netlify/lib/_scope-chart-tokens');
+const { hasPermission } = require('../netlify/lib/_rbac');
+const { HttpError } = require('../netlify/lib/_scope-rules');
+const { ROOT_DOMAINES } = require('../netlify/lib/_scope-graphs');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
@@ -268,7 +268,7 @@ async function gen(repo, body, claims){
   });
 
   await record('10 — LEGACY séparé du KPI officiel', async () => {
-    const src = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(src.includes('distinctes du KPI officiel'));
     assert.ok(src.includes('isLegacy'));
   });
@@ -359,8 +359,8 @@ async function gen(repo, body, claims){
   });
 
   await record('18-21 — graphiques GRAPH-1 (évolution, domaines, OI, motifs)', async () => {
-    const charts = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8');
-    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const charts = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-charts.js'), 'utf8');
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(charts.includes('drawLineChart') && charts.includes('drawBarChart') && charts.includes('drawStackedBar'));
     assert.ok(renderer.includes('m.graphs.evolution'));
     assert.ok(renderer.includes('m.graphs.domaines'));
@@ -386,7 +386,7 @@ async function gen(repo, body, claims){
     assert.strictEqual(CHART_TOKENS.primary, '#171C8F');
     assert.strictEqual(CHART_TOKENS.neutral, '#54585A');
     assert.strictEqual(CHART_TOKENS.warning, '#FFA300');
-    const charts = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8');
+    const charts = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-charts.js'), 'utf8');
     assert.ok(charts.includes('CHART_TOKENS'));
     assert.ok(!charts.includes('#CB4B40'));
   });
@@ -490,7 +490,7 @@ async function gen(repo, body, claims){
   await record('contrat HTTP + logos officiels + RBAC sync', async () => {
     const scopeJs = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
     const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
-    const rbac = fs.readFileSync(path.join(ROOT, 'netlify/functions/_rbac.js'), 'utf8');
+    const rbac = fs.readFileSync(path.join(ROOT, 'netlify/lib/_rbac.js'), 'utf8');
     const rbacUi = fs.readFileSync(path.join(ROOT, 'assets/js/rbac.js'), 'utf8');
     assert.ok(scopeJs.includes("path === '/reports'"));
     assert.ok(toml.includes('logo-scope-blanc.png'));
@@ -507,7 +507,7 @@ async function gen(repo, body, claims){
     assert.ok(css.includes('min-height: 44px'));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/logo-scope-blanc.png')));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/LogoSDISblanc.png')));
-    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(renderer.includes('logo-scope-blanc.png'));
     assert.ok(renderer.includes('LogoSDISblanc.png'));
   });

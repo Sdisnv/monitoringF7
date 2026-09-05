@@ -5,10 +5,10 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeDashboardService } = require('../netlify/functions/_scope-dashboard-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeDashboardService } = require('../netlify/lib/_scope-dashboard-service');
 const {
   ROOT_DOMAINES,
   FOSPEC_FAMILY,
@@ -17,8 +17,8 @@ const {
   permutationsDataset,
   compositionDataset,
   evolutionDataset
-} = require('../netlify/functions/_scope-graphs');
-const { STATUTS, KINDS, emptyVolumes } = require('../netlify/functions/_scope-analytics');
+} = require('../netlify/lib/_scope-graphs');
+const { STATUTS, KINDS, emptyVolumes } = require('../netlify/lib/_scope-analytics');
 const charts = require('../assets/js/scope-charts.js');
 
 const ROOT = path.join(__dirname, '..');

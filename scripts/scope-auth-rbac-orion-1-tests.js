@@ -3,9 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const rbac = require(path.join(ROOT, 'netlify/functions/_rbac.js'));
-const userStoreSource = fs.readFileSync(path.join(ROOT, 'netlify/functions/_user-store.js'), 'utf8');
-const oidcSource = fs.readFileSync(path.join(ROOT, 'netlify/functions/_oidc-utils.js'), 'utf8');
+const rbac = require(path.join(ROOT, 'netlify/lib/_rbac.js'));
+const userStoreSource = fs.readFileSync(path.join(ROOT, 'netlify/lib/_user-store.js'), 'utf8');
+const oidcSource = fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8');
 const authMeSource = fs.readFileSync(path.join(ROOT, 'netlify/functions/auth-me.js'), 'utf8');
 const frontendRbac = fs.readFileSync(path.join(ROOT, 'assets/js/rbac.js'), 'utf8');
 const scopeUi = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');

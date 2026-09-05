@@ -7,11 +7,11 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
 const logic = require('../assets/js/scope-ui-logic.js');
-const personnelImport = require('../netlify/functions/_scope-personnel-service');
+const personnelImport = require('../netlify/lib/_scope-personnel-service');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
@@ -345,7 +345,7 @@ function part(person, statut){
     const listed = await ctx.service.listEvenements({ annee: 2026 });
     const item = listed.evenements.find((row) => row.evenement.evenement_id === frozen.eventId);
     assert.strictEqual(item.attendusInclus, 18);
-    const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
+    const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
     assert.ok(!serviceSrc.includes('Exercice PR-ABC | Refresh'));
     assert.ok(serviceSrc.includes('RETARGET_CIBLES'));
   });

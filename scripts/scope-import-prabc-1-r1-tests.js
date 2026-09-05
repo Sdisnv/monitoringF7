@@ -6,9 +6,9 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const svc = require('../netlify/functions/_scope-personnel-service');
-const ctx = require('../netlify/functions/_scope-personnel-import-contexts');
-const postgres = require('../netlify/functions/_postgres');
+const svc = require('../netlify/lib/_scope-personnel-service');
+const ctx = require('../netlify/lib/_scope-personnel-import-contexts');
+const postgres = require('../netlify/lib/_postgres');
 const display = require('../assets/js/scope-personnel-display.js');
 const logic = require('../assets/js/scope-ui-logic.js');
 
@@ -464,7 +464,7 @@ function previewEighteen(dateActif){
     isolated.persons.set('80001', person('80001'));
     isolated.assignments.push(papr('80001'));
     isolated.setFailOnAssignmentInsert(1);
-    const source = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-service.js'), 'utf8');
+    const source = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-service.js'), 'utf8');
     assert.ok(source.includes('getDb().transaction'));
     await assert.rejects(() => svc.commitImport({
       fileText: 'NIP;GRADE;NOM;PRENOM\n80001;Sap;Test;80001',

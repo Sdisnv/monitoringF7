@@ -1,6 +1,6 @@
-const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { requirePermission } = require('./_rbac');
-const audit = require('./_audit-store');
+const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { requirePermission } = require('../lib/_rbac');
+const audit = require('../lib/_audit-store');
 function claimsFrom(event){ return verifyToken(bearerToken(event), 'access'); }
 exports.handler = async function(event){
   let claims;

@@ -7,10 +7,10 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeJspReportingService } = require('../netlify/functions/_scope-jsp-reporting');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeJspReportingService } = require('../netlify/lib/_scope-jsp-reporting');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 const L = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');

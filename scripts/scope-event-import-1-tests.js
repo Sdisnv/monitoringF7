@@ -6,13 +6,13 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { hasPermission } = require('../netlify/functions/_rbac');
-const { HttpError } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { hasPermission } = require('../netlify/lib/_rbac');
+const { HttpError } = require('../netlify/lib/_scope-rules');
 const contract = require('../assets/js/scope-import-contract.js');
 
 const ROOT = path.join(__dirname, '..');

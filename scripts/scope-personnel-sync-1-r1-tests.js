@@ -6,11 +6,11 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { STATUTS } = require('../netlify/functions/_scope-personnel-sync-contract');
-const { inconsistentSortiWithOpenAffectations } = require('../netlify/functions/_scope-personnel');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { STATUTS } = require('../netlify/lib/_scope-personnel-sync-contract');
+const { inconsistentSortiWithOpenAffectations } = require('../netlify/lib/_scope-personnel');
 
 const ROOT = path.join(__dirname, '..');
 const ACTOR = { sub: 'test-r1', roles: ['sdis-admin'] };
@@ -429,12 +429,12 @@ async function auditIncoherences(repo){
   });
 
   await record('25-28 — analytics / reports / alerts / personnel-sync non régressés', async () => {
-    const analytics = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-analytics.js'), 'utf8');
-    const reports = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-report-service.js'), 'utf8');
-    const alerts = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-alerts.js'), 'utf8');
-    const sync = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-sync.js'), 'utf8');
-    const service = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
-    const personnel = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel.js'), 'utf8');
+    const analytics = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-analytics.js'), 'utf8');
+    const reports = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-report-service.js'), 'utf8');
+    const alerts = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-alerts.js'), 'utf8');
+    const sync = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-sync.js'), 'utf8');
+    const service = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
+    const personnel = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel.js'), 'utf8');
     assert.ok(analytics.includes('officialFromNominatif') || analytics.includes('numerator'));
     assert.ok(reports.includes('SCOPE-REPORT-1'));
     assert.ok(alerts.includes('SCOPE-ALERTS-1') || alerts.includes('classify'));

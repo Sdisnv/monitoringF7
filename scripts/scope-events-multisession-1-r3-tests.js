@@ -4,12 +4,12 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const { nominativeRows } = require('../netlify/functions/_scope-report-data');
-const rules = require('../netlify/functions/_scope-cycle-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { nominativeRows } = require('../netlify/lib/_scope-report-data');
+const rules = require('../netlify/lib/_scope-cycle-rules');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -18,7 +18,7 @@ const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const api = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
 const detail = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope-personnel-detail.js'), 'utf8');
-const personnelSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-service.js'), 'utf8');
+const personnelSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-service.js'), 'utf8');
 const scopeSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
 const ACTOR = { roles: ['sdis-admin'], sub: 'ms1r3', displayName: 'Testeur R3' };
 const results = [];
@@ -104,7 +104,7 @@ async function markOn(ctx, personne, sessionIndex, statut, motif){
   await save(ctx.service, ctx.repo, `r3s${sessionIndex}`, [body]);
 }
 
-const { incompleteExpectedParticipations } = require('../netlify/functions/_scope-rules');
+const { incompleteExpectedParticipations } = require('../netlify/lib/_scope-rules');
 
 async function closeUntilLast(ctx){
   for(let i = 1; i <= 5; i += 1){

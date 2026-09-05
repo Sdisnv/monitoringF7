@@ -1,9 +1,9 @@
-const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { requirePermission } = require('./_rbac');
-const users = require('./_user-store');
-const personnel = require('./_scope-personnel-service');
-const { getPgRepo } = require('./_scope-pg');
-const { createScopeService } = require('./_scope-service');
+const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { requirePermission } = require('../lib/_rbac');
+const users = require('../lib/_user-store');
+const personnel = require('../lib/_scope-personnel-service');
+const { getPgRepo } = require('../lib/_scope-pg');
+const { createScopeService } = require('../lib/_scope-service');
 
 async function syncExpectedPopulationFromNips(nips, claims){
   const repo = await getPgRepo();

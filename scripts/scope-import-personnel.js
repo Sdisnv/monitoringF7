@@ -75,7 +75,7 @@ async function main() {
     return;
   }
 
-  const { getPgRepo } = require('../netlify/functions/_scope-pg');
+  const { getPgRepo } = require('../netlify/lib/_scope-pg');
   const repo = await getPgRepo();
   const cibles = await repo.listCibles();
   let createdPeople = 0;

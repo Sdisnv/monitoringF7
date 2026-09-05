@@ -4,18 +4,18 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
 const {
   officialFromQuantitatif,
   analyticStatus,
   resolveObjective,
   STATUTS,
   KINDS
-} = require('../netlify/functions/_scope-analytics');
-const { parsePeriod } = require('../netlify/functions/_scope-period');
+} = require('../netlify/lib/_scope-analytics');
+const { parsePeriod } = require('../netlify/lib/_scope-period');
 
 const ROOT = path.join(__dirname, '..');
 const CSV_PATH = path.join(ROOT, 'assets/data/scope/monitoring_exercices_sdis_2026.csv');
@@ -572,7 +572,7 @@ async function createClosedNominatif(repo, service, {
     assert.notStrictEqual(summary.officiel.analyticStatus, STATUTS.VIGILANCE);
     const withObj = analyticStatus(86.7, { thresholdPct: 90 }, { vigilanceMarginPct: null });
     assert.strictEqual(withObj.status, STATUTS.ATTENTION);
-    const src = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-analytics.js'), 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-analytics.js'), 'utf8');
     assert.ok(!src.includes('-5'));
     assert.ok(!src.includes('vigilanceMarginPct: 5'));
     const qty = officialFromQuantitatif({ nb_presents: 34, nb_excuses: 3, nb_non_excuses: 2, nb_dispenses: 1 });

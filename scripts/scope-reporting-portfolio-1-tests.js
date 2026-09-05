@@ -6,10 +6,10 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const crypto = require('crypto');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 
 const ROOT = path.join(__dirname, '..');
 const ACTOR = { roles: ['sdis-admin'], sub: 'portfolio-1', displayName: 'Testeur portfolio' };
@@ -236,9 +236,9 @@ async function createClosedEvent(ctx, { domaine, niveau, date, libelle, people, 
   });
 
   await record('08 — PR SESSION non régressé au niveau contrat ciblé', async () => {
-    const reportData = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-report-data.js'), 'utf8');
-    const sessionEngine = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-multisession-report.js'), 'utf8');
-    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const reportData = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-report-data.js'), 'utf8');
+    const sessionEngine = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-multisession-report.js'), 'utf8');
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.ok(reportData.includes("if(kind === 'SESSION')"));
     assert.ok(sessionEngine.includes('resolveSessionReportingScope'));
     assert.ok(renderer.includes("if(m.kind === 'SESSION')"));

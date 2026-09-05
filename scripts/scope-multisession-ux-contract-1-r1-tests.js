@@ -6,17 +6,17 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { computePrExerciseParticipationState } = require('../netlify/functions/_scope-cycle-rules');
-const { incompleteExpectedParticipations } = require('../netlify/functions/_scope-rules');
-const { MOTIFS_JSP: MODEL_MOTIFS_JSP } = require('../netlify/functions/_scope-model');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { computePrExerciseParticipationState } = require('../netlify/lib/_scope-cycle-rules');
+const { incompleteExpectedParticipations } = require('../netlify/lib/_scope-rules');
+const { MOTIFS_JSP: MODEL_MOTIFS_JSP } = require('../netlify/lib/_scope-model');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
+const rulesSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
 const logicSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
 const results = [];
 const ACTOR = { sub: 'ux-contract-1-r1' };

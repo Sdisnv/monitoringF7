@@ -13,7 +13,7 @@ const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
 const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
 const apiSource = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
-const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pg.js'), 'utf8');
+const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pg.js'), 'utf8');
 const L = require(path.join(ROOT, 'assets/js/scope-ui-logic.js'));
 
 const arbre = [
@@ -173,9 +173,9 @@ async function record(name, fn) {
 
   await record('20 — PDFKit AFM inclus dans bundle SCOPE', async () => {
     assert.ok(pkg.includes('"pdfkit"'));
-    assert.ok(toml.includes('netlify/functions/data/**'));
+    assert.ok(toml.includes('netlify/lib/data/**'));
     assert.ok(toml.includes('node_modules/pdfkit/js/data/**'));
-    assert.ok(fs.existsSync(path.join(ROOT, 'netlify/functions/data/Helvetica.afm')));
+    assert.ok(fs.existsSync(path.join(ROOT, 'netlify/lib/data/Helvetica.afm')));
     assert.ok(fs.existsSync(path.join(ROOT, 'node_modules/pdfkit/js/data/Helvetica.afm')));
   });
 

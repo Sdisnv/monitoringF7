@@ -1,7 +1,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const svc = require('../netlify/functions/_scope-personnel-service');
+const svc = require('../netlify/lib/_scope-personnel-service');
 
 const ROOT = path.join(__dirname, '..');
 
@@ -97,8 +97,8 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.strictEqual(countsJune['JSP JSP B1'], 1);
   assert.strictEqual(countsJune['PR PR'] || 0, 0);
 
-  const personnelService = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-service.js'), 'utf8');
-  const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pg.js'), 'utf8');
+  const personnelService = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-service.js'), 'utf8');
+  const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pg.js'), 'utf8');
   const api = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
   const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
   const migration = fs.readFileSync(path.join(ROOT, 'database/migrations/20260821_scope_db_convergence_1.sql'), 'utf8');
@@ -118,7 +118,7 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(!/coalesce\(niveau/.test(personnelService));
   assert.ok(personnelService.includes('site_jsp'));
   assert.ok(personnelService.includes('preview.wrote = false'));
-  assert.ok(fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-personnel-import-contexts.js'), 'utf8').includes('JSP_NORD_VAUDOIS'));
+  assert.ok(fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-personnel-import-contexts.js'), 'utf8').includes('JSP_NORD_VAUDOIS'));
 
   assert.ok(pgRepo.includes('date_entree_sdis as date_entree'));
   assert.ok(pgRepo.includes('a.date_actif as date_debut'));
@@ -201,8 +201,8 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   assert.ok(migrationJspGrade.includes('Flm 1'));
   assert.ok(!/add column if not exists niveau/i.test(migrationJspGrade));
 
-  const postgresPath = require.resolve('../netlify/functions/_postgres');
-  const schemaPath = require.resolve('../netlify/functions/_scope-schema');
+  const postgresPath = require.resolve('../netlify/lib/_postgres');
+  const schemaPath = require.resolve('../netlify/lib/_scope-schema');
   const originalPostgres = require.cache[postgresPath];
   const originalSchema = require.cache[schemaPath];
   const capturedSql = [];
@@ -221,7 +221,7 @@ TEST001;Sgt;Marc;TEST;DPS B1 - Yvonand, DPS G1 - Yverdon-les-Bains, DAP Y2 - Bel
   };
   delete require.cache[schemaPath];
   try {
-    const { ensureScopeSchema } = require('../netlify/functions/_scope-schema');
+    const { ensureScopeSchema } = require('../netlify/lib/_scope-schema');
     await ensureScopeSchema();
   } finally {
     if (originalSchema) require.cache[schemaPath] = originalSchema;

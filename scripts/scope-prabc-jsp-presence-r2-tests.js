@@ -6,11 +6,11 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { HttpError, expectedPopulationCoherence, validateCloture, incompleteExpectedParticipations } = require('../netlify/functions/_scope-rules');
-const { resolveEventImportTarget } = require('../netlify/functions/_scope-target-resolution');
-const { MOTIFS_JSP, MOTIFS_CANONIQUES } = require('../netlify/functions/_scope-model');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { HttpError, expectedPopulationCoherence, validateCloture, incompleteExpectedParticipations } = require('../netlify/lib/_scope-rules');
+const { resolveEventImportTarget } = require('../netlify/lib/_scope-target-resolution');
+const { MOTIFS_JSP, MOTIFS_CANONIQUES } = require('../netlify/lib/_scope-model');
 const logic = require('../assets/js/scope-ui-logic.js');
 const csv = require('../assets/js/scope-csv-import.js');
 

@@ -3,5 +3,6 @@ releases/
 *.log
 node_modules/
 .netlify/
+dist/
 .env
 .env.*

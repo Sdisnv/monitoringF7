@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const postgres = require('../netlify/functions/_postgres');
-const personnel = require('../netlify/functions/_scope-personnel-service');
+const postgres = require('../netlify/lib/_postgres');
+const personnel = require('../netlify/lib/_scope-personnel-service');
 
 const origQuery = postgres.query;
 const origTx = postgres.transaction;

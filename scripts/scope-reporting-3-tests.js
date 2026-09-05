@@ -7,12 +7,12 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeParticipationReportingService } = require('../netlify/functions/_scope-jsp-reporting');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
-const { parsePeriod } = require('../netlify/functions/_scope-period');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeParticipationReportingService } = require('../netlify/lib/_scope-jsp-reporting');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
+const { parsePeriod } = require('../netlify/lib/_scope-period');
 const L = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -351,13 +351,13 @@ function hooks(){
     const { repo } = await setup();
     const foca = await createScopeParticipationReportingService(repo).report({ domaine: 'FOCA', year: 2026 });
     eq(foca.objective, null);
-    const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-report-data.js'), 'utf8');
+    const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-report-data.js'), 'utf8');
     eq((reportSrc.match(/(^|[\s,{])PARTICIPATION:\s*'PARTICIPATION'/g) || []).length, 1);
     ok(!reportSrc.includes("PARTICIPATION: 'SESSION'"));
   });
 
   await record('17 - PDF blocks stricts et alertes sans valeur ambigue', async () => {
-    const pdfSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const pdfSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     const uiSrcNow = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     ok(pdfSrc.includes("if(enabled('synthese'))"));
     ok(pdfSrc.includes("if(enabled('graphiques'))"));

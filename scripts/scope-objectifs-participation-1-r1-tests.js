@@ -5,19 +5,19 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { HttpError } = require('../netlify/functions/_scope-rules');
-const { resolveObjective } = require('../netlify/functions/_scope-objectives');
-const { hasPermission } = require('../netlify/functions/_rbac');
-const { collectMultisessionReport, buildConclusion } = require('../netlify/functions/_scope-multisession-report');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { HttpError } = require('../netlify/lib/_scope-rules');
+const { resolveObjective } = require('../netlify/lib/_scope-objectives');
+const { hasPermission } = require('../netlify/lib/_rbac');
+const { collectMultisessionReport, buildConclusion } = require('../netlify/lib/_scope-multisession-report');
 const logic = require('../assets/js/scope-ui-logic.js');
 
 const ROOT = path.join(__dirname, '..');
 const BASE = '3311287';
-const pgSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pg.js'), 'utf8');
-const schemaSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-schema.js'), 'utf8');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-objectives-service.js'), 'utf8');
+const pgSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pg.js'), 'utf8');
+const schemaSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-schema.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-objectives-service.js'), 'utf8');
 const scopeJs = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const uiLogic = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
@@ -288,10 +288,10 @@ async function seedPrSession(){
   });
 
   await record('19 — graphiques PDF gelés, signatures conservées', () => {
-    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+    const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
     assert.strictEqual(
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-charts.js'), 'utf8'),
-      gitShow('netlify/functions/_scope-pdf-charts.js')
+      fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-charts.js'), 'utf8'),
+      gitShow('netlify/lib/_scope-pdf-charts.js')
     );
     assert.ok(renderer.includes('const PDF_SHIFT_08_CM = 22.68'));
     assert.ok(renderer.includes('SIGNATURE_TEXT_LINE_COUNT = 3'));
@@ -301,10 +301,10 @@ async function seedPrSession(){
 
   await record('20 — aucune modification R4', () => {
     assert.strictEqual(
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8'),
-      gitShow('netlify/functions/_scope-cycle-rules.js')
+      fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8'),
+      gitShow('netlify/lib/_scope-cycle-rules.js')
     );
-    const r4 = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-cycle-rules.js'), 'utf8');
+    const r4 = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
     assert.ok(r4.includes('sessionHasValidStatus'));
     assert.ok(r4.includes('canCloseLastSession'));
   });

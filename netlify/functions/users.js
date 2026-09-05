@@ -1,7 +1,7 @@
-const { response, verifyToken, bearerToken, parseBody } = require('./_auth-utils');
-const { permissionsForRoles, requirePermission, normalizeRoles, KNOWN_ROLES, isAdminRole } = require('./_rbac');
-const { auditEntry } = require('./_audit-server');
-const db = require('./_postgres');
+const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { permissionsForRoles, requirePermission, normalizeRoles, KNOWN_ROLES, isAdminRole } = require('../lib/_rbac');
+const { auditEntry } = require('../lib/_audit-server');
+const db = require('../lib/_postgres');
 
 function sanitizeRoles(input){
   return normalizeRoles(Array.isArray(input) ? input : [input || 'UTILISATEUR']);

@@ -7,9 +7,9 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 
 const ROOT = path.join(__dirname, '..');
 const viewerSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-pdf-viewer.js'), 'utf8');

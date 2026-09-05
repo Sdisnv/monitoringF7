@@ -6,20 +6,20 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { createScopeCycleService } = require('../netlify/functions/_scope-cycle-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { createScopeCycleService } = require('../netlify/lib/_scope-cycle-service');
 const {
   eventContributionState,
   resolveCycleCompletion,
   isEventStatisticallyCountable
-} = require('../netlify/functions/_scope-cycle-rules');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
-const { collectMultisessionReport } = require('../netlify/functions/_scope-multisession-report');
+} = require('../netlify/lib/_scope-cycle-rules');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
+const { collectMultisessionReport } = require('../netlify/lib/_scope-multisession-report');
 
 const ROOT = path.join(__dirname, '..');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
 const uiSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const ACTOR = { sub: 'scope-metier-foundation-2' };
 const results = [];

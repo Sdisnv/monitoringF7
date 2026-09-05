@@ -1,8 +1,8 @@
 'use strict';
 const assert = require('assert');
 const populations = require('../assets/js/scope-personnel-populations.js');
-const svc = require('../netlify/functions/_scope-personnel-service.js');
-const { computeTaux } = require('../netlify/functions/_scope-rules.js');
+const svc = require('../netlify/lib/_scope-personnel-service.js');
+const { computeTaux } = require('../netlify/lib/_scope-rules.js');
 
 function oi(overrides){
   return Object.assign({

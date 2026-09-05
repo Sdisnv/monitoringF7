@@ -3,7 +3,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const display = require('../assets/js/scope-personnel-display.js');
-const svc = require('../netlify/functions/_scope-personnel-service.js');
+const svc = require('../netlify/lib/_scope-personnel-service.js');
 
 function spec(overrides){
   return Object.assign({

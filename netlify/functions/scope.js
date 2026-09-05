@@ -1,17 +1,17 @@
-const { response, parseBody, verifyToken, bearerToken } = require('./_auth-utils');
-const { canWriteRecords, hasPermission } = require('./_rbac');
-const { HttpError } = require('./_scope-rules');
-const { createScopeService } = require('./_scope-service');
-const { createScopeAnalyticsService } = require('./_scope-analytics-service');
-const { createScopeObjectivesService } = require('./_scope-objectives-service');
-const { createScopeDashboardService } = require('./_scope-dashboard-service');
-const { createScopeAlertsService } = require('./_scope-alerts-service');
-const { createScopeCycleService } = require('./_scope-cycle-service');
-const { createScopeJspReportingService, createScopeParticipationReportingService } = require('./_scope-jsp-reporting');
-const { getPgRepo } = require('./_scope-pg');
-const { generateReport, pdfResponse } = require('./_scope-report-service');
-const { createScopePersonService } = require('./_scope-person-service');
-const users = require('./_user-store');
+const { response, parseBody, verifyToken, bearerToken } = require('../lib/_auth-utils');
+const { canWriteRecords, hasPermission } = require('../lib/_rbac');
+const { HttpError } = require('../lib/_scope-rules');
+const { createScopeService } = require('../lib/_scope-service');
+const { createScopeAnalyticsService } = require('../lib/_scope-analytics-service');
+const { createScopeObjectivesService } = require('../lib/_scope-objectives-service');
+const { createScopeDashboardService } = require('../lib/_scope-dashboard-service');
+const { createScopeAlertsService } = require('../lib/_scope-alerts-service');
+const { createScopeCycleService } = require('../lib/_scope-cycle-service');
+const { createScopeJspReportingService, createScopeParticipationReportingService } = require('../lib/_scope-jsp-reporting');
+const { getPgRepo } = require('../lib/_scope-pg');
+const { generateReport, pdfResponse } = require('../lib/_scope-report-service');
+const { createScopePersonService } = require('../lib/_scope-person-service');
+const users = require('../lib/_user-store');
 
 async function requireAccess(event){
   const claims = verifyToken(bearerToken(event), 'access');
@@ -100,8 +100,8 @@ exports.handler = async function(event){
       return response(200, { ok:true, service:'scope', lot:'SCOPE-IMPL-1A' });
     }
     if(method === 'POST' && path === '/pilot-import-dap-y4'){
-      const db = require('./_postgres');
-      const sql = require('./_scope-dap-y4-sql');
+      const db = require('../lib/_postgres');
+      const sql = require('../lib/_scope-dap-y4-sql');
       await db.query(sql);
       const personnes = await db.query('select count(*)::int as n from scope_personnes');
       const aff = await db.query('select count(*)::int as n from scope_affectations');

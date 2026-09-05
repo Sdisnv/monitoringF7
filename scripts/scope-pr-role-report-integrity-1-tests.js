@@ -6,20 +6,20 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { collectReport } = require('../netlify/functions/_scope-report-data');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { collectReport } = require('../netlify/lib/_scope-report-data');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 const {
   collectMultisessionReport,
   assertAllReportSessionsClosed
-} = require('../netlify/functions/_scope-multisession-report');
+} = require('../netlify/lib/_scope-multisession-report');
 
 const ROOT = path.join(__dirname, '..');
 const uiSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const logicSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
-const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-service.js'), 'utf8');
-const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-multisession-report.js'), 'utf8');
+const serviceSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-service.js'), 'utf8');
+const reportSrc = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-multisession-report.js'), 'utf8');
 const results = [];
 const ACTOR = { roles: ['sdis-admin'], sub: 'scope-pr-role-report-integrity-1', displayName: 'Testeur SCOPE' };
 const CLAIMS = { roles: ['sdis-admin'], sub: 'scope-pr-role-report-integrity-1' };

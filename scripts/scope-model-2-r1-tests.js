@@ -4,15 +4,15 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopeAnalyticsService } = require('../netlify/functions/_scope-analytics-service');
-const { createScopeObjectivesService } = require('../netlify/functions/_scope-objectives-service');
-const { createScopeAlertsService } = require('../netlify/functions/_scope-alerts-service');
-const { HttpError, validateParticipationPatch } = require('../netlify/functions/_scope-rules');
-const { canPhysicallyDeletePersonne } = require('../netlify/functions/_scope-model');
-const { previewPersonnelSync, STATUTS } = require('../netlify/functions/_scope-personnel-sync-contract');
-const { evaluateEligibility, TYPES_PERIODE } = require('../netlify/functions/_scope-personnel');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
+const { createScopeObjectivesService } = require('../netlify/lib/_scope-objectives-service');
+const { createScopeAlertsService } = require('../netlify/lib/_scope-alerts-service');
+const { HttpError, validateParticipationPatch } = require('../netlify/lib/_scope-rules');
+const { canPhysicallyDeletePersonne } = require('../netlify/lib/_scope-model');
+const { previewPersonnelSync, STATUTS } = require('../netlify/lib/_scope-personnel-sync-contract');
+const { evaluateEligibility, TYPES_PERIODE } = require('../netlify/lib/_scope-personnel');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
@@ -69,7 +69,7 @@ async function closePresent(service, eventId, people){
 
 (async () => {
   await record('1 — migration MODEL-2 / R1 idempotente', async () => {
-    const schema = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-schema.js'), 'utf8');
+    const schema = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-schema.js'), 'utf8');
     const sql2 = fs.readFileSync(path.join(ROOT, 'database/migrations/20260820_scope_model_2.sql'), 'utf8');
     const sqlR1 = fs.readFileSync(path.join(ROOT, 'database/migrations/20260820_scope_model_2_r1.sql'), 'utf8');
     assert.ok(schema.includes("values ('scope-model-2') on conflict (version) do nothing"));
@@ -629,9 +629,9 @@ async function closePresent(service, eventId, people){
   await record('28 — Monitoring F7 non modifié', async () => {
     const files = [
       'database/migrations/20260820_scope_model_2_r1.sql',
-      'netlify/functions/_scope-schema.js',
-      'netlify/functions/_scope-personnel.js',
-      'netlify/functions/_scope-service.js'
+      'netlify/lib/_scope-schema.js',
+      'netlify/lib/_scope-personnel.js',
+      'netlify/lib/_scope-service.js'
     ];
     for(const rel of files){
       const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');

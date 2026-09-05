@@ -1,4 +1,4 @@
-const { handleCollection } = require('./_data-store');
+const { handleCollection } = require('../lib/_data-store');
 
 exports.handler = async function(event){
   return handleCollection(event, {

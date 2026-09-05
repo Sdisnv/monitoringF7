@@ -4,10 +4,10 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeCycleService } = require('../netlify/functions/_scope-cycle-service');
-const { computeCycleMetrics } = require('../netlify/functions/_scope-cycle-rules');
-const { computeTaux } = require('../netlify/functions/_scope-rules');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeCycleService } = require('../netlify/lib/_scope-cycle-service');
+const { computeCycleMetrics } = require('../netlify/lib/_scope-cycle-rules');
+const { computeTaux } = require('../netlify/lib/_scope-rules');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];

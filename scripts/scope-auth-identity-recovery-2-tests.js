@@ -7,7 +7,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const identity = require('../netlify/functions/_auth-identity');
+const identity = require('../netlify/lib/_auth-identity');
 const L = require('../assets/js/scope-ui-logic.js');
 const api = require('../assets/js/scope-api.js');
 
@@ -229,9 +229,9 @@ function uiHarness(fetchImpl, rawFetch){
       fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8'),
       fs.readFileSync(path.join(ROOT, 'assets/js/auth.js'), 'utf8'),
       fs.readFileSync(path.join(ROOT, 'assets/js/session-service.js'), 'utf8'),
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_auth-utils.js'), 'utf8'),
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_oidc-utils.js'), 'utf8'),
-      fs.readFileSync(path.join(ROOT, 'netlify/functions/_user-store.js'), 'utf8')
+      fs.readFileSync(path.join(ROOT, 'netlify/lib/_auth-utils.js'), 'utf8'),
+      fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8'),
+      fs.readFileSync(path.join(ROOT, 'netlify/lib/_user-store.js'), 'utf8')
     ].join('\n');
     ok(!/displayName\s*\|\|\s*['"]SCOPE['"]/.test(sources));
     ok(!/userName\s*\|\|\s*['"]SCOPE['"]/.test(sources));

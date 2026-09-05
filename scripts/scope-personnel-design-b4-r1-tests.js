@@ -4,21 +4,21 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { createMemoryRepo } = require('../netlify/functions/_scope-memory');
-const { createScopeService } = require('../netlify/functions/_scope-service');
-const { createScopePersonService } = require('../netlify/functions/_scope-person-service');
-const { generateReport } = require('../netlify/functions/_scope-report-service');
+const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
+const { createScopeService } = require('../netlify/lib/_scope-service');
+const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { generateReport } = require('../netlify/lib/_scope-report-service');
 const {
   domainesAnneesDataset,
   specialisationsAnneesDataset,
   personRepartitionDataset
-} = require('../netlify/functions/_scope-graphs');
+} = require('../netlify/lib/_scope-graphs');
 const charts = require('../assets/js/scope-charts.js');
 
 const ROOT = path.join(__dirname, '..');
 const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
-const renderer = fs.readFileSync(path.join(ROOT, 'netlify/functions/_scope-pdf-renderer.js'), 'utf8');
+const renderer = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
 const ACTOR = { roles: ['sdis-admin'], sub: 'b4r1', displayName: 'Testeur B4-R1' };
 const results = [];
 
