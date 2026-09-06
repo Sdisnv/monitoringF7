@@ -223,7 +223,8 @@ function buttonDisabled(row){
   });
 
   await record('14 - KPI global presents', () => {
-    assert.ok(uiSrc.includes('prExerciseParticipation.kpis'));
+    assert.ok(uiSrc.includes('fiche.prExerciseParticipation || fiche.sessionParticipation'));
+    assert.ok(uiSrc.includes('fiche.compteurs'));
     assert.strictEqual(afterD34.prExerciseParticipation.kpis.presents, 5);
   });
 

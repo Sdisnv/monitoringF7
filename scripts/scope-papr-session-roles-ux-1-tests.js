@@ -24,7 +24,7 @@ function person(id, nip, nom, prenom){
 }
 
 function event(id){
-  return { evenement_id: id, cycle_id: 'cycle-papr', domaine_code: 'PR', statut: 'PLANIFIE', date: '2026-09-01' };
+  return { evenement_id: id, cycle_id: 'cycle-papr', domaine_code: 'PR', statut: 'REALISE', date: '2026-09-01' };
 }
 
 function cyclePersonne(personneId){

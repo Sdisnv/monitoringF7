@@ -62,7 +62,10 @@ const env = {
 
   await record('03 — connexion construit le retour SCOPE sans mode URL', async () => {
     assert.ok(!ui.includes('?mode=live'));
-    assert.ok(ui.includes("L.oktaLoginHref('/scope.html')"));
+    assert.ok(ui.includes("const requested = location.hash && String(location.hash).startsWith('#/')"));
+    assert.ok(ui.includes('const loginHref = L.oktaLoginHref(requested)'));
+    assert.strictEqual(logic.oktaLoginHref('/scope.html'), '/auth/oidc/start?returnTo=%2Fscope.html');
+    assert.strictEqual(logic.oktaLoginHref('/scope.html#/evenements'), '/auth/oidc/start?returnTo=%2Fscope.html%23%2Fevenements');
   });
 
   await record('04 — accès sans session refusé sans bascule locale', async () => {
@@ -96,7 +99,7 @@ const env = {
     const source = fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8');
     assert.ok(source.includes("const returnTo = sanitizeReturnTo(statePayload.returnTo || '/')"));
     assert.ok(source.includes('redirect(302, returnTo'));
-    assert.ok(ui.includes("L.oktaLoginHref('/scope.html')"));
+    assert.ok(ui.includes('const loginHref = L.oktaLoginHref(requested)'));
   });
 
   await record('08 — header sans badge de mode technique', async () => {

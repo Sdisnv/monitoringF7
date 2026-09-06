@@ -24,7 +24,7 @@ function person(id, nip){
 }
 
 function event(id, extra){
-  return Object.assign({ evenement_id: id, cycle_id: 'cycle-1', domaine_code: 'PR', date: '2026-09-01', code_cours: `PAPR.${id}`, statut: 'PLANIFIE' }, extra || {});
+  return Object.assign({ evenement_id: id, cycle_id: 'cycle-1', domaine_code: 'PR', date: '2026-09-01', code_cours: `PAPR.${id}`, statut: 'REALISE' }, extra || {});
 }
 
 function cyclePersonne(personneId, role, extra){

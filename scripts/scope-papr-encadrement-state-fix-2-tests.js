@@ -61,7 +61,7 @@ for(const role of ['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']){
     { personneId: 'A', inclus: true, alreadyCountedInSession: true, statut: 'PRESENT', role: 'PARTICIPANT' },
     { personneId: 'B', inclus: false, alreadyCountedInSession: false, statut: 'PRESENT', role: 'PARTICIPANT' }
   ];
-  assert.deepStrictEqual(payload(rows, []).map((row) => row.personneId), ['A']);
+  assert.deepStrictEqual(payload(rows, []).map((row) => row.personneId), []);
 }
 
 const refresh = extractFunction('refreshFichePreservingSaisie');

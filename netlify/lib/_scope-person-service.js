@@ -301,7 +301,7 @@ function createScopePersonService(repo){
     const statutFilter = String(query.statut || query.filter || 'actifs').toLowerCase();
     const oiFilter = String(query.oi || query.cible || '').trim();
     const domaineFilter = String(query.domaine || query.domaineCode || '').trim().toUpperCase();
-    const today = isoDate(query.date) || isoDate(new Date().toISOString());
+    const today = isoDate(query.date) || isoDate(new Date());
     const [personnes, affectations, cibles, periodes, ratesBundle] = await Promise.all([
       repo.listPersonnes({ q: q || undefined }),
       repo.listAffectations({}),
@@ -413,7 +413,7 @@ function createScopePersonService(repo){
       repo.listAffectations({ personneId }),
       ciblesMap()
     ]);
-    const today = isoDate(query.date) || isoDate(new Date().toISOString());
+    const today = isoDate(query.date) || isoDate(new Date());
     const identity = identityPayload(personne, periodes, affectations, ciblesById, today, snap.summary.period);
     const included = (snap.evaluated.includedEvents || []).map((row) => {
       const oi = principalOi(affectations, ciblesById, row.date);

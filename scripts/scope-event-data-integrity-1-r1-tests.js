@@ -229,10 +229,13 @@ async function seedPerson(repo, cibleId, spec){
     assert.ok(!ui.includes('Déjà comptabilisé dans le bilan global'));
   });
 
-  await record('09 — personne déjà couverte globalement toujours saisissable', () => {
-    const row = { inclus: true, statut: 'NON_RENSEIGNE', role: 'PARTICIPANT', coveredInGlobalBilan: true };
-    assert.ok(!logic.sessionLocked(row));
-    assert.ok(logic.isOpenSaisieRow(row));
+  await record('09 — personne déjà couverte globalement verrouillée et non recomptée', () => {
+    const row = { personneId: 'P1', inclus: true, statut: 'NON_RENSEIGNE', role: 'PARTICIPANT', coveredInGlobalBilan: true };
+    assert.ok(logic.coveredInGlobalBilan(row));
+    assert.ok(logic.sessionLocked(row));
+    assert.ok(!logic.isOpenSaisieRow(row));
+    assert.strictEqual(logic.applyParticipationStatus(row, 'PRESENT'), row);
+    assert.deepStrictEqual(logic.buildPresenceSavePayload([row], new Set()), []);
   });
 
   await record('10 — R4 global non modifié', () => {

@@ -157,7 +157,7 @@ async function runPrGlobalRegression(client, service, repo){
     baseVersion: fiche2.evenement.version,
     participations: [{ personneId: personA.personne_id, statut: 'PRESENT', role: 'PARTICIPANT' }]
   }, { sub: 'forensic-test' });
-  assert.strictEqual((await service.lireEvenement(session2)).participations.find((row) => row.personne_id === personA.personne_id).statut, 'PRESENT');
+  assert((await service.lireEvenement(session2)).participations.find((row) => row.personne_id === personA.personne_id).statut === 'PRESENT', 'Participation verrouillée non persistée');
   await service.ajouterEncadrement(session2, { personneId: personA.personne_id, role: 'FORMATEUR', baseVersion: (await service.lireEvenement(session2)).evenement.version }, { sub: 'forensic-test' });
   const enc = await dbParticipation(client, session2, personA.personne_id);
   assert(enc && enc.role === 'FORMATEUR', 'Encadrement non sélectionnable après verrou PR global');

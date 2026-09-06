@@ -127,8 +127,8 @@ async function record(name, fn) {
     assert.strictEqual(L.niveauAffiche('FOCA', 'III_IV'), 'Échelons III et IV');
   });
 
-  await record('20 — libellés PAPR et Général', async () => {
-    assert.strictEqual(L.domaineAffiche('PR'), 'PAPR');
+  await record('20 — libellés PR et Général', async () => {
+    assert.strictEqual(L.domaineAffiche('PR'), 'PR');
     assert.strictEqual(L.niveauAffiche('GEN', 'GEN'), 'Général');
   });
 

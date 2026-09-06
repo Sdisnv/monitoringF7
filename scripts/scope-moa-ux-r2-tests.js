@@ -147,12 +147,12 @@ async function record(name, fn) {
 
   await record('16 — logo SCOPE agrandi R2', async () => {
     assert.ok(css.includes('height: 48px'));
-    assert.ok(html.includes('scope-ui-logic.js?v=scope-login-1'));
+    assert.ok(html.includes('scope-ui-logic.js?v=scope-events-access-r1') || html.includes('scope-ui-logic.js?v=scope-login-1'));
     assert.ok(html.includes('scope-charts.js?v=scope-objectifs-participation-1-r1') || html.includes('scope-charts.js?v=scope-design-2d') || html.includes('scope-charts.js?v=scope-design-2c') || html.includes('scope-charts.js?v=scope-design-2b') || html.includes('scope-charts.js?v=scope-design-2') || html.includes('scope-charts.js?v=scope-moa-ux-r2'));
     assert.ok(html.includes('scope.css?v=scope-login-1') || html.includes('scope.css?v=scope-event-c3-fix') || html.includes('scope.css?v=scope-event-design-c1') || html.includes('scope.css?v=scope-event-design-c') || html.includes('scope.css?v=scope-event-design-b') || html.includes('scope.css?v=scope-event-design-a') || html.includes('scope.css?v=scope-design-2d') || html.includes('scope.css?v=scope-design-2c') || html.includes('scope.css?v=scope-design-2b') || html.includes('scope.css?v=scope-design-2') || html.includes('scope.css?v=scope-ux-event-1') || html.includes('scope.css?v=scope-ux-event-2') || html.includes('scope.css?v=scope-ux-event-3'));
     assert.ok(html.includes('scope-personnel-display.js?v=scope-objectifs-participation-1-r1') || html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
     assert.ok(/scope-personnel-activity-modal\.js\?v=scope-objectifs-participation-1-r1|scope-personnel-activity-modal\.js\?v=scope-personnel-status-ux-2a|scope-personnel-activity-modal\.js\?v=scope-personnel-design-b[23]/.test(html));
-    assert.ok(html.includes('scope-ui.js?v=scope-login-1') || html.includes('scope-ui.js?v=scope-event-c3-fix') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
+    assert.ok(html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1') || html.includes('scope-ui.js?v=scope-event-c3-fix') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
   });
 
   await record('17 — période hors header', async () => {
@@ -202,7 +202,8 @@ async function record(name, fn) {
     assert.ok(!ui.includes('Aucun jeton'));
     assert.ok(!ui.includes('scope-confirm-live'));
     assert.ok(ui.includes('scope-login-v1'));
-    assert.ok(ui.includes("L.oktaLoginHref('/scope.html')"));
+    assert.ok(ui.includes("const requested = location.hash && String(location.hash).startsWith('#/')"));
+    assert.ok(ui.includes('const loginHref = L.oktaLoginHref(requested)'));
   });
 
   await record('25 — tableau Personnel métier définitif', async () => {

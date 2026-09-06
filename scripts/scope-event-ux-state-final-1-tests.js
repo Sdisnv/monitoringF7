@@ -127,7 +127,7 @@ async function insertListEvent(repo, id, patch = {}){
 
   await record('E — save nominatif relit le serveur sans snapshot stale', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    const saveBlock = ui.slice(ui.indexOf('function saveParticipations'), ui.indexOf('function cloturer'));
+    const saveBlock = ui.slice(ui.indexOf('function persistParticipations'), ui.indexOf('function saveParticipations'));
     assert.ok(saveBlock.includes('client.enregistrerParticipations'));
     assert.ok(saveBlock.includes('await reloadFicheFromServer(id)'));
     assert.ok(!saveBlock.includes('await loadFiche(id)'));
@@ -154,12 +154,12 @@ async function insertListEvent(repo, id, patch = {}){
     await repo.upsertParticipation({ evenement_id: 'future-started', personne_id: 'p1', statut: 'PRESENT', role: 'PARTICIPANT', source: 'SAISIE' });
     const listed = await service.listEvenements({ annee: 2026, today: '2026-08-26' });
     const byId = Object.fromEntries(listed.evenements.map((item) => [item.evenement.evenement_id, item.etatMetier.code]));
-    assert.strictEqual(byId['future-empty'], 'PLANIFIE');
+    assert.strictEqual(byId['future-empty'], 'A_TRAITER');
     assert.strictEqual(byId['future-started'], 'SAISIE_EN_COURS');
     assert.strictEqual(byId['past-open'], 'A_TRAITER');
     assert.strictEqual(byId['past-realise'], 'TRAITE');
     const filtered = await service.listEvenements({ annee: 2026, statut: 'A_TRAITER', today: '2026-08-26' });
-    assert.deepStrictEqual(filtered.evenements.map((item) => item.evenement.evenement_id), ['past-open']);
+    assert.deepStrictEqual(filtered.evenements.map((item) => item.evenement.evenement_id), ['future-empty', 'past-open']);
   });
 
   await record('H — filtre UI et badge utilisent les états métier', () => {
