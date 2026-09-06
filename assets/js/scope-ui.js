@@ -7209,6 +7209,11 @@
         </td>
       </tr>`;
     }).join('');
+    const usersBody = state.adminUsersError
+      ? `<tr><td colspan="7"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.adminUsersError)}</div></td></tr>`
+      : state.adminUsersReady
+        ? (rows || '<tr><td colspan="7"><div class="scope-empty">Aucun profil applicatif enregistré.</div></td></tr>')
+        : '<tr><td colspan="7"><div class="scope-empty">Chargement des utilisateurs…</div></td></tr>';
     return `
       <div class="scope-crumb">Administration / Utilisateurs</div>
       <div class="scope-main">
@@ -7236,7 +7241,7 @@
           <div class="scope-table-wrap">
             <table class="scope-table">
               <thead><tr><th>Utilisateur</th><th>Email</th><th>Identité auth</th><th>Profil</th><th>État</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
-              <tbody>${state.adminUsersReady ? (rows || '<tr><td colspan="7"><div class="scope-empty">Aucun profil applicatif enregistré.</div></td></tr>') : '<tr><td colspan="7"><div class="scope-empty">Chargement des utilisateurs…</div></td></tr>'}</tbody>
+              <tbody>${usersBody}</tbody>
             </table>
           </div>
         </div>` : ''}
@@ -10028,7 +10033,6 @@
       if (r.screen === 'vigilance') await loadVigilance();
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
-      if (r.screen === 'utilisateurs') await loadAdminUsers();
       if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         if (client.listPersonnes) {
           const people = await client.listPersonnes();
@@ -10062,6 +10066,7 @@
       resetCycleFilters,
       resetAdminUserForm,
       fillAdminUserForm,
+      loadAdminUsers,
       renderRapportsHtml() {
         return renderRapports();
       },
