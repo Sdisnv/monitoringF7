@@ -237,7 +237,7 @@ function renderNav(hash, permissions) {
 
   await record('10 - cache bust et suite dediee ADMIN-RBAC-DOC-1 branches', async () => {
     assert.ok(htmlSource.includes('scope-ui-logic.js?v=scope-admin-rbac-doc-1'));
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
     const pkg = JSON.parse(read('package.json'));
     assert.ok(pkg.scripts['test:scope'].includes('scripts/scope-admin-rbac-doc-1-tests.js'));
     assert.ok(!/sdis-admin` \| Administration complète/.test(rbacDoc), 'ancienne matrice legacy affichee comme contrat actuel');

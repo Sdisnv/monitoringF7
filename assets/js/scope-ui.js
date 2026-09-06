@@ -162,6 +162,7 @@
       role: 'UTILISATEUR',
       active: true
     },
+    adminUserSort: { key: 'displayName', dir: 'asc' },
     personnelListPage: 1,
     personnelListPageSize: 12,
     eventSort: { key: 'date', dir: 'asc' },
@@ -1674,6 +1675,16 @@
     </header>`;
   }
 
+  function contextReturnHtml(href, label) {
+    return `<div class="scope-actions scope-context-actions">
+      <a class="scope-btn scope-btn-secondary scope-btn-compact" href="${escapeHtml(href)}">${escapeHtml(label)}</a>
+    </div>`;
+  }
+
+  function administrationReturnHtml() {
+    return contextReturnHtml('#/administration', 'Retour administration');
+  }
+
   function alertCardHtml(alert, options) {
     const ack = options && options.ack;
     const cibles = (alert.metadata && alert.metadata.cibles) || [];
@@ -2904,10 +2915,10 @@
   function renderCycle() {
     const detail = state.cycleDetail;
     if (state.cycleDetailError) {
-      return `<div class="scope-crumb"><a href="#/cycles">Cycles</a></div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Spécialisations', title: 'Cycle', context: 'Erreur', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.cycleDetailError)}</p></div></div>`;
+      return `<div class="scope-crumb"><a href="#/cycles">Activité / Cycles</a></div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Activité', title: 'Cycle', context: 'Erreur', logo: true })}${contextReturnHtml('#/cycles', 'Retour aux cycles')}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.cycleDetailError)}</p></div></div>`;
     }
     if (!state.cycleDetailReady || !detail) {
-      return `<div class="scope-crumb"><a href="#/cycles">Cycles</a></div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Spécialisations', title: 'Cycle', context: 'Chargement', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du cycle…</p></div></div>`;
+      return `<div class="scope-crumb"><a href="#/cycles">Activité / Cycles</a></div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Activité', title: 'Cycle', context: 'Chargement', logo: true })}${contextReturnHtml('#/cycles', 'Retour aux cycles')}<div class="scope-card scope-placeholder"><p>Chargement du cycle…</p></div></div>`;
     }
     const cycle = detail.cycle || {};
     const metrics = detail.metrics || {};
@@ -2972,9 +2983,10 @@
       </tr>`;
     }).join('') : `<tr><td colspan="${escapeHtml(String(4 + obligations.length))}"><div class="scope-empty">Aucune matrice individuelle disponible pour ce cycle.</div></td></tr>`;
     return `
-      <div class="scope-crumb"><a href="#/cycles">Cycles</a> / ${escapeHtml(cycle.libelle || 'Cycle')}</div>
+      <div class="scope-crumb"><a href="#/cycles">Activité / Cycles</a> / ${escapeHtml(cycle.libelle || 'Cycle')}</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Spécialisations', title: cycle.libelle || 'Cycle', context: `${cycle.type_cycle || cycle.domaine_code || '—'} · ${period}`, logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Activité', title: cycle.libelle || 'Cycle', context: `${cycle.type_cycle || cycle.domaine_code || '—'} · ${period}`, logo: true })}
+        ${contextReturnHtml('#/cycles', 'Retour aux cycles')}
         <div class="scope-kpis">
           <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(String(pilotageKpis.population ?? cycleMetric(metrics, 'populationDistincte')))}</strong><span>Population suivie</span><em>${escapeHtml(cycle.statut || 'PLANIFIE')}</em></article>
           <article class="scope-kpi"><strong>${escapeHtml(String(pilotageKpis.complete ?? 0))}</strong><span>Personnes complètes</span><small>${escapeHtml(String(pilotageKpis.incomplete ?? 0))} incomplète(s)</small></article>
@@ -3036,7 +3048,7 @@
   function renderVue() {
     const r = route();
     const dash = state.dashboard;
-    const crumbs = ['<a href="#/statistiques">Analyses</a>', '<span>Périmètre</span>'];
+    const crumbs = ['<a href="#/statistiques">Pilotage / Analyses</a>', '<span>Vue détaillée</span>'];
     if (r.domaine) crumbs.push(`<a href="#/vue/${encodeURIComponent(r.domaine)}">${escapeHtml(domaineLabel(r.domaine))}</a>`);
     if (r.cible) crumbs.push(`<span>${escapeHtml(r.cible)}</span>`);
     const header = pageHeaderHtml({
@@ -3048,7 +3060,7 @@
     });
     const contextualNav = `<div class="scope-actions scope-context-actions">
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/evenements">Événements</a>
-      <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/statistiques">Analyses</a>
+      <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/statistiques">Retour aux analyses</a>
       <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-vue-report="${escapeHtml(r.domaine || '')}" data-vue-cible="${escapeHtml(r.cible || '')}">Rapport de participation</button>
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/rapports">Hub Rapports</a>
     </div>`;
@@ -4581,7 +4593,8 @@
   function renderPersonnel(options) {
     const importMode = Boolean(options && options.importMode);
     const showImportPanel = importMode || state.personnelSync.panelOpen;
-    const allowed = canManagePersonnel() && typeof client.previewPersonnelSync === 'function';
+    const live = typeof client.previewPersonnelSync === 'function';
+    const allowed = canManagePersonnel() && live;
     const preview = state.personnelSync.preview;
     const rapport = state.personnelSync.rapport;
     const summary = (preview && (preview.importSummary || preview.summary)) || {};
@@ -4604,7 +4617,7 @@
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: importMode ? 'Administration / Imports' : 'Personnel', title: importMode ? 'Import du personnel' : 'Personnel', context: importMode ? 'Synchronisation CSV' : 'Annuaire nominatif', description: importMode ? '' : 'Annuaire nominatif. Les taux individuels restent dans la fiche.', logo: true })}
-        ${''}
+        ${importMode ? administrationReturnHtml() : ''}
         ${renderPersonnelDirectory()}
         ${showImportPanel ? `<div class="scope-card" style="margin-top:12px" id="scope-personnel-import-panel">
           <h2 style="margin-top:0">Import du personnel</h2>
@@ -4741,11 +4754,11 @@
     const identite = fiche && fiche.identite;
     if (!canReadPersonnel()) {
       return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
-        <div class="scope-main"><div class="scope-card"><p class="scope-empty">Fiche individuelle réservée aux profils habilités (personnel:read).</p></div></div>`;
+        <div class="scope-main">${contextReturnHtml('#/personnel', 'Retour au personnel')}<div class="scope-card"><p class="scope-empty">Fiche individuelle réservée aux profils habilités (personnel:read).</p></div></div>`;
     }
     if (!fiche || !identite) {
       return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
-        <div class="scope-main"><div class="scope-card"><p>Chargement de la fiche…</p></div></div>`;
+        <div class="scope-main">${contextReturnHtml('#/personnel', 'Retour au personnel')}<div class="scope-card"><p>Chargement de la fiche…</p></div></div>`;
     }
     const display = personnelDisplay();
     const ficheSabbatical = fiche.sabbatical || (fiche.personne && fiche.personne.sabbatical) || null;
@@ -5163,10 +5176,10 @@
     const report = state.jspReport;
     const site = state.jspReportSite || 'TOUS';
     if (state.jspReportError) {
-      return `<div class="scope-crumb">Rapports / Participation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: 'Participation', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.jspReportError)}</p></div></div>`;
+      return `<div class="scope-crumb">Rapports / Participation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: 'Participation', logo: true })}${contextReturnHtml('#/rapports', 'Retour aux rapports')}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.jspReportError)}</p></div></div>`;
     }
     if (!state.jspReportReady || !report) {
-      return `<div class="scope-crumb">Rapports / Participation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: 'Participation', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du rapport de participation…</p></div></div>`;
+      return `<div class="scope-crumb">Rapports / Participation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Production', title: 'RAPPORT DE PARTICIPATION', context: 'Participation', logo: true })}${contextReturnHtml('#/rapports', 'Retour aux rapports')}<div class="scope-card scope-placeholder"><p>Chargement du rapport de participation…</p></div></div>`;
     }
     const k = report.kpis || {};
     const siteRows = report.siteRows || [];
@@ -5245,10 +5258,10 @@
   function renderFormationReport() {
     const report = state.formationReport;
     if (state.formationReportError) {
-      return `<div class="scope-crumb">Rapports / Pilotage Formation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: 'Formation', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.formationReportError)}</p></div></div>`;
+      return `<div class="scope-crumb">Rapports / Pilotage Formation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: 'Formation', logo: true })}${contextReturnHtml('#/rapports', 'Retour aux rapports')}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.formationReportError)}</p></div></div>`;
     }
     if (!state.formationReportReady || !report) {
-      return `<div class="scope-crumb">Rapports / Pilotage Formation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: 'Formation', logo: true })}<div class="scope-card scope-placeholder"><p>Chargement du rapport global Formation…</p></div></div>`;
+      return `<div class="scope-crumb">Rapports / Pilotage Formation</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Commandement', title: 'RAPPORT GLOBAL FORMATION', context: 'Formation', logo: true })}${contextReturnHtml('#/rapports', 'Retour aux rapports')}<div class="scope-card scope-placeholder"><p>Chargement du rapport global Formation…</p></div></div>`;
     }
     const k = report.kpis || {};
     const domainRows = report.domainRows || [];
@@ -5478,6 +5491,7 @@
           description: 'Définissez les seuils de participation utilisés par les analyses et rapports SCOPE.',
           logo: true
         })}
+        ${administrationReturnHtml()}
         <div class="scope-card">
           <p><strong>Général</strong> — Objectif par défaut utilisé lorsqu’aucun objectif plus précis n’est défini.</p>
           <p><strong>Domaine</strong> — Objectif applicable à l’ensemble d’un domaine.</p>
@@ -5630,6 +5644,7 @@
       <div class="scope-crumb">Administration / Suivi nominatif</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Administration / Référentiels', title: 'Suivi nominatif', context: 'Configuration', logo: true })}
+        ${administrationReturnHtml()}
         <div class="scope-card">
           <h2 style="margin-top:0">Suivi nominatif configurable</h2>
           <p class="scope-mode-hint">Le nominatif est possible pour tous les domaines, sous-domaines et cibles. Ce réglage propose un mode à la création ou à l’import. Il ne transforme pas les événements existants et ne crée pas de personnes fictives.</p>
@@ -5833,7 +5848,7 @@
     const fiche = state.fiche;
     if (!fiche) {
       const loading = state.loading || !state.ficheReady;
-      return `<div class="scope-crumb">Événements</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
+      return `<div class="scope-crumb">Événements</div><div class="scope-main">${contextReturnHtml('#/evenements', 'Retour aux événements')}<div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
     }
     const ev = fiche.evenement;
     const mode = eventMode(ev);
@@ -6078,7 +6093,7 @@
     const fiche = state.fiche;
     if (!fiche) {
       const loading = state.loading || !state.ficheReady;
-      return `<div class="scope-crumb">Événements / Saisie</div><div class="scope-main"><div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
+      return `<div class="scope-crumb">Événements / Saisie</div><div class="scope-main">${contextReturnHtml('#/evenements', 'Retour aux événements')}<div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
     }
     const ev = fiche.evenement;
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
@@ -7146,6 +7161,7 @@
       <div class="scope-crumb">Administration / Imports / Événements</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Administration / Imports', title: 'Import des événements', context: 'Programme CSV', logo: true })}
+        ${administrationReturnHtml()}
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme d’événements</h2>
           <p>Ce parcours recommandé alimente le programme SCOPE. Après import, la base SCOPE reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
@@ -7189,17 +7205,32 @@
     return renderPersonnel({ importMode: true }).replace('<div class="scope-crumb">Personnel</div>', '<div class="scope-crumb">Administration / Imports / Personnel</div>');
   }
 
+  function adminUserSortColumns() {
+    return [
+      { key: 'displayName', type: 'text', value: (user) => user && (user.displayName || user.email || user.subject), tieBreakers: [
+        { key: 'email', type: 'text', value: (user) => user && user.email },
+        { key: 'subject', type: 'text', value: (user) => user && user.subject }
+      ] },
+      { key: 'email', type: 'text', value: (user) => user && user.email },
+      { key: 'subject', type: 'text', value: (user) => user && (user.nip || user.subject) },
+      { key: 'role', type: 'text', value: (user) => (user && user.roles || []).map(roleLabelText).join(', ') || roleLabelText(user && user.role) },
+      { key: 'active', type: 'status', value: (user) => user && user.active === false ? 'Inactif' : 'Actif' },
+      { key: 'lastLoginAt', type: 'date', value: (user) => user && user.lastLoginAt }
+    ];
+  }
+
   function renderUtilisateurs() {
     const canAdmin = hasScopePermission('users:admin');
     const roles = state.adminRoles.length ? state.adminRoles : ['UTILISATEUR', 'GESTIONNAIRE', 'ADMINISTRATEUR'];
     const form = state.adminUserForm || {};
     const roleOptions = roles.map((role) => `<option value="${escapeHtml(role)}" ${form.role === role ? 'selected' : ''}>${escapeHtml(roleLabelText(role))}</option>`).join('');
-    const rows = (state.adminUsers || []).map((user) => {
+    const userRows = L.sortRows ? L.sortRows(state.adminUsers || [], state.adminUserSort, adminUserSortColumns()) : (state.adminUsers || []).slice();
+    const rows = userRows.map((user) => {
       const rolesText = (user.roles || []).map(roleLabelText).join(', ') || roleLabelText(user.role || 'UTILISATEUR');
       return `<tr>
         <td data-label="Utilisateur"><strong>${escapeHtml(user.displayName || user.email || user.subject || '—')}</strong><br><small>${escapeHtml(user.subject || '—')}</small></td>
         <td data-label="Email">${escapeHtml(user.email || '—')}</td>
-        <td data-label="Identité auth">${escapeHtml(user.nip || user.subject || '—')}</td>
+        <td data-label="Identifiant">${escapeHtml(user.nip || user.subject || '—')}</td>
         <td data-label="Profil">${escapeHtml(rolesText)}</td>
         <td data-label="État">${user.active === false ? 'Inactif' : 'Actif'}</td>
         <td data-label="Dernière connexion">${escapeHtml(L.formatDate(user.lastLoginAt) || '—')}</td>
@@ -7218,16 +7249,17 @@
       <div class="scope-crumb">Administration / Utilisateurs</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Administration / Accès', title: 'Utilisateurs', context: 'Accès et rôles', logo: true })}
+        ${administrationReturnHtml()}
         ${!canAdmin ? `<div class="scope-card"><p class="scope-empty">La gestion des utilisateurs est réservée aux profils habilités (users:admin).</p></div>` : ''}
         ${canAdmin && state.adminUsersError ? `<div class="scope-card"><p class="scope-empty scope-state-error" role="alert">${escapeHtml(state.adminUsersError)}</p></div>` : ''}
         ${canAdmin ? `<div class="scope-card">
           <h2 style="margin-top:0">${state.adminUserEditing ? 'Modifier un profil applicatif' : 'Ajouter un profil applicatif'}</h2>
-          <p class="scope-mode-hint">Cette page gère uniquement les profils applicatifs SCOPE. Le compte primaire, le mot de passe et le MFA restent dans Okta. Aucun lien automatique n’est créé avec le Personnel métier.</p>
+          <p class="scope-mode-hint">Cette page gère uniquement les profils applicatifs SCOPE. Le compte, le mot de passe et la validation multi-facteur restent dans Okta. Aucun lien automatique n’est créé avec le Personnel métier.</p>
           <div class="scope-report-grid">
-            <div class="scope-field"><label>Identifiant auth / subject</label><input id="admin-user-subject" type="text" value="${escapeHtml(form.subject || '')}" ${state.adminUserEditing ? 'readonly' : ''}></div>
+            <div class="scope-field"><label>Identifiant de connexion</label><input id="admin-user-subject" type="text" value="${escapeHtml(form.subject || '')}" ${state.adminUserEditing ? 'readonly' : ''}></div>
             <div class="scope-field"><label>Email</label><input id="admin-user-email" type="email" value="${escapeHtml(form.email || '')}"></div>
             <div class="scope-field"><label>Nom affiché</label><input id="admin-user-display" type="text" value="${escapeHtml(form.displayName || '')}"></div>
-            <div class="scope-field"><label>Identifiant auth éventuel</label><input id="admin-user-nip" type="text" value="${escapeHtml(form.nip || '')}"></div>
+            <div class="scope-field"><label>Identifiant secondaire</label><input id="admin-user-nip" type="text" value="${escapeHtml(form.nip || '')}"></div>
             <div class="scope-field"><label>Profil</label><select id="admin-user-role">${roleOptions}</select></div>
             <label class="scope-check"><input id="admin-user-active" type="checkbox" ${form.active !== false ? 'checked' : ''}> Actif</label>
           </div>
@@ -7240,7 +7272,15 @@
           <h2 style="margin-top:0">Profils autorisés</h2>
           <div class="scope-table-wrap">
             <table class="scope-table">
-              <thead><tr><th>Utilisateur</th><th>Email</th><th>Identité auth</th><th>Profil</th><th>État</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
+              <thead><tr>
+                ${sortableHeader('admin-users', 'displayName', 'Utilisateur', state.adminUserSort)}
+                ${sortableHeader('admin-users', 'email', 'Email', state.adminUserSort)}
+                ${sortableHeader('admin-users', 'subject', 'Identifiant', state.adminUserSort)}
+                ${sortableHeader('admin-users', 'role', 'Profil', state.adminUserSort)}
+                ${sortableHeader('admin-users', 'active', 'État', state.adminUserSort)}
+                ${sortableHeader('admin-users', 'lastLoginAt', 'Dernière connexion', state.adminUserSort)}
+                <th>Actions</th>
+              </tr></thead>
               <tbody>${usersBody}</tbody>
             </table>
           </div>
@@ -7250,7 +7290,7 @@
           <p>SCOPE s’appuie sur les comptes institutionnels. Les profils applicatifs règlent uniquement les capacités dans SCOPE.</p>
           <dl class="scope-meta">
             <div><dt>Personne</dt><dd>objet métier suivi par NIP, affectations et participations</dd></div>
-            <div><dt>Utilisateur</dt><dd>compte authentifié par Okta / profil applicatif SCOPE</dd></div>
+            <div><dt>Utilisateur</dt><dd>compte authentifié par Okta et profil applicatif SCOPE</dd></div>
             <div><dt>Rôles</dt><dd>Utilisateur, Gestionnaire, Administrateur</dd></div>
             <div><dt>Administration</dt><dd>${canAdmin ? 'Droits d’administration détectés.' : 'Non visible avec votre profil actuel.'}</dd></div>
             <div><dt>Gestion</dt><dd>Fonctions d’administration disponibles pour les profils habilités.</dd></div>
@@ -7318,6 +7358,7 @@
       <div class="scope-crumb">Administration / À propos</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Administration', title: 'À propos', context: 'Application', logo: true })}
+        ${administrationReturnHtml()}
         <div class="scope-card scope-about-hero">
           <img src="assets/img/logo-scope-blanc.png" alt="SCOPE">
           <p class="scope-eyebrow">Suivi et analyse de l’activité</p>
@@ -7713,7 +7754,7 @@
       const role = String((document.getElementById('admin-user-role') || {}).value || 'UTILISATEUR').trim().toUpperCase();
       const active = Boolean((document.getElementById('admin-user-active') || {}).checked);
       if (!subject && !email) {
-        toast('error', 'Action refusée', 'Indiquez au minimum un identifiant auth ou un email.');
+        toast('error', 'Action refusée', 'Indiquez au minimum un identifiant de connexion ou un email.');
         return;
       }
       withLoading(async () => {
@@ -9003,6 +9044,10 @@
         }
         if (table === 'objectifs') {
           state.objectifSort = L.nextSort ? L.nextSort(state.objectifSort, key, key === 'debut' || key === 'fin' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'admin-users') {
+          state.adminUserSort = L.nextSort ? L.nextSort(state.adminUserSort, key, key === 'lastLoginAt' ? 'desc' : 'asc') : { key, dir: 'asc' };
           render();
         }
       });

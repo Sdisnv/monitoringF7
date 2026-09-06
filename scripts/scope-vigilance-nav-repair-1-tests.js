@@ -131,7 +131,7 @@ function uiHooks(hash){
   });
 
   await record('04 — cache-bust route vers le JS corrigé', async () => {
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || htmlSource.includes('scope-ui.js?v=scope-nav-convergence-1') || htmlSource.includes('scope-ui.js?v=scope-analyses-statistiques-1') || htmlSource.includes('scope-ui.js?v=scope-vigilance-nav-repair-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || htmlSource.includes('scope-ui.js?v=scope-nav-convergence-1') || htmlSource.includes('scope-ui.js?v=scope-analyses-statistiques-1') || htmlSource.includes('scope-ui.js?v=scope-vigilance-nav-repair-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
   });
 
   console.log(`\nSCOPE-VIGILANCE-NAV-REPAIR-1: ${passed} tests PASS`);
