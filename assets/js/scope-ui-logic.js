@@ -731,8 +731,7 @@
         id: 'acces',
         label: 'Accès',
         items: [
-          { id: 'utilisateurs', href: '#/reglages/utilisateurs', label: 'Utilisateurs', permission: 'users:admin', current: r.screen === 'utilisateurs' },
-          { id: 'administration', href: '#/reglages/administration', label: 'Administration', permission: 'settings:manage', current: r.screen === 'administration' }
+          { id: 'utilisateurs', href: '#/reglages/utilisateurs', label: 'Utilisateurs', permission: 'users:admin', current: r.screen === 'utilisateurs' }
         ]
       },
       {

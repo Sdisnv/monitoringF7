@@ -181,8 +181,8 @@ async function record(name, fn) {
   });
 
   await record('30 — pages admin honnêtes sans pseudo-console', async () => {
-    assert.ok(ui.includes('identité institutionnelle'));
-    assert.ok(ui.includes('gestion utilisateur locale'));
+    assert.ok(ui.includes('compte authentifié par Okta'));
+    assert.ok(ui.includes('profils applicatifs SCOPE'));
     assert.ok(ui.includes('pseudo-administration'));
   });
 

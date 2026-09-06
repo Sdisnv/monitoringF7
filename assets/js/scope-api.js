@@ -339,6 +339,8 @@
       formationReport(params) { return request('GET', `/reporting/formation${queryString(params || {})}`); },
       listAlerts(params) { return request('GET', `/alerts${queryString(params || {})}`); },
       acquitterAlerte(body) { return request('POST', '/alerts/acquitter', body); },
+      listAdminUsers() { return directRequest('GET', '/.netlify/functions/admin-users'); },
+      saveAdminUser(body) { return directRequest('POST', '/.netlify/functions/admin-users', body || {}); },
       listObjectifs(params) { return request('GET', `/objectifs${queryString(params || {})}`); },
       resolveObjectif(params) { return request('GET', `/objectifs/resolution${queryString(params || {})}`); },
       createObjectif(body) { return request('POST', '/objectifs', body); },

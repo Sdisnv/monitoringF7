@@ -148,6 +148,20 @@
     personnelOi: '',
     personnelSpecialization: '',
     personnelSort: { key: '', dir: '' },
+    adminUsers: [],
+    adminUsersReady: false,
+    adminUsersError: null,
+    adminRoles: [],
+    adminRolePermissions: {},
+    adminUserEditing: '',
+    adminUserForm: {
+      subject: '',
+      email: '',
+      displayName: '',
+      nip: '',
+      role: 'UTILISATEUR',
+      active: true
+    },
     personnelListPage: 1,
     personnelListPageSize: 12,
     eventSort: { key: 'date', dir: 'asc' },
@@ -662,6 +676,36 @@
     }
     const data = await client.listObjectifs();
     state.objectifs = data.objectifs || [];
+  }
+
+  async function loadAdminUsers() {
+    if (!hasScopePermission('users:admin')) {
+      state.adminUsers = [];
+      state.adminUsersReady = true;
+      state.adminUsersError = null;
+      return;
+    }
+    if (typeof client.listAdminUsers !== 'function') {
+      state.adminUsers = [];
+      state.adminUsersReady = true;
+      state.adminUsersError = 'Gestion utilisateurs indisponible.';
+      return;
+    }
+    state.adminUsersReady = false;
+    state.adminUsersError = null;
+    try {
+      const data = await client.listAdminUsers();
+      state.adminUsers = data.users || [];
+      state.adminRoles = data.roles || ['UTILISATEUR', 'GESTIONNAIRE', 'ADMINISTRATEUR'];
+      state.adminRolePermissions = data.rolePermissions || {};
+      state.adminUsersReady = true;
+      return data;
+    } catch (error) {
+      state.adminUsers = [];
+      state.adminUsersReady = true;
+      state.adminUsersError = L.friendlyError(error).message || 'Les utilisateurs n’ont pas pu être chargés.';
+      throw error;
+    }
   }
 
   async function loadDashboard() {
@@ -7147,16 +7191,62 @@
 
   function renderUtilisateurs() {
     const canAdmin = hasScopePermission('users:admin');
+    const roles = state.adminRoles.length ? state.adminRoles : ['UTILISATEUR', 'GESTIONNAIRE', 'ADMINISTRATEUR'];
+    const form = state.adminUserForm || {};
+    const roleOptions = roles.map((role) => `<option value="${escapeHtml(role)}" ${form.role === role ? 'selected' : ''}>${escapeHtml(roleLabelText(role))}</option>`).join('');
+    const rows = (state.adminUsers || []).map((user) => {
+      const rolesText = (user.roles || []).map(roleLabelText).join(', ') || roleLabelText(user.role || 'UTILISATEUR');
+      return `<tr>
+        <td data-label="Utilisateur"><strong>${escapeHtml(user.displayName || user.email || user.subject || '—')}</strong><br><small>${escapeHtml(user.subject || '—')}</small></td>
+        <td data-label="Email">${escapeHtml(user.email || '—')}</td>
+        <td data-label="Identité auth">${escapeHtml(user.nip || user.subject || '—')}</td>
+        <td data-label="Profil">${escapeHtml(rolesText)}</td>
+        <td data-label="État">${user.active === false ? 'Inactif' : 'Actif'}</td>
+        <td data-label="Dernière connexion">${escapeHtml(L.formatDate(user.lastLoginAt) || '—')}</td>
+        <td data-label="Actions">
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-admin-user-edit="${escapeHtml(user.subject || '')}">Modifier</button>
+          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-admin-user-toggle="${escapeHtml(user.subject || '')}" data-admin-active="${user.active === false ? 'true' : 'false'}">${user.active === false ? 'Activer' : 'Désactiver'}</button>
+        </td>
+      </tr>`;
+    }).join('');
     return `
       <div class="scope-crumb">Administration / Utilisateurs</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Administration / Accès', title: 'Utilisateurs', context: 'Accès et rôles', logo: true })}
+        ${!canAdmin ? `<div class="scope-card"><p class="scope-empty">La gestion des utilisateurs est réservée aux profils habilités (users:admin).</p></div>` : ''}
+        ${canAdmin && state.adminUsersError ? `<div class="scope-card"><p class="scope-empty scope-state-error" role="alert">${escapeHtml(state.adminUsersError)}</p></div>` : ''}
+        ${canAdmin ? `<div class="scope-card">
+          <h2 style="margin-top:0">${state.adminUserEditing ? 'Modifier un profil applicatif' : 'Ajouter un profil applicatif'}</h2>
+          <p class="scope-mode-hint">Cette page gère uniquement les profils applicatifs SCOPE. Le compte primaire, le mot de passe et le MFA restent dans Okta. Aucun lien automatique n’est créé avec le Personnel métier.</p>
+          <div class="scope-report-grid">
+            <div class="scope-field"><label>Identifiant auth / subject</label><input id="admin-user-subject" type="text" value="${escapeHtml(form.subject || '')}" ${state.adminUserEditing ? 'readonly' : ''}></div>
+            <div class="scope-field"><label>Email</label><input id="admin-user-email" type="email" value="${escapeHtml(form.email || '')}"></div>
+            <div class="scope-field"><label>Nom affiché</label><input id="admin-user-display" type="text" value="${escapeHtml(form.displayName || '')}"></div>
+            <div class="scope-field"><label>Identifiant auth éventuel</label><input id="admin-user-nip" type="text" value="${escapeHtml(form.nip || '')}"></div>
+            <div class="scope-field"><label>Profil</label><select id="admin-user-role">${roleOptions}</select></div>
+            <label class="scope-check"><input id="admin-user-active" type="checkbox" ${form.active !== false ? 'checked' : ''}> Actif</label>
+          </div>
+          <div class="scope-actions">
+            <button type="button" class="scope-btn scope-btn-primary" id="admin-user-save">${state.adminUserEditing ? 'Enregistrer' : 'Ajouter'}</button>
+            <button type="button" class="scope-btn" id="admin-user-reset">Réinitialiser</button>
+          </div>
+        </div>
+        <div class="scope-card" style="margin-top:12px">
+          <h2 style="margin-top:0">Profils autorisés</h2>
+          <div class="scope-table-wrap">
+            <table class="scope-table">
+              <thead><tr><th>Utilisateur</th><th>Email</th><th>Identité auth</th><th>Profil</th><th>État</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
+              <tbody>${state.adminUsersReady ? (rows || '<tr><td colspan="7"><div class="scope-empty">Aucun profil applicatif enregistré.</div></td></tr>') : '<tr><td colspan="7"><div class="scope-empty">Chargement des utilisateurs…</div></td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>` : ''}
         <div class="scope-card">
           <h2 style="margin-top:0">Utilisateurs</h2>
-          <p>SCOPE s’appuie sur les comptes institutionnels. Cette page expose les droits disponibles sans recréer une gestion utilisateur locale.</p>
+          <p>SCOPE s’appuie sur les comptes institutionnels. Les profils applicatifs règlent uniquement les capacités dans SCOPE.</p>
           <dl class="scope-meta">
-            <div><dt>Comptes</dt><dd>identité institutionnelle</dd></div>
-            <div><dt>Rôles</dt><dd>Administration, commandement, formation, instruction, consultation.</dd></div>
+            <div><dt>Personne</dt><dd>objet métier suivi par NIP, affectations et participations</dd></div>
+            <div><dt>Utilisateur</dt><dd>compte authentifié par Okta / profil applicatif SCOPE</dd></div>
+            <div><dt>Rôles</dt><dd>Utilisateur, Gestionnaire, Administrateur</dd></div>
             <div><dt>Administration</dt><dd>${canAdmin ? 'Droits d’administration détectés.' : 'Non visible avec votre profil actuel.'}</dd></div>
             <div><dt>Gestion</dt><dd>Fonctions d’administration disponibles pour les profils habilités.</dd></div>
           </dl>
@@ -7172,7 +7262,7 @@
         ${pageHeaderHtml({ eyebrow: 'Administration', title: 'Administration', context: 'Capacités réelles', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Administration</h2>
-          <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports, l’audit technique et les réglages serveur déjà protégés par RBAC.</p>
+          <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports et les profils utilisateurs déjà protégés par RBAC.</p>
           <div class="scope-home-links">
             ${hasScopePermission('references:manage') ? '<a href="#/reglages/objectifs">Objectifs</a>' : ''}
             ${hasScopePermission('personnel:manage') ? '<a href="#/reglages/suivi">Suivi nominatif</a><a href="#/reglages/import-personnel">Import du personnel</a>' : ''}
@@ -7183,6 +7273,39 @@
         </div>
       </div>
     `;
+  }
+
+  function roleLabelText(role) {
+    const value = String(role || '').toUpperCase();
+    if (value === 'ADMINISTRATEUR') return 'Administrateur';
+    if (value === 'GESTIONNAIRE') return 'Gestionnaire';
+    if (value === 'UTILISATEUR') return 'Utilisateur';
+    return value || 'Utilisateur';
+  }
+
+  function resetAdminUserForm() {
+    state.adminUserEditing = '';
+    state.adminUserForm = {
+      subject: '',
+      email: '',
+      displayName: '',
+      nip: '',
+      role: 'UTILISATEUR',
+      active: true
+    };
+  }
+
+  function fillAdminUserForm(user) {
+    const roles = user && Array.isArray(user.roles) ? user.roles : [];
+    state.adminUserEditing = String((user && user.subject) || '');
+    state.adminUserForm = {
+      subject: String((user && user.subject) || ''),
+      email: String((user && user.email) || ''),
+      displayName: String((user && user.displayName) || ''),
+      nip: String((user && user.nip) || ''),
+      role: String(roles[0] || (user && user.role) || 'UTILISATEUR').toUpperCase(),
+      active: user ? user.active !== false : true
+    };
   }
 
   function renderApropos() {
@@ -7572,6 +7695,59 @@
     });
     document.getElementById('scope-logout')?.addEventListener('click', () => {
       logoutScopeSession();
+    });
+    document.getElementById('admin-user-reset')?.addEventListener('click', () => {
+      resetAdminUserForm();
+      render();
+    });
+    document.getElementById('admin-user-save')?.addEventListener('click', () => {
+      const subject = String((document.getElementById('admin-user-subject') || {}).value || '').trim();
+      const email = String((document.getElementById('admin-user-email') || {}).value || '').trim();
+      const displayName = String((document.getElementById('admin-user-display') || {}).value || '').trim();
+      const nip = String((document.getElementById('admin-user-nip') || {}).value || '').trim();
+      const role = String((document.getElementById('admin-user-role') || {}).value || 'UTILISATEUR').trim().toUpperCase();
+      const active = Boolean((document.getElementById('admin-user-active') || {}).checked);
+      if (!subject && !email) {
+        toast('error', 'Action refusée', 'Indiquez au minimum un identifiant auth ou un email.');
+        return;
+      }
+      withLoading(async () => {
+        await client.saveAdminUser({ subject: subject || email, email, displayName, nip, roles: [role], active });
+        resetAdminUserForm();
+        await loadAdminUsers();
+        clearToast();
+        toast('success', 'Utilisateur enregistré', 'Le profil applicatif SCOPE a été mis à jour.');
+      });
+    });
+    root.querySelectorAll('[data-admin-user-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const subject = btn.getAttribute('data-admin-user-edit');
+        const user = (state.adminUsers || []).find((item) => String(item.subject || '') === String(subject || ''));
+        if (!user) return;
+        fillAdminUserForm(user);
+        render();
+      });
+    });
+    root.querySelectorAll('[data-admin-user-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const subject = btn.getAttribute('data-admin-user-toggle');
+        const active = btn.getAttribute('data-admin-active') === 'true';
+        const user = (state.adminUsers || []).find((item) => String(item.subject || '') === String(subject || ''));
+        if (!user) return;
+        withLoading(async () => {
+          await client.saveAdminUser({
+            subject: user.subject,
+            email: user.email || '',
+            displayName: user.displayName || '',
+            nip: user.nip || '',
+            roles: user.roles || [user.role || 'UTILISATEUR'],
+            active
+          });
+          await loadAdminUsers();
+          clearToast();
+          toast('success', active ? 'Utilisateur activé' : 'Utilisateur désactivé', 'Le profil applicatif SCOPE a été mis à jour.');
+        });
+      });
     });
     document.getElementById('obj-add')?.addEventListener('click', () => {
       const period = L.yearToObjectifPeriod(state.objectifForm.annee || String(state.year || '2026'));
@@ -9839,6 +10015,7 @@
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
       if (r.screen === 'objectifs') await loadObjectifs();
+      if (r.screen === 'utilisateurs') await loadAdminUsers();
       if (client.listPersonnes && state.personCount == null) {
         const people = await client.listPersonnes();
         state.personCount = (people.personnes || []).length;
@@ -9851,6 +10028,7 @@
       if (r.screen === 'vigilance') await loadVigilance();
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
+      if (r.screen === 'utilisateurs') await loadAdminUsers();
       if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         if (client.listPersonnes) {
           const people = await client.listPersonnes();
@@ -9882,8 +10060,13 @@
       resetEventListFilters,
       resetPersonnelFilters,
       resetCycleFilters,
+      resetAdminUserForm,
+      fillAdminUserForm,
       renderRapportsHtml() {
         return renderRapports();
+      },
+      renderUtilisateursHtml() {
+        return renderUtilisateurs();
       },
       renderRapportJspHtml(report) {
         state.jspReport = report;

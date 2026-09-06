@@ -14,6 +14,7 @@ const toml = fs.readFileSync(path.join(ROOT, 'netlify.scope.toml'), 'utf8');
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
 const apiSource = fs.readFileSync(path.join(ROOT, 'assets/js/scope-api.js'), 'utf8');
 const pgRepo = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pg.js'), 'utf8');
+const adminSettingsSource = fs.readFileSync(path.join(ROOT, 'netlify/functions/admin-settings.js'), 'utf8');
 const L = require(path.join(ROOT, 'assets/js/scope-ui-logic.js'));
 
 const arbre = [
@@ -147,12 +148,12 @@ async function record(name, fn) {
 
   await record('16 — logo SCOPE agrandi R2', async () => {
     assert.ok(css.includes('height: 48px'));
-    assert.ok(html.includes('scope-ui-logic.js?v=scope-nav-convergence-1') || html.includes('scope-ui-logic.js?v=scope-events-access-r1') || html.includes('scope-ui-logic.js?v=scope-login-1'));
+    assert.ok(html.includes('scope-ui-logic.js?v=scope-admin-rbac-doc-1') || html.includes('scope-ui-logic.js?v=scope-nav-convergence-1') || html.includes('scope-ui-logic.js?v=scope-events-access-r1') || html.includes('scope-ui-logic.js?v=scope-login-1'));
     assert.ok(html.includes('scope-charts.js?v=scope-objectifs-participation-1-r1') || html.includes('scope-charts.js?v=scope-design-2d') || html.includes('scope-charts.js?v=scope-design-2c') || html.includes('scope-charts.js?v=scope-design-2b') || html.includes('scope-charts.js?v=scope-design-2') || html.includes('scope-charts.js?v=scope-moa-ux-r2'));
     assert.ok(html.includes('scope.css?v=scope-login-1') || html.includes('scope.css?v=scope-event-c3-fix') || html.includes('scope.css?v=scope-event-design-c1') || html.includes('scope.css?v=scope-event-design-c') || html.includes('scope.css?v=scope-event-design-b') || html.includes('scope.css?v=scope-event-design-a') || html.includes('scope.css?v=scope-design-2d') || html.includes('scope.css?v=scope-design-2c') || html.includes('scope.css?v=scope-design-2b') || html.includes('scope.css?v=scope-design-2') || html.includes('scope.css?v=scope-ux-event-1') || html.includes('scope.css?v=scope-ux-event-2') || html.includes('scope.css?v=scope-ux-event-3'));
     assert.ok(html.includes('scope-personnel-display.js?v=scope-objectifs-participation-1-r1') || html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
     assert.ok(/scope-personnel-activity-modal\.js\?v=scope-objectifs-participation-1-r1|scope-personnel-activity-modal\.js\?v=scope-personnel-status-ux-2a|scope-personnel-activity-modal\.js\?v=scope-personnel-design-b[23]/.test(html));
-    assert.ok(html.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || html.includes('scope-ui.js?v=scope-nav-convergence-1') || html.includes('scope-ui.js?v=scope-analyses-statistiques-1') || html.includes('scope-ui.js?v=scope-vigilance-nav-repair-1') || html.includes('scope-ui.js?v=scope-vigilance-participation-1') || html.includes('scope-ui.js?v=scope-cycles-pr-auto-1') || html.includes('scope-ui.js?v=scope-reports-pdf-specialisation-repair-1') || html.includes('scope-ui.js?v=scope-events-render-report-repair-1') || html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1') || html.includes('scope-ui.js?v=scope-event-c3-fix') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
+    assert.ok(html.includes('scope-ui.js?v=scope-admin-rbac-doc-1') || html.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || html.includes('scope-ui.js?v=scope-nav-convergence-1') || html.includes('scope-ui.js?v=scope-analyses-statistiques-1') || html.includes('scope-ui.js?v=scope-vigilance-nav-repair-1') || html.includes('scope-ui.js?v=scope-vigilance-participation-1') || html.includes('scope-ui.js?v=scope-cycles-pr-auto-1') || html.includes('scope-ui.js?v=scope-reports-pdf-specialisation-repair-1') || html.includes('scope-ui.js?v=scope-events-render-report-repair-1') || html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1') || html.includes('scope-ui.js?v=scope-event-c3-fix') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
   });
 
   await record('17 — période hors header', async () => {
@@ -180,7 +181,8 @@ async function record(name, fn) {
   });
 
   await record('21 — RBAC navigation préservé', async () => {
-    ['users:admin', 'settings:manage', 'references:manage', 'personnel:manage', 'events:create'].forEach((perm) => assert.ok(ui.includes(perm) || logicSource.includes(perm)));
+    ['users:admin', 'references:manage', 'personnel:manage', 'events:create'].forEach((perm) => assert.ok(ui.includes(perm) || logicSource.includes(perm)));
+    assert.ok(adminSettingsSource.includes('settings:manage'));
   });
 
   await record('22 — TEST masqués et LEGACY inchangés', async () => {
