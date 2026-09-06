@@ -6,11 +6,13 @@ const { HttpError } = require('./_scope-rules');
 const { hasPermission } = require('./_rbac');
 const { collectReport, normalizeKind, REPORT_KINDS } = require('./_scope-report-data');
 const { renderReportPdf } = require('./_scope-pdf-renderer');
+const contract = require('./_scope-core-contract');
 
 const ALLOWED_KEYS = new Set([
   'kind', 'type',
   'evenementId', 'evenement_id', 'id',
   'domaine', 'domaineCode', 'sousDomaine', 'sous_domaine', 'subdomain',
+  'specialisation', 'specialization',
   'cible', 'cibleId',
   'site', 'niveau', 'perimeter', 'blocks',
   'year', 'annee', 'preset', 'semester', 'semestre', 'month', 'quarter', 'from', 'to',
@@ -41,11 +43,21 @@ function sanitizeQuery(body){
   if(unknown.length){
     throw new HttpError(400, 'payload_inconnu', `Champ(s) non autorisé(s) : ${unknown.join(', ')}.`);
   }
+  const kind = normalizeKind(raw.kind || raw.type);
+  const domaine = raw.domaineCode || raw.domaine || null;
+  const sousDomaine = raw.sousDomaine || raw.sous_domaine || raw.subdomain || null;
+  const specialisation = validateParticipationSpecialisation({
+    kind,
+    domaine,
+    sousDomaine,
+    specialisation: raw.specialisation != null ? raw.specialisation : raw.specialization
+  });
   return {
-    kind: normalizeKind(raw.kind || raw.type),
+    kind,
     evenementId: raw.evenementId || raw.evenement_id || raw.id || null,
-    domaine: raw.domaineCode || raw.domaine || null,
-    sousDomaine: raw.sousDomaine || raw.sous_domaine || raw.subdomain || null,
+    domaine,
+    sousDomaine,
+    specialisation,
     cible: raw.cibleId || raw.cible || null,
     site: raw.site || raw.niveau || null,
     perimeter: raw.perimeter || null,
@@ -64,6 +76,23 @@ function sanitizeQuery(body){
     personneId: raw.personneId || raw.personne_id || raw.id || null,
     asOf: raw.asOf || raw.date || null
   };
+}
+
+function validateParticipationSpecialisation({ kind, domaine, sousDomaine, specialisation }){
+  const value = contract.clean(specialisation).toUpperCase();
+  if(!value) return null;
+  const domainCode = contract.normalizeDomaine(domaine);
+  const subdomainCode = contract.clean(sousDomaine).toUpperCase();
+  if(kind !== 'PARTICIPATION' || domainCode !== 'FOSPEC' || !['PR', 'AUTO'].includes(subdomainCode)){
+    throw new HttpError(400, 'payload_invalide', 'Le champ specialisation est autorisé uniquement pour un rapport de participation FOSPEC spécialisé.');
+  }
+  const allowed = subdomainCode === 'PR'
+    ? contract.ORDERS.PR_SPECIALISATIONS
+    : contract.ORDERS.AUTO_SPECIALISATIONS;
+  if(!allowed.includes(value)){
+    throw new HttpError(400, 'payload_invalide', `Spécialisation ${value} non autorisée pour ${subdomainCode}.`);
+  }
+  return value;
 }
 
 function pdfHeaders(filename, sha256, pages){
@@ -146,6 +175,7 @@ function pdfResponse(result){
 module.exports = {
   REPORT_KINDS,
   sanitizeQuery,
+  validateParticipationSpecialisation,
   generateReport,
   pdfResponse,
   pdfHeaders

@@ -672,13 +672,7 @@
       state.jspReportError = 'Rapport de participation indisponible dans ce mode.';
       return null;
     }
-    const params = Object.assign({}, periodQuery(), {
-      domaine: state.participationReportDomain || 'JSP',
-      sousDomaine: state.participationReportDomain === 'FOSPEC' ? state.participationReportSubdomain : '',
-      specialisation: state.participationReportDomain === 'FOSPEC' && state.participationReportSubdomain ? state.participationReportSpecialisation : '',
-      perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
-      blocks: (state.participationReportBlocks || []).join(',')
-    });
+    const params = participationReportParams(periodQuery());
     try {
       const payload = await loader.call(client, params);
       if (seq !== state.jspReportSeq || state.currentRouteKey !== expectedRouteKey || !['rapport-jsp', 'rapport-participation'].includes(route().screen)) return null;
@@ -8371,6 +8365,22 @@
     });
   }
 
+  function participationReportParams(base) {
+    const domain = String(state.participationReportDomain || 'JSP').toUpperCase();
+    const subdomain = domain === 'FOSPEC' ? String(state.participationReportSubdomain || '').toUpperCase() : '';
+    const payload = Object.assign({}, base || {}, {
+      domaine: domain,
+      blocks: (state.participationReportBlocks || []).join(',')
+    });
+    if (subdomain) {
+      payload.sousDomaine = subdomain;
+      const specialisation = String(state.participationReportSpecialisation || '').toUpperCase();
+      if (specialisation) payload.specialisation = specialisation;
+    }
+    if (state.jspReportSite && state.jspReportSite !== 'TOUS') payload.perimeter = state.jspReportSite;
+    return payload;
+  }
+
   function generateEventReport(evenementId) {
     const body = Object.assign(reportPeriodPayload(), {
       kind: 'EVENT',
@@ -8415,14 +8425,7 @@
   }
 
   function generateJspReportPdf() {
-    const body = Object.assign(reportPeriodPayload(), {
-      kind: 'PARTICIPATION',
-      domaine: state.participationReportDomain || 'JSP',
-      sousDomaine: state.participationReportDomain === 'FOSPEC' ? state.participationReportSubdomain : '',
-      specialisation: state.participationReportDomain === 'FOSPEC' && state.participationReportSubdomain ? state.participationReportSpecialisation : '',
-      perimeter: state.jspReportSite === 'TOUS' ? '' : state.jspReportSite,
-      blocks: (state.participationReportBlocks || []).join(',')
-    });
+    const body = participationReportParams(Object.assign(reportPeriodPayload(), { kind: 'PARTICIPATION' }));
     delete body.cible;
     openReport(body);
   }
@@ -8978,6 +8981,9 @@
         if (report && report.specialisation != null) state.participationReportSpecialisation = report.specialisation || 'GEN';
         if (report && report.siteFilter) state.jspReportSite = report.siteFilter;
         return renderRapportJsp();
+      },
+      buildParticipationReportParams(base) {
+        return participationReportParams(base || {});
       },
       renderFormationReportHtml(report) {
         state.formationReport = report;
