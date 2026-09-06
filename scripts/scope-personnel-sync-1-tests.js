@@ -546,7 +546,7 @@ async function closePresent(service, eventId, people){
     const reports = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-report-service.js'), 'utf8');
     assert.ok(reports.includes('SCOPE-REPORT-1'));
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('SCOPE-REPORT-1'));
+    assert.ok(ui.includes('Exports officiels'));
     const scope = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
     assert.ok(scope.includes('/imports/personnel/commit'));
     assert.ok(scope.includes('personnel:manage'));

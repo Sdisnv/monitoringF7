@@ -469,7 +469,7 @@ async function gen(repo, body, claims){
       assert.ok(!src.includes('safePercentage('));
     }
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('SCOPE-REPORT-1'));
+    assert.ok(ui.includes('Exports officiels'));
     assert.ok(ui.includes('generateReport'));
     assert.ok(!ui.includes('officialFromQuantitatif'));
   });

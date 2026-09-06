@@ -2992,16 +2992,29 @@
   function renderVue() {
     const r = route();
     const dash = state.dashboard;
-    const crumbs = ['<a href="#/vue">Domaines</a>'];
+    const crumbs = ['<a href="#/statistiques">Analyses</a>', '<span>Périmètre</span>'];
     if (r.domaine) crumbs.push(`<a href="#/vue/${encodeURIComponent(r.domaine)}">${escapeHtml(domaineLabel(r.domaine))}</a>`);
     if (r.cible) crumbs.push(`<span>${escapeHtml(r.cible)}</span>`);
+    const header = pageHeaderHtml({
+      eyebrow: r.domaine ? 'Périmètre' : 'Vue globale',
+      title: domaineLabel(r.domaine || 'SDIS'),
+      context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble',
+      description: 'Lecture métier du périmètre sélectionné, sans recalcul de KPI dans le navigateur.',
+      logo: !r.cible
+    });
+    const contextualNav = `<div class="scope-actions scope-context-actions">
+      <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/evenements">Événements</a>
+      <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/statistiques">Analyses</a>
+      <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-vue-report="${escapeHtml(r.domaine || '')}" data-vue-cible="${escapeHtml(r.cible || '')}">Rapport de participation</button>
+      <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/rapports">Hub Rapports</a>
+    </div>`;
     if (state.dashboardError) {
       return `<div class="scope-crumb">${crumbs.join(' / ')}</div>
-        <div class="scope-main">${pageHeaderHtml({ eyebrow: r.domaine ? 'Domaine' : 'Vue globale', title: domaineLabel(r.domaine || 'SDIS'), context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble', logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+        <div class="scope-main">${header}${contextualNav}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
     }
     if (!dash) {
       return `<div class="scope-crumb">${crumbs.join(' / ')}</div>
-        <div class="scope-main">${pageHeaderHtml({ eyebrow: r.domaine ? 'Domaine' : 'Vue globale', title: domaineLabel(r.domaine || 'SDIS'), context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble', logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+        <div class="scope-main">${header}${contextualNav}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     const o = dash.officiel || {};
     const obj = L.objectiveKpiLabel(o);
@@ -3143,7 +3156,8 @@
     return `
       <div class="scope-crumb">${crumbs.join(' / ')}</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: r.domaine ? 'Domaine' : 'Vue globale', title: domaineLabel(r.domaine || 'SDIS'), context: r.cible ? L.niveauAffiche(r.domaine, r.cible) : 'Vue d’ensemble', description: 'Lecture métier du périmètre sélectionné, sans recalcul de KPI dans le navigateur.', logo: !r.cible })}
+        ${header}
+        ${contextualNav}
         ${periodContextHtml()}
         ${kpi}
         ${explainHtml}
@@ -4928,27 +4942,27 @@
     return `
       <div class="scope-crumb">Rapports</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Production', title: 'Rapports', context: 'PDF serveur', description: 'Aperçu et téléchargement issus du même document REPORT-1.', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Restitution', title: 'Rapports', context: 'Exports officiels', description: 'Produire une restitution formelle par période, périmètre, événement ou personne à partir des contrats métier SCOPE.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-card">
           <h2 style="margin-top:0">Pilotage Formation</h2>
-          <p class="scope-mode-hint">Vision consolidée des domaines Formation, objectifs, alertes, tendances et événements à surveiller.</p>
+          <p class="scope-mode-hint">Restitution consolidée destinée au commandement : participation, objectifs, tendances et points à surveiller.</p>
           <div class="scope-actions">
             <a class="scope-btn scope-btn-secondary" href="#/rapports/formation">Ouvrir le rapport global Formation</a>
           </div>
         </div>
         <div class="scope-card">
           <h2 style="margin-top:0">Participation</h2>
-          <p class="scope-mode-hint">Rapport de participation configurable par domaine et périmètre, avec écran et PDF fondés sur le même modèle serveur.</p>
+          <p class="scope-mode-hint">Restitution officielle configurable par domaine, sous-domaine, OI ou spécialisation, avec écran et PDF issus du même contrat serveur.</p>
           <div class="scope-actions">
             <a class="scope-btn scope-btn-secondary" href="#/rapports/participation">Ouvrir le rapport de participation</a>
           </div>
         </div>
         <div class="scope-card">
-          <h2 style="margin-top:0">Rapports spécialisés existants</h2>
-          <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
+          <h2 style="margin-top:0">Exports par objet</h2>
+          <p class="scope-mode-hint">Production ponctuelle pour une période, un périmètre, une cible/OI ou un événement. Les exports d’événement et de personne restent aussi accessibles depuis leur fiche source.</p>
           <div class="scope-report-grid">
-            <div class="scope-field"><label>Type de rapport</label>
+            <div class="scope-field"><label>Type de restitution</label>
               <select id="report-kind">
                 <option value="PERIOD" ${form.kind === 'PERIOD' ? 'selected' : ''}>Période SDIS</option>
                 <option value="DOMAIN" ${form.kind === 'DOMAIN' ? 'selected' : ''}>Domaine / période</option>
@@ -4975,9 +4989,9 @@
               </select>
             </div>` : ''}
           </div>
-          <p style="color:var(--scope-muted);font-size:13px">Période : celle du bandeau (année, trimestre, mois ou plage). REPORT-1 n’ouvre pas de seconde période.</p>
+          <p style="color:var(--scope-muted);font-size:13px">Période : celle du bandeau (année, trimestre, mois ou plage). Le navigateur ne recalcule aucun chiffre.</p>
           <div class="scope-actions">
-            <button type="button" class="scope-btn scope-btn-primary" id="report-generate">Générer le rapport</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="report-generate">Préparer le PDF</button>
           </div>
         </div>
       </div>
@@ -8458,6 +8472,9 @@
       state.reportForm.evenementId = e.target.value;
     });
     document.getElementById('report-generate')?.addEventListener('click', () => generateCurrentReport());
+    root.querySelectorAll('[data-vue-report]').forEach((btn) => {
+      btn.addEventListener('click', () => openParticipationReportFromVue(btn.getAttribute('data-vue-report'), btn.getAttribute('data-vue-cible')));
+    });
     document.getElementById('participation-report-domain')?.addEventListener('change', (e) => {
       state.participationReportDomain = e.target.value || 'JSP';
       state.participationReportSubdomain = '';
@@ -9252,6 +9269,27 @@
     return payload;
   }
 
+  function openParticipationReportFromVue(domaine, cible) {
+    const domain = String(domaine || '').toUpperCase();
+    const target = String(cible || '').toUpperCase();
+    state.participationReportDomain = domain === 'PR' || domain === 'AUTO' ? 'FOSPEC' : (domain || 'JSP');
+    state.participationReportSubdomain = domain === 'PR' || domain === 'AUTO'
+      ? domain
+      : (state.participationReportDomain === 'FOSPEC' && (target === 'PR' || target === 'AUTO') ? target : '');
+    if (state.participationReportSubdomain === 'AUTO') {
+      state.participationReportSpecialisation = target === 'PL' ? 'PL' : 'VL';
+    } else if (state.participationReportSubdomain === 'PR') {
+      state.participationReportSpecialisation = target === 'ABC' ? 'ABC' : 'GEN';
+    } else {
+      state.participationReportSpecialisation = 'GEN';
+    }
+    state.jspReportSite = state.participationReportSubdomain ? 'TOUS' : (target || 'TOUS');
+    state.jspReport = null;
+    state.jspReportReady = false;
+    state.jspReportError = null;
+    go('#/rapports/participation');
+  }
+
   function generateEventReport(evenementId) {
     const body = Object.assign(reportPeriodPayload(), {
       kind: 'EVENT',
@@ -9861,6 +9899,7 @@
       buildParticipationReportParams(base) {
         return participationReportParams(base || {});
       },
+      openParticipationReportFromVue,
       renderFormationReportHtml(report) {
         state.formationReport = report;
         state.formationReportReady = true;

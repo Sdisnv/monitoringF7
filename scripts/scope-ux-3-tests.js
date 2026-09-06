@@ -169,7 +169,7 @@ function record(name, fn) {
     assert.ok(ui.includes('scope-login-v1'));
     assert.ok(ui.includes('Importer un programme d’événements'));
     assert.ok(!ui.includes('data-nav="import"'));
-    assert.ok(ui.includes('REPORT-1'));
+    assert.ok(ui.includes('Exports officiels'));
   });
 
   await record('tri commun typé — dates, nombres, NIP, accents, ASC/DESC', async () => {
