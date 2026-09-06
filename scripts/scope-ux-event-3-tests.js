@@ -174,7 +174,7 @@ async function pageTexts(buffer) {
   });
 
   await record('11 — cache EVENT-3', () => {
-    if (html.includes('assets/css/scope.css?v=scope-login-1') && (html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1'))) {
+    if (html.includes('assets/css/scope.css?v=scope-login-1') && (html.includes('scope-ui.js?v=scope-events-render-report-repair-1') || html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1'))) {
       assert.ok(pkg.includes('scope-ux-event-3-tests.js'));
       return;
     }

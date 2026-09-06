@@ -180,6 +180,31 @@ function uiHarness(locationInput) {
     assert.strictEqual(invalidated, 1);
   });
 
+  await record('08 — rendu #/evenements sans ReferenceError report', () => {
+    const env = uiHarness({ hash: '#/evenements' });
+    env.api.state.authChecking = false;
+    env.api.state.needOkta = false;
+    env.api.state.listReady = true;
+    env.api.state.listError = null;
+    env.api.state.list = [{
+      evenement: {
+        evenement_id: 'EVT-1',
+        date: '2026-08-19',
+        statut: 'PLANIFIE',
+        origine: 'SCOPE',
+        libelle: 'Exercice test',
+        domaine_code: 'DPS',
+        population_figee: true
+      },
+      cibles: ['G1'],
+      attendusInclus: 1,
+      compteurs: { presents: 0, percentage: null }
+    }];
+    assert.doesNotThrow(() => env.api.render(), /report is not defined|ReferenceError/);
+    assert.ok(env.root.innerHTML.includes('Événements'));
+    assert.ok(env.root.innerHTML.includes('Exercice test'));
+  });
+
   const failed = results.filter((row) => row.status !== 'PASS');
   for (const row of results) {
     console.log(`${row.status}\t${row.name}`);

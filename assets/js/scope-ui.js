@@ -2005,7 +2005,7 @@
 
     return `
       <div class="scope-crumb">Événements · ${escapeHtml(state.year)}</div>
-      <div class="scope-main" ${report.domaine === 'JSP' ? 'aria-label="RAPPORT JSP"' : ''}>
+      <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Activité', title: 'Événements', context: state.year, description: 'Liste opérationnelle des événements planifiés, réalisés, reportés ou annulés.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-toolbar scope-events-pilot">
