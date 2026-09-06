@@ -420,6 +420,7 @@
       if (prevNav === 'statistiques') resetAnalysesFilters();
     }
     if (previous && next && routeKey(previous) !== routeKey(next)) {
+      state.openGroups = {};
       state.modal = null;
       if ((previous.screen === 'rapport-jsp' || previous.screen === 'rapport-participation') && !['rapport-jsp', 'rapport-participation'].includes(next.screen)) resetJspReportFilters();
       if (previous.screen === 'rapport-formation' && next.screen !== 'rapport-formation') {
@@ -1446,59 +1447,29 @@
       r
     );
     const link = (item, currentPage) => `<a class="scope-nav-link" href="${item.href}" ${currentPage ? 'aria-current="page"' : ''}>${item.icon ? navIcon(item.icon) : ''}<span>${escapeHtml(item.label)}</span></a>`;
+    const canSee = (item) => !item.permission || hasScopePermission(item.permission);
     const navSubsection = (label, items) => items.length ? `<div class="scope-nav-subsection">
-      <p>${escapeHtml(label)}</p>
+      ${label ? `<p>${escapeHtml(label)}</p>` : ''}
       ${items.map((item) => link(item, item.current)).join('')}
     </div>` : '';
     const section = (label) => `<p class="scope-nav-section">${escapeHtml(label)}</p>`;
-    const primaryById = new Map((model.primary || []).map((item) => [item.id, item]));
-    const primaryItem = (id, fallback) => Object.assign({}, fallback || {}, primaryById.get(id) || {});
-    const renderPrimary = (id, fallback) => {
-      const item = primaryItem(id, fallback);
-      return link(item, item.current);
-    };
-    const reglagesOpen = state.openGroups.reglages === true || r.nav === 'reglages';
-    const domainBlocks = model.domains.map((d) => {
-      const expanded = state.openGroups[d.id] != null ? state.openGroups[d.id] : d.expanded;
-      const isCurrent = r.domaine === d.id && !r.cible;
-      const overview = `<a class="scope-nav-link" href="${d.href}" ${isCurrent ? 'aria-current="page"' : ''}>Vue d’ensemble</a>`;
+    const renderGroup = (group) => {
+      if (!group) return '';
+      const groupContent = group.sections
+        ? group.sections.map((sub) => navSubsection(sub.label, (sub.items || []).filter(canSee))).join('')
+        : (group.items || []).filter(canSee).map((item) => link(item, item.current)).join('');
+      if (!groupContent) return '';
+      const expanded = state.openGroups[group.id] != null ? state.openGroups[group.id] : group.current;
       return `<div class="scope-nav-group${expanded ? '' : ' is-collapsed'}">
-        <button type="button" class="scope-nav-group-head${isCurrent ? ' is-current' : ''}" data-nav-group="${escapeHtml(d.id)}" aria-expanded="${expanded ? 'true' : 'false'}">
-          ${navIcon('folder')}
-          <span>${escapeHtml(d.label)}</span>
+        <button type="button" class="scope-nav-group-head${group.current ? ' is-current' : ''}" data-nav-group="${escapeHtml(group.id)}" aria-expanded="${expanded ? 'true' : 'false'}">
+          ${navIcon(group.icon)}
+          <span>${escapeHtml(group.label)}</span>
         </button>
-        <div class="scope-nav-sub">${overview}${d.children.map((c) => {
-          const childCurrent = r.domaine === c.id || (r.domaine === d.id && r.cible === c.id);
-          return link(c, childCurrent);
-        }).join('')}</div>
+        <div class="scope-nav-sub">${groupContent}</div>
       </div>`;
-    }).join('');
-    const parametres = [
-      { href: '#/reglages/utilisateurs', label: 'Utilisateurs', current: r.screen === 'utilisateurs', permission: 'users:admin' },
-      { href: '#/reglages/administration', label: 'Administration', current: r.screen === 'administration', permission: 'settings:manage' }
-    ].filter((item) => hasScopePermission(item.permission));
-    const application = [
-      { href: '#/reglages/objectifs', label: 'Objectifs', current: r.screen === 'objectifs', permission: 'references:manage' },
-      { href: '#/reglages/suivi', label: 'Suivi nominatif', current: r.screen === 'suivi', permission: 'personnel:manage' }
-    ].filter((item) => hasScopePermission(item.permission));
-    const importation = [
-      { href: '#/reglages/import-evenements', label: 'Événements', current: r.screen === 'import-evenements', permission: 'events:create' },
-      { href: '#/reglages/import-personnel', label: 'Personnel', current: r.screen === 'import-personnel', permission: 'personnel:manage' }
-    ].filter((item) => hasScopePermission(item.permission));
-    const settingsBlock = `
-          ${section('Réglages')}
-          <div class="scope-nav-group${reglagesOpen ? '' : ' is-collapsed'}">
-            <button type="button" class="scope-nav-group-head${r.nav === 'reglages' ? ' is-current' : ''}" data-nav-group="reglages" aria-expanded="${reglagesOpen ? 'true' : 'false'}">
-              ${navIcon('settings')}
-              <span>Réglages</span>
-            </button>
-            <div class="scope-nav-sub">
-              ${navSubsection('Paramètres', parametres)}
-              ${navSubsection('Application', application)}
-              ${navSubsection('Importation', importation)}
-              ${link({ href: '#/reglages/apropos', label: 'À propos' }, r.screen === 'apropos')}
-            </div>
-          </div>`;
+    };
+    const groupById = new Map((model.groups || []).map((group) => [group.id, group]));
+    const directLinks = (model.direct || []).filter(canSee).map((item) => link(item, item.current)).join('');
     return `
       <div class="scope-nav-backdrop" id="scope-nav-backdrop"></div>
       <aside class="scope-sidebar" id="scope-sidebar" aria-label="Navigation principale" aria-modal="${state.navOpen ? 'true' : 'false'}">
@@ -1508,17 +1479,14 @@
         </div>
         <nav class="scope-nav-scroll">
           ${section('Accueil')}
-          ${renderPrimary('accueil', { href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' })}
+          ${link(model.home || { href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' }, model.home ? model.home.current : r.screen === 'accueil')}
           ${section('Activité')}
-          ${renderPrimary('exercices', { href: '#/evenements', label: 'Événements', icon: 'events', current: r.nav === 'exercices' })}
-          ${renderPrimary('vigilance', { href: '#/vigilance', label: 'Vigilance participation', icon: 'vigilance', current: r.nav === 'vigilance' })}
-          ${renderPrimary('cycles', { href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' })}
-          ${renderPrimary('statistiques', { href: '#/statistiques', label: 'Statistiques', icon: 'stats', current: r.screen === 'statistiques' })}
-          ${hasScopePermission('personnel:read') ? link(primaryItem('personnel', { href: '#/personnel', label: 'Personnel', icon: 'people', current: r.nav === 'personnel' }), primaryItem('personnel', { current: r.nav === 'personnel' }).current) : ''}
-          ${link(primaryItem('rapports', { href: '#/rapports', label: 'Rapports', icon: 'report', current: r.nav === 'rapports' }), primaryItem('rapports', { current: r.nav === 'rapports' }).current)}
-          ${section('Domaines')}
-          ${domainBlocks}
-          ${settingsBlock}
+          ${renderGroup(groupById.get('activite'))}
+          ${section('Pilotage')}
+          ${renderGroup(groupById.get('pilotage'))}
+          ${directLinks}
+          ${section('Administration')}
+          ${renderGroup(groupById.get('administration'))}
         </nav>
         <div class="scope-sidebar-inst">
           <img class="scope-sdis-logo" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
@@ -1958,7 +1926,7 @@
             <a href="#/evenements"><span class="scope-quick-ico">${homePilotIcon('events')}</span><span><b>Événements</b><small>Programme, saisie et clôture</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
             <a href="#/reglages/suivi"><span class="scope-quick-ico">${homePilotIcon('presence')}</span><span><b>Présences</b><small>Suivi nominatif des participations</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
             <a href="#/personnel"><span class="scope-quick-ico">${homePilotIcon('people')}</span><span><b>Personnel</b><small>Annuaire et fiches individuelles</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
-            <a href="#/statistiques"><span class="scope-quick-ico">${homePilotIcon('analyses')}</span><span><b>Analyses</b><small>Statistiques et graphiques de période</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
+            <a href="#/statistiques"><span class="scope-quick-ico">${homePilotIcon('analyses')}</span><span><b>Analyses</b><small>Graphiques et résultats de période</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
             <a href="#/rapports"><span class="scope-quick-ico">${homePilotIcon('report')}</span><span><b>Rapports</b><small>Exports institutionnels</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
             <a href="#/reglages/objectifs"><span class="scope-quick-ico">${homePilotIcon('objectifs')}</span><span><b>Objectifs</b><small>Seuils de participation</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
           </div>
@@ -2405,10 +2373,10 @@
   function renderStatistiques() {
     const dash = state.dashboard;
     if (!dash && !state.dashboardError) {
-      return `<div class="scope-crumb">Statistiques</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Statistiques', context: state.year, logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
+      return `<div class="scope-crumb">Analyses</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Pilotage', title: 'Analyses', context: state.year, logo: true })}<div class="scope-card scope-placeholder"><p>${escapeHtml(L.loadingMessage('dashboard'))}</p></div></div>`;
     }
     if (state.dashboardError) {
-      return `<div class="scope-crumb">Statistiques</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Statistiques', context: state.year, logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
+      return `<div class="scope-crumb">Analyses</div><div class="scope-main">${pageHeaderHtml({ eyebrow: 'Pilotage', title: 'Analyses', context: state.year, logo: true })}<div class="scope-card scope-placeholder"><p class="scope-state-error" role="alert">${escapeHtml(state.dashboardError)}</p></div></div>`;
     }
     const graphs = (dash && dash.graphs) || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
@@ -2489,9 +2457,9 @@
         </tr>`).join('')
       : '<tr><td colspan="8"><div class="scope-empty">Aucun événement officiel réalisé sur ce périmètre.</div></td></tr>';
     return `
-      <div class="scope-crumb">Statistiques</div>
+      <div class="scope-crumb">Analyses</div>
       <div class="scope-main scope-analyses-page">
-        ${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Analyses / Statistiques', context: periodLabel(dash.period), description: 'Lecture consolidée des résultats SCOPE issue des moteurs Analytics, Objectifs, Cycles et Vigilance.', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Pilotage', title: 'Analyses', context: periodLabel(dash.period), description: 'Lecture consolidée des résultats SCOPE issue des moteurs Analytics, Objectifs, Cycles et Vigilance.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-toolbar scope-analyses-filters">
           <div class="scope-field">
@@ -2741,7 +2709,7 @@
           </div>
           <button type="button" class="scope-btn scope-btn-primary scope-events-new" id="scope-new">Nouvel événement</button>
         </div>
-        <p class="scope-mode-hint">La création manuelle reste disponible pour un événement ponctuel. Les imports sont regroupés dans Réglages → Importation.</p>
+        <p class="scope-mode-hint">La création manuelle reste disponible pour un événement ponctuel. Les imports sont regroupés dans Administration → Imports.</p>
         <div class="scope-card scope-table-wrap scope-events-list-wrap">
           <table class="scope-table scope-events-list-table">
             <thead>
@@ -4577,7 +4545,7 @@
     return `
       <div class="scope-crumb">Personnel</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: importMode ? 'Réglages / Importation' : 'Personnel', title: importMode ? 'Import du personnel' : 'Personnel', context: importMode ? 'Synchronisation CSV' : 'Annuaire nominatif', description: importMode ? '' : 'Annuaire nominatif. Les taux individuels restent dans la fiche.', logo: true })}
+        ${pageHeaderHtml({ eyebrow: importMode ? 'Administration / Imports' : 'Personnel', title: importMode ? 'Import du personnel' : 'Personnel', context: importMode ? 'Synchronisation CSV' : 'Annuaire nominatif', description: importMode ? '' : 'Annuaire nominatif. Les taux individuels restent dans la fiche.', logo: true })}
         ${''}
         ${renderPersonnelDirectory()}
         ${showImportPanel ? `<div class="scope-card" style="margin-top:12px" id="scope-personnel-import-panel">
@@ -5443,10 +5411,10 @@
           </div>
         </div></div>` : '';
     return `
-      <div class="scope-crumb">Réglages / Objectifs</div>
+      <div class="scope-crumb">Administration / Objectifs</div>
       <div class="scope-main">
         ${pageHeaderHtml({
-          eyebrow: 'Réglages / Application',
+          eyebrow: 'Administration / Application',
           title: 'OBJECTIFS DE PARTICIPATION',
           context: 'Référentiel temporel',
           description: 'Définissez les seuils de participation utilisés par les analyses et rapports SCOPE.',
@@ -5601,9 +5569,9 @@
     const tree = (state.referentiels && state.referentiels.arbre) || [];
     const rules = (state.referentiels && state.referentiels.suiviNominatif) || [];
     return `
-      <div class="scope-crumb">Réglages / Suivi nominatif</div>
+      <div class="scope-crumb">Administration / Suivi nominatif</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages / Application', title: 'Suivi nominatif', context: 'Configuration', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Administration / Référentiels', title: 'Suivi nominatif', context: 'Configuration', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Suivi nominatif configurable</h2>
           <p class="scope-mode-hint">Le nominatif est possible pour tous les domaines, sous-domaines et cibles. Ce réglage propose un mode à la création ou à l’import. Il ne transforme pas les événements existants et ne crée pas de personnes fictives.</p>
@@ -7117,9 +7085,9 @@
       <div class="scope-loading-row">Merci de garder cette fenêtre ouverte. Aucune relance automatique ne sera effectuée.</div>
     </div></div>` : '';
     return `
-      <div class="scope-crumb">Réglages / Import des événements</div>
+      <div class="scope-crumb">Administration / Imports / Événements</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages / Importation', title: 'Import des événements', context: 'Programme CSV', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Administration / Imports', title: 'Import des événements', context: 'Programme CSV', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Importer un programme d’événements</h2>
           <p>Ce parcours recommandé alimente le programme SCOPE. Après import, la base SCOPE reste la source de vérité. Aucun agrégat n’est transformé en personnes.</p>
@@ -7160,15 +7128,15 @@
   }
 
   function renderImportPersonnel() {
-    return renderPersonnel({ importMode: true }).replace('<div class="scope-crumb">Personnel</div>', '<div class="scope-crumb">Réglages / Importation / Personnel</div>');
+    return renderPersonnel({ importMode: true }).replace('<div class="scope-crumb">Personnel</div>', '<div class="scope-crumb">Administration / Imports / Personnel</div>');
   }
 
   function renderUtilisateurs() {
     const canAdmin = hasScopePermission('users:admin');
     return `
-      <div class="scope-crumb">Réglages / Utilisateurs</div>
+      <div class="scope-crumb">Administration / Utilisateurs</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages / Paramètres', title: 'Utilisateurs', context: 'Accès et rôles', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Administration / Accès', title: 'Utilisateurs', context: 'Accès et rôles', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Utilisateurs</h2>
           <p>SCOPE s’appuie sur les comptes institutionnels. Cette page expose les droits disponibles sans recréer une gestion utilisateur locale.</p>
@@ -7185,9 +7153,9 @@
 
   function renderAdministration() {
     return `
-      <div class="scope-crumb">Réglages / Administration</div>
+      <div class="scope-crumb">Administration</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages / Paramètres', title: 'Administration', context: 'Capacités réelles', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Administration', title: 'Administration', context: 'Capacités réelles', logo: true })}
         <div class="scope-card">
           <h2 style="margin-top:0">Administration</h2>
           <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports, l’audit technique et les réglages serveur déjà protégés par RBAC.</p>
@@ -7205,9 +7173,9 @@
 
   function renderApropos() {
     return `
-      <div class="scope-crumb">Réglages / À propos</div>
+      <div class="scope-crumb">Administration / À propos</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Réglages', title: 'À propos', context: 'Application', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Administration', title: 'À propos', context: 'Application', logo: true })}
         <div class="scope-card scope-about-hero">
           <img src="assets/img/logo-scope-blanc.png" alt="SCOPE">
           <p class="scope-eyebrow">Suivi et analyse de l’activité</p>

@@ -697,15 +697,53 @@
         return String(a.libelleAffiche || a.code).localeCompare(String(b.libelleAffiche || b.code), 'fr');
       });
     const parent = navParentCode(arbre, r.domaine);
-    return {
-      primary: [
-        { id: 'accueil', href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' },
-        { id: 'exercices', href: '#/evenements', label: 'Événements', icon: 'events', current: r.nav === 'exercices' },
-        { id: 'vigilance', href: '#/vigilance', label: 'Vigilance participation', icon: 'vigilance', current: r.nav === 'vigilance' },
-        { id: 'cycles', href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' },
-        { id: 'statistiques', href: '#/statistiques', label: 'Statistiques', icon: 'stats', current: r.screen === 'statistiques' }
-      ],
-      domains: roots.map((d) => {
+    const home = { id: 'accueil', href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' };
+    const activity = [
+      { id: 'exercices', href: '#/evenements', label: 'Événements', icon: 'events', current: r.nav === 'exercices' },
+      { id: 'cycles', href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' }
+    ];
+    const pilotage = [
+      { id: 'vigilance', href: '#/vigilance', label: 'Vigilance', icon: 'vigilance', current: r.nav === 'vigilance' },
+      { id: 'analyses', href: '#/statistiques', label: 'Analyses', icon: 'stats', current: r.screen === 'statistiques' }
+    ];
+    const direct = [
+      { id: 'personnel', href: '#/personnel', label: 'Personnel', icon: 'people', permission: 'personnel:read', current: r.nav === 'personnel' },
+      { id: 'rapports', href: '#/rapports', label: 'Rapports', icon: 'report', current: r.nav === 'rapports' }
+    ];
+    const adminSections = [
+      {
+        id: 'application',
+        label: 'Application',
+        items: [
+          { id: 'objectifs', href: '#/reglages/objectifs', label: 'Objectifs', permission: 'references:manage', current: r.screen === 'objectifs' },
+          { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif', permission: 'personnel:manage', current: r.screen === 'suivi' }
+        ]
+      },
+      {
+        id: 'imports',
+        label: 'Imports',
+        items: [
+          { id: 'import-evenements', href: '#/reglages/import-evenements', label: 'Événements', permission: 'events:create', current: r.screen === 'import-evenements' },
+          { id: 'import-personnel', href: '#/reglages/import-personnel', label: 'Personnel', permission: 'personnel:manage', current: r.screen === 'import-personnel' }
+        ]
+      },
+      {
+        id: 'acces',
+        label: 'Accès',
+        items: [
+          { id: 'utilisateurs', href: '#/reglages/utilisateurs', label: 'Utilisateurs', permission: 'users:admin', current: r.screen === 'utilisateurs' },
+          { id: 'administration', href: '#/reglages/administration', label: 'Administration', permission: 'settings:manage', current: r.screen === 'administration' }
+        ]
+      },
+      {
+        id: 'infos',
+        label: '',
+        items: [
+          { id: 'apropos', href: '#/reglages/apropos', label: 'À propos', current: r.screen === 'apropos' }
+        ]
+      }
+    ];
+    const domains = roots.map((d) => {
         const sous = d.sousDomaines || [];
         const cibles = (d.cibles || []).filter((c) => {
           const niveau = String(c.niveauCode || c.niveau_code || '').toUpperCase();
@@ -733,19 +771,19 @@
           expanded: d.code === r.domaine || d.code === parent || childActive,
           children
         };
-      }),
-      settings: [
-        { id: 'objectifs', href: '#/reglages/objectifs', label: 'Objectifs' },
-        { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif' },
-        { id: 'import-evenements', href: '#/reglages/import-evenements', label: 'Import des événements' },
-        { id: 'import-personnel', href: '#/reglages/import-personnel', label: 'Import du personnel' },
-        { id: 'utilisateurs', href: '#/reglages/utilisateurs', label: 'Utilisateurs' },
-        { id: 'administration', href: '#/reglages/administration', label: 'Administration' }
+      });
+    return {
+      home,
+      groups: [
+        { id: 'activite', label: 'Activité', icon: 'events', current: activity.some((item) => item.current), items: activity },
+        { id: 'pilotage', label: 'Pilotage', icon: 'stats', current: pilotage.some((item) => item.current), items: pilotage },
+        { id: 'administration', label: 'Administration', icon: 'settings', current: r.nav === 'reglages', sections: adminSections }
       ],
-      extras: [
-        { id: 'personnel', href: '#/personnel', label: 'Personnel', icon: 'people', current: r.nav === 'personnel' },
-        { id: 'rapports', href: '#/rapports', label: 'Rapports', icon: 'report', current: r.nav === 'rapports' }
-      ]
+      direct,
+      domains,
+      primary: [home].concat(activity, pilotage),
+      settings: adminSections.reduce((items, section) => items.concat(section.items || []), []),
+      extras: direct
     };
   }
 

@@ -174,7 +174,7 @@ function samplePersonnel(){
     const hooks = uiHooks('#/statistiques');
     hooks.state.referentiels.cibles = [{ cibleId: 'cible-y4', domaineCode: 'DAP', niveauCode: 'Y4' }];
     const html = hooks.renderStatistiquesHtml(sampleDashboard(), samplePersonnel());
-    assert.ok(html.includes('Analyses / Statistiques'));
+    assert.ok(html.includes('Analyses'));
     assert.ok(html.includes('Taux global'));
     assert.ok(html.includes('Comparaison des périmètres'));
     assert.ok(html.includes('Événements officiels'));
@@ -225,7 +225,7 @@ function samplePersonnel(){
   });
 
   await record('06 — cache et suite branchés', async () => {
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-analyses-statistiques-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-nav-convergence-1') || htmlSource.includes('scope-ui.js?v=scope-analyses-statistiques-1'));
     assert.ok(pkg.includes('scope-analyses-statistiques-1-tests.js'));
   });
 
