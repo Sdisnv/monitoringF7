@@ -174,12 +174,12 @@ async function pageTexts(buffer) {
   });
 
   await record('11 — cache EVENT-3', () => {
-    if (html.includes('assets/css/scope.css?v=scope-login-1') && (html.includes('scope-ui.js?v=scope-reports-pdf-specialisation-repair-1') || html.includes('scope-ui.js?v=scope-events-render-report-repair-1') || html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1'))) {
+    if (html.includes('assets/css/scope.css?v=scope-login-1') && (html.includes('scope-ui.js?v=scope-cycles-pr-auto-1') || html.includes('scope-ui.js?v=scope-reports-pdf-specialisation-repair-1') || html.includes('scope-ui.js?v=scope-events-render-report-repair-1') || html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1'))) {
       assert.ok(pkg.includes('scope-ux-event-3-tests.js'));
       return;
     }
     assert.ok(html.includes('assets/css/scope.css?v=scope-ux-event-3') || html.includes('assets/css/scope.css?v=scope-design-2') || html.includes('assets/css/scope.css?v=scope-design-2b') || html.includes('assets/css/scope.css?v=scope-design-2c') || html.includes('assets/css/scope.css?v=scope-design-2d') || html.includes('assets/css/scope.css?v=scope-event-design-a') || html.includes('assets/css/scope.css?v=scope-event-design-b') || html.includes('assets/css/scope.css?v=scope-event-design-c') || html.includes('assets/css/scope.css?v=scope-event-design-c1') || html.includes('scope-event-c4-finish') || html.includes('scope-event-c3-fix'));
-    assert.ok(html.includes('scope-ui.js?v=scope-ux-event-3') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-c4-finish') || html.includes('scope-ui.js?v=scope-event-c3-fix'));
+    assert.ok(html.includes('scope-ui.js?v=scope-cycles-pr-auto-1') || html.includes('scope-ui.js?v=scope-ux-event-3') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-c4-finish') || html.includes('scope-ui.js?v=scope-event-c3-fix'));
     assert.ok(pkg.includes('scope-ux-event-3-tests.js'));
   });
 

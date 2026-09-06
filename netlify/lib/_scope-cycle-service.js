@@ -1,5 +1,5 @@
 const { HttpError, isoDate } = require('./_scope-rules');
-const { computeCycleMetrics, proposeCycleLink, resolveCycleCompletion } = require('./_scope-cycle-rules');
+const { buildCyclePilotage, computeCycleMetrics, proposeCycleLink, resolveCycleCompletion } = require('./_scope-cycle-rules');
 
 const DOMAINES_CYCLE = new Set(['PR', 'AUTO']);
 const STATUTS_CYCLE = new Set(['PLANIFIE', 'REALISE', 'REPORTE', 'ANNULE']);
@@ -181,6 +181,30 @@ function createScopeCycleService(repo){
     return computeCycleMetrics({ cycle, evenements, cyclePersonnes, participations, personnes });
   }
 
+  async function cyclePilotage(cycle, evenements, cyclePersonnes){
+    const ids = (evenements || []).map((e) => e.evenement_id).filter(Boolean);
+    const [attendus, participations] = await Promise.all([
+      repo.listAttendusForEvents && ids.length ? repo.listAttendusForEvents(ids) : [],
+      repo.listParticipationsForEvents && ids.length ? repo.listParticipationsForEvents(ids) : []
+    ]);
+    const personnes = {};
+    const hydrateIds = [
+      ...(cyclePersonnes || []).map((row) => row.personne_id || row.personneId),
+      ...(attendus || []).map((row) => row.personne_id || row.personneId),
+      ...(participations || []).map((row) => row.personne_id || row.personneId)
+    ].filter(Boolean);
+    Object.assign(personnes, await hydratePeople(repo, hydrateIds));
+    for(const row of cyclePersonnes || []){
+      if(!row.personne_id) continue;
+      const merged = { ...(personnes[row.personne_id] || {}) };
+      for(const key of ['nip', 'nom', 'prenom', 'grade']){
+        if(row[key] != null) merged[key] = row[key];
+      }
+      personnes[row.personne_id] = merged;
+    }
+    return buildCyclePilotage({ cycle, evenements, cyclePersonnes, attendus, participations, personnes });
+  }
+
   async function detail(cycleId){
     if(isDerivedCycleId(cycleId)){
       const derived = await derivedCycleDetail(cycleId);
@@ -198,7 +222,8 @@ function createScopeCycleService(repo){
       repo.listCyclePersonnes(cycleId)
     ]);
     const metrics = await cycleMetrics(cycle);
-    return { cycle, evenements, personnes, metrics };
+    const pilotage = await cyclePilotage(cycle, evenements, personnes);
+    return { cycle, evenements, personnes, metrics, pilotage };
   }
 
   async function derivedCycleFromEvents(groupKey, events){
@@ -255,7 +280,8 @@ function createScopeCycleService(repo){
       });
     }
     const metrics = computeCycleMetrics({ cycle, evenements: scopedEvents, cyclePersonnes, participations, personnes });
-    return { metrics, personnes: cyclePersonnes };
+    const pilotage = buildCyclePilotage({ cycle, evenements: scopedEvents, cyclePersonnes, attendus, participations, personnes });
+    return { metrics, personnes: cyclePersonnes, pilotage };
   }
 
   async function derivedCycles(query = {}){
@@ -298,8 +324,8 @@ function createScopeCycleService(repo){
     const cycle = await derivedCycleFromEvents(groupKey, scoped);
     if(!cycle) return null;
     const evenements = scoped.filter((event) => yearOfEvent(event) === cycle.annee);
-    const { metrics, personnes } = await derivedCycleMetrics(cycle, evenements);
-    return { cycle, evenements, personnes, metrics };
+    const { metrics, personnes, pilotage } = await derivedCycleMetrics(cycle, evenements);
+    return { cycle, evenements, personnes, metrics, pilotage };
   }
 
   return {

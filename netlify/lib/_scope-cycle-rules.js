@@ -478,6 +478,254 @@ function computeCycleMetrics(input = {}){
   };
 }
 
+function autoObligationKey(event){
+  const explicit = normalizeText(event && (event.auto_cycle_key || event.autoCycleKey || event.specialisation || event.type_session || event.typeSession || event.sous_domaine_code || event.sousDomaineCode));
+  if(explicit) return `AUTO:${normalizeUpper(explicit)}`;
+  const textValue = `${event && event.code_cours || ''} ${event && event.libelle || ''}`;
+  if(/\bPL\b/i.test(textValue)) return 'AUTO:PL';
+  if(/\bVL\b/i.test(textValue)) return 'AUTO:VL';
+  return `AUTO:${eventId(event) || 'SESSION'}`;
+}
+
+function cycleObligationKey(event, domaine){
+  if(normalizeDomain(domaine) === 'PR'){
+    return prExerciseGroupKey(event) || `PR:${eventId(event) || 'SESSION'}`;
+  }
+  return autoObligationKey(event);
+}
+
+function cycleObligationLabel(events, key, domaine){
+  const rows = sortSessionEvents(events || []);
+  if(normalizeDomain(domaine) === 'PR') return sessionExerciseLabel(rows, key);
+  const explicit = String(key || '').replace(/^AUTO:/, '');
+  if(explicit === 'VL') return 'AUTO VL';
+  if(explicit === 'PL') return 'AUTO PL';
+  const first = rows[0] || {};
+  return normalizeText(first.sous_domaine_code || first.sousDomaineCode || first.type_session || first.typeSession || first.libelle || explicit) || explicit || 'AUTO';
+}
+
+function personIdentityFromKey(key, peopleByKey){
+  const person = peopleByKey.get(key) || {};
+  return {
+    personKey: key,
+    personneId: personneId(person) || null,
+    nip: normalizeText(person.nip) || (String(key || '').startsWith('NIP:') ? String(key).slice(4) : ''),
+    nom: normalizeText(person.nom),
+    prenom: normalizeText(person.prenom),
+    grade: normalizeText(person.grade)
+  };
+}
+
+function statusRank(status){
+  const order = { REALISE: 5, DISPENSE: 4, EXCUSE: 3, ABSENT: 2, A_RENSEIGNER: 1, NON_CONCERNE: 0 };
+  return order[status] || 0;
+}
+
+function statusFromDecision(row, populationHasKey){
+  const role = normalizeUpper(row && row.role || 'PARTICIPANT');
+  const statut = normalizeUpper(row && row.statut || 'NON_RENSEIGNE');
+  if(role === 'FORMATEUR' && STATUTS_PRESENTS.has(statut) && populationHasKey) return 'REALISE';
+  if(role === 'SURVEILLANT' && STATUTS_PRESENTS.has(statut) && populationHasKey && normalizeUpper(row && row.source) === 'SAISIE') return 'REALISE';
+  if(role !== 'PARTICIPANT') return 'NON_CONCERNE';
+  if(statut === 'PRESENT' || statut === STATUT_PERMUTATION) return 'REALISE';
+  if(statut === 'DISPENSE') return 'DISPENSE';
+  if(statut === 'ABSENT_EXCUSE') return 'EXCUSE';
+  if(statut === 'ABSENT_NON_EXCUSE') return 'ABSENT';
+  return 'A_RENSEIGNER';
+}
+
+function buildCyclePilotage(input = {}){
+  const cycle = input.cycle || {};
+  const domaine = normalizeDomain(cycle.domaine_code || cycle.domaineCode || input.domaine || input.domaineCode);
+  const personnesById = personneLookup(input.personnes);
+  const events = sortSessionEvents(cycleEvents(input, cycle).filter(isEventCycleExigible));
+  const eventGroups = new Map();
+  const eventsById = new Map();
+  for(const event of events){
+    const id = eventId(event);
+    if(id) eventsById.set(id, event);
+    const key = cycleObligationKey(event, domaine);
+    const rows = eventGroups.get(key) || [];
+    rows.push(event);
+    eventGroups.set(key, rows);
+  }
+  const obligations = [...eventGroups.entries()].map(([key, rows], index) => ({
+    obligationKey: key,
+    label: cycleObligationLabel(rows, key, domaine),
+    domaine,
+    order: index + 1,
+    eventIds: rows.map(eventId).filter(Boolean),
+    sessions: rows.map((event) => ({
+      eventId: eventId(event),
+      date: event.date || null,
+      codeCours: event.code_cours || event.codeCours || null,
+      libelle: event.libelle || '',
+      statut: event.statut || 'PLANIFIE',
+      prSessionKey: domaine === 'PR' ? prSessionKey(event) : null,
+      prSessionLabel: domaine === 'PR' ? prSessionLabel(event) : null
+    })),
+    sessionLocked: rows.length > 0 && rows.every((event) => normalizeUpper(event.statut) === 'REALISE')
+  }));
+  const obligationByEventId = new Map();
+  for(const obligation of obligations){
+    for(const id of obligation.eventIds) obligationByEventId.set(id, obligation);
+  }
+
+  const peopleByKey = new Map();
+  const populationKeys = new Set();
+  const rolesByKey = new Map();
+  const expectedByKey = new Map();
+  const ensurePerson = (row) => {
+    const key = dedupeKey(row, personnesById);
+    if(key && !peopleByKey.has(key)){
+      const person = personnesById.get(personneId(row)) || row || {};
+      peopleByKey.set(key, { ...person, ...row });
+    }
+    return key;
+  };
+  const expect = (key, obligationKey, source) => {
+    if(!key || !obligationKey) return;
+    const set = expectedByKey.get(key) || new Set();
+    set.add(obligationKey);
+    expectedByKey.set(key, set);
+    if(source === 'ATTENDU' || source === 'CYCLE' || source === 'PARTICIPATION') populationKeys.add(key);
+  };
+
+  for(const row of input.attendus || input.expected || []){
+    if(row && row.inclus === false) continue;
+    const key = ensurePerson(row);
+    const obligation = obligationByEventId.get(eventId(row));
+    expect(key, obligation && obligation.obligationKey, 'ATTENDU');
+  }
+  for(const row of input.cyclePersonnes || input.cycle_personnes || []){
+    if(cycleId(row) && cycleId(cycle) && cycleId(row) !== cycleId(cycle)) continue;
+    const role = roleCycle(row);
+    if(!ROLES_CYCLE.has(role) || statutCycle(row) === 'EXCLU') continue;
+    const key = ensurePerson(row);
+    if(!key) continue;
+    const roles = rolesByKey.get(key) || new Set();
+    roles.add(role);
+    rolesByKey.set(key, roles);
+    if(role !== 'PARTICIPANT') continue;
+    populationKeys.add(key);
+    const assigned = assignedEventId(row);
+    if(assigned && obligationByEventId.has(assigned)){
+      expect(key, obligationByEventId.get(assigned).obligationKey, 'CYCLE');
+    } else if(!expectedByKey.has(key)){
+      for(const obligation of obligations) expect(key, obligation.obligationKey, 'CYCLE');
+    }
+    if(normalizeUpper(row.exception_type || row.exceptionType) === 'DISPENSE_EXERCICE_INTERNE'){
+      const scope = Array.isArray(row.exercise_scope || row.exerciseScope) ? (row.exercise_scope || row.exerciseScope) : [];
+      for(const scoped of scope){
+        const obligation = obligationByEventId.get(String(scoped)) || obligations.find((item) => item.obligationKey === String(scoped));
+        expect(key, obligation && obligation.obligationKey, 'CYCLE');
+      }
+    }
+  }
+
+  const decisionsByKey = new Map();
+  for(const row of input.participations || []){
+    const obligation = obligationByEventId.get(eventId(row));
+    if(!obligation) continue;
+    const key = ensurePerson(row);
+    if(!key) continue;
+    const role = normalizeUpper(row.role || 'PARTICIPANT');
+    const roles = rolesByKey.get(key) || new Set();
+    if(ROLES_CYCLE.has(role)) roles.add(role);
+    rolesByKey.set(key, roles);
+    const populationHasKey = populationKeys.has(key) || (role === 'PARTICIPANT' && (expectedByKey.get(key) || new Set()).has(obligation.obligationKey));
+    const status = statusFromDecision(row, populationHasKey);
+    if(role === 'PARTICIPANT') expect(key, obligation.obligationKey, 'PARTICIPATION');
+    const byObligation = decisionsByKey.get(key) || new Map();
+    const current = byObligation.get(obligation.obligationKey);
+    if(!current || statusRank(status) > statusRank(current.status)){
+      byObligation.set(obligation.obligationKey, {
+        status,
+        statut: normalizeUpper(row.statut || 'NON_RENSEIGNE'),
+        role,
+        eventId: eventId(row),
+        motif: normalizeUpper(row.motif_absence || row.motifAbsence || row.motif) || null,
+        source: normalizeUpper(row.source) || null
+      });
+    }
+    decisionsByKey.set(key, byObligation);
+  }
+
+  const allKeys = new Set([...populationKeys, ...peopleByKey.keys()]);
+  const individualRows = [...allKeys].sort().map((key) => {
+    const expected = expectedByKey.get(key) || new Set();
+    const decisions = decisionsByKey.get(key) || new Map();
+    const roles = sortedValues(rolesByKey.get(key) || new Set());
+    const cells = obligations.map((obligation) => {
+      const expectedHere = expected.has(obligation.obligationKey);
+      const decision = decisions.get(obligation.obligationKey);
+      const status = expectedHere ? ((decision && decision.status !== 'NON_CONCERNE' && decision.status) || 'A_RENSEIGNER') : ((decision && decision.status !== 'NON_CONCERNE' && decision.status) || 'NON_CONCERNE');
+      return {
+        obligationKey: obligation.obligationKey,
+        label: obligation.label,
+        expected: expectedHere,
+        status,
+        eventId: decision && decision.eventId || null,
+        role: decision && decision.role || null,
+        statut: decision && decision.statut || null,
+        motif: decision && decision.motif || null,
+        source: decision && decision.source || null,
+        sessionLocked: obligation.sessionLocked,
+        coveredInGlobalBilan: obligation.sessionLocked && ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(status)
+      };
+    });
+    const expectedCells = cells.filter((cell) => cell.expected);
+    const realised = expectedCells.filter((cell) => cell.status === 'REALISE').length;
+    const dispenses = expectedCells.filter((cell) => cell.status === 'DISPENSE').length;
+    const excuses = expectedCells.filter((cell) => cell.status === 'EXCUSE').length;
+    const absents = expectedCells.filter((cell) => cell.status === 'ABSENT').length;
+    const open = expectedCells.filter((cell) => cell.status === 'A_RENSEIGNER').length;
+    const resolved = realised + dispenses + excuses;
+    const isPopulation = populationKeys.has(key);
+    let globalState = 'ENCADREMENT';
+    if(isPopulation){
+      if(absents || open) globalState = 'INCOMPLET';
+      else if(expectedCells.length && realised) globalState = 'COMPLET';
+      else if(expectedCells.length && dispenses) globalState = 'DISPENSE';
+      else if(expectedCells.length && excuses) globalState = 'EXCUSE';
+      else globalState = 'INCOMPLET';
+    }
+    return {
+      ...personIdentityFromKey(key, peopleByKey),
+      roles,
+      isPopulation,
+      expectedCount: expectedCells.length,
+      realisedCount: realised,
+      dispensedCount: dispenses,
+      excusedCount: excuses,
+      absentCount: absents,
+      openCount: open,
+      progressionPct: expectedCells.length ? round1((100 * resolved) / expectedCells.length) : null,
+      globalState,
+      obligations: cells
+    };
+  });
+  const populationRows = individualRows.filter((row) => row.isPopulation);
+  const completeRows = populationRows.filter((row) => ['COMPLET', 'DISPENSE', 'EXCUSE'].includes(row.globalState));
+  const incompleteRows = populationRows.filter((row) => row.globalState === 'INCOMPLET');
+  return {
+    cycleId: cycleId(cycle) || null,
+    domaine,
+    obligations,
+    individualRows,
+    kpis: {
+      population: populationRows.length,
+      complete: completeRows.length,
+      incomplete: incompleteRows.length,
+      realised: populationRows.filter((row) => row.realisedCount > 0).length,
+      excused: populationRows.filter((row) => row.excusedCount > 0).length,
+      dispensed: populationRows.filter((row) => row.dispensedCount > 0).length,
+      encadrement: individualRows.filter((row) => !row.isPopulation).length,
+      progression: populationRows.length ? round1((100 * completeRows.length) / populationRows.length) : null
+    }
+  };
+}
+
 function computePrExerciseParticipationState(input = {}){
   const cycle = input.cycle || {};
   const personnesById = personneLookup(input.personnes);
@@ -874,6 +1122,7 @@ module.exports = {
   sameTechnicalCycle,
   proposeCycleLink,
   computeCycleMetrics,
+  buildCyclePilotage,
   eventContributionState,
   isEventStatisticallyCountable,
   isEventCycleExigible,
