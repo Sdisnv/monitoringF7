@@ -1230,6 +1230,18 @@
     render();
   }
 
+  function normalizeAuthenticatedLocation() {
+    if (!window.history || typeof L.cleanAuthenticatedScopeUrl !== 'function') return;
+    const current = `${location.pathname || '/'}${location.search || ''}${location.hash || ''}`;
+    const next = L.cleanAuthenticatedScopeUrl({
+      pathname: location.pathname || '/',
+      search: location.search || '',
+      hash: location.hash || '',
+      hostname: location.hostname || ''
+    });
+    if (next && next !== current) window.history.replaceState(null, '', next);
+  }
+
   async function logoutScopeSession() {
     invalidateScopeSession('logout');
     try {
@@ -1479,7 +1491,10 @@
   }
 
   function renderLoginScreen() {
-    const loginHref = L.oktaLoginHref('/scope.html');
+    const requested = location.hash && String(location.hash).startsWith('#/')
+      ? `/scope.html${location.hash}`
+      : '/scope.html';
+    const loginHref = L.oktaLoginHref(requested);
     const params = new URLSearchParams(location.search.replace(/^\?/, ''));
     const reason = params.get('authError') === '1' ? params.get('reason') || 'callback' : '';
     const status = state.authChecking
@@ -8769,6 +8784,7 @@
     } catch (_err) { /* ignore */ }
     try {
       const data = await client.sessionMe();
+      normalizeAuthenticatedLocation();
       state.session = data.user || null;
       state.authChecking = false;
       state.authError = null;

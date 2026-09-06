@@ -1659,6 +1659,20 @@
     return `/auth/oidc/start?returnTo=${encodeURIComponent(safe)}`;
   }
 
+  const TRANSIENT_AUTH_QUERY_PARAMS = Object.freeze(['code', 'state', 'authError', 'reason', 'mode', 'idle']);
+
+  function cleanAuthenticatedScopeUrl({ pathname, search, hash, hostname } = {}) {
+    const params = new URLSearchParams(String(search || '').replace(/^\?/, ''));
+    for (const key of TRANSIENT_AUTH_QUERY_PARAMS) params.delete(key);
+    const cleanSearch = params.toString();
+    let cleanPath = pathname || '/';
+    if (hostname === 'scope-sdisnv.netlify.app' && (cleanPath === '/scope.html' || cleanPath === '/index.html')) {
+      cleanPath = '/';
+    }
+    const cleanHash = String(hash || '');
+    return `${cleanPath}${cleanSearch ? `?${cleanSearch}` : ''}${cleanHash}`;
+  }
+
   function importPreviewFilterCount(id, { standard, all, groups, excluded } = {}) {
     const lines = all || [];
     const previewGroups = groups || [];
@@ -1832,6 +1846,7 @@
     buildImportPreviewFilters,
     defaultImportPreviewFilter,
     oktaLoginHref,
+    cleanAuthenticatedScopeUrl,
     hasUnsavedPresenceChanges,
     canStartPresenceSave,
     nextEventVersionAfterSave,

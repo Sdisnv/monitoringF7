@@ -190,6 +190,15 @@ function part(personne, statut, extra){
     const taux = computeTaux(fiche.participations, fiche.attendus);
     assert.strictEqual(taux.presents, 1);
     assert.strictEqual(fiche.attendus.filter((row) => row.personne_id === ctx.people[0].personne_id).length, 1);
+    await ctx.service.retirerEncadrement(ctx.eventId, {
+      baseVersion: fiche.evenement.version,
+      personneId: ctx.people[0].personne_id,
+      scope: 'SESSION'
+    }, { sub: 'ux1-test' });
+    const afterRetrait = await ctx.service.lireEvenement(ctx.eventId);
+    const participation = afterRetrait.participations.find((row) => row.personne_id === ctx.people[0].personne_id);
+    assert.strictEqual(participation.statut, 'PRESENT');
+    assert.strictEqual(participation.role, 'PARTICIPANT');
     const payload = logic.buildPresenceSavePayload([
       { personneId: 'A', inclus: true, alreadyCountedInSession: false, statut: 'PRESENT', role: 'SURVEILLANT', presenceEdited: true }
     ], new Set(['A']));

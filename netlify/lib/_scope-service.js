@@ -1790,16 +1790,17 @@ function createScopeService(repo){
     if(attendu && attendu.inclus){
       const previousStatut = String(participation.statut || '').toUpperCase();
       const previousSource = String(participation.source || '').toUpperCase();
-      const keepPrPresence = String(participation.role || '').toUpperCase() === 'FORMATEUR'
+      const previousRole = String(participation.role || '').toUpperCase();
+      const keepParticipantPresence = (previousRole === 'FORMATEUR' || previousRole === 'SURVEILLANT')
         && previousStatut === 'PRESENT'
         && previousSource !== 'ENCADREMENT';
       await tx.upsertParticipation({
         ...participation,
-        statut: keepPrPresence ? 'PRESENT' : 'NON_RENSEIGNE',
+        statut: keepParticipantPresence ? 'PRESENT' : 'NON_RENSEIGNE',
         motif_absence: null,
         commentaire: null,
         role: 'PARTICIPANT',
-        source: keepPrPresence ? participation.source : 'SAISIE',
+        source: keepParticipantPresence ? participation.source : 'SAISIE',
         auteur_id: actorId(actor)
       });
       return;
@@ -2027,10 +2028,10 @@ function createScopeService(repo){
     const existingStatut = String(existing?.statut || '').toUpperCase();
     const existingSource = String(existing?.source || '').toUpperCase();
     const presenceDejaSaisie = attenduInclus && existingStatut === 'PRESENT' && existingSource !== 'ENCADREMENT';
-    const keepParticipantPresence = role === 'FORMATEUR' && presenceDejaSaisie;
+    const keepParticipantPresence = (role === 'FORMATEUR' || role === 'SURVEILLANT') && presenceDejaSaisie;
     const statutEncadrement = attenduInclus && role === 'FORMATEUR'
       ? 'PRESENT'
-      : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE');
+      : (keepParticipantPresence ? 'PRESENT' : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE'));
     await tx.upsertParticipation({
       ...(existing || { evenement_id: eventId, personne_id: personneId }),
       statut: statutEncadrement,
