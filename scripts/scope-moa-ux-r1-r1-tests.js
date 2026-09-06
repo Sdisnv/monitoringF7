@@ -48,8 +48,9 @@ const env = {
 };
 
 (async () => {
-  await record('01 — / ouvre DEMO selon contrat', async () => {
-    assert.strictEqual(logic.resolveClientMode({ search: '', sessionLive: false }), 'demo');
+  await record('01 — / ouvre SCOPE en auth stricte', async () => {
+    assert.strictEqual(logic.resolveClientMode({ search: '', sessionLive: false }), 'live');
+    assert.strictEqual(logic.resolveClientMode({ search: '?mode=demo', sessionLive: true }), 'live');
   });
 
   await record('02 — pas de CTA technique LIVE/DEMO visible', async () => {
@@ -59,15 +60,16 @@ const env = {
     assert.ok(!ui.includes('Mode LIVE — PostgreSQL Monitoring'));
   });
 
-  await record('03 — connexion construit ?mode=live sans URL manuelle', async () => {
-    assert.ok(ui.includes('?mode=live'));
-    assert.ok(ui.includes("L.oktaLoginHref('/scope.html?mode=live')"));
+  await record('03 — connexion construit le retour SCOPE sans mode URL', async () => {
+    assert.ok(!ui.includes('?mode=live'));
+    assert.ok(ui.includes("L.oktaLoginHref('/scope.html')"));
   });
 
-  await record('04 — confirmation d’accès conservée sans wording technique', async () => {
-    assert.strictEqual(logic.resolveClientMode({ search: '?mode=live', sessionLive: false }), 'gate');
+  await record('04 — accès sans session refusé sans bascule locale', async () => {
+    assert.strictEqual(logic.resolveClientMode({ search: '?mode=live', sessionLive: false }), 'live');
     assert.ok(ui.includes('Connexion requise'));
-    assert.ok(ui.includes('scope-confirm-live'));
+    assert.ok(!ui.includes('scope-confirm-live'));
+    assert.ok(!ui.includes('scope-stay-demo'));
     assert.ok(!ui.includes('Connexion live demandée'));
     assert.ok(!ui.includes('PostgreSQL Monitoring'));
   });
@@ -75,7 +77,7 @@ const env = {
   await record('05 — /auth/oidc/start accessible', async () => {
     await withEnv(env, async () => {
       const { handler } = require(path.join(ROOT, 'netlify/functions/auth-oidc-start.js'));
-      const response = await handler({ httpMethod: 'GET', rawQuery: 'returnTo=/scope.html?mode=live' });
+      const response = await handler({ httpMethod: 'GET', rawQuery: 'returnTo=/scope.html' });
       assert.strictEqual(response.statusCode, 302);
       assert.ok(response.headers.Location.startsWith(env.OKTA_ISSUER));
     });
@@ -84,17 +86,17 @@ const env = {
   await record('06 — redirect_uri = scope-sdisnv', async () => {
     await withEnv(env, async () => {
       const { handler } = require(path.join(ROOT, 'netlify/functions/auth-oidc-start.js'));
-      const response = await handler({ httpMethod: 'GET', rawQuery: 'returnTo=/scope.html?mode=live' });
+      const response = await handler({ httpMethod: 'GET', rawQuery: 'returnTo=/scope.html' });
       const url = new URL(response.headers.Location);
       assert.strictEqual(url.searchParams.get('redirect_uri'), env.OIDC_REDIRECT_URI);
     });
   });
 
-  await record('07 — callback revient vers le returnTo LIVE', async () => {
+  await record('07 — callback revient vers SCOPE sans mode URL', async () => {
     const source = fs.readFileSync(path.join(ROOT, 'netlify/lib/_oidc-utils.js'), 'utf8');
     assert.ok(source.includes("const returnTo = sanitizeReturnTo(statePayload.returnTo || '/')"));
     assert.ok(source.includes('redirect(302, returnTo'));
-    assert.ok(ui.includes("L.oktaLoginHref('/scope.html?mode=live')"));
+    assert.ok(ui.includes("L.oktaLoginHref('/scope.html')"));
   });
 
   await record('08 — header sans badge de mode technique', async () => {
@@ -128,6 +130,7 @@ const env = {
     assert.ok(!ui.includes('scope-start-live'));
     assert.ok(!ui.includes('Déconnexion DEMO'));
     assert.ok(!ui.includes('Démonstration'));
+    assert.ok(!fs.existsSync(path.join(ROOT, 'assets/js/scope-demo.js')));
   });
 
   await record('13 — pas de jargon session visible', async () => {

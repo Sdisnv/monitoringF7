@@ -1647,12 +1647,8 @@
     return true;
   }
 
-  function resolveClientMode({ search, sessionLive } = {}) {
-    const params = new URLSearchParams(String(search || '').replace(/^\?/, ''));
-    if (params.get('mode') === 'demo') return 'demo';
-    if (params.get('mode') === 'live' && sessionLive) return 'live';
-    if (params.get('mode') === 'live') return 'gate';
-    return 'demo';
+  function resolveClientMode() {
+    return 'live';
   }
 
   function oktaLoginHref(returnPath) {

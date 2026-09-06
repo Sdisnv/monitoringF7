@@ -130,6 +130,230 @@ html, body {
   display: block;
 }
 
+.scope-login-v1 {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 36%) minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  background: #ffffff;
+  color: var(--scope-ink);
+}
+
+.scope-login-visual {
+  min-height: 100vh;
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  padding: clamp(32px, 5vw, 72px);
+  color: #ffffff;
+  background:
+    linear-gradient(150deg, rgba(15, 23, 42, 0.16), rgba(15, 23, 42, 0.62)),
+    linear-gradient(142deg, var(--scope-red-dark) 0%, var(--scope-red) 58%, #232a32 100%);
+}
+
+.scope-login-visual-inner {
+  width: min(100%, 460px);
+}
+
+.scope-login-logo {
+  display: block;
+  width: min(220px, 72%);
+  height: auto;
+  margin: 0 0 28px;
+}
+
+.scope-login-rule {
+  width: 72px;
+  height: 4px;
+  margin: 0 0 28px;
+  background: var(--scope-yellow);
+}
+
+.scope-login-kicker {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  opacity: 0.86;
+}
+
+.scope-login-visual h1 {
+  margin: 0;
+  font-size: clamp(48px, 7vw, 86px);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.scope-login-copy {
+  max-width: 380px;
+  margin: 22px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 17px;
+}
+
+.scope-login-panel {
+  min-height: calc(100vh - 44px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: center;
+  padding: clamp(24px, 4vw, 52px);
+}
+
+.scope-login-sdis {
+  justify-self: end;
+  width: min(180px, 44vw);
+  height: auto;
+}
+
+.scope-login-card {
+  width: min(100%, 440px);
+  justify-self: center;
+  align-self: center;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius-md);
+  background: #ffffff;
+  box-shadow: var(--scope-shadow-md);
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.scope-login-lock {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin: 0 0 20px;
+  border-radius: var(--scope-radius-md);
+  background: var(--scope-red-soft);
+  color: var(--scope-red-dark);
+}
+
+.scope-login-lock .scope-nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.scope-login-eyebrow {
+  margin: 0 0 8px;
+  color: var(--scope-red-dark);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.scope-login-card h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: 0;
+  color: var(--scope-ink);
+}
+
+.scope-login-card p {
+  margin: 0;
+  color: var(--scope-muted);
+  font-size: 15px;
+}
+
+.scope-login-alert {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid var(--scope-warn);
+  border-radius: var(--scope-radius);
+  background: var(--scope-warning-soft);
+  color: var(--scope-warn);
+  font-weight: 600;
+}
+
+.scope-login-submit,
+.scope-login-status {
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+  border-radius: var(--scope-radius);
+  font-weight: 700;
+  text-align: center;
+}
+
+.scope-login-submit {
+  border: 1px solid var(--scope-red);
+  background: var(--scope-red);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.scope-login-submit:hover {
+  background: var(--scope-red-hover);
+  border-color: var(--scope-red-hover);
+  color: #ffffff;
+}
+
+.scope-login-status {
+  border: 1px solid var(--scope-line);
+  background: var(--scope-gray-50);
+  color: var(--scope-muted);
+}
+
+.scope-login-footer {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(24px, 4vw, 52px);
+  border-top: 1px solid var(--scope-line);
+  color: var(--scope-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .scope-login-v1 {
+    grid-template-columns: 1fr;
+  }
+
+  .scope-login-visual {
+    display: none;
+  }
+
+  .scope-login-panel {
+    min-height: calc(100vh - 44px);
+    padding: 24px;
+  }
+
+  .scope-login-sdis {
+    justify-self: center;
+    margin-bottom: 24px;
+  }
+
+  .scope-login-card {
+    align-self: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .scope-login-panel {
+    padding: 18px;
+  }
+
+  .scope-login-card {
+    padding: 22px 18px;
+    box-shadow: var(--scope-shadow-sm);
+  }
+
+  .scope-login-card h2 {
+    font-size: 24px;
+  }
+
+  .scope-login-footer {
+    justify-content: center;
+    padding: 0 18px;
+    text-align: center;
+  }
+}
+
 .scope-ui-card {
   background: var(--scope-card);
   border: 1px solid var(--scope-line);
@@ -1507,13 +1731,6 @@ html, body {
 }
 
 .scope-banner strong { display: block; margin-bottom: 4px; font-size: 16px; }
-
-.scope-banner.demo {
-  background: #eef2ff;
-  color: #1e3a8a;
-  border-color: #c7d2fe;
-  border-left: 4px solid #1e3a8a;
-}
 
 .scope-banner.live {
   background: #fff7f7;

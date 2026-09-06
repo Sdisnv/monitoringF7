@@ -72,7 +72,6 @@ function uiHarness(fetchImpl, rawFetch){
     window: {
       ScopeUiLogic: L,
       ScopeApi: { createHttpClient: () => ({ kind: 'http', sessionMe: fetchImpl }) },
-      ScopeDemo: { createDemoClient: () => ({ kind: 'demo' }) },
       ScopeAuthIdle: idle,
       __SCOPE_UI_TEST_HOOKS__: true,
       CurrentRoles: ['ADMINISTRATEUR'],
@@ -88,7 +87,7 @@ function uiHarness(fetchImpl, rawFetch){
       querySelectorAll(){ return []; },
       querySelector(){ return null; }
     },
-    location: { hash: '#/accueil', search: '?mode=live', href: '' },
+    location: { hash: '#/accueil', search: '', href: '' },
     sessionStorage,
     localStorage,
     console,
@@ -121,7 +120,7 @@ function uiHarness(fetchImpl, rawFetch){
     const { hooks, root } = uiHarness(async () => { const err = new Error('Token invalide.'); err.status = 401; throw err; });
     await hooks.ensureLiveSession();
     hooks.render();
-    ok(root.innerHTML.includes('Connexion requise'));
+    ok(root.innerHTML.includes('Connexion SCOPE'));
     ok(!root.innerHTML.includes('scope-sidebar'));
     ok(!root.innerHTML.includes('Centre de pilotage'));
   });
@@ -244,7 +243,7 @@ function uiHarness(fetchImpl, rawFetch){
     hooks.state.session = { displayName: 'SCOPE', roles: ['UTILISATEUR'], permissions: ['dashboard:read'] };
     hooks.invalidateScopeSession('test');
     hooks.render();
-    ok(root.innerHTML.includes('Connexion requise'));
+    ok(root.innerHTML.includes('Connexion SCOPE'));
     ok(!root.innerHTML.includes('scope-user-block'));
     ok(!root.innerHTML.includes('scope-sidebar'));
   });

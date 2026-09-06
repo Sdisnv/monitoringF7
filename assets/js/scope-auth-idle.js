@@ -241,7 +241,7 @@
   }
 
   function idleLogoutHref() {
-    return '/auth/logout?returnTo=' + encodeURIComponent('/scope.html?mode=live&idle=1');
+    return '/auth/logout?returnTo=' + encodeURIComponent('/scope.html?idle=1');
   }
 
   function start(options) {

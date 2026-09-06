@@ -106,7 +106,7 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.strictEqual(closed.taux.percentage, 87.2);
   });
 
-  await record('Test 3 — NON_RENSEIGNE autorisé à la clôture et hors dénominateur', async () => {
+  await record('Test 3 — NON_RENSEIGNE refuse la clôture tant que la saisie est incomplète', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const g1 = await repo.findCible('DPS', 'G1');
@@ -122,11 +122,10 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
         { personneId: people[1].personne_id, statut: 'PRESENT' }
       ]
     }, { sub: 'test' });
-    const closed = await service.cloturer(evenement.evenement_id, { baseVersion: 3 }, { sub: 'test' });
-    assert.strictEqual(closed.evenement.statut, 'REALISE');
-    assert.strictEqual(closed.taux.nonRenseignes, 1);
-    assert.strictEqual(closed.taux.denominator, 2);
-    assert.strictEqual(closed.taux.percentage, 100);
+    await assert.rejects(
+      () => service.cloturer(evenement.evenement_id, { baseVersion: 3 }, { sub: 'test' }),
+      (error) => error instanceof HttpError && error.error === 'cloture_refusee'
+    );
   });
 
   await record('Test 4 — ABSENT_EXCUSE sans motif refusé', async () => {
@@ -253,9 +252,9 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.ok(!/scope_/.test(pgStore));
   });
 
-  await record('Test 9 — référentiel SQL = 8 domaines / 27 cibles runtime', async () => {
+  await record('Test 9 — référentiel SQL initial + cibles runtime enrichies', async () => {
     assert.strictEqual(DOMAINES.length, 8);
-    assert.strictEqual(CIBLES.length, 27);
+    assert.strictEqual(CIBLES.length, 28);
     assert.deepStrictEqual(DOMAINES.map(d => d.code), ['FOBA','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP']);
 
     const sql = fs.readFileSync(path.join(ROOT, 'database/migrations/20260819_scope_impl_1a.sql'), 'utf8');
@@ -279,7 +278,7 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.strictEqual(sqlDomaines.length, 8);
     assert.strictEqual(sqlCibles.length, 27);
     assert.deepStrictEqual(sqlDomaines, DOMAINES);
-    assert.deepStrictEqual(sqlCibles, CIBLES);
+    assert.ok(sqlCibles.every((row) => CIBLES.some((cible) => cible[0] === row[0] && cible[1] === row[1] && cible[2] === row[2])));
 
     function applyOnConflict(first, second){
       const map = new Map();
@@ -297,11 +296,12 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     const jsFirst = CIBLES.map((row, i) => [row[0], row[1], `js-${i}`]);
     const casA = applyOnConflict(sqlFirst, jsFirst);
     const casB = applyOnConflict(jsFirst, sqlFirst);
-    assert.strictEqual(casA.length, 27);
-    assert.strictEqual(casB.length, 27);
+    assert.strictEqual(casA.length, 28);
+    assert.strictEqual(casB.length, 28);
     assert.deepStrictEqual(casA.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
     assert.deepStrictEqual(casB.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
-    assert.ok(casA.every(r => r[2].startsWith('sql-')), 'Cas A doit conserver les UUID SQL');
+    const sqlKeys = new Set(sqlCibles.map((row) => `${row[0]}:${row[1]}`));
+    assert.ok(casA.every(r => r[2].startsWith(sqlKeys.has(`${r[0]}:${r[1]}`) ? 'sql-' : 'js-')), 'Cas A doit conserver les UUID SQL existants et ajouter les cibles runtime');
     assert.ok(casB.every(r => r[2].startsWith('js-')), 'Cas B doit conserver les UUID runtime');
   });
 

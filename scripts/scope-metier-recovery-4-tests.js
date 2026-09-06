@@ -104,7 +104,6 @@ function scopeUiHooks(){
   const sandbox = {
     window: {
       ScopeUiLogic: L,
-      ScopeDemo: { createDemoClient: () => ({}) },
       ScopeApi: null,
       __SCOPE_UI_TEST_HOOKS__: true,
       addEventListener(){},

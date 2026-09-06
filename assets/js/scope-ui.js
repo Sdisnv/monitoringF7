@@ -5,14 +5,10 @@
   const root = document.getElementById('scope-root');
   if (!root || !L) return;
 
-  const LIVE_KEY = 'scope-live-confirmed';
+  const LEGACY_LIVE_KEY = 'scope-live-confirmed';
   const QUAL_KEY = 'scope-include-qualification';
   const SCOPE_SEARCH_MIN_CHARS = 3;
   const SCOPE_SEARCH_DEBOUNCE_MS = 280;
-
-  function liveConfirmed() {
-    try { return sessionStorage.getItem(LIVE_KEY) === '1'; } catch (_error) { return false; }
-  }
 
   function readIncludeQualification() {
     try { return sessionStorage.getItem(QUAL_KEY) === '1'; } catch (_error) { return false; }
@@ -23,21 +19,16 @@
   }
 
   function resolveMode() {
-    const decision = L.resolveClientMode({ search: location.search, sessionLive: liveConfirmed() });
-    if (decision === 'live' && window.ScopeApi) {
-      return { mode: 'live', client: window.ScopeApi.createHttpClient({ onUnauthorized: handleUnauthorized }), gate: false };
-    }
+    L.resolveClientMode({ search: location.search });
     return {
-      mode: 'demo',
-      client: window.ScopeDemo.createDemoClient({}),
-      gate: decision === 'gate'
+      client: window.ScopeApi && typeof window.ScopeApi.createHttpClient === 'function'
+        ? window.ScopeApi.createHttpClient({ onUnauthorized: handleUnauthorized })
+        : { sessionMe: async () => { throw Object.assign(new Error('Authentification indisponible.'), { status: 401, error: 'unauthorized' }); } }
     };
   }
 
   const resolved = resolveMode();
   let client = resolved.client;
-  let mode = resolved.mode;
-  let liveGate = resolved.gate;
 
   const state = {
     year: L.currentYear('2026-08-19'),
@@ -112,7 +103,9 @@
     manualPersonHits: [],
     reopenMotif: '',
     session: null,
-    needOkta: false,
+    authChecking: true,
+    authError: null,
+    needOkta: true,
     idleWarn: false,
     idleExpired: false,
     personCount: null,
@@ -289,7 +282,10 @@
   function friendlyActionError(error) {
     const info = presentFriendlyError(L.friendlyError(error));
     state.conflict = Boolean(info.conflict);
-    if (info.okta) invalidateScopeSession('action-unauthorized');
+    if (info.okta) {
+      invalidateScopeSession('action-unauthorized');
+      state.authError = info;
+    }
     return info;
   }
 
@@ -322,7 +318,10 @@
     } catch (error) {
       const info = presentFriendlyError(L.friendlyError(error));
       state.conflict = Boolean(info.conflict);
-      if (info.okta) invalidateScopeSession('loading-unauthorized');
+      if (info.okta) {
+        invalidateScopeSession('loading-unauthorized');
+        state.authError = info;
+      }
       toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors, okta: info.okta });
     } finally {
       state.loading = false;
@@ -1162,24 +1161,22 @@
 
   function roleLabel() {
     const roles = (state.session && (state.session.roles || [])) || [];
-    if (mode !== 'live') return 'Profil SCOPE';
     if (state.session && state.session.roleLabel) return state.session.roleLabel;
     if (roles.includes('ADMINISTRATEUR')) return 'Administrateur';
     if (roles.includes('GESTIONNAIRE')) return 'Gestionnaire';
     if (roles.includes('UTILISATEUR')) return 'Utilisateur';
     if (roles[0]) return String(roles[0]);
-    return state.session ? 'Profil SCOPE' : 'Connexion requise';
+    return state.session ? 'Profil utilisateur' : 'Connexion requise';
   }
 
   function userLabel() {
-    if (mode !== 'live') return 'SCOPE';
     if (state.session && state.session.displayName) return state.session.displayName;
     return 'Connexion requise';
   }
 
   function userInitials() {
     const label = userLabel();
-    return label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SC';
+    return label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SD';
   }
 
   function clearSensitiveSessionData() {
@@ -1204,12 +1201,14 @@
 
   function clearLocalAuthState() {
     state.session = null;
+    state.authChecking = false;
+    state.authError = null;
     state.needOkta = true;
     state.idleWarn = false;
     clearSensitiveSessionData();
     window.CurrentRoles = [];
     window.CurrentPermissions = [];
-    try { sessionStorage.removeItem(LIVE_KEY); } catch (_error) { /* ignore */ }
+    try { sessionStorage.removeItem(LEGACY_LIVE_KEY); } catch (_error) { /* ignore */ }
     try { sessionStorage.removeItem(QUAL_KEY); } catch (_error) { /* ignore */ }
     try { localStorage.removeItem('scope_auth_idle_last_activity'); } catch (_error) { /* ignore */ }
     if (window.ScopeAuthIdle && typeof window.ScopeAuthIdle.stop === 'function') window.ScopeAuthIdle.stop();
@@ -1222,12 +1221,12 @@
 
   function invalidateScopeSession(_reason) {
     clearScopeSession();
-    if (mode === 'live') liveGate = false;
     return false;
   }
 
   function handleUnauthorized(info) {
     invalidateScopeSession((info && info.url) || 'unauthorized');
+    state.authError = presentFriendlyError(info || L.friendlyError({ status: 401, error: 'unauthorized' }));
     render();
   }
 
@@ -1241,7 +1240,6 @@
 
   function hasScopePermission(permission) {
     if (!permission) return true;
-    if (mode !== 'live') return true;
     if (window.MonitoringRBAC && typeof window.MonitoringRBAC.has === 'function') {
       return window.MonitoringRBAC.has(permission);
     }
@@ -1317,6 +1315,7 @@
       people: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M21.5 20c0-2.5-1.8-4-4.5-4"/>',
       report: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
       folder: '<path d="M3 7.5 5.5 5h5l2 2.5H21v12H3Z"/>',
+      lock: '<rect x="5" y="10" width="14" height="10" rx="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v2"/>',
       settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3V21M4.8 6.5l1.6 1.6M17.6 16l1.6 1.6M3.5 12h2.2M18.3 12H21M4.8 17.5l1.6-1.6M17.6 8l1.6-1.6"/>'
     };
     return `<svg class="scope-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${paths[name] || paths.folder}</svg>`;
@@ -1409,9 +1408,7 @@
   }
 
   function headerHtml(r) {
-    const logout = mode === 'live'
-      ? `<button type="button" class="scope-btn scope-btn-ghost" id="scope-logout">Déconnexion</button>`
-      : '';
+    const logout = `<button type="button" class="scope-btn scope-btn-ghost" id="scope-logout">Déconnexion</button>`;
     return `
       <header class="scope-header">
         <div class="scope-header-inner">
@@ -1430,7 +1427,7 @@
               <span class="scope-user-avatar" aria-hidden="true">${escapeHtml(userInitials())}</span>
               <div class="scope-user-text">
                 <strong class="scope-user">${escapeHtml(userLabel())}</strong>
-                ${mode === 'live' ? `<small>${escapeHtml(roleLabel())}</small>` : ''}
+                <small>${escapeHtml(roleLabel())}</small>
               </div>
             </div>
             ${logout}
@@ -1447,25 +1444,7 @@
       const reason = params.get('reason') || 'callback';
       bits.push(`<div class="scope-banner warning" role="alert">
         <strong>Connexion interrompue</strong>
-        <div>La session SCOPE n’a pas pu être ouverte (raison : ${escapeHtml(reason)}). Réessayez de vous connecter.</div>
-      </div>`);
-    }
-    if (liveGate) {
-      bits.push(`<div class="scope-banner warning" role="alertdialog">
-        <strong>Connexion requise</strong>
-        <div>Confirmez l’ouverture de SCOPE pour accéder aux données de production.</div>
-        <div class="scope-actions">
-          <button type="button" class="scope-btn scope-btn-primary" id="scope-confirm-live">Continuer</button>
-          <button type="button" class="scope-btn" id="scope-stay-demo">Annuler</button>
-        </div>
-      </div>`);
-    } else if (mode === 'live' && state.needOkta) {
-      bits.push(`<div class="scope-banner warning" role="alertdialog">
-        <strong>Connexion requise</strong>
-        <div>${state.idleExpired ? 'Votre session a expiré après une période d’inactivité.' : 'Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.'}</div>
-        <div class="scope-actions">
-          <a class="scope-btn scope-btn-primary" id="scope-okta-login" href="${escapeHtml(L.oktaLoginHref('/scope.html?mode=live'))}">Se connecter</a>
-        </div>
+        <div>La session SCOPE n’a pas pu être ouverte (raison : ${escapeHtml(reason)}). Réessayez de vous connecter.</div>
       </div>`);
     }
     if (state.idleWarn && !state.needOkta) {
@@ -1488,6 +1467,52 @@
       </div>`);
     }
     return bits.join('');
+  }
+
+  function loginMessage() {
+    const params = new URLSearchParams(location.search.replace(/^\?/, ''));
+    if (state.authChecking) return 'Vérification de la session en cours.';
+    if (state.idleExpired) return 'Votre session a expiré après une période d’inactivité.';
+    if (state.authError && state.authError.message) return state.authError.message;
+    if (params.get('authError') === '1') return 'La session SCOPE n’a pas pu être ouverte. Réessayez de vous connecter.';
+    return 'Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.';
+  }
+
+  function renderLoginScreen() {
+    const loginHref = L.oktaLoginHref('/scope.html');
+    const params = new URLSearchParams(location.search.replace(/^\?/, ''));
+    const reason = params.get('authError') === '1' ? params.get('reason') || 'callback' : '';
+    const status = state.authChecking
+      ? `<div class="scope-login-status" role="status">Vérification de la session...</div>`
+      : `<a class="scope-login-submit" id="scope-okta-login" href="${escapeHtml(loginHref)}">Se connecter avec Okta</a>`;
+    const alert = reason || state.authError
+      ? `<div class="scope-login-alert" role="alert">${escapeHtml(reason ? `Connexion interrompue : ${reason}` : loginMessage())}</div>`
+      : '';
+    return `
+      <main class="scope-login-v1">
+        <section class="scope-login-visual" aria-label="SCOPE">
+          <div class="scope-login-visual-inner">
+            <img class="scope-login-logo" src="assets/img/logo-scope-blanc.png" alt="SCOPE" width="300" height="100">
+            <div class="scope-login-rule" aria-hidden="true"></div>
+            <p class="scope-login-kicker">Suivi et analyse de l’activité</p>
+            <h1>SCOPE</h1>
+            <p class="scope-login-copy">Accès réservé aux utilisateurs autorisés du SDIS régional du Nord vaudois.</p>
+          </div>
+        </section>
+        <section class="scope-login-panel" aria-label="Connexion">
+          <img class="scope-login-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
+          <div class="scope-login-card">
+            <div class="scope-login-lock" aria-hidden="true">${navIcon('lock')}</div>
+            <p class="scope-login-eyebrow">Authentification</p>
+            <h2>Connexion SCOPE</h2>
+            <p>${escapeHtml(loginMessage())}</p>
+            ${alert}
+            ${status}
+          </div>
+        </section>
+        <footer class="scope-login-footer">SDIS régional du Nord vaudois</footer>
+      </main>
+    `;
   }
 
   function escapeHtml(value) {
@@ -2371,7 +2396,7 @@
   }
 
   async function loadPersonnelDirectory() {
-    if (mode !== 'live' || typeof client.listPersonnelDirectory !== 'function' || !canReadPersonnel()) {
+    if (typeof client.listPersonnelDirectory !== 'function' || !canReadPersonnel()) {
       state.personnelDirectory = null;
       state.personnelReady = true;
       state.personnelError = null;
@@ -2414,7 +2439,7 @@
   }
 
   async function loadPersonneFiche(id) {
-    if (mode !== 'live' || typeof client.getPersonneFiche !== 'function' || !canReadPersonnel()) {
+    if (typeof client.getPersonneFiche !== 'function' || !canReadPersonnel()) {
       state.personneFiche = null;
       return;
     }
@@ -3112,7 +3137,6 @@
   }
 
   function renderPersonnelDirectory() {
-    const live = mode === 'live';
     const canRead = canReadPersonnel();
     const dir = state.personnelDirectory;
     const temporal = window.ScopePersonnelTemporal;
@@ -3179,12 +3203,6 @@
       ['tous', 'Tous']
     ];
     const specOptions = specializationFilterOptions();
-    if (!live) {
-      return `<div class="scope-card">
-        <h2 style="margin-top:0">Personnel</h2>
-        <p class="scope-mode-hint">Connectez-vous pour consulter l’annuaire et les fiches nominatives.</p>
-      </div>`;
-    }
     if (!canRead) {
       return `<div class="scope-card">
         <h2 style="margin-top:0">Personnel</h2>
@@ -3706,9 +3724,8 @@
 
   function renderPersonnel(options) {
     const importMode = Boolean(options && options.importMode);
-    const live = mode === 'live';
     const showImportPanel = importMode || state.personnelSync.panelOpen;
-    const allowed = live && canManagePersonnel() && typeof client.previewPersonnelSync === 'function';
+    const allowed = canManagePersonnel() && typeof client.previewPersonnelSync === 'function';
     const preview = state.personnelSync.preview;
     const rapport = state.personnelSync.rapport;
     const summary = (preview && (preview.importSummary || preview.summary)) || {};
@@ -3864,13 +3881,8 @@
   }
 
   function renderPersonne() {
-    const live = mode === 'live';
     const fiche = state.personneFiche;
     const identite = fiche && fiche.identite;
-    if (!live) {
-      return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
-        <div class="scope-main"><div class="scope-card"><p class="scope-empty">Connectez-vous pour consulter la fiche individuelle nominative.</p></div></div>`;
-    }
     if (!canReadPersonnel()) {
       return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
         <div class="scope-main"><div class="scope-card"><p class="scope-empty">Fiche individuelle réservée aux profils habilités (personnel:read).</p></div></div>`;
@@ -4115,7 +4127,6 @@
     const targetDomaines = (state.referentiels.domaines || []).map((d) => d.code);
     const cibles = (state.referentiels.cibles || []).filter((c) => c.domaineCode === form.domaine);
     const events = (state.list || []).slice(0, 40);
-    const demo = mode !== 'live';
     return `
       <div class="scope-crumb">Rapports</div>
       <div class="scope-main">
@@ -4138,7 +4149,6 @@
         <div class="scope-card">
           <h2 style="margin-top:0">Rapports spécialisés existants</h2>
           <p class="scope-mode-hint">SCOPE-REPORT-1 — génération serveur. L’aperçu affiche exactement le PDF qui sera téléchargé. Aucun chiffre n’est recalculé dans le navigateur.</p>
-          ${demo ? `<p class="scope-mode-hint">Connectez-vous pour générer le PDF.</p>` : ''}
           <div class="scope-report-grid">
             <div class="scope-field"><label>Type de rapport</label>
               <select id="report-kind">
@@ -4169,7 +4179,7 @@
           </div>
           <p style="color:var(--scope-muted);font-size:13px">Période : celle du bandeau (année, trimestre, mois ou plage). REPORT-1 n’ouvre pas de seconde période.</p>
           <div class="scope-actions">
-            <button type="button" class="scope-btn scope-btn-primary" id="report-generate" ${demo ? 'disabled' : ''}>Générer le rapport</button>
+            <button type="button" class="scope-btn scope-btn-primary" id="report-generate">Générer le rapport</button>
           </div>
         </div>
       </div>
@@ -4348,7 +4358,7 @@
           </div>
           <div class="scope-mini-kpi-grid">
             ${jspKpi(report.domaine === 'JSP' ? 'JSP concernés' : 'Personnes concernées', k.participants || k.jeunes || 0)}
-            ${jspKpi('Exercices comptabilisés', k.exercises || 0)}
+            ${jspKpi('Événements comptabilisés', k.exercises || 0)}
             ${jspKpi('Participations attendues', k.expected || 0)}
             ${jspKpi('Présents', k.present || 0)}
             ${jspKpi('Excusés', k.excused || 0)}
@@ -4364,7 +4374,7 @@
           ${jspBarChart('Comparaison des sites', graphRows, [{ id: 'presents', label: 'Présents' }, { id: 'excuses', label: 'Excusés' }, { id: 'absents', label: 'Absents' }])}
           ${jspBarChart('Motifs d’excuse', motifRows, [{ id: 'count', label: 'Excuses' }])}
         </div>`)}
-        ${blockHtml('comparaisons', `<div class="scope-card"><h2>Analyse par site</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Périmètre</th><th>Personnes</th><th>Exercices</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${siteRows.map((row) => `<tr><td>${escapeHtml(row.site)}</td><td>${row.participants || row.jeunes || 0}</td><td>${row.exercises || 0}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('')}</tbody></table></div></div>`)}
+        ${blockHtml('comparaisons', `<div class="scope-card"><h2>Analyse par site</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Périmètre</th><th>Personnes</th><th>Événements</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${siteRows.map((row) => `<tr><td>${escapeHtml(row.site)}</td><td>${row.participants || row.jeunes || 0}</td><td>${row.exercises || 0}</td><td>${row.expected || 0}</td><td>${row.present || 0}</td><td>${row.excused || 0}</td><td>${row.absent || 0}</td><td>${escapeHtml(jspPercent(row.presenceRate))}</td></tr>`).join('')}</tbody></table></div></div>`)}
         ${blockHtml('alertes', `<div class="scope-card"><h2>Alertes prioritaires</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Personne</th><th>Périmètre</th><th>Cause</th><th>Taux constaté</th><th>Absences non excusées</th><th>Objectif</th><th>Écart</th></tr></thead><tbody>${(report.alerts || []).map((row) => `<tr><td>${escapeHtml(jspPersonName(row))}</td><td>${escapeHtml(row.perimeter || '')}</td><td>${escapeHtml(row.cause)}</td><td>${escapeHtml(row.objective == null ? '—' : jspPercent(row.value))}</td><td>${escapeHtml(row.objective == null ? String(row.value ?? 0) : String(row.absent || 0))}</td><td>${escapeHtml(row.objective == null ? 'Objectif non défini' : jspPercent(row.objective))}</td><td>${escapeHtml(row.gap == null ? '—' : jspPercent(row.gap))}</td></tr>`).join('') || '<tr><td colspan="7">Aucune alerte prioritaire.</td></tr>'}</tbody></table></div></div>`)}
         ${blockHtml('surveillance', `<div class="scope-card"><h2>Participation à surveiller</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Absences totales</th><th>Taux d’absence</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(watch, 'watch') || '<tr><td colspan="11">Aucune situation à afficher.</td></tr>'}</tbody></table></div></div>`)}
         ${blockHtml('regularite', `<div class="scope-card"><h2>Participation régulière</h2><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>Périmètre</th><th>Attendus</th><th>Présents</th><th>Excusés</th><th>Absents</th><th>Taux de présence</th></tr></thead><tbody>${jspPersonRows(regulars, 'regular') || '<tr><td colspan="9">Aucune participation régulière à afficher.</td></tr>'}</tbody></table></div></div>`)}
@@ -6100,7 +6110,7 @@
   }
 
   function renderImport() {
-    const live = mode === 'live' && typeof client.previewImportEvenements === 'function';
+    const live = typeof client.previewImportEvenements === 'function';
     const preview = state.importPreview;
     const rapport = state.importRapport;
     const all = (preview && preview.lignes) || [];
@@ -6514,9 +6524,9 @@
   }
 
   function render() {
-    if (mode === 'live' && state.needOkta) {
+    if (state.authChecking || state.needOkta) {
       root.classList.toggle('is-nav-open', false);
-      root.innerHTML = `<div class="scope-app-shell scope-auth-locked"><div class="scope-workspace"><div class="scope-content">${bannerHtml()}</div></div></div>`;
+      root.innerHTML = renderLoginScreen();
       bind();
       return;
     }
@@ -6566,17 +6576,6 @@
       state.feedbackAction = null;
       render();
       if (typeof action === 'function') await action();
-    });
-    document.getElementById('scope-confirm-live')?.addEventListener('click', () => {
-      try { sessionStorage.setItem('scope-live-confirmed', '1'); } catch (_error) {}
-      const params = new URLSearchParams(location.search.replace(/^\?/, ''));
-      if (params.get('mode') === 'live') location.reload();
-      else location.search = '?mode=live';
-    });
-    document.getElementById('scope-stay-demo')?.addEventListener('click', () => {
-      try { sessionStorage.removeItem('scope-live-confirmed'); } catch (_error) {}
-      location.search = '';
-      location.hash = '#/exercices';
     });
     document.getElementById('scope-include-qual')?.addEventListener('change', (e) => {
       state.includeQualification = Boolean(e.target.checked);
@@ -8759,7 +8758,11 @@
   }
 
   async function ensureLiveSession() {
-    if (mode !== 'live' || typeof client.sessionMe !== 'function') return true;
+    if (typeof client.sessionMe !== 'function') {
+      clearLocalAuthState();
+      state.authError = presentFriendlyError(L.friendlyError({ status: 401, error: 'unauthorized' }));
+      return false;
+    }
     try {
       const params = new URLSearchParams(location.search.replace(/^\?/, ''));
       if (params.get('idle') === '1') state.idleExpired = true;
@@ -8767,6 +8770,8 @@
     try {
       const data = await client.sessionMe();
       state.session = data.user || null;
+      state.authChecking = false;
+      state.authError = null;
       window.CurrentRoles = (state.session && state.session.roles) || [];
       window.CurrentPermissions = (state.session && state.session.permissions) || [];
       document.dispatchEvent(new Event('monitoring-f7-auth-session-changed'));
@@ -8785,9 +8790,9 @@
       }
       return true;
     } catch (error) {
-      const info = L.friendlyError(error);
-      if (Boolean(info.okta) || Number(error && error.status) === 401) invalidateScopeSession('bootstrap-unauthorized');
-      else clearLocalAuthState();
+      const info = presentFriendlyError(L.friendlyError(error));
+      clearLocalAuthState();
+      state.authError = info;
       return false;
     }
   }
@@ -8852,7 +8857,7 @@
       return;
     }
     if (state.saisieGuard) state.saisieGuard.allowLeave = false;
-    if (mode === 'live' && state.needOkta) {
+    if (state.needOkta) {
       render();
       return;
     }
@@ -8902,7 +8907,7 @@
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
       if (r.screen === 'objectifs') await loadObjectifs();
-      if (mode === 'live' && client.listPersonnes && state.personCount == null) {
+      if (client.listPersonnes && state.personCount == null) {
         const people = await client.listPersonnes();
         state.personCount = (people.personnes || []).length;
       }
@@ -9013,11 +9018,10 @@
   bindPersonnelActivityChrome();
 
   (async function boot() {
-    if (mode === 'live') {
-      const ok = await ensureLiveSession();
-      render();
-      if (!ok) return;
-    }
+    render();
+    const ok = await ensureLiveSession();
+    render();
+    if (!ok) return;
     if (!location.hash) location.hash = '#/accueil';
     else await onRoute();
   })();

@@ -165,7 +165,8 @@ function record(name, fn) {
 
   await record('identité NIP / import exercices hors onglet principal', async () => {
     assert.ok(ui.includes('NIP'));
-    assert.ok(ui.includes('Connectez-vous pour consulter l’annuaire et les fiches nominatives.'));
+    assert.ok(ui.includes('Connexion SCOPE'));
+    assert.ok(ui.includes('scope-login-v1'));
     assert.ok(ui.includes('Importer un programme d’événements'));
     assert.ok(!ui.includes('data-nav="import"'));
     assert.ok(ui.includes('REPORT-1'));
@@ -215,21 +216,22 @@ function record(name, fn) {
   await record('tri événement après retour navigation conservé côté état UI', async () => {
     assert.ok(ui.includes("eventSort: { key: 'date', dir: 'asc' }"));
     assert.ok(ui.includes('state.eventSort = L.nextSort'));
-    assert.ok(ui.includes("sortableHeader('events', 'date', 'Date', state.eventSort)"));
+    assert.ok(ui.includes("sortableHeader('events', 'date', 'DATE', state.eventSort)"));
     assert.ok(ui.includes('data-scope-sort="${table}" data-sort-key'));
     assert.ok(!ui.includes('withLoading(loadList);\\n        render();'));
   });
 
   await record('table personnel événement triable sans mutation de saisie', async () => {
     assert.ok(ui.includes("eventPersonnelSort: { key: 'grade', dir: 'desc' }"));
-    assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'Personne', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'nom', 'NOM', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'prenom', 'PRÉNOM', state.eventPersonnelSort)"));
     assert.ok(ui.includes("sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)"));
-    assert.ok(ui.includes("sortableHeader('event-personnel', 'cible', 'Cible', state.eventPersonnelSort)"));
-    assert.ok(ui.includes("sortableHeader('event-personnel', 'presence', 'Statut', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'cible', 'CIBLE', state.eventPersonnelSort)"));
+    assert.ok(ui.includes("sortableHeader('event-personnel', 'presence', 'STATUT', state.eventPersonnelSort)"));
     assert.ok(ui.includes('nomFamille: person.nom'));
     assert.ok(ui.includes('prenom: person.prenom'));
     assert.ok(ui.includes('grade: person.grade'));
-    assert.ok(ui.includes('const filteredRaw = state.cibleFilter'));
+    assert.ok(ui.includes('const filteredRaw = (state.cibleFilter'));
     assert.ok(ui.includes('const filtered = sortSaisieRows(filteredRaw);'));
   });
 

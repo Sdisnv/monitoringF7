@@ -83,23 +83,27 @@ function record(name, fn){
     assert.strictEqual(fiche.participations.length, 1);
   });
 
-  await record('Mode live exige confirmation explicite', async () => {
-    assert.strictEqual(logic.resolveClientMode({ search: '' }), 'demo');
-    assert.strictEqual(logic.resolveClientMode({ search: '?mode=live' }), 'gate');
+  await record('Auth stricte : aucun mode DEMO ni confirmation locale', async () => {
+    assert.strictEqual(logic.resolveClientMode({ search: '' }), 'live');
+    assert.strictEqual(logic.resolveClientMode({ search: '?mode=live' }), 'live');
     assert.strictEqual(logic.resolveClientMode({ search: '?mode=live', sessionLive: true }), 'live');
-    assert.strictEqual(logic.resolveClientMode({ search: '?mode=demo', sessionLive: true }), 'demo');
+    assert.strictEqual(logic.resolveClientMode({ search: '?mode=demo', sessionLive: true }), 'live');
+    const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes('scope-confirm-live'));
-    assert.ok(ui.includes('scope-live-confirmed'));
-    assert.ok(ui.includes("params.get('mode') === 'live'") && ui.includes('location.reload()'));
+    assert.ok(!html.includes('scope-demo.js'));
+    assert.ok(!ui.includes('ScopeDemo'));
+    assert.ok(!ui.includes('createDemoClient'));
+    assert.ok(!ui.includes('scope-confirm-live'));
+    assert.ok(!ui.includes('scope-stay-demo'));
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
-    assert.ok(css.includes('.scope-banner.live'));
+    assert.ok(css.includes('.scope-login-v1'));
+    assert.ok(!css.includes('.scope-banner.demo'));
   });
 
   await record('Live Okta : cookie navigateur, pas de JWT injecté', async () => {
-    const href = logic.oktaLoginHref('/scope.html?mode=live');
+    const href = logic.oktaLoginHref('/scope.html');
     assert.ok(href.startsWith('/auth/oidc/start?returnTo='));
-    assert.ok(href.includes(encodeURIComponent('/scope.html?mode=live')));
+    assert.ok(href.includes(encodeURIComponent('/scope.html')));
     assert.strictEqual(logic.oktaLoginHref('https://evil.example/'), '/auth/oidc/start?returnTo=%2Fscope.html');
     const info = logic.friendlyError({ status: 401, error: 'unauthorized' });
     assert.strictEqual(info.okta, true);

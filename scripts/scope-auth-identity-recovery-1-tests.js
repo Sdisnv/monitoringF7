@@ -34,13 +34,12 @@ function uiHooks(fetchImpl){
   const uiSrc = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
   const storage = new Map([['scope-live-confirmed', '1'], ['scope-include-qualification', '1']]);
   const root = { classList: { toggle(){}, remove(){} }, innerHTML: '', querySelectorAll(){ return []; }, querySelector(){ return null; } };
-  const location = { hash: '#/accueil', search: '?mode=live', href: '' };
+  const location = { hash: '#/accueil', search: '', href: '' };
   const sessionStorage = { getItem(k){ return storage.get(k) || null; }, setItem(k, v){ storage.set(k, String(v)); }, removeItem(k){ storage.delete(k); } };
   const sandbox = {
     window: {
       ScopeUiLogic: L,
       ScopeApi: { createHttpClient: () => ({ kind: 'http' }) },
-      ScopeDemo: { createDemoClient: () => ({ kind: 'demo' }) },
       ScopeAuthIdle: { stopped: false, stop(){ this.stopped = true; } },
       __SCOPE_UI_TEST_HOOKS__: true,
       CurrentRoles: ['UTILISATEUR'],

@@ -32,15 +32,17 @@ function record(name, fn){
 }
 
 async function expectHttp(fn, status, code){
+  let caught = null;
   try {
     await fn();
-    throw new Error(`attendu HTTP ${status}${code ? `/${code}` : ''}`);
   } catch (error) {
-    assert.ok(error instanceof HttpError, `HttpError attendu, reçu ${error && error.stack || error}`);
-    assert.strictEqual(error.status, status, `status ${error.status} ≠ ${status} (${error.error})`);
-    if(code) assert.strictEqual(error.error, code, `code ${error.error} ≠ ${code}`);
-    return error;
+    caught = error;
   }
+  assert.ok(caught, `attendu HTTP ${status}${code ? `/${code}` : ''}`);
+  assert.ok(caught instanceof HttpError, `HttpError attendu, reçu ${caught && caught.stack || caught}`);
+  assert.strictEqual(caught.status, status, `status ${caught.status} ≠ ${status} (${caught.error})`);
+  if(code) assert.strictEqual(caught.error, code, `code ${caught.error} ≠ ${code}`);
+  return caught;
 }
 
 async function seedPeople(repo, cibleId, count, prefix){
@@ -164,17 +166,14 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
     assert.strictEqual(maladie.excusesAccidentMaladie, 1);
   });
 
-  await record('6 — nouveau EXCUSE sans motif refusé', async () => {
+  await record('6 — nouveau EXCUSE sans motif refusé, NON_PRECISE historique conservé', async () => {
     await expectHttp(
       async () => validateParticipationPatch({ statut: 'ABSENT_EXCUSE' }),
       422,
       'motif_obligatoire'
     );
-    await expectHttp(
-      async () => validateParticipationPatch({ statut: 'ABSENT_EXCUSE', motif_absence: 'NON_PRECISE' }),
-      422,
-      'motif_obligatoire'
-    );
+    const legacy = validateParticipationPatch({ statut: 'ABSENT_EXCUSE', motif_absence: 'NON_PRECISE' });
+    assert.strictEqual(legacy.motif_absence, 'NON_PRECISE');
   });
 
   await record('7 — PERMUTATION DAP compte comme présence', async () => {

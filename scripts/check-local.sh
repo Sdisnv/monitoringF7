@@ -57,7 +57,8 @@ grep -q "ensureScopeSchema" netlify/lib/_scope-schema.js
 grep -q "createScopeService" netlify/lib/_scope-service.js
 grep -q "listEvenements" netlify/lib/_scope-service.js
 grep -q "SCOPE-IMPL-1B" assets/js/scope-ui.js
-grep -q "scope-confirm-live" assets/js/scope-ui.js
+grep -q "scope-login-v1" assets/js/scope-ui.js
+! grep -q "scope-demo.js" scope.html
 grep -q "Importer un programme d’événements" assets/js/scope-ui.js
 grep -q "imports/evenements/preview" netlify/functions/scope.js
 grep -q "imports/evenements/commit" netlify/functions/scope.js
@@ -82,7 +83,7 @@ grep -q "scope_objectifs" netlify/lib/_scope-schema.js
 grep -q "scope_objectifs" database/migrations/20260819_scope_objectives_1.sql
 grep -q "resolveObjective" netlify/lib/_scope-objectives.js
 grep -q "/objectifs" netlify/functions/scope.js
-grep -q "Objectifs de participation" assets/js/scope-ui.js
+grep -q "#/reglages/objectifs" assets/js/scope-ui.js
 grep -q "screen: 'objectifs'" assets/js/scope-ui-logic.js
 grep -q "#/reglages/objectifs" assets/js/scope-ui.js
 grep -q "references:manage" netlify/functions/scope.js

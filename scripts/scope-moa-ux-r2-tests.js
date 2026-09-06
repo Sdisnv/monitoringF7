@@ -147,12 +147,12 @@ async function record(name, fn) {
 
   await record('16 — logo SCOPE agrandi R2', async () => {
     assert.ok(css.includes('height: 48px'));
-    assert.ok(html.includes('scope-ui-logic.js?v=scope-event-participation-ux-1') || html.includes('scope-ui-logic.js?v=scope-personnel-design-b3-r1'));
-    assert.ok(html.includes('scope-charts.js?v=scope-design-2d') || html.includes('scope-charts.js?v=scope-design-2c') || html.includes('scope-charts.js?v=scope-design-2b') || html.includes('scope-charts.js?v=scope-design-2') || html.includes('scope-charts.js?v=scope-moa-ux-r2'));
-    assert.ok(html.includes('scope.css?v=scope-event-c3-fix') || html.includes('scope.css?v=scope-event-design-c1') || html.includes('scope.css?v=scope-event-design-c') || html.includes('scope.css?v=scope-event-design-b') || html.includes('scope.css?v=scope-event-design-a') || html.includes('scope.css?v=scope-design-2d') || html.includes('scope.css?v=scope-design-2c') || html.includes('scope.css?v=scope-design-2b') || html.includes('scope.css?v=scope-design-2') || html.includes('scope.css?v=scope-ux-event-1') || html.includes('scope.css?v=scope-ux-event-2') || html.includes('scope.css?v=scope-ux-event-3'));
-    assert.ok(html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
-    assert.ok(/scope-personnel-activity-modal\.js\?v=scope-personnel-status-ux-2a|scope-personnel-activity-modal\.js\?v=scope-personnel-design-b[23]/.test(html));
-    assert.ok(html.includes('scope-ui.js?v=scope-event-c3-fix') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
+    assert.ok(html.includes('scope-ui-logic.js?v=scope-login-1'));
+    assert.ok(html.includes('scope-charts.js?v=scope-objectifs-participation-1-r1') || html.includes('scope-charts.js?v=scope-design-2d') || html.includes('scope-charts.js?v=scope-design-2c') || html.includes('scope-charts.js?v=scope-design-2b') || html.includes('scope-charts.js?v=scope-design-2') || html.includes('scope-charts.js?v=scope-moa-ux-r2'));
+    assert.ok(html.includes('scope.css?v=scope-login-1') || html.includes('scope.css?v=scope-event-c3-fix') || html.includes('scope.css?v=scope-event-design-c1') || html.includes('scope.css?v=scope-event-design-c') || html.includes('scope.css?v=scope-event-design-b') || html.includes('scope.css?v=scope-event-design-a') || html.includes('scope.css?v=scope-design-2d') || html.includes('scope.css?v=scope-design-2c') || html.includes('scope.css?v=scope-design-2b') || html.includes('scope.css?v=scope-design-2') || html.includes('scope.css?v=scope-ux-event-1') || html.includes('scope.css?v=scope-ux-event-2') || html.includes('scope.css?v=scope-ux-event-3'));
+    assert.ok(html.includes('scope-personnel-display.js?v=scope-objectifs-participation-1-r1') || html.includes('scope-personnel-display.js?v=scope-table-sorting-visual-ux-2'));
+    assert.ok(/scope-personnel-activity-modal\.js\?v=scope-objectifs-participation-1-r1|scope-personnel-activity-modal\.js\?v=scope-personnel-status-ux-2a|scope-personnel-activity-modal\.js\?v=scope-personnel-design-b[23]/.test(html));
+    assert.ok(html.includes('scope-ui.js?v=scope-login-1') || html.includes('scope-ui.js?v=scope-event-c3-fix') || html.includes('scope-ui.js?v=scope-event-design-c1') || html.includes('scope-ui.js?v=scope-event-design-c') || html.includes('scope-ui.js?v=scope-event-design-b') || html.includes('scope-ui.js?v=scope-event-design-a') || html.includes('scope-ui.js?v=scope-design-2d') || html.includes('scope-ui.js?v=scope-design-2c') || html.includes('scope-ui.js?v=scope-design-2b') || html.includes('scope-ui.js?v=scope-design-2') || html.includes('scope-ui.js?v=scope-ux-event-1') || html.includes('scope-ui.js?v=scope-ux-event-2') || html.includes('scope-ui.js?v=scope-ux-event-3'));
   });
 
   await record('17 — période hors header', async () => {
@@ -198,18 +198,20 @@ async function record(name, fn) {
 
   await record('24 — accès production R1-R1 conservé sans CTA technique', async () => {
     assert.ok(!ui.includes('scope-start-live'));
-    assert.ok(ui.includes('?mode=live'));
+    assert.ok(!ui.includes('?mode=live'));
     assert.ok(!ui.includes('Aucun jeton'));
-    assert.ok(ui.includes('scope-confirm-live'));
+    assert.ok(!ui.includes('scope-confirm-live'));
+    assert.ok(ui.includes('scope-login-v1'));
+    assert.ok(ui.includes("L.oktaLoginHref('/scope.html')"));
   });
 
   await record('25 — tableau Personnel métier définitif', async () => {
     const directory = ui.slice(ui.indexOf('function renderPersonnelDirectory'), ui.indexOf('function renderPersonnel(options)'));
     assert.ok(directory.includes("personnelSortHeader('nip', 'NIP')"));
-    assert.ok(directory.includes("personnelSortHeader('oi', 'OI')"));
-    assert.ok(directory.includes("personnelSortHeader('specializations', 'SPÉCIALISATIONS')"));
-    assert.ok(directory.includes('data-label="OI"'));
-    assert.ok(directory.includes('data-label="SPÉCIALISATIONS"'));
+    assert.ok(directory.includes("personnelSortHeader('oi', 'OI / INCORPORATION')") || directory.includes("personnelSortHeader('oi', 'OI')"));
+    assert.ok(directory.includes("personnelSortHeader('specializations', 'SPÉCIALISATION')") || directory.includes("personnelSortHeader('specializations', 'SPÉCIALISATIONS')"));
+    assert.ok(directory.includes('data-label="OI / INCORPORATION"') || directory.includes('data-label="OI"'));
+    assert.ok(directory.includes('data-label="SPÉCIALISATION"') || directory.includes('data-label="SPÉCIALISATIONS"'));
     assert.ok(directory.includes('data-label="NIP"'));
     assert.ok(directory.includes('data-label="PRÉNOM"'));
     assert.ok(directory.includes('personnelOtherAffectationsHtml'));

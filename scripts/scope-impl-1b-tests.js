@@ -8,7 +8,6 @@ const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
 const { createScopeService } = require('../netlify/lib/_scope-service');
 const { HttpError } = require('../netlify/lib/_scope-rules');
 const logic = require('../assets/js/scope-ui-logic.js');
-const { createDemoClient } = require('../assets/js/scope-demo.js');
 
 const ROOT = path.join(__dirname, '..');
 const results = [];
@@ -24,25 +23,28 @@ function record(name, fn){
 
 (async () => {
   await record('Test UI 1 — 15 attendus, 13 présents, 1 maladie, 1 absent → 86,7 %', async () => {
-    const client = createDemoClient();
-    const refs = await client.referentiels();
-    const g1 = refs.cibles.find((c) => c.domaineCode === 'DPS' && c.niveauCode === 'G1');
-    const created = await client.createEvenement({
-      date: '2026-03-12', domaineCode: 'DPS', libelle: 'Habileté incendie', cibleIds: [g1.cibleId]
-    });
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const g1 = await repo.findCible('DPS', 'G1');
+    for (let i = 1; i <= 15; i += 1) {
+      const personne = await repo.insertPersonne({ nip: `U1${String(i).padStart(3, '0')}`, nom: `Nom${i}`, prenom: 'Test' });
+      await repo.insertAffectation({ personne_id: personne.personne_id, cible_id: g1.cible_id, date_debut: '2026-01-01' });
+    }
+    const created = await service.createEvenement({
+      date: '2026-03-12', domaineCode: 'DPS', libelle: 'Habileté incendie', cibleIds: [g1.cible_id]
+    }, { sub: 'test' });
     const id = created.evenement.evenement_id;
-    const preview = await client.previewAttendus(id);
-    assert.strictEqual(preview.count, 15);
-    await client.figer(id, 1);
-    const fiche = await client.getEvenement(id);
+    await service.figerPopulation(id, { baseVersion: 1 }, { sub: 'test' });
+    const fiche = await service.lireEvenement(id);
     const people = fiche.attendus.filter((a) => a.inclus !== false).map((a) => a.personne_id);
+    assert.strictEqual(people.length, 15);
     const payload = people.map((personneId, i) => {
       if (i === 13) return { personneId, statut: 'ABSENT_EXCUSE', motif_absence: 'MALADIE' };
       if (i === 14) return { personneId, statut: 'ABSENT_NON_EXCUSE' };
       return { personneId, statut: 'PRESENT' };
     });
-    await client.enregistrerParticipations(id, payload, 2);
-    const closed = await client.cloturer(id, 3);
+    await service.enregistrerParticipations(id, { baseVersion: 2, participations: payload }, { sub: 'test' });
+    const closed = await service.cloturer(id, { baseVersion: 3 }, { sub: 'test' });
     assert.strictEqual(closed.taux.numerator, 13);
     assert.strictEqual(closed.taux.denominator, 15);
     assert.strictEqual(closed.taux.percentage, 86.7);
@@ -107,20 +109,21 @@ function record(name, fn){
   });
 
   await record('Test UI 4 — 409 message + aucun écrasement', async () => {
-    const client = createDemoClient({ forceConflict: true });
-    const refs = await client.referentiels();
-    const g1 = refs.cibles.find((c) => c.domaineCode === 'DPS' && c.niveauCode === 'G1');
-    const created = await client.createEvenement({
-      date: '2026-03-12', domaineCode: 'DPS', libelle: 'Conflit', cibleIds: [g1.cibleId]
-    });
-    const before = await client.getEvenement(created.evenement.evenement_id);
+    const repo = createMemoryRepo();
+    const service = createScopeService(repo);
+    const g1 = await repo.findCible('DPS', 'G1');
+    const created = await service.createEvenement({
+      date: '2026-03-12', domaineCode: 'DPS', libelle: 'Conflit', cibleIds: [g1.cible_id]
+    }, { sub: 'test' });
+    const before = await service.lireEvenement(created.evenement.evenement_id);
+    await service.patchEvenement(created.evenement.evenement_id, { libelle: 'Modification concurrente', baseVersion: before.version }, { sub: 'test' });
     await assert.rejects(
-      () => client.patchEvenement(created.evenement.evenement_id, { libelle: 'écrasé' }, before.version),
+      () => service.patchEvenement(created.evenement.evenement_id, { libelle: 'écrasé', baseVersion: before.version }, { sub: 'test' }),
       (error) => error.status === 409 && error.error === 'conflict'
     );
-    const after = await client.getEvenement(created.evenement.evenement_id);
-    assert.strictEqual(after.evenement.libelle, 'Conflit');
-    assert.strictEqual(after.version, before.version);
+    const after = await service.lireEvenement(created.evenement.evenement_id);
+    assert.strictEqual(after.evenement.libelle, 'Modification concurrente');
+    assert.strictEqual(after.version, before.version + 1);
     const info = logic.friendlyError({ status: 409, error: 'conflict' });
     assert.strictEqual(info.conflict, true);
     assert.ok(info.message.includes('Cette séance a été modifiée ailleurs'));
@@ -164,7 +167,8 @@ function record(name, fn){
     assert.ok(ui.includes('assets/img/LogoSDISseulnoir.png'));
     assert.ok(ui.includes('scope-logo'));
     assert.ok(ui.includes('scope-sdis-logo'));
-    assert.ok(!ui.includes('<h1>SCOPE</h1>'));
+    assert.ok(ui.includes('<h1>SCOPE</h1>'));
+    assert.ok(ui.includes('scope-login-v1'));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/logo-scope-blanc.png')));
     assert.ok(!html.includes('Monitoring F7 v67.0'));
     assert.ok(logic.parseHash('#/exercices').screen === 'liste');

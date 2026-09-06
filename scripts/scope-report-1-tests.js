@@ -461,7 +461,7 @@ async function gen(repo, body, claims){
   await record('29-30 — aucune formule KPI PDF / pas de données fictives', async () => {
     const files = [
       '_scope-pdf-renderer.js', '_scope-pdf-charts.js', '_scope-report-data.js', '_scope-report-service.js'
-    ].map((name) => fs.readFileSync(path.join(ROOT, 'netlify/functions', name), 'utf8'));
+    ].map((name) => fs.readFileSync(path.join(ROOT, 'netlify/lib', name), 'utf8'));
     for(const src of files){
       assert.ok(!src.includes('computeTaux('));
       assert.ok(!src.includes('officialFromQuantitatif'));
@@ -512,9 +512,10 @@ async function gen(repo, body, claims){
     assert.ok(renderer.includes('LogoSDISblanc.png'));
   });
 
-  await record('démo LIVE-only + pas de moteur Excel', async () => {
-    const demo = fs.readFileSync(path.join(ROOT, 'assets/js/scope-demo.js'), 'utf8');
-    assert.ok(demo.includes('reports_live_only'));
+  await record('rapports serveur + pas de moteur Excel', async () => {
+    assert.ok(!fs.existsSync(path.join(ROOT, 'assets/js/scope-demo.js')));
+    const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
+    assert.ok(!html.includes('scope-demo.js'));
     const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
     assert.ok(pkg.includes('"pdfkit"'));
     assert.ok(!pkg.includes('exceljs') && !pkg.includes('xlsx'));

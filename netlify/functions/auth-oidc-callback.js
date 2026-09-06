@@ -10,7 +10,7 @@ exports.handler = async function(event){
     console.error('oidc_callback_failed', reason, String((error && error.message) || error));
     return {
       statusCode:302,
-      headers:{ Location:`/?mode=live&authError=1&reason=${encodeURIComponent(reason)}`, 'Cache-Control':'no-store' },
+      headers:{ Location:`/scope.html?authError=1&reason=${encodeURIComponent(reason)}`, 'Cache-Control':'no-store' },
       body:''
     };
   }
