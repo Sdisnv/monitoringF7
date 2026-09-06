@@ -1370,6 +1370,7 @@
       home: '<path d="M3 10.5 12 3l9 7.5V21H14V14H10v7H3Z"/>',
       events: '<rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
       cycles: '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/>',
+      vigilance: '<path d="M12 3 4 6v5c0 5 3.2 8.2 8 10 4.8-1.8 8-5 8-10V6Z"/><path d="M9 12.2l2 2 4-4"/><path d="M8 17h8"/>',
       stats: '<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
       people: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M21.5 20c0-2.5-1.8-4-4.5-4"/>',
       report: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
@@ -1396,7 +1397,12 @@
       ${items.map((item) => link(item, item.current)).join('')}
     </div>` : '';
     const section = (label) => `<p class="scope-nav-section">${escapeHtml(label)}</p>`;
-    const primaryLink = (href, label, current, icon) => link({ href, label, icon }, current);
+    const primaryById = new Map((model.primary || []).map((item) => [item.id, item]));
+    const primaryItem = (id, fallback) => Object.assign({}, fallback || {}, primaryById.get(id) || {});
+    const renderPrimary = (id, fallback) => {
+      const item = primaryItem(id, fallback);
+      return link(item, item.current);
+    };
     const reglagesOpen = state.openGroups.reglages === true || r.nav === 'reglages';
     const domainBlocks = model.domains.map((d) => {
       const expanded = state.openGroups[d.id] != null ? state.openGroups[d.id] : d.expanded;
@@ -1448,14 +1454,14 @@
         </div>
         <nav class="scope-nav-scroll">
           ${section('Accueil')}
-          ${primaryLink('#/accueil', 'Accueil', r.screen === 'accueil', 'home')}
+          ${renderPrimary('accueil', { href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' })}
           ${section('Activité')}
-          ${primaryLink('#/evenements', 'Événements', r.nav === 'exercices', 'events')}
-          ${primaryLink('#/vigilance', 'Vigilance participation', r.nav === 'vigilance', 'objectifs')}
-          ${primaryLink('#/cycles', 'Cycles', r.nav === 'cycles', 'cycles')}
-          ${primaryLink('#/statistiques', 'Statistiques', r.screen === 'statistiques', 'stats')}
-          ${hasScopePermission('personnel:read') ? primaryLink('#/personnel', 'Personnel', r.nav === 'personnel', 'people') : ''}
-          ${primaryLink('#/rapports', 'Rapports', r.nav === 'rapports', 'report')}
+          ${renderPrimary('exercices', { href: '#/evenements', label: 'Événements', icon: 'events', current: r.nav === 'exercices' })}
+          ${renderPrimary('vigilance', { href: '#/vigilance', label: 'Vigilance participation', icon: 'vigilance', current: r.nav === 'vigilance' })}
+          ${renderPrimary('cycles', { href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' })}
+          ${renderPrimary('statistiques', { href: '#/statistiques', label: 'Statistiques', icon: 'stats', current: r.screen === 'statistiques' })}
+          ${hasScopePermission('personnel:read') ? link(primaryItem('personnel', { href: '#/personnel', label: 'Personnel', icon: 'people', current: r.nav === 'personnel' }), primaryItem('personnel', { current: r.nav === 'personnel' }).current) : ''}
+          ${link(primaryItem('rapports', { href: '#/rapports', label: 'Rapports', icon: 'report', current: r.nav === 'rapports' }), primaryItem('rapports', { current: r.nav === 'rapports' }).current)}
           ${section('Domaines')}
           ${domainBlocks}
           ${settingsBlock}
@@ -2060,7 +2066,7 @@
                 <td data-label="Action"><a class="scope-btn" href="${escapeHtml(alert.actionHref || '#/vigilance')}">${escapeHtml(alert.actionLabel || 'Ouvrir')}</a></td>
               </tr>`;
             }).join('')
-          : '<tr><td colspan="9"><div class="scope-empty">Aucune vigilance sur cette période.</div></td></tr>';
+          : '<tr><td colspan="9"><div class="scope-empty">Aucune situation de vigilance pour la période sélectionnée.</div></td></tr>';
     return `
       <div class="scope-crumb">Vigilance participation</div>
       <div class="scope-main">
@@ -9315,6 +9321,18 @@
         state.vigilanceReady = true;
         state.vigilanceError = null;
         return renderVigilance();
+      },
+      renderShellHtml(hash, payload) {
+        location.hash = hash || '#/vigilance';
+        window.location.hash = location.hash;
+        state.authChecking = false;
+        state.needOkta = false;
+        state.session = { name: 'Test SCOPE', roles: ['LECTEUR'], permissions: ['personnel:read'] };
+        state.vigilance = payload || { alerts: [], counts: { active: 0, people: 0, data: 0, p2: 0 } };
+        state.vigilanceReady = true;
+        state.vigilanceError = null;
+        render();
+        return root.innerHTML;
       },
       render,
       ensureLiveSession,

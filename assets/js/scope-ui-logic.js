@@ -699,11 +699,11 @@
     const parent = navParentCode(arbre, r.domaine);
     return {
       primary: [
-        { id: 'accueil', href: '#/accueil', label: 'Accueil' },
-        { id: 'vue', href: '#/vue', label: 'Vue d’ensemble' },
-        { id: 'exercices', href: '#/evenements', label: 'Événements' },
-        { id: 'cycles', href: '#/cycles', label: 'Cycles' },
-        { id: 'statistiques', href: '#/statistiques', label: 'Statistiques' }
+        { id: 'accueil', href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' },
+        { id: 'exercices', href: '#/evenements', label: 'Événements', icon: 'events', current: r.nav === 'exercices' },
+        { id: 'vigilance', href: '#/vigilance', label: 'Vigilance participation', icon: 'vigilance', current: r.nav === 'vigilance' },
+        { id: 'cycles', href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' },
+        { id: 'statistiques', href: '#/statistiques', label: 'Statistiques', icon: 'stats', current: r.screen === 'statistiques' }
       ],
       domains: roots.map((d) => {
         const sous = d.sousDomaines || [];
@@ -743,8 +743,8 @@
         { id: 'administration', href: '#/reglages/administration', label: 'Administration' }
       ],
       extras: [
-        { id: 'personnel', href: '#/personnel', label: 'Personnel' },
-        { id: 'rapports', href: '#/rapports', label: 'Rapports' }
+        { id: 'personnel', href: '#/personnel', label: 'Personnel', icon: 'people', current: r.nav === 'personnel' },
+        { id: 'rapports', href: '#/rapports', label: 'Rapports', icon: 'report', current: r.nav === 'rapports' }
       ]
     };
   }
