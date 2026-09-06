@@ -1570,8 +1570,9 @@
       if (ta !== null || tb !== null) return (ta ?? Number.MAX_SAFE_INTEGER) - (tb ?? Number.MAX_SAFE_INTEGER);
     }
     if (kind === 'number') {
-      const na = Number(cleanSortText(a).replace(',', '.'));
-      const nb = Number(cleanSortText(b).replace(',', '.'));
+      const toNumber = (value) => Number(cleanSortText(value).replace(/\s+/g, '').replace(',', '.').replace(/[^0-9.+-]/g, ''));
+      const na = toNumber(a);
+      const nb = toNumber(b);
       if (Number.isFinite(na) || Number.isFinite(nb)) return (Number.isFinite(na) ? na : Number.MAX_SAFE_INTEGER) - (Number.isFinite(nb) ? nb : Number.MAX_SAFE_INTEGER);
     }
     if (kind === 'status') {

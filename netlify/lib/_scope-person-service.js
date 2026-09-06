@@ -314,6 +314,8 @@ function createScopePersonService(repo){
         year: period.year,
         month: period.month,
         quarter: period.quarter,
+        domaine: domaineFilter || undefined,
+        cibleId: query.cibleId || query.cible_id || undefined,
         includeQualification: query.includeQualification,
         include_qualification: query.include_qualification
       })
@@ -384,7 +386,13 @@ function createScopePersonService(repo){
           percentage: rate.percentage,
           numerator: rate.numerator,
           denominator: rate.denominator,
-          eventCount: rate.eventCount
+          eventCount: rate.eventCount,
+          volumes: rate.volumes || {},
+          objective: rate.objective || null,
+          gapPct: rate.gapPct,
+          analyticStatus: rate.analyticStatus,
+          analyticStatusReason: rate.analyticStatusReason,
+          objectiveContext: rate.objectiveContext || null
         }
       });
     }

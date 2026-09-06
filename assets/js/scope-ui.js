@@ -205,11 +205,23 @@
     objectifFocusId: null,
     dashboard: null,
     dashboardError: null,
+    analysesFilters: { domaine: 'tous', cibleId: 'tous', specialisation: 'tous', personQuery: '' },
+    analysesPersonnel: null,
+    analysesPersonnelReady: false,
+    analysesPersonnelError: null,
+    analysesSort: { key: 'taux', dir: 'desc' },
+    analysesEventSort: { key: 'date', dir: 'desc' },
+    analysesPersonSort: { key: 'gap', dir: 'asc' },
+    cyclesSort: { key: 'periode', dir: 'desc' },
+    cycleEventSort: { key: 'date', dir: 'asc' },
+    cyclePeopleSort: { key: 'grade', dir: 'desc' },
+    cycleMatrixSort: { key: 'grade', dir: 'desc' },
     vigilance: null,
     vigilanceReady: false,
     vigilanceError: null,
     vigilanceRequestSeq: 0,
     vigilanceFilters: { domaine: 'tous', oi: 'tous', specialisation: 'tous', type: 'tous', level: 'tous' },
+    vigilanceSort: { key: 'priorite', dir: 'asc' },
     alertCounts: null,
     explainOpen: false,
     graphExplainId: null,
@@ -365,6 +377,13 @@
     state.vigilanceFilters = { domaine: 'tous', oi: 'tous', specialisation: 'tous', type: 'tous', level: 'tous' };
   }
 
+  function resetAnalysesFilters() {
+    state.analysesFilters = { domaine: 'tous', cibleId: 'tous', specialisation: 'tous', personQuery: '' };
+    state.analysesSort = { key: 'taux', dir: 'desc' };
+    state.analysesEventSort = { key: 'date', dir: 'desc' };
+    state.analysesPersonSort = { key: 'gap', dir: 'asc' };
+  }
+
   function resetJspReportFilters() {
     state.jspReportSite = 'TOUS';
     state.participationReportDomain = 'JSP';
@@ -398,6 +417,7 @@
       if (prevNav === 'personnel') resetPersonnelFilters();
       if (prevNav === 'cycles') resetCycleFilters();
       if (prevNav === 'vigilance') resetVigilanceFilters();
+      if (prevNav === 'statistiques') resetAnalysesFilters();
     }
     if (previous && next && routeKey(previous) !== routeKey(next)) {
       state.modal = null;
@@ -649,6 +669,9 @@
       state.dashboard = null;
       return;
     }
+    const analysisFilters = r.screen === 'statistiques' ? (state.analysesFilters || {}) : {};
+    const analysisDomaine = analysisFilters.domaine && analysisFilters.domaine !== 'tous' ? analysisFilters.domaine : null;
+    const analysisCible = analysisFilters.cibleId && analysisFilters.cibleId !== 'tous' ? analysisFilters.cibleId : null;
     const params = Object.assign(L.periodParams({
       preset: state.preset,
       year: state.year,
@@ -657,15 +680,41 @@
       semester: state.semester,
       from: state.from,
       to: state.to,
-      domaine: r.domaine,
-      cible: r.cible
+      domaine: analysisDomaine || r.domaine,
+      cible: analysisCible || r.cible
     }), qualQuery());
     state.dashboardError = null;
     try {
       state.dashboard = await client.dashboard(params);
+      if (r.screen === 'statistiques') await loadAnalysesPersonnel(params);
     } catch (error) {
       state.dashboardError = L.friendlyError(error).message || L.errorMessage('dashboard');
       throw error;
+    }
+  }
+
+  async function loadAnalysesPersonnel(baseParams) {
+    if (!canReadPersonnel() || typeof client.analyticsPersonnelDirectory !== 'function') {
+      state.analysesPersonnel = null;
+      state.analysesPersonnelReady = true;
+      state.analysesPersonnelError = null;
+      return;
+    }
+    state.analysesPersonnelReady = false;
+    state.analysesPersonnelError = null;
+    try {
+      const filters = state.analysesFilters || {};
+      const params = Object.assign({}, baseParams || periodQuery(), {
+        statut: 'actifs',
+        domaine: filters.domaine && filters.domaine !== 'tous' ? filters.domaine : '',
+        cibleId: filters.cibleId && filters.cibleId !== 'tous' ? filters.cibleId : '',
+        q: filters.personQuery || ''
+      });
+      state.analysesPersonnel = await client.analyticsPersonnelDirectory(params);
+      state.analysesPersonnelReady = true;
+    } catch (error) {
+      state.analysesPersonnelError = L.friendlyError(error).message || 'L’analyse individuelle n’a pas pu être chargée.';
+      state.analysesPersonnelReady = true;
     }
   }
 
@@ -793,6 +842,11 @@
       state.vigilanceReady = false;
       state.vigilanceError = null;
     }
+    if (r.screen === 'statistiques') {
+      state.dashboard = null;
+      state.analysesPersonnelReady = false;
+      state.analysesPersonnelError = null;
+    }
     if (r.screen === 'personnel' || r.screen === 'import-personnel') {
       state.personnelReady = false;
       state.personnelError = null;
@@ -801,7 +855,7 @@
     }
     withLoading(async () => {
       const r = route();
-      if (r.screen === 'vue') {
+      if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') {
         await loadDashboard();
       } else if (r.screen === 'liste') {
         await loadList();
@@ -1995,13 +2049,59 @@
     return (alerts || []).filter((alert) => {
       const md = alert.metadata || {};
       const domain = String(alert.domainCode || '').toUpperCase();
+      const type = String(md.vigilanceType || alert.code || '').toUpperCase();
+      const level = String(alert.level || '').toUpperCase();
       if (filters.domaine && filters.domaine !== 'tous' && domain !== String(filters.domaine).toUpperCase()) return false;
+      if (filters.type && filters.type !== 'tous' && type !== String(filters.type).toUpperCase()) return false;
+      if (filters.level && filters.level !== 'tous' && level !== String(filters.level).toUpperCase()) return false;
       const labels = vigilanceCibleLabels(alert);
       const typeCycle = String(md.typeCycle || '').toUpperCase();
       if (filters.oi && filters.oi !== 'tous' && !textMatchesFilter(labels, filters.oi)) return false;
       if (filters.specialisation && filters.specialisation !== 'tous' && !textMatchesFilter(labels.concat(typeCycle), filters.specialisation)) return false;
       return true;
     });
+  }
+
+  function vigilancePriorityRank(level) {
+    const order = { P0: 0, P1: 1, P2: 2, INFO: 3, INFORMATION: 3 };
+    return order[String(level || '').toUpperCase()] ?? 9;
+  }
+
+  function vigilanceNumericValue(alert) {
+    const md = (alert && alert.metadata) || {};
+    const type = String(md.vigilanceType || alert.code || '').toUpperCase();
+    if (type === 'SOUS_OBJECTIF' && md.percentage != null) return Number(md.percentage);
+    if (type === 'ABSENCE_NON_EXCUSEE') return Number(md.absenceCount || 0);
+    if (type === 'CYCLE_INCOMPLET') return Number(md.missingCount || 0);
+    if (type === 'DONNEES_A_COMPLETER') return Number(md.openCount || 0);
+    if (md.percentage != null) return Number(md.percentage);
+    return null;
+  }
+
+  function vigilanceGapValue(alert) {
+    const md = (alert && alert.metadata) || {};
+    if (md.gapPct != null) return Number(md.gapPct);
+    if (md.absenceCount != null) return -Number(md.absenceCount || 0);
+    if (md.missingCount != null) return -Number(md.missingCount || 0);
+    return null;
+  }
+
+  function vigilanceSortColumns() {
+    return [
+      { key: 'priorite', type: 'number', value: (alert) => vigilancePriorityRank(alert && alert.level), tieBreakers: [
+        { key: 'personne', type: 'text', value: (alert) => vigilancePerson(alert).main },
+        { key: 'domaine', type: 'text', value: (alert) => alert && alert.domainCode }
+      ] },
+      { key: 'personne', type: 'text', value: (alert) => vigilancePerson(alert).main, tieBreakers: [
+        { key: 'priorite', type: 'number', value: (alert) => vigilancePriorityRank(alert && alert.level) }
+      ] },
+      { key: 'domaine', type: 'text', value: (alert) => alert && alert.domainCode },
+      { key: 'perimetre', type: 'text', value: (alert) => vigilancePerimeter(alert) },
+      { key: 'situation', type: 'text', value: (alert) => vigilanceTypeLabel((alert && alert.metadata && alert.metadata.vigilanceType) || (alert && alert.code)) },
+      { key: 'valeur', type: 'number', value: vigilanceNumericValue },
+      { key: 'reference', type: 'date', value: (alert) => (alert && alert.eventDate) || vigilanceReference(alert) },
+      { key: 'ecart', type: 'number', value: vigilanceGapValue }
+    ];
   }
 
   function vigilanceFilterOptions(alerts, kind) {
@@ -2022,7 +2122,7 @@
   function renderVigilance() {
     const payload = state.vigilance || { alerts: [], counts: {} };
     const allAlerts = payload.alerts || [];
-    const rows = filteredVigilanceAlerts(allAlerts);
+    const rows = L.sortRows ? L.sortRows(filteredVigilanceAlerts(allAlerts), state.vigilanceSort, vigilanceSortColumns()) : filteredVigilanceAlerts(allAlerts);
     const counts = payload.counts || {};
     const filters = state.vigilanceFilters || {};
     const domaineOptions = ['tous'].concat(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'])
@@ -2087,12 +2187,219 @@
         </div>
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
-            <thead><tr><th>Priorité</th><th>Personne</th><th>Domaine</th><th>OI / spécialisation</th><th>Situation</th><th>Valeur</th><th>Référence</th><th>Écart</th><th>Action</th></tr></thead>
+            <thead><tr>
+              ${sortableHeader('vigilance', 'priorite', 'Priorité', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'personne', 'Personne', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'domaine', 'Domaine', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'perimetre', 'OI / spécialisation', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'situation', 'Situation', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'valeur', 'Valeur', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'reference', 'Référence', state.vigilanceSort)}
+              ${sortableHeader('vigilance', 'ecart', 'Écart', state.vigilanceSort)}
+              <th>Action</th>
+            </tr></thead>
             <tbody>${body}</tbody>
           </table>
         </div>
       </div>
     `;
+  }
+
+  function currentAnalysisCibleMeta() {
+    const id = state.analysesFilters && state.analysesFilters.cibleId;
+    if (!id || id === 'tous') return null;
+    return (state.referentiels.cibles || []).find((cible) => String(cible.cibleId || cible.cible_id) === String(id)) || null;
+  }
+
+  function analysisDomaineOptions() {
+    const codes = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
+    return ['tous'].concat(codes).map((code) => `<option value="${escapeHtml(code)}" ${state.analysesFilters.domaine === code ? 'selected' : ''}>${escapeHtml(code === 'tous' ? 'Tous domaines' : domaineLabel(code))}</option>`).join('');
+  }
+
+  function analysisCibleOptions() {
+    const domain = String((state.analysesFilters && state.analysesFilters.domaine) || 'tous').toUpperCase();
+    if (!domain || domain === 'TOUS') return '<option value="tous">Toutes OI / spécialisations</option>';
+    const family = domain === 'FOSPEC' ? new Set(['FOSPEC', 'PR', 'PAPR', 'AUTO']) : new Set([domain]);
+    const cibles = (state.referentiels.cibles || []).filter((cible) => {
+      const d = String(cible.domaineCode || cible.domaine_code || '').toUpperCase();
+      const niveau = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
+      if (!family.has(d)) return false;
+      return niveau !== 'CAD';
+    });
+    const options = cibles.map((cible) => {
+      const id = cible.cibleId || cible.cible_id;
+      const d = cible.domaineCode || cible.domaine_code || domain;
+      const n = cible.niveauCode || cible.niveau_code || cible.code || cible.libelle || '';
+      const label = L.niveauAffiche(d, n);
+      return `<option value="${escapeHtml(id)}" ${String(state.analysesFilters.cibleId) === String(id) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    });
+    return ['<option value="tous">Toutes OI / spécialisations</option>'].concat(options).join('');
+  }
+
+  function analysisSpecialisationOptions() {
+    const domain = String((state.analysesFilters && state.analysesFilters.domaine) || 'tous').toUpperCase();
+    const all = ['FOBA 1', 'FOBA 2', 'FOBA 3', 'Échelon I', 'Échelon II', 'Échelons III et IV', 'Général / PAPR', 'PR-ABC', 'AUTO VL', 'AUTO PL'];
+    const byDomain = {
+      FOBA: ['FOBA 1', 'FOBA 2', 'FOBA 3'],
+      FOCA: ['Échelon I', 'Échelon II', 'Échelons III et IV'],
+      FOSPEC: ['Général / PAPR', 'PR-ABC', 'AUTO VL', 'AUTO PL'],
+      DPS: [],
+      DAP: [],
+      JSP: []
+    };
+    const values = domain === 'TOUS' ? all : (byDomain[domain] || []);
+    return ['<option value="tous">Toutes spécialisations</option>'].concat(values.map((value) => `<option value="${escapeHtml(value)}" ${state.analysesFilters.specialisation === value ? 'selected' : ''}>${escapeHtml(value)}</option>`)).join('');
+  }
+
+  function analysisPack(row) {
+    return (row && row.officiel) || row || {};
+  }
+
+  function analysisVolumes(pack) {
+    return (pack && pack.volumes) || {};
+  }
+
+  function analysisObjectiveText(pack) {
+    const obj = pack && pack.objective;
+    if (obj && obj.thresholdPct != null) return L.formatTaux(obj.thresholdPct);
+    return 'Objectif non défini';
+  }
+
+  function analysisGapText(pack) {
+    const text = L.formatGap(pack && pack.gapPct);
+    return text || '—';
+  }
+
+  function analysisPerimeterRows(dash) {
+    const filters = state.analysesFilters || {};
+    const cible = currentAnalysisCibleMeta();
+    if (cible) {
+      return [{
+        kind: 'Périmètre',
+        id: cible.cibleId || cible.cible_id,
+        label: L.niveauAffiche(cible.domaineCode || cible.domaine_code, cible.niveauCode || cible.niveau_code),
+        domaine: cible.domaineCode || cible.domaine_code || filters.domaine,
+        href: `#/vue/${encodeURIComponent(cible.domaineCode || cible.domaine_code || filters.domaine)}/${encodeURIComponent(cible.niveauCode || cible.niveau_code || '')}`,
+        officiel: dash.officiel || {}
+      }];
+    }
+    if (filters.domaine && filters.domaine !== 'tous' && (dash.cibles || []).length) {
+      return (dash.cibles || []).map((row) => ({
+        kind: ['DPS', 'DAP', 'JSP'].includes(String(row.domaineCode || '').toUpperCase()) ? 'OI' : 'Spécialisation',
+        id: row.cibleId,
+        label: L.niveauAffiche(row.domaineCode, row.niveauCode),
+        domaine: row.domaineCode,
+        href: `#/vue/${encodeURIComponent(row.domaineCode)}/${encodeURIComponent(row.niveauCode || '')}`,
+        officiel: row.officiel || {}
+      }));
+    }
+    if (dash.domaines && dash.domaines.length) {
+      return dash.domaines.map((row) => ({
+        kind: 'Domaine',
+        id: row.code,
+        label: row.libelleAffiche || row.libelle || row.code,
+        domaine: row.code,
+        href: `#/vue/${encodeURIComponent(row.code)}`,
+        officiel: row.officiel || {}
+      }));
+    }
+    return [{
+      kind: 'Global',
+      id: 'SDIS',
+      label: 'SDIS',
+      domaine: 'Tous',
+      href: '#/statistiques',
+      officiel: dash.officiel || {}
+    }];
+  }
+
+  function analysisPerimeterColumns() {
+    return [
+      { key: 'perimetre', type: 'text', value: (row) => row.label },
+      { key: 'domaine', type: 'text', value: (row) => row.domaine },
+      { key: 'events', type: 'number', value: (row) => analysisPack(row).eventCount },
+      { key: 'attendus', type: 'number', value: (row) => analysisPack(row).denominator },
+      { key: 'presents', type: 'number', value: (row) => analysisVolumes(analysisPack(row)).presents },
+      { key: 'excuses', type: 'number', value: (row) => analysisVolumes(analysisPack(row)).excuses },
+      { key: 'absents', type: 'number', value: (row) => analysisVolumes(analysisPack(row)).nonExcuses },
+      { key: 'dispenses', type: 'number', value: (row) => analysisVolumes(analysisPack(row)).dispenses },
+      { key: 'taux', type: 'number', value: (row) => analysisPack(row).percentage },
+      { key: 'objectif', type: 'number', value: (row) => analysisPack(row).objective && analysisPack(row).objective.thresholdPct },
+      { key: 'gap', type: 'number', value: (row) => analysisPack(row).gapPct }
+    ];
+  }
+
+  function analysisEventColumns() {
+    return [
+      { key: 'date', type: 'date', value: (row) => row && row.date },
+      { key: 'libelle', type: 'text', value: (row) => row && row.libelle },
+      { key: 'domaine', type: 'text', value: (row) => row && row.domaine },
+      { key: 'mode', type: 'text', value: (row) => row && row.modeSuivi },
+      { key: 'taux', type: 'number', value: (row) => row && row.percentage },
+      { key: 'attendus', type: 'number', value: (row) => row && row.denominator },
+      { key: 'presents', type: 'number', value: (row) => row && row.numerator }
+    ];
+  }
+
+  function analysisPersonSpecialisations(person) {
+    const primary = personnelPrimaryAffectation(person);
+    const display = personnelDisplay();
+    const labels = (display && display.formatSpecializations)
+      ? display.formatSpecializations(person.affectationsOuvertes || person.affectations || []).labels
+      : personnelOtherAffectations(person, primary);
+    return labels || [];
+  }
+
+  function analysisPersonRows() {
+    const payload = state.analysesPersonnel || {};
+    const query = normalizeSearchText((state.analysesFilters && state.analysesFilters.personQuery) || '');
+    const specFilter = String((state.analysesFilters && state.analysesFilters.specialisation) || 'tous');
+    const rows = normalizePersonnelDirectory(payload).personnes || [];
+    const filtered = rows.filter((person) => {
+      if (query) {
+        const hay = normalizeSearchText([person.grade, person.nom, person.prenom, person.nip].join(' '));
+        if (!hay.includes(query)) return false;
+      }
+      if (specFilter !== 'tous') {
+        const specs = analysisPersonSpecialisations(person).map((label) => String(label).toUpperCase());
+        if (!specs.some((label) => label === specFilter.toUpperCase())) return false;
+      }
+      return true;
+    });
+    const columns = [
+      { key: 'grade', type: 'number', value: (person) => gradeRank(person && person.grade), tieBreakers: [
+        { key: 'nom', type: 'text', value: (person) => person && person.nom },
+        { key: 'prenom', type: 'text', value: (person) => person && person.prenom }
+      ] },
+      { key: 'personne', type: 'text', value: (person) => [person && person.nom, person && person.prenom].filter(Boolean).join(' ') },
+      { key: 'nip', type: 'text', value: (person) => person && person.nip },
+      { key: 'oi', type: 'text', value: (person) => personnelOiMeta(person, person, personnelOpenAssignments(person)) },
+      { key: 'specialisation', type: 'text', value: (person) => analysisPersonSpecialisations(person).join(' ') },
+      { key: 'events', type: 'number', value: (person) => person && person.taux && person.taux.eventCount },
+      { key: 'attendus', type: 'number', value: (person) => person && person.taux && person.taux.denominator },
+      { key: 'presents', type: 'number', value: (person) => person && person.taux && person.taux.volumes && person.taux.volumes.presents },
+      { key: 'excuses', type: 'number', value: (person) => person && person.taux && person.taux.volumes && person.taux.volumes.excuses },
+      { key: 'absents', type: 'number', value: (person) => person && person.taux && person.taux.volumes && person.taux.volumes.nonExcuses },
+      { key: 'dispenses', type: 'number', value: (person) => person && person.taux && person.taux.volumes && person.taux.volumes.dispenses },
+      { key: 'taux', type: 'number', value: (person) => person && person.taux && person.taux.percentage },
+      { key: 'objectif', type: 'number', value: (person) => person && person.taux && person.taux.objective && person.taux.objective.thresholdPct },
+      { key: 'gap', type: 'number', value: (person) => person && person.taux && person.taux.gapPct },
+      { key: 'vigilance', type: 'status', value: (person) => person && person.taux && person.taux.analyticStatus }
+    ];
+    return L.sortRows ? L.sortRows(filtered, state.analysesPersonSort, columns) : filtered;
+  }
+
+  function analysisComparison(dash) {
+    const points = (((dash.timeseries || {}).officiel) || []).filter((point) => point && point.percentage != null);
+    if (points.length < 2) return { label: 'Évolution', value: '—', detail: 'Deux périodes évaluables nécessaires' };
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2];
+    const delta = Number(last.percentage) - Number(prev.percentage);
+    return {
+      label: `${prev.month} → ${last.month}`,
+      value: L.formatGap(delta),
+      detail: `${L.formatTaux(prev.percentage)} puis ${L.formatTaux(last.percentage)}`
+    };
   }
 
   function renderStatistiques() {
@@ -2106,16 +2413,175 @@
     const graphs = (dash && dash.graphs) || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
     const chart = (id, opts) => C ? C.renderChartCard(graphs[id], opts) : '';
+    const o = dash.officiel || {};
+    const volumes = o.volumes || {};
+    const comparison = analysisComparison(dash);
+    const perimeters = L.sortRows ? L.sortRows(analysisPerimeterRows(dash), state.analysesSort, analysisPerimeterColumns()) : analysisPerimeterRows(dash);
+    const events = L.sortRows ? L.sortRows(dash.evenements || [], state.analysesEventSort, analysisEventColumns()) : (dash.evenements || []);
+    const people = analysisPersonRows();
+    const filters = state.analysesFilters || {};
+    const selectedCible = currentAnalysisCibleMeta();
+    const objectiveText = analysisObjectiveText(o);
+    const gapText = analysisGapText(o);
+    const individualAllowed = canReadPersonnel();
+    const peopleBody = !individualAllowed
+      ? '<tr><td colspan="16"><div class="scope-empty">Analyse individuelle réservée aux profils habilités.</div></td></tr>'
+      : state.analysesPersonnelError
+        ? `<tr><td colspan="16"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.analysesPersonnelError)}</div></td></tr>`
+        : !state.analysesPersonnelReady
+          ? `<tr><td colspan="16"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('personnel'))}</div></td></tr>`
+          : people.length
+            ? people.slice(0, 80).map((person) => {
+                const primary = personnelPrimaryAffectation(person);
+                const taux = person.taux || {};
+                const pv = taux.volumes || {};
+                const specs = analysisPersonSpecialisations(person);
+                const status = taux.analyticStatus || 'NON_EVALUABLE';
+                return `<tr>
+                  <td data-label="Grade">${escapeHtml(person.grade || '—')}</td>
+                  <td data-label="Nom">${escapeHtml(person.nom || '—')}</td>
+                  <td data-label="Prénom">${escapeHtml(person.prenom || '—')}</td>
+                  <td data-label="NIP">${escapeHtml(person.nip || '—')}</td>
+                  <td data-label="OI">${escapeHtml(formatPersonnelAffectationLabel(primary) || personnelOiMeta(person, person, personnelOpenAssignments(person)) || '—')}</td>
+                  <td data-label="Spécialisation">${escapeHtml(specs.join(', ') || '—')}</td>
+                  <td data-label="Événements">${escapeHtml(String(taux.eventCount || 0))}</td>
+                  <td data-label="Attendus">${escapeHtml(String(taux.denominator || 0))}</td>
+                  <td data-label="Présents">${escapeHtml(String(pv.presents || taux.numerator || 0))}</td>
+                  <td data-label="Excusés">${escapeHtml(String(pv.excuses || 0))}</td>
+                  <td data-label="Absents">${escapeHtml(String(pv.nonExcuses || 0))}</td>
+                  <td data-label="Dispensés">${escapeHtml(String(pv.dispenses || 0))}</td>
+                  <td data-label="Taux">${escapeHtml(taux.denominator ? L.formatTaux(taux.percentage) : 'Non évaluable')}</td>
+                  <td data-label="Objectif">${escapeHtml(analysisObjectiveText(taux))}<small>${escapeHtml(analysisGapText(taux))}</small></td>
+                  <td data-label="Vigilance">${escapeHtml(L.analyticStatusLabel(status))}</td>
+                  <td data-label="Action"><a class="scope-btn scope-btn-compact" href="#/personnel/${escapeHtml(person.personneId)}">Fiche</a></td>
+                </tr>`;
+              }).join('')
+            : '<tr><td colspan="16"><div class="scope-empty">Aucune personne ne correspond au périmètre analysé.</div></td></tr>';
+    const perimeterBody = perimeters.length
+      ? perimeters.map((row) => {
+          const pack = analysisPack(row);
+          const v = analysisVolumes(pack);
+          return `<tr>
+            <td data-label="Périmètre"><a href="${escapeHtml(row.href)}">${escapeHtml(row.label)}</a><small>${escapeHtml(row.kind)}</small></td>
+            <td data-label="Domaine">${escapeHtml(row.domaine ? domaineLabel(row.domaine) : '—')}</td>
+            <td data-label="Événements">${escapeHtml(String(pack.eventCount || 0))}</td>
+            <td data-label="Attendus">${escapeHtml(String(pack.denominator || 0))}</td>
+            <td data-label="Présents">${escapeHtml(String(v.presents || pack.numerator || 0))}</td>
+            <td data-label="Excusés">${escapeHtml(String(v.excuses || 0))}</td>
+            <td data-label="Absents">${escapeHtml(String(v.nonExcuses || 0))}</td>
+            <td data-label="Dispensés">${escapeHtml(String(v.dispenses || 0))}</td>
+            <td data-label="Taux">${escapeHtml(pack.denominator ? L.formatTaux(pack.percentage) : 'Non évaluable')}</td>
+            <td data-label="Objectif">${escapeHtml(analysisObjectiveText(pack))}</td>
+            <td data-label="Écart">${escapeHtml(analysisGapText(pack))}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="11"><div class="scope-empty">Aucun périmètre analysable sur la période.</div></td></tr>';
+    const eventBody = events.length
+      ? events.slice(0, 80).map((ev) => `<tr>
+          <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
+          <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(ev.libelle)}</a></td>
+          <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine))}</td>
+          <td data-label="Mode">${escapeHtml(L.modeLabel(ev.modeSuivi))}</td>
+          <td data-label="Taux">${escapeHtml(ev.denominator ? L.formatTaux(ev.percentage) : 'Non évaluable')}</td>
+          <td data-label="Attendus">${escapeHtml(String(ev.denominator || 0))}</td>
+          <td data-label="Présents">${escapeHtml(String(ev.numerator || 0))}</td>
+          <td data-label="Action"><a class="scope-btn scope-btn-compact" href="#/exercices/${escapeHtml(ev.evenementId)}">Ouvrir</a></td>
+        </tr>`).join('')
+      : '<tr><td colspan="8"><div class="scope-empty">Aucun événement officiel réalisé sur ce périmètre.</div></td></tr>';
     return `
       <div class="scope-crumb">Statistiques</div>
-      <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Statistiques', context: periodLabel(dash.period), description: 'Espace analytique principal SCOPE : GRAPH-1, ANALYTICS-1, OBJECTIVES-1 et ALERTS-1.', logo: true })}
+      <div class="scope-main scope-analyses-page">
+        ${pageHeaderHtml({ eyebrow: 'Analyse', title: 'Analyses / Statistiques', context: periodLabel(dash.period), description: 'Lecture consolidée des résultats SCOPE issue des moteurs Analytics, Objectifs, Cycles et Vigilance.', logo: true })}
         ${periodContextHtml()}
+        <div class="scope-toolbar scope-analyses-filters">
+          <div class="scope-field">
+            <label for="analysis-domaine">Domaine</label>
+            <select id="analysis-domaine">${analysisDomaineOptions()}</select>
+          </div>
+          <div class="scope-field">
+            <label for="analysis-cible">OI / spécialisation</label>
+            <select id="analysis-cible" ${filters.domaine === 'tous' ? 'disabled' : ''}>${analysisCibleOptions()}</select>
+          </div>
+          <div class="scope-field">
+            <label for="analysis-specialisation">Spécialisation personne</label>
+            <select id="analysis-specialisation">${analysisSpecialisationOptions()}</select>
+          </div>
+          <div class="scope-field scope-analyses-search">
+            <label for="analysis-person-q">Personne</label>
+            <input id="analysis-person-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(filters.personQuery || '')}" autocomplete="off">
+          </div>
+        </div>
+        <div class="scope-kpis">
+          <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(o.denominator ? L.formatTaux(o.percentage) : 'Non évaluable')}</strong><span>Taux global</span><em>${escapeHtml(String(o.numerator || 0))} / ${escapeHtml(String(o.denominator || 0))}</em></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(volumes.presents || 0))}</strong><span>Présents</span><small>${escapeHtml(String(volumes.excuses || 0))} excusé(s)</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(volumes.nonExcuses || 0))}</strong><span>Absents non excusés</span><small>${escapeHtml(String(volumes.dispenses || 0))} dispensé(s)</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(objectiveText)}</strong><span>Objectif</span><small>${escapeHtml(gapText)}</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(comparison.value || '—')}</strong><span>Évolution</span><small>${escapeHtml(comparison.detail)}</small></article>
+        </div>
         <div class="scope-graph-stack">${chart('evolution', { size: { width: 640, height: 136 } })}</div>
-        <div class="scope-graph-stack">${chart('domaines')}</div>
-        <div class="scope-graph-stack">${chart('children')}</div>
-        <div class="scope-graph-grid">${chart('composition')}${chart('motifs')}</div>
-        ${L.shouldRenderPermutations(route().domaine, graphs.permutations) ? `<div class="scope-graph-stack">${chart('permutations')}</div>` : ''}
+        <div class="scope-graph-stack">${chart(filters.domaine && filters.domaine !== 'tous' ? 'children' : 'domaines')}</div>
+        <div class="scope-graph-grid">${chart('composition')}</div>
+        ${selectedCible ? `<p class="scope-mode-hint">Périmètre filtré : ${escapeHtml(domaineLabel(selectedCible.domaineCode || selectedCible.domaine_code))} · ${escapeHtml(L.niveauAffiche(selectedCible.domaineCode || selectedCible.domaine_code, selectedCible.niveauCode || selectedCible.niveau_code))}.</p>` : ''}
+        <div class="scope-card scope-table-wrap scope-analyses-table">
+          <h2>Comparaison des périmètres</h2>
+          <table class="scope-table">
+            <thead><tr>
+              ${sortableHeader('analyses', 'perimetre', 'Périmètre', state.analysesSort)}
+              ${sortableHeader('analyses', 'domaine', 'Domaine', state.analysesSort)}
+              ${sortableHeader('analyses', 'events', 'Événements', state.analysesSort)}
+              ${sortableHeader('analyses', 'attendus', 'Attendus', state.analysesSort)}
+              ${sortableHeader('analyses', 'presents', 'Présents', state.analysesSort)}
+              ${sortableHeader('analyses', 'excuses', 'Excusés', state.analysesSort)}
+              ${sortableHeader('analyses', 'absents', 'Absents', state.analysesSort)}
+              ${sortableHeader('analyses', 'dispenses', 'Dispensés', state.analysesSort)}
+              ${sortableHeader('analyses', 'taux', 'Taux', state.analysesSort)}
+              ${sortableHeader('analyses', 'objectif', 'Objectif', state.analysesSort)}
+              ${sortableHeader('analyses', 'gap', 'Écart', state.analysesSort)}
+            </tr></thead>
+            <tbody>${perimeterBody}</tbody>
+          </table>
+        </div>
+        <div class="scope-card scope-table-wrap scope-analyses-events">
+          <h2>Événements officiels</h2>
+          <table class="scope-table">
+            <thead><tr>
+              ${sortableHeader('analyses-events', 'date', 'Date', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'libelle', 'Événement', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'domaine', 'Domaine', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'mode', 'Mode', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'taux', 'Taux', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'attendus', 'Attendus', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'presents', 'Présents', state.analysesEventSort)}
+              <th>Action</th>
+            </tr></thead>
+            <tbody>${eventBody}</tbody>
+          </table>
+        </div>
+        <div class="scope-card scope-table-wrap scope-analyses-people">
+          <h2>Analyse individuelle</h2>
+          <table class="scope-table">
+            <thead><tr>
+              ${sortableHeader('analyses-people', 'grade', 'Grade', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'personne', 'Nom', state.analysesPersonSort)}
+              <th>Prénom</th>
+              ${sortableHeader('analyses-people', 'nip', 'NIP', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'oi', 'OI', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'specialisation', 'Spécialisation', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'events', 'Événements', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'attendus', 'Attendus', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'presents', 'Présents', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'excuses', 'Excusés', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'absents', 'Absents', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'dispenses', 'Dispensés', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'taux', 'Taux', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'objectif', 'Objectif', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'vigilance', 'Vigilance', state.analysesPersonSort)}
+              <th>Action</th>
+            </tr></thead>
+            <tbody>${peopleBody}</tbody>
+          </table>
+        </div>
+        ${L.shouldRenderPermutations(filters.domaine, graphs.permutations) ? `<div class="scope-graph-stack">${chart('permutations')}</div>` : ''}
         ${dash.legacy && dash.legacy.eventCount ? `<p class="scope-mode-hint">LEGACY affiché séparément : ${escapeHtml(String(dash.legacy.eventCount))} agrégat(s), hors KPI officiel.</p>` : ''}
       </div>
     `;
@@ -2332,20 +2798,39 @@
     return Number((metrics && metrics[key]) || 0);
   }
 
+  function cycleProgressionValue(cycle) {
+    const metrics = (cycle && cycle.metrics) || {};
+    return metrics.tauxParticipationCycle && metrics.tauxParticipationCycle.percentage;
+  }
+
+  function cycleSortColumns() {
+    return [
+      { key: 'cycle', type: 'text', value: (cycle) => cycle && cycle.libelle },
+      { key: 'specialisation', type: 'text', value: (cycle) => cycle && (cycle.type_cycle || cycle.domaine_code) },
+      { key: 'periode', type: 'date', value: (cycle) => cycle && (cycle.date_debut || cycle.date_fin || cycle.annee) },
+      { key: 'statut', type: 'status', value: (cycle) => cycle && cycle.statut },
+      { key: 'population', type: 'number', value: (cycle) => (cycle && cycle.populationCount) ?? cycleMetric(cycle && cycle.metrics, 'populationDistincte') },
+      { key: 'progression', type: 'number', value: cycleProgressionValue },
+      { key: 'presents', type: 'number', value: (cycle) => cycleMetric(cycle && cycle.metrics, 'participantsReconnusDistincts') },
+      { key: 'sessions', type: 'number', value: (cycle) => cycle && cycle.eventCount }
+    ];
+  }
+
   function renderCycles() {
     const rows = state.cycles || [];
+    const sortedRows = L.sortRows ? L.sortRows(rows, state.cyclesSort, cycleSortColumns()) : rows;
     let body;
     if (state.cyclesError) {
       body = `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.cyclesError)}</div></td></tr>`;
     } else if (!state.cyclesReady) {
       body = `<tr><td colspan="9"><div class="scope-loading-row" role="status">Chargement des cycles…</div></td></tr>`;
-    } else if (!rows.length) {
+    } else if (!sortedRows.length) {
       body = '<tr><td colspan="9"><div class="scope-empty">Aucun cycle de spécialisation sur cette période.</div></td></tr>';
     } else {
-      body = rows.map((cycle) => {
+      body = sortedRows.map((cycle) => {
         const metrics = cycle.metrics || {};
         const period = [cycle.date_debut, cycle.date_fin].filter(Boolean).map(L.formatDate).join(' – ') || '—';
-        const progression = metrics.tauxParticipationCycle && metrics.tauxParticipationCycle.percentage;
+        const progression = cycleProgressionValue(cycle);
         return `<tr>
           <td data-label="Cycle"><a href="#/cycles/${escapeHtml(cycle.cycle_id)}">${escapeHtml(cycle.libelle)}</a></td>
           <td data-label="Spécialisation">${escapeHtml(cycle.type_cycle || cycle.domaine_code || '—')}</td>
@@ -2386,7 +2871,17 @@
         </div>
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
-            <thead><tr><th>Cycle</th><th>Spécialisation</th><th>Période</th><th>STATUT</th><th>Population</th><th>Progression</th><th>Présents</th><th>Sessions</th><th>Actions</th></tr></thead>
+            <thead><tr>
+              ${sortableHeader('cycles', 'cycle', 'Cycle', state.cyclesSort)}
+              ${sortableHeader('cycles', 'specialisation', 'Spécialisation', state.cyclesSort)}
+              ${sortableHeader('cycles', 'periode', 'Période', state.cyclesSort)}
+              ${sortableHeader('cycles', 'statut', 'Statut', state.cyclesSort)}
+              ${sortableHeader('cycles', 'population', 'Population', state.cyclesSort)}
+              ${sortableHeader('cycles', 'progression', 'Progression', state.cyclesSort)}
+              ${sortableHeader('cycles', 'presents', 'Présents', state.cyclesSort)}
+              ${sortableHeader('cycles', 'sessions', 'Sessions', state.cyclesSort)}
+              <th>Actions</th>
+            </tr></thead>
             <tbody>${body}</tbody>
           </table>
         </div>
@@ -2407,9 +2902,31 @@
     const pilotage = detail.pilotage || {};
     const pilotageKpis = pilotage.kpis || {};
     const obligations = pilotage.obligations || [];
-    const individualRows = pilotage.individualRows || [];
-    const evenements = detail.evenements || [];
-    const personnes = detail.personnes || [];
+    const individualRows = L.sortRows ? L.sortRows(pilotage.individualRows || [], state.cycleMatrixSort, [
+      { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [
+        { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') }
+      ] },
+      { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') },
+      { key: 'etat', type: 'status', value: (row) => row && row.globalState },
+      { key: 'progression', type: 'number', value: (row) => row && row.progressionPct }
+    ]) : (pilotage.individualRows || []);
+    const evenements = L.sortRows ? L.sortRows(detail.evenements || [], state.cycleEventSort, [
+      { key: 'date', type: 'date', value: (row) => row && row.date },
+      { key: 'code', type: 'text', value: (row) => row && (row.code_cours || row.identifiant_externe) },
+      { key: 'event', type: 'text', value: (row) => row && row.libelle },
+      { key: 'etat', type: 'status', value: (row) => row && row.statut }
+    ]) : (detail.evenements || []);
+    const personnes = L.sortRows ? L.sortRows(detail.personnes || [], state.cyclePeopleSort, [
+      { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [
+        { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') }
+      ] },
+      { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') },
+      { key: 'nip', type: 'text', value: (row) => row && row.nip },
+      { key: 'role', type: 'status', value: (row) => row && row.role_cycle },
+      { key: 'statut', type: 'status', value: (row) => row && row.statut_cycle },
+      { key: 'session', type: 'text', value: (row) => row && (row.session_event_id || row.participated_event_id) },
+      { key: 'exception', type: 'text', value: (row) => row && row.exception_type }
+    ]) : (detail.personnes || []);
     const period = [cycle.date_debut, cycle.date_fin].filter(Boolean).map(L.formatDate).join(' – ') || '—';
     const eventRows = evenements.length ? evenements.map((ev) => `<tr>
       <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
@@ -2463,15 +2980,33 @@
         </div>
         <div class="scope-card scope-table-wrap" style="margin-top:12px">
           <h2>Matrice individuelle</h2>
-          <table class="scope-table"><thead><tr><th>Personne</th><th>Rôles</th><th>État</th><th>Progression</th>${matrixHeaders}</tr></thead><tbody>${matrixRows}</tbody></table>
+          <table class="scope-table"><thead><tr>
+            ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
+            <th>Rôles</th>
+            ${sortableHeader('cycle-matrix', 'etat', 'État', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'progression', 'Progression', state.cycleMatrixSort)}
+            ${matrixHeaders}
+          </tr></thead><tbody>${matrixRows}</tbody></table>
         </div>
         <div class="scope-card scope-table-wrap" style="margin-top:12px">
           <h2>Sessions</h2>
-          <table class="scope-table"><thead><tr><th>Date</th><th>Code</th><th>Événement</th><th>État</th></tr></thead><tbody>${eventRows}</tbody></table>
+          <table class="scope-table"><thead><tr>
+            ${sortableHeader('cycle-events', 'date', 'Date', state.cycleEventSort)}
+            ${sortableHeader('cycle-events', 'code', 'Code', state.cycleEventSort)}
+            ${sortableHeader('cycle-events', 'event', 'Événement', state.cycleEventSort)}
+            ${sortableHeader('cycle-events', 'etat', 'État', state.cycleEventSort)}
+          </tr></thead><tbody>${eventRows}</tbody></table>
         </div>
         <div class="scope-card scope-table-wrap" style="margin-top:12px">
           <h2>Population et rôles</h2>
-          <table class="scope-table"><thead><tr><th>Nom</th><th>NIP</th><th>Rôle</th><th>Statut</th><th>Session</th><th>Exception</th></tr></thead><tbody>${peopleRows}</tbody></table>
+          <table class="scope-table"><thead><tr>
+            ${sortableHeader('cycle-people', 'grade', 'Nom', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'nip', 'NIP', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'role', 'Rôle', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'statut', 'Statut', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'session', 'Session', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'exception', 'Exception', state.cyclePeopleSort)}
+          </tr></thead><tbody>${peopleRows}</tbody></table>
         </div>
       </div>
     `;
@@ -6905,6 +7440,28 @@
     bindVigilanceFilter('vigilance-filter-level', 'level', true);
     bindVigilanceFilter('vigilance-filter-oi', 'oi', false);
     bindVigilanceFilter('vigilance-filter-specialisation', 'specialisation', false);
+    document.getElementById('analysis-domaine')?.addEventListener('change', (e) => {
+      state.analysesFilters = Object.assign({}, state.analysesFilters || {}, {
+        domaine: e.target.value || 'tous',
+        cibleId: 'tous',
+        specialisation: 'tous'
+      });
+      state.dashboard = null;
+      withLoading(loadDashboard);
+    });
+    document.getElementById('analysis-cible')?.addEventListener('change', (e) => {
+      state.analysesFilters = Object.assign({}, state.analysesFilters || {}, { cibleId: e.target.value || 'tous' });
+      state.dashboard = null;
+      withLoading(loadDashboard);
+    });
+    document.getElementById('analysis-specialisation')?.addEventListener('change', (e) => {
+      state.analysesFilters = Object.assign({}, state.analysesFilters || {}, { specialisation: e.target.value || 'tous' });
+      render();
+    });
+    document.getElementById('analysis-person-q')?.addEventListener('input', (e) => {
+      state.analysesFilters = Object.assign({}, state.analysesFilters || {}, { personQuery: e.target.value || '' });
+      render();
+    });
     document.getElementById('scope-year')?.addEventListener('change', (e) => {
       state.year = e.target.value;
       if (state.preset === 'YEAR') {
@@ -8246,6 +8803,38 @@
           state.previewSort = L.nextSort ? L.nextSort(state.previewSort, key, 'asc') : { key, dir: 'asc' };
           render();
         }
+        if (table === 'cycles') {
+          state.cyclesSort = L.nextSort ? L.nextSort(state.cyclesSort, key, key === 'periode' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'cycle-events') {
+          state.cycleEventSort = L.nextSort ? L.nextSort(state.cycleEventSort, key, key === 'date' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'cycle-people') {
+          state.cyclePeopleSort = L.nextSort ? L.nextSort(state.cyclePeopleSort, key, key === 'grade' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'cycle-matrix') {
+          state.cycleMatrixSort = L.nextSort ? L.nextSort(state.cycleMatrixSort, key, key === 'grade' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'vigilance') {
+          state.vigilanceSort = L.nextSort ? L.nextSort(state.vigilanceSort, key, key === 'priorite' ? 'asc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'analyses') {
+          state.analysesSort = L.nextSort ? L.nextSort(state.analysesSort, key, ['taux', 'gap', 'events', 'attendus', 'presents', 'excuses', 'absents', 'dispenses'].includes(key) ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'analyses-events') {
+          state.analysesEventSort = L.nextSort ? L.nextSort(state.analysesEventSort, key, key === 'date' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
+        if (table === 'analyses-people') {
+          state.analysesPersonSort = L.nextSort ? L.nextSort(state.analysesPersonSort, key, key === 'grade' ? 'desc' : ['taux', 'gap', 'events', 'attendus', 'presents', 'excuses', 'absents', 'dispenses'].includes(key) ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
         if (table === 'objectifs') {
           state.objectifSort = L.nextSort ? L.nextSort(state.objectifSort, key, key === 'debut' || key === 'fin' ? 'desc' : 'asc') : { key, dir: 'asc' };
           render();
@@ -9321,6 +9910,19 @@
         state.vigilanceReady = true;
         state.vigilanceError = null;
         return renderVigilance();
+      },
+      renderStatistiquesHtml(payload, personnelPayload) {
+        location.hash = '#/statistiques';
+        window.location.hash = location.hash;
+        state.authChecking = false;
+        state.needOkta = false;
+        state.session = { name: 'Test SCOPE', roles: ['LECTEUR'], permissions: ['personnel:read'] };
+        state.dashboard = payload || {};
+        state.dashboardError = null;
+        state.analysesPersonnel = personnelPayload || { personnes: [] };
+        state.analysesPersonnelReady = true;
+        state.analysesPersonnelError = null;
+        return renderStatistiques();
       },
       renderShellHtml(hash, payload) {
         location.hash = hash || '#/vigilance';

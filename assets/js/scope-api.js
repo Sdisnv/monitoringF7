@@ -333,6 +333,7 @@
       analyticsTimeseries(params) { return request('GET', `/analytics/timeseries${queryString(params || {})}`); },
       analyticsGraphs(params) { return request('GET', `/analytics/graphs${queryString(params || {})}`); },
       dashboard(params) { return request('GET', `/dashboard${queryString(params || {})}`); },
+      analyticsPersonnelDirectory(params) { return request('GET', `/personnel${queryString(params || {})}`); },
       jspReport(params) { return request('GET', `/reporting/jsp${queryString(params || {})}`); },
       participationReport(params) { return request('GET', `/reporting/participation${queryString(params || {})}`); },
       formationReport(params) { return request('GET', `/reporting/formation${queryString(params || {})}`); },
