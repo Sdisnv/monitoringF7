@@ -122,6 +122,26 @@ function looksLikeUuid(value){
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
 }
 
+function personEligibleByDates(person, date){
+  if(!person) return true;
+  const day = String(date || '').slice(0, 10);
+  const entree = String(person.date_entree || person.dateEntree || '').slice(0, 10);
+  const sortie = String(person.date_sortie || person.dateSortie || '').slice(0, 10);
+  if(entree && entree > day) return false;
+  if(sortie && sortie < day) return false;
+  return person.actif !== false || Boolean(sortie) || Boolean(entree);
+}
+
+function filterEligibleAttendus(attendus, bundle, date){
+  const rows = filterAttendusEligibleAtDate(attendus, bundle.periodesByPersonne, date);
+  const people = bundle.personnesById;
+  if(!(people instanceof Map)) return rows;
+  return rows.filter((row) => {
+    const pid = String(row.personne_id || row.personneId || '');
+    return personEligibleByDates(people.get(pid), date);
+  });
+}
+
 async function resolveQuery(repo, query){
   const resolved = Object.assign({}, query || {});
   const raw = resolved.cibleId || resolved.cible || null;
@@ -195,6 +215,12 @@ function createScopeAnalyticsService(repo){
     } else {
       bundle.periodesByPersonne = new Map();
     }
+    if(typeof repo.listPersonnes === 'function'){
+      const people = await repo.listPersonnes({});
+      bundle.personnesById = new Map((people || []).map((row) => [String(row.personne_id || row.personneId || row.id || ''), row]));
+    } else {
+      bundle.personnesById = new Map();
+    }
     if(!wantsQualification(query)){
       bundle.events = (bundle.events || []).filter((event) => !isQualificationEvenement(event));
     }
@@ -226,7 +252,7 @@ function createScopeAnalyticsService(repo){
       return { include: true, reason: null, mode, official };
     }
 
-    let attendusUse = filterAttendusEligibleAtDate(attendus, bundle.periodesByPersonne, event.date);
+    let attendusUse = filterEligibleAttendus(attendus, bundle, event.date);
     let partsUse = participations;
     if(personneId){
       attendusUse = attendusUse.filter((a) => String(a.personne_id) === String(personneId));
@@ -461,10 +487,16 @@ function createScopeAnalyticsService(repo){
   async function directoryRates(query){
     const resolved = await resolveQuery(repo, query || {});
     const period = parsePeriod(resolved);
+    const cibleId = looksLikeUuid(resolved.cibleId) ? resolved.cibleId : (looksLikeUuid(resolved.cible) ? resolved.cible : null);
+    const grain = inferAnalysisGrain(resolved);
+    const objectives = typeof repo.listObjectifs === 'function'
+      ? await repo.listObjectifs({ actif: true })
+      : [];
     const bundle = await loadBundle({
       from: period.from,
       to: period.to,
       domaineCode: resolved.domaineCode || resolved.domaine || null,
+      cibleId,
       includeQualification: resolved.includeQualification,
       include_qualification: resolved.include_qualification
     }, period);
@@ -478,7 +510,7 @@ function createScopeAnalyticsService(repo){
       for(const part of parts){
         byPid.set(String(part.personne_id || part.personneId), part);
       }
-      for(const attendu of filterAttendusEligibleAtDate(attendus, bundle.periodesByPersonne, event.date)){
+      for(const attendu of filterEligibleAttendus(attendus, bundle, event.date)){
         if(attendu.inclus === false) continue;
         const pid = String(attendu.personne_id || attendu.personneId);
         const part = byPid.get(pid);
@@ -487,23 +519,45 @@ function createScopeAnalyticsService(repo){
           numerator: 0,
           denominator: 0,
           eventCount: 0,
-          volumes: emptyVolumes()
+          volumes: emptyVolumes(),
+          applied: []
         };
         row.numerator += Number(official.numerator || 0);
         row.denominator += Number(official.denominator || 0);
         row.volumes = addVolumes(row.volumes, official.volumes);
         row.eventCount += 1;
+        row.applied.push(resolveEventObjective(
+          {
+            date: event.date,
+            domaine_code: event.domaine_code,
+            cible_ids: bundle.cibleIdsByEvent[event.evenement_id] || event.cible_ids || []
+          },
+          { objectives, grain, queryCibleId: cibleId }
+        ));
         acc.set(pid, row);
       }
     }
     const rates = {};
     for(const [pid, row] of acc.entries()){
+      const context = collectObjectiveContext(row.applied);
+      const objective = context.objective;
+      const gap = gapPct(safePercentage(row.numerator, row.denominator), objective);
+      const status = analyticStatus(safePercentage(row.numerator, row.denominator), objective, { vigilanceMarginPct: null });
       rates[pid] = {
         numerator: row.numerator,
         denominator: row.denominator,
         percentage: safePercentage(row.numerator, row.denominator),
         eventCount: row.eventCount,
-        volumes: row.volumes
+        volumes: row.volumes,
+        objective,
+        gapPct: gap,
+        analyticStatus: status.status,
+        analyticStatusReason: status.reason,
+        objectiveContext: {
+          homogeneous: context.homogeneous,
+          distinctObjectives: context.distinctObjectives,
+          reason: context.reason
+        }
       };
     }
     return { period, rates };

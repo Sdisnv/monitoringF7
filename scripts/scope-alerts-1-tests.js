@@ -446,11 +446,11 @@ function codes(payload, level){
     assert.ok(inboxClassify);
   });
 
-  await record('P1-03 désactivé / pas d’alerte personne', async () => {
+  await record('vigilances personne actives, aucun signal sans fait source', async () => {
     const { alerts } = ctx();
     const listed = await alerts.listAlerts({ year: 2026, preset: 'YEAR', today: '2026-08-19' });
-    assert.strictEqual(listed.config.repeatedUnexcusedAbsences.enabled, false);
-    assert.strictEqual(listed.config.personUnderObjective.enabled, false);
+    assert.strictEqual(listed.config.repeatedUnexcusedAbsences.enabled, true);
+    assert.strictEqual(listed.config.personUnderObjective.enabled, true);
     assert.ok(!(listed.alerts || []).some((a) => a.personId));
   });
 

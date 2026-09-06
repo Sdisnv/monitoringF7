@@ -15,7 +15,7 @@
  * REPORTE : comme ANNULE — aucune alerte P0 (pas d’action de clôture).
  * LEGACY : jamais de P0 / P1 officiel.
  * P1 objectifs : uniquement gapPct < 0 issu d’analytics (pas de formule parallèle).
- * P1-03 absences répétées : contrat préparé, règle désactivée (seuil MOA non validé).
+ * P1 absences non excusées : vigilance factuelle, sans seuil prédictif.
  */
 const { isoDate } = require('./_scope-rules');
 const { MODES, inferModeSuivi } = require('./_scope-analytics');
@@ -37,20 +37,22 @@ const CODES = Object.freeze({
   DOMAINE_SOUS_OBJECTIF: 'DOMAINE_SOUS_OBJECTIF',
   OBJECTIF_ABSENT: 'OBJECTIF_ABSENT',
   ABSENCES_NON_EXCUSEES_REPETEES: 'ABSENCES_NON_EXCUSEES_REPETEES',
-  PERSONNE_SOUS_OBJECTIF: 'PERSONNE_SOUS_OBJECTIF'
+  PERSONNE_SOUS_OBJECTIF: 'PERSONNE_SOUS_OBJECTIF',
+  PERSONNE_ABSENCE_NON_EXCUSEE: 'PERSONNE_ABSENCE_NON_EXCUSEE',
+  CYCLE_INCOMPLET: 'CYCLE_INCOMPLET'
 });
 
 const ALERTS_CONFIG = Object.freeze({
   timezone: TIMEZONE,
   jMinusUnfrozen: null,
   repeatedUnexcusedAbsences: {
-    enabled: false,
-    proposedThreshold: 2,
-    reason: 'MOA_SEUIL_NON_VALIDE'
+    enabled: true,
+    threshold: null,
+    reason: 'TOUTE_ABSENCE_NON_EXCUSEE_FACTUELLE'
   },
   personUnderObjective: {
-    enabled: false,
-    reason: 'PERSON-1_NON_OUVERT'
+    enabled: true,
+    reason: 'OBJECTIFS_OFFICIELS_EXISTANTS'
   },
   predictive: { enabled: false }
 });

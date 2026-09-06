@@ -812,12 +812,12 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
   });
 
   await record('42 — alerts non régressé', async () => {
-    assert.strictEqual(ALERTS_CONFIG.personUnderObjective.enabled, false);
-    assert.strictEqual(ALERTS_CONFIG.repeatedUnexcusedAbsences.enabled, false);
+    assert.strictEqual(ALERTS_CONFIG.personUnderObjective.enabled, true);
+    assert.strictEqual(ALERTS_CONFIG.repeatedUnexcusedAbsences.enabled, true);
     const repo = createMemoryRepo();
     const alerts = createScopeAlertsService(repo);
     const listed = await alerts.listAlerts({ year: 2026, preset: 'YEAR', today: '2026-08-19' });
-    assert.strictEqual(listed.config.personUnderObjective.enabled, false);
+    assert.strictEqual(listed.config.personUnderObjective.enabled, true);
     assert.ok(Array.isArray(listed.alerts));
   });
 

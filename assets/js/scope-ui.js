@@ -205,6 +205,11 @@
     objectifFocusId: null,
     dashboard: null,
     dashboardError: null,
+    vigilance: null,
+    vigilanceReady: false,
+    vigilanceError: null,
+    vigilanceRequestSeq: 0,
+    vigilanceFilters: { domaine: 'tous', oi: 'tous', specialisation: 'tous', type: 'tous', level: 'tous' },
     alertCounts: null,
     explainOpen: false,
     graphExplainId: null,
@@ -356,6 +361,10 @@
     state.cycleFilter = { domaine: 'tous', statut: 'tous' };
   }
 
+  function resetVigilanceFilters() {
+    state.vigilanceFilters = { domaine: 'tous', oi: 'tous', specialisation: 'tous', type: 'tous', level: 'tous' };
+  }
+
   function resetJspReportFilters() {
     state.jspReportSite = 'TOUS';
     state.participationReportDomain = 'JSP';
@@ -388,6 +397,7 @@
       if (prevNav === 'exercices') resetEventListFilters();
       if (prevNav === 'personnel') resetPersonnelFilters();
       if (prevNav === 'cycles') resetCycleFilters();
+      if (prevNav === 'vigilance') resetVigilanceFilters();
     }
     if (previous && next && routeKey(previous) !== routeKey(next)) {
       state.modal = null;
@@ -732,6 +742,43 @@
     }
   }
 
+  async function loadVigilance() {
+    const token = ++state.vigilanceRequestSeq;
+    if (typeof client.listAlerts !== 'function') {
+      state.vigilance = { alerts: [], counts: {} };
+      state.vigilanceReady = true;
+      state.vigilanceError = null;
+      return null;
+    }
+    const filters = state.vigilanceFilters || {};
+    const params = Object.assign(L.periodParams({
+      preset: state.preset,
+      year: state.year,
+      month: state.month,
+      quarter: state.quarter,
+      semester: state.semester,
+      from: state.from,
+      to: state.to
+    }), qualQuery());
+    if (filters.domaine && filters.domaine !== 'tous') params.domaine = filters.domaine;
+    if (filters.type && filters.type !== 'tous') params.type = filters.type;
+    if (filters.level && filters.level !== 'tous') params.level = filters.level;
+    state.vigilanceError = null;
+    try {
+      const data = await client.listAlerts(params);
+      if (token !== state.vigilanceRequestSeq || route().screen !== 'vigilance') return null;
+      state.vigilance = data;
+      state.vigilanceReady = true;
+      state.alertCounts = data.counts || state.alertCounts;
+      return data;
+    } catch (error) {
+      if (token !== state.vigilanceRequestSeq || route().screen !== 'vigilance') return null;
+      state.vigilanceError = L.friendlyError(error).message || 'Les vigilances n’ont pas pu être chargées.';
+      state.vigilanceReady = true;
+      throw error;
+    }
+  }
+
   function reloadPeriod() {
     const r = route();
     if (r.screen === 'liste') {
@@ -741,6 +788,10 @@
     if (r.screen === 'cycles') {
       state.cyclesReady = false;
       state.cyclesError = null;
+    }
+    if (r.screen === 'vigilance') {
+      state.vigilanceReady = false;
+      state.vigilanceError = null;
     }
     if (r.screen === 'personnel' || r.screen === 'import-personnel') {
       state.personnelReady = false;
@@ -758,6 +809,8 @@
         await loadCycles();
       } else if (r.screen === 'cycle' && r.id) {
         await loadCycle(r.id);
+      } else if (r.screen === 'vigilance') {
+        await loadVigilance();
       } else if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         await loadPersonnelDirectory();
       } else if (r.screen === 'personne' && r.personneId) {
@@ -1398,6 +1451,7 @@
           ${primaryLink('#/accueil', 'Accueil', r.screen === 'accueil', 'home')}
           ${section('Activité')}
           ${primaryLink('#/evenements', 'Événements', r.nav === 'exercices', 'events')}
+          ${primaryLink('#/vigilance', 'Vigilance participation', r.nav === 'vigilance', 'objectifs')}
           ${primaryLink('#/cycles', 'Cycles', r.nav === 'cycles', 'cycles')}
           ${primaryLink('#/statistiques', 'Statistiques', r.screen === 'statistiques', 'stats')}
           ${hasScopePermission('personnel:read') ? primaryLink('#/personnel', 'Personnel', r.nav === 'personnel', 'people') : ''}
@@ -1415,6 +1469,8 @@
 
   function headerHtml(r) {
     const logout = `<button type="button" class="scope-btn scope-btn-ghost" id="scope-logout">Déconnexion</button>`;
+    const activeAlerts = Number((state.alertCounts && (state.alertCounts.active ?? state.alertCounts.p0)) || 0);
+    const alertsLink = `<a class="scope-btn scope-btn-ghost" href="#/vigilance">À traiter · ${escapeHtml(String(activeAlerts))}</a>`;
     return `
       <header class="scope-header">
         <div class="scope-header-inner">
@@ -1429,6 +1485,7 @@
           <div class="scope-header-spacer"></div>
           <div class="scope-header-tools">
             <input type="checkbox" class="visually-hidden" id="scope-include-qual" ${state.includeQualification ? 'checked' : ''} aria-label="Inclure les données de qualification">
+            ${alertsLink}
             <div class="scope-user-block">
               <span class="scope-user-avatar" aria-hidden="true">${escapeHtml(userInitials())}</span>
               <div class="scope-user-text">
@@ -1644,7 +1701,7 @@
   }
 
   function homeEventsTableHtml(alerts) {
-    const rows = (alerts || []).filter((a) => a.level === 'P0').slice(0, 5);
+    const rows = (alerts || []).filter((a) => a.level === 'P0').slice(0, 4);
     if (!rows.length) {
       return '<p class="scope-home-events-empty">Aucun événement à traiter.</p>';
     }
@@ -1681,7 +1738,7 @@
     const HOME_DOMAIN_ORDER = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
     const counts = {};
     HOME_DOMAIN_ORDER.forEach((code) => { counts[code] = 0; });
-    (alerts || []).filter((a) => a.level === 'P0').forEach((alert) => {
+    (alerts || []).filter((a) => a.level === 'P0' || a.level === 'P1').forEach((alert) => {
       const key = homeTreatDomainKey(alert.domainCode);
       if (key) counts[key] += 1;
     });
@@ -1689,7 +1746,7 @@
     return `<div class="scope-treat-grid">${HOME_DOMAIN_ORDER.map((code) => {
       const count = counts[code];
       const short = count === 0 ? 'Aucune action' : (count === 1 ? 'Action prioritaire' : 'Actions prioritaires');
-      return `<a class="scope-treat-card is-${escapeHtml(code.toLowerCase())}" href="#/vue/${encodeURIComponent(code)}">
+      return `<a class="scope-treat-card is-${escapeHtml(code.toLowerCase())}" href="#/vigilance">
         <span class="scope-treat-ico" aria-hidden="true">${homePilotIcon(iconByDomain[code])}</span>
         <span class="scope-treat-body">
           <span class="scope-treat-domain">${escapeHtml(domaineLabel(code))}</span>
@@ -1731,7 +1788,7 @@
     const attendus = volumes.attendus;
     const taux = o.analyticStatus === 'NON_EVALUABLE' && o.percentage == null ? 'Non évaluable' : L.formatTaux(o.percentage);
     const obj = L.objectiveKpiLabel(o);
-    const p0Count = Number((dash.alerts && dash.alerts.counts && dash.alerts.counts.p0) || 0);
+    const activeAlertCount = Number((dash.alerts && dash.alerts.counts && (dash.alerts.counts.active ?? dash.alerts.counts.p0)) || 0);
     const graphs = dash.graphs || {};
     const C = (typeof window !== 'undefined' && window.ScopeCharts) || (typeof globalThis !== 'undefined' && globalThis.ScopeCharts);
     const HOME_DOMAIN_ORDER = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
@@ -1792,7 +1849,7 @@
               <p class="scope-eyebrow">Centre de pilotage</p>
               <h2 id="scope-treat-title">À traiter aujourd’hui</h2>
             </div>
-            <a class="scope-treat-all" href="#/vue">Voir toutes les actions${p0Count ? ` · ${escapeHtml(String(p0Count))}` : ''}</a>
+            <a class="scope-treat-all" href="#/vigilance">Voir toutes les actions${activeAlertCount ? ` · ${escapeHtml(String(activeAlertCount))}` : ''}</a>
           </div>
           ${treatCardsHtml((dash.alerts && dash.alerts.alerts) || [])}
         </section>
@@ -1831,7 +1888,7 @@
         <section class="scope-home-events" aria-labelledby="scope-home-events-title">
           <div class="scope-home-events-head">
             <h2 id="scope-home-events-title">Événements à traiter</h2>
-            <a class="scope-treat-all" href="#/vue">Voir tous les événements à traiter${p0Count ? ` · ${escapeHtml(String(p0Count))}` : ''}</a>
+            <a class="scope-treat-all" href="#/vigilance">Voir tous les événements à traiter${activeAlertCount ? ` · ${escapeHtml(String(activeAlertCount))}` : ''}</a>
           </div>
           ${homeEventsTableHtml((dash.alerts && dash.alerts.alerts) || [])}
         </section>
@@ -1846,6 +1903,188 @@
             <a href="#/reglages/objectifs"><span class="scope-quick-ico">${homePilotIcon('objectifs')}</span><span><b>Objectifs</b><small>Seuils de participation</small></span><span class="scope-quick-chev" aria-hidden="true">›</span></a>
           </div>
         </section>
+      </div>
+    `;
+  }
+
+  function vigilanceTypeLabel(type) {
+    const key = String(type || '').toUpperCase();
+    const labels = {
+      SOUS_OBJECTIF: 'Sous objectif',
+      ABSENCE_NON_EXCUSEE: 'Absence non excusée',
+      CYCLE_INCOMPLET: 'Cycle incomplet',
+      DONNEES_A_COMPLETER: 'Données à compléter'
+    };
+    return labels[key] || key || 'Pilotage';
+  }
+
+  function vigilancePerson(alert) {
+    const md = (alert && alert.metadata) || {};
+    const name = [md.grade, md.nom, md.prenom].filter(Boolean).join(' ');
+    if (name) return { main: name, sub: md.nip ? `NIP ${md.nip}` : '' };
+    if (alert && alert.personId) return { main: alert.title || 'Personne', sub: '' };
+    return { main: alert && alert.title || '—', sub: '' };
+  }
+
+  function vigilanceCibleLabels(alert) {
+    const md = (alert && alert.metadata) || {};
+    const cibles = Array.isArray(md.cibles) ? md.cibles : [];
+    const labels = cibles.map((c) => {
+      const domaine = c.domaineCode || c.domaine_code || alert.domainCode;
+      const niveau = c.niveauCode || c.niveau_code || c.code || '';
+      return niveau ? L.niveauAffiche(domaine, niveau) : '';
+    }).filter(Boolean);
+    if (md.niveauCode) labels.push(L.niveauAffiche(alert.domainCode, md.niveauCode));
+    const objective = md.objective || {};
+    if (objective.cibleId) labels.push(String(objective.cibleId));
+    return Array.from(new Set(labels));
+  }
+
+  function vigilancePerimeter(alert) {
+    const md = (alert && alert.metadata) || {};
+    const labels = vigilanceCibleLabels(alert);
+    if (md.cycleLabel) return `${md.cycleLabel}${md.typeCycle ? ` · ${md.typeCycle}` : ''}`;
+    if (labels.length) return labels.join(' · ');
+    if (alert && alert.targetId) return String(alert.targetId);
+    return '—';
+  }
+
+  function vigilanceValue(alert) {
+    const md = (alert && alert.metadata) || {};
+    const type = String(md.vigilanceType || alert.code || '').toUpperCase();
+    if (type === 'SOUS_OBJECTIF') return L.formatTaux(md.percentage);
+    if (type === 'ABSENCE_NON_EXCUSEE') return `${md.absenceCount || 0} absence${Number(md.absenceCount || 0) > 1 ? 's' : ''}`;
+    if (type === 'CYCLE_INCOMPLET') return `${md.missingCount || 0} obligation${Number(md.missingCount || 0) > 1 ? 's' : ''}`;
+    if (type === 'DONNEES_A_COMPLETER') return md.openCount != null ? `${md.openCount} présence${Number(md.openCount) > 1 ? 's' : ''}` : 'Ouvert';
+    if (md.percentage != null) return L.formatTaux(md.percentage);
+    return '—';
+  }
+
+  function vigilanceReference(alert) {
+    const md = (alert && alert.metadata) || {};
+    const type = String(md.vigilanceType || alert.code || '').toUpperCase();
+    if (type === 'SOUS_OBJECTIF' && md.thresholdPct != null) return `Objectif ${L.formatTaux(md.thresholdPct)}`;
+    if (type === 'ABSENCE_NON_EXCUSEE') return alert.eventDate ? L.formatDate(alert.eventDate) : periodRangeText(state);
+    if (type === 'CYCLE_INCOMPLET') return md.typeCycle || 'Cycle';
+    if (type === 'DONNEES_A_COMPLETER') return alert.eventDate ? L.formatDate(alert.eventDate) : 'Saisie';
+    return md.niveauCode || alert.scope || '—';
+  }
+
+  function vigilanceGap(alert) {
+    const md = (alert && alert.metadata) || {};
+    if (md.gapPct != null) return L.formatGap(md.gapPct) || '—';
+    if (md.absenceCount != null) return `-${md.absenceCount}`;
+    if (md.missingCount != null) return `-${md.missingCount}`;
+    return '—';
+  }
+
+  function textMatchesFilter(parts, value) {
+    if (!value || value === 'tous') return true;
+    const needle = String(value).toUpperCase();
+    return (parts || []).some((part) => String(part || '').toUpperCase() === needle);
+  }
+
+  function filteredVigilanceAlerts(alerts) {
+    const filters = state.vigilanceFilters || {};
+    return (alerts || []).filter((alert) => {
+      const md = alert.metadata || {};
+      const domain = String(alert.domainCode || '').toUpperCase();
+      if (filters.domaine && filters.domaine !== 'tous' && domain !== String(filters.domaine).toUpperCase()) return false;
+      const labels = vigilanceCibleLabels(alert);
+      const typeCycle = String(md.typeCycle || '').toUpperCase();
+      if (filters.oi && filters.oi !== 'tous' && !textMatchesFilter(labels, filters.oi)) return false;
+      if (filters.specialisation && filters.specialisation !== 'tous' && !textMatchesFilter(labels.concat(typeCycle), filters.specialisation)) return false;
+      return true;
+    });
+  }
+
+  function vigilanceFilterOptions(alerts, kind) {
+    const values = new Set();
+    for (const alert of alerts || []) {
+      const md = (alert && alert.metadata) || {};
+      const labels = vigilanceCibleLabels(alert);
+      const domain = String(alert && alert.domainCode || '').toUpperCase();
+      if (kind === 'oi' && ['DPS', 'DAP', 'JSP'].includes(domain)) labels.forEach((label) => values.add(label));
+      if (kind === 'specialisation') {
+        if (['FOBA', 'FOCA', 'FOSPEC', 'PR', 'PAPR', 'AUTO'].includes(domain)) labels.forEach((label) => values.add(label));
+        if (md.typeCycle) values.add(String(md.typeCycle));
+      }
+    }
+    return Array.from(values).filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+  }
+
+  function renderVigilance() {
+    const payload = state.vigilance || { alerts: [], counts: {} };
+    const allAlerts = payload.alerts || [];
+    const rows = filteredVigilanceAlerts(allAlerts);
+    const counts = payload.counts || {};
+    const filters = state.vigilanceFilters || {};
+    const domaineOptions = ['tous'].concat(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'])
+      .map((code) => `<option value="${escapeHtml(code)}" ${filters.domaine === code ? 'selected' : ''}>${escapeHtml(code === 'tous' ? 'Tous domaines' : domaineLabel(code))}</option>`).join('');
+    const oiOptions = ['tous'].concat(vigilanceFilterOptions(allAlerts, 'oi'))
+      .map((value) => `<option value="${escapeHtml(value)}" ${filters.oi === value ? 'selected' : ''}>${escapeHtml(value === 'tous' ? 'Toutes OI' : value)}</option>`).join('');
+    const specOptions = ['tous'].concat(vigilanceFilterOptions(allAlerts, 'specialisation'))
+      .map((value) => `<option value="${escapeHtml(value)}" ${filters.specialisation === value ? 'selected' : ''}>${escapeHtml(value === 'tous' ? 'Toutes spécialisations' : value)}</option>`).join('');
+    const typeOptions = [
+      ['tous', 'Tous types'],
+      ['SOUS_OBJECTIF', 'Sous objectif'],
+      ['ABSENCE_NON_EXCUSEE', 'Absences non excusées'],
+      ['CYCLE_INCOMPLET', 'Cycles incomplets'],
+      ['DONNEES_A_COMPLETER', 'Données à compléter']
+    ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.type === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('');
+    const levelOptions = [
+      ['tous', 'Toutes priorités'],
+      ['P0', 'P0 · Action requise'],
+      ['P1', 'P1 · Vigilance métier'],
+      ['P2', 'P2 · Information']
+    ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.level === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('');
+    const loading = !state.vigilanceReady && !state.vigilanceError;
+    const body = state.vigilanceError
+      ? `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.vigilanceError)}</div></td></tr>`
+      : loading
+        ? `<tr><td colspan="9"><div class="scope-loading-row" role="status">${escapeHtml(L.loadingMessage('dashboard'))}</div></td></tr>`
+        : rows.length
+          ? rows.map((alert) => {
+              const md = alert.metadata || {};
+              const person = vigilancePerson(alert);
+              const type = md.vigilanceType || alert.code;
+              return `<tr>
+                <td data-label="Priorité"><span class="scope-alert-level" data-level="${escapeHtml(alert.level)}">${escapeHtml(L.alertLevelLabel(alert.level))}</span></td>
+                <td data-label="Personne">${escapeHtml(person.main)}${person.sub ? `<small>${escapeHtml(person.sub)}</small>` : ''}</td>
+                <td data-label="Domaine">${escapeHtml(alert.domainCode ? domaineLabel(alert.domainCode) : '—')}</td>
+                <td data-label="OI / spécialisation">${escapeHtml(vigilancePerimeter(alert))}</td>
+                <td data-label="Situation">${escapeHtml(vigilanceTypeLabel(type))}<small>${escapeHtml(alert.message || '')}</small></td>
+                <td data-label="Valeur">${escapeHtml(vigilanceValue(alert))}</td>
+                <td data-label="Référence">${escapeHtml(vigilanceReference(alert))}</td>
+                <td data-label="Écart">${escapeHtml(vigilanceGap(alert))}</td>
+                <td data-label="Action"><a class="scope-btn" href="${escapeHtml(alert.actionHref || '#/vigilance')}">${escapeHtml(alert.actionLabel || 'Ouvrir')}</a></td>
+              </tr>`;
+            }).join('')
+          : '<tr><td colspan="9"><div class="scope-empty">Aucune vigilance sur cette période.</div></td></tr>';
+    return `
+      <div class="scope-crumb">Vigilance participation</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Pilotage', title: 'Vigilance participation', context: periodRangeText(state), description: 'Situations à traiter issues des faits SCOPE et des objectifs officiels.', logo: true })}
+        ${periodContextHtml()}
+        <div class="scope-kpis">
+          <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(String(counts.active || 0))}</strong><span>À traiter</span><em>P0 + P1</em></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(counts.people || 0))}</strong><span>Personnes</span><small>Vigilance personne</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(counts.data || 0))}</strong><span>Données</span><small>À compléter</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(counts.p2 || 0))}</strong><span>Informations</span><small>Non bloquant</small></article>
+        </div>
+        <div class="scope-toolbar">
+          <label>Domaine <select id="vigilance-filter-domaine">${domaineOptions}</select></label>
+          <label>OI <select id="vigilance-filter-oi">${oiOptions}</select></label>
+          <label>Spécialisation <select id="vigilance-filter-specialisation">${specOptions}</select></label>
+          <label>Type <select id="vigilance-filter-type">${typeOptions}</select></label>
+          <label>Priorité <select id="vigilance-filter-level">${levelOptions}</select></label>
+        </div>
+        <div class="scope-card scope-table-wrap">
+          <table class="scope-table">
+            <thead><tr><th>Priorité</th><th>Personne</th><th>Domaine</th><th>OI / spécialisation</th><th>Situation</th><th>Valeur</th><th>Référence</th><th>Écart</th><th>Action</th></tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
       </div>
     `;
   }
@@ -6583,7 +6822,8 @@
     const r = route();
     const body = r.screen === 'accueil' ? renderAccueil()
       : r.screen === 'vue' ? renderVue()
-        : r.screen === 'statistiques' ? renderStatistiques()
+        : r.screen === 'vigilance' ? renderVigilance()
+          : r.screen === 'statistiques' ? renderStatistiques()
       : r.screen === 'cycles' ? renderCycles()
         : r.screen === 'cycle' ? renderCycle()
       : r.screen === 'personnel' ? renderPersonnel()
@@ -6615,6 +6855,17 @@
     const cycleStatutSel = document.getElementById('cycle-filter-statut');
     if (cycleDomaineSel) cycleDomaineSel.value = state.cycleFilter.domaine;
     if (cycleStatutSel) cycleStatutSel.value = state.cycleFilter.statut;
+    const vigilanceFilters = state.vigilanceFilters || {};
+    const vigilanceDomaineSel = document.getElementById('vigilance-filter-domaine');
+    const vigilanceOiSel = document.getElementById('vigilance-filter-oi');
+    const vigilanceSpecSel = document.getElementById('vigilance-filter-specialisation');
+    const vigilanceTypeSel = document.getElementById('vigilance-filter-type');
+    const vigilanceLevelSel = document.getElementById('vigilance-filter-level');
+    if (vigilanceDomaineSel) vigilanceDomaineSel.value = vigilanceFilters.domaine;
+    if (vigilanceOiSel) vigilanceOiSel.value = vigilanceFilters.oi;
+    if (vigilanceSpecSel) vigilanceSpecSel.value = vigilanceFilters.specialisation;
+    if (vigilanceTypeSel) vigilanceTypeSel.value = vigilanceFilters.type;
+    if (vigilanceLevelSel) vigilanceLevelSel.value = vigilanceFilters.level;
   }
 
   function bind() {
@@ -6632,6 +6883,22 @@
       persistIncludeQualification(state.includeQualification);
       reloadPeriod();
     });
+    const bindVigilanceFilter = (id, key, reload) => {
+      document.getElementById(id)?.addEventListener('change', (e) => {
+        state.vigilanceFilters = Object.assign({}, state.vigilanceFilters || {}, { [key]: e.target.value || 'tous' });
+        if (reload) {
+          state.vigilanceReady = false;
+          withLoading(loadVigilance);
+        } else {
+          render();
+        }
+      });
+    };
+    bindVigilanceFilter('vigilance-filter-domaine', 'domaine', true);
+    bindVigilanceFilter('vigilance-filter-type', 'type', true);
+    bindVigilanceFilter('vigilance-filter-level', 'level', true);
+    bindVigilanceFilter('vigilance-filter-oi', 'oi', false);
+    bindVigilanceFilter('vigilance-filter-specialisation', 'specialisation', false);
     document.getElementById('scope-year')?.addEventListener('change', (e) => {
       state.year = e.target.value;
       if (state.preset === 'YEAR') {
@@ -8943,6 +9210,10 @@
       state.personnelReady = false;
       state.personnelError = null;
     }
+    if (r.screen === 'vigilance') {
+      state.vigilanceReady = false;
+      state.vigilanceError = null;
+    }
     if (r.screen === 'vue') {
       state.dashboardError = null;
     }
@@ -8976,6 +9247,7 @@
       if (r.screen === 'rapport-formation') await loadFormationReport();
       if (r.screen === 'cycles') await loadCycles();
       if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
+      if (r.screen === 'vigilance') await loadVigilance();
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
       if (r.screen === 'objectifs') await loadObjectifs();
       if (r.screen === 'personnel' || r.screen === 'import-personnel') {
@@ -9037,6 +9309,12 @@
         state.cycleDetailReady = true;
         state.cycleDetailError = null;
         return renderCycle();
+      },
+      renderVigilanceHtml(payload) {
+        state.vigilance = payload || { alerts: [], counts: {} };
+        state.vigilanceReady = true;
+        state.vigilanceError = null;
+        return renderVigilance();
       },
       render,
       ensureLiveSession,

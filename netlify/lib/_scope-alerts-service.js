@@ -2,7 +2,9 @@
 /** SCOPE-ALERTS-1 — orchestration. Source unique des alertes métier. */
 const { parsePeriod, inPeriod } = require('./_scope-period');
 const { DOMAINES } = require('./_scope-schema');
+const { MODES, inferModeSuivi } = require('./_scope-analytics');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
+const { createScopeCycleService } = require('./_scope-cycle-service');
 const { HttpError } = require('./_scope-rules');
 const {
   ALERTS_CONFIG,
@@ -11,12 +13,14 @@ const {
   isUnderObjective,
   packObjectiveAlert,
   packObjectifAbsent,
+  packAlert,
   fingerprint,
   CODES
 } = require('./_scope-alerts');
 const { todayZurichIso } = require('./_scope-calendar');
 const { inferAnalysisGrain } = require('./_scope-objectives');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
+const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 
 function groupBy(rows, key){
   const map = {};
@@ -83,8 +87,67 @@ function packOfficiel(evaluated){
   };
 }
 
+function pct(value){
+  if(value == null || !Number.isFinite(Number(value))) return '—';
+  return `${Number(value).toFixed(1).replace('.', ',')} %`;
+}
+
+function gapPts(value){
+  if(value == null || !Number.isFinite(Number(value))) return '—';
+  const n = Number(value);
+  return `${n > 0 ? '+' : ''}${n.toFixed(1).replace('.', ',')} pts`;
+}
+
+function personId(row){
+  return String((row && (row.personne_id || row.personneId || row.id)) || '');
+}
+
+function personDisplay(row){
+  return [row && row.grade, row && row.nom, row && row.prenom].filter(Boolean).join(' ') || 'Personne';
+}
+
+function personMeta(row){
+  return {
+    personId: personId(row) || null,
+    nip: row && row.nip || null,
+    grade: row && row.grade || null,
+    nom: row && row.nom || null,
+    prenom: row && row.prenom || null
+  };
+}
+
+function personEligibleByDates(person, date){
+  if(!person) return true;
+  const day = String(date || '').slice(0, 10);
+  const entree = String(person.date_entree || person.dateEntree || '').slice(0, 10);
+  const sortie = String(person.date_sortie || person.dateSortie || '').slice(0, 10);
+  if(entree && entree > day) return false;
+  if(sortie && sortie < day) return false;
+  return person.actif !== false || Boolean(entree) || Boolean(sortie);
+}
+
+function gradeRank(grade){
+  const text = String(grade || '').toLowerCase();
+  if(text.includes('cap')) return 10;
+  if(text.includes('plt')) return 9;
+  if(text.includes('lt')) return 8;
+  if(text.includes('sgt chef')) return 7;
+  if(text.includes('sgt')) return 6;
+  if(text.includes('cpl')) return 5;
+  if(text.includes('app')) return 4;
+  if(text.includes('sap')) return 3;
+  if(text.includes('sdt')) return 2;
+  return 1;
+}
+
+function alertImpact(alert){
+  const md = alert && alert.metadata || {};
+  return Math.abs(Number(md.gapPct || 0)) || Number(md.absenceCount || 0) || Number(md.missingCount || 0) || Number(md.openCount || 0) || 0;
+}
+
 function createScopeAlertsService(repo){
   const analytics = createScopeAnalyticsService(repo);
+  const cycles = createScopeCycleService(repo);
 
   async function operationalAlerts(query, period, today){
     const domaine = query.domaineCode || query.domaine || query.domain || null;
@@ -249,6 +312,210 @@ function createScopeAlertsService(repo){
     return alerts;
   }
 
+  async function personUnderObjectiveAlerts(query, period){
+    if(!ALERTS_CONFIG.personUnderObjective.enabled || typeof analytics.directoryRates !== 'function') return [];
+    if(typeof repo.listPersonnes !== 'function') return [];
+    const domainFilter = query.domaineCode || query.domaine || query.domain || null;
+    const domains = domainFilter ? [domainFilter] : DOMAINES.map((row) => row.code);
+    const people = new Map((await repo.listPersonnes({})).map((row) => [personId(row), row]));
+    const alerts = [];
+    for(const domainCode of domains){
+      const payload = await analytics.directoryRates({
+        from: period.from,
+        to: period.to,
+        domaine: domainCode,
+        cible: query.cibleId || query.cible || undefined,
+        includeQualification: query.includeQualification,
+        include_qualification: query.include_qualification
+      });
+      for(const [pid, row] of Object.entries(payload.rates || {})){
+        if(!row || row.denominator <= 0 || row.percentage == null) continue;
+        if(row.volumes && Number(row.volumes.nonRenseignes || 0) > 0) continue;
+        if(!row.objective || row.gapPct == null || Number(row.gapPct) >= 0) continue;
+        if(row.objectiveContext && row.objectiveContext.homogeneous === false) continue;
+        const person = people.get(pid) || { personne_id: pid };
+        alerts.push(packAlert({
+          code: CODES.PERSONNE_SOUS_OBJECTIF,
+          level: 'P1',
+          category: 'VIGILANCE_PERSONNE',
+          title: personDisplay(person),
+          message: 'Participation sous objectif',
+          reason: `Participation ${pct(row.percentage)} pour un objectif de ${pct(row.objective.thresholdPct)} (écart ${gapPts(row.gapPct)}).`,
+          scope: 'PERSONNE',
+          entityType: 'PERSONNE',
+          entityId: `${pid}:${domainCode}`,
+          domainCode,
+          personId: pid,
+          action: 'voir-personne',
+          actionLabel: 'Ouvrir la fiche',
+          actionHref: `#/personnel/${encodeURIComponent(pid)}`,
+          metadata: {
+            ...personMeta(person),
+            vigilanceType: 'SOUS_OBJECTIF',
+            percentage: row.percentage,
+            thresholdPct: row.objective.thresholdPct,
+            gapPct: row.gapPct,
+            numerator: row.numerator,
+            denominator: row.denominator,
+            eventCount: row.eventCount,
+            objective: row.objective,
+            objectiveContext: row.objectiveContext
+          }
+        }));
+      }
+    }
+    return alerts;
+  }
+
+  async function unexcusedAbsenceAlerts(query, period){
+    if(typeof repo.loadAnalyticsBundle !== 'function' || typeof repo.listPersonnes !== 'function') return [];
+    const domainFilter = query.domaineCode || query.domaine || query.domain || null;
+    const cibleId = query.cibleId || null;
+    const bundle = await repo.loadAnalyticsBundle({
+      from: period.from,
+      to: period.to,
+      domaineCode: domainFilter || null,
+      cibleId
+    });
+    const periodes = typeof repo.listAllPeriodes === 'function' ? await repo.listAllPeriodes() : [];
+    const periodesByPersonne = new Map();
+    for(const row of periodes || []){
+      const pid = personId(row);
+      if(!periodesByPersonne.has(pid)) periodesByPersonne.set(pid, []);
+      periodesByPersonne.get(pid).push(row);
+    }
+    const people = new Map((await repo.listPersonnes({})).map((row) => [personId(row), row]));
+    const byPersonDomain = new Map();
+    for(const event of bundle.events || []){
+      if(!wantsQualification(query) && isQualificationEvenement(event)) continue;
+      if(inferModeSuivi(event) !== MODES.NOMINATIF || event.statut !== 'REALISE') continue;
+      if(event.pr_exercise_group_key || event.prExerciseGroupKey) continue;
+      const attendus = filterAttendusEligibleAtDate(bundle.attendusByEvent[event.evenement_id] || [], periodesByPersonne, event.date)
+        .filter((row) => row.inclus !== false && personEligibleByDates(people.get(personId(row)), event.date));
+      const expected = new Set(attendus.map((row) => personId(row)));
+      const cibles = bundle.cibleIdsByEvent[event.evenement_id] || event.cible_ids || [];
+      for(const part of bundle.participationsByEvent[event.evenement_id] || []){
+        if(String(part.role || 'PARTICIPANT').toUpperCase() !== 'PARTICIPANT') continue;
+        if(String(part.statut || '').toUpperCase() !== 'ABSENT_NON_EXCUSE') continue;
+        const pid = personId(part);
+        if(!expected.has(pid)) continue;
+        const key = `${pid}:${event.domaine_code}`;
+        const row = byPersonDomain.get(key) || { personId: pid, domainCode: event.domaine_code, events: [], cibles: new Set() };
+        row.events.push({
+          eventId: event.evenement_id,
+          date: event.date,
+          libelle: event.libelle,
+          domaine: event.domaine_code
+        });
+        for(const cible of cibles) row.cibles.add(String(cible));
+        byPersonDomain.set(key, row);
+      }
+    }
+    return [...byPersonDomain.values()].map((row) => {
+      const person = people.get(row.personId) || { personne_id: row.personId };
+      const count = row.events.length;
+      return packAlert({
+        code: CODES.PERSONNE_ABSENCE_NON_EXCUSEE,
+        level: 'P1',
+        category: 'VIGILANCE_PERSONNE',
+        title: personDisplay(person),
+        message: 'Absence non excusée',
+        reason: count === 1 ? '1 absence non excusée constatée sur la période.' : `${count} absences non excusées constatées sur la période.`,
+        scope: 'PERSONNE',
+        entityType: 'PERSONNE',
+        entityId: `${row.personId}:${row.domainCode}:ABSENCES`,
+        domainCode: row.domainCode,
+        personId: row.personId,
+        eventDate: row.events[0] && row.events[0].date || null,
+        action: 'voir-personne',
+        actionLabel: 'Voir l’historique',
+        actionHref: `#/personnel/${encodeURIComponent(row.personId)}`,
+        metadata: {
+          ...personMeta(person),
+          vigilanceType: 'ABSENCE_NON_EXCUSEE',
+          absenceCount: count,
+          events: row.events,
+          cibles: [...row.cibles]
+        }
+      });
+    });
+  }
+
+  function cycleOverlapsPeriod(cycle, period){
+    const start = String(cycle.date_debut || cycle.dateDebut || cycle.date_fin || cycle.dateFin || '').slice(0, 10);
+    const end = String(cycle.date_fin || cycle.dateFin || cycle.date_debut || cycle.dateDebut || '').slice(0, 10);
+    if(!start && !end) return !cycle.annee || String(cycle.annee) === period.from.slice(0, 4);
+    return (!start || start <= period.to) && (!end || end >= period.from);
+  }
+
+  async function cycleIncompleteAlerts(query, period){
+    if(typeof repo.listCycles !== 'function') return [];
+    const domainFilter = query.domaineCode || query.domaine || query.domain || null;
+    if(domainFilter && !['PR', 'PAPR', 'AUTO', 'FOSPEC'].includes(String(domainFilter).toUpperCase())) return [];
+    const sameYear = period.from.slice(0, 4) === period.to.slice(0, 4);
+    const list = await cycles.listCycles({
+      annee: sameYear ? period.from.slice(0, 4) : undefined,
+      domaine: domainFilter && String(domainFilter).toUpperCase() !== 'FOSPEC' ? domainFilter : undefined
+    });
+    const alerts = [];
+    for(const cycle of list.cycles || []){
+      if(!cycleOverlapsPeriod(cycle, period)) continue;
+      const detail = await cycles.getCycle(cycle.cycle_id);
+      const pilotage = detail && detail.pilotage || {};
+      for(const row of pilotage.individualRows || []){
+        if(!row.isPopulation || row.globalState !== 'INCOMPLET') continue;
+        const missing = (row.obligations || []).filter((cell) => cell.expected && ['A_RENSEIGNER', 'ABSENT'].includes(cell.status));
+        if(!missing.length) continue;
+        alerts.push(packAlert({
+          code: CODES.CYCLE_INCOMPLET,
+          level: 'P1',
+          category: 'VIGILANCE_PERSONNE',
+          title: [row.grade, row.nom, row.prenom].filter(Boolean).join(' ') || row.nip || 'Personne',
+          message: 'Cycle incomplet',
+          reason: missing.map((cell) => `${cell.label} ${cell.status === 'ABSENT' ? 'absent' : 'à compléter'}`).join(', '),
+          scope: 'CYCLE',
+          entityType: 'CYCLE',
+          entityId: `${cycle.cycle_id}:${row.personKey || row.personneId || row.nip}`,
+          domainCode: cycle.domaine_code || null,
+          personId: row.personneId || null,
+          action: 'voir-cycle',
+          actionLabel: 'Ouvrir le cycle',
+          actionHref: `#/cycles/${encodeURIComponent(cycle.cycle_id)}`,
+          metadata: {
+            personId: row.personneId || null,
+            nip: row.nip || null,
+            grade: row.grade || null,
+            nom: row.nom || null,
+            prenom: row.prenom || null,
+            vigilanceType: 'CYCLE_INCOMPLET',
+            cycleId: cycle.cycle_id,
+            cycleLabel: cycle.libelle,
+            typeCycle: cycle.type_cycle || cycle.domaine_code,
+            missingCount: missing.length,
+            missing: missing.map((cell) => ({
+              obligationKey: cell.obligationKey,
+              label: cell.label,
+              status: cell.status,
+              eventId: cell.eventId || null
+            }))
+          }
+        }));
+      }
+    }
+    return alerts;
+  }
+
+  function markDataQuality(alerts){
+    return (alerts || []).map((alert) => {
+      if(alert.code !== CODES.SAISIE_NON_RENSEIGNE && alert.code !== CODES.QUANTITATIF_INCOMPLET) return alert;
+      return Object.assign({}, alert, {
+        category: 'VIGILANCE_DONNEE',
+        message: 'Données à compléter',
+        metadata: Object.assign({}, alert.metadata || {}, { vigilanceType: 'DONNEES_A_COMPLETER' })
+      });
+    });
+  }
+
   function applyAck(alerts, acks, includeAcknowledged){
     const ackSet = new Set((acks || []).map((row) => row.fingerprint));
     const out = [];
@@ -267,10 +534,17 @@ function createScopeAlertsService(repo){
     const today = resolved.today || todayZurichIso(resolved.now);
     const includeAcknowledged = ['1', 'true', 'oui', 'yes'].includes(String(resolved.includeAcknowledged || '').toLowerCase());
     const levelFilter = resolved.level ? String(resolved.level).toUpperCase() : null;
-    const operational = await operationalAlerts(resolved, period, today);
+    const operational = markDataQuality(await operationalAlerts(resolved, period, today));
     const objectives = await objectiveAlerts(resolved, period);
-    let alerts = operational.concat(objectives);
+    const personUnder = await personUnderObjectiveAlerts(resolved, period);
+    const absences = await unexcusedAbsenceAlerts(resolved, period);
+    const cyclesIncomplete = await cycleIncompleteAlerts(resolved, period);
+    let alerts = operational.concat(objectives, personUnder, absences, cyclesIncomplete);
+    const typeFilter = resolved.type ? String(resolved.type).toUpperCase() : null;
+    const categoryFilter = resolved.category ? String(resolved.category).toUpperCase() : null;
     if(levelFilter) alerts = alerts.filter((a) => a.level === levelFilter);
+    if(typeFilter) alerts = alerts.filter((a) => String(a.metadata && a.metadata.vigilanceType || a.code).toUpperCase() === typeFilter);
+    if(categoryFilter) alerts = alerts.filter((a) => String(a.category || '').toUpperCase() === categoryFilter);
 
     let acks = [];
     const userId = claims && (claims.sub || claims.userId);
@@ -282,7 +556,13 @@ function createScopeAlertsService(repo){
       const order = { P0: 0, P1: 1, P2: 2 };
       const d = (order[a.level] ?? 9) - (order[b.level] ?? 9);
       if(d) return d;
-      return String(a.eventDate || '').localeCompare(String(b.eventDate || ''))
+      const impact = alertImpact(b) - alertImpact(a);
+      if(impact) return impact;
+      const grade = gradeRank((b.metadata || {}).grade) - gradeRank((a.metadata || {}).grade);
+      if(grade) return grade;
+      return String((a.metadata || {}).nom || a.title).localeCompare(String((b.metadata || {}).nom || b.title), 'fr')
+        || String((a.metadata || {}).prenom || '').localeCompare(String((b.metadata || {}).prenom || ''), 'fr')
+        || String(a.eventDate || '').localeCompare(String(b.eventDate || ''))
         || String(a.title).localeCompare(String(b.title));
     });
 
@@ -290,7 +570,10 @@ function createScopeAlertsService(repo){
       total: alerts.length,
       p0: alerts.filter((a) => a.level === 'P0').length,
       p1: alerts.filter((a) => a.level === 'P1').length,
-      p2: alerts.filter((a) => a.level === 'P2').length
+      p2: alerts.filter((a) => a.level === 'P2').length,
+      active: alerts.filter((a) => a.level === 'P0' || a.level === 'P1').length,
+      people: alerts.filter((a) => a.category === 'VIGILANCE_PERSONNE').length,
+      data: alerts.filter((a) => a.category === 'VIGILANCE_DONNEE').length
     };
     return {
       period,

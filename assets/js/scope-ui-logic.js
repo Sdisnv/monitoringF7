@@ -916,6 +916,7 @@
     const path = raw.split('?')[0];
     const parts = path.split('/').filter(Boolean);
     if (!parts.length || parts[0] === 'accueil') return { screen: 'accueil', nav: 'accueil' };
+    if (parts[0] === 'vigilance') return { screen: 'vigilance', nav: 'vigilance' };
     if (parts[0] === 'statistiques') return { screen: 'statistiques', nav: 'statistiques' };
     if (parts[0] === 'cycles') {
       if(parts[1]) return { screen: 'cycle', nav: 'cycles', id: parts[1] };
