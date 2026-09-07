@@ -6527,12 +6527,12 @@
     const motifControl = (row) => {
       const motifLocked = Boolean(L.sessionLocked && L.sessionLocked(row));
       const lockAttr = motifLocked ? ' disabled aria-disabled="true"' : '';
-      const motifOptions = (motifs) => {
+      const motifOptions = (motifs, labels = {}) => {
         const operational = (motifs || []).filter((m) => (m.group || 'operationnel') === 'operationnel');
         const administrative = (motifs || []).filter((m) => m.group === 'administratif');
         const render = (items) => items.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('');
         if (!administrative.length) return render(operational);
-        return `<optgroup label="Dispenses métier">${render(operational)}</optgroup><optgroup label="Situations particulières">${render(administrative)}</optgroup>`;
+        return `<optgroup label="${escapeHtml(labels.primary || 'Motifs')}">${render(operational)}</optgroup><optgroup label="${escapeHtml(labels.secondary || 'À contrôler')}">${render(administrative)}</optgroup>`;
       };
       if (row.statut === 'DISPENSE') {
         const motifs = L.motifsDispenseForRow ? L.motifsDispenseForRow(row) : [];
@@ -6540,7 +6540,7 @@
         if (selected && !row.editMotif) {
           return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif de dispense"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
         }
-        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifOptions(motifs)}</select></div>`;
+        return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifOptions(motifs, { primary: 'Dispenses métier', secondary: 'Situations particulières' })}</select></div>`;
       }
       if (row.statut !== 'ABSENT_EXCUSE') return '';
       const motifs = L.motifsForRow ? L.motifsForRow(row, saisieDomaine()) : L.MOTIFS;
@@ -6548,7 +6548,7 @@
       if (selected && !row.editMotif) {
         return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
       }
-      return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif d’excuse</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-motif aria-label="Motif d’excuse"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifs.map((m) => `<option value="${escapeHtml(m.value)}" ${row.motifAbsence === m.value ? 'selected' : ''}>${escapeHtml(m.label)}</option>`).join('')}</select></div>`;
+      return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif d’excuse</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-motif aria-label="Motif d’excuse"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifOptions(motifs, { primary: 'Motifs d’excuse', secondary: 'À contrôler' })}</select></div>`;
     };
     const justificatifCell = (row) => {
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'

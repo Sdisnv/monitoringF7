@@ -326,7 +326,7 @@ async function setupSeries(){
 
   await record('20 — JSP reste inchangé', () => {
     assert.deepStrictEqual(logic.motifsSaisieForDomaine('JSP').map((m) => m.value), Object.values(MODEL_MOTIFS_JSP));
-    assert.deepStrictEqual(Object.values(MODEL_MOTIFS_JSP), ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'NON_JUSTIFIE']);
+    assert.deepStrictEqual(Object.values(MODEL_MOTIFS_JSP), ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
     const jspStatuses = logic.participationStatusesForDomaine('JSP').map((row) => row[0]);
     assert.ok(!jspStatuses.includes('DISPENSE'));
     assert.ok(logicSrc.includes("d !== 'JSP'"));

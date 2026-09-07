@@ -194,8 +194,8 @@ function part(person, statut, extra){
     assert.ok(logic.motifsSaisieForDomaine('JSP').some((m) => m.value === 'ACTIVITE_EXTRA_SCOLAIRE'));
   });
 
-  await record('12 — JSP propose Non justifié', () => {
-    assert.ok(logic.motifsSaisieForDomaine('JSP').some((m) => m.value === 'NON_JUSTIFIE' && m.label === 'Non justifié'));
+  await record('12 — JSP propose Non-justifié', () => {
+    assert.ok(logic.motifsSaisieForDomaine('JSP').some((m) => m.value === 'NON_JUSTIFIE' && m.label === 'Non-justifié'));
   });
 
   await record('13 — JSP ne propose pas Professionnel', () => {
@@ -206,8 +206,8 @@ function part(person, statut, extra){
     assert.ok(!logic.motifsSaisieForDomaine('JSP').some((m) => m.value === 'ARMEE'));
   });
 
-  await record('15 — JSP ne propose pas Accident/Maladie', () => {
-    assert.ok(!logic.motifsSaisieForDomaine('JSP').some((m) => m.value === 'ACCIDENT_MALADIE'));
+  await record('15 — JSP propose Accident/maladie', () => {
+    assert.ok(logic.motifsSaisieForDomaine('JSP').some((m) => m.value === 'ACCIDENT_MALADIE' && m.label === 'Accident/maladie'));
   });
 
   await record('16 — autre domaine conserve ses motifs actuels', () => {
@@ -222,7 +222,7 @@ function part(person, statut, extra){
     assert.strictEqual(logic.motifShortLabel('ARMEE'), 'Armée');
     const extra = logic.motifsForRow({ motifAbsence: 'PROFESSIONNEL' }, 'JSP');
     assert.ok(extra.some((m) => m.value === 'PROFESSIONNEL'));
-    assert.deepStrictEqual(Object.values(MOTIFS_JSP), ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'NON_JUSTIFIE']);
+    assert.deepStrictEqual(Object.values(MOTIFS_JSP), ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
   });
 
   await record('18 — 23 attendus / 18 présents / 4 excusés / 1 absent = 0 incomplet', async () => {

@@ -13,10 +13,11 @@
     { value: 'ACCIDENT_MALADIE', label: 'Accident/Maladie' }
   ];
   const MOTIFS_JSP = [
-    { value: 'PRIVE', label: 'Privé' },
-    { value: 'ACTIVITE_SCOLAIRE', label: 'Activité scolaire' },
-    { value: 'ACTIVITE_EXTRA_SCOLAIRE', label: 'Activité extra-scolaire' },
-    { value: 'NON_JUSTIFIE', label: 'Non justifié' }
+    { value: 'PRIVE', label: 'Privé', group: 'operationnel' },
+    { value: 'ACTIVITE_SCOLAIRE', label: 'Activité scolaire', group: 'operationnel' },
+    { value: 'ACTIVITE_EXTRA_SCOLAIRE', label: 'Activité extra-scolaire', group: 'operationnel' },
+    { value: 'ACCIDENT_MALADIE', label: 'Accident/maladie', group: 'operationnel' },
+    { value: 'NON_JUSTIFIE', label: 'Non-justifié', group: 'administratif' }
   ];
   const MOTIFS_DISPENSE = [
     { value: 'FORMATEUR_PR', label: 'Formateur PR', group: 'operationnel' },
