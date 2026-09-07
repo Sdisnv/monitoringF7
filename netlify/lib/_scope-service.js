@@ -34,6 +34,7 @@ const {
   isSousDomaineFospec,
   resolveSuiviNominatif
 } = require('./_scope-model');
+const participationPolicy = require('./_scope-participation-policy');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const {
@@ -184,6 +185,129 @@ async function bumpOrConflict(repo, eventId, baseVersion, patch){
 }
 
 function createScopeService(repo){
+  async function participationMotifRows(store = repo){
+    return store.listParticipationMotifRows ? await store.listParticipationMotifRows() : participationPolicy.motifCatalog();
+  }
+
+  async function participationPolicyRows(store = repo){
+    return store.listParticipationPolicyRows ? await store.listParticipationPolicyRows() : participationPolicy.listDefaultPolicies().map((policy) => ({
+      domain_code: policy.domainCode,
+      policy_version: policy.policyVersion,
+      config: policy
+    }));
+  }
+
+  async function resolvePolicyForEvent(store, evenement){
+    const motifRows = await participationMotifRows(store);
+    const policyRows = await participationPolicyRows(store);
+    const snapshot = evenement && (evenement.participation_policy_snapshot || evenement.participationPolicySnapshot);
+    return participationPolicy.resolveParticipationPolicy(evenement && evenement.domaine_code, {
+      snapshot,
+      motifRows,
+      policyRows
+    });
+  }
+
+  async function capturePolicySnapshot(store, domaineCode){
+    const motifRows = await participationMotifRows(store);
+    const policyRows = await participationPolicyRows(store);
+    return participationPolicy.policySnapshot(domaineCode, { motifRows, policyRows });
+  }
+
+  function policyPayload(policy, motifRows){
+    return Object.assign({}, policy, {
+      excuseMotifsDetails: participationPolicy.motifsForPolicy(policy, 'EXCUSE', { motifRows }),
+      dispenseMotifsDetails: participationPolicy.motifsForPolicy(policy, 'DISPENSE', { motifRows })
+    });
+  }
+
+  async function participationPolicies(){
+    const motifRows = await participationMotifRows(repo);
+    const policyRows = await participationPolicyRows(repo);
+    const domaines = repo.listDomaines ? await repo.listDomaines() : [];
+    const domainCodes = [...new Set([
+      ...participationPolicy.listDefaultPolicies().map((policy) => policy.domainCode),
+      ...(domaines || []).map((row) => row.code)
+    ].filter(Boolean))].sort();
+    const policies = domainCodes.map((code) => policyPayload(
+      participationPolicy.resolveParticipationPolicy(code, { motifRows, policyRows }),
+      motifRows
+    ));
+    return {
+      participation: {
+        policyVersion: participationPolicy.POLICY_VERSION,
+        statuses: Object.values(participationPolicy.STATUS_LIBRARY).sort((a, b) => a.order - b.order),
+        motifs: participationPolicy.motifCatalog(motifRows),
+        roles: Object.values(participationPolicy.ROLE_LIBRARY).sort((a, b) => a.order - b.order),
+        policies
+      }
+    };
+  }
+
+  async function saveParticipationPolicy(domainCode, body, actor){
+    const code = participationPolicy.normalizeDomain(domainCode);
+    if(!code) throw new HttpError(400, 'domaine_invalide', 'Domaine invalide.');
+    const motifRows = await participationMotifRows(repo);
+    const base = participationPolicy.resolveParticipationPolicy(code, { motifRows, policyRows: await participationPolicyRows(repo) });
+    const next = participationPolicy.resolveParticipationPolicy(code, {
+      motifRows,
+      policyRows: [{
+        domain_code: code,
+        policy_version: participationPolicy.POLICY_VERSION,
+        config: Object.assign({}, base, body || {}, {
+          domainCode: code,
+          activeStatuses: ['NON_RENSEIGNE', ...new Set((body && body.activeStatuses || base.activeStatuses || []).map((value) => String(value || '').toUpperCase()))],
+          behavior: Object.assign({}, base.behavior, (body && body.behavior) || {})
+        })
+      }]
+    });
+    await repo.upsertParticipationPolicy({
+      domain_code: code,
+      policy_version: next.policyVersion,
+      config: next,
+      actif: true,
+      commentaire: body && body.commentaire,
+      auteur_id: actorId(actor)
+    });
+    if(repo.appendJournal){
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'participation_policy',
+        entite_id: code,
+        action: 'MODIFIER_POLITIQUE',
+        apres: next
+      });
+    }
+    return { policy: policyPayload(next, motifRows) };
+  }
+
+  async function saveParticipationMotif(body, actor){
+    const motifId = String(body && (body.motifId || body.motif_id || body.id) || '').trim().toUpperCase();
+    if(!motifId) throw new HttpError(400, 'motif_invalide', 'Identifiant motif obligatoire.');
+    const row = {
+      motif_id: motifId,
+      motif_type: String(body.motifType || body.motif_type || body.type || 'EXCUSE').trim().toUpperCase(),
+      label: String(body.label || body.libelle || motifId).trim(),
+      actif: body.actif !== false && body.active !== false,
+      historique: Boolean(body.historique || body.historical),
+      display_order: Number(body.displayOrder || body.display_order || body.order || 999),
+      group_code: String(body.groupCode || body.group_code || body.group || 'operationnel').trim() || 'operationnel',
+      metadata: body.metadata || {}
+    };
+    if(!row.label) throw new HttpError(400, 'motif_libelle_vide', 'Libellé motif obligatoire.');
+    const saved = await repo.upsertParticipationMotif(row);
+    if(repo.appendJournal){
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'participation_motif',
+        entite_id: motifId,
+        action: 'MODIFIER_MOTIF',
+        apres: saved
+      });
+    }
+    return { motif: saved };
+  }
+
   function comparePeopleByGradeName(a, b){
     const rankOf = (value) => {
       const code = referentialDisplay.canonicalGradeCode ? referentialDisplay.canonicalGradeCode(value) : String(value || '').trim();
@@ -206,10 +330,11 @@ function createScopeService(repo){
   }
 
   async function referentiels(){
-    const [domaines, cibles, suivi] = await Promise.all([
+    const [domaines, cibles, suivi, participation] = await Promise.all([
       repo.listDomaines(),
       repo.listCibles(),
-      repo.listSuiviNominatif ? repo.listSuiviNominatif() : Promise.resolve([])
+      repo.listSuiviNominatif ? repo.listSuiviNominatif() : Promise.resolve([]),
+      participationPolicies()
     ]);
     const mappedDomaines = domaines.map(d => ({
       code: d.code,
@@ -253,7 +378,8 @@ function createScopeService(repo){
       personnelTemporel: {
         typesPeriode: Object.values(TYPES_PERIODE),
         motifsIndisponible: Object.values(MOTIFS_INDISPONIBLE)
-      }
+      },
+      participation: participation.participation
     };
   }
 
@@ -339,6 +465,7 @@ function createScopeService(repo){
     const codeCours = await nextManualCode(repo, body, cibleIds);
     const sessionConfig = normalizeSessionConfig(body);
     return repo.withTransaction(async (tx) => {
+      const snapshot = await capturePolicySnapshot(tx, domaine);
       let exercice = null;
       if(sessionConfig.modeSession === 'MULTI'){
         exercice = await tx.upsertExercise({
@@ -374,6 +501,8 @@ function createScopeService(repo){
         session_label: exercice ? sessionConfig.sessionLabel : null,
         pr_exercise_group_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}` : null,
         pr_session_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}.${sessionConfig.sessionIndex}` : null,
+        participation_policy_version: snapshot.policyVersion,
+        participation_policy_snapshot: snapshot,
         cible_ids: cibleIds
       });
       await tx.appendJournal({
@@ -1764,6 +1893,7 @@ function createScopeService(repo){
       if(evenement.population_figee) throw new HttpError(422, 'deja_figee', 'La population est déjà figée.');
       const preview = await previewAttendus(eventId);
       const stamp = new Date().toISOString();
+      const snapshot = evenement.participation_policy_snapshot || await capturePolicySnapshot(tx, evenement.domaine_code);
       for(const personne of preview.personnes){
         const cibleMotif = (personne.cibles || [])
           .map((c) => `${c.domaineCode || c.domaine_code}_${c.niveauCode || c.niveau_code}`)
@@ -1789,7 +1919,9 @@ function createScopeService(repo){
         population_figee: true,
         population_version: evenement.population_version + 1,
         figee_at: stamp,
-        figee_par: actorId(actor)
+        figee_par: actorId(actor),
+        participation_policy_version: evenement.participation_policy_version || snapshot.policyVersion,
+        participation_policy_snapshot: evenement.participation_policy_snapshot || snapshot
       });
       await tx.appendJournal({
         auteur_id: actorId(actor),
@@ -2037,6 +2169,7 @@ function createScopeService(repo){
       }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
+      const policySnapshot = evenement.participation_policy_snapshot || (await capturePolicySnapshot(tx, evenement.domaine_code));
       let savedCount = 0;
       let skippedEncadrement = 0;
       for(const item of items){
@@ -2045,7 +2178,7 @@ function createScopeService(repo){
         if(!attendu || attendu.inclus === false){
           throw new HttpError(422, 'non_attendu', 'Saisie réservée aux personnes attendues incluses.', { personneId });
         }
-        const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code });
+        const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code, participationPolicySnapshot: policySnapshot });
         const role = String(item.role || item.role_participation || 'PARTICIPANT').toUpperCase();
         let participationRole = ['FORMATEUR', 'SURVEILLANT'].includes(role) ? role : 'PARTICIPANT';
         if(participationRole === 'FORMATEUR' && patch.statut !== 'PRESENT'){
@@ -2072,7 +2205,10 @@ function createScopeService(repo){
       if(savedCount === 0){
         return { evenement, version: evenement.version, skippedEncadrement };
       }
-      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      const next = await bumpOrConflict(tx, eventId, baseVersion, evenement.participation_policy_snapshot ? {} : {
+        participation_policy_version: policySnapshot.policyVersion,
+        participation_policy_snapshot: policySnapshot
+      });
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
@@ -2277,7 +2413,7 @@ function createScopeService(repo){
         });
       }
       const requireExpectedFilled = !(prState && prState.isMultiSession);
-      validateCloture(evenement, attendus, participations, { requireExpectedFilled });
+      validateCloture(evenement, attendus, participations, { requireExpectedFilled, participationPolicySnapshot: evenement.participation_policy_snapshot || null });
       if(prState && !canCloseLastSession(prState)){
         throw new HttpError(422, 'session_incomplete', 'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.', {
           unfilledPeople: prState.unfilledPeople || []
@@ -2683,6 +2819,7 @@ function createScopeService(repo){
     const journal = await repo.listJournal('evenement', eventId);
     const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(eventId) : null;
     const modeSuivi = inferModeSuivi(evenement);
+    const eventPolicy = await resolvePolicyForEvent(repo, evenement);
     let compteurs = taux;
     if(modeSuivi === MODES.QUANTITATIF){
       const official = saisie ? officialFromQuantitatif(saisie) : null;
@@ -2737,6 +2874,7 @@ function createScopeService(repo){
       legacy,
       jsp,
       populationCoherence: expectedPopulationCoherence(coherenceAttendus, participations),
+      participationPolicy: policyPayload(eventPolicy, await participationMotifRows(repo)),
       version: evenement.version
     };
   }
@@ -3700,6 +3838,9 @@ function createScopeService(repo){
 
   return {
     referentiels,
+    participationPolicies,
+    saveParticipationPolicy,
+    saveParticipationMotif,
     listPersonnes,
     affectationsValides,
     listEvenements,

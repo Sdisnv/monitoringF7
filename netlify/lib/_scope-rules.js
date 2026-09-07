@@ -8,6 +8,10 @@ const {
   normalizeMotifKey,
   emptyExcuseBreakdown
 } = require('./_scope-model');
+const {
+  STATUS_LIBRARY,
+  resolveParticipationPolicy
+} = require('./_scope-participation-policy');
 
 const STATUTS_TAUX = new Set(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', STATUT_PERMUTATION]);
 const MOTIFS = new Set([
@@ -232,6 +236,16 @@ function validateParticipationPatch(item, ctx = {}){
   if(!STATUTS_PARTICIPATION.has(statut)){
     throw new HttpError(422, 'statut_invalide', `Statut de participation invalide : ${statut}.`);
   }
+  const policy = resolveParticipationPolicy(ctx.domaineCode || ctx.domaine_code, {
+    snapshot: ctx.participationPolicySnapshot || ctx.participation_policy_snapshot || ctx.policySnapshot || null,
+    policyRows: ctx.policyRows || [],
+    motifRows: ctx.motifRows || []
+  });
+  const allowedStatuses = new Set(policy.activeStatuses || []);
+  const statusDef = STATUS_LIBRARY[statut];
+  if(statut !== STATUT_PERMUTATION && statusDef && !statusDef.system && !allowedStatuses.has(statut)){
+    throw new HttpError(422, 'statut_hors_politique', `Le statut ${statut} n’est pas autorisé pour ce domaine.`);
+  }
   const motif = item.motif_absence || item.motifAbsence || null;
   const commentaire = item.commentaire || null;
   const cibleSuivie = item.cible_suivie_id || item.cibleSuivieId || null;
@@ -239,6 +253,9 @@ function validateParticipationPatch(item, ctx = {}){
     const domaine = String(ctx.domaineCode || ctx.domaine_code || '').toUpperCase();
     if(domaine && domaine !== 'DAP'){
       throw new HttpError(422, 'permutation_hors_dap', 'La permutation n’est définie que pour le domaine DAP.');
+    }
+    if(!allowedStatuses.has(statut)){
+      throw new HttpError(422, 'statut_hors_politique', `Le statut ${statut} n’est pas autorisé pour ce domaine.`);
     }
     if(motif){
       throw new HttpError(422, 'permutation_sans_motif', 'Une permutation n’est pas une absence : aucun motif d’excuse.');
@@ -387,7 +404,12 @@ function validateCloture(evenement, attendus, participations, options = {}){
     const p = byPersonne.get(String(attendu.personne_id || attendu.personneId));
     if(!p || isUnsetExpectedStatut(p.statut)) continue;
     if(!countsInEventEffectif(attendu, p)) continue;
-    try { validateParticipationPatch(p, { domaineCode: evenement && evenement.domaine_code }); }
+    try {
+      validateParticipationPatch(p, {
+        domaineCode: evenement && evenement.domaine_code,
+        participationPolicySnapshot: options.participationPolicySnapshot || options.participation_policy_snapshot || null
+      });
+    }
     catch(error){
       if(error instanceof HttpError) errors.push({ code: error.error, personne_id: attendu.personne_id, message: error.message });
       else throw error;

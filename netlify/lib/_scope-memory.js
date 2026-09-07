@@ -56,6 +56,25 @@ function createMemoryRepo(){
   const cycles = new Map();
   const cyclePersonnes = new Map();
   const exercices = new Map();
+  const policy = require('./_scope-participation-policy');
+  const participationMotifs = new Map(policy.motifCatalog().map((row) => [row.id, {
+    motif_id: row.id,
+    motif_type: row.type,
+    label: row.label,
+    actif: row.active !== false,
+    historique: row.historical === true,
+    display_order: row.order,
+    group_code: row.group,
+    metadata: {}
+  }]));
+  const participationPolicies = new Map(policy.listDefaultPolicies().map((row) => [row.domainCode, {
+    domain_code: row.domainCode,
+    policy_version: row.policyVersion,
+    config: JSON.parse(JSON.stringify(row)),
+    actif: true,
+    commentaire: 'Configuration SDIS NV par défaut - équivalence V1',
+    auteur_id: null
+  }]));
   suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
     suivi_id: '8c0a0002-2026-4000-8000-000000000001',
     portee: 'GLOBAL',
@@ -113,7 +132,9 @@ function createMemoryRepo(){
       periodes: cloneMap(periodes),
       cycles: cloneMap(cycles),
       cyclePersonnes: cloneMap(cyclePersonnes),
-      exercices: cloneMap(exercices)
+      exercices: cloneMap(exercices),
+      participationMotifs: cloneMap(participationMotifs),
+      participationPolicies: cloneMap(participationPolicies)
     };
   }
 
@@ -137,6 +158,8 @@ function createMemoryRepo(){
     cycles.clear(); (snap.cycles || new Map()).forEach((v, k) => cycles.set(k, v));
     cyclePersonnes.clear(); (snap.cyclePersonnes || new Map()).forEach((v, k) => cyclePersonnes.set(k, v));
     exercices.clear(); (snap.exercices || new Map()).forEach((v, k) => exercices.set(k, v));
+    participationMotifs.clear(); (snap.participationMotifs || new Map()).forEach((v, k) => participationMotifs.set(k, v));
+    participationPolicies.clear(); (snap.participationPolicies || new Map()).forEach((v, k) => participationPolicies.set(k, v));
   }
 
   const api = {
@@ -349,6 +372,8 @@ function createMemoryRepo(){
         session_label: row.session_label || row.sessionLabel || null,
         pr_exercise_group_key: row.pr_exercise_group_key || row.prExerciseGroupKey || null,
         pr_session_key: row.pr_session_key || row.prSessionKey || null,
+        participation_policy_version: row.participation_policy_version || row.participationPolicyVersion || null,
+        participation_policy_snapshot: row.participation_policy_snapshot || row.participationPolicySnapshot || null,
         population_figee: false,
         population_version: 0,
         figee_at: null,
@@ -667,6 +692,42 @@ function createMemoryRepo(){
     },
     async listReglesBascule(){
       return [...reglesBascule.values()];
+    },
+    async listParticipationMotifRows(){
+      return [...participationMotifs.values()].sort((a, b) => Number(a.display_order) - Number(b.display_order) || String(a.label).localeCompare(String(b.label), 'fr')).map((row) => ({ ...row }));
+    },
+    async upsertParticipationMotif(row){
+      const id = String(row.motif_id || row.id || '').trim().toUpperCase();
+      const item = {
+        motif_id: id,
+        motif_type: String(row.motif_type || row.type || 'EXCUSE').trim().toUpperCase(),
+        label: row.label || row.libelle,
+        actif: row.actif !== false && row.active !== false,
+        historique: row.historique === true || row.historical === true,
+        display_order: Number(row.display_order || row.order || 999),
+        group_code: row.group_code || row.group || 'operationnel',
+        metadata: row.metadata || {},
+        updated_at: now()
+      };
+      participationMotifs.set(id, item);
+      return { ...item };
+    },
+    async listParticipationPolicyRows(){
+      return [...participationPolicies.values()].filter((row) => row.actif !== false).map((row) => ({ ...row, config: JSON.parse(JSON.stringify(row.config || {})) }));
+    },
+    async upsertParticipationPolicy(row){
+      const domain = String(row.domain_code || row.domainCode || '').trim().toUpperCase();
+      const item = {
+        domain_code: domain,
+        policy_version: row.policy_version || row.policyVersion,
+        config: JSON.parse(JSON.stringify(row.config || row.policy || {})),
+        actif: row.actif !== false,
+        commentaire: row.commentaire || null,
+        auteur_id: row.auteur_id || null,
+        updated_at: now()
+      };
+      participationPolicies.set(domain, item);
+      return { ...item, config: JSON.parse(JSON.stringify(item.config)) };
     },
     async upsertRegleBascule(row){
       const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();

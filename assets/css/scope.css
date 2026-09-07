@@ -4250,6 +4250,13 @@ body.scope-pdf-open { overflow: hidden; }
   max-width: 720px;
 }
 
+.scope-admin-panel {
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--scope-soft);
+}
+
 .scope-mini-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

@@ -344,6 +344,7 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-generic-exercise-sessions-1') on conflict (version) do nothing`
   );
+  await migrateParticipationPolicyEngine1();
   ready = true;
   return true;
 }
@@ -1069,6 +1070,59 @@ async function migrateGenericExerciseSessions1(){
       on scope_evenements (exercice_id, session_index)
       where exercice_id is not null and session_index is not null
   `);
+}
+
+async function migrateParticipationPolicyEngine1(){
+  const policy = require('./_scope-participation-policy');
+  await db.query(`
+    create table if not exists scope_participation_motifs (
+      motif_id text primary key,
+      motif_type text not null,
+      label text not null,
+      actif boolean not null default true,
+      historique boolean not null default false,
+      display_order integer not null default 999,
+      group_code text not null default 'operationnel',
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_participation_motifs_type_chk check (motif_type in ('EXCUSE','DISPENSE')),
+      constraint scope_participation_motifs_id_chk check (length(trim(motif_id)) > 0),
+      constraint scope_participation_motifs_label_chk check (length(trim(label)) > 0)
+    )
+  `);
+  await db.query(`
+    create table if not exists scope_participation_policies (
+      domain_code text primary key references scope_domaines(code),
+      policy_version text not null,
+      config jsonb not null,
+      actif boolean not null default true,
+      commentaire text,
+      auteur_id text,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    )
+  `);
+  await db.query(`alter table scope_evenements add column if not exists participation_policy_version text`);
+  await db.query(`alter table scope_evenements add column if not exists participation_policy_snapshot jsonb`);
+  const motifs = policy.motifCatalog();
+  for(const motif of motifs){
+    await db.query(
+      `insert into scope_participation_motifs(motif_id, motif_type, label, actif, historique, display_order, group_code)
+       values ($1,$2,$3,$4,$5,$6,$7)
+       on conflict (motif_id) do nothing`,
+      [motif.id, motif.type, motif.label, motif.active !== false, motif.historical === true, motif.order, motif.group]
+    );
+  }
+  for(const row of policy.listDefaultPolicies()){
+    await db.query(
+      `insert into scope_participation_policies(domain_code, policy_version, config, commentaire)
+       values ($1,$2,$3::jsonb,$4)
+       on conflict (domain_code) do nothing`,
+      [row.domainCode, row.policyVersion, JSON.stringify(row), 'Configuration SDIS NV par défaut - équivalence V1']
+    );
+  }
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-participation-policy-engine-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

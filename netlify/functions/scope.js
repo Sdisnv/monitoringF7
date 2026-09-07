@@ -116,6 +116,22 @@ exports.handler = async function(event){
     if(method === 'GET' && path === '/referentiels'){
       return response(200, { ok:true, ...(await service.referentiels()) });
     }
+    if(method === 'GET' && path === '/participation/policies'){
+      return response(200, { ok:true, ...(await service.participationPolicies()) });
+    }
+    let params = match(path, '/participation/policies/:domain');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des politiques de participation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.saveParticipationPolicy(params.domain, body, claims)) });
+    }
+    if(method === 'POST' && path === '/participation/motifs'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des motifs de participation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.saveParticipationMotif(body, claims)) });
+    }
     if(method === 'GET' && path === '/personnes'){
       return response(200, { ok:true, ...(await service.listPersonnes(queryOf(event))) });
     }
@@ -123,7 +139,7 @@ exports.handler = async function(event){
       if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
       return response(200, { ok:true, ...(await persons.directory(queryOf(event))) });
     }
-    let params = match(path, '/personnel/:id');
+    params = match(path, '/personnel/:id');
     if(method === 'GET' && params){
       if(!hasPermission(claims, 'personnel:read')) return forbiddenPersonnel();
       return response(200, { ok:true, ...(await persons.fiche(params.id, queryOf(event))) });

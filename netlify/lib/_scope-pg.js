@@ -42,6 +42,8 @@ function mapEvent(row){
     figee_par: row.figee_par,
     cloture_at: row.cloture_at,
     cloture_par: row.cloture_par,
+    participation_policy_version: row.participation_policy_version || null,
+    participation_policy_snapshot: row.participation_policy_snapshot || null,
     version: row.version,
     identifiant_externe: row.identifiant_externe || null,
     internal_event_id: row.internal_event_id || row.evenement_id || null,
@@ -239,6 +241,29 @@ function mapAffectationDates(row){
 
 function createPgRepo(client){
   const q = (text, params) => (client || db).query(text, params);
+  let participationPolicyColumnsKnown = null;
+  const tableExists = async (tableName) => {
+    const result = await q(
+      `select exists (
+        select 1 from information_schema.tables
+        where table_schema = 'public' and table_name = $1
+      ) as ok`,
+      [tableName]
+    );
+    return result.rows[0] && result.rows[0].ok === true;
+  };
+  const hasParticipationPolicyColumns = async () => {
+    if(participationPolicyColumnsKnown !== null) return participationPolicyColumnsKnown;
+    const result = await q(
+      `select count(*)::int as n
+       from information_schema.columns
+       where table_schema = 'public'
+         and table_name = 'scope_evenements'
+         and column_name in ('participation_policy_version', 'participation_policy_snapshot')`
+    );
+    participationPolicyColumnsKnown = Number(result.rows[0] && result.rows[0].n) === 2;
+    return participationPolicyColumnsKnown;
+  };
 
   const api = {
     async withTransaction(fn){
@@ -543,6 +568,7 @@ function createPgRepo(client){
       const { inferModeSuivi } = require('./_scope-analytics');
       const modeSuivi = inferModeSuivi(row);
       const codeCours = row.code_cours || row.codeCours || null;
+      const policyColumns = await hasParticipationPolicyColumns();
       const params = [
         id,
         row.internal_event_id || row.internalEventId || id,
@@ -573,8 +599,8 @@ function createPgRepo(client){
              insert into scope_evenements(
                evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
                identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
-               exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key, version
-             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,1)
+               exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key${policyColumns ? ', participation_policy_version, participation_policy_snapshot' : ''}, version
+             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22${policyColumns ? ',$23,$24::jsonb' : ''},1)
              on conflict (code_cours) where code_cours is not null do nothing
              returning *, false as already_exists
            )
@@ -585,16 +611,22 @@ function createPgRepo(client){
            where e.code_cours = $11
              and not exists (select 1 from ins)
            limit 1`,
-          params
+          policyColumns ? params.concat([
+            row.participation_policy_version || row.participationPolicyVersion || null,
+            JSON.stringify(row.participation_policy_snapshot || row.participationPolicySnapshot || null)
+          ]) : params
         )
         : await q(
           `insert into scope_evenements(
              evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
              identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
-             exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key, version
-           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,1)
+             exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key${policyColumns ? ', participation_policy_version, participation_policy_snapshot' : ''}, version
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22${policyColumns ? ',$23,$24::jsonb' : ''},1)
            returning *, false as already_exists`,
-          params
+          policyColumns ? params.concat([
+            row.participation_policy_version || row.participationPolicyVersion || null,
+            JSON.stringify(row.participation_policy_snapshot || row.participationPolicySnapshot || null)
+          ]) : params
         );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){
@@ -668,11 +700,16 @@ function createPgRepo(client){
       }
     },
     async updateEventIfVersion(id, baseVersion, patch){
-      const allowed = [
+      let allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
-        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key'
+        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','participation_policy_version','participation_policy_snapshot'
       ];
+      if(Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_version') || Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_snapshot')){
+        if(!(await hasParticipationPolicyColumns())){
+          allowed = allowed.filter((key) => key !== 'participation_policy_version' && key !== 'participation_policy_snapshot');
+        }
+      }
       const sets = ['version = version + 1', 'updated_at = now()'];
       const params = [];
       let i = 1;
@@ -1097,6 +1134,66 @@ function createPgRepo(client){
     async listReglesBascule(){
       const result = await q('select * from scope_regles_bascule');
       return result.rows.map((row) => Object.assign({}, row, { date_bascule: dateOnly(row.date_bascule) }));
+    },
+    async listParticipationMotifRows(){
+      if(!(await tableExists('scope_participation_motifs'))) return [];
+      const result = await q('select * from scope_participation_motifs order by display_order, label');
+      return result.rows;
+    },
+    async upsertParticipationMotif(row){
+      const result = await q(
+        `insert into scope_participation_motifs(motif_id, motif_type, label, actif, historique, display_order, group_code, metadata)
+         values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)
+         on conflict (motif_id) do update set
+           motif_type = excluded.motif_type,
+           label = excluded.label,
+           actif = excluded.actif,
+           historique = excluded.historique,
+           display_order = excluded.display_order,
+           group_code = excluded.group_code,
+           metadata = excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [
+          String(row.motif_id || row.id).trim().toUpperCase(),
+          String(row.motif_type || row.type || 'EXCUSE').trim().toUpperCase(),
+          row.label || row.libelle,
+          row.actif !== false && row.active !== false,
+          row.historique === true || row.historical === true,
+          Number(row.display_order || row.order || 999),
+          row.group_code || row.group || 'operationnel',
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return result.rows[0];
+    },
+    async listParticipationPolicyRows(){
+      if(!(await tableExists('scope_participation_policies'))) return [];
+      const result = await q('select * from scope_participation_policies where actif is not false order by domain_code');
+      return result.rows;
+    },
+    async upsertParticipationPolicy(row){
+      const result = await q(
+        `insert into scope_participation_policies(domain_code, policy_version, config, actif, commentaire, auteur_id)
+         values ($1,$2,$3::jsonb,$4,$5,$6)
+         on conflict (domain_code) do update set
+           policy_version = excluded.policy_version,
+           config = excluded.config,
+           actif = excluded.actif,
+           commentaire = excluded.commentaire,
+           auteur_id = excluded.auteur_id,
+           updated_at = now()
+         returning *`,
+        [
+          String(row.domain_code || row.domainCode).trim().toUpperCase(),
+          row.policy_version || row.policyVersion,
+          JSON.stringify(row.config || row.policy || {}),
+          row.actif !== false,
+          row.commentaire || null,
+          row.auteur_id || null
+        ]
+      );
+      return result.rows[0];
     },
     async upsertRegleBascule(row){
       const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();

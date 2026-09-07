@@ -163,6 +163,10 @@
       active: true
     },
     adminUserSort: { key: 'displayName', dir: 'asc' },
+    participationAdmin: null,
+    participationAdminReady: false,
+    participationAdminError: null,
+    participationAdminDomain: 'JSP',
     personnelListPage: 1,
     personnelListPageSize: 12,
     eventSort: { key: 'date', dir: 'asc' },
@@ -708,6 +712,34 @@
       state.adminUsers = [];
       state.adminUsersReady = true;
       state.adminUsersError = L.friendlyError(error).message || 'Les utilisateurs n’ont pas pu être chargés.';
+      throw error;
+    }
+  }
+
+  async function loadParticipationAdmin() {
+    if (!hasScopePermission('references:manage')) {
+      state.participationAdmin = null;
+      state.participationAdminReady = true;
+      state.participationAdminError = null;
+      return null;
+    }
+    if (typeof client.participationPolicies !== 'function') {
+      state.participationAdmin = null;
+      state.participationAdminReady = true;
+      state.participationAdminError = 'Politiques de participation indisponibles.';
+      return null;
+    }
+    state.participationAdminReady = false;
+    state.participationAdminError = null;
+    try {
+      const data = await client.participationPolicies();
+      state.participationAdmin = data.participation || null;
+      state.participationAdminReady = true;
+      return state.participationAdmin;
+    } catch (error) {
+      state.participationAdmin = null;
+      state.participationAdminReady = true;
+      state.participationAdminError = L.friendlyError(error).message || 'Les politiques de participation n’ont pas pu être chargées.';
       throw error;
     }
   }
@@ -6515,7 +6547,8 @@
 
   function renderSaisieRows(rows) {
     const domaine = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code;
-    const statuses = L.participationStatusesForDomaine ? L.participationStatusesForDomaine(domaine) : [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
+    const policyState = state.fiche && state.fiche.participationPolicy;
+    const statuses = L.participationStatusesForDomaine ? L.participationStatusesForDomaine(domaine, policyState) : [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
     const statusPressed = (row, value) => row.statut === value;
     const statusVariant = {
       PRESENT: 'is-present',
@@ -6543,7 +6576,7 @@
         return `<div class="scope-motif-control is-open"><label class="visually-hidden" for="motif-${escapeHtml(row.personneId)}">Motif de dispense</label><select id="motif-${escapeHtml(row.personneId)}" class="scope-motif-select" data-dispense-motif aria-label="Motif de dispense"${lockAttr}>${row.motifAbsence ? '' : '<option value="" disabled selected>Motif</option>'}${motifOptions(motifs, { primary: 'Dispenses métier', secondary: 'Situations particulières' })}</select></div>`;
       }
       if (row.statut !== 'ABSENT_EXCUSE') return '';
-      const motifs = L.motifsForRow ? L.motifsForRow(row, saisieDomaine()) : L.MOTIFS;
+      const motifs = L.motifsForRow ? L.motifsForRow(row, saisieDomaine(), policyState) : L.MOTIFS;
       const selected = motifs.find((m) => m.value === row.motifAbsence);
       if (selected && !row.editMotif) {
         return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif d’excuse"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
@@ -7381,12 +7414,88 @@
           <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports et les profils utilisateurs déjà protégés par RBAC.</p>
           <div class="scope-home-links">
             ${hasScopePermission('references:manage') ? '<a href="#/reglages/objectifs">Objectifs</a>' : ''}
+            ${hasScopePermission('references:manage') ? '<a href="#/reglages/participation">Participation</a>' : ''}
             ${hasScopePermission('personnel:manage') ? '<a href="#/reglages/suivi">Suivi nominatif</a><a href="#/reglages/import-personnel">Import du personnel</a>' : ''}
             ${hasScopePermission('events:create') ? '<a href="#/reglages/import-evenements">Import des événements</a>' : ''}
             ${hasScopePermission('users:admin') ? '<a href="#/reglages/utilisateurs">Utilisateurs</a>' : ''}
           </div>
           <p class="scope-mode-hint">Aucune pseudo-administration n’a été ajoutée. Les capacités absentes restent documentées plutôt que simulées.</p>
         </div>
+      </div>
+    `;
+  }
+
+  function renderParticipationAdmin() {
+    const canManage = hasScopePermission('references:manage');
+    const data = state.participationAdmin || (state.referentiels && state.referentiels.participation) || null;
+    const policies = data && Array.isArray(data.policies) ? data.policies : [];
+    const motifs = data && Array.isArray(data.motifs) ? data.motifs : [];
+    const statuses = data && Array.isArray(data.statuses) ? data.statuses : [];
+    const domains = policies.map((policy) => policy.domainCode || policy.domain_code).filter(Boolean);
+    const activeDomain = domains.includes(state.participationAdminDomain) ? state.participationAdminDomain : (domains[0] || 'JSP');
+    state.participationAdminDomain = activeDomain;
+    const policy = policies.find((row) => String(row.domainCode || row.domain_code || '').toUpperCase() === activeDomain) || null;
+    const statusChecks = statuses
+      .filter((row) => !row.system)
+      .map((row) => {
+        const id = row.id || row.value;
+        return `<label class="scope-check"><input type="checkbox" data-participation-status="${escapeHtml(id)}" ${policy && (policy.activeStatuses || []).includes(id) ? 'checked' : ''}> ${escapeHtml(row.label || id)}</label>`;
+      }).join('');
+    const motifChecks = (type) => motifs
+      .filter((row) => String(row.type || row.motif_type || '').toUpperCase() === type)
+      .filter((row) => row.active !== false && row.actif !== false || (policy && ((type === 'EXCUSE' ? policy.excuseMotifs : policy.dispenseMotifs) || []).includes(row.id || row.value)))
+      .map((row) => {
+        const id = row.id || row.value || row.motif_id;
+        const selected = policy && ((type === 'EXCUSE' ? policy.excuseMotifs : policy.dispenseMotifs) || []).includes(id);
+        return `<label class="scope-check"><input type="checkbox" data-participation-motif="${escapeHtml(type)}:${escapeHtml(id)}" ${selected ? 'checked' : ''}> ${escapeHtml(row.label || id)}</label>`;
+      }).join('');
+    const behavior = policy && policy.behavior || {};
+    const domainOptions = domains.map((code) => `<option value="${escapeHtml(code)}" ${code === activeDomain ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('');
+    const content = !canManage
+      ? '<div class="scope-card"><p class="scope-empty">La gestion des politiques de participation est réservée aux profils habilités.</p></div>'
+      : state.participationAdminError
+        ? `<div class="scope-card"><p class="scope-empty scope-state-error" role="alert">${escapeHtml(state.participationAdminError)}</p></div>`
+        : !state.participationAdminReady && !data
+          ? '<div class="scope-card"><p class="scope-empty">Chargement des politiques…</p></div>'
+          : `<div class="scope-card">
+              <h2 style="margin-top:0">Politique par domaine</h2>
+              <div class="scope-report-grid">
+                <div class="scope-field"><label>Domaine</label><select id="participation-domain">${domainOptions}</select></div>
+                <div class="scope-field"><label>Propagation</label><input type="text" readonly value="${escapeHtml(behavior.propagationScope || 'SESSION_ONLY')}"></div>
+                <div class="scope-field"><label>Déduplication</label><input type="text" readonly value="${escapeHtml(behavior.deduplicationScope || 'SESSION')}"></div>
+              </div>
+              <div class="scope-report-grid" style="margin-top:12px">
+                <div class="scope-admin-panel">
+                  <h3 style="margin-top:0">Statuts</h3>
+                  ${statusChecks || '<p class="scope-empty">Aucun statut configurable.</p>'}
+                </div>
+                <div class="scope-admin-panel">
+                  <h3 style="margin-top:0">Motifs d’excuse</h3>
+                  ${motifChecks('EXCUSE') || '<p class="scope-empty">Aucun motif d’excuse.</p>'}
+                </div>
+                <div class="scope-admin-panel">
+                  <h3 style="margin-top:0">Motifs de dispense</h3>
+                  ${motifChecks('DISPENSE') || '<p class="scope-empty">Aucun motif de dispense.</p>'}
+                </div>
+              </div>
+              <div class="scope-actions">
+                <button type="button" class="scope-btn scope-btn-primary" id="participation-policy-save">Enregistrer</button>
+              </div>
+            </div>
+            <div class="scope-card" style="margin-top:12px">
+              <h2 style="margin-top:0">Motifs actifs</h2>
+              <div class="scope-table-wrap">
+                <table class="scope-table"><thead><tr><th>Type</th><th>Code</th><th>Libellé</th><th>Groupe</th><th>État</th></tr></thead><tbody>
+                  ${motifs.map((row) => `<tr><td>${escapeHtml(row.type || row.motif_type || '')}</td><td>${escapeHtml(row.id || row.value || row.motif_id || '')}</td><td>${escapeHtml(row.label || '')}</td><td>${escapeHtml(row.group || row.group_code || '')}</td><td>${row.active === false || row.actif === false ? 'Historique' : 'Actif'}</td></tr>`).join('') || '<tr><td colspan="5"><div class="scope-empty">Aucun motif.</div></td></tr>'}
+                </tbody></table>
+              </div>
+            </div>`;
+    return `
+      <div class="scope-crumb">Administration / Participation</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Administration / Référentiels', title: 'Participation', context: 'Statuts et motifs', logo: true })}
+        ${administrationReturnHtml()}
+        ${content}
       </div>
     `;
   }
@@ -7600,6 +7709,7 @@
               : r.screen === 'import-personnel' ? renderImportPersonnel()
                 : r.screen === 'utilisateurs' ? renderUtilisateurs()
                   : r.screen === 'administration' ? renderAdministration()
+                    : r.screen === 'participation-admin' ? renderParticipationAdmin()
                     : r.screen === 'apropos' ? renderApropos()
           : r.screen === 'nouveau' ? renderNouveau()
             : r.screen === 'saisie' ? renderSaisie()
@@ -9170,6 +9280,30 @@
       }
       render();
     });
+    document.getElementById('participation-domain')?.addEventListener('change', (e) => {
+      state.participationAdminDomain = e.target.value;
+      render();
+    });
+    document.getElementById('participation-policy-save')?.addEventListener('click', () => {
+      const domain = state.participationAdminDomain;
+      const current = (state.participationAdmin && state.participationAdmin.policies || [])
+        .find((row) => String(row.domainCode || row.domain_code || '').toUpperCase() === String(domain || '').toUpperCase());
+      const checkedValues = (selector) => Array.from(root.querySelectorAll(selector))
+        .filter((input) => input.checked)
+        .map((input) => String(input.getAttribute(selector.includes('status') ? 'data-participation-status' : 'data-participation-motif') || ''));
+      const motifValues = (type) => checkedValues(`[data-participation-motif^="${type}:"]`).map((value) => value.split(':')[1]).filter(Boolean);
+      withLoading(async () => {
+        await client.saveParticipationPolicy(domain, {
+          activeStatuses: checkedValues('[data-participation-status]'),
+          excuseMotifs: motifValues('EXCUSE'),
+          dispenseMotifs: motifValues('DISPENSE'),
+          roles: current && current.roles || [],
+          behavior: current && current.behavior || {}
+        });
+        await loadParticipationAdmin();
+        toast('success', 'Enregistré', 'La politique de participation a été enregistrée.');
+      });
+    });
     document.getElementById('scope-apply-personnel-asof')?.addEventListener('click', () => {
       state.personnelSituationDate = document.getElementById('personnel-asof')?.value || '';
       state.personnelSituationApplied = Boolean(state.personnelSituationDate);
@@ -10159,6 +10293,7 @@
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
       if (r.screen === 'objectifs') await loadObjectifs();
+      if (r.screen === 'participation-admin') await loadParticipationAdmin();
       if (r.screen === 'utilisateurs') await loadAdminUsers();
       if (client.listPersonnes && state.personCount == null) {
         const people = await client.listPersonnes();

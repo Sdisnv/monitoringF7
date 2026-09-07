@@ -41,7 +41,42 @@
     return String(code || '').toUpperCase() === 'JSP';
   }
 
-  function motifsSaisieForDomaine(domaineCode) {
+  function motifFromPolicyId(id, catalog) {
+    const value = String(id || '').toUpperCase();
+    const hit = (catalog || motifCatalogue()).find((m) => String(m.value || m.id || '').toUpperCase() === value);
+    if (!hit) return { value, label: value, group: 'operationnel' };
+    return {
+      value,
+      label: hit.label || hit.libelle || value,
+      group: hit.group || hit.group_code || 'operationnel',
+      legacy: Boolean(hit.legacy || hit.historical || hit.historique)
+    };
+  }
+
+  function normalizePolicyCatalog(policyState) {
+    const motifs = ((policyState && policyState.motifs) || []).map((row) => ({
+      value: row.value || row.id || row.motif_id,
+      label: row.label || row.libelle,
+      group: row.group || row.group_code || 'operationnel',
+      legacy: Boolean(row.legacy || row.historical || row.historique)
+    })).filter((row) => row.value);
+    return motifs.length ? motifs : motifCatalogue();
+  }
+
+  function policyForDomaine(domaineCode, policyState) {
+    const raw = String(domaineCode || '').toUpperCase();
+    const domain = raw === 'PAPR' ? 'PR' : raw;
+    if (policyState && String(policyState.domainCode || policyState.domain_code || '').toUpperCase() === domain) return policyState;
+    const policies = (policyState && policyState.policies) || [];
+    return policies.find((row) => String(row.domainCode || row.domain_code || '').toUpperCase() === domain) || null;
+  }
+
+  function motifsSaisieForDomaine(domaineCode, policyState) {
+    const policy = policyForDomaine(domaineCode, policyState);
+    if (policy && Array.isArray(policy.excuseMotifs) && policy.excuseMotifs.length) {
+      const catalog = normalizePolicyCatalog(policyState);
+      return policy.excuseMotifs.map((id) => motifFromPolicyId(id, catalog));
+    }
     return isJspDomaine(domaineCode) ? MOTIFS_JSP.slice() : MOTIFS.slice();
   }
 
@@ -49,9 +84,9 @@
     return MOTIFS.concat(MOTIFS_JSP, MOTIFS_DISPENSE, MOTIFS_DISPENSE_HISTORIQUES, MOTIFS_HISTORIQUES);
   }
 
-  function motifsForRow(row, domaineCode) {
+  function motifsForRow(row, domaineCode, policyState) {
     const domaine = domaineCode || row && (row.domaineCode || row.domaine_code);
-    const base = motifsSaisieForDomaine(domaine);
+    const base = motifsSaisieForDomaine(domaine, policyState);
     const extra = MOTIFS.concat(MOTIFS_JSP, MOTIFS_HISTORIQUES).filter((m) => {
       if (!row || row.motifAbsence !== m.value) return false;
       return !base.some((item) => item.value === m.value);
@@ -717,6 +752,7 @@
         label: 'Application',
         items: [
           { id: 'objectifs', href: '#/reglages/objectifs', label: 'Objectifs', permission: 'references:manage', current: r.screen === 'objectifs' },
+          { id: 'participation', href: '#/reglages/participation', label: 'Participation', permission: 'references:manage', current: r.screen === 'participation-admin' },
           { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif', permission: 'personnel:manage', current: r.screen === 'suivi' }
         ]
       },
@@ -980,6 +1016,7 @@
     if (parts[0] === 'reglages' && parts[1] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
     if (parts[0] === 'reglages' && parts[1] === 'import-evenements') return { screen: 'import-evenements', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'import-personnel') return { screen: 'import-personnel', nav: 'reglages' };
+    if (parts[0] === 'reglages' && parts[1] === 'participation') return { screen: 'participation-admin', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'utilisateurs') return { screen: 'utilisateurs', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'administration') return { screen: 'administration', nav: 'reglages' };
     if (parts[0] === 'rapports' && parts[1] === 'formation') return { screen: 'rapport-formation', nav: 'rapports' };
@@ -1095,9 +1132,19 @@
     ));
   }
 
-  function participationStatusesForDomaine(domaine) {
+  function participationStatusesForDomaine(domaine, policyState) {
     const raw = String(domaine || '').toUpperCase();
     const d = raw === 'PR' ? 'PAPR' : raw;
+    const policy = policyForDomaine(d, policyState);
+    if (policy && Array.isArray(policy.activeStatuses)) {
+      const labels = new Map(((policyState && policyState.statuses) || []).map((row) => [String(row.id || row.value || '').toUpperCase(), row.label || row.libelle]));
+      const allowed = policy.activeStatuses
+        .map((status) => String(status || '').toUpperCase())
+        .filter((status) => status && status !== 'NON_RENSEIGNE' && status !== 'NON_CONCERNE');
+      if (allowed.length) {
+        return allowed.map((status) => [status, labels.get(status) || (status === 'ABSENT_EXCUSE' ? 'Excusé' : status === 'ABSENT_NON_EXCUSE' ? 'Absent' : status)]);
+      }
+    }
     const list = [
       ['PRESENT', 'Présent'],
       ['ABSENT_EXCUSE', 'Excusé'],

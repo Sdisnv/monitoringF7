@@ -166,7 +166,7 @@ function uiHooks(apiClient, permissions = ['users:admin']) {
   await record('01 - cause racine: client API admin-users cache-buste', async () => {
     assert.ok(apiSource.includes("listAdminUsers() { return directRequest('GET', '/.netlify/functions/admin-users'); }"));
     assert.ok(apiSource.includes("saveAdminUser(body) { return directRequest('POST', '/.netlify/functions/admin-users', body || {}); }"));
-    assert.ok(htmlSource.includes('scope-api.js?v=scope-admin-users-availability-repair-1'));
+    assert.ok(htmlSource.includes('scope-api.js?v=scope-admin-users-availability-repair-1') || htmlSource.includes('scope-api.js?v=scope-participation-policy-engine-1'));
     assert.ok(!htmlSource.includes('scope-api.js?v=scope-auth-idle-1'));
     assert.ok(uiSource.includes("state.adminUsersError = 'Gestion utilisateurs indisponible.'"));
   });

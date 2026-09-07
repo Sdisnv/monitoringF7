@@ -137,7 +137,7 @@ async function setupClosedEvent(){
   });
 
   await record('08 cache-bust SCOPE du lot', () => {
-    assert.ok(htmlSrc.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSrc.includes('scope-ui.js?v=scope-event-close-ux-formateur-1'));
+    assert.ok(htmlSrc.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSrc.includes('scope-ui.js?v=scope-event-close-ux-formateur-1') || htmlSrc.includes('scope-ui.js?v=scope-participation-policy-engine-1'));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

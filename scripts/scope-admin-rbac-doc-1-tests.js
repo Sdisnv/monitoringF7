@@ -129,7 +129,7 @@ function renderNav(hash, permissions) {
     assert.deepStrictEqual(nav.groups.map((group) => group.id), ['activite', 'pilotage', 'administration']);
     const sections = nav.groups.find((group) => group.id === 'administration').sections;
     assert.deepStrictEqual(sections.map((section) => section.label), ['Application', 'Imports', 'Accès', '']);
-    assert.deepStrictEqual(sections[0].items.map((item) => `${item.label}:${item.permission}`), ['Objectifs:references:manage', 'Suivi nominatif:personnel:manage']);
+    assert.deepStrictEqual(sections[0].items.map((item) => `${item.label}:${item.permission}`), ['Objectifs:references:manage', 'Participation:references:manage', 'Suivi nominatif:personnel:manage']);
     assert.deepStrictEqual(sections[1].items.map((item) => `${item.label}:${item.permission}`), ['Événements:events:create', 'Personnel:personnel:manage']);
     assert.deepStrictEqual(sections[2].items.map((item) => `${item.label}:${item.permission}`), ['Utilisateurs:users:admin']);
     assert.ok(!nav.settings.some((item) => item.href === '#/reglages/administration'), 'entree redondante Administration presente dans Acces');
@@ -236,8 +236,8 @@ function renderNav(hash, permissions) {
   });
 
   await record('10 - cache bust et suite dediee ADMIN-RBAC-DOC-1 branches', async () => {
-    assert.ok(htmlSource.includes('scope-ui-logic.js?v=scope-jsp-excuse-motifs-1') || htmlSource.includes('scope-ui-logic.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui-logic.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui-logic.js?v=scope-admin-rbac-doc-1'));
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSource.includes('scope-ui.js?v=scope-event-close-ux-formateur-1') || htmlSource.includes('scope-ui.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
+    assert.ok(htmlSource.includes('scope-ui-logic.js?v=scope-jsp-excuse-motifs-1') || htmlSource.includes('scope-ui-logic.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui-logic.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui-logic.js?v=scope-admin-rbac-doc-1') || htmlSource.includes('scope-ui-logic.js?v=scope-participation-policy-engine-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSource.includes('scope-ui.js?v=scope-event-close-ux-formateur-1') || htmlSource.includes('scope-ui.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1') || htmlSource.includes('scope-ui.js?v=scope-participation-policy-engine-1'));
     const pkg = JSON.parse(read('package.json'));
     assert.ok(pkg.scripts['test:scope'].includes('scripts/scope-admin-rbac-doc-1-tests.js'));
     assert.ok(!/sdis-admin` \| Administration complète/.test(rbacDoc), 'ancienne matrice legacy affichee comme contrat actuel');

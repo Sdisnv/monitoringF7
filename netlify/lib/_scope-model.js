@@ -13,12 +13,11 @@
  *
  * Taux officiel inchangé : présents / (présents + excusés + non_excusés).
  */
-const MOTIFS_CANONIQUES = Object.freeze({
-  PRIVE: 'PRIVE',
-  PROFESSIONNEL: 'PROFESSIONNEL',
-  ARMEE: 'ARMEE',
-  ACCIDENT_MALADIE: 'ACCIDENT_MALADIE'
-});
+const participationPolicy = require('./_scope-participation-policy');
+
+const MOTIFS_CANONIQUES = Object.freeze(
+  Object.fromEntries(['PRIVE', 'PROFESSIONNEL', 'ARMEE', 'ACCIDENT_MALADIE'].map((id) => [id, id]))
+);
 
 const MOTIFS_JSP = Object.freeze({
   PRIVE: 'PRIVE',
@@ -56,9 +55,9 @@ function isJspDomaine(code){
   return String(code || '').toUpperCase() === 'JSP';
 }
 
-function motifsSaisieForDomaine(domaineCode){
-  if(isJspDomaine(domaineCode)) return Object.values(MOTIFS_JSP);
-  return Object.values(MOTIFS_CANONIQUES);
+function motifsSaisieForDomaine(domaineCode, options = {}){
+  const policy = participationPolicy.resolveParticipationPolicy(domaineCode, options);
+  return policy.excuseMotifs.slice();
 }
 
 const STATUT_PERMUTATION = 'PERMUTATION';
