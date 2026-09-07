@@ -217,7 +217,7 @@ function ciblesFor(domain){
   });
 
   await record('08 cache-bust SCOPE-DOMAINES-RAPPORTS-CLOSE-1 branche', () => {
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-event-close-ux-formateur-1') || htmlSource.includes('scope-ui.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || htmlSource.includes('scope-ui.js?v=scope-admin-rbac-doc-1'));
     assert.ok(!htmlSource.includes('scope-ui.js?v=scope-nav-convergence-1"></script>'));
   });
 

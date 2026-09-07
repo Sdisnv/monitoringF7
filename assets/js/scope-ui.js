@@ -5884,11 +5884,13 @@
   }
 
   function renderFicheLifecycleActions(ev, isLegacy, qty) {
-    if (isLegacy || qty) return '';
+    const back = '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="scope-event-back">Retour aux événements</button>';
+    if (isLegacy || qty) return back;
     const canEdit = ev.statut === 'PLANIFIE' || ev.statut === 'REPORTE';
     const canPostpone = ev.statut === 'PLANIFIE';
     const canCancel = ev.statut !== 'ANNULE' && ev.statut !== 'REALISE';
     return [
+      back,
       canEdit ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="edit-event">Modifier l’événement</button>' : '',
       canPostpone ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="postpone-event">Reporter</button>' : '',
       canCancel ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler</button>' : ''
@@ -5898,7 +5900,7 @@
   function renderFichePrimaryAction(cta, lifecycleActions = '') {
     if (!cta && !lifecycleActions) return '';
     return `<section class="scope-card scope-fiche-section scope-fiche-primary">
-      <div class="scope-section-header"><h2 class="scope-section-title">Action</h2></div>
+      <div class="scope-section-header"><h2 class="scope-section-title">Actions événement</h2></div>
       <div class="scope-actions scope-event-toolbar scope-fiche-primary-actions">
         ${cta ? `<button type="button" class="scope-btn scope-btn-primary scope-fiche-cta" data-cta="${cta.action}">${escapeHtml(cta.label)}</button>` : ''}
         ${lifecycleActions || ''}
@@ -6189,7 +6191,6 @@
         <div class="scope-actions scope-event-toolbar scope-saisie-toolbar">
           <button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="save-part" ${saveBusy ? 'disabled' : ''}>${saveBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present" ${saveBusy ? 'disabled' : ''}>Tous présents</button>
-          <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="scope-saisie-back">Retour aux événements</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie" ${saveBusy ? 'disabled' : ''}>Réinitialiser la saisie</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${saveBusy || closeBusy ? 'disabled' : ''}>${escapeHtml(closeLabel)}</button>
         </div>
@@ -6479,6 +6480,7 @@
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Présences</div>
       <div class="scope-main">
+        ${renderFichePrimaryAction(null, renderFicheLifecycleActions(ev, ev.origine === 'LEGACY_AGGREGATED', true))}
         <div class="scope-card">
           <h2 style="margin-top:0">Saisir les présences</h2>
           <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(ev.libelle)} · ${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))} · Quantitatif</p>
@@ -6504,7 +6506,6 @@
           <div class="scope-actions scope-qty-actions">
             <button type="button" class="scope-btn" id="qty-save">Enregistrer</button>
             <button type="button" class="scope-btn scope-btn-primary" id="qty-cloturer" ${equal ? '' : 'disabled'}>Clôturer</button>
-            <a class="scope-btn" href="#/exercices">Retour aux événements</a>
             <a class="scope-btn" href="#/exercices/${escapeHtml(ev.evenement_id)}">Retour fiche</a>
           </div>
         </div>
@@ -6559,13 +6560,6 @@
         : '';
       return [motifControl(row), comment, why, manual].filter(Boolean).join('');
     };
-    const roleFlag = (row) => {
-      const role = String(row.role || '').toUpperCase();
-      if (L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) {
-        return `<span class="scope-enc-role-flag">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
-      }
-      return '';
-    };
     const statusFilled = (row) => Boolean(row && L.isValidSessionStatut && L.isValidSessionStatut(row.statut));
     return `
       <div class="scope-table-scroll">
@@ -6596,7 +6590,7 @@
               const blockedAttrs = tooltipText
                 ? ` tabindex="0" aria-describedby="${tooltipId}"`
                 : '';
-              const role = roleFlag(row);
+              const role = participationRoleFlag(row);
               const filled = statusFilled(row);
               return `<tr data-pid="${row.personneId}" class="${rowClass}"${blockedAttrs}>
               <td data-label="GRADE">${escapeHtml(row.grade || '')}${tooltipText ? `<span id="${tooltipId}" class="scope-session-counted-tooltip" role="tooltip">${escapeHtml(tooltipText)}</span>` : ''}</td>
@@ -6628,6 +6622,14 @@
     if (!row) return '';
     if (row.statut === 'PERMUTATION') return 'Permutation';
     return (L.participationStatutLabel && L.participationStatutLabel(row.statut)) || row.statut || '';
+  }
+
+  function participationRoleFlag(row) {
+    const role = String(row && row.role || '').toUpperCase();
+    if (L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) {
+      return `<span class="scope-enc-role-flag">${escapeHtml((L.ROLE_LABELS && L.ROLE_LABELS[role]) || role)}</span>`;
+    }
+    return '';
   }
 
   function uniqueFilterValues(rows, pick) {
@@ -6835,7 +6837,7 @@
                 <td data-label="INCORPORATION">${escapeHtml(displayIncorporation(r.cible && r.cible !== '—' ? r.cible : '', domaineCode))}</td>
                 <td data-label="CIBLE">${escapeHtml(displayIncorporation(r.cible && r.cible !== '—' ? r.cible : '', domaineCode))}</td>
                 <td data-label="STATUT">${escapeHtml(realiseStatutLabel(r))}</td>
-                <td data-label="INFORMATIONS">${escapeHtml((L.informationMotifLabel && L.informationMotifLabel(r)) || '')}</td>
+                <td data-label="INFORMATIONS">${[participationRoleFlag(r), escapeHtml((L.informationMotifLabel && L.informationMotifLabel(r)) || '')].filter(Boolean).join(' ')}</td>
                 <td data-label="ACTION">${canReadPersonnel() && r.personneId ? `<a class="scope-btn scope-realise-fiche-action" href="#/personnel/${escapeHtml(r.personneId)}">Fiche</a>` : ''}</td>
               </tr>`).join('')}
             </tbody>
@@ -8361,6 +8363,10 @@
     });
     root.querySelector('[data-cta="saisir"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
     root.querySelector('[data-cta="saisir-volumes"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
+    document.getElementById('scope-event-back')?.addEventListener('click', () => {
+      if (route().screen === 'saisie') requestLeaveSaisie('#/exercices');
+      else go('#/exercices');
+    });
     document.getElementById('convert-nominatif')?.addEventListener('click', () => { state.modal = 'convert-nominatif'; render(); });
     document.getElementById('convert-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('convert-ok')?.addEventListener('click', () => {
@@ -8631,7 +8637,6 @@
       row.addEventListener('focusout', () => { tip.style.visibility = ''; });
     });
     document.getElementById('save-part')?.addEventListener('click', () => saveParticipations());
-    document.getElementById('scope-saisie-back')?.addEventListener('click', () => requestLeaveSaisie('#/exercices'));
     document.getElementById('scope-saisie-leave-cancel')?.addEventListener('click', () => {
       state.modal = null;
       state.saisieGuard.pendingHash = '';

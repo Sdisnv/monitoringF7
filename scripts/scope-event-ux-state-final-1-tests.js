@@ -178,7 +178,8 @@ async function insertListEvent(repo, id, patch = {}){
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('<div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>'));
     assert.ok(!ui.includes('<a href="#/exercices">Événements</a> / ${escapeHtml(ev.libelle)}'));
-    assert.ok(ui.includes('<a class="scope-btn" href="#/exercices">Retour aux événements</a>'));
+    assert.ok(ui.includes('id="scope-event-back"'));
+    assert.ok(ui.includes("requestLeaveSaisie('#/exercices')"));
   });
 
   for(const result of results){

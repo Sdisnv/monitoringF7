@@ -140,7 +140,7 @@ function nativeCsv(rows){
   });
 
   await record('02 — création manuelle expose SINGLE/MULTI sans id technique', async () => {
-    assert.ok(html.includes('scope-generic-exercise-sessions-1'));
+    assert.ok(html.includes('scope-event-close-ux-formateur-1') || html.includes('scope-generic-exercise-sessions-1'));
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const cible = await target(repo, 'AUTO', 'VL');

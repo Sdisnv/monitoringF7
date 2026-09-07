@@ -158,6 +158,14 @@ function hasLogo(file){
   try { return fs.existsSync(file); } catch { return false; }
 }
 
+function nominativeInfoLabel(row){
+  const parts = [];
+  if(row && row.roleLabel) parts.push(`Rôle : ${row.roleLabel}`);
+  if(row && row.permutation) parts.push('Permutation ⊂ présents');
+  else if(row && row.motifLabel) parts.push(row.motifLabel);
+  return parts.join(' · ');
+}
+
 class ScopePdfRenderer {
   constructor(model, meta){
     this.model = model;
@@ -785,7 +793,7 @@ class ScopePdfRenderer {
         m.nominatif.map((r) => [
           r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '',
           this.eventStatutLabel(r),
-          r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
+          nominativeInfoLabel(r)
         ]),
         [38, 72, 62, 42, 36, 42, 52, 155],
         {
@@ -1414,7 +1422,7 @@ class ScopePdfRenderer {
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Cible', 'Statut', 'Motif'],
         m.nominatif.map((r) => [
           r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '', r.statutLabel,
-          r.permutation ? 'Permutation ⊂ présents' : (r.motifLabel || '')
+          nominativeInfoLabel(r)
         ]),
         [42, 78, 68, 48, 36, 48, 64, 75]
       );

@@ -85,6 +85,15 @@ const MOTIF_LABELS = Object.freeze({
   PAS_CONCERNE: 'Non concerné'
 });
 
+const ROLE_LABELS = Object.freeze({
+  FORMATEUR: 'Formateur',
+  MONITEUR: 'Moniteur',
+  SURVEILLANT: 'Surveillant',
+  AUXILIAIRE: 'Auxiliaire',
+  RENFORT: 'Renfort',
+  REMPLACANT: 'Remplaçant'
+});
+
 const MODE_LABELS = Object.freeze({
   NOMINATIF: 'Nominatif',
   QUANTITATIF: 'Quantitatif',
@@ -206,6 +215,7 @@ function nominativeRows(fiche){
     const part = parts.find((p) => String(p.personne_id) === String(pid)) || {};
     const cible = cibleById[a.cible_id] || {};
     const statut = part.statut || 'NON_RENSEIGNE';
+    const role = String(part.role || 'PARTICIPANT').toUpperCase();
     if(!isValidSessionStatut(statut)) return null;
     return {
       grade: person.grade || '',
@@ -218,6 +228,8 @@ function nominativeRows(fiche){
       statutLabel: STATUT_LABELS[part.statut] || part.statut || 'Non renseigné',
       motif: part.motif_absence || null,
       motifLabel: part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : '',
+      role,
+      roleLabel: role !== 'PARTICIPANT' ? (ROLE_LABELS[role] || role) : '',
       permutation: part.statut === 'PERMUTATION'
     };
   }).filter(Boolean).sort(sortByGradeThenName);
