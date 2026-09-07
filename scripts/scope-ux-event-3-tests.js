@@ -174,6 +174,10 @@ async function pageTexts(buffer) {
   });
 
   await record('11 — cache EVENT-3', () => {
+    if (html.includes('scope-pr-abc-close-r2')) {
+      assert.ok(pkg.includes('scope-ux-event-3-tests.js'));
+      return;
+    }
     if ((html.includes('assets/css/scope.css?v=scope-login-visual-alignment-orion-1') || html.includes('assets/css/scope.css?v=scope-login-1')) && (html.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || html.includes('scope-ui.js?v=scope-front-finition-1') || html.includes('scope-ui.js?v=scope-admin-rbac-doc-1') || html.includes('scope-ui.js?v=scope-domaines-rapports-close-1') || html.includes('scope-ui.js?v=scope-nav-convergence-1') || html.includes('scope-ui.js?v=scope-analyses-statistiques-1') || html.includes('scope-ui.js?v=scope-vigilance-nav-repair-1') || html.includes('scope-ui.js?v=scope-vigilance-participation-1') || html.includes('scope-ui.js?v=scope-cycles-pr-auto-1') || html.includes('scope-ui.js?v=scope-reports-pdf-specialisation-repair-1') || html.includes('scope-ui.js?v=scope-events-render-report-repair-1') || html.includes('scope-ui.js?v=scope-events-access-r1') || html.includes('scope-ui.js?v=scope-login-1'))) {
       assert.ok(pkg.includes('scope-ux-event-3-tests.js'));
       return;

@@ -218,19 +218,13 @@ async function setupSession(personCount = 2){
     assert.ok(ui.includes('informationMotifLabel && L.informationMotifLabel(r)'));
   });
 
-  await record('14-16 — Clôtures et filtre non renseigné inchangés', async () => {
+  await record('14-16 — Clôture séance multi-session autorisée, filtre non renseigné stable', async () => {
     const ctx = await setupSession(2);
     const s1 = await ctx.service.lireEvenement('r1s1');
     assert.strictEqual(s1.prExerciseParticipation.isLastSession, false);
-    let refused = null;
-    try {
-      await ctx.service.cloturer('r1s1', { baseVersion: await version(ctx.repo, 'r1s1') }, ACTOR);
-    } catch (error) {
-      refused = error;
-    }
-    assert.ok(refused);
-    assert.strictEqual(refused.status, 422);
-    assert.strictEqual((await ctx.repo.getEvent('r1s1')).statut, 'PLANIFIE');
+    const closed = await ctx.service.cloturer('r1s1', { baseVersion: await version(ctx.repo, 'r1s1') }, ACTOR);
+    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    assert.strictEqual((await ctx.repo.getEvent('r1s1')).statut, 'REALISE');
     const last = await ctx.service.lireEvenement('r1s3');
     assert.strictEqual(last.prExerciseParticipation.isLastSession, true);
     assert.ok((last.prExerciseParticipation.unfilledPeople || []).length >= 1);
@@ -238,7 +232,7 @@ async function setupSession(personCount = 2){
     assert.ok(ui.includes('Clôturer la séance'));
     assert.ok(logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true }));
     assert.ok(!logic.isOpenSaisieRow({ statut: 'PRESENT', role: 'FORMATEUR', inclus: true }));
-    assert.ok(logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true, alreadyCountedInSession: true, sessionExcuse: true }));
+    assert.ok(!logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true, alreadyCountedInSession: true, sessionExcuse: true }));
   });
 
   await record('warning motifsForRow unique', () => {

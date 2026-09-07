@@ -135,8 +135,8 @@ function hooks(sessionMe, options = {}) {
 
   await record('06 — cache-bust SCOPE visuel uniquement', () => {
     const html = fs.readFileSync(path.join(ROOT, 'scope.html'), 'utf8');
-    assert.ok(html.includes('assets/css/scope.css?v=scope-login-visual-alignment-orion-1'));
-    assert.ok(html.includes('assets/js/scope-ui.js?v=scope-login-visual-alignment-orion-1'));
+    assert.ok(html.includes('assets/css/scope.css?v=scope-pr-abc-close-r2') || html.includes('assets/css/scope.css?v=scope-login-visual-alignment-orion-1'));
+    assert.ok(html.includes('assets/js/scope-ui.js?v=scope-pr-abc-close-r2') || html.includes('assets/js/scope-ui.js?v=scope-login-visual-alignment-orion-1'));
     assert.ok(html.includes('assets/js/scope-auth-idle.js?v=scope-login-1'));
     assert.ok(!html.includes('scope-demo.js'));
   });

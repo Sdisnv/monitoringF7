@@ -269,13 +269,15 @@ function resolveSessionReportingScope(input = {}){
   const events = input.evenements || input.events || [];
   const currentId = normalizeText(input.currentEventId || input.current_event_id);
   const current = events.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
+  const explicitGroupKey = normalizeText(current && (current.pr_exercise_group_key || current.prExerciseGroupKey));
   const groupKey = prExerciseGroupKey(current);
   const currentCycleId = cycleId(current);
   const period = normalizeReportingPeriod(input.reportingPeriod || input.period, current);
-  let scoped = groupKey
+  let scoped = explicitGroupKey
     ? events.filter((event) => prExerciseGroupKey(event) === groupKey)
-    : (currentCycleId ? events.filter((event) => cycleId(event) === currentCycleId) : events.filter((event) => eventId(event) === eventId(current)));
-  if(currentCycleId) scoped = scoped.filter((event) => cycleId(event) === currentCycleId);
+    : (groupKey
+      ? events.filter((event) => prExerciseGroupKey(event) === groupKey && (!currentCycleId || cycleId(event) === currentCycleId))
+      : (currentCycleId ? events.filter((event) => cycleId(event) === currentCycleId) : events.filter((event) => eventId(event) === eventId(current))));
   scoped = scoped.filter((event) => eventInReportingPeriod(event, period));
   return {
     current,
@@ -729,11 +731,15 @@ function buildCyclePilotage(input = {}){
 function computePrExerciseParticipationState(input = {}){
   const cycle = input.cycle || {};
   const personnesById = personneLookup(input.personnes);
-  const allEvents = cycleEvents(input, cycle);
+  const sourceEvents = input.evenements || input.events || [];
+  const currentId = normalizeText(input.currentEventId || input.current_event_id);
+  const current = sourceEvents.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
+  const explicitGroupKey = normalizeText(current && (current.pr_exercise_group_key || current.prExerciseGroupKey));
+  const allEvents = explicitGroupKey ? sourceEvents : cycleEvents(input, cycle);
   const group = prExerciseEvents({ ...input, evenements: allEvents });
   const events = group.events.filter(isEventCycleExigible);
   const groupEventIds = new Set(events.map(eventId).filter(Boolean));
-  const currentEventId = normalizeText(input.currentEventId || input.current_event_id);
+  const currentEventId = currentId;
   const eventOrder = new Map(events.map((event, index) => [eventId(event), index]));
   const eventsById = new Map(events.map((event) => [eventId(event), event]));
   const currentOrder = currentEventId && eventOrder.has(currentEventId) ? eventOrder.get(currentEventId) : null;

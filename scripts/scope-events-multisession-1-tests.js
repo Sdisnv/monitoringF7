@@ -127,9 +127,9 @@ function attendu(detail, personneId){
     assert.ok(css.includes('#fff6cc'));
   });
 
-  await record('04 — Dispensé : 4 motifs', () => {
+  await record('04 — Dispensé : motifs canoniques et legacy', () => {
     assert.deepStrictEqual(logic.MOTIFS_DISPENSE.map((m) => m.value), [
-      'JOKER', 'FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'PAS_CONCERNE', 'DEMISSION_EN_COURS'
+      'FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE'
     ]);
     const next = logic.applyParticipationStatus({ statut: 'NON_RENSEIGNE', role: 'PARTICIPANT' }, 'DISPENSE');
     assert.strictEqual(next.statut, 'DISPENSE');
@@ -137,6 +137,7 @@ function attendu(detail, personneId){
     const withMotif = logic.applyDispenseMotif(next, 'JOKER');
     assert.strictEqual(withMotif.motifAbsence, 'JOKER');
     assert.ok(Object.values(MOTIFS_DISPENSE).includes('PAS_CONCERNE'));
+    assert.ok(Object.values(MOTIFS_DISPENSE).includes('NON_CONCERNE'));
   });
 
   await record('05-08 — Dispensé local uniquement, couverture session sans overlay', async () => {
@@ -199,7 +200,7 @@ function attendu(detail, personneId){
     const locked = { statut: 'NON_RENSEIGNE', inclus: true, alreadyCountedInSession: true, sessionExcuse: true };
     const present = { statut: 'PRESENT', inclus: true };
     assert.ok(logic.isOpenSaisieRow(open));
-    assert.ok(logic.isOpenSaisieRow(locked));
+    assert.ok(!logic.isOpenSaisieRow(locked));
     assert.ok(!logic.isOpenSaisieRow(present));
     assert.ok(ui.includes('data-saisie-open-filter="open"'));
   });
@@ -321,7 +322,7 @@ function attendu(detail, personneId){
     assert.ok(pdfRenderer.includes('anthracite'));
     assert.ok(pdfRenderer.includes("heading('Synthèse de participation', 11, 'ink')"));
     assert.ok(ui.includes('GRADE') && ui.includes('NOM'));
-    assert.strictEqual(display.ficheEventInformations({ statutParticipation: 'DISPENSE', motif: 'PAS_CONCERNE' }), 'Pas concerné');
+    assert.strictEqual(display.ficheEventInformations({ statutParticipation: 'DISPENSE', motif: 'PAS_CONCERNE' }), 'Non concerné');
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

@@ -1774,9 +1774,9 @@ function createScopeService(repo){
 
   async function prSeriesEvents(tx, evenement){
     if(String(evenement.domaine_code || '').toUpperCase() !== 'PR') return [evenement];
-    const rows = evenement.cycle_id && tx.listCycleEvents
-      ? await tx.listCycleEvents(evenement.cycle_id)
-      : (tx.listPrExerciseEvents && evenement.pr_exercise_group_key ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+    const rows = tx.listPrExerciseEvents && evenement.pr_exercise_group_key
+      ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key)
+      : (evenement.cycle_id && tx.listCycleEvents ? await tx.listCycleEvents(evenement.cycle_id) : [evenement]);
     return resolveSessionReportingScope({ evenements: rows || [], currentEvent: evenement }).events
       .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(prSessionLabel(a)).localeCompare(String(prSessionLabel(b)), 'fr', { numeric: true }));
   }
@@ -1864,9 +1864,9 @@ function createScopeService(repo){
       ? await store.getCycle(evenement.cycle_id)
       : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
     if(!cycle) return null;
-    const cycleEvents = evenement.cycle_id && store.listCycleEvents
-      ? await store.listCycleEvents(evenement.cycle_id)
-      : (store.listPrExerciseEvents && evenement.pr_exercise_group_key ? await store.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+    const cycleEvents = store.listPrExerciseEvents && evenement.pr_exercise_group_key
+      ? await store.listPrExerciseEvents(evenement.pr_exercise_group_key)
+      : (evenement.cycle_id && store.listCycleEvents ? await store.listCycleEvents(evenement.cycle_id) : [evenement]);
     const scoped = resolveSessionReportingScope({ evenements: cycleEvents, currentEvent: evenement });
     const scopedEvents = scoped.events.length ? scoped.events : [evenement];
     const cyclePersonnes = evenement.cycle_id && store.listCyclePersonnes ? await store.listCyclePersonnes(evenement.cycle_id) : [];
@@ -2451,9 +2451,9 @@ function createScopeService(repo){
         ? await repo.getCycle(evenement.cycle_id)
         : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
       if(cycle){
-        const cycleEvents = evenement.cycle_id && repo.listCycleEvents
-          ? await repo.listCycleEvents(evenement.cycle_id)
-          : (repo.listPrExerciseEvents && evenement.pr_exercise_group_key ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key) : [evenement]);
+        const cycleEvents = repo.listPrExerciseEvents && evenement.pr_exercise_group_key
+          ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key)
+          : (evenement.cycle_id && repo.listCycleEvents ? await repo.listCycleEvents(evenement.cycle_id) : [evenement]);
         const cycleCompletion = resolveCycleCompletion({ cycle, evenements: cycleEvents });
         cycleInfo = {
           cycle_id: cycle.cycle_id || null,
