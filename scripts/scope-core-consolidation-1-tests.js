@@ -194,7 +194,7 @@ function uiHooks(){
     const parts = [{ personne_id: 'a', statut: 'PRESENT' }, { personne_id: 'b', statut: 'NON_RENSEIGNE' }];
     validateCloture(event, attendus, parts, { requireExpectedFilled: false });
     assert.throws(() => validateCloture(event, attendus, parts, { requireExpectedFilled: true }), /Clôture refusée/);
-    eq(cycles.canCloseLastSession({ isMultiSession: true, isLastSession: true, unfilledPeople: ['b'] }), false);
+    eq(cycles.canCloseLastSession({ isMultiSession: true, isLastSession: true, unfilledPeople: ['b'] }), true);
   });
 
   await record('04 hierarchies et tri institutionnel central', () => {

@@ -9797,11 +9797,12 @@
   }
 
   function confirmClotureAfterSave() {
-    const incomplete = L.listIncompleteClosureRows ? L.listIncompleteClosureRows(state.saisie) : [];
     const session = (state.fiche && (state.fiche.prExerciseParticipation || state.fiche.sessionParticipation)) || {};
     const multi = Boolean(session.isMultiSession);
-    const last = Boolean(session.isLastSession);
-    if (multi && !last) {
+    const incomplete = L.listSessionClosureBlockingRows
+      ? L.listSessionClosureBlockingRows(state.saisie, { isMultiSession: multi })
+      : (L.listIncompleteClosureRows ? L.listIncompleteClosureRows(state.saisie) : []);
+    if (multi && !incomplete.length) {
       ScopeFeedback.confirm({
         title: 'Clôturer la séance',
         message: 'La séance sera clôturée. Les personnes non renseignées restent disponibles pour les séances suivantes.',
@@ -9809,16 +9810,7 @@
       }, cloturer);
       return;
     }
-    const missing = last && multi
-      ? (session.unfilledPeople || []).map((p) => Object.assign({
-        personneId: p.personneId || p.personne_id,
-        grade: p.grade,
-        prenom: p.prenom,
-        nomFamille: p.nom || p.nomFamille,
-        nom: p.nom,
-        nip: p.nip
-      }, p))
-      : incomplete;
+    const missing = incomplete;
     if (missing.length) {
       state.clotureIncompletePeople = missing;
       state.modal = 'cloture-incomplete';
@@ -9826,11 +9818,9 @@
       return;
     }
     ScopeFeedback.confirm({
-      title: last && multi ? 'Clôturer l’exercice' : 'Clôturer l’événement',
-      message: last && multi
-        ? 'La session complète sera clôturée.'
-        : 'La saisie sera enregistrée et l’événement marqué comme réalisé.',
-      confirmText: last && multi ? 'Clôturer l’exercice' : 'Clôturer',
+      title: 'Clôturer l’événement',
+      message: 'La saisie sera enregistrée et l’événement marqué comme réalisé.',
+      confirmText: 'Clôturer',
       cancelText: 'Annuler'
     }, cloturer);
   }

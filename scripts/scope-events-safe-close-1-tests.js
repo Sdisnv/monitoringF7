@@ -347,7 +347,7 @@ async function setupEvent(count){
   await record('26 — pas de modification R4', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('alreadyCountedInSession'));
-    assert.ok(ui.includes('Clôturer l’exercice'));
+    assert.ok(ui.includes('Clôturer la séance'));
     assert.ok(ui.includes('persistParticipations'));
   });
 

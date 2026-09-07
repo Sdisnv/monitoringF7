@@ -1081,8 +1081,7 @@ function isValidSessionDecision(participation){
 }
 
 function canCloseLastSession(state){
-  if(!state || !state.isMultiSession || !state.isLastSession) return true;
-  return (state.unfilledPeople || []).length === 0;
+  return true;
 }
 
 function personHasValidStatusInSession(input = {}){

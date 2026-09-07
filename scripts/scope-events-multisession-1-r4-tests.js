@@ -139,7 +139,7 @@ function attendu(detail, personneId){
     assert.strictEqual(part.motif_absence, 'FORMATEUR_PR');
   });
 
-  await record('05-08 — Sans statut : pas de ligne réalisée, bloqué au final', async () => {
+  await record('05-08 — Sans statut : pas de ligne réalisée, bilan global ouvert', async () => {
     const ctx = await setupPr16(2);
     await markOn(ctx, ctx.people[0], 5, 'PRESENT');
     const rows1 = nominativeRows(await ctx.service.lireEvenement('r4s1'));
@@ -147,17 +147,10 @@ function attendu(detail, personneId){
     const last = await ctx.service.lireEvenement('r4s6');
     const missing = (last.prExerciseParticipation.unfilledPeople || []).map((p) => String(p.personneId));
     assert.ok(missing.includes(String(ctx.people[1].personne_id)));
-    assert.ok(!rules.canCloseLastSession(last.prExerciseParticipation));
-    let blocked = null;
-    try {
-      await ctx.service.cloturer('r4s6', { baseVersion: await version(ctx.repo, 'r4s6') }, ACTOR);
-    } catch (error) {
-      blocked = error;
-    }
-    assert.ok(blocked);
-    assert.strictEqual(blocked.status, 422);
-    assert.ok(['session_incomplete', 'cloture_refusee'].includes(blocked.error));
-    assert.ok(ui.includes('CLÔTURE IMPOSSIBLE'));
+    assert.ok(rules.canCloseLastSession(last.prExerciseParticipation));
+    const closed = await ctx.service.cloturer('r4s6', { baseVersion: await version(ctx.repo, 'r4s6') }, ACTOR);
+    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    assert.strictEqual((await ctx.repo.getParticipation('r4s6', ctx.people[1].personne_id)).statut, 'NON_RENSEIGNE');
     assert.ok(ui.includes('Afficher les personnes à renseigner'));
   });
 

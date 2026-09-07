@@ -269,11 +269,13 @@ async function closeExpectingError(service, repo, eventId){
   await record('22 seance intermediaire ne demande pas tous les statuts', () => {
     assert.ok(serviceSrc.includes('const requireExpectedFilled = !(prState && prState.isMultiSession);'));
   });
-  await record('23 derniere seance bloque si global incomplet', async () => {
+  await record('23 derniere seance cloturable avec bilan global incomplet', async () => {
     const extra = await setupSeries();
     await save(extra, 'pr31', [part('A', 'PRESENT')]);
-    const err = await closeExpectingError(extra.service, extra.repo, 'pr34');
-    assert.ok((err.details.unfilledPeople || []).length > 0);
+    const fiche = await extra.service.lireEvenement('pr34');
+    assert.ok((fiche.prExerciseParticipation.unfilledPeople || []).length > 0);
+    const closed = await extra.service.cloturer('pr34', { baseVersion: await version(extra.repo, 'pr34') }, ACTOR);
+    assert.strictEqual(closed.evenement.statut, 'REALISE');
   });
   await record('24 derniere seance passe si global complet', async () => {
     const extra = await setupSeries();

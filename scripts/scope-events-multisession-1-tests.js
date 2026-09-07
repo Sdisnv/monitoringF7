@@ -191,7 +191,7 @@ function attendu(detail, personneId){
     const missing = last.prExerciseParticipation.unfilledPeople || [];
     assert.ok(missing.some((p) => p.personneId === ctx.people[1].personne_id));
     assert.ok(missing.some((p) => p.nom && p.prenom && p.grade != null));
-    assert.ok(ui.includes('Clôturer l’exercice'));
+    assert.ok(ui.includes('Clôturer la séance'));
   });
 
   await record('13 — Filtre personnel non renseigné', () => {

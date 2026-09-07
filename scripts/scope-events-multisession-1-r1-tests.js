@@ -235,7 +235,7 @@ async function setupSession(personCount = 2){
     assert.strictEqual(last.prExerciseParticipation.isLastSession, true);
     assert.ok((last.prExerciseParticipation.unfilledPeople || []).length >= 1);
     assert.ok(ui.includes('Personnel non renseigné'));
-    assert.ok(ui.includes('Clôturer l’exercice'));
+    assert.ok(ui.includes('Clôturer la séance'));
     assert.ok(logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true }));
     assert.ok(!logic.isOpenSaisieRow({ statut: 'PRESENT', role: 'FORMATEUR', inclus: true }));
     assert.ok(logic.isOpenSaisieRow({ statut: 'NON_RENSEIGNE', inclus: true, alreadyCountedInSession: true, sessionExcuse: true }));

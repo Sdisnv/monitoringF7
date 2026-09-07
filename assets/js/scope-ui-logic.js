@@ -912,7 +912,7 @@
       }
       version = nextEventVersionAfterSave(saved, version);
     }
-    if (context.isLastSession && typeof context.unfilledAfterSave === 'function') {
+    if (context.isLastSession && !context.isMultiSession && typeof context.unfilledAfterSave === 'function') {
       order.push('unfilled');
       const missing = await context.unfilledAfterSave(version) || [];
       if (missing.length) {
@@ -1239,6 +1239,22 @@
 
   function listIncompleteClosureRows(rows) {
     return (rows || []).filter((row) => isIncompleteClosureRow(row));
+  }
+
+  function isInvalidMotifClosureRow(row) {
+    if (!row || row.inclus === false) return false;
+    if (!countsInSaisieTaux(row)) return false;
+    if (coveredInGlobalBilan(row)) return false;
+    if (statusLockedForRole(row.role)) return false;
+    if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) return true;
+    if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) return true;
+    return false;
+  }
+
+  function listSessionClosureBlockingRows(rows, options) {
+    const context = options || {};
+    if (context.isMultiSession) return (rows || []).filter((row) => isInvalidMotifClosureRow(row));
+    return listIncompleteClosureRows(rows);
   }
 
   function formatIncompletePersonLabel(row) {
@@ -1853,6 +1869,7 @@
     isOpenSaisieRow,
     isIncompleteClosureRow,
     listIncompleteClosureRows,
+    listSessionClosureBlockingRows,
     formatIncompletePersonLabel,
     motifsSaisieForDomaine,
     closureBlockers,
