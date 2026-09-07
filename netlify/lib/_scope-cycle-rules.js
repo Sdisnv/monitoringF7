@@ -52,6 +52,33 @@ function cycleId(row){
   return normalizeText(row && (row.cycle_id || row.cycleId));
 }
 
+function exerciseId(row){
+  return normalizeText(row && (row.exercice_id || row.exerciceId || row.exercise_id || row.exerciseId));
+}
+
+function exerciseModeSession(row){
+  return normalizeUpper(row && (row.mode_session || row.modeSession || (row.exercice && (row.exercice.mode_session || row.exercice.modeSession))));
+}
+
+function exerciseExpectedSessionCount(row){
+  const value = row && (
+    row.nombre_sessions_attendu
+    || row.nombreSessionsAttendu
+    || (row.exercice && (row.exercice.nombre_sessions_attendu || row.exercice.nombreSessionsAttendu))
+  );
+  const count = Number(value);
+  return Number.isFinite(count) && count > 0 ? count : null;
+}
+
+function exerciseConsolidationActive(row){
+  const value = row && (
+    row.consolidation_active
+    || row.consolidationActive
+    || (row.exercice && (row.exercice.consolidation_active || row.exercice.consolidationActive))
+  );
+  return value === true;
+}
+
 function personneLookup(personnes){
   if(personnes instanceof Map) return personnes;
   if(Array.isArray(personnes)) return new Map(personnes.map((p) => [personneId(p), p]));
@@ -240,6 +267,12 @@ function mapEventCounts(events){
 function prExerciseGroupKey(event){
   const explicit = normalizeText(event && (event.pr_exercise_group_key || event.prExerciseGroupKey));
   if(explicit) return explicit;
+  const generic = exerciseId(event);
+  if(generic){
+    const mode = exerciseModeSession(event);
+    const count = exerciseExpectedSessionCount(event);
+    if(mode === 'MULTI' || exerciseConsolidationActive(event) || (count && count > 1)) return `EXERCICE:${generic}`;
+  }
   const cyclePart = cycleId(event) || 'NO_CYCLE';
   const libelle = normalizeText(event && (event.libelle || event.label));
   const match = libelle.match(/exercice\s+pr\s+([0-9]+)(?:\.[0-9]+)?/i);
@@ -269,7 +302,7 @@ function resolveSessionReportingScope(input = {}){
   const events = input.evenements || input.events || [];
   const currentId = normalizeText(input.currentEventId || input.current_event_id);
   const current = events.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
-  const explicitGroupKey = normalizeText(current && (current.pr_exercise_group_key || current.prExerciseGroupKey));
+  const explicitGroupKey = normalizeText(current && (current.pr_exercise_group_key || current.prExerciseGroupKey)) || exerciseId(current);
   const groupKey = prExerciseGroupKey(current);
   const currentCycleId = cycleId(current);
   const period = normalizeReportingPeriod(input.reportingPeriod || input.period, current);
@@ -291,6 +324,9 @@ function resolveSessionReportingScope(input = {}){
 function prSessionKey(event){
   const explicit = normalizeText(event && (event.pr_session_key || event.prSessionKey));
   if(explicit) return explicit;
+  const generic = exerciseId(event);
+  const sessionIndex = Number(event && (event.session_index || event.sessionIndex));
+  if(generic && Number.isFinite(sessionIndex) && sessionIndex > 0) return `EXERCICE:${generic}.${sessionIndex}`;
   const cyclePart = cycleId(event) || 'NO_CYCLE';
   const libelle = normalizeText(event && (event.libelle || event.label));
   const match = libelle.match(/exercice\s+pr\s+([0-9]+\.[0-9]+)/i);
@@ -300,6 +336,10 @@ function prSessionKey(event){
 function prSessionLabel(event){
   const explicit = normalizeText(event && (event.pr_session_label || event.prSessionLabel));
   if(explicit) return explicit;
+  const genericLabel = normalizeText(event && (event.session_label || event.sessionLabel));
+  if(genericLabel) return genericLabel;
+  const sessionIndex = Number(event && (event.session_index || event.sessionIndex));
+  if(Number.isFinite(sessionIndex) && sessionIndex > 0) return String(sessionIndex);
   const libelle = normalizeText(event && (event.libelle || event.label));
   const match = libelle.match(/exercice\s+pr\s+([0-9]+\.[0-9]+)/i);
   if(match) return match[1];
@@ -329,6 +369,8 @@ function sortSessionEvents(events){
 
 function sessionExerciseLabel(events, groupKey){
   const first = (events && events[0]) || {};
+  const exerciseLabel = normalizeText(first.exercice_libelle || first.exerciceLibelle || (first.exercice && first.exercice.libelle));
+  if(exerciseLabel) return exerciseLabel;
   const libelle = normalizeText(first.libelle || first.label);
   const pr = libelle.match(/exercice\s+pr\s+(\d+)/i);
   if(pr) return `PR ${pr[1]}`;
@@ -734,7 +776,7 @@ function computePrExerciseParticipationState(input = {}){
   const sourceEvents = input.evenements || input.events || [];
   const currentId = normalizeText(input.currentEventId || input.current_event_id);
   const current = sourceEvents.find((event) => eventId(event) === currentId) || input.currentEvent || input.current_event || {};
-  const explicitGroupKey = normalizeText(current && (current.pr_exercise_group_key || current.prExerciseGroupKey));
+  const explicitGroupKey = normalizeText(current && (current.pr_exercise_group_key || current.prExerciseGroupKey)) || exerciseId(current);
   const allEvents = explicitGroupKey ? sourceEvents : cycleEvents(input, cycle);
   const group = prExerciseEvents({ ...input, evenements: allEvents });
   const events = group.events.filter(isEventCycleExigible);
@@ -1132,6 +1174,7 @@ module.exports = {
   isEventStatisticallyCountable,
   isEventCycleExigible,
   resolveCycleCompletion,
+  exerciseId,
   prExerciseGroupKey,
   prSessionKey,
   prSessionLabel,

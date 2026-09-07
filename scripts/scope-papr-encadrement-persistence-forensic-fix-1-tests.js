@@ -175,6 +175,7 @@ async function runPrGlobalRegression(client, service, repo){
   await client.connect();
   try {
     await client.query('BEGIN');
+    await client.query(fs.readFileSync(path.join(__dirname, '..', 'database/migrations/20260907_scope_generic_exercise_sessions_1.sql'), 'utf8'));
     const repo = createPgRepo(client);
     const service = createScopeService(repo);
     await runPersistenceCase(client, service, repo, 'FORMATEUR', false);

@@ -182,6 +182,9 @@
     libelleForm: '',
     cibleForm: [],
     modeChoice: '',
+    sessionModeChoice: 'SINGLE',
+    sessionCountChoice: 3,
+    consolidationChoice: true,
     modeTouched: false,
     modeSuggestion: null,
     volumes: { attendus: '', presents: '', excuses: '', excusesPrive: '', excusesProfessionnel: '', excusesArmee: '', excusesAccidentMaladie: '', excusesNonPrecise: '', nonExcuses: '', dispenses: '0', permutations: '0' },
@@ -5679,6 +5682,15 @@
           </div>
           <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
           <fieldset class="scope-field scope-mode-choice" style="margin-top:12px">
+            <legend>Organisation</legend>
+            <label class="scope-radio"><input type="radio" name="new-session-mode" value="SINGLE" ${state.sessionModeChoice !== 'MULTI' ? 'checked' : ''}> Séance unique</label>
+            <label class="scope-radio"><input type="radio" name="new-session-mode" value="MULTI" ${state.sessionModeChoice === 'MULTI' ? 'checked' : ''}> Plusieurs sessions</label>
+            ${state.sessionModeChoice === 'MULTI' ? `
+              <div class="scope-field" style="margin-top:8px"><label>Nombre de sessions</label><input id="new-session-count" type="number" min="2" step="1" value="${escapeHtml(String(state.sessionCountChoice || 3))}"></div>
+              <label class="scope-radio"><input id="new-consolidation" type="checkbox" ${state.consolidationChoice !== false ? 'checked' : ''}> Consolider la participation</label>
+            ` : ''}
+          </fieldset>
+          <fieldset class="scope-field scope-mode-choice" style="margin-top:12px">
             <legend>Mode de suivi</legend>
             <p class="scope-mode-hint" style="margin:0 0 8px">${escapeHtml((suggestion && suggestion.message) || 'Choisissez Nominatif ou Quantitatif. Le mode n’est jamais changé sans votre accord.')}</p>
             ${requireExplicit ? '<p class="scope-mode-hint">Les cibles n’ont pas la même règle : le choix est obligatoire.</p>' : ''}
@@ -8269,12 +8281,26 @@
         state.modeChoice = radio.value;
       });
     });
+    document.querySelectorAll('input[name="new-session-mode"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        state.sessionModeChoice = radio.value;
+        render();
+      });
+    });
+    document.getElementById('new-session-count')?.addEventListener('input', (e) => {
+      state.sessionCountChoice = Number(e.target.value || 3);
+    });
+    document.getElementById('new-consolidation')?.addEventListener('change', (e) => {
+      state.consolidationChoice = Boolean(e.target.checked);
+    });
     document.getElementById('new-save')?.addEventListener('click', () => {
       const date = document.getElementById('new-date').value;
       const domaineCode = document.getElementById('new-domaine').value;
       const libelle = document.getElementById('new-libelle').value;
       const cibleIds = [...document.querySelectorAll('#new-cibles input:checked')].map((n) => n.value);
       const modeSuivi = (document.querySelector('input[name="new-mode"]:checked') || {}).value;
+      const modeSession = state.sessionModeChoice === 'MULTI' ? 'MULTI' : 'SINGLE';
+      const nombreSessionsAttendu = modeSession === 'MULTI' ? Number(state.sessionCountChoice || 3) : 1;
       withLoading(async () => {
         if (!date || !libelle || !cibleIds.length) {
           throw { status: 422, error: 'incomplet', message: 'Date, domaine, au moins une cible et un libellé sont requis.' };
@@ -8282,11 +8308,27 @@
         if (!modeSuivi) {
           throw { status: 422, error: 'mode_requis', message: 'Choisissez le mode de suivi : Nominatif ou Quantitatif.' };
         }
-        const created = await client.createEvenement({ date, domaineCode, libelle, cibleIds, modeSuivi });
+        if (modeSession === 'MULTI' && (!Number.isInteger(nombreSessionsAttendu) || nombreSessionsAttendu < 2)) {
+          throw { status: 422, error: 'nombre_sessions_invalide', message: 'Indiquez au moins 2 sessions.' };
+        }
+        const created = await client.createEvenement({
+          date,
+          domaineCode,
+          libelle,
+          cibleIds,
+          modeSuivi,
+          modeSession,
+          nombreSessionsAttendu,
+          consolidationActive: state.consolidationChoice !== false,
+          sessionIndex: 1
+        });
         state.modeTouched = false;
         state.modeChoice = '';
         state.cibleForm = [];
         state.libelleForm = '';
+        state.sessionModeChoice = 'SINGLE';
+        state.sessionCountChoice = 3;
+        state.consolidationChoice = true;
         go(`#/exercices/${created.evenement.evenement_id}`);
       });
     });

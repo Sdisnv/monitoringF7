@@ -124,6 +124,7 @@ function rowFromFiche(fiche, personneId){
     role: participation.role || 'PARTICIPANT',
     statut,
     motifAbsence: participation.motif_absence || participation.motifAbsence || '',
+    sessionHasValidStatus: localValid,
     alreadyCountedInSession: already,
     coveredInGlobalBilan: Boolean(!localValid && already),
     sessionReferenceEventLabel: attendu.sessionReferenceEventLabel || attendu.session_reference_event_label || '',
@@ -228,7 +229,7 @@ async function closeExpectingError(service, repo, eventId){
   });
   await record('13 KPI saisie = global R4', () => {
     assert.deepStrictEqual(kpis(pr34), { attendus: 5, presents: 4, excuses: 0, absents: 0, dispenses: 0, open: 1 });
-    assert.ok(uiSrc.includes('prExerciseParticipation.kpis'));
+    assert.ok(!uiSrc.includes('prExerciseParticipation.kpis'));
   });
   await record('14 KPI realise = local evenement', async () => {
     await save(ctx, 'pr34', [part('D', 'PRESENT')]);

@@ -60,6 +60,53 @@ function actorId(actor){
   return String(actor?.sub || actor?.email || actor?.nip || actor || 'systeme');
 }
 
+function boolFromInput(value, fallback){
+  if(value === undefined || value === null || value === '') return fallback;
+  if(value === true || value === false) return value;
+  return ['1', 'true', 'oui', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
+function normalizeSessionConfig(body = {}){
+  const rawMode = String(body.modeSession || body.mode_session || body.sessionMode || body.session_mode || 'SINGLE').trim().toUpperCase();
+  const modeSession = rawMode === 'MULTI' || rawMode === 'PLUSIEURS' ? 'MULTI' : 'SINGLE';
+  const rawCount = body.nombreSessionsAttendu || body.nombre_sessions_attendu || body.nbSessions || body.nb_sessions || body.sessionCount || body.session_count;
+  const count = modeSession === 'MULTI'
+    ? Math.max(2, Number(rawCount || 2))
+    : 1;
+  if(!Number.isFinite(count) || count < 1){
+    throw new HttpError(400, 'nombre_sessions_invalide', 'Nombre de sessions invalide.');
+  }
+  const rawIndex = body.sessionIndex || body.session_index;
+  const sessionIndex = rawIndex === undefined || rawIndex === null || rawIndex === ''
+    ? 1
+    : Number(rawIndex);
+  if(!Number.isInteger(sessionIndex) || sessionIndex < 1 || sessionIndex > count){
+    throw new HttpError(400, 'session_index_invalide', 'Index de session invalide.');
+  }
+  return {
+    modeSession,
+    nombreSessionsAttendu: count,
+    consolidationActive: modeSession === 'MULTI'
+      ? boolFromInput(body.consolidationActive || body.consolidation_active, true)
+      : false,
+    sessionIndex,
+    sessionLabel: String(body.sessionLabel || body.session_label || (modeSession === 'MULTI' ? `Session ${sessionIndex}` : '')).trim() || null
+  };
+}
+
+function exerciseKeyFromParts(source, code, date, libelle){
+  const base = String(code || libelle || 'exercice')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+  const year = String(date || '').slice(0, 4) || 'na';
+  return `${source}:${year}:${base || 'exercice'}`;
+}
+
 function compactCodePart(value, fallback){
   const text = String(value || fallback || '')
     .trim()
@@ -290,31 +337,54 @@ function createScopeService(repo){
       }
     }
     const codeCours = await nextManualCode(repo, body, cibleIds);
-    const evenement = await repo.insertEvenement({
-      date,
-      domaine_code: domaine,
-      sous_domaine_code: isSousDomaineFospec(domaine) ? domaine : null,
-      libelle,
-      statut: 'PLANIFIE',
-      origine,
-      mode_suivi: modeSuivi,
-      code_cours: codeCours,
-      code_source: codeCours,
-      source_type: origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL',
-      heure_debut: body.heureDebut || body.heure_debut || body.debut || null,
-      heure_fin: body.heureFin || body.heure_fin || body.fin || null,
-      salle: body.salle || null,
-      responsable: body.responsable || null,
-      cible_ids: cibleIds
+    const sessionConfig = normalizeSessionConfig(body);
+    return repo.withTransaction(async (tx) => {
+      let exercice = null;
+      if(sessionConfig.modeSession === 'MULTI'){
+        exercice = await tx.upsertExercise({
+          exercice_key: exerciseKeyFromParts('manual', body.exerciceCode || body.exercice_code || codeCours, date, body.exerciceLibelle || body.exercice_libelle || libelle),
+          domaine_code: domaine,
+          code: body.exerciceCode || body.exercice_code || codeCours,
+          libelle: String(body.exerciceLibelle || body.exercice_libelle || `${libelle} — ${String(date).slice(0, 4)}`).trim(),
+          annee: Number(String(date).slice(0, 4)),
+          mode_session: 'MULTI',
+          nombre_sessions_attendu: sessionConfig.nombreSessionsAttendu,
+          consolidation_active: sessionConfig.consolidationActive,
+          source: 'MANUEL',
+          metadata: { createdFrom: 'manual_event_form' }
+        });
+      }
+      const evenement = await tx.insertEvenement({
+        date,
+        domaine_code: domaine,
+        sous_domaine_code: isSousDomaineFospec(domaine) ? domaine : null,
+        libelle,
+        statut: 'PLANIFIE',
+        origine,
+        mode_suivi: modeSuivi,
+        code_cours: codeCours,
+        code_source: codeCours,
+        source_type: origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL',
+        heure_debut: body.heureDebut || body.heure_debut || body.debut || null,
+        heure_fin: body.heureFin || body.heure_fin || body.fin || null,
+        salle: body.salle || null,
+        responsable: body.responsable || null,
+        exercice_id: exercice && exercice.exercice_id,
+        session_index: exercice ? sessionConfig.sessionIndex : null,
+        session_label: exercice ? sessionConfig.sessionLabel : null,
+        pr_exercise_group_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}` : null,
+        pr_session_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}.${sessionConfig.sessionIndex}` : null,
+        cible_ids: cibleIds
+      });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: evenement.evenement_id,
+        action: 'CREER',
+        apres: { date, domaine, libelle, cibleIds, origine, modeSuivi, exerciceId: exercice && exercice.exercice_id, sessionIndex: sessionConfig.sessionIndex }
+      });
+      return { evenement, exercice, version: evenement.version };
     });
-    await repo.appendJournal({
-      auteur_id: actorId(actor),
-      entite: 'evenement',
-      entite_id: evenement.evenement_id,
-      action: 'CREER',
-      apres: { date, domaine, libelle, cibleIds, origine, modeSuivi }
-    });
-    return { evenement, version: evenement.version };
   }
 
   function normalizeHeureEvent(value){
@@ -371,6 +441,37 @@ function createScopeService(repo){
     };
   }
 
+  async function assertExerciseSessionCountCanChange(store, exerciceId, nextCount){
+    if(!exerciceId || !store.listExerciseEvents) return { blocked: false, impacted: [] };
+    const events = await store.listExerciseEvents(exerciceId);
+    const impacted = [];
+    for(const event of events || []){
+      const index = Number(event.session_index || event.sessionIndex || 0);
+      if(!index || index <= nextCount) continue;
+      const [attendus, participations] = await Promise.all([
+        store.listAttendus ? store.listAttendus(event.evenement_id) : [],
+        store.listParticipations ? store.listParticipations(event.evenement_id) : []
+      ]);
+      const activeAttendus = (attendus || []).filter((row) => row.inclus !== false).length;
+      const businessParticipations = (participations || []).filter(participationHasBusinessTrace).length;
+      if(activeAttendus || businessParticipations || String(event.statut || '').toUpperCase() === 'REALISE'){
+        impacted.push({
+          evenement_id: event.evenement_id,
+          date: event.date,
+          libelle: event.libelle,
+          session_index: index,
+          attendus: activeAttendus,
+          participations: businessParticipations,
+          statut: event.statut
+        });
+      }
+    }
+    if(impacted.length){
+      throw new HttpError(409, 'reduction_sessions_protegee', 'La réduction du nombre de sessions est bloquée : une session supprimée du périmètre contient déjà des données.', { impacted });
+    }
+    return { blocked: false, impacted: [] };
+  }
+
   async function previewModifierEvenement(eventId, body = {}){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
@@ -380,13 +481,26 @@ function createScopeService(repo){
     const impact = (body.date !== undefined || body.cibleIds !== undefined || body.cible_ids !== undefined)
       ? await populationImpactForChange(evenement, nextDate, nextCibles)
       : { horsPopulation: [], attendusActuels: null, attendusCalcules: null, tracesConservees: 0 };
+    const wantsSessionCount = body.nombreSessionsAttendu !== undefined || body.nombre_sessions_attendu !== undefined || body.nbSessions !== undefined || body.nb_sessions !== undefined;
+    let sessionImpact = { blocked: false, impacted: [] };
+    if(wantsSessionCount && evenement.exercice_id){
+      const nextCount = Number(body.nombreSessionsAttendu || body.nombre_sessions_attendu || body.nbSessions || body.nb_sessions);
+      try {
+        sessionImpact = await assertExerciseSessionCountCanChange(repo, evenement.exercice_id, nextCount);
+      } catch(error) {
+        if(error instanceof HttpError && error.status === 409){
+          sessionImpact = { blocked: true, impacted: error.details && error.details.impacted || [] };
+        } else throw error;
+      }
+    }
     return {
       evenement_id: eventId,
       code_cours: evenement.code_cours,
       statut: evenement.statut,
       modifiable: evenement.statut === 'PLANIFIE' || evenement.statut === 'REPORTE',
       reouvertureRequise: evenement.statut === 'REALISE',
-      impact
+      impact,
+      sessionImpact
     };
   }
 
@@ -414,6 +528,7 @@ function createScopeService(repo){
     const wantsDomaine = body.domaineCode !== undefined || body.domaine_code !== undefined;
     const wantsCibles = body.cibleIds !== undefined || body.cible_ids !== undefined;
     const wantsStatut = body.statut !== undefined;
+    const wantsSessionCount = body.nombreSessionsAttendu !== undefined || body.nombre_sessions_attendu !== undefined || body.nbSessions !== undefined || body.nb_sessions !== undefined;
     if(wantsDomaine && evenement.population_figee){
       throw new HttpError(422, 'population_figee_immutable', 'Le domaine ne peut plus être modifié après gel.');
     }
@@ -474,6 +589,16 @@ function createScopeService(repo){
       }
     }
     const next = await repo.withTransaction(async (tx) => {
+      if(wantsSessionCount && evenement.exercice_id && tx.updateExercise){
+        const nextCount = Number(body.nombreSessionsAttendu || body.nombre_sessions_attendu || body.nbSessions || body.nb_sessions);
+        if(!Number.isInteger(nextCount) || nextCount < 1) throw new HttpError(400, 'nombre_sessions_invalide', 'Nombre de sessions invalide.');
+        await assertExerciseSessionCountCanChange(tx, evenement.exercice_id, nextCount);
+        await tx.updateExercise(evenement.exercice_id, {
+          mode_session: nextCount > 1 ? 'MULTI' : 'SINGLE',
+          nombre_sessions_attendu: nextCount,
+          consolidation_active: nextCount > 1 ? Boolean(evenement.consolidation_active) : false
+        });
+      }
       const updated = await bumpOrConflict(tx, eventId, baseVersion, patch);
       let current = updated;
       if(wantsCibles){
@@ -1773,6 +1898,11 @@ function createScopeService(repo){
   }
 
   async function prSeriesEvents(tx, evenement){
+    if(evenement.exercice_id && tx.listExerciseEvents){
+      const rows = await tx.listExerciseEvents(evenement.exercice_id);
+      return resolveSessionReportingScope({ evenements: rows || [], currentEvent: evenement }).events
+        .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(prSessionLabel(a)).localeCompare(String(prSessionLabel(b)), 'fr', { numeric: true }));
+    }
     if(String(evenement.domaine_code || '').toUpperCase() !== 'PR') return [evenement];
     const rows = tx.listPrExerciseEvents && evenement.pr_exercise_group_key
       ? await tx.listPrExerciseEvents(evenement.pr_exercise_group_key)
@@ -1859,14 +1989,16 @@ function createScopeService(repo){
   }
 
   async function loadPrExerciseParticipationState(store, evenement, eventId){
-    if(!(evenement && (evenement.cycle_id || evenement.pr_exercise_group_key)) || !store.listParticipationsForEvents) return null;
+    if(!(evenement && (evenement.exercice_id || evenement.cycle_id || evenement.pr_exercise_group_key)) || !store.listParticipationsForEvents) return null;
     const cycle = evenement.cycle_id && store.getCycle
       ? await store.getCycle(evenement.cycle_id)
       : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
     if(!cycle) return null;
-    const cycleEvents = store.listPrExerciseEvents && evenement.pr_exercise_group_key
-      ? await store.listPrExerciseEvents(evenement.pr_exercise_group_key)
-      : (evenement.cycle_id && store.listCycleEvents ? await store.listCycleEvents(evenement.cycle_id) : [evenement]);
+    const cycleEvents = evenement.exercice_id && store.listExerciseEvents
+      ? await store.listExerciseEvents(evenement.exercice_id)
+      : (store.listPrExerciseEvents && evenement.pr_exercise_group_key
+        ? await store.listPrExerciseEvents(evenement.pr_exercise_group_key)
+        : (evenement.cycle_id && store.listCycleEvents ? await store.listCycleEvents(evenement.cycle_id) : [evenement]));
     const scoped = resolveSessionReportingScope({ evenements: cycleEvents, currentEvent: evenement });
     const scopedEvents = scoped.events.length ? scoped.events : [evenement];
     const cyclePersonnes = evenement.cycle_id && store.listCyclePersonnes ? await store.listCyclePersonnes(evenement.cycle_id) : [];
@@ -2446,14 +2578,18 @@ function createScopeService(repo){
       .sort(comparePeopleByGradeName);
     let prExerciseParticipation = { byPersonneId: {}, kpis: null };
     let cycleInfo = null;
-    if((evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
+    let exerciceInfo = evenement.exercice || null;
+    if((evenement.exercice_id || evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
       const cycle = evenement.cycle_id && repo.getCycle
         ? await repo.getCycle(evenement.cycle_id)
         : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
       if(cycle){
-        const cycleEvents = repo.listPrExerciseEvents && evenement.pr_exercise_group_key
-          ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key)
-          : (evenement.cycle_id && repo.listCycleEvents ? await repo.listCycleEvents(evenement.cycle_id) : [evenement]);
+        if(evenement.exercice_id && repo.getExercise) exerciceInfo = await repo.getExercise(evenement.exercice_id);
+        const cycleEvents = evenement.exercice_id && repo.listExerciseEvents
+          ? await repo.listExerciseEvents(evenement.exercice_id)
+          : (repo.listPrExerciseEvents && evenement.pr_exercise_group_key
+            ? await repo.listPrExerciseEvents(evenement.pr_exercise_group_key)
+            : (evenement.cycle_id && repo.listCycleEvents ? await repo.listCycleEvents(evenement.cycle_id) : [evenement]));
         const cycleCompletion = resolveCycleCompletion({ cycle, evenements: cycleEvents });
         cycleInfo = {
           cycle_id: cycle.cycle_id || null,
@@ -2506,7 +2642,6 @@ function createScopeService(repo){
           eventIds: scopedEvents.map((row) => row.evenement_id)
         };
         prExerciseParticipation.sessionLabels = scopedEvents
-          .filter((row) => !prExerciseParticipation.groupKey || row.pr_exercise_group_key === prExerciseParticipation.groupKey)
           .map((row) => prSessionLabel(row))
           .filter(Boolean);
         attendus = attendus.map((row) => {
@@ -2584,6 +2719,7 @@ function createScopeService(repo){
       : attendusActifs;
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi },
+      exercice: exerciceInfo,
       cibles,
       attendus: attendusActifs,
       attendusExclus,
@@ -2747,6 +2883,68 @@ function createScopeService(repo){
     };
   }
 
+  function importedExerciseKey(line){
+    if(importContract.exerciseImportKey) return importContract.exerciseImportKey(line);
+    return exerciseKeyFromParts('import', line.exerciceCode || line.codeEvent || line.libelle, line.date, line.libelle);
+  }
+
+  async function attachImportedExerciseSessions(tx, imported, actor, source){
+    const candidates = (imported || []).filter((item) => {
+      const line = item.line || {};
+      return Number(line.nbSessions || line.nombreSessionsAttendu || 0) > 1 && Number(line.sessionIndex || line.session_index || 0) > 0;
+    });
+    if(!candidates.length || !tx.upsertExercise || !tx.updateEventIfVersion) return [];
+    const byKey = new Map();
+    for(const item of candidates){
+      const key = importedExerciseKey(item.line);
+      const list = byKey.get(key) || [];
+      list.push(item);
+      byKey.set(key, list);
+    }
+    const attached = [];
+    for(const [key, list] of byKey.entries()){
+      const first = list[0].line;
+      const count = Number(first.nbSessions || first.nombreSessionsAttendu);
+      const exercice = await tx.upsertExercise({
+        exercice_key: exerciseKeyFromParts(source || 'import', key, first.date, first.libelle),
+        domaine_code: first.domaineStockage,
+        code: first.exerciceCode || first.codeEvent || key,
+        libelle: String(first.exerciceLibelle || first.libelle || 'Exercice').replace(/\s*\|.*$/, '').trim() + ` — ${String(first.date || '').slice(0, 4)}`,
+        annee: Number(String(first.date || '').slice(0, 4)),
+        mode_session: 'MULTI',
+        nombre_sessions_attendu: count,
+        consolidation_active: true,
+        source: 'IMPORT',
+        metadata: { source, sourceLineNos: list.map((item) => item.line.ligneNo) }
+      });
+      for(const item of list){
+        const line = item.line;
+        const event = item.evenement;
+        const sessionIndex = Number(line.sessionIndex || line.session_index);
+        const patch = {
+          exercice_id: exercice.exercice_id,
+          session_index: sessionIndex,
+          session_label: `Session ${sessionIndex}`
+        };
+        if(String(line.domaineStockage || '').toUpperCase() === 'PR'){
+          patch.pr_exercise_group_key = `EXERCICE:${exercice.exercice_id}`;
+          patch.pr_session_key = `EXERCICE:${exercice.exercice_id}.${sessionIndex}`;
+        }
+        const updated = await tx.updateEventIfVersion(event.evenement_id, event.version, patch);
+        item.evenement = updated || event;
+        await tx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'evenement',
+          entite_id: event.evenement_id,
+          action: 'RATTACHER_EXERCICE_SESSION',
+          apres: { exerciceId: exercice.exercice_id, sessionIndex, source }
+        });
+        attached.push({ evenementId: event.evenement_id, exerciceId: exercice.exercice_id, sessionIndex });
+      }
+    }
+    return attached;
+  }
+
   async function previewImportEvenements(body){
     const csvText = String(body?.csvText || body?.csv || '');
     if(!csvText.trim()){
@@ -2885,11 +3083,17 @@ function createScopeService(repo){
           sourceLineNos: group.sourceLineNos,
           targets: group.cibles.length,
           population: population.count,
-          version: frozen ? frozen.version : event.version
+          version: frozen ? frozen.version : event.version,
+          exercice: group.nbSessions > 1 ? {
+            code: group.exerciceCode || group.codeEvent || null,
+            sessionIndex: group.sessionIndex,
+            nombreSessionsAttendu: group.nbSessions
+          } : null
         });
-        importedGroups.push({ group, event });
-        group.sourceLineNos.forEach((lineNo) => importedByLine.set(lineNo, event));
+        importedGroups.push({ group, line: group, evenement: frozen || event });
+        group.sourceLineNos.forEach((lineNo) => importedByLine.set(lineNo, frozen || event));
       }
+      const attachedExerciseSessions = await attachImportedExerciseSessions(tx, importedGroups, actor, importContract.FORMAT_STANDARD);
       if(tx.bulkUpsertAttendus) await tx.bulkUpsertAttendus(attenduRows);
       else {
         for(const row of attenduRows) await tx.upsertAttendu(row);
@@ -2909,6 +3113,7 @@ function createScopeService(repo){
           imported: created.length,
           skipped: skipped.length,
           grouped: preview.summary.regroupes,
+          attachedExerciseSessions,
           excluded: [...excluded]
         }
       });
@@ -2944,6 +3149,7 @@ function createScopeService(repo){
         format: importContract.FORMAT_STANDARD,
         created,
         skipped,
+        attachedExerciseSessions,
         excluded: [...excluded],
         summary: {
           nbLignes: preview.lignes.length,
@@ -3014,10 +3220,17 @@ function createScopeService(repo){
           ligneNo: line.ligneNo,
           evenementId: evenement.evenement_id,
           mode: line.modePropose,
-          date: line.date
+          date: line.date,
+          exercice: line.nbSessions > 1 ? {
+            code: line.exerciceCode || line.codeEvent || null,
+            sessionIndex: line.sessionIndex,
+            nombreSessionsAttendu: line.nbSessions
+          } : null
         });
         imported.push({ line, evenement });
       }
+
+      const attachedExerciseSessions = await attachImportedExerciseSessions(tx, imported, actor, importContract.FORMAT_NATIVE);
 
       const importRow = await tx.insertImport({
         source_filename: filename || null,
@@ -3029,7 +3242,8 @@ function createScopeService(repo){
           format: importContract.FORMAT_NATIVE,
           imported: created.length,
           skipped: skipped.length,
-          excluded: [...excluded]
+          excluded: [...excluded],
+          attachedExerciseSessions
         }
       });
 
@@ -3082,6 +3296,7 @@ function createScopeService(repo){
         format: importContract.FORMAT_NATIVE,
         created,
         skipped,
+        attachedExerciseSessions,
         excluded: [...excluded],
         summary: {
           nbLignes: preview.lignes.length,

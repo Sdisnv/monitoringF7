@@ -55,6 +55,7 @@ function createMemoryRepo(){
   const periodes = new Map();
   const cycles = new Map();
   const cyclePersonnes = new Map();
+  const exercices = new Map();
   suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
     suivi_id: '8c0a0002-2026-4000-8000-000000000001',
     portee: 'GLOBAL',
@@ -71,6 +72,22 @@ function createMemoryRepo(){
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
   function keyLigne(importId, ligneNo){ return `${importId}::${ligneNo}`; }
   function keyCP(cycleId, personneId, roleCycle){ return `${cycleId}::${personneId}::${roleCycle || 'PARTICIPANT'}`; }
+
+  function decorateEvent(item){
+    if(!item) return null;
+    const exercice = item.exercice_id ? exercices.get(item.exercice_id) : null;
+    return {
+      ...item,
+      date: dateOnly(item.date),
+      exercice_key: exercice ? exercice.exercice_key : null,
+      exercice_code: exercice ? exercice.code : null,
+      exercice_libelle: exercice ? exercice.libelle : null,
+      mode_session: exercice ? exercice.mode_session : null,
+      nombre_sessions_attendu: exercice ? exercice.nombre_sessions_attendu : null,
+      consolidation_active: exercice ? exercice.consolidation_active : false,
+      exercice: exercice ? { ...exercice } : null
+    };
+  }
 
   function cloneMap(map){
     return new Map([...map.entries()].map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]));
@@ -95,7 +112,8 @@ function createMemoryRepo(){
       suiviNominatif: cloneMap(suiviNominatif),
       periodes: cloneMap(periodes),
       cycles: cloneMap(cycles),
-      cyclePersonnes: cloneMap(cyclePersonnes)
+      cyclePersonnes: cloneMap(cyclePersonnes),
+      exercices: cloneMap(exercices)
     };
   }
 
@@ -118,6 +136,7 @@ function createMemoryRepo(){
     periodes.clear(); (snap.periodes || new Map()).forEach((v, k) => periodes.set(k, v));
     cycles.clear(); (snap.cycles || new Map()).forEach((v, k) => cycles.set(k, v));
     cyclePersonnes.clear(); (snap.cyclePersonnes || new Map()).forEach((v, k) => cyclePersonnes.set(k, v));
+    exercices.clear(); (snap.exercices || new Map()).forEach((v, k) => exercices.set(k, v));
   }
 
   const api = {
@@ -303,7 +322,7 @@ function createMemoryRepo(){
         if(existing){
           const current = evenementCibles.get(existing.evenement_id) || [];
           evenementCibles.set(existing.evenement_id, [...new Set(current.concat(row.cible_ids || []))]);
-          return { ...existing, already_exists: true };
+          return { ...decorateEvent(existing), already_exists: true };
         }
       }
       const item = {
@@ -325,6 +344,9 @@ function createMemoryRepo(){
         salle: row.salle || null,
         responsable: row.responsable || null,
         cycle_id: row.cycle_id || row.cycleId || null,
+        exercice_id: row.exercice_id || row.exerciceId || null,
+        session_index: row.session_index == null ? (row.sessionIndex == null ? null : Number(row.sessionIndex)) : Number(row.session_index),
+        session_label: row.session_label || row.sessionLabel || null,
         pr_exercise_group_key: row.pr_exercise_group_key || row.prExerciseGroupKey || null,
         pr_session_key: row.pr_session_key || row.prSessionKey || null,
         population_figee: false,
@@ -339,7 +361,7 @@ function createMemoryRepo(){
       };
       evenements.set(item.evenement_id, item);
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
-      return { ...item, already_exists: false };
+      return { ...decorateEvent(item), already_exists: false };
     },
     async listEvenements({ annee, statut, domaine, from, to } = {}){
       return [...evenements.values()]
@@ -353,12 +375,12 @@ function createMemoryRepo(){
           return true;
         })
         .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.libelle).localeCompare(String(b.libelle)))
-        .map((item) => ({ ...item, date: dateOnly(item.date) }));
+        .map(decorateEvent);
     },
     async getEvent(id){
       const item = evenements.get(id);
       if(!item) return null;
-      return { ...item, date: dateOnly(item.date) };
+      return decorateEvent(item);
     },
     async getEventForUpdate(id){ return api.getEvent(id); },
     async listEventCibleIds(id){ return evenementCibles.get(id) || []; },
@@ -369,7 +391,7 @@ function createMemoryRepo(){
       if(item.version !== Number(baseVersion)) return null;
       Object.assign(item, patch, { version: item.version + 1, updated_at: now() });
       evenements.set(id, item);
-      return { ...item };
+      return decorateEvent(item);
     },
     async nextManualEventSequence(){
       let max = 0;
@@ -533,13 +555,65 @@ function createMemoryRepo(){
       return [...evenements.values()]
         .filter((item) => item.cycle_id === cycleId)
         .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
-        .map((item) => ({ ...item, date: dateOnly(item.date) }));
+        .map(decorateEvent);
     },
     async listPrExerciseEvents(groupKey){
+      const textKey = String(groupKey || '');
+      if(textKey.startsWith('EXERCICE:') && api.listExerciseEvents){
+        return api.listExerciseEvents(textKey.slice('EXERCICE:'.length));
+      }
       return [...evenements.values()]
         .filter((item) => item.pr_exercise_group_key === groupKey)
         .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
-        .map((item) => ({ ...item, date: dateOnly(item.date) }));
+        .map(decorateEvent);
+    },
+    async listExerciseEvents(exerciceId){
+      return [...evenements.values()]
+        .filter((item) => item.exercice_id === exerciceId)
+        .sort((a, b) => (Number(a.session_index || 999999) - Number(b.session_index || 999999)) || String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
+        .map(decorateEvent);
+    },
+    async getExercise(id){
+      const item = exercices.get(id);
+      return item ? { ...item } : null;
+    },
+    async getExerciseByKey(exerciceKey){
+      const item = [...exercices.values()].find((row) => row.exercice_key === exerciceKey);
+      return item ? { ...item } : null;
+    },
+    async upsertExercise(row){
+      const key = row.exercice_key || row.exerciceKey || null;
+      const existing = key ? [...exercices.values()].find((item) => item.exercice_key === key) : null;
+      const item = existing || {
+        exercice_id: row.exercice_id || row.exerciceId || randomUUID(),
+        created_at: now()
+      };
+      Object.assign(item, {
+        exercice_key: key,
+        domaine_code: row.domaine_code || row.domaineCode,
+        code: row.code || null,
+        libelle: row.libelle,
+        annee: row.annee == null ? null : Number(row.annee),
+        mode_session: row.mode_session || row.modeSession || 'SINGLE',
+        nombre_sessions_attendu: row.nombre_sessions_attendu == null ? (row.nombreSessionsAttendu == null ? 1 : Number(row.nombreSessionsAttendu)) : Number(row.nombre_sessions_attendu),
+        consolidation_active: row.consolidation_active === true || row.consolidationActive === true,
+        source: row.source || 'MANUEL',
+        cycle_id: row.cycle_id || row.cycleId || null,
+        metadata: Object.assign({}, item.metadata || {}, row.metadata || {}),
+        updated_at: now()
+      });
+      exercices.set(item.exercice_id, item);
+      return { ...item };
+    },
+    async updateExercise(id, patch){
+      const item = exercices.get(id);
+      if(!item) return null;
+      Object.assign(item, patch || {}, {
+        nombre_sessions_attendu: (patch || {}).nombre_sessions_attendu == null ? item.nombre_sessions_attendu : Number(patch.nombre_sessions_attendu),
+        updated_at: now()
+      });
+      exercices.set(id, item);
+      return { ...item };
     },
     async attachEventToCycle(cycleId, eventId){
       const item = evenements.get(eventId);
@@ -547,7 +621,7 @@ function createMemoryRepo(){
       item.cycle_id = cycleId;
       item.version = Number(item.version || 1) + 1;
       item.updated_at = now();
-      return { ...item };
+      return decorateEvent(item);
     },
     async detachEventFromCycle(cycleId, eventId){
       const item = evenements.get(eventId);
@@ -555,7 +629,7 @@ function createMemoryRepo(){
       item.cycle_id = null;
       item.version = Number(item.version || 1) + 1;
       item.updated_at = now();
-      return { ...item };
+      return decorateEvent(item);
     },
     async listCyclePersonnes(cycleId){
       return [...cyclePersonnes.values()]

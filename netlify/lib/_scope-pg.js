@@ -13,6 +13,20 @@ function dateOnly(value){
 
 function mapEvent(row){
   if(!row) return null;
+  const exerciceId = row.exercice_id || null;
+  const sessionIndex = row.session_index == null ? null : Number(row.session_index);
+  const exercice = exerciceId ? {
+    exercice_id: exerciceId,
+    exercice_key: row.exercice_key || null,
+    code: row.exercice_code || null,
+    libelle: row.exercice_libelle || null,
+    annee: row.exercice_annee == null ? null : Number(row.exercice_annee),
+    mode_session: row.exercice_mode_session || null,
+    nombre_sessions_attendu: row.nombre_sessions_attendu == null ? null : Number(row.nombre_sessions_attendu),
+    consolidation_active: row.consolidation_active === true,
+    source: row.exercice_source || null,
+    cycle_id: row.exercice_cycle_id || null
+  } : null;
   return {
     evenement_id: row.evenement_id,
     date: dateOnly(row.date),
@@ -39,11 +53,41 @@ function mapEvent(row){
     salle: row.salle || null,
     responsable: row.responsable || null,
     cycle_id: row.cycle_id || null,
+    exercice_id: exerciceId,
+    session_index: sessionIndex,
+    session_label: row.session_label || null,
+    exercice_key: exercice && exercice.exercice_key,
+    exercice_code: exercice && exercice.code,
+    exercice_libelle: exercice && exercice.libelle,
+    mode_session: exercice && exercice.mode_session,
+    nombre_sessions_attendu: exercice && exercice.nombre_sessions_attendu,
+    consolidation_active: exercice ? exercice.consolidation_active : false,
+    exercice,
     pr_exercise_group_key: row.pr_exercise_group_key || null,
     pr_session_key: row.pr_session_key || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     already_exists: Boolean(row.already_exists)
+  };
+}
+
+function mapExercise(row){
+  if(!row) return null;
+  return {
+    exercice_id: row.exercice_id,
+    exercice_key: row.exercice_key || null,
+    domaine_code: row.domaine_code,
+    code: row.code || null,
+    libelle: row.libelle,
+    annee: row.annee == null ? null : Number(row.annee),
+    mode_session: row.mode_session || 'SINGLE',
+    nombre_sessions_attendu: row.nombre_sessions_attendu == null ? 1 : Number(row.nombre_sessions_attendu),
+    consolidation_active: row.consolidation_active === true,
+    source: row.source || 'MANUEL',
+    cycle_id: row.cycle_id || null,
+    metadata: row.metadata || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at
   };
 }
 
@@ -140,6 +184,19 @@ const AFFECTATION_SELECT = `
   a.date_inactif,
   a.created_at,
   a.updated_at
+`;
+
+const EVENT_SELECT = `
+  e.*,
+  x.exercice_key,
+  x.code as exercice_code,
+  x.libelle as exercice_libelle,
+  x.annee as exercice_annee,
+  x.mode_session as exercice_mode_session,
+  x.nombre_sessions_attendu,
+  x.consolidation_active,
+  x.source as exercice_source,
+  x.cycle_id as exercice_cycle_id
 `;
 
 const cibleJoinCondition = pgCibleJoinCondition;
@@ -504,6 +561,9 @@ function createPgRepo(client){
         row.heure_fin || row.heureFin || null,
         row.salle || null,
         row.responsable || null,
+        row.exercice_id || row.exerciceId || null,
+        row.session_index == null ? (row.sessionIndex == null ? null : Number(row.sessionIndex)) : Number(row.session_index),
+        row.session_label || row.sessionLabel || null,
         row.pr_exercise_group_key || row.prExerciseGroupKey || null,
         row.pr_session_key || row.prSessionKey || null
       ];
@@ -513,8 +573,8 @@ function createPgRepo(client){
              insert into scope_evenements(
                evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
                identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
-               pr_exercise_group_key, pr_session_key, version
-             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,1)
+               exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key, version
+             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,1)
              on conflict (code_cours) where code_cours is not null do nothing
              returning *, false as already_exists
            )
@@ -531,8 +591,8 @@ function createPgRepo(client){
           `insert into scope_evenements(
              evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
              identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
-             pr_exercise_group_key, pr_session_key, version
-           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,1)
+             exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key, version
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,1)
            returning *, false as already_exists`,
           params
         );
@@ -550,36 +610,36 @@ function createPgRepo(client){
       const params = [];
       let i = 1;
       if(annee){
-        clauses.push(`extract(year from date) = $${i}`);
+        clauses.push(`extract(year from e.date) = $${i}`);
         params.push(Number(annee));
         i += 1;
       }
       if(statut){
-        clauses.push(`statut = $${i}`);
+        clauses.push(`e.statut = $${i}`);
         params.push(String(statut));
         i += 1;
       }
       if(domaine){
-        clauses.push(`domaine_code = $${i}`);
+        clauses.push(`e.domaine_code = $${i}`);
         params.push(String(domaine));
         i += 1;
       }
       if(from){
-        clauses.push(`date >= $${i}::date`);
+        clauses.push(`e.date >= $${i}::date`);
         params.push(isoDate(from));
         i += 1;
       }
       if(to){
-        clauses.push(`date <= $${i}::date`);
+        clauses.push(`e.date <= $${i}::date`);
         params.push(isoDate(to));
         i += 1;
       }
       const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
-      const result = await q(`select * from scope_evenements ${where} order by date desc, libelle`, params);
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id ${where} order by e.date desc, e.libelle`, params);
       return result.rows.map(mapEvent);
     },
     async getEvent(id){
-      const result = await q('select * from scope_evenements where evenement_id = $1', [id]);
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.evenement_id = $1`, [id]);
       return mapEvent(result.rows[0] || null);
     },
     async getEventForUpdate(id){
@@ -611,7 +671,7 @@ function createPgRepo(client){
       const allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
-        'pr_exercise_group_key','pr_session_key'
+        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key'
       ];
       const sets = ['version = version + 1', 'updated_at = now()'];
       const params = [];
@@ -885,12 +945,84 @@ function createPgRepo(client){
       return mapCycle(result.rows[0] || null);
     },
     async listCycleEvents(cycleId){
-      const result = await q('select * from scope_evenements where cycle_id = $1 order by date, libelle', [cycleId]);
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.cycle_id = $1 order by e.date, e.libelle`, [cycleId]);
       return result.rows.map(mapEvent);
     },
     async listPrExerciseEvents(groupKey){
-      const result = await q('select * from scope_evenements where pr_exercise_group_key = $1 order by date, libelle', [groupKey]);
+      const textKey = String(groupKey || '');
+      if(textKey.startsWith('EXERCICE:') && api.listExerciseEvents){
+        return api.listExerciseEvents(textKey.slice('EXERCICE:'.length));
+      }
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.pr_exercise_group_key = $1 order by e.date, e.libelle`, [groupKey]);
       return result.rows.map(mapEvent);
+    },
+    async listExerciseEvents(exerciceId){
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.exercice_id = $1 order by coalesce(e.session_index, 999999), e.date, e.libelle`, [exerciceId]);
+      return result.rows.map(mapEvent);
+    },
+    async getExercise(id){
+      const result = await q('select * from scope_exercices where exercice_id = $1', [id]);
+      return mapExercise(result.rows[0] || null);
+    },
+    async getExerciseByKey(exerciceKey){
+      const result = await q('select * from scope_exercices where exercice_key = $1', [exerciceKey]);
+      return mapExercise(result.rows[0] || null);
+    },
+    async upsertExercise(row){
+      const id = row.exercice_id || row.exerciceId || randomUUID();
+      const result = await q(
+        `insert into scope_exercices(
+          exercice_id, exercice_key, domaine_code, code, libelle, annee,
+          mode_session, nombre_sessions_attendu, consolidation_active, source, cycle_id, metadata
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)
+        on conflict (exercice_key) where exercice_key is not null do update set
+          domaine_code = excluded.domaine_code,
+          code = coalesce(scope_exercices.code, excluded.code),
+          libelle = excluded.libelle,
+          annee = excluded.annee,
+          mode_session = excluded.mode_session,
+          nombre_sessions_attendu = excluded.nombre_sessions_attendu,
+          consolidation_active = excluded.consolidation_active,
+          updated_at = now(),
+          metadata = scope_exercices.metadata || excluded.metadata
+        returning *`,
+        [
+          id,
+          row.exercice_key || row.exerciceKey || null,
+          row.domaine_code || row.domaineCode,
+          row.code || null,
+          row.libelle,
+          row.annee == null ? null : Number(row.annee),
+          row.mode_session || row.modeSession || 'SINGLE',
+          row.nombre_sessions_attendu == null ? (row.nombreSessionsAttendu == null ? 1 : Number(row.nombreSessionsAttendu)) : Number(row.nombre_sessions_attendu),
+          row.consolidation_active === true || row.consolidationActive === true,
+          row.source || 'MANUEL',
+          row.cycle_id || row.cycleId || null,
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return mapExercise(result.rows[0]);
+    },
+    async updateExercise(id, patch){
+      const allowed = ['exercice_key','domaine_code','code','libelle','annee','mode_session','nombre_sessions_attendu','consolidation_active','source','cycle_id','metadata'];
+      const sets = ['updated_at = now()'];
+      const params = [];
+      let i = 1;
+      for(const key of allowed){
+        if(Object.prototype.hasOwnProperty.call(patch || {}, key)){
+          if(key === 'metadata'){
+            sets.push(`${key} = $${i}::jsonb`);
+            params.push(JSON.stringify(patch[key] || {}));
+          } else {
+            sets.push(`${key} = $${i}`);
+            params.push(patch[key]);
+          }
+          i += 1;
+        }
+      }
+      params.push(id);
+      const result = await q(`update scope_exercices set ${sets.join(', ')} where exercice_id = $${i} returning *`, params);
+      return mapExercise(result.rows[0] || null);
     },
     async attachEventToCycle(cycleId, eventId){
       const result = await q('update scope_evenements set cycle_id = $1, updated_at = now(), version = version + 1 where evenement_id = $2 returning *', [cycleId, eventId]);
@@ -1285,7 +1417,7 @@ function createPgRepo(client){
         i += 1;
       }
       const eventsRes = await q(
-        `select e.* from scope_evenements e where ${clauses.join(' and ')} order by e.date, e.libelle`,
+        `select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where ${clauses.join(' and ')} order by e.date, e.libelle`,
         params
       );
       const events = eventsRes.rows.map(mapEvent);

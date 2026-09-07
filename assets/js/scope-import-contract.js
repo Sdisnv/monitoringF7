@@ -18,6 +18,9 @@
     'cibles',
     'libelle',
     'mode_suivi',
+    'code_event',
+    'session',
+    'nb_sessions',
     'a_comptabiliser',
     'remarque',
     'identifiant_externe'
@@ -26,7 +29,7 @@
   const REQUIRED = ['date', 'domaine', 'cibles', 'libelle'];
   const STANDARD_COLUMNS = {
     obligatoires: ['code_cours', 'date', 'evenement', 'qui', 'stat_com', 'public_cible'],
-    optionnelles: ['debut', 'fin', 'domaine', 'sous_domaine', 'responsable', 'salle'],
+    optionnelles: ['debut', 'fin', 'domaine', 'sous_domaine', 'responsable', 'salle', 'code_event', 'session', 'nb_sessions'],
     informatives: ['semaine', 'jour', 'monitoring', 'code_exercice'],
     ignorees: []
   };
@@ -79,6 +82,9 @@
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '_');
     if (key === 'code_cours' || key === 'code_cour' || key === 'code') return 'code_cours';
+    if (key === 'code_event' || key === 'code_evenement' || key === 'code_exercice' || key === 'exercice') return 'code_event';
+    if (key === 'session' || key === 'seance' || key === 'session_index' || key === 'numero_session') return 'session';
+    if (key === 'nb_sessions' || key === 'nombre_sessions' || key === 'nombre_de_sessions' || key === 'sessions_total') return 'nb_sessions';
     if (key === 'date_evenement' || key === 'date_exercice') return key;
     if (key === 'debut' || key === 'heure_debut') return 'debut';
     if (key === 'fin' || key === 'heure_fin') return 'fin';
@@ -200,6 +206,57 @@
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, '');
+  }
+
+  function parsePositiveInt(raw) {
+    const text = String(raw || '').trim();
+    if (!text) return null;
+    const match = text.match(/\d+/);
+    const value = match ? Number(match[0]) : NaN;
+    return Number.isInteger(value) && value > 0 ? value : null;
+  }
+
+  function exerciseImportKey(line) {
+    const code = normalizeCodeComponent(line.codeEvent || line.code_event);
+    const year = String(line.date || '').slice(0, 4);
+    const domain = String(line.domaineStockage || line.domaine || '').toUpperCase();
+    const target = String(line.cibleCodes || '').toUpperCase();
+    const label = normalizeLabelForMatch(line.libelle);
+    return code || [year, domain, target, label].join('|');
+  }
+
+  function buildDetectedExerciseProposals(lines) {
+    const groups = new Map();
+    (lines || []).forEach((line) => {
+      if (String(line.statut || '').indexOf('ERREUR') === 0) return;
+      if (line.sessionIndex || line.nbSessions) return;
+      const year = String(line.date || '').slice(0, 4);
+      const key = [
+        year,
+        String(line.domaineStockage || '').toUpperCase(),
+        String(line.sousDomaine || '').toUpperCase(),
+        String(line.cibleCodes || '').toUpperCase(),
+        normalizeLabelForMatch(line.libelle)
+      ].join('|');
+      const list = groups.get(key) || [];
+      list.push(line);
+      groups.set(key, list);
+    });
+    return [...groups.values()]
+      .filter((list) => list.length > 1)
+      .map((list) => ({
+        statut: 'PROPOSITION',
+        persisted: false,
+        exercice: list[0].libelle,
+        domaine: list[0].domaineStockage,
+        cibleCodes: list[0].cibleCodes,
+        sessions: list
+          .slice()
+          .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')))
+          .map((line, index) => ({ ligneNo: line.ligneNo, date: line.date, sessionIndex: index + 1 })),
+        nombreSessions: list.length,
+        raison: 'Même libellé normalisé, domaine/cible et période. Proposition uniquement : aucune persistance sans validation utilisateur.'
+      }));
   }
 
   function normalizeStatCom(value) {
@@ -686,6 +743,21 @@
           cibleCodes = parsedCibles.cibleCodes;
         }
       }
+      const codeEvent = String(row.fields.code_event || '').trim();
+      const sessionIndex = parsePositiveInt(row.fields.session);
+      const nbSessions = parsePositiveInt(row.fields.nb_sessions);
+      if ((row.fields.session || row.fields.nb_sessions) && (!sessionIndex || !nbSessions)) {
+        errors.push({ error: 'sessions_invalides', message: 'SESSION et NB_SESSIONS doivent être des entiers positifs.' });
+        statutCode = statutCode || 'ERREUR';
+      }
+      if ((sessionIndex && !nbSessions) || (!sessionIndex && nbSessions)) {
+        errors.push({ error: 'sessions_incompletes', message: 'SESSION et NB_SESSIONS doivent être renseignées ensemble.' });
+        statutCode = statutCode || 'ERREUR';
+      }
+      if (sessionIndex && nbSessions && sessionIndex > nbSessions) {
+        errors.push({ error: 'session_hors_plage', message: 'SESSION ne peut pas être supérieure à NB_SESSIONS.' });
+        statutCode = statutCode || 'ERREUR';
+      }
 
       let modePropose = mode.requested || null;
       let autoMeta = null;
@@ -798,6 +870,14 @@
         comptabilise: comptable,
         remarque: row.fields.remarque || '',
         identifiantExterne: ext || null,
+        codeEvent,
+        exerciceCode: codeEvent,
+        sessionIndex,
+        session_index: sessionIndex,
+        nbSessions,
+        nombreSessionsAttendu: nbSessions,
+        modeSession: nbSessions && nbSessions > 1 ? 'MULTI' : 'SINGLE',
+        consolidationActive: Boolean(nbSessions && nbSessions > 1),
         actionPrevue,
         raison: errors.map((e) => e.message).concat(warnings).join(' ')
       });
@@ -828,12 +908,14 @@
       aCreer: aCreer.length,
       dejaExistants: lignes.filter((l) => l.actionPrevue === 'IGNORER_IDEMPOTENT').length,
       modes,
-      byDomaine
+      byDomaine,
+      exerciseGroups: [...new Set(aCreer.filter((l) => l.nbSessions && l.nbSessions > 1).map(exerciseImportKey))].length
     };
+    const detectedExerciseProposals = buildDetectedExerciseProposals(lignes);
 
     const tokenPayload = JSON.stringify({
       format: FORMAT_NATIVE,
-      lignes: lignes.map((l) => ({ n: l.ligneNo, fp: l.fingerprint, st: l.statut, mode: l.modePropose })),
+      lignes: lignes.map((l) => ({ n: l.ligneNo, fp: l.fingerprint, st: l.statut, mode: l.modePropose, ex: exerciseImportKey(l), s: l.sessionIndex, nb: l.nbSessions })),
       imported: [...maps.imported].sort(),
       existing: [...maps.byMode].sort()
     });
@@ -848,6 +930,7 @@
       ecriture: false,
       previewToken: sha256Hex(tokenPayload) || tokenPayload.slice(0, 64),
       lignes,
+      detectedExerciseProposals,
       summary
     };
   }
@@ -921,6 +1004,12 @@
       }
       const heureDebut = normalizeTime(f.debut);
       const heureFin = normalizeTime(f.fin);
+      const codeEvent = String(f.code_event || '').trim();
+      const sessionIndex = parsePositiveInt(f.session);
+      const nbSessions = parsePositiveInt(f.nb_sessions);
+      if ((f.session || f.nb_sessions) && (!sessionIndex || !nbSessions)) errors.push({ error: 'sessions_invalides', message: 'SESSION et NB_SESSIONS doivent être des entiers positifs.' });
+      if ((sessionIndex && !nbSessions) || (!sessionIndex && nbSessions)) errors.push({ error: 'sessions_incompletes', message: 'SESSION et NB_SESSIONS doivent être renseignées ensemble.' });
+      if (sessionIndex && nbSessions && sessionIndex > nbSessions) errors.push({ error: 'session_hors_plage', message: 'SESSION ne peut pas être supérieure à NB_SESSIONS.' });
       const normalizedLabel = normalizeLabelForMatch(libelle);
       const matchKey = [
         codeParts.statCom,
@@ -1015,6 +1104,14 @@
         cibleCodes,
         publicCible: displayTargetLabel(resolvedDomaine.domaineStockage || domaine, cibleCodes, cibles),
         publicCibleCode: cibleCodes,
+        codeEvent,
+        exerciceCode: codeEvent,
+        sessionIndex,
+        session_index: sessionIndex,
+        nbSessions,
+        nombreSessionsAttendu: nbSessions,
+        modeSession: nbSessions && nbSessions > 1 ? 'MULTI' : 'SINGLE',
+        consolidationActive: Boolean(nbSessions && nbSessions > 1),
         groupKey,
         matchKey,
         regroupementMetier: isTerritorialStandardEvent({
@@ -1051,6 +1148,16 @@
         responsable: line.responsable,
         salle: line.salle
       };
+      if(line.nbSessions && line.sessionIndex){
+        group.codeEvent = line.codeEvent;
+        group.exerciceCode = line.exerciceCode;
+        group.sessionIndex = line.sessionIndex;
+        group.session_index = line.sessionIndex;
+        group.nbSessions = line.nbSessions;
+        group.nombreSessionsAttendu = line.nbSessions;
+        group.modeSession = line.modeSession;
+        group.consolidationActive = line.consolidationActive;
+      }
       group.lignes.push(line);
       group.sourceLineNos.push(line.ligneNo);
       group.cibles.push(...line.cibles);
@@ -1089,8 +1196,10 @@
       ciblesInconnues: unknownTargets,
       territoriauxDistincts: groups.filter((g) => g.regroupementMetier === 'TERRITORIAL_DISTINCT').length,
       specialisationsRegroupees: groups.filter((g) => g.statut === 'GROUPED' && g.regroupementMetier === 'SPECIALISATION_REGROUPABLE').length,
+      exerciseGroups: [...new Set(lines.filter((l) => l.nbSessions && l.nbSessions > 1).map(exerciseImportKey))].length,
       peutCommit: errors === 0 && review === 0
     };
+    const detectedExerciseProposals = buildDetectedExerciseProposals(lines);
     const tokenPayload = JSON.stringify({ format: FORMAT_STANDARD, lines: lines.map((l) => [l.ligneNo, l.fingerprint, l.statut]), groups: groups.map((g) => [g.groupKey, g.statut]) });
     return {
       ok: summary.peutCommit,
@@ -1101,6 +1210,7 @@
       previewToken: sha256Hex(tokenPayload) || tokenPayload.slice(0, 64),
       lignes: lines,
       groups,
+      detectedExerciseProposals,
       summary
     };
   }
@@ -1127,6 +1237,8 @@
     inferTerritorialTargetCode,
     isTerritorialStandardEvent,
     standardGroupingKey,
+    exerciseImportKey,
+    buildDetectedExerciseProposals,
     buildCodeCours,
     splitCodeCours,
     resolveDomaine,
