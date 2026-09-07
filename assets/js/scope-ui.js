@@ -1476,6 +1476,7 @@
       report: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
       folder: '<path d="M3 7.5 5.5 5h5l2 2.5H21v12H3Z"/>',
       lock: '<rect x="5" y="10" width="14" height="10" rx="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v2"/>',
+      clock: '<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3.2 2"/>',
       settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3V21M4.8 6.5l1.6 1.6M17.6 16l1.6 1.6M3.5 12h2.2M18.3 12H21M4.8 17.5l1.6-1.6M17.6 8l1.6-1.6"/>'
     };
     return `<svg class="scope-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${paths[name] || paths.folder}</svg>`;
@@ -1623,7 +1624,7 @@
     const reason = params.get('authError') === '1' ? params.get('reason') || 'callback' : '';
     const status = state.authChecking
       ? `<div class="scope-login-status" role="status">Vérification de la session...</div>`
-      : `<a class="scope-login-submit" id="scope-okta-login" href="${escapeHtml(loginHref)}">Se connecter avec Okta</a>`;
+      : `<a class="scope-login-submit" id="scope-okta-login" href="${escapeHtml(loginHref)}" data-auth-provider="okta">Se connecter à SCOPE</a>`;
     const alert = reason || state.authError
       ? `<div class="scope-login-alert" role="alert">${escapeHtml(reason ? `Connexion interrompue : ${reason}` : loginMessage())}</div>`
       : '';
@@ -1631,25 +1632,81 @@
       <main class="scope-login-v1">
         <section class="scope-login-visual" aria-label="SCOPE">
           <div class="scope-login-visual-inner">
-            <img class="scope-login-logo" src="assets/img/logo-scope-blanc.png" alt="SCOPE" width="300" height="100">
-            <div class="scope-login-rule" aria-hidden="true"></div>
-            <p class="scope-login-kicker">Suivi et analyse de l’activité</p>
-            <h1>SCOPE</h1>
-            <p class="scope-login-copy">Accès réservé aux utilisateurs autorisés du SDIS régional du Nord vaudois.</p>
+            <div class="scope-login-brand">
+              <img class="scope-login-logo" src="assets/img/logo-scope-blanc.png" alt="SCOPE" width="300" height="100">
+              <div class="scope-login-tagline">
+                <span aria-hidden="true"></span>
+                <p>Suivi et analyse de l’activité</p>
+                <span aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="scope-login-dashboard" aria-hidden="true">
+              <div class="scope-login-kpi-card">
+                <span>Taux de réalisation</span>
+                <strong>78,6 %</strong>
+                <small>+ 4,2 % vs période précédente</small>
+              </div>
+              <div class="scope-login-kpi-card">
+                <span>Personnel suivi</span>
+                <strong>1 248</strong>
+                <small>Données consolidées</small>
+              </div>
+              <div class="scope-login-chart-card scope-login-bars">
+                <span style="--h:34%"></span><span style="--h:56%"></span><span style="--h:48%"></span><span style="--h:72%"></span><span style="--h:64%"></span><span style="--h:86%"></span>
+              </div>
+              <div class="scope-login-chart-card scope-login-line">
+                <i style="left:8%;top:62%"></i><i style="left:28%;top:48%"></i><i style="left:48%;top:54%"></i><i style="left:68%;top:32%"></i><i style="left:88%;top:24%"></i>
+              </div>
+              <div class="scope-login-chart-card scope-login-donut">
+                <div></div>
+                <ul>
+                  <li>PR <strong>42 %</strong></li>
+                  <li>AUTO <strong>28 %</strong></li>
+                  <li>FOSPEC <strong>18 %</strong></li>
+                </ul>
+              </div>
+              <div class="scope-login-chart-card scope-login-map">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <div class="scope-login-benefits">
+              <div>
+                <span>${navIcon('stats')}</span>
+                <strong>Analyse métier</strong>
+              </div>
+              <div>
+                <span>${navIcon('vigilance')}</span>
+                <strong>Données fiables</strong>
+              </div>
+              <div>
+                <span>${navIcon('clock')}</span>
+                <strong>Accessible 24/7</strong>
+              </div>
+            </div>
           </div>
         </section>
         <section class="scope-login-panel" aria-label="Connexion">
           <img class="scope-login-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
-          <div class="scope-login-card">
-            <div class="scope-login-lock" aria-hidden="true">${navIcon('lock')}</div>
-            <p class="scope-login-eyebrow">Authentification</p>
-            <h2>Connexion SCOPE</h2>
-            <p>${escapeHtml(loginMessage())}</p>
-            ${alert}
-            ${status}
+          <div class="scope-login-center">
+            <div class="scope-login-card">
+              <div class="scope-login-lock" aria-hidden="true">${navIcon('lock')}</div>
+              <h1>Connexion</h1>
+              <p class="scope-login-subtitle">SCOPE — Suivi et analyse de l’activité</p>
+              <div class="scope-login-divider" aria-hidden="true"></div>
+              <div class="scope-login-security">
+                <span aria-hidden="true">${navIcon('vigilance')}</span>
+                <p>Accès réservé au personnel autorisé du<br>SDIS régional du Nord vaudois.</p>
+              </div>
+              ${alert}
+              ${status}
+            </div>
+            <p class="scope-login-help">Si vous rencontrez des difficultés pour vous connecter, merci d’écrire à l’adresse <a href="mailto:info@sdisnv.ch">info@sdisnv.ch</a>.</p>
           </div>
         </section>
-        <footer class="scope-login-footer">SDIS régional du Nord vaudois</footer>
+        <footer class="scope-login-footer">
+          <span>© 2026 SDIS régional du Nord vaudois — Tous droits réservés</span>
+          <span>Suivi et analyse de l’activité</span>
+        </footer>
       </main>
     `;
   }

@@ -497,7 +497,8 @@ async function closePresent(service, eventId, people){
     assert.strictEqual(plan.personnesACreer, 16);
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes('scope-sync-preview'));
-    assert.ok(ui.includes('Se connecter avec Okta'));
+    assert.ok(ui.includes('Se connecter à SCOPE'));
+    assert.ok(ui.includes('data-auth-provider="okta"'));
   });
 
   await record('33 — 8 LEGACY inchangés', async () => {

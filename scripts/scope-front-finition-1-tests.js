@@ -118,7 +118,7 @@ function dashboardPayload() {
 
 (async () => {
   await record('01 - cache-bust UI FRONT-FINITION-1', () => {
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-front-finition-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1'));
   });
 
   await record('02 - vue contextuelle alignee Pilotage avec retours utiles', () => {

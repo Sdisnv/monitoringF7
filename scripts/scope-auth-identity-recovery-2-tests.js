@@ -120,7 +120,8 @@ function uiHarness(fetchImpl, rawFetch){
     const { hooks, root } = uiHarness(async () => { const err = new Error('Token invalide.'); err.status = 401; throw err; });
     await hooks.ensureLiveSession();
     hooks.render();
-    ok(root.innerHTML.includes('Connexion SCOPE'));
+    ok(root.innerHTML.includes('scope-login-v1'));
+    ok(root.innerHTML.includes('Se connecter à SCOPE'));
     ok(!root.innerHTML.includes('scope-sidebar'));
     ok(!root.innerHTML.includes('Centre de pilotage'));
   });
@@ -243,7 +244,8 @@ function uiHarness(fetchImpl, rawFetch){
     hooks.state.session = { displayName: 'SCOPE', roles: ['UTILISATEUR'], permissions: ['dashboard:read'] };
     hooks.invalidateScopeSession('test');
     hooks.render();
-    ok(root.innerHTML.includes('Connexion SCOPE'));
+    ok(root.innerHTML.includes('scope-login-v1'));
+    ok(root.innerHTML.includes('Se connecter à SCOPE'));
     ok(!root.innerHTML.includes('scope-user-block'));
     ok(!root.innerHTML.includes('scope-sidebar'));
   });

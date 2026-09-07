@@ -133,131 +133,410 @@ html, body {
 .scope-login-v1 {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(320px, 36%) minmax(0, 1fr);
-  grid-template-rows: 1fr auto;
-  background: #ffffff;
+  grid-template-columns: minmax(380px, 36%) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  background: #f7f9fc;
   color: var(--scope-ink);
 }
 
 .scope-login-visual {
-  min-height: 100vh;
-  grid-row: 1 / span 2;
+  min-height: calc(100vh - 58px);
   display: flex;
-  align-items: center;
-  padding: clamp(32px, 5vw, 72px);
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  padding: clamp(30px, 4.5vw, 64px) clamp(24px, 4vw, 52px);
   color: #ffffff;
   background:
-    linear-gradient(150deg, rgba(15, 23, 42, 0.16), rgba(15, 23, 42, 0.62)),
-    linear-gradient(142deg, var(--scope-red-dark) 0%, var(--scope-red) 58%, #232a32 100%);
+    linear-gradient(160deg, rgba(5, 9, 14, 0.94) 0%, rgba(12, 18, 25, 0.96) 48%, rgba(2, 4, 7, 0.98) 100%),
+    linear-gradient(90deg, rgba(222, 0, 10, 0.1), transparent 42%);
+}
+
+.scope-login-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(118deg, transparent 0 48%, rgba(255, 255, 255, 0.05) 49%, rgba(255, 255, 255, 0.01) 61%, transparent 62%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 72px);
+  opacity: 0.46;
+}
+
+.scope-login-visual::after {
+  content: "";
+  position: absolute;
+  inset: auto -22% 14% 8%;
+  height: 44%;
+  transform: rotate(-8deg);
+  background: linear-gradient(90deg, rgba(222, 0, 10, 0.18), rgba(255, 255, 255, 0.04), rgba(222, 0, 10, 0.08));
+  filter: blur(16px);
+  opacity: 0.76;
 }
 
 .scope-login-visual-inner {
-  width: min(100%, 460px);
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.scope-login-brand {
+  width: 100%;
 }
 
 .scope-login-logo {
   display: block;
-  width: min(220px, 72%);
+  width: min(300px, 72%);
   height: auto;
-  margin: 0 0 28px;
+  margin: 0 auto 10px;
 }
 
-.scope-login-rule {
-  width: 72px;
-  height: 4px;
-  margin: 0 0 28px;
-  background: var(--scope-yellow);
-}
-
-.scope-login-kicker {
-  margin: 0 0 12px;
-  font-size: 13px;
+.scope-login-tagline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.92);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  opacity: 0.86;
+  text-align: center;
 }
 
-.scope-login-visual h1 {
+.scope-login-tagline span {
+  width: 48px;
+  height: 2px;
+  background: var(--scope-red);
+}
+
+.scope-login-tagline p {
   margin: 0;
-  font-size: clamp(48px, 7vw, 86px);
-  line-height: 0.95;
-  letter-spacing: 0;
+  font-size: clamp(14px, 1.45vw, 17px);
 }
 
-.scope-login-copy {
-  max-width: 380px;
-  margin: 22px 0 0;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 17px;
+.scope-login-dashboard {
+  width: min(100%, 560px);
+  margin: clamp(24px, 7vh, 72px) auto clamp(24px, 6vh, 56px);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 9px;
+  transform: perspective(900px) rotateY(-9deg) rotateX(2deg);
+  transform-origin: center;
+}
+
+.scope-login-kpi-card,
+.scope-login-chart-card {
+  min-height: 88px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  background: rgba(10, 14, 19, 0.7);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.38);
+}
+
+.scope-login-kpi-card {
+  grid-column: span 3;
+  padding: 12px 14px;
+}
+
+.scope-login-kpi-card span,
+.scope-login-kpi-card small {
+  display: block;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+}
+
+.scope-login-kpi-card strong {
+  display: block;
+  margin: 4px 0 2px;
+  color: #ffffff;
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1;
+}
+
+.scope-login-chart-card {
+  grid-column: span 3;
+  position: relative;
+  overflow: hidden;
+}
+
+.scope-login-bars {
+  min-height: 112px;
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  padding: 16px;
+}
+
+.scope-login-bars span {
+  flex: 1;
+  height: var(--h);
+  min-height: 18px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #ff2a34, #9b0008);
+}
+
+.scope-login-line {
+  min-height: 112px;
+  background:
+    linear-gradient(180deg, transparent 31%, rgba(255,255,255,0.07) 32%, transparent 33%, transparent 63%, rgba(255,255,255,0.06) 64%, transparent 65%),
+    rgba(10, 14, 19, 0.7);
+}
+
+.scope-login-line::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 52%;
+  height: 2px;
+  transform: rotate(-14deg);
+  background: var(--scope-red);
+  box-shadow: 0 0 14px rgba(222, 0, 10, 0.75);
+}
+
+.scope-login-line i {
+  width: 7px;
+  height: 7px;
+  position: absolute;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(222, 0, 10, 0.34);
+}
+
+.scope-login-donut {
+  min-height: 128px;
+  grid-column: span 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+}
+
+.scope-login-donut div {
+  width: 78px;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: conic-gradient(var(--scope-red) 0 42%, #ffffff 42% 58%, #54585a 58% 86%, #2b3138 86% 100%);
+  position: relative;
+}
+
+.scope-login-donut div::after {
+  content: "";
+  position: absolute;
+  inset: 22px;
+  border-radius: inherit;
+  background: #111820;
+}
+
+.scope-login-donut ul {
+  min-width: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+}
+
+.scope-login-donut li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scope-login-donut strong {
+  color: #ffffff;
+}
+
+.scope-login-map {
+  min-height: 128px;
+  grid-column: span 3;
+  padding: 18px;
+}
+
+.scope-login-map span {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.08);
+}
+
+.scope-login-map span:nth-child(1) { width: 42%; height: 44%; left: 17%; top: 31%; clip-path: polygon(16% 0, 95% 18%, 78% 100%, 0 76%); background: rgba(222,0,10,0.55); }
+.scope-login-map span:nth-child(2) { width: 36%; height: 38%; left: 44%; top: 19%; clip-path: polygon(6% 12%, 100% 0, 88% 88%, 24% 100%); }
+.scope-login-map span:nth-child(3) { width: 28%; height: 36%; left: 52%; top: 52%; clip-path: polygon(20% 0, 100% 36%, 70% 100%, 0 78%); background: rgba(222,0,10,0.28); }
+.scope-login-map span:nth-child(4) { width: 22%; height: 30%; left: 24%; top: 54%; clip-path: polygon(0 16%, 72% 0, 100% 82%, 24% 100%); }
+
+.scope-login-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 28px);
+}
+
+.scope-login-benefits div {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.scope-login-benefits span {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--scope-red);
+  box-shadow: 0 10px 28px rgba(222, 0, 10, 0.34);
+}
+
+.scope-login-benefits .scope-nav-icon {
+  width: 23px;
+  height: 23px;
+}
+
+.scope-login-benefits strong {
+  max-width: 100%;
+  font-size: 13px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.scope-login-benefits strong::after {
+  content: "";
+  display: block;
+  width: 38px;
+  height: 2px;
+  margin: 10px auto 0;
+  background: var(--scope-red);
 }
 
 .scope-login-panel {
-  min-height: calc(100vh - 44px);
+  min-height: calc(100vh - 58px);
+  min-width: 0;
   display: grid;
   grid-template-rows: auto 1fr;
   align-items: center;
-  padding: clamp(24px, 4vw, 52px);
+  padding: clamp(24px, 4vw, 48px) clamp(28px, 6vw, 72px) clamp(24px, 3vw, 40px);
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.035), transparent 36%),
+    #f8fafc;
 }
 
 .scope-login-sdis {
   justify-self: end;
-  width: min(180px, 44vw);
+  width: min(170px, 44vw);
   height: auto;
 }
 
-.scope-login-card {
-  width: min(100%, 440px);
+.scope-login-center {
+  width: 100%;
+  max-width: 520px;
+  min-width: 0;
   justify-self: center;
   align-self: center;
-  border: 1px solid var(--scope-line);
-  border-radius: var(--scope-radius-md);
-  background: #ffffff;
-  box-shadow: var(--scope-shadow-md);
-  padding: clamp(24px, 4vw, 40px);
+}
+
+.scope-login-card {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 64px rgba(15, 23, 42, 0.1);
+  padding: clamp(30px, 4.5vw, 52px);
+  text-align: center;
 }
 
 .scope-login-lock {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
-  margin: 0 0 20px;
-  border-radius: var(--scope-radius-md);
-  background: var(--scope-red-soft);
-  color: var(--scope-red-dark);
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  background: var(--scope-red);
+  color: #ffffff;
+  box-shadow: 0 14px 32px rgba(222, 0, 10, 0.28);
 }
 
 .scope-login-lock .scope-nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
 }
 
-.scope-login-eyebrow {
-  margin: 0 0 8px;
-  color: var(--scope-red-dark);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0;
-}
-
-.scope-login-card h2 {
-  margin: 0 0 12px;
-  font-size: 28px;
+.scope-login-card h1 {
+  margin: 0 0 6px;
+  font-size: clamp(28px, 3vw, 34px);
   line-height: 1.15;
   letter-spacing: 0;
   color: var(--scope-ink);
 }
 
-.scope-login-card p {
+.scope-login-subtitle {
   margin: 0;
-  color: var(--scope-muted);
+  color: #5f6b7d;
   font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.scope-login-divider {
+  width: 64px;
+  height: 3px;
+  margin: 18px auto 28px;
+  border-radius: 999px;
+  background: var(--scope-red);
+}
+
+.scope-login-security {
+  min-height: 76px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border: 1px solid #d9e2ef;
+  border-radius: 8px;
+  background: #f3f6fb;
+  color: #1f2730;
+  text-align: left;
+}
+
+.scope-login-security span {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 8px;
+  background: #edf3ff;
+  color: #2556b8;
+}
+
+.scope-login-security .scope-nav-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.scope-login-security p {
+  min-width: 0;
+  margin: 0;
+  color: #1f2730;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
 }
 
 .scope-login-alert {
-  margin: 18px 0 0;
+  margin: 0 0 18px;
   padding: 12px 14px;
   border: 1px solid #fed7aa;
   border-left: 4px solid var(--scope-warn);
@@ -265,6 +544,9 @@ html, body {
   background: var(--scope-warning-soft);
   color: var(--scope-warn);
   font-weight: 600;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
 }
 
 .scope-login-submit,
@@ -274,22 +556,30 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 24px;
-  border-radius: var(--scope-radius);
+  margin-top: 0;
+  border-radius: 8px;
   font-weight: 700;
   text-align: center;
 }
 
 .scope-login-submit {
+  box-sizing: border-box;
   border: 1px solid var(--scope-red);
   background: var(--scope-red);
   color: #ffffff;
   text-decoration: none;
+  font-size: 16px;
+  box-shadow: 0 12px 24px rgba(222, 0, 10, 0.16);
 }
 
 .scope-login-submit:hover {
   background: var(--scope-red-hover);
   border-color: var(--scope-red-hover);
+  color: #ffffff;
+}
+
+.scope-app .scope-login-submit:link,
+.scope-app .scope-login-submit:visited {
   color: #ffffff;
 }
 
@@ -299,22 +589,57 @@ html, body {
   color: var(--scope-muted);
 }
 
+.scope-login-help {
+  width: 100%;
+  max-width: 470px;
+  margin: 18px auto 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
+}
+
+.scope-login-help a {
+  color: var(--scope-red);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .scope-login-footer {
-  min-height: 44px;
+  min-height: 58px;
+  grid-column: 1 / -1;
   display: flex;
+  justify-content: space-between;
+  gap: 18px;
   align-items: center;
-  padding: 0 clamp(24px, 4vw, 52px);
-  border-top: 1px solid var(--scope-line);
-  color: var(--scope-muted);
-  font-size: 12px;
+  padding: 0 clamp(26px, 4vw, 52px);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  background: #0d141d;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
 }
 
 @media (max-width: 960px) {
   .scope-login-v1 {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
 
   .scope-login-visual {
+    min-height: 260px;
+    padding: 26px 24px;
+  }
+
+  .scope-login-dashboard {
+    width: min(100%, 460px);
+    margin: 24px auto 0;
+    transform: none;
+  }
+
+  .scope-login-benefits {
     display: none;
   }
 
@@ -334,22 +659,99 @@ html, body {
 }
 
 @media (max-width: 560px) {
+  .scope-login-visual {
+    min-height: 160px;
+    padding: 20px 18px;
+  }
+
+  .scope-login-logo {
+    width: min(210px, 72vw);
+  }
+
+  .scope-login-tagline {
+    gap: 10px;
+  }
+
+  .scope-login-tagline span {
+    width: 28px;
+  }
+
+  .scope-login-dashboard {
+    display: none;
+  }
+
   .scope-login-panel {
-    padding: 18px;
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+    padding: 18px 28px 18px 18px;
+  }
+
+  .scope-login-center {
+    width: calc(100vw - 46px);
+    max-width: calc(100vw - 46px);
   }
 
   .scope-login-card {
+    width: 100%;
+    max-width: 100%;
     padding: 22px 18px;
     box-shadow: var(--scope-shadow-sm);
+    overflow: visible;
   }
 
-  .scope-login-card h2 {
+  .scope-login-card h1 {
     font-size: 24px;
   }
 
+  .scope-login-lock {
+    width: 60px;
+    height: 60px;
+  }
+
+  .scope-login-security {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 10px;
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .scope-login-security,
+  .scope-login-alert,
+  .scope-login-submit,
+  .scope-login-status {
+    width: min(100%, calc(100vw - 84px));
+    max-width: calc(100vw - 84px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .scope-login-security span {
+    width: 30px;
+    height: 30px;
+  }
+
+  .scope-login-security p {
+    font-size: 13px;
+    line-height: 1.42;
+  }
+
+  .scope-login-alert {
+    width: min(100%, calc(100vw - 120px));
+    max-width: calc(100vw - 120px);
+    padding: 12px 10px;
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
   .scope-login-footer {
+    min-height: auto;
+    flex-direction: column;
     justify-content: center;
-    padding: 0 18px;
+    padding: 14px 18px;
     text-align: center;
   }
 }
@@ -6213,6 +6615,12 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-app a:not(.scope-btn):visited {
   text-decoration: none;
   color: inherit;
+}
+.scope-app a.scope-login-submit,
+.scope-app a.scope-login-submit:link,
+.scope-app a.scope-login-submit:visited,
+.scope-app a.scope-login-submit:hover {
+  color: #ffffff;
 }
 .scope-crumb a,
 .scope-crumb a:link,

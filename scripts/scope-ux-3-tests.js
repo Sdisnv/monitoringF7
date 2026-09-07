@@ -165,7 +165,7 @@ function record(name, fn) {
 
   await record('identité NIP / import exercices hors onglet principal', async () => {
     assert.ok(ui.includes('NIP'));
-    assert.ok(ui.includes('Connexion SCOPE'));
+    assert.ok(ui.includes('Se connecter à SCOPE'));
     assert.ok(ui.includes('scope-login-v1'));
     assert.ok(ui.includes('Importer un programme d’événements'));
     assert.ok(!ui.includes('data-nav="import"'));

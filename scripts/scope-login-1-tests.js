@@ -104,8 +104,9 @@ function hooks(sessionMe, options = {}) {
     const ok = await env.api.ensureLiveSession();
     env.api.render();
     assert.strictEqual(ok, false);
-    assert.ok(env.root.innerHTML.includes('Connexion SCOPE'));
-    assert.ok(env.root.innerHTML.includes('Se connecter avec Okta'));
+    assert.ok(env.root.innerHTML.includes('Connexion'));
+    assert.ok(env.root.innerHTML.includes('Se connecter à SCOPE'));
+    assert.ok(env.root.innerHTML.includes('data-auth-provider="okta"'));
     assert.ok(!env.sessionStorage.map.has('scope-live-confirmed'));
   });
 
@@ -122,7 +123,7 @@ function hooks(sessionMe, options = {}) {
     assert.strictEqual(ok, true);
     assert.strictEqual(env.api.userLabel(), 'Alice Martin');
     assert.ok(env.idle.started);
-    assert.ok(!env.root.innerHTML.includes('Connexion SCOPE'));
+    assert.ok(!env.root.innerHTML.includes('scope-login-v1'));
     assert.ok(env.root.innerHTML.includes('Alice Martin'));
     assert.ok(!env.root.innerHTML.includes('Profil SCOPE'));
   });
@@ -157,7 +158,7 @@ function hooks(sessionMe, options = {}) {
   await record('08 — responsive login present desktop/mobile', async () => {
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
     assert.ok(css.includes('.scope-login-v1'));
-    assert.ok(css.includes('grid-template-columns: minmax(320px, 36%) minmax(0, 1fr)'));
+    assert.ok(css.includes('grid-template-columns: minmax(380px, 36%) minmax(0, 1fr)'));
     assert.ok(css.includes('@media (max-width: 960px)'));
     assert.ok(css.includes('@media (max-width: 560px)'));
   });

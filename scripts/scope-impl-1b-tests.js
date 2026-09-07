@@ -167,7 +167,8 @@ function record(name, fn){
     assert.ok(ui.includes('assets/img/LogoSDISseulnoir.png'));
     assert.ok(ui.includes('scope-logo'));
     assert.ok(ui.includes('scope-sdis-logo'));
-    assert.ok(ui.includes('<h1>SCOPE</h1>'));
+    assert.ok(ui.includes('class="scope-login-tagline"'));
+    assert.ok(ui.includes('Suivi et analyse de l’activité'));
     assert.ok(ui.includes('scope-login-v1'));
     assert.ok(fs.existsSync(path.join(ROOT, 'assets/img/logo-scope-blanc.png')));
     assert.ok(!html.includes('Monitoring F7 v67.0'));
