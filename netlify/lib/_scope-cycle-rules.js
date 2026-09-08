@@ -1100,6 +1100,26 @@ function computePrExerciseParticipationState(input = {}){
   };
 }
 
+function multiSessionExerciseGroupKey(event){
+  return prExerciseGroupKey(event);
+}
+
+function multiSessionSessionKey(event){
+  return prSessionKey(event);
+}
+
+function multiSessionSessionLabel(event){
+  return prSessionLabel(event);
+}
+
+function multiSessionEvents(input = {}){
+  return prExerciseEvents(input);
+}
+
+function computeMultiSessionParticipationState(input = {}){
+  return computePrExerciseParticipationState(input);
+}
+
 function computeSessionParticipationState(input = {}){
   const cycle = input.cycle || {};
   const events = cycleEvents(input, cycle);
@@ -1141,7 +1161,7 @@ function canCloseLastSession(state){
 }
 
 function personHasValidStatusInSession(input = {}){
-  const state = computePrExerciseParticipationState(input);
+  const state = computeMultiSessionParticipationState(input);
   const id = personneId({ personne_id: input.personneId || input.personne_id });
   if(id && state.byPersonneId[id] && state.byPersonneId[id].sessionHasValidStatus) return true;
   const personnesById = personneLookup(input.personnes);
@@ -1183,6 +1203,10 @@ module.exports = {
   isEventCycleExigible,
   resolveCycleCompletion,
   exerciseId,
+  multiSessionExerciseGroupKey,
+  multiSessionSessionKey,
+  multiSessionSessionLabel,
+  multiSessionEvents,
   prExerciseGroupKey,
   prSessionKey,
   prSessionLabel,
@@ -1198,6 +1222,7 @@ module.exports = {
   canCloseLastSession,
   personHasValidStatusInSession,
   collapsePersonSessionHistory,
+  computeMultiSessionParticipationState,
   computePrExerciseParticipationState,
   computeSessionParticipationState,
   computeStandardEventMetricsUnchanged

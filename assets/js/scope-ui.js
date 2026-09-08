@@ -1005,9 +1005,14 @@
     const expectedId = String(id);
     const token = ++state.ficheRequestSeq;
     state.activeFicheId = expectedId;
-    const data = await client.getEvenement(id);
+    const shouldLoadPermutations = route().screen === 'saisie' && typeof client.permutationsForEvent === 'function';
+    const [data, permutationPayload] = await Promise.all([
+      client.getEvenement(id),
+      shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
+    ]);
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
+    state.permutationObligations = shouldLoadPermutations ? ((permutationPayload && permutationPayload.obligations) || []) : [];
     state.ficheReady = true;
     state.conflict = false;
     state.encRetrait = null;
@@ -1241,14 +1246,40 @@
       .map((a) => String(a.personne_id)));
   }
 
+  function isPersonActuallyPartOfEvent(personneId) {
+    const id = String(personneId || '');
+    if (!id) return false;
+    if (expectedIds().has(id)) return true;
+    if (usedEncadrementIds().has(id)) return true;
+    if ((state.pendingExceptions || []).some((row) => String(row.personneId || row.personne_id || '') === id)) return true;
+    if ((state.saisie || []).some((row) => String(row.personneId || row.personne_id || '') === id && row.inclus !== false)) return true;
+    const activeAttendus = new Set(((state.fiche && state.fiche.attendus) || [])
+      .filter((row) => row && row.inclus !== false)
+      .map((row) => String(row.personne_id || row.personneId || ''))
+      .filter(Boolean));
+    return ((state.fiche && state.fiche.participations) || []).some((row) => {
+      const pid = String(row.personne_id || row.personneId || '');
+      if (pid !== id) return false;
+      const role = String(row.role || '').toUpperCase();
+      const statut = String(row.statut || '').toUpperCase();
+      if (statut === 'NON_CONCERNE' && !activeAttendus.has(id)) return false;
+      if (role && L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(role)) return true;
+      return activeAttendus.has(id) && statut !== 'NON_CONCERNE';
+    });
+  }
+
   function nonSelectablePersonIds() {
-    return new Set([
+    const ids = new Set([
       ...[...expectedIds()],
       ...[...usedEncadrementIds()],
-      ...((state.fiche && state.fiche.participations) || []).map((p) => String(p.personne_id || p.personneId || '')),
-      ...(state.saisie || []).map((row) => String(row.personneId || row.personne_id || '')),
+      ...(state.saisie || []).filter((row) => row && row.inclus !== false).map((row) => String(row.personneId || row.personne_id || '')),
       ...(state.pendingExceptions || []).map((row) => String(row.personneId || row.personne_id || ''))
     ].filter(Boolean));
+    ((state.fiche && state.fiche.participations) || []).forEach((row) => {
+      const id = String(row.personne_id || row.personneId || '');
+      if (id && isPersonActuallyPartOfEvent(id)) ids.add(id);
+    });
+    return ids;
   }
 
   function sortPeopleForEncadrement(rows) {
@@ -6233,7 +6264,8 @@
     const ev = fiche.evenement;
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
     const niveaux = [...new Set(state.saisie.map((r) => r.cible).filter((x) => x && x !== '—'))];
-    const filteredRaw = (state.cibleFilter === 'tous' ? state.saisie : state.saisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter)))
+    const visibleSaisie = (state.saisie || []).filter((r) => !(L.ROLES_ENCADREMENT && L.ROLES_ENCADREMENT.has(String(r && r.role || '').toUpperCase())));
+    const filteredRaw = (state.cibleFilter === 'tous' ? visibleSaisie : visibleSaisie.filter((r) => r.cible === state.cibleFilter || (r.cibles || []).includes(state.cibleFilter)))
       .filter((r) => !state.saisieOpenFilter || (L.isOpenSaisieRow ? L.isOpenSaisieRow(r) : (!r.statut || r.statut === 'NON_RENSEIGNE')));
     const filtered = sortSaisieRows(filteredRaw);
     const openCount = L.liveCounters(state.saisie).open;
@@ -10296,13 +10328,21 @@
       return;
     }
     const id = route().id;
+    const snapshot = snapshotSaisieState();
+    snapshot.saisie = snapshot.saisie.filter((item) => String(item.personneId || item.personne_id || '') !== String(personneId));
+    snapshot.manualPersonQuery = '';
+    snapshot.manualPersonHits = [];
     withFeedbackAction({
       progressTitle: 'Retrait du participant',
       successTitle: 'Ajout retiré',
       successMessage: 'La personne reste dans le référentiel SCOPE.'
     }, async () => {
       await client.retirerAttendu(id, { personneId }, state.fiche.evenement.version);
-      await loadFiche(id);
+      state.manualPersonQuery = '';
+      state.manualPersonHits = [];
+      state.pendingExceptions = (state.pendingExceptions || []).filter((item) => String(item.personneId || item.personne_id || '') !== String(personneId));
+      state.scopeSearchTokens.manual = (state.scopeSearchTokens.manual || 0) + 1;
+      await refreshFichePreservingSaisie(id, snapshot);
     });
   }
 

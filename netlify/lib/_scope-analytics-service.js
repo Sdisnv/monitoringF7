@@ -22,7 +22,7 @@ const {
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 const {
-  computePrExerciseParticipationState,
+  computeMultiSessionParticipationState,
   isValidSessionStatut,
   prSessionLabel,
   sessionExerciseLabel
@@ -421,7 +421,7 @@ function createScopeAnalyticsService(repo){
           const eventIds = groupEvents.map((row) => row.evenement_id);
           const groupAttendus = eventIds.flatMap((id) => bundle.attendusByEvent[id] || []);
           const groupParticipations = eventIds.flatMap((id) => bundle.participationsByEvent[id] || []);
-          const state = computePrExerciseParticipationState({
+          const state = computeMultiSessionParticipationState({
             cycle: { cycle_id: null, domaine_code: event.domaine_code || null },
             evenements: groupEvents,
             attendus: groupAttendus,

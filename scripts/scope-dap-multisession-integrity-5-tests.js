@@ -212,7 +212,7 @@ async function dapFixture(){
     }
     ok(blocked, 'la derniere session doit etre refusee');
     eq(blocked.error, 'session_incomplete');
-    ok(String(blocked.message).includes('personne(s) DAP restent à renseigner'));
+    ok(String(blocked.message).includes('personne(s) restent à renseigner sur l’ensemble des sessions'));
     ok((blocked.details && blocked.details.unfilledPeople || []).length >= 1);
   });
 

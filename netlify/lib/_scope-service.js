@@ -9,7 +9,8 @@ const {
   expectedPopulationCoherence,
   rangesOverlap,
   ROLES_ENCADREMENT,
-  permutationObligationSummary
+  permutationObligationSummary,
+  isPermutationCatchupAttendu
 } = require('./_scope-rules');
 const {
   TYPES_PERIODE,
@@ -44,7 +45,7 @@ const participationPolicy = require('./_scope-participation-policy');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const {
-  computePrExerciseParticipationState,
+  computeMultiSessionParticipationState,
   prSessionLabel,
   canCloseLastSession,
   resolveSessionReportingScope,
@@ -884,6 +885,11 @@ function createScopeService(repo){
       .map((c) => c.cible_id)
       .filter(Boolean);
     return dapSections.length ? [...new Set(dapSections)] : cibleIds;
+  }
+
+  function requiresFinalMultiSessionClosure(evenement){
+    const domaine = String(evenement && (evenement.domaine_code || evenement.domaineCode) || '').toUpperCase();
+    return domaine === 'DAP';
   }
 
   function normalizeIdList(ids){
@@ -2037,11 +2043,15 @@ function createScopeService(repo){
         origine_retrait: 'EXCEPTION_RETRAIT'
       });
       const participation = await tx.getParticipation(eventId, personneId);
-      await tx.upsertParticipation({
-        ...(participation || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
-        statut: 'NON_CONCERNE',
-        auteur_id: actorId(actor)
-      });
+      if(isPermutationCatchupAttendu(attendu) && typeof tx.deleteParticipation === 'function'){
+        await tx.deleteParticipation(eventId, personneId);
+      } else {
+        await tx.upsertParticipation({
+          ...(participation || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
+          statut: 'NON_CONCERNE',
+          auteur_id: actorId(actor)
+        });
+      }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {});
       await tx.appendJournal({
         auteur_id: actorId(actor),
@@ -2171,7 +2181,7 @@ function createScopeService(repo){
       ...cycleParticipations.map((row) => row.personne_id),
       ...cycleAttendus.map((row) => row.personne_id)
     ]);
-    return computePrExerciseParticipationState({
+    return computeMultiSessionParticipationState({
       cycle,
       evenements: scopedEvents,
       cyclePersonnes: scopedCyclePersonnes,
@@ -2737,8 +2747,8 @@ function createScopeService(repo){
       }
       const requireExpectedFilled = !(prState && prState.isMultiSession);
       validateCloture(evenement, attendus, participations, { requireExpectedFilled, participationPolicySnapshot: evenement.participation_policy_snapshot || null });
-      if(prState && prState.isLastSession && prState.unfilledPeople && prState.unfilledPeople.length && String(evenement.domaine_code || '').toUpperCase() === 'DAP'){
-        throw new HttpError(422, 'session_incomplete', `Impossible de clôturer : ${prState.unfilledPeople.length} personne(s) DAP restent à renseigner pour ${prState.sessionExerciseLabel || evenement.libelle}.`, {
+      if(prState && prState.isLastSession && requiresFinalMultiSessionClosure(evenement) && prState.unfilledPeople && prState.unfilledPeople.length){
+        throw new HttpError(422, 'session_incomplete', `Impossible de clôturer ${prState.sessionExerciseLabel || evenement.libelle} : ${prState.unfilledPeople.length} personne(s) restent à renseigner sur l’ensemble des sessions.`, {
           unfilledPeople: prState.unfilledPeople || []
         });
       }
@@ -3103,7 +3113,7 @@ function createScopeService(repo){
           ...cycleParticipations.map((row) => row.personne_id),
           ...cycleAttendus.map((row) => row.personne_id)
         ]);
-        prExerciseParticipation = computePrExerciseParticipationState({
+        prExerciseParticipation = computeMultiSessionParticipationState({
           cycle,
           evenements: scopedEvents,
           cyclePersonnes: scopedCyclePersonnes,
