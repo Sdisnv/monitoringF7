@@ -194,6 +194,7 @@
     volumes: { attendus: '', presents: '', excuses: '', excusesPrive: '', excusesProfessionnel: '', excusesArmee: '', excusesAccidentMaladie: '', excusesNonPrecise: '', nonExcuses: '', dispenses: '0', permutations: '0' },
     qtyPreview: null,
     permutationObligations: [],
+    permutationPanelOpen: false,
     objectifs: [],
     objectifForm: {
       portee: 'GLOBAL',
@@ -1106,6 +1107,7 @@
 
   function cibleLabelFromAttendu(attendu) {
     if (!attendu) return '—';
+    if (L.isPermutationCatchup && L.isPermutationCatchup(attendu)) return 'Rattrapage';
     if (attendu.origine === 'EXCEPTION_AJOUT') return 'Ajout manuel';
     const raw = String(attendu.motif_inclusion || attendu.motifInclusion || '').trim();
     const labels = raw.split('|')
@@ -1282,6 +1284,8 @@
         const personneId = a.personne_id || a.personneId;
         const part = parts.get(String(personneId)) || {};
         const person = personOf(fiche, personneId) || {};
+        const catchupSourceLabel = L.permutationCatchupSourceLabel ? L.permutationCatchupSourceLabel(a) : '';
+        const isCatchup = Boolean(catchupSourceLabel);
         const cibleLabel = cibleLabelFromAttendu(a);
         const alreadyCountedInSession = Boolean(a.alreadyCountedInSession || a.already_counted_in_session);
         const sessionHasValidStatus = Boolean(a.sessionHasValidStatus || a.session_has_valid_status);
@@ -1314,6 +1318,8 @@
           role: part.role || 'PARTICIPANT',
           origine: a.origine,
           manual: a.origine === 'EXCEPTION_AJOUT',
+          catchup: isCatchup,
+          catchupSourceLabel,
           jspRole: a.jspRole || a.jsp_role || null,
           alreadyCountedInSession,
           coveredInGlobalBilan,
@@ -6253,7 +6259,7 @@
           </div>
           <div class="scope-presence-toolbar">
             ${renderManualParticipantBlock()}
-            ${renderPermutationObligationsBlock()}
+            ${renderPermutationTabs(state.permutationObligations || [])}
             <div class="scope-filter-group">
               <span class="scope-filter-label" id="saisie-open-filter-label">Présences</span>
               <div class="scope-segmented" role="group" aria-labelledby="saisie-open-filter-label">
@@ -6268,6 +6274,7 @@
               ${niveaux.map((n) => `<button type="button" class="scope-segmented-item" data-cible-filter="${escapeHtml(n)}" aria-pressed="${state.cibleFilter === n}">${escapeHtml(n)}</button>`).join('')}
             </div></div>` : ''}
           </div>
+          ${renderPermutationObligationsBlock()}
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
           const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
@@ -6521,28 +6528,46 @@
     `;
   }
 
+  function permutationPanelTitle(rows) {
+    const count = (rows || []).length;
+    const hasCatchup = (rows || []).some((row) => row && row.role !== 'SOURCE');
+    return `${hasCatchup ? 'Rattrapages disponibles' : 'Permutations'} · ${count}`;
+  }
+
+  function renderPermutationTabs(rows) {
+    if (!rows || !rows.length) return '';
+    return `<div class="scope-filter-group scope-permutation-tabs">
+      <span class="scope-filter-label" id="permutation-filter-label">Permutation</span>
+      <div class="scope-segmented scope-permutation-segment" role="group" aria-labelledby="permutation-filter-label">
+        <button type="button" class="scope-segmented-item" data-permutation-panel="closed" aria-pressed="${!state.permutationPanelOpen}">Tous</button>
+        <button type="button" class="scope-segmented-item is-permutation-tab" data-permutation-panel="open" aria-pressed="${Boolean(state.permutationPanelOpen)}">${escapeHtml(permutationPanelTitle(rows))}</button>
+      </div>
+    </div>`;
+  }
+
   function renderPermutationObligationsBlock() {
     const rows = state.permutationObligations || [];
-    if (!rows.length) return '';
-    return `<div class="scope-permutation-obligations">
-      <h3 class="scope-section-sub">Personnes en permutation · ${rows.length}</h3>
+    if (!rows.length || !state.permutationPanelOpen) return '';
+    return `<div class="scope-permutation-obligations" aria-label="Personnes en permutation" aria-live="polite">
+      <h3 class="scope-section-sub">${escapeHtml(permutationPanelTitle(rows))}</h3>
       <div class="scope-table-wrap">
-        <table class="scope-table">
+        <table class="scope-table scope-permutation-table">
           <thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Source</th><th>État</th><th>Action</th></tr></thead>
           <tbody>${rows.map((row) => {
             const isSource = row.role === 'SOURCE';
             const catchupOpen = row.compatible !== false && !isSource;
-            const statusLabel = row.statut === 'A_REGULARISER' ? 'À régulariser' : 'À rattraper';
-            const contextLabel = isSource ? 'source' : 'rattrapage possible';
+            const statusLabel = L.permutationStatusLabel ? L.permutationStatusLabel(row.statut) : (row.statut === 'A_REGULARISER' ? 'À régulariser' : 'À rattraper');
+            const contextLabel = isSource ? 'Source' : 'rattrapage possible';
+            const sourceLabel = L.permutationSourceLabel ? L.permutationSourceLabel(row.source || {}) : [row.source && row.source.libelle, row.source && L.formatDate(row.source.date)].filter(Boolean).join(' · ');
             return `<tr>
               <td>${escapeHtml(row.grade || '')}</td>
               <td>${escapeHtml(row.nom || '')}</td>
               <td>${escapeHtml(row.prenom || '')}</td>
               <td>${escapeHtml(row.nip || '')}</td>
-              <td>${escapeHtml([row.source && row.source.libelle, row.source && L.formatDate(row.source.date)].filter(Boolean).join(' · '))}</td>
-              <td>${escapeHtml(`${statusLabel} · ${contextLabel}`)}</td>
+              <td>${escapeHtml(sourceLabel)}</td>
+              <td><span class="scope-permutation-state is-${escapeHtml(String(row.statut || '').toLowerCase().replace(/_/g, '-'))}">${escapeHtml(statusLabel)}</span><span class="scope-muted-inline"> · ${escapeHtml(contextLabel)}</span></td>
               <td>
-                ${catchupOpen ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-manual-add="${escapeHtml(row.personneId || '')}">Ajouter</button>` : `<span class="scope-muted-inline">Ouverte</span>`}
+                ${catchupOpen ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-permutation-add" data-permutation-add="${escapeHtml(row.personneId || '')}" data-permutation-source="${escapeHtml(sourceLabel)}">Ajouter</button>` : `<span class="scope-muted-inline">Source</span>`}
                 ${row.statut === 'A_REGULARISER' ? `<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-permutation-regularise="${escapeHtml(row.permutationId || '')}">Régulariser</button>` : ''}
               </td>
             </tr>`;
@@ -6637,9 +6662,11 @@
       const comment = row.statut === 'ABSENT_EXCUSE' && row.motifAbsence === 'AUTRE'
         ? `<input data-comment type="text" placeholder="Commentaire obligatoire" value="${escapeHtml(row.commentaire)}" class="scope-excuse-comment">`
         : '';
-      const why = row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : '';
+      const why = row.catchup && row.catchupSourceLabel
+        ? `<span class="scope-catchup-origin">${escapeHtml(row.catchupSourceLabel)}</span>`
+        : (row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : '');
       const manual = row.manual
-        ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="Retirer l’ajout manuel" title="Retirer l’ajout manuel">${trashIcon()}</button>`
+        ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="${escapeHtml(row.catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel')}" title="${escapeHtml(row.catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel')}">${trashIcon()}</button>`
         : '';
       return [motifControl(row), comment, why, manual].filter(Boolean).join('');
     };
@@ -6664,7 +6691,7 @@
               const tooltipId = `scope-session-counted-${escapeHtml(row.personneId)}`;
               const tooltipText = (L.sessionExplainTooltip ? L.sessionExplainTooltip(row) : (row.sessionMessage || row.alreadyCountedTooltip || '')) || '';
               const rowClass = [
-                row.manual ? 'scope-row-manual' : '',
+                row.catchup ? 'scope-row-catchup' : (row.manual ? 'scope-row-manual' : ''),
                 row.statut === 'ABSENT_EXCUSE' ? 'scope-row-session-excuse' : '',
                 row.statut === 'DISPENSE' ? 'scope-row-session-dispense' : '',
                 coveredGlobally ? 'scope-row-session-counted' : '',
@@ -6912,7 +6939,7 @@
               <th>ACTION</th>
             </tr></thead>
             <tbody>
-              ${filtered.map((r) => `<tr>
+              ${filtered.map((r) => `<tr${r.catchup ? ' class="scope-row-catchup"' : ''}>
                 <td data-label="GRADE">${escapeHtml(r.grade || '')}</td>
                 <td data-label="NOM">${escapeHtml(r.nomFamille || r.nom || '')}</td>
                 <td data-label="PRÉNOM">${escapeHtml(r.prenom || '')}</td>
@@ -8895,15 +8922,28 @@
     root.querySelectorAll('[data-manual-add]').forEach((btn) => {
       btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-manual-add')));
     });
+    root.querySelectorAll('[data-permutation-panel]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.permutationPanelOpen = btn.getAttribute('data-permutation-panel') === 'open';
+        render();
+      });
+    });
+    root.querySelectorAll('[data-permutation-add]').forEach((btn) => {
+      btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-permutation-add'), {
+        catchupSourceLabel: btn.getAttribute('data-permutation-source') || ''
+      }));
+    });
     root.querySelectorAll('[data-permutation-regularise]').forEach((btn) => {
       btn.addEventListener('click', () => regularisePermutationObligation(btn.getAttribute('data-permutation-regularise')));
     });
     root.querySelectorAll('[data-manual-remove]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const personneId = btn.getAttribute('data-manual-remove');
+        const row = (state.saisie || []).find((item) => String(item.personneId) === String(personneId));
+        const catchup = Boolean(row && row.catchup);
         ScopeFeedback.confirm({
-          title: 'Retirer l’ajout manuel',
-          message: 'Cette personne sera retirée uniquement de la population de cet événement.',
+          title: catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel',
+          message: catchup ? 'Cette personne sera retirée uniquement du rattrapage de cet événement.' : 'Cette personne sera retirée uniquement de la population de cet événement.',
           confirmText: 'Retirer',
           cancelText: 'Annuler'
         }, () => removeManualParticipant(personneId));
@@ -10163,14 +10203,18 @@
     });
   }
 
-  function addManualParticipant(personneId) {
+  function addManualParticipant(personneId, options) {
     const id = route().id;
+    const catchupSourceLabel = String(options && options.catchupSourceLabel || '').trim();
+    const motifInclusion = catchupSourceLabel && L.permutationCatchupMotif
+      ? L.permutationCatchupMotif({ libelle: catchupSourceLabel })
+      : null;
     withFeedbackAction({
-      progressTitle: 'Ajout du participant',
-      successTitle: 'Personne ajoutée',
-      successMessage: 'Ajout nominatif propre à cet événement.'
+      progressTitle: catchupSourceLabel ? 'Ajout du rattrapage' : 'Ajout du participant',
+      successTitle: catchupSourceLabel ? 'Rattrapage ajouté' : 'Personne ajoutée',
+      successMessage: catchupSourceLabel ? 'La personne est ajoutée comme rattrapage pour cet événement.' : 'Ajout nominatif propre à cet événement.'
     }, async () => {
-      await client.ajouterException(id, { personneId, role: 'PARTICIPANT' }, state.fiche.evenement.version);
+      await client.ajouterException(id, Object.assign({ personneId, role: 'PARTICIPANT' }, motifInclusion ? { motifInclusion } : {}), state.fiche.evenement.version);
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
       await loadFiche(id);

@@ -82,6 +82,9 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
   const expectedEvents = new Set((attendusRows || [])
     .filter((row) => String(row.personne_id) === String(personneId) && row.inclus !== false)
     .map((row) => String(row.evenement_id)));
+  const attendusByEvent = new Map((attendusRows || [])
+    .filter((row) => String(row.personne_id) === String(personneId) && row.inclus !== false)
+    .map((row) => [String(row.evenement_id), row]));
   if(!expectedEvents.size) return [];
   const participationsByEvent = new Map();
   for(const row of participationsRows || []){
@@ -100,6 +103,7 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
         .map((cid) => labelOi(ciblesById.get(cid)))
         .filter(Boolean);
       const part = participationsByEvent.get(String(event.evenement_id));
+      const attendu = attendusByEvent.get(String(event.evenement_id)) || {};
       return {
         evenementId: event.evenement_id,
         date: event.date,
@@ -113,6 +117,8 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
         statutEvenement: event.statut,
         statutParticipation: part ? part.statut : 'NON_RENSEIGNE',
         motif: part && part.motif_absence ? part.motif_absence : null,
+        motifInclusion: attendu.motif_inclusion || null,
+        motif_inclusion: attendu.motif_inclusion || null,
         href: `#/exercices/${event.evenement_id}`,
         volumes: null,
         numerator: 0,
@@ -440,6 +446,8 @@ function createScopePersonService(repo){
         permutation: statut === 'PERMUTATION',
         statutParticipation: statut,
         motif: row.motif || null,
+        motifInclusion: row.motifInclusion || row.motif_inclusion || null,
+        motif_inclusion: row.motifInclusion || row.motif_inclusion || null,
         href: `#/exercices/${row.evenementId}`,
         volumes: row.volumes,
         numerator: row.numerator,

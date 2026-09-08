@@ -2208,6 +2208,21 @@ html, body {
   background: #ffe8e8;
 }
 
+.scope-table tbody tr.scope-row-catchup,
+.scope-table tbody tr.scope-row-catchup td,
+.scope-table tbody tr.scope-row-catchup:nth-child(odd),
+.scope-table tbody tr.scope-row-catchup:nth-child(odd) td,
+.scope-table tbody tr.scope-row-catchup:nth-child(even),
+.scope-table tbody tr.scope-row-catchup:nth-child(even) td,
+.scope-table tbody tr.scope-row-catchup:hover,
+.scope-table tbody tr.scope-row-catchup:hover td {
+  background: #e8f4ff;
+}
+
+.scope-table tbody tr.scope-row-catchup {
+  box-shadow: inset 3px 0 0 #5fb6f5;
+}
+
 .scope-table tbody tr.scope-row-session-counted,
 .scope-table tbody tr.scope-row-session-counted td,
 .scope-table tbody tr.scope-row-session-counted:nth-child(odd),
@@ -4977,6 +4992,10 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-table tbody tr:hover{background:#fdeef0;}
 .scope-table tbody tr.scope-row-manual{background:#fff3f3;}
 .scope-table tbody tr.scope-row-manual:hover{background:#ffe8e8;}
+.scope-table tbody tr.scope-row-catchup,
+.scope-table tbody tr.scope-row-catchup td,
+.scope-table tbody tr.scope-row-catchup:hover,
+.scope-table tbody tr.scope-row-catchup:hover td{background:#e8f4ff;}
 .scope-table tbody tr.scope-row-session-excuse,
 .scope-table tbody tr.scope-row-session-excuse td,
 .scope-table tbody tr.scope-row-session-excuse:hover,
@@ -6339,6 +6358,67 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-presence-toolbar .scope-segmented-item {
   height: 32px;
   min-height: 32px;
+}
+
+.scope-permutation-tabs .scope-permutation-segment {
+  border-color: #9ed3ff;
+}
+
+.scope-permutation-tabs .scope-segmented-item.is-permutation-tab {
+  color: #075985;
+}
+
+.scope-permutation-tabs .scope-segmented-item.is-permutation-tab[aria-pressed="true"] {
+  background: #dff1ff;
+  color: #075985;
+  box-shadow: inset 0 -2px 0 #38a3ea;
+}
+
+.scope-permutation-obligations {
+  width: 100%;
+  margin: 4px 0 12px;
+  padding: 12px;
+  border: 1px solid #b8ddff;
+  border-radius: var(--scope-radius-sm);
+  background: #f4faff;
+}
+
+.scope-permutation-table {
+  margin-top: 8px;
+}
+
+.scope-permutation-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 1px solid #9ed3ff;
+  border-radius: var(--scope-radius-xs);
+  background: #dff1ff;
+  color: #075985;
+  font-size: var(--scope-type-label);
+  font-weight: 650;
+}
+
+.scope-permutation-state.is-rattrappe,
+.scope-permutation-state.is-regularise {
+  border-color: var(--scope-border);
+  background: var(--scope-table-head-bg);
+  color: var(--scope-text);
+}
+
+.scope-permutation-state.is-a-regulariser {
+  border-color: #f0d9b5;
+  background: var(--scope-warning-soft);
+  color: var(--scope-warning);
+}
+
+.scope-catchup-origin {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  color: #075985;
+  font-weight: 650;
 }
 
 .scope-event-saisie .scope-table tbody tr,

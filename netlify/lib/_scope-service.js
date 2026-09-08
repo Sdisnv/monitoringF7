@@ -2247,6 +2247,7 @@ function createScopeService(repo){
       const isCompatibleCatchup = !isSourceEvent && isCompatiblePermutationEvent(source, evenement);
       if(!isSourceEvent && !isCompatibleCatchup) continue;
       const personne = repo.getPersonne ? await repo.getPersonne(row.personne_id) : null;
+      const sourceCible = row.source_cible_id && repo.getCible ? await repo.getCible(row.source_cible_id) : null;
       obligations.push({
         permutationId: row.permutation_id,
         personneId: row.personne_id,
@@ -2260,7 +2261,8 @@ function createScopeService(repo){
         source: {
           date: row.source_date,
           libelle: source && source.libelle,
-          cibleId: row.source_cible_id || null
+          cibleId: row.source_cible_id || null,
+          cibleLabel: sourceCible ? [sourceCible.domaine_code, sourceCible.niveau_code].filter(Boolean).join(' ') : null
         }
       });
     }

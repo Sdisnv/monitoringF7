@@ -13,6 +13,7 @@ const { displayDomaineCode } = require('./_scope-model');
 const { collectMultisessionReport } = require('./_scope-multisession-report');
 const { createScopeJspReportingService, createScopeParticipationReportingService } = require('./_scope-jsp-reporting');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
+const UiLogic = require('../../assets/js/scope-ui-logic');
 
 const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
 const DOMAIN_PERIOD_OI = Object.freeze({
@@ -218,17 +219,20 @@ function nominativeRows(fiche){
     const statut = part.statut || 'NON_RENSEIGNE';
     const role = String(part.role || 'PARTICIPANT').toUpperCase();
     if(!isValidSessionStatut(statut)) return null;
+    const catchupSource = UiLogic.permutationCatchupSourceLabel ? UiLogic.permutationCatchupSourceLabel(a) : '';
     return {
       grade: person.grade || '',
       nom: person.nom || '',
       prenom: person.prenom || '',
       nip: person.nip || '',
       oi: cible.niveau_code || '',
-      cible: cible.libelle || cible.niveau_code || '',
+      cible: catchupSource ? 'Rattrapage' : (cible.libelle || cible.niveau_code || ''),
       statut,
       statutLabel: STATUT_LABELS[part.statut] || part.statut || 'Non renseigné',
       motif: part.motif_absence || null,
-      motifLabel: part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : '',
+      motifLabel: catchupSource ? `Rattrapage — ${catchupSource}` : (part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : ''),
+      motifInclusion: a.motif_inclusion || null,
+      motif_inclusion: a.motif_inclusion || null,
       role,
       roleLabel: role !== 'PARTICIPANT' ? (ROLE_LABELS[role] || role) : '',
       permutation: part.statut === 'PERMUTATION'

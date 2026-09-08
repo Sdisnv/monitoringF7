@@ -114,9 +114,50 @@
   }
 
   function informationMotifLabel(row) {
+    const catchup = permutationCatchupSourceLabel(row);
+    if (catchup) return catchup;
     const statut = String((row && (row.statut || row.statutParticipation)) || '').toUpperCase();
     if (statut !== 'ABSENT_EXCUSE' && statut !== 'EXCUSE' && statut !== 'DISPENSE') return '';
     return motifShortLabel(row && (row.motifAbsence || row.motif_absence || row.sessionMotif || row.motif));
+  }
+
+  function cleanLabel(value) {
+    return String(value == null ? '' : value).trim();
+  }
+
+  function permutationStatusLabel(code) {
+    const status = String(code || '').toUpperCase();
+    if (status === 'A_RATTRAPER') return 'À rattraper';
+    if (status === 'RATTRAPPE') return 'Rattrapé';
+    if (status === 'A_REGULARISER') return 'À régulariser';
+    if (status === 'REGULARISE') return 'Régularisé';
+    return status || '—';
+  }
+
+  function permutationSourceLabel(source) {
+    const src = source || {};
+    const eventLabel = cleanLabel(src.libelle || src.eventLabel || src.evenementLibelle || src.label);
+    const cible = cleanLabel(src.cibleLabel || src.cible || src.oi || src.niveauLabel || src.niveau);
+    if (eventLabel && cible) return `${eventLabel}, section ${cible}`;
+    if (eventLabel) return eventLabel;
+    if (cible) return `Section ${cible}`;
+    return 'Source de permutation';
+  }
+
+  function permutationCatchupMotif(source) {
+    return `permutation_rattrapage|${permutationSourceLabel(source)}`;
+  }
+
+  function permutationCatchupSourceLabel(row) {
+    const raw = cleanLabel(row && (row.catchupSourceLabel || row.rattrapageSourceLabel || row.sourcePermutationLabel || row.motifInclusion || row.motif_inclusion));
+    if (!raw) return '';
+    const marker = 'permutation_rattrapage|';
+    if (raw.toLowerCase().startsWith(marker)) return raw.slice(marker.length).trim();
+    return '';
+  }
+
+  function isPermutationCatchup(row) {
+    return Boolean(permutationCatchupSourceLabel(row) || row && (row.catchup || row.rattrapage || row.isCatchup));
   }
 
   function sessionExplainTooltip(row) {
@@ -1842,6 +1883,11 @@
     isDispenseMotif,
     motifShortLabel,
     informationMotifLabel,
+    permutationStatusLabel,
+    permutationSourceLabel,
+    permutationCatchupMotif,
+    permutationCatchupSourceLabel,
+    isPermutationCatchup,
     sessionExplainTooltip,
     placeSessionTooltip,
     STATUT_LABELS,

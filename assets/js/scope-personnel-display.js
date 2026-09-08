@@ -1124,6 +1124,8 @@
   }
 
   function ficheEventInformations(row){
+    const catchup = uiLogic.permutationCatchupSourceLabel ? uiLogic.permutationCatchupSourceLabel(row) : '';
+    if(catchup) return `Rattrapage — ${catchup}`;
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
     if(s !== 'ABSENT_EXCUSE' && s !== 'EXCUSE' && s !== 'DISPENSE') return '—';
     return ficheExcuseMotifLabel(row && (row.motif || row.motifAbsence)) || '—';
@@ -1131,6 +1133,7 @@
 
   function ficheEventCible(row){
     if(!row) return '—';
+    if(uiLogic.isPermutationCatchup && uiLogic.isPermutationCatchup(row)) return 'Rattrapage';
     if(row.oiAtDate) return row.oiAtDate;
     if(Array.isArray(row.cibles) && row.cibles.length) return row.cibles.filter(Boolean).join(', ') || '—';
     return clean(row.sousDomaine) || '—';
