@@ -56,7 +56,7 @@ const DEFAULT_ROLES = Object.freeze(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SU
 function basePolicy(domaineCode, patch = {}){
   const behavior = {
     denominatorStatuses: ['PRESENT', 'PERMUTATION', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE'],
-    recognizedParticipationStatuses: ['PRESENT', 'PERMUTATION', 'DISPENSE'],
+    recognizedParticipationStatuses: ['PRESENT', 'DISPENSE'],
     supervisionRoles: ['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE'],
     propagationScope: 'SESSION_ONLY',
     deduplicationScope: 'SESSION'

@@ -364,14 +364,14 @@ async function enableDap(repo, dateBascule){
     ]);
     const dap = await dashboard.dashboard({ year: 2026, preset: 'YEAR', domaine: 'DAP' });
     const vol = dap.officiel.volumes;
-    assert.strictEqual(vol.presents, 3);
+    assert.strictEqual(vol.presents, 2);
     assert.strictEqual(vol.permutations, 1);
     const points = dap.graphs.permutations.series[0].points;
-    const hors = points.find((p) => p.id === 'presentHorsPermutation').value;
+    const presents = points.find((p) => p.id === 'presents').value;
     const perm = points.find((p) => p.id === 'permutations').value;
-    assert.strictEqual(hors + perm, vol.presents);
+    assert.strictEqual(presents, vol.presents);
     assert.strictEqual(perm, 1);
-    assert.strictEqual(points.find((p) => p.id === 'permutations').subsetOf, 'presents');
+    assert.ok(!points.find((p) => p.id === 'permutations').subsetOf);
     const dps = await dashboard.dashboard({ year: 2026, preset: 'YEAR', domaine: 'DPS' });
     assert.strictEqual(dps.graphs.permutations.emptyReason, 'HORS_DAP');
     assert.strictEqual(charts.renderChartCard(dps.graphs.permutations), '');

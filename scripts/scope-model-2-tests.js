@@ -176,7 +176,7 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
     assert.strictEqual(legacy.motif_absence, 'NON_PRECISE');
   });
 
-  await record('7 — PERMUTATION DAP compte comme présence', async () => {
+  await record('7 — PERMUTATION DAP reste distincte des présences réalisées', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const analytics = createScopeAnalyticsService(repo);
@@ -190,9 +190,9 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
       { statut: 'ABSENT_EXCUSE', motif_absence: 'PRIVE' }
     ]);
     const summary = await analytics.summary({ from: '2026-01-01', to: '2026-12-31' });
-    assert.strictEqual(summary.officiel.volumes.presents, 2);
+    assert.strictEqual(summary.officiel.volumes.presents, 1);
     assert.strictEqual(summary.officiel.volumes.permutations, 1);
-    assert.strictEqual(summary.officiel.numerator, 2);
+    assert.strictEqual(summary.officiel.numerator, 1);
     assert.strictEqual(summary.officiel.denominator, 3);
   });
 

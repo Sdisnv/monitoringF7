@@ -2172,6 +2172,34 @@ function createScopeService(repo){
     return normalizeExerciseEquivalenceKey(evenement && (evenement.exercise_equivalence_key || evenement.exerciseEquivalenceKey));
   }
 
+  function cibleSectionLabel(cible){
+    if(!cible) return '';
+    return [cible.domaine_code || cible.domaineCode, cible.niveau_code || cible.niveauCode]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  async function decorateSourcePermutationAttendus(tx, evenement, attendus, cibles = []){
+    if(!tx.listPermutations || String(evenement && evenement.domaine_code || '').toUpperCase() !== 'DAP') return attendus;
+    const rows = await tx.listPermutations({ sourceEvenementId: evenement.evenement_id });
+    if(!(rows || []).length) return attendus;
+    const cibleById = new Map((cibles || []).map((c) => [String(c.cible_id || c.cibleId), c]));
+    const byPersonne = new Map((rows || []).map((row) => [String(row.personne_id), row]));
+    return (attendus || []).map((attendu) => {
+      const obligation = byPersonne.get(String(attendu.personne_id || attendu.personneId));
+      if(!obligation) return attendu;
+      const rattrapageCible = obligation.rattrapage_cible_id
+        ? cibleSectionLabel(cibleById.get(String(obligation.rattrapage_cible_id)))
+        : '';
+      return Object.assign({}, attendu, {
+        permutation_obligation_status: obligation.statut || null,
+        permutationObligationStatus: obligation.statut || null,
+        permutation_rattrapage_cible_label: rattrapageCible || null,
+        permutationRattrapageCibleLabel: rattrapageCible || null
+      });
+    });
+  }
+
   async function syncPermutationWorkflow(tx, evenement, personneId, patch, actor){
     if(!tx.upsertPermutation || !tx.listPermutations) return null;
     const status = String(patch.statut || '').toUpperCase();
@@ -2240,15 +2268,14 @@ function createScopeService(repo){
       sourceExerciseKey: exerciseKey,
       statut: [PERMUTATION_STATUS.A_RATTRAPER, PERMUTATION_STATUS.A_REGULARISER]
     });
-    const obligations = [];
-    for(const row of open || []){
+    const obligations = await Promise.all((open || []).map(async (row) => {
       const source = await repo.getEvent(row.source_evenement_id);
       const isSourceEvent = String(row.source_evenement_id || '') === String(evenement.evenement_id || '');
       const isCompatibleCatchup = !isSourceEvent && isCompatiblePermutationEvent(source, evenement);
-      if(!isSourceEvent && !isCompatibleCatchup) continue;
+      if(!isSourceEvent && !isCompatibleCatchup) return null;
       const personne = repo.getPersonne ? await repo.getPersonne(row.personne_id) : null;
       const sourceCible = row.source_cible_id && repo.getCible ? await repo.getCible(row.source_cible_id) : null;
-      obligations.push({
+      return {
         permutationId: row.permutation_id,
         personneId: row.personne_id,
         nip: personne && personne.nip,
@@ -2264,9 +2291,10 @@ function createScopeService(repo){
           cibleId: row.source_cible_id || null,
           cibleLabel: sourceCible ? [sourceCible.domaine_code, sourceCible.niveau_code].filter(Boolean).join(' ') : null
         }
-      });
-    }
-    return { obligations, exerciseKey };
+      };
+    }));
+    const filtered = obligations.filter(Boolean);
+    return { obligations: filtered, exerciseKey };
   }
 
   async function regulariserPermutation(permutationId, body, actor){
@@ -2858,6 +2886,7 @@ function createScopeService(repo){
     const allCibles = await repo.listCibles();
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
     let attendus = await repo.listAttendus(eventId);
+    attendus = await decorateSourcePermutationAttendus(repo, evenement, attendus, allCibles);
     if(String(evenement.statut || '').toUpperCase() === 'PLANIFIE'){
       const periodesByPersonne = new Map();
       const personneIds = [...new Set((attendus || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean))];
@@ -3884,7 +3913,7 @@ function createScopeService(repo){
         officiel: false,
         volumes: row,
         taux: null,
-        message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus. Les permutations sont un sous-ensemble des présents.'
+        message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus. Les permutations sont suivies séparément des présences réalisées.'
       };
     }
     const realise = evenement.statut === 'REALISE';

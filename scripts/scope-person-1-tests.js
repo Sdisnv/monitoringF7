@@ -288,7 +288,7 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
     assert.strictEqual(fiche.kpi.percentage, 100);
   });
 
-  await record('13 — permutation = présence', async () => {
+  await record('13 — permutation distincte des présences réalisées', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const persons = createScopePersonService(repo);
@@ -300,9 +300,9 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
       people: [p], statuses: [{ statut: 'PERMUTATION', cibleSuivieId: y3.cible_id }]
     });
     const fiche = await persons.fiche(p.personne_id, { year: 2026 });
-    assert.strictEqual(fiche.kpi.volumes.presents, 1);
+    assert.strictEqual(fiche.kpi.volumes.presents, 0);
     assert.strictEqual(fiche.kpi.volumes.permutations, 1);
-    assert.strictEqual(fiche.kpi.numerator, 1);
+    assert.strictEqual(fiche.kpi.numerator, 0);
     assert.strictEqual(fiche.evenements[0].permutation, true);
     assert.strictEqual(fiche.evenements[0].oiAccueil, 'DAP/Y3');
   });
@@ -322,9 +322,9 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
       });
     }
     const fiche = await persons.fiche(p.personne_id, { year: 2026 });
-    assert.strictEqual(fiche.kpi.volumes.presents, 10);
+    assert.strictEqual(fiche.kpi.volumes.presents, 8);
     assert.strictEqual(fiche.kpi.volumes.permutations, 2);
-    assert.strictEqual(fiche.kpi.numerator, 10);
+    assert.strictEqual(fiche.kpi.numerator, 8);
     assert.notStrictEqual(fiche.kpi.numerator, 12);
   });
 
@@ -657,7 +657,7 @@ async function eventClosed(repo, service, { date, domaine, niveau, libelle, peop
       people: [p], statuses: ['PRESENT']
     });
     const fiche = await persons.fiche(p.personne_id, { year: 2026 });
-    assert.strictEqual(fiche.evenements[0].libelle, 'Récent');
+    assert.strictEqual(fiche.evenements[0].libelle, 'Ancien');
     assert.ok(fiche.evenements[0].href.includes('#/exercices/'));
   });
 

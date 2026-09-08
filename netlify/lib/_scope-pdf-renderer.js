@@ -161,8 +161,8 @@ function hasLogo(file){
 function nominativeInfoLabel(row){
   const parts = [];
   if(row && row.roleLabel) parts.push(`Rôle : ${row.roleLabel}`);
-  if(row && row.permutation) parts.push('Permutation ⊂ présents');
-  else if(row && row.motifLabel) parts.push(row.motifLabel);
+  if(row && row.motifLabel) parts.push(row.motifLabel);
+  else if(row && row.permutation) parts.push('Permutation');
   return parts.join(' · ');
 }
 
@@ -535,7 +535,7 @@ class ScopePdfRenderer {
       { label: 'Dispensés (hors dénominateur)', value: String(v.dispenses || 0) }
     ]);
     if(dap){
-      this.para(`dont permutations : ${Number(v.permutations || 0)}  (sous-ensemble des présents, jamais additionnées)`);
+      this.para(`dont permutations : ${Number(v.permutations || 0)}  (statuts Permutation, non comptés comme présences événementielles)`);
     }
   }
 
@@ -783,7 +783,7 @@ class ScopePdfRenderer {
     this.kpiOfficial(m.officiel, { event: true });
     if(dap){
       const v = (m.officiel && m.officiel.volumes) || {};
-      this.para(`dont permutations : ${Number(v.permutations || 0)}  (sous-ensemble des présents, jamais additionnées)`);
+      this.para(`dont permutations : ${Number(v.permutations || 0)}  (statuts Permutation, non comptés comme présences événementielles)`);
     }
     this.renderEncadrement(m);
     if(m.nominatif && m.nominatif.length){
@@ -1034,7 +1034,7 @@ class ScopePdfRenderer {
     });
     this.doc.y = y + h + 8;
     if(m.domaine === 'DAP'){
-      this.para(`dont permutations : ${Number(v.permutations || 0)}  (sous-ensemble des présents, jamais additionnées, jamais transformées en absence)`, { size: 8 });
+      this.para(`dont permutations : ${Number(v.permutations || 0)}  (statuts Permutation, non comptés comme présences événementielles)`, { size: 8 });
     }
 
     this.iconHeading('chart', 'Analyse graphique', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });

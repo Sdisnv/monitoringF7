@@ -140,7 +140,7 @@ async function fixture(){
     const row = report.nominatif.find((item) => item.nip === '7738');
     eq(row.statutLabel, 'Présent');
     eq(row.cible, 'Rattrapage');
-    eq(row.motifLabel, 'Rattrapage — Exercice DAP 1, section DAP Y1');
+    eq(row.motifLabel, 'Exercice DAP 1, section DAP Y1');
     ok(!JSON.stringify(row).includes('Ajout manuel'));
     ok(!JSON.stringify(row).includes('Ajout ponctuel'));
   });
@@ -159,7 +159,7 @@ async function fixture(){
       motifInclusion: targetAttendu.motif_inclusion
     };
     eq(display.ficheEventCible(personTargetRow), 'Rattrapage');
-    eq(display.ficheEventInformations(personTargetRow), 'Rattrapage — Exercice DAP 1, section DAP Y1');
+    eq(display.ficheEventInformations(personTargetRow), 'Exercice DAP 1, section DAP Y1');
     const sourceParticipation = await repo.getParticipation(src.eventId, p.personne_id);
     eq(sourceParticipation.statut, 'PERMUTATION');
   });

@@ -191,7 +191,7 @@ async function createClosedEvent(ctx, { domaine, niveau, date, libelle, people, 
     assert.ok(model.events.some((ev) => ev.libelle === 'JSP jeunes'));
   });
 
-  await record('05 — DAP permutation reste présente, pas absence', async () => {
+  await record('05 — DAP permutation reste distincte des présences réalisées', async () => {
     const c = ctx();
     await enableDap(c.repo);
     const seeded = await seedPeople(c.repo, 'DAP', 'Y1', 3, 'DAP');
@@ -201,10 +201,10 @@ async function createClosedEvent(ctx, { domaine, niveau, date, libelle, people, 
       statuses: ['PRESENT', 'PERMUTATION', 'ABSENT_NON_EXCUSE']
     });
     const model = await collectReport(c.repo, { kind: 'DOMAIN', domaine: 'DAP', year: 2026, preset: 'YEAR' });
-    assert.strictEqual(model.officiel.volumes.presents, 2);
+    assert.strictEqual(model.officiel.volumes.presents, 1);
     assert.strictEqual(model.officiel.volumes.permutations, 1);
     assert.strictEqual(model.officiel.volumes.nonExcuses, 1);
-    assert.strictEqual(model.officiel.percentage, 66.7);
+    assert.strictEqual(model.officiel.percentage, 33.3);
   });
 
   await record('06 — PDF Domaine / période contient KPI, graphique OI et tableau', async () => {

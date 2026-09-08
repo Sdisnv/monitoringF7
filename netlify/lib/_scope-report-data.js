@@ -220,6 +220,12 @@ function nominativeRows(fiche){
     const role = String(part.role || 'PARTICIPANT').toUpperCase();
     if(!isValidSessionStatut(statut)) return null;
     const catchupSource = UiLogic.permutationCatchupSourceLabel ? UiLogic.permutationCatchupSourceLabel(a) : '';
+    const permutationInfo = statut === 'PERMUTATION' && UiLogic.informationMotifLabel
+      ? UiLogic.informationMotifLabel(Object.assign({}, a, part, {
+        motifInclusion: a.motif_inclusion || a.motifInclusion || null,
+        motif_inclusion: a.motif_inclusion || a.motifInclusion || null
+      }))
+      : '';
     return {
       grade: person.grade || '',
       nom: person.nom || '',
@@ -230,7 +236,7 @@ function nominativeRows(fiche){
       statut,
       statutLabel: STATUT_LABELS[part.statut] || part.statut || 'Non renseigné',
       motif: part.motif_absence || null,
-      motifLabel: catchupSource ? `Rattrapage — ${catchupSource}` : (part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : ''),
+      motifLabel: catchupSource ? catchupSource : (permutationInfo || (part.motif_absence ? (MOTIF_LABELS[part.motif_absence] || part.motif_absence) : '')),
       motifInclusion: a.motif_inclusion || null,
       motif_inclusion: a.motif_inclusion || null,
       role,

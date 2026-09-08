@@ -450,9 +450,9 @@ async function closePresent(service, eventId, people){
     }, { sub: 'test' });
     await service.cloturer(ev.evenement.evenement_id, { baseVersion: 3 }, { sub: 'test' });
     const summary = await analytics.summary({ from: '2026-01-01', to: '2026-12-31' });
-    assert.strictEqual(summary.officiel.volumes.presents, 2);
+    assert.strictEqual(summary.officiel.volumes.presents, 1);
     assert.strictEqual(summary.officiel.volumes.permutations, 1);
-    assert.strictEqual(summary.officiel.numerator, 2);
+    assert.strictEqual(summary.officiel.numerator, 1);
     const hors = await service.createEvenement({
       date: '2026-04-02', domaineCode: 'DPS', libelle: 'TEST R1 perm DPS',
       cibleIds: [g1.cible_id], modeSuivi: 'NOMINATIF'

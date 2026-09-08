@@ -287,7 +287,7 @@
   function jspParticipation(events){
     const list = (events || []).filter((row) => String(row.domaine || row.domaineCode || '').toUpperCase() === 'JSP');
     const expected = list.length;
-    const present = list.filter((row) => ['PRESENT', 'PERMUTATION'].includes(String(row.statutParticipation || row.statut || '').toUpperCase())).length;
+    const present = list.filter((row) => String(row.statutParticipation || row.statut || '').toUpperCase() === 'PRESENT').length;
     const excused = list.filter((row) => String(row.statutParticipation || row.statut || '').toUpperCase() === 'EXCUSE').length;
     const absent = list.filter((row) => ['ABSENT', 'NON_EXCUSE', 'ABSENT_NON_EXCUSE'].includes(String(row.statutParticipation || row.statut || '').toUpperCase())).length;
     return {
@@ -1125,7 +1125,9 @@
 
   function ficheEventInformations(row){
     const catchup = uiLogic.permutationCatchupSourceLabel ? uiLogic.permutationCatchupSourceLabel(row) : '';
-    if(catchup) return `Rattrapage — ${catchup}`;
+    if(catchup) return catchup;
+    const permutation = uiLogic.permutationSourceInformationLabel ? uiLogic.permutationSourceInformationLabel(row) : '';
+    if(permutation) return permutation;
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
     if(s !== 'ABSENT_EXCUSE' && s !== 'EXCUSE' && s !== 'DISPENSE') return '—';
     return ficheExcuseMotifLabel(row && (row.motif || row.motifAbsence)) || '—';
@@ -1353,6 +1355,7 @@
     ficheEventStatutLabel,
     ficheEventInformations,
     ficheEventCible,
+    isPermutationCatchup: uiLogic.isPermutationCatchup,
     ficheExcuseMotifLabel,
     personMatchesOiFilter,
     personMatchesSpecializationFilter,

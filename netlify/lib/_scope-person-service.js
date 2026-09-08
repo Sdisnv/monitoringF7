@@ -38,6 +38,42 @@ function labelOi(cible){
   return `${domaine}/${niveau}`;
 }
 
+function permutationSectionLabel(cible){
+  return String(labelOi(cible) || '').replace('/', ' ');
+}
+
+function enrichPersonPermutationRows(rows, permutations, ciblesById, sourceLabelsByEvent = new Map()){
+  if(!(permutations || []).length) return rows;
+  const bySource = new Map();
+  const byRattrapage = new Map();
+  for(const row of permutations || []){
+    if(row && row.source_evenement_id) bySource.set(String(row.source_evenement_id), row);
+    if(row && row.rattrapage_evenement_id) byRattrapage.set(String(row.rattrapage_evenement_id), row);
+  }
+  return (rows || []).map((row) => {
+    const obligation = bySource.get(String(row.evenementId || row.evenement_id || ''));
+    if(obligation){
+      const cible = obligation.rattrapage_cible_id ? ciblesById.get(String(obligation.rattrapage_cible_id)) : null;
+      const rattrapageLabel = permutationSectionLabel(cible);
+      return Object.assign({}, row, {
+        permutationObligationStatus: obligation.statut || null,
+        permutation_obligation_status: obligation.statut || null,
+        permutationRattrapageCibleLabel: rattrapageLabel || null,
+        permutation_rattrapage_cible_label: rattrapageLabel || null
+      });
+    }
+    const catchup = byRattrapage.get(String(row.evenementId || row.evenement_id || ''));
+    if(!catchup) return row;
+    const sourceLabel = sourceLabelsByEvent.get(String(catchup.source_evenement_id)) || '';
+    return Object.assign({}, row, {
+      motifInclusion: sourceLabel ? `permutation_rattrapage|${sourceLabel}` : row.motifInclusion,
+      motif_inclusion: sourceLabel ? `permutation_rattrapage|${sourceLabel}` : row.motif_inclusion,
+      rattrapageSourceLabel: sourceLabel || null,
+      catchup: true
+    });
+  });
+}
+
 function affectationPayload(row){
   if(!row) return null;
   return {
@@ -429,7 +465,19 @@ function createScopePersonService(repo){
     ]);
     const today = isoDate(query.date) || isoDate(new Date());
     const identity = identityPayload(personne, periodes, affectations, ciblesById, today, snap.summary.period);
-    const included = (snap.evaluated.includedEvents || []).map((row) => {
+    const sourcePermutations = repo.listPermutations ? await repo.listPermutations({ personneId }) : [];
+    const sourceLabelsByEvent = new Map();
+    await Promise.all((sourcePermutations || []).map(async (row) => {
+      if(!row || !row.source_evenement_id) return;
+      const [event, cible] = await Promise.all([
+        repo.getEvent ? repo.getEvent(row.source_evenement_id) : null,
+        row.source_cible_id ? Promise.resolve(ciblesById.get(String(row.source_cible_id))) : Promise.resolve(null)
+      ]);
+      const eventLabel = event && event.libelle;
+      const section = permutationSectionLabel(cible);
+      sourceLabelsByEvent.set(String(row.source_evenement_id), eventLabel && section ? `${eventLabel}, section ${section}` : (eventLabel || section || ''));
+    }));
+    let included = (snap.evaluated.includedEvents || []).map((row) => {
       const oi = principalOi(affectations, ciblesById, row.date);
       const eventCibles = (row.cibleIds || []).map((cid) => labelOi(ciblesById.get(cid))).filter(Boolean);
       const accueil = row.cibleSuivieId ? labelOi(ciblesById.get(row.cibleSuivieId)) : null;
@@ -456,13 +504,14 @@ function createScopePersonService(repo){
         appliedObjective: row.appliedObjective || null,
         prExerciseGroupKey: row.prExerciseGroupKey || row.pr_exercise_group_key || null
       };
-    }).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
+    }).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
+    included = enrichPersonPermutationRows(included, sourcePermutations, ciblesById, sourceLabelsByEvent);
     const planned = await plannedExpectedEvents(repo, personneId, snap.summary.period, affectations, ciblesById);
     const plannedById = new Map(planned.map((row) => [String(row.evenementId), row]));
     for(const row of included) plannedById.delete(String(row.evenementId));
     const { collapsePersonSessionHistory } = require('./_scope-cycle-rules');
     const ficheEvents = collapsePersonSessionHistory(included.concat([...plannedById.values()]))
-      .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.libelle).localeCompare(String(a.libelle)));
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
 
     const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });
     const entry = isoDate(personne.date_entree_sdis || personne.date_entree) || snap.summary.period.from;

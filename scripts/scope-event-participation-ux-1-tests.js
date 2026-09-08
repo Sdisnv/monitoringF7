@@ -115,7 +115,8 @@ function part(personne, statut, extra){
     }, { sub: 'ux1-test' });
     const fiche = await dap.service.lireEvenement(dap.eventId);
     assert.strictEqual(fiche.participations[0].statut, 'PERMUTATION');
-    assert.strictEqual(computeTaux(fiche.participations, fiche.attendus).presents, 1);
+    assert.strictEqual(computeTaux(fiche.participations, fiche.attendus).presents, 0);
+    assert.strictEqual(computeTaux(fiche.participations, fiche.attendus).permutations, 1);
     const dps = logic.participationStatusesForDomaine('DPS').map((row) => row[0]);
     const dapStatuses = logic.participationStatusesForDomaine('DAP').map((row) => row[0]);
     assert.ok(!dps.includes('PERMUTATION'));
@@ -272,7 +273,8 @@ function part(personne, statut, extra){
       { inclus: true, role: 'AUXILIAIRE', statut: 'PRESENT' },
       { inclus: true, role: 'PARTICIPANT', statut: 'PRESENT', alreadyCountedInSession: true }
     ]);
-    assert.strictEqual(c.present, 3);
+    assert.strictEqual(c.present, 2);
+    assert.strictEqual(c.permutations, 1);
     assert.strictEqual(c.excuse, 1);
     assert.strictEqual(c.absent, 1);
     assert.strictEqual(c.dispense, 0);

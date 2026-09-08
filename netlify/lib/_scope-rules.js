@@ -110,10 +110,10 @@ function computeTaux(participations, attendus){
     const id = String(p.personne_id || p.personneId);
     if(!inclus.has(id)) continue;
     const statut = p.statut;
-    if(statut === 'PRESENT' || statut === STATUT_PERMUTATION){
+    if(statut === 'PRESENT'){
       present += 1;
-      if(statut === STATUT_PERMUTATION) permutations += 1;
     }
+    else if(statut === STATUT_PERMUTATION) permutations += 1;
     else if(statut === 'ABSENT_EXCUSE'){
       excuse += 1;
       excuses[normalizeMotifKey(p.motif_absence)] += 1;
@@ -123,7 +123,7 @@ function computeTaux(participations, attendus){
     else if(statut === 'NON_RENSEIGNE' || statut === 'NON_CONCERNE' || !statut) nonRenseigne += 1;
   }
   const numerator = present;
-  const denominator = present + excuse + absent;
+  const denominator = present + excuse + absent + permutations;
   return {
     numerator,
     denominator,
@@ -219,7 +219,7 @@ function computeEffectifEngageEvenement({ domaine, attendus, participations, per
     const id = idOfPersonne(p);
     if(!id) continue;
     const statut = p.statut;
-    if(attenduIds.has(id) && (statut === 'PRESENT' || statut === 'PERMUTATION')){
+    if(attenduIds.has(id) && statut === 'PRESENT'){
       nips.add(nipOfParticipation(p, personnesById));
       continue;
     }

@@ -161,7 +161,7 @@ function ciblesFor(domain){
       { personne_id: 'c' },
       { personne_id: 'd' }
     ]);
-    assert.strictEqual(taux.presents, 2);
+    assert.strictEqual(taux.presents, 1);
     assert.strictEqual(taux.permutations, 1);
     assert.strictEqual(taux.dispenses, 1);
     assert.strictEqual(taux.denominator, 3);

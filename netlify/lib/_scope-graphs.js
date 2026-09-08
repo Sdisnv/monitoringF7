@@ -231,7 +231,7 @@ function permutationsDataset(officiel, domaineCode, explain){
   if(!isDapPerimeter(domaineCode)){
     return dataset({
       id: 'permutations',
-      question: 'Quelle part de la participation DAP provient de permutations ?',
+      question: 'Combien de statuts Permutation DAP restent distincts des présences réalisées ?',
       type: 'stacked',
       emptyReason: 'HORS_DAP',
       series: []
@@ -240,18 +240,17 @@ function permutationsDataset(officiel, domaineCode, explain){
   const volumes = (officiel && officiel.volumes) || emptyVolumes();
   const presents = Number(volumes.presents || 0);
   const permutations = Number(volumes.permutations || 0);
-  const hors = Math.max(0, presents - permutations);
   const emptyReason = presents <= 0 && permutations <= 0 ? 'AUCUNE_PERMUTATION' : null;
   const points = emptyReason ? [] : [
-    { id: 'presentHorsPermutation', label: 'Présents hors permutation', value: hors, token: 'present', inDenominator: true },
-    { id: 'permutations', label: 'Permutations (⊂ présents)', value: permutations, token: 'permutation', inDenominator: true, subsetOf: 'presents' }
+    { id: 'presents', label: 'Présences réalisées', value: presents, token: 'present', inDenominator: true },
+    { id: 'permutations', label: 'Permutations source', value: permutations, token: 'permutation', inDenominator: true }
   ];
   return dataset({
     id: 'permutations',
-    question: 'Quelle part de la participation DAP provient de permutations ?',
+    question: 'Combien de statuts Permutation DAP restent distincts des présences réalisées ?',
     type: 'stacked',
     emptyReason,
-    explain: explainSlice(explain, { note: 'PERMUTATION ⊂ présents. Jamais additionnée une seconde fois, jamais une absence.' }),
+    explain: explainSlice(explain, { note: 'PERMUTATION est une absence source avec obligation de rattrapage; elle reste distincte des présences réalisées.' }),
     series: [{ id: 'dap', kind: KINDS.OFFICIEL, label: 'Présents DAP', points }]
   });
 }

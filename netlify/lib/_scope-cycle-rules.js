@@ -2,7 +2,7 @@ const { STATUT_PERMUTATION } = require('./_scope-model');
 const { getEncadrementContribution, round1 } = require('./_scope-rules');
 
 const ROLES_CYCLE = new Set(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
-const STATUTS_PRESENTS = new Set(['PRESENT', STATUT_PERMUTATION]);
+const STATUTS_PRESENTS = new Set(['PRESENT']);
 const STATUTS_ABSENCE = new Set(['ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
 const SESSION_COUNTING_ROLES = new Set(['PARTICIPANT', 'FORMATEUR', 'SURVEILLANT']);
 const STATUTS_PR_EXERCISE_RECONNUS = new Set(['PRESENT', STATUT_PERMUTATION, 'DISPENSE']);
@@ -118,7 +118,7 @@ function sortedValues(set){
 
 function classifyPrGlobalSessionStatut(statuts){
   const set = statuts instanceof Set ? statuts : new Set(statuts || []);
-  if(set.has('PRESENT') || set.has(STATUT_PERMUTATION)) return 'PRESENT';
+  if(set.has('PRESENT')) return 'PRESENT';
   if(set.has('DISPENSE')) return 'DISPENSE';
   if(set.has('ABSENT_EXCUSE')) return 'ABSENT_EXCUSE';
   if(set.has('ABSENT_NON_EXCUSE')) return 'ABSENT_NON_EXCUSE';
@@ -572,7 +572,7 @@ function statusFromDecision(row, populationHasKey){
   if(role === 'FORMATEUR' && STATUTS_PRESENTS.has(statut) && populationHasKey) return 'REALISE';
   if(role === 'SURVEILLANT' && STATUTS_PRESENTS.has(statut) && populationHasKey && normalizeUpper(row && row.source) === 'SAISIE') return 'REALISE';
   if(role !== 'PARTICIPANT') return 'NON_CONCERNE';
-  if(statut === 'PRESENT' || statut === STATUT_PERMUTATION) return 'REALISE';
+  if(statut === 'PRESENT') return 'REALISE';
   if(statut === 'DISPENSE') return 'DISPENSE';
   if(statut === 'ABSENT_EXCUSE') return 'EXCUSE';
   if(statut === 'ABSENT_NON_EXCUSE') return 'ABSENT';

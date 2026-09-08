@@ -186,7 +186,7 @@ async function createNominativeEvent(domaineCode, niveauCode){
       { personne_id: '4', statut: 'DISPENSE' },
       { personne_id: '5', statut: 'PERMUTATION' }
     ], ['1', '2', '3', '4', '5'].map((id) => ({ personne_id: id, inclus: true })));
-    assert.strictEqual(taux.numerator, 2);
+    assert.strictEqual(taux.numerator, 1);
     assert.strictEqual(taux.denominator, 4);
     assert.strictEqual(taux.dispenses, 1);
     assert.strictEqual(taux.permutations, 1);

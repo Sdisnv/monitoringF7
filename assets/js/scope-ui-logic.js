@@ -116,6 +116,8 @@
   function informationMotifLabel(row) {
     const catchup = permutationCatchupSourceLabel(row);
     if (catchup) return catchup;
+    const permutation = permutationSourceInformationLabel(row);
+    if (permutation) return permutation;
     const statut = String((row && (row.statut || row.statutParticipation)) || '').toUpperCase();
     if (statut !== 'ABSENT_EXCUSE' && statut !== 'EXCUSE' && statut !== 'DISPENSE') return '';
     return motifShortLabel(row && (row.motifAbsence || row.motif_absence || row.sessionMotif || row.motif));
@@ -153,7 +155,25 @@
     if (!raw) return '';
     const marker = 'permutation_rattrapage|';
     if (raw.toLowerCase().startsWith(marker)) return raw.slice(marker.length).trim();
+    if (row && (row.rattrapageSourceLabel || row.rattrapage_source_label) && !raw.includes('|')) return raw;
     return '';
+  }
+
+  function permutationRattrapageSectionLabel(row) {
+    return cleanLabel(row && (
+      row.permutationRattrapageCibleLabel
+      || row.permutation_rattrapage_cible_label
+      || row.rattrapageCibleLabel
+      || row.rattrapage_cible_label
+    ));
+  }
+
+  function permutationSourceInformationLabel(row) {
+    const statut = String((row && (row.statut || row.statutParticipation)) || '').toUpperCase();
+    if (statut !== 'PERMUTATION') return '';
+    const section = permutationRattrapageSectionLabel(row);
+    if (section) return `Rattrapage section ${section}`;
+    return 'À rattraper';
   }
 
   function isPermutationCatchup(row) {
@@ -922,7 +942,7 @@
 
   function participationStatutLabel(statut) {
     if (statut === 'PRESENT') return 'Présent';
-    if (statut === 'PERMUTATION') return 'Permutation (présent)';
+    if (statut === 'PERMUTATION') return 'Permutation';
     if (statut === 'ABSENT_EXCUSE') return 'Excusé';
     if (statut === 'ABSENT_NON_EXCUSE') return 'Non excusé';
     if (statut === 'DISPENSE') return 'Dispensé';
@@ -1132,13 +1152,15 @@
     let absent = 0;
     let dispense = 0;
     let open = 0;
+    let permutations = 0;
     for (const row of rows || []) {
       if (!countsInSaisieTaux(row)) continue;
       const s = row.statut;
-      if (s === 'PRESENT' || s === 'PERMUTATION') {
+      if (s === 'PRESENT') {
         present += 1;
         if (row.role === 'FORMATEUR') formateur += 1;
       }
+      else if (s === 'PERMUTATION') permutations += 1;
       else if (s === 'ABSENT_EXCUSE') {
         if (isIncompleteClosureRow(row)) open += 1;
         else excuse += 1;
@@ -1150,7 +1172,7 @@
       }
       else if (isIncompleteClosureRow(row)) open += 1;
     }
-    return { present, formateur, excuse, absent, dispense, open };
+    return { present, formateur, excuse, absent, dispense, permutations, open };
   }
 
   function countsInSaisieTaux(row) {
@@ -1887,6 +1909,8 @@
     permutationSourceLabel,
     permutationCatchupMotif,
     permutationCatchupSourceLabel,
+    permutationRattrapageSectionLabel,
+    permutationSourceInformationLabel,
     isPermutationCatchup,
     sessionExplainTooltip,
     placeSessionTooltip,

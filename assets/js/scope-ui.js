@@ -179,7 +179,7 @@
     personneEdit: null,
     personneEventFilter: 'tout',
     personneDomainFilter: null,
-    personneEventSort: { key: 'date', dir: 'desc' },
+    personneEventSort: { key: 'date', dir: 'asc' },
     personneRhOpen: false,
     domaineForm: 'DPS',
     dateForm: '2026-03-12',
@@ -234,7 +234,7 @@
     analysesPersonnelReady: false,
     analysesPersonnelError: null,
     analysesSort: { key: 'taux', dir: 'desc' },
-    analysesEventSort: { key: 'date', dir: 'desc' },
+    analysesEventSort: { key: 'date', dir: 'asc' },
     analysesPersonSort: { key: 'gap', dir: 'asc' },
     cyclesSort: { key: 'periode', dir: 'desc' },
     cycleEventSort: { key: 'date', dir: 'asc' },
@@ -404,7 +404,7 @@
   function resetAnalysesFilters() {
     state.analysesFilters = { domaine: 'tous', cibleId: 'tous', specialisation: 'tous', personQuery: '' };
     state.analysesSort = { key: 'taux', dir: 'desc' };
-    state.analysesEventSort = { key: 'date', dir: 'desc' };
+    state.analysesEventSort = { key: 'date', dir: 'asc' };
     state.analysesPersonSort = { key: 'gap', dir: 'asc' };
   }
 
@@ -969,17 +969,14 @@
     state.volumes = volumesFromFiche();
     resetEventTransientUi();
     render();
-    const data = await client.getEvenement(id);
+    const shouldLoadPermutations = route().screen === 'saisie' && typeof client.permutationsForEvent === 'function';
+    const [data, permutationPayload] = await Promise.all([
+      client.getEvenement(id),
+      shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
+    ]);
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
-    if (route().screen === 'saisie' && typeof client.permutationsForEvent === 'function') {
-      try {
-        const payload = await client.permutationsForEvent(id);
-        state.permutationObligations = payload.obligations || [];
-      } catch (_error) {
-        state.permutationObligations = [];
-      }
-    }
+    state.permutationObligations = shouldLoadPermutations ? ((permutationPayload && permutationPayload.obligations) || []) : [];
     state.ficheReady = true;
     state.conflict = false;
     state.encRole = 'FORMATEUR';
@@ -1032,17 +1029,14 @@
     const expectedId = String(id);
     const token = ++state.ficheRequestSeq;
     state.activeFicheId = expectedId;
-    const data = await client.getEvenement(id);
+    const shouldLoadPermutations = route().screen === 'saisie' && typeof client.permutationsForEvent === 'function';
+    const [data, permutationPayload] = await Promise.all([
+      client.getEvenement(id),
+      shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
+    ]);
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
-    if (route().screen === 'saisie' && typeof client.permutationsForEvent === 'function') {
-      try {
-        const payload = await client.permutationsForEvent(id);
-        state.permutationObligations = payload.obligations || [];
-      } catch (_error) {
-        state.permutationObligations = [];
-      }
-    }
+    state.permutationObligations = shouldLoadPermutations ? ((permutationPayload && permutationPayload.obligations) || []) : [];
     state.ficheReady = true;
     state.conflict = false;
     state.encRetrait = null;
@@ -1320,6 +1314,8 @@
           manual: a.origine === 'EXCEPTION_AJOUT',
           catchup: isCatchup,
           catchupSourceLabel,
+          permutationObligationStatus: a.permutationObligationStatus || a.permutation_obligation_status || null,
+          permutationRattrapageCibleLabel: a.permutationRattrapageCibleLabel || a.permutation_rattrapage_cible_label || null,
           jspRole: a.jspRole || a.jsp_role || null,
           alreadyCountedInSession,
           coveredInGlobalBilan,
@@ -4856,7 +4852,7 @@
         if (!codes.includes(row.domaine)) return false;
       }
       const s = String(row.statutParticipation || row.statut || '').toUpperCase();
-      if (statut === 'presents') return s === 'PRESENT' || s === 'PERMUTATION';
+      if (statut === 'presents') return s === 'PRESENT';
       if (statut === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
       if (statut === 'non_excuses') return s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT';
       if (statut === 'dispenses') return s === 'DISPENSE';
@@ -5078,7 +5074,7 @@
             <table class="scope-table scope-fiche-events-table">
               <thead><tr>${sortableHeader('personne-events', 'date', 'DATE', state.personneEventSort)}${sortableHeader('personne-events', 'libelle', 'ÉVÉNEMENT', state.personneEventSort)}${sortableHeader('personne-events', 'domaine', 'DOMAINE', state.personneEventSort)}${sortableHeader('personne-events', 'cible', 'CIBLE / OI', state.personneEventSort)}${sortableHeader('personne-events', 'statut', 'STATUT', state.personneEventSort)}${sortableHeader('personne-events', 'informations', 'INFORMATIONS', state.personneEventSort)}</tr></thead>
               <tbody>
-                ${events.map((ev) => `<tr>
+                ${events.map((ev) => `<tr${display && display.isPermutationCatchup && display.isPermutationCatchup(ev) ? ' class="scope-row-catchup"' : ''}>
                   <td data-label="DATE">${escapeHtml(L.formatDate(ev.date) || '—')}</td>
                   <td data-label="ÉVÉNEMENT">${ev.href ? `<a class="scope-events-libelle" href="${escapeHtml(ev.href)}">${escapeHtml(ev.libelle || '—')}</a>` : escapeHtml(ev.libelle || '—')}</td>
                   <td data-label="DOMAINE">${escapeHtml(domaineLabel(ev.domaine))}</td>
@@ -6342,6 +6338,7 @@
     return renderKpiGrid([
       { label: 'Attendus', value: attendus },
       { label: 'Présents', value: c.present },
+      domaine === 'DAP' && Number(c.permutations) > 0 ? { label: 'Permutations', value: c.permutations } : null,
       { label: 'Excusés', value: c.excuse, title: excuseTitle },
       { label: 'Absents', value: c.absent },
       showDispense ? { label: 'Dispensés', value: c.dispense } : null,
@@ -6603,7 +6600,7 @@
             <div class="scope-field scope-qty-field"><label for="qty-dispenses">Dispensés</label><input id="qty-dispenses" name="dispenses" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.dispenses)}"></div>
             ${ev.domaine_code === 'DAP' ? `<div class="scope-field scope-qty-field"><label for="qty-permutations">Dont permutations</label><input id="qty-permutations" name="permutations" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.permutations || '0')}"></div>` : ''}
           </form>
-          <p class="scope-qty-error" ${equal ? 'hidden' : ''}>Présents + excusés (somme des motifs) + non excusés + dispensés doit être égal aux attendus. Les permutations sont un sous-ensemble des présents, jamais additionnées une seconde fois.</p>
+          <p class="scope-qty-error" ${equal ? 'hidden' : ''}>Présents + excusés (somme des motifs) + non excusés + dispensés doit être égal aux attendus. Les permutations sont suivies séparément des présences réalisées.</p>
           <div class="scope-card scope-qty-preview">
             <h3 style="margin-top:0">Aperçu du taux</h3>
             <p style="color:var(--scope-muted);margin-top:0">${escapeHtml((preview && preview.message) || 'Aperçu calculé par le serveur. Ce n’est pas encore un taux officiel réalisé.')}</p>
@@ -6664,7 +6661,9 @@
         : '';
       const why = row.catchup && row.catchupSourceLabel
         ? `<span class="scope-catchup-origin">${escapeHtml(row.catchupSourceLabel)}</span>`
-        : (row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : '');
+        : (row.statut === 'PERMUTATION' && L.informationMotifLabel && L.informationMotifLabel(row)
+          ? `<span class="scope-catchup-origin">${escapeHtml(L.informationMotifLabel(row))}</span>`
+          : (row.manual ? '<span class="scope-muted-inline">Ajout ponctuel</span>' : ''));
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="${escapeHtml(row.catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel')}" title="${escapeHtml(row.catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel')}">${trashIcon()}</button>`
         : '';
@@ -9300,7 +9299,7 @@
           render();
         }
         if (table === 'personne-events') {
-          const initial = key === 'date' ? 'desc' : 'asc';
+          const initial = 'asc';
           state.personneEventSort = L.nextSort ? L.nextSort(state.personneEventSort, key, initial) : { key, dir: initial };
           render();
         }
@@ -9342,7 +9341,7 @@
           render();
         }
         if (table === 'analyses-events') {
-          state.analysesEventSort = L.nextSort ? L.nextSort(state.analysesEventSort, key, key === 'date' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          state.analysesEventSort = L.nextSort ? L.nextSort(state.analysesEventSort, key, 'asc') : { key, dir: 'asc' };
           render();
         }
         if (table === 'analyses-people') {
