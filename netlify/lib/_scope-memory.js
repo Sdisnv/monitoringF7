@@ -537,6 +537,10 @@ function createMemoryRepo(){
         if(filter.personne_id && String(row.personne_id) !== String(filter.personne_id)) return false;
         if(filter.sourceEvenementId && String(row.source_evenement_id) !== String(filter.sourceEvenementId)) return false;
         if(filter.source_evenement_id && String(row.source_evenement_id) !== String(filter.source_evenement_id)) return false;
+        if(filter.sourceEvenementIds){
+          const ids = new Set((filter.sourceEvenementIds || []).map(String));
+          if(!ids.has(String(row.source_evenement_id))) return false;
+        }
         if(filter.sourceExerciseKey && String(row.source_exercise_key) !== String(filter.sourceExerciseKey)) return false;
         if(filter.source_exercise_key && String(row.source_exercise_key) !== String(filter.source_exercise_key)) return false;
         if(filter.statut){

@@ -166,6 +166,14 @@ function nominativeInfoLabel(row){
   return parts.join(' · ');
 }
 
+function permutationSummaryLabel(volumes){
+  const v = volumes || {};
+  const permutations = Number(v.permutations || 0);
+  const rattrapages = Number(v.rattrapagesRealises || 0);
+  const ouverts = v.aRattraper == null ? Math.max(0, permutations - rattrapages) : Number(v.aRattraper || 0);
+  return `Permutations : ${permutations} · Rattrapages réalisés : ${rattrapages} · À rattraper : ${ouverts}`;
+}
+
 class ScopePdfRenderer {
   constructor(model, meta){
     this.model = model;
@@ -535,7 +543,7 @@ class ScopePdfRenderer {
       { label: 'Dispensés (hors dénominateur)', value: String(v.dispenses || 0) }
     ]);
     if(dap){
-      this.para(`dont permutations : ${Number(v.permutations || 0)}  (statuts Permutation, non comptés comme présences événementielles)`);
+      this.para(permutationSummaryLabel(v));
     }
   }
 
@@ -783,7 +791,7 @@ class ScopePdfRenderer {
     this.kpiOfficial(m.officiel, { event: true });
     if(dap){
       const v = (m.officiel && m.officiel.volumes) || {};
-      this.para(`dont permutations : ${Number(v.permutations || 0)}  (statuts Permutation, non comptés comme présences événementielles)`);
+      this.para(permutationSummaryLabel(v));
     }
     this.renderEncadrement(m);
     if(m.nominatif && m.nominatif.length){
@@ -795,7 +803,7 @@ class ScopePdfRenderer {
           this.eventStatutLabel(r),
           nominativeInfoLabel(r)
         ]),
-        [38, 72, 62, 42, 36, 42, 52, 155],
+        [38, 72, 62, 42, 36, 60, 52, 137],
         {
           align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'],
           rowH: 13,
@@ -1034,7 +1042,7 @@ class ScopePdfRenderer {
     });
     this.doc.y = y + h + 8;
     if(m.domaine === 'DAP'){
-      this.para(`dont permutations : ${Number(v.permutations || 0)}  (statuts Permutation, non comptés comme présences événementielles)`, { size: 8 });
+      this.para(permutationSummaryLabel(v), { size: 8 });
     }
 
     this.iconHeading('chart', 'Analyse graphique', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
@@ -1424,7 +1432,7 @@ class ScopePdfRenderer {
           r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '', r.statutLabel,
           nominativeInfoLabel(r)
         ]),
-        [42, 78, 68, 48, 36, 48, 64, 75]
+        [42, 78, 68, 48, 36, 64, 64, 75]
       );
     }
   }

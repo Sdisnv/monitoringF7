@@ -22,6 +22,8 @@ const {
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 const { isValidSessionStatut } = require('./_scope-cycle-rules');
+const { PERMUTATION_STATUS } = require('./_scope-model');
+const { isPermutationCatchupAttendu } = require('./_scope-rules');
 
 function truthy(value){
   const text = String(value == null ? '' : value).toLowerCase();
@@ -48,10 +50,12 @@ function exclusionBucket(){
 function officialTotals(rows){
   let numerator = 0;
   let denominator = 0;
+  let eventCount = 0;
   let volumes = emptyVolumes();
   for(const row of rows){
     numerator += Number(row.numerator || 0);
     denominator += Number(row.denominator || 0);
+    eventCount += row.eventCountContribution == null ? 1 : Number(row.eventCountContribution || 0);
     volumes = addVolumes(volumes, row.volumes);
   }
   return {
@@ -59,7 +63,7 @@ function officialTotals(rows){
     denominator,
     percentage: safePercentage(numerator, denominator),
     kind: KINDS.OFFICIEL,
-    eventCount: rows.length,
+    eventCount,
     volumes
   };
 }
@@ -74,7 +78,7 @@ function timeseriesFromOfficial(rows){
     };
     current.numerator += Number(row.numerator || 0);
     current.denominator += Number(row.denominator || 0);
-    current.eventCount += 1;
+    current.eventCount += row.eventCountContribution == null ? 1 : Number(row.eventCountContribution || 0);
     current.applied.push(row.appliedObjective || null);
     buckets.set(key, current);
   }
@@ -140,6 +144,29 @@ function filterEligibleAttendus(attendus, bundle, date){
     const pid = String(row.personne_id || row.personneId || '');
     return personEligibleByDates(people.get(pid), date);
   });
+}
+
+function eventIdOf(row){
+  return String(row && (row.evenement_id || row.evenementId) || '');
+}
+
+function fulfilledPermutationPersonIdsForEvent(bundle, event){
+  const eventId = eventIdOf(event);
+  if(String(event && event.domaine_code || '').toUpperCase() !== 'DAP' || !eventId) return new Set();
+  return new Set((bundle.permutations || [])
+    .filter((row) =>
+      String(row.source_evenement_id || '') === eventId
+      && String(row.statut || '').toUpperCase() === PERMUTATION_STATUS.RATTRAPPE
+      && row.rattrapage_evenement_id
+    )
+    .map((row) => String(row.personne_id || ''))
+    .filter(Boolean));
+}
+
+function isCatchupOnlyTrace(attendus, participations){
+  const expected = attendus || [];
+  if(!expected.length || expected.some((row) => !isPermutationCatchupAttendu(row))) return false;
+  return (participations || []).some((row) => String(row.statut || '').toUpperCase() === 'PRESENT');
 }
 
 async function resolveQuery(repo, query){
@@ -224,6 +251,17 @@ function createScopeAnalyticsService(repo){
     if(!wantsQualification(query)){
       bundle.events = (bundle.events || []).filter((event) => !isQualificationEvenement(event));
     }
+    if(typeof repo.listPermutations === 'function'){
+      const sourceEvenementIds = (bundle.events || [])
+        .filter((event) => String(event.domaine_code || '').toUpperCase() === 'DAP')
+        .map((event) => event.evenement_id)
+        .filter(Boolean);
+      bundle.permutations = sourceEvenementIds.length
+        ? await repo.listPermutations({ sourceEvenementIds })
+        : [];
+    } else {
+      bundle.permutations = [];
+    }
     return bundle;
   }
 
@@ -265,8 +303,11 @@ function createScopeAnalyticsService(repo){
         }
       }
     }
-    const official = officialFromTaux(computeTaux(partsUse, attendusUse));
-    return { include: true, reason: null, mode, official, attendus: attendusUse, participations: partsUse };
+    const catchupOnlyTrace = personneId && isCatchupOnlyTrace(attendusUse, partsUse);
+    const official = officialFromTaux(computeTaux(partsUse, attendusUse, {
+      fulfilledPermutationPersonIds: fulfilledPermutationPersonIdsForEvent(bundle, event)
+    }));
+    return { include: true, reason: null, mode, official, attendus: attendusUse, participations: partsUse, catchupOnlyTrace };
   }
 
   async function evaluate(query){
@@ -346,6 +387,7 @@ function createScopeAnalyticsService(repo){
         percentage: classified.official.percentage,
         volumes,
         kind: KINDS.OFFICIEL,
+        eventCountContribution: classified.catchupOnlyTrace ? 0 : 1,
         appliedObjective,
         statutParticipation: part ? part.statut : null,
         motif: part && part.motif_absence ? part.motif_absence : null,
@@ -510,11 +552,13 @@ function createScopeAnalyticsService(repo){
       for(const part of parts){
         byPid.set(String(part.personne_id || part.personneId), part);
       }
+      const fulfilledPermutationPersonIds = fulfilledPermutationPersonIdsForEvent(bundle, event);
       for(const attendu of filterEligibleAttendus(attendus, bundle, event.date)){
         if(attendu.inclus === false) continue;
+        if(isPermutationCatchupAttendu(attendu)) continue;
         const pid = String(attendu.personne_id || attendu.personneId);
         const part = byPid.get(pid);
-        const official = officialFromTaux(computeTaux(part ? [part] : [], [attendu]));
+        const official = officialFromTaux(computeTaux(part ? [part] : [], [attendu], { fulfilledPermutationPersonIds }));
         const row = acc.get(pid) || {
           numerator: 0,
           denominator: 0,

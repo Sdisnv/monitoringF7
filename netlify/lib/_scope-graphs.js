@@ -50,11 +50,13 @@ function queryKey(query){
 function packFromEvents(events){
   let numerator = 0;
   let denominator = 0;
+  let eventCount = 0;
   let volumes = emptyVolumes();
   const applied = [];
   for(const row of events || []){
     numerator += Number(row.numerator || 0);
     denominator += Number(row.denominator || 0);
+    eventCount += row.eventCountContribution == null ? 1 : Number(row.eventCountContribution || 0);
     volumes = addVolumes(volumes, row.volumes);
     applied.push(row.appliedObjective || null);
   }
@@ -67,7 +69,7 @@ function packFromEvents(events){
     numerator,
     denominator,
     percentage,
-    eventCount: (events || []).length,
+    eventCount,
     volumes,
     objective,
     gapPct: gapPct(percentage, objective),

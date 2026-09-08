@@ -44,6 +44,8 @@ function emptyVolumes(){
     nonConcernes: 0,
     attendus: 0,
     permutations: 0,
+    rattrapagesRealises: 0,
+    aRattraper: 0,
     excusesPrive: 0,
     excusesProfessionnel: 0,
     excusesArmee: 0,

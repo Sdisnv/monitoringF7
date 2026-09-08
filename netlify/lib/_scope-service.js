@@ -2012,6 +2012,7 @@ function createScopeService(repo){
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Retrait possible uniquement sur PLANIFIE.');
       const attendu = await tx.getAttendu(eventId, personneId);
       if(!attendu) throw new HttpError(404, 'attendu_introuvable', 'Attendu introuvable.');
+      await releasePermutationCatchupForParticipation(tx, evenement, personneId, actor);
       await tx.upsertAttendu({
         ...attendu,
         inclus: false,
@@ -2200,10 +2201,51 @@ function createScopeService(repo){
     });
   }
 
+  function fulfilledPermutationPersonIds(rows, sourceEvenementId){
+    return new Set((rows || [])
+      .filter((row) =>
+        String(row.source_evenement_id || '') === String(sourceEvenementId || '')
+        && String(row.statut || '').toUpperCase() === PERMUTATION_STATUS.RATTRAPPE
+        && row.rattrapage_evenement_id
+      )
+      .map((row) => String(row.personne_id || ''))
+      .filter(Boolean));
+  }
+
+  async function fulfilledPermutationPersonIdsForEvent(tx, evenement){
+    if(!tx.listPermutations || String(evenement && evenement.domaine_code || '').toUpperCase() !== 'DAP') return new Set();
+    const rows = await tx.listPermutations({
+      sourceEvenementId: evenement.evenement_id,
+      statut: [PERMUTATION_STATUS.RATTRAPPE]
+    });
+    return fulfilledPermutationPersonIds(rows, evenement.evenement_id);
+  }
+
+  async function releasePermutationCatchupForParticipation(tx, evenement, personneId, actor){
+    if(!tx.listPermutations || !tx.upsertPermutation || !personneId) return null;
+    const rows = await tx.listPermutations({
+      personneId,
+      statut: [PERMUTATION_STATUS.RATTRAPPE]
+    });
+    const linked = (rows || []).find((row) => String(row.rattrapage_evenement_id || '') === String(evenement.evenement_id || ''));
+    if(!linked) return null;
+    return tx.upsertPermutation({
+      ...linked,
+      rattrapage_evenement_id: null,
+      rattrapage_cible_id: null,
+      rattrapage_date: null,
+      statut: PERMUTATION_STATUS.A_RATTRAPER,
+      auteur_id: actorId(actor)
+    });
+  }
+
   async function syncPermutationWorkflow(tx, evenement, personneId, patch, actor){
     if(!tx.upsertPermutation || !tx.listPermutations) return null;
     const status = String(patch.statut || '').toUpperCase();
     const exerciseKey = explicitPermutationExerciseKey(evenement);
+    if(status !== 'PRESENT'){
+      await releasePermutationCatchupForParticipation(tx, evenement, personneId, actor);
+    }
     if(!exerciseKey && status !== STATUT_PERMUTATION) return null;
     if(status === STATUT_PERMUTATION){
       if(!exerciseKey) return null;
@@ -2632,7 +2674,9 @@ function createScopeService(repo){
         cloture_par: actorId(actor)
       });
       const permutationsARegulariser = await markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor);
-      const taux = computeTaux(participations, attendus);
+      const taux = computeTaux(participations, attendus, {
+        fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(tx, evenement)
+      });
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
@@ -2784,13 +2828,14 @@ function createScopeService(repo){
       return { items: [], performance: { mode: 'batch', eventCount: 0, queries: 0 } };
     }
     const ids = list.map((e) => e.evenement_id);
-    const [allCibles, cibleRows, attendusRows, partRows, qtyRows, legacyRows] = await Promise.all([
+    const [allCibles, cibleRows, attendusRows, partRows, qtyRows, legacyRows, permutationRows] = await Promise.all([
       repo.listCibles(),
       repo.listEventCiblesForEvents ? repo.listEventCiblesForEvents(ids) : Promise.resolve([]),
       repo.listAttendusForEvents ? repo.listAttendusForEvents(ids) : Promise.resolve([]),
       repo.listParticipationsForEvents ? repo.listParticipationsForEvents(ids) : Promise.resolve([]),
       repo.listQuantitatifSaisiesForEvents ? repo.listQuantitatifSaisiesForEvents(ids) : Promise.resolve([]),
-      repo.listLegacy ? repo.listLegacy() : Promise.resolve([])
+      repo.listLegacy ? repo.listLegacy() : Promise.resolve([]),
+      repo.listPermutations ? repo.listPermutations({ sourceEvenementIds: ids, statut: [PERMUTATION_STATUS.RATTRAPPE] }) : Promise.resolve([])
     ]);
     const ciblesById = new Map((allCibles || []).map((c) => [c.cible_id, c]));
     const ciblesByEvent = groupByEventId(cibleRows);
@@ -2814,7 +2859,9 @@ function createScopeService(repo){
         today: options.today
       });
       const modeSuivi = inferModeSuivi(evenement);
-      let compteurs = computeTaux(participations, attendus);
+      let compteurs = computeTaux(participations, attendus, {
+        fulfilledPermutationPersonIds: fulfilledPermutationPersonIds(permutationRows, evenement.evenement_id)
+      });
       let attendusInclus = attendus.filter((a) => a.inclus !== false).length;
       if(modeSuivi === MODES.QUANTITATIF){
         const official = saisie ? officialFromQuantitatif(saisie) : null;
@@ -2839,7 +2886,7 @@ function createScopeService(repo){
         qualification: isQualificationEvenement(evenement)
       };
     });
-    return { items, performance: { mode: 'batch', eventCount: list.length, queries: 6 } };
+    return { items, performance: { mode: 'batch', eventCount: list.length, queries: 7 } };
   }
 
   async function summarizeEvenement(evenement){
@@ -2913,7 +2960,9 @@ function createScopeService(repo){
       })
       : participationsRaw;
     let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
-    const taux = computeTaux(participations, attendus);
+    const taux = computeTaux(participations, attendus, {
+      fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(repo, evenement)
+    });
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id)
@@ -3151,7 +3200,9 @@ function createScopeService(repo){
     if(evenement.statut !== 'REALISE'){
       const attendus = await repo.listAttendus(eventId);
       const participations = await repo.listParticipations(eventId);
-      const taux = computeTaux(participations, attendus);
+      const taux = computeTaux(participations, attendus, {
+        fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(repo, evenement)
+      });
       return {
         ...taux,
         officiel: false,
@@ -3163,7 +3214,9 @@ function createScopeService(repo){
     }
     const attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
-    return { ...computeTaux(participations, attendus), officiel: true, kind: 'NOMINATIF' };
+    return { ...computeTaux(participations, attendus, {
+      fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(repo, evenement)
+    }), officiel: true, kind: 'NOMINATIF' };
   }
 
   async function rulesList(){

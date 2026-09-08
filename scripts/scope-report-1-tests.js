@@ -295,7 +295,7 @@ async function gen(repo, body, claims){
     assert.ok(text.includes('maladie') || text.includes('Accident'));
   });
 
-  await record('12-13 — permutation DAP sous-ensemble, pas de double comptage', async () => {
+  await record('12-13 — permutation DAP consolidée, pas de double comptage', async () => {
     const { repo, service } = ctx();
     await enableDap(repo);
     const y4 = await repo.findCible('DAP', 'Y4');
@@ -307,7 +307,7 @@ async function gen(repo, body, claims){
     await closeWithStatuses(service, created.evenement.evenement_id, people, statuses);
     const out = await gen(repo, { kind: 'EVENT', evenementId: created.evenement.evenement_id, nominatif: true });
     const text = pdfText(out.buffer);
-    assert.ok(text.includes('dont permutations') || text.includes('permutations'));
+    assert.ok(text.toLowerCase().includes('permutations'));
     assert.ok(!/Total pr[ée]sence/.test(text));
   });
 

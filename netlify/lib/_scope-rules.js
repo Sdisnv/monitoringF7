@@ -92,10 +92,18 @@ function round1(value){
   return Math.round(value * 10) / 10;
 }
 
-function computeTaux(participations, attendus){
+function isPermutationCatchupAttendu(row){
+  const motif = String(row && (row.motif_inclusion || row.motifInclusion) || '').trim();
+  return motif.startsWith('permutation_rattrapage|');
+}
+
+function computeTaux(participations, attendus, options = {}){
+  const fulfilledPermutationPersonIds = new Set(
+    [...(options.fulfilledPermutationPersonIds || [])].map((id) => String(id))
+  );
   const inclus = new Set(
     (attendus || [])
-      .filter(a => a.inclus !== false)
+      .filter(a => a.inclus !== false && !isPermutationCatchupAttendu(a))
       .map(a => String(a.personne_id || a.personneId))
   );
   let present = 0;
@@ -105,6 +113,7 @@ function computeTaux(participations, attendus){
   let nonRenseigne = 0;
   let nonConcerne = 0;
   let permutations = 0;
+  let rattrapagesRealises = 0;
   const excuses = emptyExcuseBreakdown();
   for(const p of participations || []){
     const id = String(p.personne_id || p.personneId);
@@ -113,7 +122,10 @@ function computeTaux(participations, attendus){
     if(statut === 'PRESENT'){
       present += 1;
     }
-    else if(statut === STATUT_PERMUTATION) permutations += 1;
+    else if(statut === STATUT_PERMUTATION){
+      permutations += 1;
+      if(fulfilledPermutationPersonIds.has(id)) rattrapagesRealises += 1;
+    }
     else if(statut === 'ABSENT_EXCUSE'){
       excuse += 1;
       excuses[normalizeMotifKey(p.motif_absence)] += 1;
@@ -122,8 +134,9 @@ function computeTaux(participations, attendus){
     else if(statut === 'DISPENSE') dispense += 1;
     else if(statut === 'NON_RENSEIGNE' || statut === 'NON_CONCERNE' || !statut) nonRenseigne += 1;
   }
-  const numerator = present;
+  const numerator = present + rattrapagesRealises;
   const denominator = present + excuse + absent + permutations;
+  const aRattraper = Math.max(0, permutations - rattrapagesRealises);
   return {
     numerator,
     denominator,
@@ -135,6 +148,8 @@ function computeTaux(participations, attendus){
     nonRenseignes: nonRenseigne,
     nonConcernes: nonConcerne,
     permutations,
+    rattrapagesRealises,
+    aRattraper,
     excusesPrive: excuses.prive,
     excusesProfessionnel: excuses.professionnel,
     excusesArmee: excuses.armee,
@@ -432,6 +447,7 @@ module.exports = {
   isAffectationValide,
   personneActiveA,
   computeTaux,
+  isPermutationCatchupAttendu,
   round1,
   validateParticipationPatch,
   validateCloture,

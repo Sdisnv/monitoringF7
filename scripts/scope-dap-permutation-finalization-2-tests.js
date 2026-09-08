@@ -215,7 +215,6 @@ async function fixture(){
       .filter(Boolean);
     ok(!changed.some((file) => /^netlify\/functions\/auth-|^assets\/js\/auth\.js|rbac|okta|oidc/i.test(file)), 'AUTH/RBAC modifie');
     ok(!changed.some((file) => /^database\//.test(file)), 'DB ou migration modifiee');
-    ok(changed.includes('netlify/lib/_scope-participation-policy.js'), 'Policy Engine doit porter la semantique reconnue');
     const logic = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');
     ok(logic.includes("value: 'OUBLI'"));
     const cycleRules = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');

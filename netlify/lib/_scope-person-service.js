@@ -501,6 +501,7 @@ function createScopePersonService(repo){
         numerator: row.numerator,
         denominator: row.denominator,
         percentage: row.percentage,
+        eventCountContribution: row.eventCountContribution,
         appliedObjective: row.appliedObjective || null,
         prExerciseGroupKey: row.prExerciseGroupKey || row.pr_exercise_group_key || null
       };

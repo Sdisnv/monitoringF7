@@ -948,6 +948,11 @@ function createPgRepo(client){
       if(personneId) add('personne_id = ?', personneId);
       const sourceEvenementId = filter.sourceEvenementId || filter.source_evenement_id;
       if(sourceEvenementId) add('source_evenement_id = ?', sourceEvenementId);
+      if(filter.sourceEvenementIds && filter.sourceEvenementIds.length){
+        clauses.push(`source_evenement_id = any($${i}::uuid[])`);
+        params.push(filter.sourceEvenementIds);
+        i += 1;
+      }
       const sourceExerciseKey = filter.sourceExerciseKey || filter.source_exercise_key;
       if(sourceExerciseKey) add('source_exercise_key = ?', sourceExerciseKey);
       if(filter.statut){

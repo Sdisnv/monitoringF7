@@ -152,7 +152,9 @@ async function fixture(){
     await saveOne(service, target.eventId, p, 'PRESENT');
     const fiche = await service.lireEvenement(target.eventId);
     const taux = computeTaux(fiche.participations, fiche.attendus);
-    eq(taux.presents, 1);
+    eq(taux.presents, 0);
+    eq(taux.numerator, 0);
+    eq(taux.denominator, 0);
     const targetAttendu = fiche.attendus.find((row) => row.personne_id === p.personne_id);
     const personTargetRow = {
       statutParticipation: 'PRESENT',
