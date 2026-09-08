@@ -1034,6 +1034,14 @@
     const data = await client.getEvenement(id);
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
+    if (route().screen === 'saisie' && typeof client.permutationsForEvent === 'function') {
+      try {
+        const payload = await client.permutationsForEvent(id);
+        state.permutationObligations = payload.obligations || [];
+      } catch (_error) {
+        state.permutationObligations = [];
+      }
+    }
     state.ficheReady = true;
     state.conflict = false;
     state.encRetrait = null;

@@ -71,6 +71,7 @@ const MOTIF_LABELS = Object.freeze({
   ACCIDENT_MALADIE: 'Accident / maladie',
   ACTIVITE_SCOLAIRE: 'Activité scolaire',
   ACTIVITE_EXTRA_SCOLAIRE: 'Activité extra-scolaire',
+  OUBLI: 'Oubli',
   NON_JUSTIFIE: 'Non justifié',
   NON_PRECISE: 'Non précisé (historique)',
   MALADIE: 'Maladie (historique)',

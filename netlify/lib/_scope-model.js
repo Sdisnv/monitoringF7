@@ -23,6 +23,7 @@ const MOTIFS_JSP = Object.freeze({
   PRIVE: 'PRIVE',
   ACTIVITE_SCOLAIRE: 'ACTIVITE_SCOLAIRE',
   ACTIVITE_EXTRA_SCOLAIRE: 'ACTIVITE_EXTRA_SCOLAIRE',
+  OUBLI: 'OUBLI',
   ACCIDENT_MALADIE: 'ACCIDENT_MALADIE',
   NON_JUSTIFIE: 'NON_JUSTIFIE'
 });
@@ -138,7 +139,7 @@ function normalizeMotifKey(motif){
   if(text === 'PROFESSIONNEL') return 'professionnel';
   if(text === 'ARMEE') return 'armee';
   if(text === 'ACCIDENT_MALADIE' || text === 'MALADIE' || text === 'ACCIDENT') return 'accidentMaladie';
-  if(text === 'ACTIVITE_SCOLAIRE' || text === 'ACTIVITE_EXTRA_SCOLAIRE' || text === 'NON_JUSTIFIE') return 'nonPrecise';
+  if(text === 'ACTIVITE_SCOLAIRE' || text === 'ACTIVITE_EXTRA_SCOLAIRE' || text === 'OUBLI' || text === 'NON_JUSTIFIE') return 'nonPrecise';
   return 'nonPrecise';
 }
 

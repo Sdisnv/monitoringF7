@@ -87,13 +87,13 @@ async function dapFixture(){
   const y2 = await cible(repo, 'DAP', 'Y2');
   const y3 = await cible(repo, 'DAP', 'Y3');
   const y4 = await cible(repo, 'DAP', 'Y4');
-  const p = await person(repo, y1, 'DAP-PERM-1');
+  const p = await person(repo, y1, '7738', { grade: 'Plt', nom: 'Agazzi', prenom: 'Pierre-André' });
   const helper = await person(repo, y2, 'DAP-HELPER-1');
   return { repo, service, y1, y2, y3, y4, p, helper };
 }
 
 (async () => {
-  await record('01 - DAP Exercice 1 Y1 vers Y2/Y3/Y4 accepte, meme evenement refuse', async () => {
+  await record('01 - DAP Exercice 1 Y1 NIP 7738 vers Y2/Y3/Y4 accepte, meme evenement refuse', async () => {
     const { repo, service, y1, y2, y3, y4, p } = await dapFixture();
     const src = await frozenEvent(service, y1, '2026-04-01', 'Exercice 1 DAP Y1', 'DAP_EX1');
     const evY2 = await frozenEvent(service, y2, '2026-04-08', 'Exercice 1 DAP Y2', 'DAP_EX1');
@@ -106,6 +106,8 @@ async function dapFixture(){
     eq(sourceObligations.obligations[0].compatible, false);
     const y2Obligations = await service.permutationsForEvent(evY2.eventId);
     eq(y2Obligations.obligations.length, 1);
+    eq(y2Obligations.obligations[0].nip, '7738');
+    eq(y2Obligations.obligations[0].nom, 'Agazzi');
     eq(y2Obligations.obligations[0].role, 'RATTRAPAGE');
     eq(y2Obligations.obligations[0].compatible, true);
     eq((await service.permutationsForEvent(evY3.eventId)).obligations.length, 1);
@@ -208,6 +210,7 @@ async function dapFixture(){
     ok(ui.includes('Personnes en permutation'));
     ok(ui.includes('rattrapage possible'));
     ok(ui.includes('Ouverte'));
+    ok(/function reloadFicheFromServer[\s\S]*?permutationsForEvent/.test(ui));
     const migration = fs.readFileSync(path.join(ROOT, 'database/migrations/20260908_scope_permutation_moa_fix_1.sql'), 'utf8');
     ok(/UPDATE\s+scope_evenements/i.test(migration));
     ok(/exercise_equivalence_key/i.test(migration));

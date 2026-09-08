@@ -16,6 +16,7 @@
     { value: 'PRIVE', label: 'Privé', group: 'operationnel' },
     { value: 'ACTIVITE_SCOLAIRE', label: 'Activité scolaire', group: 'operationnel' },
     { value: 'ACTIVITE_EXTRA_SCOLAIRE', label: 'Activité extra-scolaire', group: 'operationnel' },
+    { value: 'OUBLI', label: 'Oubli', group: 'operationnel' },
     { value: 'ACCIDENT_MALADIE', label: 'Accident/maladie', group: 'operationnel' },
     { value: 'NON_JUSTIFIE', label: 'Non-justifié', group: 'administratif' }
   ];

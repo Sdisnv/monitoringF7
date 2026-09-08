@@ -25,6 +25,7 @@ const JSP_EXPECTED = [
   ['PRIVE', 'Privé', 'operationnel'],
   ['ACTIVITE_SCOLAIRE', 'Activité scolaire', 'operationnel'],
   ['ACTIVITE_EXTRA_SCOLAIRE', 'Activité extra-scolaire', 'operationnel'],
+  ['OUBLI', 'Oubli', 'operationnel'],
   ['ACCIDENT_MALADIE', 'Accident/maladie', 'operationnel'],
   ['NON_JUSTIFIE', 'Non-justifié', 'administratif']
 ];
@@ -83,8 +84,9 @@ async function setupJspEvent(){
 
   await record('02 séparation native sans valeur métier séparateur', () => {
     const motifs = logic.motifsSaisieForDomaine('JSP');
-    assert.strictEqual(motifs[3].value, 'ACCIDENT_MALADIE');
-    assert.strictEqual(motifs[4].value, 'NON_JUSTIFIE');
+    assert.strictEqual(motifs[3].value, 'OUBLI');
+    assert.strictEqual(motifs[4].value, 'ACCIDENT_MALADIE');
+    assert.strictEqual(motifs[5].value, 'NON_JUSTIFIE');
     assert.ok(uiSrc.includes('<optgroup label="${escapeHtml(labels.primary ||'));
     assert.ok(uiSrc.includes("secondary: 'À contrôler'"));
     assert.ok(!motifs.some((m) => /separ|separator|────|---/i.test(String(m.value))));
@@ -122,10 +124,12 @@ async function setupJspEvent(){
     const labels = report.nominatif.map((row) => row.motifLabel).sort();
     assert.ok(labels.includes('Activité scolaire'));
     assert.ok(labels.includes('Activité extra-scolaire'));
+    assert.ok(labels.includes('Oubli'));
     assert.ok(labels.includes('Accident / maladie'));
     assert.ok(labels.includes('Non justifié'));
     const reloadedMotifs = logic.motifsForRow({ motifAbsence: 'ACCIDENT_MALADIE' }, 'JSP');
     assert.strictEqual(reloadedMotifs.find((m) => m.value === 'ACCIDENT_MALADIE').label, 'Accident/maladie');
+    assert.strictEqual(logic.motifShortLabel('OUBLI'), 'Oubli');
     assert.strictEqual(logic.motifShortLabel('NON_JUSTIFIE'), 'Non-justifié');
   });
 

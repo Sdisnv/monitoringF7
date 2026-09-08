@@ -78,13 +78,14 @@ async function createNominativeEvent(domaineCode, niveauCode){
   await record('01 contrat central par domaine reproduit les listes V1', () => {
     const jsp = resolveParticipationPolicy('JSP');
     sameJson(jsp.activeStatuses, ['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
-    sameJson(jsp.excuseMotifs, ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
+    sameJson(jsp.excuseMotifs, ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
     sameJson(jsp.dispenseMotifs, []);
     const dap = resolveParticipationPolicy('DAP');
     assert.ok(dap.activeStatuses.includes('PERMUTATION'));
     const dps = resolveParticipationPolicy('DPS');
     assert.ok(dps.activeStatuses.includes('DISPENSE'));
     sameJson(dps.excuseMotifs, ['PRIVE', 'PROFESSIONNEL', 'ARMEE', 'ACCIDENT_MALADIE']);
+    assert.strictEqual(MOTIF_LIBRARY.OUBLI.label, 'Oubli');
     assert.strictEqual(MOTIF_LIBRARY.ACCIDENT_MALADIE.label, 'Accident/maladie');
     assert.strictEqual(STATUS_LIBRARY.ABSENT_EXCUSE.label, 'Excusé');
   });
@@ -104,6 +105,7 @@ async function createNominativeEvent(domaineCode, niveauCode){
     assert.strictEqual(validateParticipationPatch({ statut: 'PERMUTATION' }, { domaineCode: 'DAP' }).statut, 'PERMUTATION');
     assert.throws(() => validateParticipationPatch({ statut: 'PERMUTATION' }, { domaineCode: 'DPS' }), /domaine DAP/);
     assert.throws(() => validateParticipationPatch({ statut: 'DISPENSE' }, { domaineCode: 'JSP' }), /pas autorisé/);
+    assert.strictEqual(validateParticipationPatch({ statut: 'ABSENT_EXCUSE', motifAbsence: 'OUBLI' }, { domaineCode: 'JSP' }).motif_absence, 'OUBLI');
     assert.strictEqual(validateParticipationPatch({ statut: 'ABSENT_EXCUSE', motifAbsence: 'NON_JUSTIFIE' }, { domaineCode: 'JSP' }).motif_absence, 'NON_JUSTIFIE');
     assert.strictEqual(validateParticipationPatch({ statut: 'DISPENSE', motifAbsence: 'PAS_CONCERNE' }, { domaineCode: 'FOBA' }).motif_absence, 'PAS_CONCERNE');
   });
@@ -126,7 +128,7 @@ async function createNominativeEvent(domaineCode, niveauCode){
     });
     const fiche = await ctx.service.lireEvenement(ctx.eventId);
     assert.ok(fiche.evenement.participation_policy_snapshot);
-    sameJson(fiche.participationPolicy.excuseMotifs, ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
+    sameJson(fiche.participationPolicy.excuseMotifs, ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
     await ctx.service.enregistrerParticipations(ctx.eventId, {
       baseVersion: fiche.evenement.version,
       participations: [{ personneId: ctx.personne.personne_id, statut: 'ABSENT_EXCUSE', motifAbsence: 'NON_JUSTIFIE' }]
@@ -141,6 +143,7 @@ async function createNominativeEvent(domaineCode, niveauCode){
     const refs = await service.referentiels();
     assert.ok(refs.participation);
     assert.ok(refs.participation.policies.find((row) => row.domainCode === 'JSP'));
+    assert.ok(refs.participation.motifs.find((row) => row.id === 'OUBLI'));
     assert.ok(refs.participation.motifs.find((row) => row.id === 'NON_JUSTIFIE'));
     assert.ok(/path === '\/participation\/policies'/.test(scopeFunctionSource));
     assert.ok(/hasPermission\(claims, 'references:manage'\)[\s\S]*?saveParticipationPolicy/.test(scopeFunctionSource));

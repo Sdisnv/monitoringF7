@@ -222,7 +222,7 @@ function part(person, statut, extra){
     assert.strictEqual(logic.motifShortLabel('ARMEE'), 'Armée');
     const extra = logic.motifsForRow({ motifAbsence: 'PROFESSIONNEL' }, 'JSP');
     assert.ok(extra.some((m) => m.value === 'PROFESSIONNEL'));
-    assert.deepStrictEqual(Object.values(MOTIFS_JSP), ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
+    assert.deepStrictEqual(Object.values(MOTIFS_JSP), ['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
   });
 
   await record('18 — 23 attendus / 18 présents / 4 excusés / 1 absent = 0 incomplet', async () => {

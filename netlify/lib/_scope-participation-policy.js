@@ -19,6 +19,7 @@ const MOTIF_LIBRARY = Object.freeze({
   ACCIDENT_MALADIE: { id: 'ACCIDENT_MALADIE', label: 'Accident/maladie', type: 'EXCUSE', active: true, order: 40, group: 'operationnel' },
   ACTIVITE_SCOLAIRE: { id: 'ACTIVITE_SCOLAIRE', label: 'Activité scolaire', type: 'EXCUSE', active: true, order: 50, group: 'operationnel' },
   ACTIVITE_EXTRA_SCOLAIRE: { id: 'ACTIVITE_EXTRA_SCOLAIRE', label: 'Activité extra-scolaire', type: 'EXCUSE', active: true, order: 60, group: 'operationnel' },
+  OUBLI: { id: 'OUBLI', label: 'Oubli', type: 'EXCUSE', active: true, order: 65, group: 'operationnel' },
   NON_JUSTIFIE: { id: 'NON_JUSTIFIE', label: 'Non-justifié', type: 'EXCUSE', active: true, order: 70, group: 'administratif' },
   MALADIE: { id: 'MALADIE', label: 'Maladie (historique)', type: 'EXCUSE', active: false, historical: true, order: 900, group: 'historique' },
   ACCIDENT: { id: 'ACCIDENT', label: 'Accident (historique)', type: 'EXCUSE', active: false, historical: true, order: 910, group: 'historique' },
@@ -44,7 +45,7 @@ const ROLE_LIBRARY = Object.freeze({
 });
 
 const DEFAULT_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'PROFESSIONNEL', 'ARMEE', 'ACCIDENT_MALADIE']);
-const JSP_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
+const JSP_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
 const DEFAULT_DISPENSE_MOTIFS = Object.freeze(['FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE']);
 const FOBA_DISPENSE_MOTIFS = Object.freeze([...DEFAULT_DISPENSE_MOTIFS, 'PAS_CONCERNE']);
 const DEFAULT_STATUSES = Object.freeze(['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE']);

@@ -24,6 +24,7 @@ const MOTIF_EXCUSE_LABELS = Object.freeze({
   ACCIDENT_MALADIE: 'Accident/Maladie',
   ACTIVITE_SCOLAIRE: 'Activité scolaire',
   ACTIVITE_EXTRA_SCOLAIRE: 'Activité extra-scolaire',
+  OUBLI: 'Oubli',
   NON_JUSTIFIE: 'Non justifié'
 });
 
