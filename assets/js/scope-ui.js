@@ -2581,7 +2581,7 @@
                   <td data-label="Spécialisation">${escapeHtml(specs.join(', ') || '—')}</td>
                   <td data-label="Événements">${escapeHtml(String(taux.eventCount || 0))}</td>
                   <td data-label="Attendus">${escapeHtml(String(taux.denominator || 0))}</td>
-                  <td data-label="Présents">${escapeHtml(String(pv.presents || taux.numerator || 0))}</td>
+                  <td data-label="Réalisés">${escapeHtml(String(taux.numerator || 0))}<small>${escapeHtml(`direct ${pv.realisationsDirectes == null ? (pv.presents || 0) : pv.realisationsDirectes} · rattrapé ${pv.rattrapagesRealises || 0} · à rattraper ${pv.aRattraper || 0}`)}</small></td>
                   <td data-label="Excusés">${escapeHtml(String(pv.excuses || 0))}</td>
                   <td data-label="Absents">${escapeHtml(String(pv.nonExcuses || 0))}</td>
                   <td data-label="Dispensés">${escapeHtml(String(pv.dispenses || 0))}</td>
@@ -2601,7 +2601,7 @@
             <td data-label="Domaine">${escapeHtml(row.domaine ? domaineLabel(row.domaine) : '—')}</td>
             <td data-label="Événements">${escapeHtml(String(pack.eventCount || 0))}</td>
             <td data-label="Attendus">${escapeHtml(String(pack.denominator || 0))}</td>
-            <td data-label="Présents">${escapeHtml(String(v.presents || pack.numerator || 0))}</td>
+            <td data-label="Réalisés">${escapeHtml(String(pack.numerator || 0))}<small>${escapeHtml(`direct ${v.realisationsDirectes == null ? (v.presents || 0) : v.realisationsDirectes} · rattrapé ${v.rattrapagesRealises || 0} · à rattraper ${v.aRattraper || 0}`)}</small></td>
             <td data-label="Excusés">${escapeHtml(String(v.excuses || 0))}</td>
             <td data-label="Absents">${escapeHtml(String(v.nonExcuses || 0))}</td>
             <td data-label="Dispensés">${escapeHtml(String(v.dispenses || 0))}</td>
@@ -2619,7 +2619,7 @@
           <td data-label="Mode">${escapeHtml(L.modeLabel(ev.modeSuivi))}</td>
           <td data-label="Taux">${escapeHtml(ev.denominator ? L.formatTaux(ev.percentage) : 'Non évaluable')}</td>
           <td data-label="Attendus">${escapeHtml(String(ev.denominator || 0))}</td>
-          <td data-label="Présents">${escapeHtml(String(ev.numerator || 0))}</td>
+          <td data-label="Réalisés">${escapeHtml(String(ev.numerator || 0))}<small>${escapeHtml(`direct ${((ev.volumes || {}).realisationsDirectes == null ? ((ev.volumes || {}).presents || 0) : (ev.volumes || {}).realisationsDirectes)} · rattrapé ${(ev.volumes || {}).rattrapagesRealises || 0} · à rattraper ${(ev.volumes || {}).aRattraper || 0}`)}</small></td>
           <td data-label="Action"><a class="scope-btn scope-btn-compact" href="#/exercices/${escapeHtml(ev.evenementId)}">Ouvrir</a></td>
         </tr>`).join('')
       : '<tr><td colspan="8"><div class="scope-empty">Aucun événement officiel réalisé sur ce périmètre.</div></td></tr>';
@@ -2648,7 +2648,8 @@
         </div>
         <div class="scope-kpis">
           <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(o.denominator ? L.formatTaux(o.percentage) : 'Non évaluable')}</strong><span>Taux global</span><em>${escapeHtml(String(o.numerator || 0))} / ${escapeHtml(String(o.denominator || 0))}</em></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(volumes.presents || 0))}</strong><span>Présents</span><small>${escapeHtml(String(volumes.excuses || 0))} excusé(s)</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(o.numerator || 0))}</strong><span>Réalisés</span><small>${escapeHtml(`direct ${volumes.realisationsDirectes == null ? (volumes.presents || 0) : volumes.realisationsDirectes} · rattrapé ${volumes.rattrapagesRealises || 0}`)}</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(volumes.aRattraper || 0))}</strong><span>À rattraper</span><small>${escapeHtml(String(volumes.permutations || 0))} permutation(s)</small></article>
           <article class="scope-kpi"><strong>${escapeHtml(String(volumes.nonExcuses || 0))}</strong><span>Absents non excusés</span><small>${escapeHtml(String(volumes.dispenses || 0))} dispensé(s)</small></article>
           <article class="scope-kpi"><strong>${escapeHtml(objectiveText)}</strong><span>Objectif</span><small>${escapeHtml(gapText)}</small></article>
           <article class="scope-kpi"><strong>${escapeHtml(comparison.value || '—')}</strong><span>Évolution</span><small>${escapeHtml(comparison.detail)}</small></article>
@@ -2665,7 +2666,7 @@
               ${sortableHeader('analyses', 'domaine', 'Domaine', state.analysesSort)}
               ${sortableHeader('analyses', 'events', 'Événements', state.analysesSort)}
               ${sortableHeader('analyses', 'attendus', 'Attendus', state.analysesSort)}
-              ${sortableHeader('analyses', 'presents', 'Présents', state.analysesSort)}
+              ${sortableHeader('analyses', 'presents', 'Réalisés', state.analysesSort)}
               ${sortableHeader('analyses', 'excuses', 'Excusés', state.analysesSort)}
               ${sortableHeader('analyses', 'absents', 'Absents', state.analysesSort)}
               ${sortableHeader('analyses', 'dispenses', 'Dispensés', state.analysesSort)}
@@ -2686,7 +2687,7 @@
               ${sortableHeader('analyses-events', 'mode', 'Mode', state.analysesEventSort)}
               ${sortableHeader('analyses-events', 'taux', 'Taux', state.analysesEventSort)}
               ${sortableHeader('analyses-events', 'attendus', 'Attendus', state.analysesEventSort)}
-              ${sortableHeader('analyses-events', 'presents', 'Présents', state.analysesEventSort)}
+              ${sortableHeader('analyses-events', 'presents', 'Réalisés', state.analysesEventSort)}
               <th>Action</th>
             </tr></thead>
             <tbody>${eventBody}</tbody>
@@ -2704,7 +2705,7 @@
               ${sortableHeader('analyses-people', 'specialisation', 'Spécialisation', state.analysesPersonSort)}
               ${sortableHeader('analyses-people', 'events', 'Événements', state.analysesPersonSort)}
               ${sortableHeader('analyses-people', 'attendus', 'Attendus', state.analysesPersonSort)}
-              ${sortableHeader('analyses-people', 'presents', 'Présents', state.analysesPersonSort)}
+              ${sortableHeader('analyses-people', 'presents', 'Réalisés', state.analysesPersonSort)}
               ${sortableHeader('analyses-people', 'excuses', 'Excusés', state.analysesPersonSort)}
               ${sortableHeader('analyses-people', 'absents', 'Absents', state.analysesPersonSort)}
               ${sortableHeader('analyses-people', 'dispenses', 'Dispensés', state.analysesPersonSort)}
@@ -4921,7 +4922,7 @@
     const events = personEventsFiltered(fiche);
     const eventFilters = [
       ['tout', 'Tout'],
-      ['presents', 'Présents'],
+      ['presents', 'Réalisés'],
       ['excuses', 'Excusés'],
       ['non_excuses', 'Absents'],
       ['dispenses', 'Dispensés']
@@ -5042,7 +5043,7 @@
           <h2>SYNTHÈSE PARTICIPATION</h2>
           <div class="scope-kpis scope-person-kpis">
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.attendus))}</strong><span>Événements attendus</span></article>
-            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.presents))}</strong><span>Présents</span></article>
+            <article class="scope-kpi"><strong>${escapeHtml(kpiCell(kpi.numerator))}</strong><span>Réalisés</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.excuses))}</strong><span>Excusés</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.nonExcuses))}</strong><span>Absents</span></article>
             <article class="scope-kpi"><strong>${escapeHtml(kpiCell(vol.dispenses))}</strong><span>Dispensés</span></article>
@@ -5836,6 +5837,7 @@
       L.ciblesLabel(ciblesOf(fiche)),
       L.modeLabel(mode)
     ].filter(Boolean);
+    if (fiche && fiche.sectionEffectif != null) bits.push(`Effectif de la section : ${fiche.sectionEffectif}`);
     if (isLegacy) bits.push('Aucune population (legacy)');
     else if (mode !== 'QUANTITATIF' && ev.population_figee) bits.push('Population figée');
     else if (mode !== 'QUANTITATIF' && preview) bits.push('Preview prête');
@@ -6271,6 +6273,7 @@
             </div></div>` : ''}
           </div>
           ${renderPermutationObligationsBlock()}
+          ${renderCatchupRowsBlock(state.saisie, ev.domaine_code || ev.domaineCode)}
         ${(() => {
           const isJsp = String((ev.domaine_code || ev.domaineCode || '')).toUpperCase() === 'JSP';
           const jeunes = filtered.filter((row) => row.jspRole === 'JEUNE');
@@ -6335,10 +6338,13 @@
     const showDispense = Boolean(c.dispense) || domaine !== 'JSP';
     const excuseDetail = renderExcuseBreakdown(rows);
     const excuseTitle = String(excuseDetail).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const permutationSummary = (fiche && (fiche.permutationSummary || fiche.permutation_summary)) || {};
     return renderKpiGrid([
       { label: 'Attendus', value: attendus },
       { label: 'Présents', value: c.present },
       domaine === 'DAP' && Number(c.permutations) > 0 ? { label: 'Permutations', value: c.permutations } : null,
+      domaine === 'DAP' && Number(permutationSummary.rattrapagesRealises || 0) > 0 ? { label: 'Rattrapages réalisés', value: permutationSummary.rattrapagesRealises } : null,
+      domaine === 'DAP' && Number(permutationSummary.aRattraper || 0) > 0 ? { label: 'À rattraper', value: permutationSummary.aRattraper, emphasis: true } : null,
       { label: 'Excusés', value: c.excuse, title: excuseTitle },
       { label: 'Absents', value: c.absent },
       showDispense ? { label: 'Dispensés', value: c.dispense } : null,
@@ -6789,9 +6795,16 @@
 
   function renderRealiseKpis(fiche, rows) {
     const t = (fiche && fiche.compteurs) || {};
+    const domaine = String((fiche && fiche.evenement && fiche.evenement.domaine_code) || '').toUpperCase();
+    const permutationSummary = (fiche && (fiche.permutationSummary || fiche.permutation_summary)) || {};
+    const rattrapages = (fiche && fiche.rattrapages) || {};
     return `${renderKpiGrid([
       { label: 'Taux officiel', value: L.formatTaux(t.percentage), featured: true },
       { label: 'Présents', value: t.presents },
+      domaine === 'DAP' && Number(t.permutations || 0) > 0 ? { label: 'Permutations', value: t.permutations } : null,
+      domaine === 'DAP' && Number(permutationSummary.rattrapagesRealises || 0) > 0 ? { label: 'Rattrapages réalisés', value: permutationSummary.rattrapagesRealises } : null,
+      domaine === 'DAP' && Number(permutationSummary.aRattraper || 0) > 0 ? { label: 'À rattraper', value: permutationSummary.aRattraper, emphasis: true } : null,
+      domaine === 'DAP' && Number(rattrapages.count || 0) > 0 ? { label: 'Rattrapages', value: rattrapages.count } : null,
       { label: 'Excusés', value: t.excuses },
       { label: 'Absents', value: t.nonExcuses },
       { label: 'Dispensés', value: t.dispenses }
@@ -6809,6 +6822,26 @@
       <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}">Générer le rapport</button>
       ${multi ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}" ${sessionReportAvailable ? '' : `disabled aria-disabled="true" title="${escapeHtml(sessionReportTooltip)}"`}>Rapport détaillé</button>` : ''}
     </div>`;
+  }
+
+  function renderCatchupRowsBlock(rows, domaineCode) {
+    const catchups = sortByGradeHierarchy((rows || []).filter((row) => row && row.catchup), 'asc');
+    if (!catchups.length) return '';
+    return `<section class="scope-presence-section scope-rattrapages-block">
+      <div class="scope-section-header"><h2 class="scope-section-heading">Rattrapages</h2></div>
+      <div class="scope-table-scroll"><table class="scope-table scope-rattrapages-table">
+        <thead><tr><th>GRADE</th><th>NOM</th><th>PRÉNOM</th><th>NIP</th><th>SECTION SOURCE</th><th>STATUT</th><th>INFORMATIONS</th></tr></thead>
+        <tbody>${catchups.map((r) => `<tr class="scope-row-catchup">
+          <td data-label="GRADE">${escapeHtml(r.grade || '')}</td>
+          <td data-label="NOM">${escapeHtml(r.nomFamille || r.nom || '')}</td>
+          <td data-label="PRÉNOM">${escapeHtml(r.prenom || '')}</td>
+          <td data-label="NIP">${escapeHtml(r.nip || '')}</td>
+          <td data-label="SECTION SOURCE">${escapeHtml((L.permutationCatchupSourceLabel && L.permutationCatchupSourceLabel(r)) || '')}</td>
+          <td data-label="STATUT">${escapeHtml(realiseStatutLabel(r))}</td>
+          <td data-label="INFORMATIONS">${escapeHtml((L.informationMotifLabel && L.informationMotifLabel(r)) || displayIncorporation(r.cible || '', domaineCode))}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </section>`;
   }
 
   function renderRealiseEncadrement(fiche) {
@@ -6886,6 +6919,7 @@
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev, fiche)}
         ${renderRealiseEncadrement(fiche)}
+        ${renderCatchupRowsBlock(rows, domaineCode)}
         <section class="scope-presence-section scope-realise-participants">
           <div class="scope-section-header">
             <h2 class="scope-section-heading">Participants</h2>

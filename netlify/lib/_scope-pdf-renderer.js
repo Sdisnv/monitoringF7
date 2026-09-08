@@ -174,6 +174,12 @@ function permutationSummaryLabel(volumes){
   return `Permutations : ${permutations} · Rattrapages réalisés : ${rattrapages} · À rattraper : ${ouverts}`;
 }
 
+function isCatchupPdfRow(row){
+  const cible = String(row && row.cible || '');
+  const motif = String(row && row.motifLabel || '');
+  return cible === 'Rattrapage' || motif.startsWith('Rattrapage section ');
+}
+
 class ScopePdfRenderer {
   constructor(model, meta){
     this.model = model;
@@ -605,12 +611,13 @@ class ScopePdfRenderer {
     const aligns = (options && options.align) || [];
     const wrap = (options && options.wrap) || [];
     const highlightRows = (options && options.highlightRows) || [];
+    const highlightColor = (options && options.highlightColor) || '#fde8e8';
     const headerH = 16;
     const baseRowH = (options && options.rowH) || 18;
     const paintRow = (cells, y, { header, zebra, rowH, highlight }) => {
       const h = header ? headerH : rowH;
       if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
-      else if(highlight) this.doc.rect(MARGIN, y, width, h).fill(rgb('#fde8e8'));
+      else if(highlight) this.doc.rect(MARGIN, y, width, h).fill(rgb(highlightColor));
       else if(zebra) this.doc.rect(MARGIN, y, width, h).fill(rgb('#f7f8fa'));
       const padY = 2;
       let x = MARGIN;
@@ -719,6 +726,25 @@ class ScopePdfRenderer {
     });
   }
 
+  renderCatchups(m){
+    const rows = (m.nominatif || []).filter(isCatchupPdfRow);
+    if(!rows.length) return;
+    this.iconHeading('people', 'Rattrapages', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
+    this.table(
+      ['Grade', 'Nom', 'Prénom', 'NIP', 'Cible', 'Statut', 'Provenance / information'],
+      rows.map((r) => [
+        r.grade || '', r.nom, r.prenom, r.nip, r.cible || '', this.eventStatutLabel(r), nominativeInfoLabel(r)
+      ]),
+      [42, 78, 68, 48, 64, 64, 135],
+      {
+        rowH: 14,
+        wrap: [false, false, false, false, false, false, true],
+        highlightRows: rows.map(() => true),
+        highlightColor: '#e8f3ff'
+      }
+    );
+  }
+
   renderPersonBody(m){
     const display = require('../../assets/js/scope-personnel-display.js');
     const p = m.personne || {};
@@ -785,7 +811,9 @@ class ScopePdfRenderer {
       { label: 'Mode de suivi', value: m.event.modeLabel },
       { label: 'Domaine', value: domaineLabel(m.event.domaine) || domaineLabel(m.domaine) || '—' },
       { label: 'Spécialisation', value: m.event.specialization || ((m.event.domaine === 'PR' || m.domaine === 'PR') ? 'PAPR' : '—') },
-      { label: 'Cible(s) / OI', value: (m.event.cibles || []).map((c) => c.code).join(', ') || '—' }
+      { label: 'Cible(s) / OI', value: (m.event.cibles || []).map((c) => c.code).join(', ') || '—' },
+      { label: 'Effectif de la section', value: m.event.sectionEffectif == null ? '—' : String(m.event.sectionEffectif) },
+      { label: 'Rattrapages', value: String(((m.event.rattrapages || {}).count) || 0) }
     ], { cols: 3, rowH: 22 });
     this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { after: TYPE.sectionGap });
     this.kpiOfficial(m.officiel, { event: true });
@@ -794,6 +822,7 @@ class ScopePdfRenderer {
       this.para(permutationSummaryLabel(v));
     }
     this.renderEncadrement(m);
+    this.renderCatchups(m);
     if(m.nominatif && m.nominatif.length){
       this.iconHeading('people', 'Liste nominative', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
       this.table(
@@ -807,7 +836,9 @@ class ScopePdfRenderer {
         {
           align: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'left'],
           rowH: 13,
-          wrap: [false, false, false, false, false, false, false, true]
+          wrap: [false, false, false, false, false, false, false, true],
+          highlightRows: m.nominatif.map(isCatchupPdfRow),
+          highlightColor: '#e8f3ff'
         }
       );
     } else if(m.quantitative){
@@ -822,6 +853,7 @@ class ScopePdfRenderer {
     const functionY = identityY + SIGNATURE_FUNCTION_RELATIVE_Y;
     const signatureImageY = identityY + SIGNATURE_IMAGE_RELATIVE_Y - PDF_SHIFT_08_CM;
     const isPr = m.domaine === 'PR' || (m.event && m.event.domaine === 'PR');
+    if(!isPr) return;
     if(isPr && m.signatureImage){
       const person = m.signaturePerson || {};
       const name = [person.grade, person.prenom, person.nom].filter(Boolean).join(' ') || '—';
@@ -835,12 +867,6 @@ class ScopePdfRenderer {
       this.doc.y = Math.max(functionY + 16, identityY + 78);
       return;
     }
-    this.ensure(48);
-    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(10)
-      .text(m.signatureFunction || m.signatureRole || 'Responsable de domaine', MARGIN, identityY);
-    this.doc.y = identityY;
-    this.doc.moveDown(1.15);
-    this.doc.font('Helvetica').fontSize(11).text('____________________________', MARGIN, this.doc.y);
   }
 
   renderSessionBody(m){
@@ -1432,7 +1458,11 @@ class ScopePdfRenderer {
           r.grade || '', r.nom, r.prenom, r.nip, r.oi, r.cible || r.oi || '', r.statutLabel,
           nominativeInfoLabel(r)
         ]),
-        [42, 78, 68, 48, 36, 64, 64, 75]
+        [42, 78, 68, 48, 36, 64, 64, 75],
+        {
+          highlightRows: m.nominatif.map(isCatchupPdfRow),
+          highlightColor: '#e8f3ff'
+        }
       );
     }
   }

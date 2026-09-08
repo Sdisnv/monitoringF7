@@ -597,7 +597,10 @@ function createScopePersonService(repo){
           nonExcuses: absencesNonExcusees,
           dispenses: Number(volumes.dispenses || 0),
           nonRenseignes: Number(volumes.nonRenseignes || 0),
-          permutations: Number(volumes.permutations || 0)
+          permutations: Number(volumes.permutations || 0),
+          realisationsDirectes: Number(volumes.realisationsDirectes ?? volumes.presents ?? 0),
+          rattrapagesRealises: Number(volumes.rattrapagesRealises || 0),
+          aRattraper: Number(volumes.aRattraper || 0)
         },
         motifs: {
           prive: Number(volumes.excusesPrive || 0),

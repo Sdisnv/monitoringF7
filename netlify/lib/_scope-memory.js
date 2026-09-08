@@ -554,6 +554,9 @@ function createMemoryRepo(){
       const item = permutations.get(String(id));
       return item ? { ...item } : null;
     },
+    async deletePermutation(id){
+      return permutations.delete(String(id));
+    },
     async insertLegacy(row){
       const item = {
         legacy_id: row.legacy_id || randomUUID(),

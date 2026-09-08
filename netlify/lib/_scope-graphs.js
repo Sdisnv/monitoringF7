@@ -233,27 +233,30 @@ function permutationsDataset(officiel, domaineCode, explain){
   if(!isDapPerimeter(domaineCode)){
     return dataset({
       id: 'permutations',
-      question: 'Combien de statuts Permutation DAP restent distincts des présences réalisées ?',
+      question: 'Comment les obligations DAP sont-elles réalisées ou encore à rattraper ?',
       type: 'stacked',
       emptyReason: 'HORS_DAP',
       series: []
     });
   }
   const volumes = (officiel && officiel.volumes) || emptyVolumes();
-  const presents = Number(volumes.presents || 0);
+  const directes = Number(volumes.realisationsDirectes == null ? volumes.presents : volumes.realisationsDirectes);
   const permutations = Number(volumes.permutations || 0);
-  const emptyReason = presents <= 0 && permutations <= 0 ? 'AUCUNE_PERMUTATION' : null;
+  const rattrapages = Number(volumes.rattrapagesRealises || 0);
+  const ouverts = volumes.aRattraper == null ? Math.max(0, permutations - rattrapages) : Number(volumes.aRattraper || 0);
+  const emptyReason = directes <= 0 && permutations <= 0 ? 'AUCUNE_PERMUTATION' : null;
   const points = emptyReason ? [] : [
-    { id: 'presents', label: 'Présences réalisées', value: presents, token: 'present', inDenominator: true },
-    { id: 'permutations', label: 'Permutations source', value: permutations, token: 'permutation', inDenominator: true }
+    { id: 'directes', label: 'Réalisations directes', value: directes, token: 'present', inDenominator: true },
+    { id: 'rattrapagesRealises', label: 'Rattrapages réalisés', value: rattrapages, token: 'neutral', inDenominator: true },
+    { id: 'aRattraper', label: 'À rattraper', value: ouverts, token: 'permutation', inDenominator: true }
   ];
   return dataset({
     id: 'permutations',
-    question: 'Combien de statuts Permutation DAP restent distincts des présences réalisées ?',
+    question: 'Comment les obligations DAP sont-elles réalisées ou encore à rattraper ?',
     type: 'stacked',
     emptyReason,
-    explain: explainSlice(explain, { note: 'PERMUTATION est une absence source avec obligation de rattrapage; elle reste distincte des présences réalisées.' }),
-    series: [{ id: 'dap', kind: KINDS.OFFICIEL, label: 'Présents DAP', points }]
+    explain: explainSlice(explain, { note: 'Les rattrapages réalisés satisfont l’obligation source sans devenir une présence physique sur la séance source.' }),
+    series: [{ id: 'dap', kind: KINDS.OFFICIEL, label: 'Obligations DAP', points }]
   });
 }
 

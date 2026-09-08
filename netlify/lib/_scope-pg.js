@@ -986,6 +986,15 @@ function createPgRepo(client){
       const row = result.rows[0];
       return row ? { ...row, source_date: dateOnly(row.source_date), rattrapage_date: dateOnly(row.rattrapage_date) } : null;
     },
+    async deletePermutation(id){
+      try {
+        const result = await q('delete from scope_permutations where permutation_id = $1', [id]);
+        return result.rowCount > 0;
+      } catch(error) {
+        if(error && error.code === '42P01') return false;
+        throw error;
+      }
+    },
     async insertLegacy(row){
       const id = row.legacy_id || randomUUID();
       const result = await q(

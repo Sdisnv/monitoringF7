@@ -521,6 +521,16 @@ async function collectReport(repo, query, options){
     }
     const isLegacy = fiche.evenement.origine === 'LEGACY_AGGREGATED' || fiche.modeSuivi === 'LEGACY';
     const cibles = fiche.cibles || [];
+    const eventOfficial = isLegacy ? null : Object.assign({}, fiche.compteurs || {}, {
+      officiel: fiche.evenement.statut === 'REALISE',
+      kind: fiche.evenement.statut === 'REALISE' ? 'OFFICIEL' : 'PREVIEW',
+      objective: evaluated.officiel && evaluated.officiel.objective,
+      gapPct: evaluated.officiel && evaluated.officiel.gapPct,
+      analyticStatus: evaluated.officiel && evaluated.officiel.analyticStatus,
+      analyticStatusReason: evaluated.officiel && evaluated.officiel.analyticStatusReason,
+      objectiveContext: evaluated.officiel && evaluated.officiel.objectiveContext,
+      volumes: Object.assign({}, (fiche.compteurs || {}), fiche.permutationSummary || fiche.permutation_summary || {})
+    });
     return {
       kind,
       period,
@@ -546,9 +556,11 @@ async function collectReport(repo, query, options){
         modeSuivi: fiche.modeSuivi,
         statut: fiche.evenement.statut,
         statutLabel: STATUT_LABELS[fiche.evenement.statut] || fiche.evenement.statut,
-        modeLabel: MODE_LABELS[fiche.modeSuivi] || fiche.modeSuivi
+        modeLabel: MODE_LABELS[fiche.modeSuivi] || fiche.modeSuivi,
+        sectionEffectif: fiche.sectionEffectif == null ? null : fiche.sectionEffectif,
+        rattrapages: fiche.rattrapages || { count: 0 }
       },
-      officiel: isLegacy ? null : evaluated.officiel,
+      officiel: eventOfficial,
       legacy: isLegacy ? {
         kind: KINDS.LEGACY,
         presents: fiche.legacy && fiche.legacy.nb_presents,

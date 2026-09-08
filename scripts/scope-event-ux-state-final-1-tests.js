@@ -159,7 +159,7 @@ async function insertListEvent(repo, id, patch = {}){
     assert.strictEqual(byId['past-open'], 'A_TRAITER');
     assert.strictEqual(byId['past-realise'], 'TRAITE');
     const filtered = await service.listEvenements({ annee: 2026, statut: 'A_TRAITER', today: '2026-08-26' });
-    assert.deepStrictEqual(filtered.evenements.map((item) => item.evenement.evenement_id), ['future-empty', 'past-open']);
+    assert.deepStrictEqual(filtered.evenements.map((item) => item.evenement.evenement_id), ['past-open', 'future-empty']);
   });
 
   await record('H — filtre UI et badge utilisent les états métier', () => {

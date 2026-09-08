@@ -8,7 +8,8 @@ const {
   validateCloture,
   expectedPopulationCoherence,
   rangesOverlap,
-  ROLES_ENCADREMENT
+  ROLES_ENCADREMENT,
+  permutationObligationSummary
 } = require('./_scope-rules');
 const {
   TYPES_PERIODE,
@@ -2221,6 +2222,16 @@ function createScopeService(repo){
     return fulfilledPermutationPersonIds(rows, evenement.evenement_id);
   }
 
+  async function sectionEffectifAtEventDate(tx, evenement, cibleIds){
+    if(!tx.listAffectationsForCibles || !(cibleIds || []).length) return null;
+    const rows = await tx.listAffectationsForCibles(cibleIds, evenement.date);
+    return new Set((rows || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean)).size;
+  }
+
+  function catchupAttendusCount(attendus){
+    return (attendus || []).filter((row) => row && row.inclus !== false && isPermutationCatchupMotif(row.motif_inclusion || row.motifInclusion)).length;
+  }
+
   async function releasePermutationCatchupForParticipation(tx, evenement, personneId, actor){
     if(!tx.listPermutations || !tx.upsertPermutation || !personneId) return null;
     const rows = await tx.listPermutations({
@@ -2239,12 +2250,58 @@ function createScopeService(repo){
     });
   }
 
+  function isPermutationCatchupMotif(value){
+    return String(value || '').trim().startsWith('permutation_rattrapage|');
+  }
+
+  async function removeSourcePermutationObligation(tx, evenement, personneId, actor){
+    if(!tx.listPermutations || !tx.deletePermutation || !personneId) return 0;
+    const rows = await tx.listPermutations({
+      personneId,
+      sourceEvenementId: evenement.evenement_id
+    });
+    let removed = 0;
+    for(const obligation of rows || []){
+      if(obligation.rattrapage_evenement_id){
+        const targetAttendu = tx.getAttendu
+          ? await tx.getAttendu(obligation.rattrapage_evenement_id, personneId)
+          : null;
+        if(targetAttendu && targetAttendu.inclus !== false && isPermutationCatchupMotif(targetAttendu.motif_inclusion || targetAttendu.motifInclusion)){
+          await tx.upsertAttendu({
+            ...targetAttendu,
+            inclus: false,
+            origine_retrait: 'PERMUTATION_SOURCE_CORRIGEE'
+          });
+          if(typeof tx.deleteParticipation === 'function'){
+            await tx.deleteParticipation(obligation.rattrapage_evenement_id, personneId);
+          } else {
+            const targetParticipation = tx.getParticipation
+              ? await tx.getParticipation(obligation.rattrapage_evenement_id, personneId)
+              : null;
+            await tx.upsertParticipation({
+              ...(targetParticipation || { evenement_id: obligation.rattrapage_evenement_id, personne_id: personneId, role: 'PARTICIPANT' }),
+              statut: 'NON_CONCERNE',
+              source: 'SAISIE',
+              auteur_id: actorId(actor)
+            });
+          }
+        }
+      }
+      await tx.deletePermutation(obligation.permutation_id);
+      removed += 1;
+    }
+    return removed;
+  }
+
   async function syncPermutationWorkflow(tx, evenement, personneId, patch, actor){
     if(!tx.upsertPermutation || !tx.listPermutations) return null;
     const status = String(patch.statut || '').toUpperCase();
     const exerciseKey = explicitPermutationExerciseKey(evenement);
     if(status !== 'PRESENT'){
       await releasePermutationCatchupForParticipation(tx, evenement, personneId, actor);
+    }
+    if(status !== STATUT_PERMUTATION){
+      await removeSourcePermutationObligation(tx, evenement, personneId, actor);
     }
     if(!exerciseKey && status !== STATUT_PERMUTATION) return null;
     if(status === STATUT_PERMUTATION){
@@ -2674,9 +2731,7 @@ function createScopeService(repo){
         cloture_par: actorId(actor)
       });
       const permutationsARegulariser = await markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor);
-      const taux = computeTaux(participations, attendus, {
-        fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(tx, evenement)
-      });
+      const taux = computeTaux(participations, attendus);
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
@@ -2835,7 +2890,7 @@ function createScopeService(repo){
       repo.listParticipationsForEvents ? repo.listParticipationsForEvents(ids) : Promise.resolve([]),
       repo.listQuantitatifSaisiesForEvents ? repo.listQuantitatifSaisiesForEvents(ids) : Promise.resolve([]),
       repo.listLegacy ? repo.listLegacy() : Promise.resolve([]),
-      repo.listPermutations ? repo.listPermutations({ sourceEvenementIds: ids, statut: [PERMUTATION_STATUS.RATTRAPPE] }) : Promise.resolve([])
+      repo.listPermutations ? repo.listPermutations({ sourceEvenementIds: ids }) : Promise.resolve([])
     ]);
     const ciblesById = new Map((allCibles || []).map((c) => [c.cible_id, c]));
     const ciblesByEvent = groupByEventId(cibleRows);
@@ -2859,9 +2914,8 @@ function createScopeService(repo){
         today: options.today
       });
       const modeSuivi = inferModeSuivi(evenement);
-      let compteurs = computeTaux(participations, attendus, {
-        fulfilledPermutationPersonIds: fulfilledPermutationPersonIds(permutationRows, evenement.evenement_id)
-      });
+      let compteurs = computeTaux(participations, attendus);
+      const permutationSummary = permutationObligationSummary(permutationRows, evenement.evenement_id);
       let attendusInclus = attendus.filter((a) => a.inclus !== false).length;
       if(modeSuivi === MODES.QUANTITATIF){
         const official = saisie ? officialFromQuantitatif(saisie) : null;
@@ -2878,6 +2932,11 @@ function createScopeService(repo){
         cibles,
         compteurs,
         attendusInclus,
+        rattrapages: {
+          count: catchupAttendusCount(attendus)
+        },
+        permutationSummary,
+        permutation_summary: permutationSummary,
         legacy,
         saisieQuantitative: saisie,
         etatMetier,
@@ -2910,9 +2969,13 @@ function createScopeService(repo){
       evenements = evenements.filter((row) => !isQualificationEvenement(row));
     }
     const packed = await summarizeEvenements(evenements, { today: query?.today });
-    const items = etatMetierFilter
+    const items = (etatMetierFilter
       ? packed.items.filter((item) => item.etatMetier && item.etatMetier.code === etatMetierFilter)
-      : packed.items;
+      : packed.items
+    ).slice().sort((a, b) =>
+      String(a.evenement && a.evenement.date || '').localeCompare(String(b.evenement && b.evenement.date || ''))
+      || String(a.evenement && a.evenement.libelle || '').localeCompare(String(b.evenement && b.evenement.libelle || ''), 'fr', { numeric: true })
+    );
     return { evenements: items, performance: packed.performance };
   }
 
@@ -2960,9 +3023,7 @@ function createScopeService(repo){
       })
       : participationsRaw;
     let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
-    const taux = computeTaux(participations, attendus, {
-      fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(repo, evenement)
-    });
+    const taux = computeTaux(participations, attendus);
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id)
@@ -3109,6 +3170,12 @@ function createScopeService(repo){
     }
     const attendusExclus = attendus.filter((row) => row.inclus === false);
     const attendusActifs = attendus.filter((row) => row.inclus !== false);
+    const sectionEffectif = await sectionEffectifAtEventDate(repo, evenement, cibleIds);
+    const sourcePermutationRows = repo.listPermutations && String(evenement.domaine_code || '').toUpperCase() === 'DAP'
+      ? await repo.listPermutations({ sourceEvenementId: evenement.evenement_id })
+      : [];
+    const permutationSummary = permutationObligationSummary(sourcePermutationRows, evenement.evenement_id);
+    const rattrapages = { count: catchupAttendusCount(attendusActifs) };
     const coherenceAttendus = String(evenement.domaine_code || '').toUpperCase() === 'JSP'
       ? (jsp.jeunes || []).filter((row) => row.inclus !== false)
       : attendusActifs;
@@ -3127,6 +3194,11 @@ function createScopeService(repo){
       cycle: cycleInfo,
       journal,
       compteurs,
+      rattrapages,
+      permutationSummary,
+      permutation_summary: permutationSummary,
+      sectionEffectif,
+      section_effectif: sectionEffectif,
       saisieQuantitative: saisie,
       modeSuivi,
       legacy,
@@ -3200,9 +3272,7 @@ function createScopeService(repo){
     if(evenement.statut !== 'REALISE'){
       const attendus = await repo.listAttendus(eventId);
       const participations = await repo.listParticipations(eventId);
-      const taux = computeTaux(participations, attendus, {
-        fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(repo, evenement)
-      });
+      const taux = computeTaux(participations, attendus);
       return {
         ...taux,
         officiel: false,
@@ -3214,9 +3284,7 @@ function createScopeService(repo){
     }
     const attendus = await repo.listAttendus(eventId);
     const participations = await repo.listParticipations(eventId);
-    return { ...computeTaux(participations, attendus, {
-      fulfilledPermutationPersonIds: await fulfilledPermutationPersonIdsForEvent(repo, evenement)
-    }), officiel: true, kind: 'NOMINATIF' };
+    return { ...computeTaux(participations, attendus), officiel: true, kind: 'NOMINATIF' };
   }
 
   async function rulesList(){

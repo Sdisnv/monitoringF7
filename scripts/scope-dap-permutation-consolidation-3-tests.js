@@ -9,6 +9,7 @@ const path = require('path');
 const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
 const { createScopeService } = require('../netlify/lib/_scope-service');
 const { createScopePersonService } = require('../netlify/lib/_scope-person-service');
+const { createScopeAnalyticsService } = require('../netlify/lib/_scope-analytics-service');
 const { collectReport } = require('../netlify/lib/_scope-report-data');
 const display = require('../assets/js/scope-personnel-display');
 const L = require('../assets/js/scope-ui-logic');
@@ -117,7 +118,16 @@ async function fixture(){
 }
 
 async function sourceRate(ctx){
-  return ctx.service.tauxEvenement(ctx.source.eventId);
+  const analytics = createScopeAnalyticsService(ctx.repo);
+  const summary = await analytics.summary({
+    evenementId: ctx.source.eventId,
+    from: '2026-01-01',
+    to: '2026-12-31'
+  });
+  return Object.assign({}, summary.officiel, {
+    rattrapagesRealises: Number(summary.officiel.volumes && summary.officiel.volumes.rattrapagesRealises || 0),
+    aRattraper: Number(summary.officiel.volumes && summary.officiel.volumes.aRattraper || 0)
+  });
 }
 
 async function prepareSource(ctx, presentCount, permutationCount){

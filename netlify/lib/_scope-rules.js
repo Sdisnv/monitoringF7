@@ -97,6 +97,22 @@ function isPermutationCatchupAttendu(row){
   return motif.startsWith('permutation_rattrapage|');
 }
 
+function permutationObligationSummary(rows, sourceEvenementId){
+  const scoped = (rows || []).filter((row) => (
+    !sourceEvenementId || String(row.source_evenement_id || row.sourceEvenementId || '') === String(sourceEvenementId)
+  ));
+  const permutations = scoped.filter((row) => row && row.personne_id).length;
+  const rattrapagesRealises = scoped.filter((row) =>
+    String(row.statut || '').toUpperCase() === 'RATTRAPPE'
+    && (row.rattrapage_evenement_id || row.rattrapageEvenementId)
+  ).length;
+  return {
+    permutations,
+    rattrapagesRealises,
+    aRattraper: Math.max(0, permutations - rattrapagesRealises)
+  };
+}
+
 function computeTaux(participations, attendus, options = {}){
   const fulfilledPermutationPersonIds = new Set(
     [...(options.fulfilledPermutationPersonIds || [])].map((id) => String(id))
@@ -142,6 +158,7 @@ function computeTaux(participations, attendus, options = {}){
     denominator,
     percentage: denominator === 0 ? null : round1((100 * numerator) / denominator),
     presents: present,
+    realisationsDirectes: present,
     excuses: excuse,
     nonExcuses: absent,
     dispenses: dispense,
@@ -448,6 +465,7 @@ module.exports = {
   personneActiveA,
   computeTaux,
   isPermutationCatchupAttendu,
+  permutationObligationSummary,
   round1,
   validateParticipationPatch,
   validateCloture,

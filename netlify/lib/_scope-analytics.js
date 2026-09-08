@@ -44,6 +44,7 @@ function emptyVolumes(){
     nonConcernes: 0,
     attendus: 0,
     permutations: 0,
+    realisationsDirectes: 0,
     rattrapagesRealises: 0,
     aRattraper: 0,
     excusesPrive: 0,
@@ -60,6 +61,7 @@ function volumesFromTaux(taux){
     if(taux && taux[key] != null) base[key] = Number(taux[key] || 0);
   }
   base.presents = Number(taux.presents || 0);
+  base.realisationsDirectes = Number(taux.realisationsDirectes == null ? taux.presents : taux.realisationsDirectes);
   base.excuses = Number(taux.excuses || 0);
   base.nonExcuses = Number(taux.nonExcuses || 0);
   base.dispenses = Number(taux.dispenses || 0);
