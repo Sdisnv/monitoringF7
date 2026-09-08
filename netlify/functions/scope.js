@@ -233,6 +233,14 @@ exports.handler = async function(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.enregistrerParticipations(params.id, body, claims)) });
     }
+    params = match(path, '/evenements/:id/permutations');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, ...(await service.permutationsForEvent(params.id)) });
+    }
+    params = match(path, '/permutations/:id/regulariser');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.regulariserPermutation(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/participations/reset');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.resetParticipations(params.id, body, claims)) });

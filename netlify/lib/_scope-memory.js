@@ -75,6 +75,7 @@ function createMemoryRepo(){
     commentaire: 'Configuration SDIS NV par défaut - équivalence V1',
     auteur_id: null
   }]));
+  const permutations = new Map();
   suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
     suivi_id: '8c0a0002-2026-4000-8000-000000000001',
     portee: 'GLOBAL',
@@ -134,7 +135,8 @@ function createMemoryRepo(){
       cyclePersonnes: cloneMap(cyclePersonnes),
       exercices: cloneMap(exercices),
       participationMotifs: cloneMap(participationMotifs),
-      participationPolicies: cloneMap(participationPolicies)
+      participationPolicies: cloneMap(participationPolicies),
+      permutations: cloneMap(permutations)
     };
   }
 
@@ -160,6 +162,7 @@ function createMemoryRepo(){
     exercices.clear(); (snap.exercices || new Map()).forEach((v, k) => exercices.set(k, v));
     participationMotifs.clear(); (snap.participationMotifs || new Map()).forEach((v, k) => participationMotifs.set(k, v));
     participationPolicies.clear(); (snap.participationPolicies || new Map()).forEach((v, k) => participationPolicies.set(k, v));
+    permutations.clear(); (snap.permutations || new Map()).forEach((v, k) => permutations.set(k, v));
   }
 
   const api = {
@@ -374,6 +377,7 @@ function createMemoryRepo(){
         pr_session_key: row.pr_session_key || row.prSessionKey || null,
         participation_policy_version: row.participation_policy_version || row.participationPolicyVersion || null,
         participation_policy_snapshot: row.participation_policy_snapshot || row.participationPolicySnapshot || null,
+        exercise_equivalence_key: row.exercise_equivalence_key || row.exerciseEquivalenceKey || null,
         population_figee: false,
         population_version: 0,
         figee_at: null,
@@ -497,6 +501,54 @@ function createMemoryRepo(){
       const out = [];
       for(const row of rows || []) out.push(await api.upsertParticipation(row));
       return out;
+    },
+    async upsertPermutation(row){
+      const existing = row.permutation_id
+        ? permutations.get(String(row.permutation_id))
+        : [...permutations.values()].find((item) =>
+          String(item.personne_id) === String(row.personne_id)
+          && String(item.source_evenement_id) === String(row.source_evenement_id)
+        );
+      const id = (existing && existing.permutation_id) || row.permutation_id || randomUUID();
+      const item = {
+        ...(existing || {}),
+        permutation_id: id,
+        personne_id: row.personne_id || (existing && existing.personne_id),
+        source_evenement_id: row.source_evenement_id || (existing && existing.source_evenement_id),
+        source_exercise_key: row.source_exercise_key || (existing && existing.source_exercise_key),
+        source_cible_id: row.source_cible_id || null,
+        source_date: dateOnly(row.source_date || (existing && existing.source_date)),
+        rattrapage_evenement_id: Object.prototype.hasOwnProperty.call(row, 'rattrapage_evenement_id') ? row.rattrapage_evenement_id : (existing && existing.rattrapage_evenement_id) || null,
+        rattrapage_cible_id: Object.prototype.hasOwnProperty.call(row, 'rattrapage_cible_id') ? row.rattrapage_cible_id : (existing && existing.rattrapage_cible_id) || null,
+        rattrapage_date: dateOnly(Object.prototype.hasOwnProperty.call(row, 'rattrapage_date') ? row.rattrapage_date : (existing && existing.rattrapage_date)),
+        statut: row.statut || (existing && existing.statut) || 'A_RATTRAPER',
+        regularisation_motif: Object.prototype.hasOwnProperty.call(row, 'regularisation_motif') ? row.regularisation_motif : (existing && existing.regularisation_motif) || null,
+        commentaire: Object.prototype.hasOwnProperty.call(row, 'commentaire') ? row.commentaire : (existing && existing.commentaire) || null,
+        auteur_id: row.auteur_id || (existing && existing.auteur_id) || null,
+        created_at: (existing && existing.created_at) || now(),
+        updated_at: now()
+      };
+      permutations.set(id, item);
+      return { ...item };
+    },
+    async listPermutations(filter = {}){
+      return [...permutations.values()].filter((row) => {
+        if(filter.personneId && String(row.personne_id) !== String(filter.personneId)) return false;
+        if(filter.personne_id && String(row.personne_id) !== String(filter.personne_id)) return false;
+        if(filter.sourceEvenementId && String(row.source_evenement_id) !== String(filter.sourceEvenementId)) return false;
+        if(filter.source_evenement_id && String(row.source_evenement_id) !== String(filter.source_evenement_id)) return false;
+        if(filter.sourceExerciseKey && String(row.source_exercise_key) !== String(filter.sourceExerciseKey)) return false;
+        if(filter.source_exercise_key && String(row.source_exercise_key) !== String(filter.source_exercise_key)) return false;
+        if(filter.statut){
+          const statuses = Array.isArray(filter.statut) ? filter.statut : [filter.statut];
+          if(!statuses.includes(row.statut)) return false;
+        }
+        return true;
+      }).map((row) => ({ ...row }));
+    },
+    async getPermutation(id){
+      const item = permutations.get(String(id));
+      return item ? { ...item } : null;
     },
     async insertLegacy(row){
       const item = {

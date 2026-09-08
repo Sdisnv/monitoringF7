@@ -193,6 +193,7 @@
     modeSuggestion: null,
     volumes: { attendus: '', presents: '', excuses: '', excusesPrive: '', excusesProfessionnel: '', excusesArmee: '', excusesAccidentMaladie: '', excusesNonPrecise: '', nonExcuses: '', dispenses: '0', permutations: '0' },
     qtyPreview: null,
+    permutationObligations: [],
     objectifs: [],
     objectifForm: {
       portee: 'GLOBAL',
@@ -963,12 +964,21 @@
     state.fiche = null;
     state.preview = null;
     state.saisie = [];
+    state.permutationObligations = [];
     state.volumes = volumesFromFiche();
     resetEventTransientUi();
     render();
     const data = await client.getEvenement(id);
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
+    if (route().screen === 'saisie' && typeof client.permutationsForEvent === 'function') {
+      try {
+        const payload = await client.permutationsForEvent(id);
+        state.permutationObligations = payload.obligations || [];
+      } catch (_error) {
+        state.permutationObligations = [];
+      }
+    }
     state.ficheReady = true;
     state.conflict = false;
     state.encRole = 'FORMATEUR';
@@ -6235,6 +6245,7 @@
           </div>
           <div class="scope-presence-toolbar">
             ${renderManualParticipantBlock()}
+            ${renderPermutationObligationsBlock()}
             <div class="scope-filter-group">
               <span class="scope-filter-label" id="saisie-open-filter-label">Présences</span>
               <div class="scope-segmented" role="group" aria-labelledby="saisie-open-filter-label">
@@ -6500,6 +6511,31 @@
         </div>
       </div>
     `;
+  }
+
+  function renderPermutationObligationsBlock() {
+    const rows = state.permutationObligations || [];
+    if (!rows.length) return '';
+    return `<div class="scope-permutation-obligations">
+      <h3 class="scope-section-sub">Personnes en permutation · ${rows.length}</h3>
+      <div class="scope-table-wrap">
+        <table class="scope-table">
+          <thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Source</th><th>État</th><th>Action</th></tr></thead>
+          <tbody>${rows.map((row) => `<tr>
+            <td>${escapeHtml(row.grade || '')}</td>
+            <td>${escapeHtml(row.nom || '')}</td>
+            <td>${escapeHtml(row.prenom || '')}</td>
+            <td>${escapeHtml(row.nip || '')}</td>
+            <td>${escapeHtml([row.source && row.source.libelle, row.source && L.formatDate(row.source.date)].filter(Boolean).join(' · '))}</td>
+            <td>${escapeHtml(row.statut === 'A_REGULARISER' ? 'À régulariser' : 'À rattraper')}</td>
+            <td>
+              <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-manual-add="${escapeHtml(row.personneId || '')}">Ajouter</button>
+              ${row.statut === 'A_REGULARISER' ? `<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-permutation-regularise="${escapeHtml(row.permutationId || '')}">Régulariser</button>` : ''}
+            </td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
   }
 
   function renderSaisieQuantitative() {
@@ -8845,6 +8881,9 @@
     root.querySelectorAll('[data-manual-add]').forEach((btn) => {
       btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-manual-add')));
     });
+    root.querySelectorAll('[data-permutation-regularise]').forEach((btn) => {
+      btn.addEventListener('click', () => regularisePermutationObligation(btn.getAttribute('data-permutation-regularise')));
+    });
     root.querySelectorAll('[data-manual-remove]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const personneId = btn.getAttribute('data-manual-remove');
@@ -9933,6 +9972,9 @@
     target.querySelectorAll('[data-manual-add]').forEach((btn) => {
       btn.addEventListener('click', () => addManualParticipant(btn.getAttribute('data-manual-add')));
     });
+    target.querySelectorAll('[data-permutation-regularise]').forEach((btn) => {
+      btn.addEventListener('click', () => regularisePermutationObligation(btn.getAttribute('data-permutation-regularise')));
+    });
   }
 
   async function persistParticipations() {
@@ -10117,6 +10159,21 @@
       await client.ajouterException(id, { personneId, role: 'PARTICIPANT' }, state.fiche.evenement.version);
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
+      await loadFiche(id);
+    });
+  }
+
+  function regularisePermutationObligation(permutationId) {
+    if (!permutationId || typeof client.regulariserPermutation !== 'function') return;
+    const motif = String(prompt('Motif de régularisation') || '').trim().toUpperCase();
+    if (!motif) return;
+    const id = route().id;
+    withFeedbackAction({
+      progressTitle: 'Régularisation',
+      successTitle: 'Permutation régularisée',
+      successMessage: 'La trace de permutation reste conservée.'
+    }, async () => {
+      await client.regulariserPermutation(permutationId, { motifAbsence: motif });
       await loadFiche(id);
     });
   }

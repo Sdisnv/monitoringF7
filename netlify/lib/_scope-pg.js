@@ -67,6 +67,7 @@ function mapEvent(row){
     exercice,
     pr_exercise_group_key: row.pr_exercise_group_key || null,
     pr_session_key: row.pr_session_key || null,
+    exercise_equivalence_key: row.exercise_equivalence_key || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     already_exists: Boolean(row.already_exists)
@@ -569,6 +570,12 @@ function createPgRepo(client){
       const modeSuivi = inferModeSuivi(row);
       const codeCours = row.code_cours || row.codeCours || null;
       const policyColumns = await hasParticipationPolicyColumns();
+      const exerciseEquivalenceKey = row.exercise_equivalence_key || row.exerciseEquivalenceKey || null;
+      const eventColumns = [
+        'evenement_id', 'internal_event_id', 'date', 'domaine_code', 'sous_domaine_code', 'libelle', 'statut', 'origine', 'mode_suivi',
+        'identifiant_externe', 'code_cours', 'code_source', 'source_type', 'heure_debut', 'heure_fin', 'salle', 'responsable',
+        'exercice_id', 'session_index', 'session_label', 'pr_exercise_group_key', 'pr_session_key'
+      ];
       const params = [
         id,
         row.internal_event_id || row.internalEventId || id,
@@ -593,14 +600,24 @@ function createPgRepo(client){
         row.pr_exercise_group_key || row.prExerciseGroupKey || null,
         row.pr_session_key || row.prSessionKey || null
       ];
+      if(exerciseEquivalenceKey){
+        eventColumns.push('exercise_equivalence_key');
+        params.push(exerciseEquivalenceKey);
+      }
+      if(policyColumns){
+        eventColumns.push('participation_policy_version', 'participation_policy_snapshot');
+        params.push(
+          row.participation_policy_version || row.participationPolicyVersion || null,
+          JSON.stringify(row.participation_policy_snapshot || row.participationPolicySnapshot || null)
+        );
+      }
+      const valuePlaceholders = params.map((_, index) => `$${index + 1}${eventColumns[index] === 'participation_policy_snapshot' ? '::jsonb' : ''}`);
       const result = codeCours
         ? await q(
           `with ins as (
              insert into scope_evenements(
-               evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
-               identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
-               exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key${policyColumns ? ', participation_policy_version, participation_policy_snapshot' : ''}, version
-             ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22${policyColumns ? ',$23,$24::jsonb' : ''},1)
+               ${eventColumns.join(', ')}, version
+             ) values (${valuePlaceholders.join(', ')},1)
              on conflict (code_cours) where code_cours is not null do nothing
              returning *, false as already_exists
            )
@@ -611,22 +628,14 @@ function createPgRepo(client){
            where e.code_cours = $11
              and not exists (select 1 from ins)
            limit 1`,
-          policyColumns ? params.concat([
-            row.participation_policy_version || row.participationPolicyVersion || null,
-            JSON.stringify(row.participation_policy_snapshot || row.participationPolicySnapshot || null)
-          ]) : params
+          params
         )
         : await q(
           `insert into scope_evenements(
-             evenement_id, internal_event_id, date, domaine_code, sous_domaine_code, libelle, statut, origine, mode_suivi,
-             identifiant_externe, code_cours, code_source, source_type, heure_debut, heure_fin, salle, responsable,
-             exercice_id, session_index, session_label, pr_exercise_group_key, pr_session_key${policyColumns ? ', participation_policy_version, participation_policy_snapshot' : ''}, version
-           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22${policyColumns ? ',$23,$24::jsonb' : ''},1)
+             ${eventColumns.join(', ')}, version
+           ) values (${valuePlaceholders.join(', ')},1)
            returning *, false as already_exists`,
-          policyColumns ? params.concat([
-            row.participation_policy_version || row.participationPolicyVersion || null,
-            JSON.stringify(row.participation_policy_snapshot || row.participationPolicySnapshot || null)
-          ]) : params
+          params
         );
       const cibleIds = row.cible_ids || [];
       for(const cibleId of cibleIds){
@@ -703,7 +712,7 @@ function createPgRepo(client){
       let allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
-        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','participation_policy_version','participation_policy_snapshot'
+        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','exercise_equivalence_key','participation_policy_version','participation_policy_snapshot'
       ];
       if(Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_version') || Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_snapshot')){
         if(!(await hasParticipationPolicyColumns())){
@@ -881,6 +890,96 @@ function createPgRepo(client){
         })))]
       );
       return result.rows;
+    },
+    async upsertPermutation(row){
+      let result;
+      try {
+        result = await q(
+          `insert into scope_permutations(
+           permutation_id, personne_id, source_evenement_id, source_exercise_key, source_cible_id,
+           source_date, rattrapage_evenement_id, rattrapage_cible_id, rattrapage_date,
+           statut, regularisation_motif, commentaire, auteur_id
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+         on conflict (personne_id, source_evenement_id) do update set
+           source_exercise_key = excluded.source_exercise_key,
+           source_cible_id = excluded.source_cible_id,
+           source_date = excluded.source_date,
+           rattrapage_evenement_id = excluded.rattrapage_evenement_id,
+           rattrapage_cible_id = excluded.rattrapage_cible_id,
+           rattrapage_date = excluded.rattrapage_date,
+           statut = excluded.statut,
+           regularisation_motif = excluded.regularisation_motif,
+           commentaire = excluded.commentaire,
+           auteur_id = excluded.auteur_id,
+           updated_at = now()
+           returning *`,
+          [
+            row.permutation_id || randomUUID(),
+            row.personne_id,
+            row.source_evenement_id,
+            row.source_exercise_key,
+            row.source_cible_id || null,
+            isoDate(row.source_date) || null,
+            row.rattrapage_evenement_id || null,
+            row.rattrapage_cible_id || null,
+            isoDate(row.rattrapage_date) || null,
+            row.statut || 'A_RATTRAPER',
+            row.regularisation_motif || null,
+            row.commentaire || null,
+            row.auteur_id || null
+          ]
+        );
+      } catch(error) {
+        if(error && error.code === '42P01') return null;
+        throw error;
+      }
+      return result.rows[0];
+    },
+    async listPermutations(filter = {}){
+      const clauses = [];
+      const params = [];
+      let i = 1;
+      const add = (sql, value) => {
+        clauses.push(sql.replace('?', `$${i}`));
+        params.push(value);
+        i += 1;
+      };
+      const personneId = filter.personneId || filter.personne_id;
+      if(personneId) add('personne_id = ?', personneId);
+      const sourceEvenementId = filter.sourceEvenementId || filter.source_evenement_id;
+      if(sourceEvenementId) add('source_evenement_id = ?', sourceEvenementId);
+      const sourceExerciseKey = filter.sourceExerciseKey || filter.source_exercise_key;
+      if(sourceExerciseKey) add('source_exercise_key = ?', sourceExerciseKey);
+      if(filter.statut){
+        const statuses = Array.isArray(filter.statut) ? filter.statut : [filter.statut];
+        clauses.push(`statut = any($${i}::text[])`);
+        params.push(statuses);
+        i += 1;
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      let result;
+      try {
+        result = await q(`select * from scope_permutations ${where} order by created_at`, params);
+      } catch(error) {
+        if(error && error.code === '42P01') return [];
+        throw error;
+      }
+      return result.rows.map((row) => ({
+        ...row,
+        source_date: dateOnly(row.source_date),
+        rattrapage_date: dateOnly(row.rattrapage_date)
+      }));
+    },
+    async getPermutation(id){
+      let result;
+      try {
+        result = await q('select * from scope_permutations where permutation_id = $1', [id]);
+      } catch(error) {
+        if(error && error.code === '42P01') return null;
+        throw error;
+      }
+      const row = result.rows[0];
+      return row ? { ...row, source_date: dateOnly(row.source_date), rattrapage_date: dateOnly(row.rattrapage_date) } : null;
     },
     async insertLegacy(row){
       const id = row.legacy_id || randomUUID();

@@ -144,6 +144,8 @@
       enregistrerParticipations(id, participations, baseVersion) {
         return request('POST', `/evenements/${encodeURIComponent(id)}/participations`, withBaseVersion({ participations }, baseVersion));
       },
+      permutationsForEvent(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/permutations`); },
+      regulariserPermutation(id, body) { return request('POST', `/permutations/${encodeURIComponent(id)}/regulariser`, body || {}); },
       resetParticipations(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/participations/reset`, withBaseVersion({}, baseVersion)); },
       ajouterEncadrement(id, body, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/encadrement`, withBaseVersion(body, baseVersion)); },
       retirerEncadrement(id, body, baseVersion) { return request('DELETE', `/evenements/${encodeURIComponent(id)}/encadrement`, withBaseVersion(body, baseVersion)); },

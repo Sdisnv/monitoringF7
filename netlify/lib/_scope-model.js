@@ -8,8 +8,8 @@
  * Motifs d’excuse canoniques : PRIVE, PROFESSIONNEL, ARMEE, ACCIDENT_MALADIE.
  * Historique : MALADIE, ACCIDENT, AUTRE lus, jamais inventés.
  *
- * PERMUTATION : statut nominatif DAP, compte comme PRÉSENCE, jamais additionné
- * une seconde fois aux présents. Hors DAP : refusé.
+ * PERMUTATION : statut nominatif autorisé par politique métier. Il ouvre une
+ * obligation de rattrapage traçable dès qu'une clé d'exercice équivalente existe.
  *
  * Taux officiel inchangé : présents / (présents + excusés + non_excusés).
  */
@@ -61,6 +61,51 @@ function motifsSaisieForDomaine(domaineCode, options = {}){
 }
 
 const STATUT_PERMUTATION = 'PERMUTATION';
+
+const PARTICIPATION_STATUT_LABELS = Object.freeze({
+  PRESENT: 'Présent',
+  ABSENT_EXCUSE: 'Excusé',
+  ABSENT_NON_EXCUSE: 'Absent',
+  DISPENSE: 'Dispensé',
+  PERMUTATION: 'Permutation',
+  NON_RENSEIGNE: 'Non renseigné',
+  NON_CONCERNE: 'Non concerné'
+});
+
+const PERMUTATION_STATUS = Object.freeze({
+  A_RATTRAPER: 'A_RATTRAPER',
+  RATTRAPPE: 'RATTRAPPE',
+  A_REGULARISER: 'A_REGULARISER',
+  REGULARISE: 'REGULARISE'
+});
+
+function participationStatutLabel(code){
+  return PARTICIPATION_STATUT_LABELS[String(code || '').toUpperCase()] || code || '';
+}
+
+function normalizeExerciseEquivalenceKey(value){
+  const text = String(value || '').trim();
+  if(!text) return '';
+  return text.toUpperCase().replace(/\s+/g, ' ').replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function exerciseEquivalenceKeyForEvent(event){
+  if(!event) return '';
+  return normalizeExerciseEquivalenceKey(
+    event.exercise_equivalence_key
+    || event.exerciseEquivalenceKey
+  );
+}
+
+function isCompatiblePermutationEvent(sourceEvent, candidateEvent){
+  if(!sourceEvent || !candidateEvent) return false;
+  if(String(sourceEvent.evenement_id || sourceEvent.evenementId || '') === String(candidateEvent.evenement_id || candidateEvent.evenementId || '')) return false;
+  const sourceKey = exerciseEquivalenceKeyForEvent(sourceEvent);
+  const candidateKey = exerciseEquivalenceKeyForEvent(candidateEvent);
+  if(!sourceKey || !candidateKey || sourceKey !== candidateKey) return false;
+  return String(sourceEvent.domaine_code || sourceEvent.domaineCode || '').toUpperCase()
+    === String(candidateEvent.domaine_code || candidateEvent.domaineCode || '').toUpperCase();
+}
 
 function displayDomaineCode(code){
   const value = String(code || '').toUpperCase();
@@ -232,5 +277,11 @@ module.exports = {
   volumesFromBreakdown,
   quantitatifEquality,
   resolveSuiviNominatif,
-  canPhysicallyDeletePersonne
+  canPhysicallyDeletePersonne,
+  PARTICIPATION_STATUT_LABELS,
+  PERMUTATION_STATUS,
+  participationStatutLabel,
+  normalizeExerciseEquivalenceKey,
+  exerciseEquivalenceKeyForEvent,
+  isCompatiblePermutationEvent
 };

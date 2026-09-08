@@ -32,7 +32,12 @@ const {
 const {
   domaineAffiche,
   isSousDomaineFospec,
-  resolveSuiviNominatif
+  resolveSuiviNominatif,
+  STATUT_PERMUTATION,
+  PERMUTATION_STATUS,
+  normalizeExerciseEquivalenceKey,
+  exerciseEquivalenceKeyForEvent,
+  isCompatiblePermutationEvent
 } = require('./_scope-model');
 const participationPolicy = require('./_scope-participation-policy');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
@@ -501,6 +506,7 @@ function createScopeService(repo){
         session_label: exercice ? sessionConfig.sessionLabel : null,
         pr_exercise_group_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}` : null,
         pr_session_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}.${sessionConfig.sessionIndex}` : null,
+        exercise_equivalence_key: body.exerciseEquivalenceKey || body.exercise_equivalence_key || body.exerciceId || body.exercice_id || null,
         participation_policy_version: snapshot.policyVersion,
         participation_policy_snapshot: snapshot,
         cible_ids: cibleIds
@@ -2157,6 +2163,172 @@ function createScopeService(repo){
     });
   }
 
+  async function firstEventCibleId(tx, eventId){
+    const ids = tx.listEventCibleIds ? await tx.listEventCibleIds(eventId) : [];
+    return ids && ids.length ? ids[0] : null;
+  }
+
+  function explicitPermutationExerciseKey(evenement){
+    return normalizeExerciseEquivalenceKey(evenement && (evenement.exercise_equivalence_key || evenement.exerciseEquivalenceKey));
+  }
+
+  async function syncPermutationWorkflow(tx, evenement, personneId, patch, actor){
+    if(!tx.upsertPermutation || !tx.listPermutations) return null;
+    const status = String(patch.statut || '').toUpperCase();
+    const exerciseKey = explicitPermutationExerciseKey(evenement);
+    if(!exerciseKey && status !== STATUT_PERMUTATION) return null;
+    if(status === STATUT_PERMUTATION){
+      if(!exerciseKey) return null;
+      return tx.upsertPermutation({
+        personne_id: personneId,
+        source_evenement_id: evenement.evenement_id,
+        source_exercise_key: exerciseKey,
+        source_cible_id: patch.cible_suivie_id || await firstEventCibleId(tx, evenement.evenement_id),
+        source_date: evenement.date,
+        statut: PERMUTATION_STATUS.A_RATTRAPER,
+        regularisation_motif: null,
+        commentaire: patch.commentaire || null,
+        auteur_id: actorId(actor)
+      });
+    }
+    if(status === 'PRESENT' && exerciseKey){
+      const open = await tx.listPermutations({
+        personneId,
+        sourceExerciseKey: exerciseKey,
+        statut: [PERMUTATION_STATUS.A_RATTRAPER, PERMUTATION_STATUS.A_REGULARISER]
+      });
+      for(const obligation of open || []){
+        const source = await tx.getEvent(obligation.source_evenement_id);
+        if(!isCompatiblePermutationEvent(source, evenement)) continue;
+        return tx.upsertPermutation({
+          ...obligation,
+          rattrapage_evenement_id: evenement.evenement_id,
+          rattrapage_cible_id: patch.cible_suivie_id || await firstEventCibleId(tx, evenement.evenement_id),
+          rattrapage_date: evenement.date,
+          statut: PERMUTATION_STATUS.RATTRAPPE,
+          auteur_id: actorId(actor)
+        });
+      }
+    }
+    if(status === 'ABSENT_EXCUSE'){
+      const open = await tx.listPermutations({
+        personneId,
+        sourceEvenementId: evenement.evenement_id,
+        statut: [PERMUTATION_STATUS.A_RATTRAPER, PERMUTATION_STATUS.A_REGULARISER]
+      });
+      if((open || []).length){
+        return tx.upsertPermutation({
+          ...open[0],
+          statut: PERMUTATION_STATUS.REGULARISE,
+          regularisation_motif: patch.motif_absence,
+          commentaire: patch.commentaire || open[0].commentaire || null,
+          auteur_id: actorId(actor)
+        });
+      }
+    }
+    return null;
+  }
+
+  async function permutationsForEvent(eventId){
+    const evenement = await repo.getEvent(eventId);
+    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    const exerciseKey = exerciseEquivalenceKeyForEvent(evenement);
+    if(String(evenement.domaine_code || '').toUpperCase() !== 'DAP' || !exerciseKey || !repo.listPermutations){
+      return { obligations: [], exerciseKey: exerciseKey || null };
+    }
+    const open = await repo.listPermutations({
+      sourceExerciseKey: exerciseKey,
+      statut: [PERMUTATION_STATUS.A_RATTRAPER, PERMUTATION_STATUS.A_REGULARISER]
+    });
+    const obligations = [];
+    for(const row of open || []){
+      const source = await repo.getEvent(row.source_evenement_id);
+      if(!isCompatiblePermutationEvent(source, evenement)) continue;
+      const personne = repo.getPersonne ? await repo.getPersonne(row.personne_id) : null;
+      obligations.push({
+        permutationId: row.permutation_id,
+        personneId: row.personne_id,
+        nip: personne && personne.nip,
+        nom: personne && personne.nom,
+        prenom: personne && personne.prenom,
+        grade: personne && personne.grade,
+        statut: row.statut,
+        source: {
+          date: row.source_date,
+          libelle: source && source.libelle,
+          cibleId: row.source_cible_id || null
+        }
+      });
+    }
+    return { obligations, exerciseKey };
+  }
+
+  async function regulariserPermutation(permutationId, body, actor){
+    const motif = body && (body.motifAbsence || body.motif_absence);
+    const commentaire = body && body.commentaire;
+    validateParticipationPatch({ statut: 'ABSENT_EXCUSE', motif_absence: motif, commentaire });
+    return repo.withTransaction(async (tx) => {
+      const existing = tx.getPermutation ? await tx.getPermutation(permutationId) : null;
+      if(!existing) throw new HttpError(404, 'permutation_introuvable', 'Obligation de permutation introuvable.');
+      if(existing.statut === PERMUTATION_STATUS.RATTRAPPE) throw new HttpError(422, 'permutation_deja_rattrapee', 'Cette permutation est déjà rattrapée.');
+      const source = await tx.getEvent(existing.source_evenement_id);
+      if(!source) throw new HttpError(404, 'evenement_source_introuvable', 'Événement source introuvable.');
+      await tx.upsertParticipation({
+        evenement_id: existing.source_evenement_id,
+        personne_id: existing.personne_id,
+        statut: 'ABSENT_EXCUSE',
+        motif_absence: motif,
+        commentaire: commentaire || existing.commentaire || null,
+        cible_suivie_id: existing.source_cible_id || null,
+        role: 'PARTICIPANT',
+        source: 'REGULARISATION_PERMUTATION',
+        auteur_id: actorId(actor)
+      });
+      const saved = await tx.upsertPermutation({
+        ...existing,
+        statut: PERMUTATION_STATUS.REGULARISE,
+        regularisation_motif: motif,
+        commentaire: commentaire || existing.commentaire || null,
+        auteur_id: actorId(actor)
+      });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'permutation',
+        entite_id: permutationId,
+        action: 'REGULARISER',
+        apres: { motif, commentaire: commentaire || null }
+      });
+      return { permutation: saved };
+    });
+  }
+
+  async function markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor){
+    if(!tx.listPermutations || !tx.upsertPermutation) return 0;
+    const exerciseKey = explicitPermutationExerciseKey(evenement);
+    if(String(evenement.domaine_code || '').toUpperCase() !== 'DAP' || !exerciseKey) return 0;
+    const presentPersonnes = new Set((participations || [])
+      .filter((row) => String(row.statut || '').toUpperCase() === 'PRESENT')
+      .map((row) => String(row.personne_id || row.personneId || ''))
+      .filter(Boolean));
+    const open = await tx.listPermutations({
+      sourceExerciseKey: exerciseKey,
+      statut: [PERMUTATION_STATUS.A_RATTRAPER]
+    });
+    let changed = 0;
+    for(const obligation of open || []){
+      if(presentPersonnes.has(String(obligation.personne_id))) continue;
+      const source = await tx.getEvent(obligation.source_evenement_id);
+      if(!isCompatiblePermutationEvent(source, evenement)) continue;
+      await tx.upsertPermutation({
+        ...obligation,
+        statut: PERMUTATION_STATUS.A_REGULARISER,
+        auteur_id: actorId(actor)
+      });
+      changed += 1;
+    }
+    return changed;
+  }
+
   async function enregistrerParticipations(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     const items = Array.isArray(body.participations) ? body.participations : [];
@@ -2200,6 +2372,7 @@ function createScopeService(repo){
           source: 'SAISIE',
           auteur_id: actorId(actor)
         });
+        await syncPermutationWorkflow(tx, evenement, personneId, patch, actor);
         savedCount += 1;
       }
       if(savedCount === 0){
@@ -2424,13 +2597,14 @@ function createScopeService(repo){
         cloture_at: new Date().toISOString(),
         cloture_par: actorId(actor)
       });
+      const permutationsARegulariser = await markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor);
       const taux = computeTaux(participations, attendus);
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
         action: 'CLOTURER',
-        apres: { version: next.version, taux }
+        apres: { version: next.version, taux, permutationsARegulariser }
       });
       return { evenement: next, version: next.version, taux };
     });
@@ -3853,6 +4027,8 @@ function createScopeService(repo){
     ajouterException,
     retirerAttendu,
     enregistrerParticipations,
+    permutationsForEvent,
+    regulariserPermutation,
     ajouterEncadrement,
     retirerEncadrement,
     resetParticipations,
