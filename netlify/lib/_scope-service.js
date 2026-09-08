@@ -889,7 +889,7 @@ function createScopeService(repo){
 
   function requiresFinalMultiSessionClosure(evenement){
     const domaine = String(evenement && (evenement.domaine_code || evenement.domaineCode) || '').toUpperCase();
-    return domaine === 'DAP';
+    return domaine === 'DAP' || domaine === 'PR';
   }
 
   function normalizeIdList(ids){

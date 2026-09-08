@@ -113,14 +113,13 @@ async function expectCloseRefused(fn){
     }
   });
 
-  await record('03 — dernière séance PR-ABC clôturable techniquement sans finaliser le bilan global', async () => {
+  await record('03 — dernière séance PR-ABC refuse la clôture si le bilan global reste ouvert', async () => {
     const ctx = await setupPrAbc();
     await save(ctx.service, ctx.repo, 'prabc-1', ctx.people.slice(0, 5).map((person) => part(person, 'PRESENT')));
     const before = await ctx.service.lireEvenement('prabc-3');
     assert.strictEqual(before.prExerciseParticipation.unfilledPeople.length, 13);
-    assert.strictEqual(canCloseLastSession(before.prExerciseParticipation), true);
-    const closed = await ctx.service.cloturer('prabc-3', { baseVersion: await version(ctx.repo, 'prabc-3') }, ACTOR);
-    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    assert.strictEqual(canCloseLastSession(before.prExerciseParticipation), false);
+    await expectCloseRefused(async () => ctx.service.cloturer('prabc-3', { baseVersion: await version(ctx.repo, 'prabc-3') }, ACTOR));
     assert.strictEqual((await ctx.repo.getParticipation('prabc-3', ctx.people[5].personne_id)).statut, 'NON_RENSEIGNE');
   });
 

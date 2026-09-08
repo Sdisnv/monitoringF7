@@ -147,9 +147,8 @@ function attendu(detail, personneId){
     const last = await ctx.service.lireEvenement('r4s6');
     const missing = (last.prExerciseParticipation.unfilledPeople || []).map((p) => String(p.personneId));
     assert.ok(missing.includes(String(ctx.people[1].personne_id)));
-    assert.ok(rules.canCloseLastSession(last.prExerciseParticipation));
-    const closed = await ctx.service.cloturer('r4s6', { baseVersion: await version(ctx.repo, 'r4s6') }, ACTOR);
-    assert.strictEqual(closed.evenement.statut, 'REALISE');
+    assert.ok(!rules.canCloseLastSession(last.prExerciseParticipation));
+    await assert.rejects(async () => ctx.service.cloturer('r4s6', { baseVersion: await version(ctx.repo, 'r4s6') }, ACTOR), /restent à renseigner sur l’ensemble des sessions/);
     assert.strictEqual((await ctx.repo.getParticipation('r4s6', ctx.people[1].personne_id)).statut, 'NON_RENSEIGNE');
     assert.ok(ui.includes('Afficher les personnes à renseigner'));
   });

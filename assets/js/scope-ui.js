@@ -3212,10 +3212,11 @@
       description: 'Lecture métier du périmètre sélectionné, sans recalcul de KPI dans le navigateur.',
       logo: !r.cible
     });
+    const reportLinkLabel = r.domaine === 'DAP' && !r.cible ? 'Voir le rapport global de participation' : 'Rapport de participation';
     const contextualNav = `<div class="scope-actions scope-context-actions">
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/evenements">Événements</a>
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/statistiques">Retour aux analyses</a>
-      <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-vue-report="${escapeHtml(r.domaine || '')}" data-vue-cible="${escapeHtml(r.cible || '')}">Rapport de participation</button>
+      <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-vue-report="${escapeHtml(r.domaine || '')}" data-vue-cible="${escapeHtml(r.cible || '')}">${escapeHtml(reportLinkLabel)}</button>
       <a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/rapports">Hub Rapports</a>
     </div>`;
     if (state.dashboardError) {
@@ -5167,7 +5168,6 @@
           <p class="scope-mode-hint">Restitution officielle configurable par domaine, sous-domaine, OI ou spécialisation, avec écran et PDF issus du même contrat serveur.</p>
           <div class="scope-actions">
             <a class="scope-btn scope-btn-secondary" href="#/rapports/participation">Ouvrir le rapport de participation</a>
-            <button type="button" class="scope-btn scope-btn-secondary" data-vue-report="DAP" data-vue-cible="TOUS">DAP · Global du domaine</button>
           </div>
         </div>
         <div class="scope-card">
@@ -6598,7 +6598,7 @@
       <h3 class="scope-section-sub">${escapeHtml(permutationPanelTitle(rows))}</h3>
       <div class="scope-table-wrap">
         <table class="scope-table scope-permutation-table">
-          <thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Source</th><th>État</th><th>Action</th></tr></thead>
+          <thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Événement d’origine</th><th>État</th><th>Action</th></tr></thead>
           <tbody>${rows.map((row) => {
             const isSource = row.role === 'SOURCE';
             const catchupOpen = row.compatible !== false && !isSource;
@@ -6608,7 +6608,7 @@
             const action = catchupOpen
               ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-permutation-add" data-permutation-add="${escapeHtml(row.personneId || '')}" data-permutation-source="${escapeHtml(sourceLabel)}">Ajouter</button>`
               : `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" disabled title="${escapeHtml(isSource ? 'Rattrapage impossible sur l’événement d’origine.' : 'Cette personne fait déjà partie de cet exercice.')}">${escapeHtml(isSource ? 'Événement d’origine' : 'Déjà ajouté')}</button>`;
-            return `<tr>
+            return `<tr${catchupOpen ? '' : ' class="scope-row-disabled"'}>
               <td>${escapeHtml(row.grade || '')}</td>
               <td>${escapeHtml(row.nom || '')}</td>
               <td>${escapeHtml(row.prenom || '')}</td>

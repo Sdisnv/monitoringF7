@@ -2261,6 +2261,22 @@ html, body {
   outline-offset: -2px;
 }
 
+.scope-table tbody tr.scope-row-disabled,
+.scope-table tbody tr.scope-row-disabled td,
+.scope-table tbody tr.scope-row-disabled:nth-child(odd),
+.scope-table tbody tr.scope-row-disabled:nth-child(odd) td,
+.scope-table tbody tr.scope-row-disabled:nth-child(even),
+.scope-table tbody tr.scope-row-disabled:nth-child(even) td,
+.scope-table tbody tr.scope-row-disabled:hover,
+.scope-table tbody tr.scope-row-disabled:hover td {
+  background: #f3f4f6;
+  color: var(--scope-muted);
+}
+
+.scope-table tbody tr.scope-row-disabled .scope-btn[disabled] {
+  opacity: 0.72;
+}
+
 .scope-session-counted-tooltip {
   position: fixed;
   z-index: 40;

@@ -184,7 +184,9 @@
     if (!row) return '';
     if (row.sessionMessage) return String(row.sessionMessage);
     if (coveredInGlobalBilan(row)) {
-      const reference = String(row.sessionReferenceEventLabel || row.session_reference_event_label || row.referenceEventLabel || row.sessionReferenceLabel || row.session_reference_label || '').trim();
+      const session = String(row.sessionReferenceLabel || row.session_reference_label || '').trim();
+      if (session) return `Réalisé lors de la session ${session}.`;
+      const reference = String(row.sessionReferenceEventLabel || row.session_reference_event_label || row.referenceEventLabel || '').trim();
       const date = String(row.sessionReferenceEventDate || row.session_reference_event_date || row.referenceEventDate || '').trim();
       if (reference) return `Déjà comptabilisé lors de ${reference}${date ? ` — ${formatDate(date)}` : ''}.`;
     }

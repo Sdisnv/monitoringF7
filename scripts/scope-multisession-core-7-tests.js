@@ -165,7 +165,8 @@ async function resetEvent(service, eventId){
     const cycle = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-cycle-rules.js'), 'utf8');
     ok(ui.includes('Événement d’origine'));
     ok(ui.includes('Déjà dans cet exercice'));
-    ok(ui.includes('data-vue-report="DAP" data-vue-cible="TOUS"'));
+    ok(!ui.includes('DAP · Global du domaine'));
+    ok(ui.includes('Voir le rapport global de participation'));
     ok(!ui.includes("toast('info', 'Déjà ajoutée'"));
     ok(!ui.includes('<span class="scope-muted-inline">Source</span>'));
     ok(css.includes('.scope-status-control-group.is-compact .scope-status-control:not(.is-selected)'));

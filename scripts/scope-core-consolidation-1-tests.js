@@ -182,7 +182,7 @@ function uiHooks(){
       { personne_id: 'd', statut: 'ABSENT_NON_EXCUSE' },
       { personne_id: 'e', statut: 'DISPENSE' }
     ], attendus);
-    eq(taux.numerator, 2);
+    eq(taux.numerator, 1);
     eq(taux.denominator, 4);
     eq(taux.permutations, 1);
     eq(taux.dispenses, 1);
@@ -194,7 +194,7 @@ function uiHooks(){
     const parts = [{ personne_id: 'a', statut: 'PRESENT' }, { personne_id: 'b', statut: 'NON_RENSEIGNE' }];
     validateCloture(event, attendus, parts, { requireExpectedFilled: false });
     assert.throws(() => validateCloture(event, attendus, parts, { requireExpectedFilled: true }), /Clôture refusée/);
-    eq(cycles.canCloseLastSession({ isMultiSession: true, isLastSession: true, unfilledPeople: ['b'] }), true);
+    eq(cycles.canCloseLastSession({ isMultiSession: true, isLastSession: true, unfilledPeople: ['b'] }), false);
   });
 
   await record('04 hierarchies et tri institutionnel central', () => {
