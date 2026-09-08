@@ -437,7 +437,7 @@ class ScopePdfRenderer {
     const v = (m.officiel && m.officiel.volumes) || {};
     const cells = [
       ['Événements attendus', String(v.attendus != null ? v.attendus : (m.officiel && m.officiel.eventCount) || 0)],
-      ['Présents', String(v.presents || 0)],
+      ['Réalisés', String((m.officiel && m.officiel.numerator) || 0)],
       ['Excusés', String(v.excuses || 0)],
       ['Absents', String(v.nonExcuses || 0)],
       ['Dispensés', String(v.dispenses || 0)],
@@ -502,14 +502,19 @@ class ScopePdfRenderer {
       const v = o.volumes || {};
       const innerW = PAGE_W - 2 * MARGIN;
       const gap = 5;
+      const homogeneous = !(o.objectiveContext && o.objectiveContext.homogeneous === false);
+      const objText = homogeneous && o.objective && o.objective.thresholdPct != null
+        ? formatTaux(o.objective.thresholdPct)
+        : '—';
       const cells = [
         ['Taux officiel', formatTaux(o.percentage)],
+        ['Objectif', objText],
         ['Présents', String(v.presents || 0)],
         ['Excusés', String(v.excuses || 0)],
         ['Absents', String(v.nonExcuses || 0)],
         ['Dispensés', String(v.dispenses || 0)]
       ];
-      const w = (innerW - gap * 4) / 5;
+      const w = (innerW - gap * (cells.length - 1)) / cells.length;
       const h = 36;
       const y = this.doc.y;
       cells.forEach((cell, i) => {

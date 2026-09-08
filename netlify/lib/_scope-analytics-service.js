@@ -21,7 +21,12 @@ const {
 } = require('./_scope-objectives');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
-const { isValidSessionStatut } = require('./_scope-cycle-rules');
+const {
+  computePrExerciseParticipationState,
+  isValidSessionStatut,
+  prSessionLabel,
+  sessionExerciseLabel
+} = require('./_scope-cycle-rules');
 const { PERMUTATION_STATUS } = require('./_scope-model');
 const { isPermutationCatchupAttendu } = require('./_scope-rules');
 
@@ -161,6 +166,79 @@ function fulfilledPermutationPersonIdsForEvent(bundle, event){
     )
     .map((row) => String(row.personne_id || ''))
     .filter(Boolean));
+}
+
+function multiSessionGroupKey(event){
+  const explicit = event && (event.pr_exercise_group_key || event.prExerciseGroupKey);
+  if(explicit) return String(explicit);
+  const domaine = String(event && (event.domaine_code || event.domaineCode) || '').toUpperCase();
+  const libelle = String(event && event.libelle || '');
+  const dapGrouped = libelle.match(/formation\s+group[eé]e\s+dap\s+(\d+)(?:\.\d+)?/i);
+  if(domaine === 'DAP' && dapGrouped){
+    const year = String(event && event.date || '').slice(0, 4) || 'unknown';
+    return `DAP_FORMATION_GROUPEE:${year}:${dapGrouped[1]}`;
+  }
+  const exerciseId = event && (event.exercice_id || event.exerciceId);
+  const count = Number(event && (event.nombre_sessions_attendu || event.nombreSessionsAttendu || 0));
+  const active = event && (event.consolidation_active === true || event.consolidationActive === true);
+  if(exerciseId && (active || count > 1)) return `EXERCICE:${exerciseId}`;
+  return '';
+}
+
+function isMultiSessionConsolidatedEvent(event){
+  return Boolean(multiSessionGroupKey(event));
+}
+
+function consolidatedVolumesFromSessionState(state){
+  const k = (state && state.kpis) || {};
+  return Object.assign({}, emptyVolumes(), {
+    attendus: Number(k.population || 0),
+    presents: Number(k.presents || 0),
+    realisationsDirectes: Number(k.presents || 0),
+    excuses: Number(k.excuses || 0),
+    nonExcuses: Number(k.absents || 0),
+    dispenses: Number(k.dispenses || 0),
+    nonRenseignes: Number(k.open || 0)
+  });
+}
+
+function officialFromSessionState(state){
+  const volumes = consolidatedVolumesFromSessionState(state);
+  const numerator = Number(volumes.presents || 0);
+  const denominator = numerator + Number(volumes.excuses || 0) + Number(volumes.nonExcuses || 0);
+  return {
+    numerator,
+    denominator,
+    percentage: safePercentage(numerator, denominator),
+    kind: KINDS.OFFICIEL,
+    eventCount: 1,
+    volumes
+  };
+}
+
+function officialFromPersonSessionRows(rows){
+  const statuses = new Set((rows || [])
+    .map((row) => String(row && row.statut || '').toUpperCase())
+    .filter((status) => isValidSessionStatut(status)));
+  let volumes = Object.assign({}, emptyVolumes(), { attendus: statuses.size ? 1 : 0 });
+  if(statuses.has('PRESENT')){
+    volumes = Object.assign(volumes, { presents: 1, realisationsDirectes: 1 });
+    return { numerator: 1, denominator: 1, percentage: 100, kind: KINDS.OFFICIEL, eventCount: 1, volumes };
+  }
+  if(statuses.has('DISPENSE')){
+    volumes = Object.assign(volumes, { dispenses: 1 });
+    return { numerator: 0, denominator: 0, percentage: null, kind: KINDS.OFFICIEL, eventCount: 1, volumes };
+  }
+  if(statuses.has('ABSENT_EXCUSE')){
+    volumes = Object.assign(volumes, { excuses: 1 });
+    return { numerator: 0, denominator: 1, percentage: 0, kind: KINDS.OFFICIEL, eventCount: 1, volumes };
+  }
+  if(statuses.has('ABSENT_NON_EXCUSE')){
+    volumes = Object.assign(volumes, { nonExcuses: 1 });
+    return { numerator: 0, denominator: 1, percentage: 0, kind: KINDS.OFFICIEL, eventCount: 1, volumes };
+  }
+  volumes = Object.assign(volumes, { nonRenseignes: 1 });
+  return { numerator: 0, denominator: 0, percentage: null, kind: KINDS.OFFICIEL, eventCount: 0, volumes };
 }
 
 function isCatchupOnlyTrace(attendus, participations){
@@ -329,9 +407,67 @@ function createScopeAnalyticsService(repo){
     const objectives = typeof repo.listObjectifs === 'function'
       ? await repo.listObjectifs({ actif: true })
       : [];
+    const handledMultiSessionGroups = new Set();
 
     for(const event of bundle.events){
       const mode = inferModeSuivi(event);
+      const groupKey = multiSessionGroupKey(event);
+      if(!evenementId && groupKey && isMultiSessionConsolidatedEvent(event)){
+        if(handledMultiSessionGroups.has(groupKey)) continue;
+        const groupEvents = (bundle.events || []).filter((row) => multiSessionGroupKey(row) === groupKey);
+        const allClosed = groupEvents.length > 1 && groupEvents.every((row) => row.statut === 'REALISE');
+        if(allClosed){
+          handledMultiSessionGroups.add(groupKey);
+          const eventIds = groupEvents.map((row) => row.evenement_id);
+          const groupAttendus = eventIds.flatMap((id) => bundle.attendusByEvent[id] || []);
+          const groupParticipations = eventIds.flatMap((id) => bundle.participationsByEvent[id] || []);
+          const state = computePrExerciseParticipationState({
+            cycle: { cycle_id: null, domaine_code: event.domaine_code || null },
+            evenements: groupEvents,
+            attendus: groupAttendus,
+            participations: groupParticipations,
+            personnes: bundle.personnesById || new Map(),
+            currentEventId: event.evenement_id
+          });
+          const personGroupParticipations = personneId
+            ? groupParticipations.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId))
+            : [];
+          const personGroupAttendus = personneId
+            ? groupAttendus.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId) && row.inclus !== false)
+            : [];
+          if(personneId && !personGroupAttendus.length) continue;
+          const official = personneId
+            ? officialFromPersonSessionRows(personGroupParticipations)
+            : officialFromSessionState(state);
+          const cibles = [...new Set(eventIds.flatMap((id) => bundle.cibleIdsByEvent[id] || []))];
+          const appliedObjective = resolveEventObjective(
+            { date: event.date, domaine_code: event.domaine_code, cible_ids: cibles },
+            { objectives, grain, queryCibleId: cibleId }
+          );
+          included.push({
+            evenementId: event.evenement_id,
+            date: event.date,
+            libelle: state.sessionExerciseLabel || sessionExerciseLabel(groupEvents, groupKey),
+            domaine: event.domaine_code,
+            sousDomaine: event.sous_domaine_code || null,
+            cibleIds: cibles,
+            modeSuivi: mode,
+            numerator: official.numerator,
+            denominator: official.denominator,
+            percentage: official.percentage,
+            volumes: official.volumes,
+            kind: KINDS.OFFICIEL,
+            eventCountContribution: 1,
+            appliedObjective,
+            statutParticipation: personneId ? null : null,
+            motif: null,
+            cibleSuivieId: null,
+            prExerciseGroupKey: groupKey,
+            sessionLabels: groupEvents.map((row) => prSessionLabel(row)).filter(Boolean)
+          });
+          continue;
+        }
+      }
       const classified = classify(event, bundle);
       if(mode === MODES.LEGACY || event.origine === 'LEGACY_AGGREGATED'){
         exclusions.legacy += 1;
@@ -392,7 +528,7 @@ function createScopeAnalyticsService(repo){
         statutParticipation: part ? part.statut : null,
         motif: part && part.motif_absence ? part.motif_absence : null,
         cibleSuivieId: part && (part.cible_suivie_id || part.cibleSuivieId) ? (part.cible_suivie_id || part.cibleSuivieId) : null,
-        prExerciseGroupKey: event.pr_exercise_group_key || event.prExerciseGroupKey || null
+        prExerciseGroupKey: multiSessionGroupKey(event) || null
       });
     }
 

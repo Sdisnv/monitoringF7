@@ -996,7 +996,7 @@ function createMemoryRepo(){
         personneId: personneId || null
       };
       for(const event of evenements.values()){
-        const mapped = { ...event, date: dateOnly(event.date), mode_suivi: inferModeSuivi(event) };
+        const mapped = { ...decorateEvent(event), mode_suivi: inferModeSuivi(event) };
         if(from && to && !inPeriod(mapped.date, { from, to })) continue;
         if(domaineCode && mapped.domaine_code !== domaineCode) continue;
         if(evenementId && mapped.evenement_id !== evenementId) continue;

@@ -276,6 +276,11 @@ function prExerciseGroupKey(event){
   }
   const cyclePart = cycleId(event) || 'NO_CYCLE';
   const libelle = normalizeText(event && (event.libelle || event.label));
+  const dap = libelle.match(/formation\s+group[eé]e\s+dap\s+(\d+)(?:\.[0-9]+)?/i);
+  if(normalizeDomain(event && (event.domaine_code || event.domaineCode)) === 'DAP' && dap){
+    const year = normalizeText(event && event.date).slice(0, 4) || 'unknown';
+    return `DAP_FORMATION_GROUPEE:${year}:${dap[1]}`;
+  }
   const match = libelle.match(/exercice\s+pr\s+([0-9]+)(?:\.[0-9]+)?/i);
   return match ? `${cyclePart}:PR:${match[1]}` : '';
 }
@@ -373,6 +378,8 @@ function sessionExerciseLabel(events, groupKey){
   const exerciseLabel = normalizeText(first.exercice_libelle || first.exerciceLibelle || (first.exercice && first.exercice.libelle));
   if(exerciseLabel) return exerciseLabel;
   const libelle = normalizeText(first.libelle || first.label);
+  const dap = libelle.match(/formation\s+group[eé]e\s+dap\s+(\d+)(?:\.\d+)?/i);
+  if(dap) return `Formation groupée DAP ${dap[1]}`;
   const pr = libelle.match(/exercice\s+pr\s+(\d+)/i);
   if(pr) return `PR ${pr[1]}`;
   const trimmed = libelle.replace(/\s*\|.*$/, '').trim();

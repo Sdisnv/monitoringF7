@@ -1241,6 +1241,16 @@
       .map((a) => String(a.personne_id)));
   }
 
+  function nonSelectablePersonIds() {
+    return new Set([
+      ...[...expectedIds()],
+      ...[...usedEncadrementIds()],
+      ...((state.fiche && state.fiche.participations) || []).map((p) => String(p.personne_id || p.personneId || '')),
+      ...(state.saisie || []).map((row) => String(row.personneId || row.personne_id || '')),
+      ...(state.pendingExceptions || []).map((row) => String(row.personneId || row.personne_id || ''))
+    ].filter(Boolean));
+  }
+
   function sortPeopleForEncadrement(rows) {
     const collator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
     return (rows || []).slice().sort((a, b) => {
@@ -10036,8 +10046,8 @@
           state.encHits = sortPeopleForEncadrement(hits.filter((p) => !used.has(String(p.personne_id))));
           renderSuggestionList(kind, state.encHits);
         } else {
-          const expected = expectedIds();
-          state.manualPersonHits = sortPeopleForEncadrement(hits.filter((p) => !expected.has(String(p.personne_id))));
+          const blocked = nonSelectablePersonIds();
+          state.manualPersonHits = sortPeopleForEncadrement(hits.filter((p) => !blocked.has(String(p.personne_id))));
           renderSuggestionList(kind, state.manualPersonHits);
         }
       }).catch((error) => {
@@ -10238,6 +10248,14 @@
 
   function addManualParticipant(personneId, options) {
     const id = route().id;
+    if (nonSelectablePersonIds().has(String(personneId))) {
+      toast('info', 'Déjà ajoutée', 'Cette personne fait déjà partie de cet événement.');
+      state.manualPersonQuery = '';
+      state.manualPersonHits = [];
+      render();
+      return;
+    }
+    const snapshot = snapshotSaisieState();
     const catchupSourceLabel = String(options && options.catchupSourceLabel || '').trim();
     const motifInclusion = catchupSourceLabel && L.permutationCatchupMotif
       ? L.permutationCatchupMotif({ libelle: catchupSourceLabel })
@@ -10250,7 +10268,9 @@
       await client.ajouterException(id, Object.assign({ personneId, role: 'PARTICIPANT' }, motifInclusion ? { motifInclusion } : {}), state.fiche.evenement.version);
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
-      await loadFiche(id);
+      snapshot.manualPersonQuery = '';
+      snapshot.manualPersonHits = [];
+      await refreshFichePreservingSaisie(id, snapshot);
     });
   }
 

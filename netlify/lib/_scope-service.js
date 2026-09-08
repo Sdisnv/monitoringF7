@@ -427,7 +427,7 @@ function createScopeService(repo){
     }
     const libelle = String(body.libelle || '').trim();
     if(!libelle) throw new HttpError(400, 'libelle_vide', 'Le libellé est obligatoire.');
-    const cibleIds = Array.isArray(body.cibleIds || body.cible_ids) ? (body.cibleIds || body.cible_ids) : [];
+    let cibleIds = Array.isArray(body.cibleIds || body.cible_ids) ? (body.cibleIds || body.cible_ids) : [];
     if(!cibleIds.length) throw new HttpError(400, 'cibles_obligatoires', 'Au moins une cible est obligatoire.');
     const cibles = await repo.listCibles();
     const resolvedCibles = [];
@@ -471,6 +471,7 @@ function createScopeService(repo){
     const codeCours = await nextManualCode(repo, body, cibleIds);
     const sessionConfig = normalizeSessionConfig(body);
     return repo.withTransaction(async (tx) => {
+      cibleIds = await expandDapGroupedCibles(tx, domaine, libelle, cibleIds);
       const snapshot = await capturePolicySnapshot(tx, domaine);
       let exercice = null;
       if(sessionConfig.modeSession === 'MULTI'){
@@ -867,6 +868,22 @@ function createScopeService(repo){
       .map((c) => `${c.domaineCode || c.domaine_code}_${c.niveauCode || c.niveau_code}`)
       .filter(Boolean);
     return parts.length ? parts.join('|') : (person?.motifInclusion || 'affectation_valide_a_date');
+  }
+
+  function isDapGroupedFormationLabel(libelle){
+    return /^formation\s+group[eé]e\s+dap\s+\d+(?:\.\d+)?\b/i.test(String(libelle || '').trim());
+  }
+
+  async function expandDapGroupedCibles(tx, domaine, libelle, cibleIds){
+    if(String(domaine || '').toUpperCase() !== 'DAP' || !isDapGroupedFormationLabel(libelle) || !tx.listCibles){
+      return cibleIds;
+    }
+    const rows = await tx.listCibles();
+    const dapSections = (rows || [])
+      .filter((c) => String(c.domaine_code || '').toUpperCase() === 'DAP' && /^Y[1-4]$/i.test(String(c.niveau_code || '')))
+      .map((c) => c.cible_id)
+      .filter(Boolean);
+    return dapSections.length ? [...new Set(dapSections)] : cibleIds;
   }
 
   function normalizeIdList(ids){
@@ -2720,6 +2737,11 @@ function createScopeService(repo){
       }
       const requireExpectedFilled = !(prState && prState.isMultiSession);
       validateCloture(evenement, attendus, participations, { requireExpectedFilled, participationPolicySnapshot: evenement.participation_policy_snapshot || null });
+      if(prState && prState.isLastSession && prState.unfilledPeople && prState.unfilledPeople.length && String(evenement.domaine_code || '').toUpperCase() === 'DAP'){
+        throw new HttpError(422, 'session_incomplete', `Impossible de clôturer : ${prState.unfilledPeople.length} personne(s) DAP restent à renseigner pour ${prState.sessionExerciseLabel || evenement.libelle}.`, {
+          unfilledPeople: prState.unfilledPeople || []
+        });
+      }
       if(prState && !canCloseLastSession(prState)){
         throw new HttpError(422, 'session_incomplete', 'Chaque personne attendue doit disposer d’un statut avant la clôture définitive de l’exercice.', {
           unfilledPeople: prState.unfilledPeople || []
