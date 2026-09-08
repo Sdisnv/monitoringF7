@@ -2243,7 +2243,9 @@ function createScopeService(repo){
     const obligations = [];
     for(const row of open || []){
       const source = await repo.getEvent(row.source_evenement_id);
-      if(!isCompatiblePermutationEvent(source, evenement)) continue;
+      const isSourceEvent = String(row.source_evenement_id || '') === String(evenement.evenement_id || '');
+      const isCompatibleCatchup = !isSourceEvent && isCompatiblePermutationEvent(source, evenement);
+      if(!isSourceEvent && !isCompatibleCatchup) continue;
       const personne = repo.getPersonne ? await repo.getPersonne(row.personne_id) : null;
       obligations.push({
         permutationId: row.permutation_id,
@@ -2253,6 +2255,8 @@ function createScopeService(repo){
         prenom: personne && personne.prenom,
         grade: personne && personne.grade,
         statut: row.statut,
+        role: isSourceEvent ? 'SOURCE' : 'RATTRAPAGE',
+        compatible: isCompatibleCatchup,
         source: {
           date: row.source_date,
           libelle: source && source.libelle,

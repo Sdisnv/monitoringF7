@@ -9,6 +9,7 @@ const path = require('path');
 const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
 const { createScopeService } = require('../netlify/lib/_scope-service');
 const { computeTaux } = require('../netlify/lib/_scope-rules');
+const L = require('../assets/js/scope-ui-logic');
 
 const ROOT = path.join(__dirname, '..');
 const ACTOR = { sub: 'scope-permutation-recovery-final-1', roles: ['ADMIN'] };
@@ -99,8 +100,14 @@ async function dapFixture(){
     const evY3 = await frozenEvent(service, y3, '2026-04-15', 'Exercice 1 DAP Y3', 'DAP_EX1');
     const evY4 = await frozenEvent(service, y4, '2026-04-22', 'Exercice 1 DAP Y4', 'DAP_EX1');
     await saveOne(service, src.eventId, p, 'PERMUTATION');
-    eq((await service.permutationsForEvent(src.eventId)).obligations.length, 0);
-    eq((await service.permutationsForEvent(evY2.eventId)).obligations.length, 1);
+    const sourceObligations = await service.permutationsForEvent(src.eventId);
+    eq(sourceObligations.obligations.length, 1);
+    eq(sourceObligations.obligations[0].role, 'SOURCE');
+    eq(sourceObligations.obligations[0].compatible, false);
+    const y2Obligations = await service.permutationsForEvent(evY2.eventId);
+    eq(y2Obligations.obligations.length, 1);
+    eq(y2Obligations.obligations[0].role, 'RATTRAPAGE');
+    eq(y2Obligations.obligations[0].compatible, true);
     eq((await service.permutationsForEvent(evY3.eventId)).obligations.length, 1);
     eq((await service.permutationsForEvent(evY4.eventId)).obligations.length, 1);
     const obligation = (await repo.listPermutations({ personneId: p.personne_id }))[0];
@@ -186,6 +193,28 @@ async function dapFixture(){
     const migration = fs.readFileSync(path.join(ROOT, 'database/migrations/20260907_scope_permutation_recovery_final_1.sql'), 'utf8');
     ok(!schema.includes('scope_permutation_policies'));
     ok(!migration.includes('scope_permutation_policies'));
+  });
+
+  await record('08 - libelles DAP et backfill MOA exposes pour la recette', () => {
+    const labels = L.participationStatusesForDomaine('DAP', {
+      domainCode: 'DAP',
+      activeStatuses: ['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION'],
+      statuses: []
+    });
+    eq(labels.find(([code]) => code === 'PRESENT')[1], 'Présent');
+    eq(labels.find(([code]) => code === 'DISPENSE')[1], 'Dispensé');
+    eq(labels.find(([code]) => code === 'PERMUTATION')[1], 'Permutation');
+    const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
+    ok(ui.includes('Personnes en permutation'));
+    ok(ui.includes('rattrapage possible'));
+    ok(ui.includes('Ouverte'));
+    const migration = fs.readFileSync(path.join(ROOT, 'database/migrations/20260908_scope_permutation_moa_fix_1.sql'), 'utf8');
+    ok(/UPDATE\s+scope_evenements/i.test(migration));
+    ok(/exercise_equivalence_key/i.test(migration));
+    ok(/upper\(domaine_code\)\s*=\s*'DAP'/i.test(migration));
+    ok(!/\b(DROP|DELETE|TRUNCATE)\b/i.test(migration));
+    ok(!/scope_participation_policies/i.test(migration));
+    ok(!/scope_permutation_policies/i.test(migration));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

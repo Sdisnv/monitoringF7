@@ -163,6 +163,13 @@
   }
 
   const STATUT_LABELS = {
+    PRESENT: 'Présent',
+    ABSENT_EXCUSE: 'Excusé',
+    ABSENT_NON_EXCUSE: 'Absent',
+    DISPENSE: 'Dispensé',
+    PERMUTATION: 'Permutation',
+    NON_RENSEIGNE: 'Non renseigné',
+    NON_CONCERNE: 'Non concerné',
     PLANIFIE: 'Planifié',
     SAISIE_EN_COURS: 'Saisie en cours',
     A_TRAITER: 'À traiter',
@@ -1142,7 +1149,7 @@
         .map((status) => String(status || '').toUpperCase())
         .filter((status) => status && status !== 'NON_RENSEIGNE' && status !== 'NON_CONCERNE');
       if (allowed.length) {
-        return allowed.map((status) => [status, labels.get(status) || (status === 'ABSENT_EXCUSE' ? 'Excusé' : status === 'ABSENT_NON_EXCUSE' ? 'Absent' : status)]);
+        return allowed.map((status) => [status, labels.get(status) || statutLabel(status)]);
       }
     }
     const list = [

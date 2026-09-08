@@ -6521,18 +6521,24 @@
       <div class="scope-table-wrap">
         <table class="scope-table">
           <thead><tr><th>Grade</th><th>Nom</th><th>Prénom</th><th>NIP</th><th>Source</th><th>État</th><th>Action</th></tr></thead>
-          <tbody>${rows.map((row) => `<tr>
-            <td>${escapeHtml(row.grade || '')}</td>
-            <td>${escapeHtml(row.nom || '')}</td>
-            <td>${escapeHtml(row.prenom || '')}</td>
-            <td>${escapeHtml(row.nip || '')}</td>
-            <td>${escapeHtml([row.source && row.source.libelle, row.source && L.formatDate(row.source.date)].filter(Boolean).join(' · '))}</td>
-            <td>${escapeHtml(row.statut === 'A_REGULARISER' ? 'À régulariser' : 'À rattraper')}</td>
-            <td>
-              <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-manual-add="${escapeHtml(row.personneId || '')}">Ajouter</button>
-              ${row.statut === 'A_REGULARISER' ? `<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-permutation-regularise="${escapeHtml(row.permutationId || '')}">Régulariser</button>` : ''}
-            </td>
-          </tr>`).join('')}</tbody>
+          <tbody>${rows.map((row) => {
+            const isSource = row.role === 'SOURCE';
+            const catchupOpen = row.compatible !== false && !isSource;
+            const statusLabel = row.statut === 'A_REGULARISER' ? 'À régulariser' : 'À rattraper';
+            const contextLabel = isSource ? 'source' : 'rattrapage possible';
+            return `<tr>
+              <td>${escapeHtml(row.grade || '')}</td>
+              <td>${escapeHtml(row.nom || '')}</td>
+              <td>${escapeHtml(row.prenom || '')}</td>
+              <td>${escapeHtml(row.nip || '')}</td>
+              <td>${escapeHtml([row.source && row.source.libelle, row.source && L.formatDate(row.source.date)].filter(Boolean).join(' · '))}</td>
+              <td>${escapeHtml(`${statusLabel} · ${contextLabel}`)}</td>
+              <td>
+                ${catchupOpen ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-manual-add="${escapeHtml(row.personneId || '')}">Ajouter</button>` : `<span class="scope-muted-inline">Ouverte</span>`}
+                ${row.statut === 'A_REGULARISER' ? `<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-permutation-regularise="${escapeHtml(row.permutationId || '')}">Régulariser</button>` : ''}
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
         </table>
       </div>
     </div>`;
