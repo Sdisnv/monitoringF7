@@ -5167,6 +5167,7 @@
           <p class="scope-mode-hint">Restitution officielle configurable par domaine, sous-domaine, OI ou spécialisation, avec écran et PDF issus du même contrat serveur.</p>
           <div class="scope-actions">
             <a class="scope-btn scope-btn-secondary" href="#/rapports/participation">Ouvrir le rapport de participation</a>
+            <button type="button" class="scope-btn scope-btn-secondary" data-vue-report="DAP" data-vue-cible="TOUS">DAP · Global du domaine</button>
           </div>
         </div>
         <div class="scope-card">
@@ -6602,8 +6603,11 @@
             const isSource = row.role === 'SOURCE';
             const catchupOpen = row.compatible !== false && !isSource;
             const statusLabel = L.permutationStatusLabel ? L.permutationStatusLabel(row.statut) : (row.statut === 'A_REGULARISER' ? 'À régulariser' : 'À rattraper');
-            const contextLabel = isSource ? 'Source' : 'rattrapage possible';
+            const contextLabel = isSource ? 'Événement d’origine' : (catchupOpen ? 'rattrapage possible' : 'Déjà dans cet exercice');
             const sourceLabel = L.permutationSourceLabel ? L.permutationSourceLabel(row.source || {}) : [row.source && row.source.libelle, row.source && L.formatDate(row.source.date)].filter(Boolean).join(' · ');
+            const action = catchupOpen
+              ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-permutation-add" data-permutation-add="${escapeHtml(row.personneId || '')}" data-permutation-source="${escapeHtml(sourceLabel)}">Ajouter</button>`
+              : `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" disabled title="${escapeHtml(isSource ? 'Rattrapage impossible sur l’événement d’origine.' : 'Cette personne fait déjà partie de cet exercice.')}">${escapeHtml(isSource ? 'Événement d’origine' : 'Déjà ajouté')}</button>`;
             return `<tr>
               <td>${escapeHtml(row.grade || '')}</td>
               <td>${escapeHtml(row.nom || '')}</td>
@@ -6612,7 +6616,7 @@
               <td>${escapeHtml(sourceLabel)}</td>
               <td><span class="scope-permutation-state is-${escapeHtml(String(row.statut || '').toLowerCase().replace(/_/g, '-'))}">${escapeHtml(statusLabel)}</span><span class="scope-muted-inline"> · ${escapeHtml(contextLabel)}</span></td>
               <td>
-                ${catchupOpen ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-permutation-add" data-permutation-add="${escapeHtml(row.personneId || '')}" data-permutation-source="${escapeHtml(sourceLabel)}">Ajouter</button>` : `<span class="scope-muted-inline">Source</span>`}
+                ${action}
                 ${row.statut === 'A_REGULARISER' ? `<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-permutation-regularise="${escapeHtml(row.permutationId || '')}">Régulariser</button>` : ''}
               </td>
             </tr>`;
@@ -10281,7 +10285,6 @@
   function addManualParticipant(personneId, options) {
     const id = route().id;
     if (nonSelectablePersonIds().has(String(personneId))) {
-      toast('info', 'Déjà ajoutée', 'Cette personne fait déjà partie de cet événement.');
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
       render();

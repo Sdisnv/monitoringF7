@@ -6611,13 +6611,21 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-realise-table tbody tr:nth-child(even) td:last-child {
   background: var(--scope-gray-50);
 }
+.scope-status-control-group.is-compact {
+  display: inline-flex;
+  justify-content: flex-start;
+}
 .scope-status-control-group.is-compact .scope-status-control:not(.is-selected) {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 .scope-status-control-group.is-compact:hover .scope-status-control,
 .scope-status-control-group.is-compact:focus-within .scope-status-control,
 .scope-status-control-group.is-open .scope-status-control {
-  display: inline-flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 .scope-justificatif-cell .scope-motif-compact {
   display: inline;

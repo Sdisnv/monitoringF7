@@ -778,7 +778,7 @@ function buildCyclePilotage(input = {}){
   };
 }
 
-function computePrExerciseParticipationState(input = {}){
+function computeMultiSessionParticipationState(input = {}){
   const cycle = input.cycle || {};
   const personnesById = personneLookup(input.personnes);
   const sourceEvents = input.evenements || input.events || [];
@@ -1116,8 +1116,8 @@ function multiSessionEvents(input = {}){
   return prExerciseEvents(input);
 }
 
-function computeMultiSessionParticipationState(input = {}){
-  return computePrExerciseParticipationState(input);
+function computePrExerciseParticipationState(input = {}){
+  return computeMultiSessionParticipationState(input);
 }
 
 function computeSessionParticipationState(input = {}){

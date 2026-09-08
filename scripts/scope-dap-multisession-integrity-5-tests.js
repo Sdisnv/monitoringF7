@@ -129,7 +129,8 @@ async function dapFixture(){
     ok(addBlock.includes('refreshFichePreservingSaisie(id, snapshot)'));
     ok(!addBlock.includes('await loadFiche(id)'));
     ok(ui.includes('function nonSelectablePersonIds'));
-    ok(ui.includes('Cette personne fait déjà partie de cet événement.'));
+    ok(!ui.includes("toast('info', 'Déjà ajoutée'"));
+    ok(ui.includes('Déjà dans cet exercice'));
   });
 
   await record('C — personne deja ajoutee non selectionnable cote UI', () => {

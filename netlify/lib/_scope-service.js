@@ -2563,11 +2563,33 @@ function createScopeService(repo){
       const attendus = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
       const participationsByPersonneId = new Map(participations.map((p) => [String(p.personne_id), p]));
-      const attenduIds = new Set(attendus.filter(a => a.inclus !== false).map((a) => String(a.personne_id)));
+      const catchupAttendus = attendus.filter((a) => a.inclus !== false && isPermutationCatchupAttendu(a));
+      const resettableAttendus = attendus.filter((a) => a.inclus !== false && !isPermutationCatchupAttendu(a));
+      const attenduIds = new Set(resettableAttendus.map((a) => String(a.personne_id)));
       const encadrementRows = participations.filter((p) => ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()));
-      const resetRows = attendus
-        .filter(a => a.inclus !== false)
-        .map((a) => {
+      for(const attendu of catchupAttendus){
+        await releasePermutationCatchupForParticipation(tx, evenement, attendu.personne_id, actor);
+        await tx.upsertAttendu({
+          ...attendu,
+          inclus: false,
+          origine_retrait: 'RESET_SAISIE'
+        });
+        if(typeof tx.deleteParticipation === 'function'){
+          await tx.deleteParticipation(eventId, attendu.personne_id);
+        } else {
+          const existing = participationsByPersonneId.get(String(attendu.personne_id));
+          await tx.upsertParticipation({
+            ...(existing || { evenement_id: eventId, personne_id: attendu.personne_id, role: 'PARTICIPANT' }),
+            statut: 'NON_CONCERNE',
+            motif_absence: null,
+            commentaire: null,
+            role: 'PARTICIPANT',
+            source: 'RESET',
+            auteur_id: actorId(actor)
+          });
+        }
+      }
+      const resetRows = resettableAttendus.map((a) => {
           const existing = participationsByPersonneId.get(String(a.personne_id));
           return {
             ...(existing || { evenement_id: eventId, personne_id: a.personne_id }),
@@ -2605,7 +2627,7 @@ function createScopeService(repo){
         entite: 'evenement',
         entite_id: eventId,
         action: 'RESET_SAISIE',
-        apres: { resetParticipations: resetRows.length, encadrementSupprime: encadrementRows.length }
+        apres: { resetParticipations: resetRows.length, rattrapagesSupprimes: catchupAttendus.length, encadrementSupprime: encadrementRows.length }
       });
       return { evenement: next, version: next.version };
     });
