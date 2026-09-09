@@ -96,9 +96,11 @@ function validateParticipationSpecialisation({ kind, domaine, sousDomaine, speci
 }
 
 function pdfHeaders(filename, sha256, pages){
+  const safe = String(filename || 'SCOPE Rapport.pdf').replace(/["\\\r\n]+/g, ' ').trim() || 'SCOPE Rapport.pdf';
+  const fallback = safe.normalize('NFKD').replace(/[^\x20-\x7E]+/g, '').replace(/[;"\\]+/g, ' ').replace(/\s+/g, ' ').trim() || 'SCOPE Rapport.pdf';
   return {
     'Content-Type': 'application/pdf',
-    'Content-Disposition': `inline; filename="${filename}"`,
+    'Content-Disposition': `inline; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(safe)}`,
     'Cache-Control': 'no-store',
     'X-Scope-Report-Filename': filename,
     'X-Scope-Report-Sha256': sha256,

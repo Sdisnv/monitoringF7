@@ -10101,14 +10101,18 @@
 
   function openReport(body) {
     if (typeof client.generateReport !== 'function') return;
-    withFeedbackAction({
-      progressTitle: 'Génération du rapport…',
-      successTitle: '',
-      successMessage: ''
-    }, async () => {
-      const result = await client.generateReport(Object.assign({}, body, qualQuery()));
+    state.loading = true;
+    ScopeFeedback.progress('Génération du rapport…', 'Traitement en cours — ne quittez pas cette page.');
+    client.generateReport(Object.assign({}, body, qualQuery())).then((result) => {
+      state.loading = false;
+      ScopeFeedback.clear();
       if (window.ScopePdfViewer) window.ScopePdfViewer.open(result);
       else toast('success', 'Rapport généré', result.filename);
+    }).catch((error) => {
+      state.loading = false;
+      const info = friendlyActionError(error);
+      const nominativeErrors = nominativeErrorDetails(error);
+      ScopeFeedback.error(info.title, info.message, { errors: nominativeErrors.length ? nominativeErrors : info.errors, conflict: info.conflict, okta: info.okta });
     });
   }
 

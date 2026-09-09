@@ -120,7 +120,7 @@ async function gen(repo, body, claims){
     assert.ok(text.includes('Nom1') && text.includes('Prenom1'));
     assert.ok(text.includes('80') || text.includes('80 %') || text.includes('80,0'));
     assert.ok(!text.includes('computeTaux'));
-    assert.ok(out.filename.startsWith('SCOPE_Exercice_DPS_G1_'));
+    assert.strictEqual(out.filename, '2026 12-03 - DPS - Nominatif REPORT - Rapport de présence.pdf');
   });
 
   await record('2 — rapport événement quantitatif sans nom fictif', async () => {
@@ -394,7 +394,7 @@ async function gen(repo, body, claims){
   await record('23 — nom de fichier sanitizer', async () => {
     assert.strictEqual(sanitizeFilename('SCOPE_DAP_Y4_2026.pdf'), 'SCOPE_DAP_Y4_2026.pdf');
     assert.ok(!sanitizeFilename('SCOPE/DAP\\Y4?.pdf').includes('/'));
-    assert.ok(!sanitizeFilename('a b').includes(' '));
+    assert.ok(sanitizeFilename('a b').includes(' '));
     assert.strictEqual(buildFilename('PERIOD', { period: { from: '2026-01-01', to: '2026-12-31', preset: 'YEAR' } }), 'SCOPE_Rapport_SDIS_2026.pdf');
     assert.strictEqual(buildFilename('DOMAIN', { domaine: 'DAP', period: { from: '2026-01-01', to: '2026-12-31', preset: 'YEAR' } }), 'SCOPE_DAP_2026.pdf');
   });

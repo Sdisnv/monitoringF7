@@ -53,7 +53,7 @@
 
   function safePdfFilename(value) {
     const raw = String(value || 'SCOPE_Rapport.pdf').trim() || 'SCOPE_Rapport.pdf';
-    const cleaned = raw.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/\s+/g, '_');
+    const cleaned = raw.normalize('NFC').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim();
     return /\.pdf$/i.test(cleaned) ? cleaned : `${cleaned}.pdf`;
   }
 

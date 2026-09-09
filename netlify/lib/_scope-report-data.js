@@ -3,7 +3,7 @@
 
 const { DOMAINES_MODEL_2, SOUS_DOMAINES } = require('./_scope-schema');
 const { parsePeriod } = require('./_scope-period');
-const { HttpError } = require('./_scope-rules');
+const { HttpError, round1 } = require('./_scope-rules');
 const { KINDS } = require('./_scope-analytics');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const { createScopeDashboardService } = require('./_scope-dashboard-service');
@@ -156,12 +156,29 @@ function periodSlug(period){
 }
 
 function sanitizeFilename(name){
-  return String(name || 'SCOPE_Rapport')
-    .normalize('NFKD')
-    .replace(/[^\w.\-]+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^[_.]+|[_.]+$/g, '')
-    .slice(0, 120) || 'SCOPE_Rapport';
+  const cleaned = String(name || 'SCOPE Rapport')
+    .normalize('NFC')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160);
+  return /\.pdf$/i.test(cleaned) ? cleaned : `${cleaned || 'SCOPE Rapport'}.pdf`;
+}
+
+function cleanFilenamePart(value, fallback){
+  return String(value || fallback || '')
+    .normalize('NFC')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function dateFilenamePrefix(date, fallbackYear){
+  const d = String(date || '');
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return `${m[1]} ${m[3]}-${m[2]}`;
+  const year = String(fallbackYear || d || '').slice(0, 4);
+  return year || 'SCOPE';
 }
 
 function buildFilename(kind, ctx){
@@ -171,13 +188,20 @@ function buildFilename(kind, ctx){
   if(kind === 'TARGET') return sanitizeFilename(`SCOPE_${ctx.domaine}_${ctx.cible}_${year}.pdf`);
   if(kind === 'PERSON') return sanitizeFilename(`SCOPE_Fiche_${ctx.nip || 'personne'}_${year}.pdf`);
   if(kind === 'SESSION'){
+    if(ctx.eventDate || ctx.eventLabel){
+      return sanitizeFilename(`${dateFilenamePrefix(ctx.eventDate, ctx.year)} - ${cleanFilenamePart(ctx.domaine, 'SCOPE')} - ${cleanFilenamePart(ctx.eventLabel || ctx.exerciseLabel, 'Événement')} - Rapport de présence.pdf`);
+    }
     const year = String((ctx.period && ctx.period.from) || ctx.year || '').slice(0, 4);
     const slug = String(ctx.exerciseLabel || '').replace(/^PR\s+/i, '').replace(/\s+/g, '_');
     return sanitizeFilename(`SCOPE_Rapport_participation_${ctx.domaine || 'SCOPE'}_${slug}_${year}.pdf`);
   }
+  if(kind === 'MULTI_SESSION_V2'){
+    const y = String((ctx.period && ctx.period.from) || ctx.year || '').slice(0, 4);
+    return sanitizeFilename(`${y || 'SCOPE'} - ${cleanFilenamePart(ctx.domaine, 'SCOPE')} - ${cleanFilenamePart(ctx.eventLabel, 'Multi-session')} - Rapport de présence Multi-session.pdf`);
+  }
   const date = ctx.eventDate || '';
-  const oi = ctx.cible || 'GEN';
-  return sanitizeFilename(`SCOPE_Exercice_${ctx.domaine || 'SCOPE'}_${oi}_${date}.pdf`);
+  const label = ctx.eventLabel || ctx.cible || 'Événement';
+  return sanitizeFilename(`${dateFilenamePrefix(date, year)} - ${cleanFilenamePart(ctx.domaine, 'SCOPE')} - ${cleanFilenamePart(label, 'Événement')} - Rapport de présence.pdf`);
 }
 
 function domainPeriodOiRows(dash, domaine){
@@ -298,6 +322,83 @@ function multiSessionV2NominativeRows(fiche){
     .sort(sortByGradeThenName);
 }
 
+function multiSessionV2SessionReportModel(fiche, includeNominatif){
+  const state = fiche.multiSessionV2 || {};
+  if(!state || state.engine !== MultiSessionV2.ENGINE.MULTI_SESSION_V2) return null;
+  const event = fiche.evenement || {};
+  const eventIdText = String(event.evenement_id || event.evenementId || event.id || '');
+  const sessions = state.sessions || [];
+  const index = Math.max(1, Number(state.currentSessionIndex || 0) || (sessions.findIndex((row) => String(row.evenement_id || row.event_id || '') === eventIdText) + 1));
+  const count = Number(state.sessionCount || sessions.length || 1);
+  const currentSession = sessions.find((row) => String(row.evenement_id || row.event_id || '') === eventIdText) || event;
+  const allRows = nominativeRows(fiche).filter((row) => row && ['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION'].includes(String(row.statut || '').toUpperCase()));
+  const uniquePeople = new Set(allRows.map((row) => row.nip || `${row.nom}|${row.prenom}`).filter(Boolean));
+  const encadrement = encadrementRows(fiche);
+  const countStatus = (status) => allRows.filter((row) => String(row.statut || '').toUpperCase() === status).length;
+  const presents = countStatus('PRESENT') + countStatus('PERMUTATION');
+  const excuses = countStatus('ABSENT_EXCUSE');
+  const nonExcuses = countStatus('ABSENT_NON_EXCUSE');
+  const dispenses = countStatus('DISPENSE');
+  const population = Number(state.statistics && state.statistics.population || state.kpis && state.kpis.population || 0);
+  const nonRenseignes = Math.max(0, population - uniquePeople.size);
+  const domaine = displayDomaineCode(event.domaine_code || event.domaine || state.multisession && state.multisession.domain);
+  const label = event.libelle || currentSession.libelle || 'Session Multi-session';
+  const sessionLabel = `Session ${index}/${count}`;
+  const period = { from: event.date || currentSession.date, to: event.date || currentSession.date, preset: 'CUSTOM' };
+  return {
+    kind: 'SESSION',
+    period,
+    domaine,
+    cible: null,
+    title: `RAPPORT DE PRÉSENCE — ${String(label).toLocaleUpperCase('fr-CH')}`,
+    subtitle: `Multi-session · ${sessionLabel}`,
+    summaryLabel: 'Synthèse de présence',
+    filename: buildFilename('SESSION', {
+      period,
+      domaine,
+      eventLabel: label,
+      eventDate: event.date || currentSession.date
+    }),
+    event: {
+      id: eventIdText,
+      date: event.date || currentSession.date,
+      libelle: label,
+      domaine,
+      statut: event.statut,
+      statutLabel: STATUT_LABELS[event.statut] || event.statut || '—',
+      cibles: (fiche.cibles || []).map((c) => ({ code: c.niveau_code, libelle: c.libelle }))
+    },
+    multiSessionV2Session: true,
+    multisessionLabel: state.label || state.multisession && state.multisession.label || 'Multi-session',
+    sessionIndex: index,
+    sessionCount: count,
+    sessionLabel,
+    population,
+    sessionSummary: {
+      presents,
+      excuses,
+      nonExcuses,
+      dispenses,
+      encadrement: encadrement.length,
+      nonRenseignes
+    },
+    nominatif: includeNominatif ? allRows : [],
+    encadrement: includeNominatif ? encadrement : [],
+    officiel: {
+      percentage: null,
+      numerator: presents,
+      denominator: null,
+      volumes: { presents, excuses, nonExcuses, dispenses, nonRenseignes }
+    },
+    graphs: {},
+    explain: null,
+    quantitative: false,
+    isLegacy: false,
+    alerts: { p0: [], p1: [], p2: [] },
+    events: []
+  };
+}
+
 function multiSessionV2EventRows(state){
   return (state.sessions || []).map((session) => ({
     date: session.date,
@@ -366,7 +467,7 @@ function multiSessionV2Graphs(state, nominatif){
   };
 }
 
-function multiSessionV2ReportModel(fiche, query, includeNominatif){
+async function multiSessionV2ReportModel(repo, fiche, query, includeNominatif){
   const state = fiche.multiSessionV2;
   if(!state || state.engine !== MultiSessionV2.ENGINE.MULTI_SESSION_V2) return null;
   const multisession = state.multisession || {};
@@ -386,19 +487,34 @@ function multiSessionV2ReportModel(fiche, query, includeNominatif){
   const graphs = multiSessionV2Graphs(state, nominatif);
   const excuses = nominatif.filter((row) => row.statut === 'ABSENT_EXCUSE');
   const absents = nominatif.filter((row) => row.statut === 'ABSENT_NON_EXCUSE');
+  const domaine = displayDomaineCode(multisession.domain || fiche.evenement.domaine_code);
+  const { resolveObjective } = require('./_scope-objectives');
+  const objectives = typeof repo.listObjectifs === 'function' ? await repo.listObjectifs({ actif: true }) : [];
+  const objective = resolveObjective({
+    date: lastSession.date || fiche.evenement.date,
+    domaineCode: domaine,
+    analysisGrain: 'DOMAINE',
+    objectives
+  });
+  const objectiveThreshold = objective && Number.isFinite(Number(objective.thresholdPct)) ? Number(objective.thresholdPct) : null;
+  const gapPct = objectiveThreshold == null || stats.percentage == null ? null : round1(Number(stats.percentage) - objectiveThreshold);
   return {
     kind: 'EVENT',
     period,
-    domaine: displayDomaineCode(multisession.domain || fiche.evenement.domaine_code),
+    domaine,
     cible: cibles[0] && cibles[0].niveau_code,
     title: `RAPPORT — ${String(state.label || multisession.label || 'MULTI-SESSION').toLocaleUpperCase('fr-CH')}`,
     subtitle: `Rapport Multi-session — ${String(period.from || '').slice(0, 4) || ''}`,
-    filename: sanitizeFilename(`SCOPE_Multi-session_${state.code || multisession.code || fiche.evenement.evenement_id}.pdf`),
+    filename: buildFilename('MULTI_SESSION_V2', {
+      period,
+      domaine,
+      eventLabel: state.label || multisession.label || 'Multi-session'
+    }),
     event: {
       id: state.multisessionId || multisession.multisession_id || fiche.evenement.evenement_id,
       date: period.from,
       libelle: state.label || multisession.label || 'Multi-session',
-      domaine: displayDomaineCode(multisession.domain || fiche.evenement.domaine_code),
+      domaine,
       sousDomaine: null,
       parentDomaine: null,
       specialization: '',
@@ -430,7 +546,11 @@ function multiSessionV2ReportModel(fiche, query, includeNominatif){
         permutations: 0,
         rattrapagesRealises: 0,
         aRattraper: 0
-      }
+      },
+      objective: objectiveThreshold == null ? null : objective,
+      objectiveContext: null,
+      gapPct,
+      analyticStatus: objectiveThreshold == null || stats.percentage == null ? 'NON_EVALUABLE' : (gapPct >= 0 ? 'ATTEINT' : 'SOUS_OBJECTIF')
     },
     legacy: null,
     graphs,
@@ -544,6 +664,10 @@ async function collectReport(repo, query, options){
 
   if(kind === 'SESSION'){
     const evenementId = query.evenementId || query.evenement_id || query.id;
+    if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport de session exige un identifiant d’événement.');
+    const fiche = await scope.lireEvenement(evenementId);
+    const v2SessionModel = multiSessionV2SessionReportModel(fiche, includeNominatif);
+    if(v2SessionModel) return v2SessionModel;
     let period = null;
     try {
       if(query.year || query.annee || query.from || query.to || query.preset){
@@ -692,7 +816,7 @@ async function collectReport(repo, query, options){
     const evenementId = query.evenementId || query.evenement_id || query.id;
     if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport événement exige un identifiant.');
     const fiche = await scope.lireEvenement(evenementId);
-    const v2Model = multiSessionV2ReportModel(fiche, query, includeNominatif);
+    const v2Model = await multiSessionV2ReportModel(repo, fiche, query, includeNominatif);
     if(v2Model) return v2Model;
     const date = fiche.evenement.date;
     const period = { from: date, to: date, preset: 'CUSTOM' };
@@ -741,7 +865,8 @@ async function collectReport(repo, query, options){
         period,
         domaine: displayDomaineCode(fiche.evenement.domaine_code),
         cible: cibles[0] && cibles[0].niveau_code,
-        eventDate: date
+        eventDate: date,
+        eventLabel: fiche.evenement.libelle
       }),
       event: {
         id: fiche.evenement.evenement_id,

@@ -322,7 +322,7 @@ async function generatedSession(){
 
   await record('04 filename EVENT correct', async () => {
     const model = await eventReport();
-    assert.strictEqual(model.filename, 'SCOPE_Exercice_PR_GEN_2026-03-19.pdf');
+    assert.strictEqual(model.filename, '2026 19-03 - PR - Exercice PR 1.6 - Rapport de présence.pdf');
   });
 
   await record('05 viewer recoit le bon Blob URL', async () => {
@@ -340,7 +340,7 @@ async function generatedSession(){
     harness.context.ScopePdfViewer.open({ blob, filename: 'SCOPE Test final.pdf', pages: 1 });
     harness.context.ScopePdfViewer.download();
     assert.strictEqual(harness.createdAnchors.length, 1);
-    assert.strictEqual(harness.createdAnchors[0].download, 'SCOPE_Test_final.pdf');
+    assert.strictEqual(harness.createdAnchors[0].download, 'SCOPE Test final.pdf');
     assert.strictEqual(harness.createdAnchors[0].href, 'blob:https://scope-sdisnv.netlify.app/test-1');
   });
 

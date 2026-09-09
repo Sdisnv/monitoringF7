@@ -854,17 +854,79 @@ class ScopePdfRenderer {
     this.drawDomainSignature(m);
   }
 
+  renderReportTitle(title, subtitle, context){
+    const innerW = PAGE_W - 2 * MARGIN;
+    this.ensure(54);
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(15)
+      .text(title || 'Rapport SCOPE', MARGIN, this.doc.y, { width: innerW });
+    if(subtitle){
+      this.doc.moveDown(0.18);
+      this.doc.fillColor(rgb(INSTITUTION.red)).font('Helvetica-Bold').fontSize(10)
+        .text(subtitle, MARGIN, this.doc.y, { width: innerW });
+    }
+    if(context){
+      this.doc.moveDown(0.15);
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(8.5)
+        .text(context, MARGIN, this.doc.y, { width: innerW });
+    }
+    this.doc.moveDown(0.75);
+  }
+
+  kpiMultiSessionV2(m){
+    const o = m.officiel || {};
+    const v = o.volumes || {};
+    const innerW = PAGE_W - 2 * MARGIN;
+    const gap = 5;
+    const homogeneous = !(o.objectiveContext && o.objectiveContext.homogeneous === false);
+    const objText = homogeneous && o.objective && o.objective.thresholdPct != null ? formatTaux(o.objective.thresholdPct) : '—';
+    const cells = [
+      ['Population cible', String(v.attendus || 0)],
+      ['Population comptabilisable', String(o.denominator || 0)],
+      ['Présents', String(v.presents || 0)],
+      ['Excusés', String(v.excuses || 0)],
+      ['Absents', String(v.nonExcuses || 0)],
+      ['Dispensés', String(v.dispenses || 0)],
+      ['Taux de participation', formatTaux(o.percentage)],
+      ['Objectif', objText],
+      ['Écart', homogeneous ? formatGap(o.gapPct) : '—']
+    ];
+    const cols = 3;
+    const w = (innerW - gap * (cols - 1)) / cols;
+    const h = 34;
+    const y = this.doc.y;
+    cells.forEach((cell, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = MARGIN + col * (w + gap);
+      const yy = y + row * (h + gap);
+      this.doc.rect(x, yy, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.5).stroke();
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9.5)
+        .text(cell[1], x + 5, yy + 5, { width: w - 10, align: 'center' });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6.8)
+        .text(cell[0], x + 5, yy + 21, { width: w - 10, align: 'center' });
+    });
+    this.doc.y = y + 3 * (h + gap) + 2;
+  }
+
   renderMultiSessionV2EventBody(m){
     const v = (m.officiel && m.officiel.volumes) || {};
     const innerW = PAGE_W - 2 * MARGIN;
+    const first = (m.sessions || [])[0] || {};
+    const last = (m.sessions || [])[Math.max(0, (m.sessions || []).length - 1)] || {};
+    this.renderReportTitle(
+      'RAPPORT DE PRÉSENCE MULTI-SESSION',
+      String((m.event && m.event.libelle) || 'Formation').toLocaleUpperCase('fr-CH'),
+      `${(m.sessions || []).length || 0} sessions · ${formatDisplayDate(first.date || (m.period && m.period.from))} → ${formatDisplayDate(last.date || (m.period && m.period.to))}`
+    );
     this.kv([
       { label: 'Exercice', value: (m.event && m.event.libelle) || 'Multi-session' },
       { label: 'Type', value: 'Rapport Multi-session' },
-      { label: 'Période / année', value: `${formatDisplayDate(m.period && m.period.from)} - ${formatDisplayDate(m.period && m.period.to)}` },
+      { label: 'Période', value: `${formatDisplayDate(m.period && m.period.from)} - ${formatDisplayDate(m.period && m.period.to)}` },
       { label: 'Domaine', value: domaineLabel(m.domaine) || 'DAP' },
       { label: 'Nombre de sessions', value: String((m.sessions || []).length || 0) },
+      { label: 'Population cible', value: String(v.attendus || 0) },
       { label: 'Statut', value: (m.event && m.event.statutLabel) || 'Clôturé' }
-    ], { cols: 3, rowH: 24 });
+    ], { cols: 2, rowH: 20 });
     this.iconHeading('calendar', 'Sessions constitutives', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap });
     this.table(
       ['Session', 'Événement', 'Date'],
@@ -877,7 +939,7 @@ class ScopePdfRenderer {
       { rowH: 15, wrap: [false, true, false] }
     );
     this.iconHeading('kpi', 'Synthèse chiffrée', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
-    this.kpiOfficial(m.officiel, { event: true });
+    this.kpiMultiSessionV2(m);
     this.para('Aucune personne n’est comptée deux fois : la contribution statistique est consolidée au niveau du Multi-session.', { size: 8 });
 
     this.iconHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
@@ -967,7 +1029,81 @@ class ScopePdfRenderer {
     }
   }
 
+  renderMultiSessionV2SessionBody(m){
+    const s = m.sessionSummary || {};
+    const innerW = PAGE_W - 2 * MARGIN;
+    this.renderReportTitle(
+      'RAPPORT DE PRÉSENCE',
+      String((m.event && m.event.libelle) || 'Session Multi-session').toLocaleUpperCase('fr-CH'),
+      `Multi-session · Session ${m.sessionIndex || 1}/${m.sessionCount || 1}`
+    );
+    this.kv([
+      { label: 'Domaine', value: domaineLabel(m.domaine) || '—' },
+      { label: 'Date', value: formatDisplayDate(m.event && m.event.date) },
+      { label: 'Multi-session', value: m.multisessionLabel || '—' },
+      { label: 'Session', value: `${m.sessionIndex || 1} sur ${m.sessionCount || 1}` },
+      { label: 'Population Multi-session', value: String(m.population || 0) },
+      { label: 'Statut', value: (m.event && m.event.statutLabel) || '—' },
+      { label: 'Année', value: String((m.event && m.event.date) || '').slice(0, 4) || '—' }
+    ], { cols: 2, rowH: 20 });
+
+    this.iconHeading('kpi', 'Synthèse de la session', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap });
+    const cells = [
+      ['Présents', String(s.presents || 0)],
+      ['Excusés sur cette session', String(s.excuses || 0)],
+      ['Absents renseignés', String(s.nonExcuses || 0)],
+      ['Dispensés renseignés', String(s.dispenses || 0)],
+      ['Encadrement', String(s.encadrement || 0)]
+    ];
+    const gap = 5;
+    const w = (innerW - gap * (cells.length - 1)) / cells.length;
+    const h = 36;
+    const y = this.doc.y;
+    cells.forEach((cell, i) => {
+      const x = MARGIN + i * (w + gap);
+      this.doc.rect(x, y, w, h).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.5).stroke();
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
+        .text(cell[1], x + 3, y + 5, { width: w - 6, align: 'center' });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6.5)
+        .text(cell[0], x + 3, y + 21, { width: w - 6, align: 'center' });
+    });
+    this.doc.y = y + h + 8;
+    if(Number(s.nonRenseignes || 0) > 0){
+      this.ensure(38);
+      const boxY = this.doc.y;
+      this.doc.rect(MARGIN, boxY, innerW, 32).fillAndStroke('#f4f6f8', rgb(INSTITUTION.line));
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8.5)
+        .text('Information', MARGIN + 8, boxY + 6, { width: innerW - 16 });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(8)
+        .text(`${s.nonRenseignes} personnes de la population Multi-session ne sont pas renseignées sur cette session. Elles peuvent avoir participé ou être destinées à participer à une autre session du même exercice.`, MARGIN + 8, boxY + 17, { width: innerW - 16 });
+      this.doc.y = boxY + 38;
+    }
+
+    this.renderEncadrement(m);
+    this.iconHeading('people', 'Personnel renseigné pour cette session', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap });
+    if(m.nominatif && m.nominatif.length){
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Information / Motif / Rôle'],
+        m.nominatif.map((r) => [
+          r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
+          this.eventStatutLabel(r),
+          nominativeInfoLabel(r)
+        ]),
+        [38, 78, 68, 48, 36, 58, 133],
+        {
+          rowH: 13,
+          wrap: [false, false, false, false, false, false, true],
+          highlightColors: m.nominatif.map((r) => r.statut === 'ABSENT_EXCUSE' ? '#fdecef' : (r.statut === 'ABSENT_NON_EXCUSE' ? '#e8eaed' : (r.statut === 'DISPENSE' ? '#fff4cc' : null)))
+        }
+      );
+    } else {
+      this.para('Aucune présence, absence, excuse, dispense ou rôle n’est renseigné pour cette session.');
+    }
+    this.drawDomainSignature(m);
+  }
+
   renderSessionBody(m){
+    if(m.multiSessionV2Session) return this.renderMultiSessionV2SessionBody(m);
     const v = (m.officiel && m.officiel.volumes) || {};
     const rates = m.rates || {};
     const innerW = PAGE_W - 2 * MARGIN;
