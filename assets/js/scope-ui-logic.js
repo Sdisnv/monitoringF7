@@ -1577,6 +1577,13 @@
         message: payloadMessage || message || 'Le rapport détaillé sera disponible lorsque toutes les séances seront clôturées.'
       };
     }
+    if (code === 'referentiel_utilise') {
+      return {
+        tone: 'error',
+        title: 'Suppression impossible',
+        message: payloadMessage || message || 'Cet élément a déjà été utilisé. Archivez-le afin de préserver l’historique.'
+      };
+    }
     if (status === 409 || code === 'conflict') {
       return {
         tone: 'warning',

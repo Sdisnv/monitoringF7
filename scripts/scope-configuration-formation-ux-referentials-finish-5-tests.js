@@ -165,8 +165,8 @@ async function record(name, fn){
   await record('13 — feedback important central, bandeaux admin retirés', () => {
     const ui = read('assets/js/scope-ui.js');
     includes(ui, "form.editDefinitionVersionId ? 'Configuration enregistrée' : 'Formation créée'");
-    includes(ui, "ScopeFeedback.success('Référentiel enregistré'");
-    includes(ui, "active ? 'Référentiel réactivé' : 'Référentiel archivé'");
+    includes(ui, "successTitle: 'Référentiel enregistré'");
+    includes(ui, "successTitle: active ? 'Référentiel réactivé' : 'Référentiel archivé'");
     ok(!ui.includes("toast('success', 'Modèle créé'"), 'ancien bandeau Modèle créé absent');
     ok(!ui.includes("toast('success', 'Enregistré', 'La politique de participation"), 'ancien bandeau policy absent');
   });
@@ -194,7 +194,7 @@ async function record(name, fn){
     includes(service, 'removeSourcePermutationObligation(tx, evenement, attendu.personne_id, actor)');
     ok(!ui.includes('jobs.push(refreshAlertCounts())'), 'pas de chargement alertes bloquant');
     includes(ui, "if (r.screen === 'formation-catalog') jobs.push(loadParticipationAdmin())");
-    includes(read('scope.html'), 'scope-configuration-formation-ux-referentials-finish-5');
+    includes(read('scope.html'), 'scope-configuration-referentials-lifecycle-repair-5-1');
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

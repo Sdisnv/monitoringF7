@@ -260,7 +260,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-configuration-formation-ux-referentials-finish-5';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-configuration-referentials-lifecycle-repair-5-1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -374,10 +374,14 @@ async function ensureScopeSchema(){
   );
   await migrateParticipationPolicyEngine1();
   await migrateConfigurationFormationUxReferentialsFinish5();
+  await migrateConfigurationReferentialsLifecycleRepair51();
   await migrateGenericEventSessionPolicyArchitecture1();
   await migrateMultiSessionV2Foundation1();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
+  );
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-referentials-lifecycle-repair-5-1') on conflict (version) do nothing`
   );
   ready = true;
   return true;
@@ -1235,6 +1239,10 @@ async function migrateConfigurationFormationUxReferentialsFinish5(){
       ]
     );
   }
+}
+
+async function migrateConfigurationReferentialsLifecycleRepair51(){
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-referentials-lifecycle-repair-5-1') on conflict (version) do nothing`);
 }
 
 async function migrateGenericEventSessionPolicyArchitecture1(){

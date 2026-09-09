@@ -974,7 +974,9 @@ function createMemoryRepo(){
     },
     async upsertParticipationMotif(row){
       const id = String(row.motif_id || row.id || '').trim().toUpperCase();
+      const existing = participationMotifs.get(id) || {};
       const item = {
+        ...existing,
         motif_id: id,
         motif_type: String(row.motif_type || row.type || 'EXCUSE').trim().toUpperCase(),
         label: row.label || row.libelle,
@@ -982,11 +984,54 @@ function createMemoryRepo(){
         historique: row.historique === true || row.historical === true,
         display_order: Number(row.display_order || row.order || 999),
         group_code: row.group_code || row.group || 'operationnel',
-        metadata: row.metadata || {},
+        metadata: Object.assign({}, existing.metadata || {}, row.metadata || {}),
         updated_at: now()
       };
       participationMotifs.set(id, item);
       return { ...item };
+    },
+    async listParticipationReferentialUsages(){
+      const usages = { statuses: {}, motifs: {}, statusDetails: {}, motifDetails: {} };
+      const add = (bucket, detailBucket, id, source, count = 1) => {
+        const key = String(id || '').trim().toUpperCase();
+        const value = Number(count || 0);
+        if(!key || value <= 0) return;
+        bucket[key] = Number(bucket[key] || 0) + value;
+        detailBucket[key] = Object.assign({}, detailBucket[key] || {}, { [source]: Number((detailBucket[key] || {})[source] || 0) + value });
+      };
+      const addPolicyConfig = (config, source) => {
+        const c = config || {};
+        (c.activeStatuses || c.active_statuses || []).forEach((id) => add(usages.statuses, usages.statusDetails, id, source));
+        [
+          ...(c.excuseMotifs || c.excuse_motifs || []),
+          ...(c.dispenseMotifs || c.dispense_motifs || [])
+        ].forEach((id) => add(usages.motifs, usages.motifDetails, id, source));
+      };
+      [...participations.values()].forEach((row) => {
+        add(usages.statuses, usages.statusDetails, row.statut, 'participations');
+        add(usages.motifs, usages.motifDetails, row.motif_absence || row.motifAbsence, 'participations');
+      });
+      [...participationPolicies.values()].forEach((row) => addPolicyConfig(row.config, 'policies'));
+      [...participationPolicyVersions.values()].forEach((row) => addPolicyConfig(row.config, 'policyVersions'));
+      [...evenements.values()].forEach((row) => addPolicyConfig(row.participation_policy_snapshot || row.participationPolicySnapshot, 'eventSnapshots'));
+      [...exercices.values()].forEach((row) => addPolicyConfig(row.configuration_snapshot || row.configurationSnapshot, 'exerciseSnapshots'));
+      [...eventDefinitionVersions.values()].forEach((row) => addPolicyConfig(row.metadata, 'configurations'));
+      return usages;
+    },
+    async getParticipationReferentialUsage(kind, id){
+      const usage = await this.listParticipationReferentialUsages();
+      const key = String(id || '').trim().toUpperCase();
+      if(String(kind || '').toLowerCase() === 'status'){
+        return { count: Number(usage.statuses[key] || 0), details: usage.statusDetails[key] || {} };
+      }
+      return { count: Number(usage.motifs[key] || 0), details: usage.motifDetails[key] || {} };
+    },
+    async deleteParticipationStatus(statusId){
+      if(!this._participationStatuses) this._participationStatuses = new Map();
+      return this._participationStatuses.delete(String(statusId || '').trim().toUpperCase());
+    },
+    async deleteParticipationMotif(motifId){
+      return participationMotifs.delete(String(motifId || '').trim().toUpperCase());
     },
     async listParticipationPolicyRows(){
       return [...participationPolicies.values()].filter((row) => row.actif !== false).map((row) => ({ ...row, config: JSON.parse(JSON.stringify(row.config || {})) }));

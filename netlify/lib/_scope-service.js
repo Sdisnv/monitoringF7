@@ -256,6 +256,7 @@ function createScopeService(repo){
     const statusRows = await participationStatusRows(repo);
     const policyRows = await participationPolicyRows(repo);
     const policyVersions = repo.listParticipationPolicyVersions ? await repo.listParticipationPolicyVersions({ active: true }) : [];
+    const usage = repo.listParticipationReferentialUsages ? await repo.listParticipationReferentialUsages() : { statuses: {}, motifs: {} };
     const domaines = repo.listDomaines ? await repo.listDomaines() : [];
     const domainCodes = [...new Set([
       ...participationPolicy.listDefaultPolicies().map((policy) => policy.domainCode),
@@ -265,11 +266,25 @@ function createScopeService(repo){
       participationPolicy.resolveParticipationPolicy(code, { motifRows, policyRows }),
       motifRows
     ));
+    const enrichStatus = (row) => {
+      const id = String(row && row.id || '').toUpperCase();
+      const usageCount = Number((usage.statuses && usage.statuses[id]) || 0);
+      return Object.assign({}, row, {
+        usageCount,
+        used: usageCount > 0,
+        protected: row && (row.system || String(row.id || '').toUpperCase() === 'NON_RENSEIGNE' || String(row.id || '').toUpperCase() === 'PERMUTATION')
+      });
+    };
+    const enrichMotif = (row) => {
+      const id = String(row && row.id || '').toUpperCase();
+      const usageCount = Number((usage.motifs && usage.motifs[id]) || 0);
+      return Object.assign({}, row, { usageCount, used: usageCount > 0 });
+    };
     return {
       participation: {
         policyVersion: participationPolicy.POLICY_VERSION,
-        statuses: participationPolicy.statusCatalog(statusRows),
-        motifs: participationPolicy.motifCatalog(motifRows),
+        statuses: participationPolicy.statusCatalog(statusRows).map(enrichStatus),
+        motifs: participationPolicy.motifCatalog(motifRows).map(enrichMotif),
         roles: Object.values(participationPolicy.ROLE_LIBRARY).sort((a, b) => a.order - b.order),
         policies,
         policyVersions
@@ -612,11 +627,13 @@ function createScopeService(repo){
   async function saveParticipationMotif(body, actor){
     body = body || {};
     const motifRows = await participationMotifRows(repo);
-    const motifType = String(body && (body.motifType || body.motif_type || body.type) || 'EXCUSE').trim().toUpperCase();
     const label = String(body && (body.label || body.libelle) || '').trim();
-    const generatedId = generateReferentialId(label || motifType, new Set((motifRows || []).map((row) => String(row.motif_id || row.id || '').toUpperCase())));
+    const inputMotifType = String(body && (body.motifType || body.motif_type || body.type) || 'EXCUSE').trim().toUpperCase();
+    const generatedId = generateReferentialId(label || inputMotifType, new Set((motifRows || []).map((row) => String(row.motif_id || row.id || '').toUpperCase())));
     const motifId = String(body && (body.motifId || body.motif_id || body.id) || generatedId || '').trim().toUpperCase();
     if(!motifId) throw new HttpError(400, 'motif_invalide', 'Identifiant motif obligatoire.');
+    const existing = (motifRows || []).find((row) => String(row.motif_id || row.id || '').trim().toUpperCase() === motifId);
+    const motifType = String(existing && (existing.motif_type || existing.type) || inputMotifType).trim().toUpperCase();
     const row = {
       motif_id: motifId,
       motif_type: motifType,
@@ -641,12 +658,37 @@ function createScopeService(repo){
     return { motif: saved };
   }
 
+  async function deleteParticipationMotif(motifId, actor){
+    const id = String(motifId || '').trim().toUpperCase();
+    if(!id) throw new HttpError(400, 'motif_invalide', 'Identifiant motif obligatoire.');
+    const usage = repo.getParticipationReferentialUsage
+      ? await repo.getParticipationReferentialUsage('motif', id)
+      : { count: 0, details: {} };
+    if(Number(usage && usage.count || 0) > 0){
+      throw new HttpError(409, 'referentiel_utilise', 'Suppression impossible : ce motif a déjà été utilisé. Il doit être archivé afin de préserver l’historique.', { usage });
+    }
+    const deleted = repo.deleteParticipationMotif ? await repo.deleteParticipationMotif(id) : false;
+    if(!deleted) throw new HttpError(404, 'motif_introuvable', 'Motif introuvable.');
+    if(repo.appendJournal){
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'participation_motif',
+        entite_id: id,
+        action: 'SUPPRIMER_MOTIF',
+        apres: { motif_id: id }
+      });
+    }
+    return { deleted: true, motifId: id };
+  }
+
   async function saveParticipationStatus(body, actor){
     body = body || {};
     const statusRows = await participationStatusRows(repo);
     const label = String(body && (body.label || body.libelle) || '').trim();
     if(!label) throw new HttpError(400, 'statut_libelle_vide', 'Libellé statut obligatoire.');
-    const baseStatus = String(body && (body.baseStatus || body.base_status) || 'PRESENT').trim().toUpperCase();
+    const requestedId = String(body && (body.statusId || body.status_id || body.id) || '').trim().toUpperCase();
+    const existing = (statusRows || []).find((row) => String(row.status_id || row.id || '').trim().toUpperCase() === requestedId);
+    const baseStatus = String(existing && (existing.base_status || existing.baseStatus) || body && (body.baseStatus || body.base_status) || 'PRESENT').trim().toUpperCase();
     if(!['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE'].includes(baseStatus)){
       throw new HttpError(422, 'statut_base_invalide', 'Choisissez un comportement compatible : présence, excuse, absence ou dispense.');
     }
@@ -654,7 +696,7 @@ function createScopeService(repo){
       ...Object.keys(participationPolicy.STATUS_LIBRARY),
       ...(statusRows || []).map((row) => String(row.status_id || row.id || '').toUpperCase())
     ]);
-    const statusId = String(body && (body.statusId || body.status_id || body.id) || generateReferentialId(label, existingIds)).trim().toUpperCase();
+    const statusId = String(requestedId || generateReferentialId(label, existingIds)).trim().toUpperCase();
     const base = participationPolicy.STATUS_LIBRARY[baseStatus] || {};
     const row = {
       status_id: statusId,
@@ -677,6 +719,32 @@ function createScopeService(repo){
       });
     }
     return { status: saved };
+  }
+
+  async function deleteParticipationStatus(statusId, actor){
+    const id = String(statusId || '').trim().toUpperCase();
+    if(!id) throw new HttpError(400, 'statut_invalide', 'Identifiant statut obligatoire.');
+    if(id === 'NON_RENSEIGNE' || id === 'PERMUTATION'){
+      throw new HttpError(422, 'statut_protege', 'Ce statut est protégé par les règles métier SCOPE.');
+    }
+    const usage = repo.getParticipationReferentialUsage
+      ? await repo.getParticipationReferentialUsage('status', id)
+      : { count: 0, details: {} };
+    if(Number(usage && usage.count || 0) > 0){
+      throw new HttpError(409, 'referentiel_utilise', 'Suppression impossible : ce statut a déjà été utilisé. Il doit être archivé afin de préserver l’historique.', { usage });
+    }
+    const deleted = repo.deleteParticipationStatus ? await repo.deleteParticipationStatus(id) : false;
+    if(!deleted) throw new HttpError(404, 'statut_introuvable', 'Statut introuvable.');
+    if(repo.appendJournal){
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'participation_status',
+        entite_id: id,
+        action: 'SUPPRIMER_STATUT',
+        apres: { status_id: id }
+      });
+    }
+    return { deleted: true, statusId: id };
   }
 
   function comparePeopleByGradeName(a, b){
@@ -4988,6 +5056,8 @@ function createScopeService(repo){
     saveParticipationPolicy,
     saveParticipationStatus,
     saveParticipationMotif,
+    deleteParticipationStatus,
+    deleteParticipationMotif,
     formationCatalog,
     createEventDefinition,
     reconductEventDefinitionVersion,

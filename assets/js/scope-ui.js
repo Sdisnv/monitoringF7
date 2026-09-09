@@ -8130,35 +8130,48 @@
         <details class="scope-technical-details"><summary>Informations techniques</summary><p>Définition : ${escapeHtml(definition.code || '')}</p><p>Policy : ${escapeHtml(policy.policy_code || policy.policyCode || '—')} · ${escapeHtml(policy.version_code || policy.versionCode || '—')}</p><p>Route moteur : ${mode === 'MULTI_SESSION' ? 'Multi-session générique' : 'Session unique générique'}</p></details>
       </div>` : ''}`;
     };
+    const findReferentialRow = (type, id) => {
+      const catalogs = type === 'status' ? [...statusCatalog.values()] : (participation && participation.motifs || []);
+      return catalogs.find((item) => String(item.id || item.value || item.motif_id || item.status_id || '').toUpperCase() === String(id || '').toUpperCase()) || null;
+    };
     const renderReferentialRows = (items, type) => items.map((row) => {
       const id = row.id || row.value || row.motif_id || row.status_id || '';
       const active = row.active !== false && row.actif !== false;
       const behavior = row.baseStatus || row.base_status || '';
+      const usageCount = Number(row.usageCount || row.usage_count || 0);
+      const used = row.used === true || usageCount > 0;
+      const protectedItem = row.protected === true || row.system === true;
+      const actions = protectedItem ? '<span class="scope-muted">Protégé</span>' : [
+        `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-edit="${escapeHtml(type)}:${escapeHtml(id)}">Modifier</button>`,
+        `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-toggle="${escapeHtml(type)}:${escapeHtml(id)}">${active ? 'Archiver' : 'Réactiver'}</button>`,
+        !used ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-delete="${escapeHtml(type)}:${escapeHtml(id)}">Supprimer</button>` : ''
+      ].filter(Boolean).join(' ');
       return `<tr>
         <td>${escapeHtml(row.label || row.libelle || id)}</td>
         ${type === 'status' ? `<td>${escapeHtml(statusLabel(behavior || id))}</td>` : ''}
         <td>${escapeHtml(String(row.order || row.display_order || 999))}</td>
-        <td>${active ? 'Actif' : 'Inactif / archivé'}</td>
-        <td>${id && !row.system ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-archive="${escapeHtml(type)}:${escapeHtml(id)}">${active ? 'Archiver' : 'Réactiver'}</button>` : '<span class="scope-muted">Protégé</span>'}</td>
+        <td>${active ? 'Actif' : 'Inactif / archivé'}${used ? '<br><small class="scope-muted">Déjà utilisé</small>' : '<br><small class="scope-muted">Jamais utilisé</small>'}</td>
+        <td>${actions}</td>
       </tr>`;
     }).join('');
     const activeMotifs = (type) => (participation && participation.motifs || [])
       .filter((row) => String(row.type || row.motif_type || '').toUpperCase() === type);
     const referentialDraft = state.formationReferentialDraft;
     const referentialForm = referentialDraft ? `<section class="scope-referential-draft" id="formation-referential-form">
-      <h3>${referentialDraft.type === 'status' ? 'Ajouter un statut' : (referentialDraft.type === 'excuse' ? 'Ajouter un motif d’excuse' : 'Ajouter un motif de dispense')}</h3>
+      <h3>${referentialDraft.editing ? 'Modifier le référentiel' : (referentialDraft.type === 'status' ? 'Ajouter un statut' : (referentialDraft.type === 'excuse' ? 'Ajouter un motif d’excuse' : 'Ajouter un motif de dispense'))}</h3>
+      ${referentialDraft.id ? `<p class="scope-muted">Identifiant technique immuable : ${escapeHtml(referentialDraft.id)}</p>` : ''}
       <div class="scope-report-grid">
         <div class="scope-field"><label>Libellé métier</label><input id="referential-label" type="text" value="${escapeHtml(referentialDraft.label || '')}" placeholder="${referentialDraft.type === 'status' ? 'Statut de participation' : 'Motif'}"></div>
-        ${referentialDraft.type === 'status' ? `<div class="scope-field"><label>Comportement</label><select id="referential-base-status">
+        ${referentialDraft.type === 'status' ? `<div class="scope-field"><label>Comportement</label><select id="referential-base-status" ${referentialDraft.editing ? 'disabled' : ''}>
           <option value="PRESENT" ${referentialDraft.baseStatus === 'PRESENT' ? 'selected' : ''}>Présence</option>
           <option value="ABSENT_EXCUSE" ${referentialDraft.baseStatus === 'ABSENT_EXCUSE' ? 'selected' : ''}>Excuse</option>
           <option value="ABSENT_NON_EXCUSE" ${referentialDraft.baseStatus === 'ABSENT_NON_EXCUSE' ? 'selected' : ''}>Absence</option>
           <option value="DISPENSE" ${referentialDraft.baseStatus === 'DISPENSE' ? 'selected' : ''}>Dispense</option>
-        </select><small>Le statut réutilise un comportement moteur existant.</small></div>` : '<div class="scope-field"><label>Description / aide</label><input id="referential-description" type="text" value="" placeholder="Optionnel"></div>'}
+        </select><small>Le statut réutilise un comportement moteur existant.${referentialDraft.editing ? ' Il ne change pas pendant une modification.' : ''}</small></div>` : '<div class="scope-field"><label>Description / aide</label><input id="referential-description" type="text" value="" placeholder="Optionnel"></div>'}
         <div class="scope-field"><label>Ordre</label><input id="referential-order" type="number" min="1" value="${escapeHtml(referentialDraft.order || '999')}"></div>
       </div>
       <label class="scope-check scope-policy-check"><input id="referential-active" type="checkbox" ${referentialDraft.active === false ? '' : 'checked'}><span class="scope-policy-check-copy"><span>Actif</span><small>Un élément inactif reste disponible pour l’historique mais n’est plus proposé aux nouvelles configurations.</small></span></label>
-      <div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" id="referential-save">Ajouter</button><button type="button" class="scope-btn scope-btn-secondary" id="referential-cancel">Annuler</button></div>
+      <div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" id="referential-save">${referentialDraft.editing ? 'Enregistrer' : 'Ajouter'}</button><button type="button" class="scope-btn scope-btn-secondary" id="referential-cancel">Annuler</button></div>
     </section>` : '';
     const referentialsHtml = `<div class="scope-card scope-referentials-admin">
       <h2 style="margin-top:0">Référentiels administrables</h2>
@@ -10349,10 +10362,16 @@
     });
     document.getElementById('referential-save')?.addEventListener('click', () => {
       const draft = state.formationReferentialDraft || {};
-      withLoading(async () => {
-        if (!String(draft.label || '').trim()) throw { status: 400, error: 'referentiel_libelle_vide', message: 'Le libellé métier est obligatoire.' };
+      withFeedbackAction({
+        progressTitle: 'Enregistrement du référentiel…',
+        progressMessage: 'SCOPE met à jour le référentiel.',
+        successTitle: 'Référentiel enregistré',
+        successMessage: draft.editing ? 'Le libellé métier a été mis à jour sans changer l’identifiant.' : 'L’élément est disponible pour les nouvelles configurations.'
+      }, async () => {
+        if (!String(draft.label || '').trim()) throw { status: 422, error: 'referentiel_libelle_vide', message: 'Le libellé métier est obligatoire.' };
         if (draft.type === 'status') {
           await client.saveParticipationStatus({
+            statusId: draft.id || undefined,
             label: draft.label,
             baseStatus: draft.baseStatus || 'PRESENT',
             active: draft.active !== false,
@@ -10360,6 +10379,7 @@
           });
         } else {
           await client.saveParticipationMotif({
+            motifId: draft.id || undefined,
             motifType: draft.type === 'dispense' ? 'DISPENSE' : 'EXCUSE',
             label: draft.label,
             active: draft.active !== false,
@@ -10370,17 +10390,46 @@
         await loadParticipationAdmin();
         await loadFormationCatalog();
         state.formationReferentialDraft = null;
-        ScopeFeedback.success('Référentiel enregistré', 'L’élément est disponible pour les nouvelles configurations.');
       });
     });
-    root.querySelectorAll('[data-referential-archive]').forEach((btn) => {
+    root.querySelectorAll('[data-referential-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const [type, id] = String(btn.getAttribute('data-referential-archive') || '').split(':');
-        const catalogs = type === 'status' ? [...statusCatalog.values()] : (participation && participation.motifs || []);
-        const row = catalogs.find((item) => String(item.id || item.value || item.motif_id || item.status_id || '').toUpperCase() === String(id || '').toUpperCase());
-        if (!row || row.system) return;
+        const [type, id] = String(btn.getAttribute('data-referential-edit') || '').split(':');
+        const row = findReferentialRow(type, id);
+        if (!row || row.system || row.protected) return;
+        state.formationReferentialDraft = {
+          type,
+          id,
+          editing: true,
+          label: row.label || row.libelle || id,
+          baseStatus: row.baseStatus || row.base_status || 'PRESENT',
+          order: String(row.order || row.display_order || 999),
+          active: row.active !== false && row.actif !== false
+        };
+        render();
+        setTimeout(() => document.getElementById('formation-referential-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+      });
+    });
+    root.querySelectorAll('[data-referential-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const [type, id] = String(btn.getAttribute('data-referential-toggle') || '').split(':');
+        const row = findReferentialRow(type, id);
+        if (!row || row.system || row.protected) return;
         const active = !(row.active !== false && row.actif !== false);
-        withLoading(async () => {
+        ScopeFeedback.confirm({
+          title: active ? 'Réactiver ce référentiel ?' : `Archiver ce ${type === 'status' ? 'statut' : 'motif'} ?`,
+          message: active
+            ? 'Cet élément sera à nouveau proposé aux nouvelles configurations.'
+            : 'Cet élément ne sera plus proposé pour les nouvelles configurations. Son historique sera conservé.',
+          confirmText: active ? 'Réactiver' : 'Archiver',
+          cancelText: 'Annuler',
+          tone: active ? 'info' : 'warning'
+        }, () => withFeedbackAction({
+          progressTitle: active ? 'Réactivation du référentiel…' : 'Archivage du référentiel…',
+          progressMessage: 'SCOPE met à jour le référentiel.',
+          successTitle: active ? 'Référentiel réactivé' : 'Référentiel archivé',
+          successMessage: active ? 'L’élément est à nouveau proposé aux nouvelles configurations.' : 'L’élément reste conservé pour l’historique.'
+        }, async () => {
           if (type === 'status') {
             await client.saveParticipationStatus({
               statusId: id,
@@ -10404,8 +10453,33 @@
           invalidateCache(['referentiels', 'formationCatalog']);
           await loadParticipationAdmin();
           await loadFormationCatalog();
-          ScopeFeedback.success(active ? 'Référentiel réactivé' : 'Référentiel archivé', active ? 'L’élément est à nouveau proposé aux nouvelles configurations.' : 'L’élément reste conservé pour l’historique.');
-        });
+        }));
+      });
+    });
+    root.querySelectorAll('[data-referential-delete]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const [type, id] = String(btn.getAttribute('data-referential-delete') || '').split(':');
+        const row = findReferentialRow(type, id);
+        if (!row || row.system || row.protected || row.used || Number(row.usageCount || 0) > 0) return;
+        ScopeFeedback.confirm({
+          title: `Supprimer définitivement ce ${type === 'status' ? 'statut' : 'motif'} ?`,
+          message: 'Cet élément n’a jamais été utilisé. Sa suppression sera définitive.',
+          confirmText: 'Supprimer',
+          cancelText: 'Annuler',
+          tone: 'warning'
+        }, () => withFeedbackAction({
+          progressTitle: 'Suppression du référentiel…',
+          progressMessage: 'SCOPE vérifie les usages avant suppression.',
+          successTitle: 'Référentiel supprimé',
+          successMessage: 'L’élément inutilisé a été supprimé.'
+        }, async () => {
+          if (type === 'status') await client.deleteParticipationStatus(id);
+          else await client.deleteParticipationMotif(id);
+          invalidateCache(['referentiels', 'formationCatalog']);
+          await loadParticipationAdmin();
+          await loadFormationCatalog();
+          state.formationReferentialDraft = null;
+        }));
       });
     });
     root.querySelectorAll('[data-reconduct-definition-version]').forEach((btn) => {

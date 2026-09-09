@@ -133,11 +133,25 @@ async function scopeHandler(event){
       }
       return response(200, { ok:true, ...(await service.saveParticipationMotif(body, claims)) });
     }
+    params = match(path, '/participation/motifs/:id');
+    if(method === 'DELETE' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des motifs de participation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.deleteParticipationMotif(params.id, claims)) });
+    }
     if(method === 'POST' && path === '/participation/statuses'){
       if(!hasPermission(claims, 'references:manage')){
         return response(403, { ok:false, error:'forbidden', message:'La gestion des statuts de participation est réservée aux profils habilités.' });
       }
       return response(200, { ok:true, ...(await service.saveParticipationStatus(body, claims)) });
+    }
+    params = match(path, '/participation/statuses/:id');
+    if(method === 'DELETE' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des statuts de participation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.deleteParticipationStatus(params.id, claims)) });
     }
     if(method === 'GET' && path === '/personnes/count'){
       return response(200, { ok:true, ...(await service.countPersonnes()) });

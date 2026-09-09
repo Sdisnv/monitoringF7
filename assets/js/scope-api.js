@@ -390,6 +390,8 @@
       saveParticipationPolicy(domain, body) { return request('POST', `/participation/policies/${encodeURIComponent(domain)}`, body || {}); },
       saveParticipationMotif(body) { return request('POST', '/participation/motifs', body || {}); },
       saveParticipationStatus(body) { return request('POST', '/participation/statuses', body || {}); },
+      deleteParticipationMotif(id) { return request('DELETE', `/participation/motifs/${encodeURIComponent(id)}`); },
+      deleteParticipationStatus(id) { return request('DELETE', `/participation/statuses/${encodeURIComponent(id)}`); },
       resolveObjectif(params) { return request('GET', `/objectifs/resolution${queryString(params || {})}`); },
       createObjectif(body) { return request('POST', '/objectifs', body); },
       patchObjectif(id, body) { return request('PATCH', `/objectifs/${encodeURIComponent(id)}`, body); },

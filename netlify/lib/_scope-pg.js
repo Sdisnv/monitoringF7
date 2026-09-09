@@ -1518,7 +1518,7 @@ function createPgRepo(client){
            historique = excluded.historique,
            display_order = excluded.display_order,
            group_code = excluded.group_code,
-           metadata = excluded.metadata,
+           metadata = scope_participation_motifs.metadata || excluded.metadata,
            updated_at = now()
          returning *`,
         [
@@ -1533,6 +1533,145 @@ function createPgRepo(client){
         ]
       );
       return result.rows[0];
+    },
+    async listParticipationReferentialUsages(){
+      const usages = { statuses: {}, motifs: {}, statusDetails: {}, motifDetails: {} };
+      const add = (bucket, detailBucket, id, source, count) => {
+        const key = String(id || '').trim().toUpperCase();
+        const value = Number(count || 0);
+        if(!key || value <= 0) return;
+        bucket[key] = Number(bucket[key] || 0) + value;
+        detailBucket[key] = Object.assign({}, detailBucket[key] || {}, { [source]: value });
+      };
+      const addRows = async (sql, params, bucket, detailBucket, source, tableName) => {
+        if(tableName && !(await tableExists(tableName))) return;
+        const result = await q(sql, params || []);
+        for(const row of result.rows || []) add(bucket, detailBucket, row.id, source, row.count);
+      };
+      await addRows(
+        `select upper(statut) as id, count(*)::int as count
+         from scope_participations
+         where statut is not null and length(trim(statut)) > 0
+         group by upper(statut)`,
+        [], usages.statuses, usages.statusDetails, 'participations', 'scope_participations'
+      );
+      await addRows(
+        `select upper(motif_absence) as id, count(*)::int as count
+         from scope_participations
+         where motif_absence is not null and length(trim(motif_absence)) > 0
+         group by upper(motif_absence)`,
+        [], usages.motifs, usages.motifDetails, 'participations', 'scope_participations'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_participation_policies p,
+              lateral jsonb_array_elements_text(coalesce(p.config->'activeStatuses', p.config->'active_statuses', '[]'::jsonb)) as value
+         group by upper(value)`,
+        [], usages.statuses, usages.statusDetails, 'policies', 'scope_participation_policies'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_participation_policies p,
+              lateral jsonb_array_elements_text(
+                coalesce(p.config->'excuseMotifs', p.config->'excuse_motifs', '[]'::jsonb)
+                || coalesce(p.config->'dispenseMotifs', p.config->'dispense_motifs', '[]'::jsonb)
+              ) as value
+         group by upper(value)`,
+        [], usages.motifs, usages.motifDetails, 'policies', 'scope_participation_policies'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_participation_policy_versions v,
+              lateral jsonb_array_elements_text(coalesce(v.config->'activeStatuses', v.config->'active_statuses', '[]'::jsonb)) as value
+         group by upper(value)`,
+        [], usages.statuses, usages.statusDetails, 'policyVersions', 'scope_participation_policy_versions'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_participation_policy_versions v,
+              lateral jsonb_array_elements_text(
+                coalesce(v.config->'excuseMotifs', v.config->'excuse_motifs', '[]'::jsonb)
+                || coalesce(v.config->'dispenseMotifs', v.config->'dispense_motifs', '[]'::jsonb)
+              ) as value
+         group by upper(value)`,
+        [], usages.motifs, usages.motifDetails, 'policyVersions', 'scope_participation_policy_versions'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_evenements e,
+              lateral jsonb_array_elements_text(coalesce(e.participation_policy_snapshot->'activeStatuses', e.participation_policy_snapshot->'active_statuses', '[]'::jsonb)) as value
+         where e.participation_policy_snapshot is not null
+         group by upper(value)`,
+        [], usages.statuses, usages.statusDetails, 'eventSnapshots', 'scope_evenements'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_evenements e,
+              lateral jsonb_array_elements_text(
+                coalesce(e.participation_policy_snapshot->'excuseMotifs', e.participation_policy_snapshot->'excuse_motifs', '[]'::jsonb)
+                || coalesce(e.participation_policy_snapshot->'dispenseMotifs', e.participation_policy_snapshot->'dispense_motifs', '[]'::jsonb)
+              ) as value
+         where e.participation_policy_snapshot is not null
+         group by upper(value)`,
+        [], usages.motifs, usages.motifDetails, 'eventSnapshots', 'scope_evenements'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_exercices x,
+              lateral jsonb_array_elements_text(coalesce(x.configuration_snapshot->'activeStatuses', x.configuration_snapshot->'active_statuses', '[]'::jsonb)) as value
+         where x.configuration_snapshot is not null
+         group by upper(value)`,
+        [], usages.statuses, usages.statusDetails, 'exerciseSnapshots', 'scope_exercices'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_exercices x,
+              lateral jsonb_array_elements_text(
+                coalesce(x.configuration_snapshot->'excuseMotifs', x.configuration_snapshot->'excuse_motifs', '[]'::jsonb)
+                || coalesce(x.configuration_snapshot->'dispenseMotifs', x.configuration_snapshot->'dispense_motifs', '[]'::jsonb)
+              ) as value
+         where x.configuration_snapshot is not null
+         group by upper(value)`,
+        [], usages.motifs, usages.motifDetails, 'exerciseSnapshots', 'scope_exercices'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_event_definition_versions v,
+              lateral jsonb_array_elements_text(coalesce(v.metadata->'activeStatuses', v.metadata->'active_statuses', '[]'::jsonb)) as value
+         where v.metadata is not null
+         group by upper(value)`,
+        [], usages.statuses, usages.statusDetails, 'configurations', 'scope_event_definition_versions'
+      );
+      await addRows(
+        `select upper(value) as id, count(*)::int as count
+         from scope_event_definition_versions v,
+              lateral jsonb_array_elements_text(
+                coalesce(v.metadata->'excuseMotifs', v.metadata->'excuse_motifs', '[]'::jsonb)
+                || coalesce(v.metadata->'dispenseMotifs', v.metadata->'dispense_motifs', '[]'::jsonb)
+              ) as value
+         where v.metadata is not null
+         group by upper(value)`,
+        [], usages.motifs, usages.motifDetails, 'configurations', 'scope_event_definition_versions'
+      );
+      return usages;
+    },
+    async getParticipationReferentialUsage(kind, id){
+      const usage = await this.listParticipationReferentialUsages();
+      const key = String(id || '').trim().toUpperCase();
+      if(String(kind || '').toLowerCase() === 'status'){
+        return { count: Number(usage.statuses[key] || 0), details: usage.statusDetails[key] || {} };
+      }
+      return { count: Number(usage.motifs[key] || 0), details: usage.motifDetails[key] || {} };
+    },
+    async deleteParticipationStatus(statusId){
+      if(!(await tableExists('scope_participation_statuses'))) return false;
+      const result = await q('delete from scope_participation_statuses where status_id = $1 returning status_id', [String(statusId || '').trim().toUpperCase()]);
+      return result.rowCount > 0;
+    },
+    async deleteParticipationMotif(motifId){
+      if(!(await tableExists('scope_participation_motifs'))) return false;
+      const result = await q('delete from scope_participation_motifs where motif_id = $1 returning motif_id', [String(motifId || '').trim().toUpperCase()]);
+      return result.rowCount > 0;
     },
     async listParticipationPolicyRows(){
       if(!(await tableExists('scope_participation_policies'))) return [];
