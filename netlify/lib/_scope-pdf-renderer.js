@@ -314,6 +314,71 @@ class ScopePdfRenderer {
       .text(text, MARGIN, this.doc.y, Object.assign({ width }, rest));
   }
 
+  renderPdfBox(title, text, palette){
+    const innerW = PAGE_W - 2 * MARGIN;
+    const padX = 12;
+    const padY = 10;
+    const body = String(text || '');
+    const titleSize = 8.8;
+    const bodySize = 8.6;
+    const bodyW = innerW - 2 * padX;
+    const titleH = this.doc.heightOfString(String(title || ''), { width: bodyW });
+    const bodyH = this.doc.heightOfString(body, { width: bodyW, align: 'left' });
+    const boxH = Math.max(48, padY + titleH + 7 + bodyH + padY);
+    this.doc.y += 5;
+    this.ensure(boxH + 12);
+    const y = this.doc.y;
+    this.doc.save();
+    const draw = typeof this.doc.roundedRect === 'function'
+      ? this.doc.roundedRect.bind(this.doc)
+      : this.doc.rect.bind(this.doc);
+    draw(MARGIN, y, innerW, boxH, 5).fillAndStroke(palette.fill, palette.border);
+    this.doc.fillColor(rgb(palette.title || INSTITUTION.ink)).font('Helvetica-Bold').fontSize(titleSize)
+      .text(String(title || '').toLocaleUpperCase('fr-CH'), MARGIN + padX, y + padY, { width: bodyW });
+    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(bodySize)
+      .text(body, MARGIN + padX, y + padY + titleH + 7, { width: bodyW, align: 'left' });
+    this.doc.restore();
+    this.doc.y = y + boxH + 12;
+  }
+
+  renderPdfInfoBox(text){
+    this.renderPdfBox('Information', text, {
+      fill: '#eef6ff',
+      border: '#171C8F',
+      title: INSTITUTION.ink
+    });
+  }
+
+  renderPdfAlertBox(text){
+    this.renderPdfBox('Alerte', text, {
+      fill: '#fdecef',
+      border: '#8c000b',
+      title: INSTITUTION.redDark
+    });
+  }
+
+  renderPermutationSummary(volumes){
+    const v = volumes || {};
+    const innerW = PAGE_W - 2 * MARGIN;
+    this.iconHeading('plain', 'Suivi des permutations et rattrapages', 10, { spaceBefore: 8, after: 8 });
+    const cells = [
+      ['Permutations', String(v.permutations || 0)],
+      ['Rattrapages réalisés', String(v.rattrapagesRealises || 0)],
+      ['À rattraper', String(v.aRattraper == null ? Math.max(0, Number(v.permutations || 0) - Number(v.rattrapagesRealises || 0)) : Number(v.aRattraper || 0))]
+    ];
+    const cellW = (innerW - 10) / 3;
+    const yPerm = this.doc.y;
+    cells.forEach((cell, index) => {
+      const x = MARGIN + index * (cellW + 5);
+      this.doc.rect(x, yPerm, cellW, 28).strokeColor(rgb(INSTITUTION.line)).lineWidth(0.5).stroke();
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8.5)
+        .text(cell[1], x + 6, yPerm + 5, { width: cellW - 12, align: 'center' });
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6.8)
+        .text(cell[0], x + 6, yPerm + 18, { width: cellW - 12, align: 'center' });
+    });
+    this.doc.y = yPerm + 38;
+  }
+
   eventStatutLabel(row){
     if(!row) return '';
     if(row.statut === 'ABSENT_NON_EXCUSE' || row.statutLabel === 'Non excusé') return 'Absent';
@@ -583,19 +648,22 @@ class ScopePdfRenderer {
     rows.forEach((r) => this.para(`${r[0]} : ${Number(r[1] || 0)}`));
   }
 
-  chart(title, dataset){
+  chart(title, dataset, options){
     if(!dataset || ['HORS_DAP', 'CONTEXTE_SDIS', 'CONTEXTE_CIBLE', 'CONTEXTE_DRILL'].includes(dataset.emptyReason)) return;
-    const h = chartHeight(dataset) + 18;
+    const baseH = chartHeight(dataset);
+    const compact = options && options.compact;
+    const chartH = compact ? Math.max(36, Math.round(baseH * 0.82)) : baseH;
+    const h = chartH + (compact ? 14 : 18);
     this.ensure(h + 16);
-    this.heading(dataset.question || title, 11);
-    const box = { x: MARGIN, y: this.doc.y, w: PAGE_W - 2 * MARGIN, h: chartHeight(dataset) };
+    this.heading(dataset.question || title, compact ? 10 : 11);
+    const box = { x: MARGIN, y: this.doc.y, w: PAGE_W - 2 * MARGIN, h: chartH };
     if(dataset.type === 'line') drawLineChart(this.doc, dataset, box);
     else if(dataset.type === 'grouped' || dataset.type === 'year-series'){
       const endY = drawGroupedChart(this.doc, dataset, box);
       this.doc.y = Math.max(box.y + box.h, endY) + 6;
       return;
     } else if(dataset.type === 'donut'){
-      const endY = drawDonutChart(this.doc, dataset, Object.assign({}, box, { h: Math.max(box.h, 120) }));
+      const endY = drawDonutChart(this.doc, dataset, Object.assign({}, box, { h: Math.max(box.h, compact ? 98 : 120) }));
       this.doc.y = endY + 6;
       return;
     } else if(dataset.type === 'stacked'){
@@ -826,7 +894,7 @@ class ScopePdfRenderer {
     this.kpiOfficial(m.officiel, { event: true });
     if(dap){
       const v = (m.officiel && m.officiel.volumes) || {};
-      this.para(permutationSummaryLabel(v));
+      this.renderPermutationSummary(v);
     }
     this.renderEncadrement(m);
     this.renderCatchups(m);
@@ -916,7 +984,7 @@ class ScopePdfRenderer {
     this.renderReportTitle(
       'RAPPORT DE PRÉSENCE MULTI-SESSION',
       String((m.event && m.event.libelle) || 'Formation').toLocaleUpperCase('fr-CH'),
-      `${(m.sessions || []).length || 0} sessions · ${formatDisplayDate(first.date || (m.period && m.period.from))} → ${formatDisplayDate(last.date || (m.period && m.period.to))}`
+      `${(m.sessions || []).length || 0} sessions · ${formatDisplayDate(first.date || (m.period && m.period.from))} - ${formatDisplayDate(last.date || (m.period && m.period.to))}`
     );
     this.kv([
       { label: 'Exercice', value: (m.event && m.event.libelle) || 'Multi-session' },
@@ -942,28 +1010,34 @@ class ScopePdfRenderer {
     this.kpiMultiSessionV2(m);
     this.para('Aucune personne n’est comptée deux fois : la contribution statistique est consolidée au niveau du Multi-session.', { size: 8 });
 
-    this.iconHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
-    if(m.graphs && m.graphs.sessions) this.chart('Participation par session', m.graphs.sessions);
-    if(m.graphs && m.graphs.repartition) this.chart('Répartition des statuts finaux', m.graphs.repartition);
-    if(m.graphs && m.graphs.motifs) this.chart('Motifs des excuses', m.graphs.motifs);
+    this.iconHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 12, after: TYPE.sectionGap });
+    if(m.graphs && m.graphs.sessions) this.chart('Participation par session', m.graphs.sessions, { compact: true });
+    if(m.graphs && m.graphs.repartition) this.chart('Répartition des statuts finaux', m.graphs.repartition, { compact: true });
+    if(m.graphs && m.graphs.motifs) this.chart('Motifs des excuses', m.graphs.motifs, { compact: true });
 
-    this.iconHeading('plain', 'Lecture des statuts', TYPE.section, { spaceBefore: 8, after: TYPE.notesGap });
+    this.nextPage();
+    this.iconHeading('plain', 'Lecture des statuts', TYPE.section, { spaceBefore: 10, after: TYPE.notesGap });
     [
-      ['Présent', 'La personne a participé à au moins une session et a satisfait son obligation de formation.'],
-      ['Excusé', 'La personne n’a participé à aucune session mais bénéficie d’une excuse reconnue et renseignée.'],
-      ['Absent', 'La personne n’a participé à aucune session et ne dispose ni d’une excuse ni d’une dispense reconnue.'],
-      ['Dispensé', 'La personne est dispensée de cet exercice et est exclue du calcul de la population comptabilisable.']
+      ['PRÉSENT', 'La personne a participé à au moins une session et a satisfait son obligation de formation.'],
+      ['EXCUSÉ', 'La personne n’a participé à aucune session mais bénéficie d’une excuse reconnue et renseignée.'],
+      ['ABSENT', 'La personne n’a participé à aucune session et ne dispose ni d’une excuse ni d’une dispense reconnue.'],
+      ['DISPENSÉ', 'La personne est dispensée de cet exercice et est exclue du calcul de la population comptabilisable.']
     ].forEach(([title, text]) => {
-      this.ensure(26);
+      this.ensure(32);
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8.5)
         .text(title, MARGIN, this.doc.y, { width: innerW });
+      this.doc.moveDown(0.1);
       this.doc.font('Helvetica').fontSize(8.5).text(text, MARGIN, this.doc.y, { width: innerW });
-      this.doc.moveDown(0.25);
+      this.doc.moveDown(0.55);
     });
     this.doc.moveDown(0.4);
     this.iconHeading('plain', 'Calcul du taux', TYPE.section, { spaceBefore: 4, after: TYPE.notesGap });
-    String(m.tauxExplanation || '').split('\n').filter(Boolean).forEach((line) => {
-      this.para(line, { size: line.startsWith('Taux de participation :') ? 10 : 8.8 });
+    const tauxParts = Array.isArray(m.tauxExplanation)
+      ? m.tauxExplanation
+      : String(m.tauxExplanation || '').split('\n').filter(Boolean);
+    tauxParts.slice(0, 3).forEach((line, index) => {
+      this.para(line, { size: index === 2 ? 10 : 8.8, bold: index === 2, align: index === 2 ? 'left' : 'justify' });
+      this.doc.moveDown(index === 1 ? 0.45 : 0.25);
     });
 
     const exceptions = m.exceptions || {};
@@ -1069,14 +1143,7 @@ class ScopePdfRenderer {
     });
     this.doc.y = y + h + 8;
     if(Number(s.nonRenseignes || 0) > 0){
-      this.ensure(38);
-      const boxY = this.doc.y;
-      this.doc.rect(MARGIN, boxY, innerW, 32).fillAndStroke('#f4f6f8', rgb(INSTITUTION.line));
-      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8.5)
-        .text('Information', MARGIN + 8, boxY + 6, { width: innerW - 16 });
-      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(8)
-        .text(`${s.nonRenseignes} personnes de la population Multi-session ne sont pas renseignées sur cette session. Elles peuvent avoir participé ou être destinées à participer à une autre session du même exercice.`, MARGIN + 8, boxY + 17, { width: innerW - 16 });
-      this.doc.y = boxY + 38;
+      this.renderPdfInfoBox(`${s.nonRenseignes} personnes de la population Multi-session ne sont pas renseignées sur cette session. Elles peuvent avoir participé ou être destinées à participer à une autre session du même exercice.`);
     }
 
     this.renderEncadrement(m);
@@ -1302,7 +1369,7 @@ class ScopePdfRenderer {
     });
     this.doc.y = y + h + 8;
     if(m.domaine === 'DAP'){
-      this.para(permutationSummaryLabel(v), { size: 8 });
+      this.renderPermutationSummary(v);
     }
 
     this.iconHeading('chart', 'Analyse graphique', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });

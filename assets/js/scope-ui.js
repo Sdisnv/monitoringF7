@@ -2905,6 +2905,7 @@
       const v2Badge = v2 && v2.engine === 'MULTI_SESSION_V2'
         ? `<small class="scope-events-multisession">Multi-session · ${escapeHtml(String(v2.currentSessionIndex || 1))}/${escapeHtml(String(v2.sessionCount || 1))} · ${escapeHtml(v2SessionStatusLabel)}</small>`
         : '';
+      const simpleReportReady = !isLegacy && !v2 && String(ev.statut || '').toUpperCase() === 'REALISE';
       const rowAction = v2 && v2.engine === 'MULTI_SESSION_V2'
         ? (v2Status === 'CLOTURE'
           ? { label: 'Voir le rapport', html: `<button type="button" class="scope-btn scope-events-list-action" data-report-event="${escapeHtml(ev.evenement_id)}">Voir le rapport</button>` }
@@ -2914,7 +2915,9 @@
               label: v2SessionClosed ? 'Ouvrir' : action,
               html: `<a class="scope-btn scope-events-list-action" href="${v2SessionClosed ? `#/exercices/${escapeHtml(ev.evenement_id)}` : href}">${escapeHtml(v2SessionClosed ? 'Ouvrir' : action)}</a>`
             }))
-        : { label: action, html: `<a class="scope-btn scope-events-list-action" href="${href}">${escapeHtml(action)}</a>` };
+        : (simpleReportReady
+          ? { label: 'Voir le rapport', html: `<button type="button" class="scope-btn scope-events-list-action" data-report-event="${escapeHtml(ev.evenement_id)}">Voir le rapport</button>` }
+          : { label: action, html: `<a class="scope-btn scope-events-list-action" href="${href}">${escapeHtml(action)}</a>` });
       const statutHtml = isLegacy
         ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
         : `${eventBusinessStateBadge(item)}<span class="scope-events-mode">${escapeHtml(L.modeLabel(mode))}</span>`;

@@ -93,14 +93,18 @@ function drawBarChart(doc, dataset, box){
   const labelW = 88;
   const valueW = 70;
   const barW = w - labelW - valueW - 8;
-  points.forEach((p) => {
+  const pointColor = (point, index) => {
+    if(point && point.token) return point.token === 'dispense' ? CHART_TOKENS.neutral : colorOf(point.token);
+    return groupedPalette(index);
+  };
+  points.forEach((p, index) => {
     const evaluable = p.value != null && Number.isFinite(Number(p.value));
     doc.fillColor(rgb(INSTITUTION.ink)).fontSize(8).font('Helvetica')
       .text(String(p.label || ''), x, y + 3, { width: labelW - 4 });
     doc.rect(x + labelW, y + 3, barW, 10).fill(rgb('#f3f5f8'));
     if(evaluable){
       const bw = Math.max(1, (Number(p.value) / 100) * barW);
-      doc.rect(x + labelW, y + 3, bw, 10).fill(rgb(CHART_TOKENS.primary));
+      doc.rect(x + labelW, y + 3, bw, 10).fill(rgb(pointColor(p, index)));
       const obj = p.objective && p.objective.thresholdPct != null ? Number(p.objective.thresholdPct) : null;
       if(obj != null){
         const ox = x + labelW + (obj / 100) * barW;

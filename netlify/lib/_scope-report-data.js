@@ -423,8 +423,10 @@ function multiSessionV2Graphs(state, nominatif){
   });
   const sessionPoints = (state.sessions || []).map((session, index) => {
     const count = acquiredByEvent.get(String(session.evenement_id || session.event_id || '')) || 0;
+    const tokens = ['primary', 'secondary', 'warning', 'neutral'];
     return {
       label: MultiSessionV2.sessionLabel(session, `Session ${index + 1}`),
+      token: tokens[index % tokens.length],
       value: Math.round((1000 * count) / totalAcquired) / 10,
       numerator: count,
       denominator: totalAcquired
@@ -432,10 +434,10 @@ function multiSessionV2Graphs(state, nominatif){
   });
   const stats = state.statistics || {};
   const repartitionPoints = [
-    { label: 'Présents', value: Number(stats.presents || 0), token: 'success' },
-    { label: 'Excusés', value: Number(stats.excuses || 0), token: 'warning' },
-    { label: 'Absents', value: Number(stats.nonExcuses || 0), token: 'danger' },
-    { label: 'Dispensés', value: Number(stats.dispenses || 0), token: 'dispense' }
+    { label: 'Présents', value: Number(stats.presents || 0), token: 'primary' },
+    { label: 'Excusés', value: Number(stats.excuses || 0), token: 'secondary' },
+    { label: 'Absents', value: Number(stats.nonExcuses || 0), token: 'warning' },
+    { label: 'Dispensés', value: Number(stats.dispenses || 0), token: 'neutral' }
   ].filter((row) => row.value > 0);
   const motifCounts = new Map();
   (nominatif || []).forEach((row) => {
@@ -564,10 +566,9 @@ async function multiSessionV2ReportModel(repo, fiche, query, includeNominatif){
     },
     tauxExplanation: [
       'Le taux de participation mesure la proportion du personnel soumis à l’obligation de formation ayant effectivement participé à au moins une des sessions proposées. Les personnes dispensées ne sont pas soumises à cette obligation et sont donc retirées de la population prise en compte pour le calcul. Une personne ayant participé à plusieurs sessions n’est comptabilisée qu’une seule fois.',
-      'Les personnes excusées ou absentes restent comprises dans la population comptabilisable puisqu’elles étaient soumises à l’obligation de formation. Elles n’augmentent toutefois pas le nombre de participations réalisées.',
-      `Population cible : ${stats.population || 0} personne(s). Dispensés : ${stats.dispenses || 0} personne(s). Population comptabilisable : ${stats.denominator || 0} personne(s). Participation acquise : ${stats.numerator || 0} personne(s).`,
+      `Les personnes excusées ou absentes restent comprises dans la population comptabilisable puisqu’elles étaient soumises à l’obligation de formation. Elles n’augmentent toutefois pas le nombre de participations réalisées.\nPopulation cible : ${stats.population || 0} personne(s). Dispensés : ${stats.dispenses || 0} personne(s). Population comptabilisable : ${stats.denominator || 0} personne(s). Participation acquise : ${stats.numerator || 0} personne(s).`,
       `Taux de participation : ${stats.numerator || 0} ÷ ${stats.denominator || 0} × 100 = ${stats.percentage == null ? 'non évaluable' : `${String(stats.percentage).replace('.', ',')} %`}.`
-    ].join('\n'),
+    ],
     quantitative: false,
     isLegacy: false,
     signatureRole: 'RESPONSABLE FORMATION',

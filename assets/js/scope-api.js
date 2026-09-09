@@ -376,10 +376,21 @@
           throw new ScopeApiError(response.status, payload || {});
         }
         const buffer = await response.arrayBuffer();
+        const reportFilename = (() => {
+          const disposition = response.headers.get('Content-Disposition') || '';
+          const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+          if (utf8Match && utf8Match[1]) {
+            try { return decodeURIComponent(utf8Match[1]).normalize('NFC'); } catch (_error) { /* fall back */ }
+          }
+          const quoted = disposition.match(/filename="([^"]+)"/i);
+          if (quoted && quoted[1]) return quoted[1].normalize('NFC');
+          const header = response.headers.get('X-Scope-Report-Filename') || '';
+          return (header || 'SCOPE_Rapport.pdf').normalize('NFC');
+        })();
         return {
           buffer,
           blob: new Blob([buffer], { type: 'application/pdf' }),
-          filename: response.headers.get('X-Scope-Report-Filename') || 'SCOPE_Rapport.pdf',
+          filename: reportFilename,
           sha256: response.headers.get('X-Scope-Report-Sha256') || '',
           pages: Number(response.headers.get('X-Scope-Report-Pages') || 0)
         };
