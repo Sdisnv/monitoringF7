@@ -3110,7 +3110,7 @@ function createScopeService(repo){
       const attendus = attendusByEvent.get(evenement.evenement_id) || [];
       const participations = partsByEvent.get(evenement.evenement_id) || [];
       const saisie = qtyByEvent.get(evenement.evenement_id) || null;
-      const etatMetier = businessEtatForEvenement(evenement, {
+      let etatMetier = businessEtatForEvenement(evenement, {
         participations,
         attendus,
         saisie,
@@ -3133,6 +3133,14 @@ function createScopeService(repo){
       let multiSessionV2 = null;
       if(repo.getMultisessionV2ForEvent && repo.listMultisessionV2Sessions){
         multiSessionV2 = await loadMultiSessionV2State(repo, evenement, evenement.evenement_id);
+      }
+      if(multiSessionV2 && multiSessionV2.engine === MultiSessionV2.ENGINE.MULTI_SESSION_V2){
+        const global = String(multiSessionV2.globalStatus || '').toUpperCase();
+        etatMetier = global === 'CLOTURE'
+          ? { code: 'TRAITE', label: 'Traité' }
+          : (global === 'A_FINALISER'
+            ? { code: 'A_FINALISER', label: 'À finaliser' }
+            : { code: 'EN_COURS', label: 'En cours' });
       }
       return {
         evenement: { ...evenement, mode_suivi: modeSuivi },
@@ -3407,6 +3415,13 @@ function createScopeService(repo){
     const coherenceAttendus = String(evenement.domaine_code || '').toUpperCase() === 'JSP'
       ? (jsp.jeunes || []).filter((row) => row.inclus !== false)
       : attendusActifs;
+    const etatMetier = v2State
+      ? (String(v2State.globalStatus || '').toUpperCase() === 'CLOTURE'
+        ? { code: 'TRAITE', label: 'Traité' }
+        : (String(v2State.globalStatus || '').toUpperCase() === 'A_FINALISER'
+          ? { code: 'A_FINALISER', label: 'À finaliser' }
+          : { code: 'EN_COURS', label: 'En cours' }))
+      : businessEtatForEvenement(evenement, { participations, attendus: attendusActifs, saisie, today: null });
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi },
       exercice: exerciceInfo,
@@ -3421,6 +3436,8 @@ function createScopeService(repo){
       sessionParticipation: v2State || prExerciseParticipation,
       multiSessionV2: v2State,
       engine: v2State ? MultiSessionV2.ENGINE.MULTI_SESSION_V2 : ((prExerciseParticipation && prExerciseParticipation.isMultiSession) ? MultiSessionV2.ENGINE.LEGACY_PR_MULTI : MultiSessionV2.ENGINE.SIMPLE),
+      etatMetier,
+      etat_metier: etatMetier,
       cycle: cycleInfo,
       journal,
       compteurs,

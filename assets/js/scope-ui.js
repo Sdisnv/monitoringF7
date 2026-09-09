@@ -561,6 +561,15 @@
     return Boolean(fiche && (fiche.engine === 'MULTI_SESSION_V2' || (fiche.multiSessionV2 && fiche.multiSessionV2.engine === 'MULTI_SESSION_V2')));
   }
 
+  function isMultiSessionV2CurrentSessionClosed(fiche) {
+    const ev = fiche && fiche.evenement;
+    const v2 = fiche && (fiche.multiSessionV2 || fiche.sessionParticipation);
+    if(!ev || !v2 || v2.engine !== 'MULTI_SESSION_V2') return false;
+    const current = (v2.sessions || []).find((row) => String(row.evenement_id || row.event_id || '') === String(ev.evenement_id || '')) || {};
+    const status = String(current.status || current.statut || ev.statut || '').toUpperCase();
+    return ['CLOTUREE', 'CLOTURE', 'REALISE', 'ANNULEE'].includes(status);
+  }
+
   function prSeriesLabels(fiche) {
     const raw = (fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionLabels) || [];
     const labels = raw.length ? raw : [prSessionLabelFromEvent(fiche && fiche.evenement)].filter(Boolean);
@@ -2872,12 +2881,24 @@
         : `#/exercices/${ev.evenement_id}`;
       const v2 = item.multiSessionV2 || null;
       const v2Status = String(v2 && v2.globalStatus || '').toUpperCase();
-      const v2StatusLabel = v2Status === 'CLOTURE'
-        ? 'Clôturé'
-        : (v2Status === 'A_FINALISER' ? 'Sessions clôturées — À finaliser' : 'En cours');
+      const v2Sessions = (v2 && v2.sessions) || [];
+      const v2CurrentSession = v2Sessions.find((row) => String(row.evenement_id || row.event_id || '') === String(ev.evenement_id || '')) || {};
+      const v2SessionStatus = String(v2CurrentSession.status || v2CurrentSession.statut || ev.statut || '').toUpperCase();
+      const v2SessionClosed = ['CLOTUREE', 'CLOTURE', 'REALISE', 'ANNULEE'].includes(v2SessionStatus);
+      const v2SessionStatusLabel = v2SessionClosed ? 'Session clôturée' : 'Session en cours';
       const v2Badge = v2 && v2.engine === 'MULTI_SESSION_V2'
-        ? `<small class="scope-events-multisession">Multi-session · ${escapeHtml(String(v2.currentSessionIndex || 1))}/${escapeHtml(String(v2.sessionCount || 1))} · ${escapeHtml(v2StatusLabel)}</small>`
+        ? `<small class="scope-events-multisession">Multi-session · ${escapeHtml(String(v2.currentSessionIndex || 1))}/${escapeHtml(String(v2.sessionCount || 1))} · ${escapeHtml(v2SessionStatusLabel)}</small>`
         : '';
+      const rowAction = v2 && v2.engine === 'MULTI_SESSION_V2'
+        ? (v2Status === 'CLOTURE'
+          ? { label: 'Voir le rapport', html: `<button type="button" class="scope-btn scope-events-list-action" data-report-event="${escapeHtml(ev.evenement_id)}">Voir le rapport</button>` }
+          : (v2Status === 'A_FINALISER'
+            ? { label: 'Finaliser', html: `<a class="scope-btn scope-events-list-action" href="#/exercices/${escapeHtml(ev.evenement_id)}">Finaliser</a>` }
+            : {
+              label: v2SessionClosed ? 'Ouvrir' : action,
+              html: `<a class="scope-btn scope-events-list-action" href="${v2SessionClosed ? `#/exercices/${escapeHtml(ev.evenement_id)}` : href}">${escapeHtml(v2SessionClosed ? 'Ouvrir' : action)}</a>`
+            }))
+        : { label: action, html: `<a class="scope-btn scope-events-list-action" href="${href}">${escapeHtml(action)}</a>` };
       const statutHtml = isLegacy
         ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
         : `${eventBusinessStateBadge(item)}<span class="scope-events-mode">${escapeHtml(L.modeLabel(mode))}</span>`;
@@ -2897,7 +2918,7 @@
         <td data-label="Public / OI">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Effectif">${effectifHtml}</td>
         <td data-label="État">${statutHtml}</td>
-        <td data-label="Action"><a class="scope-btn scope-events-list-action" href="${href}">${escapeHtml(action)}</a></td>
+        <td data-label="Action">${rowAction.html}</td>
       </tr>`;
         }).join('');
       }
@@ -6037,7 +6058,7 @@
     }
     const ev = fiche.evenement;
     const mode = eventMode(ev);
-    if (ev.statut === 'REALISE') return renderRealise();
+    if (ev.statut === 'REALISE' || isMultiSessionV2CurrentSessionClosed(fiche)) return renderRealise();
     const cta = L.principalCta({
       statut: ev.statut,
       populationFigee: ev.population_figee,

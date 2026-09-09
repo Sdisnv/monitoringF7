@@ -11,6 +11,7 @@ const ENGINE = Object.freeze({
 const FINAL_STATUSES = new Set(['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE']);
 const SATISFYING_STATUSES = new Set(['PRESENT', 'DISPENSE']);
 const SUPPORT_ROLES = new Set(['FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
+const FINAL_MULTISESSION_STATUSES = new Set(['CLOTUREE', 'CLOTURE', 'REALISE']);
 
 function norm(value){
   return String(value || '').trim();
@@ -221,7 +222,7 @@ function buildState(input = {}){
       kind: ENGINE.MULTI_SESSION_V2
     },
     allSessionsClosed,
-    globalStatus: upper(multisession.status) === 'CLOTUREE'
+    globalStatus: FINAL_MULTISESSION_STATUSES.has(upper(multisession.status))
       ? 'CLOTURE'
       : (allSessionsClosed ? 'A_FINALISER' : 'EN_COURS')
   };
