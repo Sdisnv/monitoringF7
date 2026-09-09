@@ -19,6 +19,11 @@
     'libelle',
     'mode_suivi',
     'code_event',
+    'event_definition_code',
+    'definition_version_code',
+    'policy_code',
+    'policy_version_code',
+    'multi_session_code',
     'session',
     'nb_sessions',
     'a_comptabiliser',
@@ -29,7 +34,7 @@
   const REQUIRED = ['date', 'domaine', 'cibles', 'libelle'];
   const STANDARD_COLUMNS = {
     obligatoires: ['code_cours', 'date', 'evenement', 'qui', 'stat_com', 'public_cible'],
-    optionnelles: ['debut', 'fin', 'domaine', 'sous_domaine', 'responsable', 'salle', 'code_event', 'session', 'nb_sessions'],
+    optionnelles: ['debut', 'fin', 'domaine', 'sous_domaine', 'responsable', 'salle', 'code_event', 'event_definition_code', 'definition_version_code', 'policy_code', 'policy_version_code', 'multi_session_code', 'session', 'nb_sessions'],
     informatives: ['semaine', 'jour', 'monitoring', 'code_exercice'],
     ignorees: []
   };
@@ -83,6 +88,11 @@
       .replace(/[^a-z0-9]+/g, '_');
     if (key === 'code_cours' || key === 'code_cour' || key === 'code') return 'code_cours';
     if (key === 'code_event' || key === 'code_evenement' || key === 'code_exercice' || key === 'exercice') return 'code_event';
+    if (key === 'event_definition_code' || key === 'definition_code' || key === 'code_definition' || key === 'modele_code') return 'event_definition_code';
+    if (key === 'definition_version_code' || key === 'version_definition') return 'definition_version_code';
+    if (key === 'policy_code' || key === 'code_policy' || key === 'politique_code') return 'policy_code';
+    if (key === 'policy_version_code' || key === 'version_policy' || key === 'participation_policy_version') return 'policy_version_code';
+    if (key === 'multi_session_code' || key === 'multisession_code' || key === 'code_multisession') return 'multi_session_code';
     if (key === 'session' || key === 'seance' || key === 'session_index' || key === 'numero_session') return 'session';
     if (key === 'nb_sessions' || key === 'nombre_sessions' || key === 'nombre_de_sessions' || key === 'sessions_total') return 'nb_sessions';
     if (key === 'date_evenement' || key === 'date_exercice') return key;
@@ -744,6 +754,11 @@
         }
       }
       const codeEvent = String(row.fields.code_event || '').trim();
+      const eventDefinitionCode = String(row.fields.event_definition_code || '').trim();
+      const definitionVersionCode = String(row.fields.definition_version_code || '').trim();
+      const policyCode = String(row.fields.policy_code || '').trim();
+      const policyVersionCode = String(row.fields.policy_version_code || '').trim();
+      const multiSessionCode = String(row.fields.multi_session_code || '').trim();
       const sessionIndex = parsePositiveInt(row.fields.session);
       const nbSessions = parsePositiveInt(row.fields.nb_sessions);
       if ((row.fields.session || row.fields.nb_sessions) && (!sessionIndex || !nbSessions)) {
@@ -872,6 +887,16 @@
         identifiantExterne: ext || null,
         codeEvent,
         exerciceCode: codeEvent,
+        eventDefinitionCode,
+        event_definition_code: eventDefinitionCode,
+        definitionVersionCode,
+        definition_version_code: definitionVersionCode,
+        policyCode,
+        policy_code: policyCode,
+        policyVersionCode,
+        policy_version_code: policyVersionCode,
+        multiSessionCode,
+        multi_session_code: multiSessionCode,
         sessionIndex,
         session_index: sessionIndex,
         nbSessions,
@@ -1005,6 +1030,11 @@
       const heureDebut = normalizeTime(f.debut);
       const heureFin = normalizeTime(f.fin);
       const codeEvent = String(f.code_event || '').trim();
+      const eventDefinitionCode = String(f.event_definition_code || '').trim();
+      const definitionVersionCode = String(f.definition_version_code || '').trim();
+      const policyCode = String(f.policy_code || '').trim();
+      const policyVersionCode = String(f.policy_version_code || '').trim();
+      const multiSessionCode = String(f.multi_session_code || '').trim();
       const sessionIndex = parsePositiveInt(f.session);
       const nbSessions = parsePositiveInt(f.nb_sessions);
       if ((f.session || f.nb_sessions) && (!sessionIndex || !nbSessions)) errors.push({ error: 'sessions_invalides', message: 'SESSION et NB_SESSIONS doivent être des entiers positifs.' });
@@ -1106,6 +1136,16 @@
         publicCibleCode: cibleCodes,
         codeEvent,
         exerciceCode: codeEvent,
+        eventDefinitionCode,
+        event_definition_code: eventDefinitionCode,
+        definitionVersionCode,
+        definition_version_code: definitionVersionCode,
+        policyCode,
+        policy_code: policyCode,
+        policyVersionCode,
+        policy_version_code: policyVersionCode,
+        multiSessionCode,
+        multi_session_code: multiSessionCode,
         sessionIndex,
         session_index: sessionIndex,
         nbSessions,
@@ -1151,6 +1191,16 @@
       if(line.nbSessions && line.sessionIndex){
         group.codeEvent = line.codeEvent;
         group.exerciceCode = line.exerciceCode;
+        group.eventDefinitionCode = line.eventDefinitionCode;
+        group.event_definition_code = line.event_definition_code;
+        group.definitionVersionCode = line.definitionVersionCode;
+        group.definition_version_code = line.definition_version_code;
+        group.policyCode = line.policyCode;
+        group.policy_code = line.policy_code;
+        group.policyVersionCode = line.policyVersionCode;
+        group.policy_version_code = line.policy_version_code;
+        group.multiSessionCode = line.multiSessionCode;
+        group.multi_session_code = line.multi_session_code;
         group.sessionIndex = line.sessionIndex;
         group.session_index = line.sessionIndex;
         group.nbSessions = line.nbSessions;

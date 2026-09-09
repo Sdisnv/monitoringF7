@@ -42,6 +42,7 @@ const {
   isCompatiblePermutationEvent
 } = require('./_scope-model');
 const participationPolicy = require('./_scope-participation-policy');
+const genericCatalog = require('./_scope-generic-event-catalog');
 const { matchesAssignmentToEventTarget } = require('./_scope-target-resolution');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const {
@@ -232,6 +233,7 @@ function createScopeService(repo){
   async function participationPolicies(){
     const motifRows = await participationMotifRows(repo);
     const policyRows = await participationPolicyRows(repo);
+    const policyVersions = repo.listParticipationPolicyVersions ? await repo.listParticipationPolicyVersions({ active: true }) : [];
     const domaines = repo.listDomaines ? await repo.listDomaines() : [];
     const domainCodes = [...new Set([
       ...participationPolicy.listDefaultPolicies().map((policy) => policy.domainCode),
@@ -247,9 +249,121 @@ function createScopeService(repo){
         statuses: Object.values(participationPolicy.STATUS_LIBRARY).sort((a, b) => a.order - b.order),
         motifs: participationPolicy.motifCatalog(motifRows),
         roles: Object.values(participationPolicy.ROLE_LIBRARY).sort((a, b) => a.order - b.order),
-        policies
+        policies,
+        policyVersions
       }
     };
+  }
+
+  async function formationCatalog(filter = {}){
+    const [definitions, definitionVersions, policyVersions, domaines, cibles] = await Promise.all([
+      repo.listEventDefinitions ? repo.listEventDefinitions(filter) : Promise.resolve([]),
+      repo.listEventDefinitionVersions ? repo.listEventDefinitionVersions(filter) : Promise.resolve([]),
+      repo.listParticipationPolicyVersions ? repo.listParticipationPolicyVersions({ active: true }) : Promise.resolve([]),
+      repo.listDomaines ? repo.listDomaines() : Promise.resolve([]),
+      repo.listCibles ? repo.listCibles() : Promise.resolve([])
+    ]);
+    const versionsByDefinition = new Map();
+    for(const version of definitionVersions || []){
+      const id = version.definition_id || version.definitionId;
+      const list = versionsByDefinition.get(id) || [];
+      list.push(version);
+      versionsByDefinition.set(id, list);
+    }
+    return {
+      formationCatalog: {
+        routes: genericCatalog.ROUTES,
+        modes: genericCatalog.ORGANISATION_MODES,
+        definitions: (definitions || []).map((definition) => Object.assign({}, definition, {
+          versions: versionsByDefinition.get(definition.definition_id || definition.definitionId) || []
+        })),
+        definitionVersions,
+        policyVersions,
+        domaines,
+        cibles,
+        transition: ['SIMPLE_LEGACY', 'PR_LEGACY', 'GENERIC_SIMPLE', 'GENERIC_MULTI_SESSION']
+      }
+    };
+  }
+
+  async function createEventDefinition(body, actor){
+    if(!repo.upsertEventDefinition || !repo.upsertEventDefinitionVersion){
+      throw new HttpError(501, 'catalogue_indisponible', 'Le catalogue formation n’est pas disponible sur ce stockage.');
+    }
+    const definition = genericCatalog.normalizeDefinition(body || {});
+    const policyVersions = repo.listParticipationPolicyVersions ? await repo.listParticipationPolicyVersions({ domain: definition.domain, active: true }) : [];
+    const requestedMode = genericCatalog.normalizeDefinitionVersion({
+      ...body,
+      domain: definition.domain,
+      mode_organisation: body.modeOrganisation || body.mode_organisation || body.mode || body.modeSession,
+      session_count: body.sessionCount || body.session_count || body.nombreSessionsAttendu
+    }).mode_organisation;
+    const isMultiSession = requestedMode === genericCatalog.ORGANISATION_MODES.MULTI_SESSION;
+    const compatibleMultiPolicy = isMultiSession
+      ? (policyVersions || []).find((row) => !((row.config && row.config.activeStatuses) || []).map((status) => String(status || '').toUpperCase()).includes('PERMUTATION'))
+      : null;
+    let policyVersion = (policyVersions || []).find((row) => String(row.policy_version_id || row.policyVersionId) === String(body.policyVersionId || body.policy_version_id))
+      || compatibleMultiPolicy
+      || (policyVersions || [])[0]
+      || null;
+    if(!policyVersion && repo.upsertParticipationPolicyVersion){
+      const policySnapshot = await capturePolicySnapshot(repo, definition.domain);
+      policyVersion = await repo.upsertParticipationPolicyVersion(genericCatalog.policyVersionFromDomainPolicy(policySnapshot, { year: Number(body.year || body.annee || 2026) }));
+    }
+    const versionInput = genericCatalog.validateDefinitionVersion({
+      ...body,
+      definition_id: definition.definition_id,
+      domain: definition.domain,
+      policy_version_id: policyVersion && (policyVersion.policy_version_id || policyVersion.policyVersionId),
+      valid_from: body.validFrom || body.valid_from || `${Number(body.year || body.annee || 2026)}-01-01`,
+      valid_to: body.validTo || body.valid_to || `${Number(body.year || body.annee || 2026)}-12-31`,
+      mode_organisation: body.modeOrganisation || body.mode_organisation || body.mode || body.modeSession,
+      session_count: body.sessionCount || body.session_count || body.nombreSessionsAttendu
+    }, policyVersion && policyVersion.config);
+    return repo.withTransaction(async (tx) => {
+      const savedDefinition = await tx.upsertEventDefinition(definition);
+      const savedVersion = await tx.upsertEventDefinitionVersion(Object.assign({}, versionInput, {
+        definition_id: savedDefinition.definition_id || savedDefinition.definitionId
+      }));
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'event_definition',
+        entite_id: savedDefinition.definition_id || savedDefinition.definitionId,
+        action: 'CREER_DEFINITION_EXERCICE',
+        apres: {
+          code: savedDefinition.code,
+          domain: savedDefinition.domain,
+          versionId: savedVersion.definition_version_id || savedVersion.definitionVersionId,
+          mode: savedVersion.mode_organisation || savedVersion.modeOrganisation
+        }
+      });
+      return { definition: savedDefinition, version: savedVersion };
+    });
+  }
+
+  async function reconductEventDefinitionVersion(versionId, body, actor){
+    if(!repo.getEventDefinitionVersion || !repo.upsertEventDefinitionVersion){
+      throw new HttpError(501, 'catalogue_indisponible', 'Le catalogue formation n’est pas disponible sur ce stockage.');
+    }
+    const current = await repo.getEventDefinitionVersion(versionId);
+    if(!current) throw new HttpError(404, 'definition_version_introuvable', 'Version de définition introuvable.');
+    const targetYear = Number(body?.year || body?.annee);
+    let next;
+    try {
+      next = genericCatalog.reconductDefinitionVersion(current, targetYear, body?.patch || {});
+    } catch (error) {
+      throw new HttpError(400, 'reconduction_invalide', error.message);
+    }
+    const saved = await repo.upsertEventDefinitionVersion(next);
+    await repo.appendJournal({
+      auteur_id: actorId(actor),
+      entite: 'event_definition_version',
+      entite_id: saved.definition_version_id || saved.definitionVersionId,
+      action: 'RECONDUIRE_VERSION_EXERCICE',
+      avant: { versionId },
+      apres: { targetYear }
+    });
+    return { version: saved };
   }
 
   async function saveParticipationPolicy(domainCode, body, actor){
@@ -338,11 +452,12 @@ function createScopeService(repo){
   }
 
   async function referentiels(){
-    const [domaines, cibles, suivi, participation] = await Promise.all([
+    const [domaines, cibles, suivi, participation, catalogue] = await Promise.all([
       repo.listDomaines(),
       repo.listCibles(),
       repo.listSuiviNominatif ? repo.listSuiviNominatif() : Promise.resolve([]),
-      participationPolicies()
+      participationPolicies(),
+      formationCatalog()
     ]);
     const mappedDomaines = domaines.map(d => ({
       code: d.code,
@@ -372,6 +487,7 @@ function createScopeService(repo){
       domaines: mappedDomaines,
       cibles: mappedCibles,
       arbre,
+      formationCatalog: catalogue.formationCatalog,
       suiviNominatif: (suivi || []).map((row) => ({
         suiviId: row.suivi_id || row.suiviId,
         portee: row.portee,
@@ -472,11 +588,24 @@ function createScopeService(repo){
     }
     const codeCours = await nextManualCode(repo, body, cibleIds);
     const sessionConfig = normalizeSessionConfig(body);
+    const requestedDefinitionVersionId = body.definitionVersionId || body.definition_version_id || null;
+    const definitionVersion = requestedDefinitionVersionId && repo.getEventDefinitionVersion
+      ? await repo.getEventDefinitionVersion(requestedDefinitionVersionId)
+      : null;
+    if(requestedDefinitionVersionId && !definitionVersion){
+      throw new HttpError(400, 'definition_version_introuvable', 'Version de définition introuvable.');
+    }
+    const genericEngineRoute = definitionVersion
+      ? genericCatalog.resolveEngineRoute({ domaine_code: domaine }, { definitionVersion })
+      : null;
     return repo.withTransaction(async (tx) => {
       cibleIds = await expandDapGroupedCibles(tx, domaine, libelle, cibleIds);
       const snapshot = await capturePolicySnapshot(tx, domaine);
       let exercice = null;
-      if(sessionConfig.modeSession === 'MULTI'){
+      const definitionMode = definitionVersion && (definitionVersion.mode_organisation || definitionVersion.modeOrganisation);
+      const isGenericMulti = definitionMode === genericCatalog.ORGANISATION_MODES.MULTI_SESSION;
+      if(sessionConfig.modeSession === 'MULTI' || isGenericMulti){
+        const sessionCount = isGenericMulti ? Number(definitionVersion.session_count || definitionVersion.sessionCount || sessionConfig.nombreSessionsAttendu) : sessionConfig.nombreSessionsAttendu;
         exercice = await tx.upsertExercise({
           exercice_key: exerciseKeyFromParts('manual', body.exerciceCode || body.exercice_code || codeCours, date, body.exerciceLibelle || body.exercice_libelle || libelle),
           domaine_code: domaine,
@@ -484,9 +613,13 @@ function createScopeService(repo){
           libelle: String(body.exerciceLibelle || body.exercice_libelle || `${libelle} — ${String(date).slice(0, 4)}`).trim(),
           annee: Number(String(date).slice(0, 4)),
           mode_session: 'MULTI',
-          nombre_sessions_attendu: sessionConfig.nombreSessionsAttendu,
-          consolidation_active: sessionConfig.consolidationActive,
+          nombre_sessions_attendu: sessionCount,
+          consolidation_active: isGenericMulti ? true : sessionConfig.consolidationActive,
           source: 'MANUEL',
+          definition_version_id: definitionVersion && (definitionVersion.definition_version_id || definitionVersion.definitionVersionId),
+          policy_version_id: definitionVersion && (definitionVersion.policy_version_id || definitionVersion.policyVersionId),
+          engine_route: genericEngineRoute,
+          configuration_snapshot: definitionVersion ? genericCatalog.snapshotDefinitionVersion({ code: definitionVersion.definitionCode, label: definitionVersion.definitionLabel, domain: definitionVersion.domain }, definitionVersion, { policy_version_id: definitionVersion.policy_version_id || definitionVersion.policyVersionId, policy_code: definitionVersion.policyCode, version_code: definitionVersion.policyVersionCode }) : null,
           metadata: { createdFrom: 'manual_event_form' }
         });
       }
@@ -508,6 +641,10 @@ function createScopeService(repo){
         exercice_id: exercice && exercice.exercice_id,
         session_index: exercice ? sessionConfig.sessionIndex : null,
         session_label: exercice ? sessionConfig.sessionLabel : null,
+        definition_version_id: definitionVersion && (definitionVersion.definition_version_id || definitionVersion.definitionVersionId),
+        policy_version_id: definitionVersion && (definitionVersion.policy_version_id || definitionVersion.policyVersionId),
+        engine_route: genericEngineRoute,
+        engine_snapshot: definitionVersion ? genericCatalog.snapshotDefinitionVersion({ code: definitionVersion.definitionCode, label: definitionVersion.definitionLabel, domain: definitionVersion.domain }, definitionVersion, { policy_version_id: definitionVersion.policy_version_id || definitionVersion.policyVersionId, policy_code: definitionVersion.policyCode, version_code: definitionVersion.policyVersionCode }) : null,
         pr_exercise_group_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}` : null,
         pr_session_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}.${sessionConfig.sessionIndex}` : null,
         exercise_equivalence_key: body.exerciseEquivalenceKey || body.exercise_equivalence_key || body.exerciceId || body.exercice_id || null,
@@ -3651,6 +3788,35 @@ function createScopeService(repo){
     return exerciseKeyFromParts('import', line.exerciceCode || line.codeEvent || line.libelle, line.date, line.libelle);
   }
 
+  async function importDefinitionBinding(tx, line){
+    const explicitCode = String(line?.eventDefinitionCode || line?.event_definition_code || '').trim();
+    if(!explicitCode || !tx.listEventDefinitions || !tx.listEventDefinitionVersions) return null;
+    const definitions = await tx.listEventDefinitions({ status: 'ACTIF' });
+    const definition = (definitions || []).find((row) => String(row.code || '').toUpperCase() === genericCatalog.definitionCode({ code: explicitCode }));
+    if(!definition) return null;
+    const versions = await tx.listEventDefinitionVersions({ definitionId: definition.definition_id || definition.definitionId, active: true });
+    const requestedVersion = String(line?.definitionVersionCode || line?.definition_version_code || '').trim();
+    const version = requestedVersion
+      ? (versions || []).find((row) => String(row.version_code || row.versionCode || '').toUpperCase() === requestedVersion.toUpperCase())
+      : genericCatalog.findApplicableVersion(versions, definition.definition_id || definition.definitionId, line.date);
+    if(!version) return null;
+    const policyVersionId = version.policy_version_id || version.policyVersionId || null;
+    const engineRoute = genericCatalog.resolveEngineRoute({ domaine_code: line.domaineStockage || line.domaine }, { definitionVersion: version });
+    const snapshot = genericCatalog.snapshotDefinitionVersion(definition, version, {
+      policy_version_id: policyVersionId,
+      policy_code: version.policyCode,
+      version_code: version.policyVersionCode
+    });
+    return {
+      definition,
+      version,
+      definitionVersionId: version.definition_version_id || version.definitionVersionId,
+      policyVersionId,
+      engineRoute,
+      snapshot
+    };
+  }
+
   async function attachImportedExerciseSessions(tx, imported, actor, source){
     const candidates = (imported || []).filter((item) => {
       const line = item.line || {};
@@ -3667,6 +3833,7 @@ function createScopeService(repo){
     const attached = [];
     for(const [key, list] of byKey.entries()){
       const first = list[0].line;
+      const binding = await importDefinitionBinding(tx, first);
       const count = Number(first.nbSessions || first.nombreSessionsAttendu);
       const exercice = await tx.upsertExercise({
         exercice_key: exerciseKeyFromParts(source || 'import', key, first.date, first.libelle),
@@ -3678,6 +3845,10 @@ function createScopeService(repo){
         nombre_sessions_attendu: count,
         consolidation_active: true,
         source: 'IMPORT',
+        definition_version_id: binding && binding.definitionVersionId,
+        policy_version_id: binding && binding.policyVersionId,
+        engine_route: binding && binding.engineRoute,
+        configuration_snapshot: binding && binding.snapshot,
         metadata: { source, sourceLineNos: list.map((item) => item.line.ligneNo) }
       });
       for(const item of list){
@@ -3687,7 +3858,11 @@ function createScopeService(repo){
         const patch = {
           exercice_id: exercice.exercice_id,
           session_index: sessionIndex,
-          session_label: `Session ${sessionIndex}`
+          session_label: `Session ${sessionIndex}`,
+          definition_version_id: binding && binding.definitionVersionId,
+          policy_version_id: binding && binding.policyVersionId,
+          engine_route: binding && binding.engineRoute,
+          engine_snapshot: binding && binding.snapshot
         };
         if(String(line.domaineStockage || '').toUpperCase() === 'PR'){
           patch.pr_exercise_group_key = `EXERCICE:${exercice.exercice_id}`;
@@ -3708,6 +3883,33 @@ function createScopeService(repo){
     return attached;
   }
 
+  async function enrichGenericImportPreview(preview){
+    const defs = repo.listEventDefinitions ? await repo.listEventDefinitions({ status: 'ACTIF' }) : [];
+    const versions = repo.listEventDefinitionVersions ? await repo.listEventDefinitionVersions({ active: true }) : [];
+    const withLines = genericCatalog.enrichImportLinesWithMatches(preview.lignes || [], {
+      definitions: defs,
+      definitionVersions: versions
+    });
+    const byLine = new Map(withLines.map((line) => [Number(line.ligneNo), line.genericMatch]));
+    const groups = (preview.groups || []).map((group) => {
+      const matches = (group.sourceLineNos || []).map((lineNo) => byLine.get(Number(lineNo))).filter(Boolean);
+      const best = matches.find((m) => m.status === 'EXACT') || matches.find((m) => m.status === 'SUGGESTED') || matches[0] || null;
+      return Object.assign({}, group, {
+        genericMatch: best,
+        actionPrevue: best && best.definitionId && group.actionPrevue === 'CREER' ? 'VALIDATION_HUMAINE_REQUISE' : group.actionPrevue
+      });
+    });
+    return Object.assign({}, preview, {
+      lignes: withLines,
+      groups,
+      genericDefinitions: {
+        suggestions: withLines.filter((line) => line.genericMatch && line.genericMatch.definitionId).length,
+        unknown: withLines.filter((line) => line.genericMatch && line.genericMatch.status === 'UNKNOWN_DEFINITION').length,
+        validationRequired: withLines.some((line) => line.genericMatch && line.genericMatch.action === 'VALIDATION_HUMAINE_REQUISE')
+      }
+    });
+  }
+
   async function previewImportEvenements(body){
     const csvText = String(body?.csvText || body?.csv || '');
     if(!csvText.trim()){
@@ -3719,14 +3921,14 @@ function createScopeService(repo){
       if(preview.error === 'fichier_vide'){
         throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
       }
-      return { ...preview, ecriture: false };
+      return { ...(await enrichGenericImportPreview(preview)), ecriture: false };
     }
     if(format === importContract.FORMAT_STANDARD){
       const preview = importContract.previewStandardImport(csvText, await previewNativeContext(body));
       if(preview.error === 'fichier_vide'){
         throw new HttpError(400, 'csv_vide', 'Fichier CSV vide.');
       }
-      return { ...(await enrichStandardPreviewPopulations(preview)), ecriture: false };
+      return { ...(await enrichStandardPreviewPopulations(await enrichGenericImportPreview(preview))), ecriture: false };
     }
     if(format === importContract.FORMAT_F7){
       const preview = previewFromCsv(csvText, await previewContext());
@@ -3777,6 +3979,7 @@ function createScopeService(repo){
           group.sourceLineNos.forEach((lineNo) => skippedByLine.set(lineNo, skipped[skipped.length - 1]));
           continue;
         }
+        const genericBinding = await importDefinitionBinding(tx, group);
         const event = await tx.insertEvenement({
           date: group.date,
           domaine_code: group.domaineStockage,
@@ -3792,6 +3995,10 @@ function createScopeService(repo){
           heure_fin: group.heureFin || null,
           salle: group.salle || null,
           responsable: group.responsable || null,
+          definition_version_id: genericBinding && genericBinding.definitionVersionId,
+          policy_version_id: genericBinding && genericBinding.policyVersionId,
+          engine_route: genericBinding && genericBinding.engineRoute,
+          engine_snapshot: genericBinding && genericBinding.snapshot,
           cible_ids: (group.cibles || []).map((c) => c.cibleId)
         });
         if(event.already_exists){
@@ -3968,6 +4175,7 @@ function createScopeService(repo){
           skipped.push({ ligneNo: line.ligneNo, statut: line.statut, fingerprint: line.fingerprint });
           continue;
         }
+        const genericBinding = await importDefinitionBinding(tx, line);
         const evenement = await tx.insertEvenement({
           date: line.date,
           domaine_code: line.domaineStockage,
@@ -3977,6 +4185,10 @@ function createScopeService(repo){
           origine: 'IMPORT_CSV',
           mode_suivi: line.modePropose,
           identifiant_externe: line.identifiantExterne || null,
+          definition_version_id: genericBinding && genericBinding.definitionVersionId,
+          policy_version_id: genericBinding && genericBinding.policyVersionId,
+          engine_route: genericBinding && genericBinding.engineRoute,
+          engine_snapshot: genericBinding && genericBinding.snapshot,
           cible_ids: (line.cibles || []).map((c) => c.cibleId)
         });
         created.push({
@@ -4461,11 +4673,36 @@ function createScopeService(repo){
     }
   }
 
+  async function performanceDiagnostics(){
+    return {
+      performance: {
+        generatedAt: new Date().toISOString(),
+        scope: 'navigation_principale',
+        measurements: genericCatalog.performanceBaseline(),
+        appliedOptimizations: [
+          'referentiels client mis en cache et invalides apres ecriture',
+          'listes evenements/cycles/dashboard/vigilance chargees via cache court par periode',
+          'suppression du double appel objectifs sur changement de route',
+          'compteur personnel reutilise entre vues au lieu de recharger le repertoire complet'
+        ],
+        safeguards: [
+          'cache court TTL',
+          'invalidation explicite apres import/ecriture',
+          'tokens de requetes existants conserves pour eviter les reponses obsoletes'
+        ]
+      }
+    };
+  }
+
   return {
     referentiels,
     participationPolicies,
     saveParticipationPolicy,
     saveParticipationMotif,
+    formationCatalog,
+    createEventDefinition,
+    reconductEventDefinitionVersion,
+    performanceDiagnostics,
     listPersonnes,
     affectationsValides,
     listEvenements,

@@ -177,6 +177,10 @@
       proposeCycle(body) { return request('POST', '/cycles/proposer', body); },
       previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
+      formationCatalog(params) { return request('GET', `/formation/catalog${queryString(params || {})}`); },
+      createEventDefinition(body) { return request('POST', '/formation/definitions', body); },
+      reconductEventDefinitionVersion(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/reconduct`, body); },
+      performanceDiagnostics() { return request('GET', '/diagnostics/performance'); },
       async previewPersonnelSync(body) {
         const payload = await directRequest('POST', '/.netlify/functions/scope-personnel-import-analyze', Object.assign({}, body || {}, {
           fileText: (body && (body.fileText || body.csvText)) || '',

@@ -56,6 +56,9 @@ function createMemoryRepo(){
   const cycles = new Map();
   const cyclePersonnes = new Map();
   const exercices = new Map();
+  const eventDefinitions = new Map();
+  const eventDefinitionVersions = new Map();
+  const participationPolicyVersions = new Map();
   const multisessionsV2 = new Map();
   const multisessionV2Sessions = new Map();
   const multisessionV2Population = new Map();
@@ -79,6 +82,68 @@ function createMemoryRepo(){
     commentaire: 'Configuration SDIS NV par défaut - équivalence V1',
     auteur_id: null
   }]));
+  const catalog = require('./_scope-generic-event-catalog');
+  policy.listDefaultPolicies().forEach((row) => {
+    const version = catalog.policyVersionFromDomainPolicy(row, { year: 2026 });
+    const id = version.policy_version_id || randomUUID();
+    participationPolicyVersions.set(id, Object.assign({}, version, {
+      policy_version_id: id,
+      created_at: now(),
+      updated_at: now()
+    }));
+  });
+  const dapPolicy = policy.resolveParticipationPolicy('DAP');
+  const dapMultiConfig = Object.assign({}, dapPolicy, {
+    policyVersion: 'dap-multisession-2026',
+    activeStatuses: (dapPolicy.activeStatuses || []).filter((status) => status !== 'PERMUTATION'),
+    behavior: Object.assign({}, dapPolicy.behavior || {}, {
+      propagationScope: 'ALL_EXERCISE_SESSIONS',
+      deduplicationScope: 'EXERCISE'
+    })
+  });
+  const dapMultiPolicyVersion = catalog.normalizePolicyVersion({
+    policy_code: 'DAP-MULTISESSION',
+    domain: 'DAP',
+    version_code: '2026',
+    valid_from: '2026-01-01',
+    valid_to: '2026-12-31',
+    config: dapMultiConfig,
+    metadata: { source: 'generic_event_session_policy_architecture_1', explicit: true }
+  });
+  dapMultiPolicyVersion.policy_version_id = dapMultiPolicyVersion.policy_version_id || randomUUID();
+  participationPolicyVersions.set(dapMultiPolicyVersion.policy_version_id, Object.assign({}, dapMultiPolicyVersion, {
+    created_at: now(),
+    updated_at: now()
+  }));
+  const dapDefinition = catalog.normalizeDefinition({
+    code: 'DAP-FORMATION-GROUPEE',
+    label: 'Formation groupée DAP',
+    domain: 'DAP',
+    description: 'Premier modèle générique raccordable au Multi-session V2 validé.',
+    metadata: { source: 'generic_event_session_policy_architecture_1', explicit: true }
+  });
+  dapDefinition.definition_id = dapDefinition.definition_id || randomUUID();
+  eventDefinitions.set(dapDefinition.definition_id, Object.assign({}, dapDefinition, {
+    created_at: now(),
+    updated_at: now()
+  }));
+  const dapDefinitionVersion = catalog.normalizeDefinitionVersion({
+    definition_id: dapDefinition.definition_id,
+    version_code: '2026',
+    valid_from: '2026-01-01',
+    valid_to: '2026-12-31',
+    mode_organisation: catalog.ORGANISATION_MODES.MULTI_SESSION,
+    session_count: 2,
+    policy_version_id: dapMultiPolicyVersion.policy_version_id,
+    population_rule: { type: 'SCOPE_TARGET_RULE', domain: 'DAP', scope: 'CIBLES_EVENEMENT' },
+    numbering_pattern: '{label} {index.major}.{index.minor}',
+    metadata: { source: 'generic_event_session_policy_architecture_1', reference: 'DAP-FORMATION-GROUPEE-1-2026' }
+  });
+  dapDefinitionVersion.definition_version_id = dapDefinitionVersion.definition_version_id || randomUUID();
+  eventDefinitionVersions.set(dapDefinitionVersion.definition_version_id, Object.assign({}, dapDefinitionVersion, {
+    created_at: now(),
+    updated_at: now()
+  }));
   const permutations = new Map();
   suiviNominatif.set('8c0a0002-2026-4000-8000-000000000001', {
     suivi_id: '8c0a0002-2026-4000-8000-000000000001',
@@ -112,6 +177,10 @@ function createMemoryRepo(){
       mode_session: exercice ? exercice.mode_session : null,
       nombre_sessions_attendu: exercice ? exercice.nombre_sessions_attendu : null,
       consolidation_active: exercice ? exercice.consolidation_active : false,
+      definition_version_id: item.definition_version_id || (exercice && exercice.definition_version_id) || null,
+      policy_version_id: item.policy_version_id || (exercice && exercice.policy_version_id) || null,
+      engine_route: item.engine_route || (exercice && exercice.engine_route) || null,
+      engine_snapshot: item.engine_snapshot || null,
       exercice: exercice ? { ...exercice } : null
     };
   }
@@ -141,6 +210,9 @@ function createMemoryRepo(){
       cycles: cloneMap(cycles),
       cyclePersonnes: cloneMap(cyclePersonnes),
       exercices: cloneMap(exercices),
+      eventDefinitions: cloneMap(eventDefinitions),
+      eventDefinitionVersions: cloneMap(eventDefinitionVersions),
+      participationPolicyVersions: cloneMap(participationPolicyVersions),
       multisessionsV2: cloneMap(multisessionsV2),
       multisessionV2Sessions: cloneMap(multisessionV2Sessions),
       multisessionV2Population: cloneMap(multisessionV2Population),
@@ -171,6 +243,9 @@ function createMemoryRepo(){
     cycles.clear(); (snap.cycles || new Map()).forEach((v, k) => cycles.set(k, v));
     cyclePersonnes.clear(); (snap.cyclePersonnes || new Map()).forEach((v, k) => cyclePersonnes.set(k, v));
     exercices.clear(); (snap.exercices || new Map()).forEach((v, k) => exercices.set(k, v));
+    eventDefinitions.clear(); (snap.eventDefinitions || new Map()).forEach((v, k) => eventDefinitions.set(k, v));
+    eventDefinitionVersions.clear(); (snap.eventDefinitionVersions || new Map()).forEach((v, k) => eventDefinitionVersions.set(k, v));
+    participationPolicyVersions.clear(); (snap.participationPolicyVersions || new Map()).forEach((v, k) => participationPolicyVersions.set(k, v));
     multisessionsV2.clear(); (snap.multisessionsV2 || new Map()).forEach((v, k) => multisessionsV2.set(k, v));
     multisessionV2Sessions.clear(); (snap.multisessionV2Sessions || new Map()).forEach((v, k) => multisessionV2Sessions.set(k, v));
     multisessionV2Population.clear(); (snap.multisessionV2Population || new Map()).forEach((v, k) => multisessionV2Population.set(k, v));
@@ -392,6 +467,10 @@ function createMemoryRepo(){
         pr_session_key: row.pr_session_key || row.prSessionKey || null,
         participation_policy_version: row.participation_policy_version || row.participationPolicyVersion || null,
         participation_policy_snapshot: row.participation_policy_snapshot || row.participationPolicySnapshot || null,
+        definition_version_id: row.definition_version_id || row.definitionVersionId || null,
+        policy_version_id: row.policy_version_id || row.policyVersionId || null,
+        engine_route: row.engine_route || row.engineRoute || null,
+        engine_snapshot: row.engine_snapshot || row.engineSnapshot || null,
         exercise_equivalence_key: row.exercise_equivalence_key || row.exerciseEquivalenceKey || null,
         population_figee: false,
         population_version: 0,
@@ -790,6 +869,10 @@ function createMemoryRepo(){
         consolidation_active: row.consolidation_active === true || row.consolidationActive === true,
         source: row.source || 'MANUEL',
         cycle_id: row.cycle_id || row.cycleId || null,
+        definition_version_id: row.definition_version_id || row.definitionVersionId || null,
+        policy_version_id: row.policy_version_id || row.policyVersionId || null,
+        engine_route: row.engine_route || row.engineRoute || null,
+        configuration_snapshot: row.configuration_snapshot || row.configurationSnapshot || null,
         metadata: Object.assign({}, item.metadata || {}, row.metadata || {}),
         updated_at: now()
       });
@@ -894,6 +977,117 @@ function createMemoryRepo(){
       };
       participationPolicies.set(domain, item);
       return { ...item, config: JSON.parse(JSON.stringify(item.config)) };
+    },
+    async listParticipationPolicyVersions(filter = {}){
+      return [...participationPolicyVersions.values()]
+        .filter((row) => !filter.domain || row.domain === String(filter.domain).toUpperCase())
+        .filter((row) => filter.active === undefined || (row.active !== false) === (filter.active !== false))
+        .sort((a, b) => String(a.domain).localeCompare(String(b.domain)) || String(a.policy_code).localeCompare(String(b.policy_code)) || String(b.valid_from || '').localeCompare(String(a.valid_from || '')))
+        .map((row) => ({ ...row, policyVersionId: row.policy_version_id, policyCode: row.policy_code, versionCode: row.version_code, config: JSON.parse(JSON.stringify(row.config || {})), metadata: JSON.parse(JSON.stringify(row.metadata || {})) }));
+    },
+    async upsertParticipationPolicyVersion(row){
+      const code = row.policy_code || row.policyCode || catalog.policyCode(row);
+      const versionCode = row.version_code || row.versionCode || 'V1';
+      const existing = [...participationPolicyVersions.values()].find((item) => item.policy_code === code && item.version_code === versionCode);
+      const item = {
+        ...(existing || {}),
+        policy_version_id: existing?.policy_version_id || row.policy_version_id || row.policyVersionId || randomUUID(),
+        policy_code: code,
+        domain: String(row.domain || row.domain_code || row.domainCode).toUpperCase(),
+        version_code: versionCode,
+        valid_from: isoDate(row.valid_from || row.validFrom),
+        valid_to: isoDate(row.valid_to || row.validTo),
+        config: JSON.parse(JSON.stringify(row.config || {})),
+        active: row.active !== false && row.actif !== false,
+        metadata: Object.assign({}, existing?.metadata || {}, row.metadata || {}),
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      participationPolicyVersions.set(item.policy_version_id, item);
+      return { ...item, policyVersionId: item.policy_version_id, policyCode: item.policy_code, versionCode: item.version_code, config: JSON.parse(JSON.stringify(item.config || {})), metadata: JSON.parse(JSON.stringify(item.metadata || {})) };
+    },
+    async listEventDefinitions(filter = {}){
+      return [...eventDefinitions.values()]
+        .filter((row) => !filter.domain || row.domain === String(filter.domain).toUpperCase())
+        .filter((row) => !filter.status || row.status === String(filter.status).toUpperCase())
+        .sort((a, b) => String(a.domain).localeCompare(String(b.domain)) || String(a.label).localeCompare(String(b.label), 'fr'))
+        .map((row) => ({ ...row, definitionId: row.definition_id, metadata: JSON.parse(JSON.stringify(row.metadata || {})) }));
+    },
+    async upsertEventDefinition(row){
+      const code = row.code || catalog.definitionCode(row);
+      const existing = [...eventDefinitions.values()].find((item) => item.code === code);
+      const item = {
+        ...(existing || {}),
+        definition_id: existing?.definition_id || row.definition_id || row.definitionId || randomUUID(),
+        code,
+        label: row.label || row.libelle,
+        domain: String(row.domain || row.domainCode || row.domaine_code).toUpperCase(),
+        description: row.description || '',
+        status: row.status || 'ACTIF',
+        metadata: Object.assign({}, existing?.metadata || {}, row.metadata || {}),
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      eventDefinitions.set(item.definition_id, item);
+      return { ...item, definitionId: item.definition_id, metadata: JSON.parse(JSON.stringify(item.metadata || {})) };
+    },
+    async listEventDefinitionVersions(filter = {}){
+      return [...eventDefinitionVersions.values()]
+        .filter((row) => !filter.definitionId || row.definition_id === filter.definitionId)
+        .filter((row) => {
+          if(!filter.domain) return true;
+          const def = eventDefinitions.get(row.definition_id);
+          return def && def.domain === String(filter.domain).toUpperCase();
+        })
+        .filter((row) => filter.active === undefined || (row.active !== false) === (filter.active !== false))
+        .sort((a, b) => String(b.valid_from || '').localeCompare(String(a.valid_from || '')) || String(b.version_code || '').localeCompare(String(a.version_code || '')))
+        .map((row) => {
+          const def = eventDefinitions.get(row.definition_id) || {};
+          const pv = participationPolicyVersions.get(row.policy_version_id) || {};
+          return {
+            ...row,
+            definitionVersionId: row.definition_version_id,
+            definitionId: row.definition_id,
+            versionCode: row.version_code,
+            validFrom: row.valid_from,
+            validTo: row.valid_to,
+            modeOrganisation: row.mode_organisation,
+            sessionCount: row.session_count,
+            policyVersionId: row.policy_version_id,
+            populationRule: JSON.parse(JSON.stringify(row.population_rule || {})),
+            definitionCode: def.code || null,
+            definitionLabel: def.label || null,
+            domain: def.domain || null,
+            policyCode: pv.policy_code || null,
+            policyVersionCode: pv.version_code || null,
+            metadata: JSON.parse(JSON.stringify(row.metadata || {}))
+          };
+        });
+    },
+    async getEventDefinitionVersion(id){
+      return (await api.listEventDefinitionVersions({})).find((row) => String(row.definition_version_id) === String(id)) || null;
+    },
+    async upsertEventDefinitionVersion(row){
+      const existing = [...eventDefinitionVersions.values()].find((item) => item.definition_id === (row.definition_id || row.definitionId) && item.version_code === (row.version_code || row.versionCode));
+      const item = {
+        ...(existing || {}),
+        definition_version_id: existing?.definition_version_id || row.definition_version_id || row.definitionVersionId || randomUUID(),
+        definition_id: row.definition_id || row.definitionId,
+        version_code: row.version_code || row.versionCode || 'V1',
+        valid_from: isoDate(row.valid_from || row.validFrom),
+        valid_to: isoDate(row.valid_to || row.validTo),
+        mode_organisation: row.mode_organisation || row.modeOrganisation || 'SIMPLE',
+        session_count: Number(row.session_count || row.sessionCount || 1),
+        policy_version_id: row.policy_version_id || row.policyVersionId || null,
+        population_rule: JSON.parse(JSON.stringify(row.population_rule || row.populationRule || {})),
+        numbering_pattern: row.numbering_pattern || row.numberingPattern || null,
+        active: row.active !== false && row.actif !== false,
+        metadata: Object.assign({}, existing?.metadata || {}, row.metadata || {}),
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      eventDefinitionVersions.set(item.definition_version_id, item);
+      return api.getEventDefinitionVersion(item.definition_version_id);
     },
     async upsertRegleBascule(row){
       const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();

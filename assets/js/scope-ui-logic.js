@@ -823,6 +823,7 @@
         label: 'Application',
         items: [
           { id: 'objectifs', href: '#/reglages/objectifs', label: 'Objectifs', permission: 'references:manage', current: r.screen === 'objectifs' },
+          { id: 'formations', href: '#/reglages/formations', label: 'Configuration formation', permission: 'references:manage', current: r.screen === 'formation-catalog' },
           { id: 'participation', href: '#/reglages/participation', label: 'Participation', permission: 'references:manage', current: r.screen === 'participation-admin' },
           { id: 'suivi', href: '#/reglages/suivi', label: 'Suivi nominatif', permission: 'personnel:manage', current: r.screen === 'suivi' }
         ]
@@ -1087,6 +1088,7 @@
     if (parts[0] === 'reglages' && parts[1] === 'personnel') return { screen: 'personnel', nav: 'personnel' };
     if (parts[0] === 'reglages' && parts[1] === 'import-evenements') return { screen: 'import-evenements', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'import-personnel') return { screen: 'import-personnel', nav: 'reglages' };
+    if (parts[0] === 'reglages' && parts[1] === 'formations') return { screen: 'formation-catalog', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'participation') return { screen: 'participation-admin', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'utilisateurs') return { screen: 'utilisateurs', nav: 'reglages' };
     if (parts[0] === 'reglages' && parts[1] === 'administration') return { screen: 'administration', nav: 'reglages' };

@@ -167,6 +167,22 @@
     participationAdminReady: false,
     participationAdminError: null,
     participationAdminDomain: 'JSP',
+    formationCatalog: null,
+    formationCatalogReady: false,
+    formationCatalogError: null,
+    formationDefinitionForm: {
+      domain: 'JSP',
+      label: '',
+      code: '',
+      description: '',
+      modeOrganisation: 'SIMPLE',
+      sessionCount: '1',
+      policyVersionId: '',
+      year: String(new Date().getFullYear() + 1),
+      validFrom: `${new Date().getFullYear() + 1}-01-01`,
+      validTo: `${new Date().getFullYear() + 1}-12-31`
+    },
+    clientCache: {},
     personnelListPage: 1,
     personnelListPageSize: 12,
     eventSort: { key: 'date', dir: 'asc' },
@@ -633,12 +649,59 @@
     render();
   }
 
+  const CACHE_TTL = {
+    referentiels: 5 * 60 * 1000,
+    list: 30 * 1000,
+    cycles: 30 * 1000,
+    objectifs: 60 * 1000,
+    dashboard: 20 * 1000,
+    vigilance: 20 * 1000,
+    formationCatalog: 60 * 1000,
+    personnelDirectory: 30 * 1000,
+    personCount: 60 * 1000
+  };
+
+  function cacheKey(namespace, payload) {
+    return `${namespace}:${JSON.stringify(payload || {})}`;
+  }
+
+  function cacheGet(namespace, payload) {
+    const key = cacheKey(namespace, payload);
+    const entry = state.clientCache && state.clientCache[key];
+    if (!entry) return null;
+    if (Date.now() - entry.at > (CACHE_TTL[namespace] || 0)) {
+      delete state.clientCache[key];
+      return null;
+    }
+    return entry.data;
+  }
+
+  function cacheSet(namespace, payload, data) {
+    state.clientCache[cacheKey(namespace, payload)] = { at: Date.now(), data };
+    return data;
+  }
+
+  function invalidateCache(namespaces) {
+    const wanted = new Set([].concat(namespaces || []));
+    Object.keys(state.clientCache || {}).forEach((key) => {
+      const ns = key.split(':')[0];
+      if (!wanted.size || wanted.has(ns)) delete state.clientCache[key];
+    });
+  }
+
+  async function cached(namespace, payload, loader) {
+    const hit = cacheGet(namespace, payload);
+    if (hit) return hit;
+    return cacheSet(namespace, payload, await loader());
+  }
+
   async function loadReferentiels() {
-    const data = await client.referentiels();
+    const data = await cached('referentiels', {}, () => client.referentiels());
     state.referentiels = {
       domaines: data.domaines || [],
       cibles: data.cibles || [],
       arbre: data.arbre || [],
+      formationCatalog: data.formationCatalog || null,
       suiviNominatif: data.suiviNominatif || []
     };
   }
@@ -647,11 +710,12 @@
     const token = ++state.listRequestSeq;
     state.listError = null;
     try {
-      const data = await client.listEvenements(Object.assign({
+      const params = Object.assign({
         annee: state.year,
         statut: state.statut,
         domaineCode: state.domaine
-      }, qualQuery()));
+      }, qualQuery());
+      const data = await cached('list', params, () => client.listEvenements(params));
       if (token !== state.listRequestSeq) return null;
       state.list = data.evenements || [];
       state.listReady = true;
@@ -673,11 +737,12 @@
     }
     state.cyclesError = null;
     try {
-      const data = await client.listCycles({
+      const params = {
         annee: state.year,
         domaine: state.cycleFilter.domaine,
         statut: state.cycleFilter.statut
-      });
+      };
+      const data = await cached('cycles', params, () => client.listCycles(params));
       if (token !== state.cyclesRequestSeq || route().screen !== 'cycles') return null;
       state.cycles = data.cycles || [];
       state.cyclesReady = true;
@@ -719,7 +784,7 @@
       state.objectifs = [];
       return;
     }
-    const data = await client.listObjectifs();
+    const data = await cached('objectifs', {}, () => client.listObjectifs());
     state.objectifs = data.objectifs || [];
   }
 
@@ -781,6 +846,41 @@
     }
   }
 
+  async function loadFormationCatalog() {
+    if (!hasScopePermission('references:manage')) {
+      state.formationCatalog = null;
+      state.formationCatalogReady = true;
+      state.formationCatalogError = null;
+      return null;
+    }
+    if (typeof client.formationCatalog !== 'function') {
+      state.formationCatalog = null;
+      state.formationCatalogReady = true;
+      state.formationCatalogError = 'Catalogue formation indisponible.';
+      return null;
+    }
+    state.formationCatalogReady = false;
+    state.formationCatalogError = null;
+    try {
+      const data = await cached('formationCatalog', {}, () => client.formationCatalog());
+      state.formationCatalog = data.formationCatalog || null;
+      state.formationCatalogReady = true;
+      return state.formationCatalog;
+    } catch (error) {
+      state.formationCatalog = null;
+      state.formationCatalogReady = true;
+      state.formationCatalogError = L.friendlyError(error).message || 'La configuration formation n’a pas pu être chargée.';
+      throw error;
+    }
+  }
+
+  async function loadPersonCount() {
+    if (!client.listPersonnes) return null;
+    const data = await cached('personCount', {}, () => client.listPersonnes());
+    state.personCount = (data.personnes || []).length;
+    return state.personCount;
+  }
+
   async function loadDashboard() {
     const r = route();
     if (typeof client.dashboard !== 'function') {
@@ -803,7 +903,7 @@
     }), qualQuery());
     state.dashboardError = null;
     try {
-      state.dashboard = await client.dashboard(params);
+      state.dashboard = await cached('dashboard', params, () => client.dashboard(params));
       if (r.screen === 'statistiques') await loadAnalysesPersonnel(params);
     } catch (error) {
       state.dashboardError = L.friendlyError(error).message || L.errorMessage('dashboard');
@@ -902,7 +1002,7 @@
       to: state.to
     }), qualQuery());
     try {
-      const data = await client.listAlerts(params);
+      const data = await cached('vigilance', params, () => client.listAlerts(params));
       state.alertCounts = data.counts || null;
     } catch (_error) {
       /* le compteur header reste facultatif */
@@ -932,7 +1032,7 @@
     if (filters.level && filters.level !== 'tous') params.level = filters.level;
     state.vigilanceError = null;
     try {
-      const data = await client.listAlerts(params);
+      const data = await cached('vigilance', params, () => client.listAlerts(params));
       if (token !== state.vigilanceRequestSeq || route().screen !== 'vigilance') return null;
       state.vigilance = data;
       state.vigilanceReady = true;
@@ -3500,14 +3600,15 @@
             to: state.to
           })
         : { from: state.from, to: state.to, preset: state.preset, year: state.year };
-      const payload = await client.listPersonnelDirectory({
+      const params = {
         statut: state.personnelStatut === 'tous' ? 'all' : state.personnelStatut,
         from: period.from,
         to: period.to,
         preset: period.preset || state.preset,
         year: period.year || state.year,
         asOf: state.personnelSituationApplied ? (state.personnelSituationDate || '') : ''
-      });
+      };
+      const payload = await cached('personnelDirectory', params, () => client.listPersonnelDirectory(params));
       if (seq !== state.personnelListSeq) return;
       state.personnelDirectory = normalizePersonnelDirectory(payload);
       state.personnelReady = true;
@@ -7263,6 +7364,28 @@
     return `<span class="scope-import-pill ${cls}">${escapeHtml(labels[statut] || statut)}</span>`;
   }
 
+  function genericMatchHtml(match) {
+    if (!match) return '';
+    const statusLabel = match.status === 'EXACT' ? 'Définition reconnue' : (match.status === 'SUGGESTED' ? 'Suggestion de définition' : 'Définition à valider');
+    const details = [
+      match.definitionCode || match.definition_code,
+      match.definitionLabel || match.definition_label,
+      match.policyCode || match.policy_code,
+      match.policyVersionCode || match.policy_version_code,
+      match.modeOrganisation || match.mode_organisation
+    ].filter(Boolean).join(' · ');
+    const suggestions = Array.isArray(match.suggestions) && match.suggestions.length
+      ? `<ul>${match.suggestions.slice(0, 3).map((item) => `<li>${escapeHtml(item.definitionLabel || item.definition_label || item.definitionCode || item.definition_code || 'Définition proposée')}</li>`).join('')}</ul>`
+      : '';
+    const cls = match.status === 'EXACT' ? 'ok' : (match.status === 'SUGGESTED' ? 'warn' : 'err');
+    return `<div class="scope-import-generic-match ${cls}">
+      <strong>${escapeHtml(statusLabel)}</strong>
+      ${details ? `<p>${escapeHtml(details)}</p>` : ''}
+      ${match.requiresValidation ? '<p>Validation humaine requise avant rattachement.</p>' : ''}
+      ${suggestions}
+    </div>`;
+  }
+
   function importLineVisible(line) {
     const filter = state.importFilter || 'TOUS';
     const excluded = Boolean(state.importExcluded[line.ligneNo]);
@@ -7392,6 +7515,7 @@
         <p class="scope-import-libelle">${escapeHtml(l.libelle || '')}</p>
         ${standard ? `<p class="scope-import-mode">CODE COURS : ${escapeHtml(l.codeCours || '—')} · Stat.Com : ${escapeHtml(l.statCom || '—')}</p>` : ''}
         ${native ? `<p class="scope-import-mode">Mode demandé : ${escapeHtml(l.modeDemande || '—')} · Mode proposé : ${escapeHtml(l.modePropose || '—')}</p>` : ''}
+        ${genericMatchHtml(l.genericMatch)}
         <p class="scope-import-reason">${escapeHtml(l.raison || l.statutLibelle || '')}</p>
         <p class="scope-import-action">Action : ${escapeHtml(l.actionPrevue || '—')}</p>
         ${l.statut === 'A_ARBITRER' ? `<div class="scope-field"><label>Arbitrage du mode</label>
@@ -7462,6 +7586,7 @@
           <div><span>Lignes source</span><strong>${escapeHtml(String((g.sourceLineNos || []).length || 1))}</strong></div>
           <div><span>Population</span><strong>${escapeHtml(String(population))}</strong></div>
         </div>
+        ${genericMatchHtml(g.genericMatch || first.genericMatch)}
         ${isIssue ? `<div class="scope-import-decision"><strong>${escapeHtml(g.raison || first.raison || 'Point à contrôler')}</strong><p>Action : ${escapeHtml(g.actionPrevue || first.actionPrevue || 'ARBITRER')}</p></div>` : ''}
         <details class="scope-import-source">
           <summary>Consulter les lignes source ${escapeHtml(sourceLines ? `(${sourceLines})` : '')}</summary>
@@ -7674,6 +7799,7 @@
           <p>Les fonctions administratives réelles exposées dans SCOPE sont les objectifs, le suivi nominatif, les imports et les profils utilisateurs déjà protégés par RBAC.</p>
           <div class="scope-home-links">
             ${hasScopePermission('references:manage') ? '<a href="#/reglages/objectifs">Objectifs</a>' : ''}
+            ${hasScopePermission('references:manage') ? '<a href="#/reglages/formations">Configuration formation</a>' : ''}
             ${hasScopePermission('references:manage') ? '<a href="#/reglages/participation">Participation</a>' : ''}
             ${hasScopePermission('personnel:manage') ? '<a href="#/reglages/suivi">Suivi nominatif</a><a href="#/reglages/import-personnel">Import du personnel</a>' : ''}
             ${hasScopePermission('events:create') ? '<a href="#/reglages/import-evenements">Import des événements</a>' : ''}
@@ -7754,6 +7880,94 @@
       <div class="scope-crumb">Administration / Participation</div>
       <div class="scope-main">
         ${pageHeaderHtml({ eyebrow: 'Administration / Référentiels', title: 'Participation', context: 'Statuts et motifs', logo: true })}
+        ${administrationReturnHtml()}
+        ${content}
+      </div>
+    `;
+  }
+
+  function renderFormationCatalog() {
+    const canManage = hasScopePermission('references:manage');
+    const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
+    const definitions = Array.isArray(catalog.definitions) ? catalog.definitions : [];
+    const policyVersions = Array.isArray(catalog.policyVersions) ? catalog.policyVersions : [];
+    const domaines = (state.referentiels && state.referentiels.domaines) || catalog.domaines || [];
+    const form = state.formationDefinitionForm || {};
+    const domainOptions = domaines
+      .filter((d) => d.actif !== false)
+      .map((d) => `<option value="${escapeHtml(d.code)}" ${String(form.domain || '').toUpperCase() === String(d.code).toUpperCase() ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || d.code)}</option>`)
+      .join('');
+    const activeDomain = String(form.domain || 'JSP').toUpperCase();
+    const policyOptions = policyVersions
+      .filter((p) => !p.domain || String(p.domain).toUpperCase() === activeDomain)
+      .map((p) => `<option value="${escapeHtml(p.policy_version_id || p.policyVersionId || '')}" ${String(form.policyVersionId || '') === String(p.policy_version_id || p.policyVersionId || '') ? 'selected' : ''}>${escapeHtml(`${p.policy_code || p.policyCode || 'Policy'} · ${p.version_code || p.versionCode || ''}`)}</option>`)
+      .join('');
+    const selectedPolicy = policyVersions.find((p) => String(p.policy_version_id || p.policyVersionId || '') === String(form.policyVersionId || ''))
+      || policyVersions.find((p) => String(p.domain || '').toUpperCase() === activeDomain)
+      || null;
+    const policyConfig = selectedPolicy && selectedPolicy.config || {};
+    const statuses = (policyConfig.activeStatuses || policyConfig.active_statuses || []).filter((s) => s !== 'NON_RENSEIGNE');
+    const motifs = (policyConfig.excuseMotifs || policyConfig.excuse_motifs || []).concat(policyConfig.dispenseMotifs || policyConfig.dispense_motifs || []);
+    const rows = definitions.map((definition) => {
+      const versions = definition.versions || [];
+      const latest = versions[0] || {};
+      const mode = latest.mode_organisation || latest.modeOrganisation || 'SIMPLE';
+      const sessions = Number(latest.session_count || latest.sessionCount || 1);
+      const policy = latest.policyCode ? `${latest.policyCode} · ${latest.policyVersionCode || ''}` : '—';
+      const validite = [latest.valid_from || latest.validFrom || '—', latest.valid_to || latest.validTo || '—'].join(' → ');
+      return `<tr>
+        <td>${escapeHtml(definition.domain || '')}</td>
+        <td><strong>${escapeHtml(definition.label || '')}</strong><br><span class="scope-muted">${escapeHtml(definition.code || '')}</span></td>
+        <td>${mode === 'MULTI_SESSION' ? `Multi-session · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</td>
+        <td>${escapeHtml(policy)}</td>
+        <td>${escapeHtml(validite)}</td>
+        <td>${escapeHtml(definition.status || 'ACTIF')}</td>
+        <td>${versions[0] ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versions[0].definition_version_id || versions[0].definitionVersionId || '')}">Reconduire</button>` : ''}</td>
+      </tr>`;
+    }).join('');
+    const content = !canManage
+      ? '<div class="scope-card"><p class="scope-empty">La configuration formation est réservée aux profils habilités.</p></div>'
+      : state.formationCatalogError
+        ? `<div class="scope-card"><p class="scope-empty scope-state-error" role="alert">${escapeHtml(state.formationCatalogError)}</p></div>`
+        : `<div class="scope-card">
+            <h2 style="margin-top:0">Créer un modèle</h2>
+            <div class="scope-report-grid">
+              <div class="scope-field"><label>Domaine</label><select id="formation-domain">${domainOptions}</select></div>
+              <div class="scope-field"><label>Libellé</label><input id="formation-label" type="text" value="${escapeHtml(form.label || '')}" placeholder="Formation extincteur JSP"></div>
+              <div class="scope-field"><label>Code métier</label><input id="formation-code" type="text" value="${escapeHtml(form.code || '')}" placeholder="JSP-EXTINCTEUR"></div>
+              <div class="scope-field"><label>Année</label><input id="formation-year" type="number" min="2026" value="${escapeHtml(form.year || '')}"></div>
+              <div class="scope-field"><label>Mode</label><select id="formation-mode">
+                <option value="SIMPLE" ${form.modeOrganisation !== 'MULTI_SESSION' ? 'selected' : ''}>Session unique</option>
+                <option value="MULTI_SESSION" ${form.modeOrganisation === 'MULTI_SESSION' ? 'selected' : ''}>Multi-session</option>
+              </select></div>
+              <div class="scope-field"><label>Nombre de sessions</label><input id="formation-session-count" type="number" min="1" value="${escapeHtml(form.sessionCount || '1')}" ${form.modeOrganisation === 'MULTI_SESSION' ? '' : 'disabled'}></div>
+              <div class="scope-field"><label>Policy</label><select id="formation-policy">${policyOptions || '<option value="">Policy par défaut</option>'}</select></div>
+              <div class="scope-field"><label>Valable dès</label><input id="formation-valid-from" type="date" value="${escapeHtml(form.validFrom || '')}"></div>
+              <div class="scope-field"><label>Valable jusqu’au</label><input id="formation-valid-to" type="date" value="${escapeHtml(form.validTo || '')}"></div>
+            </div>
+            <div class="scope-admin-panel" style="margin-top:12px">
+              <h3 style="margin-top:0">Aperçu de la policy</h3>
+              <p><strong>Statuts :</strong> ${escapeHtml(statuses.join(', ') || '—')}</p>
+              <p><strong>Motifs :</strong> ${escapeHtml(motifs.join(', ') || '—')}</p>
+              <p><strong>Routage :</strong> ${form.modeOrganisation === 'MULTI_SESSION' ? 'GENERIC_MULTI_SESSION' : 'GENERIC_SIMPLE'}</p>
+            </div>
+            <div class="scope-actions">
+              <button type="button" class="scope-btn scope-btn-primary" id="formation-create">Créer le modèle</button>
+            </div>
+          </div>
+          <div class="scope-card" style="margin-top:12px">
+            <h2 style="margin-top:0">Modèles d’exercice</h2>
+            <div class="scope-table-wrap">
+              <table class="scope-table">
+                <thead><tr><th>Domaine</th><th>Exercice</th><th>Organisation</th><th>Policy</th><th>Validité</th><th>État</th><th>Actions</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="7"><div class="scope-empty">Aucun modèle configuré.</div></td></tr>'}</tbody>
+              </table>
+            </div>
+          </div>`;
+    return `
+      <div class="scope-crumb">Administration / Configuration formation</div>
+      <div class="scope-main">
+        ${pageHeaderHtml({ eyebrow: 'Administration / Référentiels', title: 'Configuration formation', context: 'Modèles, sessions et policies', logo: true })}
         ${administrationReturnHtml()}
         ${content}
       </div>
@@ -7894,6 +8108,7 @@
       const body = readQtyVolumes();
       withLoading(async () => {
         const res = await client.enregistrerSaisieQuantitative(id, body, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         await reloadFicheFromServer(id);
         toast('success', 'Enregistré', 'Les présences ont été enregistrées.');
         state.fiche.evenement.version = res.version;
@@ -7907,8 +8122,10 @@
           throw { status: 422, error: 'volumes_incoherents', message: 'Présents + excusés + non excusés + dispensés doit être égal aux attendus.' };
         }
         await client.enregistrerSaisieQuantitative(id, body, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         await reloadFicheFromServer(id);
         await client.cloturer(id, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         await reloadFicheFromServer(id);
         go(`#/exercices/${id}`);
       });
@@ -7969,6 +8186,7 @@
               : r.screen === 'import-personnel' ? renderImportPersonnel()
                 : r.screen === 'utilisateurs' ? renderUtilisateurs()
                   : r.screen === 'administration' ? renderAdministration()
+                    : r.screen === 'formation-catalog' ? renderFormationCatalog()
                     : r.screen === 'participation-admin' ? renderParticipationAdmin()
                     : r.screen === 'apropos' ? renderApropos()
           : r.screen === 'nouveau' ? renderNouveau()
@@ -8575,6 +8793,7 @@
             previewToken: state.importPreview && state.importPreview.previewToken,
             decisions: state.importDecisions
           });
+          invalidateCache(['list', 'dashboard', 'vigilance', 'cycles', 'personCount']);
           state.importCommitProgress = { title: 'Import du programme en cours', phase: 'Finalisation...' };
           render();
           await loadList();
@@ -8694,6 +8913,7 @@
           consolidationActive: state.consolidationChoice !== false,
           sessionIndex: 1
         });
+        invalidateCache(['list', 'dashboard', 'vigilance', 'cycles']);
         state.modeTouched = false;
         state.modeChoice = '';
         state.cibleForm = [];
@@ -9152,6 +9372,7 @@
         successMessage: 'L’événement a été annulé.'
       }, async () => {
         await client.annuler(id, motif, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         state.modal = null;
         await loadFiche(id);
       });
@@ -9169,6 +9390,7 @@
         successMessage: 'La saisie est à nouveau possible.'
       }, async () => {
         await client.reouvrir(id, motif, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         state.modal = null;
         await loadFiche(id);
         go(`#/exercices/${id}`);
@@ -9378,6 +9600,7 @@
         state.personnelSync.decisions = {};
         state.personnelSync.commitPayload = null;
         state.personnelSync.rapport = Object.assign({}, rapport, { successMessage });
+        invalidateCache(['personnelDirectory', 'personCount', 'list', 'dashboard', 'vigilance']);
         if (typeof loadPersonnelDirectory === 'function') await loadPersonnelDirectory();
         toast('success', 'IMPORT TERMINÉ', successMessage);
       });
@@ -9592,8 +9815,68 @@
           roles: current && current.roles || [],
           behavior: current && current.behavior || {}
         });
+        invalidateCache(['referentiels', 'formationCatalog']);
         await loadParticipationAdmin();
         toast('success', 'Enregistré', 'La politique de participation a été enregistrée.');
+      });
+    });
+    const bindFormationField = (id, key) => {
+      document.getElementById(id)?.addEventListener('input', (e) => {
+        state.formationDefinitionForm[key] = e.target.value;
+        if (key === 'year') {
+          state.formationDefinitionForm.validFrom = `${e.target.value}-01-01`;
+          state.formationDefinitionForm.validTo = `${e.target.value}-12-31`;
+        }
+        render();
+      });
+      document.getElementById(id)?.addEventListener('change', (e) => {
+        state.formationDefinitionForm[key] = e.target.value;
+        if (key === 'modeOrganisation' && e.target.value !== 'MULTI_SESSION') state.formationDefinitionForm.sessionCount = '1';
+        if (key === 'modeOrganisation' && e.target.value === 'MULTI_SESSION' && Number(state.formationDefinitionForm.sessionCount || 0) < 2) state.formationDefinitionForm.sessionCount = '2';
+        render();
+      });
+    };
+    [
+      ['formation-domain', 'domain'],
+      ['formation-label', 'label'],
+      ['formation-code', 'code'],
+      ['formation-year', 'year'],
+      ['formation-mode', 'modeOrganisation'],
+      ['formation-session-count', 'sessionCount'],
+      ['formation-policy', 'policyVersionId'],
+      ['formation-valid-from', 'validFrom'],
+      ['formation-valid-to', 'validTo']
+    ].forEach(([id, key]) => bindFormationField(id, key));
+    document.getElementById('formation-create')?.addEventListener('click', () => {
+      const form = state.formationDefinitionForm || {};
+      withLoading(async () => {
+        await client.createEventDefinition({
+          domain: form.domain,
+          label: form.label,
+          code: form.code,
+          description: form.description,
+          modeOrganisation: form.modeOrganisation,
+          sessionCount: Number(form.modeOrganisation === 'MULTI_SESSION' ? form.sessionCount || 2 : 1),
+          policyVersionId: form.policyVersionId || null,
+          year: Number(form.year || new Date().getFullYear()),
+          validFrom: form.validFrom,
+          validTo: form.validTo
+        });
+        invalidateCache(['referentiels', 'formationCatalog']);
+        await loadFormationCatalog();
+        toast('success', 'Modèle créé', 'La configuration formation a été enregistrée.');
+      });
+    });
+    root.querySelectorAll('[data-reconduct-definition-version]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-reconduct-definition-version');
+        const year = Number(state.year || new Date().getFullYear()) + 1;
+        withLoading(async () => {
+          await client.reconductEventDefinitionVersion(id, { year });
+          invalidateCache(['referentiels', 'formationCatalog']);
+          await loadFormationCatalog();
+          toast('success', 'Reconduction créée', `Une version ${year} a été préparée.`);
+        });
       });
     });
     document.getElementById('scope-apply-personnel-asof')?.addEventListener('click', () => {
@@ -10141,6 +10424,7 @@
         successMessage: 'Les présences, justificatifs et l’encadrement ont été effacés.'
       }, async () => {
         await client.resetParticipations(id, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         await loadFiche(id);
       });
     }
@@ -10251,6 +10535,7 @@
     render();
     try {
       const res = await client.enregistrerParticipations(id, payload, state.fiche.evenement.version);
+      invalidateCache(['list', 'dashboard', 'vigilance']);
       await reloadFicheFromServer(id);
       const version = (res && res.version) || (state.fiche && state.fiche.evenement && state.fiche.evenement.version);
       if (version && state.fiche && state.fiche.evenement) state.fiche.evenement.version = version;
@@ -10378,6 +10663,7 @@
     }, async () => {
       try {
         await client.cloturer(id, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         setUnsavedPresenceChanges(false);
         await loadFiche(id);
         state.saisieGuard.allowLeave = true;
@@ -10400,6 +10686,7 @@
     }, async () => {
       try {
         await client.cloturerMultiSessionV2(id, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         setUnsavedPresenceChanges(false);
         await loadFiche(route().id);
         render();
@@ -10432,6 +10719,7 @@
         successMessage: 'La consolidation finale du Multi-session est terminée.'
       }, async () => {
         await client.cloturerMultiSessionV2(multisessionId, null);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
         await loadList();
         if (eventId && state.fiche && String(state.fiche.evenement && state.fiche.evenement.evenement_id) === String(eventId)) {
           await loadFiche(eventId);
@@ -10453,6 +10741,7 @@
       successMessage: v2AllSessions ? 'Le rôle a été ajouté à toutes les sessions du Multi-session.' : (serieComplete ? 'Le Formateur a été ajouté à toute la série PR.' : 'La personne est hors du taux principal.')
     }, async () => {
       await client.ajouterEncadrement(id, { personneId, role, serieComplete, toutesSessions: v2AllSessions }, state.fiche.evenement.version);
+      invalidateCache(['list', 'dashboard', 'vigilance']);
       state.encQuery = '';
       state.encHits = [];
       state.encSerieComplete = false;
@@ -10470,6 +10759,7 @@
       successMessage: serie ? 'Le Formateur a été retiré de toute la série PR.' : 'La personne peut être sélectionnée de nouveau.'
     }, async () => {
       await client.retirerEncadrement(id, { personneId, scope: scope || 'SESSION' }, state.fiche.evenement.version);
+      invalidateCache(['list', 'dashboard', 'vigilance']);
       await refreshFichePreservingSaisie(id, snapshot);
     });
   }
@@ -10493,6 +10783,7 @@
       successMessage: catchupSourceLabel ? 'La personne est ajoutée comme rattrapage pour cet événement.' : 'Ajout nominatif propre à cet événement.'
     }, async () => {
       await client.ajouterException(id, Object.assign({ personneId, role: 'PARTICIPANT' }, motifInclusion ? { motifInclusion } : {}), state.fiche.evenement.version);
+      invalidateCache(['list', 'dashboard', 'vigilance']);
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
       snapshot.manualPersonQuery = '';
@@ -10512,6 +10803,7 @@
       successMessage: 'La trace de permutation reste conservée.'
     }, async () => {
       await client.regulariserPermutation(permutationId, { motifAbsence: motif });
+      invalidateCache(['list', 'dashboard', 'vigilance']);
       await loadFiche(id);
     });
   }
@@ -10533,6 +10825,7 @@
       successMessage: 'La personne reste dans le référentiel SCOPE.'
     }, async () => {
       await client.retirerAttendu(id, { personneId }, state.fiche.evenement.version);
+      invalidateCache(['list', 'dashboard', 'vigilance']);
       state.manualPersonQuery = '';
       state.manualPersonHits = [];
       state.pendingExceptions = (state.pendingExceptions || []).filter((item) => String(item.personneId || item.personne_id || '') !== String(personneId));
@@ -10696,11 +10989,11 @@
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
       if (r.screen === 'objectifs') await loadObjectifs();
+      if (r.screen === 'formation-catalog') await loadFormationCatalog();
       if (r.screen === 'participation-admin') await loadParticipationAdmin();
       if (r.screen === 'utilisateurs') await loadAdminUsers();
       if (client.listPersonnes && state.personCount == null) {
-        const people = await client.listPersonnes();
-        state.personCount = (people.personnes || []).length;
+        await loadPersonCount();
       }
       if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
       if (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') await loadJspReport();
@@ -10709,11 +11002,9 @@
       if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
       if (r.screen === 'vigilance') await loadVigilance();
       if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
-      if (r.screen === 'objectifs') await loadObjectifs();
       if (r.screen === 'personnel' || r.screen === 'import-personnel') {
         if (client.listPersonnes) {
-          const people = await client.listPersonnes();
-          state.personCount = (people.personnes || []).length;
+          await loadPersonCount();
         }
         await loadPersonnelDirectory();
       }

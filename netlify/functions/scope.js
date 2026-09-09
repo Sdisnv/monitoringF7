@@ -427,6 +427,32 @@ exports.handler = async function(event){
       return response(200, { ok:true, ...(await objectives.desactiverObjectif(params.id, body, claims)) });
     }
 
+    if(method === 'GET' && path === '/formation/catalog'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.formationCatalog(queryOf(event))) });
+    }
+    if(method === 'POST' && path === '/formation/definitions'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });
+      }
+      return response(201, { ok:true, ...(await service.createEventDefinition(body, claims)) });
+    }
+    params = match(path, '/formation/definition-versions/:id/reconduct');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.reconductEventDefinitionVersion(params.id, body, claims)) });
+    }
+    if(method === 'GET' && path === '/diagnostics/performance'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'Le diagnostic de performance est réservé aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.performanceDiagnostics()) });
+    }
+
     if((method === 'POST' || method === 'GET') && path === '/reports'){
       if(!hasPermission(claims, 'dashboard:read')){
         return response(403, { ok:false, error:'forbidden', message:'La consultation des rapports exige un profil habilité.' });

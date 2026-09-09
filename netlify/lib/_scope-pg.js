@@ -58,6 +58,10 @@ function mapEvent(row){
     exercice_id: exerciceId,
     session_index: sessionIndex,
     session_label: row.session_label || null,
+    definition_version_id: row.definition_version_id || null,
+    policy_version_id: row.policy_version_id || null,
+    engine_route: row.engine_route || null,
+    engine_snapshot: row.engine_snapshot || null,
     exercice_key: exercice && exercice.exercice_key,
     exercice_code: exercice && exercice.code,
     exercice_libelle: exercice && exercice.libelle,
@@ -88,6 +92,83 @@ function mapExercise(row){
     consolidation_active: row.consolidation_active === true,
     source: row.source || 'MANUEL',
     cycle_id: row.cycle_id || null,
+    definition_version_id: row.definition_version_id || null,
+    policy_version_id: row.policy_version_id || null,
+    engine_route: row.engine_route || null,
+    configuration_snapshot: row.configuration_snapshot || null,
+    metadata: row.metadata || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function mapEventDefinition(row){
+  if(!row) return null;
+  return {
+    definition_id: row.definition_id,
+    definitionId: row.definition_id,
+    code: row.code,
+    label: row.label,
+    domain: row.domain,
+    description: row.description || '',
+    status: row.status || 'ACTIF',
+    metadata: row.metadata || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function mapEventDefinitionVersion(row){
+  if(!row) return null;
+  return {
+    definition_version_id: row.definition_version_id,
+    definitionVersionId: row.definition_version_id,
+    definition_id: row.definition_id,
+    definitionId: row.definition_id,
+    version_code: row.version_code,
+    versionCode: row.version_code,
+    valid_from: dateOnly(row.valid_from),
+    validFrom: dateOnly(row.valid_from),
+    valid_to: dateOnly(row.valid_to),
+    validTo: dateOnly(row.valid_to),
+    mode_organisation: row.mode_organisation,
+    modeOrganisation: row.mode_organisation,
+    session_count: row.session_count == null ? 1 : Number(row.session_count),
+    sessionCount: row.session_count == null ? 1 : Number(row.session_count),
+    policy_version_id: row.policy_version_id || null,
+    policyVersionId: row.policy_version_id || null,
+    population_rule: row.population_rule || {},
+    populationRule: row.population_rule || {},
+    numbering_pattern: row.numbering_pattern || null,
+    numberingPattern: row.numbering_pattern || null,
+    active: row.active !== false,
+    metadata: row.metadata || {},
+    definitionCode: row.definition_code || null,
+    definitionLabel: row.definition_label || null,
+    domain: row.domain || null,
+    policyCode: row.policy_code || null,
+    policyVersionCode: row.policy_version_code || null,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function mapParticipationPolicyVersion(row){
+  if(!row) return null;
+  return {
+    policy_version_id: row.policy_version_id,
+    policyVersionId: row.policy_version_id,
+    policy_code: row.policy_code,
+    policyCode: row.policy_code,
+    domain: row.domain,
+    version_code: row.version_code,
+    versionCode: row.version_code,
+    valid_from: dateOnly(row.valid_from),
+    validFrom: dateOnly(row.valid_from),
+    valid_to: dateOnly(row.valid_to),
+    validTo: dateOnly(row.valid_to),
+    config: row.config || {},
+    active: row.active !== false,
     metadata: row.metadata || {},
     created_at: row.created_at,
     updated_at: row.updated_at
@@ -611,7 +692,16 @@ function createPgRepo(client){
           JSON.stringify(row.participation_policy_snapshot || row.participationPolicySnapshot || null)
         );
       }
-      const valuePlaceholders = params.map((_, index) => `$${index + 1}${eventColumns[index] === 'participation_policy_snapshot' ? '::jsonb' : ''}`);
+      if(await tableExists('scope_event_definition_versions')){
+        eventColumns.push('definition_version_id', 'policy_version_id', 'engine_route', 'engine_snapshot');
+        params.push(
+          row.definition_version_id || row.definitionVersionId || null,
+          row.policy_version_id || row.policyVersionId || null,
+          row.engine_route || row.engineRoute || null,
+          JSON.stringify(row.engine_snapshot || row.engineSnapshot || null)
+        );
+      }
+      const valuePlaceholders = params.map((_, index) => `$${index + 1}${eventColumns[index] === 'participation_policy_snapshot' || eventColumns[index] === 'engine_snapshot' ? '::jsonb' : ''}`);
       const result = codeCours
         ? await q(
           `with ins as (
@@ -712,7 +802,8 @@ function createPgRepo(client){
       let allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
-        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','exercise_equivalence_key','participation_policy_version','participation_policy_snapshot'
+        'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','exercise_equivalence_key','participation_policy_version','participation_policy_snapshot',
+        'definition_version_id','policy_version_id','engine_route','engine_snapshot'
       ];
       if(Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_version') || Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_snapshot')){
         if(!(await hasParticipationPolicyColumns())){
@@ -1241,8 +1332,9 @@ function createPgRepo(client){
       const result = await q(
         `insert into scope_exercices(
           exercice_id, exercice_key, domaine_code, code, libelle, annee,
-          mode_session, nombre_sessions_attendu, consolidation_active, source, cycle_id, metadata
-        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)
+          mode_session, nombre_sessions_attendu, consolidation_active, source, cycle_id, metadata,
+          definition_version_id, policy_version_id, engine_route, configuration_snapshot
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16::jsonb)
         on conflict (exercice_key) where exercice_key is not null do update set
           domaine_code = excluded.domaine_code,
           code = coalesce(scope_exercices.code, excluded.code),
@@ -1251,6 +1343,10 @@ function createPgRepo(client){
           mode_session = excluded.mode_session,
           nombre_sessions_attendu = excluded.nombre_sessions_attendu,
           consolidation_active = excluded.consolidation_active,
+          definition_version_id = coalesce(scope_exercices.definition_version_id, excluded.definition_version_id),
+          policy_version_id = coalesce(scope_exercices.policy_version_id, excluded.policy_version_id),
+          engine_route = coalesce(excluded.engine_route, scope_exercices.engine_route),
+          configuration_snapshot = coalesce(scope_exercices.configuration_snapshot, excluded.configuration_snapshot),
           updated_at = now(),
           metadata = scope_exercices.metadata || excluded.metadata
         returning *`,
@@ -1266,19 +1362,23 @@ function createPgRepo(client){
           row.consolidation_active === true || row.consolidationActive === true,
           row.source || 'MANUEL',
           row.cycle_id || row.cycleId || null,
-          JSON.stringify(row.metadata || {})
+          JSON.stringify(row.metadata || {}),
+          row.definition_version_id || row.definitionVersionId || null,
+          row.policy_version_id || row.policyVersionId || null,
+          row.engine_route || row.engineRoute || null,
+          JSON.stringify(row.configuration_snapshot || row.configurationSnapshot || null)
         ]
       );
       return mapExercise(result.rows[0]);
     },
     async updateExercise(id, patch){
-      const allowed = ['exercice_key','domaine_code','code','libelle','annee','mode_session','nombre_sessions_attendu','consolidation_active','source','cycle_id','metadata'];
+      const allowed = ['exercice_key','domaine_code','code','libelle','annee','mode_session','nombre_sessions_attendu','consolidation_active','source','cycle_id','metadata','definition_version_id','policy_version_id','engine_route','configuration_snapshot'];
       const sets = ['updated_at = now()'];
       const params = [];
       let i = 1;
       for(const key of allowed){
         if(Object.prototype.hasOwnProperty.call(patch || {}, key)){
-          if(key === 'metadata'){
+          if(key === 'metadata' || key === 'configuration_snapshot'){
             sets.push(`${key} = $${i}::jsonb`);
             params.push(JSON.stringify(patch[key] || {}));
           } else {
@@ -1425,6 +1525,164 @@ function createPgRepo(client){
         ]
       );
       return result.rows[0];
+    },
+    async listParticipationPolicyVersions(filter = {}){
+      if(!(await tableExists('scope_participation_policy_versions'))) return [];
+      const clauses = [];
+      const params = [];
+      if(filter.domain){
+        params.push(String(filter.domain).toUpperCase());
+        clauses.push(`domain = $${params.length}`);
+      }
+      if(filter.active !== undefined){
+        params.push(filter.active !== false);
+        clauses.push(`active = $${params.length}`);
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      const result = await q(`select * from scope_participation_policy_versions ${where} order by domain, policy_code, valid_from desc nulls last, version_code desc`, params);
+      return result.rows.map(mapParticipationPolicyVersion);
+    },
+    async upsertParticipationPolicyVersion(row){
+      const result = await q(
+        `insert into scope_participation_policy_versions(policy_version_id, policy_code, domain, version_code, valid_from, valid_to, config, active, metadata)
+         values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9::jsonb)
+         on conflict (policy_code, version_code) do update set
+           domain = excluded.domain,
+           valid_from = excluded.valid_from,
+           valid_to = excluded.valid_to,
+           config = excluded.config,
+           active = excluded.active,
+           metadata = scope_participation_policy_versions.metadata || excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [
+          row.policy_version_id || row.policyVersionId || randomUUID(),
+          row.policy_code || row.policyCode,
+          String(row.domain || row.domain_code || row.domainCode).toUpperCase(),
+          row.version_code || row.versionCode,
+          isoDate(row.valid_from || row.validFrom),
+          isoDate(row.valid_to || row.validTo),
+          JSON.stringify(row.config || {}),
+          row.active !== false && row.actif !== false,
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return mapParticipationPolicyVersion(result.rows[0]);
+    },
+    async listEventDefinitions(filter = {}){
+      if(!(await tableExists('scope_event_definitions'))) return [];
+      const clauses = [];
+      const params = [];
+      if(filter.domain){
+        params.push(String(filter.domain).toUpperCase());
+        clauses.push(`d.domain = $${params.length}`);
+      }
+      if(filter.status){
+        params.push(String(filter.status).toUpperCase());
+        clauses.push(`d.status = $${params.length}`);
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      const result = await q(`select d.* from scope_event_definitions d ${where} order by d.domain, d.label`, params);
+      return result.rows.map(mapEventDefinition);
+    },
+    async upsertEventDefinition(row){
+      const result = await q(
+        `insert into scope_event_definitions(definition_id, code, label, domain, description, status, metadata)
+         values ($1,$2,$3,$4,$5,$6,$7::jsonb)
+         on conflict (code) do update set
+           label = excluded.label,
+           domain = excluded.domain,
+           description = excluded.description,
+           status = excluded.status,
+           metadata = scope_event_definitions.metadata || excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [
+          row.definition_id || row.definitionId || randomUUID(),
+          row.code,
+          row.label || row.libelle,
+          String(row.domain || row.domaine_code || row.domainCode).toUpperCase(),
+          row.description || null,
+          row.status || 'ACTIF',
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return mapEventDefinition(result.rows[0]);
+    },
+    async listEventDefinitionVersions(filter = {}){
+      if(!(await tableExists('scope_event_definition_versions'))) return [];
+      const clauses = [];
+      const params = [];
+      if(filter.definitionId){
+        params.push(filter.definitionId);
+        clauses.push(`v.definition_id = $${params.length}`);
+      }
+      if(filter.domain){
+        params.push(String(filter.domain).toUpperCase());
+        clauses.push(`d.domain = $${params.length}`);
+      }
+      if(filter.active !== undefined){
+        params.push(filter.active !== false);
+        clauses.push(`v.active = $${params.length}`);
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      const result = await q(
+        `select v.*, d.code as definition_code, d.label as definition_label, d.domain, pv.policy_code, pv.version_code as policy_version_code
+         from scope_event_definition_versions v
+         join scope_event_definitions d on d.definition_id = v.definition_id
+         left join scope_participation_policy_versions pv on pv.policy_version_id = v.policy_version_id
+         ${where}
+         order by d.domain, d.label, v.valid_from desc nulls last, v.version_code desc`,
+        params
+      );
+      return result.rows.map(mapEventDefinitionVersion);
+    },
+    async getEventDefinitionVersion(id){
+      if(!(await tableExists('scope_event_definition_versions'))) return null;
+      const result = await q(
+        `select v.*, d.code as definition_code, d.label as definition_label, d.domain, pv.policy_code, pv.version_code as policy_version_code
+         from scope_event_definition_versions v
+         join scope_event_definitions d on d.definition_id = v.definition_id
+         left join scope_participation_policy_versions pv on pv.policy_version_id = v.policy_version_id
+         where v.definition_version_id = $1`,
+        [id]
+      );
+      return mapEventDefinitionVersion(result.rows[0] || null);
+    },
+    async upsertEventDefinitionVersion(row){
+      const result = await q(
+        `insert into scope_event_definition_versions(
+          definition_version_id, definition_id, version_code, valid_from, valid_to, mode_organisation,
+          session_count, policy_version_id, population_rule, numbering_pattern, active, metadata
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12::jsonb)
+        on conflict (definition_id, version_code) do update set
+          valid_from = excluded.valid_from,
+          valid_to = excluded.valid_to,
+          mode_organisation = excluded.mode_organisation,
+          session_count = excluded.session_count,
+          policy_version_id = excluded.policy_version_id,
+          population_rule = excluded.population_rule,
+          numbering_pattern = excluded.numbering_pattern,
+          active = excluded.active,
+          metadata = scope_event_definition_versions.metadata || excluded.metadata,
+          updated_at = now()
+        returning *`,
+        [
+          row.definition_version_id || row.definitionVersionId || randomUUID(),
+          row.definition_id || row.definitionId,
+          row.version_code || row.versionCode,
+          isoDate(row.valid_from || row.validFrom),
+          isoDate(row.valid_to || row.validTo),
+          row.mode_organisation || row.modeOrganisation || 'SIMPLE',
+          Number(row.session_count || row.sessionCount || 1),
+          row.policy_version_id || row.policyVersionId || null,
+          JSON.stringify(row.population_rule || row.populationRule || {}),
+          row.numbering_pattern || row.numberingPattern || null,
+          row.active !== false && row.actif !== false,
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return this.getEventDefinitionVersion(result.rows[0].definition_version_id);
     },
     async upsertRegleBascule(row){
       const portee = String(row.portee || (row.cible_id ? 'CIBLE' : (row.domaine_code ? 'DOMAINE' : 'GLOBAL'))).toUpperCase();

@@ -345,6 +345,7 @@ async function ensureScopeSchema(){
     `insert into monitoring_f7_schema_migrations(version) values ('scope-generic-exercise-sessions-1') on conflict (version) do nothing`
   );
   await migrateParticipationPolicyEngine1();
+  await migrateGenericEventSessionPolicyArchitecture1();
   await migrateMultiSessionV2Foundation1();
   ready = true;
   return true;
@@ -1151,6 +1152,133 @@ async function migrateParticipationPolicyEngine1(){
     );
   }
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-participation-policy-engine-1') on conflict (version) do nothing`);
+}
+
+async function migrateGenericEventSessionPolicyArchitecture1(){
+  const catalog = require('./_scope-generic-event-catalog');
+  const policy = require('./_scope-participation-policy');
+  await db.query(`
+    create table if not exists scope_event_definitions (
+      definition_id uuid primary key default gen_random_uuid(),
+      code text not null unique,
+      label text not null,
+      domain text not null references scope_domaines(code),
+      description text,
+      status text not null default 'ACTIF',
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_event_definitions_status_chk check (status in ('ACTIF','INACTIF','ARCHIVE')),
+      constraint scope_event_definitions_code_chk check (length(trim(code)) > 0),
+      constraint scope_event_definitions_label_chk check (length(trim(label)) > 0)
+    )
+  `);
+  await db.query(`create index if not exists scope_event_definitions_domain_idx on scope_event_definitions(domain, status)`);
+  await db.query(`
+    create table if not exists scope_participation_policy_versions (
+      policy_version_id uuid primary key default gen_random_uuid(),
+      policy_code text not null,
+      domain text not null references scope_domaines(code),
+      version_code text not null,
+      valid_from date,
+      valid_to date,
+      config jsonb not null default '{}'::jsonb,
+      active boolean not null default true,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_policy_versions_dates_chk check (valid_to is null or valid_from is null or valid_from <= valid_to),
+      constraint scope_policy_versions_unique unique(policy_code, version_code),
+      constraint scope_policy_versions_code_chk check (length(trim(policy_code)) > 0),
+      constraint scope_policy_versions_version_chk check (length(trim(version_code)) > 0)
+    )
+  `);
+  await db.query(`create index if not exists scope_policy_versions_domain_dates_idx on scope_participation_policy_versions(domain, valid_from, valid_to) where active is true`);
+  await db.query(`
+    create table if not exists scope_event_definition_versions (
+      definition_version_id uuid primary key default gen_random_uuid(),
+      definition_id uuid not null references scope_event_definitions(definition_id),
+      version_code text not null,
+      valid_from date,
+      valid_to date,
+      mode_organisation text not null default 'SIMPLE',
+      session_count integer not null default 1,
+      policy_version_id uuid references scope_participation_policy_versions(policy_version_id),
+      population_rule jsonb not null default '{}'::jsonb,
+      numbering_pattern text,
+      active boolean not null default true,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_event_definition_versions_mode_chk check (mode_organisation in ('SIMPLE','MULTI_SESSION')),
+      constraint scope_event_definition_versions_sessions_chk check (
+        (mode_organisation = 'SIMPLE' and session_count = 1)
+        or (mode_organisation = 'MULTI_SESSION' and session_count >= 2)
+      ),
+      constraint scope_event_definition_versions_dates_chk check (valid_to is null or valid_from is null or valid_from <= valid_to),
+      constraint scope_event_definition_versions_unique unique(definition_id, version_code)
+    )
+  `);
+  await db.query(`create index if not exists scope_event_definition_versions_lookup_idx on scope_event_definition_versions(definition_id, valid_from, valid_to) where active is true`);
+  await db.query(`alter table scope_exercices add column if not exists definition_version_id uuid references scope_event_definition_versions(definition_version_id)`);
+  await db.query(`alter table scope_exercices add column if not exists policy_version_id uuid references scope_participation_policy_versions(policy_version_id)`);
+  await db.query(`alter table scope_exercices add column if not exists engine_route text`);
+  await db.query(`alter table scope_exercices add column if not exists configuration_snapshot jsonb`);
+  await db.query(`alter table scope_evenements add column if not exists definition_version_id uuid references scope_event_definition_versions(definition_version_id)`);
+  await db.query(`alter table scope_evenements add column if not exists policy_version_id uuid references scope_participation_policy_versions(policy_version_id)`);
+  await db.query(`alter table scope_evenements add column if not exists engine_route text`);
+  await db.query(`alter table scope_evenements add column if not exists engine_snapshot jsonb`);
+  await db.query(`alter table scope_evenements drop constraint if exists scope_evenements_engine_route_chk`);
+  await db.query(`
+    alter table scope_evenements add constraint scope_evenements_engine_route_chk
+      check (engine_route is null or engine_route in ('SIMPLE_LEGACY','PR_LEGACY','GENERIC_SIMPLE','GENERIC_MULTI_SESSION'))
+  `);
+  await db.query(`alter table scope_exercices drop constraint if exists scope_exercices_engine_route_chk`);
+  await db.query(`
+    alter table scope_exercices add constraint scope_exercices_engine_route_chk
+      check (engine_route is null or engine_route in ('SIMPLE_LEGACY','PR_LEGACY','GENERIC_SIMPLE','GENERIC_MULTI_SESSION'))
+  `);
+  for(const row of policy.listDefaultPolicies()){
+    const version = catalog.policyVersionFromDomainPolicy(row, { year: 2026 });
+    await db.query(
+      `insert into scope_participation_policy_versions(policy_code, domain, version_code, valid_from, valid_to, config, metadata)
+       values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb)
+       on conflict (policy_code, version_code) do nothing`,
+      [version.policy_code, version.domain, version.version_code, version.valid_from, version.valid_to, JSON.stringify(version.config), JSON.stringify(version.metadata)]
+    );
+  }
+  const dapMultiPolicy = policy.resolveParticipationPolicy('DAP');
+  const dapMultiConfig = Object.assign({}, dapMultiPolicy, {
+    policyVersion: 'dap-multisession-2026',
+    activeStatuses: (dapMultiPolicy.activeStatuses || []).filter((status) => status !== 'PERMUTATION'),
+    behavior: Object.assign({}, dapMultiPolicy.behavior || {}, {
+      propagationScope: 'ALL_EXERCISE_SESSIONS',
+      deduplicationScope: 'EXERCISE'
+    })
+  });
+  await db.query(
+    `insert into scope_participation_policy_versions(policy_code, domain, version_code, valid_from, valid_to, config, metadata)
+     values ('DAP-MULTISESSION','DAP','2026','2026-01-01','2026-12-31',$1::jsonb,'{"source":"generic_event_session_policy_architecture_1","explicit":true}'::jsonb)
+     on conflict (policy_code, version_code) do nothing`,
+    [JSON.stringify(dapMultiConfig)]
+  );
+  await db.query(
+    `insert into scope_event_definitions(code, label, domain, description, status, metadata)
+     values ('DAP-FORMATION-GROUPEE','Formation groupée DAP','DAP','Premier modèle générique raccordable au Multi-session V2 validé.','ACTIF','{"source":"generic_event_session_policy_architecture_1","explicit":true}'::jsonb)
+     on conflict (code) do nothing`
+  );
+  await db.query(`
+    insert into scope_event_definition_versions(definition_id, version_code, valid_from, valid_to, mode_organisation, session_count, policy_version_id, population_rule, numbering_pattern, metadata)
+    select d.definition_id, '2026', '2026-01-01', '2026-12-31', 'MULTI_SESSION', 2, pv.policy_version_id,
+           '{"type":"SCOPE_TARGET_RULE","domain":"DAP","scope":"CIBLES_EVENEMENT"}'::jsonb,
+           '{label} {index.major}.{index.minor}',
+           '{"source":"generic_event_session_policy_architecture_1","reference":"DAP-FORMATION-GROUPEE-1-2026"}'::jsonb
+    from scope_event_definitions d
+    join scope_participation_policy_versions pv on pv.policy_code = 'DAP-MULTISESSION' and pv.version_code = '2026'
+    where d.code = 'DAP-FORMATION-GROUPEE'
+    on conflict (definition_id, version_code) do nothing
+  `);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-generic-event-session-policy-architecture-1') on conflict (version) do nothing`);
 }
 
 async function migrateMultiSessionV2Foundation1(){

@@ -2530,6 +2530,26 @@ html, body {
   background: #fff9ec;
 }
 .scope-import-decision p { margin: 4px 0 0; }
+.scope-import-generic-match {
+  margin-top: 10px;
+  border-left: 3px solid #1a5fb4;
+  padding: 8px 10px;
+  background: #e7f0fb;
+  color: var(--scope-ink);
+}
+.scope-import-generic-match.warn {
+  border-left-color: var(--scope-warn);
+  background: #fff9ec;
+}
+.scope-import-generic-match.err {
+  border-left-color: var(--scope-error);
+  background: var(--scope-red-soft);
+}
+.scope-import-generic-match p { margin: 4px 0 0; }
+.scope-import-generic-match ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+}
 .scope-import-source {
   margin-top: 10px;
   color: var(--scope-muted);
