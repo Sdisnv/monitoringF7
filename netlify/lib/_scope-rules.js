@@ -300,7 +300,9 @@ function validateParticipationPatch(item, ctx = {}){
     };
   }
   if(statut === 'DISPENSE'){
-    if(motif && !MOTIFS_DISPENSE_SET.has(String(motif))){
+    const snapshotDispenseMotifs = ((ctx.participationPolicySnapshot || ctx.participation_policy_snapshot || ctx.policySnapshot || {}).dispenseMotifs || []);
+    const allowedDispenseMotifs = new Set([...(policy.dispenseMotifs || []), ...snapshotDispenseMotifs, ...MOTIFS_DISPENSE_SET].map((value) => String(value || '').toUpperCase()));
+    if(motif && !allowedDispenseMotifs.has(String(motif).toUpperCase())){
       throw new HttpError(422, 'motif_dispense_invalide', 'Le motif de dispense doit appartenir au référentiel (Joker, Formateur PR, Formation hors SDIS, Pas concerné).');
     }
     return {
@@ -311,7 +313,9 @@ function validateParticipationPatch(item, ctx = {}){
     };
   }
   if(statut === 'ABSENT_EXCUSE'){
-    if(!motif || !MOTIFS.has(String(motif))){
+    const snapshotExcuseMotifs = ((ctx.participationPolicySnapshot || ctx.participation_policy_snapshot || ctx.policySnapshot || {}).excuseMotifs || []);
+    const allowedExcuseMotifs = new Set([...(policy.excuseMotifs || []), ...snapshotExcuseMotifs, ...MOTIFS].map((value) => String(value || '').toUpperCase()));
+    if(!motif || !allowedExcuseMotifs.has(String(motif).toUpperCase())){
       throw new HttpError(422, 'motif_obligatoire', 'Une absence excusée exige un motif du référentiel (privé, professionnel, armée, accident/maladie).');
     }
     if(motif === 'AUTRE' && !String(commentaire || '').trim()){

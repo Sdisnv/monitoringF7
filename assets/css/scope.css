@@ -4390,9 +4390,25 @@ body.scope-pdf-open { overflow: hidden; }
   padding: 12px;
 }
 
+.scope-formation-model[data-zebra="even"] {
+  background: #f8fafc;
+}
+
 .scope-formation-model.is-open {
   border-color: var(--scope-blue);
   box-shadow: 0 0 0 1px rgba(23, 28, 143, .08);
+}
+
+.scope-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 4px;
+}
+
+.scope-formation-editor:focus {
+  outline: 2px solid rgba(23, 28, 143, .22);
+  outline-offset: 3px;
 }
 
 .scope-formation-model header,
@@ -4444,6 +4460,18 @@ body.scope-pdf-open { overflow: hidden; }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
+}
+
+.scope-policy-column {
+  min-width: 0;
+}
+
+.scope-policy-column-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .scope-formation-detail h3,
@@ -4512,11 +4540,45 @@ body.scope-pdf-open { overflow: hidden; }
   line-height: 1.35;
 }
 
-.scope-formation-preview,
+.scope-policy-column-summary {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--scope-line);
+  color: var(--scope-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.scope-policy-column-summary strong,
+.scope-policy-column-summary span {
+  display: block;
+}
+
 .scope-technical-details {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--scope-line);
+}
+
+.scope-referentials-admin {
+  margin-top: 12px;
+}
+
+.scope-referential-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.scope-referential-draft {
+  margin: 12px 0 16px;
+  padding: 12px;
+  border: 1px solid rgba(23, 28, 143, .25);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.scope-referential-draft h3 {
+  margin: 0 0 10px;
 }
 
 .scope-help {

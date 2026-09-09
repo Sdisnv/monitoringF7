@@ -948,6 +948,30 @@ function createMemoryRepo(){
     async listParticipationMotifRows(){
       return [...participationMotifs.values()].sort((a, b) => Number(a.display_order) - Number(b.display_order) || String(a.label).localeCompare(String(b.label), 'fr')).map((row) => ({ ...row }));
     },
+    async listParticipationStatusRows(){
+      return [...(this._participationStatuses || new Map()).values()]
+        .sort((a, b) => Number(a.display_order) - Number(b.display_order) || String(a.label).localeCompare(String(b.label), 'fr'))
+        .map((row) => ({ ...row, metadata: JSON.parse(JSON.stringify(row.metadata || {})) }));
+    },
+    async upsertParticipationStatus(row){
+      if(!this._participationStatuses) this._participationStatuses = new Map();
+      const id = String(row.status_id || row.id || '').trim().toUpperCase();
+      const existing = this._participationStatuses.get(id) || {};
+      const item = {
+        ...existing,
+        status_id: id,
+        label: row.label || row.libelle,
+        base_status: String(row.base_status || row.baseStatus || 'PRESENT').trim().toUpperCase(),
+        actif: row.actif !== false && row.active !== false,
+        historique: row.historique === true || row.historical === true,
+        display_order: Number(row.display_order || row.order || 999),
+        group_code: row.group_code || row.group || 'operationnel',
+        metadata: Object.assign({}, existing.metadata || {}, row.metadata || {}),
+        updated_at: now()
+      };
+      this._participationStatuses.set(id, item);
+      return { ...item, metadata: JSON.parse(JSON.stringify(item.metadata || {})) };
+    },
     async upsertParticipationMotif(row){
       const id = String(row.motif_id || row.id || '').trim().toUpperCase();
       const item = {

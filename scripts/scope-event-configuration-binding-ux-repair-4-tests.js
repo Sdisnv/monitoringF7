@@ -173,7 +173,7 @@ async function saveOne(service, eventId, personne, statut, motifAbsence){
     }, ACTOR);
     const simpleFiche = await service.lireEvenement(simple.evenement.evenement_id);
     includes(ui, 'uniqueMotifIds');
-    includes(ui, "'NON_CONCERNE', 'PAS_CONCERNE'");
+    includes(ui, "motifItems('DISPENSE', selectedDispenseMotifs)");
     includes(ui, 'Permutation non disponible pour une formation à plusieurs sessions.');
     ok((simpleFiche.participationPolicy.activeStatuses || []).includes('PERMUTATION'), 'DAP simple conserve Permutation');
   });
@@ -210,7 +210,7 @@ async function saveOne(service, eventId, personne, statut, motifAbsence){
     includes(service, 'removeSourcePermutationObligation(tx, evenement, attendu.personne_id, actor)');
     ok(!ui.includes('jobs.push(refreshAlertCounts())'), 'pas de chargement alertes bloquant');
     includes(ui, "refreshAlertCounts().then(() => render()).catch(() => {})");
-    includes(html, 'scope-event-configuration-binding-ux-repair-4');
+    ok(html.includes('scope-event-configuration-binding-ux-repair-4') || html.includes('scope-configuration-formation-ux-referentials-finish-5'), 'cache-buster SCOPE récent');
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

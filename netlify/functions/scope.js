@@ -133,6 +133,12 @@ async function scopeHandler(event){
       }
       return response(200, { ok:true, ...(await service.saveParticipationMotif(body, claims)) });
     }
+    if(method === 'POST' && path === '/participation/statuses'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La gestion des statuts de participation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.saveParticipationStatus(body, claims)) });
+    }
     if(method === 'GET' && path === '/personnes/count'){
       return response(200, { ok:true, ...(await service.countPersonnes()) });
     }

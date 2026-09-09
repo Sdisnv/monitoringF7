@@ -260,7 +260,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-multisession-v2-foundation-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-configuration-formation-ux-referentials-finish-5';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -373,8 +373,12 @@ async function ensureScopeSchema(){
     `insert into monitoring_f7_schema_migrations(version) values ('scope-generic-exercise-sessions-1') on conflict (version) do nothing`
   );
   await migrateParticipationPolicyEngine1();
+  await migrateConfigurationFormationUxReferentialsFinish5();
   await migrateGenericEventSessionPolicyArchitecture1();
   await migrateMultiSessionV2Foundation1();
+  await db.query(
+    `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
+  );
   ready = true;
   return true;
   });
@@ -1187,6 +1191,50 @@ async function migrateParticipationPolicyEngine1(){
     );
   }
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-participation-policy-engine-1') on conflict (version) do nothing`);
+}
+
+async function migrateConfigurationFormationUxReferentialsFinish5(){
+  const policy = require('./_scope-participation-policy');
+  await db.query(`alter table scope_participations drop constraint if exists scope_participations_motif_val_chk`);
+  await db.query(`
+    alter table scope_participations add constraint scope_participations_motif_val_chk check (
+      motif_absence is null or length(trim(motif_absence)) > 0
+    )
+  `);
+  await db.query(`
+    create table if not exists scope_participation_statuses (
+      status_id text primary key,
+      label text not null,
+      base_status text not null,
+      actif boolean not null default true,
+      historique boolean not null default false,
+      display_order integer not null default 999,
+      group_code text not null default 'operationnel',
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_participation_statuses_base_chk check (base_status in ('PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','PERMUTATION')),
+      constraint scope_participation_statuses_id_chk check (length(trim(status_id)) > 0),
+      constraint scope_participation_statuses_label_chk check (length(trim(label)) > 0)
+    )
+  `);
+  for(const status of policy.statusCatalog().filter((row) => !row.system)){
+    await db.query(
+      `insert into scope_participation_statuses(status_id, label, base_status, actif, historique, display_order, group_code, metadata)
+       values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)
+       on conflict (status_id) do nothing`,
+      [
+        status.id,
+        status.label,
+        ['PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','PERMUTATION'].includes(status.id) ? status.id : 'PRESENT',
+        status.active !== false,
+        status.historical === true,
+        status.order,
+        status.group || 'operationnel',
+        JSON.stringify({ source: 'STATUS_LIBRARY', system_behavior: status.id })
+      ]
+    );
+  }
 }
 
 async function migrateGenericEventSessionPolicyArchitecture1(){

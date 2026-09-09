@@ -63,7 +63,7 @@ function nativeCsv(rows){
     includes(ui, 'uniqueMotifIds');
     includes(ui, "if (kind === 'status' && !state.formationDefinitionForm[key].includes('PRESENT'))");
     includes(ui, 'Présent est obligatoire pour cette configuration.');
-    includes(ui, "uniqueMotifIds(['FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE', 'PAS_CONCERNE'])");
+    includes(ui, "motifItems('DISPENSE', selectedDispenseMotifs)");
   });
 
   await record('F/G/H/I — UX modèle, application et protection temporelle', async () => {

@@ -44,6 +44,31 @@ const ROLE_LIBRARY = Object.freeze({
   REMPLACANT: { id: 'REMPLACANT', label: 'Remplaçant', supervision: false, exception: true, order: 90 }
 });
 
+function statusRow(row){
+  const id = String(row && (row.status_id || row.id) || '').trim().toUpperCase();
+  const baseStatus = String(row && (row.base_status || row.baseStatus) || id || '').trim().toUpperCase();
+  const base = STATUS_LIBRARY[id] || STATUS_LIBRARY[baseStatus] || {};
+  return {
+    id,
+    label: row && (row.label || row.libelle) || base.label || id,
+    system: row && row.system !== undefined ? Boolean(row.system) : Boolean(base.system),
+    baseStatus: STATUS_LIBRARY[baseStatus] ? baseStatus : id,
+    active: row && (row.actif === false || row.active === false) ? false : (base.active !== false),
+    historical: row && (row.historique === true || row.historical === true) ? true : Boolean(base.historical),
+    order: Number(row && (row.display_order || row.order) || base.order || 999),
+    group: row && (row.group_code || row.group) || base.group || 'operationnel'
+  };
+}
+
+function statusCatalog(rows){
+  const byId = new Map(Object.values(STATUS_LIBRARY).map((row) => [row.id, statusRow(row)]));
+  for(const row of rows || []){
+    const mapped = statusRow(row);
+    if(mapped.id) byId.set(mapped.id, mapped);
+  }
+  return [...byId.values()].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'fr'));
+}
+
 const DEFAULT_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'PROFESSIONNEL', 'ARMEE', 'ACCIDENT_MALADIE']);
 const JSP_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
 const DEFAULT_DISPENSE_MOTIFS = Object.freeze(['FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE']);
@@ -196,6 +221,7 @@ module.exports = {
   ROLE_LIBRARY,
   DEFAULT_DOMAIN_POLICIES,
   normalizeDomain,
+  statusCatalog,
   motifCatalog,
   resolveParticipationPolicy,
   policySnapshot,

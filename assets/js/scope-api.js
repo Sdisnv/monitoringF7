@@ -389,6 +389,7 @@
       participationPolicies() { return request('GET', '/participation/policies'); },
       saveParticipationPolicy(domain, body) { return request('POST', `/participation/policies/${encodeURIComponent(domain)}`, body || {}); },
       saveParticipationMotif(body) { return request('POST', '/participation/motifs', body || {}); },
+      saveParticipationStatus(body) { return request('POST', '/participation/statuses', body || {}); },
       resolveObjectif(params) { return request('GET', `/objectifs/resolution${queryString(params || {})}`); },
       createObjectif(body) { return request('POST', '/objectifs', body); },
       patchObjectif(id, body) { return request('PATCH', `/objectifs/${encodeURIComponent(id)}`, body); },

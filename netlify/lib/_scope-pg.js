@@ -1475,6 +1475,38 @@ function createPgRepo(client){
       const result = await q('select * from scope_participation_motifs order by display_order, label');
       return result.rows;
     },
+    async listParticipationStatusRows(){
+      if(!(await tableExists('scope_participation_statuses'))) return [];
+      const result = await q('select * from scope_participation_statuses order by display_order, label');
+      return result.rows;
+    },
+    async upsertParticipationStatus(row){
+      const result = await q(
+        `insert into scope_participation_statuses(status_id, label, base_status, actif, historique, display_order, group_code, metadata)
+         values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)
+         on conflict (status_id) do update set
+           label = excluded.label,
+           base_status = excluded.base_status,
+           actif = excluded.actif,
+           historique = excluded.historique,
+           display_order = excluded.display_order,
+           group_code = excluded.group_code,
+           metadata = scope_participation_statuses.metadata || excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [
+          String(row.status_id || row.id).trim().toUpperCase(),
+          row.label || row.libelle,
+          String(row.base_status || row.baseStatus || 'PRESENT').trim().toUpperCase(),
+          row.actif !== false && row.active !== false,
+          row.historique === true || row.historical === true,
+          Number(row.display_order || row.order || 999),
+          row.group_code || row.group || 'operationnel',
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return result.rows[0];
+    },
     async upsertParticipationMotif(row){
       const result = await q(
         `insert into scope_participation_motifs(motif_id, motif_type, label, actif, historique, display_order, group_code, metadata)

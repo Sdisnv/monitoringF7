@@ -194,8 +194,29 @@ async function bumpOrConflict(repo, eventId, baseVersion, patch){
 }
 
 function createScopeService(repo){
+  function generateReferentialId(label, existingIds){
+    const base = String(label || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .toUpperCase()
+      .slice(0, 48) || 'REFERENTIEL';
+    let candidate = base;
+    let index = 2;
+    while(existingIds && existingIds.has(candidate)){
+      candidate = `${base}_${index}`;
+      index += 1;
+    }
+    return candidate;
+  }
+
   async function participationMotifRows(store = repo){
     return store.listParticipationMotifRows ? await store.listParticipationMotifRows() : participationPolicy.motifCatalog();
+  }
+
+  async function participationStatusRows(store = repo){
+    return store.listParticipationStatusRows ? await store.listParticipationStatusRows() : [];
   }
 
   async function participationPolicyRows(store = repo){
@@ -232,6 +253,7 @@ function createScopeService(repo){
 
   async function participationPolicies(){
     const motifRows = await participationMotifRows(repo);
+    const statusRows = await participationStatusRows(repo);
     const policyRows = await participationPolicyRows(repo);
     const policyVersions = repo.listParticipationPolicyVersions ? await repo.listParticipationPolicyVersions({ active: true }) : [];
     const domaines = repo.listDomaines ? await repo.listDomaines() : [];
@@ -246,7 +268,7 @@ function createScopeService(repo){
     return {
       participation: {
         policyVersion: participationPolicy.POLICY_VERSION,
-        statuses: Object.values(participationPolicy.STATUS_LIBRARY).sort((a, b) => a.order - b.order),
+        statuses: participationPolicy.statusCatalog(statusRows),
         motifs: participationPolicy.motifCatalog(motifRows),
         roles: Object.values(participationPolicy.ROLE_LIBRARY).sort((a, b) => a.order - b.order),
         policies,
@@ -588,12 +610,17 @@ function createScopeService(repo){
   }
 
   async function saveParticipationMotif(body, actor){
-    const motifId = String(body && (body.motifId || body.motif_id || body.id) || '').trim().toUpperCase();
+    body = body || {};
+    const motifRows = await participationMotifRows(repo);
+    const motifType = String(body && (body.motifType || body.motif_type || body.type) || 'EXCUSE').trim().toUpperCase();
+    const label = String(body && (body.label || body.libelle) || '').trim();
+    const generatedId = generateReferentialId(label || motifType, new Set((motifRows || []).map((row) => String(row.motif_id || row.id || '').toUpperCase())));
+    const motifId = String(body && (body.motifId || body.motif_id || body.id) || generatedId || '').trim().toUpperCase();
     if(!motifId) throw new HttpError(400, 'motif_invalide', 'Identifiant motif obligatoire.');
     const row = {
       motif_id: motifId,
-      motif_type: String(body.motifType || body.motif_type || body.type || 'EXCUSE').trim().toUpperCase(),
-      label: String(body.label || body.libelle || motifId).trim(),
+      motif_type: motifType,
+      label: label || motifId,
       actif: body.actif !== false && body.active !== false,
       historique: Boolean(body.historique || body.historical),
       display_order: Number(body.displayOrder || body.display_order || body.order || 999),
@@ -612,6 +639,44 @@ function createScopeService(repo){
       });
     }
     return { motif: saved };
+  }
+
+  async function saveParticipationStatus(body, actor){
+    body = body || {};
+    const statusRows = await participationStatusRows(repo);
+    const label = String(body && (body.label || body.libelle) || '').trim();
+    if(!label) throw new HttpError(400, 'statut_libelle_vide', 'Libellé statut obligatoire.');
+    const baseStatus = String(body && (body.baseStatus || body.base_status) || 'PRESENT').trim().toUpperCase();
+    if(!['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE'].includes(baseStatus)){
+      throw new HttpError(422, 'statut_base_invalide', 'Choisissez un comportement compatible : présence, excuse, absence ou dispense.');
+    }
+    const existingIds = new Set([
+      ...Object.keys(participationPolicy.STATUS_LIBRARY),
+      ...(statusRows || []).map((row) => String(row.status_id || row.id || '').toUpperCase())
+    ]);
+    const statusId = String(body && (body.statusId || body.status_id || body.id) || generateReferentialId(label, existingIds)).trim().toUpperCase();
+    const base = participationPolicy.STATUS_LIBRARY[baseStatus] || {};
+    const row = {
+      status_id: statusId,
+      label,
+      base_status: baseStatus,
+      actif: body.actif !== false && body.active !== false,
+      historique: Boolean(body.historique || body.historical),
+      display_order: Number(body.displayOrder || body.display_order || body.order || base.order || 999),
+      group_code: String(body.groupCode || body.group_code || body.group || 'operationnel').trim() || 'operationnel',
+      metadata: Object.assign({}, body.metadata || {}, { configurable: true })
+    };
+    const saved = repo.upsertParticipationStatus ? await repo.upsertParticipationStatus(row) : row;
+    if(repo.appendJournal){
+      await repo.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'participation_status',
+        entite_id: statusId,
+        action: row.actif ? 'MODIFIER_STATUT' : 'ARCHIVER_STATUT',
+        apres: saved
+      });
+    }
+    return { status: saved };
   }
 
   function comparePeopleByGradeName(a, b){
@@ -4921,6 +4986,7 @@ function createScopeService(repo){
     referentiels,
     participationPolicies,
     saveParticipationPolicy,
+    saveParticipationStatus,
     saveParticipationMotif,
     formationCatalog,
     createEventDefinition,
