@@ -7949,6 +7949,8 @@
     if (form.modeOrganisation === 'MULTI_SESSION') {
       form.activeStatuses = (form.activeStatuses || []).filter((status) => status !== 'PERMUTATION');
     }
+    if (!Array.isArray(form.activeStatuses)) form.activeStatuses = [];
+    if (!form.activeStatuses.includes('PRESENT')) form.activeStatuses.unshift('PRESENT');
     const selectedStatuses = (Array.isArray(form.activeStatuses) ? form.activeStatuses : baseStatuses)
       .filter((s) => s !== 'NON_RENSEIGNE' && !(form.modeOrganisation === 'MULTI_SESSION' && s === 'PERMUTATION'));
     const selectedExcuseMotifs = uniqueMotifIds(Array.isArray(form.excuseMotifs) ? form.excuseMotifs : baseExcuseMotifs);
