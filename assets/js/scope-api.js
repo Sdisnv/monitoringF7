@@ -60,13 +60,22 @@
       const payloadBytes = typeof TextEncoder !== 'undefined'
         ? new TextEncoder().encode(payloadText).length
         : payloadText.length;
+      let serverPerf = null;
+      try {
+        const raw = response && response.headers && response.headers.get('X-Scope-Perf');
+        serverPerf = raw ? JSON.parse(raw) : null;
+      } catch (_error) {
+        serverPerf = null;
+      }
       const item = {
         at: new Date().toISOString(),
         method,
         path,
         status: response && response.status || 0,
         durationMs,
-        payloadBytes
+        payloadBytes,
+        serverTiming: response && response.headers && response.headers.get('Server-Timing') || '',
+        serverPerf
       };
       window.ScopePerformance = window.ScopePerformance || { calls: [] };
       window.ScopePerformance.calls.push(item);

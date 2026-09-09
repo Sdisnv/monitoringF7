@@ -1067,6 +1067,16 @@ function createMemoryRepo(){
           };
         });
     },
+    async countEventsByDefinitionVersions(versionIds = []){
+      const wanted = new Set((versionIds || []).filter(Boolean).map(String));
+      const counts = {};
+      for(const event of evenements.values()){
+        const decorated = decorateEvent(event);
+        const id = decorated && decorated.definition_version_id;
+        if(id && wanted.has(String(id))) counts[id] = Number(counts[id] || 0) + 1;
+      }
+      return counts;
+    },
     async getEventDefinitionVersion(id){
       return (await api.listEventDefinitionVersions({})).find((row) => String(row.definition_version_id) === String(id)) || null;
     },

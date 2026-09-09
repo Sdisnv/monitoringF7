@@ -260,11 +260,39 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-multisession-v2-foundation-1';
+const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
+let readyPromise = null;
+
+async function hasMigration(version){
+  const result = await db.query('select 1 from monitoring_f7_schema_migrations where version = $1 limit 1', [version]);
+  return Boolean(result.rows && result.rows[0]);
+}
+
+async function withSchemaLock(callback){
+  await db.query('select pg_advisory_lock($1)', [SCOPE_SCHEMA_LOCK_KEY]);
+  try{
+    return await callback();
+  }finally{
+    await db.query('select pg_advisory_unlock($1)', [SCOPE_SCHEMA_LOCK_KEY]);
+  }
+}
 
 async function ensureScopeSchema(){
   if(ready) return true;
+  if(readyPromise) return readyPromise;
+  readyPromise = (async () => {
   await db.ensureCoreSchema();
+  if(await hasMigration(LATEST_SCOPE_SCHEMA_VERSION)){
+    ready = true;
+    return true;
+  }
+  return await withSchemaLock(async () => {
+  if(await hasMigration(LATEST_SCOPE_SCHEMA_VERSION)){
+    ready = true;
+    return true;
+  }
   for(const sql of DDL){
     await db.query(sql);
   }
@@ -349,6 +377,13 @@ async function ensureScopeSchema(){
   await migrateMultiSessionV2Foundation1();
   ready = true;
   return true;
+  });
+  })();
+  try{
+    return await readyPromise;
+  }finally{
+    readyPromise = null;
+  }
 }
 
 async function migrateAlerts1(){

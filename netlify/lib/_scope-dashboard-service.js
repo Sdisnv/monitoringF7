@@ -42,9 +42,11 @@ function createScopeDashboardService(repo){
       include_qualification: resolved.include_qualification
     };
     const evaluated = await analytics.evaluate(sdisQuery);
-    const series = await analytics.timeseries(sdisQuery);
-    const explain = await analytics.explain(sdisQuery);
-    const alertsPayload = await alertsService.listAlerts(resolved);
+    const [series, explain, alertsPayload] = await Promise.all([
+      analytics.timeseries(sdisQuery),
+      analytics.explain(sdisQuery),
+      alertsService.listAlerts(Object.assign({}, resolved, { summaryOnly: true }))
+    ]);
 
     const absences = {
       count: Number((evaluated.officiel.volumes && evaluated.officiel.volumes.nonExcuses) || 0),
@@ -64,7 +66,7 @@ function createScopeDashboardService(repo){
     const cachedByDomaine = new Map();
     const cachedByCible = new Map();
     if(!domaineCode && !cibleRaw){
-      for(const domaine of DOMAINES){
+      const domainRows = await Promise.all(DOMAINES.map(async (domaine) => {
         const sub = await analytics.evaluate({
           from: period.from,
           to: period.to,
@@ -72,6 +74,9 @@ function createScopeDashboardService(repo){
           includeQualification: resolved.includeQualification,
           include_qualification: resolved.include_qualification
         });
+        return { domaine, sub };
+      }));
+      for(const { domaine, sub } of domainRows){
         cachedByDomaine.set(domaine.code, sub);
         domaines.push({
           code: domaine.code,
@@ -82,7 +87,9 @@ function createScopeDashboardService(repo){
       }
     } else if(domaineCode && !cibleRaw && typeof repo.listCibles === 'function'){
       const allCibles = await repo.listCibles();
-      for(const cible of allCibles.filter((row) => row.domaine_code === domaineCode && row.actif !== false)){
+      const cibleRows = await Promise.all(allCibles
+        .filter((row) => row.domaine_code === domaineCode && row.actif !== false)
+        .map(async (cible) => {
         const sub = await analytics.evaluate({
           from: period.from,
           to: period.to,
@@ -91,6 +98,9 @@ function createScopeDashboardService(repo){
           includeQualification: resolved.includeQualification,
           include_qualification: resolved.include_qualification
         });
+        return { cible, sub };
+      }));
+      for(const { cible, sub } of cibleRows){
         cachedByCible.set(cible.cible_id, sub);
         cibles.push({
           cibleId: cible.cible_id,

@@ -1,4 +1,7 @@
+const { AsyncLocalStorage } = require('async_hooks');
+
 let pool = null;
+const metricsStore = new AsyncLocalStorage();
 
 function getDatabaseUrl(){
   const url = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL || '';
@@ -20,18 +23,47 @@ function getPool(){
 }
 
 async function query(text, params){
-  return getPool().query(text, params || []);
+  const metrics = metricsStore.getStore();
+  const acquireStart = Date.now();
+  const client = await getPool().connect();
+  const acquiredAt = Date.now();
+  if(metrics){
+    metrics.dbAcquireMs += acquiredAt - acquireStart;
+    metrics.queryCount += 1;
+  }
+  try{
+    const sqlStart = Date.now();
+    const result = await client.query(text, params || []);
+    if(metrics) metrics.sqlMs += Date.now() - sqlStart;
+    return result;
+  }finally{
+    client.release();
+  }
 }
 
 async function transaction(callback){
+  const metrics = metricsStore.getStore();
+  const acquireStart = Date.now();
   const client = await getPool().connect();
+  if(metrics) metrics.dbAcquireMs += Date.now() - acquireStart;
+  const instrumented = metrics ? Object.assign(Object.create(Object.getPrototypeOf(client)), client, {
+    query: async (text, params) => {
+      metrics.queryCount += 1;
+      const sqlStart = Date.now();
+      const result = await client.query(text, params || []);
+      metrics.sqlMs += Date.now() - sqlStart;
+      return result;
+    }
+  }) : client;
   try{
-    await client.query('begin');
-    const result = await callback(client);
-    await client.query('commit');
+    await instrumented.query('begin');
+    const result = await callback(instrumented);
+    await instrumented.query('commit');
     return result;
   }catch(error){
-    try{ await client.query('rollback'); }catch{}
+    try{
+      await instrumented.query('rollback');
+    }catch{}
     throw error;
   }finally{
     client.release();
@@ -39,8 +71,11 @@ async function transaction(callback){
 }
 
 let schemaReady = false;
+let coreSchemaPromise = null;
 async function ensureCoreSchema(){
   if(schemaReady) return true;
+  if(coreSchemaPromise) return coreSchemaPromise;
+  coreSchemaPromise = (async () => {
   await query(`create table if not exists monitoring_f7_schema_migrations (
     version text primary key,
     applied_at timestamptz not null default now()
@@ -112,10 +147,46 @@ async function ensureCoreSchema(){
   await query(`insert into monitoring_f7_schema_migrations(version) values ('v67.0-auto-core-schema') on conflict (version) do nothing`);
   schemaReady = true;
   return true;
+  })();
+  try{
+    return await coreSchemaPromise;
+  }finally{
+    coreSchemaPromise = null;
+  }
+}
+
+function createMetrics(label){
+  return {
+    label: label || '',
+    startedAt: Date.now(),
+    queryCount: 0,
+    dbAcquireMs: 0,
+    sqlMs: 0,
+    transformMs: 0
+  };
+}
+
+async function withMetrics(label, callback){
+  const metrics = createMetrics(label);
+  return metricsStore.run(metrics, async () => {
+    try{
+      return await callback(metrics);
+    }finally{
+      metrics.totalMs = Date.now() - metrics.startedAt;
+    }
+  });
+}
+
+function currentMetrics(){
+  const metrics = metricsStore.getStore();
+  if(!metrics) return null;
+  return Object.assign({}, metrics, { totalMs: Date.now() - metrics.startedAt });
 }
 
 module.exports = {
   query,
   transaction,
-  ensureCoreSchema
+  ensureCoreSchema,
+  withMetrics,
+  currentMetrics
 };

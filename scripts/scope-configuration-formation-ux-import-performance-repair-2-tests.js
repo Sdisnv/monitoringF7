@@ -154,9 +154,11 @@ function nativeCsv(rows){
     includes(api, 'personnesCount()');
     includes(api, 'ScopePerformance');
     includes(api, 'payloadBytes');
+    includes(api, 'serverPerf');
     includes(ui, 'Promise.all(jobs)');
     ok(!ui.includes('if (client.listPersonnes && state.personCount == null)'), 'chargement global du personnel supprimé');
-    includes(serviceSrc, 'beforeUserMs: 16000');
+    includes(serviceSrc, 'measuredBeforeMs: 14000');
+    includes(serviceSrc, 'serverInstrumentation');
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const count = await service.countPersonnes();
@@ -173,7 +175,7 @@ function nativeCsv(rows){
   await record('08 — cache-buster REPAIR-2 et protections moteurs', () => {
     const html = read('scope.html');
     const serviceSrc = read('netlify/lib/_scope-service.js');
-    includes(html, 'scope-configuration-formation-ux-import-performance-repair-2');
+    ok(html.includes('scope-configuration-policy-runtime-performance-root-repair-3') || html.includes('scope-configuration-formation-ux-import-performance-repair-2'), 'cache-buster formation repair présent');
     includes(serviceSrc, 'cloturerMultiSessionV2');
     includes(read('netlify/lib/_scope-rules.js'), 'PERMUTATION');
     includes(read('netlify/lib/_scope-multisession-v2.js'), 'MULTI_SESSION_V2');

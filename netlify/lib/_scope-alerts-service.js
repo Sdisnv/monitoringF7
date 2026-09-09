@@ -534,11 +534,12 @@ function createScopeAlertsService(repo){
     const today = resolved.today || todayZurichIso(resolved.now);
     const includeAcknowledged = ['1', 'true', 'oui', 'yes'].includes(String(resolved.includeAcknowledged || '').toLowerCase());
     const levelFilter = resolved.level ? String(resolved.level).toUpperCase() : null;
+    const summaryOnly = resolved.summaryOnly === true || ['1', 'true', 'oui', 'yes'].includes(String(resolved.summaryOnly || '').toLowerCase());
     const operational = markDataQuality(await operationalAlerts(resolved, period, today));
     const objectives = await objectiveAlerts(resolved, period);
-    const personUnder = await personUnderObjectiveAlerts(resolved, period);
-    const absences = await unexcusedAbsenceAlerts(resolved, period);
-    const cyclesIncomplete = await cycleIncompleteAlerts(resolved, period);
+    const personUnder = summaryOnly ? [] : await personUnderObjectiveAlerts(resolved, period);
+    const absences = summaryOnly ? [] : await unexcusedAbsenceAlerts(resolved, period);
+    const cyclesIncomplete = summaryOnly ? [] : await cycleIncompleteAlerts(resolved, period);
     let alerts = operational.concat(objectives, personUnder, absences, cyclesIncomplete);
     const typeFilter = resolved.type ? String(resolved.type).toUpperCase() : null;
     const categoryFilter = resolved.category ? String(resolved.category).toUpperCase() : null;

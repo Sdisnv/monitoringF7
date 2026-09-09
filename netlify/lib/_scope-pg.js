@@ -1641,6 +1641,19 @@ function createPgRepo(client){
       );
       return result.rows.map(mapEventDefinitionVersion);
     },
+    async countEventsByDefinitionVersions(versionIds = []){
+      const ids = (versionIds || []).filter(Boolean);
+      if(!ids.length) return {};
+      const result = await q(
+        `select coalesce(e.definition_version_id, x.definition_version_id) as definition_version_id, count(*)::int as count
+         from scope_evenements e
+         left join scope_exercices x on x.exercice_id = e.exercice_id
+         where coalesce(e.definition_version_id, x.definition_version_id) = any($1::uuid[])
+         group by coalesce(e.definition_version_id, x.definition_version_id)`,
+        [ids]
+      );
+      return Object.fromEntries((result.rows || []).map((row) => [row.definition_version_id, Number(row.count || 0)]));
+    },
     async getEventDefinitionVersion(id){
       if(!(await tableExists('scope_event_definition_versions'))) return null;
       const result = await q(

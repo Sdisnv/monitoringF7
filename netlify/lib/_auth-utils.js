@@ -8,9 +8,33 @@ const jsonHeaders = {
 };
 
 function response(statusCode, payload){
+  let metricsHeaders = {};
+  try{
+    const db = require('./_postgres');
+    const metrics = db.currentMetrics && db.currentMetrics();
+    if(metrics){
+      metricsHeaders = {
+        'Server-Timing': [
+          `scope;dur=${Number(metrics.totalMs || 0)}`,
+          `db-acquire;dur=${Number(metrics.dbAcquireMs || 0)}`,
+          `db-sql;dur=${Number(metrics.sqlMs || 0)}`,
+          `db-queries;desc="${Number(metrics.queryCount || 0)}"`
+        ].join(', '),
+        'X-Scope-Perf': JSON.stringify({
+          totalMs: Number(metrics.totalMs || 0),
+          dbAcquireMs: Number(metrics.dbAcquireMs || 0),
+          sqlMs: Number(metrics.sqlMs || 0),
+          queryCount: Number(metrics.queryCount || 0)
+        }),
+        'Access-Control-Expose-Headers': 'Server-Timing, X-Scope-Perf'
+      };
+    }
+  }catch(_error){
+    metricsHeaders = {};
+  }
   return {
     statusCode,
-    headers: jsonHeaders,
+    headers: Object.assign({}, jsonHeaders, metricsHeaders),
     body: JSON.stringify(payload)
   };
 }

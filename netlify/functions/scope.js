@@ -12,6 +12,7 @@ const { getPgRepo } = require('../lib/_scope-pg');
 const { generateReport, pdfResponse } = require('../lib/_scope-report-service');
 const { createScopePersonService } = require('../lib/_scope-person-service');
 const users = require('../lib/_user-store');
+const { withMetrics } = require('../lib/_postgres');
 
 async function requireAccess(event){
   const claims = verifyToken(bearerToken(event), 'access');
@@ -62,7 +63,7 @@ function forbiddenPersonnel(){
   });
 }
 
-exports.handler = async function(event){
+async function scopeHandler(event){
     if(event.httpMethod === 'OPTIONS'){
     return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' }, body: '' };
   }
@@ -512,4 +513,10 @@ exports.handler = async function(event){
         : (raw || 'Une erreur interne SCOPE est survenue.')
     });
   }
+}
+
+exports.handler = async function(event){
+  if(event.httpMethod === 'OPTIONS') return scopeHandler(event);
+  const label = `${event.httpMethod || 'GET'} ${scopePath(event)}`;
+  return withMetrics(label, () => scopeHandler(event));
 };

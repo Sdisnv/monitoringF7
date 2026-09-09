@@ -217,12 +217,13 @@ function nativeCsv(rows){
     eq(catalog.resolveEngineRoute({ domaine_code: 'DAP', libelle: 'Formation groupée DAP 1.1' }), 'SIMPLE_LEGACY');
   });
 
-  await record('11 — diagnostics performance exposent appels avant/après et limites', async () => {
+  await record('11 — diagnostics performance exposent mesures, instrumentation et limites', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const diag = (await service.performanceDiagnostics()).performance;
-    ok(diag.measurements.evenements.beforeUserMs > diag.measurements.evenements.afterTargetMs, 'événements optimisés');
-    ok(diag.measurements.personnel.beforeUserMs > diag.measurements.personnel.afterTargetMs, 'personnel optimisé');
+    ok(diag.measurements.evenements.measuredBeforeMs >= 12000, 'événements mesurés avant R3');
+    ok(diag.measurements.personnel.measuredBeforeMs >= 12000, 'personnel mesuré avant R3');
+    ok(diag.serverInstrumentation && diag.serverInstrumentation.headers.includes('Server-Timing'), 'instrumentation serveur exposée');
     ok(Array.isArray(diag.appliedOptimizations) && diag.appliedOptimizations.length >= 3, 'optimisations listées');
     ok(Array.isArray(diag.safeguards) && diag.safeguards.length >= 1, 'garde-fous documentés');
   });

@@ -263,13 +263,28 @@ function createScopeService(repo){
       repo.listDomaines ? repo.listDomaines() : Promise.resolve([]),
       repo.listCibles ? repo.listCibles() : Promise.resolve([])
     ]);
+    const versionIds = (definitionVersions || []).map((row) => row.definition_version_id || row.definitionVersionId).filter(Boolean);
+    const eventCounts = repo.countEventsByDefinitionVersions
+      ? await repo.countEventsByDefinitionVersions(versionIds)
+      : {};
     const versionsByDefinition = new Map();
     for(const version of definitionVersions || []){
       const id = version.definition_id || version.definitionId;
       const list = versionsByDefinition.get(id) || [];
-      list.push(version);
+      const versionId = version.definition_version_id || version.definitionVersionId;
+      list.push(Object.assign({}, version, {
+        linkedEventCount: Number(eventCounts[versionId] || 0),
+        linked_event_count: Number(eventCounts[versionId] || 0)
+      }));
       versionsByDefinition.set(id, list);
     }
+    const enrichedVersions = (definitionVersions || []).map((version) => {
+      const versionId = version.definition_version_id || version.definitionVersionId;
+      return Object.assign({}, version, {
+        linkedEventCount: Number(eventCounts[versionId] || 0),
+        linked_event_count: Number(eventCounts[versionId] || 0)
+      });
+    });
     return {
       formationCatalog: {
         routes: genericCatalog.ROUTES,
@@ -277,7 +292,7 @@ function createScopeService(repo){
         definitions: (definitions || []).map((definition) => Object.assign({}, definition, {
           versions: versionsByDefinition.get(definition.definition_id || definition.definitionId) || []
         })),
-        definitionVersions,
+        definitionVersions: enrichedVersions,
         policyVersions,
         domaines,
         cibles,
@@ -4734,18 +4749,32 @@ function createScopeService(repo){
         generatedAt: new Date().toISOString(),
         scope: 'navigation_principale',
         measurements: {
-          accueil: { beforeUserMs: 16000, afterTargetMs: 3500, rootCause: 'bootstrap referentiels + liste + dashboard + compteur personnel complet executes en sequence' },
-          evenements: { beforeUserMs: 12000, afterTargetMs: 3000, rootCause: 'navigation bloquee par chargements secondaires et compteur personnel hors vue import' },
-          personnel: { beforeUserMs: 14000, afterTargetMs: 4500, rootCause: 'premiere ouverture charge le repertoire complet; retour rapide par cache court' },
-          analyses: { beforeUserMs: 17000, afterTargetMs: 5000, rootCause: 'dashboard et analyses declenches avec rendu global bloquant' },
-          vigilance: { beforeUserMs: 2000, afterTargetMs: 2000, rootCause: 'vue deja limitee, cache court conserve' }
+          accueil: { measuredBeforeMs: 14000, measuredAfterMs: null, rootCause: 'dashboard principal et compteur alertes de navigation attendus dans le chargement global' },
+          evenements: { measuredBeforeMs: 15000, measuredAfterMs: null, rootCause: 'premiere ouverture penalisee par ensureSchema runtime et compteur alertes attendu avec la liste' },
+          personnel: { measuredBeforeMs: 12000, measuredAfterMs: null, rootCause: 'premiere ouverture charge le repertoire complet; navigation bloquee par compteurs secondaires' },
+          analyses: { measuredBeforeMs: 13000, measuredAfterMs: null, rootCause: 'dashboard analytique + analyse nominative + alertes secondaires retenaient le loader global' },
+          vigilance: { measuredBeforeMs: 17000, measuredAfterMs: null, rootCause: 'service alertes complet execute toutes les familles de vigilance et DDL runtime potentiel au premier hit' }
+        },
+        serverInstrumentation: {
+          headers: ['Server-Timing', 'X-Scope-Perf'],
+          fields: ['totalMs', 'dbAcquireMs', 'sqlMs', 'queryCount'],
+          endpoints: {
+            accueil: ['/referentiels', '/evenements', '/dashboard'],
+            evenements: ['/evenements'],
+            personnel: ['/personnes/count', '/personnel'],
+            analyses: ['/dashboard', '/analytics/personnel'],
+            vigilance: ['/alerts']
+          }
         },
         appliedOptimizations: [
+          'ensureScopeSchema court-circuite les migrations deja appliquees et utilise un verrou PostgreSQL advisory pour les environnements vierges',
           'referentiels client mis en cache et invalides apres ecriture',
           'listes evenements/cycles/dashboard/vigilance chargees via cache court par periode',
           'suppression du double appel objectifs sur changement de route',
           'compteur personnel remplace par endpoint count leger et charge uniquement pour import/personnel',
           'chargements independants de navigation executes en parallele',
+          'compteur alertes de navigation rafraichi en arriere-plan non bloquant',
+          'bandeau global Chargement supprime pour les navigations ordinaires',
           'instrumentation client ScopePerformance pour duree appels, payloads et rendu utile'
         ],
         safeguards: [
