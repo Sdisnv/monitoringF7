@@ -2223,6 +2223,69 @@ html, body {
   box-shadow: inset 3px 0 0 #5fb6f5;
 }
 
+.scope-multisession-v2-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid #c9ddf8;
+  border-left: 4px solid #3279c8;
+  border-radius: var(--scope-radius);
+  background: #f4f8ff;
+  color: #122033;
+}
+
+.scope-multisession-v2-band strong {
+  display: block;
+  font-size: 15px;
+}
+
+.scope-multisession-v2-band span {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  font-size: 12px;
+}
+
+.scope-multisession-v2-band dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.scope-multisession-v2-band div,
+.scope-multisession-v2-band dt,
+.scope-multisession-v2-band dd {
+  min-width: 0;
+}
+
+.scope-multisession-v2-band dt {
+  color: var(--scope-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scope-multisession-v2-band dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .scope-multisession-v2-band {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .scope-multisession-v2-band dl {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .scope-table tbody tr.scope-row-session-counted,
 .scope-table tbody tr.scope-row-session-counted td,
 .scope-table tbody tr.scope-row-session-counted:nth-child(odd),

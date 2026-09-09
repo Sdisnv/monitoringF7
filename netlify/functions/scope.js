@@ -272,6 +272,10 @@ exports.handler = async function(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.cloturer(params.id, body, claims)) });
     }
+    params = match(path, '/multisessions-v2/:id/cloturer');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.cloturerMultiSessionV2(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/reouvrir');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.reouvrir(params.id, body, claims)) });

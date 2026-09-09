@@ -51,6 +51,7 @@ const {
   resolveSessionReportingScope,
   resolveCycleCompletion
 } = require('./_scope-cycle-rules');
+const MultiSessionV2 = require('./_scope-multisession-v2');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -2192,6 +2193,78 @@ function createScopeService(repo){
     });
   }
 
+  async function loadMultiSessionV2State(store, evenement, eventId){
+    if(!store.getMultisessionV2ForEvent || !store.listMultisessionV2Sessions) return null;
+    const multisession = await store.getMultisessionV2ForEvent(eventId || evenement?.evenement_id);
+    if(!multisession) return null;
+    const sessions = await store.listMultisessionV2Sessions(multisession.multisession_id || multisession.id);
+    const eventIds = (sessions || []).map((row) => row.evenement_id || row.event_id).filter(Boolean);
+    const populationRows = store.listMultisessionV2Population
+      ? await store.listMultisessionV2Population(multisession.multisession_id || multisession.id)
+      : [];
+    const participationRows = store.listParticipationsForEvents && eventIds.length
+      ? await store.listParticipationsForEvents(eventIds)
+      : [];
+    const personnes = await hydratePersonnes([
+      ...populationRows.map((row) => row.person_id || row.personne_id),
+      ...participationRows.map((row) => row.personne_id)
+    ]);
+    return MultiSessionV2.buildState({
+      multisession,
+      sessions,
+      population: populationRows.map((row) => Object.assign({}, row, { personne_id: row.personne_id || row.person_id })),
+      participations: participationRows,
+      personnes,
+      currentEventId: eventId || evenement?.evenement_id
+    });
+  }
+
+  async function ensureMultiSessionV2EventRows(store, state, evenement, actor){
+    if(!state || !state.multisessionId) return;
+    const eventId = evenement.evenement_id;
+    const currentAttendus = store.listAttendus ? await store.listAttendus(eventId) : [];
+    const attenduIds = new Set(currentAttendus.filter((row) => row.inclus !== false).map((row) => String(row.personne_id)));
+    for(const row of state.multisession ? (await store.listMultisessionV2Population(state.multisessionId)) : []){
+      const personneId = String(row.person_id || row.personne_id || '');
+      if(!personneId || attenduIds.has(personneId)) continue;
+      await store.upsertAttendu({
+        evenement_id: eventId,
+        personne_id: personneId,
+        inclus: true,
+        origine: 'MULTISESSION_V2',
+        origine_retrait: null,
+        motif_inclusion: 'multisession_v2_population'
+      });
+      if(!(await store.getParticipation(eventId, personneId))){
+        await store.upsertParticipation({
+          evenement_id: eventId,
+          personne_id: personneId,
+          statut: 'NON_RENSEIGNE',
+          role: 'PARTICIPANT',
+          source: 'MULTISESSION_V2',
+          auteur_id: actorId(actor)
+        });
+      }
+    }
+  }
+
+  async function mirrorMultiSessionV2Participation(store, state, eventId, row, actor){
+    if(!state || !store.upsertMultisessionV2Participation) return;
+    await store.upsertMultisessionV2Participation({
+      multisession_id: state.multisessionId,
+      session_id: eventId,
+      person_id: row.personne_id || row.personneId,
+      attendance_status: row.statut,
+      role: row.role || 'PARTICIPANT',
+      reason: row.motif_absence || null,
+      created_by: actorId(actor)
+    });
+  }
+
+  function multisessionV2PersonState(state, personneId){
+    return state && state.byPersonneId ? state.byPersonneId[String(personneId || '')] : null;
+  }
+
   async function firstEventCibleId(tx, eventId){
     const ids = tx.listEventCibleIds ? await tx.listEventCibleIds(eventId) : [];
     return ids && ids.length ? ids[0] : null;
@@ -2322,6 +2395,7 @@ function createScopeService(repo){
 
   async function syncPermutationWorkflow(tx, evenement, personneId, patch, actor){
     if(!tx.upsertPermutation || !tx.listPermutations) return null;
+    if(await loadMultiSessionV2State(tx, evenement, evenement.evenement_id)) return null;
     const status = String(patch.statut || '').toUpperCase();
     const exerciseKey = explicitPermutationExerciseKey(evenement);
     if(status !== 'PRESENT'){
@@ -2386,6 +2460,10 @@ function createScopeService(repo){
   async function permutationsForEvent(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    const v2State = await loadMultiSessionV2State(repo, evenement, eventId);
+    if(v2State){
+      return { obligations: [], exerciseKey: null, engine: MultiSessionV2.ENGINE.MULTI_SESSION_V2 };
+    }
     const exerciseKey = exerciseEquivalenceKeyForEvent(evenement);
     if(String(evenement.domaine_code || '').toUpperCase() !== 'DAP' || !exerciseKey || !repo.listPermutations){
       return { obligations: [], exerciseKey: exerciseKey || null };
@@ -2464,6 +2542,7 @@ function createScopeService(repo){
 
   async function markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor){
     if(!tx.listPermutations || !tx.upsertPermutation) return 0;
+    if(await loadMultiSessionV2State(tx, evenement, evenement.evenement_id)) return 0;
     const exerciseKey = explicitPermutationExerciseKey(evenement);
     if(String(evenement.domaine_code || '').toUpperCase() !== 'DAP' || !exerciseKey) return 0;
     const presentPersonnes = new Set((participations || [])
@@ -2502,6 +2581,8 @@ function createScopeService(repo){
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
       if(!evenement.population_figee) throw new HttpError(422, 'population_non_figee', 'Population non figée.');
       const policySnapshot = evenement.participation_policy_snapshot || (await capturePolicySnapshot(tx, evenement.domaine_code));
+      const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
+      if(v2State) await ensureMultiSessionV2EventRows(tx, v2State, evenement, actor);
       let savedCount = 0;
       let skippedEncadrement = 0;
       for(const item of items){
@@ -2512,6 +2593,16 @@ function createScopeService(repo){
         }
         const patch = validateParticipationPatch(item, { domaineCode: evenement.domaine_code, participationPolicySnapshot: policySnapshot });
         const role = String(item.role || item.role_participation || 'PARTICIPANT').toUpperCase();
+        if(v2State && patch.statut === STATUT_PERMUTATION){
+          throw new HttpError(422, 'multisession_v2_permutation_interdite', 'Permutation indisponible pour un Multi-session.');
+        }
+        const v2PersonState = multisessionV2PersonState(v2State, personneId);
+        if(v2PersonState && v2PersonState.alreadyCountedInSession && role === 'PARTICIPANT' && patch.statut !== 'NON_RENSEIGNE'){
+          throw new HttpError(422, 'multisession_v2_deja_participe', v2PersonState.sessionMessage || 'Participation déjà enregistrée dans une autre session du Multi-session.', {
+            personneId,
+            countedEventId: v2PersonState.countedEventId
+          });
+        }
         let participationRole = ['FORMATEUR', 'SURVEILLANT'].includes(role) ? role : 'PARTICIPANT';
         if(participationRole === 'FORMATEUR' && patch.statut !== 'PRESENT'){
           throw new HttpError(422, 'encadrement_present', 'Un rôle d’encadrement compté en session doit être présent.');
@@ -2532,6 +2623,12 @@ function createScopeService(repo){
           source: 'SAISIE',
           auteur_id: actorId(actor)
         });
+        await mirrorMultiSessionV2Participation(tx, v2State, eventId, {
+          personne_id: personneId,
+          statut: patch.statut,
+          role: participationRole,
+          motif_absence: patch.motif_absence || null
+        }, actor);
         await syncPermutationWorkflow(tx, evenement, personneId, patch, actor);
         savedCount += 1;
       }
@@ -2671,12 +2768,9 @@ function createScopeService(repo){
     const baseVersion = requireBaseVersion(body);
     const personneId = body.personneId || body.personne_id;
     const role = String(body.role || '');
-    const serieComplete = Boolean(body.serieComplete || body.seriesComplete || body.touteSerie);
+    const serieComplete = Boolean(body.serieComplete || body.seriesComplete || body.touteSerie || body.toutesSessions || body.allSessions);
     if(!ROLES_ENCADREMENT.has(role)){
       throw new HttpError(422, 'role_invalide', 'Rôle d’encadrement invalide (FORMATEUR, MONITEUR, SURVEILLANT, AUXILIAIRE).');
-    }
-    if(serieComplete && role !== 'FORMATEUR'){
-      throw new HttpError(422, 'serie_formateur_uniquement', 'L’option série complète est réservée au rôle Formateur.');
     }
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
@@ -2684,10 +2778,20 @@ function createScopeService(repo){
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Encadrement saisissable uniquement sur PLANIFIE.');
       const personne = await tx.getPersonne(personneId);
       if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
-      if(serieComplete && !isFirstPrSessionEvent(evenement)){
+      const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
+      const v2AllSessions = Boolean(v2State && serieComplete);
+      if(serieComplete && !v2AllSessions && role !== 'FORMATEUR'){
+        throw new HttpError(422, 'serie_formateur_uniquement', 'L’option série complète est réservée au rôle Formateur.');
+      }
+      if(v2AllSessions && !['FORMATEUR', 'MONITEUR'].includes(role)){
+        throw new HttpError(422, 'multisession_v2_role_toutes_sessions_invalide', 'L’option Toutes les sessions est réservée aux rôles Formateur et Moniteur.');
+      }
+      if(serieComplete && !v2AllSessions && !isFirstPrSessionEvent(evenement)){
         throw new HttpError(422, 'serie_depuis_premiere_session', 'L’option série complète est disponible uniquement depuis la première session PR.');
       }
-      const targets = serieComplete
+      const targets = v2AllSessions
+        ? (v2State.sessions || [])
+        : serieComplete
         ? (await prSeriesEvents(tx, evenement)).filter((row) => row.statut === 'PLANIFIE')
         : [evenement];
       let changed = 0;
@@ -2695,6 +2799,11 @@ function createScopeService(repo){
         const result = await upsertEncadrementRow(tx, target, personneId, role, actor, { allowSameRole: serieComplete });
         if(!result.changed) continue;
         await bumpOrConflict(tx, target.evenement_id, target.evenement_id === eventId ? baseVersion : target.version, {});
+        await mirrorMultiSessionV2Participation(tx, v2AllSessions ? v2State : null, target.evenement_id, {
+          personne_id: personneId,
+          statut: role === 'FORMATEUR' ? 'PRESENT' : 'NON_CONCERNE',
+          role
+        }, actor);
         changed += 1;
       }
       const next = await tx.getEvent(eventId);
@@ -2702,8 +2811,8 @@ function createScopeService(repo){
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: serieComplete ? 'ENCADREMENT_SERIE' : 'ENCADREMENT',
-        apres: { personneId, role, serieComplete, count: changed }
+        action: v2AllSessions ? 'MULTISESSION_V2_ENCADREMENT_TOUTES_SESSIONS' : (serieComplete ? 'ENCADREMENT_SERIE' : 'ENCADREMENT'),
+        apres: { personneId, role, serieComplete, toutesSessions: v2AllSessions, count: changed }
       });
       return { evenement: next, version: next.version };
     });
@@ -2741,6 +2850,7 @@ function createScopeService(repo){
       }
       const attendusRaw = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
+      const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
       const periodesByPersonne = new Map();
       const personneIds = [...new Set((attendusRaw || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean))];
       await Promise.all(personneIds.map(async (pid) => {
@@ -2755,7 +2865,7 @@ function createScopeService(repo){
           ? row
           : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
       ));
-      const prState = await loadPrExerciseParticipationState(tx, evenement, eventId);
+      const prState = v2State ? null : await loadPrExerciseParticipationState(tx, evenement, eventId);
       if(prState && prState.byPersonneId){
         attendus = attendus.map((row) => {
           const state = prState.byPersonneId[String(row.personne_id || row.personneId)];
@@ -2767,7 +2877,7 @@ function createScopeService(repo){
           });
         });
       }
-      const requireExpectedFilled = !(prState && prState.isMultiSession);
+      const requireExpectedFilled = !(v2State || (prState && prState.isMultiSession));
       validateCloture(evenement, attendus, participations, { requireExpectedFilled, participationPolicySnapshot: evenement.participation_policy_snapshot || null });
       if(prState && prState.isLastSession && requiresFinalMultiSessionClosure(evenement) && prState.unfilledPeople && prState.unfilledPeople.length){
         throw new HttpError(422, 'session_incomplete', `Impossible de clôturer ${prState.sessionExerciseLabel || evenement.libelle} : ${prState.unfilledPeople.length} personne(s) restent à renseigner sur l’ensemble des sessions.`, {
@@ -2784,16 +2894,55 @@ function createScopeService(repo){
         cloture_at: new Date().toISOString(),
         cloture_par: actorId(actor)
       });
+      if(v2State && tx.upsertMultisessionV2Session){
+        const session = (v2State.sessions || []).find((row) => String(row.evenement_id || row.event_id) === String(eventId));
+        await tx.upsertMultisessionV2Session({
+          multisession_id: v2State.multisessionId,
+          event_id: eventId,
+          sequence: session ? session.sequence : v2State.currentSessionIndex,
+          status: 'CLOTUREE',
+          metadata: { closedBy: actorId(actor), closedAt: new Date().toISOString() }
+        });
+      }
       const permutationsARegulariser = await markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor);
-      const taux = computeTaux(participations, attendus);
+      const refreshedV2State = v2State ? await loadMultiSessionV2State(tx, next, eventId) : null;
+      const taux = refreshedV2State ? refreshedV2State.statistics : computeTaux(participations, attendus);
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'CLOTURER',
-        apres: { version: next.version, taux, permutationsARegulariser }
+        action: v2State ? 'MULTISESSION_V2_CLOTURER_SESSION' : 'CLOTURER',
+        apres: { version: next.version, taux, permutationsARegulariser, engine: v2State ? MultiSessionV2.ENGINE.MULTI_SESSION_V2 : undefined }
       });
       return { evenement: next, version: next.version, taux };
+    });
+  }
+
+  async function cloturerMultiSessionV2(multisessionId, body = {}, actor){
+    return repo.withTransaction(async (tx) => {
+      const multisession = tx.getMultisessionV2 ? await tx.getMultisessionV2(multisessionId) : null;
+      if(!multisession) throw new HttpError(404, 'multisession_v2_introuvable', 'Multi-session introuvable.');
+      const sessions = tx.listMultisessionV2Sessions ? await tx.listMultisessionV2Sessions(multisessionId) : [];
+      if(!sessions.length) throw new HttpError(422, 'multisession_v2_sans_session', 'Le Multi-session ne contient aucune session.');
+      const current = sessions[sessions.length - 1];
+      const state = await loadMultiSessionV2State(tx, current, current.evenement_id || current.event_id);
+      MultiSessionV2.validateFinalClosure(state);
+      const closed = await tx.updateMultisessionV2(multisessionId, {
+        status: 'CLOTUREE',
+        closed_at: new Date().toISOString(),
+        closed_by: actorId(actor),
+        metadata: Object.assign({}, multisession.metadata || {}, { closedByAction: 'MULTISESSION_V2_CLOSE' })
+      });
+      if(tx.appendJournal){
+        await tx.appendJournal({
+          auteur_id: actorId(actor),
+          entite: 'multisession_v2',
+          entite_id: multisessionId,
+          action: 'CLOTURER_MULTISESSION_V2',
+          apres: { statistics: state.statistics, version: body.baseVersion || body.base_version || null }
+        });
+      }
+      return { multisession: closed, sessionParticipation: state, taux: state.statistics };
     });
   }
 
@@ -3076,11 +3225,30 @@ function createScopeService(repo){
         return Object.assign({}, row, { statut: 'NON_RENSEIGNE' });
       })
       : participationsRaw;
+    const v2State = await loadMultiSessionV2State(repo, evenement, eventId);
+    if(v2State){
+      const activeIds = new Set(attendus.filter((a) => a.inclus !== false).map((a) => String(a.personne_id)));
+      const populationRows = repo.listMultisessionV2Population ? await repo.listMultisessionV2Population(v2State.multisessionId) : [];
+      for(const row of populationRows || []){
+        const personneId = String(row.person_id || row.personne_id || '');
+        if(!personneId || activeIds.has(personneId)) continue;
+        attendus.push({
+          evenement_id: eventId,
+          personne_id: personneId,
+          inclus: true,
+          origine: 'MULTISESSION_V2',
+          motif_inclusion: 'multisession_v2_population'
+        });
+        activeIds.add(personneId);
+      }
+      attendus = MultiSessionV2.decorateAttendus(attendus, v2State);
+    }
     let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
-    const taux = computeTaux(participations, attendus);
+    let taux = v2State ? v2State.statistics : computeTaux(participations, attendus);
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
-      ...participations.map(p => p.personne_id)
+      ...participations.map(p => p.personne_id),
+      ...((v2State && repo.listMultisessionV2Population ? await repo.listMultisessionV2Population(v2State.multisessionId) : []).map((row) => row.person_id || row.personne_id))
     ]);
     encadrement = encadrement
       .map((row) => Object.assign({}, personnes[String(row.personne_id)] || personnes[row.personne_id] || {}, row))
@@ -3088,7 +3256,7 @@ function createScopeService(repo){
     let prExerciseParticipation = { byPersonneId: {}, kpis: null };
     let cycleInfo = null;
     let exerciceInfo = evenement.exercice || null;
-    if((evenement.exercice_id || evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
+    if(!v2State && (evenement.exercice_id || evenement.cycle_id || evenement.pr_exercise_group_key) && repo.listParticipationsForEvents){
       const cycle = evenement.cycle_id && repo.getCycle
         ? await repo.getCycle(evenement.cycle_id)
         : { cycle_id: null, domaine_code: evenement.domaine_code || 'PR' };
@@ -3244,7 +3412,9 @@ function createScopeService(repo){
       encadrement,
       personnes,
       prExerciseParticipation,
-      sessionParticipation: prExerciseParticipation,
+      sessionParticipation: v2State || prExerciseParticipation,
+      multiSessionV2: v2State,
+      engine: v2State ? MultiSessionV2.ENGINE.MULTI_SESSION_V2 : ((prExerciseParticipation && prExerciseParticipation.isMultiSession) ? MultiSessionV2.ENGINE.LEGACY_PR_MULTI : MultiSessionV2.ENGINE.SIMPLE),
       cycle: cycleInfo,
       journal,
       compteurs,
@@ -3300,6 +3470,10 @@ function createScopeService(repo){
         kind: 'EXCLUDED',
         exclus: { annule: true }
       };
+    }
+    const v2State = await loadMultiSessionV2State(repo, evenement, eventId);
+    if(v2State){
+      return { ...v2State.statistics, officiel: String(evenement.statut || '').toUpperCase() === 'REALISE', kind: MultiSessionV2.ENGINE.MULTI_SESSION_V2 };
     }
     if(isQuantitatif(evenement)){
       const saisie = repo.getQuantitatifSaisie ? await repo.getQuantitatifSaisie(eventId) : null;
@@ -4243,6 +4417,7 @@ function createScopeService(repo){
     retirerEncadrement,
     resetParticipations,
     cloturer,
+    cloturerMultiSessionV2,
     reouvrir,
     annulerEvenement,
     supprimerOuAnnulerEvenement,

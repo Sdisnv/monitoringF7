@@ -557,6 +557,10 @@
     return /\b\d+\.1$/.test(label);
   }
 
+  function isMultiSessionV2Fiche(fiche) {
+    return Boolean(fiche && (fiche.engine === 'MULTI_SESSION_V2' || (fiche.multiSessionV2 && fiche.multiSessionV2.engine === 'MULTI_SESSION_V2')));
+  }
+
   function prSeriesLabels(fiche) {
     const raw = (fiche && fiche.prExerciseParticipation && fiche.prExerciseParticipation.sessionLabels) || [];
     const labels = raw.length ? raw : [prSessionLabelFromEvent(fiche && fiche.evenement)].filter(Boolean);
@@ -568,6 +572,12 @@
     if (!labels.length) return '';
     const formatted = L.formatPrSessionList ? L.formatPrSessionList(labels) : labels.join(', ');
     return `Toute la série — sessions PR ${formatted}`;
+  }
+
+  function multiSessionV2ScopeText(fiche) {
+    const v2 = fiche && (fiche.multiSessionV2 || fiche.sessionParticipation);
+    const labels = ((v2 && v2.sessions) || []).map((row) => row.session_label || row.sessionLabel || row.libelle).filter(Boolean);
+    return labels.length ? `Toutes les sessions — ${labels.join(', ')}` : 'Toutes les sessions du Multi-session';
   }
 
   function formateurSeriesLabelsFor(personneId) {
@@ -1364,8 +1374,8 @@
           sessionExcuse,
           sessionDispense,
           sessionHasValidStatus: localValid,
-          sessionMessage: localValid ? (a.sessionMessage || a.session_message || '') : '',
-          sessionSummary: localValid ? (a.sessionSummary || a.session_summary || '') : '',
+          sessionMessage: a.sessionMessage || a.session_message || '',
+          sessionSummary: a.sessionSummary || a.session_summary || '',
           sessionReferenceEventLabel: a.sessionReferenceEventLabel || a.session_reference_event_label || '',
           sessionReferenceEventDate: a.sessionReferenceEventDate || a.session_reference_event_date || '',
           sessionReferenceLabel: a.sessionReferenceLabel || a.session_reference_label || '',
@@ -6274,13 +6284,15 @@
     const closeBusy = state.presenceCloseBusy;
     const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
     const hasIncompleteDispense = L.hasIncompleteDispense ? L.hasIncompleteDispense(state.saisie) : false;
-    const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : 'Clôturer');
+    const isV2 = fiche.engine === 'MULTI_SESSION_V2' || Boolean(fiche.multiSessionV2);
+    const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : (isV2 ? 'Clôturer cette session' : 'Clôturer'));
     const saveState = presenceSaveLabel();
     const lifecycleActions = renderFicheLifecycleActions(ev, ev.origine === 'LEGACY_AGGREGATED', false);
     return `
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main scope-event-saisie">
         ${eventIdentityBand(ev, fiche)}
+        ${isV2 ? renderMultiSessionV2Summary(fiche) : ''}
         ${renderPresenceKpis(niveaux, fiche)}
         ${lifecycleActions ? `<section class="scope-card scope-fiche-section scope-fiche-primary"><div class="scope-section-header"><h2 class="scope-section-title">Actions événement</h2></div><div class="scope-actions scope-event-toolbar scope-fiche-primary-actions">${lifecycleActions}</div></section>` : ''}
         ${hasIncompleteExcuse ? '<p class="scope-presence-warning">Choisissez un motif pour chaque absence excusée avant la clôture.</p>' : ''}
@@ -6290,6 +6302,7 @@
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present" ${saveBusy ? 'disabled' : ''}>Tous présents</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie" ${saveBusy ? 'disabled' : ''}>Réinitialiser la saisie</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${saveBusy || closeBusy ? 'disabled' : ''}>${escapeHtml(closeLabel)}</button>
+          ${isV2 ? `<button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="cloturer-multisession" ${saveBusy || closeBusy ? 'disabled' : ''}>Clôturer le Multi-session</button>` : ''}
         </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
         ${renderEncadrementBlock()}
@@ -6393,6 +6406,27 @@
       showDispense ? { label: 'Dispensés', value: c.dispense } : null,
       { label: openLabel, value: openVal, emphasis: Number(openVal) > 0 }
     ], 'Compteurs de présence').replace('<div class="scope-kpi-grid"', '<div class="scope-kpi-grid scope-saisie-kpis"');
+  }
+
+  function renderMultiSessionV2Summary(fiche) {
+    const stateV2 = fiche && (fiche.multiSessionV2 || fiche.sessionParticipation);
+    if(!stateV2 || stateV2.engine !== 'MULTI_SESSION_V2') return '';
+    const k = stateV2.kpis || {};
+    const current = Number(stateV2.currentSessionIndex || 1);
+    const total = Number(stateV2.sessionCount || (stateV2.sessions || []).length || 1);
+    const label = stateV2.label || (stateV2.multisession && stateV2.multisession.label) || 'Multi-session';
+    return `<section class="scope-multisession-v2-band" aria-label="Multi-session">
+      <div>
+        <strong>${escapeHtml(label)}</strong>
+        <span>Multi-session · Session ${escapeHtml(String(current))}/${escapeHtml(String(total))}</span>
+      </div>
+      <dl>
+        <div><dt>Population cible</dt><dd>${escapeHtml(String(k.population || 0))}</dd></div>
+        <div><dt>Participation déjà acquise</dt><dd>${escapeHtml(String(k.participationAcquise || 0))}</dd></div>
+        <div><dt>Restent à traiter</dt><dd>${escapeHtml(String(k.restentATraiter || 0))}</dd></div>
+        <div><dt>Dispensés</dt><dd>${escapeHtml(String(k.dispenses || 0))}</dd></div>
+      </dl>
+    </section>`;
   }
 
   function sortIdentityTieBreak(a, b) {
@@ -6528,6 +6562,12 @@
       byRole.get(role).push(p);
     });
     const roles = encadrementRolesForEvent(fiche);
+    const v2AllSessions = isMultiSessionV2Fiche(fiche) && ['FORMATEUR', 'MONITEUR'].includes(String(state.encRole || '').toUpperCase());
+    const prAllSessions = state.encRole === 'FORMATEUR' && isFirstPrSession(fiche);
+    const allSessionsToggle = v2AllSessions || prAllSessions;
+    const allSessionsText = v2AllSessions ? 'Toutes les sessions' : 'Formateur pour toute la série';
+    const allSessionsTitle = v2AllSessions ? 'Ajoute automatiquement ce rôle à toutes les sessions du Multi-session.' : 'Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.';
+    const allSessionsRange = v2AllSessions ? multiSessionV2ScopeText(fiche) : prSeriesScopeText(fiche);
     return `
       <section class="scope-encadrement-block" data-enc-editable="true">
         <div class="scope-section-header">
@@ -6549,11 +6589,11 @@
             <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
           </div>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add">Ajouter</button>
-          ${state.encRole === 'FORMATEUR' && isFirstPrSession(fiche) ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}" title="Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.">
+          ${allSessionsToggle ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}" title="${escapeHtml(allSessionsTitle)}">
             <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
-            <span class="scope-serie-label">Formateur pour toute la série</span>
-            <span class="scope-info-tip" tabindex="0" aria-describedby="enc-serie-help">ⓘ<span id="enc-serie-help" class="scope-tooltip" role="tooltip">Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.</span></span>
-            ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(prSeriesScopeText(fiche))}</span>` : ''}
+            <span class="scope-serie-label">${escapeHtml(allSessionsText)}</span>
+            <span class="scope-info-tip" tabindex="0" aria-describedby="enc-serie-help">ⓘ<span id="enc-serie-help" class="scope-tooltip" role="tooltip">${escapeHtml(allSessionsTitle)}</span></span>
+            ${state.encSerieComplete ? `<span class="scope-serie-range">${escapeHtml(allSessionsRange)}</span>` : ''}
           </button>` : ''}
         </div>
         ${renderEncadrementGroups(fiche, { readOnly: false, byRole, roles, encCount })}
@@ -6672,7 +6712,9 @@
   function renderSaisieRows(rows) {
     const domaine = state.fiche && state.fiche.evenement && state.fiche.evenement.domaine_code;
     const policyState = state.fiche && state.fiche.participationPolicy;
-    const statuses = L.participationStatusesForDomaine ? L.participationStatusesForDomaine(domaine, policyState) : [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']];
+    const isV2 = state.fiche && (state.fiche.engine === 'MULTI_SESSION_V2' || (state.fiche.multiSessionV2 && state.fiche.multiSessionV2.engine === 'MULTI_SESSION_V2'));
+    const statuses = (L.participationStatusesForDomaine ? L.participationStatusesForDomaine(domaine, policyState) : [['PRESENT', 'Présent'], ['ABSENT_EXCUSE', 'Excusé'], ['ABSENT_NON_EXCUSE', 'Absent'], ['DISPENSE', 'Dispensé']])
+      .filter(([value]) => !(isV2 && value === 'PERMUTATION'));
     const statusPressed = (row, value) => row.statut === value;
     const statusVariant = {
       PRESENT: 'is-present',
@@ -8903,6 +8945,7 @@
       row.addEventListener('focusout', () => { tip.style.visibility = ''; });
     });
     document.getElementById('save-part')?.addEventListener('click', () => saveParticipations());
+    document.getElementById('cloturer-multisession')?.addEventListener('click', () => cloturerMultiSessionV2());
     document.getElementById('scope-saisie-leave-cancel')?.addEventListener('click', () => {
       state.modal = null;
       state.saisieGuard.pendingHash = '';
@@ -8930,7 +8973,7 @@
     document.getElementById('cloture-incomplete-cancel')?.addEventListener('click', () => { state.modal = null; state.clotureIncompletePeople = []; render(); });
     document.getElementById('enc-role')?.addEventListener('change', (e) => {
       state.encRole = e.target.value || 'FORMATEUR';
-      if (state.encRole !== 'FORMATEUR') state.encSerieComplete = false;
+      if (state.encRole !== 'FORMATEUR' && !(isMultiSessionV2Fiche(state.fiche) && state.encRole === 'MONITEUR')) state.encSerieComplete = false;
       render();
     });
     document.getElementById('enc-add')?.addEventListener('click', () => {
@@ -10250,17 +10293,48 @@
     });
   }
 
+  function cloturerMultiSessionV2() {
+    const v2 = state.fiche && (state.fiche.multiSessionV2 || state.fiche.sessionParticipation);
+    const id = v2 && (v2.multisessionId || (v2.multisession && (v2.multisession.multisession_id || v2.multisession.id)));
+    if(!id || !client.cloturerMultiSessionV2) return;
+    state.presenceCloseBusy = 'close';
+    withFeedbackAction({
+      progressTitle: 'Clôture du Multi-session…',
+      successTitle: 'Multi-session clôturé',
+      successMessage: 'La consolidation finale du Multi-session est terminée.'
+    }, async () => {
+      try {
+        await client.cloturerMultiSessionV2(id, state.fiche.evenement.version);
+        setUnsavedPresenceChanges(false);
+        await loadFiche(route().id);
+        render();
+      } catch(error) {
+        const people = (error && error.details && (error.details.unfilledPeople || error.details.pendingPeople)) || [];
+        if(people.length){
+          state.clotureIncompletePeople = people;
+          state.modal = 'cloture-incomplete';
+          render();
+          return;
+        }
+        throw error;
+      } finally {
+        state.presenceCloseBusy = null;
+      }
+    });
+  }
+
   function addEncadrement(personneId) {
     const id = route().id;
     const role = state.encRole || document.getElementById('enc-role')?.value || 'FORMATEUR';
-    const serieComplete = role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche);
+    const v2AllSessions = isMultiSessionV2Fiche(state.fiche) && ['FORMATEUR', 'MONITEUR'].includes(String(role || '').toUpperCase()) && state.encSerieComplete;
+    const serieComplete = (role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche)) || v2AllSessions;
     const snapshot = snapshotSaisieState();
     withFeedbackAction({
       progressTitle: 'Ajout à l’encadrement',
       successTitle: 'Encadrement ajouté',
-      successMessage: serieComplete ? 'Le Formateur a été ajouté à toute la série PR.' : 'La personne est hors du taux principal.'
+      successMessage: v2AllSessions ? 'Le rôle a été ajouté à toutes les sessions du Multi-session.' : (serieComplete ? 'Le Formateur a été ajouté à toute la série PR.' : 'La personne est hors du taux principal.')
     }, async () => {
-      await client.ajouterEncadrement(id, { personneId, role, serieComplete }, state.fiche.evenement.version);
+      await client.ajouterEncadrement(id, { personneId, role, serieComplete, toutesSessions: v2AllSessions }, state.fiche.evenement.version);
       state.encQuery = '';
       state.encHits = [];
       state.encSerieComplete = false;

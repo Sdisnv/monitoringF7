@@ -738,6 +738,124 @@ function createPgRepo(client){
       );
       return mapEvent(result.rows[0] || null);
     },
+    async upsertMultisessionV2(row){
+      const result = await q(
+        `insert into scope_multisessions_v2(multisession_id, code, label, domain, period, status, metadata)
+         values (coalesce($1, gen_random_uuid()), $2, $3, $4, $5, coalesce($6, 'OUVERTE'), coalesce($7::jsonb, '{}'::jsonb))
+         on conflict (code) do update set
+           label = excluded.label,
+           domain = excluded.domain,
+           period = excluded.period,
+           status = excluded.status,
+           metadata = scope_multisessions_v2.metadata || excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [row.multisession_id || null, row.code, row.label, row.domain || row.domaine || row.domaine_code, row.period || null, row.status || 'OUVERTE', JSON.stringify(row.metadata || {})]
+      );
+      return result.rows[0] || null;
+    },
+    async getMultisessionV2(id){
+      const result = await q('select * from scope_multisessions_v2 where multisession_id = $1', [id]);
+      return result.rows[0] || null;
+    },
+    async getMultisessionV2ForEvent(eventId){
+      const result = await q(
+        `select ms.*
+         from scope_multisessions_v2 ms
+         join scope_multisession_v2_sessions s on s.multisession_id = ms.multisession_id
+         where s.event_id = $1`,
+        [eventId]
+      );
+      return result.rows[0] || null;
+    },
+    async listMultisessionV2Sessions(multisessionId){
+      const result = await q(
+        `select ${EVENT_SELECT}, s.multisession_session_id, s.multisession_id, s.event_id, s.sequence, s.status, s.metadata
+         from scope_multisession_v2_sessions s
+         join scope_evenements e on e.evenement_id = s.event_id
+         left join scope_exercices x on x.exercice_id = e.exercice_id
+         where s.multisession_id = $1
+         order by s.sequence, e.date, e.libelle`,
+        [multisessionId]
+      );
+      return result.rows.map((row) => Object.assign(mapEvent(row), {
+        multisession_session_id: row.multisession_session_id,
+        multisession_id: row.multisession_id,
+        event_id: row.event_id,
+        sequence: Number(row.sequence),
+        status: row.status,
+        metadata: row.metadata || {}
+      }));
+    },
+    async upsertMultisessionV2Session(row){
+      const result = await q(
+        `insert into scope_multisession_v2_sessions(multisession_id, event_id, sequence, status, metadata)
+         values ($1,$2,$3,coalesce($4,'OUVERTE'),coalesce($5::jsonb,'{}'::jsonb))
+         on conflict (event_id) do update set
+           multisession_id = excluded.multisession_id,
+           sequence = excluded.sequence,
+           status = excluded.status,
+           metadata = scope_multisession_v2_sessions.metadata || excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [row.multisession_id, row.event_id, Number(row.sequence || 1), row.status || 'OUVERTE', JSON.stringify(row.metadata || {})]
+      );
+      return result.rows[0] || null;
+    },
+    async listMultisessionV2Population(multisessionId){
+      const result = await q(
+        `select mp.*, mp.person_id as personne_id, p.nip, p.grade, p.nom, p.prenom
+         from scope_multisession_v2_population mp
+         left join scope_personnes p on p.id = mp.person_id
+         where mp.multisession_id = $1
+         order by p.nom, p.prenom, p.nip`,
+        [multisessionId]
+      );
+      return result.rows;
+    },
+    async upsertMultisessionV2Population(row){
+      const result = await q(
+        `insert into scope_multisession_v2_population(multisession_id, person_id, snapshot, provenance)
+         values ($1,$2,coalesce($3::jsonb,'{}'::jsonb),coalesce($4,'ATTENDUS_CONSOLIDES'))
+         on conflict (multisession_id, person_id) do update set
+           snapshot = scope_multisession_v2_population.snapshot || excluded.snapshot,
+           provenance = excluded.provenance,
+           updated_at = now()
+         returning *, person_id as personne_id`,
+        [row.multisession_id, row.person_id || row.personne_id, JSON.stringify(row.snapshot || {}), row.provenance || 'ATTENDUS_CONSOLIDES']
+      );
+      return result.rows[0] || null;
+    },
+    async upsertMultisessionV2Participation(row){
+      const result = await q(
+        `insert into scope_multisession_v2_participations(multisession_id, session_id, person_id, attendance_status, role, reason, created_by)
+         values ($1,$2,$3,$4,coalesce($5,'PARTICIPANT'),$6,$7)
+         on conflict (multisession_id, session_id, person_id, role) do update set
+           attendance_status = excluded.attendance_status,
+           reason = excluded.reason,
+           created_by = excluded.created_by,
+           updated_at = now()
+         returning *, person_id as personne_id`,
+        [row.multisession_id, row.session_id || row.event_id, row.person_id || row.personne_id, row.attendance_status || row.statut, row.role || 'PARTICIPANT', row.reason || row.motif_absence || null, row.created_by || row.auteur_id || null]
+      );
+      return result.rows[0] || null;
+    },
+    async updateMultisessionV2(id, patch){
+      const allowed = ['status', 'closed_at', 'closed_by', 'metadata'];
+      const sets = ['updated_at = now()'];
+      const params = [];
+      let i = 1;
+      for(const key of allowed){
+        if(Object.prototype.hasOwnProperty.call(patch || {}, key)){
+          sets.push(`${key} = $${i}${key === 'metadata' ? '::jsonb' : ''}`);
+          params.push(key === 'metadata' ? JSON.stringify(patch[key] || {}) : patch[key]);
+          i += 1;
+        }
+      }
+      params.push(id);
+      const result = await q(`update scope_multisessions_v2 set ${sets.join(', ')} where multisession_id = $${i} returning *`, params);
+      return result.rows[0] || null;
+    },
     async listAttendus(eventId){
       const result = await q('select * from scope_attendus where evenement_id = $1', [eventId]);
       return result.rows;

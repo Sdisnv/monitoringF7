@@ -56,6 +56,10 @@ function createMemoryRepo(){
   const cycles = new Map();
   const cyclePersonnes = new Map();
   const exercices = new Map();
+  const multisessionsV2 = new Map();
+  const multisessionV2Sessions = new Map();
+  const multisessionV2Population = new Map();
+  const multisessionV2Participations = new Map();
   const policy = require('./_scope-participation-policy');
   const participationMotifs = new Map(policy.motifCatalog().map((row) => [row.id, {
     motif_id: row.id,
@@ -92,6 +96,9 @@ function createMemoryRepo(){
   function keyEP(evenementId, personneId){ return `${evenementId}::${personneId}`; }
   function keyLigne(importId, ligneNo){ return `${importId}::${ligneNo}`; }
   function keyCP(cycleId, personneId, roleCycle){ return `${cycleId}::${personneId}::${roleCycle || 'PARTICIPANT'}`; }
+  function keyMsSession(multisessionId, eventId){ return `${multisessionId}::${eventId}`; }
+  function keyMsPopulation(multisessionId, personneId){ return `${multisessionId}::${personneId}`; }
+  function keyMsParticipation(multisessionId, sessionId, personneId, role){ return `${multisessionId}::${sessionId}::${personneId}::${role || 'PARTICIPANT'}`; }
 
   function decorateEvent(item){
     if(!item) return null;
@@ -134,6 +141,10 @@ function createMemoryRepo(){
       cycles: cloneMap(cycles),
       cyclePersonnes: cloneMap(cyclePersonnes),
       exercices: cloneMap(exercices),
+      multisessionsV2: cloneMap(multisessionsV2),
+      multisessionV2Sessions: cloneMap(multisessionV2Sessions),
+      multisessionV2Population: cloneMap(multisessionV2Population),
+      multisessionV2Participations: cloneMap(multisessionV2Participations),
       participationMotifs: cloneMap(participationMotifs),
       participationPolicies: cloneMap(participationPolicies),
       permutations: cloneMap(permutations)
@@ -160,6 +171,10 @@ function createMemoryRepo(){
     cycles.clear(); (snap.cycles || new Map()).forEach((v, k) => cycles.set(k, v));
     cyclePersonnes.clear(); (snap.cyclePersonnes || new Map()).forEach((v, k) => cyclePersonnes.set(k, v));
     exercices.clear(); (snap.exercices || new Map()).forEach((v, k) => exercices.set(k, v));
+    multisessionsV2.clear(); (snap.multisessionsV2 || new Map()).forEach((v, k) => multisessionsV2.set(k, v));
+    multisessionV2Sessions.clear(); (snap.multisessionV2Sessions || new Map()).forEach((v, k) => multisessionV2Sessions.set(k, v));
+    multisessionV2Population.clear(); (snap.multisessionV2Population || new Map()).forEach((v, k) => multisessionV2Population.set(k, v));
+    multisessionV2Participations.clear(); (snap.multisessionV2Participations || new Map()).forEach((v, k) => multisessionV2Participations.set(k, v));
     participationMotifs.clear(); (snap.participationMotifs || new Map()).forEach((v, k) => participationMotifs.set(k, v));
     participationPolicies.clear(); (snap.participationPolicies || new Map()).forEach((v, k) => participationPolicies.set(k, v));
     permutations.clear(); (snap.permutations || new Map()).forEach((v, k) => permutations.set(k, v));
@@ -438,6 +453,98 @@ function createMemoryRepo(){
       evenementCibles.delete(eventId);
       evenements.delete(eventId);
       return { deleted: Boolean(event), event: event || null };
+    },
+    async upsertMultisessionV2(row){
+      const existing = row.multisession_id
+        ? multisessionsV2.get(String(row.multisession_id))
+        : [...multisessionsV2.values()].find((item) => item.code === row.code);
+      const item = {
+        ...(existing || {}),
+        multisession_id: existing?.multisession_id || row.multisession_id || randomUUID(),
+        code: row.code,
+        label: row.label,
+        domain: row.domain || row.domaine || row.domaine_code,
+        period: row.period || null,
+        status: row.status || 'OUVERTE',
+        closed_at: row.closed_at || existing?.closed_at || null,
+        closed_by: row.closed_by || existing?.closed_by || null,
+        metadata: row.metadata || existing?.metadata || {},
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      multisessionsV2.set(String(item.multisession_id), item);
+      return { ...item };
+    },
+    async getMultisessionV2(id){
+      const item = multisessionsV2.get(String(id));
+      return item ? { ...item } : null;
+    },
+    async getMultisessionV2ForEvent(eventId){
+      const session = [...multisessionV2Sessions.values()].find((row) => row.event_id === eventId);
+      if(!session) return null;
+      const item = multisessionsV2.get(String(session.multisession_id));
+      return item ? { ...item } : null;
+    },
+    async listMultisessionV2Sessions(multisessionId){
+      return [...multisessionV2Sessions.values()]
+        .filter((row) => row.multisession_id === multisessionId)
+        .map((row) => ({ ...decorateEvent(evenements.get(row.event_id)), multisession_session_id: row.multisession_session_id, multisession_id: row.multisession_id, event_id: row.event_id, sequence: row.sequence, status: row.status, metadata: row.metadata }));
+    },
+    async upsertMultisessionV2Session(row){
+      const existing = [...multisessionV2Sessions.values()].find((item) => item.event_id === row.event_id)
+        || multisessionV2Sessions.get(keyMsSession(row.multisession_id, row.event_id));
+      const item = {
+        ...(existing || {}),
+        multisession_session_id: existing?.multisession_session_id || row.multisession_session_id || randomUUID(),
+        multisession_id: row.multisession_id,
+        event_id: row.event_id,
+        sequence: Number(row.sequence || existing?.sequence || 1),
+        status: row.status || existing?.status || 'OUVERTE',
+        metadata: row.metadata || existing?.metadata || {},
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      multisessionV2Sessions.set(keyMsSession(item.multisession_id, item.event_id), item);
+      return { ...item };
+    },
+    async listMultisessionV2Population(multisessionId){
+      return [...multisessionV2Population.values()].filter((row) => row.multisession_id === multisessionId).map((row) => ({ ...row }));
+    },
+    async upsertMultisessionV2Population(row){
+      const item = {
+        multisession_id: row.multisession_id,
+        person_id: row.person_id || row.personne_id,
+        personne_id: row.person_id || row.personne_id,
+        snapshot: row.snapshot || {},
+        provenance: row.provenance || 'ATTENDUS_CONSOLIDES',
+        created_at: row.created_at || now(),
+        updated_at: now()
+      };
+      multisessionV2Population.set(keyMsPopulation(item.multisession_id, item.person_id), item);
+      return { ...item };
+    },
+    async upsertMultisessionV2Participation(row){
+      const item = {
+        multisession_id: row.multisession_id,
+        session_id: row.session_id || row.event_id,
+        person_id: row.person_id || row.personne_id,
+        personne_id: row.person_id || row.personne_id,
+        attendance_status: row.attendance_status || row.statut,
+        role: row.role || 'PARTICIPANT',
+        reason: row.reason || row.motif_absence || null,
+        created_by: row.created_by || row.auteur_id || null,
+        created_at: row.created_at || now(),
+        updated_at: now()
+      };
+      multisessionV2Participations.set(keyMsParticipation(item.multisession_id, item.session_id, item.person_id, item.role), item);
+      return { ...item };
+    },
+    async updateMultisessionV2(id, patch){
+      const item = multisessionsV2.get(String(id));
+      if(!item) return null;
+      Object.assign(item, patch || {}, { updated_at: now() });
+      multisessionsV2.set(String(id), item);
+      return { ...item };
     },
     async listAttendus(eventId){
       return [...attendus.values()].filter(a => a.evenement_id === eventId);

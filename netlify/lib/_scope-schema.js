@@ -345,6 +345,7 @@ async function ensureScopeSchema(){
     `insert into monitoring_f7_schema_migrations(version) values ('scope-generic-exercise-sessions-1') on conflict (version) do nothing`
   );
   await migrateParticipationPolicyEngine1();
+  await migrateMultiSessionV2Foundation1();
   ready = true;
   return true;
 }
@@ -1150,6 +1151,110 @@ async function migrateParticipationPolicyEngine1(){
     );
   }
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-participation-policy-engine-1') on conflict (version) do nothing`);
+}
+
+async function migrateMultiSessionV2Foundation1(){
+  await db.query(`
+    create table if not exists scope_multisessions_v2 (
+      multisession_id uuid primary key default gen_random_uuid(),
+      code text not null unique,
+      label text not null,
+      domain text not null references scope_domaines(code),
+      period text,
+      status text not null default 'OUVERTE',
+      closed_at timestamptz,
+      closed_by text,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_multisessions_v2_status_chk check (status in ('PLANIFIEE','OUVERTE','CLOTUREE','ANNULEE')),
+      constraint scope_multisessions_v2_code_chk check (length(trim(code)) > 0),
+      constraint scope_multisessions_v2_label_chk check (length(trim(label)) > 0)
+    )
+  `);
+  await db.query(`
+    create table if not exists scope_multisession_v2_sessions (
+      multisession_session_id uuid primary key default gen_random_uuid(),
+      multisession_id uuid not null references scope_multisessions_v2(multisession_id) on delete cascade,
+      event_id uuid not null references scope_evenements(evenement_id) on delete cascade,
+      sequence integer not null,
+      status text not null default 'OUVERTE',
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_multisession_v2_sessions_sequence_chk check (sequence >= 1),
+      constraint scope_multisession_v2_sessions_status_chk check (status in ('PLANIFIEE','OUVERTE','CLOTUREE','ANNULEE')),
+      constraint scope_multisession_v2_sessions_event_uq unique (event_id),
+      constraint scope_multisession_v2_sessions_sequence_uq unique (multisession_id, sequence)
+    )
+  `);
+  await db.query(`
+    create table if not exists scope_multisession_v2_population (
+      multisession_id uuid not null references scope_multisessions_v2(multisession_id) on delete cascade,
+      person_id text not null references scope_personnes(id),
+      snapshot jsonb not null default '{}'::jsonb,
+      provenance text not null default 'ATTENDUS_CONSOLIDES',
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      primary key (multisession_id, person_id)
+    )
+  `);
+  await db.query(`
+    create table if not exists scope_multisession_v2_participations (
+      multisession_id uuid not null references scope_multisessions_v2(multisession_id) on delete cascade,
+      session_id uuid not null references scope_evenements(evenement_id) on delete cascade,
+      person_id text not null references scope_personnes(id),
+      attendance_status text not null,
+      role text not null default 'PARTICIPANT',
+      reason text,
+      created_by text,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      primary key (multisession_id, session_id, person_id, role),
+      constraint scope_multisession_v2_participations_status_chk check (
+        attendance_status in ('PRESENT','ABSENT_EXCUSE','ABSENT_NON_EXCUSE','DISPENSE','NON_RENSEIGNE','NON_CONCERNE')
+      ),
+      constraint scope_multisession_v2_participations_role_chk check (
+        role in ('PARTICIPANT','FORMATEUR','MONITEUR','SURVEILLANT','AUXILIAIRE')
+      )
+    )
+  `);
+  await db.query(`create index if not exists scope_multisession_v2_sessions_lookup_idx on scope_multisession_v2_sessions(multisession_id, event_id)`);
+  await db.query(`create index if not exists scope_multisession_v2_population_person_idx on scope_multisession_v2_population(person_id)`);
+  await db.query(`
+    insert into scope_multisessions_v2(code, label, domain, period, status, metadata)
+    select 'DAP-FORMATION-GROUPEE-1-2026', 'Formation groupée DAP', 'DAP', '2026', 'OUVERTE',
+           '{"activation":"MULTISESSION-V2-FOUNDATION-1","explicit":true}'::jsonb
+    where exists (
+      select 1 from scope_evenements
+      where domaine_code = 'DAP' and libelle in ('Formation groupée DAP 1.1','Formation groupée DAP 1.2')
+    )
+    on conflict (code) do nothing
+  `);
+  await db.query(`
+    insert into scope_multisession_v2_sessions(multisession_id, event_id, sequence, status, metadata)
+    select ms.multisession_id, e.evenement_id,
+           case when e.libelle = 'Formation groupée DAP 1.1' then 1 else 2 end,
+           case when e.statut = 'ANNULE' then 'ANNULEE' when e.statut = 'REALISE' then 'CLOTUREE' else 'OUVERTE' end,
+           jsonb_build_object('activation','MULTISESSION-V2-FOUNDATION-1','source','existing_event')
+    from scope_multisessions_v2 ms
+    join scope_evenements e on e.domaine_code = 'DAP'
+      and e.libelle in ('Formation groupée DAP 1.1','Formation groupée DAP 1.2')
+    where ms.code = 'DAP-FORMATION-GROUPEE-1-2026'
+    on conflict (event_id) do nothing
+  `);
+  await db.query(`
+    insert into scope_multisession_v2_population(multisession_id, person_id, snapshot, provenance)
+    select distinct ms.multisession_id, a.personne_id,
+           jsonb_build_object('activation','MULTISESSION-V2-FOUNDATION-1','source','scope_attendus','event_id',a.evenement_id),
+           'ATTENDUS_CONSOLIDES'
+    from scope_multisessions_v2 ms
+    join scope_multisession_v2_sessions s on s.multisession_id = ms.multisession_id
+    join scope_attendus a on a.evenement_id = s.event_id and a.inclus is not false
+    where ms.code = 'DAP-FORMATION-GROUPEE-1-2026'
+    on conflict (multisession_id, person_id) do nothing
+  `);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-multisession-v2-foundation-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

@@ -150,6 +150,7 @@
       ajouterEncadrement(id, body, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/encadrement`, withBaseVersion(body, baseVersion)); },
       retirerEncadrement(id, body, baseVersion) { return request('DELETE', `/evenements/${encodeURIComponent(id)}/encadrement`, withBaseVersion(body, baseVersion)); },
       cloturer(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/cloturer`, withBaseVersion({}, baseVersion)); },
+      cloturerMultiSessionV2(id, baseVersion) { return request('POST', `/multisessions-v2/${encodeURIComponent(id)}/cloturer`, withBaseVersion({}, baseVersion)); },
       reouvrir(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/reouvrir`, withBaseVersion({ motif }, baseVersion)); },
       annuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/annuler`, withBaseVersion({ motif }, baseVersion)); },
       supprimerOuAnnuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/supprimer-ou-annuler`, withBaseVersion({ motif }, baseVersion)); },
