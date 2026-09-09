@@ -2250,7 +2250,7 @@ html, body {
 
 .scope-multisession-v2-band dl {
   display: grid;
-  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  grid-template-columns: repeat(5, minmax(88px, 1fr));
   gap: 10px;
   margin: 0;
 }
@@ -6693,17 +6693,16 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-status-control-group.is-compact {
   display: inline-flex;
   justify-content: flex-start;
+  width: auto;
+  max-width: max-content;
 }
 .scope-status-control-group.is-compact .scope-status-control:not(.is-selected) {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
 .scope-status-control-group.is-compact:hover .scope-status-control,
 .scope-status-control-group.is-compact:focus-within .scope-status-control,
 .scope-status-control-group.is-open .scope-status-control {
-  visibility: visible;
-  opacity: 1;
+  display: inline-flex;
   pointer-events: auto;
 }
 .scope-justificatif-cell .scope-motif-compact {
@@ -6733,6 +6732,17 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-justificatif-cell .scope-motif-compact:focus-visible {
   outline: 2px solid var(--scope-red);
   outline-offset: 2px;
+}
+.scope-events-multisession {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin-top: 3px;
+  color: var(--scope-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 @media (max-width: 1023px) {

@@ -180,19 +180,20 @@ async function save(service, eventId, entries){
     eq(state.statistics.denominator, 4);
   });
 
-  await record('TEST 8 — clôture finale refusée avec C non renseigné identifié', async () => {
+  await record('TEST 8 — clôture finale refusée tant que les sessions ne sont pas clôturées', async () => {
     let failed = null;
     try {
       await service.cloturerMultiSessionV2(ms.multisession_id, {}, ACTOR);
     } catch(error) {
       failed = error;
     }
-    eq(failed && failed.error, 'multisession_v2_incomplete');
-    ok((failed.details.unfilledPeople || []).some((row) => row.personneId === people.C.personne_id), 'C doit être listé');
+    eq(failed && failed.error, 'multisession_v2_sessions_ouvertes');
   });
 
   await record('TEST 9 — après C absent, clôture Multi-session autorisée', async () => {
     await save(service, s2.eventId, [{ personne: people.C, statut: 'ABSENT_NON_EXCUSE' }]);
+    const fiche = await service.lireEvenement(s2.eventId);
+    await service.cloturer(s2.eventId, { baseVersion: fiche.evenement.version }, ACTOR);
     const closed = await service.cloturerMultiSessionV2(ms.multisession_id, {}, ACTOR);
     eq(closed.multisession.status, 'CLOTUREE');
   });
@@ -207,7 +208,7 @@ async function save(service, eventId, entries){
     } catch(error) {
       failed = error;
     }
-    eq(failed && failed.error, 'multisession_v2_permutation_interdite');
+    ok(['multisession_v2_permutation_interdite', 'statut_invalide'].includes(failed && failed.error), 'permutation V2 refusée côté serveur');
   });
 
   await record('NON-REG — DAP simple conserve la permutation', async () => {

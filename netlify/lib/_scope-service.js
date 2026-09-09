@@ -3104,7 +3104,7 @@ function createScopeService(repo){
     (legacyRows || []).forEach((row) => {
       if(row.evenement_id) legacyByEvent.set(row.evenement_id, row);
     });
-    const items = list.map((evenement) => {
+    const items = await Promise.all(list.map(async (evenement) => {
       const linked = ciblesByEvent.get(evenement.evenement_id) || [];
       const cibles = linked.map((row) => ciblesById.get(row.cible_id) || row).filter(Boolean);
       const attendus = attendusByEvent.get(evenement.evenement_id) || [];
@@ -3130,6 +3130,10 @@ function createScopeService(repo){
       const legacy = evenement.origine === 'LEGACY_AGGREGATED'
         ? (legacyByEvent.get(evenement.evenement_id) || null)
         : null;
+      let multiSessionV2 = null;
+      if(repo.getMultisessionV2ForEvent && repo.listMultisessionV2Sessions){
+        multiSessionV2 = await loadMultiSessionV2State(repo, evenement, evenement.evenement_id);
+      }
       return {
         evenement: { ...evenement, mode_suivi: modeSuivi },
         cibles,
@@ -3141,13 +3145,15 @@ function createScopeService(repo){
         permutationSummary,
         permutation_summary: permutationSummary,
         legacy,
+        multiSessionV2,
+        engine: multiSessionV2 ? MultiSessionV2.ENGINE.MULTI_SESSION_V2 : undefined,
         saisieQuantitative: saisie,
         etatMetier,
         etat_metier: etatMetier,
         modeSuivi,
         qualification: isQualificationEvenement(evenement)
       };
-    });
+    }));
     return { items, performance: { mode: 'batch', eventCount: list.length, queries: 7 } };
   }
 

@@ -2870,6 +2870,14 @@
       const href = ev.statut === 'PLANIFIE' && !isLegacy && (ev.population_figee || mode === 'QUANTITATIF')
         ? `#/exercices/${ev.evenement_id}/saisie`
         : `#/exercices/${ev.evenement_id}`;
+      const v2 = item.multiSessionV2 || null;
+      const v2Status = String(v2 && v2.globalStatus || '').toUpperCase();
+      const v2StatusLabel = v2Status === 'CLOTURE'
+        ? 'Clôturé'
+        : (v2Status === 'A_FINALISER' ? 'Sessions clôturées — À finaliser' : 'En cours');
+      const v2Badge = v2 && v2.engine === 'MULTI_SESSION_V2'
+        ? `<small class="scope-events-multisession">Multi-session · ${escapeHtml(String(v2.currentSessionIndex || 1))}/${escapeHtml(String(v2.sessionCount || 1))} · ${escapeHtml(v2StatusLabel)}</small>`
+        : '';
       const statutHtml = isLegacy
         ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>'
         : `${eventBusinessStateBadge(item)}<span class="scope-events-mode">${escapeHtml(L.modeLabel(mode))}</span>`;
@@ -2884,7 +2892,7 @@
       const effectifHtml = `<span class="scope-events-effectif-main">${escapeHtml(String(attendusCell))}</span>${effectifBits.length ? `<small class="scope-events-effectif-sub">${escapeHtml(effectifBits.join(' · '))}</small>` : ''}`;
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-        <td data-label="Événement"><a class="scope-events-libelle" href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a></td>
+        <td data-label="Événement"><a class="scope-events-libelle" href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a>${v2Badge}</td>
         <td data-label="Domaine"><span class="scope-events-domain">${escapeHtml(domaineLabel(ev.domaine_code))}</span></td>
         <td data-label="Public / OI">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Effectif">${effectifHtml}</td>
@@ -6285,6 +6293,8 @@
     const hasIncompleteExcuse = L.hasIncompleteExcuse ? L.hasIncompleteExcuse(state.saisie) : false;
     const hasIncompleteDispense = L.hasIncompleteDispense ? L.hasIncompleteDispense(state.saisie) : false;
     const isV2 = fiche.engine === 'MULTI_SESSION_V2' || Boolean(fiche.multiSessionV2);
+    const v2State = fiche.multiSessionV2 || fiche.sessionParticipation || {};
+    const v2CanFinalize = isV2 && v2State.allSessionsClosed && String(v2State.globalStatus || '').toUpperCase() !== 'CLOTURE';
     const closeLabel = closeBusy === 'save' ? 'Enregistrement…' : (closeBusy === 'close' ? 'Clôture…' : (isV2 ? 'Clôturer cette session' : 'Clôturer'));
     const saveState = presenceSaveLabel();
     const lifecycleActions = renderFicheLifecycleActions(ev, ev.origine === 'LEGACY_AGGREGATED', false);
@@ -6302,7 +6312,7 @@
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="all-present" ${saveBusy ? 'disabled' : ''}>Tous présents</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="reset-saisie" ${saveBusy ? 'disabled' : ''}>Réinitialiser la saisie</button>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cloturer" ${saveBusy || closeBusy ? 'disabled' : ''}>${escapeHtml(closeLabel)}</button>
-          ${isV2 ? `<button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="cloturer-multisession" ${saveBusy || closeBusy ? 'disabled' : ''}>Clôturer le Multi-session</button>` : ''}
+          ${isV2 ? `<button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="cloturer-multisession" ${saveBusy || closeBusy || !v2CanFinalize ? 'disabled' : ''} ${v2CanFinalize ? '' : 'title="Disponible lorsque toutes les sessions sont clôturées"'}>Clôturer le Multi-session</button>` : ''}
         </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
         ${renderEncadrementBlock()}
@@ -6415,15 +6425,20 @@
     const current = Number(stateV2.currentSessionIndex || 1);
     const total = Number(stateV2.sessionCount || (stateV2.sessions || []).length || 1);
     const label = stateV2.label || (stateV2.multisession && stateV2.multisession.label) || 'Multi-session';
+    const globalStatus = String(stateV2.globalStatus || '').toUpperCase();
+    const statusLabel = globalStatus === 'CLOTURE'
+      ? 'Clôturé'
+      : (globalStatus === 'A_FINALISER' ? 'Sessions clôturées — À finaliser' : 'En cours');
     return `<section class="scope-multisession-v2-band" aria-label="Multi-session">
       <div>
         <strong>${escapeHtml(label)}</strong>
-        <span>Multi-session · Session ${escapeHtml(String(current))}/${escapeHtml(String(total))}</span>
+        <span>Multi-session · Session ${escapeHtml(String(current))}/${escapeHtml(String(total))} · ${escapeHtml(statusLabel)}</span>
       </div>
       <dl>
         <div><dt>Population cible</dt><dd>${escapeHtml(String(k.population || 0))}</dd></div>
         <div><dt>Participation déjà acquise</dt><dd>${escapeHtml(String(k.participationAcquise || 0))}</dd></div>
         <div><dt>Restent à traiter</dt><dd>${escapeHtml(String(k.restentATraiter || 0))}</dd></div>
+        <div><dt>À renseigner</dt><dd>${escapeHtml(String(k.aRenseigner == null ? k.restentATraiter || 0 : k.aRenseigner))}</dd></div>
         <div><dt>Dispensés</dt><dd>${escapeHtml(String(k.dispenses || 0))}</dd></div>
       </dl>
     </section>`;
@@ -6900,15 +6915,19 @@
   }
 
   function renderRealiseToolbar(ev, fiche) {
-    const session = fiche && (fiche.prExerciseParticipation || fiche.sessionParticipation);
+    const session = fiche && (fiche.sessionParticipation || fiche.multiSessionV2 || fiche.prExerciseParticipation);
     const multi = Boolean(session && session.isMultiSession);
+    const isV2 = Boolean(session && session.engine === 'MULTI_SESSION_V2');
+    const globalStatus = String(session && session.globalStatus || '').toUpperCase();
     const sessionReportAvailable = !multi || Boolean(session && session.allSessionsClosed);
     const sessionReportTooltip = 'Disponible lorsque toutes les séances sont clôturées.';
+    const reportLabel = isV2 && globalStatus === 'CLOTURE' ? 'Voir le rapport' : 'Générer le rapport';
     return `<div class="scope-actions scope-event-toolbar scope-realise-toolbar">
       <a class="scope-btn" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
-      <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}">Générer le rapport</button>
-      ${multi ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}" ${sessionReportAvailable ? '' : `disabled aria-disabled="true" title="${escapeHtml(sessionReportTooltip)}"`}>Rapport détaillé</button>` : ''}
+      ${isV2 && globalStatus !== 'CLOTURE' ? `<button type="button" class="scope-btn scope-btn-primary" id="cloturer-multisession">Clôturer le Multi-session</button>` : ''}
+      <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}"${isV2 && globalStatus !== 'CLOTURE' ? ` disabled aria-disabled="true" title="Disponible après clôture du Multi-session"` : ''}>${escapeHtml(reportLabel)}</button>
+      ${multi && !isV2 ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}" ${sessionReportAvailable ? '' : `disabled aria-disabled="true" title="${escapeHtml(sessionReportTooltip)}"`}>Rapport détaillé</button>` : ''}
     </div>`;
   }
 
@@ -6987,6 +7006,7 @@
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
+        ${isMultiSessionV2Fiche(fiche) ? renderMultiSessionV2Summary(fiche) : ''}
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev, fiche)}
         ${volumesBlock(saisie, { taux: t, officiel: true })}
@@ -7004,6 +7024,7 @@
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
+        ${isMultiSessionV2Fiche(fiche) ? renderMultiSessionV2Summary(fiche) : ''}
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev, fiche)}
         ${renderRealiseEncadrement(fiche)}
@@ -10196,7 +10217,7 @@
   }
 
   function confirmClotureAfterSave() {
-    const session = (state.fiche && (state.fiche.prExerciseParticipation || state.fiche.sessionParticipation)) || {};
+    const session = (state.fiche && (state.fiche.sessionParticipation || state.fiche.multiSessionV2 || state.fiche.prExerciseParticipation)) || {};
     const multi = Boolean(session.isMultiSession);
     const incomplete = L.listSessionClosureBlockingRows
       ? L.listSessionClosureBlockingRows(state.saisie, { isMultiSession: multi })
@@ -10275,11 +10296,12 @@
 
   function cloturer() {
     const id = route().id;
+    const isV2 = isMultiSessionV2Fiche(state.fiche);
     state.presenceCloseBusy = 'close';
     withFeedbackAction({
       progressTitle: 'Clôture…',
-      successTitle: 'Événement clôturé',
-      successMessage: 'La saisie est enregistrée et l’événement est marqué comme réalisé.'
+      successTitle: isV2 ? 'Session clôturée' : 'Événement clôturé',
+      successMessage: isV2 ? 'La session est clôturée. Le Multi-session reste finalisable séparément.' : 'La saisie est enregistrée et l’événement est marqué comme réalisé.'
     }, async () => {
       try {
         await client.cloturer(id, state.fiche.evenement.version);

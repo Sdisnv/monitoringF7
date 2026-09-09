@@ -71,6 +71,7 @@ function buildState(input = {}){
   if(!multisession) return null;
   const currentEventId = norm(input.currentEventId || input.current_event_id);
   const sessions = sortSessions(input.sessions || []);
+  const allSessionsClosed = sessions.every((row) => upper(row.statut) === 'REALISE' || upper(row.status) === 'CLOTUREE' || upper(row.status) === 'ANNULEE');
   const eventsById = new Map(sessions.map((row) => [eventId(row), row]));
   const personnes = input.personnes || {};
   const populationRows = input.population || [];
@@ -151,7 +152,10 @@ function buildState(input = {}){
     const state = byPersonneId[pid];
     const final = finalByPerson.get(pid);
     const contribution = contributions.get(pid);
-    const finalStatus = final && (final.role === 'FORMATEUR' && final.statut === 'PRESENT' ? 'PRESENT' : final.statut);
+    let finalStatus = final && (final.role === 'FORMATEUR' && final.statut === 'PRESENT' ? 'PRESENT' : final.statut);
+    if(finalStatus && !allSessionsClosed && !['PRESENT', 'DISPENSE'].includes(finalStatus)){
+      finalStatus = null;
+    }
     state.finalStatus = finalStatus || null;
     if(finalStatus === 'PRESENT') presents += 1;
     else if(finalStatus === 'DISPENSE') dispenses += 1;
@@ -201,6 +205,7 @@ function buildState(input = {}){
       population: populationRows.length,
       participationAcquise: presents,
       restentATraiter: missing.length,
+      aRenseigner: missing.length,
       dispenses
     },
     statistics: {
@@ -215,7 +220,10 @@ function buildState(input = {}){
       officiel: false,
       kind: ENGINE.MULTI_SESSION_V2
     },
-    allSessionsClosed: sessions.every((row) => upper(row.statut) === 'REALISE' || upper(row.status) === 'CLOTUREE' || upper(row.status) === 'ANNULEE')
+    allSessionsClosed,
+    globalStatus: upper(multisession.status) === 'CLOTUREE'
+      ? 'CLOTURE'
+      : (allSessionsClosed ? 'A_FINALISER' : 'EN_COURS')
   };
 }
 
@@ -253,6 +261,12 @@ function calculateStatistics(participations, population){
 
 function validateFinalClosure(state){
   if(!state) throw new HttpError(422, 'multisession_v2_introuvable', 'Multi-session introuvable.');
+  if(!state.allSessionsClosed){
+    throw new HttpError(422, 'multisession_v2_sessions_ouvertes', 'Clôture du Multi-session impossible : toutes les sessions doivent d’abord être clôturées.', {
+      openSessions: (state.sessions || []).filter((row) => !['REALISE', 'CLOTUREE', 'ANNULEE'].includes(upper(row.statut)) && !['CLOTUREE', 'ANNULEE'].includes(upper(row.status)))
+        .map((row) => ({ eventId: eventId(row), label: row.libelle || row.label || null, status: row.status || row.statut || null }))
+    });
+  }
   if(state.unfilledPeople && state.unfilledPeople.length){
     throw new HttpError(422, 'multisession_v2_incomplete', `Clôture du Multi-session impossible : ${state.unfilledPeople.length} personne(s) restent à renseigner.`, {
       unfilledPeople: state.unfilledPeople

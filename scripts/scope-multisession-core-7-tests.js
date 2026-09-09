@@ -170,7 +170,7 @@ async function resetEvent(service, eventId){
     ok(!ui.includes("toast('info', 'Déjà ajoutée'"));
     ok(!ui.includes('<span class="scope-muted-inline">Source</span>'));
     ok(css.includes('.scope-status-control-group.is-compact .scope-status-control:not(.is-selected)'));
-    ok(!/scope-status-control-group\.is-compact\s+\.scope-status-control:not\(\.is-selected\)\s*\{[^}]*display:\s*none/.test(css));
+    ok(/scope-status-control-group\.is-compact\s+\.scope-status-control:not\(\.is-selected\)\s*\{[^}]*display:\s*none/.test(css));
     ok(/function computeMultiSessionParticipationState/.test(cycle));
     ok(/function computePrExerciseParticipationState\(input = \{\}\)\{\s*return computeMultiSessionParticipationState\(input\);/m.test(cycle));
   });

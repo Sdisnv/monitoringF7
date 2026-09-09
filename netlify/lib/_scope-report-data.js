@@ -12,6 +12,7 @@ const { ROOT_DOMAINES } = require('./_scope-graphs');
 const { displayDomaineCode } = require('./_scope-model');
 const { collectMultisessionReport } = require('./_scope-multisession-report');
 const { createScopeJspReportingService, createScopeParticipationReportingService } = require('./_scope-jsp-reporting');
+const MultiSessionV2 = require('./_scope-multisession-v2');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 const UiLogic = require('../../assets/js/scope-ui-logic');
 
@@ -264,6 +265,133 @@ function encadrementRows(fiche){
   });
 }
 
+function multiSessionV2NominativeRows(fiche){
+  const state = fiche.multiSessionV2 || {};
+  const byPerson = state.byPersonneId || {};
+  const personnes = fiche.personnes || {};
+  const cibles = fiche.cibles || [];
+  const cibleById = Object.fromEntries(cibles.map((c) => [c.cible_id, c]));
+  return (fiche.attendus || [])
+    .filter((row) => row && row.inclus !== false && byPerson[String(row.personne_id || row.personneId)])
+    .map((row) => {
+      const pid = String(row.personne_id || row.personneId || '');
+      const person = personnes[pid] || {};
+      const targetState = byPerson[pid] || {};
+      const cible = cibleById[row.cible_id] || {};
+      const statut = targetState.finalStatus || 'NON_RENSEIGNE';
+      return {
+        grade: person.grade || row.grade || '',
+        nom: person.nom || row.nom || '',
+        prenom: person.prenom || row.prenom || '',
+        nip: person.nip || row.nip || '',
+        oi: cible.niveau_code || row.cible || '',
+        cible: cible.libelle || cible.niveau_code || row.cible || '',
+        statut,
+        statutLabel: STATUT_LABELS[statut] || statut,
+        motif: targetState.countedMotif || null,
+        motifLabel: targetState.countedMotif ? (MOTIF_LABELS[targetState.countedMotif] || targetState.countedMotif) : '',
+        role: targetState.countedRole || 'PARTICIPANT',
+        roleLabel: targetState.countedRole && targetState.countedRole !== 'PARTICIPANT' ? (ROLE_LABELS[targetState.countedRole] || targetState.countedRole) : ''
+      };
+    })
+    .sort(sortByGradeThenName);
+}
+
+function multiSessionV2EventRows(state){
+  return (state.sessions || []).map((session) => ({
+    date: session.date,
+    libelle: session.libelle,
+    site: MultiSessionV2.sessionLabel(session),
+    expected: state.kpis && state.kpis.population,
+    present: '',
+    excused: '',
+    absent: '',
+    dispensed: '',
+    nonRenseigne: '',
+    presenceRate: null
+  }));
+}
+
+function multiSessionV2ReportModel(fiche, query, includeNominatif){
+  const state = fiche.multiSessionV2;
+  if(!state || state.engine !== MultiSessionV2.ENGINE.MULTI_SESSION_V2) return null;
+  const multisession = state.multisession || {};
+  if(String(multisession.status || '').toUpperCase() !== 'CLOTUREE'){
+    throw new HttpError(422, 'rapport_multisession_v2_non_cloture', 'Le rapport consolidé sera disponible après clôture du Multi-session.');
+  }
+  const firstSession = (state.sessions || [])[0] || fiche.evenement;
+  const lastSession = (state.sessions || [])[Math.max(0, (state.sessions || []).length - 1)] || fiche.evenement;
+  const period = {
+    from: firstSession.date || fiche.evenement.date,
+    to: lastSession.date || fiche.evenement.date,
+    preset: 'CUSTOM'
+  };
+  const stats = state.statistics || {};
+  const cibles = fiche.cibles || [];
+  return {
+    kind: 'EVENT',
+    period,
+    domaine: displayDomaineCode(multisession.domain || fiche.evenement.domaine_code),
+    cible: cibles[0] && cibles[0].niveau_code,
+    title: `RAPPORT — ${String(state.label || multisession.label || 'MULTI-SESSION').toLocaleUpperCase('fr-CH')}`,
+    subtitle: `Rapport de l’exercice Multi-session — ${(state.sessions || []).map((session) => session.libelle).filter(Boolean).join(' / ')}`,
+    filename: sanitizeFilename(`SCOPE_Multi-session_${state.code || multisession.code || fiche.evenement.evenement_id}.pdf`),
+    event: {
+      id: state.multisessionId || multisession.multisession_id || fiche.evenement.evenement_id,
+      date: period.from,
+      libelle: state.label || multisession.label || 'Multi-session',
+      domaine: displayDomaineCode(multisession.domain || fiche.evenement.domaine_code),
+      sousDomaine: null,
+      parentDomaine: null,
+      specialization: '',
+      cibles: cibles.map((c) => ({ code: c.niveau_code, libelle: c.libelle })),
+      modeSuivi: 'NOMINATIF',
+      statut: 'CLOTUREE',
+      statutLabel: 'Clôturé',
+      modeLabel: 'Nominatif · Multi-session',
+      sectionEffectif: fiche.sectionEffectif == null ? null : fiche.sectionEffectif,
+      rattrapages: { count: 0 }
+    },
+    officiel: {
+      percentage: stats.percentage,
+      numerator: stats.numerator,
+      denominator: stats.denominator,
+      presents: stats.presents,
+      excuses: stats.excuses,
+      nonExcuses: stats.nonExcuses,
+      dispenses: stats.dispenses,
+      officiel: true,
+      kind: 'MULTI_SESSION_V2',
+      volumes: {
+        attendus: stats.population,
+        presents: stats.presents,
+        excuses: stats.excuses,
+        nonExcuses: stats.nonExcuses,
+        dispenses: stats.dispenses,
+        nonRenseignes: 0,
+        permutations: 0,
+        rattrapagesRealises: 0,
+        aRattraper: 0
+      }
+    },
+    legacy: null,
+    graphs: null,
+    explain: null,
+    nominatif: includeNominatif ? multiSessionV2NominativeRows(fiche) : [],
+    encadrement: includeNominatif ? encadrementRows(fiche) : [],
+    quantitative: false,
+    isLegacy: false,
+    signatureRole: 'RESPONSABLE FORMATION',
+    signaturePerson: null,
+    signatureImage: null,
+    signatureFunction: 'RESPONSABLE FORMATION',
+    alerts: { p0: [], p1: [], p2: [] },
+    events: multiSessionV2EventRows(state),
+    domaines: ROOT_DOMAINES,
+    multiSessionV2: true
+  };
+}
+
 async function collectReport(repo, query, options){
   const kind = normalizeKind(query.kind || query.type);
   const includeNominatif = Boolean(options && options.includeNominatif);
@@ -495,6 +623,8 @@ async function collectReport(repo, query, options){
     const evenementId = query.evenementId || query.evenement_id || query.id;
     if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport événement exige un identifiant.');
     const fiche = await scope.lireEvenement(evenementId);
+    const v2Model = multiSessionV2ReportModel(fiche, query, includeNominatif);
+    if(v2Model) return v2Model;
     const date = fiche.evenement.date;
     const period = { from: date, to: date, preset: 'CUSTOM' };
     const evaluated = await analytics.evaluate({ evenementId, from: date, to: date });
