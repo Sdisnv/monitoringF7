@@ -554,6 +554,10 @@ function createPgRepo(client){
       );
       return result.rows.map(mapPersonneDates);
     },
+    async countPersonnes(){
+      const result = await q(`select count(*)::int as count from scope_personnes`);
+      return Number(result.rows[0] && result.rows[0].count || 0);
+    },
     async insertAffectation(row){
       const cible = row.cible_id ? await api.getCible(row.cible_id) : null;
       const next = normalizeAffectationInput(row, cible);

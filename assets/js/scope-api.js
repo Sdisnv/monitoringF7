@@ -53,6 +53,29 @@
       return payload;
     }
 
+    function recordMetric(method, path, startedAt, response, payload) {
+      if (typeof window === 'undefined') return;
+      const durationMs = Math.round(((window.performance && performance.now && performance.now()) || Date.now()) - startedAt);
+      const payloadText = payload == null ? '' : JSON.stringify(payload);
+      const payloadBytes = typeof TextEncoder !== 'undefined'
+        ? new TextEncoder().encode(payloadText).length
+        : payloadText.length;
+      const item = {
+        at: new Date().toISOString(),
+        method,
+        path,
+        status: response && response.status || 0,
+        durationMs,
+        payloadBytes
+      };
+      window.ScopePerformance = window.ScopePerformance || { calls: [] };
+      window.ScopePerformance.calls.push(item);
+      if (window.ScopePerformance.calls.length > 120) window.ScopePerformance.calls.shift();
+      if (typeof window.dispatchEvent === 'function' && typeof CustomEvent !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('scope:api-metric', { detail: item }));
+      }
+    }
+
     async function fetchOnce(url, fetchOptions) {
       const headers = Object.assign({}, fetchOptions.headers || {});
       const token = getToken();
@@ -79,6 +102,7 @@
       const headers = { Accept: 'application/json' };
       if (body !== undefined) headers['Content-Type'] = 'application/json';
       let response;
+      const startedAt = (typeof performance !== 'undefined' && performance.now && performance.now()) || Date.now();
       try {
         response = await fetchWithAuthRetry(`${base}${path}`, {
           method,
@@ -89,6 +113,7 @@
         throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
       }
       const payload = await parseResponse(response);
+      recordMetric(method, path, startedAt, response, payload);
       if (!response.ok) throw new ScopeApiError(response.status, payload || {});
       return payload;
     }
@@ -97,6 +122,7 @@
       const headers = { Accept: 'application/json' };
       if (body !== undefined) headers['Content-Type'] = 'application/json';
       let response;
+      const startedAt = (typeof performance !== 'undefined' && performance.now && performance.now()) || Date.now();
       try {
         response = await fetchWithAuthRetry(path, {
           method,
@@ -107,6 +133,7 @@
         throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
       }
       const payload = await parseResponse(response);
+      recordMetric(method, path, startedAt, response, payload);
       if (!response.ok) throw new ScopeApiError(response.status, payload || {});
       return payload;
     }
@@ -132,6 +159,7 @@
       sessionMe,
       referentiels() { return request('GET', '/referentiels'); },
       listPersonnes(q) { return request('GET', `/personnes${queryString({ q })}`); },
+      personnesCount() { return request('GET', '/personnes/count'); },
       listEvenements(params) { return request('GET', `/evenements${queryString(params || {})}`); },
       getEvenement(id) { return request('GET', `/evenements/${encodeURIComponent(id)}`); },
       createEvenement(body) { return request('POST', '/evenements', body); },

@@ -335,7 +335,7 @@ class ScopePdfRenderer {
     draw(MARGIN, y, innerW, boxH, 5).fillAndStroke(palette.fill, palette.border);
     this.doc.fillColor(rgb(palette.title || INSTITUTION.ink)).font('Helvetica-Bold').fontSize(titleSize)
       .text(String(title || '').toLocaleUpperCase('fr-CH'), MARGIN + padX, y + padY, { width: bodyW });
-    this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(bodySize)
+    this.doc.fillColor(rgb(opts.body || INSTITUTION.ink)).font('Helvetica').fontSize(bodySize)
       .text(body, MARGIN + padX, y + padY + titleH + 7, { width: bodyW, align: 'left' });
     this.doc.restore();
     this.doc.y = y + boxH + 12;
@@ -345,7 +345,8 @@ class ScopePdfRenderer {
     this.renderPdfBox('Information', text, {
       fill: '#eef6ff',
       border: '#171C8F',
-      title: INSTITUTION.ink
+      title: '#171C8F',
+      body: '#171C8F'
     });
   }
 
@@ -353,7 +354,8 @@ class ScopePdfRenderer {
     this.renderPdfBox('Alerte', text, {
       fill: '#fdecef',
       border: '#8c000b',
-      title: INSTITUTION.redDark
+      title: '#8c000b',
+      body: '#8c000b'
     });
   }
 

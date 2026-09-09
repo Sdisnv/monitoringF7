@@ -102,3 +102,30 @@ Diagnostic indicatif exposé par `/diagnostics/performance` :
 - référentiels : cache 5 minutes avec invalidation après modification.
 
 Limite restante : les temps exacts en production restent dépendants de la base Netlify/Postgres et doivent être observés côté navigateur après déploiement.
+
+## Repair 2 — exploitation métier
+
+Le lot `SCOPE-CONFIGURATION-FORMATION-UX-IMPORT-PERFORMANCE-REPAIR-2` transforme la fondation technique en parcours métier exploitable.
+
+Changements principaux :
+
+- la liste des modèles devient consultable ;
+- la fiche modèle affiche Identité, Organisation, Participation, Historique/version ;
+- les codes techniques sont masqués dans le parcours normal et restent disponibles dans `Informations techniques` ;
+- la création demande un domaine, un nom, une organisation, une année et des règles métier ;
+- SCOPE génère le code de définition et la policy versionnée ;
+- la reconduction annuelle clone aussi la policy vers la nouvelle année ;
+- le preview import affiche `Reconnu`, `À confirmer` ou `Non reconnu` ;
+- la version applicable est résolue depuis la date réelle de l'événement ;
+- les doublons date/domaine/libellé sont signalés avant écriture.
+
+Performance :
+
+- suppression du chargement global de tout le personnel hors vues qui l'utilisent ;
+- ajout de `/personnes/count` pour le compteur léger ;
+- parallélisation des chargements indépendants pendant la navigation ;
+- instrumentation client `window.ScopePerformance.calls` avec méthode, chemin, durée, statut et taille de payload.
+
+Diagnostic local DB :
+
+Depuis l'environnement Codex, la résolution réseau du pooler Supabase a d'abord été bloquée par le sandbox puis la connexion SQL a expiré. Aucune écriture DB n'a été tentée. Le diagnostic production doit donc être complété côté navigateur avec `window.ScopePerformance.calls` après déploiement.

@@ -382,6 +382,9 @@ function createMemoryRepo(){
           || `${p.prenom} ${p.nom}`.toLowerCase().includes(query);
       });
     },
+    async countPersonnes(){
+      return personnes.size;
+    },
     async insertAffectation(row){
       const cibleRow = row.cible_id ? cibles.find((c) => c.cible_id === row.cible_id) : null;
       const item = {

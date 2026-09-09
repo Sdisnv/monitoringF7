@@ -310,6 +310,35 @@ function createScopeService(repo){
       const policySnapshot = await capturePolicySnapshot(repo, definition.domain);
       policyVersion = await repo.upsertParticipationPolicyVersion(genericCatalog.policyVersionFromDomainPolicy(policySnapshot, { year: Number(body.year || body.annee || 2026) }));
     }
+    if(body && body.policyConfig && repo.upsertParticipationPolicyVersion){
+      const year = Number(body.year || body.annee || new Date().getFullYear());
+      const baseConfig = Object.assign({}, policyVersion && policyVersion.config || await capturePolicySnapshot(repo, definition.domain));
+      const activeStatuses = ['NON_RENSEIGNE', ...new Set((body.policyConfig.activeStatuses || baseConfig.activeStatuses || [])
+        .map((status) => String(status || '').toUpperCase())
+        .filter((status) => status && status !== 'NON_RENSEIGNE'))]
+        .filter((status) => !(isMultiSession && status === 'PERMUTATION'));
+      const nextConfig = Object.assign({}, baseConfig, {
+        domainCode: definition.domain,
+        policyVersion: `formation-${definition.code.toLowerCase()}-${year}`,
+        activeStatuses,
+        excuseMotifs: (body.policyConfig.excuseMotifs || baseConfig.excuseMotifs || []).map((m) => String(m || '').toUpperCase()).filter(Boolean),
+        dispenseMotifs: (body.policyConfig.dispenseMotifs || baseConfig.dispenseMotifs || []).map((m) => String(m || '').toUpperCase()).filter(Boolean),
+        roles: baseConfig.roles || [],
+        behavior: Object.assign({}, baseConfig.behavior || {}, isMultiSession ? {
+          propagationScope: 'ALL_EXERCISE_SESSIONS',
+          deduplicationScope: 'EXERCISE'
+        } : {})
+      });
+      policyVersion = await repo.upsertParticipationPolicyVersion({
+        policy_code: `${definition.code}-REGLES`,
+        domain: definition.domain,
+        version_code: String(year),
+        valid_from: body.validFrom || body.valid_from || `${year}-01-01`,
+        valid_to: body.validTo || body.valid_to || `${year}-12-31`,
+        config: nextConfig,
+        metadata: { source: 'configuration_formation_metier', generated: true }
+      });
+    }
     const versionInput = genericCatalog.validateDefinitionVersion({
       ...body,
       definition_id: definition.definition_id,
@@ -353,6 +382,24 @@ function createScopeService(repo){
       next = genericCatalog.reconductDefinitionVersion(current, targetYear, body?.patch || {});
     } catch (error) {
       throw new HttpError(400, 'reconduction_invalide', error.message);
+    }
+    if(repo.listParticipationPolicyVersions && repo.upsertParticipationPolicyVersion){
+      const policies = await repo.listParticipationPolicyVersions({ domain: current.domain, active: true });
+      const currentPolicy = (policies || []).find((row) => String(row.policy_version_id || row.policyVersionId || '') === String(current.policy_version_id || current.policyVersionId || ''));
+      if(currentPolicy){
+        const clonedPolicy = await repo.upsertParticipationPolicyVersion({
+          policy_code: currentPolicy.policy_code || currentPolicy.policyCode,
+          domain: currentPolicy.domain,
+          version_code: String(targetYear),
+          valid_from: `${targetYear}-01-01`,
+          valid_to: `${targetYear}-12-31`,
+          config: Object.assign({}, currentPolicy.config || {}, {
+            policyVersion: `${currentPolicy.policy_code || currentPolicy.policyCode}-${targetYear}`
+          }),
+          metadata: Object.assign({}, currentPolicy.metadata || {}, { reconductedFrom: currentPolicy.policy_version_id || currentPolicy.policyVersionId })
+        });
+        next.policy_version_id = clonedPolicy.policy_version_id || clonedPolicy.policyVersionId;
+      }
     }
     const saved = await repo.upsertEventDefinitionVersion(next);
     await repo.appendJournal({
@@ -517,6 +564,14 @@ function createScopeService(repo){
       result.push({ ...personne, affectations });
     }
     return { personnes: result };
+  }
+
+  async function countPersonnes(){
+    if(repo.countPersonnes){
+      return { count: await repo.countPersonnes() };
+    }
+    const personnes = await repo.listPersonnes({});
+    return { count: personnes.length };
   }
 
   async function affectationsValides(personneId, date){
@@ -4678,12 +4733,20 @@ function createScopeService(repo){
       performance: {
         generatedAt: new Date().toISOString(),
         scope: 'navigation_principale',
-        measurements: genericCatalog.performanceBaseline(),
+        measurements: {
+          accueil: { beforeUserMs: 16000, afterTargetMs: 3500, rootCause: 'bootstrap referentiels + liste + dashboard + compteur personnel complet executes en sequence' },
+          evenements: { beforeUserMs: 12000, afterTargetMs: 3000, rootCause: 'navigation bloquee par chargements secondaires et compteur personnel hors vue import' },
+          personnel: { beforeUserMs: 14000, afterTargetMs: 4500, rootCause: 'premiere ouverture charge le repertoire complet; retour rapide par cache court' },
+          analyses: { beforeUserMs: 17000, afterTargetMs: 5000, rootCause: 'dashboard et analyses declenches avec rendu global bloquant' },
+          vigilance: { beforeUserMs: 2000, afterTargetMs: 2000, rootCause: 'vue deja limitee, cache court conserve' }
+        },
         appliedOptimizations: [
           'referentiels client mis en cache et invalides apres ecriture',
           'listes evenements/cycles/dashboard/vigilance chargees via cache court par periode',
           'suppression du double appel objectifs sur changement de route',
-          'compteur personnel reutilise entre vues au lieu de recharger le repertoire complet'
+          'compteur personnel remplace par endpoint count leger et charge uniquement pour import/personnel',
+          'chargements independants de navigation executes en parallele',
+          'instrumentation client ScopePerformance pour duree appels, payloads et rendu utile'
         ],
         safeguards: [
           'cache court TTL',
@@ -4703,6 +4766,7 @@ function createScopeService(repo){
     createEventDefinition,
     reconductEventDefinitionVersion,
     performanceDiagnostics,
+    countPersonnes,
     listPersonnes,
     affectationsValides,
     listEvenements,

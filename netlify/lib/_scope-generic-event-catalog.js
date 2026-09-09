@@ -289,6 +289,8 @@ function enrichImportLinesWithMatches(lines, catalog = {}){
         definitionCode: best.definition.code,
         definitionLabel: best.definition.label || best.definition.libelle,
         definitionVersionId: version && (version.definition_version_id || version.definitionVersionId),
+        definitionVersionCode: version && (version.version_code || version.versionCode),
+        policyVersionCode: version && (version.policyVersionCode || version.policy_version_code),
         mode: version && (version.mode_organisation || version.modeOrganisation),
         sessionIndex: extractSessionIndex(line),
         sessionCount: version && Number(version.session_count || version.sessionCount || 1),

@@ -132,6 +132,9 @@ exports.handler = async function(event){
       }
       return response(200, { ok:true, ...(await service.saveParticipationMotif(body, claims)) });
     }
+    if(method === 'GET' && path === '/personnes/count'){
+      return response(200, { ok:true, ...(await service.countPersonnes()) });
+    }
     if(method === 'GET' && path === '/personnes'){
       return response(200, { ok:true, ...(await service.listPersonnes(queryOf(event))) });
     }

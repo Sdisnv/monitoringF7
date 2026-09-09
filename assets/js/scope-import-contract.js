@@ -604,6 +604,7 @@
     const byExt = new Set();
     const byMode = new Set();
     const byIdentity = new Set();
+    const byLooseIdentity = new Set();
     const byCodeCours = new Map();
     const byBusiness = new Map();
     const byBusinessLite = new Map();
@@ -624,7 +625,9 @@
       if (ext) byExt.add(ext);
       if (codeCours) byCodeCours.set(codeCours, e);
       const base = `nat:${date}|${domaine}|${sous}|${codes}|${libelle}`;
+      const loose = `nat:${date}|${domaine}|${sous}|${libelle}`;
       byIdentity.add(base);
+      byLooseIdentity.add(loose);
       byMode.add(`${base}|${mode}`);
       const business = [
         date,
@@ -649,7 +652,7 @@
       liteList.push(e);
       byBusinessLite.set(lite, liteList);
     });
-    return { imported, byExt, byMode, byIdentity, byCodeCours, byBusiness, byBusinessLite };
+    return { imported, byExt, byMode, byIdentity, byLooseIdentity, byCodeCours, byBusiness, byBusinessLite };
   }
 
   function existingEventCibleCodes(event) {
@@ -816,6 +819,9 @@
       const identKey = dateInfo.iso && resolvedDomaine.domaineStockage && libelle
         ? `nat:${dateInfo.iso}|${resolvedDomaine.domaineStockage}|${resolvedDomaine.sousDomaine || ''}|${cibleCodes}|${libelle.toLowerCase()}`
         : null;
+      const looseIdentKey = dateInfo.iso && resolvedDomaine.domaineStockage && libelle
+        ? `nat:${dateInfo.iso}|${resolvedDomaine.domaineStockage}|${resolvedDomaine.sousDomaine || ''}|${libelle.toLowerCase()}`
+        : null;
       if (identKey && seenIdentity.has(identKey) && !errors.some((e) => e.error === 'doublon_fichier')) {
         const prev = seenIdentity.get(identKey);
         if (prev.mode === modePropose) {
@@ -844,6 +850,10 @@
         statutCode = 'CONFLIT';
         actionPrevue = 'REFUSER';
         errors.push({ error: 'conflit_existant', message: 'Un exercice existe déjà avec la même identité et un autre mode.' });
+      } else if (looseIdentKey && maps.byLooseIdentity && maps.byLooseIdentity.has(looseIdentKey)) {
+        statutCode = 'DEJA_PRESENT';
+        actionPrevue = 'IGNORER_IDEMPOTENT';
+        warnings.push('Un événement existe déjà à la même date avec le même domaine et le même libellé.');
       } else if (statutCode === 'A_ARBITRER') {
         actionPrevue = 'ARBITRER';
       } else {

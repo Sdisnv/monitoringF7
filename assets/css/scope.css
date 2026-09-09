@@ -4373,6 +4373,121 @@ body.scope-pdf-open { overflow: hidden; }
   background: var(--scope-soft);
 }
 
+.scope-admin-layout {
+  display: grid;
+  gap: 12px;
+}
+
+.scope-formation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.scope-formation-model {
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+}
+
+.scope-formation-model.is-open {
+  border-color: var(--scope-blue);
+  box-shadow: 0 0 0 1px rgba(23, 28, 143, .08);
+}
+
+.scope-formation-model header,
+.scope-formation-version,
+.scope-formation-meta,
+.scope-formation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scope-formation-model header p,
+.scope-formation-model header strong,
+.scope-formation-version span,
+.scope-formation-version small {
+  display: block;
+}
+
+.scope-formation-meta {
+  justify-content: flex-start;
+  margin-top: 8px;
+  color: var(--scope-muted);
+  font-size: 13px;
+}
+
+.scope-formation-version {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  background: var(--scope-gray-50);
+}
+
+.scope-formation-version.is-selected {
+  border-color: var(--scope-blue);
+  background: #eef2ff;
+}
+
+.scope-formation-detail {
+  margin-top: 10px;
+  padding: 12px;
+  border-left: 3px solid var(--scope-blue);
+  background: #f8fafc;
+}
+
+.scope-formation-detail-grid,
+.scope-policy-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.scope-formation-detail h3,
+.scope-policy-builder h4 {
+  margin: 0 0 8px;
+}
+
+.scope-formation-detail dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 10px;
+  margin: 0;
+}
+
+.scope-formation-detail dt {
+  color: var(--scope-muted);
+}
+
+.scope-formation-detail dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.scope-policy-check {
+  margin: 6px 0;
+}
+
+.scope-policy-check.is-disabled {
+  opacity: .55;
+}
+
+.scope-formation-preview,
+.scope-technical-details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--scope-line);
+}
+
+.scope-help {
+  margin: 6px 0 0;
+  color: var(--scope-muted);
+  font-size: 13px;
+}
+
 .scope-mini-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

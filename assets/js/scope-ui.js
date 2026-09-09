@@ -173,15 +173,18 @@
     formationDefinitionForm: {
       domain: 'JSP',
       label: '',
-      code: '',
       description: '',
       modeOrganisation: 'SIMPLE',
       sessionCount: '1',
       policyVersionId: '',
       year: String(new Date().getFullYear() + 1),
       validFrom: `${new Date().getFullYear() + 1}-01-01`,
-      validTo: `${new Date().getFullYear() + 1}-12-31`
+      validTo: `${new Date().getFullYear() + 1}-12-31`,
+      activeStatuses: [],
+      excuseMotifs: [],
+      dispenseMotifs: []
     },
+    formationSelectedVersionId: '',
     clientCache: {},
     personnelListPage: 1,
     personnelListPageSize: 12,
@@ -702,7 +705,8 @@
       cibles: data.cibles || [],
       arbre: data.arbre || [],
       formationCatalog: data.formationCatalog || null,
-      suiviNominatif: data.suiviNominatif || []
+      suiviNominatif: data.suiviNominatif || [],
+      participation: data.participation || null
     };
   }
 
@@ -875,9 +879,9 @@
   }
 
   async function loadPersonCount() {
-    if (!client.listPersonnes) return null;
-    const data = await cached('personCount', {}, () => client.listPersonnes());
-    state.personCount = (data.personnes || []).length;
+    if (!client.personnesCount && !client.listPersonnes) return null;
+    const data = await cached('personCount', {}, () => client.personnesCount ? client.personnesCount() : client.listPersonnes());
+    state.personCount = Number(data.count != null ? data.count : ((data.personnes || []).length));
     return state.personCount;
   }
 
@@ -7366,13 +7370,13 @@
 
   function genericMatchHtml(match) {
     if (!match) return '';
-    const statusLabel = match.status === 'EXACT' ? 'Définition reconnue' : (match.status === 'SUGGESTED' ? 'Suggestion de définition' : 'Définition à valider');
+    const statusLabel = match.status === 'EXACT' ? 'Reconnu' : (match.status === 'SUGGESTED' ? 'À confirmer' : 'Non reconnu');
+    const sessionText = match.sessionIndex && match.sessionCount ? `Session ${match.sessionIndex}/${match.sessionCount}` : '';
     const details = [
-      match.definitionCode || match.definition_code,
       match.definitionLabel || match.definition_label,
-      match.policyCode || match.policy_code,
-      match.policyVersionCode || match.policy_version_code,
-      match.modeOrganisation || match.mode_organisation
+      match.policyVersionCode || match.policy_version_code ? `Version ${match.policyVersionCode || match.policy_version_code}` : '',
+      match.mode || match.modeOrganisation || match.mode_organisation,
+      sessionText
     ].filter(Boolean).join(' · ');
     const suggestions = Array.isArray(match.suggestions) && match.suggestions.length
       ? `<ul>${match.suggestions.slice(0, 3).map((item) => `<li>${escapeHtml(item.definitionLabel || item.definition_label || item.definitionCode || item.definition_code || 'Définition proposée')}</li>`).join('')}</ul>`
@@ -7381,7 +7385,8 @@
     return `<div class="scope-import-generic-match ${cls}">
       <strong>${escapeHtml(statusLabel)}</strong>
       ${details ? `<p>${escapeHtml(details)}</p>` : ''}
-      ${match.requiresValidation ? '<p>Validation humaine requise avant rattachement.</p>' : ''}
+      ${match.status === 'UNKNOWN_DEFINITION' ? '<p>Aucun modèle SCOPE correspondant. Créez ou choisissez un modèle avant écriture.</p>' : ''}
+      ${match.action === 'VALIDATION_HUMAINE_REQUISE' ? '<p>Validation humaine requise avant rattachement définitif.</p>' : ''}
       ${suggestions}
     </div>`;
   }
@@ -7892,7 +7897,21 @@
     const definitions = Array.isArray(catalog.definitions) ? catalog.definitions : [];
     const policyVersions = Array.isArray(catalog.policyVersions) ? catalog.policyVersions : [];
     const domaines = (state.referentiels && state.referentiels.domaines) || catalog.domaines || [];
+    const participation = state.participationAdmin || (state.referentiels && state.referentiels.participation) || {};
+    const statusCatalog = new Map(((participation && participation.statuses) || []).map((row) => [String(row.id || '').toUpperCase(), row]));
+    const motifCatalog = new Map(((participation && participation.motifs) || []).map((row) => [String(row.id || row.value || '').toUpperCase(), row]));
     const form = state.formationDefinitionForm || {};
+    const versionLabel = (v) => `${escapeHtml(v.version_code || v.versionCode || 'Version')} · ${escapeHtml(L.formatDate(v.valid_from || v.validFrom))} → ${escapeHtml(L.formatDate(v.valid_to || v.validTo))}`;
+    const statusLabel = (id) => (statusCatalog.get(String(id || '').toUpperCase()) || {}).label || ({
+      PRESENT: 'Présent',
+      ABSENT_EXCUSE: 'Excusé',
+      ABSENT_NON_EXCUSE: 'Absent',
+      DISPENSE: 'Dispensé',
+      PERMUTATION: 'Permutation'
+    }[String(id || '').toUpperCase()] || id);
+    const motifLabel = (id) => (motifCatalog.get(String(id || '').toUpperCase()) || {}).label || String(id || '').replace(/_/g, ' ').toLowerCase();
+    const policyConfigOf = (policy) => (policy && policy.config) || {};
+    const defaultPolicyForDomain = (domain) => policyVersions.find((p) => String(p.domain || '').toUpperCase() === String(domain || '').toUpperCase()) || null;
     const domainOptions = domaines
       .filter((d) => d.actif !== false)
       .map((d) => `<option value="${escapeHtml(d.code)}" ${String(form.domain || '').toUpperCase() === String(d.code).toUpperCase() ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || d.code)}</option>`)
@@ -7900,56 +7919,108 @@
     const activeDomain = String(form.domain || 'JSP').toUpperCase();
     const policyOptions = policyVersions
       .filter((p) => !p.domain || String(p.domain).toUpperCase() === activeDomain)
-      .map((p) => `<option value="${escapeHtml(p.policy_version_id || p.policyVersionId || '')}" ${String(form.policyVersionId || '') === String(p.policy_version_id || p.policyVersionId || '') ? 'selected' : ''}>${escapeHtml(`${p.policy_code || p.policyCode || 'Policy'} · ${p.version_code || p.versionCode || ''}`)}</option>`)
+      .map((p) => `<option value="${escapeHtml(p.policy_version_id || p.policyVersionId || '')}" ${String(form.policyVersionId || '') === String(p.policy_version_id || p.policyVersionId || '') ? 'selected' : ''}>${escapeHtml(`Règles ${p.domain || activeDomain} · ${p.version_code || p.versionCode || ''}`)}</option>`)
       .join('');
     const selectedPolicy = policyVersions.find((p) => String(p.policy_version_id || p.policyVersionId || '') === String(form.policyVersionId || ''))
-      || policyVersions.find((p) => String(p.domain || '').toUpperCase() === activeDomain)
+      || defaultPolicyForDomain(activeDomain)
       || null;
-    const policyConfig = selectedPolicy && selectedPolicy.config || {};
-    const statuses = (policyConfig.activeStatuses || policyConfig.active_statuses || []).filter((s) => s !== 'NON_RENSEIGNE');
-    const motifs = (policyConfig.excuseMotifs || policyConfig.excuse_motifs || []).concat(policyConfig.dispenseMotifs || policyConfig.dispense_motifs || []);
+    const policyConfig = policyConfigOf(selectedPolicy);
+    const baseStatuses = (policyConfig.activeStatuses || policyConfig.active_statuses || []).filter((s) => s !== 'NON_RENSEIGNE');
+    const selectedStatuses = (Array.isArray(form.activeStatuses) && form.activeStatuses.length ? form.activeStatuses : baseStatuses)
+      .filter((s) => s !== 'NON_RENSEIGNE');
+    const baseExcuseMotifs = policyConfig.excuseMotifs || policyConfig.excuse_motifs || [];
+    const baseDispenseMotifs = policyConfig.dispenseMotifs || policyConfig.dispense_motifs || [];
+    const selectedExcuseMotifs = Array.isArray(form.excuseMotifs) && form.excuseMotifs.length ? form.excuseMotifs : baseExcuseMotifs;
+    const selectedDispenseMotifs = Array.isArray(form.dispenseMotifs) && form.dispenseMotifs.length ? form.dispenseMotifs : baseDispenseMotifs;
+    const isMulti = form.modeOrganisation === 'MULTI_SESSION';
+    const renderChecks = (type, items, selected, disabledIds = []) => items.map((id) => {
+      const disabled = disabledIds.includes(String(id).toUpperCase());
+      return `<label class="scope-check scope-policy-check ${disabled ? 'is-disabled' : ''}">
+        <input type="checkbox" data-formation-policy="${escapeHtml(type)}:${escapeHtml(id)}" ${selected.includes(id) && !disabled ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+        ${escapeHtml(type === 'status' ? statusLabel(id) : motifLabel(id))}
+      </label>`;
+    }).join('');
+    const renderVersionSummary = (definition, version, selected) => {
+      const policy = policyVersions.find((p) => String(p.policy_version_id || p.policyVersionId || '') === String(version.policy_version_id || version.policyVersionId || '')) || {};
+      const config = policyConfigOf(policy);
+      const statuses = (config.activeStatuses || []).filter((s) => s !== 'NON_RENSEIGNE').map(statusLabel).join(' · ') || '—';
+      const excuses = (config.excuseMotifs || []).map(motifLabel).join(' · ') || '—';
+      const dispenses = (config.dispenseMotifs || []).map(motifLabel).join(' · ') || '—';
+      const mode = version.mode_organisation || version.modeOrganisation || 'SIMPLE';
+      const sessions = Number(version.session_count || version.sessionCount || 1);
+      return `<article class="scope-formation-version ${selected ? 'is-selected' : ''}">
+        <div>
+          <strong>${escapeHtml(version.version_code || version.versionCode || 'Version')}</strong>
+          <span>${mode === 'MULTI_SESSION' ? `Plusieurs sessions · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</span>
+          <small>${escapeHtml(L.formatDate(version.valid_from || version.validFrom))} → ${escapeHtml(L.formatDate(version.valid_to || version.validTo))}</small>
+        </div>
+        <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-formation-open="${escapeHtml(version.definition_version_id || version.definitionVersionId || '')}">Consulter</button>
+      </article>
+      ${selected ? `<div class="scope-formation-detail">
+        <div class="scope-formation-detail-grid">
+          <section><h3>Identité</h3><dl><dt>Domaine</dt><dd>${escapeHtml(definition.domain || '')}</dd><dt>Nom de la formation</dt><dd>${escapeHtml(definition.label || '')}</dd><dt>Version</dt><dd>${escapeHtml(version.version_code || version.versionCode || '')}</dd><dt>Validité</dt><dd>${escapeHtml(L.formatDate(version.valid_from || version.validFrom))} → ${escapeHtml(L.formatDate(version.valid_to || version.validTo))}</dd><dt>État</dt><dd>${definition.status === 'INACTIF' ? 'Inactif' : 'Actif'}</dd></dl></section>
+          <section><h3>Organisation</h3><p>${mode === 'MULTI_SESSION' ? `Multi-session · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p><p class="scope-muted">${mode === 'MULTI_SESSION' ? 'Une personne satisfait son obligation lorsqu’elle participe valablement à une des sessions.' : 'Une seule session porte l’exercice.'}</p></section>
+          <section><h3>Participation</h3><p><strong>Statuts disponibles</strong><br>${escapeHtml(statuses)}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml(excuses)}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml(dispenses)}</p><p><strong>Permutation</strong><br>${(config.activeStatuses || []).includes('PERMUTATION') ? 'Disponible selon règles DAP simple' : 'Non disponible pour cette configuration'}</p></section>
+          <section><h3>Historique / version</h3><p>${escapeHtml(versionLabel(version).replace(/<[^>]+>/g, ''))}</p><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(version.definition_version_id || version.definitionVersionId || '')}">Reconduire l’année suivante</button></section>
+        </div>
+        <details class="scope-technical-details"><summary>Informations techniques</summary><p>Définition : ${escapeHtml(definition.code || '')}</p><p>Policy : ${escapeHtml(policy.policy_code || policy.policyCode || '—')} · ${escapeHtml(policy.version_code || policy.versionCode || '—')}</p><p>Route moteur : ${mode === 'MULTI_SESSION' ? 'Multi-session générique' : 'Session unique générique'}</p></details>
+      </div>` : ''}`;
+    };
     const rows = definitions.map((definition) => {
       const versions = definition.versions || [];
       const latest = versions[0] || {};
       const mode = latest.mode_organisation || latest.modeOrganisation || 'SIMPLE';
       const sessions = Number(latest.session_count || latest.sessionCount || 1);
-      const policy = latest.policyCode ? `${latest.policyCode} · ${latest.policyVersionCode || ''}` : '—';
       const validite = [latest.valid_from || latest.validFrom || '—', latest.valid_to || latest.validTo || '—'].join(' → ');
-      return `<tr>
-        <td>${escapeHtml(definition.domain || '')}</td>
-        <td><strong>${escapeHtml(definition.label || '')}</strong><br><span class="scope-muted">${escapeHtml(definition.code || '')}</span></td>
-        <td>${mode === 'MULTI_SESSION' ? `Multi-session · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</td>
-        <td>${escapeHtml(policy)}</td>
-        <td>${escapeHtml(validite)}</td>
-        <td>${escapeHtml(definition.status || 'ACTIF')}</td>
-        <td>${versions[0] ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versions[0].definition_version_id || versions[0].definitionVersionId || '')}">Reconduire</button>` : ''}</td>
-      </tr>`;
+      const selected = versions.some((v) => String(v.definition_version_id || v.definitionVersionId || '') === String(state.formationSelectedVersionId || ''));
+      const detail = versions.map((version) => renderVersionSummary(definition, version, String(version.definition_version_id || version.definitionVersionId || '') === String(state.formationSelectedVersionId || ''))).join('');
+      return `<article class="scope-formation-model ${selected ? 'is-open' : ''}">
+        <header>
+          <div><strong>${escapeHtml(definition.label || '')}</strong><p>${escapeHtml(definition.domain || '')} · ${mode === 'MULTI_SESSION' ? `Multi-session · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p></div>
+          <div class="scope-formation-actions">
+            <span class="scope-import-pill ${definition.status === 'INACTIF' ? 'warn' : 'ok'}">${definition.status === 'INACTIF' ? 'Inactif' : 'Actif'}</span>
+            ${latest.definition_version_id || latest.definitionVersionId ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-formation-open="${escapeHtml(latest.definition_version_id || latest.definitionVersionId || '')}">${selected ? 'Masquer' : 'Consulter'}</button>` : ''}
+          </div>
+        </header>
+        <div class="scope-formation-meta"><span>Version ${escapeHtml(latest.version_code || latest.versionCode || '—')}</span><span>${escapeHtml(validite)}</span></div>
+        ${selected ? detail : ''}
+      </article>`;
     }).join('');
     const content = !canManage
       ? '<div class="scope-card"><p class="scope-empty">La configuration formation est réservée aux profils habilités.</p></div>'
       : state.formationCatalogError
         ? `<div class="scope-card"><p class="scope-empty scope-state-error" role="alert">${escapeHtml(state.formationCatalogError)}</p></div>`
-        : `<div class="scope-card">
-            <h2 style="margin-top:0">Créer un modèle</h2>
+        : `<div class="scope-admin-layout">
+          <div class="scope-card">
+            <h2 style="margin-top:0">Créer une formation</h2>
+            <p class="scope-muted">Renseignez le métier; SCOPE génère les identifiants techniques et choisit la route moteur adaptée.</p>
             <div class="scope-report-grid">
               <div class="scope-field"><label>Domaine</label><select id="formation-domain">${domainOptions}</select></div>
-              <div class="scope-field"><label>Libellé</label><input id="formation-label" type="text" value="${escapeHtml(form.label || '')}" placeholder="Formation extincteur JSP"></div>
-              <div class="scope-field"><label>Code métier</label><input id="formation-code" type="text" value="${escapeHtml(form.code || '')}" placeholder="JSP-EXTINCTEUR"></div>
-              <div class="scope-field"><label>Année</label><input id="formation-year" type="number" min="2026" value="${escapeHtml(form.year || '')}"></div>
-              <div class="scope-field"><label>Mode</label><select id="formation-mode">
+              <div class="scope-field"><label>Nom de la formation</label><input id="formation-label" type="text" value="${escapeHtml(form.label || '')}" placeholder="Formation extincteur"></div>
+              <div class="scope-field"><label>Année d’application</label><input id="formation-year" type="number" min="2026" value="${escapeHtml(form.year || '')}"></div>
+              <div class="scope-field"><label>Organisation</label><select id="formation-mode">
                 <option value="SIMPLE" ${form.modeOrganisation !== 'MULTI_SESSION' ? 'selected' : ''}>Session unique</option>
-                <option value="MULTI_SESSION" ${form.modeOrganisation === 'MULTI_SESSION' ? 'selected' : ''}>Multi-session</option>
+                <option value="MULTI_SESSION" ${form.modeOrganisation === 'MULTI_SESSION' ? 'selected' : ''}>Plusieurs sessions</option>
               </select></div>
               <div class="scope-field"><label>Nombre de sessions</label><input id="formation-session-count" type="number" min="1" value="${escapeHtml(form.sessionCount || '1')}" ${form.modeOrganisation === 'MULTI_SESSION' ? '' : 'disabled'}></div>
-              <div class="scope-field"><label>Policy</label><select id="formation-policy">${policyOptions || '<option value="">Policy par défaut</option>'}</select></div>
               <div class="scope-field"><label>Valable dès</label><input id="formation-valid-from" type="date" value="${escapeHtml(form.validFrom || '')}"></div>
               <div class="scope-field"><label>Valable jusqu’au</label><input id="formation-valid-to" type="date" value="${escapeHtml(form.validTo || '')}"></div>
+              <div class="scope-field"><label>Base de règles</label><select id="formation-policy">${policyOptions || '<option value="">Règles par défaut du domaine</option>'}</select></div>
             </div>
-            <div class="scope-admin-panel" style="margin-top:12px">
-              <h3 style="margin-top:0">Aperçu de la policy</h3>
-              <p><strong>Statuts :</strong> ${escapeHtml(statuses.join(', ') || '—')}</p>
-              <p><strong>Motifs :</strong> ${escapeHtml(motifs.join(', ') || '—')}</p>
-              <p><strong>Routage :</strong> ${form.modeOrganisation === 'MULTI_SESSION' ? 'GENERIC_MULTI_SESSION' : 'GENERIC_SIMPLE'}</p>
+            <div class="scope-admin-panel scope-policy-builder" style="margin-top:12px">
+              <h3 style="margin-top:0">Règles de participation</h3>
+              <p class="scope-muted">Sélectionnez les statuts et motifs affichés aux équipes de saisie.</p>
+              <div class="scope-policy-columns">
+                <section><h4>Statuts disponibles</h4>${renderChecks('status', ['PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION'], selectedStatuses, isMulti ? ['PERMUTATION'] : [])}${isMulti ? '<p class="scope-help">Permutation non disponible pour une formation à plusieurs sessions.</p>' : ''}</section>
+                <section><h4>Motifs d’excuse</h4>${renderChecks('excuse', ['PRIVE', 'PROFESSIONNEL', 'ARMEE', 'ACCIDENT_MALADIE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'NON_JUSTIFIE'], selectedExcuseMotifs)}</section>
+                <section><h4>Motifs de dispense</h4>${renderChecks('dispense', ['FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE', 'PAS_CONCERNE'], selectedDispenseMotifs)}</section>
+              </div>
+              <div class="scope-formation-preview">
+                <strong>Aperçu métier</strong>
+                <p>Statuts : ${escapeHtml(selectedStatuses.filter((s) => !(isMulti && s === 'PERMUTATION')).map(statusLabel).join(' · ') || '—')}</p>
+                <p>Motifs d’excuse : ${escapeHtml(selectedExcuseMotifs.map(motifLabel).join(' · ') || '—')}</p>
+                <p>Organisation : ${isMulti ? `Plusieurs sessions · ${escapeHtml(String(form.sessionCount || 2))} sessions` : 'Session unique'}</p>
+              </div>
             </div>
             <div class="scope-actions">
               <button type="button" class="scope-btn scope-btn-primary" id="formation-create">Créer le modèle</button>
@@ -7957,13 +8028,9 @@
           </div>
           <div class="scope-card" style="margin-top:12px">
             <h2 style="margin-top:0">Modèles d’exercice</h2>
-            <div class="scope-table-wrap">
-              <table class="scope-table">
-                <thead><tr><th>Domaine</th><th>Exercice</th><th>Organisation</th><th>Policy</th><th>Validité</th><th>État</th><th>Actions</th></tr></thead>
-                <tbody>${rows || '<tr><td colspan="7"><div class="scope-empty">Aucun modèle configuré.</div></td></tr>'}</tbody>
-              </table>
-            </div>
-          </div>`;
+            <div class="scope-formation-list">${rows || '<div class="scope-empty">Aucun modèle configuré.</div>'}</div>
+          </div>
+        </div>`;
     return `
       <div class="scope-crumb">Administration / Configuration formation</div>
       <div class="scope-main">
@@ -9831,15 +9898,22 @@
       });
       document.getElementById(id)?.addEventListener('change', (e) => {
         state.formationDefinitionForm[key] = e.target.value;
+        if (key === 'domain' || key === 'policyVersionId') {
+          state.formationDefinitionForm.activeStatuses = [];
+          state.formationDefinitionForm.excuseMotifs = [];
+          state.formationDefinitionForm.dispenseMotifs = [];
+        }
         if (key === 'modeOrganisation' && e.target.value !== 'MULTI_SESSION') state.formationDefinitionForm.sessionCount = '1';
         if (key === 'modeOrganisation' && e.target.value === 'MULTI_SESSION' && Number(state.formationDefinitionForm.sessionCount || 0) < 2) state.formationDefinitionForm.sessionCount = '2';
+        if (key === 'modeOrganisation' && e.target.value === 'MULTI_SESSION') {
+          state.formationDefinitionForm.activeStatuses = (state.formationDefinitionForm.activeStatuses || []).filter((status) => status !== 'PERMUTATION');
+        }
         render();
       });
     };
     [
       ['formation-domain', 'domain'],
       ['formation-label', 'label'],
-      ['formation-code', 'code'],
       ['formation-year', 'year'],
       ['formation-mode', 'modeOrganisation'],
       ['formation-session-count', 'sessionCount'],
@@ -9847,17 +9921,45 @@
       ['formation-valid-from', 'validFrom'],
       ['formation-valid-to', 'validTo']
     ].forEach(([id, key]) => bindFormationField(id, key));
+    root.querySelectorAll('[data-formation-policy]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const [kind, value] = String(input.getAttribute('data-formation-policy') || '').split(':');
+        const key = kind === 'status' ? 'activeStatuses' : (kind === 'excuse' ? 'excuseMotifs' : 'dispenseMotifs');
+        const current = new Set(state.formationDefinitionForm[key] || []);
+        if (input.checked) current.add(value);
+        else current.delete(value);
+        if (state.formationDefinitionForm.modeOrganisation === 'MULTI_SESSION') current.delete('PERMUTATION');
+        state.formationDefinitionForm[key] = [...current];
+        render();
+      });
+    });
+    root.querySelectorAll('[data-formation-open]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-formation-open') || '';
+        state.formationSelectedVersionId = state.formationSelectedVersionId === id ? '' : id;
+        render();
+      });
+    });
     document.getElementById('formation-create')?.addEventListener('click', () => {
       const form = state.formationDefinitionForm || {};
       withLoading(async () => {
+        const checked = (kind) => Array.from(root.querySelectorAll(`[data-formation-policy^="${kind}:"]`))
+          .filter((input) => input.checked)
+          .map((input) => String(input.getAttribute('data-formation-policy') || '').split(':')[1])
+          .filter(Boolean);
+        const selectedStatusesPayload = checked('status').filter((status) => !(form.modeOrganisation === 'MULTI_SESSION' && status === 'PERMUTATION'));
         await client.createEventDefinition({
           domain: form.domain,
           label: form.label,
-          code: form.code,
           description: form.description,
           modeOrganisation: form.modeOrganisation,
           sessionCount: Number(form.modeOrganisation === 'MULTI_SESSION' ? form.sessionCount || 2 : 1),
           policyVersionId: form.policyVersionId || null,
+          policyConfig: {
+            activeStatuses: ['NON_RENSEIGNE', ...selectedStatusesPayload],
+            excuseMotifs: checked('excuse'),
+            dispenseMotifs: checked('dispense')
+          },
           year: Number(form.year || new Date().getFullYear()),
           validFrom: form.validFrom,
           validTo: form.validTo
@@ -10988,29 +11090,27 @@
     }
     await withLoading(async () => {
       if (!state.referentiels.domaines.length) await loadReferentiels();
-      if (r.screen === 'objectifs') await loadObjectifs();
-      if (r.screen === 'formation-catalog') await loadFormationCatalog();
-      if (r.screen === 'participation-admin') await loadParticipationAdmin();
-      if (r.screen === 'utilisateurs') await loadAdminUsers();
-      if (client.listPersonnes && state.personCount == null) {
-        await loadPersonCount();
-      }
-      if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') await loadList();
-      if (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') await loadJspReport();
-      if (r.screen === 'rapport-formation') await loadFormationReport();
-      if (r.screen === 'cycles') await loadCycles();
-      if (r.screen === 'cycle' && r.id) await loadCycle(r.id);
-      if (r.screen === 'vigilance') await loadVigilance();
-      if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') await loadDashboard();
+      const jobs = [];
+      if (r.screen === 'objectifs') jobs.push(loadObjectifs());
+      if (r.screen === 'formation-catalog') jobs.push(loadFormationCatalog());
+      if (r.screen === 'participation-admin') jobs.push(loadParticipationAdmin());
+      if (r.screen === 'utilisateurs') jobs.push(loadAdminUsers());
+      if (r.screen === 'import-evenements' && state.personCount == null) jobs.push(loadPersonCount());
+      if (r.screen === 'liste' || r.screen === 'rapports' || r.screen === 'accueil') jobs.push(loadList());
+      if (r.screen === 'rapport-jsp' || r.screen === 'rapport-participation') jobs.push(loadJspReport());
+      if (r.screen === 'rapport-formation') jobs.push(loadFormationReport());
+      if (r.screen === 'cycles') jobs.push(loadCycles());
+      if (r.screen === 'cycle' && r.id) jobs.push(loadCycle(r.id));
+      if (r.screen === 'vigilance') jobs.push(loadVigilance());
+      if (r.screen === 'vue' || r.screen === 'accueil' || r.screen === 'statistiques') jobs.push(loadDashboard());
       if (r.screen === 'personnel' || r.screen === 'import-personnel') {
-        if (client.listPersonnes) {
-          await loadPersonCount();
-        }
-        await loadPersonnelDirectory();
+        jobs.push(loadPersonCount());
+        jobs.push(loadPersonnelDirectory());
       }
-      if (r.screen === 'personne' && r.personneId) await loadPersonneFiche(r.personneId);
-      if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) await loadFiche(r.id);
-      await refreshAlertCounts();
+      if (r.screen === 'personne' && r.personneId) jobs.push(loadPersonneFiche(r.personneId));
+      if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) jobs.push(loadFiche(r.id));
+      jobs.push(refreshAlertCounts());
+      await Promise.all(jobs);
     });
     if (r.screen === 'saisie' && r.id) {
       state.saisieGuard.stayHash = `#/exercices/${r.id}/saisie`;
@@ -11061,6 +11161,19 @@
         state.formationReportReady = true;
         state.formationReportError = null;
         return renderFormationReport();
+      },
+      renderFormationCatalogHtml(payload, selectedVersionId) {
+        state.referentiels = Object.assign({}, state.referentiels || {}, {
+          domaines: payload && payload.domaines || [],
+          participation: payload && payload.participation || null
+        });
+        state.formationCatalog = payload && payload.formationCatalog || payload || null;
+        state.formationCatalogReady = true;
+        state.formationCatalogError = null;
+        state.formationSelectedVersionId = selectedVersionId || '';
+        state.session = { name: 'Test SCOPE', roles: ['ADMINISTRATEUR'], permissions: ['references:manage'] };
+        window.CurrentPermissions = ['references:manage'];
+        return renderFormationCatalog();
       },
       renderCycleHtml(detail) {
         state.cycleDetail = detail;

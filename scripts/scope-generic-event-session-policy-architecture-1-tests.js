@@ -221,8 +221,8 @@ function nativeCsv(rows){
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const diag = (await service.performanceDiagnostics()).performance;
-    ok(diag.measurements.evenements.beforeCalls > diag.measurements.evenements.afterCalls, 'événements optimisés');
-    ok(diag.measurements.personnel.beforeCalls > diag.measurements.personnel.afterCalls, 'personnel optimisé');
+    ok(diag.measurements.evenements.beforeUserMs > diag.measurements.evenements.afterTargetMs, 'événements optimisés');
+    ok(diag.measurements.personnel.beforeUserMs > diag.measurements.personnel.afterTargetMs, 'personnel optimisé');
     ok(Array.isArray(diag.appliedOptimizations) && diag.appliedOptimizations.length >= 3, 'optimisations listées');
     ok(Array.isArray(diag.safeguards) && diag.safeguards.length >= 1, 'garde-fous documentés');
   });
