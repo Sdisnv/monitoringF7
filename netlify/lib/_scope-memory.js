@@ -1077,6 +1077,37 @@ function createMemoryRepo(){
       }
       return counts;
     },
+    async listEventsByDefinitionVersions(versionIds = []){
+      const wanted = new Set((versionIds || []).filter(Boolean).map(String));
+      const versions = await api.listEventDefinitionVersions({});
+      const byId = new Map((versions || []).map((row) => [String(row.definition_version_id || row.definitionVersionId), row]));
+      const byVersion = {};
+      const add = (versionId, event, metadata = {}) => {
+        if(!versionId || !wanted.has(String(versionId)) || !event) return;
+        if(!byVersion[versionId]) byVersion[versionId] = [];
+        if(byVersion[versionId].some((row) => String(row.evenement_id) === String(event.evenement_id))) return;
+        byVersion[versionId].push(Object.assign({}, decorateEvent(event), { association_metadata: metadata }));
+      };
+      for(const event of evenements.values()){
+        const decorated = decorateEvent(event);
+        add(decorated.definition_version_id, event, {});
+      }
+      for(const [versionId, version] of byId.entries()){
+        if(!wanted.has(versionId)) continue;
+        const deterministicCode = `${version.definitionCode || version.definition_code || ''}-1-${version.version_code || version.versionCode || ''}`;
+        const multisession = [...multisessionsV2.values()].find((row) => String(row.code || '') === deterministicCode);
+        if(!multisession) continue;
+        for(const session of multisessionV2Sessions.values()){
+          if(String(session.multisession_id) !== String(multisession.multisession_id)) continue;
+          const event = evenements.get(session.event_id);
+          if(event && !event.definition_version_id) add(versionId, event, Object.assign({}, session.metadata || {}, { source: 'existing_event' }));
+        }
+      }
+      Object.keys(byVersion).forEach((key) => {
+        byVersion[key].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || Number(a.session_index || 0) - Number(b.session_index || 0));
+      });
+      return byVersion;
+    },
     async getEventDefinitionVersion(id){
       return (await api.listEventDefinitionVersions({})).find((row) => String(row.definition_version_id) === String(id)) || null;
     },

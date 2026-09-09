@@ -86,7 +86,7 @@ function nativeCsv(rows){
     eq(refreshed.linkedEventCount, 1);
     const ui = read('assets/js/scope-ui.js');
     includes(ui, 'Application aux événements');
-    includes(ui, 'Aucun événement n’est actuellement rattaché à cette configuration.');
+    ok(ui.includes('Aucun événement n’est actuellement rattaché à cette configuration.') || ui.includes('Aucun événement n’utilise actuellement cette configuration.'), 'message aucun événement associé présent');
     includes(ui, 'Cette version est déjà utilisée par des événements. Pour préserver l’historique');
     includes(ui, 'Modifier la configuration');
     includes(ui, 'Créer une nouvelle version');

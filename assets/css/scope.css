@@ -4370,7 +4370,7 @@ body.scope-pdf-open { overflow: hidden; }
   border: 1px solid var(--scope-line);
   border-radius: 8px;
   padding: 12px;
-  background: var(--scope-soft);
+  background: var(--scope-gray-50);
 }
 
 .scope-admin-layout {
@@ -4468,13 +4468,39 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-policy-check {
-  margin: 6px 0;
-  align-items: flex-start;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  min-height: 38px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--scope-line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.scope-policy-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--scope-blue);
+}
+
+.scope-policy-check input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: 2px;
+}
+
+.scope-policy-check-copy {
+  min-width: 0;
+  line-height: 1.25;
 }
 
 .scope-policy-check.is-disabled {
   opacity: .55;
+  cursor: not-allowed;
 }
 
 .scope-policy-check small,
@@ -4497,6 +4523,70 @@ body.scope-pdf-open { overflow: hidden; }
   margin: 6px 0 0;
   color: var(--scope-muted);
   font-size: 13px;
+}
+
+.scope-event-config-box,
+.scope-event-config-card {
+  margin-top: 12px;
+}
+
+.scope-event-config-box {
+  padding: 12px;
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  background: var(--scope-soft);
+}
+
+.scope-event-config-box h3 {
+  margin: 0 0 10px;
+}
+
+.scope-event-config-meta {
+  margin-top: 0;
+}
+
+.scope-formation-linked-events {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--scope-line);
+}
+
+.scope-formation-linked-events h3 {
+  margin: 0 0 4px;
+}
+
+.scope-associated-events-list {
+  display: grid;
+  gap: 8px;
+}
+
+.scope-associated-event {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--scope-line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.scope-associated-event time {
+  color: var(--scope-muted);
+  font-size: 13px;
+}
+
+.scope-associated-event small {
+  display: block;
+  margin-top: 3px;
+  color: var(--scope-muted);
+}
+
+@media (max-width: 760px) {
+  .scope-associated-event {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }
 
 .scope-mini-kpi-grid {

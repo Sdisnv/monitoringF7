@@ -175,7 +175,7 @@ function nativeCsv(rows){
   await record('08 — cache-buster REPAIR-2 et protections moteurs', () => {
     const html = read('scope.html');
     const serviceSrc = read('netlify/lib/_scope-service.js');
-    ok(html.includes('scope-configuration-policy-runtime-performance-root-repair-3') || html.includes('scope-configuration-formation-ux-import-performance-repair-2'), 'cache-buster formation repair présent');
+    ok(html.includes('scope-event-configuration-binding-ux-repair-4') || html.includes('scope-configuration-policy-runtime-performance-root-repair-3') || html.includes('scope-configuration-formation-ux-import-performance-repair-2'), 'cache-buster formation repair présent');
     includes(serviceSrc, 'cloturerMultiSessionV2');
     includes(read('netlify/lib/_scope-rules.js'), 'PERMUTATION');
     includes(read('netlify/lib/_scope-multisession-v2.js'), 'MULTI_SESSION_V2');

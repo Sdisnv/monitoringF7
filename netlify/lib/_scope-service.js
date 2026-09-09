@@ -267,22 +267,31 @@ function createScopeService(repo){
     const eventCounts = repo.countEventsByDefinitionVersions
       ? await repo.countEventsByDefinitionVersions(versionIds)
       : {};
+    const eventsByVersion = repo.listEventsByDefinitionVersions
+      ? await repo.listEventsByDefinitionVersions(versionIds)
+      : {};
     const versionsByDefinition = new Map();
     for(const version of definitionVersions || []){
       const id = version.definition_id || version.definitionId;
       const list = versionsByDefinition.get(id) || [];
       const versionId = version.definition_version_id || version.definitionVersionId;
+      const associatedEvents = normalizeAssociatedConfigurationEvents(eventsByVersion[versionId] || [], version);
       list.push(Object.assign({}, version, {
-        linkedEventCount: Number(eventCounts[versionId] || 0),
-        linked_event_count: Number(eventCounts[versionId] || 0)
+        linkedEventCount: Number(eventCounts[versionId] || associatedEvents.length || 0),
+        linked_event_count: Number(eventCounts[versionId] || associatedEvents.length || 0),
+        linkedEvents: associatedEvents,
+        linked_events: associatedEvents
       }));
       versionsByDefinition.set(id, list);
     }
     const enrichedVersions = (definitionVersions || []).map((version) => {
       const versionId = version.definition_version_id || version.definitionVersionId;
+      const associatedEvents = normalizeAssociatedConfigurationEvents(eventsByVersion[versionId] || [], version);
       return Object.assign({}, version, {
-        linkedEventCount: Number(eventCounts[versionId] || 0),
-        linked_event_count: Number(eventCounts[versionId] || 0)
+        linkedEventCount: Number(eventCounts[versionId] || associatedEvents.length || 0),
+        linked_event_count: Number(eventCounts[versionId] || associatedEvents.length || 0),
+        linkedEvents: associatedEvents,
+        linked_events: associatedEvents
       });
     });
     return {
@@ -297,6 +306,119 @@ function createScopeService(repo){
         domaines,
         cibles,
         transition: ['SIMPLE_LEGACY', 'PR_LEGACY', 'GENERIC_SIMPLE', 'GENERIC_MULTI_SESSION']
+      }
+    };
+  }
+
+  function dateOnlyText(value){
+    return value ? String(value).slice(0, 10) : null;
+  }
+
+  function normalizeAssociationOrigin(event, version){
+    const source = String(event && (event.source_type || event.sourceType || event.origine || '') || '').toUpperCase();
+    if(source === 'CSV' || source === 'IMPORT_CSV') return 'Import';
+    const metadata = (event && event.association_metadata) || (event && event.metadata) || {};
+    if(metadata && metadata.source === 'existing_event') return 'Historique existant / migration';
+    if(event && event.exercice_id && (event.definition_version_id || event.exercice_definition_version_id)) return 'Association administrative';
+    if(String(event && event.origine || '').toUpperCase() === 'MANUEL') return 'Création manuelle';
+    if(version && (version.metadata || {}).reconductedFrom) return 'Reconduction / configuration annuelle';
+    return 'Association administrative';
+  }
+
+  function normalizeAssociatedConfigurationEvents(events = [], version = {}){
+    const sessionCount = Number(version.session_count || version.sessionCount || 1);
+    return (events || []).map((event) => ({
+      evenementId: event.evenement_id || event.evenementId,
+      evenement_id: event.evenement_id || event.evenementId,
+      date: dateOnlyText(event.date),
+      libelle: event.libelle || event.label || '',
+      domaine: event.domaine_code || event.domaineCode || event.domain || '',
+      domaineCode: event.domaine_code || event.domaineCode || event.domain || '',
+      statut: event.statut || '',
+      sessionIndex: event.session_index == null ? null : Number(event.session_index),
+      session_index: event.session_index == null ? null : Number(event.session_index),
+      sessionCount,
+      session_count: sessionCount,
+      originLabel: normalizeAssociationOrigin(event, version),
+      origin_label: normalizeAssociationOrigin(event, version)
+    })).sort((a, b) =>
+      String(a.date || '').localeCompare(String(b.date || ''))
+      || Number(a.sessionIndex || 0) - Number(b.sessionIndex || 0)
+      || String(a.libelle || '').localeCompare(String(b.libelle || ''), 'fr', { numeric: true })
+    );
+  }
+
+  async function resolveEventFormationConfiguration(evenement, v2State = null){
+    if(!evenement) return {
+      label: 'Configuration historique SCOPE',
+      isLegacy: true,
+      originLabel: 'Historique existant'
+    };
+    let version = null;
+    let definition = null;
+    const eventVersionId = evenement.definition_version_id || evenement.definitionVersionId || (evenement.exercice && (evenement.exercice.definition_version_id || evenement.exercice.definitionVersionId));
+    if(eventVersionId && repo.getEventDefinitionVersion){
+      version = await repo.getEventDefinitionVersion(eventVersionId);
+    }
+    if(!version && v2State && String(v2State.code || '').toUpperCase() === 'DAP-FORMATION-GROUPEE-1-2026' && repo.listEventDefinitionVersions){
+      const versions = await repo.listEventDefinitionVersions({ domain: 'DAP', active: true });
+      version = (versions || []).find((row) =>
+        String(row.definitionCode || row.definition_code || '').toUpperCase() === 'DAP-FORMATION-GROUPEE'
+        && String(row.version_code || row.versionCode || '') === '2026'
+      ) || null;
+    }
+    if(version && repo.listEventDefinitions){
+      const definitions = await repo.listEventDefinitions({ status: 'ACTIF' });
+      definition = (definitions || []).find((row) => String(row.definition_id || row.definitionId || '') === String(version.definition_id || version.definitionId || '')) || null;
+    }
+    const snapshot = evenement.engine_snapshot
+      || (evenement.exercice && evenement.exercice.configuration_snapshot)
+      || null;
+    const snapDefinition = snapshot && snapshot.definition;
+    const snapVersion = snapshot && snapshot.version;
+    const snapPolicy = snapshot && snapshot.policyVersion;
+    if(!version && !definition && !snapDefinition && !v2State){
+      return {
+        label: 'Configuration historique SCOPE',
+        isLegacy: true,
+        originLabel: evenement.origine === 'IMPORT_CSV' ? 'Import historique' : 'Historique existant'
+      };
+    }
+    const sessionCount = Number(
+      (version && (version.session_count || version.sessionCount))
+      || (snapVersion && snapVersion.sessionCount)
+      || (v2State && v2State.sessionCount)
+      || evenement.nombre_sessions_attendu
+      || 1
+    );
+    const sessionIndex = Number(
+      evenement.session_index
+      || (v2State && v2State.currentSessionIndex)
+      || 0
+    ) || null;
+    const mode = String((version && (version.mode_organisation || version.modeOrganisation)) || (snapVersion && snapVersion.mode) || (sessionCount > 1 ? 'MULTI_SESSION' : 'SIMPLE')).toUpperCase();
+    const originLabel = v2State && !eventVersionId
+      ? 'Historique existant / migration'
+      : normalizeAssociationOrigin(evenement, version || {});
+    return {
+      label: (definition && definition.label) || (snapDefinition && snapDefinition.label) || (v2State && v2State.label) || evenement.libelle,
+      version: (version && (version.version_code || version.versionCode)) || (snapVersion && snapVersion.versionCode) || (v2State && v2State.period) || null,
+      validFrom: (version && (version.valid_from || version.validFrom)) || (snapVersion && snapVersion.validFrom) || null,
+      validTo: (version && (version.valid_to || version.validTo)) || (snapVersion && snapVersion.validTo) || null,
+      domain: (definition && definition.domain) || (version && version.domain) || (snapDefinition && snapDefinition.domain) || evenement.domaine_code,
+      organisation: mode === 'MULTI_SESSION' ? 'Plusieurs sessions' : 'Session unique',
+      modeOrganisation: mode,
+      sessionCount,
+      sessionIndex,
+      policyLabel: [
+        (version && (version.policyCode || version.policy_code)) || (snapPolicy && snapPolicy.policyCode),
+        (version && (version.policyVersionCode || version.policy_version_code)) || (snapPolicy && snapPolicy.versionCode)
+      ].filter(Boolean).join(' · ') || 'Règles de participation SCOPE',
+      originLabel,
+      technical: {
+        definitionVersionId: (version && (version.definition_version_id || version.definitionVersionId)) || eventVersionId || null,
+        policyVersionId: (version && (version.policy_version_id || version.policyVersionId)) || (snapPolicy && snapPolicy.policyVersionId) || null,
+        engineRoute: evenement.engine_route || evenement.engineRoute || null
       }
     };
   }
@@ -2891,6 +3013,12 @@ function createScopeService(repo){
       const resettableAttendus = attendus.filter((a) => a.inclus !== false && !isPermutationCatchupAttendu(a));
       const attenduIds = new Set(resettableAttendus.map((a) => String(a.personne_id)));
       const encadrementRows = participations.filter((p) => ROLES_ENCADREMENT.has(String(p.role || '').toUpperCase()));
+      for(const attendu of resettableAttendus){
+        const existing = participationsByPersonneId.get(String(attendu.personne_id));
+        if(String(existing && existing.statut || '').toUpperCase() === STATUT_PERMUTATION){
+          await removeSourcePermutationObligation(tx, evenement, attendu.personne_id, actor);
+        }
+      }
       for(const attendu of catchupAttendus){
         await releasePermutationCatchupForParticipation(tx, evenement, attendu.personne_id, actor);
         await tx.upsertAttendu({
@@ -3673,6 +3801,7 @@ function createScopeService(repo){
           ? { code: 'A_FINALISER', label: 'À finaliser' }
           : { code: 'EN_COURS', label: 'En cours' }))
       : businessEtatForEvenement(evenement, { participations, attendus: attendusActifs, saisie, today: null });
+    const formationConfiguration = await resolveEventFormationConfiguration(evenement, v2State);
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi },
       exercice: exerciceInfo,
@@ -3701,6 +3830,8 @@ function createScopeService(repo){
       modeSuivi,
       legacy,
       jsp,
+      formationConfiguration,
+      formation_configuration: formationConfiguration,
       populationCoherence: expectedPopulationCoherence(coherenceAttendus, participations),
       participationPolicy: policyPayload(eventPolicy, await participationMotifRows(repo)),
       version: evenement.version

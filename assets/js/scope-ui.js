@@ -184,7 +184,8 @@
       excuseMotifs: [],
       dispenseMotifs: [],
       policyDraftKey: '',
-      editDefinitionVersionId: ''
+      editDefinitionVersionId: '',
+      editOriginalSignature: ''
     },
     formationSelectedVersionId: '',
     clientCache: {},
@@ -206,6 +207,7 @@
     dateForm: '2026-03-12',
     libelleForm: '',
     cibleForm: [],
+    definitionVersionForm: '',
     modeChoice: '',
     sessionModeChoice: 'SINGLE',
     sessionCountChoice: 3,
@@ -5922,6 +5924,53 @@
     const prHint = domaine === 'PR'
       ? '<p class="scope-mode-hint">Général / PAPR = tous les PAPR actifs à la date, y compris PR-ABC. PR-ABC = uniquement les personnes PR-ABC actives. Le ciblage est stocké sur la cible, jamais déduit du libellé.</p>'
       : '';
+    const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
+    const definitions = Array.isArray(catalog.definitions) ? catalog.definitions : [];
+    const eventDate = state.dateForm || `${state.year}-03-12`;
+    const compatibleVersions = [];
+    definitions.forEach((definition) => {
+      if (String(definition.domain || '').toUpperCase() !== String(domaine || '').toUpperCase()) return;
+      (definition.versions || []).forEach((version) => {
+        if (version.active === false || version.actif === false) return;
+        const from = String(version.valid_from || version.validFrom || '');
+        const to = String(version.valid_to || version.validTo || '');
+        if (eventDate && from && eventDate < from) return;
+        if (eventDate && to && eventDate > to) return;
+        compatibleVersions.push({ definition, version });
+      });
+    });
+    if (state.definitionVersionForm && !compatibleVersions.some((item) => String(item.version.definition_version_id || item.version.definitionVersionId || '') === String(state.definitionVersionForm))) {
+      state.definitionVersionForm = '';
+    }
+    if (compatibleVersions.length === 1 && !state.definitionVersionForm) {
+      state.definitionVersionForm = compatibleVersions[0].version.definition_version_id || compatibleVersions[0].version.definitionVersionId || '';
+    }
+    const selectedConfig = compatibleVersions.find((item) => String(item.version.definition_version_id || item.version.definitionVersionId || '') === String(state.definitionVersionForm || '')) || null;
+    if (selectedConfig) {
+      const selectedMode = String(selectedConfig.version.mode_organisation || selectedConfig.version.modeOrganisation || 'SIMPLE').toUpperCase();
+      const selectedSessions = Number(selectedConfig.version.session_count || selectedConfig.version.sessionCount || 1);
+      if (selectedMode === 'MULTI_SESSION') {
+        state.sessionModeChoice = 'MULTI';
+        state.sessionCountChoice = selectedSessions || state.sessionCountChoice || 2;
+        state.consolidationChoice = true;
+      } else {
+        state.sessionModeChoice = 'SINGLE';
+        state.sessionCountChoice = 1;
+      }
+    }
+    const configHelp = !compatibleVersions.length
+      ? 'Aucune configuration de formation compatible n’est définie pour cet événement. L’événement restera sur le fonctionnement SCOPE existant.'
+      : (compatibleVersions.length === 1
+        ? 'Une configuration compatible est proposée automatiquement. L’association reste visible avant création.'
+        : 'Plusieurs configurations sont compatibles : choisissez celle à utiliser pour cet événement.');
+    const configOptions = compatibleVersions.map(({ definition, version }) => {
+      const id = version.definition_version_id || version.definitionVersionId || '';
+      const sessions = Number(version.session_count || version.sessionCount || 1);
+      const mode = String(version.mode_organisation || version.modeOrganisation || 'SIMPLE').toUpperCase() === 'MULTI_SESSION'
+        ? `Plusieurs sessions · ${sessions} sessions`
+        : 'Session unique';
+      return `<option value="${escapeHtml(id)}" ${String(state.definitionVersionForm || '') === String(id) ? 'selected' : ''}>${escapeHtml(`${definition.label || 'Formation'} — Version ${version.version_code || version.versionCode || ''} — ${mode}`)}</option>`;
+    }).join('');
     return `
       <div class="scope-crumb">Événements / Nouvel événement</div>
       <div class="scope-main">
@@ -5940,9 +5989,21 @@
             </div>
           </div>
           <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
+          <section class="scope-event-config-box">
+            <h3>Formation / configuration</h3>
+            <div class="scope-field">
+              <label for="new-definition-version">Configuration de formation</label>
+              <select id="new-definition-version" ${compatibleVersions.length ? '' : 'disabled'}>
+                <option value="">${compatibleVersions.length ? 'Aucune configuration sélectionnée' : 'Aucune configuration compatible'}</option>
+                ${configOptions}
+              </select>
+              <small>${escapeHtml(configHelp)}</small>
+            </div>
+            ${selectedConfig ? `<p class="scope-mode-hint">Association visible : ${escapeHtml(selectedConfig.definition.label || '')} · Version ${escapeHtml(selectedConfig.version.version_code || selectedConfig.version.versionCode || '')}.</p>` : ''}
+          </section>
           <fieldset class="scope-field scope-mode-choice" style="margin-top:12px">
             <legend>Organisation</legend>
-            <label class="scope-radio"><input type="radio" name="new-session-mode" value="SINGLE" ${state.sessionModeChoice !== 'MULTI' ? 'checked' : ''}> Séance unique</label>
+            <label class="scope-radio"><input type="radio" name="new-session-mode" value="SINGLE" ${state.sessionModeChoice !== 'MULTI' ? 'checked' : ''}> Session unique</label>
             <label class="scope-radio"><input type="radio" name="new-session-mode" value="MULTI" ${state.sessionModeChoice === 'MULTI' ? 'checked' : ''}> Plusieurs sessions</label>
             ${state.sessionModeChoice === 'MULTI' ? `
               <div class="scope-field" style="margin-top:8px"><label>Nombre de sessions</label><input id="new-session-count" type="number" min="2" step="1" value="${escapeHtml(String(state.sessionCountChoice || 3))}"></div>
@@ -6069,6 +6130,35 @@
       <span>${escapeHtml(String(cycle.eventCount || 0))} événement${Number(cycle.eventCount || 0) > 1 ? 's' : ''}</span>
       <span>${escapeHtml(progress)}${cancelled ? ` · ${cancelled} annulé${cancelled > 1 ? 's' : ''}` : ''}</span>
     </div>`;
+  }
+
+  function renderEventFormationConfiguration(fiche) {
+    const cfg = fiche && (fiche.formationConfiguration || fiche.formation_configuration);
+    if (!cfg) return '';
+    const isLegacy = cfg.isLegacy === true;
+    const details = isLegacy
+      ? '<p>Configuration historique SCOPE</p>'
+      : `<dl class="scope-meta scope-event-config-meta">
+        <div><dt>Formation</dt><dd>${escapeHtml(cfg.label || '—')}</dd></div>
+        <div><dt>Version</dt><dd>${escapeHtml(cfg.version ? `Version ${cfg.version}` : '—')}</dd></div>
+        <div><dt>Organisation</dt><dd>${escapeHtml(cfg.organisation || '—')}${Number(cfg.sessionCount || 0) > 1 ? ` · ${escapeHtml(String(cfg.sessionCount))} sessions` : ''}</dd></div>
+        ${Number(cfg.sessionIndex || 0) > 0 && Number(cfg.sessionCount || 0) > 1 ? `<div><dt>Session</dt><dd>Session ${escapeHtml(String(cfg.sessionIndex))} sur ${escapeHtml(String(cfg.sessionCount))}</dd></div>` : ''}
+        <div><dt>Règles</dt><dd>${escapeHtml(cfg.policyLabel || 'Règles de participation SCOPE')}</dd></div>
+        <div><dt>Association</dt><dd>${escapeHtml(cfg.originLabel || 'Association administrative')}</dd></div>
+      </dl>`;
+    const tech = cfg.technical || {};
+    const techHtml = !isLegacy && (tech.definitionVersionId || tech.policyVersionId || tech.engineRoute)
+      ? `<details class="scope-technical-details"><summary>Informations techniques</summary>
+        ${tech.definitionVersionId ? `<p>Version de configuration : ${escapeHtml(tech.definitionVersionId)}</p>` : ''}
+        ${tech.policyVersionId ? `<p>Version des règles : ${escapeHtml(tech.policyVersionId)}</p>` : ''}
+        ${tech.engineRoute ? `<p>Route moteur : ${escapeHtml(tech.engineRoute)}</p>` : ''}
+      </details>`
+      : '';
+    return `<section class="scope-card scope-fiche-section scope-event-config-card">
+      <div class="scope-section-header"><h2 class="scope-section-title">Configuration de formation</h2></div>
+      ${details}
+      ${techHtml}
+    </section>`;
   }
 
   function renderFicheIdentity(ev, fiche) {
@@ -6210,6 +6300,7 @@
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
       <div class="scope-main scope-event-fiche">
         ${renderFicheIdentity(ev, fiche)}
+        ${renderEventFormationConfiguration(fiche)}
         ${renderFicheSummary(fiche, ev, mode, previewCount, jeunesCount)}
         ${renderFichePrimaryAction(cta, lifecycleActions)}
         ${qty || !state.preview ? '' : renderPreviewList()}
@@ -6448,6 +6539,7 @@
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
       <div class="scope-main scope-event-saisie">
         ${eventIdentityBand(ev, fiche)}
+        ${renderEventFormationConfiguration(fiche)}
         ${isV2 ? renderMultiSessionV2Summary(fiche) : ''}
         ${renderPresenceKpis(niveaux, fiche)}
         ${lifecycleActions ? `<section class="scope-card scope-fiche-section scope-fiche-primary"><div class="scope-section-header"><h2 class="scope-section-title">Actions événement</h2></div><div class="scope-actions scope-event-toolbar scope-fiche-primary-actions">${lifecycleActions}</div></section>` : ''}
@@ -7153,6 +7245,7 @@
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
+        ${renderEventFormationConfiguration(fiche)}
         ${isMultiSessionV2Fiche(fiche) ? renderMultiSessionV2Summary(fiche) : ''}
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev, fiche)}
@@ -7171,6 +7264,7 @@
       <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
+        ${renderEventFormationConfiguration(fiche)}
         ${isMultiSessionV2Fiche(fiche) ? renderMultiSessionV2Summary(fiche) : ''}
         ${renderRealiseKpis(fiche, rows)}
         ${renderRealiseToolbar(ev, fiche)}
@@ -7960,8 +8054,8 @@
       const disabled = disabledIds.includes(String(id).toUpperCase());
       return `<label class="scope-check scope-policy-check ${disabled ? 'is-disabled' : ''}">
         <input type="checkbox" data-formation-policy="${escapeHtml(type)}:${escapeHtml(id)}" ${selected.includes(id) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-        ${escapeHtml(type === 'status' ? statusLabel(id) : motifLabel(id))}
-        ${disabled && String(id).toUpperCase() === 'PRESENT' ? '<small>Présent est obligatoire pour cette configuration.</small>' : ''}
+        <span class="scope-policy-check-copy"><span>${escapeHtml(type === 'status' ? statusLabel(id) : motifLabel(id))}</span>
+        ${disabled && String(id).toUpperCase() === 'PRESENT' ? '<small>Présent est obligatoire pour cette configuration.</small>' : ''}</span>
       </label>`;
     }).join('');
     const renderVersionSummary = (definition, version, selected) => {
@@ -7973,6 +8067,7 @@
       const mode = version.mode_organisation || version.modeOrganisation || 'SIMPLE';
       const sessions = Number(version.session_count || version.sessionCount || 1);
       const linkedEventCount = Number(version.linkedEventCount || version.linked_event_count || 0);
+      const linkedEvents = version.linkedEvents || version.linked_events || [];
       const versionId = version.definition_version_id || version.definitionVersionId || '';
       const editable = linkedEventCount === 0;
       const applicationText = mode === 'MULTI_SESSION'
@@ -7980,7 +8075,20 @@
         : `Cette configuration s’applique aux événements rattachés à « ${definition.label || 'ce modèle'} », dont la date est comprise entre ${L.formatDate(version.valid_from || version.validFrom)} et ${L.formatDate(version.valid_to || version.validTo)}.`;
       const usageText = linkedEventCount > 0
         ? `Événements associés : ${linkedEventCount}. Cette version est déjà utilisée par des événements. Pour préserver l’historique, créez une nouvelle version.`
-        : 'Aucun événement n’est actuellement rattaché à cette configuration. Le rattachement pourra être réalisé lors de l’import ou depuis l’administration des événements.';
+        : 'Aucun événement n’utilise actuellement cette configuration. Les événements peuvent être associés lors de leur création ou lors d’un import validé.';
+      const linkedEventsHtml = linkedEvents.length
+        ? `<div class="scope-associated-events-list">${linkedEvents.map((event) => {
+          const sessionText = Number(event.sessionIndex || event.session_index || 0) > 0 && Number(event.sessionCount || event.session_count || sessions || 0) > 1
+            ? `<small>Session ${escapeHtml(String(event.sessionIndex || event.session_index))} sur ${escapeHtml(String(event.sessionCount || event.session_count || sessions))}</small>`
+            : '';
+          return `<article class="scope-associated-event">
+            <time>${escapeHtml(L.formatDate(event.date))}</time>
+            <div><strong>${escapeHtml(event.libelle || '')}</strong>${sessionText}<small>Association : ${escapeHtml(event.originLabel || event.origin_label || 'Association administrative')}</small></div>
+            <span>${escapeHtml(domaineLabel(event.domaine || event.domaineCode || definition.domain || ''))}</span>
+            <span>${escapeHtml(L.statutLabel ? L.statutLabel(event.statut || 'PLANIFIE') : (event.statut || '—'))}</span>
+          </article>`;
+        }).join('')}</div>`
+        : '<p class="scope-empty">Aucun événement n’utilise actuellement cette configuration.</p><p class="scope-muted">Les événements peuvent être associés lors de leur création ou lors d’un import validé.</p>';
       return `<article class="scope-formation-version ${selected ? 'is-selected' : ''}">
         <div>
           <strong>${escapeHtml(version.version_code || version.versionCode || 'Version')}</strong>
@@ -7992,11 +8100,12 @@
       ${selected ? `<div class="scope-formation-detail">
         <div class="scope-formation-detail-grid">
           <section><h3>Identité</h3><dl><dt>Domaine</dt><dd>${escapeHtml(definition.domain || '')}</dd><dt>Nom de la formation</dt><dd>${escapeHtml(definition.label || '')}</dd><dt>Version</dt><dd>${escapeHtml(version.version_code || version.versionCode || '')}</dd><dt>Validité</dt><dd>${escapeHtml(L.formatDate(version.valid_from || version.validFrom))} → ${escapeHtml(L.formatDate(version.valid_to || version.validTo))}</dd><dt>État</dt><dd>${definition.status === 'INACTIF' ? 'Inactif' : 'Actif'}</dd></dl></section>
-          <section><h3>Organisation</h3><p>${mode === 'MULTI_SESSION' ? `Multi-session · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p><p class="scope-muted">${mode === 'MULTI_SESSION' ? 'Une personne satisfait son obligation lorsqu’elle participe valablement à une des sessions.' : 'Une seule session porte l’exercice.'}</p></section>
+          <section><h3>Organisation</h3><p>${mode === 'MULTI_SESSION' ? `Plusieurs sessions · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p><p class="scope-muted">${mode === 'MULTI_SESSION' ? 'Une personne satisfait son obligation lorsqu’elle participe valablement à une des sessions.' : 'Une seule session porte l’exercice.'}</p></section>
           <section><h3>Participation</h3><p><strong>Statuts disponibles</strong><br>${escapeHtml(statuses)}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml(excuses)}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml(dispenses)}</p><p><strong>Permutation</strong><br>${(config.activeStatuses || []).includes('PERMUTATION') ? 'Disponible selon règles DAP simple' : 'Non disponible pour cette configuration'}</p></section>
           <section><h3>Application aux événements</h3><p>${escapeHtml(applicationText)}</p><p class="scope-muted">${escapeHtml(usageText)}</p></section>
           <section><h3>Historique / version</h3><p>${escapeHtml(versionLabel(version).replace(/<[^>]+>/g, ''))}</p>${editable ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-edit-formation-version="${escapeHtml(versionId)}">Modifier la configuration</button>` : `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Créer une nouvelle version</button>`}<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Reconduire l’année suivante</button></section>
         </div>
+        <section class="scope-formation-linked-events"><h3>Événements utilisant cette configuration</h3><p class="scope-muted">${escapeHtml(String(linkedEventCount))} événement${linkedEventCount > 1 ? 's' : ''}</p>${linkedEventsHtml}</section>
         <details class="scope-technical-details"><summary>Informations techniques</summary><p>Définition : ${escapeHtml(definition.code || '')}</p><p>Policy : ${escapeHtml(policy.policy_code || policy.policyCode || '—')} · ${escapeHtml(policy.version_code || policy.versionCode || '—')}</p><p>Route moteur : ${mode === 'MULTI_SESSION' ? 'Multi-session générique' : 'Session unique générique'}</p></details>
       </div>` : ''}`;
     };
@@ -8010,7 +8119,7 @@
       const detail = versions.map((version) => renderVersionSummary(definition, version, String(version.definition_version_id || version.definitionVersionId || '') === String(state.formationSelectedVersionId || ''))).join('');
       return `<article class="scope-formation-model ${selected ? 'is-open' : ''}">
         <header>
-          <div><strong>${escapeHtml(definition.label || '')}</strong><p>${escapeHtml(definition.domain || '')} · ${mode === 'MULTI_SESSION' ? `Multi-session · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p></div>
+          <div><strong>${escapeHtml(definition.label || '')}</strong><p>${escapeHtml(definition.domain || '')} · ${mode === 'MULTI_SESSION' ? `Plusieurs sessions · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p></div>
           <div class="scope-formation-actions">
             <span class="scope-import-pill ${definition.status === 'INACTIF' ? 'warn' : 'ok'}">${definition.status === 'INACTIF' ? 'Inactif' : 'Actif'}</span>
             ${latest.definition_version_id || latest.definitionVersionId ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-formation-open="${escapeHtml(latest.definition_version_id || latest.definitionVersionId || '')}">${selected ? 'Masquer' : 'Consulter'}</button>` : ''}
@@ -8057,7 +8166,8 @@
               </div>
             </div>
             <div class="scope-actions">
-              <button type="button" class="scope-btn scope-btn-primary" id="formation-create">${form.editDefinitionVersionId ? 'Enregistrer la configuration' : 'Créer le modèle'}</button>
+              <button type="button" class="scope-btn scope-btn-primary" id="formation-create">${form.editDefinitionVersionId ? 'Enregistrer les modifications' : 'Créer le modèle'}</button>
+              ${form.editDefinitionVersionId ? '<button type="button" class="scope-btn scope-btn-secondary" id="formation-cancel-edit">Annuler</button>' : ''}
             </div>
           </div>
           <div class="scope-card" style="margin-top:12px">
@@ -8949,11 +9059,13 @@
     document.getElementById('new-domaine')?.addEventListener('change', (e) => {
       state.domaineForm = e.target.value;
       state.cibleForm = [];
+      state.definitionVersionForm = '';
       state.modeTouched = false;
       withLoading(async () => { await refreshModeSuggestion(); });
     });
     document.getElementById('new-date')?.addEventListener('change', (e) => {
       state.dateForm = e.target.value;
+      state.definitionVersionForm = '';
       state.modeTouched = false;
       withLoading(async () => { await refreshModeSuggestion(); });
     });
@@ -8985,6 +9097,21 @@
     document.getElementById('new-consolidation')?.addEventListener('change', (e) => {
       state.consolidationChoice = Boolean(e.target.checked);
     });
+    document.getElementById('new-definition-version')?.addEventListener('change', (e) => {
+      state.definitionVersionForm = e.target.value;
+      const catalog = state.formationCatalog || {};
+      for (const definition of (catalog.definitions || [])) {
+        for (const version of (definition.versions || [])) {
+          if (String(version.definition_version_id || version.definitionVersionId || '') !== String(state.definitionVersionForm || '')) continue;
+          const mode = String(version.mode_organisation || version.modeOrganisation || 'SIMPLE').toUpperCase();
+          const sessions = Number(version.session_count || version.sessionCount || 1);
+          state.sessionModeChoice = mode === 'MULTI_SESSION' ? 'MULTI' : 'SINGLE';
+          state.sessionCountChoice = mode === 'MULTI_SESSION' ? sessions : 1;
+          state.consolidationChoice = mode === 'MULTI_SESSION' ? true : state.consolidationChoice;
+        }
+      }
+      render();
+    });
     document.getElementById('new-save')?.addEventListener('click', () => {
       const date = document.getElementById('new-date').value;
       const domaineCode = document.getElementById('new-domaine').value;
@@ -9012,13 +9139,15 @@
           modeSession,
           nombreSessionsAttendu,
           consolidationActive: state.consolidationChoice !== false,
-          sessionIndex: 1
+          sessionIndex: 1,
+          definitionVersionId: state.definitionVersionForm || null
         });
         invalidateCache(['list', 'dashboard', 'vigilance', 'cycles']);
         state.modeTouched = false;
         state.modeChoice = '';
         state.cibleForm = [];
         state.libelleForm = '';
+        state.definitionVersionForm = '';
         state.sessionModeChoice = 'SINGLE';
         state.sessionCountChoice = 3;
         state.consolidationChoice = true;
@@ -9944,6 +10073,40 @@
         <p>Organisation : ${isMulti ? `Plusieurs sessions · ${escapeHtml(String(form.sessionCount || 2))} sessions` : 'Session unique'}</p>
       `;
     };
+    const resetFormationDefinitionForm = () => {
+      const nextYear = String(new Date().getFullYear() + 1);
+      state.formationDefinitionForm = {
+        domain: 'JSP',
+        label: '',
+        description: '',
+        modeOrganisation: 'SIMPLE',
+        sessionCount: '1',
+        policyVersionId: '',
+        year: nextYear,
+        validFrom: `${nextYear}-01-01`,
+        validTo: `${nextYear}-12-31`,
+        activeStatuses: [],
+        excuseMotifs: [],
+        dispenseMotifs: [],
+        policyDraftKey: '',
+        editDefinitionVersionId: '',
+        editOriginalSignature: ''
+      };
+    };
+    const formationFormSignature = (source) => JSON.stringify({
+      domain: source.domain || '',
+      label: source.label || '',
+      description: source.description || '',
+      modeOrganisation: source.modeOrganisation || 'SIMPLE',
+      sessionCount: String(source.sessionCount || '1'),
+      policyVersionId: source.policyVersionId || '',
+      year: String(source.year || ''),
+      validFrom: source.validFrom || '',
+      validTo: source.validTo || '',
+      activeStatuses: (source.activeStatuses || []).slice().sort(),
+      excuseMotifs: (source.excuseMotifs || []).slice().sort(),
+      dispenseMotifs: (source.dispenseMotifs || []).slice().sort()
+    });
     const bindFormationField = (id, key) => {
       document.getElementById(id)?.addEventListener('input', (e) => {
         state.formationDefinitionForm[key] = e.target.value;
@@ -10012,7 +10175,7 @@
         const policies = Array.isArray(catalog.policyVersions) ? catalog.policyVersions : [];
         const policy = policies.find((row) => String(row.policy_version_id || row.policyVersionId || '') === String(found.version.policy_version_id || found.version.policyVersionId || '')) || {};
         const config = policy.config || {};
-        state.formationDefinitionForm = Object.assign({}, state.formationDefinitionForm, {
+        const nextForm = Object.assign({}, state.formationDefinitionForm, {
           domain: found.definition.domain || 'DPS',
           label: found.definition.label || '',
           description: found.definition.description || '',
@@ -10028,6 +10191,8 @@
           policyDraftKey: 'manual-edit',
           editDefinitionVersionId: id
         });
+        nextForm.editOriginalSignature = formationFormSignature(nextForm);
+        state.formationDefinitionForm = nextForm;
         render();
       });
     });
@@ -10057,8 +10222,19 @@
         });
         invalidateCache(['referentiels', 'formationCatalog']);
         await loadFormationCatalog();
+        resetFormationDefinitionForm();
         toast('success', 'Modèle créé', 'La configuration formation a été enregistrée.');
       });
+    });
+    document.getElementById('formation-cancel-edit')?.addEventListener('click', () => {
+      const form = state.formationDefinitionForm || {};
+      const changed = form.editOriginalSignature && form.editOriginalSignature !== formationFormSignature(form);
+      const abandon = !changed || typeof window === 'undefined' || !window.confirm
+        ? true
+        : window.confirm('Abandonner les modifications ?');
+      if (!abandon) return;
+      resetFormationDefinitionForm();
+      render();
     });
     root.querySelectorAll('[data-reconduct-definition-version]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -10618,6 +10794,8 @@
       }, async () => {
         await client.resetParticipations(id, state.fiche.evenement.version);
         invalidateCache(['list', 'dashboard', 'vigilance']);
+        state.permutationObligations = [];
+        state.permutationPanelOpen = false;
         await loadFiche(id);
       });
     }
@@ -11183,7 +11361,7 @@
       if (!state.referentiels.domaines.length) await loadReferentiels();
       const jobs = [];
       if (r.screen === 'objectifs') jobs.push(loadObjectifs());
-      if (r.screen === 'formation-catalog') jobs.push(loadFormationCatalog());
+      if (r.screen === 'formation-catalog' || r.screen === 'nouveau') jobs.push(loadFormationCatalog());
       if (r.screen === 'participation-admin') jobs.push(loadParticipationAdmin());
       if (r.screen === 'utilisateurs') jobs.push(loadAdminUsers());
       if (r.screen === 'import-evenements' && state.personCount == null) jobs.push(loadPersonCount());

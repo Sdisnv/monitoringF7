@@ -1654,6 +1654,52 @@ function createPgRepo(client){
       );
       return Object.fromEntries((result.rows || []).map((row) => [row.definition_version_id, Number(row.count || 0)]));
     },
+    async listEventsByDefinitionVersions(versionIds = []){
+      const ids = (versionIds || []).filter(Boolean);
+      if(!ids.length) return {};
+      const result = await q(
+        `with wanted as (
+           select v.definition_version_id, v.version_code, d.code as definition_code
+           from scope_event_definition_versions v
+           join scope_event_definitions d on d.definition_id = v.definition_id
+           where v.definition_version_id = any($1::uuid[])
+         ),
+         explicit_events as (
+           select w.definition_version_id as binding_definition_version_id, e.*, coalesce(e.session_index, s.sequence) as resolved_session_index,
+                  coalesce(s.metadata, '{}'::jsonb) as association_metadata
+           from wanted w
+           join scope_evenements e on e.definition_version_id = w.definition_version_id
+           left join scope_multisession_v2_sessions s on s.event_id = e.evenement_id
+           union
+           select w.definition_version_id as binding_definition_version_id, e.*, coalesce(e.session_index, s.sequence) as resolved_session_index,
+                  coalesce(s.metadata, '{}'::jsonb) as association_metadata
+           from wanted w
+           join scope_exercices x on x.definition_version_id = w.definition_version_id
+           join scope_evenements e on e.exercice_id = x.exercice_id
+           left join scope_multisession_v2_sessions s on s.event_id = e.evenement_id
+           where e.definition_version_id is null
+           union
+           select w.definition_version_id as binding_definition_version_id, e.*, coalesce(e.session_index, s.sequence) as resolved_session_index,
+                  coalesce(s.metadata, '{}'::jsonb) || jsonb_build_object('source','existing_event') as association_metadata
+           from wanted w
+           join scope_multisessions_v2 ms on ms.code = concat(w.definition_code, '-1-', w.version_code)
+           join scope_multisession_v2_sessions s on s.multisession_id = ms.multisession_id
+           join scope_evenements e on e.evenement_id = s.event_id
+           where e.definition_version_id is null
+         )
+         select * from explicit_events order by date, resolved_session_index nulls last, libelle`,
+        [ids]
+      );
+      const byVersion = {};
+      for(const row of result.rows || []){
+        const key = row.binding_definition_version_id;
+        if(!byVersion[key]) byVersion[key] = [];
+        byVersion[key].push(Object.assign(mapEvent({ ...row, session_index: row.resolved_session_index }), {
+          association_metadata: row.association_metadata || {}
+        }));
+      }
+      return byVersion;
+    },
     async getEventDefinitionVersion(id){
       if(!(await tableExists('scope_event_definition_versions'))) return null;
       const result = await q(
