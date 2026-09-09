@@ -346,7 +346,7 @@ function multiSessionV2Graphs(state, nominatif){
   return {
     sessions: {
       type: 'bar',
-      question: 'Participation acquise par session',
+      question: 'Répartition des participations acquises par session',
       series: [{ id: 'sessions', points: sessionPoints }]
     },
     repartition: {
@@ -442,7 +442,12 @@ function multiSessionV2ReportModel(fiche, query, includeNominatif){
       excuses: includeNominatif ? excuses : [],
       absents: includeNominatif ? absents : []
     },
-    tauxExplanation: `Taux de participation = personnes ayant satisfait l’obligation ÷ population cible comptabilisable × 100. Population cible comptabilisable = population cible − personnes dispensées. Calcul courant : ${stats.numerator || 0} ÷ (${stats.population || 0} − ${stats.dispenses || 0}) × 100 = ${stats.percentage == null ? 'non évaluable' : `${String(stats.percentage).replace('.', ',')} %`}.`,
+    tauxExplanation: [
+      'Le taux de participation mesure la proportion du personnel soumis à l’obligation de formation ayant effectivement participé à au moins une des sessions proposées. Les personnes dispensées ne sont pas soumises à cette obligation et sont donc retirées de la population prise en compte pour le calcul. Une personne ayant participé à plusieurs sessions n’est comptabilisée qu’une seule fois.',
+      'Les personnes excusées ou absentes restent comprises dans la population comptabilisable puisqu’elles étaient soumises à l’obligation de formation. Elles n’augmentent toutefois pas le nombre de participations réalisées.',
+      `Population cible : ${stats.population || 0} personne(s). Dispensés : ${stats.dispenses || 0} personne(s). Population comptabilisable : ${stats.denominator || 0} personne(s). Participation acquise : ${stats.numerator || 0} personne(s).`,
+      `Taux de participation : ${stats.numerator || 0} ÷ ${stats.denominator || 0} × 100 = ${stats.percentage == null ? 'non évaluable' : `${String(stats.percentage).replace('.', ',')} %`}.`
+    ].join('\n'),
     quantitative: false,
     isLegacy: false,
     signatureRole: 'RESPONSABLE FORMATION',

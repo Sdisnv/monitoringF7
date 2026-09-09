@@ -2583,6 +2583,26 @@ function createScopeService(repo){
       const policySnapshot = evenement.participation_policy_snapshot || (await capturePolicySnapshot(tx, evenement.domaine_code));
       const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
       if(v2State) await ensureMultiSessionV2EventRows(tx, v2State, evenement, actor);
+      const missingExcuseReasons = [];
+      for(const item of items){
+        if(String(item && item.statut || '').toUpperCase() !== 'ABSENT_EXCUSE') continue;
+        const motif = item.motif_absence || item.motifAbsence || null;
+        if(motif) continue;
+        const personneId = item.personneId || item.personne_id;
+        const personne = tx.getPersonne ? await tx.getPersonne(personneId) : null;
+        missingExcuseReasons.push({
+          personId: personneId,
+          personneId,
+          nip: personne && personne.nip,
+          grade: personne && personne.grade,
+          nom: personne && personne.nom,
+          prenom: personne && personne.prenom,
+          errorCode: 'motif_obligatoire'
+        });
+      }
+      if(missingExcuseReasons.length){
+        throw new HttpError(422, 'motif_obligatoire', `Un motif d’excuse doit être renseigné pour ${missingExcuseReasons.length} personne(s).`, { missingExcuseReasons });
+      }
       let savedCount = 0;
       let skippedEncadrement = 0;
       for(const item of items){

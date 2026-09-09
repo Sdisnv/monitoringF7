@@ -310,6 +310,21 @@
   };
   window.ScopeFeedback = ScopeFeedback;
 
+  function personErrorLine(row) {
+    if (!row) return '';
+    const identity = [row.grade, row.prenom, row.nom].filter(Boolean).join(' ');
+    const nip = row.nip ? `NIP ${row.nip}` : '';
+    const reason = row.reason || row.errorCode || row.error || '';
+    return [identity || row.personId || row.personneId || '', nip, reason].filter(Boolean).join(' — ');
+  }
+
+  function nominativeErrorDetails(error) {
+    const details = (error && error.details) || {};
+    const people = details.people || details.personnes || details.unfilledPeople || details.pendingPeople || details.missingExcuseReasons || details.invalidStatuses || [];
+    if (!Array.isArray(people) || !people.length) return [];
+    return people.map(personErrorLine).filter(Boolean).map((message) => ({ message }));
+  }
+
   function presentFriendlyError(info) {
     if (info && info.okta) {
       return Object.assign({}, info, {
@@ -346,7 +361,8 @@
     } catch (error) {
       state.loading = false;
       const info = friendlyActionError(error);
-      ScopeFeedback.error(info.title, info.message, { errors: info.errors, conflict: info.conflict, okta: info.okta });
+      const nominativeErrors = nominativeErrorDetails(error);
+      ScopeFeedback.error(info.title, info.message, { errors: nominativeErrors.length ? nominativeErrors : info.errors, conflict: info.conflict, okta: info.okta });
       return null;
     }
   }
@@ -2893,7 +2909,7 @@
         ? (v2Status === 'CLOTURE'
           ? { label: 'Voir le rapport', html: `<button type="button" class="scope-btn scope-events-list-action" data-report-event="${escapeHtml(ev.evenement_id)}">Voir le rapport</button>` }
           : (v2Status === 'A_FINALISER'
-            ? { label: 'Finaliser', html: `<a class="scope-btn scope-events-list-action" href="#/exercices/${escapeHtml(ev.evenement_id)}">Finaliser</a>` }
+            ? { label: 'Finaliser', html: `<button type="button" class="scope-btn scope-btn-primary scope-events-list-action" data-finalize-multisession="${escapeHtml(v2.multisessionId || '')}" data-finalize-event="${escapeHtml(ev.evenement_id)}">Finaliser</button>` }
             : {
               label: v2SessionClosed ? 'Ouvrir' : action,
               html: `<a class="scope-btn scope-events-list-action" href="${v2SessionClosed ? `#/exercices/${escapeHtml(ev.evenement_id)}` : href}">${escapeHtml(v2SessionClosed ? 'Ouvrir' : action)}</a>`
@@ -6947,7 +6963,8 @@
       <a class="scope-btn" href="#/exercices">Retour aux événements</a>
       <button type="button" class="scope-btn" id="reopen">Réouvrir</button>
       ${isV2 && globalStatus !== 'CLOTURE' ? `<button type="button" class="scope-btn scope-btn-primary" id="cloturer-multisession">Clôturer le Multi-session</button>` : ''}
-      <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}"${isV2 && globalStatus !== 'CLOTURE' ? ` disabled aria-disabled="true" title="Disponible après clôture du Multi-session"` : ''}>${escapeHtml(reportLabel)}</button>
+      ${isV2 ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}">Rapport de la session</button>` : ''}
+      <button type="button" class="scope-btn" data-report-event="${escapeHtml(ev.evenement_id)}"${isV2 && globalStatus !== 'CLOTURE' ? ` disabled aria-disabled="true" title="Disponible après clôture du Multi-session"` : ''}>${escapeHtml(isV2 ? 'Rapport Multi-session' : reportLabel)}</button>
       ${multi && !isV2 ? `<button type="button" class="scope-btn" data-report-session="${escapeHtml(ev.evenement_id)}" ${sessionReportAvailable ? '' : `disabled aria-disabled="true" title="${escapeHtml(sessionReportTooltip)}"`}>Rapport détaillé</button>` : ''}
     </div>`;
   }
@@ -9236,6 +9253,9 @@
     root.querySelectorAll('[data-report-session]').forEach((btn) => {
       btn.addEventListener('click', () => generateSessionReport(btn.getAttribute('data-report-session')));
     });
+    root.querySelectorAll('[data-finalize-multisession]').forEach((btn) => {
+      btn.addEventListener('click', () => finalizeMultiSessionFromList(btn.getAttribute('data-finalize-multisession'), btn.getAttribute('data-finalize-event')));
+    });
   }
 
   function bindPersonnelSync() {
@@ -10081,7 +10101,11 @@
 
   function openReport(body) {
     if (typeof client.generateReport !== 'function') return;
-    withLoading(async () => {
+    withFeedbackAction({
+      progressTitle: 'Génération du rapport…',
+      successTitle: '',
+      successMessage: ''
+    }, async () => {
       const result = await client.generateReport(Object.assign({}, body, qualQuery()));
       if (window.ScopePdfViewer) window.ScopePdfViewer.open(result);
       else toast('success', 'Rapport généré', result.filename);
@@ -10287,10 +10311,15 @@
       state.presenceCloseBusy = null;
       if (!saved.ok) {
         const info = saved.error ? L.friendlyError(saved.error) : {};
+        const nominativeErrors = nominativeErrorDetails(saved.error);
         if (info.conflict || saved.conflict) {
           ScopeFeedback.error(info.title || 'Séance modifiée ailleurs', info.message || 'Cette séance a été modifiée ailleurs. Rechargez les données avant de poursuivre.', { conflict: true });
         } else {
-          ScopeFeedback.error('Saisie non enregistrée', L.PRESENCE_SAVE_FAILED_CLOSE_MESSAGE || 'La saisie n’a pas pu être enregistrée. L’événement n’a pas été clôturé.');
+          ScopeFeedback.error(
+            info.title || 'Saisie non enregistrée',
+            info.message || L.PRESENCE_SAVE_FAILED_CLOSE_MESSAGE || 'La saisie n’a pas pu être enregistrée. L’événement n’a pas été clôturé.',
+            { errors: nominativeErrors.length ? nominativeErrors : info.errors }
+          );
         }
         render();
         return;
@@ -10316,7 +10345,10 @@
     }
     if (!result.ok) {
       state.modal = null;
-      ScopeFeedback.error('Saisie non enregistrée', result.message || 'La saisie n’a pas pu être enregistrée.');
+      const nominativeErrors = nominativeErrorDetails(result.error);
+      ScopeFeedback.error('Saisie non enregistrée', result.message || 'La saisie n’a pas pu être enregistrée.', {
+        errors: nominativeErrors.length ? nominativeErrors : null
+      });
       render();
       return;
     }
@@ -10375,6 +10407,29 @@
       } finally {
         state.presenceCloseBusy = null;
       }
+    });
+  }
+
+  function finalizeMultiSessionFromList(multisessionId, eventId) {
+    if (!multisessionId || !client.cloturerMultiSessionV2) return;
+    ScopeFeedback.confirm({
+      title: 'Finaliser le Multi-session ?',
+      message: 'Cette action clôturera définitivement l’exercice Multi-session et générera son rapport consolidé.',
+      confirmText: 'Finaliser',
+      cancelText: 'Annuler'
+    }, () => {
+      withFeedbackAction({
+        progressTitle: 'Finalisation du Multi-session…',
+        successTitle: 'Multi-session clôturé',
+        successMessage: 'La consolidation finale du Multi-session est terminée.'
+      }, async () => {
+        await client.cloturerMultiSessionV2(multisessionId, null);
+        await loadList();
+        if (eventId && state.fiche && String(state.fiche.evenement && state.fiche.evenement.evenement_id) === String(eventId)) {
+          await loadFiche(eventId);
+        }
+        render();
+      });
     });
   }
 

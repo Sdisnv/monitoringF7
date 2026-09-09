@@ -887,18 +887,22 @@ class ScopePdfRenderer {
 
     this.iconHeading('plain', 'Lecture des statuts', TYPE.section, { spaceBefore: 8, after: TYPE.notesGap });
     [
-      ['Présent', 'La personne a satisfait son obligation de participation en participant à au moins une session du Multi-session.'],
-      ['Excusé', 'La personne n’a participé à aucune session mais dispose d’une excuse reconnue avec motif.'],
-      ['Absent', 'La personne n’a participé à aucune session et ne dispose pas d’une excuse ou dispense reconnue.'],
-      ['Dispensé', 'La personne est exclue de l’obligation de participation pour cet exercice et n’entre pas dans le dénominateur du taux de participation.']
+      ['Présent', 'La personne a participé à au moins une session et a satisfait son obligation de formation.'],
+      ['Excusé', 'La personne n’a participé à aucune session mais bénéficie d’une excuse reconnue et renseignée.'],
+      ['Absent', 'La personne n’a participé à aucune session et ne dispose ni d’une excuse ni d’une dispense reconnue.'],
+      ['Dispensé', 'La personne est dispensée de cet exercice et est exclue du calcul de la population comptabilisable.']
     ].forEach(([title, text]) => {
+      this.ensure(26);
       this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8.5)
-        .text(title, MARGIN, this.doc.y, { width: 80, continued: true });
-      this.doc.font('Helvetica').text(`  ${text}`, { width: innerW - 80 });
+        .text(title, MARGIN, this.doc.y, { width: innerW });
+      this.doc.font('Helvetica').fontSize(8.5).text(text, MARGIN, this.doc.y, { width: innerW });
+      this.doc.moveDown(0.25);
     });
     this.doc.moveDown(0.4);
     this.iconHeading('plain', 'Calcul du taux', TYPE.section, { spaceBefore: 4, after: TYPE.notesGap });
-    this.para(m.tauxExplanation || '', { size: TYPE.body });
+    String(m.tauxExplanation || '').split('\n').filter(Boolean).forEach((line) => {
+      this.para(line, { size: line.startsWith('Taux de participation :') ? 10 : 8.8 });
+    });
 
     const exceptions = m.exceptions || {};
     this.iconHeading('people', 'Personnel excusé', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
@@ -907,7 +911,7 @@ class ScopePdfRenderer {
         ['Grade', 'Nom', 'Prénom', 'Motif'],
         exceptions.excuses.map((row) => [row.grade || '', row.nom || '', row.prenom || '', row.motifLabel || '']),
         [46, 120, 100, 193],
-        { rowH: 14, wrap: [false, false, false, true], highlightRows: exceptions.excuses.map(() => true), highlightColor: '#fdecef' }
+        { rowH: 14, wrap: [false, false, false, true] }
       );
     } else this.para('Aucune personne excusée.');
     this.iconHeading('people', 'Personnel absent', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
@@ -916,13 +920,13 @@ class ScopePdfRenderer {
         ['Grade', 'Nom', 'Prénom'],
         exceptions.absents.map((row) => [row.grade || '', row.nom || '', row.prenom || '']),
         [46, 150, 130],
-        { rowH: 14, highlightRows: exceptions.absents.map(() => true), highlightColor: '#e8eaed' }
+        { rowH: 14 }
       );
     } else this.para('Aucune personne absente.');
 
     if(m.nominatif && m.nominatif.length){
       this.nextPage();
-      this.iconHeading('people', 'Liste nominative consolidée', TYPE.section, { after: TYPE.sectionGap });
+      this.iconHeading('people', 'Liste nominative consolidée du personnel', TYPE.section, { after: TYPE.sectionGap });
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif'],
         m.nominatif.map((r) => [

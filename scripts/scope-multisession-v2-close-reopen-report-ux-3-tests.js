@@ -221,7 +221,8 @@ async function listItem(service, eventId){
     ok(report.graphs.sessions && report.graphs.repartition && report.graphs.motifs, '2–3 graphiques alimentés');
     eq(report.exceptions.excuses.length, 1);
     eq(report.exceptions.absents.length, 1);
-    ok(String(report.tauxExplanation || '').includes('Population cible comptabilisable'), 'formule du taux exposée');
+    ok(String(report.tauxExplanation || '').includes('Le taux de participation mesure la proportion du personnel soumis à l’obligation de formation'), 'explication du taux exposée');
+    ok(String(report.tauxExplanation || '').includes('Population comptabilisable'), 'calcul détaillé exposé');
     const pdf = await generateReport(ctx.repo, { kind: 'EVENT', evenementId: ctx.s2.eventId, nominatif: true }, ACTOR, { generatedAt: '2026-09-09T08:00:00.000Z' });
     ok(pdf.buffer && pdf.buffer.length > 1000, 'PDF Multi-session rendu');
     ok(Number(pdf.pages || 0) >= 2, 'PDF détaillé multipage');
