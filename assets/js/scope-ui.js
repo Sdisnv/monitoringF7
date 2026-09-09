@@ -9122,11 +9122,15 @@
     document.getElementById('cancel-ok')?.addEventListener('click', () => {
       const motif = document.getElementById('cancel-motif').value;
       if (!String(motif || '').trim()) {
-        toast('error', 'Motif obligatoire', 'Indiquez le motif de l’annulation.');
+        ScopeFeedback.error('Motif obligatoire', 'Indiquez le motif de l’annulation.');
         return;
       }
       const id = route().id;
-      withLoading(async () => {
+      withFeedbackAction({
+        progressTitle: 'Annulation…',
+        successTitle: 'Événement annulé',
+        successMessage: 'L’événement a été annulé.'
+      }, async () => {
         await client.annuler(id, motif, state.fiche.evenement.version);
         state.modal = null;
         await loadFiche(id);
@@ -9134,8 +9138,16 @@
     });
     document.getElementById('reopen-ok')?.addEventListener('click', () => {
       const motif = document.getElementById('reopen-motif').value;
+      if (!String(motif || '').trim()) {
+        ScopeFeedback.error('Motif obligatoire', 'Indiquez le motif de la réouverture.');
+        return;
+      }
       const id = route().id;
-      withLoading(async () => {
+      withFeedbackAction({
+        progressTitle: 'Réouverture…',
+        successTitle: 'Événement réouvert',
+        successMessage: 'La saisie est à nouveau possible.'
+      }, async () => {
         await client.reouvrir(id, motif, state.fiche.evenement.version);
         state.modal = null;
         await loadFiche(id);

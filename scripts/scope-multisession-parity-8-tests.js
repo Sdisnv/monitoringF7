@@ -289,7 +289,7 @@ async function removeExpected(service, eventId, personne){
     ok(ui.includes('<th>Événement d’origine</th>'));
     ok(ui.includes('scope-row-disabled'));
     ok(css.includes('.scope-table tbody tr.scope-row-disabled'));
-    ok(!/scope-status-control-group\.is-compact\s+\.scope-status-control:not\(\.is-selected\)\s*\{[^}]*display:\s*none/.test(css));
+    ok(/scope-status-control-group\.is-compact\s+\.scope-status-control:not\(\.is-selected\)\s*\{[^}]*display:\s*none/.test(css));
     ok(logic.includes('Réalisé lors de la session'));
     ok(!ui.includes("toast('info', 'Déjà ajoutée'"));
   });

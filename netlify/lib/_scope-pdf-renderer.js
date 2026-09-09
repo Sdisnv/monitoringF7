@@ -616,13 +616,14 @@ class ScopePdfRenderer {
     const aligns = (options && options.align) || [];
     const wrap = (options && options.wrap) || [];
     const highlightRows = (options && options.highlightRows) || [];
+    const highlightColors = (options && options.highlightColors) || [];
     const highlightColor = (options && options.highlightColor) || '#fde8e8';
     const headerH = 16;
     const baseRowH = (options && options.rowH) || 18;
     const paintRow = (cells, y, { header, zebra, rowH, highlight }) => {
       const h = header ? headerH : rowH;
       if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
-      else if(highlight) this.doc.rect(MARGIN, y, width, h).fill(rgb(highlightColor));
+      else if(highlight) this.doc.rect(MARGIN, y, width, h).fill(rgb(typeof highlight === 'string' ? highlight : highlightColor));
       else if(zebra) this.doc.rect(MARGIN, y, width, h).fill(rgb('#f7f8fa'));
       const padY = 2;
       let x = MARGIN;
@@ -672,7 +673,7 @@ class ScopePdfRenderer {
         this.nextPage();
         drawHeader();
       }
-      paintRow(row, this.doc.y, { zebra: idx % 2 === 1, rowH, highlight: Boolean(highlightRows[idx]) });
+      paintRow(row, this.doc.y, { zebra: idx % 2 === 1, rowH, highlight: highlightColors[idx] || (highlightRows[idx] ? highlightColor : false) });
     });
     this.doc.y += 8;
   }
@@ -809,6 +810,7 @@ class ScopePdfRenderer {
   }
 
   renderEventBody(m){
+    if(m.multiSessionV2) return this.renderMultiSessionV2EventBody(m);
     const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
     this.kv([
       { label: 'Date de l’exercice', value: formatDisplayDate(m.event.date) },
@@ -848,6 +850,93 @@ class ScopePdfRenderer {
       );
     } else if(m.quantitative){
       this.para('Suivi quantitatif : aucun nom n’est inventé.');
+    }
+    this.drawDomainSignature(m);
+  }
+
+  renderMultiSessionV2EventBody(m){
+    const v = (m.officiel && m.officiel.volumes) || {};
+    const innerW = PAGE_W - 2 * MARGIN;
+    this.kv([
+      { label: 'Exercice', value: (m.event && m.event.libelle) || 'Multi-session' },
+      { label: 'Type', value: 'Rapport Multi-session' },
+      { label: 'Période / année', value: `${formatDisplayDate(m.period && m.period.from)} - ${formatDisplayDate(m.period && m.period.to)}` },
+      { label: 'Domaine', value: domaineLabel(m.domaine) || 'DAP' },
+      { label: 'Nombre de sessions', value: String((m.sessions || []).length || 0) },
+      { label: 'Statut', value: (m.event && m.event.statutLabel) || 'Clôturé' }
+    ], { cols: 3, rowH: 24 });
+    this.iconHeading('calendar', 'Sessions constitutives', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap });
+    this.table(
+      ['Session', 'Événement', 'Date'],
+      (m.sessions || []).map((session, index) => [
+        `${index + 1}/${(m.sessions || []).length}`,
+        session.libelle || '',
+        formatDisplayDate(session.date)
+      ]),
+      [64, 310, 85],
+      { rowH: 15, wrap: [false, true, false] }
+    );
+    this.iconHeading('kpi', 'Synthèse chiffrée', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
+    this.kpiOfficial(m.officiel, { event: true });
+    this.para('Aucune personne n’est comptée deux fois : la contribution statistique est consolidée au niveau du Multi-session.', { size: 8 });
+
+    this.iconHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+    if(m.graphs && m.graphs.sessions) this.chart('Participation par session', m.graphs.sessions);
+    if(m.graphs && m.graphs.repartition) this.chart('Répartition des statuts finaux', m.graphs.repartition);
+    if(m.graphs && m.graphs.motifs) this.chart('Motifs des excuses', m.graphs.motifs);
+
+    this.iconHeading('plain', 'Lecture des statuts', TYPE.section, { spaceBefore: 8, after: TYPE.notesGap });
+    [
+      ['Présent', 'La personne a satisfait son obligation de participation en participant à au moins une session du Multi-session.'],
+      ['Excusé', 'La personne n’a participé à aucune session mais dispose d’une excuse reconnue avec motif.'],
+      ['Absent', 'La personne n’a participé à aucune session et ne dispose pas d’une excuse ou dispense reconnue.'],
+      ['Dispensé', 'La personne est exclue de l’obligation de participation pour cet exercice et n’entre pas dans le dénominateur du taux de participation.']
+    ].forEach(([title, text]) => {
+      this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(8.5)
+        .text(title, MARGIN, this.doc.y, { width: 80, continued: true });
+      this.doc.font('Helvetica').text(`  ${text}`, { width: innerW - 80 });
+    });
+    this.doc.moveDown(0.4);
+    this.iconHeading('plain', 'Calcul du taux', TYPE.section, { spaceBefore: 4, after: TYPE.notesGap });
+    this.para(m.tauxExplanation || '', { size: TYPE.body });
+
+    const exceptions = m.exceptions || {};
+    this.iconHeading('people', 'Personnel excusé', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+    if((exceptions.excuses || []).length){
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'Motif'],
+        exceptions.excuses.map((row) => [row.grade || '', row.nom || '', row.prenom || '', row.motifLabel || '']),
+        [46, 120, 100, 193],
+        { rowH: 14, wrap: [false, false, false, true], highlightRows: exceptions.excuses.map(() => true), highlightColor: '#fdecef' }
+      );
+    } else this.para('Aucune personne excusée.');
+    this.iconHeading('people', 'Personnel absent', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
+    if((exceptions.absents || []).length){
+      this.table(
+        ['Grade', 'Nom', 'Prénom'],
+        exceptions.absents.map((row) => [row.grade || '', row.nom || '', row.prenom || '']),
+        [46, 150, 130],
+        { rowH: 14, highlightRows: exceptions.absents.map(() => true), highlightColor: '#e8eaed' }
+      );
+    } else this.para('Aucune personne absente.');
+
+    if(m.nominatif && m.nominatif.length){
+      this.nextPage();
+      this.iconHeading('people', 'Liste nominative consolidée', TYPE.section, { after: TYPE.sectionGap });
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'OI', 'Statut', 'Motif'],
+        m.nominatif.map((r) => [
+          r.grade || '', r.nom || '', r.prenom || '', r.nip || '', r.oi || '',
+          this.eventStatutLabel(r),
+          nominativeInfoLabel(r)
+        ]),
+        [38, 78, 68, 48, 36, 60, 131],
+        {
+          rowH: 13,
+          wrap: [false, false, false, false, false, false, true],
+          highlightColors: m.nominatif.map((r) => r.statut === 'ABSENT_EXCUSE' ? '#fdecef' : (r.statut === 'ABSENT_NON_EXCUSE' ? '#e8eaed' : (r.statut === 'DISPENSE' ? '#fff4cc' : null)))
+        }
+      );
     }
     this.drawDomainSignature(m);
   }

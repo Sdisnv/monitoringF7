@@ -143,7 +143,7 @@ async function setupJspEvent(){
 
   await record('06 cache-bust des assets modifiés', () => {
     assert.ok(htmlSrc.includes('scope-ui-logic.js?v=scope-jsp-excuse-motifs-1') || htmlSrc.includes('scope-ui-logic.js?v=scope-participation-policy-engine-1'));
-    assert.ok(htmlSrc.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSrc.includes('scope-ui.js?v=scope-participation-policy-engine-1'));
+    assert.ok(htmlSrc.includes('scope-ui.js?v=scope-multisession-v2-close-reopen-report-ux-3') || htmlSrc.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSrc.includes('scope-ui.js?v=scope-participation-policy-engine-1'));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

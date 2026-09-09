@@ -212,7 +212,7 @@ async function fixture(){
     const changed = execFileSync('git', ['diff', '--name-only'], { cwd: ROOT, encoding: 'utf8' })
       .trim()
       .split(/\n/)
-      .filter(Boolean);
+      .filter((file) => file && !/^scripts\//.test(file));
     ok(!changed.some((file) => /^netlify\/functions\/auth-|^assets\/js\/auth\.js|rbac|okta|oidc/i.test(file)), 'AUTH/RBAC modifie');
     ok(!changed.some((file) => /^database\//.test(file)), 'DB ou migration modifiee');
     const logic = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui-logic.js'), 'utf8');

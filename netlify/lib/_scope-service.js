@@ -3009,19 +3009,43 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-      if(evenement.statut !== 'REALISE') throw new HttpError(422, 'statut_invalide', 'Réouverture possible uniquement depuis REALISE.');
+      const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
+      const v2Session = v2State
+        ? (v2State.sessions || []).find((row) => String(row.evenement_id || row.event_id || '') === String(eventId))
+        : null;
+      const v2SessionClosed = v2Session && ['CLOTUREE', 'CLOTURE', 'REALISE'].includes(String(v2Session.status || v2Session.statut || '').toUpperCase());
+      if(evenement.statut !== 'REALISE' && !v2SessionClosed){
+        throw new HttpError(422, 'statut_invalide', 'Réouverture possible uniquement depuis REALISE.');
+      }
       const next = await bumpOrConflict(tx, eventId, baseVersion, {
         statut: 'PLANIFIE',
         cloture_at: null,
         cloture_par: null
       });
+      if(v2State && tx.upsertMultisessionV2Session){
+        await tx.upsertMultisessionV2Session({
+          multisession_id: v2State.multisessionId,
+          event_id: eventId,
+          sequence: v2Session ? v2Session.sequence : v2State.currentSessionIndex,
+          status: 'OUVERTE',
+          metadata: Object.assign({}, v2Session && v2Session.metadata || {}, { reopenedBy: actorId(actor), reopenedAt: new Date().toISOString(), reopenMotif: motif })
+        });
+        if(tx.updateMultisessionV2 && v2State.multisession && ['CLOTUREE', 'CLOTURE', 'REALISE'].includes(String(v2State.multisession.status || '').toUpperCase())){
+          await tx.updateMultisessionV2(v2State.multisessionId, {
+            status: 'OUVERTE',
+            closed_at: null,
+            closed_by: null,
+            metadata: Object.assign({}, v2State.multisession.metadata || {}, { reopenedByAction: 'MULTISESSION_V2_SESSION_REOPEN' })
+          });
+        }
+      }
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'REOUVRIR',
+        action: v2State ? 'MULTISESSION_V2_REOUVRIR_SESSION' : 'REOUVRIR',
         commentaire: motif,
-        apres: { version: next.version }
+        apres: { version: next.version, engine: v2State ? MultiSessionV2.ENGINE.MULTI_SESSION_V2 : undefined }
       });
       return { evenement: next, version: next.version };
     });

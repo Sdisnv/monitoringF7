@@ -289,9 +289,10 @@ function multiSessionV2NominativeRows(fiche){
         statut,
         statutLabel: STATUT_LABELS[statut] || statut,
         motif: targetState.countedMotif || null,
-        motifLabel: targetState.countedMotif ? (MOTIF_LABELS[targetState.countedMotif] || targetState.countedMotif) : '',
+        motifLabel: targetState.finalMotif ? (MOTIF_LABELS[targetState.finalMotif] || targetState.finalMotif) : '',
         role: targetState.countedRole || 'PARTICIPANT',
-        roleLabel: targetState.countedRole && targetState.countedRole !== 'PARTICIPANT' ? (ROLE_LABELS[targetState.countedRole] || targetState.countedRole) : ''
+        roleLabel: targetState.countedRole && targetState.countedRole !== 'PARTICIPANT' ? (ROLE_LABELS[targetState.countedRole] || targetState.countedRole) : '',
+        finalEventId: targetState.finalEventId || targetState.countedEventId || null
       };
     })
     .sort(sortByGradeThenName);
@@ -312,6 +313,59 @@ function multiSessionV2EventRows(state){
   }));
 }
 
+function multiSessionV2Graphs(state, nominatif){
+  const totalAcquired = Math.max(1, Number(state.statistics && state.statistics.presents || 0));
+  const acquiredByEvent = new Map();
+  (nominatif || []).forEach((row) => {
+    if(row.statut !== 'PRESENT' || !row.finalEventId) return;
+    acquiredByEvent.set(String(row.finalEventId), (acquiredByEvent.get(String(row.finalEventId)) || 0) + 1);
+  });
+  const sessionPoints = (state.sessions || []).map((session, index) => {
+    const count = acquiredByEvent.get(String(session.evenement_id || session.event_id || '')) || 0;
+    return {
+      label: MultiSessionV2.sessionLabel(session, `Session ${index + 1}`),
+      value: Math.round((1000 * count) / totalAcquired) / 10,
+      numerator: count,
+      denominator: totalAcquired
+    };
+  });
+  const stats = state.statistics || {};
+  const repartitionPoints = [
+    { label: 'Présents', value: Number(stats.presents || 0), token: 'success' },
+    { label: 'Excusés', value: Number(stats.excuses || 0), token: 'warning' },
+    { label: 'Absents', value: Number(stats.nonExcuses || 0), token: 'danger' },
+    { label: 'Dispensés', value: Number(stats.dispenses || 0), token: 'dispense' }
+  ].filter((row) => row.value > 0);
+  const motifCounts = new Map();
+  (nominatif || []).forEach((row) => {
+    if(row.statut !== 'ABSENT_EXCUSE') return;
+    const label = row.motifLabel || 'Non précisé';
+    motifCounts.set(label, (motifCounts.get(label) || 0) + 1);
+  });
+  const motifPoints = [...motifCounts.entries()].map(([label, value]) => ({ label, value, token: 'warning' }));
+  return {
+    sessions: {
+      type: 'bar',
+      question: 'Participation acquise par session',
+      series: [{ id: 'sessions', points: sessionPoints }]
+    },
+    repartition: {
+      type: 'donut',
+      question: 'Répartition des statuts finaux',
+      series: [{ id: 'statuts', points: repartitionPoints }]
+    },
+    motifs: motifPoints.length ? {
+      type: 'bar',
+      question: 'Motifs des excuses',
+      series: [{ id: 'motifs', points: motifPoints.map((row) => Object.assign({}, row, {
+        value: Math.round((1000 * row.value) / Math.max(1, motifPoints.reduce((sum, item) => sum + item.value, 0))) / 10,
+        numerator: row.value,
+        denominator: motifPoints.reduce((sum, item) => sum + item.value, 0)
+      })) }]
+    } : null
+  };
+}
+
 function multiSessionV2ReportModel(fiche, query, includeNominatif){
   const state = fiche.multiSessionV2;
   if(!state || state.engine !== MultiSessionV2.ENGINE.MULTI_SESSION_V2) return null;
@@ -328,13 +382,17 @@ function multiSessionV2ReportModel(fiche, query, includeNominatif){
   };
   const stats = state.statistics || {};
   const cibles = fiche.cibles || [];
+  const nominatif = multiSessionV2NominativeRows(fiche);
+  const graphs = multiSessionV2Graphs(state, nominatif);
+  const excuses = nominatif.filter((row) => row.statut === 'ABSENT_EXCUSE');
+  const absents = nominatif.filter((row) => row.statut === 'ABSENT_NON_EXCUSE');
   return {
     kind: 'EVENT',
     period,
     domaine: displayDomaineCode(multisession.domain || fiche.evenement.domaine_code),
     cible: cibles[0] && cibles[0].niveau_code,
     title: `RAPPORT — ${String(state.label || multisession.label || 'MULTI-SESSION').toLocaleUpperCase('fr-CH')}`,
-    subtitle: `Rapport de l’exercice Multi-session — ${(state.sessions || []).map((session) => session.libelle).filter(Boolean).join(' / ')}`,
+    subtitle: `Rapport Multi-session — ${String(period.from || '').slice(0, 4) || ''}`,
     filename: sanitizeFilename(`SCOPE_Multi-session_${state.code || multisession.code || fiche.evenement.evenement_id}.pdf`),
     event: {
       id: state.multisessionId || multisession.multisession_id || fiche.evenement.evenement_id,
@@ -375,10 +433,16 @@ function multiSessionV2ReportModel(fiche, query, includeNominatif){
       }
     },
     legacy: null,
-    graphs: null,
+    graphs,
     explain: null,
-    nominatif: includeNominatif ? multiSessionV2NominativeRows(fiche) : [],
+    nominatif: includeNominatif ? nominatif : [],
     encadrement: includeNominatif ? encadrementRows(fiche) : [],
+    sessions: state.sessions || [],
+    exceptions: {
+      excuses: includeNominatif ? excuses : [],
+      absents: includeNominatif ? absents : []
+    },
+    tauxExplanation: `Taux de participation = personnes ayant satisfait l’obligation ÷ population cible comptabilisable × 100. Population cible comptabilisable = population cible − personnes dispensées. Calcul courant : ${stats.numerator || 0} ÷ (${stats.population || 0} − ${stats.dispenses || 0}) × 100 = ${stats.percentage == null ? 'non évaluable' : `${String(stats.percentage).replace('.', ',')} %`}.`,
     quantitative: false,
     isLegacy: false,
     signatureRole: 'RESPONSABLE FORMATION',

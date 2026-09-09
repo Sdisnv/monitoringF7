@@ -93,6 +93,8 @@ function buildState(input = {}){
       countedRole: null,
       countedStatut: null,
       countedMotif: null,
+      finalEventId: null,
+      finalMotif: null,
       referenceEventId: null,
       referenceEventLabel: null,
       referenceEventDate: null,
@@ -158,6 +160,10 @@ function buildState(input = {}){
       finalStatus = null;
     }
     state.finalStatus = finalStatus || null;
+    if(final && finalStatus){
+      state.finalEventId = eventId(final.row);
+      state.finalMotif = final.row.motif_absence || final.row.motifAbsence || final.row.reason || null;
+    }
     if(finalStatus === 'PRESENT') presents += 1;
     else if(finalStatus === 'DISPENSE') dispenses += 1;
     else if(finalStatus === 'ABSENT_EXCUSE') excuses += 1;

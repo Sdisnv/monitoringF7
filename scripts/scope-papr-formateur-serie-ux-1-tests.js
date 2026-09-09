@@ -78,13 +78,13 @@ async function setupPr(count = 4){
   await record('C — affichage limité à Formateur et première session x.1', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes("state.encRole === 'FORMATEUR' && isFirstPrSession(fiche)"));
-    assert.ok(ui.includes("if (state.encRole !== 'FORMATEUR') state.encSerieComplete = false;"));
+    assert.ok(ui.includes("if (state.encRole !== 'FORMATEUR' && !(isMultiSessionV2Fiche(state.fiche) && state.encRole === 'MONITEUR')) state.encSerieComplete = false;"));
   });
 
   await record('D — OFF/ON transmet serieComplete false/true sans nouveau backend', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
-    assert.ok(ui.includes("const serieComplete = role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche);"));
-    assert.ok(ui.includes('await client.ajouterEncadrement(id, { personneId, role, serieComplete }, state.fiche.evenement.version);'));
+    assert.ok(ui.includes("const serieComplete = (role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche)) || v2AllSessions;"));
+    assert.ok(ui.includes('await client.ajouterEncadrement(id, { personneId, role, serieComplete, toutesSessions: v2AllSessions }, state.fiche.evenement.version);'));
     assert.ok(!ui.includes('client.ajouterEncadrementSerie'));
   });
 

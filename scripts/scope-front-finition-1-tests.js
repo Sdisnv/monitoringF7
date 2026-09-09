@@ -118,7 +118,7 @@ function dashboardPayload() {
 
 (async () => {
   await record('01 - cache-bust UI FRONT-FINITION-1', () => {
-    assert.ok(htmlSource.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSource.includes('scope-ui.js?v=scope-event-close-ux-formateur-1') || htmlSource.includes('scope-ui.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-participation-policy-engine-1'));
+    assert.ok(htmlSource.includes('scope-ui.js?v=scope-multisession-v2-close-reopen-report-ux-3') || htmlSource.includes('scope-ui.js?v=scope-jsp-excuse-motifs-1') || htmlSource.includes('scope-ui.js?v=scope-event-close-ux-formateur-1') || htmlSource.includes('scope-ui.js?v=scope-generic-exercise-sessions-1') || htmlSource.includes('scope-ui.js?v=scope-pr-abc-close-r2') || htmlSource.includes('scope-ui.js?v=scope-login-visual-alignment-orion-1') || htmlSource.includes('scope-ui.js?v=scope-front-finition-1') || htmlSource.includes('scope-ui.js?v=scope-participation-policy-engine-1'));
   });
 
   await record('02 - vue contextuelle alignee Pilotage avec retours utiles', () => {
