@@ -1555,6 +1555,14 @@ class ScopePdfRenderer {
 
   render(){
     const m = this.model;
+    if(m.multiSessionV2){
+      this.renderMultiSessionV2EventBody(m);
+      return;
+    }
+    if(m.multiSessionV2Session){
+      this.renderMultiSessionV2SessionBody(m);
+      return;
+    }
     this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(14)
       .text(m.title, MARGIN, this.doc.y, { width: PAGE_W - 2 * MARGIN });
     this.doc.moveDown(0.12);

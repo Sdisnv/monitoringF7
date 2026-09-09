@@ -10110,6 +10110,7 @@
       else toast('success', 'Rapport généré', result.filename);
     }).catch((error) => {
       state.loading = false;
+      ScopeFeedback.clear();
       const info = friendlyActionError(error);
       const nominativeErrors = nominativeErrorDetails(error);
       ScopeFeedback.error(info.title, info.message, { errors: nominativeErrors.length ? nominativeErrors : info.errors, conflict: info.conflict, okta: info.okta });

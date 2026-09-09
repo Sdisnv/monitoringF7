@@ -25,6 +25,15 @@ let assertions = 0;
 function ok(value, message){ assertions += 1; assert.ok(value, message); }
 function eq(actual, expected, message){ assertions += 1; assert.strictEqual(actual, expected, message); }
 function includes(text, needle, message){ assertions += 1; assert.ok(String(text || '').includes(needle), message || `expected ${needle}`); }
+function pdfText(buffer){
+  const raw = Buffer.from(buffer).toString('latin1');
+  const chunks = [];
+  raw.replace(/<([0-9A-Fa-f]+)>/g, (_, hex) => {
+    if(hex.length % 2 === 0) chunks.push(Buffer.from(hex, 'hex').toString('latin1'));
+    return _;
+  });
+  return chunks.join('');
+}
 
 async function record(name, fn){
   try {
@@ -158,6 +167,12 @@ async function fixture(label){
     ok(!report.nonParticipants, 'pas de liste nominative des non-renseignés');
     const pdf = await generateReport(ctx.repo, { kind: 'SESSION', evenementId: ctx.s1.evenement_id, nominatif: true }, ACTOR, { generatedAt: '2026-09-09T08:00:00.000Z' });
     ok(pdf.buffer && pdf.buffer.length > 1000, 'PDF session 1 rendu');
+    const text = pdfText(pdf.buffer);
+    includes(text, 'RAPPORT DE PRÉSENCE');
+    includes(text, 'FORMATION GROUPÉE DAP 1.1');
+    includes(text, 'Multi-session · Session 1/2');
+    ok(!text.includes('Nombre de séances'), 'pas de libellé séance en session V2');
+    ok(!text.includes('Analyse graphique'), 'pas de graphiques en session V2');
   });
 
   await record('TEST B — rapport session 2/2 factuel', async () => {
@@ -185,12 +200,18 @@ async function fixture(label){
     const pdf = await generateReport(ctx.repo, { kind: 'EVENT', evenementId: ctx.s2.evenement_id, nominatif: true }, ACTOR, { generatedAt: '2026-09-09T08:00:00.000Z' });
     eq(pdf.filename, '2026 - DAP - Formation groupée DAP - Rapport de présence Multi-session.pdf');
     ok(pdf.buffer && pdf.buffer.length > 1000, 'PDF Multi-session rendu');
+    const text = pdfText(pdf.buffer);
+    includes(text, 'RAPPORT DE PRÉSENCE MULTI-SESSION');
+    includes(text, 'Objectif');
+    includes(text, 'Écart');
+    includes(text, 'Liste nominative consolidée du personnel');
   });
 
   await record('TEST D — preview PDF libère le feedback', async () => {
     const ui = fs.readFileSync('assets/js/scope-ui.js', 'utf8');
     includes(ui, "ScopeFeedback.progress('Génération du rapport…'", 'loading rapport explicite');
     includes(ui, 'ScopeFeedback.clear();', 'feedback fermé avant preview');
+    includes(ui, "}).catch((error) => {\n      state.loading = false;\n      ScopeFeedback.clear();", 'feedback fermé aussi en erreur');
     includes(ui, 'window.ScopePdfViewer.open(result)', 'preview ouverte après génération');
     includes(ui, 'ScopeFeedback.error(info.title, info.message', 'échec génération en modal centrale');
     const viewer = fs.readFileSync('assets/js/scope-pdf-viewer.js', 'utf8');
