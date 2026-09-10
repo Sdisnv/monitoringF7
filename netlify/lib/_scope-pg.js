@@ -864,12 +864,13 @@ function createPgRepo(client){
         i += 1;
       }
       const year = query.annee || query.year;
+      const periodStartYearSql = `coalesce(substring(period::text from '"from"\\s*:\\s*"([0-9]{4})'), substring(period::text from '^([0-9]{4})'))`;
       if(year){
-        where.push(`coalesce(period->>'from', period->>'to', '') like $${i}`);
-        params.push(`${Number(year)}%`);
+        where.push(`${periodStartYearSql} = $${i}`);
+        params.push(String(Number(year)));
         i += 1;
       }
-      const sql = `select * from scope_multisessions_v2 ${where.length ? `where ${where.join(' and ')}` : ''} order by period->>'from' desc nulls last, label`;
+      const sql = `select * from scope_multisessions_v2 ${where.length ? `where ${where.join(' and ')}` : ''} order by ${periodStartYearSql} desc nulls last, label`;
       const result = await q(sql, params);
       return result.rows;
     },

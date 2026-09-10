@@ -226,6 +226,13 @@ async function seedMultiSessionRepo(){
     ok(pdf && Buffer.isBuffer(pdf.buffer) && pdf.buffer.length > 1000, 'PDF non vide');
   });
 
+  await record('11 — SQL production TEXT-safe pour scope_multisessions_v2.period', () => {
+    const pg = read('netlify/lib/_scope-pg.js');
+    ok(pg.includes('substring(period::text'), 'filtre période compatible avec period text en production');
+    ok(!pg.includes("period->>'from'"), 'aucun opérateur JSON sur period text');
+    ok(!pg.includes('period->>"from"'), 'aucun opérateur JSON double quote sur period text');
+  });
+
   const failed = results.filter((r) => r.status !== 'PASS');
   results.forEach((r) => console.log(`${r.status} ${r.name}${r.proof ? `\n${r.proof}` : ''}`));
   console.log(`Assertions: ${assertions}`);
