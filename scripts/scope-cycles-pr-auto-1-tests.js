@@ -278,10 +278,11 @@ function sampleAutoInput(){
       pilotage: buildCyclePilotage(input)
     };
     const html = hooks.renderCycleHtml(detail);
-    ok(html.includes('Matrice individuelle'));
-    ok(html.includes('Personnes complètes'));
+    ok(html.includes('Matrice détaillée'));
+    ok(html.includes('Personnel concerné'));
+    ok(html.includes('Obligations satisfaites'));
     ok(html.includes('#/exercices/pr1-a'));
-    ok(html.includes('Progression cycle'));
+    ok(html.includes('Progression'));
   });
 
   for(const result of results){

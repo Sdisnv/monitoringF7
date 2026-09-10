@@ -335,7 +335,7 @@ class ScopePdfRenderer {
     draw(MARGIN, y, innerW, boxH, 5).fillAndStroke(palette.fill, palette.border);
     this.doc.fillColor(rgb(palette.title || INSTITUTION.ink)).font('Helvetica-Bold').fontSize(titleSize)
       .text(String(title || '').toLocaleUpperCase('fr-CH'), MARGIN + padX, y + padY, { width: bodyW });
-    this.doc.fillColor(rgb(opts.body || INSTITUTION.ink)).font('Helvetica').fontSize(bodySize)
+    this.doc.fillColor(rgb(palette.body || INSTITUTION.ink)).font('Helvetica').fontSize(bodySize)
       .text(body, MARGIN + padX, y + padY + titleH + 7, { width: bodyW, align: 'left' });
     this.doc.restore();
     this.doc.y = y + boxH + 12;
@@ -1171,6 +1171,78 @@ class ScopePdfRenderer {
     this.drawDomainSignature(m);
   }
 
+  renderCycleReportBody(m){
+    const cr = m.cycleReport || {};
+    const cycle = cr.cycle || {};
+    const k = cr.kpis || {};
+    const period = `${formatDisplayDate(m.period && m.period.from)} - ${formatDisplayDate(m.period && m.period.to)}`;
+    this.renderReportTitle(
+      String(m.title || 'Rapport de cycle').toLocaleUpperCase('fr-CH'),
+      cr.typeLabel || 'Cycle',
+      `${period} · ${cr.statusLabel || '—'}`
+    );
+    this.kv([
+      { label: 'Type', value: cr.typeLabel || 'Cycle' },
+      { label: 'Formation / cycle', value: cycle.libelle || '—' },
+      { label: 'Domaine', value: domaineLabel(m.domaine) || m.domaine || '—' },
+      { label: 'Période', value: period },
+      { label: 'Sessions', value: `${cr.sessionsRealised || 0}/${cr.sessionCount || 0} réalisées` },
+      { label: 'Population', value: String(k.population || 0) },
+      { label: 'Statut', value: cr.statusLabel || '—' },
+      { label: 'Source', value: cycle.source_type === 'CONFIGURATION' ? 'Configuration formation' : (cycle.source_type || 'SCOPE') }
+    ], { cols: 2, rowH: 20 });
+
+    this.iconHeading('kpi', 'Synthèse', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+    this.kv([
+      { label: 'Population concernée', value: String(k.population || 0) },
+      { label: 'Obligations satisfaites', value: String(k.complete || 0) },
+      { label: 'À traiter', value: String(k.resteATraiter ?? k.incomplete ?? 0) },
+      { label: 'Réalisés', value: String(k.realised || 0) },
+      { label: 'Excusés', value: String(k.excused || 0) },
+      { label: 'Dispensés', value: String(k.dispensed || 0) },
+      { label: 'Encadrement', value: String(k.encadrement || 0) },
+      { label: 'Progression', value: formatTaux(k.progression) }
+    ], { cols: 4, rowH: 24 });
+
+    if(m.graphs && (m.graphs.sessions || m.graphs.repartition)){
+      this.iconHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap });
+      if(m.graphs.sessions) this.chart('Obligations satisfaites par session', m.graphs.sessions, { compact: true });
+      if(m.graphs.repartition) this.chart('Répartition des états consolidés', m.graphs.repartition, { compact: true });
+    }
+
+    this.iconHeading('people', 'Personnes restant à traiter', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+    if(m.remainingRows && m.remainingRows.length){
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'Information'],
+        m.remainingRows.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.information]),
+        [40, 86, 74, 48, 211],
+        { rowH: 14, wrap: [false, false, false, false, true] }
+      );
+    } else {
+      this.para('Aucune personne ne reste à traiter sur ce cycle.');
+    }
+
+    if(m.nominatif && m.nominatif.length){
+      this.iconHeading('people', 'Personnel concerné', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'Rôle', 'État', 'Progression', 'Résultat / information'],
+        m.nominatif.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.roles, row.etat, row.progression, row.resultat || row.information]),
+        [34, 64, 58, 42, 52, 62, 50, 97],
+        { rowH: 13, wrap: [false, false, false, false, true, false, false, true] }
+      );
+    }
+
+    if(m.encadrement && m.encadrement.length){
+      this.iconHeading('people', 'Encadrement', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap });
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'Rôle', 'Information'],
+        m.encadrement.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.roles, row.information]),
+        [42, 84, 72, 48, 82, 131],
+        { rowH: 13, wrap: [false, false, false, false, true, true] }
+      );
+    }
+  }
+
   renderSessionBody(m){
     if(m.multiSessionV2Session) return this.renderMultiSessionV2SessionBody(m);
     const v = (m.officiel && m.officiel.volumes) || {};
@@ -1681,6 +1753,11 @@ class ScopePdfRenderer {
 
     if(m.kind === 'FORMATION'){
       this.renderFormationReportBody(m);
+      return;
+    }
+
+    if(m.kind === 'CYCLE'){
+      this.renderCycleReportBody(m);
       return;
     }
 

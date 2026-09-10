@@ -1,5 +1,6 @@
 const { HttpError, isoDate } = require('./_scope-rules');
 const { buildCyclePilotage, computeCycleMetrics, proposeCycleLink, resolveCycleCompletion } = require('./_scope-cycle-rules');
+const MultiSessionV2 = require('./_scope-multisession-v2');
 
 const DOMAINES_CYCLE = new Set(['PR', 'AUTO']);
 const STATUTS_CYCLE = new Set(['PLANIFIE', 'REALISE', 'REPORTE', 'ANNULE']);
@@ -36,8 +37,27 @@ function derivedCycleId(groupKey, annee){
   return `derived-pr-cycle:${Buffer.from(JSON.stringify({ groupKey: String(groupKey || ''), annee: Number(annee) || null }), 'utf8').toString('base64url')}`;
 }
 
+function multisessionCycleId(multisessionId){
+  return `multisession-v2-cycle:${Buffer.from(String(multisessionId || ''), 'utf8').toString('base64url')}`;
+}
+
 function isDerivedCycleId(cycleId){
   return String(cycleId || '').startsWith('derived-pr-cycle:');
+}
+
+function isMultisessionCycleId(cycleId){
+  return String(cycleId || '').startsWith('multisession-v2-cycle:');
+}
+
+function multisessionIdentityFromId(cycleId){
+  const prefix = 'multisession-v2-cycle:';
+  const value = String(cycleId || '');
+  if(!value.startsWith(prefix)) return null;
+  try{
+    return Buffer.from(value.slice(prefix.length), 'base64url').toString('utf8');
+  }catch(_error){
+    return null;
+  }
 }
 
 function derivedIdentityFromId(cycleId){
@@ -92,6 +112,24 @@ function cycleStatusFromCompletion(completion){
   if(completion.eventCount > 0 && completion.cancelledCount === completion.eventCount) return 'ANNULE';
   if(completion.realisedCount > 0 || completion.postponedCount > 0) return 'EN_COURS';
   return 'PLANIFIE';
+}
+
+function multiSessionStatusFromState(state){
+  const status = String(state && state.globalStatus || '').toUpperCase();
+  if(status === 'CLOTURE') return 'TERMINE';
+  if(status === 'A_FINALISER') return 'A_FINALISER';
+  return 'EN_COURS';
+}
+
+function dateRangeFromSessions(sessions){
+  const dates = (sessions || []).map((row) => dateOnly(row.date)).filter(Boolean).sort();
+  return { from: dates[0] || null, to: dates[dates.length - 1] || null };
+}
+
+function personDedupeKey(row){
+  const nip = text(row && row.nip);
+  const id = text(row && (row.personne_id || row.personneId || row.person_id || row.id));
+  return nip ? `NIP:${nip}` : (id ? `ID:${id}` : '');
 }
 
 async function hydratePeople(repo, ids){
@@ -207,6 +245,11 @@ function createScopeCycleService(repo){
   }
 
   async function detail(cycleId){
+    if(isMultisessionCycleId(cycleId)){
+      const multi = await multisessionCycleDetail(cycleId);
+      if(multi) return multi;
+      throw new HttpError(404, 'cycle_introuvable', 'Cycle introuvable.');
+    }
     if(isDerivedCycleId(cycleId)){
       const derived = await derivedCycleDetail(cycleId);
       if(derived) return derived;
@@ -225,6 +268,197 @@ function createScopeCycleService(repo){
     const metrics = await cycleMetrics(cycle);
     const pilotage = await cyclePilotage(cycle, evenements, personnes);
     return { cycle, evenements, personnes, metrics, pilotage };
+  }
+
+  async function buildMultiSessionState(multisession){
+    if(!multisession || !repo.listMultisessionV2Sessions) return null;
+    const multisessionId = multisession.multisession_id || multisession.id;
+    const sessions = await repo.listMultisessionV2Sessions(multisessionId);
+    const eventIds = (sessions || []).map((row) => eventId(row)).filter(Boolean);
+    const [populationRows, participations] = await Promise.all([
+      repo.listMultisessionV2Population ? repo.listMultisessionV2Population(multisessionId) : [],
+      repo.listParticipationsForEvents && eventIds.length ? repo.listParticipationsForEvents(eventIds) : []
+    ]);
+    const personnes = await hydratePeople(repo, [
+      ...populationRows.map((row) => row.person_id || row.personne_id || row.personneId),
+      ...participations.map((row) => row.personne_id || row.personneId)
+    ]);
+    return MultiSessionV2.buildState({
+      multisession,
+      sessions,
+      population: populationRows.map((row) => Object.assign({}, row, { personne_id: row.personne_id || row.person_id })),
+      participations,
+      personnes
+    });
+  }
+
+  function multiSessionPilotageFromState(state, populationRows, participations, personnes){
+    const sessions = state.sessions || [];
+    const obligations = sessions.map((event, index) => ({
+      obligationKey: eventId(event),
+      label: `Session ${index + 1}/${sessions.length}`,
+      domaine: state.multisession && state.multisession.domain || '',
+      order: index + 1,
+      eventIds: [eventId(event)].filter(Boolean),
+      sessions: [event],
+      sessionLocked: ['REALISE', 'CLOTUREE', 'ANNULEE'].includes(String(event.statut || event.status || '').toUpperCase())
+    }));
+    const peopleByKey = new Map();
+    for(const row of populationRows || []){
+      const id = row.personne_id || row.person_id || row.personneId;
+      const p = personnes[id] || row;
+      const key = personDedupeKey({ ...p, ...row, personne_id: id });
+      if(key) peopleByKey.set(key, { ...p, ...row, personne_id: id });
+    }
+    const targetKeys = new Set(peopleByKey.keys());
+    const supportByKey = new Map();
+    for(const row of participations || []){
+      const role = String(row.role || 'PARTICIPANT').toUpperCase();
+      if(!ROLES_CYCLE.has(role) || role === 'PARTICIPANT') continue;
+      const id = row.personne_id || row.personneId;
+      const p = personnes[id] || row;
+      const key = personDedupeKey({ ...p, ...row, personne_id: id });
+      if(!key) continue;
+      if(!peopleByKey.has(key)) peopleByKey.set(key, { ...p, ...row, personne_id: id });
+      const roles = supportByKey.get(key) || new Set();
+      roles.add(role);
+      supportByKey.set(key, roles);
+    }
+    const rows = [...peopleByKey.entries()].map(([key, person]) => {
+      const pid = text(person.personne_id || person.person_id || person.id);
+      const v2 = state.byPersonneId && state.byPersonneId[pid] || {};
+      const finalStatus = String(v2.finalStatus || '').toUpperCase();
+      const isPopulation = targetKeys.has(key);
+      let globalState = supportByKey.has(key) ? 'ENCADREMENT' : 'HORS_POPULATION';
+      if(isPopulation){
+        if(finalStatus === 'PRESENT') globalState = 'COMPLET';
+        else if(finalStatus === 'DISPENSE') globalState = 'DISPENSE';
+        else if(finalStatus === 'ABSENT_EXCUSE') globalState = 'EXCUSE';
+        else if(finalStatus === 'ABSENT_NON_EXCUSE') globalState = 'INCOMPLET';
+        else globalState = 'INCOMPLET';
+      }
+      const roleSet = new Set(isPopulation ? ['PARTICIPANT'] : []);
+      for(const role of supportByKey.get(key) || []) roleSet.add(role);
+      const cells = obligations.map((obligation) => {
+        const p = (participations || []).find((row) => eventId(row) === obligation.obligationKey && personDedupeKey({ ...(personnes[row.personne_id] || {}), ...row }) === key) || null;
+        const statut = String(p && p.statut || '').toUpperCase();
+        let status = 'NON_CONCERNE';
+        if(isPopulation){
+          if(statut === 'PRESENT') status = 'REALISE';
+          else if(statut === 'DISPENSE') status = 'DISPENSE';
+          else if(statut === 'ABSENT_EXCUSE') status = 'EXCUSE';
+          else if(statut === 'ABSENT_NON_EXCUSE') status = 'ABSENT';
+          else status = 'A_RENSEIGNER';
+        }
+        return { obligationKey: obligation.obligationKey, label: obligation.label, expected: isPopulation, status, eventId: p && eventId(p) || null, role: p && p.role || null, statut: p && p.statut || null, motif: p && (p.motif_absence || p.reason) || null, sessionLocked: obligation.sessionLocked };
+      });
+      return {
+        personKey: key,
+        personneId: pid,
+        nip: person.nip || '',
+        nom: person.nom || '',
+        prenom: person.prenom || '',
+        grade: person.grade || '',
+        roles: [...roleSet].sort(),
+        isPopulation,
+        isEncadrement: supportByKey.has(key),
+        isOutsidePopulation: !isPopulation && !supportByKey.has(key),
+        expectedCount: isPopulation ? 1 : 0,
+        realisedCount: finalStatus === 'PRESENT' ? 1 : 0,
+        dispensedCount: finalStatus === 'DISPENSE' ? 1 : 0,
+        excusedCount: finalStatus === 'ABSENT_EXCUSE' ? 1 : 0,
+        absentCount: finalStatus === 'ABSENT_NON_EXCUSE' ? 1 : 0,
+        openCount: isPopulation && !finalStatus ? 1 : 0,
+        progressionPct: isPopulation ? (finalStatus ? 100 : 0) : null,
+        globalState,
+        primaryEventId: v2.finalEventId || v2.countedEventId || null,
+        primaryResultLabel: v2.referenceSessionLabel || null,
+        obligations: cells
+      };
+    }).sort((a, b) => String(a.nom || '').localeCompare(String(b.nom || ''), 'fr', { sensitivity: 'base' }) || String(a.prenom || '').localeCompare(String(b.prenom || ''), 'fr', { sensitivity: 'base' }));
+    const population = rows.filter((row) => row.isPopulation);
+    const complete = population.filter((row) => ['COMPLET', 'DISPENSE', 'EXCUSE'].includes(row.globalState));
+    const incomplete = population.filter((row) => row.globalState === 'INCOMPLET');
+    return {
+      cycleId: multisessionCycleId(state.multisessionId),
+      domaine: state.multisession && state.multisession.domain || '',
+      obligations,
+      individualRows: rows,
+      kpis: {
+        population: population.length,
+        complete: complete.length,
+        incomplete: incomplete.length,
+        resteATraiter: incomplete.length,
+        remainingObligations: incomplete.length,
+        realised: population.filter((row) => row.realisedCount > 0).length,
+        excused: population.filter((row) => row.excusedCount > 0).length,
+        dispensed: population.filter((row) => row.dispensedCount > 0).length,
+        encadrement: rows.filter((row) => row.isEncadrement).length,
+        horsPopulation: rows.filter((row) => row.isOutsidePopulation).length,
+        progression: population.length ? Math.round((1000 * complete.length) / population.length) / 10 : null
+      }
+    };
+  }
+
+  async function multisessionCycleDetail(cycleId){
+    const multisessionId = multisessionIdentityFromId(cycleId);
+    if(!multisessionId || !repo.getMultisessionV2) return null;
+    const multisession = await repo.getMultisessionV2(multisessionId);
+    if(!multisession) return null;
+    const sessions = repo.listMultisessionV2Sessions ? await repo.listMultisessionV2Sessions(multisessionId) : [];
+    const eventIds = (sessions || []).map((row) => eventId(row)).filter(Boolean);
+    const [populationRows, participations] = await Promise.all([
+      repo.listMultisessionV2Population ? repo.listMultisessionV2Population(multisessionId) : [],
+      repo.listParticipationsForEvents && eventIds.length ? repo.listParticipationsForEvents(eventIds) : []
+    ]);
+    const personnes = await hydratePeople(repo, [
+      ...populationRows.map((row) => row.person_id || row.personne_id || row.personneId),
+      ...participations.map((row) => row.personne_id || row.personneId)
+    ]);
+    const state = MultiSessionV2.buildState({
+      multisession,
+      sessions,
+      population: populationRows.map((row) => Object.assign({}, row, { personne_id: row.personne_id || row.person_id })),
+      participations,
+      personnes
+    });
+    const range = dateRangeFromSessions(sessions);
+    const cycle = {
+      cycle_id: cycleId,
+      cycle_key: multisession.code || multisessionId,
+      annee: String(range.from || range.to || '').slice(0, 4) ? Number(String(range.from || range.to).slice(0, 4)) : null,
+      domaine_code: String(multisession.domain || '').toUpperCase(),
+      type_cycle: 'MULTI_SESSION',
+      libelle: multisession.label || 'Formation Multi-session',
+      statut: multiSessionStatusFromState(state),
+      stat_com: null,
+      qui: null,
+      date_debut: range.from,
+      date_fin: range.to,
+      source_type: 'CONFIGURATION',
+      metadata: { engine: MultiSessionV2.ENGINE.MULTI_SESSION_V2, multisessionId }
+    };
+    const pilotage = multiSessionPilotageFromState(state, populationRows, participations, personnes);
+    const metrics = {
+      populationDistincte: state.statistics.population,
+      participantsReconnusDistincts: state.statistics.presents,
+      nonRenseignesDistincts: state.kpis.restentATraiter,
+      effectifEngageCycle: state.statistics.presents,
+      tauxParticipationCycle: {
+        numerator: state.statistics.presents,
+        denominator: state.statistics.denominator,
+        percentage: state.statistics.percentage,
+        contrat: 'MULTI_SESSION_V2'
+      },
+      details: {
+        population: (populationRows || []).map((row) => personDedupeKey({ ...(personnes[row.person_id || row.personne_id] || {}), ...row })).filter(Boolean)
+      }
+    };
+    const personnesCycle = (populationRows || []).map((row) => {
+      const id = row.personne_id || row.person_id || row.personneId;
+      return { ...(personnes[id] || {}), personne_id: id, role_cycle: 'PARTICIPANT', statut_cycle: 'ACTIF' };
+    });
+    return { cycle, evenements: sessions, personnes: personnesCycle, metrics, pilotage };
   }
 
   async function derivedCycleFromEvents(groupKey, events){
@@ -289,9 +523,12 @@ function createScopeCycleService(repo){
     if(!repo.listEvenements) return [];
     const annee = query.annee || query.year || null;
     const domaine = optionalFilter(query.domaine || query.domaineCode || query.domaine_code);
+    const domainSet = String(domaine || '').toUpperCase() === 'FOSPEC'
+      ? new Set(['FOSPEC', 'PR', 'AUTO'])
+      : (domaine ? new Set([normalizeDomain(domaine)]) : null);
     const events = await repo.listEvenements({
       annee: annee ? Number(annee) : null,
-      domaine: domaine || null
+      domaine: domainSet && domainSet.size === 1 ? [...domainSet][0] : null
     });
     const groups = new Map();
     for(const event of events || []){
@@ -300,7 +537,7 @@ function createScopeCycleService(repo){
       if(!groupKey) continue;
       const year = yearOfEvent(event);
       if(annee && Number(annee) !== year) continue;
-      if(domaine && normalizeDomain(event.domaine_code) !== normalizeDomain(domaine)) continue;
+      if(domainSet && !domainSet.has(normalizeDomain(event.domaine_code))) continue;
       const key = `${year || 'NA'}::${normalizeDomain(event.domaine_code)}::${groupKey}`;
       const rows = groups.get(key) || [];
       rows.push(event);
@@ -331,13 +568,18 @@ function createScopeCycleService(repo){
 
   return {
     async listCycles(query = {}){
+      const requestedDomain = optionalFilter(query.domaine || query.domaineCode || query.domaine_code);
+      const domainSet = String(requestedDomain || '').toUpperCase() === 'FOSPEC'
+        ? new Set(['FOSPEC', 'PR', 'AUTO'])
+        : (requestedDomain ? new Set([normalizeDomain(requestedDomain)]) : null);
       const cycles = await repo.listCycles({
         annee: query.annee || query.year,
-        domaine: optionalFilter(query.domaine || query.domaineCode || query.domaine_code),
+        domaine: domainSet && domainSet.size === 1 ? [...domainSet][0] : null,
         statut: optionalFilter(query.statut)
       });
       const items = [];
       for(const cycle of cycles){
+        if(domainSet && !domainSet.has(normalizeDomain(cycle.domaine_code))) continue;
         const evenements = await repo.listCycleEvents(cycle.cycle_id);
         const personnes = await repo.listCyclePersonnes(cycle.cycle_id);
         const metrics = await cycleMetrics(cycle);
@@ -359,6 +601,32 @@ function createScopeCycleService(repo){
           personneCount: detail.personnes.length,
           derived: true
         });
+      }
+      if(repo.listMultisessionsV2){
+        const multisessions = await repo.listMultisessionsV2(Object.assign({}, query, {
+          domaine: domainSet && domainSet.size === 1 ? [...domainSet][0] : null
+        }));
+        for(const multisession of multisessions || []){
+          if(domainSet && !domainSet.has(normalizeDomain(multisession.domain || multisession.domaine_code))) continue;
+          const id = multisession.multisession_id || multisession.id;
+          if(!id) continue;
+          const detail = await multisessionCycleDetail(multisessionCycleId(id));
+          if(!detail) continue;
+          const statusFilter = optionalFilter(query.statut);
+          if(statusFilter && detail.cycle.statut !== statusFilter) continue;
+          items.push({
+            ...detail.cycle,
+            eventCount: detail.evenements.length,
+            populationCount: detail.pilotage.kpis.population,
+            remainingCount: detail.pilotage.kpis.resteATraiter,
+            metrics: detail.metrics,
+            personneCount: detail.pilotage.kpis.population,
+            pilotageKpis: detail.pilotage.kpis,
+            cycleTypeLabel: 'Formation Multi-session',
+            derived: true,
+            engine: MultiSessionV2.ENGINE.MULTI_SESSION_V2
+          });
+        }
       }
       items.sort((a, b) => Number(b.annee || 0) - Number(a.annee || 0) || String(a.libelle || '').localeCompare(String(b.libelle || ''), 'fr'));
       return { cycles: items };

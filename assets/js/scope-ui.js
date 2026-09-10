@@ -3081,11 +3081,20 @@
             <label>Domaine</label>
             <select id="filter-domaine">
               <option value="tous">Tous</option>
-              ${L.eventDomainFilterItems(state.referentiels.domaines).map((item) => (
-                item.type === 'separator'
-                  ? '<option disabled class="scope-domain-sep">────────</option>'
-                  : `<option value="${escapeHtml(item.code)}">${escapeHtml(item.label)}</option>`
-              )).join('')}
+              <optgroup label="Domaines opérationnels">
+                <option value="DPS">DPS</option>
+                <option value="DAP">DAP</option>
+                <option value="JSP">JSP</option>
+              </optgroup>
+              <optgroup label="Formations">
+                <option value="FOBA">FOBA</option>
+                <option value="FOCA">FOCA</option>
+                <option value="FOSPEC">FOSPEC</option>
+              </optgroup>
+              <optgroup label="Spécialisations FOSPEC">
+                <option value="PR">PR</option>
+                <option value="AUTO">AUTO</option>
+              </optgroup>
             </select>
           </div>
           <button type="button" class="scope-btn scope-btn-primary scope-events-new" id="scope-new">Nouvel événement</button>
@@ -3115,9 +3124,10 @@
   function cycleRoleLabel(role) {
     const code = String(role || '').toUpperCase();
     if (code === 'FORMATEUR') return 'Formateur';
-    if (code === 'MONITEUR') return 'Moniteur JSP';
+    if (code === 'MONITEUR') return 'Moniteur';
     if (code === 'SURVEILLANT') return 'Surveillant';
     if (code === 'AUXILIAIRE') return 'Auxiliaire';
+    if (code === 'PARTICIPANT') return 'Participant';
     return 'Participant';
   }
 
@@ -3139,8 +3149,45 @@
     if (code === 'ABSENT') return 'Absent';
     if (code === 'A_RENSEIGNER') return 'À renseigner';
     if (code === 'ENCADREMENT') return 'Encadrement';
-    if (code === 'NON_CONCERNE') return '—';
+    if (code === 'HORS_POPULATION') return 'Hors population';
+    if (code === 'NON_CONCERNE') return 'Non concerné';
     return code || '—';
+  }
+
+  function cycleStatusLabel(statut) {
+    const code = String(statut || '').toUpperCase();
+    if (code === 'TERMINE' || code === 'REALISE') return 'Terminé';
+    if (code === 'A_FINALISER') return 'À finaliser';
+    if (code === 'EN_COURS') return 'En cours';
+    if (code === 'PLANIFIE') return 'Planifié';
+    if (code === 'ANNULE') return 'Annulé';
+    return code || '—';
+  }
+
+  function cycleTypeLabel(cycle) {
+    const type = String(cycle && cycle.type_cycle || '').toUpperCase();
+    const domain = String(cycle && cycle.domaine_code || '').toUpperCase();
+    if (type === 'MULTI_SESSION') return 'Formation Multi-session';
+    if (domain === 'AUTO') return 'Cycle AUTO';
+    if (domain === 'PR' || type === 'PAPR') return 'Cycle PR';
+    return type ? `Cycle ${type}` : 'Cycle';
+  }
+
+  function cyclePrimaryResult(row) {
+    if (!row) return '—';
+    if (row.primaryResultLabel) return row.primaryResultLabel;
+    const active = (row.obligations || []).filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE');
+    if (!active.length) return cyclePilotageStateLabel(row.globalState);
+    return active.map((cell) => [cell.label, cyclePilotageStateLabel(cell.status)].filter(Boolean).join(' · ')).join(' | ');
+  }
+
+  function cycleCellDetailLabel(cell) {
+    if (!cell) return '';
+    const parts = [];
+    if (cell.role) parts.push(cycleRoleLabel(cell.role));
+    if (cell.statut) parts.push(cyclePilotageStateLabel(cell.status || cell.statut));
+    if (cell.motif) parts.push(formationMotifLabel(cell.motif));
+    return parts.join(' · ');
   }
 
   function cycleMetric(metrics, key) {
@@ -3149,18 +3196,21 @@
 
   function cycleProgressionValue(cycle) {
     const metrics = (cycle && cycle.metrics) || {};
+    const kpis = (cycle && cycle.pilotageKpis) || {};
+    if (kpis.progression != null) return kpis.progression;
     return metrics.tauxParticipationCycle && metrics.tauxParticipationCycle.percentage;
   }
 
   function cycleSortColumns() {
     return [
       { key: 'cycle', type: 'text', value: (cycle) => cycle && cycle.libelle },
-      { key: 'specialisation', type: 'text', value: (cycle) => cycle && (cycle.type_cycle || cycle.domaine_code) },
+      { key: 'type', type: 'text', value: cycleTypeLabel },
+      { key: 'domaine', type: 'text', value: (cycle) => domaineLabel(cycle && cycle.domaine_code) },
       { key: 'periode', type: 'date', value: (cycle) => cycle && (cycle.date_debut || cycle.date_fin || cycle.annee) },
       { key: 'statut', type: 'status', value: (cycle) => cycle && cycle.statut },
       { key: 'population', type: 'number', value: (cycle) => (cycle && cycle.populationCount) ?? cycleMetric(cycle && cycle.metrics, 'populationDistincte') },
+      { key: 'reste', type: 'number', value: (cycle) => (cycle && cycle.remainingCount) ?? ((cycle && cycle.pilotageKpis && cycle.pilotageKpis.resteATraiter) ?? 0) },
       { key: 'progression', type: 'number', value: cycleProgressionValue },
-      { key: 'presents', type: 'number', value: (cycle) => cycleMetric(cycle && cycle.metrics, 'participantsReconnusDistincts') },
       { key: 'sessions', type: 'number', value: (cycle) => cycle && cycle.eventCount }
     ];
   }
@@ -3170,41 +3220,57 @@
     const sortedRows = L.sortRows ? L.sortRows(rows, state.cyclesSort, cycleSortColumns()) : rows;
     let body;
     if (state.cyclesError) {
-      body = `<tr><td colspan="9"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.cyclesError)}</div></td></tr>`;
+      body = `<tr><td colspan="10"><div class="scope-empty scope-state-error" role="alert">${escapeHtml(state.cyclesError)}</div></td></tr>`;
     } else if (!state.cyclesReady) {
-      body = `<tr><td colspan="9"><div class="scope-loading-row" role="status">Chargement des cycles…</div></td></tr>`;
+      body = `<tr><td colspan="10"><div class="scope-loading-row" role="status">Chargement des cycles…</div></td></tr>`;
     } else if (!sortedRows.length) {
-      body = '<tr><td colspan="9"><div class="scope-empty">Aucun cycle de spécialisation sur cette période.</div></td></tr>';
+      body = '<tr><td colspan="10"><div class="scope-empty">Aucun cycle ou formation Multi-session sur cette période.</div></td></tr>';
     } else {
       body = sortedRows.map((cycle) => {
         const metrics = cycle.metrics || {};
+        const kpis = cycle.pilotageKpis || {};
         const period = [cycle.date_debut, cycle.date_fin].filter(Boolean).map(L.formatDate).join(' – ') || '—';
         const progression = cycleProgressionValue(cycle);
+        const population = cycle.populationCount ?? kpis.population ?? cycleMetric(metrics, 'populationDistincte');
+        const remaining = cycle.remainingCount ?? kpis.resteATraiter ?? kpis.incomplete ?? 0;
         return `<tr>
-          <td data-label="Cycle"><a href="#/cycles/${escapeHtml(cycle.cycle_id)}">${escapeHtml(cycle.libelle)}</a></td>
-          <td data-label="Spécialisation">${escapeHtml(cycle.type_cycle || cycle.domaine_code || '—')}</td>
+          <td data-label="Formation / Cycle"><a href="#/cycles/${escapeHtml(cycle.cycle_id)}">${escapeHtml(cycle.libelle)}</a></td>
+          <td data-label="Type">${escapeHtml(cycle.cycleTypeLabel || cycleTypeLabel(cycle))}</td>
+          <td data-label="Domaine">${escapeHtml(domaineLabel(cycle.domaine_code))}</td>
           <td data-label="Période">${escapeHtml(period)}</td>
-          <td data-label="Statut">${statutBadge(cycle.statut || 'PLANIFIE')}</td>
-          <td data-label="Population">${escapeHtml(String(cycle.populationCount ?? cycleMetric(metrics, 'populationDistincte')))}</td>
+          <td data-label="État">${escapeHtml(cycleStatusLabel(cycle.statut))}</td>
+          <td data-label="Population concernée">${escapeHtml(String(population))}</td>
+          <td data-label="Reste à traiter">${escapeHtml(String(remaining))}</td>
           <td data-label="Progression">${escapeHtml(L.formatTaux(progression))}</td>
-          <td data-label="Présents">${escapeHtml(String(cycleMetric(metrics, 'participantsReconnusDistincts')))}</td>
           <td data-label="Sessions">${escapeHtml(String(cycle.eventCount || 0))}</td>
-          <td data-label="Actions"><a class="scope-btn" href="#/cycles/${escapeHtml(cycle.cycle_id)}">Ouvrir</a></td>
+          <td data-label="Action"><div class="scope-cycle-row-actions"><a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/cycles/${escapeHtml(cycle.cycle_id)}">Ouvrir</a><button type="button" class="scope-btn scope-btn-compact" data-report-cycle="${escapeHtml(cycle.cycle_id)}">PDF</button></div></td>
         </tr>`;
       }).join('');
     }
     return `
       <div class="scope-crumb">Activité / Cycles</div>
       <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Spécialisations', title: 'Cycles', context: state.year, description: 'Cycles PAPR et AUTO rattachés aux événements SCOPE.', logo: true })}
+        ${pageHeaderHtml({ eyebrow: 'Pilotage consolidé', title: 'Cycles', context: state.year, description: 'Cycles PR/AUTO et formations Multi-session rattachés aux configurations SCOPE.', logo: true })}
         ${periodContextHtml()}
         <div class="scope-toolbar">
           <div class="scope-field">
             <label>Domaine</label>
             <select id="cycle-filter-domaine">
               <option value="tous">Tous</option>
-              <option value="PR">PR</option>
-              <option value="AUTO">AUTO</option>
+              <optgroup label="Domaines opérationnels">
+                <option value="DPS">DPS</option>
+                <option value="DAP">DAP</option>
+                <option value="JSP">JSP</option>
+              </optgroup>
+              <optgroup label="Formations">
+                <option value="FOBA">FOBA</option>
+                <option value="FOCA">FOCA</option>
+                <option value="FOSPEC">FOSPEC</option>
+              </optgroup>
+              <optgroup label="Spécialisations FOSPEC">
+                <option value="PR">PR</option>
+                <option value="AUTO">AUTO</option>
+              </optgroup>
             </select>
           </div>
           <div class="scope-field">
@@ -3221,15 +3287,16 @@
         <div class="scope-card scope-table-wrap">
           <table class="scope-table">
             <thead><tr>
-              ${sortableHeader('cycles', 'cycle', 'Cycle', state.cyclesSort)}
-              ${sortableHeader('cycles', 'specialisation', 'Spécialisation', state.cyclesSort)}
+              ${sortableHeader('cycles', 'cycle', 'Formation / Cycle', state.cyclesSort)}
+              ${sortableHeader('cycles', 'type', 'Type', state.cyclesSort)}
+              ${sortableHeader('cycles', 'domaine', 'Domaine', state.cyclesSort)}
               ${sortableHeader('cycles', 'periode', 'Période', state.cyclesSort)}
-              ${sortableHeader('cycles', 'statut', 'Statut', state.cyclesSort)}
-              ${sortableHeader('cycles', 'population', 'Population', state.cyclesSort)}
+              ${sortableHeader('cycles', 'statut', 'État', state.cyclesSort)}
+              ${sortableHeader('cycles', 'population', 'Population concernée', state.cyclesSort)}
+              ${sortableHeader('cycles', 'reste', 'Reste à traiter', state.cyclesSort)}
               ${sortableHeader('cycles', 'progression', 'Progression', state.cyclesSort)}
-              ${sortableHeader('cycles', 'presents', 'Présents', state.cyclesSort)}
               ${sortableHeader('cycles', 'sessions', 'Sessions', state.cyclesSort)}
-              <th>Actions</th>
+              <th>Action</th>
             </tr></thead>
             <tbody>${body}</tbody>
           </table>
@@ -3297,7 +3364,7 @@
       const cells = obligations.map((obligation) => {
         const cell = (row.obligations || []).find((item) => item.obligationKey === obligation.obligationKey) || {};
         const event = cell.eventId ? `<a href="#/exercices/${escapeHtml(cell.eventId)}">${escapeHtml(cyclePilotageStateLabel(cell.status))}</a>` : escapeHtml(cyclePilotageStateLabel(cell.status));
-        const detail = [cell.role, cell.statut, cell.motif].filter(Boolean).join(' · ');
+        const detail = cycleCellDetailLabel(cell);
         return `<td data-label="${escapeHtml(obligation.label)}">${event}${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</td>`;
       }).join('');
       return `<tr>
@@ -3308,38 +3375,65 @@
         ${cells}
       </tr>`;
     }).join('') : `<tr><td colspan="${escapeHtml(String(4 + obligations.length))}"><div class="scope-empty">Aucune matrice individuelle disponible pour ce cycle.</div></td></tr>`;
+    const populationRows = individualRows.filter((row) => row && row.isPopulation);
+    const encadrementRows = individualRows.filter((row) => row && row.isEncadrement);
+    const outsideRows = individualRows.filter((row) => row && row.isOutsidePopulation);
+    const matrixCols = [
+      { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [{ key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') }] },
+      { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') },
+      { key: 'role', type: 'text', value: (row) => (row && row.roles || []).map(cycleRoleLabel).join(', ') },
+      { key: 'etat', type: 'status', value: (row) => row && row.globalState },
+      { key: 'progression', type: 'number', value: (row) => row && row.progressionPct },
+      { key: 'resultat', type: 'text', value: cyclePrimaryResult }
+    ];
+    const sortedPopulationRows = L.sortRows ? L.sortRows(populationRows, state.cycleMatrixSort, matrixCols) : populationRows;
+    const sortedEncadrementRows = L.sortRows ? L.sortRows(encadrementRows, state.cycleMatrixSort, matrixCols) : encadrementRows;
+    const personCell = (row) => `${escapeHtml([row.grade, row.nom, row.prenom].filter(Boolean).join(' ') || 'Personne')}<small>${escapeHtml(row.nip || 'NIP non renseigné')}</small>`;
+    const populationHtml = sortedPopulationRows.length ? sortedPopulationRows.map((row) => `<tr>
+      <td data-label="Personne">${personCell(row)}</td>
+      <td data-label="Rôle">${escapeHtml((row.roles || []).map(cycleRoleLabel).join(', ') || 'Participant')}</td>
+      <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.globalState))}</td>
+      <td data-label="Progression">${escapeHtml(L.formatTaux(row.progressionPct))}</td>
+      <td data-label="Résultat">${escapeHtml(cyclePrimaryResult(row))}</td>
+      <td data-label="Information">${(row.primaryEventId && String(row.globalState || '').toUpperCase() === 'INCOMPLET') ? `<a href="#/exercices/${escapeHtml(row.primaryEventId)}">Ouvrir la session</a>` : escapeHtml((row.populationSources || []).join(', ') || 'Population concernée')}</td>
+    </tr>`).join('') : '<tr><td colspan="6"><div class="scope-empty">Aucune personne concernée par ce cycle.</div></td></tr>';
+    const encadrementHtml = sortedEncadrementRows.length ? sortedEncadrementRows.map((row) => `<tr>
+      <td data-label="Personne">${personCell(row)}</td>
+      <td data-label="Rôle">${escapeHtml((row.roles || []).filter((role) => role !== 'PARTICIPANT').map(cycleRoleLabel).join(', ') || 'Encadrement')}</td>
+      <td data-label="Sessions">${escapeHtml((row.obligations || []).filter((cell) => cell && cell.eventId).map((cell) => cell.label).join(', ') || '—')}</td>
+      <td data-label="Information">${escapeHtml(row.isPopulation ? 'Appartient aussi à la population concernée' : 'Hors dénominateur')}</td>
+    </tr>`).join('') : '<tr><td colspan="4"><div class="scope-empty">Aucun encadrement rattaché à ce cycle.</div></td></tr>';
+    const typeLabel = cycle.cycleTypeLabel || cycleTypeLabel(cycle);
+    const statusLabel = cycleStatusLabel(cycle.statut);
+    const remaining = pilotageKpis.resteATraiter ?? pilotageKpis.incomplete ?? 0;
     return `
       <div class="scope-crumb"><a href="#/cycles">Activité / Cycles</a> / ${escapeHtml(cycle.libelle || 'Cycle')}</div>
-      <div class="scope-main">
-        ${pageHeaderHtml({ eyebrow: 'Activité', title: cycle.libelle || 'Cycle', context: `${cycle.type_cycle || cycle.domaine_code || '—'} · ${period}`, logo: true })}
+      <div class="scope-main scope-cycle-page">
+        ${pageHeaderHtml({ eyebrow: typeLabel, title: cycle.libelle || 'Cycle', context: `${statusLabel} · ${period}`, logo: true })}
         ${contextReturnHtml('#/cycles', 'Retour aux cycles')}
-        <div class="scope-kpis">
-          <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(String(pilotageKpis.population ?? cycleMetric(metrics, 'populationDistincte')))}</strong><span>Population suivie</span><em>${escapeHtml(cycle.statut || 'PLANIFIE')}</em></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(pilotageKpis.complete ?? 0))}</strong><span>Personnes complètes</span><small>${escapeHtml(String(pilotageKpis.incomplete ?? 0))} incomplète(s)</small></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(cycleMetric(metrics, 'formateursDistincts') + cycleMetric(metrics, 'moniteursDistincts') + cycleMetric(metrics, 'surveillantsDistincts') + cycleMetric(metrics, 'auxiliairesDistincts')))}</strong><span>Encadrement visible</span><small>Hors comptage sauf population spécialisée</small></article>
-          <article class="scope-kpi"><strong>${escapeHtml(L.formatTaux(pilotageKpis.progression))}</strong><span>Progression cycle</span><small>${escapeHtml(String(obligations.length))} obligation(s)</small></article>
+        <div class="scope-actions scope-cycle-actions">
+          <button type="button" class="scope-btn scope-btn-primary" data-report-cycle="${escapeHtml(cycle.cycle_id)}">Exporter le rapport PDF</button>
+          <button type="button" class="scope-btn scope-btn-secondary" data-print-cycle>Imprimer</button>
         </div>
-        <div class="scope-card">
-          <h2 style="margin-top:0">Identité métier</h2>
+        <div class="scope-kpis">
+          <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(String(pilotageKpis.population ?? cycleMetric(metrics, 'populationDistincte')))}</strong><span>Population concernée</span><em>${escapeHtml(statusLabel)}</em></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(pilotageKpis.complete ?? 0))}</strong><span>Obligations satisfaites</span><small>${escapeHtml(String(remaining))} à traiter</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(String(pilotageKpis.encadrement ?? encadrementRows.length))}</strong><span>Encadrement</span><small>Visible hors dénominateur</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(L.formatTaux(pilotageKpis.progression))}</strong><span>Progression</span><small>${escapeHtml(String(obligations.length))} session(s)</small></article>
+        </div>
+        <div class="scope-card scope-cycle-section">
+          <h2 style="margin-top:0">Informations du cycle</h2>
           <dl class="scope-meta">
-            <div><dt>STAT.COM</dt><dd>${escapeHtml(cycle.stat_com || '—')}</dd></div>
-            <div><dt>QUI</dt><dd>${escapeHtml(cycle.qui || '—')}</dd></div>
-            <div><dt>Clé</dt><dd>${escapeHtml(cycle.cycle_key || '—')}</dd></div>
-            <div><dt>Source</dt><dd>${escapeHtml(cycle.source_type || 'MANUEL')}</dd></div>
+            <div><dt>Type</dt><dd>${escapeHtml(typeLabel)}</dd></div>
+            <div><dt>Formation</dt><dd>${escapeHtml(cycle.libelle || '—')}</dd></div>
+            <div><dt>Période</dt><dd>${escapeHtml(period)}</dd></div>
+            <div><dt>Sessions</dt><dd>${escapeHtml(String(obligations.length || evenements.length || 0))}</dd></div>
+            <div><dt>Domaine</dt><dd>${escapeHtml(domaineLabel(cycle.domaine_code))}</dd></div>
+            <div><dt>Population</dt><dd>${escapeHtml(cycle.domaine_code === 'PR' ? 'PAPR' : 'Population configurée')}</dd></div>
           </dl>
         </div>
-        <div class="scope-card scope-table-wrap" style="margin-top:12px">
-          <h2>Matrice individuelle</h2>
-          <table class="scope-table"><thead><tr>
-            ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
-            <th>Rôles</th>
-            ${sortableHeader('cycle-matrix', 'etat', 'État', state.cycleMatrixSort)}
-            ${sortableHeader('cycle-matrix', 'progression', 'Progression', state.cycleMatrixSort)}
-            ${matrixHeaders}
-          </tr></thead><tbody>${matrixRows}</tbody></table>
-        </div>
-        <div class="scope-card scope-table-wrap" style="margin-top:12px">
-          <h2>Sessions</h2>
+        <div class="scope-card scope-table-wrap scope-cycle-section">
+          <h2>Sessions / événements constitutifs</h2>
           <table class="scope-table"><thead><tr>
             ${sortableHeader('cycle-events', 'date', 'Date', state.cycleEventSort)}
             ${sortableHeader('cycle-events', 'code', 'Code', state.cycleEventSort)}
@@ -3347,16 +3441,45 @@
             ${sortableHeader('cycle-events', 'etat', 'État', state.cycleEventSort)}
           </tr></thead><tbody>${eventRows}</tbody></table>
         </div>
-        <div class="scope-card scope-table-wrap" style="margin-top:12px">
-          <h2>Population et rôles</h2>
+        <div class="scope-card scope-table-wrap scope-cycle-section">
+          <h2>Personnel concerné</h2>
           <table class="scope-table"><thead><tr>
-            ${sortableHeader('cycle-people', 'grade', 'Nom', state.cyclePeopleSort)}
-            ${sortableHeader('cycle-people', 'nip', 'NIP', state.cyclePeopleSort)}
-            ${sortableHeader('cycle-people', 'role', 'Rôle', state.cyclePeopleSort)}
-            ${sortableHeader('cycle-people', 'statut', 'Statut', state.cyclePeopleSort)}
-            ${sortableHeader('cycle-people', 'session', 'Session', state.cyclePeopleSort)}
-            ${sortableHeader('cycle-people', 'exception', 'Exception', state.cyclePeopleSort)}
-          </tr></thead><tbody>${peopleRows}</tbody></table>
+            ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'role', 'Rôle', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'etat', 'État', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'progression', 'Progression', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'resultat', 'Session / résultat', state.cycleMatrixSort)}
+            <th>Information</th>
+          </tr></thead><tbody>${populationHtml}</tbody></table>
+        </div>
+        <div class="scope-card scope-table-wrap scope-cycle-section">
+          <h2>Encadrement</h2>
+          <table class="scope-table"><thead><tr>
+            ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'role', 'Rôle', state.cycleMatrixSort)}
+            <th>Sessions</th>
+            <th>Information</th>
+          </tr></thead><tbody>${encadrementHtml}</tbody></table>
+        </div>
+        ${outsideRows.length ? `<div class="scope-card scope-cycle-section"><h2>Informations complémentaires</h2><p class="scope-muted">${escapeHtml(String(outsideRows.length))} personne${outsideRows.length > 1 ? 's' : ''} hors population suivie apparaît${outsideRows.length > 1 ? 'ssent' : ''} dans les données du cycle sans entrer dans le dénominateur.</p></div>` : ''}
+        <details class="scope-card scope-cycle-section">
+          <summary>Informations techniques</summary>
+          <dl class="scope-meta">
+            <div><dt>STAT.COM</dt><dd>${escapeHtml(cycle.stat_com || '—')}</dd></div>
+            <div><dt>QUI</dt><dd>${escapeHtml(cycle.qui || '—')}</dd></div>
+            <div><dt>Clé technique</dt><dd>${escapeHtml(cycle.cycle_key || '—')}</dd></div>
+            <div><dt>Source</dt><dd>${escapeHtml(cycle.source_type || 'MANUEL')}</dd></div>
+          </dl>
+        </details>
+        <div class="scope-card scope-table-wrap scope-cycle-section">
+          <h2>Matrice détaillée</h2>
+          <table class="scope-table"><thead><tr>
+            ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
+            <th>Rôles</th>
+            ${sortableHeader('cycle-matrix', 'etat', 'État', state.cycleMatrixSort)}
+            ${sortableHeader('cycle-matrix', 'progression', 'Progression', state.cycleMatrixSort)}
+            ${matrixHeaders}
+          </tr></thead><tbody>${matrixRows}</tbody></table>
         </div>
       </div>
     `;
@@ -5035,6 +5158,40 @@
     if (code === 'accidentMaladie') return 'Accident / maladie';
     if (code === 'nonPrecise') return 'Non précisé (historique)';
     return code;
+  }
+
+  function formationStatusLabel(code) {
+    const id = String(code || '').toUpperCase();
+    const participation = state.participationAdmin || (state.referentiels && state.referentiels.participation) || {};
+    const row = ((participation && participation.statuses) || []).find((item) => String(item.id || item.value || '').toUpperCase() === id);
+    if (row && row.label) return row.label;
+    return ({
+      NON_RENSEIGNE: 'Non renseigné',
+      PRESENT: 'Présent',
+      ABSENT_EXCUSE: 'Excusé',
+      ABSENT_NON_EXCUSE: 'Absent',
+      DISPENSE: 'Dispensé',
+      PERMUTATION: 'Permutation',
+      NON_CONCERNE: 'Non concerné'
+    }[id] || String(code || '').replace(/_/g, ' ').toLowerCase());
+  }
+
+  function formationMotifLabel(code) {
+    const id = String(code || '').toUpperCase();
+    const participation = state.participationAdmin || (state.referentiels && state.referentiels.participation) || {};
+    const row = ((participation && participation.motifs) || []).find((item) => String(item.id || item.value || item.motif_id || '').toUpperCase() === id);
+    if (row && row.label) return row.label;
+    return ({
+      PRIVE: 'Privé',
+      PROFESSIONNEL: 'Professionnel',
+      ARMEE: 'Armée',
+      ACCIDENT_MALADIE: 'Accident / maladie',
+      FORMATION_HORS_SDIS: 'Formation hors SDIS',
+      DEMISSION_EN_COURS: 'Démission en cours',
+      NON_CONCERNE: 'Non concerné',
+      PAS_CONCERNE: 'Non concerné',
+      AUTO_RETRAIT: 'Auto-retrait'
+    }[id] || String(code || '').replace(/_/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toLocaleUpperCase('fr-CH')));
   }
 
   function rhTypeLabel(type, motif) {
@@ -8083,9 +8240,9 @@
         : 'Session non renseignée';
       const eventId = row.eventId || row.evenementId || '';
       const control = row.selectable
-        ? `<label class="scope-check scope-association-check"><input type="checkbox" data-association-select="${escapeHtml(eventId)}" data-association-session="${escapeHtml(row.sessionIndex || '')}" checked><span>Associer</span></label>`
+        ? `<label class="scope-check scope-association-check"><input type="checkbox" data-association-select="${escapeHtml(eventId)}" data-association-session="${escapeHtml(row.sessionIndex || '')}" checked><span class="scope-association-check-mark"></span><span>Associer</span></label>`
         : (row.status === 'DEJA_ASSOCIE' && row.canDissociate
-          ? `<label class="scope-check scope-association-check"><input type="checkbox" data-association-dissociate="${escapeHtml(eventId)}"><span>Dissocier</span></label>`
+          ? `<label class="scope-check scope-association-check"><input type="checkbox" data-association-dissociate="${escapeHtml(eventId)}"><span class="scope-association-check-mark"></span><span>Dissocier</span></label>`
           : '<span class="scope-muted">Protégé</span>');
       return `<tr class="scope-association-row ${statusClass(row.status)}" data-association-status="${escapeHtml(row.status || '')}">
         <td>${control}</td>
@@ -8114,7 +8271,7 @@
         <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-association-filter="AMBIGU">Ambigus</button>
       </div>
       <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Choix</th><th>Date</th><th>Événement</th><th>Domaine</th><th>État</th><th>Session</th><th>Saisies</th></tr></thead><tbody>${rowHtml || '<tr><td colspan="7"><div class="scope-empty">Aucun événement compatible trouvé.</div></td></tr>'}</tbody></table></div>
-      <section><h3>Règles concernées</h3><p><strong>Statuts</strong><br>${escapeHtml((rules.activeStatuses || []).join(' · ') || '—')}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml((rules.excuseMotifs || []).join(' · ') || '—')}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml((rules.dispenseMotifs || []).join(' · ') || '—')}</p></section>
+      <section><h3>Règles concernées</h3><p><strong>Statuts</strong><br>${escapeHtml((rules.activeStatuses || []).map(formationStatusLabel).join(' · ') || '—')}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml((rules.excuseMotifs || []).map(formationMotifLabel).join(' · ') || '—')}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml((rules.dispenseMotifs || []).map(formationMotifLabel).join(' · ') || '—')}</p></section>
       ${selected.length ? `<p class="scope-muted">${escapeHtml(String(selected.length))} événement${selected.length > 1 ? 's' : ''} compatible${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''} par défaut. Décochez ceux à laisser inchangés.</p>` : '<p class="scope-empty">Aucun événement sélectionnable dans cette prévisualisation.</p>'}
     </div>`;
   }
@@ -9920,6 +10077,12 @@
     root.querySelectorAll('[data-report-session]').forEach((btn) => {
       btn.addEventListener('click', () => generateSessionReport(btn.getAttribute('data-report-session')));
     });
+    root.querySelectorAll('[data-report-cycle]').forEach((btn) => {
+      btn.addEventListener('click', () => generateCycleReport(btn.getAttribute('data-report-cycle')));
+    });
+    root.querySelectorAll('[data-print-cycle]').forEach((btn) => {
+      btn.addEventListener('click', () => window.print());
+    });
     root.querySelectorAll('[data-finalize-multisession]').forEach((btn) => {
       btn.addEventListener('click', () => finalizeMultiSessionFromList(btn.getAttribute('data-finalize-multisession'), btn.getAttribute('data-finalize-event')));
     });
@@ -11190,6 +11353,17 @@
     const body = Object.assign(reportPeriodPayload(), {
       kind: 'SESSION',
       evenementId,
+      nominatif: canNominatif()
+    });
+    delete body.domaine;
+    delete body.cible;
+    openReport(body);
+  }
+
+  function generateCycleReport(cycleId) {
+    const body = Object.assign(reportPeriodPayload(), {
+      kind: 'CYCLE',
+      cycleId,
       nominatif: canNominatif()
     });
     delete body.domaine;

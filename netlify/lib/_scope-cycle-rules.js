@@ -104,7 +104,7 @@ function isSessionCountingParticipation(row, personnesById, population){
   const statut = normalizeUpper(row && row.statut || 'NON_RENSEIGNE');
   const source = normalizeUpper(row && row.source);
   if(!SESSION_COUNTING_ROLES.has(role)) return false;
-  if(role === 'PARTICIPANT') return STATUTS_PR_EXERCISE_RECONNUS.has(statut);
+  if(role === 'PARTICIPANT') return population.has(dedupeKey(row, personnesById)) && STATUTS_PR_EXERCISE_RECONNUS.has(statut);
   if(!STATUTS_PRESENTS.has(statut)) return false;
   const key = dedupeKey(row, personnesById);
   if(!key || !population.has(key)) return false;
@@ -432,6 +432,7 @@ function computeCycleMetrics(input = {}){
   const surveillants = new Set();
   const auxiliaires = new Set();
   const dispensesInternes = new Set();
+  const participantStatusesByKey = new Map();
   const assignedByPerson = new Map();
   const participatedByPerson = new Map();
   const sessionCounts = mapEventCounts(events);
@@ -466,6 +467,11 @@ function computeCycleMetrics(input = {}){
     const statut = normalizeUpper(participation.statut || 'NON_RENSEIGNE');
     const key = addPerson(new Set(), participation, personnesById);
     if(!key) continue;
+    if(role === 'PARTICIPANT' && population.has(key)){
+      const statuses = participantStatusesByKey.get(key) || new Set();
+      statuses.add(statut);
+      participantStatusesByKey.set(key, statuses);
+    }
     if(role === 'FORMATEUR') formateurs.add(key);
     else if(role === 'MONITEUR') moniteurs.add(key);
     else if(role === 'SURVEILLANT') surveillants.add(key);
@@ -479,6 +485,16 @@ function computeCycleMetrics(input = {}){
       nonRenseignes.add(key);
     } else if(role === 'PARTICIPANT' && STATUTS_ABSENCE.has(statut) && assignedByPerson.get(key) === eid){
       absencesQualifiees.add(key);
+    }
+  }
+
+  for(const [key, statuses] of participantStatusesByKey.entries()){
+    if(statuses.size > 0 && [...statuses].every((status) => status === 'NON_CONCERNE')){
+      population.delete(key);
+      nonRenseignes.delete(key);
+      participantsReconnus.delete(key);
+      absencesQualifiees.delete(key);
+      dispensesInternes.delete(key);
     }
   }
 
@@ -576,6 +592,7 @@ function statusRank(status){
 function statusFromDecision(row, populationHasKey){
   const role = normalizeUpper(row && row.role || 'PARTICIPANT');
   const statut = normalizeUpper(row && row.statut || 'NON_RENSEIGNE');
+  if(statut === 'NON_CONCERNE') return 'NON_CONCERNE';
   if(role === 'FORMATEUR' && STATUTS_PRESENTS.has(statut) && populationHasKey) return 'REALISE';
   if(role === 'SURVEILLANT' && STATUTS_PRESENTS.has(statut) && populationHasKey && normalizeUpper(row && row.source) === 'SAISIE') return 'REALISE';
   if(role !== 'PARTICIPANT') return 'NON_CONCERNE';
@@ -625,8 +642,11 @@ function buildCyclePilotage(input = {}){
 
   const peopleByKey = new Map();
   const populationKeys = new Set();
+  const populationSourceByKey = new Map();
   const rolesByKey = new Map();
   const expectedByKey = new Map();
+  const supportKeys = new Set();
+  const participantOnlyOutsidePopulation = new Set();
   const ensurePerson = (row) => {
     const key = dedupeKey(row, personnesById);
     if(key && !peopleByKey.has(key)){
@@ -640,7 +660,12 @@ function buildCyclePilotage(input = {}){
     const set = expectedByKey.get(key) || new Set();
     set.add(obligationKey);
     expectedByKey.set(key, set);
-    if(source === 'ATTENDU' || source === 'CYCLE' || source === 'PARTICIPATION') populationKeys.add(key);
+    if(source === 'ATTENDU' || source === 'CYCLE'){
+      populationKeys.add(key);
+      const sources = populationSourceByKey.get(key) || new Set();
+      sources.add(source);
+      populationSourceByKey.set(key, sources);
+    }
   };
 
   for(const row of input.attendus || input.expected || []){
@@ -658,8 +683,14 @@ function buildCyclePilotage(input = {}){
     const roles = rolesByKey.get(key) || new Set();
     roles.add(role);
     rolesByKey.set(key, roles);
-    if(role !== 'PARTICIPANT') continue;
+    if(role !== 'PARTICIPANT'){
+      supportKeys.add(key);
+      continue;
+    }
     populationKeys.add(key);
+    const sources = populationSourceByKey.get(key) || new Set();
+    sources.add('CYCLE');
+    populationSourceByKey.set(key, sources);
     const assigned = assignedEventId(row);
     if(assigned && obligationByEventId.has(assigned)){
       expect(key, obligationByEventId.get(assigned).obligationKey, 'CYCLE');
@@ -687,7 +718,12 @@ function buildCyclePilotage(input = {}){
     rolesByKey.set(key, roles);
     const populationHasKey = populationKeys.has(key) || (role === 'PARTICIPANT' && (expectedByKey.get(key) || new Set()).has(obligation.obligationKey));
     const status = statusFromDecision(row, populationHasKey);
-    if(role === 'PARTICIPANT') expect(key, obligation.obligationKey, 'PARTICIPATION');
+    if(role === 'PARTICIPANT'){
+      if(populationHasKey) expect(key, obligation.obligationKey, 'PARTICIPATION');
+      else participantOnlyOutsidePopulation.add(key);
+    } else if(ROLES_CYCLE.has(role)){
+      supportKeys.add(key);
+    }
     const byObligation = decisionsByKey.get(key) || new Map();
     const current = byObligation.get(obligation.obligationKey);
     if(!current || statusRank(status) > statusRank(current.status)){
@@ -711,7 +747,7 @@ function buildCyclePilotage(input = {}){
     const cells = obligations.map((obligation) => {
       const expectedHere = expected.has(obligation.obligationKey);
       const decision = decisions.get(obligation.obligationKey);
-      const status = expectedHere ? ((decision && decision.status !== 'NON_CONCERNE' && decision.status) || 'A_RENSEIGNER') : ((decision && decision.status !== 'NON_CONCERNE' && decision.status) || 'NON_CONCERNE');
+      const status = expectedHere ? ((decision && decision.status) || 'A_RENSEIGNER') : ((decision && decision.status) || 'NON_CONCERNE');
       return {
         obligationKey: obligation.obligationKey,
         label: obligation.label,
@@ -733,8 +769,9 @@ function buildCyclePilotage(input = {}){
     const absents = expectedCells.filter((cell) => cell.status === 'ABSENT').length;
     const open = expectedCells.filter((cell) => cell.status === 'A_RENSEIGNER').length;
     const resolved = realised + dispenses + excuses;
-    const isPopulation = populationKeys.has(key);
-    let globalState = 'ENCADREMENT';
+    const hasOnlyNonConcerne = expectedCells.length > 0 && expectedCells.every((cell) => cell.status === 'NON_CONCERNE');
+    const isPopulation = populationKeys.has(key) && !hasOnlyNonConcerne;
+    let globalState = supportKeys.has(key) ? 'ENCADREMENT' : (participantOnlyOutsidePopulation.has(key) ? 'HORS_POPULATION' : 'NON_CONCERNE');
     if(isPopulation){
       if(absents || open) globalState = 'INCOMPLET';
       else if(expectedCells.length && realised) globalState = 'COMPLET';
@@ -742,10 +779,16 @@ function buildCyclePilotage(input = {}){
       else if(expectedCells.length && excuses) globalState = 'EXCUSE';
       else globalState = 'INCOMPLET';
     }
+    const contributionCell = expectedCells.find((cell) => ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(cell.status))
+      || cells.find((cell) => ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(cell.status))
+      || null;
     return {
       ...personIdentityFromKey(key, peopleByKey),
       roles,
       isPopulation,
+      isEncadrement: supportKeys.has(key),
+      isOutsidePopulation: !isPopulation && !supportKeys.has(key),
+      populationSources: sortedValues(populationSourceByKey.get(key) || new Set()),
       expectedCount: expectedCells.length,
       realisedCount: realised,
       dispensedCount: dispenses,
@@ -754,6 +797,8 @@ function buildCyclePilotage(input = {}){
       openCount: open,
       progressionPct: expectedCells.length ? round1((100 * resolved) / expectedCells.length) : null,
       globalState,
+      primaryEventId: contributionCell && contributionCell.eventId || null,
+      primaryResultLabel: contributionCell && contributionCell.label || null,
       obligations: cells
     };
   });
@@ -769,10 +814,13 @@ function buildCyclePilotage(input = {}){
       population: populationRows.length,
       complete: completeRows.length,
       incomplete: incompleteRows.length,
+      resteATraiter: incompleteRows.length,
+      remainingObligations: incompleteRows.length,
       realised: populationRows.filter((row) => row.realisedCount > 0).length,
       excused: populationRows.filter((row) => row.excusedCount > 0).length,
       dispensed: populationRows.filter((row) => row.dispensedCount > 0).length,
-      encadrement: individualRows.filter((row) => !row.isPopulation).length,
+      encadrement: individualRows.filter((row) => row.isEncadrement).length,
+      horsPopulation: individualRows.filter((row) => row.isOutsidePopulation).length,
       progression: populationRows.length ? round1((100 * completeRows.length) / populationRows.length) : null
     }
   };

@@ -11,6 +11,7 @@ const contract = require('./_scope-core-contract');
 const ALLOWED_KEYS = new Set([
   'kind', 'type',
   'evenementId', 'evenement_id', 'id',
+  'cycleId', 'cycle_id',
   'domaine', 'domaineCode', 'sousDomaine', 'sous_domaine', 'subdomain',
   'specialisation', 'specialization',
   'cible', 'cibleId',
@@ -55,6 +56,7 @@ function sanitizeQuery(body){
   return {
     kind,
     evenementId: raw.evenementId || raw.evenement_id || raw.id || null,
+    cycleId: raw.cycleId || raw.cycle_id || raw.id || null,
     domaine,
     sousDomaine,
     specialisation,

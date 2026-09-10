@@ -853,6 +853,26 @@ function createPgRepo(client){
       const result = await q('select * from scope_multisessions_v2 where multisession_id = $1', [id]);
       return result.rows[0] || null;
     },
+    async listMultisessionsV2(query = {}){
+      const where = [];
+      const params = [];
+      let i = 1;
+      const domain = String(query.domaine || query.domaineCode || query.domaine_code || '').trim().toUpperCase();
+      if(domain && domain !== 'TOUS'){
+        where.push(`upper(domain) = $${i}`);
+        params.push(domain);
+        i += 1;
+      }
+      const year = query.annee || query.year;
+      if(year){
+        where.push(`coalesce(period->>'from', period->>'to', '') like $${i}`);
+        params.push(`${Number(year)}%`);
+        i += 1;
+      }
+      const sql = `select * from scope_multisessions_v2 ${where.length ? `where ${where.join(' and ')}` : ''} order by period->>'from' desc nulls last, label`;
+      const result = await q(sql, params);
+      return result.rows;
+    },
     async getMultisessionV2ForEvent(eventId){
       const result = await q(
         `select ms.*

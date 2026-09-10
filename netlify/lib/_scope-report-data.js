@@ -12,6 +12,7 @@ const { ROOT_DOMAINES } = require('./_scope-graphs');
 const { displayDomaineCode } = require('./_scope-model');
 const { collectMultisessionReport } = require('./_scope-multisession-report');
 const { createScopeJspReportingService, createScopeParticipationReportingService } = require('./_scope-jsp-reporting');
+const { createScopeCycleService } = require('./_scope-cycle-service');
 const MultiSessionV2 = require('./_scope-multisession-v2');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 const UiLogic = require('../../assets/js/scope-ui-logic');
@@ -50,7 +51,7 @@ function exerciseReportTitle(event){
   return `RAPPORT — ${core.toLocaleUpperCase('fr-CH')}`;
 }
 
-const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP', 'PARTICIPATION', 'FORMATION']);
+const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP', 'PARTICIPATION', 'FORMATION', 'CYCLE']);
 
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
@@ -115,7 +116,8 @@ function normalizeKind(raw){
     DETAIL: 'SESSION', EXERCISE_DETAIL: 'SESSION', RAPPORT_DETAILLE: 'SESSION',
     JSP: 'JSP', RAPPORT_JSP: 'JSP', JSP_REPORT: 'JSP',
     PARTICIPATION: 'PARTICIPATION', RAPPORT_PARTICIPATION: 'PARTICIPATION',
-    FORMATION: 'FORMATION', RAPPORT_FORMATION: 'FORMATION'
+    FORMATION: 'FORMATION', RAPPORT_FORMATION: 'FORMATION',
+    CYCLE: 'CYCLE', RAPPORT_CYCLE: 'CYCLE'
   };
   const kind = map[text];
   if(!kind) throw new HttpError(400, 'type_rapport_invalide', 'Type de rapport inconnu.');
@@ -198,6 +200,11 @@ function buildFilename(kind, ctx){
   if(kind === 'MULTI_SESSION_V2'){
     const y = String((ctx.period && ctx.period.from) || ctx.year || '').slice(0, 4);
     return sanitizeFilename(`${y || 'SCOPE'} - ${cleanFilenamePart(ctx.domaine, 'SCOPE')} - ${cleanFilenamePart(ctx.eventLabel, 'Multi-session')} - Rapport de présence Multi-session.pdf`);
+  }
+  if(kind === 'CYCLE'){
+    const y = String((ctx.period && ctx.period.from) || ctx.year || '').slice(0, 4) || 'SCOPE';
+    const suffix = ctx.engine === 'MULTI_SESSION_V2' ? 'Rapport Multi-session' : 'Rapport de cycle';
+    return sanitizeFilename(`${y} - ${cleanFilenamePart(ctx.domaine, 'SCOPE')} - ${cleanFilenamePart(ctx.eventLabel || ctx.cycleLabel, 'Cycle')} - ${suffix}.pdf`);
   }
   const date = ctx.eventDate || '';
   const label = ctx.eventLabel || ctx.cible || 'Événement';
@@ -467,6 +474,101 @@ function multiSessionV2Graphs(state, nominatif){
       })) }]
     } : null
   };
+}
+
+function cycleStatusLabel(code){
+  const value = String(code || '').toUpperCase();
+  if(value === 'TERMINE' || value === 'REALISE') return 'Terminé';
+  if(value === 'A_FINALISER') return 'À finaliser';
+  if(value === 'EN_COURS') return 'En cours';
+  if(value === 'ANNULE') return 'Annulé';
+  if(value === 'PLANIFIE') return 'Planifié';
+  return value || '—';
+}
+
+function cycleTypeLabel(cycle){
+  const type = String(cycle && cycle.type_cycle || '').toUpperCase();
+  const domain = displayDomaineCode(cycle && cycle.domaine_code);
+  if(type === 'MULTI_SESSION') return 'Formation Multi-session';
+  if(domain === 'AUTO') return 'Cycle AUTO';
+  if(domain === 'PR') return 'Cycle PR';
+  return type ? `Cycle ${type}` : 'Cycle';
+}
+
+function cyclePilotageStateLabel(code){
+  const value = String(code || '').toUpperCase();
+  if(value === 'COMPLET') return 'Obligation satisfaite';
+  if(value === 'INCOMPLET') return 'À traiter';
+  if(value === 'DISPENSE') return 'Dispensé';
+  if(value === 'EXCUSE') return 'Excusé';
+  if(value === 'REALISE') return 'Réalisé';
+  if(value === 'ABSENT') return 'Absent';
+  if(value === 'A_RENSEIGNER') return 'À renseigner';
+  if(value === 'ENCADREMENT') return 'Encadrement';
+  if(value === 'HORS_POPULATION') return 'Hors population';
+  if(value === 'NON_CONCERNE') return 'Non concerné';
+  return value || '—';
+}
+
+function cycleRoleLabel(role){
+  const code = String(role || '').toUpperCase();
+  if(code === 'FORMATEUR') return 'Formateur';
+  if(code === 'MONITEUR') return 'Moniteur';
+  if(code === 'SURVEILLANT') return 'Surveillant';
+  if(code === 'AUXILIAIRE') return 'Auxiliaire';
+  if(code === 'PARTICIPANT') return 'Participant';
+  return code || '—';
+}
+
+function cycleGraphs(detail){
+  const kpis = (detail.pilotage && detail.pilotage.kpis) || {};
+  const population = Math.max(1, Number(kpis.population || 0));
+  const statePoints = [
+    { label: 'Obligations satisfaites', count: Number(kpis.realised || 0), token: 'primary' },
+    { label: 'Excusés', count: Number(kpis.excused || 0), token: 'secondary' },
+    { label: 'Dispensés', count: Number(kpis.dispensed || 0), token: 'warning' },
+    { label: 'À traiter', count: Number(kpis.resteATraiter || kpis.incomplete || 0), token: 'neutral' }
+  ].filter((row) => row.count > 0);
+  const sessions = (detail.evenements || []).map((event, index) => {
+    const rows = ((detail.pilotage && detail.pilotage.individualRows) || []).filter((row) => row.isPopulation && String(row.primaryEventId || '') === String(event.evenement_id || event.event_id || ''));
+    const tokens = ['primary', 'secondary', 'warning', 'neutral'];
+    return {
+      label: event.libelle || `Session ${index + 1}`,
+      token: tokens[index % tokens.length],
+      value: Math.round((1000 * rows.length) / population) / 10,
+      numerator: rows.length,
+      denominator: population
+    };
+  }).filter((row) => row.numerator > 0);
+  return {
+    repartition: statePoints.length ? {
+      type: 'donut',
+      question: 'Répartition des états consolidés',
+      series: [{ id: 'etats', points: statePoints.map((row) => ({ label: row.label, value: row.count, token: row.token })) }]
+    } : null,
+    sessions: sessions.length ? {
+      type: 'bar',
+      question: 'Obligations satisfaites par session',
+      series: [{ id: 'sessions', points: sessions }]
+    } : null
+  };
+}
+
+function cycleReportRows(rows){
+  return (rows || []).slice().sort(sortByGradeThenName).map((row) => ({
+    grade: row.grade || '',
+    nom: row.nom || '',
+    prenom: row.prenom || '',
+    nip: row.nip || '',
+    roles: (row.roles || []).map(cycleRoleLabel).join(', ') || '—',
+    etat: cyclePilotageStateLabel(row.globalState),
+    progression: row.progressionPct == null ? '—' : `${String(row.progressionPct).replace('.', ',')} %`,
+    resultat: row.primaryResultLabel || '—',
+    information: (row.obligations || [])
+      .filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE')
+      .map((cell) => [cell.label, cyclePilotageStateLabel(cell.status), MOTIF_LABELS[cell.motif] || cell.motif].filter(Boolean).join(' · '))
+      .join(' | ') || '—'
+  }));
 }
 
 async function multiSessionV2ReportModel(repo, fiche, query, includeNominatif){
@@ -810,6 +912,83 @@ async function collectReport(repo, query, options){
       isLegacy: false,
       alerts: { p0: [], p1: [], p2: [] },
       events: formation.eventsToWatch || []
+    };
+  }
+
+  if(kind === 'CYCLE'){
+    const cycleId = query.cycleId || query.cycle_id || query.id;
+    if(!cycleId) throw new HttpError(400, 'cycle_requis', 'Le rapport de cycle exige un identifiant de cycle.');
+    const cycles = createScopeCycleService(repo);
+    const detail = await cycles.getCycle(cycleId);
+    const cycle = detail.cycle || {};
+    const pilotage = detail.pilotage || {};
+    const kpis = pilotage.kpis || {};
+    const populationRows = (pilotage.individualRows || []).filter((row) => row && row.isPopulation);
+    const encadrementRows = (pilotage.individualRows || []).filter((row) => row && row.isEncadrement);
+    const remainingRows = populationRows.filter((row) => String(row.globalState || '').toUpperCase() === 'INCOMPLET');
+    const eventCount = (detail.evenements || []).length;
+    const realisedSessions = (detail.evenements || []).filter((row) => ['REALISE', 'CLOTUREE', 'CLOTURE'].includes(String(row.statut || row.status || '').toUpperCase())).length;
+    const period = {
+      from: cycle.date_debut || `${cycle.annee || new Date().getFullYear()}-01-01`,
+      to: cycle.date_fin || `${cycle.annee || new Date().getFullYear()}-12-31`,
+      preset: 'CUSTOM'
+    };
+    const domaine = displayDomaineCode(cycle.domaine_code);
+    const engine = cycle.metadata && cycle.metadata.engine;
+    const title = engine === MultiSessionV2.ENGINE.MULTI_SESSION_V2
+      ? `Rapport Multi-session — ${cycle.libelle || 'Formation'}`
+      : `Rapport de cycle — ${cycle.libelle || 'Cycle'}`;
+    return {
+      kind: 'CYCLE',
+      period,
+      domaine,
+      cible: null,
+      title,
+      subtitle: `${cycleTypeLabel(cycle)} · ${cycleStatusLabel(cycle.statut)}`,
+      summaryLabel: 'Pilotage consolidé',
+      filename: buildFilename('CYCLE', {
+        period,
+        domaine,
+        eventLabel: cycle.libelle,
+        cycleLabel: cycle.libelle,
+        engine
+      }),
+      event: null,
+      officiel: {
+        percentage: kpis.progression,
+        numerator: kpis.complete,
+        denominator: kpis.population,
+        eventCount,
+        volumes: {
+          population: kpis.population,
+          complete: kpis.complete,
+          incomplete: kpis.resteATraiter ?? kpis.incomplete,
+          realised: kpis.realised,
+          excuses: kpis.excused,
+          dispenses: kpis.dispensed,
+          encadrement: kpis.encadrement
+        }
+      },
+      cycleReport: {
+        cycle,
+        typeLabel: cycleTypeLabel(cycle),
+        statusLabel: cycleStatusLabel(cycle.statut),
+        sessionsRealised: realisedSessions,
+        sessionCount: eventCount,
+        kpis,
+        remainingCount: remainingRows.length,
+        engine
+      },
+      graphs: cycleGraphs(detail),
+      explain: null,
+      nominatif: includeNominatif ? cycleReportRows(populationRows) : [],
+      encadrement: includeNominatif ? cycleReportRows(encadrementRows) : [],
+      remainingRows: includeNominatif ? cycleReportRows(remainingRows) : [],
+      quantitative: false,
+      isLegacy: false,
+      alerts: { p0: [], p1: [], p2: [] },
+      events: detail.evenements || [],
+      domaines: ROOT_DOMAINES
     };
   }
 

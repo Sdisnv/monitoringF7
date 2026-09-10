@@ -3955,11 +3955,80 @@ html, body {
 }
 
 .scope-association-check {
-  min-height: 0;
+  min-height: 34px;
   margin: 0;
-  padding: 4px 6px;
-  border: 0;
-  background: transparent;
+  padding: 6px 10px;
+  border: 1px solid var(--scope-border);
+  border-radius: var(--scope-radius-xs);
+  background: #fff;
+  cursor: pointer;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.scope-association-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scope-association-check-mark {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--scope-border);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: #fff;
+}
+
+.scope-association-check input:checked + .scope-association-check-mark {
+  background: var(--scope-blue);
+  border-color: var(--scope-blue);
+}
+
+.scope-association-check input:checked + .scope-association-check-mark::after {
+  content: "";
+  width: 8px;
+  height: 5px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.scope-association-check:focus-within {
+  border-color: var(--scope-blue);
+  box-shadow: 0 0 0 3px rgba(23, 28, 143, .14);
+}
+
+.scope-cycle-row-actions,
+.scope-cycle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.scope-cycle-section {
+  margin-top: 12px;
+}
+
+@media print {
+  .scope-cycle-page .scope-cycle-actions,
+  .scope-cycle-page .scope-crumb,
+  .scope-cycle-page .scope-context-actions,
+  .scope-cycle-page details {
+    display: none !important;
+  }
+
+  .scope-cycle-page,
+  .scope-cycle-page .scope-card {
+    box-shadow: none !important;
+  }
 }
 
 .scope-feedback-actions {

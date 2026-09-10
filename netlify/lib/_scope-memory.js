@@ -561,6 +561,21 @@ function createMemoryRepo(){
       const item = multisessionsV2.get(String(id));
       return item ? { ...item } : null;
     },
+    async listMultisessionsV2(query = {}){
+      const year = query.annee || query.year || null;
+      const domain = String(query.domaine || query.domaineCode || query.domaine_code || '').toUpperCase();
+      return [...multisessionsV2.values()]
+        .filter((row) => {
+          if(domain && domain !== 'TOUS' && String(row.domain || '').toUpperCase() !== domain) return false;
+          if(year){
+            const period = row.period || {};
+            const from = String(period.from || row.created_at || '');
+            if(String(year) !== from.slice(0, 4)) return false;
+          }
+          return true;
+        })
+        .map((row) => ({ ...row }));
+    },
     async getMultisessionV2ForEvent(eventId){
       const session = [...multisessionV2Sessions.values()].find((row) => row.event_id === eventId);
       if(!session) return null;
