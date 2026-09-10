@@ -361,7 +361,7 @@ function createScopeCycleService(repo){
         if(finalStatus === 'PRESENT') globalState = 'COMPLET';
         else if(finalStatus === 'DISPENSE') globalState = 'DISPENSE';
         else if(finalStatus === 'ABSENT_EXCUSE') globalState = 'EXCUSE';
-        else if(finalStatus === 'ABSENT_NON_EXCUSE') globalState = 'INCOMPLET';
+        else if(finalStatus === 'ABSENT_NON_EXCUSE') globalState = 'ABSENT';
         else globalState = 'INCOMPLET';
       }
       const roleSet = new Set(isPopulation ? ['PARTICIPANT'] : []);
@@ -379,6 +379,8 @@ function createScopeCycleService(repo){
         }
         return { obligationKey: obligation.obligationKey, label: obligation.label, expected: isPopulation, status, eventId: p && eventId(p) || null, role: p && p.role || null, statut: p && p.statut || null, motif: p && (p.motif_absence || p.reason) || null, sessionLocked: obligation.sessionLocked };
       });
+      const primaryEventId = v2.finalEventId || v2.countedEventId || null;
+      const primaryEvent = primaryEventId ? sessions.find((event) => eventId(event) === primaryEventId) : null;
       return {
         personKey: key,
         personneId: pid,
@@ -397,15 +399,20 @@ function createScopeCycleService(repo){
         absentCount: finalStatus === 'ABSENT_NON_EXCUSE' ? 1 : 0,
         openCount: isPopulation && !finalStatus ? 1 : 0,
         progressionPct: isPopulation ? (finalStatus ? 100 : 0) : null,
+        obligationSatisfiedPct: isPopulation ? (['PRESENT', 'DISPENSE', 'ABSENT_EXCUSE'].includes(finalStatus) ? 100 : 0) : null,
+        treatedCount: isPopulation && finalStatus ? 1 : 0,
+        obligationSatisfiedCount: isPopulation && ['PRESENT', 'DISPENSE', 'ABSENT_EXCUSE'].includes(finalStatus) ? 1 : 0,
         globalState,
-        primaryEventId: v2.finalEventId || v2.countedEventId || null,
-        primaryResultLabel: v2.referenceSessionLabel || null,
+        primaryEventId,
+        primaryResultLabel: v2.referenceSessionLabel || (primaryEvent && primaryEvent.libelle) || null,
         obligations: cells
       };
     }).sort((a, b) => String(a.nom || '').localeCompare(String(b.nom || ''), 'fr', { sensitivity: 'base' }) || String(a.prenom || '').localeCompare(String(b.prenom || ''), 'fr', { sensitivity: 'base' }));
     const population = rows.filter((row) => row.isPopulation);
     const complete = population.filter((row) => ['COMPLET', 'DISPENSE', 'EXCUSE'].includes(row.globalState));
+    const treated = population.filter((row) => ['COMPLET', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(row.globalState));
     const incomplete = population.filter((row) => row.globalState === 'INCOMPLET');
+    const absent = population.filter((row) => row.globalState === 'ABSENT');
     return {
       cycleId: multisessionCycleId(state.multisessionId),
       domaine: state.multisession && state.multisession.domain || '',
@@ -414,15 +421,24 @@ function createScopeCycleService(repo){
       kpis: {
         population: population.length,
         complete: complete.length,
+        obligationsSatisfaites: complete.length,
+        obligationSatisfied: complete.length,
         incomplete: incomplete.length,
+        dossiersTraites: treated.length,
+        treated: treated.length,
         resteATraiter: incomplete.length,
         remainingObligations: incomplete.length,
         realised: population.filter((row) => row.realisedCount > 0).length,
         excused: population.filter((row) => row.excusedCount > 0).length,
         dispensed: population.filter((row) => row.dispensedCount > 0).length,
+        absent: absent.length,
+        absents: absent.length,
         encadrement: rows.filter((row) => row.isEncadrement).length,
         horsPopulation: rows.filter((row) => row.isOutsidePopulation).length,
-        progression: population.length ? Math.round((1000 * complete.length) / population.length) / 10 : null
+        progression: population.length ? Math.round((1000 * treated.length) / population.length) / 10 : null,
+        tauxTraitement: population.length ? Math.round((1000 * treated.length) / population.length) / 10 : null,
+        tauxObligations: population.length ? Math.round((1000 * complete.length) / population.length) / 10 : null,
+        couvertureCycle: population.length ? Math.round((1000 * complete.length) / population.length) / 10 : null
       }
     };
   }

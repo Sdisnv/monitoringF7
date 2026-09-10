@@ -697,19 +697,22 @@ class ScopePdfRenderer {
     const highlightRows = (options && options.highlightRows) || [];
     const highlightColors = (options && options.highlightColors) || [];
     const highlightColor = (options && options.highlightColor) || '#fde8e8';
-    const headerH = 16;
+    const headerH = (options && options.headerH) || 16;
     const baseRowH = (options && options.rowH) || 18;
+    const rowFontSize = (options && options.rowFontSize) || 8;
+    const headerFontSize = (options && options.headerFontSize) || 7;
+    const maxRowH = (options && options.maxRowH) || 52;
+    const padY = options && options.padY != null ? options.padY : 2;
     const paintRow = (cells, y, { header, zebra, rowH, highlight }) => {
       const h = header ? headerH : rowH;
       if(header) this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
       else if(highlight) this.doc.rect(MARGIN, y, width, h).fill(rgb(typeof highlight === 'string' ? highlight : highlightColor));
       else if(zebra) this.doc.rect(MARGIN, y, width, h).fill(rgb('#f7f8fa'));
-      const padY = 2;
       let x = MARGIN;
       cells.forEach((cell, i) => {
         const align = header ? (aligns[i] || 'left') : (aligns[i] || 'left');
         const font = header ? 'Helvetica-Bold' : 'Helvetica';
-        const fontSize = header ? 7 : 8;
+        const fontSize = header ? headerFontSize : rowFontSize;
         const text = String(cell == null ? '' : cell);
         const boxW = cols[i] - 4;
         this.doc.fillColor(rgb(INSTITUTION.ink)).font(font).fontSize(fontSize);
@@ -735,9 +738,9 @@ class ScopePdfRenderer {
       let h = baseRowH;
       cells.forEach((cell, i) => {
         if(!wrap[i]) return;
-        this.doc.font('Helvetica').fontSize(8);
+        this.doc.font('Helvetica').fontSize(rowFontSize);
         const textH = this.doc.heightOfString(String(cell == null ? '' : cell), { width: cols[i] - 4 });
-        h = Math.max(h, Math.min(52, textH + 8));
+        h = Math.max(h, Math.min(maxRowH, textH + padY * 2 + 4));
       });
       return h;
     };
@@ -1201,7 +1204,7 @@ class ScopePdfRenderer {
       { label: 'Source', value: cycle.source_type === 'CONFIGURATION' ? 'Configuration formation' : (cycle.source_type || 'SCOPE') }
     ], { cols: 2, rowH: 20 });
 
-    this.keepHeading('kpi', 'Synthèse', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap, contentH: 56 });
+    this.keepHeading('kpi', 'Synthèse', TYPE.section, { spaceBefore: 6, after: 10, contentH: 48 });
     this.kv([
       { label: 'Population concernée', value: String(k.population || 0) },
       { label: 'Dossiers traités', value: `${k.dossiersTraites ?? k.treated ?? 0}/${k.population || 0}` },
@@ -1214,43 +1217,43 @@ class ScopePdfRenderer {
       { label: 'Traitement', value: formatTaux(k.tauxTraitement ?? k.progression) },
       { label: 'Taux d’obligations satisfaites', value: formatTaux(k.tauxObligations ?? k.couvertureCycle) },
       { label: 'Encadrement', value: String(k.encadrement || 0) }
-    ], { cols: 4, rowH: 24 });
+    ], { cols: 4, rowH: 20 });
 
     if(m.graphs && (m.graphs.sessions || m.graphs.repartition)){
-      this.keepHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap, contentH: 70 });
+      this.keepHeading('chart', 'Graphiques', TYPE.section, { spaceBefore: 4, after: 10, contentH: 70 });
       if(m.graphs.sessions) this.chart('Participation réalisée par session', m.graphs.sessions, { compact: true });
       if(m.graphs.repartition) this.chart('Répartition des états consolidés', m.graphs.repartition, { compact: true });
     }
 
-    this.keepHeading('people', 'Personnes restant à traiter', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap, contentH: 46 });
+    this.keepHeading('people', 'Personnes restant à traiter', TYPE.section, { spaceBefore: 6, after: 10, contentH: 42 });
     if(m.remainingRows && m.remainingRows.length){
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'Information'],
         m.remainingRows.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.information]),
-        [40, 86, 74, 48, 211],
-        { rowH: 14, wrap: [true, true, true, false, true] }
+        [50, 92, 78, 42, 197],
+        { rowH: 12, headerH: 14, rowFontSize: 7.3, headerFontSize: 6.8, padY: 1, maxRowH: 34, wrap: [true, true, true, false, true] }
       );
     } else {
       this.para('Aucune personne ne reste à traiter sur ce cycle.');
     }
 
     if(m.nominatif && m.nominatif.length){
-      this.keepHeading('people', 'Personnel concerné', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap, contentH: 54 });
+      this.keepHeading('people', 'Personnel concerné', TYPE.section, { spaceBefore: 6, after: 10, contentH: 38 });
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'Rôle', 'État', 'Session / résultat', 'Information'],
         m.nominatif.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.roles, row.etat, row.resultat, row.information]),
-        [42, 64, 54, 42, 54, 62, 76, 65],
-        { rowH: 15, wrap: [true, true, true, false, true, true, true, true] }
+        [54, 70, 58, 38, 70, 52, 64, 53],
+        { rowH: 12, headerH: 14, rowFontSize: 7.3, headerFontSize: 6.5, padY: 1, maxRowH: 34, wrap: [true, true, true, false, true, true, true, true] }
       );
     }
 
     if(m.encadrement && m.encadrement.length){
-      this.keepHeading('people', 'Encadrement', TYPE.section, { spaceBefore: 8, after: TYPE.sectionGap, contentH: 48 });
+      this.keepHeading('people', 'Encadrement', TYPE.section, { spaceBefore: 6, after: 10, contentH: 38 });
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'Rôle', 'Information'],
         m.encadrement.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.roles, row.information]),
-        [42, 84, 72, 48, 82, 131],
-        { rowH: 13, wrap: [true, true, true, false, true, true] }
+        [56, 92, 76, 40, 92, 103],
+        { rowH: 12, headerH: 14, rowFontSize: 7.3, headerFontSize: 6.8, padY: 1, maxRowH: 34, wrap: [true, true, true, false, true, true] }
       );
     }
   }

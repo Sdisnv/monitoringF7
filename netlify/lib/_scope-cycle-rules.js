@@ -743,7 +743,9 @@ function buildCyclePilotage(input = {}){
   const individualRows = [...allKeys].sort().map((key) => {
     const expected = expectedByKey.get(key) || new Set();
     const decisions = decisionsByKey.get(key) || new Map();
-    const roles = sortedValues(rolesByKey.get(key) || new Set());
+    const roleSet = new Set(rolesByKey.get(key) || new Set());
+    if(populationKeys.has(key)) roleSet.add('PARTICIPANT');
+    const roles = sortedValues(roleSet);
     const cells = obligations.map((obligation) => {
       const expectedHere = expected.has(obligation.obligationKey);
       const decision = decisions.get(obligation.obligationKey);

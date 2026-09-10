@@ -522,6 +522,29 @@ function cycleRoleLabel(role){
   return code || '—';
 }
 
+function cycleRoleSummaryLabel(roles){
+  const set = new Set((roles || []).map((role) => String(role || '').toUpperCase()).filter(Boolean));
+  if(set.has('FORMATEUR') && set.has('PARTICIPANT')) return 'Formateur + participant';
+  if(set.has('MONITEUR') && set.has('PARTICIPANT')) return 'Moniteur + participant';
+  if(set.has('SURVEILLANT') && set.has('PARTICIPANT')) return 'Surveillant + participant';
+  if(set.has('AUXILIAIRE') && set.has('PARTICIPANT')) return 'Auxiliaire + participant';
+  return [...set].map(cycleRoleLabel).join(', ') || '—';
+}
+
+function compactCycleResultLabel(label){
+  const value = String(label || '').trim();
+  if(!value) return '';
+  const pr = value.match(/\bPR\s*([0-9]+(?:\.[0-9]+)?)\b/i);
+  if(pr) return `PR ${pr[1]}`;
+  const auto = value.match(/\bAUTO\s*([A-Z0-9]+(?:\.[0-9]+)?)\b/i);
+  if(auto) return `AUTO ${auto[1]}`;
+  const dap = value.match(/\bDAP\s*([0-9]+(?:\.[0-9]+)?)\b/i);
+  if(dap) return `DAP ${dap[1]}`;
+  const dps = value.match(/\bDPS\s*([0-9]+(?:\.[0-9]+)?)\b/i);
+  if(dps) return `DPS ${dps[1]}`;
+  return value.replace(/^Exercice\s+/i, '').replace(/\s*\|\s*Base\b/i, '').trim();
+}
+
 function cycleGraphs(detail){
   const kpis = (detail.pilotage && detail.pilotage.kpis) || {};
   const population = Math.max(1, Number(kpis.population || 0));
@@ -564,18 +587,18 @@ function cycleGraphs(detail){
 function cyclePrimaryResultLabel(row){
   if(!row) return '—';
   const state = String(row.globalState || '').toUpperCase();
-  if(state === 'COMPLET') return row.primaryResultLabel || 'Participation validée';
+  if(state === 'COMPLET') return compactCycleResultLabel(row.primaryResultLabel) || 'Présent';
   if(state === 'EXCUSE') return 'Statut reconnu';
   if(state === 'DISPENSE') return 'Statut reconnu';
-  if(state === 'ABSENT') return row.primaryResultLabel || 'Statut renseigné';
-  if(row.primaryResultLabel) return row.primaryResultLabel;
+  if(state === 'ABSENT') return compactCycleResultLabel(row.primaryResultLabel) || 'Statut renseigné';
+  if(row.primaryResultLabel) return compactCycleResultLabel(row.primaryResultLabel);
   return cyclePilotageStateLabel(row.globalState);
 }
 
 function cycleInformationLabel(row){
   if(!row) return '—';
   const state = String(row.globalState || '').toUpperCase();
-  if(state === 'COMPLET') return 'Participation validée';
+  if(state === 'COMPLET') return '—';
   if(state === 'ABSENT') return 'Statut renseigné';
   if(['EXCUSE', 'DISPENSE'].includes(state)){
     const covered = (row.obligations || []).find((cell) => ['EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
@@ -594,7 +617,7 @@ function cycleReportRows(rows){
     nom: row.nom || '',
     prenom: row.prenom || '',
     nip: row.nip || '',
-    roles: (row.roles || []).map(cycleRoleLabel).join(', ') || '—',
+    roles: cycleRoleSummaryLabel(row.roles),
     etat: cyclePilotageStateLabel(row.globalState),
     resultat: cyclePrimaryResultLabel(row),
     information: cycleInformationLabel(row)
