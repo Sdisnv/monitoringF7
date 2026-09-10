@@ -23,6 +23,7 @@ const {
   filterAttendusEligibleAtDate
 } = require('./_scope-personnel');
 const personnelSync = require('./_scope-personnel-sync');
+const { hasPermission } = require('./_rbac');
 const csvImport = require('./_scope-csv-import');
 const importContract = require('./_scope-import-contract');
 const {
@@ -251,6 +252,41 @@ function createScopeService(repo){
     });
   }
 
+  function summarizeReferentialUsage(details = {}){
+    const summary = {
+      configurations: Number(details.configurations || 0),
+      policies: Number(details.policies || 0),
+      policyVersions: Number(details.policyVersions || 0),
+      events: Number(details.eventSnapshots || 0),
+      participations: Number(details.participations || 0),
+      snapshots: Number(details.eventSnapshots || 0) + Number(details.exerciseSnapshots || 0),
+      exerciseSnapshots: Number(details.exerciseSnapshots || 0)
+    };
+    const protectedCount = summary.configurations
+      + summary.policies
+      + summary.policyVersions
+      + summary.events
+      + summary.participations
+      + summary.exerciseSnapshots;
+    summary.total = protectedCount;
+    summary.canDelete = protectedCount <= 0;
+    summary.referenced = protectedCount > 0;
+    return summary;
+  }
+
+  function referentialUsageLabel(summary = {}){
+    const parts = [];
+    const configurations = Number(summary.configurations || 0);
+    const events = Number(summary.events || 0);
+    const participations = Number(summary.participations || 0);
+    const snapshots = Number(summary.snapshots || 0);
+    if(configurations) parts.push(`${configurations} configuration${configurations > 1 ? 's' : ''}`);
+    if(events) parts.push(`${events} événement${events > 1 ? 's' : ''}`);
+    if(participations) parts.push(`${participations} saisie${participations > 1 ? 's' : ''}`);
+    if(!parts.length && snapshots) parts.push('Historique uniquement');
+    return parts.length ? parts.join(' · ') : 'Jamais référencé';
+  }
+
   async function participationPolicies(){
     const motifRows = await participationMotifRows(repo);
     const statusRows = await participationStatusRows(repo);
@@ -269,8 +305,14 @@ function createScopeService(repo){
     const enrichStatus = (row) => {
       const id = String(row && row.id || '').toUpperCase();
       const usageCount = Number((usage.statuses && usage.statuses[id]) || 0);
+      const usageDetails = usage.statusDetails && usage.statusDetails[id] || {};
+      const usageSummary = summarizeReferentialUsage(usageDetails);
       return Object.assign({}, row, {
         usageCount,
+        usageDetails,
+        usageSummary,
+        usageLabel: referentialUsageLabel(usageSummary),
+        canDelete: usageSummary.canDelete,
         used: usageCount > 0,
         protected: row && (row.system || String(row.id || '').toUpperCase() === 'NON_RENSEIGNE' || String(row.id || '').toUpperCase() === 'PERMUTATION')
       });
@@ -278,7 +320,16 @@ function createScopeService(repo){
     const enrichMotif = (row) => {
       const id = String(row && row.id || '').toUpperCase();
       const usageCount = Number((usage.motifs && usage.motifs[id]) || 0);
-      return Object.assign({}, row, { usageCount, used: usageCount > 0 });
+      const usageDetails = usage.motifDetails && usage.motifDetails[id] || {};
+      const usageSummary = summarizeReferentialUsage(usageDetails);
+      return Object.assign({}, row, {
+        usageCount,
+        usageDetails,
+        usageSummary,
+        usageLabel: referentialUsageLabel(usageSummary),
+        canDelete: usageSummary.canDelete,
+        used: usageCount > 0
+      });
     };
     return {
       participation: {
@@ -289,6 +340,32 @@ function createScopeService(repo){
         policies,
         policyVersions
       }
+    };
+  }
+
+  async function participationReferentialUsage(kind, id, actor){
+    const normalizedKind = String(kind || '').trim().toLowerCase();
+    const referentialKind = normalizedKind === 'status' || normalizedKind === 'statut' ? 'status' : 'motif';
+    const key = String(id || '').trim().toUpperCase();
+    if(!key) throw new HttpError(400, 'referentiel_invalide', 'Référentiel invalide.');
+    const includePeople = hasPermission(actor, 'personnel:read');
+    const details = repo.listParticipationReferentialUsageDetails
+      ? await repo.listParticipationReferentialUsageDetails(referentialKind, key, { includePeople })
+      : null;
+    const aggregate = repo.getParticipationReferentialUsage
+      ? await repo.getParticipationReferentialUsage(referentialKind, key)
+      : { count: 0, details: {} };
+    const summary = summarizeReferentialUsage((details && details.sourceCounts) || aggregate.details || {});
+    return {
+      usage: Object.assign({
+        kind: referentialKind,
+        id: key,
+        summary,
+        usageCount: Number(aggregate.count || summary.total || 0),
+        canDelete: summary.canDelete,
+        label: referentialUsageLabel(summary),
+        canShowPeople: includePeople
+      }, details || {})
     };
   }
 
@@ -5053,6 +5130,7 @@ function createScopeService(repo){
   return {
     referentiels,
     participationPolicies,
+    participationReferentialUsage,
     saveParticipationPolicy,
     saveParticipationStatus,
     saveParticipationMotif,

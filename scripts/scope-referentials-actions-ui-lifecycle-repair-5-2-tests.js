@@ -122,9 +122,9 @@ function motif(catalog, id){
 
   await record('09 — Élément utilisé n’affiche pas Supprimer', () => {
     const ui = read('assets/js/scope-ui.js');
-    includes(ui, 'const used = row.used === true || usageCount > 0');
-    includes(ui, "!used ? `<button type=\"button\" class=\"scope-btn scope-btn-secondary scope-btn-compact\" data-referential-delete=");
-    includes(ui, 'Déjà utilisé');
+    includes(ui, 'const canDelete = row.canDelete !== undefined ? row.canDelete === true : usageSummary.canDelete === true');
+    includes(ui, 'data-referential-usages=');
+    includes(ui, 'canDelete ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-delete=');
   });
 
   await record('10 — Archiver élément utilisé fonctionne', async () => {

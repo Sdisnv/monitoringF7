@@ -118,7 +118,7 @@ function motif(catalog, id){
     const id = created.motif.motif_id;
     await service.saveParticipationMotif({ motifId: id, motifType: 'EXCUSE', label: created.motif.label, active: false, historique: true }, ACTOR);
     const ui = read('assets/js/scope-ui.js');
-    includes(ui, '.filter((row) => row.active !== false || selected.includes(row.id || row.value || row.motif_id))');
+    includes(ui, '.filter((row) => row.active !== false || (preserveHistoricalReferences && selected.includes(row.id || row.value || row.motif_id)))');
     const catalog = await service.participationPolicies();
     eq(motif(catalog, id).active, false);
   });
@@ -156,8 +156,8 @@ function motif(catalog, id){
     includes(ui, 'Réactiver');
     includes(ui, 'Supprimer');
     includes(ui, 'usageCount');
-    includes(ui, 'Jamais utilisé');
-    includes(ui, 'Déjà utilisé');
+    includes(ui, 'Jamais référencé');
+    includes(ui, 'Voir les usages');
   });
 
   await record('11 — confirmations centrales et aucun alert/confirm navigateur', () => {

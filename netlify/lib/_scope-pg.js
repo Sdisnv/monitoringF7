@@ -1655,6 +1655,183 @@ function createPgRepo(client){
       );
       return usages;
     },
+    async listParticipationReferentialUsageDetails(kind, id, options = {}){
+      const referentialKind = String(kind || '').toLowerCase() === 'status' ? 'status' : 'motif';
+      const key = String(id || '').trim().toUpperCase();
+      const includePeople = options.includePeople === true;
+      const usage = await this.listParticipationReferentialUsages();
+      const sourceCounts = referentialKind === 'status' ? (usage.statusDetails[key] || {}) : (usage.motifDetails[key] || {});
+      const result = {
+        kind: referentialKind,
+        id: key,
+        sourceCounts,
+        configurations: [],
+        policies: [],
+        policyVersions: [],
+        snapshotEvents: [],
+        exerciseSnapshots: [],
+        events: [],
+        canShowPeople: includePeople,
+        peopleRestricted: false
+      };
+      const arrayExpr = (alias, field) => referentialKind === 'status'
+        ? `coalesce(${alias}.${field}->'activeStatuses', ${alias}.${field}->'active_statuses', '[]'::jsonb)`
+        : `(coalesce(${alias}.${field}->'excuseMotifs', ${alias}.${field}->'excuse_motifs', '[]'::jsonb)
+          || coalesce(${alias}.${field}->'dispenseMotifs', ${alias}.${field}->'dispense_motifs', '[]'::jsonb))`;
+      const containsSql = (alias, field) => `exists (select 1 from jsonb_array_elements_text(${arrayExpr(alias, field)}) as value where upper(value) = $1)`;
+      if(await tableExists('scope_event_definition_versions') && await tableExists('scope_event_definitions')){
+        const rows = await q(
+          `select v.definition_version_id, v.version_code, v.valid_from, v.valid_to, v.active,
+                  d.domain, d.label as definition_label, d.status as definition_status
+           from scope_event_definition_versions v
+           join scope_event_definitions d on d.definition_id = v.definition_id
+           where v.metadata is not null and ${containsSql('v', 'metadata')}
+           order by d.domain, d.label, v.valid_from desc nulls last, v.version_code desc`,
+          [key]
+        );
+        result.configurations = rows.rows.map((row) => ({
+          domain: row.domain,
+          label: row.definition_label,
+          version: row.version_code,
+          validFrom: dateOnly(row.valid_from),
+          validTo: dateOnly(row.valid_to),
+          active: row.active !== false,
+          status: row.active === false || row.definition_status === 'ARCHIVE' ? 'historique' : 'active'
+        }));
+      }
+      if(await tableExists('scope_participation_policies')){
+        const rows = await q(
+          `select domain_code, policy_version, actif, commentaire
+           from scope_participation_policies p
+           where p.config is not null and ${containsSql('p', 'config')}
+           order by domain_code`,
+          [key]
+        );
+        result.policies = rows.rows.map((row) => ({
+          domain: row.domain_code,
+          version: row.policy_version,
+          active: row.actif !== false,
+          label: row.commentaire || `Règles ${row.domain_code}`
+        }));
+      }
+      if(await tableExists('scope_participation_policy_versions')){
+        const rows = await q(
+          `select policy_version_id, policy_code, domain, version_code, valid_from, valid_to, active
+           from scope_participation_policy_versions v
+           where v.config is not null and ${containsSql('v', 'config')}
+           order by domain, policy_code, valid_from desc nulls last, version_code desc`,
+          [key]
+        );
+        result.policyVersions = rows.rows.map((row) => ({
+          domain: row.domain,
+          policyCode: row.policy_code,
+          version: row.version_code,
+          validFrom: dateOnly(row.valid_from),
+          validTo: dateOnly(row.valid_to),
+          active: row.active !== false
+        }));
+      }
+      if(await tableExists('scope_evenements')){
+        const rows = await q(
+          `select e.evenement_id, e.date, e.libelle, e.domaine_code, e.statut
+           from scope_evenements e
+           where e.participation_policy_snapshot is not null and ${containsSql('e', 'participation_policy_snapshot')}
+           order by e.date desc, e.libelle
+           limit 100`,
+          [key]
+        );
+        result.snapshotEvents = rows.rows.map((row) => ({
+          eventId: row.evenement_id,
+          date: dateOnly(row.date),
+          label: row.libelle,
+          domain: row.domaine_code,
+          status: row.statut
+        }));
+      }
+      if(await tableExists('scope_exercices')){
+        const rows = await q(
+          `select x.exercice_id, x.annee, x.domaine_code, x.libelle, x.mode_session
+           from scope_exercices x
+           where x.configuration_snapshot is not null and ${containsSql('x', 'configuration_snapshot')}
+           order by x.annee desc nulls last, x.libelle
+           limit 100`,
+          [key]
+        );
+        result.exerciseSnapshots = rows.rows.map((row) => ({
+          exerciseId: row.exercice_id,
+          year: row.annee == null ? null : Number(row.annee),
+          label: row.libelle,
+          domain: row.domaine_code,
+          modeSession: row.mode_session
+        }));
+      }
+      if(await tableExists('scope_participations') && await tableExists('scope_evenements')){
+        const where = referentialKind === 'status' ? 'upper(p.statut) = $1' : 'upper(p.motif_absence) = $1';
+        if(includePeople && await tableExists('scope_personnes')){
+          const rows = await q(
+            `select e.evenement_id, e.date, e.libelle, e.domaine_code, e.statut as event_status,
+                    p.personne_id, p.statut, p.motif_absence, p.role,
+                    sp.nip, sp.grade, sp.nom, sp.prenom
+             from scope_participations p
+             join scope_evenements e on e.evenement_id = p.evenement_id
+             left join scope_personnes sp on sp.id = p.personne_id
+             where ${where}
+             order by e.date desc, e.libelle, sp.nom, sp.prenom
+             limit 300`,
+            [key]
+          );
+          const byEvent = new Map();
+          for(const row of rows.rows || []){
+            const eventId = row.evenement_id;
+            if(!byEvent.has(eventId)){
+              byEvent.set(eventId, {
+                eventId,
+                date: dateOnly(row.date),
+                label: row.libelle,
+                domain: row.domaine_code,
+                status: row.event_status,
+                count: 0,
+                people: []
+              });
+            }
+            const item = byEvent.get(eventId);
+            item.count += 1;
+            item.people.push({
+              personId: row.personne_id,
+              nip: row.nip || '',
+              grade: row.grade || '',
+              nom: row.nom || '',
+              prenom: row.prenom || '',
+              status: row.statut,
+              motif: row.motif_absence || null,
+              role: row.role || 'PARTICIPANT'
+            });
+          }
+          result.events = [...byEvent.values()];
+        }else{
+          const rows = await q(
+            `select e.evenement_id, e.date, e.libelle, e.domaine_code, e.statut, count(*)::int as count
+             from scope_participations p
+             join scope_evenements e on e.evenement_id = p.evenement_id
+             where ${where}
+             group by e.evenement_id, e.date, e.libelle, e.domaine_code, e.statut
+             order by e.date desc, e.libelle
+             limit 100`,
+            [key]
+          );
+          result.events = rows.rows.map((row) => ({
+            eventId: row.evenement_id,
+            date: dateOnly(row.date),
+            label: row.libelle,
+            domain: row.domaine_code,
+            status: row.statut,
+            count: Number(row.count || 0)
+          }));
+          result.peopleRestricted = rows.rows.some((row) => Number(row.count || 0) > 0);
+        }
+      }
+      return result;
+    },
     async getParticipationReferentialUsage(kind, id){
       const usage = await this.listParticipationReferentialUsages();
       const key = String(id || '').trim().toUpperCase();

@@ -194,7 +194,7 @@ async function record(name, fn){
     includes(service, 'removeSourcePermutationObligation(tx, evenement, attendu.personne_id, actor)');
     ok(!ui.includes('jobs.push(refreshAlertCounts())'), 'pas de chargement alertes bloquant');
     includes(ui, "if (r.screen === 'formation-catalog') jobs.push(loadParticipationAdmin())");
-    includes(read('scope.html'), 'scope-referentials-actions-ui-lifecycle-repair-5-2');
+    includes(read('scope.html'), 'scope-referentials-usage-traceability-active-filter-repair-5-3');
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

@@ -1018,6 +1018,121 @@ function createMemoryRepo(){
       [...eventDefinitionVersions.values()].forEach((row) => addPolicyConfig(row.metadata, 'configurations'));
       return usages;
     },
+    async listParticipationReferentialUsageDetails(kind, id, options = {}){
+      const referentialKind = String(kind || '').toLowerCase() === 'status' ? 'status' : 'motif';
+      const key = String(id || '').trim().toUpperCase();
+      const includePeople = options.includePeople === true;
+      const usage = await this.listParticipationReferentialUsages();
+      const sourceCounts = referentialKind === 'status' ? (usage.statusDetails[key] || {}) : (usage.motifDetails[key] || {});
+      const configHas = (config) => {
+        const c = config || {};
+        const ids = referentialKind === 'status'
+          ? (c.activeStatuses || c.active_statuses || [])
+          : [
+              ...(c.excuseMotifs || c.excuse_motifs || []),
+              ...(c.dispenseMotifs || c.dispense_motifs || [])
+            ];
+        return ids.map((value) => String(value || '').toUpperCase()).includes(key);
+      };
+      const configurations = [...eventDefinitionVersions.values()]
+        .filter((row) => configHas(row.metadata))
+        .map((row) => {
+          const def = eventDefinitions.get(row.definition_id) || {};
+          return {
+            domain: def.domain || row.domain || '',
+            label: def.label || row.definition_label || '',
+            version: row.version_code || row.versionCode || '',
+            validFrom: dateOnly(row.valid_from || row.validFrom),
+            validTo: dateOnly(row.valid_to || row.validTo),
+            active: row.active !== false,
+            status: row.active === false ? 'historique' : 'active'
+          };
+        });
+      const policies = [...participationPolicies.values()]
+        .filter((row) => configHas(row.config))
+        .map((row) => ({
+          domain: row.domain_code,
+          version: row.policy_version,
+          active: row.actif !== false,
+          label: row.commentaire || `Règles ${row.domain_code}`
+        }));
+      const policyVersions = [...participationPolicyVersions.values()]
+        .filter((row) => configHas(row.config))
+        .map((row) => ({
+          domain: row.domain,
+          policyCode: row.policy_code,
+          version: row.version_code,
+          validFrom: dateOnly(row.valid_from),
+          validTo: dateOnly(row.valid_to),
+          active: row.active !== false
+        }));
+      const snapshotEvents = [...evenements.values()]
+        .filter((row) => configHas(row.participation_policy_snapshot || row.participationPolicySnapshot))
+        .map((row) => ({
+          eventId: row.evenement_id,
+          date: dateOnly(row.date),
+          label: row.libelle,
+          domain: row.domaine_code,
+          status: row.statut
+        }));
+      const exerciseSnapshots = [...exercices.values()]
+        .filter((row) => configHas(row.configuration_snapshot || row.configurationSnapshot))
+        .map((row) => ({
+          exerciseId: row.exercice_id,
+          year: row.annee == null ? null : Number(row.annee),
+          label: row.libelle,
+          domain: row.domaine_code,
+          modeSession: row.mode_session
+        }));
+      const participationRows = [...participations.values()]
+        .filter((row) => referentialKind === 'status'
+          ? String(row.statut || '').toUpperCase() === key
+          : String(row.motif_absence || row.motifAbsence || '').toUpperCase() === key);
+      const eventMap = new Map();
+      for(const row of participationRows){
+        const event = evenements.get(row.evenement_id) || {};
+        const eventId = row.evenement_id || 'unknown';
+        if(!eventMap.has(eventId)){
+          eventMap.set(eventId, {
+            eventId,
+            date: dateOnly(event.date),
+            label: event.libelle || '',
+            domain: event.domaine_code || '',
+            status: event.statut || '',
+            count: 0,
+            people: includePeople ? [] : undefined
+          });
+        }
+        const item = eventMap.get(eventId);
+        item.count += 1;
+        if(includePeople){
+          const person = personnes.get(row.personne_id) || {};
+          item.people.push({
+            personId: row.personne_id,
+            nip: person.nip || '',
+            grade: person.grade || '',
+            nom: person.nom || '',
+            prenom: person.prenom || '',
+            status: row.statut,
+            motif: row.motif_absence || row.motifAbsence || null,
+            role: row.role || 'PARTICIPANT'
+          });
+        }
+      }
+      return {
+        kind: referentialKind,
+        id: key,
+        sourceCounts,
+        configurations,
+        policies,
+        policyVersions,
+        snapshotEvents,
+        exerciseSnapshots,
+        events: [...eventMap.values()],
+        canShowPeople: includePeople,
+        peopleRestricted: !includePeople && participationRows.length > 0
+      };
+    },
     async getParticipationReferentialUsage(kind, id){
       const usage = await this.listParticipationReferentialUsages();
       const key = String(id || '').trim().toUpperCase();

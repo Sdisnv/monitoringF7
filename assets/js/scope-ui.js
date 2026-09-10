@@ -7995,6 +7995,64 @@
     return rows.find((item) => String(item.id || item.value || item.motif_id || item.status_id || '').toUpperCase() === String(id || '').toUpperCase()) || null;
   }
 
+  function referentialUsageSummary(row = {}) {
+    const summary = row.usageSummary || row.usage_summary || {};
+    return {
+      configurations: Number(summary.configurations || 0),
+      policies: Number(summary.policies || 0),
+      policyVersions: Number(summary.policyVersions || summary.policy_versions || 0),
+      events: Number(summary.events || 0),
+      participations: Number(summary.participations || 0),
+      snapshots: Number(summary.snapshots || 0),
+      canDelete: summary.canDelete !== undefined ? summary.canDelete === true : Number(row.usageCount || row.usage_count || 0) <= 0
+    };
+  }
+
+  function referentialUsageText(row = {}) {
+    if (row.usageLabel || row.usage_label) return row.usageLabel || row.usage_label;
+    const summary = referentialUsageSummary(row);
+    const parts = [];
+    if (summary.configurations) parts.push(`${summary.configurations} configuration${summary.configurations > 1 ? 's' : ''}`);
+    if (summary.events) parts.push(`${summary.events} événement${summary.events > 1 ? 's' : ''}`);
+    if (summary.participations) parts.push(`${summary.participations} saisie${summary.participations > 1 ? 's' : ''}`);
+    if (!parts.length && summary.snapshots) parts.push('Historique uniquement');
+    return parts.length ? parts.join(' · ') : 'Jamais référencé';
+  }
+
+  function renderReferentialUsageHtml(usage = {}, label = '') {
+    const summary = usage.summary || {};
+    const countLine = (name, value) => `<div><dt>${escapeHtml(name)}</dt><dd>${escapeHtml(String(Number(value || 0)))}</dd></div>`;
+    const configs = (usage.configurations || []).map((row) => `<li><strong>${escapeHtml(row.domain || '')}</strong> — ${escapeHtml(row.label || '')}${row.version ? ` · Version ${escapeHtml(row.version)}` : ''}${row.status ? ` · ${escapeHtml(row.status)}` : ''}</li>`).join('');
+    const policyVersions = (usage.policyVersions || []).map((row) => `<li><strong>${escapeHtml(row.domain || '')}</strong> — ${escapeHtml(row.policyCode || 'Règles standards')}${row.version ? ` · Version ${escapeHtml(row.version)}` : ''}${row.active === false ? ' · historique' : ''}</li>`).join('');
+    const events = (usage.events || []).map((event) => {
+      const people = Array.isArray(event.people) && event.people.length
+        ? `<ul>${event.people.slice(0, 12).map((person) => `<li>${escapeHtml([person.grade, person.nom, person.prenom].filter(Boolean).join(' ') || person.personId || 'Personne')} ${person.nip ? `— NIP ${escapeHtml(person.nip)}` : ''}</li>`).join('')}</ul>`
+        : '';
+      return `<li><strong>${escapeHtml(L.formatDate(event.date) || event.date || '')}</strong> — ${escapeHtml(event.label || '')} · ${escapeHtml(event.domain || '')} · ${escapeHtml(String(event.count || 0))} personne${Number(event.count || 0) > 1 ? 's' : ''}${people}</li>`;
+    }).join('');
+    const snapshotEvents = (usage.snapshotEvents || []).slice(0, 8).map((event) => `<li>${escapeHtml(L.formatDate(event.date) || event.date || '')} — ${escapeHtml(event.label || '')} · ${escapeHtml(event.domain || '')}</li>`).join('');
+    const noParticipation = Number(summary.configurations || 0) > 0 && Number(summary.participations || 0) === 0
+      ? '<p class="scope-muted">Ce référentiel est prévu dans une ou plusieurs configurations mais n’a encore été utilisé dans aucune saisie.</p>'
+      : '';
+    const peopleNote = usage.peopleRestricted
+      ? '<p class="scope-muted">Le détail nominatif exige la permission personnel:read.</p>'
+      : '';
+    return `<div class="scope-referential-usage-modal">
+      <dl class="scope-meta">
+        ${countLine('Configurations', summary.configurations)}
+        ${countLine('Policies', Number(summary.policies || 0) + Number(summary.policyVersions || 0))}
+        ${countLine('Événements', summary.events)}
+        ${countLine('Participations renseignées', summary.participations)}
+        ${countLine('Historique / snapshots', summary.snapshots)}
+      </dl>
+      ${noParticipation}
+      <section><h3>Configurations</h3><ul>${configs || '<li>Aucune configuration.</li>'}</ul></section>
+      ${policyVersions ? `<section><h3>Versions de règles</h3><ul>${policyVersions}</ul></section>` : ''}
+      <section><h3>Événements / participations</h3><ul>${events || '<li>Aucune participation renseignée.</li>'}</ul>${peopleNote}</section>
+      ${snapshotEvents ? `<section><h3>Snapshots historiques</h3><ul>${snapshotEvents}</ul></section>` : ''}
+    </div>`;
+  }
+
   function renderFormationCatalog() {
     const canManage = hasScopePermission('references:manage');
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
@@ -8016,6 +8074,8 @@
       PERMUTATION: 'Permutation'
     }[String(id || '').toUpperCase()] || id);
     const motifLabel = (id) => (motifCatalog.get(String(id || '').toUpperCase()) || {}).label || String(id || '').replace(/_/g, ' ').toLowerCase();
+    const isStatusActive = (id) => (statusCatalog.get(String(id || '').toUpperCase()) || {}).active !== false;
+    const isMotifActive = (id) => (motifCatalog.get(String(id || '').toUpperCase()) || {}).active !== false;
     const uniqueMotifIds = (ids) => {
       const seen = new Set();
       return (ids || []).filter((id) => {
@@ -8044,12 +8104,13 @@
     const baseStatuses = (policyConfig.activeStatuses || policyConfig.active_statuses || []).filter((s) => s !== 'NON_RENSEIGNE');
     const baseExcuseMotifs = uniqueMotifIds(policyConfig.excuseMotifs || policyConfig.excuse_motifs || []);
     const baseDispenseMotifs = uniqueMotifIds(policyConfig.dispenseMotifs || policyConfig.dispense_motifs || []);
+    const preserveHistoricalReferences = draftMode === 'edit';
     const draftKey = `${activeDomain}:${selectedPolicy && (selectedPolicy.policy_version_id || selectedPolicy.policyVersionId) || ''}:${form.modeOrganisation || 'SIMPLE'}`;
     if (formOpen && form.policyDraftKey !== draftKey) {
       form.policyDraftKey = draftKey;
-      form.activeStatuses = baseStatuses.slice();
-      form.excuseMotifs = baseExcuseMotifs.slice();
-      form.dispenseMotifs = baseDispenseMotifs.slice();
+      form.activeStatuses = baseStatuses.filter((id) => preserveHistoricalReferences || isStatusActive(id));
+      form.excuseMotifs = baseExcuseMotifs.filter((id) => preserveHistoricalReferences || isMotifActive(id));
+      form.dispenseMotifs = baseDispenseMotifs.filter((id) => preserveHistoricalReferences || isMotifActive(id));
     }
     if (form.modeOrganisation === 'MULTI_SESSION') {
       form.activeStatuses = (form.activeStatuses || []).filter((status) => status !== 'PERMUTATION');
@@ -8057,9 +8118,10 @@
     if (!Array.isArray(form.activeStatuses)) form.activeStatuses = [];
     if (formOpen && activeDomain && !form.activeStatuses.includes('PRESENT')) form.activeStatuses.unshift('PRESENT');
     const selectedStatuses = (activeDomain ? (Array.isArray(form.activeStatuses) ? form.activeStatuses : baseStatuses) : [])
+      .filter((s) => preserveHistoricalReferences || isStatusActive(s))
       .filter((s) => s !== 'NON_RENSEIGNE' && !(form.modeOrganisation === 'MULTI_SESSION' && s === 'PERMUTATION'));
-    const selectedExcuseMotifs = activeDomain ? uniqueMotifIds(Array.isArray(form.excuseMotifs) ? form.excuseMotifs : baseExcuseMotifs) : [];
-    const selectedDispenseMotifs = activeDomain ? uniqueMotifIds(Array.isArray(form.dispenseMotifs) ? form.dispenseMotifs : baseDispenseMotifs) : [];
+    const selectedExcuseMotifs = activeDomain ? uniqueMotifIds(Array.isArray(form.excuseMotifs) ? form.excuseMotifs : baseExcuseMotifs).filter((id) => preserveHistoricalReferences || isMotifActive(id)) : [];
+    const selectedDispenseMotifs = activeDomain ? uniqueMotifIds(Array.isArray(form.dispenseMotifs) ? form.dispenseMotifs : baseDispenseMotifs).filter((id) => preserveHistoricalReferences || isMotifActive(id)) : [];
     const isMulti = form.modeOrganisation === 'MULTI_SESSION';
     const statusItems = [...statusCatalog.values()]
       .filter((row) => !row.system && row.active !== false)
@@ -8068,16 +8130,18 @@
     const motifItems = (type, selected) => uniqueMotifIds([...
       new Set([...(participation && participation.motifs || [])
         .filter((row) => String(row.type || row.motif_type || '').toUpperCase() === type)
-        .filter((row) => row.active !== false || selected.includes(row.id || row.value || row.motif_id))
+        .filter((row) => row.active !== false || (preserveHistoricalReferences && selected.includes(row.id || row.value || row.motif_id)))
         .map((row) => row.id || row.value || row.motif_id), ...selected])
     ]);
     const renderPolicySummary = (label, values, mapper) => `<p class="scope-policy-column-summary"><strong>Résumé</strong><span>${escapeHtml((values || []).map(mapper).join(' · ') || '—')}</span></p>`;
     const renderChecks = (type, items, selected, disabledIds = []) => items.map((id) => {
-      const disabled = disabledIds.includes(String(id).toUpperCase());
+      const archived = type === 'status' ? !isStatusActive(id) : !isMotifActive(id);
+      const disabled = disabledIds.includes(String(id).toUpperCase()) || archived;
       return `<label class="scope-check scope-policy-check ${disabled ? 'is-disabled' : ''}">
         <input type="checkbox" data-formation-policy="${escapeHtml(type)}:${escapeHtml(id)}" ${selected.includes(id) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
         <span class="scope-policy-check-copy"><span>${escapeHtml(type === 'status' ? statusLabel(id) : motifLabel(id))}</span>
-        ${disabled && String(id).toUpperCase() === 'PRESENT' ? '<small>Présent est obligatoire pour cette configuration.</small>' : ''}</span>
+        ${disabled && String(id).toUpperCase() === 'PRESENT' ? '<small>Présent est obligatoire pour cette configuration.</small>' : ''}
+        ${archived ? '<small>Archivé — conservé dans cette configuration.</small>' : ''}</span>
       </label>`;
     }).join('');
     const renderPolicyColumn = (kind, title, items, selected, disabledIds = []) => `<section class="scope-policy-column">
@@ -8141,18 +8205,22 @@
       const active = row.active !== false && row.actif !== false;
       const behavior = row.baseStatus || row.base_status || '';
       const usageCount = Number(row.usageCount || row.usage_count || 0);
-      const used = row.used === true || usageCount > 0;
+      const usageSummary = referentialUsageSummary(row);
+      const usageText = referentialUsageText(row);
+      const canDelete = row.canDelete !== undefined ? row.canDelete === true : usageSummary.canDelete === true;
+      const hasUsage = row.used === true || usageCount > 0 || usageText !== 'Jamais référencé';
       const protectedItem = row.protected === true || row.system === true;
       const actions = protectedItem ? '<span class="scope-muted">Protégé</span>' : [
         `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-edit="${escapeHtml(type)}:${escapeHtml(id)}">Modifier</button>`,
         `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-toggle="${escapeHtml(type)}:${escapeHtml(id)}">${active ? 'Archiver' : 'Réactiver'}</button>`,
-        !used ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-delete="${escapeHtml(type)}:${escapeHtml(id)}">Supprimer</button>` : ''
+        hasUsage ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-usages="${escapeHtml(type)}:${escapeHtml(id)}">Voir les usages</button>` : '',
+        canDelete ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-delete="${escapeHtml(type)}:${escapeHtml(id)}">Supprimer</button>` : ''
       ].filter(Boolean).join(' ');
       return `<tr>
         <td>${escapeHtml(row.label || row.libelle || id)}</td>
         ${type === 'status' ? `<td>${escapeHtml(statusLabel(behavior || id))}</td>` : ''}
         <td>${escapeHtml(String(row.order || row.display_order || 999))}</td>
-        <td>${active ? 'Actif' : 'Inactif / archivé'}${used ? '<br><small class="scope-muted">Déjà utilisé</small>' : '<br><small class="scope-muted">Jamais utilisé</small>'}</td>
+        <td>${active ? 'Actif' : 'Inactif / archivé'}<br><small class="scope-muted">${escapeHtml(usageText)}</small></td>
         <td>${actions}</td>
       </tr>`;
     }).join('');
@@ -8427,6 +8495,7 @@
           : kind === 'progress' ? ''
             : 'i';
     const progress = fb.progress ? '<div class="scope-feedback-progress" aria-hidden="true"></div>' : '';
+    const html = fb.html ? `<div class="scope-feedback-body">${fb.html}</div>` : '';
     const errors = Array.isArray(fb.errors) && fb.errors.length
       ? `<ul class="scope-feedback-errors">${fb.errors.slice(0, Number(fb.errorsMax || 5)).map((e) => `<li>${escapeHtml(e.message || e.code || String(e))}</li>`).join('')}</ul>`
       : '';
@@ -8438,6 +8507,7 @@
         ${progress || `<div class="scope-feedback-mark" aria-hidden="true">${escapeHtml(mark)}</div>`}
         <h2>${escapeHtml(title)}</h2>
         ${message ? `<p>${escapeHtml(message)}</p>` : ''}
+        ${html}
         ${errors}
         ${actions}
       </div>
@@ -10457,11 +10527,34 @@
         }));
       });
     });
+    root.querySelectorAll('[data-referential-usages]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const [type, id] = String(btn.getAttribute('data-referential-usages') || '').split(':');
+        const row = findReferentialRow(type, id);
+        if (!row || typeof client.participationReferentialUsage !== 'function') return;
+        const kind = type === 'status' ? 'status' : 'motif';
+        ScopeFeedback.progress('Chargement des usages…', 'SCOPE recherche les configurations, événements et saisies liés à ce référentiel.');
+        client.participationReferentialUsage(kind, id)
+          .then((payload) => {
+            const usage = payload && payload.usage || {};
+            const label = row.label || row.libelle || id;
+            ScopeFeedback.info(`Usages du ${kind === 'status' ? 'statut' : 'motif'} "${label}"`, '', {
+              html: renderReferentialUsageHtml(usage, label),
+              closeText: 'Fermer'
+            });
+          })
+          .catch((error) => {
+            const info = presentFriendlyError(L.friendlyError(error));
+            ScopeFeedback.error(info.title || 'Usages indisponibles', info.message || 'Les usages de ce référentiel n’ont pas pu être chargés.');
+          });
+      });
+    });
     root.querySelectorAll('[data-referential-delete]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const [type, id] = String(btn.getAttribute('data-referential-delete') || '').split(':');
         const row = findReferentialRow(type, id);
-        if (!row || row.system || row.protected || row.used || Number(row.usageCount || 0) > 0) return;
+        const canDelete = row && (row.canDelete !== undefined ? row.canDelete === true : Number(row.usageCount || 0) <= 0 && row.used !== true);
+        if (!row || row.system || row.protected || !canDelete) return;
         ScopeFeedback.confirm({
           title: `Supprimer définitivement ce ${type === 'status' ? 'statut' : 'motif'} ?`,
           message: 'Cet élément n’a jamais été utilisé. Sa suppression sera définitive.',

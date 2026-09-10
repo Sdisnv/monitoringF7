@@ -120,7 +120,14 @@ async function scopeHandler(event){
     if(method === 'GET' && path === '/participation/policies'){
       return response(200, { ok:true, ...(await service.participationPolicies()) });
     }
-    let params = match(path, '/participation/policies/:domain');
+    let params = match(path, '/participation/referentials/:kind/:id/usages');
+    if(method === 'GET' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La consultation des usages référentiels est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.participationReferentialUsage(params.kind, params.id, claims)) });
+    }
+    params = match(path, '/participation/policies/:domain');
     if(method === 'POST' && params){
       if(!hasPermission(claims, 'references:manage')){
         return response(403, { ok:false, error:'forbidden', message:'La gestion des politiques de participation est réservée aux profils habilités.' });

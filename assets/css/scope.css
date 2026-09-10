@@ -3890,6 +3890,39 @@ html, body {
   font-size: 14px;
 }
 
+.scope-feedback-body {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.scope-feedback-card:has(.scope-feedback-body) {
+  width: min(760px, 100%);
+  max-height: min(760px, calc(100vh - 36px));
+  overflow: auto;
+}
+
+.scope-referential-usage-modal {
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.scope-referential-usage-modal .scope-meta {
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scope-referential-usage-modal h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.scope-referential-usage-modal ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
 .scope-feedback-actions {
   display: flex;
   justify-content: center;

@@ -387,6 +387,7 @@
       saveAdminUser(body) { return directRequest('POST', '/.netlify/functions/admin-users', body || {}); },
       listObjectifs(params) { return request('GET', `/objectifs${queryString(params || {})}`); },
       participationPolicies() { return request('GET', '/participation/policies'); },
+      participationReferentialUsage(kind, id) { return request('GET', `/participation/referentials/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/usages`); },
       saveParticipationPolicy(domain, body) { return request('POST', `/participation/policies/${encodeURIComponent(domain)}`, body || {}); },
       saveParticipationMotif(body) { return request('POST', '/participation/motifs', body || {}); },
       saveParticipationStatus(body) { return request('POST', '/participation/statuses', body || {}); },
