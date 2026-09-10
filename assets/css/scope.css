@@ -2550,6 +2550,22 @@ html, body {
   margin: 6px 0 0 18px;
   padding: 0;
 }
+.scope-import-config-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(120px, 180px);
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--scope-border);
+  background: #f8fafc;
+}
+.scope-import-config-controls .scope-field { margin: 0; }
+.scope-config-choice {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 10px;
+}
 .scope-import-source {
   margin-top: 10px;
   color: var(--scope-muted);
@@ -2643,6 +2659,7 @@ html, body {
 
 @media (max-width: 800px) {
   .scope-import-list { grid-template-columns: 1fr; }
+  .scope-import-config-controls { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {

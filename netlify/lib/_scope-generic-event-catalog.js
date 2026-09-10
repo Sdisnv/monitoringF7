@@ -236,18 +236,106 @@ function extractSessionIndex(line = {}){
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+function suggestedSessionIndexFromLabel(line = {}, sessionCount){
+  const label = text(line.libelle || line.label || '');
+  const matches = [...label.matchAll(/\b(?:session\s*)?(\d+)\s*[./-]\s*(\d+)\b/gi)];
+  const last = matches[matches.length - 1];
+  const n = last ? Number(last[2]) : null;
+  return Number.isInteger(n) && n > 0 && (!sessionCount || n <= Number(sessionCount)) ? n : null;
+}
+
+function decisionForLine(line, decisions = {}){
+  const key = String(line && line.ligneNo || '');
+  return (decisions && (decisions[key] || decisions[line && line.ligneNo])) || {};
+}
+
+function versionById(versions, id){
+  return (versions || []).find((row) => String(row.definition_version_id || row.definitionVersionId || '') === String(id || '')) || null;
+}
+
+function definitionForVersion(definitions, version){
+  if(!version) return null;
+  return (definitions || []).find((row) => String(row.definition_id || row.definitionId || '') === String(version.definition_id || version.definitionId || '')) || null;
+}
+
+function matchPayload({ status, action, definition, version, sessionIndex, sessionSuggested, reason, candidates = [] }){
+  const mode = version && (version.mode_organisation || version.modeOrganisation);
+  const sessionCount = version ? Number(version.session_count || version.sessionCount || 1) : null;
+  return {
+    status,
+    confidence: status === 'EXACT' ? 'ELEVEE' : (status === 'UNKNOWN_DEFINITION' ? 'AUCUNE' : 'MOYENNE'),
+    action,
+    label: definition ? definition.label || definition.libelle : 'Configuration historique SCOPE',
+    definitionId: definition && (definition.definition_id || definition.definitionId) || null,
+    definitionCode: definition && definition.code || null,
+    definitionLabel: definition && (definition.label || definition.libelle) || null,
+    definitionVersionId: version && (version.definition_version_id || version.definitionVersionId) || null,
+    definitionVersionCode: version && (version.version_code || version.versionCode) || null,
+    policyVersionCode: version && (version.policyVersionCode || version.policy_version_code) || null,
+    mode,
+    sessionIndex: sessionIndex || null,
+    sessionSuggested: Boolean(sessionSuggested),
+    sessionCount,
+    reason,
+    candidates
+  };
+}
+
 function enrichImportLinesWithMatches(lines, catalog = {}){
   const definitions = catalog.definitions || [];
   const versions = catalog.definitionVersions || [];
+  const decisions = catalog.decisions || {};
   return (lines || []).map((line) => {
     const domain = upper(line.domaineStockage || line.domaine || line.domain);
+    const decision = decisionForLine(line, decisions);
+    if(decision && (decision.configuration === 'NONE' || decision.configurationChoice === 'NONE' || decision.noConfiguration === true)){
+      return {
+        ...line,
+        genericMatch: matchPayload({
+          status: 'UNCONFIGURED',
+          action: 'IMPORTER_SANS_CONFIGURATION',
+          reason: 'Choix utilisateur : événement ponctuel / configuration historique SCOPE.'
+        })
+      };
+    }
+    const chosenVersion = versionById(versions, decision.definitionVersionId || decision.definition_version_id);
+    if(chosenVersion){
+      const definition = definitionForVersion(definitions, chosenVersion);
+      const count = Number(chosenVersion.session_count || chosenVersion.sessionCount || 1);
+      const mode = upper(chosenVersion.mode_organisation || chosenVersion.modeOrganisation);
+      const sessionIndex = Number(decision.sessionIndex || decision.session_index || extractSessionIndex(line) || 0) || null;
+      if(mode === ORGANISATION_MODES.MULTI_SESSION && (!sessionIndex || sessionIndex > count)){
+        return {
+          ...line,
+          genericMatch: matchPayload({
+            status: 'INCOMPATIBLE',
+            action: 'CORRIGER_SESSION',
+            definition,
+            version: chosenVersion,
+            sessionIndex,
+            reason: `Session à choisir entre 1 et ${count}.`
+          })
+        };
+      }
+      return {
+        ...line,
+        genericMatch: matchPayload({
+          status: 'EXACT',
+          action: 'PRET',
+          definition,
+          version: chosenVersion,
+          sessionIndex,
+          reason: 'Configuration choisie par l’utilisateur.'
+        })
+      };
+    }
     const explicit = definitionCode({
       code: line.eventDefinitionCode || line.event_definition_code || line.definitionCode || line.definition_code || line.exerciceCode || line.codeEvent,
       domain,
       label: line.libelle
     });
     const eventLabel = normalizeComparable(line.libelle || '');
-    let best = null;
+    const matches = [];
     for(const def of definitions){
       if(domain && upper(def.domain || def.domaine_code) !== domain) continue;
       const defCode = slug(def.code || '');
@@ -264,38 +352,82 @@ function enrichImportLinesWithMatches(lines, catalog = {}){
         score = 0.72;
         reason = 'code compatible';
       }
-      if(score && (!best || score > best.score)) best = { definition: def, score, reason };
+      if(score) matches.push({ definition: def, score, reason });
     }
+    matches.sort((a, b) => b.score - a.score || String(a.definition.label || '').localeCompare(String(b.definition.label || ''), 'fr'));
+    const best = matches[0] || null;
     if(!best){
       return {
         ...line,
-        genericMatch: {
+        genericMatch: matchPayload({
           status: 'UNKNOWN_DEFINITION',
-          confidence: 0,
-          action: 'CREER_MODELE_OU_IMPORTER_LEGACY',
-          label: 'Aucun modèle trouvé'
-        }
+          action: 'IMPORTER_SANS_CONFIGURATION',
+          reason: 'Aucune configuration compatible trouvée.'
+        })
+      };
+    }
+    const sameScore = matches.filter((item) => item.score >= Math.max(0.7, best.score - 0.02));
+    if(sameScore.length > 1 && best.score < 0.95){
+      return {
+        ...line,
+        genericMatch: matchPayload({
+          status: 'AMBIGUOUS',
+          action: 'CHOIX_CONFIGURATION_REQUIS',
+          reason: 'Plusieurs configurations compatibles.',
+          candidates: sameScore.slice(0, 6).map((item) => ({
+            definitionId: item.definition.definition_id || item.definitionId,
+            definitionCode: item.definition.code,
+            definitionLabel: item.definition.label || item.definition.libelle,
+            reason: item.reason
+          }))
+        })
       };
     }
     const version = findApplicableVersion(versions, best.definition.definition_id || best.definition.definitionId, line.date || line.annee);
+    if(!version){
+      return {
+        ...line,
+        genericMatch: matchPayload({
+          status: 'UNKNOWN_VERSION',
+          action: 'IMPORTER_SANS_CONFIGURATION',
+          definition: best.definition,
+          reason: 'Aucune version active compatible avec la date.'
+        })
+      };
+    }
+    const sessionCount = Number(version.session_count || version.sessionCount || 1);
+    const mode = upper(version.mode_organisation || version.modeOrganisation);
+    const explicitSession = extractSessionIndex(line);
+    const suggestedSession = !explicitSession ? suggestedSessionIndexFromLabel(line, sessionCount) : null;
+    const resolvedSession = explicitSession || suggestedSession;
+    if(mode === ORGANISATION_MODES.MULTI_SESSION && (!resolvedSession || resolvedSession > sessionCount)){
+      return {
+        ...line,
+        genericMatch: matchPayload({
+          status: resolvedSession && resolvedSession > sessionCount ? 'INCOMPATIBLE' : 'SESSION_REQUIRED',
+          action: 'CHOIX_SESSION_REQUIS',
+          definition: best.definition,
+          version,
+          sessionIndex: resolvedSession,
+          sessionSuggested: Boolean(suggestedSession),
+          reason: resolvedSession && resolvedSession > sessionCount
+            ? `Session ${resolvedSession} hors plage pour ${sessionCount} sessions.`
+            : `Choisissez la session entre 1 et ${sessionCount}.`
+        })
+      };
+    }
+    const exact = best.score >= 0.95 && (!suggestedSession || decision.confirmSuggestedSession === true || decision.confirmConfiguration === true);
     return {
       ...line,
-      genericMatch: {
-        status: best.score >= 0.95 ? 'EXACT' : 'SUGGESTED',
-        confidence: best.score >= 0.95 ? 'ELEVEE' : 'MOYENNE',
-        score: best.score,
-        action: 'VALIDATION_HUMAINE_REQUISE',
-        definitionId: best.definition.definition_id || best.definition.definitionId,
-        definitionCode: best.definition.code,
-        definitionLabel: best.definition.label || best.definition.libelle,
-        definitionVersionId: version && (version.definition_version_id || version.definitionVersionId),
-        definitionVersionCode: version && (version.version_code || version.versionCode),
-        policyVersionCode: version && (version.policyVersionCode || version.policy_version_code),
-        mode: version && (version.mode_organisation || version.modeOrganisation),
-        sessionIndex: extractSessionIndex(line),
-        sessionCount: version && Number(version.session_count || version.sessionCount || 1),
-        reason: best.reason
-      }
+      genericMatch: Object.assign(matchPayload({
+        status: exact ? 'EXACT' : 'SUGGESTED',
+        action: exact ? 'PRET' : 'VALIDATION_HUMAINE_REQUISE',
+        definition: best.definition,
+        version,
+        sessionIndex: resolvedSession,
+        sessionSuggested: Boolean(suggestedSession),
+        reason: suggestedSession ? `Session proposée : ${suggestedSession} sur ${sessionCount}.` : best.reason
+      }), { score: best.score })
     };
   });
 }

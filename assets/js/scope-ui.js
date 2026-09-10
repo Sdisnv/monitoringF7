@@ -211,6 +211,7 @@
     libelleForm: '',
     cibleForm: [],
     definitionVersionForm: '',
+    sessionIndexChoice: 1,
     modeChoice: '',
     sessionModeChoice: 'SINGLE',
     sessionCountChoice: 3,
@@ -6133,9 +6134,11 @@
         state.sessionModeChoice = 'MULTI';
         state.sessionCountChoice = selectedSessions || state.sessionCountChoice || 2;
         state.consolidationChoice = true;
+        if (!Number(state.sessionIndexChoice) || Number(state.sessionIndexChoice) > selectedSessions) state.sessionIndexChoice = 1;
       } else {
         state.sessionModeChoice = 'SINGLE';
         state.sessionCountChoice = 1;
+        state.sessionIndexChoice = 1;
       }
     }
     const configHelp = !compatibleVersions.length
@@ -6170,7 +6173,11 @@
           </div>
           <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
           <section class="scope-event-config-box">
-            <h3>Formation / configuration</h3>
+            <h3>Configuration de formation</h3>
+            <div class="scope-config-choice">
+              <label class="scope-radio"><input type="radio" name="new-config-mode" value="NONE" ${state.definitionVersionForm ? '' : 'checked'}> Événement ponctuel / sans configuration</label>
+              <label class="scope-radio"><input type="radio" name="new-config-mode" value="EXISTING" ${state.definitionVersionForm ? 'checked' : ''} ${compatibleVersions.length ? '' : 'disabled'}> Utiliser une configuration existante</label>
+            </div>
             <div class="scope-field">
               <label for="new-definition-version">Configuration de formation</label>
               <select id="new-definition-version" ${compatibleVersions.length ? '' : 'disabled'}>
@@ -6180,6 +6187,14 @@
               <small>${escapeHtml(configHelp)}</small>
             </div>
             ${selectedConfig ? `<p class="scope-mode-hint">Association visible : ${escapeHtml(selectedConfig.definition.label || '')} · Version ${escapeHtml(selectedConfig.version.version_code || selectedConfig.version.versionCode || '')}.</p>` : ''}
+            ${selectedConfig && String(selectedConfig.version.mode_organisation || selectedConfig.version.modeOrganisation || '').toUpperCase() === 'MULTI_SESSION' ? `
+              <div class="scope-field">
+                <label for="new-session-index">Session</label>
+                <select id="new-session-index">
+                  ${Array.from({ length: Number(selectedConfig.version.session_count || selectedConfig.version.sessionCount || 1) }, (_, index) => index + 1).map((index) => `<option value="${index}" ${Number(state.sessionIndexChoice || 1) === index ? 'selected' : ''}>${index} sur ${Number(selectedConfig.version.session_count || selectedConfig.version.sessionCount || 1)}</option>`).join('')}
+                </select>
+              </div>
+            ` : ''}
           </section>
           <fieldset class="scope-field scope-mode-choice" style="margin-top:12px">
             <legend>Organisation</legend>
@@ -7645,25 +7660,71 @@
 
   function genericMatchHtml(match) {
     if (!match) return '';
-    const statusLabel = match.status === 'EXACT' ? 'Reconnu' : (match.status === 'SUGGESTED' ? 'À confirmer' : 'Non reconnu');
+    const statusLabel = match.status === 'EXACT' ? 'Reconnu'
+      : (match.status === 'SUGGESTED' || match.status === 'SESSION_REQUIRED' || match.status === 'AMBIGUOUS' ? 'À confirmer'
+        : (match.status === 'UNCONFIGURED' || match.status === 'UNKNOWN_DEFINITION' || match.status === 'UNKNOWN_VERSION' ? 'Non configuré' : 'Incompatible'));
     const sessionText = match.sessionIndex && match.sessionCount ? `Session ${match.sessionIndex}/${match.sessionCount}` : '';
     const details = [
       match.definitionLabel || match.definition_label,
       match.policyVersionCode || match.policy_version_code ? `Version ${match.policyVersionCode || match.policy_version_code}` : '',
-      match.mode || match.modeOrganisation || match.mode_organisation,
+      String(match.mode || match.modeOrganisation || match.mode_organisation || '').toUpperCase() === 'MULTI_SESSION' ? `Plusieurs sessions · ${match.sessionCount || '—'} sessions` : (match.mode || match.modeOrganisation || match.mode_organisation),
       sessionText
     ].filter(Boolean).join(' · ');
     const suggestions = Array.isArray(match.suggestions) && match.suggestions.length
       ? `<ul>${match.suggestions.slice(0, 3).map((item) => `<li>${escapeHtml(item.definitionLabel || item.definition_label || item.definitionCode || item.definition_code || 'Définition proposée')}</li>`).join('')}</ul>`
       : '';
-    const cls = match.status === 'EXACT' ? 'ok' : (match.status === 'SUGGESTED' ? 'warn' : 'err');
+    const cls = match.status === 'EXACT' ? 'ok' : (['SUGGESTED', 'SESSION_REQUIRED', 'AMBIGUOUS'].includes(match.status) ? 'warn' : (match.status === 'INCOMPATIBLE' ? 'err' : 'info'));
     return `<div class="scope-import-generic-match ${cls}">
       <strong>${escapeHtml(statusLabel)}</strong>
       ${details ? `<p>${escapeHtml(details)}</p>` : ''}
-      ${match.status === 'UNKNOWN_DEFINITION' ? '<p>Aucun modèle SCOPE correspondant. Créez ou choisissez un modèle avant écriture.</p>' : ''}
+      ${match.sessionSuggested ? '<p>Session proposée depuis le libellé : confirmez ou corrigez avant validation.</p>' : ''}
+      ${match.status === 'UNKNOWN_DEFINITION' || match.status === 'UNKNOWN_VERSION' || match.status === 'UNCONFIGURED' ? '<p>Événement ponctuel / configuration historique SCOPE.</p>' : ''}
       ${match.action === 'VALIDATION_HUMAINE_REQUISE' ? '<p>Validation humaine requise avant rattachement définitif.</p>' : ''}
+      ${match.action === 'CHOIX_SESSION_REQUIS' ? '<p>Choisissez la session avant validation.</p>' : ''}
       ${suggestions}
     </div>`;
+  }
+
+  function importConfigurationOptions(line, decision) {
+    const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
+    const versions = [];
+    (catalog.definitions || []).forEach((definition) => {
+      if (String(definition.domain || '').toUpperCase() !== String(line.domaineStockage || line.domaine || '').toUpperCase()) return;
+      (definition.versions || []).forEach((version) => {
+        if (version.active === false || version.actif === false) return;
+        const date = String(line.date || '');
+        const from = String(version.valid_from || version.validFrom || '');
+        const to = String(version.valid_to || version.validTo || '');
+        if (date && from && date < from) return;
+        if (date && to && date > to) return;
+        versions.push({ definition, version });
+      });
+    });
+    const current = decision.definitionVersionId || decision.definition_version_id || (line.genericMatch && line.genericMatch.action === 'PRET' ? line.genericMatch.definitionVersionId : '');
+    const selected = versions.find((item) => String(item.version.definition_version_id || item.version.definitionVersionId || '') === String(current || '')) || null;
+    const count = selected ? Number(selected.version.session_count || selected.version.sessionCount || 1) : Number(line.genericMatch && line.genericMatch.sessionCount || 1);
+    return `<div class="scope-import-config-controls">
+      <div class="scope-field"><label>Configuration</label><select data-import-config="${line.ligneNo}">
+        <option value="NONE" ${(decision.configuration === 'NONE' || decision.configurationChoice === 'NONE') ? 'selected' : ''}>Événement ponctuel / sans configuration</option>
+        ${versions.map(({ definition, version }) => {
+          const id = version.definition_version_id || version.definitionVersionId || '';
+          const mode = String(version.mode_organisation || version.modeOrganisation || '').toUpperCase() === 'MULTI_SESSION'
+            ? `Plusieurs sessions · ${Number(version.session_count || version.sessionCount || 1)} sessions`
+            : 'Session unique';
+          return `<option value="${escapeHtml(id)}" ${String(current || '') === String(id) ? 'selected' : ''}>${escapeHtml(`${definition.label || 'Formation'} · Version ${version.version_code || version.versionCode || ''} · ${mode}`)}</option>`;
+        }).join('')}
+      </select></div>
+      ${count > 1 ? `<div class="scope-field"><label>Session</label><select data-import-session="${line.ligneNo}">
+        <option value="">Choisir…</option>
+        ${Array.from({ length: count }, (_, index) => index + 1).map((index) => `<option value="${index}" ${Number(decision.sessionIndex || decision.session_index || (line.genericMatch && line.genericMatch.sessionIndex) || 0) === index ? 'selected' : ''}>${index} sur ${count}</option>`).join('')}
+      </select></div>` : ''}
+      ${(line.genericMatch && line.genericMatch.action && line.genericMatch.action !== 'PRET' && line.genericMatch.action !== 'IMPORTER_SANS_CONFIGURATION') ? '<p class="scope-import-mode">Corrigez cette ligne puis relancez automatiquement la preview.</p>' : ''}
+    </div>`;
+  }
+
+  function importConfigurationRequiresAction(line) {
+    const action = String(line && line.genericMatch && line.genericMatch.action || '');
+    return ['VALIDATION_HUMAINE_REQUISE', 'CHOIX_CONFIGURATION_REQUIS', 'CHOIX_SESSION_REQUIS', 'CORRIGER_SESSION'].includes(action);
   }
 
   function importLineVisible(line) {
@@ -7768,6 +7829,7 @@
       if (state.importExcluded[l.ligneNo]) return false;
       if (String(l.statut).indexOf('ERREUR') === 0 || l.statut === 'CONFLIT' || l.statut === 'REVIEW_REQUIRED') return true;
       if (l.statut === 'A_ARBITRER' && !(state.importDecisions[l.ligneNo] && state.importDecisions[l.ligneNo].mode)) return true;
+      if (importConfigurationRequiresAction(l)) return true;
       return false;
     });
     const creatable = all.some((l) => {
@@ -7796,6 +7858,7 @@
         ${standard ? `<p class="scope-import-mode">CODE COURS : ${escapeHtml(l.codeCours || '—')} · Stat.Com : ${escapeHtml(l.statCom || '—')}</p>` : ''}
         ${native ? `<p class="scope-import-mode">Mode demandé : ${escapeHtml(l.modeDemande || '—')} · Mode proposé : ${escapeHtml(l.modePropose || '—')}</p>` : ''}
         ${genericMatchHtml(l.genericMatch)}
+        ${importConfigurationOptions(l, decision)}
         <p class="scope-import-reason">${escapeHtml(l.raison || l.statutLibelle || '')}</p>
         <p class="scope-import-action">Action : ${escapeHtml(l.actionPrevue || '—')}</p>
         ${l.statut === 'A_ARBITRER' ? `<div class="scope-field"><label>Arbitrage du mode</label>
@@ -7867,6 +7930,7 @@
           <div><span>Population</span><strong>${escapeHtml(String(population))}</strong></div>
         </div>
         ${genericMatchHtml(g.genericMatch || first.genericMatch)}
+        ${importConfigurationOptions(Object.assign({}, first, g, { ligneNo: (g.sourceLineNos || [first.ligneNo])[0], genericMatch: g.genericMatch || first.genericMatch }), state.importDecisions[(g.sourceLineNos || [first.ligneNo])[0]] || {})}
         ${isIssue ? `<div class="scope-import-decision"><strong>${escapeHtml(g.raison || first.raison || 'Point à contrôler')}</strong><p>Action : ${escapeHtml(g.actionPrevue || first.actionPrevue || 'ARBITRER')}</p></div>` : ''}
         <details class="scope-import-source">
           <summary>Consulter les lignes source ${escapeHtml(sourceLines ? `(${sourceLines})` : '')}</summary>
@@ -9431,7 +9495,37 @@
     root.querySelectorAll('[data-import-decision]').forEach((sel) => {
       sel.addEventListener('change', () => {
         const no = Number(sel.getAttribute('data-import-decision'));
-        state.importDecisions[no] = { mode: sel.value || null };
+        state.importDecisions[no] = Object.assign({}, state.importDecisions[no] || {}, { mode: sel.value || null });
+        withLoading(async () => {
+          state.importPreview = await client.previewImportEvenements({
+            csvText: state.importFile.csvText,
+            filename: state.importFile.filename,
+            decisions: state.importDecisions
+          });
+        });
+      });
+    });
+    root.querySelectorAll('[data-import-config]').forEach((sel) => {
+      sel.addEventListener('change', () => {
+        const no = Number(sel.getAttribute('data-import-config'));
+        const current = state.importDecisions[no] || {};
+        state.importDecisions[no] = Object.assign({}, current, sel.value === 'NONE'
+          ? { configuration: 'NONE', definitionVersionId: null, sessionIndex: null }
+          : { configuration: 'EXISTING', definitionVersionId: sel.value || null, confirmConfiguration: true });
+        withLoading(async () => {
+          state.importPreview = await client.previewImportEvenements({
+            csvText: state.importFile.csvText,
+            filename: state.importFile.filename,
+            decisions: state.importDecisions
+          });
+        });
+      });
+    });
+    root.querySelectorAll('[data-import-session]').forEach((sel) => {
+      sel.addEventListener('change', () => {
+        const no = Number(sel.getAttribute('data-import-session'));
+        const current = state.importDecisions[no] || {};
+        state.importDecisions[no] = Object.assign({}, current, { sessionIndex: sel.value ? Number(sel.value) : null, confirmSuggestedSession: true, confirmConfiguration: true });
         withLoading(async () => {
           state.importPreview = await client.previewImportEvenements({
             csvText: state.importFile.csvText,
@@ -9484,6 +9578,7 @@
     });
     document.getElementById('new-definition-version')?.addEventListener('change', (e) => {
       state.definitionVersionForm = e.target.value;
+      state.sessionIndexChoice = 1;
       const catalog = state.formationCatalog || {};
       for (const definition of (catalog.definitions || [])) {
         for (const version of (definition.versions || [])) {
@@ -9496,6 +9591,21 @@
         }
       }
       render();
+    });
+    document.querySelectorAll('input[name="new-config-mode"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'NONE') {
+          state.definitionVersionForm = '';
+          state.sessionIndexChoice = 1;
+          state.sessionModeChoice = 'SINGLE';
+          state.sessionCountChoice = 3;
+          state.consolidationChoice = true;
+        }
+        render();
+      });
+    });
+    document.getElementById('new-session-index')?.addEventListener('change', (e) => {
+      state.sessionIndexChoice = Number(e.target.value || 1);
     });
     document.getElementById('new-save')?.addEventListener('click', () => {
       const date = document.getElementById('new-date').value;
@@ -9524,7 +9634,7 @@
           modeSession,
           nombreSessionsAttendu,
           consolidationActive: state.consolidationChoice !== false,
-          sessionIndex: 1,
+          sessionIndex: state.definitionVersionForm ? Number(state.sessionIndexChoice || 1) : 1,
           definitionVersionId: state.definitionVersionForm || null
         });
         invalidateCache(['list', 'dashboard', 'vigilance', 'cycles']);
@@ -9533,6 +9643,7 @@
         state.cibleForm = [];
         state.libelleForm = '';
         state.definitionVersionForm = '';
+        state.sessionIndexChoice = 1;
         state.sessionModeChoice = 'SINGLE';
         state.sessionCountChoice = 3;
         state.consolidationChoice = true;

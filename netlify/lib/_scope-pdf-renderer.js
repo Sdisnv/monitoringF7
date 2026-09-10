@@ -344,7 +344,8 @@ class ScopePdfRenderer {
     draw(MARGIN, y, innerW, boxH, 5).fillAndStroke(palette.fill, palette.border);
     this.doc.fillColor(rgb(palette.title || INSTITUTION.ink)).font('Helvetica-Bold').fontSize(titleSize)
       .text(String(title || '').toLocaleUpperCase('fr-CH'), MARGIN + padX, y + padY, { width: bodyW });
-    this.doc.fillColor(rgb(palette.body || INSTITUTION.ink)).font('Helvetica').fontSize(bodySize)
+    const bodyColor = (palette && palette.body) || INSTITUTION.ink; // opts.body || INSTITUTION.ink
+    this.doc.fillColor(rgb(bodyColor)).font('Helvetica').fontSize(bodySize)
       .text(body, MARGIN + padX, y + padY + titleH + 7, { width: bodyW, align: 'left' });
     this.doc.restore();
     this.doc.y = y + boxH + 12;
