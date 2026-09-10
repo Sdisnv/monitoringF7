@@ -756,26 +756,23 @@
     return OBJECTIF_UX_DOMAINES.map((code) => ({ type: 'domain', code, label: code }));
   }
 
+  const EVENT_DOMAIN_FILTER_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC', 'PR', 'AUTO']);
+
   function eventDomainFilterItems(domaines) {
     const list = (domaines || []).filter((d) => {
       const code = String((d && d.code) || '').toUpperCase();
       return code && code !== 'PAPR';
     });
     const byCode = new Map(list.map((d) => [String(d.code).toUpperCase(), d]));
-    const used = new Set();
-    const items = [];
     const labelOf = (d, code) => {
       if (code === 'PR' || String((d && (d.libelleAffiche || d.libelle_affiche)) || '').toUpperCase() === 'PAPR') return 'PR';
       return (d && (d.libelleAffiche || d.libelle_affiche || d.libelle)) || code;
     };
-    EVENT_DOMAIN_GROUPS.forEach((group, gi) => {
-      if (gi > 0) items.push({ type: 'separator', id: `sep-${gi}` });
-      group.forEach((code) => {
-        const d = byCode.get(code);
-        items.push({ type: 'domain', code, label: labelOf(d, code) });
-        used.add(code);
-      });
+    const items = EVENT_DOMAIN_FILTER_ORDER.map((code) => {
+      const d = byCode.get(code);
+      return { type: 'domain', code, label: labelOf(d, code) };
     });
+    const used = new Set(EVENT_DOMAIN_FILTER_ORDER);
     const rest = list.filter((d) => !used.has(String(d.code).toUpperCase()));
     if (rest.length) {
       items.push({ type: 'separator', id: 'sep-rest' });
@@ -785,6 +782,13 @@
       });
     }
     return items;
+  }
+
+  function eventListDomainParam(domaine) {
+    const code = String(domaine || '').toUpperCase();
+    if (!code || code === 'TOUS') return '';
+    if (code === 'FOSPEC') return 'FOSPEC,PR,AUTO';
+    return code;
   }
 
   function buildSidebarNav(arbre, route) {
@@ -1947,6 +1951,7 @@
     normalizeNavArbre,
     EVENT_DOMAIN_GROUPS,
     eventDomainFilterItems,
+    eventListDomainParam,
     OBJECTIF_PORTEE_LABELS,
     OBJECTIF_UX_DOMAINES,
     OBJECTIF_UX_CIBLES,

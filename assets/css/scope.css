@@ -3923,6 +3923,45 @@ html, body {
   padding-left: 18px;
 }
 
+.scope-association-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scope-association-row {
+  border-left: 4px solid transparent;
+}
+
+.scope-association-row.is-compatible {
+  background: #f2fbf6;
+  border-left-color: #2e7d5b;
+}
+
+.scope-association-row.is-associated {
+  background: #eef6ff;
+  border-left-color: var(--scope-blue);
+}
+
+.scope-association-row.is-ambiguous {
+  background: #fff8df;
+  border-left-color: #d89a00;
+}
+
+.scope-association-row.is-incompatible,
+.scope-association-row.is-protected {
+  background: #f7f7f8;
+  border-left-color: #9ca3af;
+}
+
+.scope-association-check {
+  min-height: 0;
+  margin: 0;
+  padding: 4px 6px;
+  border: 0;
+  background: transparent;
+}
+
 .scope-feedback-actions {
   display: flex;
   justify-content: center;

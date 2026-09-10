@@ -247,6 +247,14 @@ function createScopeService(repo){
 
   function policyPayload(policy, motifRows){
     return Object.assign({}, policy, {
+      motifs: (motifRows || []).map((row) => ({
+        value: row.motif_id || row.id || row.value,
+        id: row.motif_id || row.id || row.value,
+        label: row.label || row.libelle || row.motif_id || row.id || row.value,
+        group: row.group_code || row.group || 'operationnel',
+        type: row.motif_type || row.type || 'EXCUSE',
+        active: row.actif !== false && row.active !== false
+      })),
       excuseMotifsDetails: participationPolicy.motifsForPolicy(policy, 'EXCUSE', { motifRows }),
       dispenseMotifsDetails: participationPolicy.motifsForPolicy(policy, 'DISPENSE', { motifRows })
     });
@@ -624,11 +632,17 @@ function createScopeService(repo){
       : { sessionIndex: null, source: '', ambiguous: false };
     let status = 'COMPATIBLE';
     let selectable = true;
+    let canDissociate = false;
+    let dissociationReason = '';
     let reason = 'Même domaine et date comprise dans la période de validité.';
     if(String(currentVersionId || '') === String(versionId || '')){
       status = 'DEJA_ASSOCIE';
       selectable = false;
       reason = 'Événement déjà associé à cette configuration.';
+      canDissociate = String(event.statut || '').toUpperCase() !== 'REALISE';
+      dissociationReason = canDissociate
+        ? 'Dissociation administrative possible après confirmation.'
+        : 'Événement réalisé : association protégée par l’historique.';
     } else if(currentVersionId){
       status = 'AUTRE_CONFIGURATION';
       selectable = false;
@@ -666,7 +680,9 @@ function createScopeService(repo){
       sessionSource: session.source || null,
       hasParticipations: businessParticipations.length > 0,
       participationCount: businessParticipations.length,
-      invalidParticipations
+      invalidParticipations,
+      canDissociate,
+      dissociationReason
     };
   }
 
@@ -788,6 +804,166 @@ function createScopeService(repo){
     });
   }
 
+  async function dissociateEventsFromFormationConfiguration(definitionVersionId, body = {}, actor){
+    if(!repo.getEventDefinitionVersion) throw new HttpError(501, 'configuration_indisponible', 'Configuration formation indisponible.');
+    const selectedIds = (body.eventIds || body.event_ids || (body.eventId ? [body.eventId] : [])).map(String).filter(Boolean);
+    if(!selectedIds.length) throw new HttpError(400, 'dissociation_vide', 'Sélectionnez au moins un événement à dissocier.');
+    const version = await repo.getEventDefinitionVersion(definitionVersionId);
+    if(!version) throw new HttpError(404, 'definition_version_introuvable', 'Version de définition introuvable.');
+    const updated = [];
+    return repo.withTransaction(async (tx) => {
+      for(const eventId of selectedIds){
+        const event = await tx.getEvent(eventId);
+        if(!event) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+        const eventVersionId = event.definition_version_id || event.definitionVersionId;
+        const sameEventBinding = String(eventVersionId || '') === String(definitionVersionId || '');
+        let exercise = null;
+        if(event.exercice_id && tx.getExercise) exercise = await tx.getExercise(event.exercice_id);
+        const exerciseVersionId = exercise && (exercise.definition_version_id || exercise.definitionVersionId);
+        const sameExerciseBinding = String(exerciseVersionId || '') === String(definitionVersionId || '');
+        if(!sameEventBinding && !sameExerciseBinding){
+          throw new HttpError(409, 'dissociation_configuration_invalide', 'Cet événement n’est pas associé à cette configuration.', { eventId, definitionVersionId });
+        }
+        if(String(event.statut || '').toUpperCase() === 'REALISE'){
+          throw new HttpError(409, 'dissociation_realise_interdite', 'Dissociation impossible. Cet événement est réalisé et son association fait partie de son historique.', { eventId });
+        }
+        const exerciseEvents = exercise && tx.listExerciseEvents ? await tx.listExerciseEvents(exercise.exercice_id || event.exercice_id) : [];
+        const configuredExerciseEvents = (exerciseEvents || []).filter((row) =>
+          String(row.definition_version_id || row.definitionVersionId || exerciseVersionId || '') === String(definitionVersionId || '')
+        );
+        const groupDissociation = body.scope === 'GROUP' || body.scope === 'FORMATION_GROUPEE';
+        if(exercise && String(exercise.mode_session || exercise.modeSession || '').toUpperCase() === 'MULTI' && configuredExerciseEvents.length > 1 && !groupDissociation){
+          throw new HttpError(409, 'dissociation_partielle_multisession_interdite', 'Dissociation impossible : cette configuration porte une formation groupée. Utilisez une dissociation de la formation groupée complète afin de préserver la cohérence des sessions.', {
+            eventId,
+            exerciseId: exercise.exercice_id || event.exercice_id,
+            affectedEvents: configuredExerciseEvents.map((row) => row.evenement_id || row.evenementId)
+          });
+        }
+        const targets = groupDissociation && configuredExerciseEvents.length ? configuredExerciseEvents : [event];
+        for(const target of targets){
+          const targetId = target.evenement_id || target.evenementId;
+          const current = await tx.getEvent(targetId);
+          if(!current) continue;
+          if(String(current.statut || '').toUpperCase() === 'REALISE'){
+            throw new HttpError(409, 'dissociation_realise_interdite', 'Dissociation impossible. Au moins une session est réalisée et son association fait partie de son historique.', { eventId: targetId });
+          }
+          const participations = tx.listParticipations ? await tx.listParticipations(targetId) : [];
+          const businessParticipations = (participations || []).filter(participationHasBusinessTrace);
+          const defaultPolicy = await capturePolicySnapshot(tx, current.domaine_code || current.domaineCode);
+          const invalid = validateParticipationsAgainstPolicy(participations, defaultPolicy);
+          if(businessParticipations.length && invalid.length){
+            throw new HttpError(409, 'dissociation_saisies_incompatibles', 'Dissociation impossible : des saisies existantes utilisent des règles absentes de la configuration historique SCOPE.', {
+              eventId: targetId,
+              invalidParticipations: invalid
+            });
+          }
+          const patch = {
+            definition_version_id: null,
+            policy_version_id: null,
+            engine_route: null,
+            engine_snapshot: null,
+            participation_policy_version: defaultPolicy.policyVersion,
+            participation_policy_snapshot: defaultPolicy
+          };
+          const next = await bumpOrConflict(tx, targetId, current.version, patch);
+          await tx.appendJournal({
+            auteur_id: actorId(actor),
+            entite: 'evenement',
+            entite_id: targetId,
+            action: 'DISSOCIER_CONFIGURATION_FORMATION',
+            commentaire: body.commentaire || 'Dissociation manuelle d’une configuration de formation',
+            avant: {
+              definition_version_id: current.definition_version_id || null,
+              policy_version_id: current.policy_version_id || null,
+              engine_route: current.engine_route || null
+            },
+            apres: {
+              definition_version_id: null,
+              policy_version_id: null,
+              configuration: 'Configuration historique SCOPE',
+              participationsPreserved: businessParticipations.length
+            }
+          });
+          updated.push(next);
+        }
+        if(groupDissociation && sameExerciseBinding && exercise && tx.updateExercise){
+          await tx.updateExercise(exercise.exercice_id || event.exercice_id, {
+            definition_version_id: null,
+            policy_version_id: null,
+            engine_route: null,
+            configuration_snapshot: null
+          });
+        }
+      }
+      return { dissociatedEvents: updated, count: updated.length };
+    });
+  }
+
+  function normalizedPolicyConfig(config = {}){
+    return {
+      activeStatuses: (config.activeStatuses || config.active_statuses || []).map((value) => String(value || '').toUpperCase()).filter(Boolean),
+      excuseMotifs: (config.excuseMotifs || config.excuse_motifs || []).map((value) => String(value || '').toUpperCase()).filter(Boolean),
+      dispenseMotifs: (config.dispenseMotifs || config.dispense_motifs || []).map((value) => String(value || '').toUpperCase()).filter(Boolean)
+    };
+  }
+
+  function removedPolicyElements(previousConfig = {}, nextConfig = {}){
+    const previous = normalizedPolicyConfig(previousConfig);
+    const next = normalizedPolicyConfig(nextConfig);
+    const without = (before, after) => before.filter((value) => !after.includes(value));
+    return {
+      statuses: without(previous.activeStatuses, next.activeStatuses).filter((value) => value !== 'NON_RENSEIGNE'),
+      excuseMotifs: without(previous.excuseMotifs, next.excuseMotifs),
+      dispenseMotifs: without(previous.dispenseMotifs, next.dispenseMotifs)
+    };
+  }
+
+  function removedPolicyElementsEmpty(removed){
+    return !((removed.statuses || []).length || (removed.excuseMotifs || []).length || (removed.dispenseMotifs || []).length);
+  }
+
+  function participationUsesRemovedPolicyElement(participation, removed){
+    const statut = String(participation && participation.statut || '').toUpperCase();
+    const motif = String(participation && (participation.motif_absence || participation.motifAbsence) || '').toUpperCase();
+    if((removed.statuses || []).includes(statut)) return { kind: 'status', id: statut };
+    if(statut === 'ABSENT_EXCUSE' && (removed.excuseMotifs || []).includes(motif)) return { kind: 'motif', id: motif };
+    if(statut === 'DISPENSE' && (removed.dispenseMotifs || []).includes(motif)) return { kind: 'motif', id: motif };
+    return null;
+  }
+
+  async function validateFormationConfigurationRemoval(store, versionId, previousConfig, nextConfig){
+    const removed = removedPolicyElements(previousConfig, nextConfig);
+    if(removedPolicyElementsEmpty(removed)) return { removed, protectedUsages: [] };
+    const eventsByVersion = store.listEventsByDefinitionVersions ? await store.listEventsByDefinitionVersions([versionId]) : {};
+    const events = eventsByVersion[versionId] || [];
+    const protectedUsages = [];
+    for(const event of events){
+      const participations = store.listParticipations ? await store.listParticipations(event.evenement_id || event.evenementId) : [];
+      for(const participation of participations || []){
+        if(!participationHasBusinessTrace(participation)) continue;
+        const hit = participationUsesRemovedPolicyElement(participation, removed);
+        if(hit){
+          protectedUsages.push({
+            eventId: event.evenement_id || event.evenementId,
+            date: dateOnlyText(event.date),
+            libelle: event.libelle,
+            statut: event.statut,
+            kind: hit.kind,
+            id: hit.id
+          });
+        }
+      }
+    }
+    if(protectedUsages.length){
+      throw new HttpError(409, 'configuration_element_utilise', 'Impossible de retirer cet élément : il a déjà été utilisé dans une ou plusieurs participations. Il doit être conservé afin de préserver l’historique.', {
+        removed,
+        usages: protectedUsages.slice(0, 50),
+        participationCount: protectedUsages.length
+      });
+    }
+    return { removed, protectedUsages };
+  }
+
   async function createEventDefinition(body, actor){
     if(!repo.upsertEventDefinition || !repo.upsertEventDefinitionVersion){
       throw new HttpError(501, 'catalogue_indisponible', 'Le catalogue formation n’est pas disponible sur ce stockage.');
@@ -804,7 +980,12 @@ function createScopeService(repo){
     const compatibleMultiPolicy = isMultiSession
       ? (policyVersions || []).find((row) => !((row.config && row.config.activeStatuses) || []).map((status) => String(status || '').toUpperCase()).includes('PERMUTATION'))
       : null;
+    const editDefinitionVersionId = body.definitionVersionId || body.definition_version_id || body.editDefinitionVersionId || null;
+    const editedVersion = editDefinitionVersionId && repo.getEventDefinitionVersion
+      ? await repo.getEventDefinitionVersion(editDefinitionVersionId)
+      : null;
     let policyVersion = (policyVersions || []).find((row) => String(row.policy_version_id || row.policyVersionId) === String(body.policyVersionId || body.policy_version_id))
+      || (editedVersion && (policyVersions || []).find((row) => String(row.policy_version_id || row.policyVersionId || '') === String(editedVersion.policy_version_id || editedVersion.policyVersionId || '')))
       || compatibleMultiPolicy
       || (policyVersions || [])[0]
       || null;
@@ -831,6 +1012,9 @@ function createScopeService(repo){
           deduplicationScope: 'EXERCISE'
         } : {})
       });
+      if(editedVersion && String(editedVersion.policy_version_id || editedVersion.policyVersionId || '') === String(policyVersion && (policyVersion.policy_version_id || policyVersion.policyVersionId) || '')){
+        await validateFormationConfigurationRemoval(repo, editedVersion.definition_version_id || editedVersion.definitionVersionId, baseConfig, nextConfig);
+      }
       policyVersion = await repo.upsertParticipationPolicyVersion({
         policy_code: `${definition.code}-REGLES`,
         domain: definition.domain,
@@ -856,6 +1040,33 @@ function createScopeService(repo){
       const savedVersion = await tx.upsertEventDefinitionVersion(Object.assign({}, versionInput, {
         definition_id: savedDefinition.definition_id || savedDefinition.definitionId
       }));
+      if(body && body.policyConfig && editDefinitionVersionId && String(savedVersion.definition_version_id || savedVersion.definitionVersionId || '') === String(editDefinitionVersionId)){
+        const refreshedPolicy = await policySnapshotFromDefinitionVersion(tx, savedVersion);
+        const eventsByVersion = tx.listEventsByDefinitionVersions ? await tx.listEventsByDefinitionVersions([editDefinitionVersionId]) : {};
+        const linkedEvents = eventsByVersion[editDefinitionVersionId] || [];
+        for(const event of linkedEvents){
+          if(String(event.statut || '').toUpperCase() === 'REALISE') continue;
+          const eventId = event.evenement_id || event.evenementId;
+          const current = await tx.getEvent(eventId);
+          if(!current) continue;
+          const eventSnapshot = genericCatalog.snapshotDefinitionVersion(savedDefinition, savedVersion, {
+            policy_version_id: savedVersion.policy_version_id || savedVersion.policyVersionId,
+            policy_code: savedVersion.policyCode || savedVersion.policy_code,
+            version_code: savedVersion.policyVersionCode || savedVersion.policy_version_code
+          });
+          eventSnapshot.association = Object.assign({}, (current.engine_snapshot && current.engine_snapshot.association) || {}, {
+            origin: ((current.engine_snapshot && current.engine_snapshot.association) || {}).origin || 'MANUAL',
+            label: ((current.engine_snapshot && current.engine_snapshot.association) || {}).label || 'Association administrative',
+            updatedAt: new Date().toISOString()
+          });
+          await tx.updateEventIfVersion(eventId, current.version, {
+            policy_version_id: savedVersion.policy_version_id || savedVersion.policyVersionId || null,
+            engine_snapshot: eventSnapshot,
+            participation_policy_version: refreshedPolicy.policyVersion,
+            participation_policy_snapshot: refreshedPolicy
+          });
+        }
+      }
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'event_definition',
@@ -4017,11 +4228,19 @@ function createScopeService(repo){
     const statutFilter = statut && statut !== 'tous' && !etatsMetier.has(statut) ? statut : null;
     const etatMetierFilter = statut && statut !== 'tous' && etatsMetier.has(statut) ? statut : null;
     const domaine = query?.domaineCode || query?.domaine_code || query?.domaine || null;
+    const domaines = String(domaine || '')
+      .split(',')
+      .map((value) => String(value || '').trim().toUpperCase())
+      .filter((value) => value && value !== 'TOUS');
     let evenements = await repo.listEvenements({
       annee: annee ? Number(annee) : null,
       statut: statutFilter,
-      domaine: domaine && domaine !== 'tous' ? domaine : null
+      domaine: domaines.length === 1 ? domaines[0] : null
     });
+    if(domaines.length > 1){
+      const allowedDomaines = new Set(domaines);
+      evenements = evenements.filter((row) => allowedDomaines.has(String(row.domaine_code || '').toUpperCase()));
+    }
     if(!wantsQualification(query)){
       evenements = evenements.filter((row) => !isQualificationEvenement(row));
     }
@@ -5391,6 +5610,7 @@ function createScopeService(repo){
     createEventDefinition,
     previewFormationEventAssociation,
     associateEventsToFormationConfiguration,
+    dissociateEventsFromFormationConfiguration,
     reconductEventDefinitionVersion,
     performanceDiagnostics,
     countPersonnes,

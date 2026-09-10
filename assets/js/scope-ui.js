@@ -725,7 +725,7 @@
       const params = Object.assign({
         annee: state.year,
         statut: state.statut,
-        domaineCode: state.domaine
+        domaineCode: L.eventListDomainParam ? L.eventListDomainParam(state.domaine) : state.domaine
       }, qualQuery());
       const data = await cached('list', params, () => client.listEvenements(params));
       if (token !== state.listRequestSeq) return null;
@@ -2995,6 +2995,7 @@
       const ev = item.evenement;
       const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
       const mode = L.modeSuiviOf(ev);
+      const business = eventBusinessState(item);
       const legacyPct = isLegacy ? L.legacyTauxFromRow(item.legacy) : null;
       const taux = L.displayTauxForList(
         ev.statut,
@@ -3002,8 +3003,10 @@
         isLegacy ? legacyPct : (item.compteurs && item.compteurs.percentage),
         { origine: ev.origine }
       );
-      const action = ev.statut === 'PLANIFIE' && !isLegacy && (ev.population_figee || mode === 'QUANTITATIF') ? 'Saisir' : 'Ouvrir';
-      const href = ev.statut === 'PLANIFIE' && !isLegacy && (ev.population_figee || mode === 'QUANTITATIF')
+      const saisieBusinessStates = new Set(['PLANIFIE', 'A_TRAITER', 'SAISIE_EN_COURS']);
+      const directSaisie = !isLegacy && saisieBusinessStates.has(String(business.code || '').toUpperCase()) && (ev.population_figee || mode === 'QUANTITATIF');
+      const action = directSaisie ? (String(business.code || '').toUpperCase() === 'SAISIE_EN_COURS' ? 'Compléter la saisie' : 'Saisir') : 'Ouvrir';
+      const href = directSaisie
         ? `#/exercices/${ev.evenement_id}/saisie`
         : `#/exercices/${ev.evenement_id}`;
       const v2 = item.multiSessionV2 || null;
@@ -3043,7 +3046,7 @@
       const effectifHtml = `<span class="scope-events-effectif-main">${escapeHtml(String(attendusCell))}</span>${effectifBits.length ? `<small class="scope-events-effectif-sub">${escapeHtml(effectifBits.join(' · '))}</small>` : ''}`;
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-        <td data-label="Événement"><a class="scope-events-libelle" href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a>${v2Badge}</td>
+        <td data-label="Événement"><a class="scope-events-libelle" href="${escapeHtml(directSaisie ? href : `#/exercices/${ev.evenement_id}`)}">${escapeHtml(ev.libelle)}</a>${v2Badge}</td>
         <td data-label="Domaine"><span class="scope-events-domain">${escapeHtml(domaineLabel(ev.domaine_code))}</span></td>
         <td data-label="Public / OI">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Effectif">${effectifHtml}</td>
@@ -8060,6 +8063,13 @@
     const definition = preview.definition || {};
     const candidates = Array.isArray(preview.candidates) ? preview.candidates : [];
     const selected = candidates.filter((row) => row.selectable);
+    const statusClass = (status) => ({
+      DEJA_ASSOCIE: 'is-associated',
+      AUTRE_CONFIGURATION: 'is-protected',
+      COMPATIBLE: 'is-compatible',
+      AMBIGU: 'is-ambiguous',
+      INCOMPATIBLE: 'is-incompatible'
+    }[String(status || '').toUpperCase()] || 'is-incompatible');
     const rowHtml = candidates.slice(0, 40).map((row) => {
       const statusLabel = {
         DEJA_ASSOCIE: 'Déjà associé à cette configuration',
@@ -8071,11 +8081,18 @@
       const sessionText = row.sessionIndex
         ? `Session ${row.sessionIndex} sur ${version.sessionCount || row.sessionCount || '—'}`
         : 'Session non renseignée';
-      return `<tr>
+      const eventId = row.eventId || row.evenementId || '';
+      const control = row.selectable
+        ? `<label class="scope-check scope-association-check"><input type="checkbox" data-association-select="${escapeHtml(eventId)}" data-association-session="${escapeHtml(row.sessionIndex || '')}" checked><span>Associer</span></label>`
+        : (row.status === 'DEJA_ASSOCIE' && row.canDissociate
+          ? `<label class="scope-check scope-association-check"><input type="checkbox" data-association-dissociate="${escapeHtml(eventId)}"><span>Dissocier</span></label>`
+          : '<span class="scope-muted">Protégé</span>');
+      return `<tr class="scope-association-row ${statusClass(row.status)}" data-association-status="${escapeHtml(row.status || '')}">
+        <td>${control}</td>
         <td>${escapeHtml(L.formatDate(row.date) || row.date || '')}</td>
         <td><strong>${escapeHtml(row.libelle || '')}</strong><br><small>${escapeHtml(row.currentConfiguration || 'Configuration historique SCOPE')}</small></td>
         <td>${escapeHtml(row.domaine || definition.domain || '')}</td>
-        <td>${escapeHtml(statusLabel)}<br><small>${escapeHtml(row.reason || '')}</small></td>
+        <td>${escapeHtml(statusLabel)}<br><small>${escapeHtml(row.dissociationReason || row.reason || '')}</small></td>
         <td>${escapeHtml(sessionText)}</td>
         <td>${row.hasParticipations ? `${escapeHtml(String(row.participationCount || 0))} saisie${Number(row.participationCount || 0) > 1 ? 's' : ''}` : 'Aucune saisie'}</td>
       </tr>`;
@@ -8090,9 +8107,15 @@
         <div><dt>Incompatibles</dt><dd>${escapeHtml(String(summary.incompatible || 0))}</dd></div>
       </dl>
       <p class="scope-muted">Aucune écriture n’est effectuée pendant cette prévisualisation. Les événements compatibles sélectionnés passeront de « Configuration historique SCOPE » à cette version de configuration.</p>
-      <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Domaine</th><th>État</th><th>Session</th><th>Saisies</th></tr></thead><tbody>${rowHtml || '<tr><td colspan="6"><div class="scope-empty">Aucun événement compatible trouvé.</div></td></tr>'}</tbody></table></div>
+      <div class="scope-association-filters" aria-label="Filtres associations">
+        <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-association-filter="TOUS">Tous</button>
+        <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-association-filter="COMPATIBLE">Compatibles</button>
+        <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-association-filter="DEJA_ASSOCIE">Déjà associés</button>
+        <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-association-filter="AMBIGU">Ambigus</button>
+      </div>
+      <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Choix</th><th>Date</th><th>Événement</th><th>Domaine</th><th>État</th><th>Session</th><th>Saisies</th></tr></thead><tbody>${rowHtml || '<tr><td colspan="7"><div class="scope-empty">Aucun événement compatible trouvé.</div></td></tr>'}</tbody></table></div>
       <section><h3>Règles concernées</h3><p><strong>Statuts</strong><br>${escapeHtml((rules.activeStatuses || []).join(' · ') || '—')}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml((rules.excuseMotifs || []).join(' · ') || '—')}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml((rules.dispenseMotifs || []).join(' · ') || '—')}</p></section>
-      ${selected.length ? `<p class="scope-muted">${escapeHtml(String(selected.length))} événement${selected.length > 1 ? 's' : ''} compatible${selected.length > 1 ? 's' : ''} prêt${selected.length > 1 ? 's' : ''} à associer.</p>` : '<p class="scope-empty">Aucun événement sélectionnable dans cette prévisualisation.</p>'}
+      ${selected.length ? `<p class="scope-muted">${escapeHtml(String(selected.length))} événement${selected.length > 1 ? 's' : ''} compatible${selected.length > 1 ? 's' : ''} sélectionné${selected.length > 1 ? 's' : ''} par défaut. Décochez ceux à laisser inchangés.</p>` : '<p class="scope-empty">Aucun événement sélectionnable dans cette prévisualisation.</p>'}
     </div>`;
   }
 
@@ -8179,12 +8202,16 @@
     const renderPolicySummary = (label, values, mapper) => `<p class="scope-policy-column-summary"><strong>Résumé</strong><span>${escapeHtml((values || []).map(mapper).join(' · ') || '—')}</span></p>`;
     const renderChecks = (type, items, selected, disabledIds = []) => items.map((id) => {
       const archived = type === 'status' ? !isStatusActive(id) : !isMotifActive(id);
-      const disabled = disabledIds.includes(String(id).toUpperCase()) || archived;
+      const catalogRow = type === 'status' ? statusCatalog.get(String(id || '').toUpperCase()) : motifCatalog.get(String(id || '').toUpperCase());
+      const usageSummary = referentialUsageSummary(catalogRow || {});
+      const historicallyUsed = Number(usageSummary.participations || 0) > 0;
+      const disabled = disabledIds.includes(String(id).toUpperCase()) || (archived && historicallyUsed);
       return `<label class="scope-check scope-policy-check ${disabled ? 'is-disabled' : ''}">
         <input type="checkbox" data-formation-policy="${escapeHtml(type)}:${escapeHtml(id)}" ${selected.includes(id) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
         <span class="scope-policy-check-copy"><span>${escapeHtml(type === 'status' ? statusLabel(id) : motifLabel(id))}</span>
         ${disabled && String(id).toUpperCase() === 'PRESENT' ? '<small>Présent est obligatoire pour cette configuration.</small>' : ''}
-        ${archived ? '<small>Archivé — conservé dans cette configuration.</small>' : ''}</span>
+        ${archived && selected.includes(id) && !historicallyUsed ? '<small>Archivé — actuellement inclus dans cette configuration. Archivé — conservé dans cette configuration. Vous pouvez le décocher s’il n’a jamais été utilisé.</small>' : ''}
+        ${archived && historicallyUsed ? '<small>Utilisé historiquement — retrait impossible.</small>' : ''}</span>
       </label>`;
     }).join('');
     const renderPolicyColumn = (kind, title, items, selected, disabledIds = []) => `<section class="scope-policy-column">
@@ -8203,12 +8230,12 @@
       const linkedEventCount = Number(version.linkedEventCount || version.linked_event_count || 0);
       const linkedEvents = version.linkedEvents || version.linked_events || [];
       const versionId = version.definition_version_id || version.definitionVersionId || '';
-      const editable = linkedEventCount === 0;
+      const editable = canManage;
       const applicationText = mode === 'MULTI_SESSION'
         ? `Cette configuration s’applique aux événements rattachés à « ${definition.label || 'ce modèle'} », dont la date est comprise entre ${L.formatDate(version.valid_from || version.validFrom)} et ${L.formatDate(version.valid_to || version.validTo)}, et associés au Multi-session prévu de ${sessions} sessions.`
         : `Cette configuration s’applique aux événements rattachés à « ${definition.label || 'ce modèle'} », dont la date est comprise entre ${L.formatDate(version.valid_from || version.validFrom)} et ${L.formatDate(version.valid_to || version.validTo)}.`;
       const usageText = linkedEventCount > 0
-        ? `Événements associés : ${linkedEventCount}. Cette version est déjà utilisée par des événements. Pour préserver l’historique, créez une nouvelle version.`
+        ? `Événements associés : ${linkedEventCount}. Les éléments jamais utilisés peuvent être retirés; les saisies historiques restent protégées. Créer une nouvelle version reste nécessaire lorsqu’un élément déjà utilisé doit évoluer.`
         : 'Aucun événement n’utilise actuellement cette configuration. Les événements peuvent être associés lors de leur création ou lors d’un import validé.';
       const linkedEventsHtml = linkedEvents.length
         ? `<div class="scope-associated-events-list">${linkedEvents.map((event) => {
@@ -8237,7 +8264,7 @@
           <section><h3>Organisation</h3><p>${mode === 'MULTI_SESSION' ? `Plusieurs sessions · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p><p class="scope-muted">${mode === 'MULTI_SESSION' ? 'Une personne satisfait son obligation lorsqu’elle participe valablement à une des sessions.' : 'Une seule session porte l’exercice.'}</p></section>
           <section><h3>Participation</h3><p><strong>Statuts disponibles</strong><br>${escapeHtml(statuses)}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml(excuses)}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml(dispenses)}</p><p><strong>Permutation</strong><br>${(config.activeStatuses || []).includes('PERMUTATION') ? 'Disponible selon règles DAP simple' : 'Non disponible pour cette configuration'}</p></section>
           <section><h3>Application aux événements</h3><p>${escapeHtml(applicationText)}</p><p class="scope-muted">${escapeHtml(usageText)}</p></section>
-          <section><h3>Historique / version</h3><p>${escapeHtml(versionLabel(version).replace(/<[^>]+>/g, ''))}</p>${editable ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-edit-formation-version="${escapeHtml(versionId)}">Modifier la configuration</button>` : `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Créer une nouvelle version</button>`}<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Reconduire l’année suivante</button></section>
+          <section><h3>Historique / version</h3><p>${escapeHtml(versionLabel(version).replace(/<[^>]+>/g, ''))}</p>${editable ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-edit-formation-version="${escapeHtml(versionId)}">Modifier la configuration</button>` : ''}<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Reconduire l’année suivante</button></section>
         </div>
         <section class="scope-formation-linked-events"><div class="scope-policy-column-head"><h3>Événements utilisant cette configuration</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-associate-formation-events="${escapeHtml(versionId)}">Associer des événements</button></div><p class="scope-muted">${escapeHtml(String(linkedEventCount))} événement${linkedEventCount > 1 ? 's' : ''}</p>${linkedEventsHtml}</section>
         <details class="scope-technical-details"><summary>Informations techniques</summary><p>Définition : ${escapeHtml(definition.code || '')}</p><p>Policy : ${escapeHtml(policy.policy_code || policy.policyCode || '—')} · ${escapeHtml(policy.version_code || policy.versionCode || '—')}</p><p>Route moteur : ${mode === 'MULTI_SESSION' ? 'Multi-session générique' : 'Session unique générique'}</p></details>
@@ -10373,32 +10400,53 @@
             ScopeFeedback.confirm({
               title: 'Associer des événements ?',
               message: candidates.length
-                ? 'Les événements compatibles seront rattachés explicitement à cette configuration.'
+                ? 'Sélectionnez les associations ou dissociations à appliquer.'
                 : 'Aucun événement compatible ne peut être associé automatiquement.',
-              confirmText: candidates.length ? 'Associer les événements sélectionnés' : 'Fermer',
+              confirmText: 'Appliquer la sélection',
               cancelText: 'Annuler',
               html: renderFormationAssociationPreviewHtml(preview)
             }, async () => {
-              if (!candidates.length) {
+              const selectedAssociations = Array.from(document.querySelectorAll('[data-association-select]:checked')).map((input) => ({
+                eventId: input.getAttribute('data-association-select'),
+                sessionIndex: input.getAttribute('data-association-session') || null
+              })).filter((row) => row.eventId);
+              const selectedDissociations = Array.from(document.querySelectorAll('[data-association-dissociate]:checked')).map((input) => input.getAttribute('data-association-dissociate')).filter(Boolean);
+              if (!selectedAssociations.length && !selectedDissociations.length) {
                 ScopeFeedback.clear();
                 return;
               }
               await withFeedbackAction({
-                progressTitle: 'Association des événements…',
-                progressMessage: 'SCOPE rattache les événements sélectionnés à la configuration.',
-                successTitle: 'Événements associés',
-                successMessage: 'La configuration est maintenant visible sur les événements associés.'
+                progressTitle: 'Mise à jour des associations…',
+                progressMessage: 'SCOPE applique uniquement la sélection demandée.',
+                successTitle: 'Associations mises à jour',
+                successMessage: 'Les associations de configuration ont été actualisées.'
               }, async () => {
-                await client.associateFormationEvents(id, {
-                  events: candidates.map((row) => ({ eventId: row.eventId || row.evenementId, sessionIndex: row.sessionIndex || null })),
-                  confirmExistingParticipations: true
-                });
+                if (selectedAssociations.length) {
+                  await client.associateFormationEvents(id, {
+                    events: selectedAssociations,
+                    confirmExistingParticipations: true
+                  });
+                }
+                if (selectedDissociations.length && typeof client.dissociateFormationEvents === 'function') {
+                  await client.dissociateFormationEvents(id, { eventIds: selectedDissociations });
+                }
                 invalidateCache(['referentiels', 'formationCatalog', 'list']);
                 await loadFormationCatalog();
                 await loadList();
                 render();
               });
             });
+            setTimeout(() => {
+              document.querySelectorAll('[data-association-filter]').forEach((filterBtn) => {
+                filterBtn.addEventListener('click', () => {
+                  const filter = String(filterBtn.getAttribute('data-association-filter') || 'TOUS').toUpperCase();
+                  document.querySelectorAll('[data-association-status]').forEach((row) => {
+                    const status = String(row.getAttribute('data-association-status') || '').toUpperCase();
+                    row.hidden = filter !== 'TOUS' && status !== filter;
+                  });
+                });
+              });
+            }, 0);
           })
           .catch((error) => {
             const info = presentFriendlyError(L.friendlyError(error));
@@ -10453,6 +10501,7 @@
           .filter(Boolean);
         const selectedStatusesPayload = checked('status').filter((status) => !(form.modeOrganisation === 'MULTI_SESSION' && status === 'PERMUTATION'));
         await client.createEventDefinition({
+          definitionVersionId: form.editDefinitionVersionId || null,
           domain: form.domain,
           label: form.label,
           description: form.description,

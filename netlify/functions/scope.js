@@ -484,6 +484,13 @@ async function scopeHandler(event){
       }
       return response(200, { ok:true, ...(await service.associateEventsToFormationConfiguration(params.id, body, claims)) });
     }
+    params = match(path, '/formation/definition-versions/:id/dissociate-events');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.dissociateEventsFromFormationConfiguration(params.id, body, claims)) });
+    }
     params = match(path, '/formation/definition-versions/:id/reconduct');
     if(method === 'POST' && params){
       if(!hasPermission(claims, 'references:manage')){

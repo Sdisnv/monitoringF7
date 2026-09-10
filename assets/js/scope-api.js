@@ -218,6 +218,7 @@
       createEventDefinition(body) { return request('POST', '/formation/definitions', body); },
       previewFormationEventAssociation(id) { return request('GET', `/formation/definition-versions/${encodeURIComponent(id)}/association-preview`); },
       associateFormationEvents(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/associate-events`, body || {}); },
+      dissociateFormationEvents(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/dissociate-events`, body || {}); },
       reconductEventDefinitionVersion(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/reconduct`, body); },
       performanceDiagnostics() { return request('GET', '/diagnostics/performance'); },
       async previewPersonnelSync(body) {
