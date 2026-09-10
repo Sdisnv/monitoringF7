@@ -1227,8 +1227,8 @@ class ScopePdfRenderer {
       this.table(
         ['Grade', 'Nom', 'Prénom', 'NIP', 'Rôle', 'État', 'Progression', 'Résultat / information'],
         m.nominatif.map((row) => [row.grade, row.nom, row.prenom, row.nip, row.roles, row.etat, row.progression, row.resultat || row.information]),
-        [34, 64, 58, 42, 52, 62, 50, 97],
-        { rowH: 13, wrap: [false, false, false, false, true, false, false, true] }
+        [32, 58, 52, 40, 48, 82, 45, 102],
+        { rowH: 15, wrap: [false, false, false, false, true, true, false, true] }
       );
     }
 

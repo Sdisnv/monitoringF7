@@ -56,7 +56,8 @@ const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERS
 const STATUT_LABELS = Object.freeze({
   PRESENT: 'Présent',
   ABSENT_EXCUSE: 'Excusé',
-  ABSENT_NON_EXCUSE: 'Non excusé',
+  ABSENT_NON_EXCUSE: 'Absent',
+  ABSENT: 'Absent',
   DISPENSE: 'Dispensé',
   PERMUTATION: 'Permutation',
   NON_RENSEIGNE: 'Non renseigné',
@@ -170,6 +171,7 @@ function sanitizeFilename(name){
 function cleanFilenamePart(value, fallback){
   return String(value || fallback || '')
     .normalize('NFC')
+    .replace(/[–—]/g, '-')
     .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -554,6 +556,31 @@ function cycleGraphs(detail){
   };
 }
 
+function cyclePrimaryResultLabel(row){
+  if(!row) return '—';
+  const state = String(row.globalState || '').toUpperCase();
+  if(state === 'COMPLET') return ['Obligation satisfaite', row.primaryResultLabel].filter(Boolean).join(' — ');
+  if(state === 'EXCUSE') return 'Excusé — obligation satisfaite';
+  if(state === 'DISPENSE') return 'Dispensé — obligation satisfaite';
+  if(state === 'ABSENT') return 'Absent';
+  if(row.primaryResultLabel) return row.primaryResultLabel;
+  return cyclePilotageStateLabel(row.globalState);
+}
+
+function cycleInformationLabel(row){
+  if(!row) return '—';
+  const state = String(row.globalState || '').toUpperCase();
+  if(['COMPLET', 'EXCUSE', 'DISPENSE'].includes(state)){
+    const covered = (row.obligations || []).find((cell) => ['REALISE', 'EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
+    const label = covered && covered.label ? covered.label : row.primaryResultLabel;
+    return label ? `${label} · aucune action requise` : 'Aucune action requise';
+  }
+  return (row.obligations || [])
+    .filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE')
+    .map((cell) => [cell.label, cyclePilotageStateLabel(cell.status), MOTIF_LABELS[cell.motif] || cell.motif].filter(Boolean).join(' · '))
+    .join(' | ') || '—';
+}
+
 function cycleReportRows(rows){
   return (rows || []).slice().sort(sortByGradeThenName).map((row) => ({
     grade: row.grade || '',
@@ -563,11 +590,8 @@ function cycleReportRows(rows){
     roles: (row.roles || []).map(cycleRoleLabel).join(', ') || '—',
     etat: cyclePilotageStateLabel(row.globalState),
     progression: row.progressionPct == null ? '—' : `${String(row.progressionPct).replace('.', ',')} %`,
-    resultat: row.primaryResultLabel || '—',
-    information: (row.obligations || [])
-      .filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE')
-      .map((cell) => [cell.label, cyclePilotageStateLabel(cell.status), MOTIF_LABELS[cell.motif] || cell.motif].filter(Boolean).join(' · '))
-      .join(' | ') || '—'
+    resultat: cyclePrimaryResultLabel(row),
+    information: cycleInformationLabel(row)
   }));
 }
 

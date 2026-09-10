@@ -3175,10 +3175,26 @@
 
   function cyclePrimaryResult(row) {
     if (!row) return '—';
+    const state = String(row.globalState || '').toUpperCase();
+    if (state === 'COMPLET') return [cyclePilotageStateLabel(row.globalState), row.primaryResultLabel].filter(Boolean).join(' — ');
+    if (state === 'EXCUSE') return 'Excusé — obligation satisfaite';
+    if (state === 'DISPENSE') return 'Dispensé — obligation satisfaite';
+    if (state === 'ABSENT') return 'Absent';
     if (row.primaryResultLabel) return row.primaryResultLabel;
     const active = (row.obligations || []).filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE');
     if (!active.length) return cyclePilotageStateLabel(row.globalState);
     return active.map((cell) => [cell.label, cyclePilotageStateLabel(cell.status)].filter(Boolean).join(' · ')).join(' | ');
+  }
+
+  function cycleInformation(row) {
+    if (!row) return '—';
+    const state = String(row.globalState || '').toUpperCase();
+    if (['COMPLET', 'EXCUSE', 'DISPENSE'].includes(state)) {
+      const covered = (row.obligations || []).find((cell) => ['REALISE', 'EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
+      const label = covered && covered.label ? covered.label : row.primaryResultLabel;
+      return label ? `${label} · aucune action requise` : 'Aucune action requise';
+    }
+    return (row.populationSources || []).join(', ') || 'Population concernée';
   }
 
   function cycleCellDetailLabel(cell) {
@@ -3395,7 +3411,7 @@
       <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.globalState))}</td>
       <td data-label="Progression">${escapeHtml(L.formatTaux(row.progressionPct))}</td>
       <td data-label="Résultat">${escapeHtml(cyclePrimaryResult(row))}</td>
-      <td data-label="Information">${(row.primaryEventId && String(row.globalState || '').toUpperCase() === 'INCOMPLET') ? `<a href="#/exercices/${escapeHtml(row.primaryEventId)}">Ouvrir la session</a>` : escapeHtml((row.populationSources || []).join(', ') || 'Population concernée')}</td>
+      <td data-label="Information">${(row.primaryEventId && String(row.globalState || '').toUpperCase() === 'INCOMPLET') ? `<a href="#/exercices/${escapeHtml(row.primaryEventId)}">Ouvrir la session</a>` : escapeHtml(cycleInformation(row))}</td>
     </tr>`).join('') : '<tr><td colspan="6"><div class="scope-empty">Aucune personne concernée par ce cycle.</div></td></tr>';
     const encadrementHtml = sortedEncadrementRows.length ? sortedEncadrementRows.map((row) => `<tr>
       <td data-label="Personne">${personCell(row)}</td>

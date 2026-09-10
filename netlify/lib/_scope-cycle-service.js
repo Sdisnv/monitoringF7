@@ -103,8 +103,35 @@ function cycleLabelFromEvents(groupKey, events){
   const domaine = String((first.domaine_code || (keyMatch && keyMatch[1]) || 'PR')).toUpperCase();
   const cycleNo = parsed.cycleNo || (keyMatch && keyMatch[2]) || '';
   const suffix = String(first.libelle || '').split('|').slice(1).join('|').trim();
-  const annee = yearOfEvent(first);
-  return [cycleNo ? `${domaine} ${cycleNo}` : domaine, suffix || 'Base', annee].filter(Boolean).join(' — ');
+  const prefix = cycleNo ? `Exercice ${domaine} ${cycleNo}` : `Exercice ${domaine}`;
+  return [prefix, suffix || 'Base'].filter(Boolean).join(' – ');
+}
+
+function cycleDisplayLabel(cycle){
+  const raw = text(cycle && cycle.libelle);
+  if(!raw) return raw;
+  const domain = normalizeDomain(cycle && cycle.domaine_code);
+  const type = String(cycle && cycle.type_cycle || '').toUpperCase();
+  if(type === 'MULTI_SESSION') return raw;
+  if(domain !== 'PR' && domain !== 'AUTO') return raw;
+  let compact = raw
+    .replace(/\s+[—-]\s+\d{4}\s*$/u, '')
+    .replace(/^Cycle\s+(PR|AUTO)\s*/i, '$1 ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const match = compact.match(/^(?:Exercice\s+)?(PR|AUTO)\s+(\d+)(?:\s*[–—-]\s*|\s+)(.+)$/i);
+  if(match){
+    return `Exercice ${domain} ${match[2]} – ${match[3].trim() || 'Base'}`;
+  }
+  const number = compact.match(new RegExp(`^(?:Exercice\\s+)?${domain}\\s+(\\d+)\\s*$`, 'i'));
+  if(number) return `Exercice ${domain} ${number[1]} – Base`;
+  return raw;
+}
+
+function projectCycleLabel(cycle){
+  if(!cycle) return cycle;
+  const libelle = cycleDisplayLabel(cycle);
+  return libelle && libelle !== cycle.libelle ? { ...cycle, libelle, libelle_source: cycle.libelle } : cycle;
 }
 
 function cycleStatusFromCompletion(completion){
@@ -267,7 +294,7 @@ function createScopeCycleService(repo){
     ]);
     const metrics = await cycleMetrics(cycle);
     const pilotage = await cyclePilotage(cycle, evenements, personnes);
-    return { cycle, evenements, personnes, metrics, pilotage };
+    return { cycle: projectCycleLabel(cycle), evenements, personnes, metrics, pilotage };
   }
 
   async function buildMultiSessionState(multisession){
@@ -583,7 +610,7 @@ function createScopeCycleService(repo){
         const evenements = await repo.listCycleEvents(cycle.cycle_id);
         const personnes = await repo.listCyclePersonnes(cycle.cycle_id);
         const metrics = await cycleMetrics(cycle);
-        items.push({ ...cycle, eventCount: evenements.length, populationCount: metrics.populationDistincte, metrics, personneCount: personnes.length });
+        items.push({ ...projectCycleLabel(cycle), eventCount: evenements.length, populationCount: metrics.populationDistincte, metrics, personneCount: personnes.length });
       }
       const persistedKeys = new Set(items.map((cycle) => String(cycle.cycle_key || '')));
       const synthetic = await derivedCycles(query);

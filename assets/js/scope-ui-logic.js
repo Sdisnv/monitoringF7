@@ -951,7 +951,7 @@
     if (statut === 'PRESENT') return 'Présent';
     if (statut === 'PERMUTATION') return 'Permutation';
     if (statut === 'ABSENT_EXCUSE') return 'Excusé';
-    if (statut === 'ABSENT_NON_EXCUSE') return 'Non excusé';
+    if (statut === 'ABSENT_NON_EXCUSE' || statut === 'ABSENT') return 'Absent';
     if (statut === 'DISPENSE') return 'Dispensé';
     if (statut === 'NON_RENSEIGNE') return 'Non renseigné';
     if (statut === 'NON_CONCERNE') return 'Non concerné';
