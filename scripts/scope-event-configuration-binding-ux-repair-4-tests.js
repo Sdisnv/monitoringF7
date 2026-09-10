@@ -210,7 +210,7 @@ async function saveOne(service, eventId, personne, statut, motifAbsence){
     includes(service, 'removeSourcePermutationObligation(tx, evenement, attendu.personne_id, actor)');
     ok(!ui.includes('jobs.push(refreshAlertCounts())'), 'pas de chargement alertes bloquant');
     includes(ui, "refreshAlertCounts().then(() => render()).catch(() => {})");
-    ok(html.includes('scope-referentials-usage-traceability-active-filter-repair-5-3') || html.includes('scope-event-configuration-binding-ux-repair-4') || html.includes('scope-configuration-formation-ux-referentials-finish-5'), 'cache-buster SCOPE récent');
+    ok(html.includes('scope-event-configuration-binding-migration-6') || html.includes('scope-referentials-usage-traceability-active-filter-repair-5-3') || html.includes('scope-event-configuration-binding-ux-repair-4') || html.includes('scope-configuration-formation-ux-referentials-finish-5'), 'cache-buster SCOPE récent');
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

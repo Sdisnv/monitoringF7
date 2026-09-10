@@ -470,6 +470,20 @@ async function scopeHandler(event){
       }
       return response(201, { ok:true, ...(await service.createEventDefinition(body, claims)) });
     }
+    params = match(path, '/formation/definition-versions/:id/association-preview');
+    if(method === 'GET' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.previewFormationEventAssociation(params.id)) });
+    }
+    params = match(path, '/formation/definition-versions/:id/associate-events');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.associateEventsToFormationConfiguration(params.id, body, claims)) });
+    }
     params = match(path, '/formation/definition-versions/:id/reconduct');
     if(method === 'POST' && params){
       if(!hasPermission(claims, 'references:manage')){

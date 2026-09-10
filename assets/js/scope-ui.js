@@ -323,7 +323,8 @@
         confirmText: options.confirmText || 'Confirmer',
         cancelText: options.cancelText || 'Annuler',
         tone: options.tone || 'warning',
-        errors: options.errors || []
+        errors: options.errors || [],
+        html: options.html || ''
       });
     },
     clear() {
@@ -8053,6 +8054,48 @@
     </div>`;
   }
 
+  function renderFormationAssociationPreviewHtml(preview = {}) {
+    const summary = preview.summary || {};
+    const version = preview.version || {};
+    const definition = preview.definition || {};
+    const candidates = Array.isArray(preview.candidates) ? preview.candidates : [];
+    const selected = candidates.filter((row) => row.selectable);
+    const rowHtml = candidates.slice(0, 40).map((row) => {
+      const statusLabel = {
+        DEJA_ASSOCIE: 'Déjà associé à cette configuration',
+        AUTRE_CONFIGURATION: 'Associé à une autre configuration',
+        COMPATIBLE: 'Compatible',
+        AMBIGU: 'Ambigu',
+        INCOMPATIBLE: 'Incompatible'
+      }[row.status] || row.status || 'Configuration historique SCOPE';
+      const sessionText = row.sessionIndex
+        ? `Session ${row.sessionIndex} sur ${version.sessionCount || row.sessionCount || '—'}`
+        : 'Session non renseignée';
+      return `<tr>
+        <td>${escapeHtml(L.formatDate(row.date) || row.date || '')}</td>
+        <td><strong>${escapeHtml(row.libelle || '')}</strong><br><small>${escapeHtml(row.currentConfiguration || 'Configuration historique SCOPE')}</small></td>
+        <td>${escapeHtml(row.domaine || definition.domain || '')}</td>
+        <td>${escapeHtml(statusLabel)}<br><small>${escapeHtml(row.reason || '')}</small></td>
+        <td>${escapeHtml(sessionText)}</td>
+        <td>${row.hasParticipations ? `${escapeHtml(String(row.participationCount || 0))} saisie${Number(row.participationCount || 0) > 1 ? 's' : ''}` : 'Aucune saisie'}</td>
+      </tr>`;
+    }).join('');
+    const rules = preview.targetPolicy || {};
+    return `<div class="scope-referential-usage-modal scope-formation-association-preview">
+      <p><strong>${escapeHtml(definition.label || 'Configuration formation')}</strong> · Version ${escapeHtml(version.versionCode || '')}</p>
+      <dl class="scope-meta">
+        <div><dt>Événements compatibles</dt><dd>${escapeHtml(String(summary.legacySelectable || 0))}</dd></div>
+        <div><dt>Déjà associés</dt><dd>${escapeHtml(String(summary.alreadyAssociated || 0))}</dd></div>
+        <div><dt>Ambigus</dt><dd>${escapeHtml(String(summary.ambiguous || 0))}</dd></div>
+        <div><dt>Incompatibles</dt><dd>${escapeHtml(String(summary.incompatible || 0))}</dd></div>
+      </dl>
+      <p class="scope-muted">Aucune écriture n’est effectuée pendant cette prévisualisation. Les événements compatibles sélectionnés passeront de « Configuration historique SCOPE » à cette version de configuration.</p>
+      <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Événement</th><th>Domaine</th><th>État</th><th>Session</th><th>Saisies</th></tr></thead><tbody>${rowHtml || '<tr><td colspan="6"><div class="scope-empty">Aucun événement compatible trouvé.</div></td></tr>'}</tbody></table></div>
+      <section><h3>Règles concernées</h3><p><strong>Statuts</strong><br>${escapeHtml((rules.activeStatuses || []).join(' · ') || '—')}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml((rules.excuseMotifs || []).join(' · ') || '—')}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml((rules.dispenseMotifs || []).join(' · ') || '—')}</p></section>
+      ${selected.length ? `<p class="scope-muted">${escapeHtml(String(selected.length))} événement${selected.length > 1 ? 's' : ''} compatible${selected.length > 1 ? 's' : ''} prêt${selected.length > 1 ? 's' : ''} à associer.</p>` : '<p class="scope-empty">Aucun événement sélectionnable dans cette prévisualisation.</p>'}
+    </div>`;
+  }
+
   function renderFormationCatalog() {
     const canManage = hasScopePermission('references:manage');
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
@@ -8196,7 +8239,7 @@
           <section><h3>Application aux événements</h3><p>${escapeHtml(applicationText)}</p><p class="scope-muted">${escapeHtml(usageText)}</p></section>
           <section><h3>Historique / version</h3><p>${escapeHtml(versionLabel(version).replace(/<[^>]+>/g, ''))}</p>${editable ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-edit-formation-version="${escapeHtml(versionId)}">Modifier la configuration</button>` : `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Créer une nouvelle version</button>`}<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-reconduct-definition-version="${escapeHtml(versionId)}">Reconduire l’année suivante</button></section>
         </div>
-        <section class="scope-formation-linked-events"><h3>Événements utilisant cette configuration</h3><p class="scope-muted">${escapeHtml(String(linkedEventCount))} événement${linkedEventCount > 1 ? 's' : ''}</p>${linkedEventsHtml}</section>
+        <section class="scope-formation-linked-events"><div class="scope-policy-column-head"><h3>Événements utilisant cette configuration</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-associate-formation-events="${escapeHtml(versionId)}">Associer des événements</button></div><p class="scope-muted">${escapeHtml(String(linkedEventCount))} événement${linkedEventCount > 1 ? 's' : ''}</p>${linkedEventsHtml}</section>
         <details class="scope-technical-details"><summary>Informations techniques</summary><p>Définition : ${escapeHtml(definition.code || '')}</p><p>Policy : ${escapeHtml(policy.policy_code || policy.policyCode || '—')} · ${escapeHtml(policy.version_code || policy.versionCode || '—')}</p><p>Route moteur : ${mode === 'MULTI_SESSION' ? 'Multi-session générique' : 'Session unique générique'}</p></details>
       </div>` : ''}`;
     };
@@ -10316,6 +10359,51 @@
         const id = btn.getAttribute('data-formation-open') || '';
         state.formationSelectedVersionId = state.formationSelectedVersionId === id ? '' : id;
         render();
+      });
+    });
+    root.querySelectorAll('[data-associate-formation-events]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-associate-formation-events') || '';
+        if (!id || typeof client.previewFormationEventAssociation !== 'function' || typeof client.associateFormationEvents !== 'function') return;
+        ScopeFeedback.progress('Recherche des événements compatibles…', 'SCOPE prépare une prévisualisation sans modifier les événements.');
+        client.previewFormationEventAssociation(id)
+          .then((payload) => {
+            const preview = payload && payload.associationPreview || {};
+            const candidates = Array.isArray(preview.candidates) ? preview.candidates.filter((row) => row.selectable) : [];
+            ScopeFeedback.confirm({
+              title: 'Associer des événements ?',
+              message: candidates.length
+                ? 'Les événements compatibles seront rattachés explicitement à cette configuration.'
+                : 'Aucun événement compatible ne peut être associé automatiquement.',
+              confirmText: candidates.length ? 'Associer les événements sélectionnés' : 'Fermer',
+              cancelText: 'Annuler',
+              html: renderFormationAssociationPreviewHtml(preview)
+            }, async () => {
+              if (!candidates.length) {
+                ScopeFeedback.clear();
+                return;
+              }
+              await withFeedbackAction({
+                progressTitle: 'Association des événements…',
+                progressMessage: 'SCOPE rattache les événements sélectionnés à la configuration.',
+                successTitle: 'Événements associés',
+                successMessage: 'La configuration est maintenant visible sur les événements associés.'
+              }, async () => {
+                await client.associateFormationEvents(id, {
+                  events: candidates.map((row) => ({ eventId: row.eventId || row.evenementId, sessionIndex: row.sessionIndex || null })),
+                  confirmExistingParticipations: true
+                });
+                invalidateCache(['referentiels', 'formationCatalog', 'list']);
+                await loadFormationCatalog();
+                await loadList();
+                render();
+              });
+            });
+          })
+          .catch((error) => {
+            const info = presentFriendlyError(L.friendlyError(error));
+            ScopeFeedback.error(info.title || 'Association indisponible', info.message || 'La prévisualisation des événements compatibles a échoué.');
+          });
       });
     });
     root.querySelectorAll('[data-edit-formation-version]').forEach((btn) => {

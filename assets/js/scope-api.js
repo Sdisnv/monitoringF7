@@ -216,6 +216,8 @@
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
       formationCatalog(params) { return request('GET', `/formation/catalog${queryString(params || {})}`); },
       createEventDefinition(body) { return request('POST', '/formation/definitions', body); },
+      previewFormationEventAssociation(id) { return request('GET', `/formation/definition-versions/${encodeURIComponent(id)}/association-preview`); },
+      associateFormationEvents(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/associate-events`, body || {}); },
       reconductEventDefinitionVersion(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/reconduct`, body); },
       performanceDiagnostics() { return request('GET', '/diagnostics/performance'); },
       async previewPersonnelSync(body) {
