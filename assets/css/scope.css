@@ -4017,6 +4017,15 @@ html, body {
   margin-top: 12px;
 }
 
+@media (min-width: 900px) {
+  .scope-cycles-list-table th:nth-child(1),
+  .scope-cycles-list-table td:nth-child(1),
+  .scope-cycles-list-table th:nth-child(2),
+  .scope-cycles-list-table td:nth-child(2) {
+    white-space: nowrap;
+  }
+}
+
 @media print {
   .scope-cycle-page .scope-cycle-actions,
   .scope-cycle-page .scope-crumb,

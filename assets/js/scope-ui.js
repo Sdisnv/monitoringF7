@@ -3141,8 +3141,8 @@
 
   function cyclePilotageStateLabel(statut) {
     const code = String(statut || '').toUpperCase();
-    if (code === 'COMPLET') return 'Complet';
-    if (code === 'INCOMPLET') return 'Incomplet';
+    if (code === 'COMPLET') return 'Présent';
+    if (code === 'INCOMPLET') return 'À renseigner';
     if (code === 'DISPENSE') return 'Dispensé';
     if (code === 'EXCUSE') return 'Excusé';
     if (code === 'REALISE') return 'Réalisé';
@@ -3176,10 +3176,10 @@
   function cyclePrimaryResult(row) {
     if (!row) return '—';
     const state = String(row.globalState || '').toUpperCase();
-    if (state === 'COMPLET') return [cyclePilotageStateLabel(row.globalState), row.primaryResultLabel].filter(Boolean).join(' — ');
-    if (state === 'EXCUSE') return 'Excusé — obligation satisfaite';
-    if (state === 'DISPENSE') return 'Dispensé — obligation satisfaite';
-    if (state === 'ABSENT') return 'Absent';
+    if (state === 'COMPLET') return row.primaryResultLabel || 'Participation validée';
+    if (state === 'EXCUSE') return 'Statut reconnu';
+    if (state === 'DISPENSE') return 'Statut reconnu';
+    if (state === 'ABSENT') return row.primaryResultLabel || 'Statut renseigné';
     if (row.primaryResultLabel) return row.primaryResultLabel;
     const active = (row.obligations || []).filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE');
     if (!active.length) return cyclePilotageStateLabel(row.globalState);
@@ -3189,10 +3189,12 @@
   function cycleInformation(row) {
     if (!row) return '—';
     const state = String(row.globalState || '').toUpperCase();
-    if (['COMPLET', 'EXCUSE', 'DISPENSE'].includes(state)) {
-      const covered = (row.obligations || []).find((cell) => ['REALISE', 'EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
-      const label = covered && covered.label ? covered.label : row.primaryResultLabel;
-      return label ? `${label} · aucune action requise` : 'Aucune action requise';
+    if (state === 'COMPLET') return 'Participation validée';
+    if (state === 'ABSENT') return 'Statut renseigné';
+    if (['EXCUSE', 'DISPENSE'].includes(state)) {
+      const covered = (row.obligations || []).find((cell) => ['EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
+      const motif = covered && covered.motif ? formationMotifLabel(covered.motif) : '';
+      return motif || 'Statut renseigné';
     }
     return (row.populationSources || []).join(', ') || 'Population concernée';
   }
@@ -3213,6 +3215,7 @@
   function cycleProgressionValue(cycle) {
     const metrics = (cycle && cycle.metrics) || {};
     const kpis = (cycle && cycle.pilotageKpis) || {};
+    if (kpis.tauxTraitement != null) return kpis.tauxTraitement;
     if (kpis.progression != null) return kpis.progression;
     return metrics.tauxParticipationCycle && metrics.tauxParticipationCycle.percentage;
   }
@@ -3257,7 +3260,7 @@
           <td data-label="État">${escapeHtml(cycleStatusLabel(cycle.statut))}</td>
           <td data-label="Population concernée">${escapeHtml(String(population))}</td>
           <td data-label="Reste à traiter">${escapeHtml(String(remaining))}</td>
-          <td data-label="Progression">${escapeHtml(L.formatTaux(progression))}</td>
+          <td data-label="Traitement">${escapeHtml(L.formatTaux(progression))}</td>
           <td data-label="Sessions">${escapeHtml(String(cycle.eventCount || 0))}</td>
           <td data-label="Action"><div class="scope-cycle-row-actions"><a class="scope-btn scope-btn-secondary scope-btn-compact" href="#/cycles/${escapeHtml(cycle.cycle_id)}">Ouvrir</a><button type="button" class="scope-btn scope-btn-compact" data-report-cycle="${escapeHtml(cycle.cycle_id)}">PDF</button></div></td>
         </tr>`;
@@ -3301,7 +3304,7 @@
           </div>
         </div>
         <div class="scope-card scope-table-wrap">
-          <table class="scope-table">
+          <table class="scope-table scope-cycles-list-table">
             <thead><tr>
               ${sortableHeader('cycles', 'cycle', 'Formation / Cycle', state.cyclesSort)}
               ${sortableHeader('cycles', 'type', 'Type', state.cyclesSort)}
@@ -3310,7 +3313,7 @@
               ${sortableHeader('cycles', 'statut', 'État', state.cyclesSort)}
               ${sortableHeader('cycles', 'population', 'Population concernée', state.cyclesSort)}
               ${sortableHeader('cycles', 'reste', 'Reste à traiter', state.cyclesSort)}
-              ${sortableHeader('cycles', 'progression', 'Progression', state.cyclesSort)}
+              ${sortableHeader('cycles', 'progression', 'Traitement', state.cyclesSort)}
               ${sortableHeader('cycles', 'sessions', 'Sessions', state.cyclesSort)}
               <th>Action</th>
             </tr></thead>
@@ -3340,7 +3343,8 @@
       ] },
       { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') },
       { key: 'etat', type: 'status', value: (row) => row && row.globalState },
-      { key: 'progression', type: 'number', value: (row) => row && row.progressionPct }
+      { key: 'progression', type: 'number', value: (row) => row && row.progressionPct },
+      { key: 'obligations', type: 'number', value: (row) => row && row.obligationSatisfiedPct }
     ]) : (pilotage.individualRows || []);
     const evenements = L.sortRows ? L.sortRows(detail.evenements || [], state.cycleEventSort, [
       { key: 'date', type: 'date', value: (row) => row && row.date },
@@ -3387,10 +3391,9 @@
         <td data-label="Personne">${escapeHtml(name)}<small>${escapeHtml(row.nip || 'NIP non renseigné')}</small></td>
         <td data-label="Rôles">${escapeHtml((row.roles || []).map(cycleRoleLabel).join(', ') || '—')}</td>
         <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.globalState))}</td>
-        <td data-label="Progression">${escapeHtml(L.formatTaux(row.progressionPct))}</td>
         ${cells}
       </tr>`;
-    }).join('') : `<tr><td colspan="${escapeHtml(String(4 + obligations.length))}"><div class="scope-empty">Aucune matrice individuelle disponible pour ce cycle.</div></td></tr>`;
+    }).join('') : `<tr><td colspan="${escapeHtml(String(3 + obligations.length))}"><div class="scope-empty">Aucune matrice individuelle disponible pour ce cycle.</div></td></tr>`;
     const populationRows = individualRows.filter((row) => row && row.isPopulation);
     const encadrementRows = individualRows.filter((row) => row && row.isEncadrement);
     const outsideRows = individualRows.filter((row) => row && row.isOutsidePopulation);
@@ -3399,7 +3402,6 @@
       { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') },
       { key: 'role', type: 'text', value: (row) => (row && row.roles || []).map(cycleRoleLabel).join(', ') },
       { key: 'etat', type: 'status', value: (row) => row && row.globalState },
-      { key: 'progression', type: 'number', value: (row) => row && row.progressionPct },
       { key: 'resultat', type: 'text', value: cyclePrimaryResult }
     ];
     const sortedPopulationRows = L.sortRows ? L.sortRows(populationRows, state.cycleMatrixSort, matrixCols) : populationRows;
@@ -3409,10 +3411,9 @@
       <td data-label="Personne">${personCell(row)}</td>
       <td data-label="Rôle">${escapeHtml((row.roles || []).map(cycleRoleLabel).join(', ') || 'Participant')}</td>
       <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.globalState))}</td>
-      <td data-label="Progression">${escapeHtml(L.formatTaux(row.progressionPct))}</td>
       <td data-label="Résultat">${escapeHtml(cyclePrimaryResult(row))}</td>
       <td data-label="Information">${(row.primaryEventId && String(row.globalState || '').toUpperCase() === 'INCOMPLET') ? `<a href="#/exercices/${escapeHtml(row.primaryEventId)}">Ouvrir la session</a>` : escapeHtml(cycleInformation(row))}</td>
-    </tr>`).join('') : '<tr><td colspan="6"><div class="scope-empty">Aucune personne concernée par ce cycle.</div></td></tr>';
+    </tr>`).join('') : '<tr><td colspan="5"><div class="scope-empty">Aucune personne concernée par ce cycle.</div></td></tr>';
     const encadrementHtml = sortedEncadrementRows.length ? sortedEncadrementRows.map((row) => `<tr>
       <td data-label="Personne">${personCell(row)}</td>
       <td data-label="Rôle">${escapeHtml((row.roles || []).filter((role) => role !== 'PARTICIPANT').map(cycleRoleLabel).join(', ') || 'Encadrement')}</td>
@@ -3433,9 +3434,10 @@
         </div>
         <div class="scope-kpis">
           <article class="scope-kpi scope-kpi-main"><strong>${escapeHtml(String(pilotageKpis.population ?? cycleMetric(metrics, 'populationDistincte')))}</strong><span>Population concernée</span><em>${escapeHtml(statusLabel)}</em></article>
-          <article class="scope-kpi"><strong>${escapeHtml(String(pilotageKpis.complete ?? 0))}</strong><span>Obligations satisfaites</span><small>${escapeHtml(String(remaining))} à traiter</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(`${pilotageKpis.dossiersTraites ?? 0} / ${pilotageKpis.population ?? cycleMetric(metrics, 'populationDistincte')}`)}</strong><span>Dossiers traités</span><small>${escapeHtml(String(remaining))} à renseigner</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(`${pilotageKpis.obligationsSatisfaites ?? pilotageKpis.complete ?? 0} / ${pilotageKpis.population ?? cycleMetric(metrics, 'populationDistincte')}`)}</strong><span>Obligations satisfaites</span><small>${escapeHtml(L.formatTaux(pilotageKpis.tauxObligations ?? pilotageKpis.couvertureCycle))}</small></article>
+          <article class="scope-kpi"><strong>${escapeHtml(L.formatTaux(pilotageKpis.tauxTraitement ?? pilotageKpis.progression))}</strong><span>Traitement</span><small>${escapeHtml(String(obligations.length))} session(s)</small></article>
           <article class="scope-kpi"><strong>${escapeHtml(String(pilotageKpis.encadrement ?? encadrementRows.length))}</strong><span>Encadrement</span><small>Visible hors dénominateur</small></article>
-          <article class="scope-kpi"><strong>${escapeHtml(L.formatTaux(pilotageKpis.progression))}</strong><span>Progression</span><small>${escapeHtml(String(obligations.length))} session(s)</small></article>
         </div>
         <div class="scope-card scope-cycle-section">
           <h2 style="margin-top:0">Informations du cycle</h2>
@@ -3463,7 +3465,6 @@
             ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
             ${sortableHeader('cycle-matrix', 'role', 'Rôle', state.cycleMatrixSort)}
             ${sortableHeader('cycle-matrix', 'etat', 'État', state.cycleMatrixSort)}
-            ${sortableHeader('cycle-matrix', 'progression', 'Progression', state.cycleMatrixSort)}
             ${sortableHeader('cycle-matrix', 'resultat', 'Session / résultat', state.cycleMatrixSort)}
             <th>Information</th>
           </tr></thead><tbody>${populationHtml}</tbody></table>
@@ -3493,7 +3494,6 @@
             ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}
             <th>Rôles</th>
             ${sortableHeader('cycle-matrix', 'etat', 'État', state.cycleMatrixSort)}
-            ${sortableHeader('cycle-matrix', 'progression', 'Progression', state.cycleMatrixSort)}
             ${matrixHeaders}
           </tr></thead><tbody>${matrixRows}</tbody></table>
         </div>

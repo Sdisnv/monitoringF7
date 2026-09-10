@@ -281,8 +281,10 @@ function sampleAutoInput(){
     ok(html.includes('Matrice détaillée'));
     ok(html.includes('Personnel concerné'));
     ok(html.includes('Obligations satisfaites'));
+    ok(html.includes('Dossiers traités'));
+    ok(html.includes('Traitement'));
     ok(html.includes('#/exercices/pr1-a'));
-    ok(html.includes('Progression'));
+    ok(!html.includes('data-label="Progression"'));
   });
 
   for(const result of results){

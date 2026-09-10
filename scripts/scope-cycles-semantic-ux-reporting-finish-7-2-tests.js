@@ -92,14 +92,14 @@ async function seedCycleRepo(){
 
   await record('03 — Multi-session/Cycle : Excusé consolidé 100 % sans faux À renseigner principal', () => {
     const ui = read('assets/js/scope-ui.js');
-    ok(ui.includes("if (state === 'EXCUSE') return 'Excusé — obligation satisfaite';"), 'résultat principal Excusé consolidé');
-    ok(ui.includes('aucune action requise'), 'information secondaire sans action à renseigner');
+    ok(ui.includes("if (state === 'EXCUSE') return 'Statut reconnu';"), 'résultat principal Excusé consolidé');
+    ok(ui.includes("formationMotifLabel(covered.motif)"), 'information secondaire affiche le motif métier');
   });
 
   await record('04 — Multi-session/Cycle : Dispensé consolidé 100 % sans faux À renseigner principal', () => {
     const ui = read('assets/js/scope-ui.js');
-    ok(ui.includes("if (state === 'DISPENSE') return 'Dispensé — obligation satisfaite';"), 'résultat principal Dispensé consolidé');
-    ok(ui.includes("['COMPLET', 'EXCUSE', 'DISPENSE'].includes(state)"), 'information consolidée masque les détails non actionnables');
+    ok(ui.includes("if (state === 'DISPENSE') return 'Statut reconnu';"), 'résultat principal Dispensé consolidé');
+    ok(ui.includes("if (['EXCUSE', 'DISPENSE'].includes(state))"), 'information consolidée sans faux À renseigner');
   });
 
   await record('05 — titres PR générés métier sans année redondante', async () => {
@@ -123,7 +123,7 @@ async function seedCycleRepo(){
     ok(!rowsText.includes('NO_CYCLE'), 'clé technique absente du nominatif utilisateur');
     const pdf = await renderReportPdf(model, { generatedAt: '2026-09-10T12:00:00Z' });
     ok(Buffer.isBuffer(pdf.buffer) && pdf.buffer.length > 1000, 'PDF Cycle générable');
-    ok(read('netlify/lib/_scope-pdf-renderer.js').includes('wrap: [false, false, false, false, true, true, false, true]'), 'colonne État wrappable dans PDF');
+    ok(read('netlify/lib/_scope-pdf-renderer.js').includes('wrap: [true, true, true, false, true, true, true, true]'), 'colonnes métier wrappables dans PDF');
   });
 
   await record('07 — population / encadrement R7 conservés', () => {

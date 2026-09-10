@@ -748,12 +748,18 @@ function buildCyclePilotage(input = {}){
       const expectedHere = expected.has(obligation.obligationKey);
       const decision = decisions.get(obligation.obligationKey);
       const status = expectedHere ? ((decision && decision.status) || 'A_RENSEIGNER') : ((decision && decision.status) || 'NON_CONCERNE');
+      const fallbackEventId = expectedHere && obligation.sessions && obligation.sessions.length
+        ? ((obligation.sessions.find((session) => !['REALISE', 'CLOTUREE', 'CLOTURE'].includes(normalizeUpper(session.statut))) || obligation.sessions[0]).eventId)
+        : null;
+      const resultEventId = decision && decision.eventId || fallbackEventId;
+      const resultEvent = resultEventId ? eventsById.get(resultEventId) : null;
       return {
         obligationKey: obligation.obligationKey,
         label: obligation.label,
+        resultLabel: resultEvent && resultEvent.libelle || obligation.label,
         expected: expectedHere,
         status,
-        eventId: decision && decision.eventId || null,
+        eventId: resultEventId,
         role: decision && decision.role || null,
         statut: decision && decision.statut || null,
         motif: decision && decision.motif || null,
@@ -768,20 +774,26 @@ function buildCyclePilotage(input = {}){
     const excuses = expectedCells.filter((cell) => cell.status === 'EXCUSE').length;
     const absents = expectedCells.filter((cell) => cell.status === 'ABSENT').length;
     const open = expectedCells.filter((cell) => cell.status === 'A_RENSEIGNER').length;
-    const resolved = realised + dispenses + excuses;
+    const obligationsSatisfied = realised + dispenses + excuses;
+    const treated = obligationsSatisfied + absents;
     const hasOnlyNonConcerne = expectedCells.length > 0 && expectedCells.every((cell) => cell.status === 'NON_CONCERNE');
     const isPopulation = populationKeys.has(key) && !hasOnlyNonConcerne;
     let globalState = supportKeys.has(key) ? 'ENCADREMENT' : (participantOnlyOutsidePopulation.has(key) ? 'HORS_POPULATION' : 'NON_CONCERNE');
     if(isPopulation){
-      if(absents || open) globalState = 'INCOMPLET';
+      if(open) globalState = 'INCOMPLET';
       else if(expectedCells.length && realised) globalState = 'COMPLET';
       else if(expectedCells.length && dispenses) globalState = 'DISPENSE';
       else if(expectedCells.length && excuses) globalState = 'EXCUSE';
+      else if(expectedCells.length && absents) globalState = 'ABSENT';
       else globalState = 'INCOMPLET';
     }
-    const contributionCell = expectedCells.find((cell) => ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(cell.status))
-      || cells.find((cell) => ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(cell.status))
+    const contributionCell = expectedCells.filter((cell) => ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(cell.status))
+      .sort((a, b) => statusRank(b.status) - statusRank(a.status))[0]
+      || cells.filter((cell) => ['REALISE', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(cell.status))
+        .sort((a, b) => statusRank(b.status) - statusRank(a.status))[0]
       || null;
+    const actionCell = expectedCells.find((cell) => cell.status === 'A_RENSEIGNER') || null;
+    const primaryCell = actionCell || contributionCell;
     return {
       ...personIdentityFromKey(key, peopleByKey),
       roles,
@@ -795,16 +807,21 @@ function buildCyclePilotage(input = {}){
       excusedCount: excuses,
       absentCount: absents,
       openCount: open,
-      progressionPct: expectedCells.length ? round1((100 * resolved) / expectedCells.length) : null,
+      treatedCount: treated,
+      obligationSatisfiedCount: obligationsSatisfied,
+      progressionPct: expectedCells.length ? round1((100 * treated) / expectedCells.length) : null,
+      obligationSatisfiedPct: expectedCells.length ? round1((100 * obligationsSatisfied) / expectedCells.length) : null,
       globalState,
-      primaryEventId: contributionCell && contributionCell.eventId || null,
-      primaryResultLabel: contributionCell && contributionCell.label || null,
+      primaryEventId: primaryCell && primaryCell.eventId || null,
+      primaryResultLabel: primaryCell && (primaryCell.resultLabel || primaryCell.label) || null,
       obligations: cells
     };
   });
   const populationRows = individualRows.filter((row) => row.isPopulation);
   const completeRows = populationRows.filter((row) => ['COMPLET', 'DISPENSE', 'EXCUSE'].includes(row.globalState));
+  const treatedRows = populationRows.filter((row) => ['COMPLET', 'DISPENSE', 'EXCUSE', 'ABSENT'].includes(row.globalState));
   const incompleteRows = populationRows.filter((row) => row.globalState === 'INCOMPLET');
+  const absentRows = populationRows.filter((row) => row.globalState === 'ABSENT');
   return {
     cycleId: cycleId(cycle) || null,
     domaine,
@@ -813,15 +830,24 @@ function buildCyclePilotage(input = {}){
     kpis: {
       population: populationRows.length,
       complete: completeRows.length,
+      obligationsSatisfaites: completeRows.length,
+      obligationSatisfied: completeRows.length,
       incomplete: incompleteRows.length,
+      dossiersTraites: treatedRows.length,
+      treated: treatedRows.length,
       resteATraiter: incompleteRows.length,
       remainingObligations: incompleteRows.length,
       realised: populationRows.filter((row) => row.realisedCount > 0).length,
       excused: populationRows.filter((row) => row.excusedCount > 0).length,
       dispensed: populationRows.filter((row) => row.dispensedCount > 0).length,
+      absent: absentRows.length,
+      absents: absentRows.length,
       encadrement: individualRows.filter((row) => row.isEncadrement).length,
       horsPopulation: individualRows.filter((row) => row.isOutsidePopulation).length,
-      progression: populationRows.length ? round1((100 * completeRows.length) / populationRows.length) : null
+      progression: populationRows.length ? round1((100 * treatedRows.length) / populationRows.length) : null,
+      tauxTraitement: populationRows.length ? round1((100 * treatedRows.length) / populationRows.length) : null,
+      tauxObligations: populationRows.length ? round1((100 * completeRows.length) / populationRows.length) : null,
+      couvertureCycle: populationRows.length ? round1((100 * completeRows.length) / populationRows.length) : null
     }
   };
 }

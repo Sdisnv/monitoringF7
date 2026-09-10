@@ -499,7 +499,7 @@ function cycleTypeLabel(cycle){
 
 function cyclePilotageStateLabel(code){
   const value = String(code || '').toUpperCase();
-  if(value === 'COMPLET') return 'Obligation satisfaite';
+  if(value === 'COMPLET') return 'Présent';
   if(value === 'INCOMPLET') return 'À traiter';
   if(value === 'DISPENSE') return 'Dispensé';
   if(value === 'EXCUSE') return 'Excusé';
@@ -526,13 +526,18 @@ function cycleGraphs(detail){
   const kpis = (detail.pilotage && detail.pilotage.kpis) || {};
   const population = Math.max(1, Number(kpis.population || 0));
   const statePoints = [
-    { label: 'Obligations satisfaites', count: Number(kpis.realised || 0), token: 'primary' },
+    { label: 'Participation réalisée', count: Number(kpis.realised || 0), token: 'primary' },
     { label: 'Excusés', count: Number(kpis.excused || 0), token: 'secondary' },
     { label: 'Dispensés', count: Number(kpis.dispensed || 0), token: 'warning' },
+    { label: 'Absents', count: Number(kpis.absent || kpis.absents || 0), token: 'neutral' },
     { label: 'À traiter', count: Number(kpis.resteATraiter || kpis.incomplete || 0), token: 'neutral' }
   ].filter((row) => row.count > 0);
   const sessions = (detail.evenements || []).map((event, index) => {
-    const rows = ((detail.pilotage && detail.pilotage.individualRows) || []).filter((row) => row.isPopulation && String(row.primaryEventId || '') === String(event.evenement_id || event.event_id || ''));
+    const rows = ((detail.pilotage && detail.pilotage.individualRows) || []).filter((row) => (
+      row.isPopulation
+      && String(row.globalState || '').toUpperCase() === 'COMPLET'
+      && String(row.primaryEventId || '') === String(event.evenement_id || event.event_id || '')
+    ));
     const tokens = ['primary', 'secondary', 'warning', 'neutral'];
     return {
       label: event.libelle || `Session ${index + 1}`,
@@ -550,7 +555,7 @@ function cycleGraphs(detail){
     } : null,
     sessions: sessions.length ? {
       type: 'bar',
-      question: 'Obligations satisfaites par session',
+      question: 'Participation réalisée par session',
       series: [{ id: 'sessions', points: sessions }]
     } : null
   };
@@ -559,10 +564,10 @@ function cycleGraphs(detail){
 function cyclePrimaryResultLabel(row){
   if(!row) return '—';
   const state = String(row.globalState || '').toUpperCase();
-  if(state === 'COMPLET') return ['Obligation satisfaite', row.primaryResultLabel].filter(Boolean).join(' — ');
-  if(state === 'EXCUSE') return 'Excusé — obligation satisfaite';
-  if(state === 'DISPENSE') return 'Dispensé — obligation satisfaite';
-  if(state === 'ABSENT') return 'Absent';
+  if(state === 'COMPLET') return row.primaryResultLabel || 'Participation validée';
+  if(state === 'EXCUSE') return 'Statut reconnu';
+  if(state === 'DISPENSE') return 'Statut reconnu';
+  if(state === 'ABSENT') return row.primaryResultLabel || 'Statut renseigné';
   if(row.primaryResultLabel) return row.primaryResultLabel;
   return cyclePilotageStateLabel(row.globalState);
 }
@@ -570,10 +575,12 @@ function cyclePrimaryResultLabel(row){
 function cycleInformationLabel(row){
   if(!row) return '—';
   const state = String(row.globalState || '').toUpperCase();
-  if(['COMPLET', 'EXCUSE', 'DISPENSE'].includes(state)){
-    const covered = (row.obligations || []).find((cell) => ['REALISE', 'EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
-    const label = covered && covered.label ? covered.label : row.primaryResultLabel;
-    return label ? `${label} · aucune action requise` : 'Aucune action requise';
+  if(state === 'COMPLET') return 'Participation validée';
+  if(state === 'ABSENT') return 'Statut renseigné';
+  if(['EXCUSE', 'DISPENSE'].includes(state)){
+    const covered = (row.obligations || []).find((cell) => ['EXCUSE', 'DISPENSE'].includes(String(cell && cell.status || '').toUpperCase()));
+    const motif = covered && covered.motif ? MOTIF_LABELS[covered.motif] || covered.motif : '';
+    return motif || 'Statut renseigné';
   }
   return (row.obligations || [])
     .filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE')
@@ -589,7 +596,6 @@ function cycleReportRows(rows){
     nip: row.nip || '',
     roles: (row.roles || []).map(cycleRoleLabel).join(', ') || '—',
     etat: cyclePilotageStateLabel(row.globalState),
-    progression: row.progressionPct == null ? '—' : `${String(row.progressionPct).replace('.', ',')} %`,
     resultat: cyclePrimaryResultLabel(row),
     information: cycleInformationLabel(row)
   }));
@@ -979,16 +985,19 @@ async function collectReport(repo, query, options){
       }),
       event: null,
       officiel: {
-        percentage: kpis.progression,
-        numerator: kpis.complete,
+        percentage: kpis.tauxTraitement ?? kpis.progression,
+        numerator: kpis.dossiersTraites ?? kpis.treated ?? kpis.complete,
         denominator: kpis.population,
         eventCount,
         volumes: {
           population: kpis.population,
           complete: kpis.complete,
+          obligationsSatisfaites: kpis.obligationsSatisfaites ?? kpis.complete,
+          dossiersTraites: kpis.dossiersTraites ?? kpis.treated,
           incomplete: kpis.resteATraiter ?? kpis.incomplete,
           realised: kpis.realised,
           excuses: kpis.excused,
+          absents: kpis.absent ?? kpis.absents,
           dispenses: kpis.dispensed,
           encadrement: kpis.encadrement
         }
