@@ -864,7 +864,7 @@ function createPgRepo(client){
         i += 1;
       }
       const year = query.annee || query.year;
-      const periodStartYearSql = `coalesce(substring(period::text from '"from"\\s*:\\s*"([0-9]{4})'), substring(period::text from '^([0-9]{4})'))`;
+      const periodStartYearSql = `coalesce(substring(period::text from '"from"[[:space:]]*:[[:space:]]*"([0-9]{4})'), substring(period::text from '^([0-9]{4})'))`;
       if(year){
         where.push(`${periodStartYearSql} = $${i}`);
         params.push(String(Number(year)));
