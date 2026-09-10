@@ -7989,6 +7989,12 @@
     `;
   }
 
+  function findReferentialRow(type, id) {
+    const data = state.participationAdmin || (state.referentiels && state.referentiels.participation) || {};
+    const rows = type === 'status' ? (data.statuses || []) : (data.motifs || []);
+    return rows.find((item) => String(item.id || item.value || item.motif_id || item.status_id || '').toUpperCase() === String(id || '').toUpperCase()) || null;
+  }
+
   function renderFormationCatalog() {
     const canManage = hasScopePermission('references:manage');
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
@@ -8130,10 +8136,6 @@
         <details class="scope-technical-details"><summary>Informations techniques</summary><p>Définition : ${escapeHtml(definition.code || '')}</p><p>Policy : ${escapeHtml(policy.policy_code || policy.policyCode || '—')} · ${escapeHtml(policy.version_code || policy.versionCode || '—')}</p><p>Route moteur : ${mode === 'MULTI_SESSION' ? 'Multi-session générique' : 'Session unique générique'}</p></details>
       </div>` : ''}`;
     };
-    const findReferentialRow = (type, id) => {
-      const catalogs = type === 'status' ? [...statusCatalog.values()] : (participation && participation.motifs || []);
-      return catalogs.find((item) => String(item.id || item.value || item.motif_id || item.status_id || '').toUpperCase() === String(id || '').toUpperCase()) || null;
-    };
     const renderReferentialRows = (items, type) => items.map((row) => {
       const id = row.id || row.value || row.motif_id || row.status_id || '';
       const active = row.active !== false && row.actif !== false;
@@ -8159,7 +8161,6 @@
     const referentialDraft = state.formationReferentialDraft;
     const referentialForm = referentialDraft ? `<section class="scope-referential-draft" id="formation-referential-form">
       <h3>${referentialDraft.editing ? 'Modifier le référentiel' : (referentialDraft.type === 'status' ? 'Ajouter un statut' : (referentialDraft.type === 'excuse' ? 'Ajouter un motif d’excuse' : 'Ajouter un motif de dispense'))}</h3>
-      ${referentialDraft.id ? `<p class="scope-muted">Identifiant technique immuable : ${escapeHtml(referentialDraft.id)}</p>` : ''}
       <div class="scope-report-grid">
         <div class="scope-field"><label>Libellé métier</label><input id="referential-label" type="text" value="${escapeHtml(referentialDraft.label || '')}" placeholder="${referentialDraft.type === 'status' ? 'Statut de participation' : 'Motif'}"></div>
         ${referentialDraft.type === 'status' ? `<div class="scope-field"><label>Comportement</label><select id="referential-base-status" ${referentialDraft.editing ? 'disabled' : ''}>
@@ -11683,6 +11684,9 @@
           domaines: payload && payload.domaines || [],
           participation: payload && payload.participation || null
         });
+        state.participationAdmin = payload && payload.participation || null;
+        state.participationAdminReady = true;
+        state.participationAdminError = null;
         state.formationCatalog = payload && payload.formationCatalog || payload || null;
         state.formationCatalogReady = true;
         state.formationCatalogError = null;
@@ -11690,6 +11694,15 @@
         state.session = { name: 'Test SCOPE', roles: ['ADMINISTRATEUR'], permissions: ['references:manage'] };
         window.CurrentPermissions = ['references:manage'];
         return renderFormationCatalog();
+      },
+      mountFormationCatalogHtml(payload, selectedVersionId) {
+        this.renderFormationCatalogHtml(payload, selectedVersionId);
+        state.authChecking = false;
+        state.needOkta = false;
+        state.authError = null;
+        if (location.hash !== '#/reglages/formations') location.hash = '#/reglages/formations';
+        render();
+        return true;
       },
       renderCycleHtml(detail) {
         state.cycleDetail = detail;
