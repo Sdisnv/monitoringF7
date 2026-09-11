@@ -699,6 +699,8 @@ function createMemoryRepo(){
         heure_debut_individuelle: row.heure_debut_individuelle || row.heureDebutIndividuelle || null,
         heure_fin_individuelle: row.heure_fin_individuelle || row.heureFinIndividuelle || null,
         duree_individuelle_minutes: row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes),
+        creation_dl: row.creation_dl == null && row.creationDl == null ? (existing?.creation_dl || false) : Boolean(row.creation_dl ?? row.creationDl),
+        preparation_dl_minutes: row.preparation_dl_minutes == null ? (row.preparationDlMinutes == null ? (existing?.preparation_dl_minutes ?? null) : Number(row.preparationDlMinutes)) : Number(row.preparation_dl_minutes),
         cible_suivie_id: row.cible_suivie_id || null,
         role: row.role || 'PARTICIPANT',
         source: row.source || 'SAISIE',

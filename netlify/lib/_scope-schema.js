@@ -160,6 +160,8 @@ const DDL = [
     role text not null default 'PARTICIPANT',
     source text not null default 'SAISIE',
     auteur_id text,
+    creation_dl boolean default false,
+    preparation_dl_minutes integer,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     primary key (evenement_id, personne_id),
@@ -178,6 +180,9 @@ const DDL = [
     constraint scope_participations_autre_chk check (
       motif_absence is distinct from 'AUTRE'
       or (commentaire is not null and length(trim(commentaire)) > 0)
+    ),
+    constraint scope_participations_preparation_dl_chk check (
+      preparation_dl_minutes is null or preparation_dl_minutes >= 0
     )
   )`,
   `create index if not exists scope_participations_evenement_statut
@@ -260,7 +265,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-event-temporal-configuration-foundation-9';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-event-population-time-staffing-workflow-close-10';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -378,6 +383,7 @@ async function ensureScopeSchema(){
   await migrateGenericEventSessionPolicyArchitecture1();
   await migrateMultiSessionV2Foundation1();
   await migrateEventTemporalConfigurationFoundation9();
+  await migrateEventPopulationTimeStaffingWorkflowClose10();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1499,6 +1505,19 @@ async function migrateEventTemporalConfigurationFoundation9(){
   await db.query(`alter table scope_participations add column if not exists duree_individuelle_minutes integer`);
   await db.query(`create index if not exists scope_evenements_temporal_idx on scope_evenements(date, heure_debut_prevue, heure_debut_reelle)`);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-event-temporal-configuration-foundation-9') on conflict (version) do nothing`);
+}
+
+async function migrateEventPopulationTimeStaffingWorkflowClose10(){
+  await db.query(`alter table scope_participations add column if not exists creation_dl boolean default false`);
+  await db.query(`alter table scope_participations add column if not exists preparation_dl_minutes integer`);
+  await db.query(`alter table scope_participations drop constraint if exists scope_participations_preparation_dl_chk`);
+  await db.query(`
+    alter table scope_participations
+      add constraint scope_participations_preparation_dl_chk
+      check (preparation_dl_minutes is null or preparation_dl_minutes >= 0)
+  `);
+  await db.query(`create index if not exists scope_participations_creation_dl_idx on scope_participations(personne_id, evenement_id) where creation_dl is true`);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-event-population-time-staffing-workflow-close-10') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

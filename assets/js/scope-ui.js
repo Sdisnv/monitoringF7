@@ -82,6 +82,11 @@
     personHits: [],
     encRole: 'FORMATEUR',
     encSerieComplete: false,
+    encTimeMode: 'EVENT',
+    encHeureDebut: '',
+    encHeureFin: '',
+    encCreationDl: false,
+    encPreparationDlMinutes: '',
     encRetrait: null,
     encQuery: '',
     encHits: [],
@@ -89,6 +94,7 @@
     hasUnsavedChanges: false,
     presenceSaveBusy: false,
     presenceCloseBusy: null,
+    participantAssignmentBusy: false,
     presenceSaveStatus: 'idle',
     saisieGuard: { stayHash: '', pendingHash: '', restoring: false, allowLeave: false },
     realiseQuery: '',
@@ -6758,7 +6764,9 @@
     const previewPeople = (!qty && state.preview)
       ? (state.preview.personnes || []).filter((p) => !state.pendingRetraits.includes(p.personneId))
       : [];
-    const previewCount = (!qty && state.preview) ? previewPeople.length + ((state.pendingExceptions || []).length) : null;
+    const previewCount = (!qty && state.preview)
+      ? previewPeople.length + ((state.pendingExceptions || []).filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || ''))).length)
+      : null;
     const jeunesCount = (!qty && state.preview)
       ? (((state.preview.jeunes) || previewPeople.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId))).length
       : 0;
@@ -6938,22 +6946,31 @@
     const sorted = L.sortRows ? L.sortRows(rows || [], state.previewSort, previewSortColumns()) : (rows || []).slice();
     return sorted.length ? sorted.map((p) => {
       const id = previewPersonFields(p);
+      const personneId = String(p.personneId || p.personne_id || '');
+      const selected = !state.pendingRetraits.includes(personneId);
       return `<tr>
+        <td data-label="Sélection">
+          <label class="scope-preview-check">
+            <input type="checkbox" data-preview-select="${escapeHtml(personneId)}" ${selected ? 'checked' : ''}>
+            <span>Sélectionner</span>
+          </label>
+        </td>
         <td data-label="Grade">${escapeHtml(id.grade || '—')}</td>
         <td data-label="Nom">${escapeHtml(id.nom || '—')}</td>
         <td data-label="Prénom">${escapeHtml(id.prenom || '—')}</td>
         <td data-label="NIP">${escapeHtml(p.nip)}</td>
         <td data-label="Cible">${escapeHtml(previewCibleLabel(p))}</td>
         <td data-label="Motif d’inclusion">${escapeHtml(previewInclusionLabel(p))}</td>
-        <td data-label="Action"><button type="button" class="scope-remove-action scope-icon-action" data-retrait="${p.personneId}" aria-label="Retirer" title="Retirer">${trashIcon()}</button></td>
+        <td data-label="Action">${p.motifInclusion === 'exception_ajout' ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-retrait="${escapeHtml(personneId)}">Retirer</button>` : ''}</td>
       </tr>`;
-    }).join('') : `<tr><td colspan="7"><div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div></td></tr>`;
+    }).join('') : `<tr><td colspan="8"><div class="scope-empty">${escapeHtml(L.emptyMessage('attendus'))}</div></td></tr>`;
   }
 
   function previewTableHtml(rows) {
     return `<div class="scope-table-wrap scope-fiche-preview-wrap">
       <table class="scope-table scope-fiche-preview-table">
         <thead><tr>
+          <th>Sélection</th>
           ${sortableHeader('event-preview', 'grade', 'Grade', state.previewSort)}
           ${sortableHeader('event-preview', 'nom', 'Nom', state.previewSort)}
           ${sortableHeader('event-preview', 'prenom', 'Prénom', state.previewSort)}
@@ -6968,8 +6985,9 @@
   }
 
   function renderPreviewList() {
-    const people = (state.preview.personnes || []).filter((p) => !state.pendingRetraits.includes(p.personneId));
-    const extras = state.pendingExceptions;
+    const allPeople = (state.preview.personnes || []);
+    const people = allPeople.filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || '')));
+    const extras = (state.pendingExceptions || []).filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || '')));
     const rows = people.concat(extras);
     const jeunes = ((state.preview && state.preview.jeunes) || people.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(p.personneId));
     const splitJsp = Boolean(jeunes.length);
@@ -6981,6 +6999,10 @@
           <p class="scope-fiche-preview-count">${rows.length} personne${rows.length > 1 ? 's' : ''}${splitJsp ? ` · ${jeunes.length} jeune${jeunes.length > 1 ? 's' : ''}` : ''}</p>
         </div>
         <div class="scope-toolbar scope-fiche-preview-toolbar">
+          <div class="scope-preview-selection-actions" aria-label="Sélection des participants">
+            <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="preview-select-all">Tout sélectionner</button>
+            <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="preview-unselect-all">Tout désélectionner</button>
+          </div>
           <div class="scope-field">
             <label for="preview-q">Ajouter une personne</label>
             <input id="preview-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.personQuery)}" autocomplete="off">
@@ -6989,14 +7011,14 @@
         ${state.personHits.length ? `<div class="scope-fiche-hits">${state.personHits.map((p) => `
           <div class="scope-fiche-hit">
             <span>${escapeHtml(hitLabel(p) || 'Personne')} · ${escapeHtml(p.nip)}</span>
-            <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-add-ex="${p.personne_id}">Ajouter</button>
+            <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-add-ex="${p.personne_id}">+ Ajouter</button>
           </div>`).join('')}</div>` : (state.personQuery ? `<div class="scope-empty">${escapeHtml(L.emptyMessage('personnes'))}</div>` : '')}
         ${splitJsp ? `
         <h3 class="scope-section-sub">Jeunes JSP · ${jeunes.length}</h3>
         ${previewTableHtml(jeunes)}
         ${extras.length ? `<h3 class="scope-section-sub">Ajouts manuels · ${extras.length}</h3>
         ${previewTableHtml(extras)}` : ''}` : previewTableHtml(rows)}
-        <p class="scope-fiche-tech-note">Les ajouts et retraits préparés ici sont appliqués au figer. Les taux jeunes JSP et moniteurs JSP restent distincts.</p>
+        <p class="scope-fiche-tech-note">Les ajouts et retraits préparés ici seront appliqués lors de l’assignation des participants. Les taux jeunes JSP et moniteurs JSP restent distincts.</p>
       </section>
     `;
   }
@@ -7311,6 +7333,8 @@
     const allSessionsText = v2AllSessions ? 'Toutes les sessions' : 'Formateur pour toute la série';
     const allSessionsTitle = v2AllSessions ? 'Ajoute automatiquement ce rôle à toutes les sessions du Multi-session.' : 'Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.';
     const allSessionsRange = v2AllSessions ? multiSessionV2ScopeText(fiche) : prSeriesScopeText(fiche);
+    const customTime = state.encTimeMode === 'CUSTOM';
+    const formateurRole = String(state.encRole || '').toUpperCase() === 'FORMATEUR';
     return `
       <section class="scope-encadrement-block" data-enc-editable="true">
         <div class="scope-section-header">
@@ -7332,6 +7356,29 @@
             <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
           </div>
           <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add">Ajouter</button>
+          <div class="scope-field scope-enc-time-mode">
+            <label for="enc-time-mode">Horaire</label>
+            <select id="enc-time-mode">
+              <option value="EVENT" ${state.encTimeMode !== 'CUSTOM' ? 'selected' : ''}>Horaire exercice</option>
+              <option value="CUSTOM" ${customTime ? 'selected' : ''}>Horaire personnalisé</option>
+            </select>
+          </div>
+          ${customTime ? `<div class="scope-field scope-enc-time-field">
+            <label for="enc-debut">Début</label>
+            <input id="enc-debut" type="time" value="${escapeHtml(state.encHeureDebut || '')}">
+          </div>
+          <div class="scope-field scope-enc-time-field">
+            <label for="enc-fin">Fin</label>
+            <input id="enc-fin" type="time" value="${escapeHtml(state.encHeureFin || '')}">
+          </div>` : ''}
+          ${formateurRole ? `<label class="scope-enc-dl-toggle">
+            <input id="enc-creation-dl" type="checkbox" ${state.encCreationDl ? 'checked' : ''}>
+            <span>Création DL</span>
+          </label>
+          ${state.encCreationDl ? `<div class="scope-field scope-enc-dl-min">
+            <label for="enc-prep-min">Temps de préparation</label>
+            <input id="enc-prep-min" type="number" min="0" step="5" inputmode="numeric" value="${escapeHtml(state.encPreparationDlMinutes || '')}" placeholder="minutes">
+          </div>` : ''}` : ''}
           ${allSessionsToggle ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}" title="${escapeHtml(allSessionsTitle)}">
             <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
             <span class="scope-serie-label">${escapeHtml(allSessionsText)}</span>
@@ -7504,15 +7551,27 @@
       const manual = row.manual
         ? `<button type="button" class="scope-remove-action scope-icon-action" data-manual-remove="${escapeHtml(row.personneId)}" aria-label="${escapeHtml(row.catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel')}" title="${escapeHtml(row.catchup ? 'Retirer le rattrapage' : 'Retirer l’ajout manuel')}">${trashIcon()}</button>`
         : '';
+      return [motifControl(row), comment, why, manual].filter(Boolean).join('');
+    };
+    const timeCell = (row) => {
       const timeLocked = Boolean(L.sessionLocked && L.sessionLocked(row));
       const hasTimeOverride = Boolean(row.heureDebutIndividuelle || row.heureFinIndividuelle);
-      const timeControl = row.timeOverrideOpen || hasTimeOverride
+      const custom = row.timeOverrideOpen || hasTimeOverride;
+      const timeControl = custom
         ? `<div class="scope-person-time-control">
+            <select data-time-mode aria-label="Mode horaire"${timeLocked ? ' disabled' : ''}>
+              <option value="EVENT">Horaire exercice</option>
+              <option value="CUSTOM" selected>Horaire personnalisé</option>
+            </select>
             <label>Début <input type="time" data-individual-time="start" value="${escapeHtml(row.heureDebutIndividuelle || '')}"${timeLocked ? ' disabled' : ''}></label>
             <label>Fin <input type="time" data-individual-time="end" value="${escapeHtml(row.heureFinIndividuelle || '')}"${timeLocked ? ' disabled' : ''}></label>
+            ${(row.heureDebutIndividuelle || row.heureFinIndividuelle) ? `<span class="scope-time-inline">D: ${escapeHtml(row.heureDebutIndividuelle || '—')} F: ${escapeHtml(row.heureFinIndividuelle || '—')}</span>` : ''}
           </div>`
-        : `<button type="button" class="scope-motif-compact" data-time-edit="${escapeHtml(row.personneId)}"${timeLocked ? ' disabled aria-disabled="true"' : ''}>Horaire</button>`;
-      return [motifControl(row), comment, why, timeControl, manual].filter(Boolean).join('');
+        : `<select data-time-mode aria-label="Mode horaire"${timeLocked ? ' disabled' : ''}>
+            <option value="EVENT" selected>Horaire exercice</option>
+            <option value="CUSTOM">Horaire personnalisé</option>
+          </select>`;
+      return timeControl;
     };
     const statusFilled = (row) => Boolean(row && L.isValidSessionStatut && L.isValidSessionStatut(row.statut));
     return `
@@ -7525,6 +7584,7 @@
             ${sortableHeader('event-personnel', 'nip', 'NIP', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'cible', 'CIBLE', state.eventPersonnelSort)}
             ${sortableHeader('event-personnel', 'presence', 'STATUT', state.eventPersonnelSort)}
+            <th>HORAIRE</th>
             <th>INFORMATIONS</th>
           </tr></thead>
           <tbody>
@@ -7563,6 +7623,7 @@
                   </div>
                 </div>
               </td>
+              <td data-label="HORAIRE" class="scope-time-cell">${timeCell(row)}</td>
               <td data-label="INFORMATIONS" class="scope-justificatif-cell">${justificatifCell(row)}</td>
             </tr>`;
             }).join('')}
@@ -9998,23 +10059,43 @@
       });
     });
     root.querySelector('[data-cta="figer"]')?.addEventListener('click', () => {
+      if (state.participantAssignmentBusy) return;
       const id = route().id;
-      withLoading(async () => {
+      const basePeople = (state.preview && state.preview.personnes) || [];
+      const selectedPersonIds = basePeople
+        .map((p) => String(p.personneId || p.personne_id || ''))
+        .filter((personneId) => personneId && !state.pendingRetraits.includes(personneId))
+        .concat((state.pendingExceptions || [])
+          .map((p) => String(p.personneId || p.personne_id || ''))
+          .filter((personneId) => personneId && !state.pendingRetraits.includes(personneId)));
+      ScopeFeedback.confirm({
+        title: 'Assigner les participants ?',
+        message: `${selectedPersonIds.length} participant${selectedPersonIds.length > 1 ? 's' : ''} seront assignés à cet événement.`,
+        confirmText: 'Assigner',
+        cancelText: 'Annuler'
+      }, () => withFeedbackAction({
+        progressTitle: 'Assignation des participants',
+        progressMessage: 'La population préparée est assignée en une seule opération.',
+        successTitle: 'Participants assignés',
+        successMessage: 'La saisie des participations est maintenant disponible.'
+      }, async () => {
+        state.participantAssignmentBusy = true;
         let version = state.fiche.evenement.version;
-        const frozen = await client.figer(id, version);
-        version = frozen.version;
-        for (const personneId of state.pendingRetraits) {
-          const res = await client.retirerAttendu(id, { personneId }, version);
-          version = res.version;
+        try {
+          const frozen = await client.figer(id, {
+            assignmentRequest: true,
+            selectedPersonIds,
+            manualAdditions: state.pendingExceptions || []
+          }, version);
+          version = frozen.version;
+          state.preview = null;
+          state.pendingRetraits = [];
+          state.pendingExceptions = [];
+          await loadFiche(id);
+        } finally {
+          state.participantAssignmentBusy = false;
         }
-        for (const person of state.pendingExceptions) {
-          const res = await client.ajouterException(id, { personneId: person.personneId, role: 'RENFORT' }, version);
-          version = res.version;
-        }
-        state.preview = null;
-        await loadFiche(id);
-        toast('success', 'Population figée', 'Vous pouvez saisir les participations.');
-      });
+      }));
     });
     root.querySelector('[data-cta="saisir"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
     root.querySelector('[data-cta="saisir-volumes"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
@@ -10156,7 +10237,14 @@
         if (!person) return;
         if (state.pendingExceptions.some((p) => p.personneId === id)) return;
         state.pendingExceptions.push({
-          personneId: id, nom: person.nom, prenom: person.prenom, nip: person.nip, cibles: [], motifInclusion: 'exception_ajout'
+          personneId: id,
+          grade: person.grade || '',
+          nom: person.nom,
+          nomFamille: person.nom,
+          prenom: person.prenom,
+          nip: person.nip,
+          cibles: [],
+          motifInclusion: 'exception_ajout'
         });
         state.personHits = [];
         state.personQuery = '';
@@ -10295,6 +10383,24 @@
         }
       });
     });
+    root.querySelectorAll('[data-time-mode]').forEach((select) => {
+      select.addEventListener('change', () => {
+        const tr = select.closest('[data-pid]');
+        if (!tr) return;
+        const row = state.saisie.find((r) => r.personneId === tr.getAttribute('data-pid'));
+        if (!row || (L.sessionLocked && L.sessionLocked(row))) return;
+        if (select.value === 'CUSTOM') {
+          row.timeOverrideOpen = true;
+        } else {
+          row.timeOverrideOpen = false;
+          row.heureDebutIndividuelle = '';
+          row.heureFinIndividuelle = '';
+        }
+        row.presenceEdited = true;
+        setUnsavedPresenceChanges(true);
+        render();
+      });
+    });
     root.querySelectorAll('[data-individual-time]').forEach((input) => {
       input.addEventListener('change', () => {
         const pid = input.closest('[data-pid]').getAttribute('data-pid');
@@ -10360,6 +10466,18 @@
       if (state.encRole !== 'FORMATEUR' && !(isMultiSessionV2Fiche(state.fiche) && state.encRole === 'MONITEUR')) state.encSerieComplete = false;
       render();
     });
+    document.getElementById('enc-time-mode')?.addEventListener('change', (e) => {
+      state.encTimeMode = e.target.value || 'EVENT';
+      if (state.encTimeMode !== 'CUSTOM') {
+        state.encHeureDebut = '';
+        state.encHeureFin = '';
+      }
+      render();
+    });
+    document.getElementById('enc-debut')?.addEventListener('change', (e) => { state.encHeureDebut = e.target.value || ''; });
+    document.getElementById('enc-fin')?.addEventListener('change', (e) => { state.encHeureFin = e.target.value || ''; });
+    document.getElementById('enc-creation-dl')?.addEventListener('change', (e) => { state.encCreationDl = Boolean(e.target.checked); render(); });
+    document.getElementById('enc-prep-min')?.addEventListener('change', (e) => { state.encPreparationDlMinutes = e.target.value || ''; });
     document.getElementById('enc-add')?.addEventListener('click', () => {
       if (state.encHits.length === 1) addEncadrement(state.encHits[0].personne_id);
     });
@@ -10369,6 +10487,23 @@
     });
     document.getElementById('enc-q')?.addEventListener('input', (e) => {
       searchPersonnes(e.target.value, 'encadrement');
+    });
+    root.querySelectorAll('[data-preview-select]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const personneId = String(input.getAttribute('data-preview-select') || '');
+        if (!personneId) return;
+        if (input.checked) state.pendingRetraits = state.pendingRetraits.filter((id) => String(id) !== personneId);
+        else if (!state.pendingRetraits.includes(personneId)) state.pendingRetraits.push(personneId);
+        render();
+      });
+    });
+    document.getElementById('preview-select-all')?.addEventListener('click', () => {
+      state.pendingRetraits = [];
+      render();
+    });
+    document.getElementById('preview-unselect-all')?.addEventListener('click', () => {
+      state.pendingRetraits = ((state.preview && state.preview.personnes) || []).map((p) => String(p.personneId || p.personne_id || '')).filter(Boolean);
+      render();
     });
     document.getElementById('manual-person-q')?.addEventListener('input', (e) => {
       searchPersonnes(e.target.value, 'manual');
@@ -12260,16 +12395,27 @@
     const v2AllSessions = isMultiSessionV2Fiche(state.fiche) && ['FORMATEUR', 'MONITEUR'].includes(String(role || '').toUpperCase()) && state.encSerieComplete;
     const serieComplete = (role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche)) || v2AllSessions;
     const snapshot = snapshotSaisieState();
+    const body = { personneId, role, serieComplete, toutesSessions: v2AllSessions };
+    if (state.encTimeMode === 'CUSTOM') {
+      body.heureDebutIndividuelle = state.encHeureDebut || null;
+      body.heureFinIndividuelle = state.encHeureFin || null;
+    }
+    if (String(role || '').toUpperCase() === 'FORMATEUR' && state.encCreationDl) {
+      body.creationDl = true;
+      body.preparationDlMinutes = Number(state.encPreparationDlMinutes || 0);
+    }
     withFeedbackAction({
       progressTitle: 'Ajout à l’encadrement',
       successTitle: 'Encadrement ajouté',
       successMessage: v2AllSessions ? 'Le rôle a été ajouté à toutes les sessions du Multi-session.' : (serieComplete ? 'Le Formateur a été ajouté à toute la série PR.' : 'La personne est hors du taux principal.')
     }, async () => {
-      await client.ajouterEncadrement(id, { personneId, role, serieComplete, toutesSessions: v2AllSessions }, state.fiche.evenement.version);
+      await client.ajouterEncadrement(id, body, state.fiche.evenement.version);
       invalidateCache(['list', 'dashboard', 'vigilance']);
       state.encQuery = '';
       state.encHits = [];
       state.encSerieComplete = false;
+      state.encCreationDl = false;
+      state.encPreparationDlMinutes = '';
       await refreshFichePreservingSaisie(id, snapshot);
     });
   }

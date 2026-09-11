@@ -175,7 +175,11 @@
       patchEvenement(id, body, baseVersion) { return request('PATCH', `/evenements/${encodeURIComponent(id)}`, withBaseVersion(body, baseVersion)); },
       previewModifierEvenement(id, body) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-modifier`, body || {}); },
       previewAttendus(id) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-attendus`, {}); },
-      figer(id, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/figer`, withBaseVersion({}, baseVersion)); },
+      figer(id, bodyOrBaseVersion, maybeBaseVersion) {
+        const body = (bodyOrBaseVersion && typeof bodyOrBaseVersion === 'object') ? bodyOrBaseVersion : {};
+        const baseVersion = (bodyOrBaseVersion && typeof bodyOrBaseVersion === 'object') ? maybeBaseVersion : bodyOrBaseVersion;
+        return request('POST', `/evenements/${encodeURIComponent(id)}/figer`, withBaseVersion(body, baseVersion));
+      },
       ajouterException(id, body, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/exceptions`, withBaseVersion(body, baseVersion)); },
       retirerAttendu(id, body, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/retraits`, withBaseVersion(body, baseVersion)); },
       enregistrerParticipations(id, participations, baseVersion) {

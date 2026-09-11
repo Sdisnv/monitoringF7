@@ -1078,8 +1078,9 @@ function createPgRepo(client){
       const result = await q(
         `insert into scope_participations(
            evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id,
-           heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+           heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes,
+           creation_dl, preparation_dl_minutes
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          on conflict (evenement_id, personne_id) do update set
            statut = excluded.statut,
            motif_absence = excluded.motif_absence,
@@ -1091,6 +1092,8 @@ function createPgRepo(client){
            heure_debut_individuelle = excluded.heure_debut_individuelle,
            heure_fin_individuelle = excluded.heure_fin_individuelle,
            duree_individuelle_minutes = excluded.duree_individuelle_minutes,
+           creation_dl = coalesce(excluded.creation_dl, scope_participations.creation_dl),
+           preparation_dl_minutes = coalesce(excluded.preparation_dl_minutes, scope_participations.preparation_dl_minutes),
            updated_at = now()
          returning *`,
         [
@@ -1099,7 +1102,9 @@ function createPgRepo(client){
           row.cible_suivie_id || null,
           row.heure_debut_individuelle || row.heureDebutIndividuelle || null,
           row.heure_fin_individuelle || row.heureFinIndividuelle || null,
-          row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes)
+          row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes),
+          row.creation_dl == null && row.creationDl == null ? null : Boolean(row.creation_dl ?? row.creationDl),
+          row.preparation_dl_minutes == null ? (row.preparationDlMinutes == null ? null : Number(row.preparationDlMinutes)) : Number(row.preparation_dl_minutes)
         ]
       );
       return result.rows[0];
@@ -1110,11 +1115,13 @@ function createPgRepo(client){
       const result = await q(
         `insert into scope_participations(
            evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id,
-           heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes
+           heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes,
+           creation_dl, preparation_dl_minutes
          )
          select evenement_id, personne_id, statut, motif_absence, commentaire,
                 coalesce(role, 'PARTICIPANT'), coalesce(source, 'SAISIE'), auteur_id, cible_suivie_id,
-                heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes
+                heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes,
+                creation_dl, preparation_dl_minutes
          from jsonb_to_recordset($1::jsonb) as x(
            evenement_id uuid,
            personne_id uuid,
@@ -1127,7 +1134,9 @@ function createPgRepo(client){
            cible_suivie_id uuid,
            heure_debut_individuelle text,
            heure_fin_individuelle text,
-           duree_individuelle_minutes integer
+           duree_individuelle_minutes integer,
+           creation_dl boolean,
+           preparation_dl_minutes integer
          )
          on conflict (evenement_id, personne_id) do update set
            statut = excluded.statut,
@@ -1140,6 +1149,8 @@ function createPgRepo(client){
            heure_debut_individuelle = excluded.heure_debut_individuelle,
            heure_fin_individuelle = excluded.heure_fin_individuelle,
            duree_individuelle_minutes = excluded.duree_individuelle_minutes,
+           creation_dl = coalesce(excluded.creation_dl, scope_participations.creation_dl),
+           preparation_dl_minutes = coalesce(excluded.preparation_dl_minutes, scope_participations.preparation_dl_minutes),
            updated_at = now()
          returning *`,
         [JSON.stringify(list.map((row) => ({
@@ -1154,7 +1165,9 @@ function createPgRepo(client){
           cible_suivie_id: row.cible_suivie_id || null,
           heure_debut_individuelle: row.heure_debut_individuelle || row.heureDebutIndividuelle || null,
           heure_fin_individuelle: row.heure_fin_individuelle || row.heureFinIndividuelle || null,
-          duree_individuelle_minutes: row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes)
+          duree_individuelle_minutes: row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes),
+          creation_dl: row.creation_dl == null && row.creationDl == null ? null : Boolean(row.creation_dl ?? row.creationDl),
+          preparation_dl_minutes: row.preparation_dl_minutes == null ? (row.preparationDlMinutes == null ? null : Number(row.preparationDlMinutes)) : Number(row.preparation_dl_minutes)
         })))]
       );
       return result.rows;

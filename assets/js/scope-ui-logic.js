@@ -1159,8 +1159,8 @@
     if (statut && statut !== 'PLANIFIE') return null;
     if (modeSuivi === 'QUANTITATIF') return { action: 'saisir-volumes', label: 'Saisir les présences' };
     if (populationFigee) return { action: 'saisir', label: 'Saisir les participations' };
-    if (previewReady) return { action: 'figer', label: 'Figer la population' };
-    return { action: 'generer', label: 'Générer les attendus' };
+    if (previewReady) return { action: 'figer', label: 'Assigner les participants' };
+    return { action: 'generer', label: 'Préparer les participants' };
   }
 
   function modeSuiviOf(evenement) {

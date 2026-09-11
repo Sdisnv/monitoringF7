@@ -340,12 +340,22 @@ function encadrementRows(fiche){
   const personnes = fiche.personnes || {};
   return (fiche.encadrement || []).map((p) => {
     const person = personnes[p.personne_id] || {};
+    const start = p.heure_debut_individuelle || p.heureDebutIndividuelle || '';
+    const end = p.heure_fin_individuelle || p.heureFinIndividuelle || '';
+    const duration = p.duree_individuelle_minutes == null ? p.dureeIndividuelleMinutes : p.duree_individuelle_minutes;
+    const prepMinutes = p.preparation_dl_minutes == null ? p.preparationDlMinutes : p.preparation_dl_minutes;
     return {
       grade: person.grade || '',
       nom: person.nom || '',
       prenom: person.prenom || '',
       nip: person.nip || '',
-      role: p.role
+      role: p.role,
+      heureDebut: start,
+      heureFin: end,
+      horaire: start || end ? `D: ${start || '—'} F: ${end || '—'}` : 'Horaire exercice',
+      dureeMinutes: duration == null ? null : Number(duration),
+      creationDl: Boolean(p.creation_dl || p.creationDl),
+      preparationDlMinutes: prepMinutes == null ? null : Number(prepMinutes)
     };
   }).sort((a, b) => {
     const roleDelta = roleGroupRank(a.role) - roleGroupRank(b.role);

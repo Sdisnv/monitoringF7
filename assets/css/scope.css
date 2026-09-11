@@ -6717,10 +6717,34 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-fiche-preview-toolbar {
   margin: 0 0 10px;
   align-items: end;
+  gap: 10px 14px;
 }
 .scope-fiche-preview-toolbar .scope-field {
   min-width: 16rem;
   flex: 1 1 16rem;
+}
+.scope-preview-selection-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-right: 4px;
+}
+.scope-preview-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 2px 4px;
+  color: var(--scope-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.scope-preview-check input {
+  width: 14px;
+  height: 14px;
+  accent-color: #1d4ed8;
 }
 .scope-fiche-hits {
   margin: 0 0 12px;
@@ -7932,6 +7956,10 @@ body.scope-pdf-open { overflow: hidden; }
   gap: 6px;
   align-items: center;
 }
+.scope-time-cell select,
+.scope-person-time-control select {
+  min-width: 138px;
+}
 
 .scope-person-time-control label {
   display: inline-flex;
@@ -7943,6 +7971,32 @@ body.scope-pdf-open { overflow: hidden; }
 
 .scope-person-time-control input {
   width: 92px;
+}
+.scope-time-inline {
+  color: var(--scope-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.scope-enc-time-mode,
+.scope-enc-time-field,
+.scope-enc-dl-min {
+  min-width: 128px;
+}
+.scope-enc-dl-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--scope-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.scope-enc-dl-toggle input {
+  accent-color: #1d4ed8;
 }
 
 .scope-fiche-time-line {

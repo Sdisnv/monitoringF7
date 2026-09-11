@@ -807,9 +807,17 @@ class ScopePdfRenderer {
     groups.forEach((group) => {
       this.heading(roleLabels[group.role] || group.role, 11);
       this.table(
-        ['Grade', 'Nom', 'Prénom', 'NIP'],
-        group.rows.map((r) => [r.grade || '', r.nom, r.prenom, r.nip]),
-        [52, 150, 130, 70],
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'Horaire', 'Durée', 'Préparation DL'],
+        group.rows.map((r) => [
+          r.grade || '',
+          r.nom,
+          r.prenom,
+          r.nip,
+          r.horaire || 'Horaire exercice',
+          r.dureeMinutes == null ? '—' : `${Math.round(Number(r.dureeMinutes))} min`,
+          r.creationDl ? `${Math.round(Number(r.preparationDlMinutes || 0))} min` : '—'
+        ]),
+        [40, 92, 78, 52, 74, 44, 70],
         { rowH: 15 }
       );
     });

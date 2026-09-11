@@ -1658,6 +1658,22 @@ function createScopeService(repo){
     };
   }
 
+  function normalizeLessonPrep(item = {}){
+    const hasCreation = item.creationDl !== undefined || item.creation_dl !== undefined || item.creationDL !== undefined;
+    const hasMinutes = item.preparationDlMinutes !== undefined || item.preparation_dl_minutes !== undefined || item.tempsPreparationDlMinutes !== undefined;
+    if(!hasCreation && !hasMinutes) return {};
+    const creation = Boolean(item.creationDl ?? item.creation_dl ?? item.creationDL);
+    const minutesRaw = item.preparationDlMinutes ?? item.preparation_dl_minutes ?? item.tempsPreparationDlMinutes;
+    const minutes = minutesRaw === '' || minutesRaw == null ? null : Number(minutesRaw);
+    if(minutes != null && (!Number.isFinite(minutes) || minutes < 0)){
+      throw new HttpError(422, 'preparation_dl_invalide', 'Le temps de préparation DL doit être renseigné en minutes positives.');
+    }
+    return {
+      creation_dl: creation,
+      preparation_dl_minutes: creation ? (minutes == null ? 0 : Math.round(minutes)) : null
+    };
+  }
+
   function sameIdList(a, b){
     const left = (a || []).map((id) => String(id)).sort();
     const right = (b || []).map((id) => String(id)).sort();
@@ -3068,25 +3084,47 @@ function createScopeService(repo){
         throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population à figer.');
       }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Le gel n’est possible que sur un événement PLANIFIE.');
-      if(evenement.population_figee) throw new HttpError(422, 'deja_figee', 'La population est déjà figée.');
+      if(evenement.population_figee){
+        if(body && body.assignmentRequest){
+          const current = await photographieFigee(eventId);
+          return { evenement, version: evenement.version, count: current.count || 0, alreadyAssigned: true };
+        }
+        throw new HttpError(422, 'deja_figee', 'La population est déjà figée.');
+      }
       const preview = await previewAttendus(eventId);
+      const previewById = new Map((preview.personnes || []).map((personne) => [String(personne.personneId || personne.personne_id || ''), personne]));
+      const hasSelectionBody = Array.isArray(body && body.selectedPersonIds) || Array.isArray(body && body.personneIds);
+      const requestedIds = Array.isArray(body && body.selectedPersonIds)
+        ? body.selectedPersonIds.map((id) => String(id || '')).filter(Boolean)
+        : Array.isArray(body && body.personneIds)
+          ? body.personneIds.map((id) => String(id || '')).filter(Boolean)
+          : [];
+      const selectedIds = [...new Set(hasSelectionBody ? requestedIds : (preview.personnes || []).map((p) => String(p.personneId || p.personne_id || '')).filter(Boolean))];
+      if(!selectedIds.length && (hasSelectionBody || body && body.assignmentRequest)){
+        throw new HttpError(422, 'population_vide', 'Aucun participant n’est sélectionné pour cet événement.');
+      }
       const stamp = new Date().toISOString();
       const snapshot = evenement.participation_policy_snapshot || await capturePolicySnapshot(tx, evenement.domaine_code);
-      for(const personne of preview.personnes){
+      for(const personneId of selectedIds){
+        const personne = previewById.get(String(personneId)) || {};
+        if(!previewById.has(String(personneId))){
+          const existingPerson = await tx.getPersonne(personneId);
+          if(!existingPerson) throw new HttpError(404, 'personne_introuvable', 'Une personne sélectionnée est introuvable.');
+        }
         const cibleMotif = (personne.cibles || [])
           .map((c) => `${c.domaineCode || c.domaine_code}_${c.niveauCode || c.niveau_code}`)
           .filter(Boolean)
           .join('|');
         await tx.upsertAttendu({
           evenement_id: eventId,
-          personne_id: personne.personneId,
+          personne_id: personneId,
           inclus: true,
-          origine: 'REGLE',
-          motif_inclusion: cibleMotif || personne.motifInclusion
+          origine: previewById.has(String(personneId)) ? 'REGLE' : 'EXCEPTION_AJOUT',
+          motif_inclusion: cibleMotif || personne.motifInclusion || (previewById.has(String(personneId)) ? null : 'exception_ajout')
         });
         await tx.upsertParticipation({
           evenement_id: eventId,
-          personne_id: personne.personneId,
+          personne_id: personneId,
           statut: 'NON_RENSEIGNE',
           role: 'PARTICIPANT',
           source: 'GENERATION',
@@ -3105,10 +3143,10 @@ function createScopeService(repo){
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
-        action: 'FIGER',
-        apres: { count: preview.count, version: next.version }
+        action: 'ASSIGNER_PARTICIPANTS',
+        apres: { count: selectedIds.length, proposed: preview.count, version: next.version }
       });
-      return { evenement: next, version: next.version, count: preview.count };
+      return { evenement: next, version: next.version, count: selectedIds.length };
     });
   }
 
@@ -3933,6 +3971,7 @@ function createScopeService(repo){
           motif_absence: null,
           commentaire: null,
           ...(options.temporal || {}),
+          ...(options.lessonPrep || {}),
           role,
           source: keepParticipantPresence ? existing.source : 'ENCADREMENT',
           auteur_id: actorId(actor)
@@ -3957,6 +3996,7 @@ function createScopeService(repo){
       const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
       const v2AllSessions = Boolean(v2State && serieComplete);
       const temporalPatch = normalizeParticipationTemporal(body, evenement);
+      const lessonPrepPatch = role === 'FORMATEUR' ? normalizeLessonPrep(body) : {};
       if(serieComplete && !v2AllSessions && role !== 'FORMATEUR'){
         throw new HttpError(422, 'serie_formateur_uniquement', 'L’option série complète est réservée au rôle Formateur.');
       }
@@ -3971,12 +4011,20 @@ function createScopeService(repo){
         : serieComplete
         ? (await prSeriesEvents(tx, evenement)).filter((row) => row.statut === 'PLANIFIE')
         : [evenement];
+      if(v2State && lessonPrepPatch.creation_dl){
+        const existingRows = await tx.listParticipationsForEvents((v2State.sessions || []).map((row) => row.evenement_id || row.event_id).filter(Boolean));
+        const duplicate = existingRows.find((row) => String(row.personne_id) === String(personneId) && row.creation_dl && String(row.evenement_id) !== String(eventId));
+        if(duplicate){
+          throw new HttpError(422, 'creation_dl_deja_comptee', 'La création DL est déjà comptabilisée pour ce formateur dans ce Multi-session.');
+        }
+      }
       let changed = 0;
       for(const target of targets){
         const targetTemporal = target.evenement_id === evenement.evenement_id
           ? temporalPatch
           : normalizeParticipationTemporal(body, target);
-        const result = await upsertEncadrementRow(tx, target, personneId, role, actor, { allowSameRole: serieComplete, temporal: targetTemporal });
+        const targetLessonPrep = target.evenement_id === evenement.evenement_id ? lessonPrepPatch : {};
+        const result = await upsertEncadrementRow(tx, target, personneId, role, actor, { allowSameRole: serieComplete, temporal: targetTemporal, lessonPrep: targetLessonPrep });
         if(!result.changed) continue;
         await bumpOrConflict(tx, target.evenement_id, target.evenement_id === eventId ? baseVersion : target.version, {});
         await mirrorMultiSessionV2Participation(tx, v2AllSessions ? v2State : null, target.evenement_id, {
