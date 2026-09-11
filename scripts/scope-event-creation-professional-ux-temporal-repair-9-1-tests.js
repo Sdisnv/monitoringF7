@@ -64,7 +64,7 @@ function sourceBlock(source, marker){
     const ui = read('assets/js/scope-ui.js');
     includes(ui, 'Événement ponctuel');
     includes(ui, 'Utiliser une configuration de formation');
-    includes(ui, 'Aucune configuration applicable à cette date et ce domaine.');
+    includes(ui, 'Aucune configuration de formation spécifique disponible pour ce domaine et cette date.');
     includes(ui, 'Compatible avec le domaine sélectionné, la date de l’événement et une version active.');
     includes(ui, "String(definition.domain || '').toUpperCase() !== String(domaine || '').toUpperCase()");
     includes(ui, 'if (eventDate && from && eventDate < from) return;');

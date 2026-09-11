@@ -300,8 +300,8 @@
     }
     const compact = niveau.toUpperCase().replace(/[\s/_-]+/g, '');
     if (domaine === 'JSP' && compact === 'CAD') return 'Cadets';
-    if (domaine === 'AUTO' && compact === 'VL') return 'Cond. VL';
-    if (domaine === 'AUTO' && compact === 'PL') return 'Cond. PL';
+    if (domaine === 'AUTO' && compact === 'VL') return 'cond VL';
+    if (domaine === 'AUTO' && compact === 'PL') return 'cond PL';
     const affiche = niveauAffiche(domaine, niveau);
     if (affiche && affiche !== niveau) return affiche;
     if (libelle) {
@@ -397,6 +397,24 @@
     const m = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return text || '—';
     return `${m[3]}.${m[2]}.${m[1]}`;
+  }
+
+  function formatDurationMinutes(minutes) {
+    const d = Number(minutes);
+    if (!Number.isFinite(d) || d < 0) return '';
+    const h = Math.floor(d / 60);
+    const r = d % 60;
+    if (h && r) return `${h} h ${String(r).padStart(2, '0')}`;
+    if (h) return `${h} h`;
+    return `${r} min`;
+  }
+
+  function domainTaxonomyGroups() {
+    return [
+      { label: 'Domaines opérationnels', codes: ['DPS', 'DAP', 'JSP'] },
+      { label: 'Formations', codes: ['FOBA', 'FOCA', 'FOSPEC'] },
+      { label: 'Spécialisations FOSPEC', codes: ['PR', 'AUTO'] }
+    ];
   }
 
   function formatTaux(percentage) {
@@ -1654,20 +1672,41 @@
   }
 
   function sortCiblesForEventForm(cibles) {
-    const rank = (niveau) => {
-      const code = String(niveau || '').toUpperCase();
-      if (code === 'GEN') return 0;
-      if (code === 'ABC') return 1;
-      return 10;
+    const METIER_ORDER = {
+      DPS: ['G1', 'C1', 'B1', 'B2', 'GEN'],
+      DAP: ['Y1', 'Y2', 'Y3', 'Y4', 'GEN'],
+      JSP: ['G1', 'C1', 'B1', 'CAD', 'GEN'],
+      AUTO: ['VL', 'PL'],
+      PR: ['G1', 'C1', 'B1', 'B2', 'ABC', 'GEN'],
+      FOBA: ['1', '2', '3'],
+      FOCA: ['I', 'II', 'III_IV', 'GEN']
+    };
+    const explicitOrder = (cible) => {
+      const value = cible && (cible.displayOrder != null ? cible.displayOrder : (cible.display_order != null ? cible.display_order : cible.ordre));
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    };
+    const rank = (cible) => {
+      const explicit = explicitOrder(cible);
+      if (explicit != null && explicit !== 999) return explicit;
+      const domain = String(cible && (cible.domaineCode || cible.domaine_code) || '').toUpperCase();
+      const code = String(cible && (cible.niveauCode || cible.niveau_code) || '').toUpperCase();
+      const list = METIER_ORDER[domain];
+      if (list) {
+        const idx = list.indexOf(code);
+        if (idx >= 0) return idx;
+      }
+      if (code === 'GEN') return 90;
+      return 50;
     };
     return (cibles || []).slice().sort((a, b) => {
       const da = String(a.domaineCode || a.domaine_code || '');
       const db = String(b.domaineCode || b.domaine_code || '');
       if (da !== db) return da.localeCompare(db, 'fr');
+      const diff = rank(a) - rank(b);
+      if (diff) return diff;
       const na = String(a.niveauCode || a.niveau_code || '');
       const nb = String(b.niveauCode || b.niveau_code || '');
-      const diff = rank(na) - rank(nb);
-      if (diff) return diff;
       return na.localeCompare(nb, 'fr');
     });
   }
@@ -1964,6 +2003,8 @@
     domaineAffiche,
     niveauAffiche,
     cibleMetierLabel,
+    formatDurationMinutes,
+    domainTaxonomyGroups,
     statutLabel,
     formatPrSessionList,
     formatFormateurPrTooltip,

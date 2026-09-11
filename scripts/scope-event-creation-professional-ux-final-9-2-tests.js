@@ -60,7 +60,7 @@ async function record(name, fn){
 
   await record('01 — domaine vide par défaut', async () => {
     includes(ui, "domaineForm: ''");
-    includes(ui, '<option value="">Choisir un domaine</option>');
+    includes(ui, 'Choisir un domaine');
     includes(ui, 'function resetNouveauForm()');
     includes(ui, "state.domaineForm = ''");
     notIncludes(ui, "domaineForm: 'DPS'");
@@ -98,13 +98,13 @@ async function record(name, fn){
     eq(logic.cibleMetierLabel({ domaineCode: 'JSP', niveauCode: 'CAD' }), 'Cadets');
   });
 
-  await record('07 — VL affiché Cond. VL', async () => {
-    eq(logic.cibleMetierLabel('AUTO', 'VL'), 'Cond. VL');
-    eq(logic.cibleMetierLabel({ domaineCode: 'AUTO', niveauCode: 'VL', libelle: 'AUTO VL' }), 'Cond. VL');
+  await record('07 — VL affiché cond VL', async () => {
+    eq(logic.cibleMetierLabel('AUTO', 'VL'), 'cond VL');
+    eq(logic.cibleMetierLabel({ domaineCode: 'AUTO', niveauCode: 'VL', libelle: 'AUTO VL' }), 'cond VL');
   });
 
-  await record('08 — PL affiché Cond. PL', async () => {
-    eq(logic.cibleMetierLabel('AUTO', 'PL'), 'Cond. PL');
+  await record('08 — PL affiché cond PL', async () => {
+    eq(logic.cibleMetierLabel('AUTO', 'PL'), 'cond PL');
     eq(logic.niveauAffiche('AUTO', 'VL'), 'VL');
     eq(logic.niveauAffiche('JSP', 'CAD'), 'CAD');
   });
@@ -120,9 +120,9 @@ async function record(name, fn){
   await record('10 — checkbox + label structurés/accessibles', async () => {
     includes(ui, 'class="scope-target-chip" for="');
     includes(ui, 'role="group" aria-label="Public cible"');
-    includes(css, 'align-items: center');
-    includes(chipBlock, 'width: 1em');
-    includes(chipBlock, 'height: 1em');
+    includes(css, 'align-items: baseline');
+    includes(css, '.scope-target-chip input[type="checkbox"]');
+    includes(css, 'white-space: nowrap');
     includes(css, '.scope-target-chip:has(input:focus-visible)');
   });
 

@@ -580,6 +580,19 @@
     render();
   }
 
+  function domainTaxonomySelectHtml(selected, options = {}) {
+    const emptyValue = options.emptyValue == null ? '' : options.emptyValue;
+    const emptyLabel = options.emptyLabel || 'Choisir un domaine';
+    const selectedValue = String(selected == null ? emptyValue : selected);
+    const groups = (L.domainTaxonomyGroups && L.domainTaxonomyGroups()) || [
+      { label: 'Domaines opérationnels', codes: ['DPS', 'DAP', 'JSP'] },
+      { label: 'Formations', codes: ['FOBA', 'FOCA', 'FOSPEC'] },
+      { label: 'Spécialisations FOSPEC', codes: ['PR', 'AUTO'] }
+    ];
+    return `<option value="${escapeHtml(String(emptyValue))}" ${String(selectedValue) === String(emptyValue) ? 'selected' : ''}>${escapeHtml(emptyLabel)}</option>`
+      + groups.map((group) => `<optgroup label="${escapeHtml(group.label)}">${group.codes.map((code) => `<option value="${escapeHtml(code)}" ${String(selectedValue) === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')}</optgroup>`).join('');
+  }
+
   function domaineLabel(code) {
     const canon = String(code || '').toUpperCase() === 'PAPR' ? 'PR' : code;
     const d = state.referentiels.domaines.find((x) => x.code === code || x.code === canon);
@@ -3108,21 +3121,7 @@
           <div class="scope-field">
             <label>Domaine</label>
             <select id="filter-domaine">
-              <option value="tous">Tous</option>
-              <optgroup label="Domaines opérationnels">
-                <option value="DPS">DPS</option>
-                <option value="DAP">DAP</option>
-                <option value="JSP">JSP</option>
-              </optgroup>
-              <optgroup label="Formations">
-                <option value="FOBA">FOBA</option>
-                <option value="FOCA">FOCA</option>
-                <option value="FOSPEC">FOSPEC</option>
-              </optgroup>
-              <optgroup label="Spécialisations FOSPEC">
-                <option value="PR">PR</option>
-                <option value="AUTO">AUTO</option>
-              </optgroup>
+              ${domainTaxonomySelectHtml(state.domaine === 'tous' ? 'tous' : state.domaine, { emptyValue: 'tous', emptyLabel: 'Tous' })}
             </select>
           </div>
           <button type="button" class="scope-btn scope-btn-primary scope-events-new" id="scope-new">Nouvel événement</button>
@@ -3303,21 +3302,7 @@
           <div class="scope-field">
             <label>Domaine</label>
             <select id="cycle-filter-domaine">
-              <option value="tous">Tous</option>
-              <optgroup label="Domaines opérationnels">
-                <option value="DPS">DPS</option>
-                <option value="DAP">DAP</option>
-                <option value="JSP">JSP</option>
-              </optgroup>
-              <optgroup label="Formations">
-                <option value="FOBA">FOBA</option>
-                <option value="FOCA">FOCA</option>
-                <option value="FOSPEC">FOSPEC</option>
-              </optgroup>
-              <optgroup label="Spécialisations FOSPEC">
-                <option value="PR">PR</option>
-                <option value="AUTO">AUTO</option>
-              </optgroup>
+              ${domainTaxonomySelectHtml(state.cycleFilter && state.cycleFilter.domaine === 'tous' ? 'tous' : (state.cycleFilter && state.cycleFilter.domaine), { emptyValue: 'tous', emptyLabel: 'Tous' })}
             </select>
           </div>
           <div class="scope-field">
@@ -6248,7 +6233,7 @@
     const duration = formatPlannedDurationLabel(state.heureDebutPrevueForm, state.heureFinPrevueForm);
     if (target) {
       target.textContent = duration
-        ? `Durée prévue : ${duration}. L’horaire réel sera initialisé avec cet horaire et pourra être corrigé avant clôture.`
+        ? `Durée prévue : ${duration}. L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.`
         : 'L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.';
     }
     updateNewEventRecap();
@@ -6276,8 +6261,8 @@
         const cibleId = c.cibleId || c.cible_id || '';
         const inputId = `${id}-${cibleId}`;
         return `<label class="scope-target-chip" for="${escapeHtml(inputId)}">
-          <input id="${escapeHtml(inputId)}" type="checkbox" value="${escapeHtml(cibleId)}" ${selected.has(cibleId) ? 'checked' : ''}${disabled ? ' disabled' : ''}>
           <span>${escapeHtml(eventCibleLabel(c))}</span>
+          <input id="${escapeHtml(inputId)}" type="checkbox" value="${escapeHtml(cibleId)}" ${selected.has(cibleId) ? 'checked' : ''}${disabled ? ' disabled' : ''}>
         </label>`;
       }).join('') || '<span class="scope-empty">Aucune cible référencée pour ce domaine.</span>'}
     </div>`;
@@ -6363,8 +6348,13 @@
     const configHelp = !hasDomaine
       ? 'Sélectionnez d’abord un domaine pour afficher les publics et configurations disponibles.'
       : (!compatibleVersions.length
-        ? 'Aucune configuration applicable à cette date et ce domaine.'
+        ? 'Aucune configuration de formation spécifique disponible pour ce domaine et cette date.'
         : 'Choisissez explicitement une configuration compatible, ou conservez un événement ponctuel.');
+    const ponctuelHelp = !hasDomaine
+      ? 'Sélectionnez d’abord un domaine pour afficher les publics et configurations disponibles.'
+      : (!compatibleVersions.length
+        ? 'Aucune configuration de formation spécifique disponible pour ce domaine et cette date.'
+        : 'Cet événement utilise les règles standards du domaine.');
     const configOptions = compatibleVersions.map(({ definition, version }) => {
       const id = version.definition_version_id || version.definitionVersionId || '';
       return `<option value="${escapeHtml(id)}" ${String(state.definitionVersionForm || '') === String(id) ? 'selected' : ''}>${escapeHtml(definition.label || 'Formation')}</option>`;
@@ -6376,7 +6366,7 @@
     const durationPreview = formatPlannedDurationLabel(state.heureDebutPrevueForm, state.heureFinPrevueForm);
     const recap = buildNewEventRecapModel();
     if (multiMode) recap.session = `Plusieurs sessions · Session ${Number(state.sessionIndexChoice || 1)} sur ${sessionCount}`;
-    const domainOptions = `<option value="">Choisir un domaine</option>${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === domaine ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}`;
+    const domainOptions = domainTaxonomySelectHtml(domaine, { emptyValue: '', emptyLabel: 'Choisir un domaine' });
     return `
       <div class="scope-crumb">Événements / Nouvel événement</div>
       <div class="scope-main scope-event-form-main">
@@ -6393,11 +6383,11 @@
                   <select id="new-domaine">${domainOptions}</select>
                 </div>
               </div>
-              <p class="scope-mode-hint" id="new-duration-preview">${durationPreview ? `Durée prévue : ${escapeHtml(durationPreview)}. L’horaire réel sera initialisé avec cet horaire et pourra être corrigé avant clôture.` : 'L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.'}</p>
+              <p class="scope-mode-hint scope-time-help" id="new-duration-preview">${durationPreview ? `Durée prévue : ${escapeHtml(durationPreview)}. L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.` : 'L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.'}</p>
               <div class="scope-identification-secondary">
                 <div class="scope-field scope-identification-libelle"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
                 <div class="scope-field scope-identification-targets"><label>Public cible</label>
-                  ${hasDomaine ? `${prHint}<small class="scope-target-help">Les choix proviennent des référentiels SCOPE du domaine sélectionné.</small>${renderTargetPicker('new-cibles', cibles, state.cibleForm)}` : '<p class="scope-mode-hint" id="new-target-domain-help">Sélectionnez d’abord un domaine pour afficher les publics et configurations disponibles.</p>'}
+                  ${hasDomaine ? `${prHint}${renderTargetPicker('new-cibles', cibles, state.cibleForm)}` : '<p class="scope-mode-hint" id="new-target-domain-help">Sélectionnez d’abord un domaine pour afficher les publics et configurations disponibles.</p>'}
                 </div>
               </div>
             </section>
@@ -6407,16 +6397,17 @@
                 <label class="scope-radio scope-radio-card"><input type="radio" name="new-config-mode" value="NONE" ${configMode === 'NONE' ? 'checked' : ''}> <span><strong>Événement ponctuel</strong><small>Fonctionnement SCOPE existant, sans configuration persistée.</small></span></label>
                 <label class="scope-radio scope-radio-card"><input type="radio" name="new-config-mode" value="EXISTING" ${configMode === 'EXISTING' ? 'checked' : ''} ${hasDomaine && compatibleVersions.length ? '' : 'disabled'}> <span><strong>Utiliser une configuration de formation</strong><small>Association explicite aux règles compatibles avec le domaine et la date.</small></span></label>
               </div>
-              <div class="scope-field">
+              ${configMode === 'EXISTING' ? `
+              <div class="scope-field" id="new-config-select-wrap">
                 <label for="new-definition-version">Configuration</label>
-                <select id="new-definition-version" ${configMode === 'EXISTING' && compatibleVersions.length ? '' : 'disabled'}>
-                  <option value="">${hasDomaine ? (compatibleVersions.length ? 'Choisir une configuration' : 'Aucune configuration compatible') : 'Sélectionnez d’abord un domaine'}</option>
+                <select id="new-definition-version">
+                  <option value="">${compatibleVersions.length ? 'Choisir une configuration' : 'Aucune configuration compatible'}</option>
                   ${hasDomaine ? configOptions : ''}
                 </select>
-                ${configMode === 'EXISTING' ? `<div id="new-config-details">${configVersionDetailsHtml(selectedConfig)}</div>` : ''}
+                <div id="new-config-details">${configVersionDetailsHtml(selectedConfig)}</div>
                 <small>${escapeHtml(configHelp)}</small>
               </div>
-              ${renderConfigCompatibility(selectedConfig)}
+              ${renderConfigCompatibility(selectedConfig)}` : `<p class="scope-mode-hint" id="new-config-ponctuel-help">${escapeHtml(ponctuelHelp)}</p>`}
             </section>
             <section class="scope-form-section">
               <h3>Organisation</h3>
@@ -6602,8 +6593,8 @@
         <div><dt>Organisation</dt><dd>${escapeHtml(cfg.organisation || '—')}${Number(cfg.sessionCount || 0) > 1 ? ` · ${escapeHtml(String(cfg.sessionCount))} sessions` : ''}</dd></div>
         <div><dt>Session</dt><dd>${escapeHtml(sessionText)}</dd></div>
         ${periodText ? `<div><dt>Période d’application</dt><dd>${escapeHtml(periodText)}</dd></div>` : ''}
-        <div><dt>Règles</dt><dd>${escapeHtml(cfg.policyLabel || 'Règles de participation SCOPE')}</dd></div>
-        <div><dt>Association</dt><dd>${escapeHtml(cfg.originLabel || 'Association administrative')}</dd></div>
+        <div><dt>Règles disponibles</dt><dd>${escapeHtml(cfg.policyLabel || 'Règles de participation SCOPE')}</dd></div>
+        <div><dt>Origine de l’association</dt><dd>${escapeHtml(cfg.originLabel || 'Association administrative')}</dd></div>
       </dl>`;
     const tech = cfg.technical || {};
     const techHtml = (tech.definitionVersionId || tech.policyVersionId || tech.engineRoute || tech.prExerciseGroupKey || tech.prSessionKey || tech.cycleId)
@@ -6623,15 +6614,32 @@
     </section>`;
   }
 
+  function eventTemporalSummaryHtml(ev, fiche) {
+    const temporal = (fiche && fiche.temporal) || ev.temporal || {};
+    const plannedStart = String(temporal.plannedStart || ev.heure_debut_prevue || '').slice(0, 5);
+    const plannedEnd = String(temporal.plannedEnd || ev.heure_fin_prevue || '').slice(0, 5);
+    const actualStart = String(temporal.actualStart || ev.heure_debut_reelle || '').slice(0, 5);
+    const actualEnd = String(temporal.actualEnd || ev.heure_fin_reelle || '').slice(0, 5);
+    const planned = [plannedStart, plannedEnd].filter(Boolean).join('–');
+    const actual = [actualStart, actualEnd].filter(Boolean).join('–');
+    const minutes = temporal.durationMinutes != null ? Number(temporal.durationMinutes) : null;
+    const duration = (L.formatDurationMinutes && minutes != null && Number.isFinite(minutes))
+      ? L.formatDurationMinutes(minutes)
+      : formatPlannedDurationLabel(actualStart || plannedStart, actualEnd || plannedEnd);
+    if (!planned && !actual) return '';
+    const same = planned && actual && planned === actual;
+    if (same) {
+      return `<p class="scope-fiche-time-line"><span>Horaire ${escapeHtml(planned)}</span>${duration ? `<span>Durée ${escapeHtml(duration)}</span>` : ''}</p>`;
+    }
+    return `<p class="scope-fiche-time-line">${planned ? `<span>Prévu ${escapeHtml(planned)}</span>` : ''}${actual ? `<span>Réalisé ${escapeHtml(actual)}</span>` : ''}${duration ? `<span>Durée ${escapeHtml(duration)}</span>` : ''}</p>`;
+  }
+
   function renderFicheIdentity(ev, fiche) {
     const mode = eventMode(ev);
     const isLegacy = ev.origine === 'LEGACY_AGGREGATED';
-    const temporal = (fiche && fiche.temporal) || ev.temporal || {};
-    const horaire = temporal.actualLabel || [ev.heure_debut_reelle || ev.heure_debut, ev.heure_fin_reelle || ev.heure_fin].filter(Boolean).join(' – ');
     const publicOi = L.ciblesLabel(ciblesOf(fiche));
     const meta = [
       L.formatDate(ev.date),
-      horaire || null,
       domaineLabel(ev.domaine_code),
       publicOi && publicOi !== '—' ? publicOi : null
     ].filter(Boolean);
@@ -6642,6 +6650,7 @@
         <p class="scope-page-eyebrow">Événement</p>
         <h1>${escapeHtml(ev.libelle)}</h1>
         <p class="scope-fiche-meta-line">${meta.map((bit) => `<span>${escapeHtml(bit)}</span>`).join('<span class="scope-event-meta-sep">·</span>')}</p>
+        ${eventTemporalSummaryHtml(ev, fiche)}
         <div class="scope-fiche-identity-status">
           ${eventBusinessStateBadge(fiche)}
           ${tech.map((item) => `<span class="scope-fiche-tech">${escapeHtml(item)}</span>`).join('')}

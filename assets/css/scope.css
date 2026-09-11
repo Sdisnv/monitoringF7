@@ -7704,7 +7704,7 @@ body.scope-pdf-open { overflow: hidden; }
 
 .scope-form-section h3,
 .scope-form-section h4 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 .scope-form-two {
@@ -7716,19 +7716,24 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-identification-grid {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(120px, .8fr) minmax(120px, .8fr) minmax(160px, 1.1fr);
-  gap: 10px 12px;
+  gap: 8px 12px;
 }
 
 .scope-identification-secondary {
   display: grid;
   grid-template-columns: minmax(260px, 0.48fr) minmax(280px, 1.02fr);
-  gap: 10px 16px;
-  margin-top: 10px;
+  gap: 8px 16px;
+  margin-top: 8px;
   align-items: start;
 }
 
 .scope-identification-libelle input {
   width: 100%;
+}
+
+.scope-time-help {
+  margin: 4px 0 0;
+  font-size: 12px;
 }
 
 .scope-option-grid,
@@ -7772,36 +7777,52 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-target-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  align-items: center;
+  gap: 2px 14px;
+  align-items: baseline;
+  line-height: 1.2;
 }
 
+.scope-field .scope-target-chip,
 .scope-target-chip {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 4px;
   margin: 0;
-  padding: 2px 4px 2px 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--scope-text);
+  font-size: 13px;
   font-weight: 500;
+  letter-spacing: 0;
   line-height: 1.2;
+  text-transform: none;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
 }
 
-.scope-target-chip input {
+.scope-field .scope-target-chip input[type="checkbox"],
+.scope-target-chip input[type="checkbox"] {
   position: static;
-  width: 1em;
-  height: 1em;
+  width: 13px;
+  height: 13px;
+  min-width: 13px;
+  min-height: 0;
   margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   flex: 0 0 auto;
   accent-color: #1d4ed8;
 }
 
 .scope-target-chip span {
-  display: inline-block;
+  display: inline;
   line-height: 1.2;
 }
 
@@ -7895,7 +7916,7 @@ body.scope-pdf-open { overflow: hidden; }
 }
 
 .scope-business-info {
-  border-color: #1d4ed8;
+  border: 1px solid #1e3a8a;
   background: #eff6ff;
   color: #153e75;
 }
@@ -7922,6 +7943,20 @@ body.scope-pdf-open { overflow: hidden; }
 
 .scope-person-time-control input {
   width: 92px;
+}
+
+.scope-fiche-time-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 6px 0 0;
+  color: var(--scope-text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.scope-fiche-time-line span {
+  color: var(--scope-text);
 }
 
 .scope-edit-event-modal {
