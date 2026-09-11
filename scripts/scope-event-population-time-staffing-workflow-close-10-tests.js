@@ -43,6 +43,7 @@ async function record(name, fn){
     includes(ui, 'manualAdditions');
     includes(ui, 'assignmentRequest: true');
     includes(ui, 'Assigner les participants ?');
+    includes(ui, 'Assignation des participants en cours…');
     includes(ui, 'participantAssignmentBusy');
     includes(api, 'figer(id, bodyOrBaseVersion, maybeBaseVersion)');
     includes(service, 'ASSIGNER_PARTICIPANTS');
@@ -55,9 +56,8 @@ async function record(name, fn){
     includes(ui, 'data-preview-select');
     includes(ui, 'preview-select-all');
     includes(ui, 'preview-unselect-all');
-    includes(ui, '+ Ajouter');
     includes(ui, 'Ajout manuel');
-    includes(ui, 'grade: person.grade ||');
+    includes(ui, "return 'Assignation'");
     includes(ui, "id.grade || '—'");
   });
 
@@ -77,10 +77,10 @@ async function record(name, fn){
     includes(ui, 'Début prévu');
     includes(ui, 'Début réel');
     includes(ui, '<th>HORAIRE</th>');
-    includes(ui, 'Horaire exercice');
-    includes(ui, 'Horaire personnalisé');
-    includes(ui, 'D: ');
-    includes(ui, 'F: ');
+    includes(ui, 'Plan horaire');
+    includes(ui, 'Individuel');
+    includes(ui, 'D : ');
+    includes(ui, 'F : ');
     includes(service, 'durationMinutes(start || evenement.heure_debut_reelle');
   });
 
@@ -90,7 +90,7 @@ async function record(name, fn){
     const schema = read('netlify/lib/_scope-schema.js');
     includes(ui, 'enc-time-mode');
     includes(ui, 'enc-creation-dl');
-    includes(ui, 'Temps de préparation');
+    includes(ui, 'Descente de leçon');
     includes(ui, 'preparationDlMinutes');
     includes(service, 'normalizeLessonPrep');
     includes(service, 'creation_dl_deja_comptee');
@@ -106,7 +106,7 @@ async function record(name, fn){
     includes(data, 'preparationDlMinutes');
     includes(pdf, 'Horaire');
     includes(pdf, 'Durée');
-    includes(pdf, 'Préparation DL');
+    includes(pdf, 'DL');
   });
 
   await record('08 — styles UX ciblés', async () => {

@@ -807,13 +807,13 @@ class ScopePdfRenderer {
     groups.forEach((group) => {
       this.heading(roleLabels[group.role] || group.role, 11);
       this.table(
-        ['Grade', 'Nom', 'Prénom', 'NIP', 'Horaire', 'Durée', 'Préparation DL'],
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'Horaire', 'Durée', 'DL'],
         group.rows.map((r) => [
           r.grade || '',
           r.nom,
           r.prenom,
           r.nip,
-          r.horaire || 'Horaire exercice',
+          r.horaire || 'Horaire événement',
           r.dureeMinutes == null ? '—' : `${Math.round(Number(r.dureeMinutes))} min`,
           r.creationDl ? `${Math.round(Number(r.preparationDlMinutes || 0))} min` : '—'
         ]),
@@ -916,6 +916,9 @@ class ScopePdfRenderer {
       { label: 'Effectif de la section', value: m.event.sectionEffectif == null ? '—' : String(m.event.sectionEffectif) },
       { label: 'Rattrapages', value: String(((m.event.rattrapages || {}).count) || 0) }
     ], { cols: 3, rowH: 22 });
+    if(m.event && String(m.event.statut || '').toUpperCase() === 'ANNULE'){
+      this.para('Événement ANNULÉ — hors statistiques de présence, hors taux et hors cycles.');
+    }
     this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { after: TYPE.sectionGap });
     this.kpiOfficial(m.officiel, { event: true });
     if(dap){
@@ -924,6 +927,16 @@ class ScopePdfRenderer {
     }
     this.renderEncadrement(m);
     this.renderCatchups(m);
+    const exceptions = (m.horaireExceptions || (m.nominatif || []).filter((r) => r.horaireException));
+    if(exceptions.length){
+      this.iconHeading('kpi', 'Exceptions horaires individuelles', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
+      this.table(
+        ['Grade', 'Nom', 'Prénom', 'NIP', 'Horaire'],
+        exceptions.map((r) => [r.grade || '', r.nom, r.prenom, r.nip, r.horaireException]),
+        [48, 92, 82, 52, 185],
+        { rowH: 14 }
+      );
+    }
     if(m.nominatif && m.nominatif.length){
       this.iconHeading('people', 'Liste nominative', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
       this.table(

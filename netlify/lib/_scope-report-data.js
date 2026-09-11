@@ -309,6 +309,9 @@ function nominativeRows(fiche){
     const statut = part.statut || 'NON_RENSEIGNE';
     const role = String(part.role || 'PARTICIPANT').toUpperCase();
     if(!isValidSessionStatut(statut)) return null;
+    const effective = String(statut).toUpperCase() === 'PRESENT';
+    const start = effective ? (part.heure_debut_individuelle || part.heureDebutIndividuelle || '') : '';
+    const end = effective ? (part.heure_fin_individuelle || part.heureFinIndividuelle || '') : '';
     const catchupSource = UiLogic.permutationCatchupSourceLabel ? UiLogic.permutationCatchupSourceLabel(a) : '';
     const permutationInfo = statut === 'PERMUTATION' && UiLogic.informationMotifLabel
       ? UiLogic.informationMotifLabel(Object.assign({}, a, part, {
@@ -331,7 +334,10 @@ function nominativeRows(fiche){
       motif_inclusion: a.motif_inclusion || null,
       role,
       roleLabel: role !== 'PARTICIPANT' ? (ROLE_LABELS[role] || role) : '',
-      permutation: part.statut === 'PERMUTATION'
+      permutation: part.statut === 'PERMUTATION',
+      heureDebut: start || '',
+      heureFin: end || '',
+      horaireException: start || end ? `D : ${start || '—'} · F : ${end || '—'}` : ''
     };
   }).filter(Boolean).sort(sortByGradeThenName);
 }
@@ -352,7 +358,7 @@ function encadrementRows(fiche){
       role: p.role,
       heureDebut: start,
       heureFin: end,
-      horaire: start || end ? `D: ${start || '—'} F: ${end || '—'}` : 'Horaire exercice',
+      horaire: start || end ? `D : ${start || '—'} F : ${end || '—'}` : 'Horaire événement',
       dureeMinutes: duration == null ? null : Number(duration),
       creationDl: Boolean(p.creation_dl || p.creationDl),
       preparationDlMinutes: prepMinutes == null ? null : Number(prepMinutes)
@@ -1121,6 +1127,26 @@ async function collectReport(repo, query, options){
     const evenementId = query.evenementId || query.evenement_id || query.id;
     if(!evenementId) throw new HttpError(400, 'evenement_requis', 'Le rapport événement exige un identifiant.');
     const fiche = await scope.lireEvenement(evenementId);
+    const statutEvent = String(fiche.evenement.statut || '').toUpperCase();
+    if(fiche.evenement.hidden_at || fiche.evenement.hiddenAt){
+      throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    }
+    if(
+      statutEvent !== 'ANNULE'
+      && statutEvent !== 'REALISE'
+      && fiche.modeSuivi === 'NOMINATIF'
+      && fiche.evenement.origine !== 'LEGACY_AGGREGATED'
+      && !fiche.evenement.population_figee
+    ){
+      throw new HttpError(422, 'rapport_indisponible', 'Le rapport n’est pas disponible tant qu’aucune population n’est assignée.');
+    }
+    const hasExploitable = statutEvent === 'ANNULE' || statutEvent === 'REALISE' || fiche.modeSuivi !== 'NOMINATIF' || (fiche.participations || []).some((row) => {
+      const value = String(row && row.statut || '').toUpperCase();
+      return value && value !== 'NON_RENSEIGNE' && value !== 'NON_CONCERNE';
+    });
+    if(!hasExploitable){
+      throw new HttpError(422, 'rapport_indisponible', 'Aucune donnée exploitable n’est encore disponible pour ce rapport.');
+    }
     const v2Model = await multiSessionV2ReportModel(repo, fiche, query, includeNominatif);
     if(v2Model) return v2Model;
     const date = fiche.evenement.date;
@@ -1205,6 +1231,9 @@ async function collectReport(repo, query, options){
       graphs,
       explain,
       nominatif: includeNominatif && fiche.modeSuivi === 'NOMINATIF' && !isLegacy ? nominativeRows(fiche) : [],
+      horaireExceptions: includeNominatif && fiche.modeSuivi === 'NOMINATIF' && !isLegacy
+        ? nominativeRows(fiche).filter((row) => row.horaireException)
+        : [],
       encadrement: includeNominatif && fiche.modeSuivi === 'NOMINATIF' && !isLegacy ? encadrementRows(fiche) : [],
       quantitative: fiche.modeSuivi === 'QUANTITATIF',
       isLegacy,

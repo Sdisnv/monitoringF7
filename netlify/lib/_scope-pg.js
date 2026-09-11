@@ -57,6 +57,8 @@ function mapEvent(row){
     heure_debut_reelle: row.heure_debut_reelle || row.heure_debut || null,
     heure_fin_reelle: row.heure_fin_reelle || row.heure_fin || null,
     duree_reelle_minutes: row.duree_reelle_minutes == null ? null : Number(row.duree_reelle_minutes),
+    hidden_at: row.hidden_at || null,
+    hidden_par: row.hidden_par || null,
     salle: row.salle || null,
     responsable: row.responsable || null,
     cycle_id: row.cycle_id || null,
@@ -755,10 +757,13 @@ function createPgRepo(client){
       }
       return mapEvent(result.rows[0]);
     },
-    async listEvenements({ annee, statut, domaine, from, to } = {}){
+    async listEvenements({ annee, statut, domaine, from, to, includeHidden } = {}){
       const clauses = [];
       const params = [];
       let i = 1;
+      if(!includeHidden){
+        clauses.push('e.hidden_at is null');
+      }
       if(annee){
         clauses.push(`extract(year from e.date) = $${i}`);
         params.push(Number(annee));
@@ -822,6 +827,7 @@ function createPgRepo(client){
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
         'heure_debut_prevue','heure_fin_prevue','heure_debut_reelle','heure_fin_reelle','duree_reelle_minutes',
+        'hidden_at','hidden_par',
         'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','exercise_equivalence_key','participation_policy_version','participation_policy_snapshot',
         'definition_version_id','policy_version_id','engine_route','engine_snapshot'
       ];
@@ -1376,7 +1382,7 @@ function createPgRepo(client){
       return mapCycle(result.rows[0] || null);
     },
     async listCycleEvents(cycleId){
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.cycle_id = $1 order by e.date, e.libelle`, [cycleId]);
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.cycle_id = $1 and e.hidden_at is null order by e.date, e.libelle`, [cycleId]);
       return result.rows.map(mapEvent);
     },
     async listPrExerciseEvents(groupKey){
@@ -1384,11 +1390,11 @@ function createPgRepo(client){
       if(textKey.startsWith('EXERCICE:') && api.listExerciseEvents){
         return api.listExerciseEvents(textKey.slice('EXERCICE:'.length));
       }
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.pr_exercise_group_key = $1 order by e.date, e.libelle`, [groupKey]);
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.pr_exercise_group_key = $1 and e.hidden_at is null order by e.date, e.libelle`, [groupKey]);
       return result.rows.map(mapEvent);
     },
     async listExerciseEvents(exerciceId){
-      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.exercice_id = $1 order by coalesce(e.session_index, 999999), e.date, e.libelle`, [exerciceId]);
+      const result = await q(`select ${EVENT_SELECT} from scope_evenements e left join scope_exercices x on x.exercice_id = e.exercice_id where e.exercice_id = $1 and e.hidden_at is null order by coalesce(e.session_index, 999999), e.date, e.libelle`, [exerciceId]);
       return result.rows.map(mapEvent);
     },
     async getExercise(id){
@@ -2457,7 +2463,7 @@ function createPgRepo(client){
       await q('delete from scope_objectifs where objectif_id = $1', [id]);
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
-      const clauses = ['e.date >= $1::date', 'e.date <= $2::date'];
+      const clauses = ['e.date >= $1::date', 'e.date <= $2::date', 'e.hidden_at is null'];
       const params = [from, to];
       let i = 3;
       if(domaineCode){
@@ -2469,6 +2475,8 @@ function createPgRepo(client){
         clauses.push(`e.evenement_id = $${i}`);
         params.push(evenementId);
         i += 1;
+      } else {
+        clauses.push(`e.statut <> 'ANNULE'`);
       }
       if(cibleId){
         clauses.push(`exists (select 1 from scope_evenement_cibles x where x.evenement_id = e.evenement_id and x.cible_id = $${i})`);

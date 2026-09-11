@@ -409,6 +409,17 @@
     return `${r} min`;
   }
 
+  function formatClockLabel(value) {
+    const text = String(value || '').trim();
+    const m = text.match(/^(\d{1,2})[:h.](\d{2})/);
+    if (!m) return '';
+    return `${String(m[1]).padStart(2, '0')}h${m[2]}`;
+  }
+
+  function isEffectiveParticipationStatut(statut) {
+    return String(statut || '').toUpperCase() === 'PRESENT';
+  }
+
   function domainTaxonomyGroups() {
     return [
       { label: 'Domaines opérationnels', codes: ['DPS', 'DAP', 'JSP'] },
@@ -1320,6 +1331,15 @@
         next.editMotif = false;
       }
     }
+    if (!isEffectiveParticipationStatut(next.statut)) {
+      next.heureDebutIndividuelle = '';
+      next.heureFinIndividuelle = '';
+      next.timeOverrideOpen = false;
+    } else if (!isEffectiveParticipationStatut(row && row.statut)) {
+      next.heureDebutIndividuelle = '';
+      next.heureFinIndividuelle = '';
+      next.timeOverrideOpen = false;
+    }
     next.presenceEdited = true;
     return next;
   }
@@ -1331,6 +1351,9 @@
       motifAbsence: motif,
       editMotif: false,
       presenceEdited: true,
+      heureDebutIndividuelle: '',
+      heureFinIndividuelle: '',
+      timeOverrideOpen: false,
       role: preserveParticipationRole(row && row.role)
     });
     if (motif !== 'AUTRE') next.commentaire = row && row.motifAbsence === 'AUTRE' ? '' : (row.commentaire || '');
@@ -1345,6 +1368,9 @@
       editMotif: false,
       presenceEdited: true,
       commentaire: '',
+      heureDebutIndividuelle: '',
+      heureFinIndividuelle: '',
+      timeOverrideOpen: false,
       role: preserveParticipationRole(row && row.role)
     });
   }
@@ -1360,15 +1386,18 @@
         const locked = lockedEncadrement.has(String(r.personneId));
         return !locked || (role === 'SURVEILLANT' && r.presenceEdited);
       })
-      .map((r) => ({
-        personneId: r.personneId,
-        statut: r.statut,
-        role: preserveParticipationRole(r.role),
-        motif_absence: r.motifAbsence || null,
-        commentaire: r.commentaire || null,
-        heureDebutIndividuelle: r.heureDebutIndividuelle || null,
-        heureFinIndividuelle: r.heureFinIndividuelle || null
-      }));
+      .map((r) => {
+        const effective = isEffectiveParticipationStatut(r.statut);
+        return {
+          personneId: r.personneId,
+          statut: r.statut,
+          role: preserveParticipationRole(r.role),
+          motif_absence: r.motifAbsence || null,
+          commentaire: r.commentaire || null,
+          heureDebutIndividuelle: effective ? (r.heureDebutIndividuelle || null) : null,
+          heureFinIndividuelle: effective ? (r.heureFinIndividuelle || null) : null
+        };
+      });
   }
 
   function excuseBreakdown(rows, domaineCode) {
@@ -2004,6 +2033,8 @@
     niveauAffiche,
     cibleMetierLabel,
     formatDurationMinutes,
+    formatClockLabel,
+    isEffectiveParticipationStatut,
     domainTaxonomyGroups,
     statutLabel,
     formatPrSessionList,

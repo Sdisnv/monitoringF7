@@ -315,6 +315,10 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.annulerEvenement(params.id, body, claims)) });
     }
+    params = match(path, '/evenements/:id/masquer');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.masquerEvenement(params.id, body, claims)) });
+    }
     params = match(path, '/evenements/:id/supprimer-ou-annuler');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.supprimerOuAnnulerEvenement(params.id, body, claims)) });

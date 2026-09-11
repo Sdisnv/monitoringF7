@@ -486,6 +486,8 @@ function createMemoryRepo(){
         figee_par: null,
         cloture_at: null,
         cloture_par: null,
+        hidden_at: row.hidden_at || row.hiddenAt || null,
+        hidden_par: row.hidden_par || row.hiddenPar || null,
         version: 1,
         created_at: now(),
         updated_at: now()
@@ -494,9 +496,10 @@ function createMemoryRepo(){
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
       return { ...decorateEvent(item), already_exists: false };
     },
-    async listEvenements({ annee, statut, domaine, from, to } = {}){
+    async listEvenements({ annee, statut, domaine, from, to, includeHidden } = {}){
       return [...evenements.values()]
         .filter((item) => {
+          if(!includeHidden && item.hidden_at) return false;
           if(annee && String(item.date).slice(0, 4) !== String(annee)) return false;
           if(statut && item.statut !== statut) return false;
           if(domaine && item.domaine_code !== domaine) return false;
@@ -851,7 +854,7 @@ function createMemoryRepo(){
     },
     async listCycleEvents(cycleId){
       return [...evenements.values()]
-        .filter((item) => item.cycle_id === cycleId)
+        .filter((item) => item.cycle_id === cycleId && !item.hidden_at)
         .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
         .map(decorateEvent);
     },
@@ -861,13 +864,13 @@ function createMemoryRepo(){
         return api.listExerciseEvents(textKey.slice('EXERCICE:'.length));
       }
       return [...evenements.values()]
-        .filter((item) => item.pr_exercise_group_key === groupKey)
+        .filter((item) => item.pr_exercise_group_key === groupKey && !item.hidden_at)
         .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
         .map(decorateEvent);
     },
     async listExerciseEvents(exerciceId){
       return [...evenements.values()]
-        .filter((item) => item.exercice_id === exerciceId)
+        .filter((item) => item.exercice_id === exerciceId && !item.hidden_at)
         .sort((a, b) => (Number(a.session_index || 999999) - Number(b.session_index || 999999)) || String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)))
         .map(decorateEvent);
     },
