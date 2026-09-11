@@ -37,7 +37,7 @@ async function seedPerson(repo, spec){
 }
 
 (async () => {
-  await record('Synchronise un nouvel attendu depuis une affectation valide, sans sync globale', async () => {
+  await record('Après assignation, une affectation valide n’est plus réinjectée automatiquement', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const foba1 = await repo.findCible('FOBA', '1');
@@ -48,22 +48,17 @@ async function seedPerson(repo, spec){
 
     await repo.insertAffectation({ personne_id: person.personne_id, cible_id: foba1.cible_id, date_debut: '2026-09-01' });
     const sync = await service.syncExpectedPopulationForPersonnes([person.personne_id], { sub: 'test' });
-    assert.strictEqual(sync.eventsRecalculated, 1);
+    assert.strictEqual(sync.attendusAdded, 0);
+    assert.ok((sync.skippedAssigned || 0) >= 1);
 
     const updatedTarget = await service.lireEvenement(target.evenement.evenement_id);
-    const attendu = updatedTarget.attendus.find((row) => row.personne_id === person.personne_id);
-    assert.ok(attendu);
-    assert.strictEqual(attendu.inclus, true);
-    assert.strictEqual(attendu.origine, 'REGLE');
-    const participation = updatedTarget.participations.find((row) => row.personne_id === person.personne_id);
-    assert.strictEqual(participation.statut, 'NON_RENSEIGNE');
-    assert.strictEqual(participation.role, 'PARTICIPANT');
+    assert.strictEqual(updatedTarget.attendus.some((row) => row.personne_id === person.personne_id), false);
 
     const untouchedOther = await service.lireEvenement(other.evenement.evenement_id);
     assert.strictEqual(untouchedOther.attendus.some((row) => row.personne_id === person.personne_id), false);
   });
 
-  await record('Retire seulement les attendus normaux sortis de période et conserve les présences saisies', async () => {
+  await record('Après assignation, les attendus persistés restent la source de vérité même si l’affectation change', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const foba1 = await repo.findCible('FOBA', '1');
@@ -85,17 +80,14 @@ async function seedPerson(repo, spec){
 
     await repo.updateAffectation(aff.affectation_id, { date_debut: '2026-06-01', date_fin: '2026-08-31' });
     const sync = await service.syncExpectedPopulationForPersonnes([person.personne_id], { sub: 'test' });
-    assert.strictEqual(sync.eventsRecalculated, 2);
+    assert.strictEqual(sync.attendusRemoved, 0);
 
     const beforeFiche = await service.lireEvenement(before.evenement.evenement_id);
     const insideFiche = await service.lireEvenement(inside.evenement.evenement_id);
     const afterFiche = await service.lireEvenement(after.evenement.evenement_id);
-    assert.strictEqual(beforeFiche.attendus.some((row) => row.personne_id === person.personne_id), false);
-    assert.strictEqual(beforeFiche.attendusExclus.find((row) => row.personne_id === person.personne_id).inclus, false);
-    assert.strictEqual(beforeFiche.participations.find((row) => row.personne_id === person.personne_id).statut, 'NON_CONCERNE');
-    assert.strictEqual(insideFiche.attendus.find((row) => row.personne_id === person.personne_id).inclus, true);
-    assert.strictEqual(afterFiche.attendus.some((row) => row.personne_id === person.personne_id), false);
-    assert.strictEqual(afterFiche.attendusExclus.find((row) => row.personne_id === person.personne_id).inclus, false);
+    assert.ok(beforeFiche.attendus.find((row) => row.personne_id === person.personne_id));
+    assert.ok(insideFiche.attendus.find((row) => row.personne_id === person.personne_id));
+    assert.ok(afterFiche.attendus.find((row) => row.personne_id === person.personne_id));
     const preserved = afterFiche.participations.find((row) => row.personne_id === person.personne_id);
     assert.strictEqual(preserved.statut, 'PRESENT');
     assert.strictEqual(preserved.commentaire, 'Saisie conservée');
@@ -154,9 +146,9 @@ async function seedPerson(repo, spec){
     await repo.insertAffectation({ personne_id: person.personne_id, cible_id: foba1.cible_id, date_debut: '2026-01-01' });
 
     const sync = await service.syncExpectedPopulationForPersonnes([person.personne_id], { sub: 'test' });
-    assert.strictEqual(sync.reclassifiedManual, 1);
+    assert.strictEqual(sync.reclassifiedManual, 0);
     const after = await service.lireEvenement(fiche.evenement.evenement_id);
-    assert.strictEqual(after.attendus.find((row) => row.personne_id === person.personne_id).origine, 'REGLE');
+    assert.strictEqual(after.attendus.find((row) => row.personne_id === person.personne_id).origine, 'EXCEPTION_AJOUT');
     assert.strictEqual(after.participations.find((row) => row.personne_id === person.personne_id).commentaire, 'Déjà saisi');
   });
 

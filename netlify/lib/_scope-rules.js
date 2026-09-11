@@ -300,10 +300,13 @@ function validateParticipationPatch(item, ctx = {}){
     };
   }
   if(statut === 'DISPENSE'){
-    const snapshotDispenseMotifs = ((ctx.participationPolicySnapshot || ctx.participation_policy_snapshot || ctx.policySnapshot || {}).dispenseMotifs || []);
-    const allowedDispenseMotifs = new Set([...(policy.dispenseMotifs || []), ...snapshotDispenseMotifs, ...MOTIFS_DISPENSE_SET].map((value) => String(value || '').toUpperCase()));
+    const snapshot = ctx.participationPolicySnapshot || ctx.participation_policy_snapshot || ctx.policySnapshot || {};
+    const snapshotDispenseMotifs = snapshot.dispenseMotifs || [];
+    const policyMotifs = [...(policy.dispenseMotifs || []), ...snapshotDispenseMotifs].map((value) => String(value || '').toUpperCase()).filter(Boolean);
+    const allowedDispenseMotifs = new Set(policyMotifs.length ? policyMotifs : [...MOTIFS_DISPENSE_SET].map((value) => String(value || '').toUpperCase()));
+    if(allowedDispenseMotifs.has('NON_CONCERNE')) allowedDispenseMotifs.add('PAS_CONCERNE');
     if(motif && !allowedDispenseMotifs.has(String(motif).toUpperCase())){
-      throw new HttpError(422, 'motif_dispense_invalide', 'Le motif de dispense doit appartenir au référentiel (Joker, Formateur PR, Formation hors SDIS, Pas concerné).');
+      throw new HttpError(422, 'motif_dispense_invalide', 'Le motif de dispense n’est pas autorisé pour cet événement.');
     }
     return {
       statut,

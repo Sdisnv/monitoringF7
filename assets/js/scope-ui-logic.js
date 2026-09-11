@@ -95,7 +95,18 @@
     return base.concat(extra);
   }
 
-  function motifsDispenseForRow(row) {
+  function motifsDispenseForRow(row, domaineCode, policyState) {
+    const policy = policyForDomaine(domaineCode || (row && (row.domaineCode || row.domaine_code)), policyState);
+    const catalog = normalizePolicyCatalog(policyState);
+    if (policy && Array.isArray(policy.dispenseMotifs)) {
+      const motifs = policy.dispenseMotifs.map((id) => motifFromPolicyId(id, catalog));
+      if (row && row.motifAbsence && !motifs.some((item) => item.value === row.motifAbsence)) {
+        const extra = motifFromPolicyId(row.motifAbsence, catalog);
+        extra.legacy = true;
+        motifs.push(extra);
+      }
+      return motifs;
+    }
     const motifs = MOTIFS_DISPENSE.slice();
     if (row && row.motifAbsence === 'PAS_CONCERNE') motifs.push(MOTIFS_DISPENSE_HISTORIQUES[0]);
     return motifs;
@@ -414,6 +425,16 @@
     const m = text.match(/^(\d{1,2})[:h.](\d{2})/);
     if (!m) return '';
     return `${String(m[1]).padStart(2, '0')}h${m[2]}`;
+  }
+
+  function formatDurationHoursMinutes(minutes) {
+    const value = Number(minutes);
+    if (!Number.isFinite(value)) return '';
+    const rounded = Math.round(value);
+    const hours = Math.floor(rounded / 60);
+    const rest = rounded % 60;
+    if (!hours) return `${rounded} min`;
+    return `${rounded} min / ${hours} h ${String(rest).padStart(2, '0')}`;
   }
 
   function isEffectiveParticipationStatut(statut) {
@@ -1431,7 +1452,6 @@
     if (statusLockedForRole(row.role)) return false;
     if (!row.statut || row.statut === 'NON_RENSEIGNE' || row.statut === 'NON_CONCERNE') return true;
     if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) return true;
-    if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) return true;
     return false;
   }
 
@@ -1449,7 +1469,6 @@
     if (coveredInGlobalBilan(row)) return false;
     if (statusLockedForRole(row.role)) return false;
     if (row.statut === 'ABSENT_EXCUSE' && !row.motifAbsence) return true;
-    if (row.statut === 'DISPENSE' && !isDispenseMotif(row.motifAbsence)) return true;
     return false;
   }
 
@@ -2034,6 +2053,7 @@
     cibleMetierLabel,
     formatDurationMinutes,
     formatClockLabel,
+    formatDurationHoursMinutes,
     isEffectiveParticipationStatut,
     domainTaxonomyGroups,
     statutLabel,

@@ -813,7 +813,7 @@ class ScopePdfRenderer {
           r.nom,
           r.prenom,
           r.nip,
-          r.horaire || 'Horaire événement',
+          r.horaire || 'Horaire de l’événement',
           r.dureeMinutes == null ? '—' : `${Math.round(Number(r.dureeMinutes))} min`,
           r.creationDl ? `${Math.round(Number(r.preparationDlMinutes || 0))} min` : '—'
         ]),

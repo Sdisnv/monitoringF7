@@ -79,16 +79,10 @@ function encadrementCompare(a, b){
     }, ACTOR);
     await repo.updateAffectation(aff.affectation_id, { date_debut: '2026-07-01' });
     const sync = await service.syncExpectedPopulationForPersonnes([a.personne_id], ACTOR);
-    assert.strictEqual(sync.attendusRemoved, 1);
+    assert.strictEqual(sync.attendusRemoved, 0);
 
     fiche = await service.lireEvenement(fiche.evenement.evenement_id);
-    assert.strictEqual(fiche.attendus.some((row) => row.personne_id === a.personne_id), false);
-    assert.strictEqual(fiche.attendusExclus.filter((row) => row.personne_id === a.personne_id).length, 1);
-    assert.strictEqual(fiche.attendusExclus[0].origine_retrait, 'EXCEPTION_RETRAIT');
-    assert.strictEqual(sync.details[0].removed[0].motifRetrait, 'AFFECTATION_HORS_PERIODE_HISTORIQUE');
-    assert.strictEqual(fiche.compteurs.numerator, 0);
-    assert.strictEqual(fiche.compteurs.denominator, 0);
-    assert.strictEqual(fiche.compteurs.percentage, null);
+    assert.strictEqual(fiche.attendus.filter((row) => row.personne_id === a.personne_id).length, 1);
     const participation = fiche.participations.find((row) => row.personne_id === a.personne_id);
     assert.strictEqual(participation.statut, 'PRESENT');
     assert.strictEqual(participation.commentaire, 'historique');
@@ -97,13 +91,10 @@ function encadrementCompare(a, b){
 
     await repo.updateAffectation(aff.affectation_id, { date_debut: '2026-01-01' });
     const resync = await service.syncExpectedPopulationForPersonnes([a.personne_id], ACTOR);
-    assert.strictEqual(resync.eventsRecalculated, 1);
+    assert.strictEqual(resync.eventsRecalculated, 0);
     fiche = await service.lireEvenement(fiche.evenement.evenement_id);
-    assert.strictEqual(fiche.attendus.filter((row) => row.personne_id === a.personne_id && row.origine === 'REGLE').length, 1);
-    assert.strictEqual(fiche.attendusExclus.some((row) => row.personne_id === a.personne_id), false);
+    assert.strictEqual(fiche.attendus.filter((row) => row.personne_id === a.personne_id).length, 1);
     assert.strictEqual(fiche.participations.find((row) => row.personne_id === a.personne_id).commentaire, 'historique');
-    assert.strictEqual(fiche.compteurs.numerator, 1);
-    assert.strictEqual(fiche.compteurs.denominator, 1);
   });
 
   await record('Encadrement trie par rang métier descendant puis nom prénom NIP, tous rôles confondus', async () => {

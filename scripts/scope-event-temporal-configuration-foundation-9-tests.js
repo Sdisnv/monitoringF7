@@ -177,7 +177,7 @@ async function seedPerson(repo, id = 'person-r9'){
     const ui = read('assets/js/scope-ui.js');
     includes(service, 'Règles PR historiques');
     includes(service, 'legacyProjection');
-    includes(ui, 'Période d’application');
+    includes(ui, 'PÉRIODE D’APPLICATION');
     includes(ui, 'Informations techniques');
     includes(ui, 'scope-business-info');
   });

@@ -54,7 +54,7 @@ function excludedFor(fiche, personneId){
     assert.ok(attenduFor(await service.lireEvenement(event.evenement.evenement_id), p.personne_id));
   });
 
-  await record('B/C — fin avant événement ou date_actif repoussée => retrait automatique si modifiable', async () => {
+  await record('B/C — après assignation, plus de retrait automatique d’éligibilité', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const foba1 = await repo.findCible('FOBA', '1');
@@ -64,15 +64,12 @@ function excludedFor(fiche, personneId){
     await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR);
     await repo.updateAffectation(aff.affectation_id, { date_fin: '2026-06-23' });
     const sync = await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR);
-    assert.strictEqual(sync.attendusRemoved, 1);
-    assert.ok(excludedFor(await service.lireEvenement(event.evenement.evenement_id), p.personne_id));
-
-    await repo.updateAffectation(aff.affectation_id, { date_debut: '2026-07-01', date_fin: null });
-    const again = await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR);
-    assert.strictEqual(again.eventsRecalculated, 0);
+    assert.strictEqual(sync.attendusRemoved, 0);
+    assert.ok((sync.skippedAssigned || 0) >= 1);
+    assert.ok(attenduFor(await service.lireEvenement(event.evenement.evenement_id), p.personne_id));
   });
 
-  await record('D/E — avancer date_actif ou réactiver => ajout automatique', async () => {
+  await record('D/E — après assignation, plus d’ajout automatique d’éligibilité', async () => {
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const foba2 = await repo.findCible('FOBA', '2');
@@ -81,8 +78,9 @@ function excludedFor(fiche, personneId){
     const event = await seedFrozenEvent(service, foba2, '2026-06-24', 'FOBA 2 applicable');
     assert.strictEqual((await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR)).eventsRecalculated, 0);
     await repo.updateAffectation(aff.affectation_id, { date_debut: '2026-01-01' });
-    assert.strictEqual((await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR)).attendusAdded, 1);
-    assert.ok(attenduFor(await service.lireEvenement(event.evenement.evenement_id), p.personne_id));
+    const sync = await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR);
+    assert.strictEqual(sync.attendusAdded, 0);
+    assert.ok(!attenduFor(await service.lireEvenement(event.evenement.evenement_id), p.personne_id));
   });
 
   await record('F/G — multi-cible FOBA 1 + FOBA 2 sans contamination entre niveaux', async () => {
@@ -120,7 +118,7 @@ function excludedFor(fiche, personneId){
     await repo.updateAffectation(aff.affectation_id, { date_fin: '2026-04-30' });
     await service.syncExpectedPopulationForPersonnes([p.personne_id], ACTOR);
     const after = await service.lireEvenement(event.evenement.evenement_id);
-    assert.ok(excludedFor(after, p.personne_id));
+    assert.ok(attenduFor(after, p.personne_id), 'population assignée conservée');
     assert.strictEqual(after.participations.find((row) => row.personne_id === p.personne_id).commentaire, 'historique');
   });
 

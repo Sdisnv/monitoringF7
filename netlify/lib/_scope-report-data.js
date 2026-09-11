@@ -358,7 +358,8 @@ function encadrementRows(fiche){
       role: p.role,
       heureDebut: start,
       heureFin: end,
-      horaire: start || end ? `D : ${start || '—'} F : ${end || '—'}` : 'Horaire événement',
+      horaire: start || end ? `D : ${start || '—'} F : ${end || '—'}` : 'Horaire de l’événement',
+      preparationLabel: Boolean(p.creation_dl || p.creationDl) ? `Préparation à solder : ${Math.round(Number(prepMinutes || 0))} min` : '',
       dureeMinutes: duration == null ? null : Number(duration),
       creationDl: Boolean(p.creation_dl || p.creationDl),
       preparationDlMinutes: prepMinutes == null ? null : Number(prepMinutes)

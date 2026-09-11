@@ -60,15 +60,12 @@ function attendee(fiche, personneId){
     await repo.insertAffectation({ personne_id: p.personne_id, cible_id: foba1.cible_id, date_debut: '2026-01-01' });
 
     const dry = await service.reconcileExpectedPopulation({ year: '2026', domaine: 'FOBA', dryRun: true }, ACTOR);
-    assert.strictEqual(dry.attendusAdded, 1);
+    assert.strictEqual(dry.attendusAdded, 0);
     assert.strictEqual(attendee(await service.lireEvenement(ev.evenement.evenement_id), p.personne_id), undefined);
 
     const applied = await service.reconcileExpectedPopulation({ year: '2026', domaine: 'FOBA', dryRun: false }, ACTOR);
-    assert.strictEqual(applied.attendusAdded, 1);
-    const after = await service.lireEvenement(ev.evenement.evenement_id);
-    assert.strictEqual(attendee(after, p.personne_id).origine, 'REGLE');
-    assert.match(String(attendee(after, p.personne_id).motif_inclusion || ''), /FOBA_1/);
-    assert.ok(!String(attendee(after, p.personne_id).motif_inclusion || '').includes('FOBA_2'));
+    assert.strictEqual(applied.attendusAdded, 0);
+    assert.strictEqual(attendee(await service.lireEvenement(ev.evenement.evenement_id), p.personne_id), undefined);
   });
 
   await record('FOBA 3 non impacté par personne FOBA 1', async () => {
@@ -96,16 +93,16 @@ function attendee(fiche, personneId){
     }, ACTOR);
     await repo.insertAffectation({ personne_id: p.personne_id, cible_id: foba1.cible_id, date_debut: '2026-01-01' });
     const applied = await service.reconcileExpectedPopulation({ year: '2026', domaine: 'FOBA' }, ACTOR);
-    assert.strictEqual(applied.reclassifiedManual, 1);
+    assert.strictEqual(applied.reclassifiedManual, 0);
     let after = await service.lireEvenement(ev.evenement.evenement_id);
-    assert.strictEqual(attendee(after, p.personne_id).origine, 'REGLE');
+    assert.strictEqual(attendee(after, p.personne_id).origine, 'EXCEPTION_AJOUT');
     assert.strictEqual(after.participations.find((row) => row.personne_id === p.personne_id).commentaire, 'historique');
 
     await repo.updateAffectation((await repo.listAffectations({ personneId: p.personne_id }))[0].affectation_id, { date_debut: '2026-07-01' });
     const removed = await service.reconcileExpectedPopulation({ year: '2026', domaine: 'FOBA' }, ACTOR);
-    assert.strictEqual(removed.attendusRemoved, 1);
+    assert.strictEqual(removed.attendusRemoved, 0);
     after = await service.lireEvenement(ev.evenement.evenement_id);
-    assert.ok(after.attendusExclus.find((row) => row.personne_id === p.personne_id));
+    assert.ok(attendee(after, p.personne_id));
     assert.strictEqual(after.participations.find((row) => row.personne_id === p.personne_id).commentaire, 'historique');
 
     const realised = await frozenEvent(service, foba1, '2026-08-01', 'FOBA réalisé ignoré');
@@ -132,24 +129,14 @@ function attendee(fiche, personneId){
     }, ACTOR);
     const missing = await seedPerson(repo, foba1, { nip: 'KPI17' });
     const first = await service.reconcileExpectedPopulation({ year: '2026', domaine: 'FOBA' }, ACTOR);
-    assert.strictEqual(first.attendusAdded, 1);
+    assert.strictEqual(first.attendusAdded, 0);
     const second = await service.reconcileExpectedPopulation({ year: '2026', domaine: 'FOBA' }, ACTOR);
     assert.strictEqual(second.eventsRecalculated, 0);
     const after = await service.lireEvenement(ev.evenement.evenement_id);
-    assert.strictEqual(after.attendus.length, 17);
+    assert.strictEqual(after.attendus.length, 16);
     assert.strictEqual(after.compteurs.presents, 14);
     assert.strictEqual(after.compteurs.excuses, 2);
-    assert.strictEqual(after.compteurs.nonRenseignes, 1);
-    assert.ok(attendee(after, missing.personne_id));
-
-    await service.enregistrerParticipations(ev.evenement.evenement_id, {
-      baseVersion: after.evenement.version,
-      participations: [{ personneId: missing.personne_id, statut: 'PRESENT' }]
-    }, ACTOR);
-    await service.cloturer(ev.evenement.evenement_id, { baseVersion: after.evenement.version + 1 }, ACTOR);
-    const fiche = await personService.fiche(missing.personne_id, { from: '2026-01-01', to: '2026-12-31' });
-    assert.strictEqual(fiche.kpi.volumes.attendus, 1);
-    assert.strictEqual(fiche.evenements.filter((row) => row.libelle === 'Exercice FOBA KPI').length, 1);
+    assert.ok(!attendee(after, missing.personne_id));
   });
 
   for(const result of results){

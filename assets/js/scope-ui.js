@@ -87,6 +87,9 @@
     encHeureFin: '',
     encCreationDl: false,
     encPreparationDlMinutes: '',
+    encEditPersonneId: '',
+    encBusy: false,
+    actionBusy: false,
     encRetrait: null,
     encQuery: '',
     encHits: [],
@@ -95,6 +98,8 @@
     presenceSaveBusy: false,
     presenceCloseBusy: null,
     participantAssignmentBusy: false,
+    reactivateBusy: false,
+    unassignBusy: false,
     eventSaveBusy: false,
     deleteEventBusy: false,
     presenceSaveStatus: 'idle',
@@ -385,6 +390,8 @@
   }
 
   async function withFeedbackAction(options, fn) {
+    if (state.actionBusy) return null;
+    state.actionBusy = true;
     state.loading = true;
     if (options && options.progressTitle) {
       ScopeFeedback.progress(options.progressTitle, options.progressMessage || 'Traitement en cours — ne quittez pas cette page.');
@@ -403,6 +410,8 @@
       const nominativeErrors = nominativeErrorDetails(error);
       ScopeFeedback.error(info.title, info.message, { errors: nominativeErrors.length ? nominativeErrors : info.errors, conflict: info.conflict, okta: info.okta });
       return null;
+    } finally {
+      state.actionBusy = false;
     }
   }
 
@@ -1407,13 +1416,16 @@
         <h3 class="scope-enc-role-title">${escapeHtml(encadrementRoleHeading(role, count))}</h3>
         <div class="scope-enc-people">${people.map((p) => {
           const label = eventPersonLabel(p);
-          const remove = readOnly ? '' : `<button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Retirer ${escapeHtml(L.ROLE_LABELS[role] || role)} ${escapeHtml(label)}">${trashIcon()}</button>`;
           return `<div class="scope-enc-person">
             <div class="scope-enc-id">
               <span class="scope-enc-name">${escapeHtml(label)}</span>
               <small class="scope-enc-meta">${escapeHtml(encadrementPersonSummary(p))}</small>
+              ${p.nip ? `<small class="scope-enc-nip">NIP ${escapeHtml(p.nip)}</small>` : ''}
             </div>
-            ${remove}
+            ${readOnly ? '' : `<div class="scope-enc-actions">
+              <button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-enc-edit="${escapeHtml(p.personne_id)}">Modifier</button>
+              <button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Supprimer ${escapeHtml(L.ROLE_LABELS[role] || role)} ${escapeHtml(label)}">Supprimer</button>
+            </div>`}
           </div>`;
         }).join('')}</div>
       </section>`;
@@ -1432,12 +1444,11 @@
     const individual = start || end;
     const horaire = individual
       ? `Horaire ${formatEventClock(start) || start || '—'}–${formatEventClock(end) || end || '—'}`
-      : 'Horaire événement';
+      : 'Horaire de l’événement';
     const dl = p.creation_dl || p.creationDl;
     const minutes = p.preparation_dl_minutes == null ? p.preparationDlMinutes : p.preparation_dl_minutes;
     const bits = [role, horaire];
-    if (dl) bits.push(`DL à prendre en charge : ${Math.round(Number(minutes || 0))} min`);
-    if (p.nip) bits.push(`NIP ${p.nip}`);
+    if (dl) bits.push(`Préparation à solder : ${Math.round(Number(minutes || 0))} min`);
     return bits.filter(Boolean).join(' · ');
   }
 
@@ -6630,7 +6641,7 @@
     ].filter(Boolean);
     if (fiche && fiche.sectionEffectif != null) bits.push(`Effectif de la section : ${fiche.sectionEffectif}`);
     if (isLegacy) bits.push('Aucune population (legacy)');
-    else if (mode !== 'QUANTITATIF' && ev.population_figee) bits.push('Population figée');
+    else if (mode !== 'QUANTITATIF' && ev.population_figee) bits.push(fiche && fiche.attendus ? `Effectif assigné : ${fiche.attendus.length}` : 'Participants assignés');
     else if (mode !== 'QUANTITATIF' && preview) bits.push('Preview prête');
     return `<header class="scope-event-identity">
       <h1 class="scope-event-title">${escapeHtml(ev.libelle)}</h1>
@@ -6665,18 +6676,19 @@
     const periodText = cfg.periodLabel
       || (cfg.validFrom && cfg.validTo ? `${L.formatDate(cfg.validFrom)} - ${L.formatDate(cfg.validTo)}` : (cfg.validFrom ? `Depuis ${String(cfg.validFrom).slice(0, 4)}` : ''));
     const details = `<dl class="scope-meta scope-event-config-meta">
-        <div><dt>Formation</dt><dd>${escapeHtml(cfg.label || '—')}</dd></div>
-        <div><dt>Organisation</dt><dd>${escapeHtml(cfg.organisation || '—')}${Number(cfg.sessionCount || 0) > 1 ? ` · ${escapeHtml(String(cfg.sessionCount))} sessions` : ''}</dd></div>
-        <div><dt>Session</dt><dd>${escapeHtml(sessionText)}</dd></div>
-        ${periodText ? `<div><dt>Période d’application</dt><dd>${escapeHtml(periodText)}</dd></div>` : ''}
-        <div><dt>Règles disponibles</dt><dd>${escapeHtml(cfg.policyLabel || 'Règles de participation SCOPE')}</dd></div>
-        <div><dt>Origine de l’association</dt><dd>${escapeHtml(cfg.originLabel || 'Association administrative')}</dd></div>
+        <div><dt>FORMATION</dt><dd>${escapeHtml(cfg.label || '—')}</dd></div>
+        <div><dt>ORGANISATION</dt><dd>${escapeHtml(cfg.organisation || (Number(cfg.sessionCount || 0) > 1 ? `Plusieurs sessions · ${cfg.sessionCount} sessions` : 'Session unique'))}</dd></div>
+        <div><dt>SESSION</dt><dd>${escapeHtml(sessionText)}</dd></div>
+        ${periodText ? `<div><dt>PÉRIODE D’APPLICATION</dt><dd>${escapeHtml(periodText)}</dd></div>` : ''}
+        <div><dt>RÈGLES DISPONIBLES</dt><dd>${escapeHtml(cfg.policyLabel || `Règles de participation ${String((cfg.domain || (fiche.evenement && fiche.evenement.domaine_code) || 'SCOPE')).toUpperCase()}`)}</dd></div>
+        <div><dt>ORIGINE DE L’ASSOCIATION</dt><dd>${escapeHtml(cfg.originLabel || 'Association administrative')}</dd></div>
       </dl>`;
     const tech = cfg.technical || {};
-    const techHtml = (tech.definitionVersionId || tech.policyVersionId || tech.engineRoute || tech.prExerciseGroupKey || tech.prSessionKey || tech.cycleId)
+    const techHtml = (tech.definitionVersionId || tech.policyVersionId || tech.policyCode || tech.engineRoute || tech.prExerciseGroupKey || tech.prSessionKey || tech.cycleId)
       ? `<details class="scope-technical-details"><summary>Informations techniques</summary>
         ${tech.definitionVersionId ? `<p>Version de configuration : ${escapeHtml(tech.definitionVersionId)}</p>` : ''}
         ${tech.policyVersionId ? `<p>Version des règles : ${escapeHtml(tech.policyVersionId)}</p>` : ''}
+        ${tech.policyCode ? `<p>Clé des règles : ${escapeHtml(tech.policyCode)}</p>` : ''}
         ${tech.engineRoute ? `<p>Route moteur : ${escapeHtml(tech.engineRoute)}</p>` : ''}
         ${tech.prExerciseGroupKey ? `<p>Groupe PR : ${escapeHtml(tech.prExerciseGroupKey)}</p>` : ''}
         ${tech.prSessionKey ? `<p>Session PR : ${escapeHtml(tech.prSessionKey)}</p>` : ''}
@@ -6710,14 +6722,16 @@
     const planned = [plannedStart, plannedEnd].filter(Boolean).join('–');
     const actual = [actualStart, actualEnd].filter(Boolean).join('–');
     const minutes = temporal.durationMinutes != null ? Number(temporal.durationMinutes) : null;
-    const durationText = minutes != null && Number.isFinite(minutes) ? `${Math.round(minutes)} min` : '';
+    const durationText = minutes != null && Number.isFinite(minutes)
+      ? ((L.formatDurationHoursMinutes && L.formatDurationHoursMinutes(minutes)) || `${Math.round(minutes)} min`)
+      : '';
     if (!planned && !actual) return '';
     const same = planned && actual && planned === actual;
     const startLabel = formatEventClock(actualStart || plannedStart);
     const endLabel = formatEventClock(actualEnd || plannedEnd);
     if (same || (!planned || !actual)) {
-      return `<p class="scope-fiche-time-line">
-        ${startLabel && endLabel ? `<span>${scopeInlineIcon('watch')} D : ${escapeHtml(startLabel)}&nbsp;&nbsp;F : ${escapeHtml(endLabel)}</span>` : `<span>Horaire : ${escapeHtml(formatEventClock(plannedStart) || planned || actual)}</span>`}
+      return `<p class="scope-fiche-time-line is-emphasis">
+        ${startLabel && endLabel ? `<span>${scopeInlineIcon('watch')} D : ${escapeHtml(startLabel)} · F : ${escapeHtml(endLabel)}</span>` : `<span>Horaire : ${escapeHtml(formatEventClock(plannedStart) || planned || actual)}</span>`}
         ${durationText ? `<span>${scopeInlineIcon('chrono')} Durée : ${escapeHtml(durationText)}</span>` : ''}
       </p>`;
     }
@@ -6738,7 +6752,7 @@
       publicOi && publicOi !== '—' ? publicOi : null
     ].filter(Boolean);
     const tech = [isLegacy ? L.modeLabel('LEGACY') : L.modeLabel(mode)];
-    if (!isLegacy && mode !== 'QUANTITATIF' && ev.population_figee) tech.push('Population figée');
+    if (!isLegacy && mode !== 'QUANTITATIF' && ev.population_figee) tech.push(fiche && fiche.attendus ? `Effectif assigné : ${fiche.attendus.length}` : 'Participants assignés');
     return `<header class="scope-fiche-identity">
       <div>
         <p class="scope-page-eyebrow">Événement</p>
@@ -6805,12 +6819,16 @@
     const canEdit = ev.statut === 'PLANIFIE' || ev.statut === 'REPORTE';
     const canPostpone = ev.statut === 'PLANIFIE';
     const canCancel = ev.statut !== 'ANNULE' && ev.statut !== 'REALISE';
+    const canReactivate = ev.statut === 'ANNULE';
     const canDelete = ev.statut !== 'REALISE';
+    const canUnassign = ev.statut === 'PLANIFIE' && ev.population_figee;
     return [
       back,
       canEdit ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="edit-event">Modifier l’événement</button>' : '',
       canPostpone ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="postpone-event">Reporter</button>' : '',
       canCancel ? '<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact scope-fiche-cancel" id="cancel-event">Annuler</button>' : '',
+      canReactivate ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="reactivate-event"${state.reactivateBusy ? ' disabled' : ''}>Réactiver l’événement</button>` : '',
+      canUnassign ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="unassign-event"${state.unassignBusy ? ' disabled' : ''}>Revenir à la préparation</button>` : '',
       canDelete ? `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="delete-event"${state.deleteEventBusy ? ' disabled' : ''}>Supprimer l’événement</button>` : ''
     ].join('');
   }
@@ -6936,12 +6954,12 @@
       state.pendingRetraits = state.pendingRetraits.filter((pid) => String(pid) !== String(id));
       state.personHits = [];
       state.personQuery = '';
-      ScopeFeedback.info('Déjà dans la liste', 'Cette personne est déjà proposée. Elle a été sélectionnée.');
+      ScopeFeedback.info('Déjà dans la liste', 'Cette personne est déjà proposée dans la liste.');
       render();
       return;
     }
     if (person.actif === false || String(person.statut_rh || person.statutRh || '').toUpperCase() === 'INACTIF') {
-      ScopeFeedback.error('Ajout impossible', 'Cette personne est inactive à cette date.');
+      ScopeFeedback.error('Ajout impossible', 'Cette personne est inactive à la date de l’événement.');
       return;
     }
     state.pendingExceptions.push({
@@ -7477,9 +7495,10 @@
     const customTime = state.encTimeMode === 'CUSTOM';
     const formateurRole = String(state.encRole || '').toUpperCase() === 'FORMATEUR';
     const lockMap = (fiche && (fiche.creationDlLocks || fiche.creation_dl_locks)) || {};
-    const lockPersonId = state.encHits.length === 1 ? String(state.encHits[0].personne_id || '') : '';
+    const lockPersonId = state.encEditPersonneId || (state.encHits.length === 1 ? String(state.encHits[0].personne_id || '') : '');
     const dlLock = lockPersonId ? lockMap[lockPersonId] : null;
     const dlDisabled = Boolean(dlLock);
+    const editing = Boolean(state.encEditPersonneId);
     return `
       <section class="scope-encadrement-block" data-enc-editable="true">
         <div class="scope-section-header">
@@ -7487,7 +7506,7 @@
         </div>
         <div class="scope-enc-prep-row">
           <div class="scope-field scope-enc-role-field">
-            <label for="enc-role">Rôle</label>
+            <label class="scope-enc-col-title" for="enc-role">RÔLE</label>
             <select id="enc-role" class="scope-enc-role" aria-label="Rôle d’encadrement">
               <option value="FORMATEUR" ${state.encRole === 'FORMATEUR' ? 'selected' : ''}>Formateur</option>
               <option value="MONITEUR" ${state.encRole === 'MONITEUR' ? 'selected' : ''}>Moniteur</option>
@@ -7496,29 +7515,33 @@
             </select>
           </div>
           <fieldset class="scope-field scope-enc-horaire-field">
-            <legend>Horaire</legend>
+            <legend class="scope-enc-col-title">HORAIRE</legend>
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" id="enc-time-mode" value="EVENT" ${state.encTimeMode !== 'CUSTOM' ? 'checked' : ''}> Événement</label>
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" value="CUSTOM" ${customTime ? 'checked' : ''}> Individuel</label>
-            ${customTime ? `<span class="scope-enc-df"><span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(state.encHeureDebut || '')}"><span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(state.encHeureFin || '')}"></span>` : ''}
+            <span class="scope-enc-df" id="enc-df-wrap"${customTime ? '' : ' hidden'}>
+              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(state.encHeureDebut || '')}">
+              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(state.encHeureFin || '')}">
+            </span>
           </fieldset>
-          ${formateurRole ? `<div class="scope-field scope-enc-dl-field">
-            <span class="scope-enc-dl-legend">Descente de leçon</span>
+          <div class="scope-field scope-enc-dl-field">
+            <span class="scope-enc-col-title" id="enc-dl-title">DESCENTE DE LEÇON</span>
             <label class="scope-enc-dl-toggle">
-              <input id="enc-creation-dl" type="checkbox" ${state.encCreationDl && !dlDisabled ? 'checked' : ''} ${dlDisabled ? 'disabled' : ''}>
-              <span>DL</span>
+              <input id="enc-creation-dl" type="checkbox" ${state.encCreationDl && !dlDisabled && formateurRole ? 'checked' : ''} ${dlDisabled || !formateurRole ? 'disabled' : ''} aria-label="Descente de leçon — Préparation à solder">
+              <span>Préparation à solder</span>
             </label>
-            ${dlDisabled ? `<small class="scope-enc-dl-lock">DL déjà comptabilisée sur la ${escapeHtml(dlLock.sessionLabel || 'session X')}</small>` : ''}
-            ${state.encCreationDl && !dlDisabled ? `<span class="scope-enc-dl-min">${scopeInlineIcon('chrono')} <input id="enc-prep-min" type="number" min="0" step="5" inputmode="numeric" value="${escapeHtml(state.encPreparationDlMinutes || '')}" aria-label="Minutes de descente de leçon"> min</span>` : ''}
-          </div>` : ''}
+            ${dlDisabled ? `<small class="scope-enc-dl-lock">Préparation déjà comptabilisée sur la ${escapeHtml(dlLock.sessionLabel || 'session X')}</small>` : ''}
+            <span class="scope-enc-dl-min" id="enc-dl-minutes-wrap"${state.encCreationDl && !dlDisabled && formateurRole ? '' : ' hidden'}>${scopeInlineIcon('chrono')} <input id="enc-prep-min" type="number" min="0" step="5" inputmode="numeric" value="${escapeHtml(state.encPreparationDlMinutes || '')}" aria-label="Minutes de descente de leçon"> min</span>
+          </div>
           <div class="scope-field scope-lookup-field scope-person-lookup scope-enc-search-field">
-            <label for="enc-q">Recherche</label>
+            <label class="scope-enc-col-title" for="enc-q">RECHERCHE</label>
             <div class="scope-enc-search-line">
-              <input id="enc-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.encQuery)}" autocomplete="off">
-              <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add">Ajouter</button>
+              <input id="enc-q" type="search" placeholder="Nom, prénom ou NIP" value="${escapeHtml(state.encQuery)}" autocomplete="off" ${editing ? 'disabled' : ''}>
+              <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="enc-add"${state.encBusy ? ' disabled' : ''}>${editing ? (state.encBusy ? 'Enregistrement…' : 'Enregistrer') : (state.encBusy ? 'Ajout…' : 'Ajouter')}</button>
+              ${editing ? '<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" id="enc-edit-cancel">Annuler</button>' : ''}
             </div>
             <div id="enc-suggestions" class="scope-suggestion-anchor"></div>
           </div>
-          ${allSessionsToggle ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}" title="${escapeHtml(allSessionsTitle)}">
+          ${allSessionsToggle && !editing ? `<button type="button" id="enc-serie-complete" class="scope-serie-toggle ${state.encSerieComplete ? 'is-on' : ''}" role="switch" aria-checked="${state.encSerieComplete ? 'true' : 'false'}" title="${escapeHtml(allSessionsTitle)}">
             <span class="scope-switch-track" aria-hidden="true"><span class="scope-switch-thumb"></span></span>
             <span class="scope-serie-label">${escapeHtml(allSessionsText)}</span>
             <span class="scope-info-tip" tabindex="0" aria-describedby="enc-serie-help">ⓘ<span id="enc-serie-help" class="scope-tooltip" role="tooltip">${escapeHtml(allSessionsTitle)}</span></span>
@@ -7663,7 +7686,7 @@
         return `<optgroup label="${escapeHtml(labels.primary || 'Motifs')}">${render(operational)}</optgroup><optgroup label="${escapeHtml(labels.secondary || 'À contrôler')}">${render(administrative)}</optgroup>`;
       };
       if (row.statut === 'DISPENSE') {
-        const motifs = L.motifsDispenseForRow ? L.motifsDispenseForRow(row) : [];
+        const motifs = L.motifsDispenseForRow ? L.motifsDispenseForRow(row, saisieDomaine(), policyState) : [];
         const selected = motifs.find((m) => m.value === row.motifAbsence);
         if (selected && !row.editMotif) {
           return `<div class="scope-motif-control is-compact"><button type="button" class="scope-motif-compact" data-motif-edit="${escapeHtml(row.personneId)}" aria-label="Modifier le motif de dispense"${lockAttr}>${escapeHtml(selected.label)}</button></div>`;
@@ -7699,19 +7722,24 @@
       const hasTimeOverride = Boolean(row.heureDebutIndividuelle || row.heureFinIndividuelle);
       const custom = row.timeOverrideOpen || hasTimeOverride;
       if (!custom) {
-        return `<button type="button" class="scope-time-mode-btn" data-time-mode-toggle="CUSTOM" ${timeLocked ? 'disabled' : ''}>Plan horaire</button>`;
+        return `<div class="scope-person-time-control">
+          <button type="button" class="scope-time-mode-btn is-on" data-time-mode-toggle="EVENT" ${timeLocked ? 'disabled' : ''}>Plan horaire</button>
+          <button type="button" class="scope-time-mode-btn" data-time-mode-toggle="CUSTOM" ${timeLocked ? 'disabled' : ''}>Individuel</button>
+        </div>`;
       }
       const saved = Boolean(row.heureDebutIndividuelle && row.heureFinIndividuelle) && !row.timeFieldsOpen;
       if (saved) {
         return `<div class="scope-person-time-control is-saved">
-          <button type="button" class="scope-time-mode-btn is-on" data-time-mode-toggle="EVENT" ${timeLocked ? 'disabled' : ''}>Individuel</button>
-          <span class="scope-time-inline">D : ${escapeHtml(formatEventClock(row.heureDebutIndividuelle) || row.heureDebutIndividuelle)} · F : ${escapeHtml(formatEventClock(row.heureFinIndividuelle) || row.heureFinIndividuelle)}</span>
+          <button type="button" class="scope-time-mode-btn" data-time-mode-toggle="EVENT" ${timeLocked ? 'disabled' : ''}>Plan horaire</button>
+          <button type="button" class="scope-time-mode-btn is-on" data-time-mode-toggle="CUSTOM" ${timeLocked ? 'disabled' : ''}>Individuel</button>
+          <span class="scope-time-inline">Individuel · D: ${escapeHtml(formatEventClock(row.heureDebutIndividuelle) || row.heureDebutIndividuelle)} · F: ${escapeHtml(formatEventClock(row.heureFinIndividuelle) || row.heureFinIndividuelle)}</span>
         </div>`;
       }
       return `<div class="scope-person-time-control">
-        <button type="button" class="scope-time-mode-btn is-on" data-time-mode-toggle="EVENT" ${timeLocked ? 'disabled' : ''}>Individuel</button>
-        <label class="scope-time-df">D : <input type="time" data-individual-time="start" value="${escapeHtml(row.heureDebutIndividuelle || '')}"${timeLocked ? ' disabled' : ''}></label>
-        <label class="scope-time-df">F : <input type="time" data-individual-time="end" value="${escapeHtml(row.heureFinIndividuelle || '')}"${timeLocked ? ' disabled' : ''}></label>
+        <button type="button" class="scope-time-mode-btn" data-time-mode-toggle="EVENT" ${timeLocked ? 'disabled' : ''}>Plan horaire</button>
+        <button type="button" class="scope-time-mode-btn is-on" data-time-mode-toggle="CUSTOM" ${timeLocked ? 'disabled' : ''}>Individuel</button>
+        <label class="scope-time-df">D: <input type="time" data-individual-time="start" value="${escapeHtml(row.heureDebutIndividuelle || '')}"${timeLocked ? ' disabled' : ''}></label>
+        <label class="scope-time-df">F: <input type="time" data-individual-time="end" value="${escapeHtml(row.heureFinIndividuelle || '')}"${timeLocked ? ' disabled' : ''}></label>
       </div>`;
     };
     const statusFilled = (row) => Boolean(row && L.isValidSessionStatut && L.isValidSessionStatut(row.statut));
@@ -8139,7 +8167,7 @@
     if (state.modal !== 'cancel-event') return '';
     return `<div class="scope-modal"><div class="scope-card">
       <h3>Annuler l’événement</h3>
-      <p>L’événement sera conservé dans l’historique mais exclu des statistiques.</p>
+      <p>L’événement était prévu mais n’a pas eu lieu. Il restera visible comme ANNULÉ, hors saisie et hors statistiques.</p>
       <div class="scope-field"><label>Motif</label><textarea id="cancel-motif"></textarea></div>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="cancel-ok">Confirmer l’annulation</button>
@@ -8153,7 +8181,7 @@
     return `<div class="scope-modal"><div class="scope-card">
       <h3>Supprimer l’événement</h3>
       <p>Supprimer définitivement cet événement des vues opérationnelles ?</p>
-      <p class="scope-mode-hint">L’événement disparaîtra des listes, recherches, impressions, rapports et cycles. Une trace administrative minimale est conservée.</p>
+      <p class="scope-mode-hint">Autorisé s’il n’y a pas de participation réelle ni de saisie quantitative. Une population assignée non saisie peut être purgée dans la même opération.</p>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="delete-ok"${state.deleteEventBusy ? ' disabled' : ''}>Supprimer</button>
         <button type="button" class="scope-btn" id="delete-dismiss">Retour</button>
@@ -10233,15 +10261,10 @@
         cta.disabled = true;
         cta.textContent = 'Assignation…';
       }
-      ScopeFeedback.confirm({
-        title: 'Assigner les participants ?',
-        message: `${selectedPersonIds.length} participant${selectedPersonIds.length > 1 ? 's' : ''} seront assignés à cet événement.`,
-        confirmText: 'Assigner',
-        cancelText: 'Annuler'
-      }, () => withFeedbackAction({
+      withFeedbackAction({
         progressTitle: 'Assignation des participants en cours…',
         progressMessage: 'La population préparée est assignée en une seule opération.',
-        successTitle: `${selectedPersonIds.length} participant${selectedPersonIds.length > 1 ? 's' : ''} ont été assignés à l’événement.`,
+        successTitle: `${selectedPersonIds.length} participant${selectedPersonIds.length > 1 ? 's' : ''} ont été assignés.`,
         successMessage: 'La saisie affiche exactement cette population.'
       }, async () => {
         let version = state.fiche.evenement.version;
@@ -10260,7 +10283,7 @@
         } finally {
           state.participantAssignmentBusy = false;
         }
-      }));
+      });
     });
     root.querySelector('[data-cta="saisir"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
     root.querySelector('[data-cta="saisir-volumes"]')?.addEventListener('click', () => go(`#/exercices/${route().id}/saisie`));
@@ -10647,13 +10670,11 @@
     document.getElementById('enc-role')?.addEventListener('change', (e) => {
       state.encRole = e.target.value || 'FORMATEUR';
       if (state.encRole !== 'FORMATEUR' && !(isMultiSessionV2Fiche(state.fiche) && state.encRole === 'MONITEUR')) state.encSerieComplete = false;
-      render();
-    });
-    document.getElementById('enc-time-mode')?.addEventListener('change', (e) => {
-      state.encTimeMode = e.target.value || 'EVENT';
-      if (state.encTimeMode !== 'CUSTOM') {
-        state.encHeureDebut = '';
-        state.encHeureFin = '';
+      if (state.encRole !== 'FORMATEUR') {
+        const minutesWrap = document.getElementById('enc-dl-minutes-wrap');
+        if (minutesWrap) minutesWrap.hidden = true;
+      } else {
+        syncEncadrementPrepVisibility();
       }
       render();
     });
@@ -10664,15 +10685,25 @@
           state.encHeureDebut = '';
           state.encHeureFin = '';
         }
-        render();
+        const wrap = document.getElementById('enc-df-wrap');
+        if (wrap) wrap.hidden = state.encTimeMode !== 'CUSTOM';
       });
     });
     document.getElementById('enc-debut')?.addEventListener('change', (e) => { state.encHeureDebut = e.target.value || ''; });
     document.getElementById('enc-fin')?.addEventListener('change', (e) => { state.encHeureFin = e.target.value || ''; });
-    document.getElementById('enc-creation-dl')?.addEventListener('change', (e) => { state.encCreationDl = Boolean(e.target.checked); render(); });
+    document.getElementById('enc-creation-dl')?.addEventListener('change', (e) => {
+      state.encCreationDl = Boolean(e.target.checked);
+      const wrap = document.getElementById('enc-dl-minutes-wrap');
+      if (wrap) wrap.hidden = !(state.encCreationDl && String(state.encRole || '').toUpperCase() === 'FORMATEUR');
+    });
     document.getElementById('enc-prep-min')?.addEventListener('change', (e) => { state.encPreparationDlMinutes = e.target.value || ''; });
     document.getElementById('enc-add')?.addEventListener('click', () => {
-      if (state.encHits.length === 1) addEncadrement(state.encHits[0].personne_id);
+      if (state.encEditPersonneId) saveEncadrement();
+      else if (state.encHits.length === 1) addEncadrement(state.encHits[0].personne_id);
+    });
+    document.getElementById('enc-edit-cancel')?.addEventListener('click', () => {
+      resetEncadrementForm();
+      render();
     });
     document.getElementById('enc-serie-complete')?.addEventListener('click', () => {
       state.encSerieComplete = !state.encSerieComplete;
@@ -10728,6 +10759,9 @@
     });
     root.querySelectorAll('[data-enc-add]').forEach((btn) => {
       btn.addEventListener('click', () => addEncadrement(btn.getAttribute('data-enc-add')));
+    });
+    root.querySelectorAll('[data-enc-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => startEncadrementEdit(btn.getAttribute('data-enc-edit')));
     });
     root.querySelectorAll('[data-enc-remove]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -10792,6 +10826,61 @@
     document.getElementById('reopen-cancel')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('cancel-event')?.addEventListener('click', () => { state.modal = 'cancel-event'; render(); });
     document.getElementById('delete-event')?.addEventListener('click', () => { state.modal = 'delete-event'; render(); });
+    document.getElementById('reactivate-event')?.addEventListener('click', () => {
+      if (state.reactivateBusy || state.actionBusy) return;
+      ScopeFeedback.confirm({
+        title: 'Réactiver l’événement',
+        message: 'Réactiver cet événement et le rendre à nouveau opérationnel ?',
+        confirmText: 'Réactiver l’événement',
+        cancelText: 'Annuler'
+      }, () => {
+        const id = route().id;
+        state.reactivateBusy = true;
+        withFeedbackAction({
+          progressTitle: 'Réactivation…',
+          successTitle: 'Événement réactivé',
+          successMessage: 'L’événement est à nouveau opérationnel.'
+        }, async () => {
+          try {
+            await client.reactiver(id, 'Réactivation événement annulé', state.fiche.evenement.version);
+            invalidateCache(['list', 'dashboard', 'vigilance']);
+            await loadFiche(id);
+            go(`#/exercices/${id}`);
+          } finally {
+            state.reactivateBusy = false;
+          }
+        });
+      });
+    });
+    document.getElementById('unassign-event')?.addEventListener('click', () => {
+      if (state.unassignBusy || state.actionBusy) return;
+      ScopeFeedback.confirm({
+        title: 'Revenir à la préparation',
+        message: 'Les participants assignés sans saisie réelle seront retirés. Vous pourrez préparer à nouveau la population.',
+        confirmText: 'Revenir à la préparation',
+        cancelText: 'Annuler'
+      }, () => {
+        const id = route().id;
+        state.unassignBusy = true;
+        withFeedbackAction({
+          progressTitle: 'Retour à la préparation…',
+          successTitle: 'Préparation rouverte',
+          successMessage: 'Les participants non saisis ont été désassignés.'
+        }, async () => {
+          try {
+            await client.desassigner(id, state.fiche.evenement.version);
+            invalidateCache(['list', 'dashboard', 'vigilance']);
+            state.preview = null;
+            state.pendingRetraits = [];
+            state.pendingExceptions = [];
+            await loadFiche(id);
+            go(`#/exercices/${id}`);
+          } finally {
+            state.unassignBusy = false;
+          }
+        });
+      });
+    });
     document.getElementById('cancel-dismiss')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('delete-dismiss')?.addEventListener('click', () => { state.modal = null; render(); });
     document.getElementById('cancel-ok')?.addEventListener('click', () => {
@@ -12628,34 +12717,111 @@
     });
   }
 
+  function syncEncadrementPrepVisibility() {
+    const wrap = document.getElementById('enc-dl-minutes-wrap');
+    if (wrap) wrap.hidden = !(state.encCreationDl && String(state.encRole || '').toUpperCase() === 'FORMATEUR');
+  }
+
+  function resetEncadrementForm() {
+    state.encEditPersonneId = '';
+    state.encRole = 'FORMATEUR';
+    state.encTimeMode = 'EVENT';
+    state.encHeureDebut = '';
+    state.encHeureFin = '';
+    state.encCreationDl = false;
+    state.encPreparationDlMinutes = '';
+    state.encQuery = '';
+    state.encHits = [];
+    state.encSerieComplete = false;
+    state.encBusy = false;
+  }
+
+  function startEncadrementEdit(personneId) {
+    const row = ((state.fiche && state.fiche.encadrement) || []).find((p) => String(p.personne_id) === String(personneId));
+    if (!row) return;
+    state.encEditPersonneId = String(personneId);
+    state.encRole = String(row.role || 'FORMATEUR').toUpperCase();
+    const start = row.heure_debut_individuelle || row.heureDebutIndividuelle || '';
+    const end = row.heure_fin_individuelle || row.heureFinIndividuelle || '';
+    state.encTimeMode = (start || end) ? 'CUSTOM' : 'EVENT';
+    state.encHeureDebut = start || '';
+    state.encHeureFin = end || '';
+    state.encCreationDl = Boolean(row.creation_dl || row.creationDl);
+    const minutes = row.preparation_dl_minutes == null ? row.preparationDlMinutes : row.preparation_dl_minutes;
+    state.encPreparationDlMinutes = minutes == null || minutes === '' ? '' : String(minutes);
+    state.encQuery = eventPersonLabel(row);
+    state.encHits = [];
+    render();
+  }
+
+  function encadrementFormBody(personneId, role) {
+    const body = { personneId, role };
+    if (state.encTimeMode === 'CUSTOM') {
+      body.timeMode = 'CUSTOM';
+      body.heureDebutIndividuelle = state.encHeureDebut || null;
+      body.heureFinIndividuelle = state.encHeureFin || null;
+    } else {
+      body.timeMode = 'EVENT';
+      body.heureDebutIndividuelle = null;
+      body.heureFinIndividuelle = null;
+    }
+    if (String(role || '').toUpperCase() === 'FORMATEUR') {
+      body.creationDl = Boolean(state.encCreationDl);
+      body.preparationDlMinutes = state.encCreationDl ? Number(state.encPreparationDlMinutes || 0) : null;
+    } else {
+      body.creationDl = false;
+      body.preparationDlMinutes = null;
+    }
+    return body;
+  }
+
+  function saveEncadrement() {
+    if (state.encBusy || state.actionBusy) return;
+    const id = route().id;
+    const personneId = state.encEditPersonneId;
+    if (!personneId) return;
+    const role = state.encRole || document.getElementById('enc-role')?.value || 'FORMATEUR';
+    const snapshot = snapshotSaisieState();
+    const body = encadrementFormBody(personneId, role);
+    state.encBusy = true;
+    withFeedbackAction({
+      progressTitle: 'Modification de l’encadrement',
+      successTitle: 'Encadrement modifié',
+      successMessage: 'Les informations du formateur ont été enregistrées.'
+    }, async () => {
+      try {
+        await client.modifierEncadrement(id, body, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
+        resetEncadrementForm();
+        await refreshFichePreservingSaisie(id, snapshot);
+      } finally {
+        state.encBusy = false;
+      }
+    });
+  }
+
   function addEncadrement(personneId) {
+    if (state.encBusy || state.actionBusy) return;
     const id = route().id;
     const role = state.encRole || document.getElementById('enc-role')?.value || 'FORMATEUR';
     const v2AllSessions = isMultiSessionV2Fiche(state.fiche) && ['FORMATEUR', 'MONITEUR'].includes(String(role || '').toUpperCase()) && state.encSerieComplete;
     const serieComplete = (role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche)) || v2AllSessions;
     const snapshot = snapshotSaisieState();
-    const body = { personneId, role, serieComplete, toutesSessions: v2AllSessions };
-    if (state.encTimeMode === 'CUSTOM') {
-      body.heureDebutIndividuelle = state.encHeureDebut || null;
-      body.heureFinIndividuelle = state.encHeureFin || null;
-    }
-    if (String(role || '').toUpperCase() === 'FORMATEUR' && state.encCreationDl) {
-      body.creationDl = true;
-      body.preparationDlMinutes = Number(state.encPreparationDlMinutes || 0);
-    }
+    const body = Object.assign(encadrementFormBody(personneId, role), { serieComplete, toutesSessions: v2AllSessions });
+    state.encBusy = true;
     withFeedbackAction({
       progressTitle: 'Ajout à l’encadrement',
       successTitle: 'Encadrement ajouté',
       successMessage: v2AllSessions ? 'Le rôle a été ajouté à toutes les sessions du Multi-session.' : (serieComplete ? 'Le Formateur a été ajouté à toute la série PR.' : 'La personne est hors du taux principal.')
     }, async () => {
-      await client.ajouterEncadrement(id, body, state.fiche.evenement.version);
-      invalidateCache(['list', 'dashboard', 'vigilance']);
-      state.encQuery = '';
-      state.encHits = [];
-      state.encSerieComplete = false;
-      state.encCreationDl = false;
-      state.encPreparationDlMinutes = '';
-      await refreshFichePreservingSaisie(id, snapshot);
+      try {
+        await client.ajouterEncadrement(id, body, state.fiche.evenement.version);
+        invalidateCache(['list', 'dashboard', 'vigilance']);
+        resetEncadrementForm();
+        await refreshFichePreservingSaisie(id, snapshot);
+      } finally {
+        state.encBusy = false;
+      }
     });
   }
 

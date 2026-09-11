@@ -265,7 +265,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-event-workflow-assignment-staffing-semantic-repair-10-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-event-assigned-population-policy-staffing-close-10-2';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -385,6 +385,7 @@ async function ensureScopeSchema(){
   await migrateEventTemporalConfigurationFoundation9();
   await migrateEventPopulationTimeStaffingWorkflowClose10();
   await migrateEventWorkflowAssignmentStaffingSemanticRepair101();
+  await migrateEventAssignedPopulationPolicyStaffingClose102();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1526,6 +1527,10 @@ async function migrateEventWorkflowAssignmentStaffingSemanticRepair101(){
   await db.query(`alter table scope_evenements add column if not exists hidden_par text`);
   await db.query(`create index if not exists scope_evenements_hidden_idx on scope_evenements(hidden_at) where hidden_at is null`);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-event-workflow-assignment-staffing-semantic-repair-10-1') on conflict (version) do nothing`);
+}
+
+async function migrateEventAssignedPopulationPolicyStaffingClose102(){
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-event-assigned-population-policy-staffing-close-10-2') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

@@ -511,7 +511,7 @@ function createScopeService(repo){
           validFrom: null,
           validTo: null,
           domain: 'PR',
-          organisation: count > 1 ? 'Plusieurs sessions' : 'Session unique',
+          organisation: count > 1 ? `Plusieurs sessions · ${count} sessions` : 'Session unique',
           modeOrganisation: count > 1 ? 'MULTI_SESSION' : 'SIMPLE',
           sessionCount: count,
           sessionIndex: index,
@@ -529,6 +529,10 @@ function createScopeService(repo){
       return {
         label: 'Configuration historique SCOPE',
         isLegacy: true,
+        organisation: 'Session unique',
+        modeOrganisation: 'SIMPLE',
+        sessionCount: 1,
+        policyLabel: domain ? `Règles de participation ${domain}` : 'Règles de participation SCOPE',
         originLabel: evenement.origine === 'IMPORT_CSV' ? 'Import historique' : 'Historique existant'
       };
     }
@@ -565,18 +569,21 @@ function createScopeService(repo){
         return '';
       })(),
       domain: (definition && definition.domain) || (version && version.domain) || (snapDefinition && snapDefinition.domain) || evenement.domaine_code,
-      organisation: mode === 'MULTI_SESSION' ? 'Plusieurs sessions' : 'Session unique',
+      organisation: mode === 'MULTI_SESSION'
+        ? `Plusieurs sessions${sessionCount > 1 ? ` · ${sessionCount} sessions` : ''}`
+        : 'Session unique',
       modeOrganisation: mode,
       sessionCount,
       sessionIndex,
-      policyLabel: [
-        (version && (version.policyCode || version.policy_code)) || (snapPolicy && snapPolicy.policyCode),
-        (version && (version.policyVersionCode || version.policy_version_code)) || (snapPolicy && snapPolicy.versionCode)
-      ].filter(Boolean).join(' · ') || 'Règles de participation SCOPE',
+      policyLabel: `Règles de participation ${String((definition && definition.domain) || (version && version.domain) || (snapDefinition && snapDefinition.domain) || evenement.domaine_code || 'SCOPE').toUpperCase()}`,
       originLabel,
       technical: {
         definitionVersionId: (version && (version.definition_version_id || version.definitionVersionId)) || eventVersionId || null,
         policyVersionId: (version && (version.policy_version_id || version.policyVersionId)) || (snapPolicy && snapPolicy.policyVersionId) || null,
+        policyCode: [
+          (version && (version.policyCode || version.policy_code)) || (snapPolicy && snapPolicy.policyCode),
+          (version && (version.policyVersionCode || version.policy_version_code)) || (snapPolicy && snapPolicy.versionCode)
+        ].filter(Boolean).join(' · ') || null,
         engineRoute: evenement.engine_route || evenement.engineRoute || null
       }
     };
@@ -1607,6 +1614,10 @@ function createScopeService(repo){
     return String(evenement && evenement.statut || '').toUpperCase() === 'ANNULE';
   }
 
+  function assignedPopulationLocked(evenement){
+    return Boolean(evenement && evenement.population_figee) && !isQuantitatif(evenement) && evenement.origine !== 'LEGACY_AGGREGATED';
+  }
+
   function isEffectiveParticipationStatut(statut){
     return String(statut || '').toUpperCase() === 'PRESENT';
   }
@@ -1674,15 +1685,30 @@ function createScopeService(repo){
   }
 
   function normalizeParticipationTemporal(item = {}, evenement = {}){
+    const mode = String(item.timeMode || item.horaireMode || item.modeHoraire || '').toUpperCase();
     const hasStart = item.heureDebutIndividuelle !== undefined || item.heure_debut_individuelle !== undefined || item.debutIndividuel !== undefined;
     const hasEnd = item.heureFinIndividuelle !== undefined || item.heure_fin_individuelle !== undefined || item.finIndividuelle !== undefined;
+    if(mode === 'EVENT'){
+      return {
+        heure_debut_individuelle: null,
+        heure_fin_individuelle: null,
+        duree_individuelle_minutes: null
+      };
+    }
     if(!hasStart && !hasEnd) return {};
     const start = normalizeHeureEvent(item.heureDebutIndividuelle ?? item.heure_debut_individuelle ?? item.debutIndividuel);
     const end = normalizeHeureEvent(item.heureFinIndividuelle ?? item.heure_fin_individuelle ?? item.finIndividuelle);
+    if(!start && !end){
+      return {
+        heure_debut_individuelle: null,
+        heure_fin_individuelle: null,
+        duree_individuelle_minutes: null
+      };
+    }
     return {
       heure_debut_individuelle: start,
       heure_fin_individuelle: end,
-      duree_individuelle_minutes: durationMinutes(start || evenement.heure_debut_reelle || evenement.heure_debut, end || evenement.heure_fin_reelle || evenement.heure_fin)
+      duree_individuelle_minutes: durationMinutes(start, end)
     };
   }
 
@@ -2251,6 +2277,7 @@ function createScopeService(repo){
       skippedClosed: 0,
       skippedQuantitatif: 0,
       skippedUnfrozen: 0,
+      skippedAssigned: 0,
       details: []
     };
     for(const evenement of events || []){
@@ -2265,6 +2292,10 @@ function createScopeService(repo){
       }
       if(!evenement.population_figee){
         summary.skippedUnfrozen += 1;
+        continue;
+      }
+      if(assignedPopulationLocked(evenement)){
+        summary.skippedAssigned = (summary.skippedAssigned || 0) + 1;
         continue;
       }
       const eventId = evenement.evenement_id;
@@ -3140,12 +3171,27 @@ function createScopeService(repo){
         : Array.isArray(body && body.personneIds)
           ? body.personneIds.map((id) => String(id || '')).filter(Boolean)
           : [];
-      const selectedIds = [...new Set(hasSelectionBody ? requestedIds : (preview.personnes || []).map((p) => String(p.personneId || p.personne_id || '')).filter(Boolean))];
+      const selectedIds = [...new Set(
+        hasSelectionBody || (body && body.assignmentRequest)
+          ? requestedIds
+          : (preview.personnes || []).map((p) => String(p.personneId || p.personne_id || '')).filter(Boolean)
+      )];
       if(!selectedIds.length && (hasSelectionBody || body && body.assignmentRequest)){
         throw new HttpError(422, 'population_vide', 'Aucun participant n’est sélectionné pour cet événement.');
       }
       const stamp = new Date().toISOString();
       const snapshot = evenement.participation_policy_snapshot || await capturePolicySnapshot(tx, evenement.domaine_code);
+      const selectedSet = new Set(selectedIds.map((id) => String(id)));
+      const existingAttendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
+      for(const row of existingAttendus || []){
+        if(selectedSet.has(String(row.personne_id))) continue;
+        if(row.inclus === false) continue;
+        await tx.upsertAttendu({
+          ...row,
+          inclus: false,
+          origine_retrait: 'NON_ASSIGNE'
+        });
+      }
       for(const personneId of selectedIds){
         const personne = previewById.get(String(personneId)) || {};
         if(!previewById.has(String(personneId))){
@@ -3993,7 +4039,9 @@ function createScopeService(repo){
     const existing = await tx.getParticipation(eventId, personneId);
     if(existing && ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase())){
       if(options.allowSameRole && String(existing.role || '').toUpperCase() === role) return { changed: false };
-      throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
+      if(!options.replaceExisting){
+        throw new HttpError(422, 'deja_encadrement', 'Cette personne est déjà ajoutée à l’encadrement.');
+      }
     }
     if(existing && !ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase()) && !(attendu && attendu.inclus)){
       const residualEncadrement = String(existing.statut || '') === 'NON_CONCERNE';
@@ -4093,6 +4141,67 @@ function createScopeService(repo){
     });
   }
 
+  async function modifierEncadrement(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    const personneId = body.personneId || body.personne_id;
+    const role = String(body.role || '');
+    if(!personneId) throw new HttpError(400, 'personne_obligatoire', 'La personne d’encadrement est obligatoire.');
+    if(role && !ROLES_ENCADREMENT.has(role)){
+      throw new HttpError(422, 'role_invalide', 'Rôle d’encadrement invalide (FORMATEUR, MONITEUR, SURVEILLANT, AUXILIAIRE).');
+    }
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Encadrement saisissable uniquement sur PLANIFIE.');
+      const existing = await tx.getParticipation(eventId, personneId);
+      if(!existing || !ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase())){
+        throw new HttpError(404, 'encadrement_introuvable', 'Cette personne n’est pas dans l’encadrement.');
+      }
+      const nextRole = role || String(existing.role || 'FORMATEUR').toUpperCase();
+      const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
+      const temporalPatch = body.heureDebutIndividuelle !== undefined || body.heure_debut_individuelle !== undefined || body.timeMode || body.horaireMode
+        ? normalizeParticipationTemporal(body, evenement)
+        : {
+          heure_debut_individuelle: existing.heure_debut_individuelle || null,
+          heure_fin_individuelle: existing.heure_fin_individuelle || null,
+          duree_individuelle_minutes: existing.duree_individuelle_minutes == null ? null : Number(existing.duree_individuelle_minutes)
+        };
+      if(String(body.timeMode || body.horaireMode || '').toUpperCase() === 'EVENT'){
+        temporalPatch.heure_debut_individuelle = null;
+        temporalPatch.heure_fin_individuelle = null;
+        temporalPatch.duree_individuelle_minutes = null;
+      }
+      const lessonPrepPatch = nextRole === 'FORMATEUR' ? normalizeLessonPrep(Object.assign({
+        creationDl: existing.creation_dl,
+        preparationDlMinutes: existing.preparation_dl_minutes
+      }, body)) : { creation_dl: false, preparation_dl_minutes: null };
+      if(v2State && lessonPrepPatch.creation_dl){
+        const existingRows = await tx.listParticipationsForEvents((v2State.sessions || []).map((row) => row.evenement_id || row.event_id).filter(Boolean));
+        const duplicate = existingRows.find((row) => String(row.personne_id) === String(personneId) && row.creation_dl && String(row.evenement_id) !== String(eventId));
+        if(duplicate){
+          const session = (v2State.sessions || []).find((row) => String(row.evenement_id || row.event_id) === String(duplicate.evenement_id)) || {};
+          const sequence = session.sequence || session.session_index || session.sessionIndex || '';
+          const label = session.libelle || session.session_label || (sequence ? `session ${sequence}` : 'une autre session');
+          throw new HttpError(422, 'creation_dl_deja_comptee', `Préparation déjà comptabilisée sur la ${label}.`);
+        }
+      }
+      await upsertEncadrementRow(tx, evenement, personneId, nextRole, actor, {
+        replaceExisting: true,
+        temporal: temporalPatch,
+        lessonPrep: lessonPrepPatch
+      });
+      const next = await bumpOrConflict(tx, eventId, baseVersion, {});
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'MODIFIER_ENCADREMENT',
+        apres: { personneId, role: nextRole, version: next.version }
+      });
+      return { evenement: next, version: next.version };
+    });
+  }
+
   async function cloturer(eventId, body, actor){
     const baseVersion = requireBaseVersion(body);
     return repo.withTransaction(async (tx) => {
@@ -4126,20 +4235,7 @@ function createScopeService(repo){
       const attendusRaw = await tx.listAttendus(eventId);
       const participations = await tx.listParticipations(eventId);
       const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
-      const periodesByPersonne = new Map();
-      const personneIds = [...new Set((attendusRaw || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean))];
-      await Promise.all(personneIds.map(async (pid) => {
-        periodesByPersonne.set(pid, tx.listPersonnesPeriodes ? await tx.listPersonnesPeriodes(pid) : []);
-      }));
-      const eligible = new Set(
-        filterAttendusEligibleAtDate(attendusRaw, periodesByPersonne, evenement.date)
-          .map((row) => String(row.personne_id || row.personneId))
-      );
-      let attendus = (attendusRaw || []).map((row) => (
-        eligible.has(String(row.personne_id || row.personneId))
-          ? row
-          : Object.assign({}, row, { inclus: false, origine_retrait: row.origine_retrait || 'INDISPONIBLE' })
-      ));
+      let attendus = (attendusRaw || []).filter((row) => row.inclus !== false);
       const prState = v2State ? null : await loadPrExerciseParticipationState(tx, evenement, eventId);
       if(prState && prState.byPersonneId){
         attendus = attendus.map((row) => {
@@ -4261,13 +4357,34 @@ function createScopeService(repo){
         throw new HttpError(422, 'suppression_interdite', 'L’événement est réalisé. La suppression n’est pas possible car des données historiques sont conservées.');
       }
       const participations = tx.listParticipations ? await tx.listParticipations(eventId) : [];
-      const recorded = (participations || []).filter((row) => recordedParticipationStatut(row && row.statut));
+      const recorded = (participations || []).filter((row) => (
+        recordedParticipationStatut(row && row.statut)
+        && !ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase())
+      ));
       if(recorded.length){
         throw new HttpError(422, 'suppression_interdite', 'Cet événement possède déjà des participations réelles. La suppression n’est pas possible afin de conserver la traçabilité.');
       }
       const saisie = tx.getQuantitatifSaisie ? await tx.getQuantitatifSaisie(eventId) : null;
       if(saisie && (Number(saisie.nb_attendus) || Number(saisie.nb_presents) || Number(saisie.nb_excuses) || Number(saisie.nb_dispenses))){
         throw new HttpError(422, 'suppression_interdite', 'Cet événement possède déjà une saisie quantitative. La suppression n’est pas possible afin de conserver la traçabilité.');
+      }
+      const attendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
+      for(const row of attendus || []){
+        if(row.inclus === false) continue;
+        await tx.upsertAttendu({
+          ...row,
+          inclus: false,
+          origine_retrait: 'SUPPRESSION_METIER'
+        });
+      }
+      for(const row of participations || []){
+        if(recordedParticipationStatut(row && row.statut)) continue;
+        await tx.upsertParticipation({
+          ...row,
+          statut: 'NON_CONCERNE',
+          source: 'SUPPRESSION_METIER',
+          auteur_id: actorId(actor)
+        });
       }
       const stamp = new Date().toISOString();
       const next = await bumpOrConflict(tx, eventId, baseVersion, {
@@ -4284,6 +4401,85 @@ function createScopeService(repo){
         apres: { hidden_at: stamp, version: next.version }
       });
       return { hidden: true, alreadyHidden: false, evenement: next, version: next.version };
+    });
+  }
+
+  async function desassignerPopulation(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(String(evenement.statut || '').toUpperCase() !== 'PLANIFIE'){
+        throw new HttpError(422, 'statut_invalide', 'La préparation des participants n’est possible que sur un événement planifié.');
+      }
+      if(evenement.origine === 'LEGACY_AGGREGATED' || isQuantitatif(evenement)){
+        throw new HttpError(422, 'mode_invalide', 'Cette action n’est pas disponible pour cet événement.');
+      }
+      const participations = tx.listParticipations ? await tx.listParticipations(eventId) : [];
+      const recorded = (participations || []).filter((row) => (
+        recordedParticipationStatut(row && row.statut)
+        && !ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase())
+      ));
+      if(recorded.length){
+        throw new HttpError(422, 'population_verrouillee', 'Des participations réelles existent. Revenez à la préparation uniquement si aucun statut réel n’a été saisi.');
+      }
+      const attendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
+      for(const row of attendus || []){
+        if(row.inclus === false) continue;
+        await tx.upsertAttendu({
+          ...row,
+          inclus: false,
+          origine_retrait: 'DESASSIGNATION'
+        });
+      }
+      for(const row of participations || []){
+        if(ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase())) continue;
+        await tx.upsertParticipation({
+          ...row,
+          statut: 'NON_CONCERNE',
+          source: 'DESASSIGNATION',
+          auteur_id: actorId(actor)
+        });
+      }
+      const next = await bumpOrConflict(tx, eventId, baseVersion, {
+        population_figee: false,
+        figee_at: null,
+        figee_par: null
+      });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'DESASSIGNER_PARTICIPANTS',
+        avant: { population_figee: true, version: evenement.version },
+        apres: { population_figee: false, version: next.version }
+      });
+      return { evenement: next, version: next.version, released: true };
+    });
+  }
+
+  async function reactiverEvenement(eventId, body, actor){
+    const baseVersion = requireBaseVersion(body);
+    return repo.withTransaction(async (tx) => {
+      const evenement = await tx.getEventForUpdate(eventId);
+      if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(String(evenement.statut || '').toUpperCase() !== 'ANNULE'){
+        throw new HttpError(422, 'statut_invalide', 'Seuls les événements annulés peuvent être réactivés.');
+      }
+      const nextStatut = evenement.cloture_at ? 'REALISE' : 'PLANIFIE';
+      const next = await bumpOrConflict(tx, eventId, baseVersion, { statut: nextStatut });
+      await tx.appendJournal({
+        auteur_id: actorId(actor),
+        entite: 'evenement',
+        entite_id: eventId,
+        action: 'REACTIVER',
+        commentaire: String(body.motif || body.commentaire || '').trim() || 'Réactivation événement annulé',
+        avant: { statut: 'ANNULE', version: evenement.version },
+        apres: { statut: nextStatut, version: next.version }
+      });
+      return { evenement: next, version: next.version, reactived: true };
     });
   }
 
@@ -4570,7 +4766,7 @@ function createScopeService(repo){
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
     let attendus = await repo.listAttendus(eventId);
     attendus = await decorateSourcePermutationAttendus(repo, evenement, attendus, allCibles);
-    if(String(evenement.statut || '').toUpperCase() === 'PLANIFIE'){
+    if(String(evenement.statut || '').toUpperCase() === 'PLANIFIE' && !assignedPopulationLocked(evenement)){
       const periodesByPersonne = new Map();
       const personneIds = [...new Set((attendus || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean))];
       await Promise.all(personneIds.map(async (pid) => {
@@ -6025,12 +6221,15 @@ function createScopeService(repo){
     permutationsForEvent,
     regulariserPermutation,
     ajouterEncadrement,
+    modifierEncadrement,
     retirerEncadrement,
     resetParticipations,
     cloturer,
     cloturerMultiSessionV2,
     reouvrir,
     annulerEvenement,
+    reactiverEvenement,
+    desassignerPopulation,
     masquerEvenement,
     supprimerOuAnnulerEvenement,
     lireEvenement,

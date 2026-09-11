@@ -357,12 +357,12 @@ function codesOf(logic, domain, rows){
 
   await record('24 — bloc information bleu présent', async () => {
     includes(ui, 'scope-event-config-card scope-business-info');
-    includes(ui, '<div><dt>Formation</dt>');
-    includes(ui, '<div><dt>Organisation</dt>');
-    includes(ui, '<div><dt>Session</dt>');
-    includes(ui, 'Période d’application');
-    includes(ui, 'Règles disponibles');
-    includes(ui, 'Origine de l’association');
+    includes(ui, '<div><dt>FORMATION</dt>');
+    includes(ui, '<div><dt>ORGANISATION</dt>');
+    includes(ui, '<div><dt>SESSION</dt>');
+    includes(ui, 'PÉRIODE D’APPLICATION');
+    includes(ui, 'RÈGLES DISPONIBLES');
+    includes(ui, 'ORIGINE DE L’ASSOCIATION');
     includes(ui, 'Informations techniques');
     includes(css, 'background: #eff6ff');
     includes(css, 'color: #153e75');

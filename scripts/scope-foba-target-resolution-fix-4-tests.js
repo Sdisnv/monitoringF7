@@ -152,19 +152,26 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
 }
 
 (async () => {
-  await record('A — Noémie type FOBA 1 réelle incluse une fois dans FOBA 1 + FOBA 2', async () => {
+  await record('A — Noémie type FOBA 1 réelle n’est plus réinjectée après assignation', async () => {
     const { service, person, event } = await setupLegacyFoba();
     let fiche = await service.lireEvenement(event.evenement.evenement_id);
     assert.strictEqual(attenduFor(fiche, person.personne_id), undefined);
     const sync = await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
-    assert.strictEqual(sync.eventsRecalculated, 1);
-    assert.strictEqual(sync.attendusAdded, 1);
+    assert.strictEqual(sync.attendusAdded, 0);
+    fiche = await service.lireEvenement(event.evenement.evenement_id);
+    assert.strictEqual(attenduFor(fiche, person.personne_id), undefined);
+    const added = await service.ajouterException(event.evenement.evenement_id, {
+      baseVersion: fiche.evenement.version,
+      personneId: person.personne_id,
+      role: 'PARTICIPANT'
+    }, ACTOR);
     fiche = await service.lireEvenement(event.evenement.evenement_id);
     const attendu = attenduFor(fiche, person.personne_id);
     assert.ok(attendu);
     assert.strictEqual(attendu.origine, 'REGLE');
     assert.match(String(attendu.motif_inclusion || ''), /FOBA_1/);
     assert.ok(!String(attendu.motif_inclusion || '').includes('FOBA_2'));
+    assert.ok(added.version);
   });
 
   await record('B — FOBA 1 avant dateActif absent', async () => {
@@ -178,9 +185,9 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
   await record('C — FOBA 1 dateActif égale date événement présent', async () => {
     const { service, person, event } = await setupLegacyFoba({ dateActif: '2026-03-25' });
     const sync = await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
-    assert.strictEqual(sync.attendusAdded, 1);
+    assert.strictEqual(sync.attendusAdded, 0);
     const fiche = await service.lireEvenement(event.evenement.evenement_id);
-    assert.ok(attenduFor(fiche, person.personne_id));
+    assert.strictEqual(attenduFor(fiche, person.personne_id), undefined);
   });
 
   await record('D — dateInactif strictement avant absent, égale date événement présent', async () => {
@@ -191,13 +198,17 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
 
     const sameDay = await setupLegacyFoba({ dateInactif: '2026-03-25' });
     const syncSameDay = await sameDay.service.syncExpectedPopulationForPersonnes([sameDay.person.personne_id], ACTOR);
-    assert.strictEqual(syncSameDay.attendusAdded, 1);
-    assert.ok(attenduFor(await sameDay.service.lireEvenement(sameDay.event.evenement.evenement_id), sameDay.person.personne_id));
+    assert.strictEqual(syncSameDay.attendusAdded, 0);
+    assert.strictEqual(attenduFor(await sameDay.service.lireEvenement(sameDay.event.evenement.evenement_id), sameDay.person.personne_id), undefined);
   });
 
-  await record('E — multi-cibles FOBA ne mélange pas FOBA 1 avec FOBA 2', async () => {
+  await record('E — multi-cibles FOBA: ajout explicite sans mélange FOBA 1 / FOBA 2', async () => {
     const { service, person, event } = await setupLegacyFoba();
-    await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
+    await service.ajouterException(event.evenement.evenement_id, {
+      baseVersion: event.evenement.version,
+      personneId: person.personne_id,
+      role: 'PARTICIPANT'
+    }, ACTOR);
     const fiche = await service.lireEvenement(event.evenement.evenement_id);
     assert.strictEqual((await service.previewAttendus(event.evenement.evenement_id)).personnes.filter((row) => String(row.personneId) === String(person.personne_id)).length, 1);
     assert.match(String(attenduFor(fiche, person.personne_id).motif_inclusion || ''), /FOBA_1/);
@@ -208,13 +219,17 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
     const { repo, service, person, event } = await setupLegacyFoba();
     await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
     const second = await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
-    assert.strictEqual(second.eventsRecalculated, 0);
-    assert.strictEqual((await repo.listAttendus(event.evenement.evenement_id)).filter((row) => String(row.personne_id) === String(person.personne_id)).length, 1);
+    assert.strictEqual(second.attendusAdded, 0);
+    assert.strictEqual((await repo.listAttendus(event.evenement.evenement_id)).filter((row) => String(row.personne_id) === String(person.personne_id)).length, 0);
   });
 
   await record('G — participation historique préservée et REALISE non reconstruit', async () => {
     const { repo, service, person, event } = await setupLegacyFoba();
-    await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
+    await service.ajouterException(event.evenement.evenement_id, {
+      baseVersion: event.evenement.version,
+      personneId: person.personne_id,
+      role: 'PARTICIPANT'
+    }, ACTOR);
     let fiche = await service.lireEvenement(event.evenement.evenement_id);
     await service.enregistrerParticipations(event.evenement.evenement_id, {
       baseVersion: fiche.evenement.version,
@@ -222,9 +237,9 @@ async function setupLegacyFoba({ dateActif = '2026-01-01', dateInactif = null, i
     }, ACTOR);
     repo.updateLegacyAssignment('aff-foba-1', { date_actif: '2026-04-01' });
     const sync = await service.syncExpectedPopulationForPersonnes([person.personne_id], ACTOR);
-    assert.strictEqual(sync.attendusRemoved, 1);
+    assert.strictEqual(sync.attendusRemoved, 0);
     fiche = await service.lireEvenement(event.evenement.evenement_id);
-    assert.ok(excludedFor(fiche, person.personne_id));
+    assert.ok(attenduFor(fiche, person.personne_id));
     assert.strictEqual(participationFor(fiche, person.personne_id).commentaire, 'historique');
 
     const realised = await setupLegacyFoba({ dateActif: '2026-04-01' });

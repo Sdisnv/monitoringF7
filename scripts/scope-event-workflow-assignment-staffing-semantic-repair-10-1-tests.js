@@ -79,7 +79,7 @@ async function seedNominatifEvent(options = {}){
   const logic = loadLogic();
 
   await record('01 — cache-bust et migration additive R10.1', async () => {
-    includes(html, 'scope-event-workflow-assignment-staffing-semantic-repair-10-1');
+    includes(html, 'scope-event-assigned-population-policy-staffing-close-10-2');
     includes(schema, 'hidden_at timestamptz');
     includes(schema, 'scope-event-workflow-assignment-staffing-semantic-repair-10-1');
     includes(serviceSrc, 'async function masquerEvenement');
@@ -185,14 +185,14 @@ async function seedNominatifEvent(options = {}){
     includes(ui, "searchPersonnes(e.target.value, 'preview')");
     includes(ui, 'function addPreviewPerson(id)');
     includes(ui, "ScopeFeedback.error('Ajout impossible'");
-    includes(ui, 'Cette personne est inactive à cette date.');
+    includes(ui, 'Cette personne est inactive à la date de l’événement.');
     includes(ui, 'preview-suggestions');
     notIncludes(ui, "document.getElementById('preview-q')?.addEventListener('input', (e) => {\n      state.personQuery = e.target.value;\n      const q = state.personQuery.trim();\n      if (q.length < SCOPE_SEARCH_MIN_CHARS) { state.personHits = []; render(); return; }");
   });
 
   await record('06 — assignation unique + source de vérité', async () => {
     includes(ui, 'Assignation des participants en cours…');
-    includes(ui, 'ont été assignés à l’événement.');
+    includes(ui, 'ont été assignés.');
     includes(ui, 'participantAssignmentBusy = true');
     const { service, created, personne } = await seedNominatifEvent({ nip: '7649' });
     const assigned = await service.figerPopulation(created.evenement.evenement_id, {
@@ -292,9 +292,9 @@ async function seedNominatifEvent(options = {}){
   await record('10 — encadrement compact, DL, unicité', async () => {
     includes(ui, 'scope-enc-prep-row');
     includes(ui, 'Descente de leçon');
-    includes(ui, 'DL déjà comptabilisée sur la');
+    includes(ui, 'Préparation déjà comptabilisée sur la');
     includes(ui, 'function encadrementPersonSummary');
-    includes(ui, 'Horaire événement');
+    includes(ui, 'Horaire de l’événement');
     includes(css, '.scope-enc-radio input');
     includes(css, 'width: 14px');
     includes(serviceSrc, 'DL déjà comptabilisée sur la');

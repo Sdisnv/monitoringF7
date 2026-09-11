@@ -71,8 +71,10 @@ function statusCatalog(rows){
 
 const DEFAULT_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'PROFESSIONNEL', 'ARMEE', 'ACCIDENT_MALADIE']);
 const JSP_EXCUSE_MOTIFS = Object.freeze(['PRIVE', 'ACTIVITE_SCOLAIRE', 'ACTIVITE_EXTRA_SCOLAIRE', 'OUBLI', 'ACCIDENT_MALADIE', 'NON_JUSTIFIE']);
-const DEFAULT_DISPENSE_MOTIFS = Object.freeze(['FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE']);
-const FOBA_DISPENSE_MOTIFS = Object.freeze([...DEFAULT_DISPENSE_MOTIFS, 'PAS_CONCERNE']);
+const PR_DISPENSE_MOTIFS = Object.freeze(['FORMATEUR_PR', 'FORMATION_HORS_SDIS', 'JOKER', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE']);
+const STANDARD_DISPENSE_MOTIFS = Object.freeze(['FORMATION_HORS_SDIS', 'AUTO_RETRAIT', 'DEMISSION_EN_COURS', 'NON_CONCERNE']);
+const DEFAULT_DISPENSE_MOTIFS = STANDARD_DISPENSE_MOTIFS;
+const FOBA_DISPENSE_MOTIFS = Object.freeze([...STANDARD_DISPENSE_MOTIFS, 'PAS_CONCERNE']);
 const DEFAULT_STATUSES = Object.freeze(['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE']);
 const JSP_STATUSES = Object.freeze(['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE']);
 const DAP_STATUSES = Object.freeze(['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION']);
@@ -113,7 +115,10 @@ const DEFAULT_DOMAIN_POLICIES = Object.freeze({
   }),
   FOCA: basePolicy('FOCA'),
   FOSPEC: basePolicy('FOSPEC'),
-  PR: basePolicy('PR', { behavior: { propagationScope: 'ALL_EXERCISE_SESSIONS', deduplicationScope: 'EXERCISE' } }),
+  PR: basePolicy('PR', {
+    dispenseMotifs: PR_DISPENSE_MOTIFS.slice(),
+    behavior: { propagationScope: 'ALL_EXERCISE_SESSIONS', deduplicationScope: 'EXERCISE' }
+  }),
   AUTO: basePolicy('AUTO', { behavior: { propagationScope: 'ALL_EXERCISE_SESSIONS', deduplicationScope: 'EXERCISE' } })
 });
 
@@ -186,10 +191,18 @@ function sanitizePolicy(policy, motifs){
   };
 }
 
+function isPrDefaultDispenseDump(motifs){
+  const values = new Set(listFrom(motifs));
+  return PR_DISPENSE_MOTIFS.length === values.size && PR_DISPENSE_MOTIFS.every((id) => values.has(id));
+}
+
 function resolveParticipationPolicy(domaineCode, options = {}){
   const domainCode = normalizeDomain(domaineCode);
   const base = DEFAULT_DOMAIN_POLICIES[domainCode] || basePolicy(domainCode || 'DPS');
-  const snapshot = options.snapshot && options.snapshot.domainCode ? options.snapshot : null;
+  let snapshot = options.snapshot && options.snapshot.domainCode ? options.snapshot : null;
+  if(snapshot && domainCode !== 'PR' && isPrDefaultDispenseDump(snapshot.dispenseMotifs)){
+    snapshot = Object.assign({}, snapshot, { dispenseMotifs: base.dispenseMotifs.slice() });
+  }
   const merged = snapshot || mergePolicyRow(base, (options.policyRows || []).find((row) => normalizeDomain(row.domain_code || row.domainCode) === domainCode));
   const motifs = motifCatalog(options.motifRows);
   return Object.freeze(sanitizePolicy(Object.assign({}, merged, { domainCode }), motifs));

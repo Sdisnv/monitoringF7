@@ -42,7 +42,6 @@ async function record(name, fn){
     includes(ui, 'selectedPersonIds');
     includes(ui, 'manualAdditions');
     includes(ui, 'assignmentRequest: true');
-    includes(ui, 'Assigner les participants ?');
     includes(ui, 'Assignation des participants en cours…');
     includes(ui, 'participantAssignmentBusy');
     includes(api, 'figer(id, bodyOrBaseVersion, maybeBaseVersion)');
@@ -81,7 +80,7 @@ async function record(name, fn){
     includes(ui, 'Individuel');
     includes(ui, 'D : ');
     includes(ui, 'F : ');
-    includes(service, 'durationMinutes(start || evenement.heure_debut_reelle');
+    includes(service, 'function durationMinutes(start, end)');
   });
 
   await record('06 — encadrement horaire et préparation DL', async () => {

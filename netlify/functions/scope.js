@@ -280,6 +280,10 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.ajouterEncadrement(params.id, body, claims)) });
     }
+    params = match(path, '/evenements/:id/encadrement/modifier');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.modifierEncadrement(params.id, body, claims)) });
+    }
     if(method === 'DELETE' && params){
       return response(200, { ok:true, ...(await service.retirerEncadrement(params.id, body, claims)) });
     }
@@ -314,6 +318,14 @@ async function scopeHandler(event){
     params = match(path, '/evenements/:id/annuler');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.annulerEvenement(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/reactiver');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.reactiverEvenement(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/desassigner');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.desassignerPopulation(params.id, body, claims)) });
     }
     params = match(path, '/evenements/:id/masquer');
     if(method === 'POST' && params){
