@@ -6101,6 +6101,82 @@
     `;
   }
 
+  function formatPlannedDurationLabel(startValue, endValue) {
+    const start = String(startValue || '');
+    const end = String(endValue || '');
+    const m = /^(\d{2}):(\d{2})$/.exec(start);
+    const n = /^(\d{2}):(\d{2})$/.exec(end);
+    if (!m || !n) return '';
+    const a = Number(m[1]) * 60 + Number(m[2]);
+    const b = Number(n[1]) * 60 + Number(n[2]);
+    const d = b >= a ? b - a : b + 1440 - a;
+    if (!Number.isFinite(d)) return '';
+    const h = Math.floor(d / 60);
+    const r = d % 60;
+    return h ? `${h} h ${String(r).padStart(2, '0')}` : `${r} min`;
+  }
+
+  function updateNewDurationPreview() {
+    const target = document.getElementById('new-duration-preview');
+    const timeSummary = document.getElementById('new-time-summary');
+    const durationSummary = document.getElementById('new-duration-summary');
+    const duration = formatPlannedDurationLabel(state.heureDebutPrevueForm, state.heureFinPrevueForm);
+    if (target) {
+      target.textContent = duration
+        ? `Durée prévue : ${duration}. L’horaire réel sera initialisé avec cet horaire et pourra être corrigé avant clôture.`
+        : 'L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.';
+    }
+    if (timeSummary) timeSummary.textContent = [state.heureDebutPrevueForm, state.heureFinPrevueForm].filter(Boolean).join(' - ') || 'Non renseigné';
+    if (durationSummary) durationSummary.textContent = duration || 'Non renseignée';
+  }
+
+  function updateNewSessionIndexOptions() {
+    const select = document.getElementById('new-session-index');
+    const summary = document.getElementById('new-session-summary');
+    if (!select) return;
+    const count = Math.max(2, Number(state.sessionCountChoice || 2));
+    if (Number(state.sessionIndexChoice || 1) > count) state.sessionIndexChoice = count;
+    const selected = Number(state.sessionIndexChoice || 1);
+    select.innerHTML = Array.from({ length: count }, (_, index) => index + 1)
+      .map((index) => `<option value="${index}" ${selected === index ? 'selected' : ''}>${index} sur ${count}</option>`)
+      .join('');
+    select.value = String(selected);
+    if (summary) summary.textContent = `Plusieurs sessions · Session ${selected} sur ${count}`;
+  }
+
+  function renderTargetPicker(id, cibles, selectedIds, options = {}) {
+    const selected = new Set(selectedIds || []);
+    const disabled = Boolean(options.disabled);
+    return `<div id="${escapeHtml(id)}" class="scope-target-picker" role="group" aria-label="Public cible">
+      ${cibles.map((c) => {
+        const cibleId = c.cibleId || c.cible_id || '';
+        return `<label class="scope-target-chip">
+          <input type="checkbox" value="${escapeHtml(cibleId)}" ${selected.has(cibleId) ? 'checked' : ''}${disabled ? ' disabled' : ''}>
+          <span>${escapeHtml(L.niveauAffiche(c.domaineCode || c.domaine_code, c.niveauCode || c.niveau_code))}</span>
+        </label>`;
+      }).join('') || '<span class="scope-empty">Aucune cible référencée pour ce domaine.</span>'}
+    </div>`;
+  }
+
+  function renderConfigCompatibility(item) {
+    if (!item) return '';
+    const definition = item.definition || {};
+    const version = item.version || {};
+    const from = version.valid_from || version.validFrom || '';
+    const to = version.valid_to || version.validTo || '';
+    const sessions = Number(version.session_count || version.sessionCount || 1);
+    const organisation = String(version.mode_organisation || version.modeOrganisation || 'SIMPLE').toUpperCase() === 'MULTI_SESSION'
+      ? `Plusieurs sessions · ${sessions} sessions`
+      : 'Session unique';
+    const period = [from ? `du ${L.formatDate(from)}` : '', to ? `au ${L.formatDate(to)}` : ''].filter(Boolean).join(' ');
+    return `<div class="scope-config-summary">
+      <strong>${escapeHtml(definition.label || 'Configuration de formation')}</strong>
+      <span>${escapeHtml(organisation)}</span>
+      <span>${escapeHtml(period || 'Période ouverte')}</span>
+      <small>Compatible avec le domaine sélectionné, la date de l’événement et une version active.</small>
+    </div>`;
+  }
+
   function renderNouveau() {
     const domaine = state.domaineForm || 'DPS';
     const cibles = L.sortCiblesForEventForm
@@ -6159,7 +6235,7 @@
       if (!Number(state.sessionIndexChoice) || Number(state.sessionIndexChoice) > count) state.sessionIndexChoice = 1;
     }
     const configHelp = !compatibleVersions.length
-      ? 'Aucune configuration de formation compatible n’est définie pour cet événement. L’événement restera sur le fonctionnement SCOPE existant.'
+      ? 'Aucune configuration applicable à cette date et ce domaine.'
       : 'Choisissez explicitement une configuration compatible, ou conservez un événement ponctuel.';
     const configOptions = compatibleVersions.map(({ definition, version }) => {
       const id = version.definition_version_id || version.definitionVersionId || '';
@@ -6176,20 +6252,8 @@
       ? Number(selectedConfig.version.session_count || selectedConfig.version.sessionCount || 1)
       : Math.max(1, Number(state.sessionCountChoice || 1));
     const multiMode = state.sessionModeChoice === 'MULTI';
-    const durationPreview = (() => {
-      const start = String(state.heureDebutPrevueForm || '');
-      const end = String(state.heureFinPrevueForm || '');
-      const m = /^(\d{2}):(\d{2})$/.exec(start);
-      const n = /^(\d{2}):(\d{2})$/.exec(end);
-      if (!m || !n) return '';
-      const a = Number(m[1]) * 60 + Number(m[2]);
-      const b = Number(n[1]) * 60 + Number(n[2]);
-      const d = b >= a ? b - a : b + 1440 - a;
-      if (!Number.isFinite(d)) return '';
-      const h = Math.floor(d / 60);
-      const r = d % 60;
-      return h ? `${h} h ${String(r).padStart(2, '0')}` : `${r} min`;
-    })();
+    const durationPreview = formatPlannedDurationLabel(state.heureDebutPrevueForm, state.heureFinPrevueForm);
+    const targetSummary = `${cibles.length} choix ${cibles.length > 1 ? 'disponibles' : 'disponible'} pour ${domaineLabel(domaine)}.`;
     return `
       <div class="scope-crumb">Événements / Nouvel événement</div>
       <div class="scope-main scope-event-form-main">
@@ -6198,30 +6262,27 @@
           <div class="scope-event-form-grid">
             <section class="scope-form-section is-wide">
               <h3>Identification</h3>
-              <div class="scope-form-two">
+              <div class="scope-identification-grid">
                 <div class="scope-field"><label>Date</label><input id="new-date" type="date" value="${escapeHtml(state.dateForm || `${state.year}-03-12`)}"></div>
+                <div class="scope-field"><label>Début prévu</label><input id="new-heure-debut" type="time" value="${escapeHtml(state.heureDebutPrevueForm || '')}"></div>
+                <div class="scope-field"><label>Fin prévue</label><input id="new-heure-fin" type="time" value="${escapeHtml(state.heureFinPrevueForm || '')}"></div>
                 <div class="scope-field"><label>Domaine</label>
                   <select id="new-domaine">${state.referentiels.domaines.map((d) => `<option value="${d.code}" ${d.code === domaine ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || L.domaineAffiche(d.code))}</option>`).join('')}</select>
                 </div>
-                <div class="scope-field"><label>Début prévu</label><input id="new-heure-debut" type="time" value="${escapeHtml(state.heureDebutPrevueForm || '')}"></div>
-                <div class="scope-field"><label>Fin prévue</label><input id="new-heure-fin" type="time" value="${escapeHtml(state.heureFinPrevueForm || '')}"></div>
               </div>
-              ${durationPreview ? `<p class="scope-mode-hint">Durée prévue : ${escapeHtml(durationPreview)}. L’horaire réel sera initialisé avec cet horaire et pourra être corrigé avant clôture.</p>` : '<p class="scope-mode-hint">L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.</p>'}
+              <p class="scope-mode-hint" id="new-duration-preview">${durationPreview ? `Durée prévue : ${escapeHtml(durationPreview)}. L’horaire réel sera initialisé avec cet horaire et pourra être corrigé avant clôture.` : 'L’horaire réel reprend l’horaire prévu à la création et reste corrigeable avant clôture.'}</p>
+              <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
               <div class="scope-field"><label>Public cible</label>
                 ${prHint}
-                <div id="new-cibles" class="scope-chip-grid">
-                  ${cibles.map((c) => `<label class="scope-check-tile">
-                    <input type="checkbox" value="${c.cibleId}" ${state.cibleForm.includes(c.cibleId) ? 'checked' : ''}> <span>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</span>
-                  </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
-                </div>
+                <small class="scope-target-help">${escapeHtml(targetSummary)} Les choix proviennent des référentiels SCOPE du domaine sélectionné.</small>
+                ${renderTargetPicker('new-cibles', cibles, state.cibleForm)}
               </div>
-              <div class="scope-field"><label>Libellé</label><input id="new-libelle" type="text" placeholder="Habileté incendie" value="${escapeHtml(state.libelleForm || '')}"></div>
             </section>
             <section class="scope-form-section">
               <h3>Configuration de formation</h3>
               <div class="scope-option-grid">
                 <label class="scope-radio scope-radio-card"><input type="radio" name="new-config-mode" value="NONE" ${configMode === 'NONE' ? 'checked' : ''}> <span><strong>Événement ponctuel</strong><small>Fonctionnement SCOPE existant, sans configuration persistée.</small></span></label>
-                <label class="scope-radio scope-radio-card"><input type="radio" name="new-config-mode" value="EXISTING" ${configMode === 'EXISTING' ? 'checked' : ''} ${compatibleVersions.length ? '' : 'disabled'}> <span><strong>Configuration existante</strong><small>Association explicite aux règles de formation compatibles.</small></span></label>
+                <label class="scope-radio scope-radio-card"><input type="radio" name="new-config-mode" value="EXISTING" ${configMode === 'EXISTING' ? 'checked' : ''} ${compatibleVersions.length ? '' : 'disabled'}> <span><strong>Utiliser une configuration de formation</strong><small>Association explicite aux règles compatibles avec le domaine et la date.</small></span></label>
               </div>
               <div class="scope-field">
                 <label for="new-definition-version">Configuration</label>
@@ -6231,7 +6292,7 @@
                 </select>
                 <small>${escapeHtml(configHelp)}</small>
               </div>
-              ${selectedConfig ? `<p class="scope-mode-hint">Association : ${escapeHtml(selectedConfig.definition.label || '')} · ${escapeHtml(String(selectedConfig.version.mode_organisation || selectedConfig.version.modeOrganisation || '').toUpperCase() === 'MULTI_SESSION' ? 'Plusieurs sessions' : 'Session unique')}.</p>` : ''}
+              ${renderConfigCompatibility(selectedConfig)}
             </section>
             <section class="scope-form-section">
               <h3>Organisation</h3>
@@ -6249,7 +6310,7 @@
                     </select>
                   </div>
                 </div>
-                <label class="scope-radio"><input id="new-consolidation" type="checkbox" ${state.consolidationChoice !== false ? 'checked' : ''} ${selectedConfig ? 'disabled' : ''}> Consolider la participation</label>
+                <p class="scope-mode-hint">Une participation à l’une des sessions valide la formation. Cette règle est appliquée par SCOPE sans ressaisie technique.</p>
               ` : '<p class="scope-mode-hint">Cette création produira un événement simple.</p>'}
             </section>
             <section class="scope-form-section">
@@ -6258,7 +6319,7 @@
               ${requireExplicit ? '<p class="scope-mode-hint">Les cibles n’ont pas la même règle : le choix est obligatoire.</p>' : ''}
               <div class="scope-option-grid">
                 <label class="scope-radio scope-radio-card"><input type="radio" name="new-mode" value="NOMINATIF" ${chosen === 'NOMINATIF' ? 'checked' : ''}> <span><strong>Suivi nominatif</strong><small>Chaque personne attendue est suivie individuellement.</small></span></label>
-                <label class="scope-radio scope-radio-card"><input type="radio" name="new-mode" value="QUANTITATIF" ${chosen === 'QUANTITATIF' ? 'checked' : ''}> <span><strong>Suivi quantitatif</strong><small>La saisie porte sur des volumes consolidés.</small></span></label>
+                <label class="scope-radio scope-radio-card"><input type="radio" name="new-mode" value="QUANTITATIF" ${chosen === 'QUANTITATIF' ? 'checked' : ''}> <span><strong>Suivi quantitatif</strong><small>Seuls les effectifs globaux sont renseignés, sans liste nominative.</small></span></label>
               </div>
             </section>
             <section class="scope-form-section is-wide">
@@ -6266,11 +6327,12 @@
               <dl class="scope-meta">
                 <div><dt>Public cible</dt><dd>${escapeHtml(cibles.filter((c) => state.cibleForm.includes(c.cibleId)).map((c) => L.niveauAffiche(c.domaineCode, c.niveauCode)).join(', ') || 'À choisir')}</dd></div>
                 <div><dt>Configuration</dt><dd>${escapeHtml(selectedConfig ? (selectedConfig.definition.label || 'Configuration') : 'Événement ponctuel')}</dd></div>
-                <div><dt>Organisation</dt><dd>${escapeHtml(multiMode ? `Plusieurs sessions · Session ${Number(state.sessionIndexChoice || 1)} sur ${sessionCount}` : 'Session unique')}</dd></div>
-                <div><dt>Horaire prévu</dt><dd>${escapeHtml([state.heureDebutPrevueForm, state.heureFinPrevueForm].filter(Boolean).join(' - ') || 'Non renseigné')}</dd></div>
+                <div><dt>Organisation</dt><dd id="new-session-summary">${escapeHtml(multiMode ? `Plusieurs sessions · Session ${Number(state.sessionIndexChoice || 1)} sur ${sessionCount}` : 'Session unique')}</dd></div>
+                <div><dt>Horaire prévu</dt><dd id="new-time-summary">${escapeHtml([state.heureDebutPrevueForm, state.heureFinPrevueForm].filter(Boolean).join(' - ') || 'Non renseigné')}</dd></div>
+                <div><dt>Durée prévue</dt><dd id="new-duration-summary">${escapeHtml(durationPreview || 'Non renseignée')}</dd></div>
                 <div><dt>Suivi</dt><dd>${escapeHtml(chosen === 'QUANTITATIF' ? 'Quantitatif' : 'Nominatif')}</dd></div>
               </dl>
-            </div>
+            </section>
           </div>
           <div class="scope-actions">
             <button type="button" class="scope-btn scope-btn-primary" id="new-save">Créer</button>
@@ -6668,11 +6730,8 @@
       </section>
       <section class="scope-form-section">
         <h4>Public cible</h4>
-        <div id="edit-event-cibles" class="scope-chip-grid">
-          ${cibles.map((c) => `<label class="scope-check-tile">
-            <input type="checkbox" value="${escapeHtml(c.cibleId)}" ${selected.has(c.cibleId) ? 'checked' : ''}${cibleDisabled ? ' disabled' : ''}> <span>${escapeHtml(L.niveauAffiche(c.domaineCode, c.niveauCode))}</span>
-          </label>`).join('') || '<span class="scope-empty">Aucune cible</span>'}
-        </div>
+        <small class="scope-target-help">Les choix proviennent des référentiels SCOPE du domaine de l’événement.</small>
+        ${renderTargetPicker('edit-event-cibles', cibles, selected, { disabled: cibleDisabled })}
       </section>
       <div class="scope-field"><label>Motif de modification</label><textarea id="edit-event-motif">${escapeHtml(form.motif || '')}</textarea></div>
       ${warning}
@@ -9648,11 +9707,11 @@
     });
     document.getElementById('new-heure-debut')?.addEventListener('input', (e) => {
       state.heureDebutPrevueForm = e.target.value;
-      render();
+      updateNewDurationPreview();
     });
     document.getElementById('new-heure-fin')?.addEventListener('input', (e) => {
       state.heureFinPrevueForm = e.target.value;
-      render();
+      updateNewDurationPreview();
     });
     document.getElementById('new-libelle')?.addEventListener('input', (e) => {
       state.libelleForm = e.target.value;
@@ -9679,10 +9738,7 @@
     document.getElementById('new-session-count')?.addEventListener('input', (e) => {
       state.sessionCountChoice = Math.max(2, Number(e.target.value || 2));
       if (Number(state.sessionIndexChoice || 1) > Number(state.sessionCountChoice || 2)) state.sessionIndexChoice = Number(state.sessionCountChoice || 2);
-      render();
-    });
-    document.getElementById('new-consolidation')?.addEventListener('change', (e) => {
-      state.consolidationChoice = Boolean(e.target.checked);
+      updateNewSessionIndexOptions();
     });
     document.getElementById('new-definition-version')?.addEventListener('change', (e) => {
       state.configurationModeForm = e.target.value ? 'EXISTING' : 'NONE';
@@ -9716,6 +9772,8 @@
     });
     document.getElementById('new-session-index')?.addEventListener('change', (e) => {
       state.sessionIndexChoice = Number(e.target.value || 1);
+      const summary = document.getElementById('new-session-summary');
+      if (summary) summary.textContent = `Plusieurs sessions · Session ${Number(state.sessionIndexChoice || 1)} sur ${Math.max(2, Number(state.sessionCountChoice || 2))}`;
     });
     document.getElementById('new-save')?.addEventListener('click', () => {
       const date = document.getElementById('new-date').value;
@@ -9745,7 +9803,7 @@
           modeSuivi,
           modeSession,
           nombreSessionsAttendu,
-          consolidationActive: state.consolidationChoice !== false,
+          consolidationActive: modeSession === 'MULTI',
           sessionIndex: modeSession === 'MULTI' ? Number(state.sessionIndexChoice || 1) : 1,
           definitionVersionId: state.configurationModeForm === 'EXISTING' ? (state.definitionVersionForm || null) : null,
           heureDebut: heureDebutPrevue,

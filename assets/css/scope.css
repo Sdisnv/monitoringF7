@@ -7713,6 +7713,12 @@ body.scope-pdf-open { overflow: hidden; }
   gap: 10px 12px;
 }
 
+.scope-identification-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, .8fr) minmax(120px, .8fr) minmax(160px, 1.1fr);
+  gap: 10px 12px;
+}
+
 .scope-option-grid,
 .scope-chip-grid {
   display: grid;
@@ -7742,6 +7748,79 @@ body.scope-pdf-open { overflow: hidden; }
   margin-top: 2px;
   color: var(--scope-muted);
   line-height: 1.35;
+}
+
+.scope-target-help {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--scope-muted);
+  line-height: 1.35;
+}
+
+.scope-target-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.scope-target-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 12px 7px 34px;
+  border: 1px solid var(--scope-line);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: var(--scope-text);
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.scope-target-chip input {
+  position: absolute;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #1d4ed8;
+}
+
+.scope-target-chip:has(input:checked) {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #153e75;
+  box-shadow: 0 0 0 1px rgba(29, 78, 216, .12);
+}
+
+.scope-target-chip:has(input:focus-visible) {
+  outline: 3px solid rgba(29, 78, 216, .2);
+  outline-offset: 2px;
+}
+
+.scope-target-chip:has(input:disabled) {
+  opacity: .62;
+  cursor: not-allowed;
+}
+
+.scope-config-summary {
+  display: grid;
+  gap: 3px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #153e75;
+}
+
+.scope-config-summary span,
+.scope-config-summary small {
+  color: #153e75;
 }
 
 .scope-business-info {
@@ -7782,5 +7861,14 @@ body.scope-pdf-open { overflow: hidden; }
   .scope-event-form-grid,
   .scope-form-two {
     grid-template-columns: 1fr;
+  }
+
+  .scope-identification-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scope-target-chip {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: flex-start;
   }
 }

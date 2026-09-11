@@ -231,7 +231,7 @@ async function createDpsMulti(service, sessionCount = 6, year = 2026, label = 'F
     const css = read('assets/css/scope.css');
     includes(ui, 'Configuration de formation');
     includes(ui, 'Événement ponctuel / sans configuration');
-    includes(ui, 'Configuration existante');
+    includes(ui, 'Utiliser une configuration de formation');
     includes(ui, 'Session');
     includes(ui, 'data-import-config');
     includes(ui, 'data-import-session');

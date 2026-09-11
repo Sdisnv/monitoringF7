@@ -164,7 +164,7 @@ async function seedPerson(repo, id = 'person-r9'){
     const ui = read('assets/js/scope-ui.js');
     includes(ui, 'Public cible');
     includes(ui, 'Événement ponctuel');
-    includes(ui, 'Configuration existante');
+    includes(ui, 'Utiliser une configuration de formation');
     includes(ui, 'Début prévu');
     includes(ui, 'Fin prévue');
     includes(ui, 'Session ${Number(state.sessionIndexChoice || 1)} sur ${sessionCount}');
