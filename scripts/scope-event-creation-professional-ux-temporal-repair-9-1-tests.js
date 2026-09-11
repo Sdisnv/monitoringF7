@@ -90,7 +90,7 @@ function sourceBlock(source, marker){
     includes(ui, "document.getElementById('new-session-count')?.addEventListener('input'");
     includes(ui, 'Math.max(2, Number(state.sessionCountChoice || 2))');
     includes(ui, 'if (Number(state.sessionIndexChoice || 1) > count) state.sessionIndexChoice = count;');
-    includes(ui, 'Une participation à l’une des sessions valide la formation.');
+    includes(ui, 'Une participation valide à l’une des sessions satisfait la formation.');
     notIncludes(ui, 'Consolider la participation');
     notIncludes(ui, 'new-consolidation');
   });
@@ -101,9 +101,10 @@ function sourceBlock(source, marker){
     const createBlock = sourceBlock(ui, 'function renderNouveau()');
     includes(ui, 'scope-identification-grid');
     includes(css, 'grid-template-columns: minmax(150px, 1fr) minmax(120px, .8fr) minmax(120px, .8fr) minmax(160px, 1.1fr)');
-    includes(ui, '<div><dt>Durée prévue</dt>');
-    includes(ui, '<div><dt>Horaire prévu</dt>');
-    includes(ui, '<div><dt>Organisation</dt>');
+    includes(ui, 'id="new-event-recap"');
+    includes(ui, 'id="new-duration-summary"');
+    includes(ui, 'id="new-time-summary"');
+    includes(ui, 'id="new-session-summary"');
     notIncludes(createBlock, 'Code :', 'pas de code technique dans la création');
   });
 

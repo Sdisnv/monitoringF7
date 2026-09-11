@@ -286,6 +286,31 @@
     return niveau;
   }
 
+  function cibleMetierLabel(cible, niveauCode) {
+    let domaine = '';
+    let niveau = '';
+    let libelle = '';
+    if (cible && typeof cible === 'object' && arguments.length < 2) {
+      domaine = String(cible.domaineCode || cible.domaine_code || '');
+      niveau = String(cible.niveauCode || cible.niveau_code || '');
+      libelle = String(cible.libelle || cible.libelleAffiche || '');
+    } else {
+      domaine = String(cible || '');
+      niveau = String(niveauCode || '');
+    }
+    const compact = niveau.toUpperCase().replace(/[\s/_-]+/g, '');
+    if (domaine === 'JSP' && compact === 'CAD') return 'Cadets';
+    if (domaine === 'AUTO' && compact === 'VL') return 'Cond. VL';
+    if (domaine === 'AUTO' && compact === 'PL') return 'Cond. PL';
+    const affiche = niveauAffiche(domaine, niveau);
+    if (affiche && affiche !== niveau) return affiche;
+    if (libelle) {
+      const raw = `${domaine} ${niveau}`.trim();
+      if (libelle !== niveau && libelle !== raw && libelle !== domaine) return libelle;
+    }
+    return affiche || niveau;
+  }
+
   function statutLabel(code) {
     return STATUT_LABELS[code] || code || '';
   }
@@ -1938,6 +1963,7 @@
     getEncadrementContribution,
     domaineAffiche,
     niveauAffiche,
+    cibleMetierLabel,
     statutLabel,
     formatPrSessionList,
     formatFormateurPrTooltip,
