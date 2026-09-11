@@ -101,7 +101,7 @@ function normalizeSessionConfig(body = {}){
       ? boolFromInput(body.consolidationActive || body.consolidation_active, true)
       : false,
     sessionIndex,
-    sessionLabel: String(body.sessionLabel || body.session_label || (modeSession === 'MULTI' ? `Session ${sessionIndex}` : '')).trim() || null
+    sessionLabel: String(body.sessionLabel || body.session_label || (modeSession === 'MULTI' ? `${sessionIndex}/${count}` : '')).trim() || null
   };
 }
 
@@ -500,6 +500,32 @@ function createScopeService(repo){
     const snapVersion = snapshot && snapshot.version;
     const snapPolicy = snapshot && snapshot.policyVersion;
     if(!version && !definition && !snapDefinition && !v2State){
+      const domain = String(evenement.domaine_code || evenement.domaineCode || '').toUpperCase();
+      if(domain === 'PR' && (evenement.pr_exercise_group_key || evenement.prExerciseGroupKey || evenement.cycle_id || evenement.cycleId)){
+        const exercise = evenement.exercice || (evenement.exercice_id && repo.getExercise ? await repo.getExercise(evenement.exercice_id) : null);
+        const count = Number((exercise && (exercise.nombre_sessions_attendu || exercise.nombreSessionsAttendu)) || evenement.nombre_sessions_attendu || 1);
+        const index = Number(evenement.session_index || evenement.sessionIndex || 0) || null;
+        return {
+          label: (exercise && exercise.libelle) || 'Cycle PR',
+          version: null,
+          validFrom: null,
+          validTo: null,
+          domain: 'PR',
+          organisation: count > 1 ? 'Plusieurs sessions' : 'Session unique',
+          modeOrganisation: count > 1 ? 'MULTI_SESSION' : 'SIMPLE',
+          sessionCount: count,
+          sessionIndex: index,
+          policyLabel: 'Règles PR historiques',
+          originLabel: evenement.origine === 'IMPORT_CSV' ? 'Import historique' : 'Historique existant',
+          isLegacy: true,
+          legacyProjection: true,
+          technical: {
+            prExerciseGroupKey: evenement.pr_exercise_group_key || evenement.prExerciseGroupKey || null,
+            prSessionKey: evenement.pr_session_key || evenement.prSessionKey || null,
+            cycleId: evenement.cycle_id || evenement.cycleId || null
+          }
+        };
+      }
       return {
         label: 'Configuration historique SCOPE',
         isLegacy: true,
@@ -530,6 +556,14 @@ function createScopeService(repo){
       version: (version && (version.version_code || version.versionCode)) || (snapVersion && snapVersion.versionCode) || (v2State && v2State.period) || null,
       validFrom: (version && (version.valid_from || version.validFrom)) || (snapVersion && snapVersion.validFrom) || null,
       validTo: (version && (version.valid_to || version.validTo)) || (snapVersion && snapVersion.validTo) || null,
+      periodLabel: (() => {
+        const from = (version && (version.valid_from || version.validFrom)) || (snapVersion && snapVersion.validFrom) || null;
+        const to = (version && (version.valid_to || version.validTo)) || (snapVersion && snapVersion.validTo) || null;
+        if(from && to) return `${dateOnlyText(from)} - ${dateOnlyText(to)}`;
+        if(from) return `Depuis ${String(from).slice(0, 4)}`;
+        if(to) return `Jusqu’à ${String(to).slice(0, 4)}`;
+        return '';
+      })(),
       domain: (definition && definition.domain) || (version && version.domain) || (snapDefinition && snapDefinition.domain) || evenement.domaine_code,
       organisation: mode === 'MULTI_SESSION' ? 'Plusieurs sessions' : 'Session unique',
       modeOrganisation: mode,
@@ -1467,6 +1501,7 @@ function createScopeService(repo){
       modeSession: 'MULTI',
       nombreSessionsAttendu: Number(definitionVersion.session_count || definitionVersion.sessionCount || 2)
     } : {}));
+    const temporal = normalizeEventTemporal(body);
     return repo.withTransaction(async (tx) => {
       cibleIds = await expandDapGroupedCibles(tx, domaine, libelle, cibleIds);
       const snapshot = definitionVersion
@@ -1503,8 +1538,13 @@ function createScopeService(repo){
         code_cours: codeCours,
         code_source: codeCours,
         source_type: origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL',
-        heure_debut: body.heureDebut || body.heure_debut || body.debut || null,
-        heure_fin: body.heureFin || body.heure_fin || body.fin || null,
+        heure_debut: temporal.plannedStart,
+        heure_fin: temporal.plannedEnd,
+        heure_debut_prevue: temporal.plannedStart,
+        heure_fin_prevue: temporal.plannedEnd,
+        heure_debut_reelle: temporal.actualStart,
+        heure_fin_reelle: temporal.actualEnd,
+        duree_reelle_minutes: temporal.duration,
         salle: body.salle || null,
         responsable: body.responsable || null,
         exercice_id: exercice && exercice.exercice_id,
@@ -1526,7 +1566,7 @@ function createScopeService(repo){
         entite: 'evenement',
         entite_id: evenement.evenement_id,
         action: 'CREER',
-        apres: { date, domaine, libelle, cibleIds, origine, modeSuivi, exerciceId: exercice && exercice.exercice_id, sessionIndex: sessionConfig.sessionIndex }
+        apres: { date, domaine, libelle, cibleIds, origine, modeSuivi, exerciceId: exercice && exercice.exercice_id, sessionIndex: sessionConfig.sessionIndex, temporal }
       });
       return { evenement, exercice, version: evenement.version };
     });
@@ -1541,6 +1581,83 @@ function createScopeService(repo){
     return `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}`;
   }
 
+  function minutesFromHeure(value){
+    const text = normalizeHeureEvent(value);
+    if(!text) return null;
+    const m = String(text).match(/^(\d{2}):(\d{2})$/);
+    if(!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if(h > 23 || min > 59) return null;
+    return h * 60 + min;
+  }
+
+  function durationMinutes(start, end){
+    const debut = minutesFromHeure(start);
+    const fin = minutesFromHeure(end);
+    if(debut == null || fin == null) return null;
+    return fin >= debut ? fin - debut : fin + 24 * 60 - debut;
+  }
+
+  function normalizeEventTemporal(body = {}, current = null){
+    const hasPlannedStart = body.heureDebutPrevue !== undefined || body.heure_debut_prevue !== undefined || body.heureDebut !== undefined || body.heure_debut !== undefined || body.debut !== undefined;
+    const hasPlannedEnd = body.heureFinPrevue !== undefined || body.heure_fin_prevue !== undefined || body.heureFin !== undefined || body.heure_fin !== undefined || body.fin !== undefined;
+    const hasActualStart = body.heureDebutReelle !== undefined || body.heure_debut_reelle !== undefined || body.debutReel !== undefined || body.debut_reel !== undefined;
+    const hasActualEnd = body.heureFinReelle !== undefined || body.heure_fin_reelle !== undefined || body.finReelle !== undefined || body.fin_reelle !== undefined;
+    const plannedStart = hasPlannedStart
+      ? normalizeHeureEvent(body.heureDebutPrevue ?? body.heure_debut_prevue ?? body.heureDebut ?? body.heure_debut ?? body.debut)
+      : (current ? (current.heure_debut_prevue || current.heure_debut || null) : null);
+    const plannedEnd = hasPlannedEnd
+      ? normalizeHeureEvent(body.heureFinPrevue ?? body.heure_fin_prevue ?? body.heureFin ?? body.heure_fin ?? body.fin)
+      : (current ? (current.heure_fin_prevue || current.heure_fin || null) : null);
+    const actualStart = hasActualStart
+      ? normalizeHeureEvent(body.heureDebutReelle ?? body.heure_debut_reelle ?? body.debutReel ?? body.debut_reel)
+      : (current ? (current.heure_debut_reelle || plannedStart || null) : plannedStart);
+    const actualEnd = hasActualEnd
+      ? normalizeHeureEvent(body.heureFinReelle ?? body.heure_fin_reelle ?? body.finReelle ?? body.fin_reelle)
+      : (current ? (current.heure_fin_reelle || plannedEnd || null) : plannedEnd);
+    return {
+      plannedStart,
+      plannedEnd,
+      actualStart,
+      actualEnd,
+      duration: durationMinutes(actualStart, actualEnd),
+      hasAny: hasPlannedStart || hasPlannedEnd || hasActualStart || hasActualEnd
+    };
+  }
+
+  function eventTemporalPayload(evenement = {}){
+    const plannedStart = evenement.heure_debut_prevue || evenement.heure_debut || null;
+    const plannedEnd = evenement.heure_fin_prevue || evenement.heure_fin || null;
+    const actualStart = evenement.heure_debut_reelle || plannedStart || null;
+    const actualEnd = evenement.heure_fin_reelle || plannedEnd || null;
+    const duration = evenement.duree_reelle_minutes == null
+      ? durationMinutes(actualStart, actualEnd)
+      : Number(evenement.duree_reelle_minutes);
+    return {
+      plannedStart,
+      plannedEnd,
+      actualStart,
+      actualEnd,
+      plannedLabel: plannedStart && plannedEnd ? `${plannedStart} - ${plannedEnd}` : (plannedStart || plannedEnd || ''),
+      actualLabel: actualStart && actualEnd ? `${actualStart} - ${actualEnd}` : (actualStart || actualEnd || ''),
+      durationMinutes: Number.isFinite(duration) ? duration : null
+    };
+  }
+
+  function normalizeParticipationTemporal(item = {}, evenement = {}){
+    const hasStart = item.heureDebutIndividuelle !== undefined || item.heure_debut_individuelle !== undefined || item.debutIndividuel !== undefined;
+    const hasEnd = item.heureFinIndividuelle !== undefined || item.heure_fin_individuelle !== undefined || item.finIndividuelle !== undefined;
+    if(!hasStart && !hasEnd) return {};
+    const start = normalizeHeureEvent(item.heureDebutIndividuelle ?? item.heure_debut_individuelle ?? item.debutIndividuel);
+    const end = normalizeHeureEvent(item.heureFinIndividuelle ?? item.heure_fin_individuelle ?? item.finIndividuelle);
+    return {
+      heure_debut_individuelle: start,
+      heure_fin_individuelle: end,
+      duree_individuelle_minutes: durationMinutes(start || evenement.heure_debut_reelle || evenement.heure_debut, end || evenement.heure_fin_reelle || evenement.heure_fin)
+    };
+  }
+
   function sameIdList(a, b){
     const left = (a || []).map((id) => String(id)).sort();
     const right = (b || []).map((id) => String(id)).sort();
@@ -1548,7 +1665,7 @@ function createScopeService(repo){
   }
 
   function journalChamps(avant, apres){
-    const keys = ['date', 'heure_debut', 'heure_fin', 'libelle', 'statut'];
+    const keys = ['date', 'heure_debut', 'heure_fin', 'heure_debut_prevue', 'heure_fin_prevue', 'heure_debut_reelle', 'heure_fin_reelle', 'duree_reelle_minutes', 'libelle', 'statut'];
     return keys
       .filter((key) => String(avant[key] || '') !== String(apres[key] || ''))
       .map((champ) => ({ champ, avant: avant[champ] ?? null, apres: apres[champ] ?? null }));
@@ -1691,11 +1808,23 @@ function createScopeService(repo){
     if(wantsDomaine){
       patch.domaine_code = String(body.domaineCode || body.domaine_code);
     }
-    if(body.heureDebut !== undefined || body.heure_debut !== undefined || body.debut !== undefined){
-      patch.heure_debut = normalizeHeureEvent(body.heureDebut || body.heure_debut || body.debut);
-    }
-    if(body.heureFin !== undefined || body.heure_fin !== undefined || body.fin !== undefined){
-      patch.heure_fin = normalizeHeureEvent(body.heureFin || body.heure_fin || body.fin);
+    const temporal = normalizeEventTemporal(body, evenement);
+    if(temporal.hasAny){
+      const wantsPlannedStart = body.heureDebutPrevue !== undefined || body.heure_debut_prevue !== undefined || body.heureDebut !== undefined || body.heure_debut !== undefined || body.debut !== undefined;
+      const wantsPlannedEnd = body.heureFinPrevue !== undefined || body.heure_fin_prevue !== undefined || body.heureFin !== undefined || body.heure_fin !== undefined || body.fin !== undefined;
+      const wantsActualStart = body.heureDebutReelle !== undefined || body.heure_debut_reelle !== undefined || body.debutReel !== undefined || body.debut_reel !== undefined;
+      const wantsActualEnd = body.heureFinReelle !== undefined || body.heure_fin_reelle !== undefined || body.finReelle !== undefined || body.fin_reelle !== undefined;
+      if(wantsPlannedStart){
+        patch.heure_debut = temporal.plannedStart;
+        patch.heure_debut_prevue = temporal.plannedStart;
+      }
+      if(wantsPlannedEnd){
+        patch.heure_fin = temporal.plannedEnd;
+        patch.heure_fin_prevue = temporal.plannedEnd;
+      }
+      if(wantsActualStart) patch.heure_debut_reelle = temporal.actualStart;
+      if(wantsActualEnd) patch.heure_fin_reelle = temporal.actualEnd;
+      if(wantsActualStart || wantsActualEnd) patch.duree_reelle_minutes = temporal.duration;
     }
     if(body.salle !== undefined) patch.salle = String(body.salle || '').trim() || null;
     if(body.responsable !== undefined) patch.responsable = String(body.responsable || '').trim() || null;
@@ -1760,12 +1889,22 @@ function createScopeService(repo){
         date: isoDate(evenement.date),
         heure_debut: evenement.heure_debut || null,
         heure_fin: evenement.heure_fin || null,
+        heure_debut_prevue: evenement.heure_debut_prevue || null,
+        heure_fin_prevue: evenement.heure_fin_prevue || null,
+        heure_debut_reelle: evenement.heure_debut_reelle || null,
+        heure_fin_reelle: evenement.heure_fin_reelle || null,
+        duree_reelle_minutes: evenement.duree_reelle_minutes == null ? null : Number(evenement.duree_reelle_minutes),
         libelle: evenement.libelle,
         statut: evenement.statut
       }, {
         date: isoDate(current.date),
         heure_debut: current.heure_debut || null,
         heure_fin: current.heure_fin || null,
+        heure_debut_prevue: current.heure_debut_prevue || null,
+        heure_fin_prevue: current.heure_fin_prevue || null,
+        heure_debut_reelle: current.heure_debut_reelle || null,
+        heure_fin_reelle: current.heure_fin_reelle || null,
+        duree_reelle_minutes: current.duree_reelle_minutes == null ? null : Number(current.duree_reelle_minutes),
         libelle: current.libelle,
         statut: current.statut
       });
@@ -1787,6 +1926,7 @@ function createScopeService(repo){
           date: isoDate(evenement.date),
           heure_debut: evenement.heure_debut || null,
           heure_fin: evenement.heure_fin || null,
+          temporal: eventTemporalPayload(evenement),
           libelle: evenement.libelle,
           statut: evenement.statut,
           version: evenement.version
@@ -1797,6 +1937,7 @@ function createScopeService(repo){
           date: isoDate(current.date),
           heure_debut: current.heure_debut || null,
           heure_fin: current.heure_fin || null,
+          temporal: eventTemporalPayload(current),
           libelle: current.libelle,
           statut: current.statut,
           version: current.version,
@@ -3642,9 +3783,11 @@ function createScopeService(repo){
           skippedEncadrement += 1;
           continue;
         }
+        const temporalPatch = normalizeParticipationTemporal(item, evenement);
         await tx.upsertParticipation({
           ...(existing || { evenement_id: eventId, personne_id: personneId, role: 'PARTICIPANT' }),
           ...patch,
+          ...temporalPatch,
           role: participationRole,
           source: 'SAISIE',
           auteur_id: actorId(actor)
@@ -3786,12 +3929,13 @@ function createScopeService(repo){
       : (keepParticipantPresence ? 'PRESENT' : (attenduInclus ? 'NON_RENSEIGNE' : 'NON_CONCERNE'));
     await tx.upsertParticipation({
       ...(existing || { evenement_id: eventId, personne_id: personneId }),
-      statut: statutEncadrement,
-      motif_absence: null,
-      commentaire: null,
-      role,
-      source: keepParticipantPresence ? existing.source : 'ENCADREMENT',
-      auteur_id: actorId(actor)
+          statut: statutEncadrement,
+          motif_absence: null,
+          commentaire: null,
+          ...(options.temporal || {}),
+          role,
+          source: keepParticipantPresence ? existing.source : 'ENCADREMENT',
+          auteur_id: actorId(actor)
     });
     return { changed: true };
   }
@@ -3812,6 +3956,7 @@ function createScopeService(repo){
       if(!personne) throw new HttpError(404, 'personne_introuvable', 'Personne introuvable.');
       const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
       const v2AllSessions = Boolean(v2State && serieComplete);
+      const temporalPatch = normalizeParticipationTemporal(body, evenement);
       if(serieComplete && !v2AllSessions && role !== 'FORMATEUR'){
         throw new HttpError(422, 'serie_formateur_uniquement', 'L’option série complète est réservée au rôle Formateur.');
       }
@@ -3828,7 +3973,10 @@ function createScopeService(repo){
         : [evenement];
       let changed = 0;
       for(const target of targets){
-        const result = await upsertEncadrementRow(tx, target, personneId, role, actor, { allowSameRole: serieComplete });
+        const targetTemporal = target.evenement_id === evenement.evenement_id
+          ? temporalPatch
+          : normalizeParticipationTemporal(body, target);
+        const result = await upsertEncadrementRow(tx, target, personneId, role, actor, { allowSameRole: serieComplete, temporal: targetTemporal });
         if(!result.changed) continue;
         await bumpOrConflict(tx, target.evenement_id, target.evenement_id === eventId ? baseVersion : target.version, {});
         await mirrorMultiSessionV2Participation(tx, v2AllSessions ? v2State : null, target.evenement_id, {
@@ -4487,8 +4635,9 @@ function createScopeService(repo){
           : { code: 'EN_COURS', label: 'En cours' }))
       : businessEtatForEvenement(evenement, { participations, attendus: attendusActifs, saisie, today: null });
     const formationConfiguration = await resolveEventFormationConfiguration(evenement, v2State);
+    const temporal = eventTemporalPayload(evenement);
     return {
-      evenement: { ...evenement, mode_suivi: modeSuivi },
+      evenement: { ...evenement, mode_suivi: modeSuivi, temporal },
       exercice: exerciceInfo,
       cibles,
       attendus: attendusActifs,
@@ -4517,6 +4666,7 @@ function createScopeService(repo){
       jsp,
       formationConfiguration,
       formation_configuration: formationConfiguration,
+      temporal,
       populationCoherence: expectedPopulationCoherence(coherenceAttendus, participations),
       participationPolicy: policyPayload(eventPolicy, await participationMotifRows(repo)),
       version: evenement.version

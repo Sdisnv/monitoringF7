@@ -212,7 +212,7 @@ async function seedContext(options = {}){
     includes(ui, 'const directSaisie =');
     includes(ui, "new Set(['PLANIFIE', 'A_TRAITER', 'SAISIE_EN_COURS'])");
     includes(ui, 'data-report-event');
-    includes(ui, 'Compléter la saisie');
+    includes(ui, 'Compléter');
   });
 
   await record('10 — label métier Recette TEST respecte la casse', async () => {

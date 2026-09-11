@@ -51,6 +51,62 @@ function exerciseReportTitle(event){
   return `RAPPORT — ${core.toLocaleUpperCase('fr-CH')}`;
 }
 
+function normalizeTime(value){
+  if(value == null || String(value).trim() === '') return null;
+  const text = String(value).trim();
+  const m = text.match(/^(\d{1,2})[h:.]?(\d{2})?$/i);
+  if(!m) return text;
+  return `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}`;
+}
+
+function timeMinutes(value){
+  const text = normalizeTime(value);
+  if(!text) return null;
+  const m = String(text).match(/^(\d{2}):(\d{2})$/);
+  if(!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if(h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
+function durationMinutes(start, end){
+  const a = timeMinutes(start);
+  const b = timeMinutes(end);
+  if(a == null || b == null) return null;
+  return b >= a ? b - a : b + 1440 - a;
+}
+
+function durationLabel(minutes){
+  const value = Number(minutes);
+  if(!Number.isFinite(value)) return '';
+  const h = Math.floor(value / 60);
+  const m = value % 60;
+  if(h && m) return `${h} h ${String(m).padStart(2, '0')}`;
+  if(h) return `${h} h`;
+  return `${m} min`;
+}
+
+function eventTemporal(event = {}){
+  const plannedStart = normalizeTime(event.heure_debut_prevue || event.heureDebutPrevue || event.heure_debut || event.heureDebut);
+  const plannedEnd = normalizeTime(event.heure_fin_prevue || event.heureFinPrevue || event.heure_fin || event.heureFin);
+  const actualStart = normalizeTime(event.heure_debut_reelle || event.heureDebutReelle || plannedStart);
+  const actualEnd = normalizeTime(event.heure_fin_reelle || event.heureFinReelle || plannedEnd);
+  const minutes = event.duree_reelle_minutes == null && event.dureeReelleMinutes == null
+    ? durationMinutes(actualStart, actualEnd)
+    : Number(event.duree_reelle_minutes == null ? event.dureeReelleMinutes : event.duree_reelle_minutes);
+  return {
+    plannedStart,
+    plannedEnd,
+    actualStart,
+    actualEnd,
+    plannedLabel: [plannedStart, plannedEnd].filter(Boolean).join(' - '),
+    actualLabel: [actualStart, actualEnd].filter(Boolean).join(' - '),
+    durationMinutes: Number.isFinite(minutes) ? minutes : null,
+    durationLabel: Number.isFinite(minutes) ? durationLabel(minutes) : ''
+  };
+}
+
 const REPORT_KINDS = Object.freeze(['PERIOD', 'DOMAIN', 'TARGET', 'EVENT', 'PERSON', 'SESSION', 'JSP', 'PARTICIPATION', 'FORMATION', 'CYCLE']);
 
 const STATUT_LABELS = Object.freeze({
@@ -354,6 +410,7 @@ function multiSessionV2SessionReportModel(fiche, includeNominatif){
   const label = event.libelle || currentSession.libelle || 'Session Multi-session';
   const sessionLabel = `Session ${index}/${count}`;
   const period = { from: event.date || currentSession.date, to: event.date || currentSession.date, preset: 'CUSTOM' };
+  const temporal = eventTemporal(Object.assign({}, currentSession, event));
   return {
     kind: 'SESSION',
     period,
@@ -375,8 +432,10 @@ function multiSessionV2SessionReportModel(fiche, includeNominatif){
       domaine,
       statut: event.statut,
       statutLabel: STATUT_LABELS[event.statut] || event.statut || '—',
-      cibles: (fiche.cibles || []).map((c) => ({ code: c.niveau_code, libelle: c.libelle }))
+      cibles: (fiche.cibles || []).map((c) => ({ code: c.niveau_code, libelle: c.libelle })),
+      temporal
     },
+    temporal,
     multiSessionV2Session: true,
     multisessionLabel: state.label || state.multisession && state.multisession.label || 'Multi-session',
     sessionIndex: index,
@@ -714,7 +773,7 @@ async function multiSessionV2ReportModel(repo, fiche, query, includeNominatif){
     explain: null,
     nominatif: includeNominatif ? nominatif : [],
     encadrement: includeNominatif ? encadrementRows(fiche) : [],
-    sessions: state.sessions || [],
+    sessions: (state.sessions || []).map((session) => Object.assign({}, session, { temporal: eventTemporal(session) })),
     exceptions: {
       excuses: includeNominatif ? excuses : [],
       absents: includeNominatif ? absents : []
@@ -1080,6 +1139,7 @@ async function collectReport(repo, query, options){
     }
     const isLegacy = fiche.evenement.origine === 'LEGACY_AGGREGATED' || fiche.modeSuivi === 'LEGACY';
     const cibles = fiche.cibles || [];
+    const temporal = eventTemporal(fiche.evenement);
     const eventOfficial = isLegacy ? null : Object.assign({}, fiche.compteurs || {}, {
       officiel: fiche.evenement.statut === 'REALISE',
       kind: fiche.evenement.statut === 'REALISE' ? 'OFFICIEL' : 'PREVIEW',
@@ -1118,8 +1178,10 @@ async function collectReport(repo, query, options){
         statutLabel: STATUT_LABELS[fiche.evenement.statut] || fiche.evenement.statut,
         modeLabel: MODE_LABELS[fiche.modeSuivi] || fiche.modeSuivi,
         sectionEffectif: fiche.sectionEffectif == null ? null : fiche.sectionEffectif,
-        rattrapages: fiche.rattrapages || { count: 0 }
+        rattrapages: fiche.rattrapages || { count: 0 },
+        temporal
       },
+      temporal,
       officiel: eventOfficial,
       legacy: isLegacy ? {
         kind: KINDS.LEGACY,

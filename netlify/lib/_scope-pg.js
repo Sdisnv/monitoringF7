@@ -52,6 +52,11 @@ function mapEvent(row){
     source_type: row.source_type || null,
     heure_debut: row.heure_debut || null,
     heure_fin: row.heure_fin || null,
+    heure_debut_prevue: row.heure_debut_prevue || row.heure_debut || null,
+    heure_fin_prevue: row.heure_fin_prevue || row.heure_fin || null,
+    heure_debut_reelle: row.heure_debut_reelle || row.heure_debut || null,
+    heure_fin_reelle: row.heure_fin_reelle || row.heure_fin || null,
+    duree_reelle_minutes: row.duree_reelle_minutes == null ? null : Number(row.duree_reelle_minutes),
     salle: row.salle || null,
     responsable: row.responsable || null,
     cycle_id: row.cycle_id || null,
@@ -659,8 +664,13 @@ function createPgRepo(client){
       const eventColumns = [
         'evenement_id', 'internal_event_id', 'date', 'domaine_code', 'sous_domaine_code', 'libelle', 'statut', 'origine', 'mode_suivi',
         'identifiant_externe', 'code_cours', 'code_source', 'source_type', 'heure_debut', 'heure_fin', 'salle', 'responsable',
+        'heure_debut_prevue', 'heure_fin_prevue', 'heure_debut_reelle', 'heure_fin_reelle', 'duree_reelle_minutes',
         'exercice_id', 'session_index', 'session_label', 'pr_exercise_group_key', 'pr_session_key'
       ];
+      const plannedStart = row.heure_debut_prevue || row.heureDebutPrevue || row.heure_debut || row.heureDebut || null;
+      const plannedEnd = row.heure_fin_prevue || row.heureFinPrevue || row.heure_fin || row.heureFin || null;
+      const actualStart = row.heure_debut_reelle || row.heureDebutReelle || plannedStart;
+      const actualEnd = row.heure_fin_reelle || row.heureFinReelle || plannedEnd;
       const params = [
         id,
         row.internal_event_id || row.internalEventId || id,
@@ -675,10 +685,15 @@ function createPgRepo(client){
         codeCours,
         row.code_source || row.codeSource || codeCours,
         row.source_type || row.sourceType || (row.origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
-        row.heure_debut || row.heureDebut || null,
-        row.heure_fin || row.heureFin || null,
+        plannedStart,
+        plannedEnd,
         row.salle || null,
         row.responsable || null,
+        plannedStart,
+        plannedEnd,
+        actualStart,
+        actualEnd,
+        row.duree_reelle_minutes == null ? (row.dureeReelleMinutes == null ? null : Number(row.dureeReelleMinutes)) : Number(row.duree_reelle_minutes),
         row.exercice_id || row.exerciceId || null,
         row.session_index == null ? (row.sessionIndex == null ? null : Number(row.sessionIndex)) : Number(row.session_index),
         row.session_label || row.sessionLabel || null,
@@ -806,6 +821,7 @@ function createPgRepo(client){
       let allowed = [
         'date','domaine_code','libelle','statut','origine','mode_suivi','population_figee','population_version',
         'figee_at','figee_par','cloture_at','cloture_par','sous_domaine_code','heure_debut','heure_fin','salle','responsable','cycle_id',
+        'heure_debut_prevue','heure_fin_prevue','heure_debut_reelle','heure_fin_reelle','duree_reelle_minutes',
         'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','exercise_equivalence_key','participation_policy_version','participation_policy_snapshot',
         'definition_version_id','policy_version_id','engine_route','engine_snapshot'
       ];
@@ -1061,8 +1077,9 @@ function createPgRepo(client){
     async upsertParticipation(row){
       const result = await q(
         `insert into scope_participations(
-           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id
-         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id,
+           heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes
+         ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
          on conflict (evenement_id, personne_id) do update set
            statut = excluded.statut,
            motif_absence = excluded.motif_absence,
@@ -1071,12 +1088,18 @@ function createPgRepo(client){
            source = excluded.source,
            auteur_id = excluded.auteur_id,
            cible_suivie_id = excluded.cible_suivie_id,
+           heure_debut_individuelle = excluded.heure_debut_individuelle,
+           heure_fin_individuelle = excluded.heure_fin_individuelle,
+           duree_individuelle_minutes = excluded.duree_individuelle_minutes,
            updated_at = now()
          returning *`,
         [
           row.evenement_id, row.personne_id, row.statut, row.motif_absence || null,
           row.commentaire || null, row.role || 'PARTICIPANT', row.source || 'SAISIE', row.auteur_id || null,
-          row.cible_suivie_id || null
+          row.cible_suivie_id || null,
+          row.heure_debut_individuelle || row.heureDebutIndividuelle || null,
+          row.heure_fin_individuelle || row.heureFinIndividuelle || null,
+          row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes)
         ]
       );
       return result.rows[0];
@@ -1086,10 +1109,12 @@ function createPgRepo(client){
       if(!list.length) return [];
       const result = await q(
         `insert into scope_participations(
-           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id
+           evenement_id, personne_id, statut, motif_absence, commentaire, role, source, auteur_id, cible_suivie_id,
+           heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes
          )
          select evenement_id, personne_id, statut, motif_absence, commentaire,
-                coalesce(role, 'PARTICIPANT'), coalesce(source, 'SAISIE'), auteur_id, cible_suivie_id
+                coalesce(role, 'PARTICIPANT'), coalesce(source, 'SAISIE'), auteur_id, cible_suivie_id,
+                heure_debut_individuelle, heure_fin_individuelle, duree_individuelle_minutes
          from jsonb_to_recordset($1::jsonb) as x(
            evenement_id uuid,
            personne_id uuid,
@@ -1099,7 +1124,10 @@ function createPgRepo(client){
            role text,
            source text,
            auteur_id text,
-           cible_suivie_id uuid
+           cible_suivie_id uuid,
+           heure_debut_individuelle text,
+           heure_fin_individuelle text,
+           duree_individuelle_minutes integer
          )
          on conflict (evenement_id, personne_id) do update set
            statut = excluded.statut,
@@ -1109,6 +1137,9 @@ function createPgRepo(client){
            source = excluded.source,
            auteur_id = excluded.auteur_id,
            cible_suivie_id = excluded.cible_suivie_id,
+           heure_debut_individuelle = excluded.heure_debut_individuelle,
+           heure_fin_individuelle = excluded.heure_fin_individuelle,
+           duree_individuelle_minutes = excluded.duree_individuelle_minutes,
            updated_at = now()
          returning *`,
         [JSON.stringify(list.map((row) => ({
@@ -1120,7 +1151,10 @@ function createPgRepo(client){
           role: row.role || 'PARTICIPANT',
           source: row.source || 'SAISIE',
           auteur_id: row.auteur_id || null,
-          cible_suivie_id: row.cible_suivie_id || null
+          cible_suivie_id: row.cible_suivie_id || null,
+          heure_debut_individuelle: row.heure_debut_individuelle || row.heureDebutIndividuelle || null,
+          heure_fin_individuelle: row.heure_fin_individuelle || row.heureFinIndividuelle || null,
+          duree_individuelle_minutes: row.duree_individuelle_minutes == null ? (row.dureeIndividuelleMinutes == null ? null : Number(row.dureeIndividuelleMinutes)) : Number(row.duree_individuelle_minutes)
         })))]
       );
       return result.rows;

@@ -1322,7 +1322,9 @@
         statut: r.statut,
         role: preserveParticipationRole(r.role),
         motif_absence: r.motifAbsence || null,
-        commentaire: r.commentaire || null
+        commentaire: r.commentaire || null,
+        heureDebutIndividuelle: r.heureDebutIndividuelle || null,
+        heureFinIndividuelle: r.heureFinIndividuelle || null
       }));
   }
 

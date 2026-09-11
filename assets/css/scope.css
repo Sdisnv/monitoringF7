@@ -7679,3 +7679,108 @@ body.scope-pdf-open { overflow: hidden; }
 /* UX-CLEANUP-1 — remaining inline styles in scope-ui.js (~95). This lot did not migrate page titles, report KPI blocks, or form margin-top helpers. */
 /* Legacy divergences kept on purpose: .scope-chips / .scope-import-pill / .scope-status-pill / .scope-mode-pill 999px; table-as-card @media 800px except .scope-event-saisie. */
 /* === /UX-DS-1 === */
+
+.scope-event-form-card {
+  max-width: 1120px;
+  width: 100%;
+}
+
+.scope-event-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.scope-form-section {
+  padding: 14px;
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.scope-form-section.is-wide {
+  grid-column: 1 / -1;
+}
+
+.scope-form-section h3,
+.scope-form-section h4 {
+  margin: 0 0 12px;
+}
+
+.scope-form-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.scope-option-grid,
+.scope-chip-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.scope-radio-card,
+.scope-check-tile {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--scope-line);
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.scope-radio-card:has(input:checked),
+.scope-check-tile:has(input:checked) {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.scope-radio-card small {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  line-height: 1.35;
+}
+
+.scope-business-info {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #153e75;
+}
+
+.scope-business-info .scope-section-title,
+.scope-business-info dt {
+  color: #153e75;
+}
+
+.scope-person-time-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.scope-person-time-control label {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--scope-muted);
+}
+
+.scope-person-time-control input {
+  width: 92px;
+}
+
+.scope-edit-event-modal {
+  max-width: 760px;
+}
+
+@media (max-width: 760px) {
+  .scope-event-form-grid,
+  .scope-form-two {
+    grid-template-columns: 1fr;
+  }
+}

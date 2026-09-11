@@ -112,7 +112,8 @@ async function record(name, fn){
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     includes(ui, "simpleReportReady = !isLegacy && !v2 && String(ev.statut || '').toUpperCase() === 'REALISE'");
     includes(ui, 'data-report-event="${escapeHtml(ev.evenement_id)}">Voir le rapport</button>');
-    includes(ui, '<a class="scope-events-libelle" href="#/exercices/${escapeHtml(ev.evenement_id)}"');
+    includes(ui, 'scope-events-libelle');
+    includes(ui, "directSaisie ? href : `#/exercices/${ev.evenement_id}`");
   });
 
   await record('TEST 6 — protections métier', async () => {

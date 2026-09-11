@@ -895,8 +895,11 @@ class ScopePdfRenderer {
   renderEventBody(m){
     if(m.multiSessionV2) return this.renderMultiSessionV2EventBody(m);
     const dap = m.domaine === 'DAP' || (m.event && m.event.domaine === 'DAP');
+    const temporal = m.temporal || (m.event && m.event.temporal) || {};
     this.kv([
       { label: 'Date de l’exercice', value: formatDisplayDate(m.event.date) },
+      { label: 'Horaire', value: temporal.actualLabel || '—' },
+      { label: 'Durée réalisée', value: temporal.durationLabel || (temporal.durationMinutes == null ? '—' : `${temporal.durationMinutes} min`) },
       { label: 'Statut', value: m.event.statutLabel },
       { label: 'Mode de suivi', value: m.event.modeLabel },
       { label: 'Domaine', value: domaineLabel(m.event.domaine) || domaineLabel(m.domaine) || '—' },
@@ -1012,14 +1015,16 @@ class ScopePdfRenderer {
     ], { cols: 2, rowH: 20 });
     this.iconHeading('calendar', 'Sessions constitutives', TYPE.section, { spaceBefore: 6, after: TYPE.sectionGap });
     this.table(
-      ['Session', 'Événement', 'Date'],
+      ['Session', 'Événement', 'Date', 'Horaire', 'Durée'],
       (m.sessions || []).map((session, index) => [
         `${index + 1}/${(m.sessions || []).length}`,
         session.libelle || '',
-        formatDisplayDate(session.date)
+        formatDisplayDate(session.date),
+        (session.temporal && session.temporal.actualLabel) || '—',
+        (session.temporal && session.temporal.durationLabel) || '—'
       ]),
-      [64, 310, 85],
-      { rowH: 15, wrap: [false, true, false] }
+      [54, 235, 62, 58, 50],
+      { rowH: 15, wrap: [false, true, false, false, false] }
     );
     this.iconHeading('kpi', 'Synthèse chiffrée', TYPE.section, { spaceBefore: 4, after: TYPE.sectionGap });
     this.kpiMultiSessionV2(m);
@@ -1121,6 +1126,7 @@ class ScopePdfRenderer {
   renderMultiSessionV2SessionBody(m){
     const s = m.sessionSummary || {};
     const innerW = PAGE_W - 2 * MARGIN;
+    const temporal = m.temporal || (m.event && m.event.temporal) || {};
     this.renderReportTitle(
       'RAPPORT DE PRÉSENCE',
       String((m.event && m.event.libelle) || 'Session Multi-session').toLocaleUpperCase('fr-CH'),
@@ -1129,6 +1135,8 @@ class ScopePdfRenderer {
     this.kv([
       { label: 'Domaine', value: domaineLabel(m.domaine) || '—' },
       { label: 'Date', value: formatDisplayDate(m.event && m.event.date) },
+      { label: 'Horaire réalisé', value: temporal.actualLabel || '—' },
+      { label: 'Durée réalisée', value: temporal.durationLabel || (temporal.durationMinutes == null ? '—' : `${temporal.durationMinutes} min`) },
       { label: 'Multi-session', value: m.multisessionLabel || '—' },
       { label: 'Session', value: `${m.sessionIndex || 1} sur ${m.sessionCount || 1}` },
       { label: 'Population Multi-session', value: String(m.population || 0) },
