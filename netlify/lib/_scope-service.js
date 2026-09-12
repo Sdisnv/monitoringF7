@@ -1618,6 +1618,27 @@ function createScopeService(repo){
     return Boolean(evenement && evenement.population_figee) && !isQuantitatif(evenement) && evenement.origine !== 'LEGACY_AGGREGATED';
   }
 
+  function isOperationalAttendu(row){
+    return Boolean(row) && row.inclus !== false;
+  }
+
+  function operationalAttendus(rows){
+    return (rows || []).filter(isOperationalAttendu);
+  }
+
+  function throwIfEventHidden(evenement){
+    if(isHiddenEvenement(evenement)){
+      throw new HttpError(422, 'evenement_masque', 'Cet événement n’est plus visible dans les vues opérationnelles.');
+    }
+  }
+
+  function recordedParticipantRows(participations){
+    return (participations || []).filter((row) => (
+      recordedParticipationStatut(row && row.statut)
+      && !ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase())
+    ));
+  }
+
   function isEffectiveParticipationStatut(statut){
     return String(statut || '').toUpperCase() === 'PRESENT';
   }
@@ -2781,7 +2802,7 @@ function createScopeService(repo){
   async function previewAttendus(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-    if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    throwIfEventHidden(evenement);
     if(isCancelledEvenement(evenement)){
       throw new HttpError(422, 'evenement_annule', 'Un événement annulé n’a pas de population à préparer.');
     }
@@ -3145,7 +3166,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-      if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       if(isCancelledEvenement(evenement)){
         throw new HttpError(422, 'evenement_annule', 'Un événement annulé ne peut plus recevoir de population.');
       }
@@ -3156,14 +3177,17 @@ function createScopeService(repo){
         throw new HttpError(422, 'mode_quantitatif', 'Un événement quantitatif n’a pas de population à figer.');
       }
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Le gel n’est possible que sur un événement PLANIFIE.');
-      if(evenement.population_figee){
-        if(body && body.assignmentRequest){
-          const current = await photographieFigee(eventId);
-          return { evenement, version: evenement.version, count: current.count || 0, alreadyAssigned: true };
-        }
+      const existingParticipations = tx.listParticipations ? await tx.listParticipations(eventId) : [];
+      const recordedAssigned = recordedParticipantRows(existingParticipations);
+      if(evenement.population_figee && !(body && body.assignmentRequest)){
         throw new HttpError(422, 'deja_figee', 'La population est déjà figée.');
       }
-      const preview = await previewAttendus(eventId);
+      if(evenement.population_figee && recordedAssigned.length){
+        throw new HttpError(422, 'population_verrouillee', 'Des participations réelles existent. La population assignée ne peut plus être remplacée.');
+      }
+      const preview = evenement.population_figee
+        ? await photographieFigee(eventId)
+        : await previewAttendus(eventId);
       const previewById = new Map((preview.personnes || []).map((personne) => [String(personne.personneId || personne.personne_id || ''), personne]));
       const hasSelectionBody = Array.isArray(body && body.selectedPersonIds) || Array.isArray(body && body.personneIds);
       const requestedIds = Array.isArray(body && body.selectedPersonIds)
@@ -3183,14 +3207,30 @@ function createScopeService(repo){
       const snapshot = evenement.participation_policy_snapshot || await capturePolicySnapshot(tx, evenement.domaine_code);
       const selectedSet = new Set(selectedIds.map((id) => String(id)));
       const existingAttendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
-      for(const row of existingAttendus || []){
-        if(selectedSet.has(String(row.personne_id))) continue;
-        if(row.inclus === false) continue;
+      const exclusionIds = new Set([
+        ...(preview.personnes || []).map((personne) => String(personne.personneId || personne.personne_id || '')).filter(Boolean),
+        ...(existingAttendus || []).map((row) => String(row.personne_id || row.personneId || '')).filter(Boolean)
+      ]);
+      for(const personneId of exclusionIds){
+        if(selectedSet.has(personneId)) continue;
+        const existing = (existingAttendus || []).find((row) => String(row.personne_id) === personneId) || {};
         await tx.upsertAttendu({
-          ...row,
+          ...existing,
+          evenement_id: eventId,
+          personne_id: personneId,
           inclus: false,
+          origine: existing.origine || 'REGLE',
           origine_retrait: 'NON_ASSIGNE'
         });
+        const participation = (existingParticipations || []).find((row) => String(row.personne_id) === personneId);
+        if(participation && !ROLES_ENCADREMENT.has(String(participation.role || '').toUpperCase()) && !recordedParticipationStatut(participation.statut)){
+          await tx.upsertParticipation({
+            ...participation,
+            statut: 'NON_CONCERNE',
+            source: 'NON_ASSIGNE',
+            auteur_id: actorId(actor)
+          });
+        }
       }
       for(const personneId of selectedIds){
         const personne = previewById.get(String(personneId)) || {};
@@ -3395,10 +3435,11 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Encadrement saisissable uniquement sur PLANIFIE.');
       const participation = await tx.getParticipation(eventId, personneId);
       if(!participation || !ROLES_ENCADREMENT.has(participation.role)){
-        throw new HttpError(404, 'encadrement_introuvable', 'Encadrement introuvable.');
+        throw new HttpError(422, 'encadrement_introuvable', 'Cette personne n’est plus dans l’encadrement de cet événement.');
       }
       if(scope === 'SERIE' && String(participation.role || '').toUpperCase() !== 'FORMATEUR'){
         throw new HttpError(422, 'serie_formateur_uniquement', 'Le retrait de série est réservé au rôle Formateur.');
@@ -3493,6 +3534,7 @@ function createScopeService(repo){
 
   async function ensureMultiSessionV2EventRows(store, state, evenement, actor){
     if(!state || !state.multisessionId) return;
+    if(assignedPopulationLocked(evenement)) return;
     const eventId = evenement.evenement_id;
     const currentAttendus = store.listAttendus ? await store.listAttendus(eventId) : [];
     const attenduIds = new Set(currentAttendus.filter((row) => row.inclus !== false).map((row) => String(row.personne_id)));
@@ -4152,10 +4194,11 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       if(evenement.statut !== 'PLANIFIE') throw new HttpError(422, 'statut_invalide', 'Encadrement saisissable uniquement sur PLANIFIE.');
       const existing = await tx.getParticipation(eventId, personneId);
       if(!existing || !ROLES_ENCADREMENT.has(String(existing.role || '').toUpperCase())){
-        throw new HttpError(404, 'encadrement_introuvable', 'Cette personne n’est pas dans l’encadrement.');
+        throw new HttpError(422, 'encadrement_introuvable', 'Cette personne n’est plus dans l’encadrement de cet événement.');
       }
       const nextRole = role || String(existing.role || 'FORMATEUR').toUpperCase();
       const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
@@ -4277,7 +4320,9 @@ function createScopeService(repo){
       }
       const permutationsARegulariser = await markUnrecoveredPermutationsForEvent(tx, evenement, participations, actor);
       const refreshedV2State = v2State ? await loadMultiSessionV2State(tx, next, eventId) : null;
-      const taux = refreshedV2State ? refreshedV2State.statistics : computeTaux(participations, attendus);
+      const taux = (refreshedV2State && !assignedPopulationLocked(evenement))
+        ? refreshedV2State.statistics
+        : computeTaux(participations, attendus);
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
@@ -4354,19 +4399,16 @@ function createScopeService(repo){
         throw new HttpError(422, 'suppression_interdite', 'Un événement historique agrégé ne peut pas être supprimé des vues opérationnelles.');
       }
       if(String(evenement.statut || '').toUpperCase() === 'REALISE' || evenement.cloture_at){
-        throw new HttpError(422, 'suppression_interdite', 'L’événement est réalisé. La suppression n’est pas possible car des données historiques sont conservées.');
+        throw new HttpError(422, 'suppression_interdite', 'Impossible de supprimer cet événement réalisé.');
       }
       const participations = tx.listParticipations ? await tx.listParticipations(eventId) : [];
-      const recorded = (participations || []).filter((row) => (
-        recordedParticipationStatut(row && row.statut)
-        && !ROLES_ENCADREMENT.has(String(row.role || '').toUpperCase())
-      ));
+      const recorded = recordedParticipantRows(participations);
       if(recorded.length){
-        throw new HttpError(422, 'suppression_interdite', 'Cet événement possède déjà des participations réelles. La suppression n’est pas possible afin de conserver la traçabilité.');
+        throw new HttpError(422, 'suppression_interdite', 'Impossible de supprimer cet événement : des participations ont déjà été enregistrées.');
       }
       const saisie = tx.getQuantitatifSaisie ? await tx.getQuantitatifSaisie(eventId) : null;
       if(saisie && (Number(saisie.nb_attendus) || Number(saisie.nb_presents) || Number(saisie.nb_excuses) || Number(saisie.nb_dispenses))){
-        throw new HttpError(422, 'suppression_interdite', 'Cet événement possède déjà une saisie quantitative. La suppression n’est pas possible afin de conserver la traçabilité.');
+        throw new HttpError(422, 'suppression_interdite', 'Impossible de supprimer cet événement : une saisie quantitative existe.');
       }
       const attendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
       for(const row of attendus || []){
@@ -4409,7 +4451,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-      if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       if(String(evenement.statut || '').toUpperCase() !== 'PLANIFIE'){
         throw new HttpError(422, 'statut_invalide', 'La préparation des participants n’est possible que sur un événement planifié.');
       }
@@ -4464,7 +4506,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-      if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       if(String(evenement.statut || '').toUpperCase() !== 'ANNULE'){
         throw new HttpError(422, 'statut_invalide', 'Seuls les événements annulés peuvent être réactivés.');
       }
@@ -4760,7 +4802,9 @@ function createScopeService(repo){
   async function lireEvenement(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
-    if(isHiddenEvenement(evenement)) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    if(isHiddenEvenement(evenement)){
+      throw new HttpError(404, 'evenement_introuvable', 'Cet événement n’est plus visible dans les vues opérationnelles.');
+    }
     const cibleIds = await repo.listEventCibleIds(eventId);
     const allCibles = await repo.listCibles();
     const cibles = allCibles.filter(c => cibleIds.includes(c.cible_id));
@@ -4792,8 +4836,8 @@ function createScopeService(repo){
       })
       : participationsRaw;
     const v2State = await loadMultiSessionV2State(repo, evenement, eventId);
-    if(v2State){
-      const activeIds = new Set(attendus.filter((a) => a.inclus !== false).map((a) => String(a.personne_id)));
+    if(v2State && !assignedPopulationLocked(evenement)){
+      const activeIds = new Set(operationalAttendus(attendus).map((a) => String(a.personne_id)));
       const populationRows = repo.listMultisessionV2Population ? await repo.listMultisessionV2Population(v2State.multisessionId) : [];
       for(const row of populationRows || []){
         const personneId = String(row.person_id || row.personne_id || '');
@@ -4807,10 +4851,14 @@ function createScopeService(repo){
         });
         activeIds.add(personneId);
       }
+    }
+    if(v2State){
       attendus = MultiSessionV2.decorateAttendus(attendus, v2State);
     }
     let encadrement = participations.filter(p => ROLES_ENCADREMENT.has(p.role));
-    let taux = v2State ? v2State.statistics : computeTaux(participations, attendus);
+    let taux = (v2State && !assignedPopulationLocked(evenement))
+      ? v2State.statistics
+      : computeTaux(participations, operationalAttendus(attendus));
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id),
@@ -5070,7 +5118,7 @@ function createScopeService(repo){
       };
     }
     const v2State = await loadMultiSessionV2State(repo, evenement, eventId);
-    if(v2State){
+    if(v2State && !assignedPopulationLocked(evenement)){
       return { ...v2State.statistics, officiel: String(evenement.statut || '').toUpperCase() === 'REALISE', kind: MultiSessionV2.ENGINE.MULTI_SESSION_V2 };
     }
     if(isQuantitatif(evenement)){

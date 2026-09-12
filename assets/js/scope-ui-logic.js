@@ -1681,6 +1681,19 @@
         message: payloadMessage || message || 'Cet élément a déjà été utilisé. Archivez-le afin de préserver l’historique.'
       };
     }
+    if (status === 404 || code === 'not_found' || code === 'evenement_introuvable' || code === 'encadrement_introuvable' || code === 'attendu_introuvable' || code === 'personne_introuvable' || code === 'ressource_introuvable') {
+      const fallback = code === 'encadrement_introuvable'
+        ? 'Cette personne n’est plus dans l’encadrement de cet événement.'
+        : (code === 'evenement_introuvable' || status === 404
+          ? 'Cet événement n’est plus disponible dans les vues opérationnelles.'
+          : 'Cette action n’est pas disponible pour cet événement.');
+      const text = message && message !== code && message !== 'not_found' ? message : fallback;
+      return {
+        tone: 'error',
+        title: 'Action impossible',
+        message: text
+      };
+    }
     if (status === 409 || code === 'conflict') {
       return {
         tone: 'warning',
@@ -1706,7 +1719,11 @@
         message: 'Le service SCOPE n’a pas pu terminer cette action. Réessayez. Si le problème continue, contactez l’administrateur.'
       };
     }
-    return { tone: 'error', title: 'Impossible de continuer', message: (error && error.message) || 'Une erreur est survenue.' };
+    const fallbackMessage = (error && error.message) || payloadMessage || 'Une erreur est survenue.';
+    if (!fallbackMessage || String(fallbackMessage).toLowerCase() === 'not_found' || String(fallbackMessage) === String(code || '')) {
+      return { tone: 'error', title: 'Action impossible', message: 'Cette action n’est pas disponible pour cet événement.' };
+    }
+    return { tone: 'error', title: 'Impossible de continuer', message: fallbackMessage };
   }
 
   function ciblesLabel(cibles) {

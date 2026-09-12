@@ -174,7 +174,7 @@ async function save(service, eventId, entries){
   });
 
   await record('TEST 7 — dispensé exclu du dénominateur', async () => {
-    await save(service, s2.eventId, [{ personne: people.E, statut: 'DISPENSE', motifAbsence: 'JOKER' }]);
+    await save(service, s2.eventId, [{ personne: people.E, statut: 'DISPENSE' }]);
     const state = (await service.lireEvenement(s2.eventId)).multiSessionV2;
     eq(state.statistics.dispenses, 1);
     eq(state.statistics.denominator, 4);

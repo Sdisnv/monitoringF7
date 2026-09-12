@@ -276,13 +276,13 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.resetParticipations(params.id, body, claims)) });
     }
-    params = match(path, '/evenements/:id/encadrement');
-    if(method === 'POST' && params){
-      return response(200, { ok:true, ...(await service.ajouterEncadrement(params.id, body, claims)) });
-    }
     params = match(path, '/evenements/:id/encadrement/modifier');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.modifierEncadrement(params.id, body, claims)) });
+    }
+    params = match(path, '/evenements/:id/encadrement');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await service.ajouterEncadrement(params.id, body, claims)) });
     }
     if(method === 'DELETE' && params){
       return response(200, { ok:true, ...(await service.retirerEncadrement(params.id, body, claims)) });
@@ -555,7 +555,7 @@ async function scopeHandler(event){
       return response(200, { ok:true, ...(await service.commitImportEvenements(body, claims)) });
     }
 
-    return response(404, { ok:false, error:'not_found', path });
+    return response(404, { ok:false, error:'ressource_introuvable', message:'Cette action n’est pas disponible pour cet événement.' });
   }catch(error){
     if(error instanceof HttpError){
       const status = error.status === 409 ? 409 : error.status;

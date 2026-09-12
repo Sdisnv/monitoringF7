@@ -1197,11 +1197,19 @@
       && ev.origine !== 'LEGACY_AGGREGATED'
     ) {
       try {
+        const keptRetraits = Array.isArray(state.pendingRetraits) ? state.pendingRetraits.map(String) : [];
+        const keptExceptions = Array.isArray(state.pendingExceptions) ? state.pendingExceptions.slice() : [];
         const preview = await client.previewAttendus(id);
         if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId) return null;
         state.preview = preview;
-        state.pendingRetraits = [];
-        state.pendingExceptions = [];
+        const previewIds = new Set(
+          ((preview && preview.personnes) || [])
+            .map((p) => String(p.personneId || p.personne_id || ''))
+            .concat(keptExceptions.map((p) => String(p.personneId || p.personne_id || '')))
+            .filter(Boolean)
+        );
+        state.pendingRetraits = keptRetraits.filter((pid) => previewIds.has(String(pid)));
+        state.pendingExceptions = keptExceptions;
       } catch (_error) {
         if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId) return null;
         state.preview = null;
@@ -6786,7 +6794,10 @@
       if (att != null && att !== '') items.push({ label: 'Attendus', value: att });
       items.push({ label: 'Taux historique', value: L.formatTaux(L.legacyTauxFromRow(legacy)) });
     } else {
-      if (previewCount != null) items.push({ label: 'Attendus', value: previewCount });
+      const assignedCount = ev.population_figee && fiche && Array.isArray(fiche.attendus)
+        ? fiche.attendus.length
+        : previewCount;
+      if (assignedCount != null) items.push({ label: 'Attendus', value: assignedCount });
       if (jeunesCount) items.push({ label: 'Jeunes JSP', value: jeunesCount });
       if (c.presents != null && c.presents !== '') items.push({ label: 'Présents', value: c.presents });
       if (c.open != null && c.open !== '') items.push({ label: 'À renseigner', value: c.open, emphasis: Number(c.open) > 0 });
@@ -7519,8 +7530,8 @@
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" id="enc-time-mode" value="EVENT" ${state.encTimeMode !== 'CUSTOM' ? 'checked' : ''}> Événement</label>
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" value="CUSTOM" ${customTime ? 'checked' : ''}> Individuel</label>
             <span class="scope-enc-df" id="enc-df-wrap"${customTime ? '' : ' hidden'}>
-              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(state.encHeureDebut || '')}">
-              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(state.encHeureFin || '')}">
+              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(state.encHeureDebut || '')}" aria-label="Début individuel">
+              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(state.encHeureFin || '')}" aria-label="Fin individuelle">
             </span>
           </fieldset>
           <div class="scope-field scope-enc-dl-field">
@@ -10249,12 +10260,18 @@
       if (state.participantAssignmentBusy) return;
       const id = route().id;
       const basePeople = (state.preview && state.preview.personnes) || [];
-      const selectedPersonIds = basePeople
+      const checkboxNodes = [...root.querySelectorAll('[data-preview-select]')];
+      const selectedFromDom = checkboxNodes
+        .filter((input) => input.checked)
+        .map((input) => String(input.getAttribute('data-preview-select') || ''))
+        .filter(Boolean);
+      const selectedFromState = basePeople
         .map((p) => String(p.personneId || p.personne_id || ''))
         .filter((personneId) => personneId && !state.pendingRetraits.includes(personneId))
         .concat((state.pendingExceptions || [])
           .map((p) => String(p.personneId || p.personne_id || ''))
           .filter((personneId) => personneId && !state.pendingRetraits.includes(personneId)));
+      const selectedPersonIds = [...new Set(checkboxNodes.length ? selectedFromDom : selectedFromState)];
       state.participantAssignmentBusy = true;
       const cta = root.querySelector('[data-cta="figer"]');
       if (cta) {
@@ -10673,10 +10690,17 @@
       if (state.encRole !== 'FORMATEUR') {
         const minutesWrap = document.getElementById('enc-dl-minutes-wrap');
         if (minutesWrap) minutesWrap.hidden = true;
+        const dl = document.getElementById('enc-creation-dl');
+        if (dl) {
+          dl.checked = false;
+          dl.disabled = true;
+        }
+        state.encCreationDl = false;
       } else {
+        const dl = document.getElementById('enc-creation-dl');
+        if (dl) dl.disabled = false;
         syncEncadrementPrepVisibility();
       }
-      render();
     });
     root.querySelectorAll('input[name="enc-time-mode"]').forEach((input) => {
       input.addEventListener('change', () => {

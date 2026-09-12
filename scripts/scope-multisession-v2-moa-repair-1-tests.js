@@ -159,7 +159,7 @@ async function closeSession(service, eventId){
     await closeSession(ctx.service, ctx.s1.eventId);
     await save(ctx.service, ctx.s2.eventId, [
       { personne: ctx.people.B, statut: 'PRESENT' },
-      { personne: ctx.people.C, statut: 'DISPENSE', motifAbsence: 'JOKER' }
+      { personne: ctx.people.C, statut: 'DISPENSE' }
     ]);
     await closeSession(ctx.service, ctx.s2.eventId);
     const preClose = await ctx.service.lireEvenement(ctx.s2.eventId);
