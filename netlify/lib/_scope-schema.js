@@ -148,7 +148,18 @@ const DDL = [
     updated_at timestamptz not null default now(),
     primary key (evenement_id, personne_id),
     constraint scope_attendus_origine_chk check (origine in ('REGLE','EXCEPTION_AJOUT')),
-    constraint scope_attendus_retrait_chk check (origine_retrait is null or origine_retrait = 'EXCEPTION_RETRAIT')
+    constraint scope_attendus_retrait_chk check (
+      origine_retrait is null
+      or origine_retrait in (
+        'EXCEPTION_RETRAIT',
+        'NON_ASSIGNE',
+        'PERMUTATION_SOURCE_CORRIGEE',
+        'RESET_SAISIE',
+        'SUPPRESSION_METIER',
+        'DESASSIGNATION',
+        'INDISPONIBLE'
+      )
+    )
   )`,
   `create index if not exists scope_attendus_evenement on scope_attendus (evenement_id)`,
   `create table if not exists scope_participations (
@@ -265,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-participant-selection-runtime-root-repair-10-3-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-attendus-retrait-schema-contract-repair-10-3-2';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -388,6 +399,7 @@ async function ensureScopeSchema(){
   await migrateEventAssignedPopulationPolicyStaffingClose102();
   await migrateEventAssignedPopulationReactivationDeleteFinal103();
   await migrateParticipantSelectionRuntimeRootRepair1031();
+  await migrateAttendusRetraitSchemaContractRepair1032();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1541,6 +1553,47 @@ async function migrateEventAssignedPopulationReactivationDeleteFinal103(){
 
 async function migrateParticipantSelectionRuntimeRootRepair1031(){
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-participant-selection-runtime-root-repair-10-3-1') on conflict (version) do nothing`);
+}
+
+async function migrateAttendusRetraitSchemaContractRepair1032(){
+  const allowed = [
+    'EXCEPTION_RETRAIT',
+    'NON_ASSIGNE',
+    'PERMUTATION_SOURCE_CORRIGEE',
+    'RESET_SAISIE',
+    'SUPPRESSION_METIER',
+    'DESASSIGNATION',
+    'INDISPONIBLE'
+  ];
+  const existing = await db.query(
+    `select distinct origine_retrait as value
+       from scope_attendus
+      where origine_retrait is not null
+        and origine_retrait not in (${allowed.map((_, index) => `$${index + 1}`).join(', ')})`,
+    allowed
+  );
+  const unexpected = (existing.rows || []).map((row) => row.value).filter(Boolean);
+  if(unexpected.length){
+    throw new Error(`scope_attendus.origine_retrait contient des valeurs hors contrat, non modifiées : ${unexpected.join(', ')}`);
+  }
+  await db.query(`alter table scope_attendus drop constraint if exists scope_attendus_retrait_chk`);
+  await db.query(`
+    alter table scope_attendus
+    add constraint scope_attendus_retrait_chk
+    check (
+      origine_retrait is null
+      or origine_retrait in (
+        'EXCEPTION_RETRAIT',
+        'NON_ASSIGNE',
+        'PERMUTATION_SOURCE_CORRIGEE',
+        'RESET_SAISIE',
+        'SUPPRESSION_METIER',
+        'DESASSIGNATION',
+        'INDISPONIBLE'
+      )
+    )
+  `);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-attendus-retrait-schema-contract-repair-10-3-2') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };
