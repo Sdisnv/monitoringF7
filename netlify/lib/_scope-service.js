@@ -3200,6 +3200,9 @@ function createScopeService(repo){
           ? requestedIds
           : (preview.personnes || []).map((p) => String(p.personneId || p.personne_id || '')).filter(Boolean)
       )];
+      if((hasSelectionBody || (body && body.assignmentRequest)) && selectedIds.some((id) => !requestedIds.map(String).includes(String(id)))){
+        throw new HttpError(422, 'selection_elargie', 'La sélection des participants ne peut pas être élargie au-delà des identifiants reçus.');
+      }
       if(!selectedIds.length && (hasSelectionBody || body && body.assignmentRequest)){
         throw new HttpError(422, 'population_vide', 'Aucun participant n’est sélectionné pour cet événement.');
       }

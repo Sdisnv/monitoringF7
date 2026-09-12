@@ -60,6 +60,7 @@
     activeFicheId: null,
     ficheRequestSeq: 0,
     preview: null,
+    previewSelectionRows: [],
     pendingRetraits: [],
     pendingExceptions: [],
     saisie: [],
@@ -558,6 +559,8 @@
         state.fiche = null;
         state.ficheReady = false;
         state.preview = null;
+        state.previewSelectionRows = [];
+        state.pendingExceptions = [];
         state.saisie = [];
         state.volumes = volumesFromFiche();
         resetEventTransientUi();
@@ -1197,18 +1200,13 @@
       && ev.origine !== 'LEGACY_AGGREGATED'
     ) {
       try {
-        const keptRetraits = Array.isArray(state.pendingRetraits) ? state.pendingRetraits.map(String) : [];
+        const keptSelectionRows = Array.isArray(state.previewSelectionRows) ? state.previewSelectionRows.slice() : [];
         const keptExceptions = Array.isArray(state.pendingExceptions) ? state.pendingExceptions.slice() : [];
         const preview = await client.previewAttendus(id);
         if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId) return null;
         state.preview = preview;
-        const previewIds = new Set(
-          ((preview && preview.personnes) || [])
-            .map((p) => String(p.personneId || p.personne_id || ''))
-            .concat(keptExceptions.map((p) => String(p.personneId || p.personne_id || '')))
-            .filter(Boolean)
-        );
-        state.pendingRetraits = keptRetraits.filter((pid) => previewIds.has(String(pid)));
+        const previewPeople = ((preview && preview.personnes) || []).concat(keptExceptions);
+        state.previewSelectionRows = L.createPreviewSelectionRows(previewPeople, keptSelectionRows);
         state.pendingExceptions = keptExceptions;
       } catch (_error) {
         if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId) return null;
@@ -6883,13 +6881,14 @@
     const previewPeople = (!qty && state.preview)
       ? (state.preview.personnes || [])
       : [];
-    const previewSelectedCount = (!qty && state.preview)
-      ? previewPeople.filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || ''))).length
-        + ((state.pendingExceptions || []).filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || ''))).length)
+    const previewCountState = (!qty && state.preview)
+      ? L.previewSelectionCount(ensurePreviewSelectionRows())
       : null;
-    const previewCount = previewSelectedCount;
+    const previewCount = previewCountState ? previewCountState.selected : null;
+    const selectedPreviewIds = new Set(L.selectedPreviewPersonIds(state.previewSelectionRows || []));
     const jeunesCount = (!qty && state.preview)
-      ? (((state.preview.jeunes) || previewPeople.filter((p) => p.jspRole === 'JEUNE')).filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || '')))).length
+      ? (((state.preview.jeunes) || previewPeople.filter((p) => p.jspRole === 'JEUNE'))
+        .filter((p) => selectedPreviewIds.has(String(p.personneId || p.personne_id || '')))).length
       : 0;
     const extraActions = [
       qty && ev.statut === 'PLANIFIE'
@@ -6936,21 +6935,49 @@
     return 'Assignation';
   }
 
-  function previewPreparedPersonIds() {
-    return [...new Set(
-      ((state.preview && state.preview.personnes) || [])
-        .map((p) => String(p.personneId || p.personne_id || ''))
-        .concat((state.pendingExceptions || []).map((p) => String(p.personneId || p.personne_id || '')))
-        .filter(Boolean)
-    )];
+  function previewPreparedPeople() {
+    return ((state.preview && state.preview.personnes) || []).concat(state.pendingExceptions || []);
+  }
+
+  function ensurePreviewSelectionRows() {
+    const people = previewPreparedPeople();
+    if (!Array.isArray(state.previewSelectionRows) || state.previewSelectionRows.length !== people.filter((p) => L.previewPersonId(p)).length) {
+      state.previewSelectionRows = L.createPreviewSelectionRows(people, state.previewSelectionRows || []);
+    }
+    return state.previewSelectionRows;
+  }
+
+  function previewJeunesSuffix() {
+    const allPeople = (state.preview && state.preview.personnes) || [];
+    const jeunes = ((state.preview && state.preview.jeunes) || allPeople.filter((p) => p.jspRole === 'JEUNE'));
+    if (!jeunes.length) return '';
+    return `${jeunes.length} jeune${jeunes.length > 1 ? 's' : ''}`;
+  }
+
+  function displayedPreviewSelectedCount() {
+    const el = document.querySelector('.scope-fiche-preview-count');
+    const parsed = L.parsePreviewSelectedCountText(el && el.textContent);
+    if (parsed != null) return parsed;
+    return L.previewSelectionCount(ensurePreviewSelectionRows()).selected;
+  }
+
+  function applyPreviewRowSelected(personId, selected) {
+    state.previewSelectionRows = L.setPreviewRowSelected(ensurePreviewSelectionRows(), personId, selected);
+    updatePreviewSelectionCount();
+  }
+
+  function syncPreviewCheckboxesFromState() {
+    const selected = new Set(L.selectedPreviewPersonIds(state.previewSelectionRows || []));
+    root.querySelectorAll('[data-preview-select]').forEach((input) => {
+      input.checked = selected.has(String(input.getAttribute('data-preview-select') || ''));
+    });
   }
 
   function updatePreviewSelectionCount() {
     const el = document.querySelector('.scope-fiche-preview-count');
     if (!el) return;
-    const ids = previewPreparedPersonIds();
-    const selected = ids.filter((id) => !state.pendingRetraits.includes(id)).length;
-    el.textContent = `${ids.length} personne${ids.length > 1 ? 's' : ''} · ${selected} sélectionnée${selected > 1 ? 's' : ''}`;
+    const count = L.previewSelectionCount(ensurePreviewSelectionRows());
+    el.textContent = L.formatPreviewSelectionCountLabel(count.total, count.selected, previewJeunesSuffix());
   }
 
   function addPreviewPerson(id) {
@@ -6959,18 +6986,19 @@
       ScopeFeedback.error('Ajout impossible', 'Cette personne n’a pas pu être identifiée.');
       return;
     }
-    const already = ((state.preview && state.preview.personnes) || []).some((p) => String(p.personneId || p.personne_id) === String(id))
-      || (state.pendingExceptions || []).some((p) => String(p.personneId || p.personne_id) === String(id));
-    if (already) {
-      state.pendingRetraits = state.pendingRetraits.filter((pid) => String(pid) !== String(id));
+    if (person.actif === false || String(person.statut_rh || person.statutRh || '').toUpperCase() === 'INACTIF') {
+      ScopeFeedback.error('Ajout impossible', 'Cette personne est inactive à la date de l’événement.');
+      return;
+    }
+    const currentRows = ensurePreviewSelectionRows();
+    const result = L.addManualPreviewSelectionRow(currentRows, person);
+    if (result.duplicate) {
+      state.previewSelectionRows = result.rows;
       state.personHits = [];
       state.personQuery = '';
       ScopeFeedback.info('Déjà dans la liste', 'Cette personne est déjà proposée dans la liste.');
-      render();
-      return;
-    }
-    if (person.actif === false || String(person.statut_rh || person.statutRh || '').toUpperCase() === 'INACTIF') {
-      ScopeFeedback.error('Ajout impossible', 'Cette personne est inactive à la date de l’événement.');
+      syncPreviewCheckboxesFromState();
+      updatePreviewSelectionCount();
       return;
     }
     state.pendingExceptions.push({
@@ -6982,9 +7010,10 @@
       nip: person.nip,
       cibles: [],
       motifInclusion: 'exception_ajout',
-      origine: 'EXCEPTION_AJOUT'
+      origine: 'EXCEPTION_AJOUT',
+      manual: true
     });
-    state.pendingRetraits = state.pendingRetraits.filter((pid) => String(pid) !== String(id));
+    state.previewSelectionRows = result.rows;
     state.personHits = [];
     state.personQuery = '';
     render();
@@ -7119,10 +7148,11 @@
 
   function previewRowsHtml(rows) {
     const sorted = L.sortRows ? L.sortRows(rows || [], state.previewSort, previewSortColumns()) : (rows || []).slice();
+    const selectedMap = new Map((ensurePreviewSelectionRows() || []).map((row) => [String(row.personId), row.selected === true]));
     return sorted.length ? sorted.map((p) => {
       const id = previewPersonFields(p);
       const personneId = String(p.personneId || p.personne_id || '');
-      const selected = !state.pendingRetraits.includes(personneId);
+      const selected = selectedMap.has(personneId) ? selectedMap.get(personneId) === true : false;
       return `<tr>
         <td data-label="Sélection" class="scope-preview-select-cell">
           <label class="scope-preview-check">
@@ -7160,14 +7190,14 @@
     const allPeople = (state.preview.personnes || []);
     const extras = state.pendingExceptions || [];
     const rows = allPeople.concat(extras);
-    const selectedCount = rows.filter((p) => !state.pendingRetraits.includes(String(p.personneId || p.personne_id || ''))).length;
+    const count = L.previewSelectionCount(ensurePreviewSelectionRows());
     const jeunes = ((state.preview && state.preview.jeunes) || allPeople.filter((p) => p.jspRole === 'JEUNE'));
     const splitJsp = Boolean(jeunes.length);
     return `
       <section class="scope-card scope-fiche-section scope-fiche-preview">
         <div class="scope-section-header">
           <h2 class="scope-section-title">Préparer les participants</h2>
-          <p class="scope-fiche-preview-count">${rows.length} personne${rows.length > 1 ? 's' : ''} · ${selectedCount} sélectionnée${selectedCount > 1 ? 's' : ''}${splitJsp ? ` · ${jeunes.length} jeune${jeunes.length > 1 ? 's' : ''}` : ''}</p>
+          <p class="scope-fiche-preview-count">${escapeHtml(L.formatPreviewSelectionCountLabel(count.total, count.selected, previewJeunesSuffix()))}</p>
         </div>
         <div class="scope-toolbar scope-fiche-preview-toolbar">
           <div class="scope-preview-selection-actions" aria-label="Sélection des participants">
@@ -10252,26 +10282,39 @@
       const id = route().id;
       withLoading(async () => {
         state.preview = await client.previewAttendus(id);
-        state.pendingRetraits = [];
         state.pendingExceptions = [];
+        state.previewSelectionRows = L.createPreviewSelectionRows((state.preview && state.preview.personnes) || [], []);
       });
     });
     root.querySelector('[data-cta="figer"]')?.addEventListener('click', () => {
       if (state.participantAssignmentBusy) return;
       const id = route().id;
-      const basePeople = (state.preview && state.preview.personnes) || [];
+      const rows = ensurePreviewSelectionRows();
+      const displayedCount = displayedPreviewSelectedCount();
+      const built = L.buildAssignmentSelectedPersonIds(rows, displayedCount);
       const checkboxNodes = [...root.querySelectorAll('[data-preview-select]')];
       const selectedFromDom = checkboxNodes
         .filter((input) => input.checked)
         .map((input) => String(input.getAttribute('data-preview-select') || ''))
-        .filter(Boolean);
-      const selectedFromState = basePeople
-        .map((p) => String(p.personneId || p.personne_id || ''))
-        .filter((personneId) => personneId && !state.pendingRetraits.includes(personneId))
-        .concat((state.pendingExceptions || [])
-          .map((p) => String(p.personneId || p.personne_id || ''))
-          .filter((personneId) => personneId && !state.pendingRetraits.includes(personneId)));
-      const selectedPersonIds = [...new Set(checkboxNodes.length ? selectedFromDom : selectedFromState)];
+        .filter(Boolean)
+        .sort();
+      const selectedFromState = (built.selectedPersonIds || []).slice().sort();
+      const checkboxCountMatchesRows = checkboxNodes.length === rows.length;
+      const domMatchesState = !checkboxCountMatchesRows || (
+        selectedFromDom.length === selectedFromState.length
+        && selectedFromDom.every((personId, index) => personId === selectedFromState[index])
+      );
+      if (!built.ok || built.selectedPersonIds.length !== displayedCount || !domMatchesState) {
+        ScopeFeedback.error(
+          'Sélection incohérente',
+          'La sélection affichée ne correspond pas aux participants à assigner. Recommencez la sélection.'
+        );
+        return;
+      }
+      const selectedPersonIds = built.selectedPersonIds;
+      const manualAdditions = (state.pendingExceptions || []).filter((person) => (
+        selectedPersonIds.includes(String(person.personneId || person.personne_id || ''))
+      ));
       state.participantAssignmentBusy = true;
       const cta = root.querySelector('[data-cta="figer"]');
       if (cta) {
@@ -10289,11 +10332,11 @@
           const frozen = await client.figer(id, {
             assignmentRequest: true,
             selectedPersonIds,
-            manualAdditions: state.pendingExceptions || []
+            manualAdditions
           }, version);
           version = frozen.version;
           state.preview = null;
-          state.pendingRetraits = [];
+          state.previewSelectionRows = [];
           state.pendingExceptions = [];
           await loadFiche(id);
           go(`#/exercices/${id}/saisie`);
@@ -10455,8 +10498,8 @@
     root.querySelectorAll('[data-retrait]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-retrait');
-        state.pendingExceptions = state.pendingExceptions.filter((p) => p.personneId !== id);
-        if (!state.pendingRetraits.includes(id)) state.pendingRetraits.push(id);
+        state.pendingExceptions = state.pendingExceptions.filter((p) => String(p.personneId) !== String(id));
+        state.previewSelectionRows = (state.previewSelectionRows || []).filter((row) => String(row.personId) !== String(id));
         render();
       });
     });
@@ -10740,20 +10783,17 @@
       input.addEventListener('change', () => {
         const personneId = String(input.getAttribute('data-preview-select') || '');
         if (!personneId) return;
-        if (input.checked) state.pendingRetraits = state.pendingRetraits.filter((id) => String(id) !== personneId);
-        else if (!state.pendingRetraits.includes(personneId)) state.pendingRetraits.push(personneId);
-        updatePreviewSelectionCount();
+        applyPreviewRowSelected(personneId, input.checked === true);
       });
     });
     document.getElementById('preview-select-all')?.addEventListener('click', () => {
-      state.pendingRetraits = [];
-      root.querySelectorAll('[data-preview-select]').forEach((input) => { input.checked = true; });
+      state.previewSelectionRows = L.setAllPreviewSelected(ensurePreviewSelectionRows(), true);
+      syncPreviewCheckboxesFromState();
       updatePreviewSelectionCount();
     });
     document.getElementById('preview-unselect-all')?.addEventListener('click', () => {
-      const ids = previewPreparedPersonIds();
-      state.pendingRetraits = ids;
-      root.querySelectorAll('[data-preview-select]').forEach((input) => { input.checked = false; });
+      state.previewSelectionRows = L.setAllPreviewSelected(ensurePreviewSelectionRows(), false);
+      syncPreviewCheckboxesFromState();
       updatePreviewSelectionCount();
     });
     document.getElementById('manual-person-q')?.addEventListener('input', (e) => {
@@ -10895,7 +10935,7 @@
             await client.desassigner(id, state.fiche.evenement.version);
             invalidateCache(['list', 'dashboard', 'vigilance']);
             state.preview = null;
-            state.pendingRetraits = [];
+            state.previewSelectionRows = [];
             state.pendingExceptions = [];
             await loadFiche(id);
             go(`#/exercices/${id}`);

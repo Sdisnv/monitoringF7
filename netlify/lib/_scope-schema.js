@@ -265,7 +265,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-event-assigned-population-reactivation-delete-final-10-3';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-participant-selection-runtime-root-repair-10-3-1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -387,6 +387,7 @@ async function ensureScopeSchema(){
   await migrateEventWorkflowAssignmentStaffingSemanticRepair101();
   await migrateEventAssignedPopulationPolicyStaffingClose102();
   await migrateEventAssignedPopulationReactivationDeleteFinal103();
+  await migrateParticipantSelectionRuntimeRootRepair1031();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1536,6 +1537,10 @@ async function migrateEventAssignedPopulationPolicyStaffingClose102(){
 
 async function migrateEventAssignedPopulationReactivationDeleteFinal103(){
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-event-assigned-population-reactivation-delete-final-10-3') on conflict (version) do nothing`);
+}
+
+async function migrateParticipantSelectionRuntimeRootRepair1031(){
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-participant-selection-runtime-root-repair-10-3-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

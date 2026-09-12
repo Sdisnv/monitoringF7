@@ -1186,6 +1186,116 @@
     return { screen: 'accueil', nav: 'accueil' };
   }
 
+  function previewPersonId(person) {
+    return String((person && (person.personId || person.personneId || person.personne_id)) || '').trim();
+  }
+
+  function createPreviewSelectionRows(people, previousRows) {
+    const prevMap = new Map((previousRows || []).map((row) => [String(row.personId), row]));
+    const seen = new Set();
+    const rows = [];
+    for (const person of people || []) {
+      const personId = previewPersonId(person);
+      if (!personId || seen.has(personId)) continue;
+      seen.add(personId);
+      const prev = prevMap.get(personId);
+      rows.push({
+        personId,
+        selected: prev ? prev.selected === true : true,
+        manual: Boolean(
+          (person && (person.manual || person.origine === 'EXCEPTION_AJOUT' || person.motifInclusion === 'exception_ajout'))
+          || (prev && prev.manual)
+        ),
+        source: person
+      });
+    }
+    return rows;
+  }
+
+  function setAllPreviewSelected(rows, selected) {
+    return (rows || []).map((row) => Object.assign({}, row, { selected: Boolean(selected) }));
+  }
+
+  function setPreviewRowSelected(rows, personId, selected) {
+    const id = String(personId || '').trim();
+    return (rows || []).map((row) => (
+      String(row.personId) === id ? Object.assign({}, row, { selected: Boolean(selected) }) : row
+    ));
+  }
+
+  function selectedPreviewPersonIds(rows) {
+    return (rows || [])
+      .filter((row) => row && row.selected === true)
+      .map((row) => String(row.personId || '').trim())
+      .filter(Boolean);
+  }
+
+  function previewSelectionCount(rows) {
+    const list = rows || [];
+    return {
+      total: list.length,
+      selected: list.filter((row) => row && row.selected === true).length
+    };
+  }
+
+  function formatPreviewSelectionCountLabel(total, selected, extraSuffix) {
+    const nTotal = Number(total) || 0;
+    const nSelected = Number(selected) || 0;
+    const extra = extraSuffix ? ` · ${extraSuffix}` : '';
+    return `${nTotal} personne${nTotal > 1 ? 's' : ''} · ${nSelected} sélectionnée${nSelected > 1 ? 's' : ''}${extra}`;
+  }
+
+  function parsePreviewSelectedCountText(text) {
+    const match = String(text || '').match(/·\s*(\d+)\s+sélectionnée/);
+    return match ? Number(match[1]) : null;
+  }
+
+  function addManualPreviewSelectionRow(rows, person) {
+    const personId = previewPersonId(person);
+    const current = rows || [];
+    if (!personId) return { rows: current, added: false, duplicate: false };
+    if (current.some((row) => String(row.personId) === personId)) {
+      return {
+        rows: current.map((row) => (
+          String(row.personId) === personId
+            ? Object.assign({}, row, { selected: true, manual: Boolean(row.manual) })
+            : row
+        )),
+        added: false,
+        duplicate: true
+      };
+    }
+    return {
+      rows: current.concat([{
+        personId,
+        selected: true,
+        manual: true,
+        source: Object.assign({}, person, {
+          personneId: personId,
+          personne_id: personId,
+          motifInclusion: 'exception_ajout',
+          origine: 'EXCEPTION_AJOUT',
+          manual: true
+        })
+      }]),
+      added: true,
+      duplicate: false
+    };
+  }
+
+  function buildAssignmentSelectedPersonIds(rows, displayedCount) {
+    const selectedPersonIds = selectedPreviewPersonIds(rows);
+    const count = previewSelectionCount(rows);
+    const displayed = displayedCount == null || displayedCount === '' ? null : Number(displayedCount);
+    if (selectedPersonIds.length !== count.selected) {
+      return { ok: false, selectedPersonIds: [], error: 'selection_incoherente' };
+    }
+    if (displayed != null && Number.isFinite(displayed) && selectedPersonIds.length !== displayed) {
+      return { ok: false, selectedPersonIds: [], error: 'selection_incoherente' };
+    }
+    return { ok: true, selectedPersonIds };
+  }
+
   function principalCta({ statut, populationFigee, previewReady, origine, modeSuivi }) {
     if (origine === 'LEGACY_AGGREGATED' || modeSuivi === 'LEGACY') return null;
     if (statut && statut !== 'PLANIFIE') return null;
@@ -2122,6 +2232,16 @@
     objectiveKpiLabel,
     participationStatutLabel,
     parseHash,
+    previewPersonId,
+    createPreviewSelectionRows,
+    setAllPreviewSelected,
+    setPreviewRowSelected,
+    selectedPreviewPersonIds,
+    previewSelectionCount,
+    formatPreviewSelectionCountLabel,
+    parsePreviewSelectedCountText,
+    addManualPreviewSelectionRow,
+    buildAssignmentSelectedPersonIds,
     principalCta,
     modeSuiviOf,
     modeLabel,

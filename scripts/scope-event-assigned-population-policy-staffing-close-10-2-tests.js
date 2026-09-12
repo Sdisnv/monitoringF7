@@ -82,7 +82,7 @@ async function seedDpsB1Population(count){
   const logic = loadLogic();
 
   await record('01 — cache-bust et migration additive R10.2', async () => {
-    includes(html, 'scope-event-assigned-population-reactivation-delete-final-10-3');
+    includes(html, 'scope-participant-selection-runtime-root-repair-10-3-1');
     includes(schema, 'scope-event-assigned-population-policy-staffing-close-10-2');
     includes(schema, 'scope-event-workflow-assignment-staffing-semantic-repair-10-1');
     notIncludes(schema, 'drop table scope_evenements');

@@ -79,7 +79,7 @@ async function seedNominatifEvent(options = {}){
   const logic = loadLogic();
 
   await record('01 — cache-bust et migration additive R10.1', async () => {
-    includes(html, 'scope-event-assigned-population-reactivation-delete-final-10-3');
+    includes(html, 'scope-participant-selection-runtime-root-repair-10-3-1');
     includes(schema, 'hidden_at timestamptz');
     includes(schema, 'scope-event-workflow-assignment-staffing-semantic-repair-10-1');
     includes(serviceSrc, 'async function masquerEvenement');
@@ -171,7 +171,7 @@ async function seedNominatifEvent(options = {}){
     notIncludes(ui, '<span>Sélectionner</span>');
     includes(ui, 'data-label="Origine"');
     includes(ui, 'function updatePreviewSelectionCount()');
-    includes(ui, 'previewPreparedPersonIds()');
+    includes(ui, 'previewPreparedPeople()');
     includes(ui, 'const extras = state.pendingExceptions || [];');
     includes(ui, 'const rows = allPeople.concat(extras);');
     const { service, created, personne } = await seedNominatifEvent({ nip: '7648', grade: 'Cap' });

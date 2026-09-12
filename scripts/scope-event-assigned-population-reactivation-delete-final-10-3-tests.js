@@ -81,7 +81,7 @@ async function seedDpsB1Population(count, libelle){
   const logic = loadLogic();
 
   await record('01 — cache-bust et migration additive R10.3', async () => {
-    includes(html, 'scope-event-assigned-population-reactivation-delete-final-10-3');
+    includes(html, 'scope-participant-selection-runtime-root-repair-10-3-1');
     includes(schema, 'scope-event-assigned-population-reactivation-delete-final-10-3');
     includes(schema, 'scope-event-assigned-population-policy-staffing-close-10-2');
     includes(schema, 'scope-event-workflow-assignment-staffing-semantic-repair-10-1');
@@ -291,8 +291,11 @@ async function seedDpsB1Population(count, libelle){
     includes(css, 'label.scope-enc-radio');
     includes(css, 'text-transform: none');
     includes(css, 'display: inline-flex');
-    includes(ui, "checkboxNodes.length ? selectedFromDom : selectedFromState");
-    includes(ui, 'keptRetraits');
+    includes(ui, 'previewSelectionRows');
+    includes(ui, 'buildAssignmentSelectedPersonIds');
+    includes(ui, 'Sélection incohérente');
+    notIncludes(ui, "checkboxNodes.length ? selectedFromDom : selectedFromState");
+    includes(ui, 'keptSelectionRows');
   });
 
   await record('Cas G — DELETE encadrement routé, jamais not_found utilisateur', async () => {
