@@ -917,10 +917,11 @@ class ScopePdfRenderer {
       { label: 'Rattrapages', value: String(((m.event.rattrapages || {}).count) || 0) }
     ], { cols: 3, rowH: 22 });
     if(m.event && String(m.event.statut || '').toUpperCase() === 'ANNULE'){
-      this.para('Événement ANNULÉ — hors statistiques de présence, hors taux et hors cycles.');
+      this.para('Événement ANNULÉ — hors statistiques de présence, hors taux officiel et hors heures de formation.');
+    } else {
+      this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { after: TYPE.sectionGap });
+      this.kpiOfficial(m.officiel, { event: true });
     }
-    this.iconHeading('kpi', 'Synthèse de participation', TYPE.section, { after: TYPE.sectionGap });
-    this.kpiOfficial(m.officiel, { event: true });
     if(dap){
       const v = (m.officiel && m.officiel.volumes) || {};
       this.renderPermutationSummary(v);

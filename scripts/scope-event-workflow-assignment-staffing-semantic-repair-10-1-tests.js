@@ -79,7 +79,7 @@ async function seedNominatifEvent(options = {}){
   const logic = loadLogic();
 
   await record('01 — cache-bust et migration additive R10.1', async () => {
-    includes(html, 'scope-participant-selection-runtime-root-repair-10-3-1');
+    includes(html, 'scope-cancelled-event-single-source-of-truth-11');
     includes(schema, 'hidden_at timestamptz');
     includes(schema, 'scope-event-workflow-assignment-staffing-semantic-repair-10-1');
     includes(serviceSrc, 'async function masquerEvenement');

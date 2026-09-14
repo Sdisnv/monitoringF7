@@ -51,7 +51,9 @@ const {
   prSessionLabel,
   canCloseLastSession,
   resolveSessionReportingScope,
-  resolveCycleCompletion
+  resolveCycleCompletion,
+  isCancelledEvenement: isCancelledEvenementRule,
+  isHiddenEvenement: isHiddenEvenementRule
 } = require('./_scope-cycle-rules');
 const MultiSessionV2 = require('./_scope-multisession-v2');
 const display = require('../../assets/js/scope-personnel-display.js');
@@ -1607,11 +1609,28 @@ function createScopeService(repo){
   }
 
   function isHiddenEvenement(evenement){
-    return Boolean(evenement && (evenement.hidden_at || evenement.hiddenAt));
+    return isHiddenEvenementRule(evenement);
   }
 
   function isCancelledEvenement(evenement){
-    return String(evenement && evenement.statut || '').toUpperCase() === 'ANNULE';
+    return isCancelledEvenementRule(evenement);
+  }
+
+  function cancelledOfficialCompteurs(){
+    return {
+      numerator: 0,
+      denominator: 0,
+      percentage: null,
+      presents: 0,
+      excuses: 0,
+      nonExcuses: 0,
+      dispenses: 0,
+      nonRenseignes: 0,
+      open: 0,
+      officiel: false,
+      kind: 'EXCLUDED',
+      exclus: { annule: true }
+    };
   }
 
   function assignedPopulationLocked(evenement){
@@ -4253,6 +4272,9 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      if(isCancelledEvenement(evenement) || isHiddenEvenement(evenement)){
+        throw new HttpError(422, 'statut_invalide', 'La clôture n’est pas possible sur un événement annulé.');
+      }
       if(isQuantitatif(evenement)){
         if(evenement.statut !== 'PLANIFIE'){
           throw new HttpError(422, 'statut_invalide', 'La clôture n’est possible que depuis PLANIFIE.');
@@ -4722,7 +4744,11 @@ function createScopeService(repo){
       if(repo.getMultisessionV2ForEvent && repo.listMultisessionV2Sessions){
         multiSessionV2 = await loadMultiSessionV2State(repo, evenement, evenement.evenement_id);
       }
-      if(multiSessionV2 && multiSessionV2.engine === MultiSessionV2.ENGINE.MULTI_SESSION_V2){
+      if(isCancelledEvenement(evenement)){
+        etatMetier = { code: 'ANNULE', label: 'Annulé' };
+        compteurs = cancelledOfficialCompteurs();
+        attendusInclus = 0;
+      } else if(multiSessionV2 && multiSessionV2.engine === MultiSessionV2.ENGINE.MULTI_SESSION_V2){
         const global = String(multiSessionV2.globalStatus || '').toUpperCase();
         etatMetier = global === 'CLOTURE'
           ? { code: 'TRAITE', label: 'Traité' }
@@ -4862,6 +4888,9 @@ function createScopeService(repo){
     let taux = (v2State && !assignedPopulationLocked(evenement))
       ? v2State.statistics
       : computeTaux(participations, operationalAttendus(attendus));
+    if(isCancelledEvenement(evenement)){
+      taux = cancelledOfficialCompteurs();
+    }
     const personnes = await hydratePersonnes([
       ...attendus.map(a => a.personne_id),
       ...participations.map(p => p.personne_id),
@@ -4985,6 +5014,9 @@ function createScopeService(repo){
         ? { ...official, presents: official.volumes.presents, excuses: official.volumes.excuses, nonExcuses: official.volumes.nonExcuses, dispenses: official.volumes.dispenses }
         : { numerator: 0, denominator: 0, percentage: null, presents: 0, excuses: 0, nonExcuses: 0, dispenses: 0 };
     }
+    if(isCancelledEvenement(evenement)){
+      compteurs = cancelledOfficialCompteurs();
+    }
     let legacy = null;
     if(evenement.origine === 'LEGACY_AGGREGATED' && repo.getLegacyByEvenementId){
       legacy = await repo.getLegacyByEvenementId(eventId);
@@ -5004,7 +5036,9 @@ function createScopeService(repo){
       jsp = {
         jeunes,
         jeunesAttendus: jeunes.filter((row) => row.inclus !== false).length,
-        tauxJeunes: computeTaux(participations.filter((row) => jeuneIds.has(String(row.personne_id))), jeunes)
+        tauxJeunes: isCancelledEvenement(evenement)
+          ? cancelledOfficialCompteurs()
+          : computeTaux(participations.filter((row) => jeuneIds.has(String(row.personne_id))), jeunes)
       };
     }
     const attendusExclus = attendus.filter((row) => row.inclus === false);
@@ -5034,13 +5068,15 @@ function createScopeService(repo){
     const coherenceAttendus = String(evenement.domaine_code || '').toUpperCase() === 'JSP'
       ? (jsp.jeunes || []).filter((row) => row.inclus !== false)
       : attendusActifs;
-    const etatMetier = v2State
+    const etatMetier = isCancelledEvenement(evenement)
+      ? { code: 'ANNULE', label: 'Annulé' }
+      : (v2State
       ? (String(v2State.globalStatus || '').toUpperCase() === 'CLOTURE'
         ? { code: 'TRAITE', label: 'Traité' }
         : (String(v2State.globalStatus || '').toUpperCase() === 'A_FINALISER'
           ? { code: 'A_FINALISER', label: 'À finaliser' }
           : { code: 'EN_COURS', label: 'En cours' }))
-      : businessEtatForEvenement(evenement, { participations, attendus: attendusActifs, saisie, today: null });
+      : businessEtatForEvenement(evenement, { participations, attendus: attendusActifs, saisie, today: null }));
     const formationConfiguration = await resolveEventFormationConfiguration(evenement, v2State);
     const temporal = eventTemporalPayload(evenement);
     return {
@@ -5106,19 +5142,8 @@ function createScopeService(repo){
         exclus: { nonRealise: true, legacy: true }
       };
     }
-    if(String(evenement.statut || '').toUpperCase() === 'ANNULE'){
-      return {
-        numerator: 0,
-        denominator: 0,
-        percentage: null,
-        presents: 0,
-        excuses: 0,
-        nonExcuses: 0,
-        dispenses: 0,
-        officiel: false,
-        kind: 'EXCLUDED',
-        exclus: { annule: true }
-      };
+    if(isCancelledEvenement(evenement)){
+      return cancelledOfficialCompteurs();
     }
     const v2State = await loadMultiSessionV2State(repo, evenement, eventId);
     if(v2State && !assignedPopulationLocked(evenement)){

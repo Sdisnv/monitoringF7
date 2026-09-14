@@ -21,6 +21,7 @@ const { todayZurichIso } = require('./_scope-calendar');
 const { inferAnalysisGrain } = require('./_scope-objectives');
 const { isQualificationEvenement, wantsQualification } = require('./_scope-qualification');
 const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
+const { isCancelledEvenement, isEventOperational } = require('./_scope-cycle-rules');
 
 function groupBy(rows, key){
   const map = {};
@@ -388,6 +389,7 @@ function createScopeAlertsService(repo){
     const byPersonDomain = new Map();
     for(const event of bundle.events || []){
       if(!wantsQualification(query) && isQualificationEvenement(event)) continue;
+      if(!isEventOperational(event) || isCancelledEvenement(event)) continue;
       if(inferModeSuivi(event) !== MODES.NOMINATIF || event.statut !== 'REALISE') continue;
       if(event.pr_exercise_group_key || event.prExerciseGroupKey) continue;
       const attendus = filterAttendusEligibleAtDate(bundle.attendusByEvent[event.evenement_id] || [], periodesByPersonne, event.date)

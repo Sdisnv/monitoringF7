@@ -25,7 +25,9 @@ const {
   computeMultiSessionParticipationState,
   isValidSessionStatut,
   prSessionLabel,
-  sessionExerciseLabel
+  sessionExerciseLabel,
+  isCancelledEvenement,
+  isHiddenEvenement
 } = require('./_scope-cycle-rules');
 const { PERMUTATION_STATUS } = require('./_scope-model');
 const { isPermutationCatchupAttendu } = require('./_scope-rules');
@@ -355,7 +357,8 @@ function createScopeAnalyticsService(repo){
     if(personneId && mode !== MODES.NOMINATIF){
       return { include: false, reason: 'personne_non_nominatif', mode };
     }
-    if(event.statut === 'ANNULE') return { include: false, reason: 'annule', mode };
+    if(isHiddenEvenement(event)) return { include: false, reason: 'masque', mode };
+    if(isCancelledEvenement(event)) return { include: false, reason: 'annule', mode };
     if(event.statut === 'REPORTE') return { include: false, reason: 'reporte', mode };
     if(event.statut === 'PLANIFIE') return { include: false, reason: 'planifie', mode };
     if(event.statut !== 'REALISE') return { include: false, reason: 'statut_non_realise', mode };

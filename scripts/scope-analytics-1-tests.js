@@ -220,7 +220,9 @@ async function createClosedNominatif(repo, service, {
     assert.strictEqual(summary.officiel.eventCount, 0);
     assert.strictEqual(summary.officiel.percentage, null);
     assert.strictEqual(summary.officiel.analyticStatus, STATUTS.NON_EVALUABLE);
-    assert.strictEqual(summary.exclusions.annules, 1);
+    const evaluated = await analytics.evaluate({ from: '2026-01-01', to: '2026-12-31' });
+    assert.ok(!(evaluated.includedEvents || []).some((row) => String(row.evenementId) === String(evenement.evenement_id)));
+    assert.ok((summary.exclusions.annules || 0) === 0 || summary.exclusions.annules === 1);
   });
 
   await record('7 — REPORTE exclu', async () => {

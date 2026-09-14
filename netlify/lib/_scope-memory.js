@@ -1543,6 +1543,7 @@ function createMemoryRepo(){
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
       const { inferModeSuivi } = require('./_scope-analytics');
       const { inPeriod } = require('./_scope-period');
+      const { isCancelledEvenement, isHiddenEvenement } = require('./_scope-cycle-rules');
       const bundle = {
         events: [],
         attendusByEvent: {},
@@ -1557,6 +1558,7 @@ function createMemoryRepo(){
         if(from && to && !inPeriod(mapped.date, { from, to })) continue;
         if(domaineCode && mapped.domaine_code !== domaineCode) continue;
         if(evenementId && mapped.evenement_id !== evenementId) continue;
+        if(!evenementId && (isHiddenEvenement(mapped) || isCancelledEvenement(mapped))) continue;
         const cibleIds = evenementCibles.get(mapped.evenement_id) || [];
         if(cibleId && !cibleIds.includes(cibleId)) continue;
         if(personneId){

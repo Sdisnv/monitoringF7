@@ -3106,7 +3106,9 @@
         { origine: ev.origine }
       );
       const saisieBusinessStates = new Set(['PLANIFIE', 'A_TRAITER', 'SAISIE_EN_COURS']);
-      const cancelled = String(ev.statut || '').toUpperCase() === 'ANNULE' || String(business.code || '').toUpperCase() === 'ANNULE';
+      const cancelled = (L.isCancelledEvenement && L.isCancelledEvenement(ev))
+        || String(ev.statut || '').toUpperCase() === 'ANNULE'
+        || String(business.code || '').toUpperCase() === 'ANNULE';
       const directSaisie = !cancelled && !isLegacy && saisieBusinessStates.has(String(business.code || '').toUpperCase()) && (ev.population_figee || mode === 'QUANTITATIF');
       const action = directSaisie ? (String(business.code || '').toUpperCase() === 'SAISIE_EN_COURS' ? 'Compléter' : 'Saisir') : 'Ouvrir';
       const href = directSaisie
@@ -5317,6 +5319,7 @@
         if (!codes.includes(row.domaine)) return false;
       }
       const s = String(row.statutParticipation || row.statut || '').toUpperCase();
+      if (display && display.ficheEventIsCancelled && display.ficheEventIsCancelled(row)) return statut === 'tout';
       if (statut === 'presents') return s === 'PRESENT';
       if (statut === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
       if (statut === 'non_excuses') return s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT';
@@ -5539,14 +5542,20 @@
             <table class="scope-table scope-fiche-events-table">
               <thead><tr>${sortableHeader('personne-events', 'date', 'DATE', state.personneEventSort)}${sortableHeader('personne-events', 'libelle', 'ÉVÉNEMENT', state.personneEventSort)}${sortableHeader('personne-events', 'domaine', 'DOMAINE', state.personneEventSort)}${sortableHeader('personne-events', 'cible', 'CIBLE / OI', state.personneEventSort)}${sortableHeader('personne-events', 'statut', 'STATUT', state.personneEventSort)}${sortableHeader('personne-events', 'informations', 'INFORMATIONS', state.personneEventSort)}</tr></thead>
               <tbody>
-                ${events.map((ev) => `<tr${display && display.isPermutationCatchup && display.isPermutationCatchup(ev) ? ' class="scope-row-catchup"' : ''}>
+                ${events.map((ev) => {
+                  const cancelled = display && display.ficheEventIsCancelled && display.ficheEventIsCancelled(ev);
+                  const href = cancelled
+                    ? ((L.cancelledEventHref && L.cancelledEventHref(ev.evenementId)) || `#/exercices/${ev.evenementId}`)
+                    : ev.href;
+                  return `<tr${display && display.isPermutationCatchup && display.isPermutationCatchup(ev) ? ' class="scope-row-catchup"' : ''}>
                   <td data-label="DATE">${escapeHtml(L.formatDate(ev.date) || '—')}</td>
-                  <td data-label="ÉVÉNEMENT">${ev.href ? `<a class="scope-events-libelle" href="${escapeHtml(ev.href)}">${escapeHtml(ev.libelle || '—')}</a>` : escapeHtml(ev.libelle || '—')}</td>
+                  <td data-label="ÉVÉNEMENT">${href ? `<a class="scope-events-libelle" href="${escapeHtml(href)}">${escapeHtml(ev.libelle || '—')}</a>` : escapeHtml(ev.libelle || '—')}</td>
                   <td data-label="DOMAINE">${escapeHtml(domaineLabel(ev.domaine))}</td>
                   <td data-label="CIBLE / OI">${escapeHtml(eventCible(ev))}</td>
                   <td data-label="STATUT">${escapeHtml(eventStatut(ev))}</td>
                   <td data-label="INFORMATIONS">${escapeHtml(eventInfo(ev))}</td>
-                </tr>`).join('') || '<tr><td colspan="6">Aucun événement nominatif sur la période.</td></tr>'}
+                </tr>`;
+                }).join('') || '<tr><td colspan="6">Aucun événement nominatif sur la période.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -6769,12 +6778,19 @@
           ${eventBusinessStateBadge(fiche)}
           ${tech.map((item) => `<span class="scope-fiche-tech">${escapeHtml(item)}</span>`).join('')}
         </div>
+        ${L.isCancelledEvenement && L.isCancelledEvenement(ev) ? '<p class="scope-fiche-tech-note">Événement ANNULÉ — n’a pas eu lieu. Hors statistiques, hors saisie et hors cycles.</p>' : ''}
         ${eventCycleSummary(fiche)}
       </div>
     </header>`;
   }
 
   function renderFicheSummary(fiche, ev, mode, previewCount, jeunesCount) {
+    if (L.isCancelledEvenement && L.isCancelledEvenement(ev)) {
+      return `<section class="scope-card scope-fiche-section">
+      <div class="scope-section-header"><h2 class="scope-section-title">Synthèse</h2></div>
+      <p class="scope-fiche-tech-note">Événement annulé — hors statistiques de présence, hors taux et hors heures de formation.</p>
+    </section>`;
+    }
     const items = [];
     const qty = mode === 'QUANTITATIF' ? fiche.saisieQuantitative : null;
     const c = (fiche && fiche.compteurs) || {};
@@ -6868,7 +6884,9 @@
     }
     const ev = fiche.evenement;
     const mode = eventMode(ev);
-    if (ev.statut === 'REALISE' || isMultiSessionV2CurrentSessionClosed(fiche)) return renderRealise();
+    if (L.isCancelledEvenement && L.isCancelledEvenement(ev)) {
+      /* stay on fiche lecture ANNULÉ, never REALISE/saisie */
+    } else if (ev.statut === 'REALISE' || isMultiSessionV2CurrentSessionClosed(fiche)) return renderRealise();
     const cta = L.principalCta({
       statut: ev.statut,
       populationFigee: ev.population_figee,
@@ -7227,7 +7245,7 @@
       return `<div class="scope-crumb">Événements / Saisie</div><div class="scope-main">${contextReturnHtml('#/evenements', 'Retour aux événements')}<div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
     }
     const ev = fiche.evenement;
-    if (String(ev.statut || '').toUpperCase() === 'ANNULE') {
+    if (L.isCancelledEvenement && L.isCancelledEvenement(ev)) {
       return `<div class="scope-crumb">Événements / Saisie</div><div class="scope-main">${contextReturnHtml(`#/exercices/${escapeHtml(ev.evenement_id)}`, 'Retour à l’événement')}<div class="scope-card scope-placeholder"><p>Événement annulé. La saisie des présences n’est plus possible.</p></div></div>`;
     }
     if (eventMode(ev) === 'QUANTITATIF') return renderSaisieQuantitative();
@@ -13152,6 +13170,11 @@
     });
     refreshAlertCounts().then(() => render()).catch(() => {});
     if (r.screen === 'saisie' && r.id) {
+      const ev = state.fiche && state.fiche.evenement;
+      if (ev && L.isCancelledEvenement && L.isCancelledEvenement(ev)) {
+        location.hash = `#/exercices/${r.id}`;
+        return;
+      }
       state.saisieGuard.stayHash = `#/exercices/${r.id}/saisie`;
     } else if (r.screen !== 'saisie') {
       state.saisieGuard.stayHash = '';

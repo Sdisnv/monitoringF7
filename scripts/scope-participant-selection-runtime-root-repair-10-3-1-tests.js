@@ -86,7 +86,7 @@ async function seedDpsB1Population(count, libelle){
   const logic = loadLogic();
 
   await record('01 — cache-bust et migration additive R10.3.1', async () => {
-    includes(html, 'scope-participant-selection-runtime-root-repair-10-3-1');
+    includes(html, 'scope-cancelled-event-single-source-of-truth-11');
     includes(schema, 'scope-participant-selection-runtime-root-repair-10-3-1');
     includes(schema, 'scope-event-assigned-population-reactivation-delete-final-10-3');
     includes(schema, 'scope-event-assigned-population-policy-staffing-close-10-2');

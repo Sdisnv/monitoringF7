@@ -202,14 +202,33 @@ function cycleEvents(input, cycle){
 }
 
 function eventStatut(row){
-  return normalizeUpper(row && row.statut);
+  return normalizeUpper(row && (row.statut || row.status || row.statutEvenement));
+}
+
+function isCancelledEvenement(event){
+  const statut = eventStatut(event)
+    || normalizeUpper(event && (
+      (event.etatMetier && event.etatMetier.code)
+      || (event.etat_metier && event.etat_metier.code)
+    ));
+  return statut === 'ANNULE' || statut === 'ANNULEE';
+}
+
+function isHiddenEvenement(event){
+  return Boolean(event && (event.hidden_at || event.hiddenAt));
+}
+
+function isEventOperational(event){
+  return Boolean(event) && !isHiddenEvenement(event) && !isCancelledEvenement(event);
 }
 
 function eventContributionState(event){
   const statut = eventStatut(event) || 'PLANIFIE';
   const id = eventId(event);
-  const countable = statut === 'REALISE';
-  const exigible = STATUTS_EVENT_EXIGIBLES.has(statut);
+  const hidden = isHiddenEvenement(event);
+  const cancelled = isCancelledEvenement(event);
+  const countable = !hidden && !cancelled && statut === 'REALISE';
+  const exigible = !hidden && !cancelled && STATUTS_EVENT_EXIGIBLES.has(statut);
   return {
     eventId: id || null,
     statut,
@@ -217,9 +236,11 @@ function eventContributionState(event){
     countable,
     contributesToStatistics: countable,
     contributesToCycleCompletion: exigible,
-    reason: statut === 'ANNULE'
+    reason: cancelled
       ? 'EVENEMENT_ANNULE_NON_EXIGIBLE'
-      : (countable ? 'EVENEMENT_REALISE_COMPTABILISABLE' : 'EVENEMENT_NON_REALISE_NON_COMPTABILISABLE')
+      : (hidden
+        ? 'EVENEMENT_MASQUE_NON_EXIGIBLE'
+        : (countable ? 'EVENEMENT_REALISE_COMPTABILISABLE' : 'EVENEMENT_NON_REALISE_NON_COMPTABILISABLE'))
   };
 }
 
@@ -229,6 +250,14 @@ function isEventStatisticallyCountable(event){
 
 function isEventCycleExigible(event){
   return eventContributionState(event).exigible;
+}
+
+function isParticipationCountable(event, participation){
+  if(!isEventOperational(event) || !isEventStatisticallyCountable(event)) return false;
+  if(!participation) return false;
+  const role = normalizeUpper(participation.role || 'PARTICIPANT');
+  if(role && !ROLES_CYCLE.has(role) && role !== 'RENFORT' && role !== 'REMPLACANT') return false;
+  return true;
 }
 
 function resolveCycleCompletion(input = {}){
@@ -1250,6 +1279,10 @@ function collapsePersonSessionHistory(rows){
   const groups = new Map();
   const singles = [];
   for(const row of rows || []){
+    if(isCancelledEvenement(row) || row && row.cancelled === true){
+      singles.push(row);
+      continue;
+    }
     const key = normalizeText(row && (row.prExerciseGroupKey || row.pr_exercise_group_key));
     if(!key){
       singles.push(row);
@@ -1276,6 +1309,10 @@ module.exports = {
   computeCycleMetrics,
   buildCyclePilotage,
   eventContributionState,
+  isCancelledEvenement,
+  isHiddenEvenement,
+  isEventOperational,
+  isParticipationCountable,
   isEventStatisticallyCountable,
   isEventCycleExigible,
   resolveCycleCompletion,

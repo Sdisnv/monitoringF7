@@ -16,6 +16,7 @@ const { createScopeCycleService } = require('./_scope-cycle-service');
 const MultiSessionV2 = require('./_scope-multisession-v2');
 const PersonnelRefs = require('../../assets/js/scope-personnel-referentials');
 const UiLogic = require('../../assets/js/scope-ui-logic');
+const { isCancelledEvenement } = require('./_scope-cycle-rules');
 
 const ENC_GROUP_ORDER = Object.freeze(['FORMATEUR', 'SURVEILLANT', 'MONITEUR', 'AUXILIAIRE']);
 const DOMAIN_PERIOD_OI = Object.freeze({
@@ -1175,9 +1176,25 @@ async function collectReport(repo, query, options){
       signaturePerson = signer ? { grade: signer.grade || '', prenom: signer.prenom || '', nom: signer.nom || '', nip: signer.nip } : { grade: '', prenom: '', nom: '', nip: '1506' };
     }
     const isLegacy = fiche.evenement.origine === 'LEGACY_AGGREGATED' || fiche.modeSuivi === 'LEGACY';
+    const cancelled = isCancelledEvenement(fiche.evenement);
     const cibles = fiche.cibles || [];
     const temporal = eventTemporal(fiche.evenement);
-    const eventOfficial = isLegacy ? null : Object.assign({}, fiche.compteurs || {}, {
+    const eventOfficial = isLegacy ? null : (cancelled
+      ? {
+          numerator: 0,
+          denominator: 0,
+          percentage: null,
+          presents: 0,
+          excuses: 0,
+          nonExcuses: 0,
+          dispenses: 0,
+          open: 0,
+          officiel: false,
+          kind: 'EXCLUDED',
+          exclus: { annule: true },
+          volumes: {}
+        }
+      : Object.assign({}, fiche.compteurs || {}, {
       officiel: fiche.evenement.statut === 'REALISE',
       kind: fiche.evenement.statut === 'REALISE' ? 'OFFICIEL' : 'PREVIEW',
       objective: evaluated.officiel && evaluated.officiel.objective,
@@ -1186,7 +1203,7 @@ async function collectReport(repo, query, options){
       analyticStatusReason: evaluated.officiel && evaluated.officiel.analyticStatusReason,
       objectiveContext: evaluated.officiel && evaluated.officiel.objectiveContext,
       volumes: Object.assign({}, (fiche.compteurs || {}), fiche.permutationSummary || fiche.permutation_summary || {})
-    });
+    }));
     return {
       kind,
       period,

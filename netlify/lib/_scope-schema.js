@@ -276,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-attendus-retrait-schema-contract-repair-10-3-2';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-cancelled-event-single-source-of-truth-11';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -400,6 +400,7 @@ async function ensureScopeSchema(){
   await migrateEventAssignedPopulationReactivationDeleteFinal103();
   await migrateParticipantSelectionRuntimeRootRepair1031();
   await migrateAttendusRetraitSchemaContractRepair1032();
+  await migrateCancelledEventSingleSourceOfTruth11();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1594,6 +1595,10 @@ async function migrateAttendusRetraitSchemaContractRepair1032(){
     )
   `);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-attendus-retrait-schema-contract-repair-10-3-2') on conflict (version) do nothing`);
+}
+
+async function migrateCancelledEventSingleSourceOfTruth11(){
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-cancelled-event-single-source-of-truth-11') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

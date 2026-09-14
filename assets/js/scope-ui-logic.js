@@ -1296,8 +1296,32 @@
     return { ok: true, selectedPersonIds };
   }
 
+  function isCancelledEvenement(event) {
+    const statut = String((event && (
+      event.statut
+      || event.status
+      || event.statutEvenement
+      || event.eventStatut
+      || (event.etatMetier && event.etatMetier.code)
+      || (event.etat_metier && event.etat_metier.code)
+      || (typeof event === 'string' ? event : '')
+    )) || '').toUpperCase();
+    return Boolean(event && event.cancelled === true) || statut === 'ANNULE' || statut === 'ANNULEE';
+  }
+
+  function cancelledEventHref(eventId) {
+    return `#/exercices/${eventId}`;
+  }
+
+  function isParticipationCountable(event, participation) {
+    if (isCancelledEvenement(event) || (event && (event.hidden_at || event.hiddenAt))) return false;
+    if (String((event && (event.statut || event.status)) || '').toUpperCase() !== 'REALISE') return false;
+    return Boolean(participation);
+  }
+
   function principalCta({ statut, populationFigee, previewReady, origine, modeSuivi }) {
     if (origine === 'LEGACY_AGGREGATED' || modeSuivi === 'LEGACY') return null;
+    if (isCancelledEvenement({ statut })) return null;
     if (statut && statut !== 'PLANIFIE') return null;
     if (modeSuivi === 'QUANTITATIF') return { action: 'saisir-volumes', label: 'Saisir les présences' };
     if (populationFigee) return { action: 'saisir', label: 'Saisir les participations' };
@@ -2242,6 +2266,9 @@
     parsePreviewSelectedCountText,
     addManualPreviewSelectionRow,
     buildAssignmentSelectedPersonIds,
+    isCancelledEvenement,
+    cancelledEventHref,
+    isParticipationCountable,
     principalCta,
     modeSuiviOf,
     modeLabel,

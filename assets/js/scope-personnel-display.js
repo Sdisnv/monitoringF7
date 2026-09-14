@@ -1092,7 +1092,14 @@
     return Boolean(kpi.analyticStatus && kpi.analyticStatus !== 'NON_EVALUABLE' && kpi.percentage != null);
   }
 
+  function ficheEventIsCancelled(row){
+    if(uiLogic.isCancelledEvenement && uiLogic.isCancelledEvenement(row)) return true;
+    const statut = String((row && (row.statutEvenement || row.statut || '')) || '').toUpperCase();
+    return Boolean(row && row.cancelled === true) || statut === 'ANNULE' || statut === 'ANNULEE';
+  }
+
   function ficheEventStatutLabel(row){
+    if(ficheEventIsCancelled(row)) return 'Annulé';
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
     if(s === 'PRESENT') return 'Présent';
     if(s === 'PERMUTATION') return 'Permutation';
@@ -1101,6 +1108,7 @@
     if(s === 'DISPENSE') return 'Dispensé';
     if(s === 'NON_RENSEIGNE' || s === 'NON_CONCERNE') return 'Non renseigné';
     if(s === 'PLANIFIE') return 'Planifié';
+    if(s === 'ANNULE' || s === 'ANNULEE') return 'Annulé';
     return s ? s : '—';
   }
 
@@ -1124,6 +1132,7 @@
   }
 
   function ficheEventInformations(row){
+    if(ficheEventIsCancelled(row)) return 'Événement annulé';
     const catchup = uiLogic.permutationCatchupSourceLabel ? uiLogic.permutationCatchupSourceLabel(row) : '';
     if(catchup) return catchup;
     const permutation = uiLogic.permutationSourceInformationLabel ? uiLogic.permutationSourceInformationLabel(row) : '';
@@ -1352,6 +1361,7 @@
     ficheIncorporationRows,
     ficheSpecializationView,
     ficheParticipationIsOfficial,
+    ficheEventIsCancelled,
     ficheEventStatutLabel,
     ficheEventInformations,
     ficheEventCible,
