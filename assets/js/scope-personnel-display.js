@@ -1103,8 +1103,19 @@
     return Boolean(row && (row.hidden === true || row.hidden_at || row.hiddenAt));
   }
 
+  function ficheEventRoleInformation(row){
+    const role = String((row && (row.roleParticipation || row.role || '')) || '').toUpperCase();
+    if(role === 'FORMATEUR') return 'Formateur';
+    if(role === 'SURVEILLANT') return 'Surveillant';
+    if(role === 'AUXILIAIRE') return 'Auxiliaire';
+    if(role === 'MONITEUR') return 'Moniteur';
+    return '';
+  }
+
   function ficheEventStatutLabel(row){
     if(ficheEventIsCancelled(row)) return 'Annulé';
+    const role = String((row && (row.roleParticipation || row.role || '')) || '').toUpperCase();
+    if(role === 'AUXILIAIRE') return '—';
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
     if(s === 'PRESENT') return 'Présent';
     if(s === 'PERMUTATION') return 'Permutation';
@@ -1142,6 +1153,8 @@
     if(catchup) return catchup;
     const permutation = uiLogic.permutationSourceInformationLabel ? uiLogic.permutationSourceInformationLabel(row) : '';
     if(permutation) return permutation;
+    const roleInfo = ficheEventRoleInformation(row);
+    if(roleInfo) return roleInfo;
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
     if(s !== 'ABSENT_EXCUSE' && s !== 'EXCUSE' && s !== 'DISPENSE') return '—';
     return ficheExcuseMotifLabel(row && (row.motif || row.motifAbsence)) || '—';
@@ -1369,6 +1382,7 @@
     ficheEventIsCancelled,
     ficheEventIsHidden,
     ficheEventStatutLabel,
+    ficheEventRoleInformation,
     ficheEventInformations,
     ficheEventCible,
     isPermutationCatchup: uiLogic.isPermutationCatchup,

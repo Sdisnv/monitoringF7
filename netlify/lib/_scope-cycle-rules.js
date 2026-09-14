@@ -1251,12 +1251,17 @@ function isValidSessionStatut(statut){
   return STATUTS_SESSION_VALIDES.has(normalizeUpper(statut));
 }
 
+function isNonContributiveEncadrementRole(role){
+  const r = normalizeUpper(role);
+  return r === 'AUXILIAIRE' || r === 'MONITEUR';
+}
+
 function isValidSessionDecision(participation){
   const role = normalizeUpper(participation && participation.role || 'PARTICIPANT');
   const statut = normalizeUpper(participation && participation.statut);
   const source = normalizeUpper(participation && participation.source);
   if(!STATUTS_SESSION_VALIDES.has(statut)) return false;
-  if(role === 'AUXILIAIRE' || role === 'MONITEUR') return false;
+  if(isNonContributiveEncadrementRole(role)) return false;
   if(role === 'SURVEILLANT' && source !== 'SAISIE') return false;
   return true;
 }
@@ -1332,6 +1337,7 @@ module.exports = {
   sessionExerciseLabel,
   MOTIF_DISPENSE_LABELS,
   isValidSessionStatut,
+  isNonContributiveEncadrementRole,
   isValidSessionDecision,
   canCloseLastSession,
   personHasValidStatusInSession,

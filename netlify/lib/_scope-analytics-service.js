@@ -24,6 +24,7 @@ const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 const {
   computeMultiSessionParticipationState,
   isValidSessionStatut,
+  isNonContributiveEncadrementRole,
   isValidSessionDecision,
   prSessionLabel,
   sessionExerciseLabel,
@@ -390,6 +391,9 @@ function createScopeAnalyticsService(repo){
       attendusUse = attendusUse.filter((a) => String(a.personne_id) === String(personneId));
       partsUse = participations.filter((p) => String(p.personne_id) === String(personneId));
       if(!attendusUse.length) return { include: false, reason: 'personne_hors_attendus', mode };
+      if(isNonContributiveEncadrementRole(partsUse[0] && partsUse[0].role)){
+        return { include: false, reason: 'encadrement_non_contributif', mode };
+      }
       if(event.pr_exercise_group_key || event.prExerciseGroupKey){
         const statut = partsUse[0] && partsUse[0].statut;
         if(!isValidSessionStatut(statut)){
@@ -521,7 +525,7 @@ function createScopeAnalyticsService(repo){
         else if(classified.reason === 'reporte') exclusions.reportes += 1;
         else if(classified.reason === 'planifie') exclusions.planifies += 1;
         else if(classified.reason === 'quantitatif_sans_volumes') exclusions.quantitatifSansVolumes += 1;
-        else if(classified.reason === 'personne_non_nominatif' || classified.reason === 'personne_hors_attendus' || classified.reason === 'session_sans_statut_valable'){
+        else if(classified.reason === 'personne_non_nominatif' || classified.reason === 'personne_hors_attendus' || classified.reason === 'session_sans_statut_valable' || classified.reason === 'encadrement_non_contributif'){
           exclusions.horsPerimetre += 1;
         }
         excludedEvents.push({
@@ -763,6 +767,7 @@ function createScopeAnalyticsService(repo){
         if(isPermutationCatchupAttendu(attendu)) continue;
         const pid = String(attendu.personne_id || attendu.personneId);
         const part = byPid.get(pid);
+        if(isNonContributiveEncadrementRole(part && part.role)) continue;
         const official = officialFromTaux(computeTaux(part ? [part] : [], [attendu], { fulfilledPermutationPersonIds }));
         addDirectoryRate(acc, pid, Object.assign({}, official, { eventCount: 1 }), resolveEventObjective(
           {

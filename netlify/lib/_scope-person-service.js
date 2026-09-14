@@ -23,7 +23,8 @@ const {
 const { isPrincipalOi } = require('./_scope-personnel-sync-contract');
 const { TYPES_PERIODE } = require('./_scope-personnel');
 const { ALERTS_CONFIG } = require('./_scope-alerts');
-const { isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
+const { isQualificationEvenement, isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
+const { inferModeSuivi, MODES } = require('./_scope-analytics');
 const { isCancelledEvenement, isHiddenEvenement } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
@@ -148,10 +149,76 @@ function principalOi(affectations, ciblesById, date){
   return enriched.find((row) => row.principal) || enriched[0] || null;
 }
 
-async function plannedExpectedEvents(repo, personneId, period, affectations, ciblesById){
+function includedStatsByEventId(includedRows){
+  return new Map((includedRows || [])
+    .filter((row) => row && row.evenementId)
+    .map((row) => [String(row.evenementId), row]));
+}
+
+function personHistoryRow(event, {
+  affectations,
+  ciblesById,
+  eventCibles,
+  part,
+  attendu,
+  included
+} = {}){
+  const cancelled = isCancelledEvenement(event);
+  const planned = !cancelled && String(event.statut || '').toUpperCase() === 'PLANIFIE';
+  const role = String((part && part.role) || 'PARTICIPANT').toUpperCase();
+  const contributing = Boolean(!cancelled && !planned && included && Number(included.eventCountContribution || 0) > 0);
+  const oi = principalOi(affectations, ciblesById, event.date);
+  return {
+    evenementId: event.evenement_id,
+    date: event.date,
+    libelle: event.libelle,
+    domaine: event.domaine_code,
+    sousDomaine: event.sous_domaine_code || null,
+    cibles: eventCibles || [],
+    oiAtDate: oi ? oi.label : null,
+    oiAccueil: part && (part.cible_suivie_id || part.cibleSuivieId)
+      ? labelOi(ciblesById.get(part.cible_suivie_id || part.cibleSuivieId))
+      : null,
+    permutation: String((part && part.statut) || '').toUpperCase() === 'PERMUTATION',
+    cancelled,
+    planned,
+    statutEvenement: cancelled ? 'ANNULE' : event.statut,
+    statutParticipation: cancelled ? 'ANNULE' : (part ? part.statut : 'NON_RENSEIGNE'),
+    roleParticipation: role,
+    sourceParticipation: part && part.source ? part.source : null,
+    motif: part && part.motif_absence ? part.motif_absence : null,
+    motifInclusion: attendu && attendu.motif_inclusion ? attendu.motif_inclusion : null,
+    motif_inclusion: attendu && attendu.motif_inclusion ? attendu.motif_inclusion : null,
+    href: `#/exercices/${event.evenement_id}`,
+    volumes: contributing ? included.volumes : null,
+    numerator: contributing ? Number(included.numerator || 0) : 0,
+    denominator: contributing ? Number(included.denominator || 0) : 0,
+    percentage: contributing ? included.percentage : null,
+    eventCountContribution: contributing ? Number(included.eventCountContribution || 0) : 0,
+    appliedObjective: contributing ? (included.appliedObjective || null) : null,
+    prExerciseGroupKey: event.pr_exercise_group_key || event.prExerciseGroupKey || null
+  };
+}
+
+function personIsConcernedByEvent(event, part, attendu){
+  if(part) return true;
+  if(!attendu || attendu.inclus === false) return false;
+  const statut = String(event && event.statut || '').toUpperCase();
+  return isCancelledEvenement(event) || statut === 'PLANIFIE' || statut === 'REALISE';
+}
+
+async function personOperationalHistoryEvents(repo, personneId, period, affectations, ciblesById, includedRows, query = {}){
   if(!repo.listEvenements) return [];
-  const events = (await repo.listEvenements({ statut: 'PLANIFIE' }) || [])
-    .filter((event) => event && !isHiddenEvenement(event) && event.date >= period.from && event.date <= period.to);
+  const includeQualification = wantsQualification(query);
+  const events = (await repo.listEvenements({ from: period.from, to: period.to }) || []).filter((event) => {
+    if(!event || isHiddenEvenement(event)) return false;
+    if(!includeQualification && isQualificationEvenement(event)) return false;
+    if(event.origine === 'LEGACY_AGGREGATED') return false;
+    if(inferModeSuivi(event) !== MODES.NOMINATIF) return false;
+    const statut = String(event.statut || '').toUpperCase();
+    if(statut === 'REPORTE') return false;
+    return statut === 'REALISE' || statut === 'PLANIFIE' || isCancelledEvenement(event);
+  });
   if(!events.length) return [];
   const ids = events.map((event) => event.evenement_id).filter(Boolean);
   const [attendusRows, participationsRows, ciblesRows] = await Promise.all([
@@ -159,16 +226,15 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
     repo.listParticipationsForEvents ? repo.listParticipationsForEvents(ids) : [],
     repo.listEventCiblesForEvents ? repo.listEventCiblesForEvents(ids) : []
   ]);
-  const expectedEvents = new Set((attendusRows || [])
-    .filter((row) => String(row.personne_id) === String(personneId) && row.inclus !== false)
-    .map((row) => String(row.evenement_id)));
-  const attendusByEvent = new Map((attendusRows || [])
-    .filter((row) => String(row.personne_id) === String(personneId) && row.inclus !== false)
-    .map((row) => [String(row.evenement_id), row]));
-  if(!expectedEvents.size) return [];
+  const attendusByEvent = new Map();
+  for(const row of attendusRows || []){
+    if(String(row.personne_id) !== String(personneId) || row.inclus === false) continue;
+    attendusByEvent.set(String(row.evenement_id), row);
+  }
   const participationsByEvent = new Map();
   for(const row of participationsRows || []){
-    if(String(row.personne_id) === String(personneId)) participationsByEvent.set(String(row.evenement_id), row);
+    if(String(row.personne_id) !== String(personneId)) continue;
+    participationsByEvent.set(String(row.evenement_id), row);
   }
   const ciblesByEvent = new Map();
   for(const row of ciblesRows || []){
@@ -176,92 +242,25 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
     if(!ciblesByEvent.has(eventId)) ciblesByEvent.set(eventId, []);
     ciblesByEvent.get(eventId).push(row.cible_id);
   }
+  const includedById = includedStatsByEventId(includedRows);
   return events
-    .filter((event) => expectedEvents.has(String(event.evenement_id)))
+    .filter((event) => personIsConcernedByEvent(
+      event,
+      participationsByEvent.get(String(event.evenement_id)),
+      attendusByEvent.get(String(event.evenement_id))
+    ))
     .map((event) => {
       const eventCibles = (ciblesByEvent.get(String(event.evenement_id)) || [])
         .map((cid) => labelOi(ciblesById.get(cid)))
         .filter(Boolean);
-      const part = participationsByEvent.get(String(event.evenement_id));
-      const attendu = attendusByEvent.get(String(event.evenement_id)) || {};
-      return {
-        evenementId: event.evenement_id,
-        date: event.date,
-        libelle: event.libelle,
-        domaine: event.domaine_code,
-        sousDomaine: event.sous_domaine_code || null,
-        cibles: eventCibles,
-        oiAtDate: (principalOi(affectations, ciblesById, event.date) || {}).label || null,
-        oiAccueil: null,
-        permutation: false,
-        statutEvenement: event.statut,
-        statutParticipation: part ? part.statut : 'NON_RENSEIGNE',
-        motif: part && part.motif_absence ? part.motif_absence : null,
-        motifInclusion: attendu.motif_inclusion || null,
-        motif_inclusion: attendu.motif_inclusion || null,
-        href: `#/exercices/${event.evenement_id}`,
-        volumes: null,
-        numerator: 0,
-        denominator: 0,
-        percentage: null,
-        appliedObjective: null,
-        planned: true,
-        prExerciseGroupKey: event.pr_exercise_group_key || event.prExerciseGroupKey || null
-      };
-    });
-}
-
-async function cancelledHistoricalEvents(repo, personneId, period, affectations, ciblesById){
-  if(!repo.listEvenements) return [];
-  const events = (await repo.listEvenements({ statut: 'ANNULE' }) || [])
-    .filter((event) => event && isCancelledEvenement(event) && !isHiddenEvenement(event) && event.date >= period.from && event.date <= period.to);
-  if(!events.length) return [];
-  const ids = events.map((event) => event.evenement_id).filter(Boolean);
-  const [attendusRows, ciblesRows] = await Promise.all([
-    repo.listAttendusForEvents ? repo.listAttendusForEvents(ids) : [],
-    repo.listEventCiblesForEvents ? repo.listEventCiblesForEvents(ids) : []
-  ]);
-  const expectedEvents = new Set((attendusRows || [])
-    .filter((row) => String(row.personne_id) === String(personneId) && row.inclus !== false)
-    .map((row) => String(row.evenement_id)));
-  if(!expectedEvents.size) return [];
-  const ciblesByEvent = new Map();
-  for(const row of ciblesRows || []){
-    const eventId = String(row.evenement_id);
-    if(!ciblesByEvent.has(eventId)) ciblesByEvent.set(eventId, []);
-    ciblesByEvent.get(eventId).push(row.cible_id);
-  }
-  return events
-    .filter((event) => expectedEvents.has(String(event.evenement_id)))
-    .map((event) => {
-      const eventCibles = (ciblesByEvent.get(String(event.evenement_id)) || [])
-        .map((cid) => labelOi(ciblesById.get(cid)))
-        .filter(Boolean);
-      return {
-        evenementId: event.evenement_id,
-        date: event.date,
-        libelle: event.libelle,
-        domaine: event.domaine_code,
-        sousDomaine: event.sous_domaine_code || null,
-        cibles: eventCibles,
-        oiAtDate: (principalOi(affectations, ciblesById, event.date) || {}).label || null,
-        oiAccueil: null,
-        permutation: false,
-        cancelled: true,
-        statutEvenement: 'ANNULE',
-        statutParticipation: 'ANNULE',
-        motif: null,
-        motifInclusion: null,
-        motif_inclusion: null,
-        href: `#/exercices/${event.evenement_id}`,
-        volumes: null,
-        numerator: 0,
-        denominator: 0,
-        percentage: null,
-        eventCountContribution: 0,
-        appliedObjective: null,
-        planned: false
-      };
+      return personHistoryRow(event, {
+        affectations,
+        ciblesById,
+        eventCibles,
+        part: participationsByEvent.get(String(event.evenement_id)) || null,
+        attendu: attendusByEvent.get(String(event.evenement_id)) || null,
+        included: includedById.get(String(event.evenement_id)) || null
+      });
     });
 }
 
@@ -621,23 +620,22 @@ function createScopePersonService(repo){
     });
     const hiddenIds = await hiddenEvenementIds(repo);
     included = excludeHiddenEventRows(included, hiddenIds);
-    const planned = excludeHiddenEventRows(
-      await plannedExpectedEvents(repo, personneId, snap.summary.period, affectations, ciblesById),
-      hiddenIds
-    );
-    const plannedById = new Map(planned.map((row) => [String(row.evenementId), row]));
-    for(const row of included) plannedById.delete(String(row.evenementId));
-    const cancelled = excludeHiddenEventRows(
-      await cancelledHistoricalEvents(repo, personneId, snap.summary.period, affectations, ciblesById),
-      hiddenIds
-    );
-    const cancelledById = new Map(cancelled.map((row) => [String(row.evenementId), row]));
-    for(const row of included) cancelledById.delete(String(row.evenementId));
-    for(const row of plannedById.values()) cancelledById.delete(String(row.evenementId));
-    const { collapsePersonSessionHistory } = require('./_scope-cycle-rules');
-    const ficheEvents = excludeHiddenEventRows(
-      collapsePersonSessionHistory(included.concat([...plannedById.values()], [...cancelledById.values()])),
-      hiddenIds
+    const ficheEvents = enrichPersonPermutationRows(
+      excludeHiddenEventRows(
+        await personOperationalHistoryEvents(
+          repo,
+          personneId,
+          snap.summary.period,
+          affectations,
+          ciblesById,
+          included,
+          query
+        ),
+        hiddenIds
+      ),
+      sourcePermutations,
+      ciblesById,
+      sourceLabelsByEvent
     ).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
 
     const officialFromVisibleEvents = packFromEvents(included);
