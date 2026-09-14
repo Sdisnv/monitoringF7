@@ -5407,7 +5407,11 @@
       const s = String(row.statutParticipation || row.statut || '').toUpperCase();
       if ((display && display.ficheEventIsHidden && display.ficheEventIsHidden(row))
         || (L.isHiddenEvenement && L.isHiddenEvenement(row))) return false;
+      if (display && display.ficheEventMatchesPersonnelFilter) {
+        return display.ficheEventMatchesPersonnelFilter(row, statut);
+      }
       if (display && display.ficheEventIsCancelled && display.ficheEventIsCancelled(row)) return statut === 'tout';
+      if (display && display.ficheEventIsPlanned && display.ficheEventIsPlanned(row)) return statut === 'tout';
       if (statut === 'presents') return s === 'PRESENT';
       if (statut === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
       if (statut === 'non_excuses') return s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT';

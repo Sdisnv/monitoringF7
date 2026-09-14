@@ -1112,8 +1112,16 @@
     return '';
   }
 
+  function ficheEventIsPlanned(row){
+    if(ficheEventIsCancelled(row) || ficheEventIsHidden(row)) return false;
+    if(row && row.planned === true) return true;
+    const statut = String((row && (row.statutEvenement || '')) || '').toUpperCase();
+    return statut === 'PLANIFIE';
+  }
+
   function ficheEventStatutLabel(row){
     if(ficheEventIsCancelled(row)) return 'Annulé';
+    if(ficheEventIsPlanned(row)) return 'Planifié';
     const role = String((row && (row.roleParticipation || row.role || '')) || '').toUpperCase();
     if(role === 'AUXILIAIRE') return '—';
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
@@ -1126,6 +1134,18 @@
     if(s === 'PLANIFIE') return 'Planifié';
     if(s === 'ANNULE' || s === 'ANNULEE') return 'Annulé';
     return s ? s : '—';
+  }
+
+  function ficheEventMatchesPersonnelFilter(row, filter){
+    const bucket = String(filter || 'tout').toLowerCase();
+    if(ficheEventIsHidden(row)) return false;
+    if(ficheEventIsCancelled(row) || ficheEventIsPlanned(row)) return bucket === 'tout';
+    const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
+    if(bucket === 'presents') return s === 'PRESENT';
+    if(bucket === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
+    if(bucket === 'non_excuses') return s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT';
+    if(bucket === 'dispenses') return s === 'DISPENSE';
+    return true;
   }
 
   function ficheExcuseMotifLabel(code){
@@ -1381,9 +1401,11 @@
     ficheParticipationIsOfficial,
     ficheEventIsCancelled,
     ficheEventIsHidden,
+    ficheEventIsPlanned,
     ficheEventStatutLabel,
     ficheEventRoleInformation,
     ficheEventInformations,
+    ficheEventMatchesPersonnelFilter,
     ficheEventCible,
     isPermutationCatchup: uiLogic.isPermutationCatchup,
     ficheExcuseMotifLabel,
