@@ -243,6 +243,17 @@ function officialFromPersonSessionRows(rows){
   return { numerator: 0, denominator: 0, percentage: null, kind: KINDS.OFFICIEL, eventCount: 0, volumes };
 }
 
+function statutFromPersonSessionRows(rows){
+  const statuses = new Set((rows || [])
+    .map((row) => String(row && row.statut || '').toUpperCase())
+    .filter((status) => isValidSessionStatut(status)));
+  if(statuses.has('PRESENT')) return 'PRESENT';
+  if(statuses.has('DISPENSE')) return 'DISPENSE';
+  if(statuses.has('ABSENT_EXCUSE')) return 'ABSENT_EXCUSE';
+  if(statuses.has('ABSENT_NON_EXCUSE')) return 'ABSENT_NON_EXCUSE';
+  return null;
+}
+
 function isCatchupOnlyTrace(attendus, participations){
   const expected = attendus || [];
   if(!expected.length || expected.some((row) => !isPermutationCatchupAttendu(row))) return false;
@@ -392,6 +403,22 @@ function createScopeAnalyticsService(repo){
     return { include: true, reason: null, mode, official, attendus: attendusUse, participations: partsUse, catchupOnlyTrace };
   }
 
+  function addDirectoryRate(acc, pid, official, objective){
+    const row = acc.get(pid) || {
+      numerator: 0,
+      denominator: 0,
+      eventCount: 0,
+      volumes: emptyVolumes(),
+      applied: []
+    };
+    row.numerator += Number(official.numerator || 0);
+    row.denominator += Number(official.denominator || 0);
+    row.volumes = addVolumes(row.volumes, official.volumes);
+    row.eventCount += Number(official.eventCount || 0);
+    row.applied.push(objective || null);
+    acc.set(pid, row);
+  }
+
   async function evaluate(query){
     const resolved = await resolveQuery(repo, query || {});
     const period = parsePeriod(resolved);
@@ -444,6 +471,8 @@ function createScopeAnalyticsService(repo){
           const official = personneId
             ? officialFromPersonSessionRows(personGroupParticipations)
             : officialFromSessionState(state);
+          if(personneId && Number(official.eventCount || 0) <= 0) continue;
+          const statutParticipation = personneId ? statutFromPersonSessionRows(personGroupParticipations) : null;
           const cibles = [...new Set(eventIds.flatMap((id) => bundle.cibleIdsByEvent[id] || []))];
           const appliedObjective = resolveEventObjective(
             { date: event.date, domaine_code: event.domaine_code, cible_ids: cibles },
@@ -462,9 +491,9 @@ function createScopeAnalyticsService(repo){
             percentage: official.percentage,
             volumes: official.volumes,
             kind: KINDS.OFFICIEL,
-            eventCountContribution: 1,
+            eventCountContribution: Number(official.eventCount || 0),
             appliedObjective,
-            statutParticipation: personneId ? null : null,
+            statutParticipation,
             motif: null,
             cibleSuivieId: null,
             prExerciseGroupKey: groupKey,
@@ -684,7 +713,36 @@ function createScopeAnalyticsService(repo){
       include_qualification: resolved.include_qualification
     }, period);
     const acc = new Map();
+    const handledMultiSessionGroups = new Set();
     for(const event of bundle.events){
+      const groupKey = multiSessionGroupKey(event);
+      if(groupKey && isMultiSessionConsolidatedEvent(event)){
+        if(handledMultiSessionGroups.has(groupKey)) continue;
+        const groupEvents = (bundle.events || []).filter((row) => multiSessionGroupKey(row) === groupKey);
+        const allClosed = groupEvents.length > 1 && groupEvents.every((row) => row.statut === 'REALISE');
+        if(allClosed){
+          handledMultiSessionGroups.add(groupKey);
+          const eventIds = groupEvents.map((row) => row.evenement_id);
+          const groupAttendus = eventIds.flatMap((id) => bundle.attendusByEvent[id] || []);
+          const groupParticipations = eventIds.flatMap((id) => bundle.participationsByEvent[id] || []);
+          const personIds = [...new Set(groupAttendus
+            .filter((row) => row && row.inclus !== false)
+            .map((row) => String(row.personne_id || row.personneId || ''))
+            .filter(Boolean))];
+          const cibles = [...new Set(eventIds.flatMap((id) => bundle.cibleIdsByEvent[id] || []))];
+          const objective = resolveEventObjective(
+            { date: event.date, domaine_code: event.domaine_code, cible_ids: cibles },
+            { objectives, grain, queryCibleId: cibleId }
+          );
+          for(const pid of personIds){
+            const rows = groupParticipations.filter((row) => String(row.personne_id || row.personneId || '') === pid);
+            const official = officialFromPersonSessionRows(rows);
+            if(Number(official.eventCount || 0) <= 0) continue;
+            addDirectoryRate(acc, pid, official, objective);
+          }
+          continue;
+        }
+      }
       const classified = classify(event, bundle);
       if(!classified.include || classified.mode !== MODES.NOMINATIF) continue;
       const attendus = bundle.attendusByEvent[event.evenement_id] || [];
@@ -700,18 +758,7 @@ function createScopeAnalyticsService(repo){
         const pid = String(attendu.personne_id || attendu.personneId);
         const part = byPid.get(pid);
         const official = officialFromTaux(computeTaux(part ? [part] : [], [attendu], { fulfilledPermutationPersonIds }));
-        const row = acc.get(pid) || {
-          numerator: 0,
-          denominator: 0,
-          eventCount: 0,
-          volumes: emptyVolumes(),
-          applied: []
-        };
-        row.numerator += Number(official.numerator || 0);
-        row.denominator += Number(official.denominator || 0);
-        row.volumes = addVolumes(row.volumes, official.volumes);
-        row.eventCount += 1;
-        row.applied.push(resolveEventObjective(
+        addDirectoryRate(acc, pid, Object.assign({}, official, { eventCount: 1 }), resolveEventObjective(
           {
             date: event.date,
             domaine_code: event.domaine_code,
@@ -719,7 +766,6 @@ function createScopeAnalyticsService(repo){
           },
           { objectives, grain, queryCibleId: cibleId }
         ));
-        acc.set(pid, row);
       }
     }
     const rates = {};
