@@ -215,6 +215,8 @@
     eventPersonnelSort: { key: 'grade', dir: 'desc' },
     previewSort: { key: 'grade', dir: 'asc' },
     personneFiche: null,
+    personneReady: false,
+    personneError: null,
     personneEdit: null,
     personneEventFilter: 'tout',
     personneDomainFilter: null,
@@ -416,9 +418,26 @@
     }
   }
 
+  function renderAfterLoad() {
+    try {
+      render();
+    } catch (error) {
+      const info = presentFriendlyError(L.friendlyError(error));
+      if (route().screen === 'personne') {
+        state.personneReady = true;
+        state.personneError = (info && info.message) || L.errorMessage('personne');
+      }
+      try {
+        render();
+      } catch (_retry) {
+        /* never leave the last successful frame on a perpetual loader */
+      }
+    }
+  }
+
   async function withLoading(fn) {
     state.loading = true;
-    render();
+    renderAfterLoad();
     try {
       await fn();
     } catch (error) {
@@ -428,10 +447,19 @@
         invalidateScopeSession('loading-unauthorized');
         state.authError = info;
       }
-      toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors, okta: info.okta });
+      try {
+        toast(info.tone, info.title, info.message, { conflict: info.conflict, errors: info.errors, okta: info.okta });
+      } catch (_toastError) {
+        state.feedback = {
+          kind: 'error',
+          title: info.title,
+          message: info.message,
+          closeable: true
+        };
+      }
     } finally {
       state.loading = false;
-      render();
+      renderAfterLoad();
     }
   }
 
@@ -568,6 +596,7 @@
       if (next.screen === 'personne') {
         state.personneFiche = null;
         state.personneReady = false;
+        state.personneError = null;
       }
     }
   }
@@ -3854,20 +3883,31 @@
   async function loadPersonneFiche(id) {
     if (typeof client.getPersonneFiche !== 'function' || !canReadPersonnel()) {
       state.personneFiche = null;
+      state.personneError = null;
+      state.personneReady = true;
       return;
     }
     const prev = state.personneFiche && state.personneFiche.identite && state.personneFiche.identite.personneId;
-    state.personneFiche = await client.getPersonneFiche(id, periodQuery());
-    if (prev !== id) {
-      state.personneEventFilter = 'tout';
-      state.personneDomainFilter = null;
+    state.personneError = null;
+    try {
+      state.personneFiche = await client.getPersonneFiche(id, periodQuery());
+      if (prev !== id) {
+        state.personneEventFilter = 'tout';
+        state.personneDomainFilter = null;
+      }
+    } catch (error) {
+      state.personneFiche = null;
+      state.personneError = ((L.friendlyError(error) || {}).message) || L.errorMessage('personne');
+      throw error;
+    } finally {
+      state.personneReady = true;
     }
   }
 
   async function reloadPersonneFiche(id) {
     await loadPersonneFiche(id);
     state.personneEdit = null;
-    render();
+    renderAfterLoad();
   }
 
   function canManagePersonnel() {
@@ -5313,6 +5353,7 @@
   function personEventsFiltered(fiche) {
     const statut = state.personneEventFilter || 'tout';
     const domaine = state.personneDomainFilter;
+    const display = personnelDisplay();
     const filtered = (fiche.evenements || []).filter((row) => {
       if (domaine) {
         const codes = domaine === 'FOSPEC' ? ['FOSPEC', 'PR', 'AUTO'] : [domaine];
@@ -5329,6 +5370,12 @@
     return L.sortRows ? L.sortRows(filtered, state.personneEventSort, personEventColumns()) : filtered;
   }
 
+  function personneFicheStatusHtml(message, options) {
+    const loading = Boolean(options && options.loading);
+    return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
+        <div class="scope-main">${contextReturnHtml('#/personnel', 'Retour au personnel')}<div class="scope-card"><p${loading ? '' : ' class="scope-empty"'}>${escapeHtml(message)}</p></div></div>`;
+  }
+
   function renderPersonne() {
     const fiche = state.personneFiche;
     const identite = fiche && fiche.identite;
@@ -5337,9 +5384,11 @@
         <div class="scope-main">${contextReturnHtml('#/personnel', 'Retour au personnel')}<div class="scope-card"><p class="scope-empty">Fiche individuelle réservée aux profils habilités (personnel:read).</p></div></div>`;
     }
     if (!fiche || !identite) {
-      return `<div class="scope-crumb"><a href="#/personnel">Personnel</a></div>
-        <div class="scope-main">${contextReturnHtml('#/personnel', 'Retour au personnel')}<div class="scope-card"><p>Chargement de la fiche…</p></div></div>`;
+      if (state.personneError) return personneFicheStatusHtml(state.personneError);
+      if (state.personneReady) return personneFicheStatusHtml(L.errorMessage('personne'));
+      return personneFicheStatusHtml(L.loadingMessage('personne'), { loading: true });
     }
+    try {
     const display = personnelDisplay();
     const ficheSabbatical = fiche.sabbatical || (fiche.personne && fiche.personne.sabbatical) || null;
     const identity = display && display.ficheIdentityView
@@ -5562,6 +5611,10 @@
         </section>
       </div>
     `;
+    } catch (error) {
+      const message = ((L.friendlyError(error) || {}).message) || L.errorMessage('personne');
+      return personneFicheStatusHtml(message);
+    }
   }
 
   function canNominatif() {
