@@ -913,6 +913,7 @@ function createPgRepo(client){
          join scope_evenements e on e.evenement_id = s.event_id
          left join scope_exercices x on x.exercice_id = e.exercice_id
          where s.multisession_id = $1
+           and e.hidden_at is null
          order by s.sequence, e.date, e.libelle`,
         [multisessionId]
       );

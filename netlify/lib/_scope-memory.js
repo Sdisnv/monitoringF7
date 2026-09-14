@@ -671,7 +671,8 @@ function createMemoryRepo(){
     async listMultisessionV2Sessions(multisessionId){
       return [...multisessionV2Sessions.values()]
         .filter((row) => row.multisession_id === multisessionId)
-        .map((row) => ({ ...decorateEvent(evenements.get(row.event_id)), multisession_session_id: row.multisession_session_id, multisession_id: row.multisession_id, event_id: row.event_id, sequence: row.sequence, status: row.status, metadata: row.metadata }));
+        .map((row) => ({ ...decorateEvent(evenements.get(row.event_id)), multisession_session_id: row.multisession_session_id, multisession_id: row.multisession_id, event_id: row.event_id, sequence: row.sequence, status: row.status, metadata: row.metadata }))
+        .filter((row) => !row.hidden_at && !row.hiddenAt);
     },
     async upsertMultisessionV2Session(row){
       const existing = [...multisessionV2Sessions.values()].find((item) => item.event_id === row.event_id)
