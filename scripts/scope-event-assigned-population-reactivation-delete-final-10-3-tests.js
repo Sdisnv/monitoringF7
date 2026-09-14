@@ -271,9 +271,7 @@ async function seedDpsB1Population(count, libelle){
     ok(hiddenUsed.hidden, 'saisie réelle n’empêche plus le masquage métier');
     const persistedUsed = await used.repo.getEvent(used.created.evenement.evenement_id);
     ok(persistedUsed.hidden_at, 'hidden_at persisté');
-    const kept = (await used.repo.listParticipations(used.created.evenement.evenement_id))
-      .find((row) => String(row.personne_id) === String(used.people[0].personne_id));
-    eq(String(kept && kept.statut || '').toUpperCase(), 'PRESENT', 'audit PRESENT conservé');
+    eq((await used.repo.listParticipations(used.created.evenement.evenement_id)).length, 0, 'participations purgées');
     let readUsed = null;
     try{
       await used.service.lireEvenement(used.created.evenement.evenement_id);

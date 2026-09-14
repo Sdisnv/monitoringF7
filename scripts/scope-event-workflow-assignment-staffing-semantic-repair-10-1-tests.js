@@ -119,7 +119,8 @@ async function seedNominatifEvent(options = {}){
 
   await record('03 — suppression métier: invisible + refus si participations', async () => {
     includes(ui, 'Supprimer l’événement');
-    includes(ui, 'Supprimer définitivement cet événement des vues opérationnelles ?');
+    includes(ui, 'Supprimer définitivement cet événement ?');
+    includes(ui, 'Les participations et les données associées seront supprimées de SCOPE.');
     includes(ui, "successTitle: 'Événement supprimé'");
     const empty = await seedNominatifEvent({ libelle: 'Suppression vide R10.1', nip: '9001' });
     const hidden = await empty.service.masquerEvenement(empty.created.evenement.evenement_id, {
@@ -155,12 +156,11 @@ async function seedNominatifEvent(options = {}){
     const hiddenFilled = await filled.service.masquerEvenement(filled.created.evenement.evenement_id, {
       baseVersion: afterSave.version
     }, ACTOR);
-    ok(hiddenFilled.hidden, 'participations conservées n’empêchent plus le masquage');
+    ok(hiddenFilled.hidden, 'participations n’empêchent plus le masquage');
     const persisted = await filled.repo.getEvent(filled.created.evenement.evenement_id);
     ok(persisted.hidden_at, 'hidden_at persisté');
-    const kept = (await filled.repo.listParticipations(filled.created.evenement.evenement_id))
-      .find((row) => String(row.personne_id) === String(filled.personne.personne_id));
-    eq(String(kept && kept.statut || '').toUpperCase(), 'PRESENT', 'audit PRESENT conservé');
+    eq((await filled.repo.listParticipations(filled.created.evenement.evenement_id)).length, 0, 'participations purgées');
+    eq((await filled.repo.listAttendus(filled.created.evenement.evenement_id)).length, 0, 'attendus purgés');
     let readFilled = null;
     try{
       await filled.service.lireEvenement(filled.created.evenement.evenement_id);

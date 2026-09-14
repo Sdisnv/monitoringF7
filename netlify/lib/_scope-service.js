@@ -4421,45 +4421,39 @@ function createScopeService(repo){
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
       if(isHiddenEvenement(evenement)){
-        return { hidden: true, alreadyHidden: true, evenement, version: evenement.version };
+        const purge = tx.purgeEventFunctionalChildren
+          ? await tx.purgeEventFunctionalChildren(eventId)
+          : { participationsDeleted: 0, attendusDeleted: 0 };
+        return { hidden: true, alreadyHidden: true, evenement, version: evenement.version, purge };
       }
       if(evenement.origine === 'LEGACY_AGGREGATED'){
         throw new HttpError(422, 'suppression_interdite', 'Un événement historique agrégé ne peut pas être supprimé des vues opérationnelles.');
       }
-      const participations = tx.listParticipations ? await tx.listParticipations(eventId) : [];
-      const attendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
-      for(const row of attendus || []){
-        if(row.inclus === false) continue;
-        await tx.upsertAttendu({
-          ...row,
-          inclus: false,
-          origine_retrait: 'SUPPRESSION_METIER'
-        });
-      }
-      for(const row of participations || []){
-        if(recordedParticipationStatut(row && row.statut)) continue;
-        await tx.upsertParticipation({
-          ...row,
-          statut: 'NON_CONCERNE',
-          source: 'SUPPRESSION_METIER',
-          auteur_id: actorId(actor)
-        });
-      }
+      const purge = tx.purgeEventFunctionalChildren
+        ? await tx.purgeEventFunctionalChildren(eventId)
+        : { participationsDeleted: 0, attendusDeleted: 0 };
       const stamp = new Date().toISOString();
       const next = await bumpOrConflict(tx, eventId, baseVersion, {
         hidden_at: stamp,
-        hidden_par: actorId(actor)
+        hidden_par: actorId(actor),
+        cycle_id: null
       });
       await tx.appendJournal({
         auteur_id: actorId(actor),
         entite: 'evenement',
         entite_id: eventId,
         action: 'MASQUER',
-        commentaire: motif || 'Suppression métier des vues opérationnelles',
-        avant: { statut: evenement.statut, version: evenement.version, libelle: evenement.libelle, date: evenement.date, codeCours: evenement.code_cours },
-        apres: { hidden_at: stamp, version: next.version }
+        commentaire: motif || 'Suppression métier : événement et données associées retirés du modèle fonctionnel',
+        avant: {
+          statut: evenement.statut,
+          version: evenement.version,
+          libelle: evenement.libelle,
+          date: evenement.date,
+          codeCours: evenement.code_cours
+        },
+        apres: { hidden_at: stamp, version: next.version, purge }
       });
-      return { hidden: true, alreadyHidden: false, evenement: next, version: next.version };
+      return { hidden: true, alreadyHidden: false, evenement: next, version: next.version, purge };
     });
   }
 

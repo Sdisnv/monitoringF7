@@ -8347,8 +8347,9 @@
     if (state.modal !== 'delete-event') return '';
     return `<div class="scope-modal"><div class="scope-card">
       <h3>Supprimer l’événement</h3>
-      <p>Supprimer définitivement cet événement des vues opérationnelles ?</p>
-      <p class="scope-mode-hint">Autorisé s’il n’y a pas de participation réelle ni de saisie quantitative. Une population assignée non saisie peut être purgée dans la même opération.</p>
+      <p>Supprimer définitivement cet événement ?</p>
+      <p>Les participations et les données associées seront supprimées de SCOPE.</p>
+      <p class="scope-mode-hint">Si l’événement était prévu mais n’a pas eu lieu, utilisez plutôt Annuler.</p>
       <div class="scope-actions">
         <button type="button" class="scope-btn scope-btn-primary" id="delete-ok"${state.deleteEventBusy ? ' disabled' : ''}>Supprimer</button>
         <button type="button" class="scope-btn" id="delete-dismiss">Retour</button>

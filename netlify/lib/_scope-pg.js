@@ -2295,6 +2295,88 @@ function createPgRepo(client){
       const result = await q('delete from scope_evenements where evenement_id = $1 returning *', [eventId]);
       return { deleted: Boolean(result.rows[0]), event: mapEvent(result.rows[0] || null) };
     },
+    async purgeEventFunctionalChildren(eventId){
+      async function countDelete(sql, params){
+        try{
+          const result = await q(sql, params);
+          return Number(result.rowCount || 0);
+        }catch(error){
+          if(error && error.code === '42P01') return 0;
+          throw error;
+        }
+      }
+      const v2ParticipationsDeleted = await countDelete(
+        'delete from scope_multisession_v2_participations where session_id = $1',
+        [eventId]
+      );
+      const v2SessionsDeleted = await countDelete(
+        'delete from scope_multisession_v2_sessions where event_id = $1',
+        [eventId]
+      );
+      const participationsDeleted = await countDelete(
+        'delete from scope_participations where evenement_id = $1',
+        [eventId]
+      );
+      const attendusDeleted = await countDelete(
+        'delete from scope_attendus where evenement_id = $1',
+        [eventId]
+      );
+      const quantitatifDeleted = await countDelete(
+        'delete from scope_saisies_quantitatives where evenement_id = $1',
+        [eventId]
+      );
+      const permutationsDeleted = await countDelete(
+        'delete from scope_permutations where source_evenement_id = $1',
+        [eventId]
+      );
+      let permutationsCleared = 0;
+      try{
+        const cleared = await q(
+          `update scope_permutations
+           set rattrapage_evenement_id = null,
+               rattrapage_cible_id = null,
+               rattrapage_date = null,
+               statut = case
+                 when statut in ('RATTRAPPE','REGULARISE','A_REGULARISER') then 'A_RATTRAPER'
+                 else statut
+               end,
+               regularisation_motif = case
+                 when statut in ('RATTRAPPE','REGULARISE','A_REGULARISER') then null
+                 else regularisation_motif
+               end,
+               updated_at = now()
+           where rattrapage_evenement_id = $1`,
+          [eventId]
+        );
+        permutationsCleared = Number(cleared.rowCount || 0);
+      }catch(error){
+        if(!(error && error.code === '42P01')) throw error;
+      }
+      let cycleRefsCleared = 0;
+      try{
+        const cycleRows = await q(
+          `update scope_cycle_personnes
+           set session_event_id = case when session_event_id = $1 then null else session_event_id end,
+               participated_event_id = case when participated_event_id = $1 then null else participated_event_id end,
+               updated_at = now()
+           where session_event_id = $1 or participated_event_id = $1`,
+          [eventId]
+        );
+        cycleRefsCleared = Number(cycleRows.rowCount || 0);
+      }catch(error){
+        if(!(error && error.code === '42P01')) throw error;
+      }
+      return {
+        participationsDeleted,
+        attendusDeleted,
+        quantitatifDeleted,
+        v2ParticipationsDeleted,
+        v2SessionsDeleted,
+        permutationsDeleted,
+        permutationsCleared,
+        cycleRefsCleared
+      };
+    },
     async countTable(name){
       const allowed = new Set([
         'scope_personnes', 'scope_evenements', 'scope_attendus', 'scope_participations',

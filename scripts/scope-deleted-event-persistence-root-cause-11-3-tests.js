@@ -108,12 +108,12 @@ async function statusOf(fn){
   const html = read('scope.html');
   const display = require('../assets/js/scope-personnel-display.js');
 
-  await record('01 — cache-bust 11.3 et suppression métier persiste hidden_at même avec saisies', async () => {
-    includes(html, TOKEN);
-    includes(html, 'scope-ui.js?v=scope-deleted-event-persistence-root-cause-11-3');
+  await record('01 — cache-bust et suppression métier persiste hidden_at même avec saisies', async () => {
+    includes(html, 'scope-event-deletion-cascade-cleanup-11-4');
     includes(ui, 'const canDelete = true;');
     includes(serviceSrc, "action: 'MASQUER'");
     includes(serviceSrc, 'hidden_at: stamp');
+    includes(serviceSrc, 'purgeEventFunctionalChildren');
     notIncludes(serviceSrc, 'Impossible de supprimer cet événement réalisé.');
     notIncludes(serviceSrc, 'des participations ont déjà été enregistrées.');
     notIncludes(serviceSrc, 'une saisie quantitative existe.');
@@ -151,10 +151,9 @@ async function statusOf(fn){
     eq(persisted.statut, 'REALISE');
 
     const parts = await repo.listParticipations(created.eventId);
-    const present = (parts || []).find((row) => String(row.personne_id) === String(personne.personne_id));
-    eq(String(present && present.statut || '').toUpperCase(), 'PRESENT', 'participation d’audit conservée');
+    eq((parts || []).length, 0, 'participations fonctionnelles purgées');
     const attendus = await repo.listAttendus(created.eventId);
-    ok((attendus || []).some((row) => String(row.personne_id) === String(personne.personne_id)), 'attendu d’audit conservé');
+    eq((attendus || []).length, 0, 'attendus fonctionnels purgés');
 
     eq(await statusOf(() => service.lireEvenement(created.eventId)), 404, 'accès direct opérationnel impossible');
     eq(await statusOf(() => service.enregistrerParticipations(created.eventId, {
@@ -219,8 +218,7 @@ async function statusOf(fn){
     const persisted = await repo.getEvent(created.eventId);
     ok(persisted.hidden_at);
     eq(persisted.statut, 'PLANIFIE');
-    const present = (await repo.listParticipations(created.eventId)).find((row) => String(row.personne_id) === String(personne.personne_id));
-    eq(String(present.statut).toUpperCase(), 'PRESENT');
+    eq((await repo.listParticipations(created.eventId)).length, 0, 'participations purgées');
     eq(await statusOf(() => service.lireEvenement(created.eventId)), 404);
     const fiche = await persons.fiche(personne.personne_id, PERIOD);
     ok(!(fiche.evenements || []).some((row) => String(row.evenementId) === String(created.eventId)));

@@ -544,6 +544,84 @@ function createMemoryRepo(){
       evenements.delete(eventId);
       return { deleted: Boolean(event), event: event || null };
     },
+    async purgeEventFunctionalChildren(eventId){
+      const id = String(eventId);
+      let participationsDeleted = 0;
+      for(const [key, row] of [...participations.entries()]){
+        if(String(row.evenement_id) === id){
+          participations.delete(key);
+          participationsDeleted += 1;
+        }
+      }
+      let attendusDeleted = 0;
+      for(const [key, row] of [...attendus.entries()]){
+        if(String(row.evenement_id) === id){
+          attendus.delete(key);
+          attendusDeleted += 1;
+        }
+      }
+      const hadQuantitatif = quantitatives.delete(eventId) || quantitatives.delete(id);
+      let v2ParticipationsDeleted = 0;
+      for(const [key, row] of [...multisessionV2Participations.entries()]){
+        if(String(row.session_id || row.event_id) === id){
+          multisessionV2Participations.delete(key);
+          v2ParticipationsDeleted += 1;
+        }
+      }
+      let v2SessionsDeleted = 0;
+      for(const [key, row] of [...multisessionV2Sessions.entries()]){
+        if(String(row.event_id) === id){
+          multisessionV2Sessions.delete(key);
+          v2SessionsDeleted += 1;
+        }
+      }
+      let permutationsDeleted = 0;
+      let permutationsCleared = 0;
+      for(const [key, row] of [...permutations.entries()]){
+        if(String(row.source_evenement_id) === id){
+          permutations.delete(key);
+          permutationsDeleted += 1;
+          continue;
+        }
+        if(String(row.rattrapage_evenement_id || '') === id){
+          row.rattrapage_evenement_id = null;
+          row.rattrapage_cible_id = null;
+          row.rattrapage_date = null;
+          if(['RATTRAPPE', 'REGULARISE', 'A_REGULARISER'].includes(String(row.statut || '').toUpperCase())){
+            row.statut = 'A_RATTRAPER';
+            row.regularisation_motif = null;
+          }
+          row.updated_at = now();
+          permutationsCleared += 1;
+        }
+      }
+      let cycleRefsCleared = 0;
+      for(const row of cyclePersonnes.values()){
+        let changed = false;
+        if(String(row.session_event_id || '') === id){
+          row.session_event_id = null;
+          changed = true;
+        }
+        if(String(row.participated_event_id || '') === id){
+          row.participated_event_id = null;
+          changed = true;
+        }
+        if(changed){
+          row.updated_at = now();
+          cycleRefsCleared += 1;
+        }
+      }
+      return {
+        participationsDeleted,
+        attendusDeleted,
+        quantitatifDeleted: hadQuantitatif ? 1 : 0,
+        v2ParticipationsDeleted,
+        v2SessionsDeleted,
+        permutationsDeleted,
+        permutationsCleared,
+        cycleRefsCleared
+      };
+    },
     async upsertMultisessionV2(row){
       const existing = row.multisession_id
         ? multisessionsV2.get(String(row.multisession_id))

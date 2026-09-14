@@ -126,7 +126,8 @@ async function seedDpsB1Population(count, libelle){
 
   await record('03 — contrat schéma = valeurs réellement écrites par le code', async () => {
     const written = serviceWrittenRetraitValues(serviceSrc);
-    eq(written.join(','), REQUIRED_RETRAIT_VALUES.slice().sort().join(','));
+    const expectedWritten = REQUIRED_RETRAIT_VALUES.filter((value) => value !== 'SUPPRESSION_METIER').sort();
+    eq(written.join(','), expectedWritten.join(','));
     for(const value of written){
       ok(pgRetraitAllows(createList, value), `schéma accepte ${value} écrit par le service`);
     }
@@ -134,7 +135,8 @@ async function seedDpsB1Population(count, libelle){
     includes(serviceSrc, "origine_retrait: 'EXCEPTION_RETRAIT'");
     includes(serviceSrc, "origine_retrait: 'PERMUTATION_SOURCE_CORRIGEE'");
     includes(serviceSrc, "origine_retrait: 'RESET_SAISIE'");
-    includes(serviceSrc, "origine_retrait: 'SUPPRESSION_METIER'");
+    notIncludes(serviceSrc, "origine_retrait: 'SUPPRESSION_METIER'");
+    includes(serviceSrc, 'purgeEventFunctionalChildren');
     includes(serviceSrc, "origine_retrait: 'DESASSIGNATION'");
     includes(serviceSrc, "origine_retrait || 'INDISPONIBLE'");
   });
