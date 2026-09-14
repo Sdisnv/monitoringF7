@@ -47,6 +47,30 @@ function eventRowId(row){
   return String((row && (row.evenementId || row.evenement_id)) || '');
 }
 
+function timeseriesFromVisibleEvents(events){
+  const buckets = new Map();
+  for(const row of events || []){
+    const month = String(row.date || '').slice(0, 7);
+    if(!/^\d{4}-\d{2}$/.test(month)) continue;
+    if(!buckets.has(month)) buckets.set(month, []);
+    buckets.get(month).push(row);
+  }
+  return [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([month, rows]) => {
+    const pack = packFromEvents(rows);
+    return {
+      month,
+      numerator: pack.numerator,
+      denominator: pack.denominator,
+      eventCount: pack.eventCount,
+      kind: pack.kind,
+      percentage: pack.percentage,
+      thresholdPct: pack.objective ? pack.objective.thresholdPct : null,
+      objective: pack.objective,
+      objectiveContext: pack.objectiveContext
+    };
+  });
+}
+
 async function hiddenEvenementIds(repo){
   if(!repo.listEvenements) return new Set();
   const rows = await repo.listEvenements({ includeHidden: true });
@@ -616,7 +640,11 @@ function createScopePersonService(repo){
       hiddenIds
     ).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
 
-    const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });
+    const officialFromVisibleEvents = packFromEvents(included);
+    const evaluated = Object.assign({}, snap.evaluated, {
+      includedEvents: included,
+      officiel: Object.assign({}, snap.evaluated && snap.evaluated.officiel || {}, officialFromVisibleEvents)
+    });
     const entry = isoDate(personne.date_entree_sdis || personne.date_entree) || snap.summary.period.from;
     const careerFrom = `${String(entry).slice(0, 4)}-01-01`;
     let careerEvents = snap.evaluated.includedEvents || [];
@@ -630,16 +658,15 @@ function createScopePersonService(repo){
       careerEvents = (careerSnap.evaluated && careerSnap.evaluated.includedEvents) || careerEvents;
     }
     careerEvents = excludeHiddenEventRows(careerEvents, hiddenIds);
-    const graphs = personGraphs(evaluated, snap.timeseries, snap.explain, careerEvents, ciblesById);
-    let officiel = snap.summary.officiel || {};
-    if((snap.evaluated.includedEvents || []).some((row) => hiddenIds.has(String(row.evenementId || row.evenement_id)))){
-      const pack = packFromEvents(included);
-      officiel = Object.assign({}, officiel, pack, {
-        volumes: Object.assign({}, officiel.volumes || {}, pack.volumes || {}, {
-          attendus: Number(pack.eventCount || 0)
-        })
-      });
-    }
+    const visibleTimeseries = Object.assign({}, snap.timeseries || {}, {
+      officiel: timeseriesFromVisibleEvents(included)
+    });
+    const graphs = personGraphs(evaluated, visibleTimeseries, snap.explain, careerEvents, ciblesById);
+    let officiel = Object.assign({}, snap.summary.officiel || {}, officialFromVisibleEvents, {
+      volumes: Object.assign({}, (snap.summary.officiel && snap.summary.officiel.volumes) || {}, officialFromVisibleEvents.volumes || {}, {
+        attendus: Number(officialFromVisibleEvents.eventCount || 0)
+      })
+    });
     const ctx = officiel.objectiveContext || {};
     let objectifMessage = 'Aucun objectif défini.';
     if(ctx.homogeneous === false && (ctx.distinctObjectives || []).length > 1){
@@ -749,7 +776,7 @@ function createScopePersonService(repo){
       explain: Object.assign({}, snap.explain, {
         modesInclus: 'NOMINATIF uniquement. QUANTITATIF et LEGACY ne sont jamais attribués à une personne.'
       }),
-      timeseries: snap.timeseries,
+      timeseries: visibleTimeseries,
       graphs,
       exclusions: snap.explain.exclusions,
       rapportPersonne: { disponible: true, kind: 'PERSON' }
