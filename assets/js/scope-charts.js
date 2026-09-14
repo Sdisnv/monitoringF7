@@ -378,9 +378,9 @@
     const usable = points.filter((p) => Number(p.value || 0) > 0);
     if (!usable.length) return emptyState(dataset && dataset.emptyReason);
     const palette = extrasSafe.palette || Object.freeze({
-      present: extrasSafe.personLayout ? TOKENS.primary : TOKENS.neutral,
+      present: TOKENS.neutral,
       excuse: TOKENS.warning,
-      dispense: TOKENS.neutral,
+      dispense: extrasSafe.personLayout ? TOKENS.primary : TOKENS.neutral,
       nonExcuse: TOKENS.secondary,
       prive: TOKENS.secondary,
       professionnel: TOKENS.primary,
