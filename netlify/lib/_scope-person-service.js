@@ -4,7 +4,7 @@
  * Réutilise analytics.evaluate / snapshot. Aucun second moteur de taux.
  * QUANTITATIF et LEGACY ne sont jamais attribués à une personne.
  */
-const { HttpError, isoDate, isAffectationValide } = require('./_scope-rules');
+const { HttpError, isoDate, isAffectationValide, ROLES_ENCADREMENT } = require('./_scope-rules');
 const { parsePeriod } = require('./_scope-period');
 const { createScopeAnalyticsService } = require('./_scope-analytics-service');
 const {
@@ -25,7 +25,7 @@ const { TYPES_PERIODE } = require('./_scope-personnel');
 const { ALERTS_CONFIG } = require('./_scope-alerts');
 const { isQualificationEvenement, isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
 const { inferModeSuivi, MODES } = require('./_scope-analytics');
-const { isCancelledEvenement, isHiddenEvenement } = require('./_scope-cycle-rules');
+const { isCancelledEvenement, isHiddenEvenement, isValidSessionStatut } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
 function isArchivedStatut(statut){
@@ -151,8 +151,26 @@ function principalOi(affectations, ciblesById, date){
 
 function includedStatsByEventId(includedRows){
   return new Map((includedRows || [])
-    .filter((row) => row && row.evenementId)
+    .filter((row) => row && row.evenementId && !isConsolidatedSessionAnalyticsRow(row))
     .map((row) => [String(row.evenementId), row]));
+}
+
+function isConsolidatedSessionAnalyticsRow(row){
+  return Array.isArray(row && row.sessionLabels) && row.sessionLabels.length > 0;
+}
+
+function isEncadrementHistoryRole(role){
+  return ROLES_ENCADREMENT.has(String(role || '').toUpperCase());
+}
+
+function isOperationalHistoryParticipation(part){
+  if(!part) return false;
+  if(isEncadrementHistoryRole(part.role)) return true;
+  return isValidSessionStatut(part.statut);
+}
+
+function eventSessionGroupKey(event){
+  return String((event && (event.pr_exercise_group_key || event.prExerciseGroupKey)) || '');
 }
 
 function personHistoryRow(event, {
@@ -201,10 +219,13 @@ function personHistoryRow(event, {
 }
 
 function personIsConcernedByEvent(event, part, attendu){
-  if(part) return true;
-  if(!attendu || attendu.inclus === false) return false;
-  const statut = String(event && event.statut || '').toUpperCase();
-  return isCancelledEvenement(event) || statut === 'PLANIFIE' || statut === 'REALISE';
+  const expected = Boolean(attendu && attendu.inclus !== false);
+  if(isCancelledEvenement(event)) return Boolean(part || expected);
+  const planned = String(event && event.statut || '').toUpperCase() === 'PLANIFIE';
+  if(planned) return Boolean(part || expected);
+  if(isOperationalHistoryParticipation(part)) return true;
+  if(eventSessionGroupKey(event)) return false;
+  return Boolean(part || expected);
 }
 
 async function personOperationalHistoryEvents(repo, personneId, period, affectations, ciblesById, includedRows, query = {}){
@@ -628,7 +649,7 @@ function createScopePersonService(repo){
           snap.summary.period,
           affectations,
           ciblesById,
-          included,
+          snap.evaluated.includedEvents,
           query
         ),
         hiddenIds

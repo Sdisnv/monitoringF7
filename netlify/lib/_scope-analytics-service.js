@@ -193,6 +193,16 @@ function isMultiSessionConsolidatedEvent(event){
   return Boolean(multiSessionGroupKey(event));
 }
 
+function isRealisedEvenement(event){
+  return String(event && event.statut || '').toUpperCase() === 'REALISE';
+}
+
+function realisedGroupEventIds(groupEvents){
+  return new Set((groupEvents || [])
+    .filter(isRealisedEvenement)
+    .map((row) => String(row.evenement_id || row.evenementId || '')));
+}
+
 function consolidatedVolumesFromSessionState(state){
   const k = (state && state.kpis) || {};
   return Object.assign({}, emptyVolumes(), {
@@ -452,15 +462,17 @@ function createScopeAnalyticsService(repo){
       if(!evenementId && groupKey && isMultiSessionConsolidatedEvent(event)){
         if(handledMultiSessionGroups.has(groupKey)) continue;
         const groupEvents = (bundle.events || []).filter((row) => multiSessionGroupKey(row) === groupKey);
-        const allClosed = groupEvents.length > 1 && groupEvents.every((row) => row.statut === 'REALISE');
-        if(allClosed){
+        const allClosed = groupEvents.length > 1 && groupEvents.every(isRealisedEvenement);
+        const personConsolidate = Boolean(personneId) && groupEvents.length > 1 && realisedGroupEventIds(groupEvents).size > 0;
+        if(allClosed || personConsolidate){
           handledMultiSessionGroups.add(groupKey);
+          const realisedIds = realisedGroupEventIds(groupEvents);
           const eventIds = groupEvents.map((row) => row.evenement_id);
           const groupAttendus = eventIds.flatMap((id) => bundle.attendusByEvent[id] || []);
           const groupParticipations = eventIds.flatMap((id) => bundle.participationsByEvent[id] || []);
           const state = computeMultiSessionParticipationState({
             cycle: { cycle_id: null, domaine_code: event.domaine_code || null },
-            evenements: groupEvents,
+            evenements: allClosed ? groupEvents : groupEvents.filter(isRealisedEvenement),
             attendus: groupAttendus,
             participations: groupParticipations,
             personnes: bundle.personnesById || new Map(),
@@ -470,7 +482,7 @@ function createScopeAnalyticsService(repo){
             ? groupParticipations.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId))
             : [];
           const personValidSessionParticipations = personneId
-            ? personGroupParticipations.filter((row) => isValidSessionDecision(row))
+            ? personGroupParticipations.filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')) && isValidSessionDecision(row))
             : [];
           const personGroupAttendus = personneId
             ? groupAttendus.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId) && row.inclus !== false)
@@ -727,9 +739,10 @@ function createScopeAnalyticsService(repo){
       if(groupKey && isMultiSessionConsolidatedEvent(event)){
         if(handledMultiSessionGroups.has(groupKey)) continue;
         const groupEvents = (bundle.events || []).filter((row) => multiSessionGroupKey(row) === groupKey);
-        const allClosed = groupEvents.length > 1 && groupEvents.every((row) => row.statut === 'REALISE');
-        if(allClosed){
+        if(groupEvents.length > 1){
           handledMultiSessionGroups.add(groupKey);
+          const realisedIds = realisedGroupEventIds(groupEvents);
+          if(!realisedIds.size) continue;
           const eventIds = groupEvents.map((row) => row.evenement_id);
           const groupAttendus = eventIds.flatMap((id) => bundle.attendusByEvent[id] || []);
           const groupParticipations = eventIds.flatMap((id) => bundle.participationsByEvent[id] || []);
@@ -745,6 +758,7 @@ function createScopeAnalyticsService(repo){
           for(const pid of personIds){
             const rows = groupParticipations
               .filter((row) => String(row.personne_id || row.personneId || '') === pid)
+              .filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')))
               .filter((row) => isValidSessionDecision(row));
             const official = officialFromPersonSessionRows(rows);
             if(Number(official.eventCount || 0) <= 0) continue;

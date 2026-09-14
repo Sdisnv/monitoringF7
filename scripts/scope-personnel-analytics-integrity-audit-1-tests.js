@@ -319,7 +319,9 @@ async function seedMultiSessionIntegrity(){
       kpi: { numerator: 1, denominator: 1, percentage: 100, eventCount: 1 },
       volumes: { presents: 1, attendus: 1 }
     });
-    eq(countedHistory(twice.fiche.evenements).length, 1);
+    eq(twice.fiche.evenements.length, 2);
+    eq(twice.fiche.kpi.eventCount, 1);
+    ok(twice.fiche.evenements.length > twice.fiche.kpi.eventCount);
   });
 
   await record('06 — PR multi-session : excusé/dispensé individuels sans pollution globale', async () => {
