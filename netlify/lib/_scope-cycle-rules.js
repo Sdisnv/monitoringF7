@@ -1,5 +1,11 @@
 const { STATUT_PERMUTATION } = require('./_scope-model');
 const { getEncadrementContribution, round1 } = require('./_scope-rules');
+const {
+  SERIES_TYPE,
+  describeEventSeries,
+  parseSeriesNotation,
+  seriesPersistenceFields
+} = require('./_scope-event-series');
 
 const ROLES_CYCLE = new Set(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE']);
 const STATUTS_PRESENTS = new Set(['PRESENT']);
@@ -295,23 +301,7 @@ function mapEventCounts(events){
 }
 
 function prExerciseGroupKey(event){
-  const explicit = normalizeText(event && (event.pr_exercise_group_key || event.prExerciseGroupKey));
-  if(explicit) return explicit;
-  const generic = exerciseId(event);
-  if(generic){
-    const mode = exerciseModeSession(event);
-    const count = exerciseExpectedSessionCount(event);
-    if(mode === 'MULTI' || exerciseConsolidationActive(event) || (count && count > 1)) return `EXERCICE:${generic}`;
-  }
-  const cyclePart = cycleId(event) || 'NO_CYCLE';
-  const libelle = normalizeText(event && (event.libelle || event.label));
-  const dap = libelle.match(/formation\s+group[eé]e\s+dap\s+(\d+)(?:\.[0-9]+)?/i);
-  if(normalizeDomain(event && (event.domaine_code || event.domaineCode)) === 'DAP' && dap){
-    const year = normalizeText(event && event.date).slice(0, 4) || 'unknown';
-    return `DAP_FORMATION_GROUPEE:${year}:${dap[1]}`;
-  }
-  const match = libelle.match(/exercice\s+pr\s+([0-9]+)(?:\.[0-9]+)?/i);
-  return match ? `${cyclePart}:PR:${match[1]}` : '';
+  return describeEventSeries(event).seriesKey || '';
 }
 
 function reportingYearPeriodForEvent(event){
@@ -357,30 +347,13 @@ function resolveSessionReportingScope(input = {}){
 }
 
 function prSessionKey(event){
-  const explicit = normalizeText(event && (event.pr_session_key || event.prSessionKey));
-  if(explicit) return explicit;
-  const generic = exerciseId(event);
-  const sessionIndex = Number(event && (event.session_index || event.sessionIndex));
-  if(generic && Number.isFinite(sessionIndex) && sessionIndex > 0) return `EXERCICE:${generic}.${sessionIndex}`;
-  const cyclePart = cycleId(event) || 'NO_CYCLE';
-  const libelle = normalizeText(event && (event.libelle || event.label));
-  const match = libelle.match(/exercice\s+pr\s+([0-9]+\.[0-9]+)/i);
-  return match ? `${cyclePart}:PR:${match[1]}` : '';
+  return describeEventSeries(event).sessionKey || '';
 }
 
 function prSessionLabel(event){
-  const explicit = normalizeText(event && (event.pr_session_label || event.prSessionLabel));
-  if(explicit) return explicit;
-  const genericLabel = normalizeText(event && (event.session_label || event.sessionLabel));
-  if(genericLabel) return genericLabel;
-  const sessionIndex = Number(event && (event.session_index || event.sessionIndex));
-  if(Number.isFinite(sessionIndex) && sessionIndex > 0) return String(sessionIndex);
-  const libelle = normalizeText(event && (event.libelle || event.label));
-  const match = libelle.match(/exercice\s+pr\s+([0-9]+\.[0-9]+)/i);
-  if(match) return match[1];
-  const key = prSessionKey(event);
-  const keyMatch = key.match(/PR:([0-9]+\.[0-9]+)$/);
-  return keyMatch ? keyMatch[1] : normalizeText(event && (event.code_cours || event.codeCours)) || normalizeText(eventId(event));
+  const series = describeEventSeries(event);
+  if(series.sessionLabel) return series.sessionLabel;
+  return normalizeText(event && (event.code_cours || event.codeCours)) || normalizeText(eventId(event));
 }
 
 function parseSessionOrder(event){
@@ -1342,6 +1315,10 @@ module.exports = {
   canCloseLastSession,
   personHasValidStatusInSession,
   collapsePersonSessionHistory,
+  SERIES_TYPE,
+  describeEventSeries,
+  parseSeriesNotation,
+  seriesPersistenceFields,
   computeMultiSessionParticipationState,
   computePrExerciseParticipationState,
   computeSessionParticipationState,

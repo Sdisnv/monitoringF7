@@ -226,6 +226,13 @@
     return Number.isInteger(value) && value > 0 ? value : null;
   }
 
+  function seriesApi(){
+    if (typeof require === 'function') {
+      try { return require('./scope-event-series.js'); } catch (error) { /* browser bundle without sibling */ }
+    }
+    return (typeof globalThis !== 'undefined' && globalThis.ScopeEventSeries) || {};
+  }
+
   function exerciseImportKey(line) {
     const code = normalizeCodeComponent(line.codeEvent || line.code_event);
     const year = String(line.date || '').slice(0, 4);
@@ -236,20 +243,23 @@
   }
 
   function buildDetectedExerciseProposals(lines) {
+    const series = seriesApi();
     const groups = new Map();
     (lines || []).forEach((line) => {
       if (String(line.statut || '').indexOf('ERREUR') === 0) return;
       if (line.sessionIndex || line.nbSessions) return;
+      const parsed = series.parseSeriesNotation
+        ? series.parseSeriesNotation(line.libelle, { domain: line.domaineStockage || line.domaine })
+        : null;
+      if (!parsed || parsed.seriesType !== 'MULTI_SESSION' || !parsed.seriesKey) return;
       const year = String(line.date || '').slice(0, 4);
       const key = [
         year,
-        String(line.domaineStockage || '').toUpperCase(),
-        String(line.sousDomaine || '').toUpperCase(),
-        String(line.cibleCodes || '').toUpperCase(),
-        normalizeLabelForMatch(line.libelle)
+        String(line.domaineStockage || line.domaine || '').toUpperCase(),
+        parsed.seriesKey
       ].join('|');
       const list = groups.get(key) || [];
-      list.push(line);
+      list.push(Object.assign({ _series: parsed }, line));
       groups.set(key, list);
     });
     return [...groups.values()]
@@ -258,14 +268,14 @@
         statut: 'PROPOSITION',
         persisted: false,
         exercice: list[0].libelle,
-        domaine: list[0].domaineStockage,
+        domaine: list[0].domaineStockage || list[0].domaine,
         cibleCodes: list[0].cibleCodes,
         sessions: list
           .slice()
-          .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')))
-          .map((line, index) => ({ ligneNo: line.ligneNo, date: line.date, sessionIndex: index + 1 })),
+          .sort((a, b) => Number((a._series && a._series.sessionNumber) || 0) - Number((b._series && b._series.sessionNumber) || 0) || String(a.date || '').localeCompare(String(b.date || '')))
+          .map((line) => ({ ligneNo: line.ligneNo, date: line.date, sessionIndex: (line._series && line._series.sessionNumber) || null })),
         nombreSessions: list.length,
-        raison: 'Même libellé normalisé, domaine/cible et période. Proposition uniquement : aucune persistance sans validation utilisateur.'
+        raison: 'Notation X.Y : proposition de série multi-séances. Aucune persistance sans validation utilisateur.'
       }));
   }
 

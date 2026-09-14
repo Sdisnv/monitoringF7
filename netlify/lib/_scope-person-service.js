@@ -25,7 +25,7 @@ const { TYPES_PERIODE } = require('./_scope-personnel');
 const { ALERTS_CONFIG } = require('./_scope-alerts');
 const { isQualificationEvenement, isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
 const { inferModeSuivi, MODES } = require('./_scope-analytics');
-const { isCancelledEvenement, isHiddenEvenement, isValidSessionStatut } = require('./_scope-cycle-rules');
+const { isCancelledEvenement, isHiddenEvenement, isValidSessionStatut, describeEventSeries } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
 function isArchivedStatut(statut){
@@ -170,7 +170,7 @@ function isOperationalHistoryParticipation(part){
 }
 
 function eventSessionGroupKey(event){
-  return String((event && (event.pr_exercise_group_key || event.prExerciseGroupKey)) || '');
+  return describeEventSeries(event).seriesKey || '';
 }
 
 function personHistoryRow(event, {
@@ -214,7 +214,7 @@ function personHistoryRow(event, {
     percentage: contributing ? included.percentage : null,
     eventCountContribution: contributing ? Number(included.eventCountContribution || 0) : 0,
     appliedObjective: contributing ? (included.appliedObjective || null) : null,
-    prExerciseGroupKey: event.pr_exercise_group_key || event.prExerciseGroupKey || null
+    prExerciseGroupKey: eventSessionGroupKey(event) || null
   };
 }
 

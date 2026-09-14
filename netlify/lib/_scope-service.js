@@ -53,7 +53,8 @@ const {
   resolveSessionReportingScope,
   resolveCycleCompletion,
   isCancelledEvenement: isCancelledEvenementRule,
-  isHiddenEvenement: isHiddenEvenementRule
+  isHiddenEvenement: isHiddenEvenementRule,
+  seriesPersistenceFields
 } = require('./_scope-cycle-rules');
 const MultiSessionV2 = require('./_scope-multisession-v2');
 const display = require('../../assets/js/scope-personnel-display.js');
@@ -1563,8 +1564,19 @@ function createScopeService(repo){
         policy_version_id: definitionVersion && (definitionVersion.policy_version_id || definitionVersion.policyVersionId),
         engine_route: genericEngineRoute,
         engine_snapshot: definitionVersion ? genericCatalog.snapshotDefinitionVersion({ code: definitionVersion.definitionCode, label: definitionVersion.definitionLabel, domain: definitionVersion.domain }, definitionVersion, { policy_version_id: definitionVersion.policy_version_id || definitionVersion.policyVersionId, policy_code: definitionVersion.policyCode, version_code: definitionVersion.policyVersionCode }) : null,
-        pr_exercise_group_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}` : null,
-        pr_session_key: exercice && domaine === 'PR' ? `EXERCICE:${exercice.exercice_id}.${sessionConfig.sessionIndex}` : null,
+        ...seriesPersistenceFields({
+          libelle,
+          domaine_code: domaine,
+          date,
+          cycle_id: body.cycleId || body.cycle_id || null,
+          exercice_id: exercice && exercice.exercice_id,
+          mode_session: exercice ? 'MULTI' : 'SINGLE',
+          nombre_sessions_attendu: exercice ? sessionConfig.nombreSessionsAttendu : 1,
+          consolidation_active: Boolean(exercice),
+          session_index: exercice ? sessionConfig.sessionIndex : null,
+          pr_exercise_group_key: body.prExerciseGroupKey || body.pr_exercise_group_key || null,
+          pr_session_key: body.prSessionKey || body.pr_session_key || null
+        }),
         exercise_equivalence_key: body.exerciseEquivalenceKey || body.exercise_equivalence_key || body.exerciceId || body.exercice_id || null,
         participation_policy_version: snapshot.policyVersion,
         participation_policy_snapshot: snapshot,
@@ -5371,10 +5383,8 @@ function createScopeService(repo){
           engine_route: binding && binding.engineRoute,
           engine_snapshot: binding && binding.snapshot
         };
-        if(String(line.domaineStockage || '').toUpperCase() === 'PR'){
-          patch.pr_exercise_group_key = `EXERCICE:${exercice.exercice_id}`;
-          patch.pr_session_key = `EXERCICE:${exercice.exercice_id}.${sessionIndex}`;
-        }
+        patch.pr_exercise_group_key = `EXERCICE:${exercice.exercice_id}`;
+        patch.pr_session_key = `EXERCICE:${exercice.exercice_id}.${sessionIndex}`;
         const updated = await tx.updateEventIfVersion(event.evenement_id, event.version, patch);
         item.evenement = updated || event;
         await tx.appendJournal({
@@ -5531,7 +5541,13 @@ function createScopeService(repo){
           engine_snapshot: genericBinding && genericBinding.snapshot,
           participation_policy_version: targetPolicy.policyVersion,
           participation_policy_snapshot: targetPolicy,
-          cible_ids: (group.cibles || []).map((c) => c.cibleId)
+          cible_ids: (group.cibles || []).map((c) => c.cibleId),
+          ...seriesPersistenceFields({
+            libelle: group.libelle,
+            domaine_code: group.domaineStockage,
+            date: group.date,
+            session_index: group.sessionIndex || null
+          })
         });
         if(event.already_exists){
           const item = { sourceLineNos: group.sourceLineNos, statut: 'EXACT_MATCH', codeCours: group.codeCours };
@@ -5729,7 +5745,13 @@ function createScopeService(repo){
           engine_snapshot: genericBinding && genericBinding.snapshot,
           participation_policy_version: targetPolicy.policyVersion,
           participation_policy_snapshot: targetPolicy,
-          cible_ids: (line.cibles || []).map((c) => c.cibleId)
+          cible_ids: (line.cibles || []).map((c) => c.cibleId),
+          ...seriesPersistenceFields({
+            libelle: line.libelle,
+            domaine_code: line.domaineStockage,
+            date: line.date,
+            session_index: line.sessionIndex || null
+          })
         });
         created.push({
           ligneNo: line.ligneNo,
@@ -5878,7 +5900,12 @@ function createScopeService(repo){
           statut: 'PLANIFIE',
           origine,
           mode_suivi: origine === 'LEGACY_AGGREGATED' ? 'LEGACY' : 'NOMINATIF',
-          cible_ids: line.cibleId ? [line.cibleId] : []
+          cible_ids: line.cibleId ? [line.cibleId] : [],
+          ...seriesPersistenceFields({
+            libelle: line.libelle,
+            domaine_code: line.domaine,
+            date: line.date
+          })
         });
         let legacy = null;
         if(line.typePropose === 'LEGACY'){

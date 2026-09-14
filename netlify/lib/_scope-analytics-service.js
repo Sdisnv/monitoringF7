@@ -29,7 +29,8 @@ const {
   prSessionLabel,
   sessionExerciseLabel,
   isCancelledEvenement,
-  isHiddenEvenement
+  isHiddenEvenement,
+  describeEventSeries
 } = require('./_scope-cycle-rules');
 const { PERMUTATION_STATUS } = require('./_scope-model');
 const { isPermutationCatchupAttendu } = require('./_scope-rules');
@@ -173,20 +174,7 @@ function fulfilledPermutationPersonIdsForEvent(bundle, event){
 }
 
 function multiSessionGroupKey(event){
-  const explicit = event && (event.pr_exercise_group_key || event.prExerciseGroupKey);
-  if(explicit) return String(explicit);
-  const domaine = String(event && (event.domaine_code || event.domaineCode) || '').toUpperCase();
-  const libelle = String(event && event.libelle || '');
-  const dapGrouped = libelle.match(/formation\s+group[eé]e\s+dap\s+(\d+)(?:\.\d+)?/i);
-  if(domaine === 'DAP' && dapGrouped){
-    const year = String(event && event.date || '').slice(0, 4) || 'unknown';
-    return `DAP_FORMATION_GROUPEE:${year}:${dapGrouped[1]}`;
-  }
-  const exerciseId = event && (event.exercice_id || event.exerciceId);
-  const count = Number(event && (event.nombre_sessions_attendu || event.nombreSessionsAttendu || 0));
-  const active = event && (event.consolidation_active === true || event.consolidationActive === true);
-  if(exerciseId && (active || count > 1)) return `EXERCICE:${exerciseId}`;
-  return '';
+  return describeEventSeries(event).seriesKey || '';
 }
 
 function isMultiSessionConsolidatedEvent(event){

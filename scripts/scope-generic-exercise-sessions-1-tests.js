@@ -140,7 +140,7 @@ function nativeCsv(rows){
   });
 
   await record('02 — création manuelle expose SINGLE/MULTI sans id technique', async () => {
-    assert.ok(html.includes('scope-event-configuration-binding-ux-repair-4') || html.includes('scope-configuration-policy-runtime-performance-root-repair-3') || html.includes('scope-configuration-formation-ux-import-performance-repair-2') || html.includes('scope-generic-event-session-policy-architecture-1') || html.includes('scope-jsp-excuse-motifs-1') || html.includes('scope-event-close-ux-formateur-1') || html.includes('scope-generic-exercise-sessions-1') || html.includes('scope-participation-policy-engine-1'));
+    assert.ok(html.includes('scope-event-series-semantic-contract-1') || html.includes('scope-personnel-encadrement-realized-history-generic-repair-4') || html.includes('scope-event-configuration-binding-ux-repair-4') || html.includes('scope-configuration-policy-runtime-performance-root-repair-3') || html.includes('scope-configuration-formation-ux-import-performance-repair-2') || html.includes('scope-generic-event-session-policy-architecture-1') || html.includes('scope-jsp-excuse-motifs-1') || html.includes('scope-event-close-ux-formateur-1') || html.includes('scope-generic-exercise-sessions-1') || html.includes('scope-participation-policy-engine-1'));
     const repo = createMemoryRepo();
     const service = createScopeService(repo);
     const cible = await target(repo, 'AUTO', 'VL');
@@ -307,8 +307,7 @@ function nativeCsv(rows){
       '2026-05-01;AUTO;;VL;Exercice conduite VL;NOMINATIF;;;'
     ]);
     const preview = await service.previewImportEvenements({ csvText: csv });
-    assert.strictEqual(preview.detectedExerciseProposals.length, 1);
-    assert.strictEqual(preview.detectedExerciseProposals[0].persisted, false);
+    assert.strictEqual(preview.detectedExerciseProposals.length, 0);
     assert.strictEqual(preview.summary.exerciseGroups, 0);
     const result = await service.commitImportEvenements({ csvText: csv, previewToken: preview.previewToken }, ACTOR);
     assert.strictEqual(result.attachedExerciseSessions.length, 0);
