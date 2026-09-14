@@ -24,6 +24,7 @@ const { filterAttendusEligibleAtDate } = require('./_scope-personnel');
 const {
   computeMultiSessionParticipationState,
   isValidSessionStatut,
+  isValidSessionDecision,
   prSessionLabel,
   sessionExerciseLabel,
   isCancelledEvenement,
@@ -464,15 +465,18 @@ function createScopeAnalyticsService(repo){
           const personGroupParticipations = personneId
             ? groupParticipations.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId))
             : [];
+          const personValidSessionParticipations = personneId
+            ? personGroupParticipations.filter((row) => isValidSessionDecision(row))
+            : [];
           const personGroupAttendus = personneId
             ? groupAttendus.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId) && row.inclus !== false)
             : [];
           if(personneId && !personGroupAttendus.length) continue;
           const official = personneId
-            ? officialFromPersonSessionRows(personGroupParticipations)
+            ? officialFromPersonSessionRows(personValidSessionParticipations)
             : officialFromSessionState(state);
           if(personneId && Number(official.eventCount || 0) <= 0) continue;
-          const statutParticipation = personneId ? statutFromPersonSessionRows(personGroupParticipations) : null;
+          const statutParticipation = personneId ? statutFromPersonSessionRows(personValidSessionParticipations) : null;
           const cibles = [...new Set(eventIds.flatMap((id) => bundle.cibleIdsByEvent[id] || []))];
           const appliedObjective = resolveEventObjective(
             { date: event.date, domaine_code: event.domaine_code, cible_ids: cibles },
@@ -735,7 +739,9 @@ function createScopeAnalyticsService(repo){
             { objectives, grain, queryCibleId: cibleId }
           );
           for(const pid of personIds){
-            const rows = groupParticipations.filter((row) => String(row.personne_id || row.personneId || '') === pid);
+            const rows = groupParticipations
+              .filter((row) => String(row.personne_id || row.personneId || '') === pid)
+              .filter((row) => isValidSessionDecision(row));
             const official = officialFromPersonSessionRows(rows);
             if(Number(official.eventCount || 0) <= 0) continue;
             addDirectoryRate(acc, pid, official, objective);
