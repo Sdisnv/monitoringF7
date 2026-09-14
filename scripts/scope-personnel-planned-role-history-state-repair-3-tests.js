@@ -207,7 +207,7 @@ function toutRows(events){
     const fiche = await persons.fiche(trainer.personne_id, PERIOD);
     eq(toutRows(fiche.evenements).length, 3);
     eq(realizedRows(fiche.evenements).length, 2);
-    ok(realizedRows(fiche.evenements).every((row) => display.ficheEventStatutLabel(row) === 'Présent'));
+    ok(realizedRows(fiche.evenements).every((row) => display.ficheEventStatutLabel(row) === 'Réalisé'));
     const planned = fiche.evenements.find((row) => row.planned);
     eq(display.ficheEventStatutLabel(planned), 'Planifié');
     eq(display.ficheEventInformations(planned), 'Formateur');

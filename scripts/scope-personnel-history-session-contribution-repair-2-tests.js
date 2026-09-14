@@ -124,7 +124,7 @@ async function assertFicheDirectorySync(persons, personId, expected){
     eq(rows[0].roleParticipation, 'FORMATEUR');
     eq(rows[0].statutParticipation, 'PRESENT');
     eq(display.ficheEventInformations(rows[0]), 'Formateur');
-    eq(display.ficheEventStatutLabel(rows[0]), 'Présent');
+    eq(display.ficheEventStatutLabel(rows[0]), 'Réalisé');
     ok(!rows.some((row) => row.statutParticipation === 'NON_RENSEIGNE'));
     const evaluated = await analytics.evaluate(Object.assign({ personneId: trainer.personne_id }, PERIOD));
     eq(evaluated.officiel.eventCount, 1);

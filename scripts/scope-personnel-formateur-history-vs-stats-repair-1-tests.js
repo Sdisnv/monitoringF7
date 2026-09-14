@@ -132,7 +132,7 @@ function historyRoles(fiche, role){
     eq(rows.length, 3, 'historique formateur PR-ABC');
     eq(new Set(rows.map((row) => row.evenementId)).size, 3);
     ok(rows.every((row) => display.ficheEventInformations(row) === 'Formateur'));
-    ok(rows.every((row) => display.ficheEventStatutLabel(row) === 'Présent'));
+    ok(rows.every((row) => display.ficheEventStatutLabel(row) === 'Réalisé'));
     const evaluated = await analytics.evaluate(Object.assign({ personneId: trainer.personne_id }, PERIOD));
     eq(evaluated.officiel.eventCount, 1);
     eq(evaluated.includedEvents.length, 1);
@@ -179,7 +179,7 @@ function historyRoles(fiche, role){
     eq(fiche.evenements.length, 1);
     eq(fiche.evenements[0].statutParticipation, 'PRESENT');
     eq(fiche.evenements[0].roleParticipation, 'FORMATEUR');
-    eq(display.ficheEventStatutLabel(fiche.evenements[0]), 'Présent');
+    eq(display.ficheEventStatutLabel(fiche.evenements[0]), 'Réalisé');
     eq(display.ficheEventInformations(fiche.evenements[0]), 'Formateur');
   });
 
@@ -197,7 +197,7 @@ function historyRoles(fiche, role){
     const rows = historyRoles(fiche, 'AUXILIAIRE');
     eq(rows.length, 1);
     eq(display.ficheEventInformations(rows[0]), 'Auxiliaire');
-    eq(display.ficheEventStatutLabel(rows[0]), '—');
+    eq(display.ficheEventStatutLabel(rows[0]), 'Réalisé');
   });
 
   await record('CAS 5 — surveillant visible sans double comptage', async () => {

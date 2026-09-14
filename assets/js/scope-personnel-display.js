@@ -1119,9 +1119,22 @@
     return statut === 'PLANIFIE';
   }
 
+  function ficheEventIsEncadrement(row){
+    return Boolean(ficheEventRoleInformation(row));
+  }
+
+  function ficheEventIsRealized(row){
+    if(!row || ficheEventIsCancelled(row) || ficheEventIsPlanned(row) || ficheEventIsHidden(row)) return false;
+    const statut = String((row.statutEvenement || '') || '').toUpperCase();
+    if(statut === 'PLANIFIE' || statut === 'ANNULE' || statut === 'ANNULEE' || statut === 'REPORTE') return false;
+    if(statut) return statut === 'REALISE';
+    return true;
+  }
+
   function ficheEventStatutLabel(row){
     if(ficheEventIsCancelled(row)) return 'Annulé';
     if(ficheEventIsPlanned(row)) return 'Planifié';
+    if(ficheEventIsEncadrement(row) && ficheEventIsRealized(row)) return 'Réalisé';
     const role = String((row && (row.roleParticipation || row.role || '')) || '').toUpperCase();
     if(role === 'AUXILIAIRE') return '—';
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
@@ -1141,7 +1154,10 @@
     if(ficheEventIsHidden(row)) return false;
     if(ficheEventIsCancelled(row) || ficheEventIsPlanned(row)) return bucket === 'tout';
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
-    if(bucket === 'presents') return s === 'PRESENT';
+    if(bucket === 'presents'){
+      if(ficheEventIsEncadrement(row) && ficheEventIsRealized(row)) return true;
+      return s === 'PRESENT';
+    }
     if(bucket === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
     if(bucket === 'non_excuses') return s === 'ABSENT_NON_EXCUSE' || s === 'ABSENT';
     if(bucket === 'dispenses') return s === 'DISPENSE';
@@ -1402,6 +1418,8 @@
     ficheEventIsCancelled,
     ficheEventIsHidden,
     ficheEventIsPlanned,
+    ficheEventIsEncadrement,
+    ficheEventIsRealized,
     ficheEventStatutLabel,
     ficheEventRoleInformation,
     ficheEventInformations,
