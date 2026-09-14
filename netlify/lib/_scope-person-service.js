@@ -24,7 +24,7 @@ const { isPrincipalOi } = require('./_scope-personnel-sync-contract');
 const { TYPES_PERIODE } = require('./_scope-personnel');
 const { ALERTS_CONFIG } = require('./_scope-alerts');
 const { isTestPersonnelNip, wantsQualification } = require('./_scope-qualification');
-const { isCancelledEvenement } = require('./_scope-cycle-rules');
+const { isCancelledEvenement, isHiddenEvenement } = require('./_scope-cycle-rules');
 const display = require('../../assets/js/scope-personnel-display.js');
 
 function isArchivedStatut(statut){
@@ -41,6 +41,25 @@ function labelOi(cible){
 
 function permutationSectionLabel(cible){
   return String(labelOi(cible) || '').replace('/', ' ');
+}
+
+function eventRowId(row){
+  return String((row && (row.evenementId || row.evenement_id)) || '');
+}
+
+async function hiddenEvenementIds(repo){
+  if(!repo.listEvenements) return new Set();
+  const rows = await repo.listEvenements({ includeHidden: true });
+  return new Set((rows || []).filter(isHiddenEvenement).map((row) => String(row.evenement_id)));
+}
+
+function excludeHiddenEventRows(rows, hiddenIds){
+  const hidden = hiddenIds || new Set();
+  return (rows || []).filter((row) => {
+    if(isHiddenEvenement(row)) return false;
+    const id = eventRowId(row);
+    return !id || !hidden.has(id);
+  });
 }
 
 function enrichPersonPermutationRows(rows, permutations, ciblesById, sourceLabelsByEvent = new Map()){
@@ -108,7 +127,7 @@ function principalOi(affectations, ciblesById, date){
 async function plannedExpectedEvents(repo, personneId, period, affectations, ciblesById){
   if(!repo.listEvenements) return [];
   const events = (await repo.listEvenements({ statut: 'PLANIFIE' }) || [])
-    .filter((event) => event && event.date >= period.from && event.date <= period.to);
+    .filter((event) => event && !isHiddenEvenement(event) && event.date >= period.from && event.date <= period.to);
   if(!events.length) return [];
   const ids = events.map((event) => event.evenement_id).filter(Boolean);
   const [attendusRows, participationsRows, ciblesRows] = await Promise.all([
@@ -171,7 +190,7 @@ async function plannedExpectedEvents(repo, personneId, period, affectations, cib
 async function cancelledHistoricalEvents(repo, personneId, period, affectations, ciblesById){
   if(!repo.listEvenements) return [];
   const events = (await repo.listEvenements({ statut: 'ANNULE' }) || [])
-    .filter((event) => event && !event.hidden_at && !event.hiddenAt && event.date >= period.from && event.date <= period.to);
+    .filter((event) => event && isCancelledEvenement(event) && !isHiddenEvenement(event) && event.date >= period.from && event.date <= period.to);
   if(!events.length) return [];
   const ids = events.map((event) => event.evenement_id).filter(Boolean);
   const [attendusRows, ciblesRows] = await Promise.all([
@@ -576,16 +595,26 @@ function createScopePersonService(repo){
         prExerciseGroupKey: null
       });
     });
-    const planned = await plannedExpectedEvents(repo, personneId, snap.summary.period, affectations, ciblesById);
+    const hiddenIds = await hiddenEvenementIds(repo);
+    included = excludeHiddenEventRows(included, hiddenIds);
+    const planned = excludeHiddenEventRows(
+      await plannedExpectedEvents(repo, personneId, snap.summary.period, affectations, ciblesById),
+      hiddenIds
+    );
     const plannedById = new Map(planned.map((row) => [String(row.evenementId), row]));
     for(const row of included) plannedById.delete(String(row.evenementId));
-    const cancelled = await cancelledHistoricalEvents(repo, personneId, snap.summary.period, affectations, ciblesById);
+    const cancelled = excludeHiddenEventRows(
+      await cancelledHistoricalEvents(repo, personneId, snap.summary.period, affectations, ciblesById),
+      hiddenIds
+    );
     const cancelledById = new Map(cancelled.map((row) => [String(row.evenementId), row]));
     for(const row of included) cancelledById.delete(String(row.evenementId));
     for(const row of plannedById.values()) cancelledById.delete(String(row.evenementId));
     const { collapsePersonSessionHistory } = require('./_scope-cycle-rules');
-    const ficheEvents = collapsePersonSessionHistory(included.concat([...plannedById.values()], [...cancelledById.values()]))
-      .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
+    const ficheEvents = excludeHiddenEventRows(
+      collapsePersonSessionHistory(included.concat([...plannedById.values()], [...cancelledById.values()])),
+      hiddenIds
+    ).sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.libelle).localeCompare(String(b.libelle)));
 
     const evaluated = Object.assign({}, snap.evaluated, { includedEvents: included });
     const entry = isoDate(personne.date_entree_sdis || personne.date_entree) || snap.summary.period.from;
@@ -600,8 +629,17 @@ function createScopePersonService(repo){
       }));
       careerEvents = (careerSnap.evaluated && careerSnap.evaluated.includedEvents) || careerEvents;
     }
+    careerEvents = excludeHiddenEventRows(careerEvents, hiddenIds);
     const graphs = personGraphs(evaluated, snap.timeseries, snap.explain, careerEvents, ciblesById);
-    const officiel = snap.summary.officiel || {};
+    let officiel = snap.summary.officiel || {};
+    if((snap.evaluated.includedEvents || []).some((row) => hiddenIds.has(String(row.evenementId || row.evenement_id)))){
+      const pack = packFromEvents(included);
+      officiel = Object.assign({}, officiel, pack, {
+        volumes: Object.assign({}, officiel.volumes || {}, pack.volumes || {}, {
+          attendus: Number(pack.eventCount || 0)
+        })
+      });
+    }
     const ctx = officiel.objectiveContext || {};
     let objectifMessage = 'Aucun objectif défini.';
     if(ctx.homogeneous === false && (ctx.distinctObjectives || []).length > 1){

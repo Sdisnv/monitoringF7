@@ -57,6 +57,7 @@
     cycleFilter: { domaine: 'tous', statut: 'tous' },
     fiche: null,
     ficheReady: false,
+    eventUnavailable: null,
     activeFicheId: null,
     ficheRequestSeq: 0,
     preview: null,
@@ -586,6 +587,7 @@
       if (next.screen === 'fiche' || next.screen === 'saisie') {
         state.fiche = null;
         state.ficheReady = false;
+        state.eventUnavailable = null;
         state.preview = null;
         state.previewSelectionRows = [];
         state.pendingExceptions = [];
@@ -1190,12 +1192,28 @@
     });
   }
 
+  function markHiddenEventUnavailable(error, eventId) {
+    const status = Number(error && error.status);
+    const code = error && (error.error || error.code);
+    if (status !== 404 && code !== 'evenement_introuvable') return false;
+    const info = L.friendlyError(error);
+    state.eventUnavailable = {
+      id: String(eventId || ''),
+      message: info.message || 'Cet événement n’est plus disponible.'
+    };
+    state.fiche = null;
+    state.ficheReady = true;
+    if (route().screen === 'saisie') location.hash = '#/exercices';
+    return true;
+  }
+
   async function loadFiche(id) {
     const expectedId = String(id);
     const token = ++state.ficheRequestSeq;
     state.activeFicheId = expectedId;
     state.ficheReady = false;
     state.fiche = null;
+    state.eventUnavailable = null;
     state.preview = null;
     state.saisie = [];
     state.permutationObligations = [];
@@ -1203,10 +1221,19 @@
     resetEventTransientUi();
     render();
     const shouldLoadPermutations = route().screen === 'saisie' && typeof client.permutationsForEvent === 'function';
-    const [data, permutationPayload] = await Promise.all([
-      client.getEvenement(id),
-      shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
-    ]);
+    let data;
+    let permutationPayload = null;
+    try {
+      const loaded = await Promise.all([
+        client.getEvenement(id),
+        shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
+      ]);
+      data = loaded[0];
+      permutationPayload = loaded[1];
+    } catch (error) {
+      if (markHiddenEventUnavailable(error, expectedId)) return null;
+      throw error;
+    }
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
     state.permutationObligations = shouldLoadPermutations ? ((permutationPayload && permutationPayload.obligations) || []) : [];
@@ -1262,10 +1289,19 @@
     const token = ++state.ficheRequestSeq;
     state.activeFicheId = expectedId;
     const shouldLoadPermutations = route().screen === 'saisie' && typeof client.permutationsForEvent === 'function';
-    const [data, permutationPayload] = await Promise.all([
-      client.getEvenement(id),
-      shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
-    ]);
+    let data;
+    let permutationPayload = null;
+    try {
+      const loaded = await Promise.all([
+        client.getEvenement(id),
+        shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
+      ]);
+      data = loaded[0];
+      permutationPayload = loaded[1];
+    } catch (error) {
+      if (markHiddenEventUnavailable(error, expectedId)) return null;
+      throw error;
+    }
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
     state.permutationObligations = shouldLoadPermutations ? ((permutationPayload && permutationPayload.obligations) || []) : [];
@@ -1291,10 +1327,19 @@
     const token = ++state.ficheRequestSeq;
     state.activeFicheId = expectedId;
     const shouldLoadPermutations = route().screen === 'saisie' && typeof client.permutationsForEvent === 'function';
-    const [data, permutationPayload] = await Promise.all([
-      client.getEvenement(id),
-      shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
-    ]);
+    let data;
+    let permutationPayload = null;
+    try {
+      const loaded = await Promise.all([
+        client.getEvenement(id),
+        shouldLoadPermutations ? client.permutationsForEvent(id).catch(() => ({ obligations: [] })) : Promise.resolve(null)
+      ]);
+      data = loaded[0];
+      permutationPayload = loaded[1];
+    } catch (error) {
+      if (markHiddenEventUnavailable(error, expectedId)) return null;
+      throw error;
+    }
     if (token !== state.ficheRequestSeq || state.activeFicheId !== expectedId || route().id !== expectedId) return null;
     state.fiche = data;
     state.permutationObligations = shouldLoadPermutations ? ((permutationPayload && permutationPayload.obligations) || []) : [];
@@ -5360,6 +5405,8 @@
         if (!codes.includes(row.domaine)) return false;
       }
       const s = String(row.statutParticipation || row.statut || '').toUpperCase();
+      if ((display && display.ficheEventIsHidden && display.ficheEventIsHidden(row))
+        || (L.isHiddenEvenement && L.isHiddenEvenement(row))) return false;
       if (display && display.ficheEventIsCancelled && display.ficheEventIsCancelled(row)) return statut === 'tout';
       if (statut === 'presents') return s === 'PRESENT';
       if (statut === 'excuses') return s === 'ABSENT_EXCUSE' || s === 'EXCUSE';
@@ -6931,6 +6978,10 @@
 
   function renderFiche() {
     const fiche = state.fiche;
+    if (state.eventUnavailable && !fiche) {
+      return `<div class="scope-crumb"><a href="#/exercices">Événements</a></div>
+        <div class="scope-main">${contextReturnHtml('#/exercices', 'Retour aux événements')}<div class="scope-card"><p class="scope-empty">${escapeHtml(state.eventUnavailable.message || 'Cet événement n’est plus disponible.')}</p></div></div>`;
+    }
     if (!fiche) {
       const loading = state.loading || !state.ficheReady;
       return `<div class="scope-crumb">Événements</div><div class="scope-main">${contextReturnHtml('#/evenements', 'Retour aux événements')}<div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
@@ -7293,6 +7344,10 @@
 
   function renderSaisie() {
     const fiche = state.fiche;
+    if (state.eventUnavailable && !fiche) {
+      return `<div class="scope-crumb"><a href="#/exercices">Événements</a></div>
+        <div class="scope-main">${contextReturnHtml('#/exercices', 'Retour aux événements')}<div class="scope-card"><p class="scope-empty">${escapeHtml(state.eventUnavailable.message || 'Cet événement n’est plus disponible.')}</p></div></div>`;
+    }
     if (!fiche) {
       const loading = state.loading || !state.ficheReady;
       return `<div class="scope-crumb">Événements / Saisie</div><div class="scope-main">${contextReturnHtml('#/evenements', 'Retour aux événements')}<div class="scope-card scope-placeholder"><p>${escapeHtml(loading ? 'Chargement de l’événement…' : 'Événement introuvable.')}</p></div></div>`;
@@ -13223,6 +13278,7 @@
     });
     refreshAlertCounts().then(() => render()).catch(() => {});
     if (r.screen === 'saisie' && r.id) {
+      if (state.eventUnavailable) return;
       const ev = state.fiche && state.fiche.evenement;
       if (ev && L.isCancelledEvenement && L.isCancelledEvenement(ev)) {
         location.hash = `#/exercices/${r.id}`;

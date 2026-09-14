@@ -1309,12 +1309,19 @@
     return Boolean(event && event.cancelled === true) || statut === 'ANNULE' || statut === 'ANNULEE';
   }
 
+  function isHiddenEvenement(event) {
+    if (!event) return false;
+    if (event.hidden === true) return true;
+    const etat = String((event.etatMetier && event.etatMetier.code) || (event.etat_metier && event.etat_metier.code) || '').toUpperCase();
+    return Boolean(event.hidden_at || event.hiddenAt) || etat === 'SUPPRIME';
+  }
+
   function cancelledEventHref(eventId) {
     return `#/exercices/${eventId}`;
   }
 
   function isParticipationCountable(event, participation) {
-    if (isCancelledEvenement(event) || (event && (event.hidden_at || event.hiddenAt))) return false;
+    if (isHiddenEvenement(event) || isCancelledEvenement(event)) return false;
     if (String((event && (event.statut || event.status)) || '').toUpperCase() !== 'REALISE') return false;
     return Boolean(participation);
   }
@@ -2267,6 +2274,7 @@
     addManualPreviewSelectionRow,
     buildAssignmentSelectedPersonIds,
     isCancelledEvenement,
+    isHiddenEvenement,
     cancelledEventHref,
     isParticipationCountable,
     principalCta,

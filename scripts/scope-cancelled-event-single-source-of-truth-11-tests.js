@@ -125,7 +125,8 @@ async function seedDpsB1CancelledScenario(){
     includes(displaySrc, 'function ficheEventIsCancelled');
     includes(personSrc, 'async function cancelledHistoricalEvents');
     includes(analyticsSrc, 'if(isCancelledEvenement(event)) return { include: false, reason: \'annule\', mode }');
-    includes(memorySrc, 'if(!evenementId && (isHiddenEvenement(mapped) || isCancelledEvenement(mapped))) continue');
+    includes(memorySrc, 'if(isHiddenEvenement(mapped)) continue');
+    includes(memorySrc, 'if(!evenementId && isCancelledEvenement(mapped)) continue');
     includes(ui, 'location.hash = `#/exercices/${r.id}`');
     includes(pdfSrc, 'hors taux officiel et hors heures de formation');
     ok(CycleRules.isCancelledEvenement({ statut: 'ANNULE' }));

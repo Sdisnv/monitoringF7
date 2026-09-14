@@ -293,6 +293,7 @@ function createScopeAnalyticsService(repo){
         : await repo.listEvenements({ domaine: domaineCode || undefined });
       bundle = { events: [], attendusByEvent: {}, participationsByEvent: {}, cibleIdsByEvent: {}, legacyByEvent: {}, quantitatifByEvent: {} };
       for(const event of events){
+        if(isHiddenEvenement(event)) continue;
         if(!inPeriod(event.date, period)) continue;
         if(domaineCode && event.domaine_code !== domaineCode) continue;
         const cibleIds = await repo.listEventCibleIds(event.evenement_id);
@@ -413,6 +414,7 @@ function createScopeAnalyticsService(repo){
     const handledMultiSessionGroups = new Set();
 
     for(const event of bundle.events){
+      if(isHiddenEvenement(event)) continue;
       const mode = inferModeSuivi(event);
       const groupKey = multiSessionGroupKey(event);
       if(!evenementId && groupKey && isMultiSessionConsolidatedEvent(event)){

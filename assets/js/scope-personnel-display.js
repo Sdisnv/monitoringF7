@@ -1098,6 +1098,11 @@
     return Boolean(row && row.cancelled === true) || statut === 'ANNULE' || statut === 'ANNULEE';
   }
 
+  function ficheEventIsHidden(row){
+    if(uiLogic.isHiddenEvenement && uiLogic.isHiddenEvenement(row)) return true;
+    return Boolean(row && (row.hidden === true || row.hidden_at || row.hiddenAt));
+  }
+
   function ficheEventStatutLabel(row){
     if(ficheEventIsCancelled(row)) return 'Annulé';
     const s = String((row && (row.statutParticipation || row.statut)) || '').toUpperCase();
@@ -1362,6 +1367,7 @@
     ficheSpecializationView,
     ficheParticipationIsOfficial,
     ficheEventIsCancelled,
+    ficheEventIsHidden,
     ficheEventStatutLabel,
     ficheEventInformations,
     ficheEventCible,

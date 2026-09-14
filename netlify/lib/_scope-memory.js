@@ -1558,7 +1558,8 @@ function createMemoryRepo(){
         if(from && to && !inPeriod(mapped.date, { from, to })) continue;
         if(domaineCode && mapped.domaine_code !== domaineCode) continue;
         if(evenementId && mapped.evenement_id !== evenementId) continue;
-        if(!evenementId && (isHiddenEvenement(mapped) || isCancelledEvenement(mapped))) continue;
+        if(isHiddenEvenement(mapped)) continue;
+        if(!evenementId && isCancelledEvenement(mapped)) continue;
         const cibleIds = evenementCibles.get(mapped.evenement_id) || [];
         if(cibleId && !cibleIds.includes(cibleId)) continue;
         if(personneId){
