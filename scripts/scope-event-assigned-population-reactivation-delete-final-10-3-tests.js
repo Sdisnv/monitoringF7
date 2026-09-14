@@ -267,14 +267,20 @@ async function seedDpsB1Population(count, libelle){
       baseVersion: frozen.version,
       participations: [{ personneId: used.people[0].personne_id, statut: 'PRESENT' }]
     }, ACTOR);
-    let refuse = null;
+    const hiddenUsed = await used.service.masquerEvenement(used.created.evenement.evenement_id, { baseVersion: saved.version }, ACTOR);
+    ok(hiddenUsed.hidden, 'saisie réelle n’empêche plus le masquage métier');
+    const persistedUsed = await used.repo.getEvent(used.created.evenement.evenement_id);
+    ok(persistedUsed.hidden_at, 'hidden_at persisté');
+    const kept = (await used.repo.listParticipations(used.created.evenement.evenement_id))
+      .find((row) => String(row.personne_id) === String(used.people[0].personne_id));
+    eq(String(kept && kept.statut || '').toUpperCase(), 'PRESENT', 'audit PRESENT conservé');
+    let readUsed = null;
     try{
-      await used.service.masquerEvenement(used.created.evenement.evenement_id, { baseVersion: saved.version }, ACTOR);
+      await used.service.lireEvenement(used.created.evenement.evenement_id);
     }catch(error){
-      refuse = error;
+      readUsed = error;
     }
-    eq(refuse && refuse.error, 'suppression_interdite');
-    eq(refuse.message, 'Impossible de supprimer cet événement : des participations ont déjà été enregistrées.');
+    eq(readUsed && readUsed.status, 404);
   });
 
   await record('Cas F — UX encadrement titres / casse / radios', async () => {
@@ -319,7 +325,7 @@ async function seedDpsB1Population(count, libelle){
     includes(ui, 'Réactiver l’événement');
     includes(ui, 'Revenir à la préparation');
     includes(serviceSrc, 'function operationalAttendus');
-    includes(serviceSrc, 'Impossible de supprimer cet événement réalisé.');
+    includes(serviceSrc, 'Un événement historique agrégé ne peut pas être supprimé des vues opérationnelles.');
   });
 
   const failed = results.filter((row) => row.status === 'NOK');

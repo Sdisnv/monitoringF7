@@ -1847,6 +1847,7 @@ function createScopeService(repo){
   async function previewModifierEvenement(eventId, body = {}){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    throwIfEventHidden(evenement);
     const currentCibles = repo.listEventCibleIds ? await repo.listEventCibleIds(eventId) : [];
     const nextDate = body.date !== undefined ? isoDate(body.date) : isoDate(evenement.date);
     const nextCibles = body.cibleIds || body.cible_ids || currentCibles;
@@ -1880,6 +1881,7 @@ function createScopeService(repo){
     const baseVersion = requireBaseVersion(body);
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    throwIfEventHidden(evenement);
     if(body.codeCours !== undefined || body.code_cours !== undefined){
       throw new HttpError(422, 'code_cours_immutable', 'CODE COURS immuable après création.');
     }
@@ -4394,6 +4396,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       if(!['PLANIFIE', 'REPORTE', 'REALISE'].includes(evenement.statut)){
         throw new HttpError(422, 'statut_invalide', 'Annulation possible depuis PLANIFIE, REPORTE ou REALISE.');
       }
@@ -4423,18 +4426,7 @@ function createScopeService(repo){
       if(evenement.origine === 'LEGACY_AGGREGATED'){
         throw new HttpError(422, 'suppression_interdite', 'Un événement historique agrégé ne peut pas être supprimé des vues opérationnelles.');
       }
-      if(String(evenement.statut || '').toUpperCase() === 'REALISE' || evenement.cloture_at){
-        throw new HttpError(422, 'suppression_interdite', 'Impossible de supprimer cet événement réalisé.');
-      }
       const participations = tx.listParticipations ? await tx.listParticipations(eventId) : [];
-      const recorded = recordedParticipantRows(participations);
-      if(recorded.length){
-        throw new HttpError(422, 'suppression_interdite', 'Impossible de supprimer cet événement : des participations ont déjà été enregistrées.');
-      }
-      const saisie = tx.getQuantitatifSaisie ? await tx.getQuantitatifSaisie(eventId) : null;
-      if(saisie && (Number(saisie.nb_attendus) || Number(saisie.nb_presents) || Number(saisie.nb_excuses) || Number(saisie.nb_dispenses))){
-        throw new HttpError(422, 'suppression_interdite', 'Impossible de supprimer cet événement : une saisie quantitative existe.');
-      }
       const attendus = tx.listAttendus ? await tx.listAttendus(eventId) : [];
       for(const row of attendus || []){
         if(row.inclus === false) continue;
@@ -4556,6 +4548,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       const deleted = tx.deleteEventIfNoDependencies ? await tx.deleteEventIfNoDependencies(eventId) : { deleted: false, reason: 'unsupported' };
       if(deleted.deleted){
         await tx.appendJournal({
@@ -4589,6 +4582,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      throwIfEventHidden(evenement);
       const v2State = await loadMultiSessionV2State(tx, evenement, eventId);
       const v2Session = v2State
         ? (v2State.sessions || []).find((row) => String(row.evenement_id || row.event_id || '') === String(eventId))
@@ -5121,6 +5115,9 @@ function createScopeService(repo){
   async function tauxEvenement(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    if(isHiddenEvenement(evenement)){
+      throw new HttpError(404, 'evenement_introuvable', 'Cet événement n’est plus visible dans les vues opérationnelles.');
+    }
     if(evenement.origine === 'LEGACY_AGGREGATED'){
       const legacy = repo.getLegacyByEvenementId
         ? await repo.getLegacyByEvenementId(eventId)

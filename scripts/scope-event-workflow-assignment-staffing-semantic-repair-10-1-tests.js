@@ -152,15 +152,22 @@ async function seedNominatifEvent(options = {}){
       }]
     }, ACTOR);
     const afterSave = await filled.service.lireEvenement(filled.created.evenement.evenement_id);
-    let refuse = null;
+    const hiddenFilled = await filled.service.masquerEvenement(filled.created.evenement.evenement_id, {
+      baseVersion: afterSave.version
+    }, ACTOR);
+    ok(hiddenFilled.hidden, 'participations conservées n’empêchent plus le masquage');
+    const persisted = await filled.repo.getEvent(filled.created.evenement.evenement_id);
+    ok(persisted.hidden_at, 'hidden_at persisté');
+    const kept = (await filled.repo.listParticipations(filled.created.evenement.evenement_id))
+      .find((row) => String(row.personne_id) === String(filled.personne.personne_id));
+    eq(String(kept && kept.statut || '').toUpperCase(), 'PRESENT', 'audit PRESENT conservé');
+    let readFilled = null;
     try{
-      await filled.service.masquerEvenement(filled.created.evenement.evenement_id, {
-        baseVersion: afterSave.version
-      }, ACTOR);
+      await filled.service.lireEvenement(filled.created.evenement.evenement_id);
     }catch(error){
-      refuse = error;
+      readFilled = error;
     }
-    ok(refuse && refuse.error === 'suppression_interdite', 'refus explicite');
+    ok(readFilled && readFilled.status === 404, 'événement masqué non exploitable');
   });
 
   await record('04 — préparation: tableau, grades, sélection non destructive', async () => {

@@ -279,13 +279,16 @@ async function seedDpsB1Population(count){
       baseVersion: frozen.version,
       participations: [{ personneId: other.people[0].personne_id, statut: 'PRESENT' }]
     }, ACTOR);
-    let refuse = null;
+    const hiddenUsed = await other.service.masquerEvenement(other.created.evenement.evenement_id, { baseVersion: saved.version }, ACTOR);
+    ok(hiddenUsed.hidden, 'participation réelle n’empêche plus le masquage métier');
+    ok((await other.repo.getEvent(other.created.evenement.evenement_id)).hidden_at);
+    let readUsed = null;
     try{
-      await other.service.masquerEvenement(other.created.evenement.evenement_id, { baseVersion: saved.version }, ACTOR);
+      await other.service.lireEvenement(other.created.evenement.evenement_id);
     }catch(error){
-      refuse = error;
+      readUsed = error;
     }
-    ok(refuse && refuse.error === 'suppression_interdite', 'participation réelle refuse la suppression');
+    ok(readUsed && readUsed.status === 404, 'événement masqué non exploitable');
 
     const cancelCtx = await seedDpsB1Population(1);
     const cancelled = await cancelCtx.service.annulerEvenement(cancelCtx.created.evenement.evenement_id, {

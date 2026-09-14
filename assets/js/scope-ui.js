@@ -6945,7 +6945,7 @@
     const canPostpone = ev.statut === 'PLANIFIE';
     const canCancel = ev.statut !== 'ANNULE' && ev.statut !== 'REALISE';
     const canReactivate = ev.statut === 'ANNULE';
-    const canDelete = ev.statut !== 'REALISE';
+    const canDelete = true;
     const canUnassign = ev.statut === 'PLANIFIE' && ev.population_figee;
     return [
       back,
