@@ -1015,7 +1015,27 @@ function createScopeService(repo){
     if(!repo.upsertEventDefinition || !repo.upsertEventDefinitionVersion){
       throw new HttpError(501, 'catalogue_indisponible', 'Le catalogue formation n’est pas disponible sur ce stockage.');
     }
-    const definition = genericCatalog.normalizeDefinition(body || {});
+    const editDefinitionVersionId = body.definitionVersionId || body.definition_version_id || body.editDefinitionVersionId || null;
+    const editedVersion = editDefinitionVersionId && repo.getEventDefinitionVersion
+      ? await repo.getEventDefinitionVersion(editDefinitionVersionId)
+      : null;
+    if(editDefinitionVersionId && !editedVersion){
+      throw new HttpError(404, 'definition_version_introuvable', 'Version de définition introuvable.');
+    }
+    const existingDefinition = editedVersion && repo.listEventDefinitions
+      ? (await repo.listEventDefinitions({})).find((row) =>
+        String(row.definition_id || row.definitionId || '') === String(editedVersion.definition_id || editedVersion.definitionId || '')
+      ) || null
+      : null;
+    const definition = genericCatalog.normalizeDefinition(Object.assign({}, body || {}, existingDefinition ? {
+      definition_id: existingDefinition.definition_id || existingDefinition.definitionId,
+      code: existingDefinition.code,
+      domain: existingDefinition.domain,
+      label: body.label || body.libelle || existingDefinition.label,
+      description: body.description == null ? existingDefinition.description : body.description,
+      status: existingDefinition.status || existingDefinition.statut || 'ACTIF',
+      metadata: Object.assign({}, existingDefinition.metadata || {}, { updatedFromDefinitionVersionId: editDefinitionVersionId })
+    } : {}));
     const policyVersions = repo.listParticipationPolicyVersions ? await repo.listParticipationPolicyVersions({ domain: definition.domain, active: true }) : [];
     const requestedMode = genericCatalog.normalizeDefinitionVersion({
       ...body,
@@ -1026,10 +1046,6 @@ function createScopeService(repo){
     const isMultiSession = requestedMode === genericCatalog.ORGANISATION_MODES.MULTI_SESSION;
     const compatibleMultiPolicy = isMultiSession
       ? (policyVersions || []).find((row) => !((row.config && row.config.activeStatuses) || []).map((status) => String(status || '').toUpperCase()).includes('PERMUTATION'))
-      : null;
-    const editDefinitionVersionId = body.definitionVersionId || body.definition_version_id || body.editDefinitionVersionId || null;
-    const editedVersion = editDefinitionVersionId && repo.getEventDefinitionVersion
-      ? await repo.getEventDefinitionVersion(editDefinitionVersionId)
       : null;
     let policyVersion = (policyVersions || []).find((row) => String(row.policy_version_id || row.policyVersionId) === String(body.policyVersionId || body.policy_version_id))
       || (editedVersion && (policyVersions || []).find((row) => String(row.policy_version_id || row.policyVersionId || '') === String(editedVersion.policy_version_id || editedVersion.policyVersionId || '')))
@@ -4922,7 +4938,18 @@ function createScopeService(repo){
       ...((v2State && repo.listMultisessionV2Population ? await repo.listMultisessionV2Population(v2State.multisessionId) : []).map((row) => row.person_id || row.personne_id))
     ]);
     encadrement = encadrement
-      .map((row) => Object.assign({}, personnes[String(row.personne_id)] || personnes[row.personne_id] || {}, row))
+      .map((row) => {
+        const start = row.heure_debut_individuelle || row.heureDebutIndividuelle || evenement.heure_debut_reelle || evenement.heure_debut_prevue || evenement.heure_debut || null;
+        const end = row.heure_fin_individuelle || row.heureFinIndividuelle || evenement.heure_fin_reelle || evenement.heure_fin_prevue || evenement.heure_fin || null;
+        return Object.assign({}, personnes[String(row.personne_id)] || personnes[row.personne_id] || {}, row, {
+          heure_debut_effective: start,
+          heure_fin_effective: end,
+          heureDebutEffective: start,
+          heureFinEffective: end,
+          horaire_mode: row.heure_debut_individuelle || row.heure_fin_individuelle ? 'CUSTOM' : 'EVENT',
+          horaireMode: row.heure_debut_individuelle || row.heure_fin_individuelle ? 'CUSTOM' : 'EVENT'
+        });
+      })
       .sort(comparePeopleByGradeName);
     let prExerciseParticipation = { byPersonneId: {}, kpis: null };
     let cycleInfo = null;

@@ -1521,10 +1521,12 @@
     const role = L.ROLE_LABELS && L.ROLE_LABELS[p.role] ? L.ROLE_LABELS[p.role] : (p.role || '');
     const start = p.heure_debut_individuelle || p.heureDebutIndividuelle || '';
     const end = p.heure_fin_individuelle || p.heureFinIndividuelle || '';
+    const effectiveStart = p.heure_debut_effective || p.heureDebutEffective || start || '';
+    const effectiveEnd = p.heure_fin_effective || p.heureFinEffective || end || '';
     const individual = start || end;
     const horaire = individual
       ? `Horaire ${formatEventClock(start) || start || '—'}–${formatEventClock(end) || end || '—'}`
-      : 'Horaire de l’événement';
+      : `Horaire événement ${formatEventClock(effectiveStart) || effectiveStart || '—'}–${formatEventClock(effectiveEnd) || effectiveEnd || '—'}`;
     const dl = p.creation_dl || p.creationDl;
     const minutes = p.preparation_dl_minutes == null ? p.preparationDlMinutes : p.preparation_dl_minutes;
     const bits = [role, horaire];
@@ -7678,6 +7680,9 @@
     const allSessionsTitle = v2AllSessions ? 'Ajoute automatiquement ce rôle à toutes les sessions du Multi-session.' : 'Ajoute automatiquement ce formateur à toutes les sessions de cette série PR.';
     const allSessionsRange = v2AllSessions ? multiSessionV2ScopeText(fiche) : prSeriesScopeText(fiche);
     const customTime = state.encTimeMode === 'CUSTOM';
+    const eventHours = eventEffectiveHours();
+    const displayedStart = customTime ? (state.encHeureDebut || '') : eventHours.start;
+    const displayedEnd = customTime ? (state.encHeureFin || '') : eventHours.end;
     const formateurRole = String(state.encRole || '').toUpperCase() === 'FORMATEUR';
     const lockMap = (fiche && (fiche.creationDlLocks || fiche.creation_dl_locks)) || {};
     const lockPersonId = state.encEditPersonneId || (state.encHits.length === 1 ? String(state.encHits[0].personne_id || '') : '');
@@ -7703,9 +7708,9 @@
             <legend class="scope-enc-col-title">HORAIRE</legend>
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" id="enc-time-mode" value="EVENT" ${state.encTimeMode !== 'CUSTOM' ? 'checked' : ''}> Événement</label>
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" value="CUSTOM" ${customTime ? 'checked' : ''}> Individuel</label>
-            <span class="scope-enc-df" id="enc-df-wrap"${customTime ? '' : ' hidden'}>
-              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(state.encHeureDebut || '')}" aria-label="Début individuel">
-              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(state.encHeureFin || '')}" aria-label="Fin individuelle">
+            <span class="scope-enc-df" id="enc-df-wrap">
+              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(displayedStart || '')}" aria-label="${customTime ? 'Début individuel' : 'Début événement'}" ${customTime ? '' : 'disabled'}>
+              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(displayedEnd || '')}" aria-label="${customTime ? 'Fin individuelle' : 'Fin événement'}" ${customTime ? '' : 'disabled'}>
             </span>
           </fieldset>
           <div class="scope-field scope-enc-dl-field">
@@ -10918,12 +10923,30 @@
     root.querySelectorAll('input[name="enc-time-mode"]').forEach((input) => {
       input.addEventListener('change', () => {
         state.encTimeMode = input.value || 'EVENT';
+        const startInput = document.getElementById('enc-debut');
+        const endInput = document.getElementById('enc-fin');
         if (state.encTimeMode !== 'CUSTOM') {
           state.encHeureDebut = '';
           state.encHeureFin = '';
+          const hours = eventEffectiveHours();
+          if (startInput) {
+            startInput.value = hours.start || '';
+            startInput.disabled = true;
+          }
+          if (endInput) {
+            endInput.value = hours.end || '';
+            endInput.disabled = true;
+          }
+        } else {
+          if (startInput) {
+            startInput.value = state.encHeureDebut || '';
+            startInput.disabled = false;
+          }
+          if (endInput) {
+            endInput.value = state.encHeureFin || '';
+            endInput.disabled = false;
+          }
         }
-        const wrap = document.getElementById('enc-df-wrap');
-        if (wrap) wrap.hidden = state.encTimeMode !== 'CUSTOM';
       });
     });
     document.getElementById('enc-debut')?.addEventListener('change', (e) => { state.encHeureDebut = e.target.value || ''; });
@@ -12995,6 +13018,15 @@
     state.encQuery = eventPersonLabel(row);
     state.encHits = [];
     render();
+  }
+
+  function eventEffectiveHours() {
+    const ev = state.fiche && state.fiche.evenement || {};
+    const temporal = state.fiche && state.fiche.temporal || ev.temporal || {};
+    return {
+      start: String(temporal.actualStart || ev.heure_debut_reelle || temporal.plannedStart || ev.heure_debut_prevue || ev.heure_debut || '').slice(0, 5),
+      end: String(temporal.actualEnd || ev.heure_fin_reelle || temporal.plannedEnd || ev.heure_fin_prevue || ev.heure_fin || '').slice(0, 5)
+    };
   }
 
   function encadrementFormBody(personneId, role) {
