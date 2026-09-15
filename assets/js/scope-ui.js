@@ -8893,6 +8893,7 @@
     const policies = data && Array.isArray(data.policies) ? data.policies : [];
     const motifs = data && Array.isArray(data.motifs) ? data.motifs : [];
     const statuses = data && Array.isArray(data.statuses) ? data.statuses : [];
+    const roles = data && Array.isArray(data.roles) ? data.roles : [];
     const domains = policies.map((policy) => policy.domainCode || policy.domain_code).filter(Boolean);
     const activeDomain = domains.includes(state.participationAdminDomain) ? state.participationAdminDomain : (domains[0] || 'JSP');
     state.participationAdminDomain = activeDomain;
@@ -8912,6 +8913,20 @@
         return `<label class="scope-check"><input type="checkbox" data-participation-motif="${escapeHtml(type)}:${escapeHtml(id)}" ${selected ? 'checked' : ''}> ${escapeHtml(row.label || id)}</label>`;
       }).join('');
     const behavior = policy && policy.behavior || {};
+    const capabilities = policy && policy.eventCapabilities || {};
+    const roleChecks = roles
+      .map((row) => {
+        const id = row.id || row.value;
+        if (!id) return '';
+        const selected = policy && (policy.roles || []).includes(id);
+        return `<label class="scope-check"><input type="checkbox" data-participation-role="${escapeHtml(id)}" ${selected ? 'checked' : ''}> ${escapeHtml(row.label || id)}</label>`;
+      }).join('');
+    const capabilityChecks = `
+      <label class="scope-check"><input type="checkbox" data-participation-capability="supportsIndividual" ${capabilities.supportsIndividual === false ? '' : 'checked'}> Événements individuels autorisés</label>
+      <label class="scope-check"><input type="checkbox" data-participation-capability="supportsMultiSession" ${capabilities.supportsMultiSession === false ? '' : 'checked'}> Exercices en plusieurs séances autorisés</label>
+      <label class="scope-check"><input type="checkbox" data-participation-capability="supportsPermutation" ${capabilities.supportsPermutation ? 'checked' : ''}> Permutation autorisée</label>
+      <label class="scope-check"><input type="checkbox" data-participation-capability="supportsCatchup" ${capabilities.supportsCatchup ? 'checked' : ''}> Rattrapage autorisé</label>
+    `;
     const domainOptions = domains.map((code) => `<option value="${escapeHtml(code)}" ${code === activeDomain ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('');
     const content = !canManage
       ? '<div class="scope-card"><p class="scope-empty">La gestion des politiques de participation est réservée aux profils habilités.</p></div>'
@@ -8925,6 +8940,16 @@
                 <div class="scope-field"><label>Domaine</label><select id="participation-domain">${domainOptions}</select></div>
                 <div class="scope-field"><label>Propagation</label><input type="text" readonly value="${escapeHtml(behavior.propagationScope || 'SESSION_ONLY')}"></div>
                 <div class="scope-field"><label>Déduplication</label><input type="text" readonly value="${escapeHtml(behavior.deduplicationScope || 'SESSION')}"></div>
+              </div>
+              <div class="scope-report-grid" style="margin-top:12px">
+                <div class="scope-admin-panel">
+                  <h3 style="margin-top:0">Type d’exercice</h3>
+                  ${capabilityChecks}
+                </div>
+                <div class="scope-admin-panel">
+                  <h3 style="margin-top:0">Rôles d’encadrement</h3>
+                  ${roleChecks || '<p class="scope-empty">Aucun rôle configurable.</p>'}
+                </div>
               </div>
               <div class="scope-report-grid" style="margin-top:12px">
                 <div class="scope-admin-panel">
@@ -11569,12 +11594,21 @@
         .filter((input) => input.checked)
         .map((input) => String(input.getAttribute(selector.includes('status') ? 'data-participation-status' : 'data-participation-motif') || ''));
       const motifValues = (type) => checkedValues(`[data-participation-motif^="${type}:"]`).map((value) => value.split(':')[1]).filter(Boolean);
+      const roleValues = Array.from(root.querySelectorAll('[data-participation-role]'))
+        .filter((input) => input.checked)
+        .map((input) => String(input.getAttribute('data-participation-role') || '').toUpperCase())
+        .filter(Boolean);
+      const capabilityValues = {};
+      root.querySelectorAll('[data-participation-capability]').forEach((input) => {
+        capabilityValues[input.getAttribute('data-participation-capability')] = input.checked;
+      });
       withLoading(async () => {
         await client.saveParticipationPolicy(domain, {
           activeStatuses: checkedValues('[data-participation-status]'),
           excuseMotifs: motifValues('EXCUSE'),
           dispenseMotifs: motifValues('DISPENSE'),
-          roles: current && current.roles || [],
+          roles: roleValues,
+          eventCapabilities: Object.assign({}, current && current.eventCapabilities || {}, capabilityValues),
           behavior: current && current.behavior || {}
         });
         invalidateCache(['referentiels', 'formationCatalog']);

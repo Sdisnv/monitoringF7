@@ -385,7 +385,10 @@ function realizedRows(events){
       domaineCode: 'AUTO',
       libelle: 'CAR 1.1',
       cibleIds: [cible.cible_id],
-      modeSuivi: 'NOMINATIF'
+      modeSuivi: 'NOMINATIF',
+      modeSession: 'MULTI',
+      nombreSessionsAttendu: 3,
+      sessionIndex: 1
     }, ACTOR);
     const before = describeEventSeries(created.evenement);
     eq(before.seriesType, SERIES_TYPE.MULTI_SESSION);

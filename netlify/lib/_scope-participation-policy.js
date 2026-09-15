@@ -87,9 +87,10 @@ const EVENT_SESSION_MODES = Object.freeze({
 
 const DEFAULT_EVENT_CAPABILITIES = Object.freeze({
   defaultMode: EVENT_SESSION_MODES.INDIVIDUAL,
+  supportsIndividual: true,
   supportsPermutation: false,
   supportsCatchup: false,
-  supportsMultiSession: false,
+  supportsMultiSession: true,
   seriesFamilies: []
 });
 
@@ -236,6 +237,7 @@ function sanitizePolicy(policy, motifs){
       defaultMode: String(policy.eventCapabilities && policy.eventCapabilities.defaultMode || '').toUpperCase() === EVENT_SESSION_MODES.MULTI_SESSION
         ? EVENT_SESSION_MODES.MULTI_SESSION
         : EVENT_SESSION_MODES.INDIVIDUAL,
+      supportsIndividual: policy.eventCapabilities && policy.eventCapabilities.supportsIndividual === false ? false : true,
       supportsPermutation: Boolean(policy.eventCapabilities && policy.eventCapabilities.supportsPermutation),
       supportsCatchup: Boolean(policy.eventCapabilities && policy.eventCapabilities.supportsCatchup),
       supportsMultiSession: Boolean(policy.eventCapabilities && policy.eventCapabilities.supportsMultiSession),
@@ -289,7 +291,10 @@ function notationSeriesDecision(label, policy){
   const match = text.match(/\b(\d+)\s*[.]\s*(\d+)\b/);
   if(!match) return null;
   const before = normalizeSeriesLabel(text.slice(0, match.index));
-  const family = (policy.eventCapabilities.seriesFamilies || [])
+  const configuredFamilies = policy.eventCapabilities.seriesFamilies || [];
+  const fallbackFamily = { id: policy.domainCode || 'SCOPE', labels: [policy.domainCode || 'SCOPE'], defaultForBareNotation: true };
+  const families = configuredFamilies.length ? configuredFamilies : [fallbackFamily];
+  const family = families
     .slice()
     .sort((a, b) => Math.max(...(b.labels || []).map((label) => normalizeSeriesLabel(label).length)) - Math.max(...(a.labels || []).map((label) => normalizeSeriesLabel(label).length)))
     .find((candidate) =>
@@ -297,7 +302,7 @@ function notationSeriesDecision(label, policy){
       const normalized = normalizeSeriesLabel(label);
       return normalized && (` ${before} `).includes(` ${normalized} `);
     })
-  ) || (before ? null : (policy.eventCapabilities.seriesFamilies || []).find((candidate) => candidate.defaultForBareNotation));
+  ) || (before ? null : families.find((candidate) => candidate.defaultForBareNotation));
   if(!family) return null;
   const exerciseNumber = Number(match[1]);
   const sessionNumber = Number(match[2]);

@@ -558,20 +558,26 @@ function autoObligationKey(event){
 }
 
 function cycleObligationKey(event, domaine){
-  if(normalizeDomain(domaine) === 'PR'){
-    return prExerciseGroupKey(event) || `PR:${eventId(event) || 'SESSION'}`;
-  }
-  return autoObligationKey(event);
+  const seriesKey = prExerciseGroupKey(event);
+  if(seriesKey) return seriesKey;
+  const domain = normalizeDomain(domaine) || normalizeDomain(event && (event.domaine_code || event.domaineCode));
+  if(domain === 'AUTO') return autoObligationKey(event);
+  return `${domain || 'SCOPE'}:${eventId(event) || 'SESSION'}`;
 }
 
 function cycleObligationLabel(events, key, domaine){
   const rows = sortSessionEvents(events || []);
   if(normalizeDomain(domaine) === 'PR') return sessionExerciseLabel(rows, key);
-  const explicit = String(key || '').replace(/^AUTO:/, '');
-  if(explicit === 'VL') return 'AUTO VL';
-  if(explicit === 'PL') return 'AUTO PL';
   const first = rows[0] || {};
-  return normalizeText(first.sous_domaine_code || first.sousDomaineCode || first.type_session || first.typeSession || first.libelle || explicit) || explicit || 'AUTO';
+  const series = describeEventSeries(first);
+  if(series.seriesType === SERIES_TYPE.MULTI_SESSION){
+    return normalizeText(first.exercice_libelle || first.exerciceLibelle || (first.exercice && first.exercice.libelle) || first.libelle) || series.seriesKey || 'Exercice';
+  }
+  const explicit = String(key || '').replace(/^[A-Z]+:/, '');
+  if(normalizeDomain(domaine) === 'AUTO' && explicit){
+    return `AUTO ${explicit}`;
+  }
+  return normalizeText(first.sous_domaine_code || first.sousDomaineCode || first.type_session || first.typeSession || first.libelle || explicit) || explicit || 'Exercice';
 }
 
 function personIdentityFromKey(key, peopleByKey){

@@ -69,6 +69,20 @@
     ));
   }
 
+  function explicitIndividualDecision(event){
+    const value = upper(event && (
+      event.event_mode
+      || event.eventMode
+      || event.series_decision
+      || event.seriesDecision
+      || event.session_decision
+      || event.sessionDecision
+    ));
+    if(value === SERIES_TYPE.INDIVIDUAL || value === 'SINGLE' || value === 'REFUSED' || value === 'REFUSEE') return true;
+    if(event && (event.multiSessionRefused === true || event.multi_session_refused === true || event.refuseSeries === true || event.refuse_series === true)) return true;
+    return !exerciseIdOf(event) && exerciseMode(event) === 'SINGLE';
+  }
+
   function expectedSessionCount(event){
     const value = event && (
       event.nombre_sessions_attendu
@@ -230,6 +244,10 @@
       }, event);
     }
 
+    if(explicitIndividualDecision(event)){
+      return emptyIndividual(domain, 'explicit_individual');
+    }
+
     const dap = dapGroupedSeries(event);
     if(dap) return withSessionFields(dap, event);
 
@@ -243,8 +261,15 @@
     return emptyIndividual(domain, notation.source);
   }
 
-  function seriesPersistenceFields(event = {}){
+  function seriesPersistenceFields(event = {}, options = {}){
     const series = describeEventSeries(event);
+    const canPersistDetected = options.persistDetectedNotation === true || options.persistDetectedSeries === true;
+    if(series.persisted !== true && !canPersistDetected){
+      return {
+        pr_exercise_group_key: null,
+        pr_session_key: null
+      };
+    }
     if(series.seriesType !== SERIES_TYPE.MULTI_SESSION || !series.seriesKey){
       return {
         pr_exercise_group_key: null,

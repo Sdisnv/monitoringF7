@@ -247,6 +247,12 @@
       { id: 'PR', labels: ['PR'], defaultForBareNotation: true },
       { id: 'PR-ABC', labels: ['PR-ABC', 'PR ABC', 'ABC'] }
     ],
+    FOBA: [],
+    FOCA: [],
+    DPS: [],
+    DAP: [],
+    JSP: [],
+    FOSPEC: [],
     AUTO: [
       { id: 'CAR', labels: ['CAR'] },
       { id: 'TRUCK', labels: ['TRUCK'] }
@@ -266,7 +272,10 @@
 
   function detectSessionNotation(line) {
     const domain = String(line.domaineStockage || line.domaine || '').toUpperCase();
-    const families = IMPORT_SERIES_FAMILIES[domain] || [];
+    const configuredFamilies = IMPORT_SERIES_FAMILIES[domain];
+    const families = configuredFamilies && configuredFamilies.length
+      ? configuredFamilies
+      : (domain ? [{ id: domain, labels: [domain], defaultForBareNotation: true }] : []);
     if (!families.length) return null;
     const text = String(line.libelle || '').trim();
     const match = text.match(/\b(\d+)\s*[.]\s*(\d+)\b/);
@@ -299,9 +308,19 @@
     (lines || []).forEach((line) => {
       if (String(line.statut || '').indexOf('ERREUR') === 0) return;
       if (line.sessionIndex || line.nbSessions) return;
-      const parsed = series.parseSeriesNotation
+      let parsed = series.parseSeriesNotation
         ? series.parseSeriesNotation(line.libelle, { domain: line.domaineStockage || line.domaine })
         : null;
+      if(!parsed || parsed.seriesType !== 'MULTI_SESSION' || !parsed.seriesKey){
+        const detected = detectSessionNotation(line);
+        parsed = detected ? {
+          seriesType: 'MULTI_SESSION',
+          seriesKey: detected.seriesKey,
+          sessionNumber: detected.sessionIndex,
+          exerciseNumber: detected.exerciseNumber,
+          family: detected.family
+        } : parsed;
+      }
       if (!parsed || parsed.seriesType !== 'MULTI_SESSION' || !parsed.seriesKey) return;
       const year = String(line.date || '').slice(0, 4);
       const key = [

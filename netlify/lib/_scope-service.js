@@ -1183,6 +1183,8 @@ function createScopeService(repo){
         config: Object.assign({}, base, body || {}, {
           domainCode: code,
           activeStatuses: ['NON_RENSEIGNE', ...new Set((body && body.activeStatuses || base.activeStatuses || []).map((value) => String(value || '').toUpperCase()))],
+          eventCapabilities: Object.assign({}, base.eventCapabilities || {}, (body && body.eventCapabilities) || {}),
+          roles: (body && body.roles || base.roles || []).map((value) => String(value || '').toUpperCase()).filter(Boolean),
           behavior: Object.assign({}, base.behavior, (body && body.behavior) || {})
         })
       }]
