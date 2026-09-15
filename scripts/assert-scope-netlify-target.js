@@ -30,8 +30,23 @@ if (output.includes(BLOCKED_SITE_NAME) || output.includes(BLOCKED_SITE_ID)) {
 
 const nameMatch = output.match(/Current project:\s*([^\n]+)/);
 const idMatch = output.match(/Project Id:\s*([^\n]+)/);
-const siteName = nameMatch ? nameMatch[1].trim() : '';
+let siteName = nameMatch ? nameMatch[1].trim() : '';
 const siteId = idMatch ? idMatch[1].trim() : '';
+
+if (!siteName && siteId === EXPECTED_SITE_ID) {
+  const siteResult = spawnSync('netlify', ['api', 'getSite', '--data', JSON.stringify({ site_id: siteId })], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  if (siteResult.error) fail(`Unable to verify Netlify site by id: ${siteResult.error.message}`);
+  if (siteResult.status !== 0) fail('netlify api getSite returned a non-zero exit code.');
+  try {
+    const site = JSON.parse(siteResult.stdout || '{}');
+    siteName = String(site.name || '').trim();
+  } catch (error) {
+    fail(`Unable to parse Netlify site response: ${error.message}`);
+  }
+}
 
 if (siteName !== EXPECTED_SITE_NAME || siteId !== EXPECTED_SITE_ID) {
   fail(`Expected ${EXPECTED_SITE_NAME} (${EXPECTED_SITE_ID}), got ${siteName || '<unknown>'} (${siteId || '<unknown>'}).`);

@@ -1100,9 +1100,16 @@ function createScopeService(repo){
     }, policyVersion && policyVersion.config);
     return repo.withTransaction(async (tx) => {
       const savedDefinition = await tx.upsertEventDefinition(definition);
-      const savedVersion = await tx.upsertEventDefinitionVersion(Object.assign({}, versionInput, {
+      const savedVersionRaw = await tx.upsertEventDefinitionVersion(Object.assign({}, versionInput, {
         definition_id: savedDefinition.definition_id || savedDefinition.definitionId
       }));
+      const savedVersion = Object.assign({}, savedVersionRaw, {
+        definition_code: savedDefinition.code,
+        definitionCode: savedDefinition.code,
+        definition_label: savedDefinition.label,
+        definitionLabel: savedDefinition.label,
+        domain: savedDefinition.domain
+      });
       if(body && body.policyConfig && editDefinitionVersionId && String(savedVersion.definition_version_id || savedVersion.definitionVersionId || '') === String(editDefinitionVersionId)){
         const refreshedPolicy = await policySnapshotFromDefinitionVersion(tx, savedVersion);
         const eventsByVersion = tx.listEventsByDefinitionVersions ? await tx.listEventsByDefinitionVersions([editDefinitionVersionId]) : {};

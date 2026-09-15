@@ -3558,12 +3558,32 @@ html, body {
   fill: none;
 }
 
+.scope-action-icon {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.scope-icon-action-neutral {
+  color: var(--scope-ink);
+}
+
 .scope-remove-action:hover,
 .scope-remove-action:focus-visible,
-.scope-enc-person button:hover,
 .scope-icon-action:hover {
   background: var(--scope-red-soft);
   color: var(--scope-red);
+  outline: 0;
+}
+
+.scope-icon-action-neutral:hover,
+.scope-icon-action-neutral:focus-visible {
+  background: var(--scope-gray-100);
+  color: var(--scope-ink);
   outline: 0;
 }
 
@@ -6052,9 +6072,11 @@ body.scope-pdf-open { overflow: hidden; }
 
 .scope-enc-actions {
   display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 4px;
   align-items: center;
+  width: max-content;
+  max-width: 56px;
 }
 .scope-enc-person .scope-enc-nip {
   display: block;
@@ -6841,8 +6863,12 @@ body.scope-pdf-open { overflow: hidden; }
   min-height: 36px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--scope-border);
-  grid-template-columns: minmax(0, 1fr) 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  justify-content: start;
+  column-gap: 10px;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .scope-enc-person:last-child {

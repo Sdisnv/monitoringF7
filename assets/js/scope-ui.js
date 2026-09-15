@@ -1503,8 +1503,8 @@
               ${p.nip ? `<small class="scope-enc-nip">NIP ${escapeHtml(p.nip)}</small>` : ''}
             </div>
             ${readOnly ? '' : `<div class="scope-enc-actions">
-              <button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-enc-edit="${escapeHtml(p.personne_id)}">Modifier</button>
-              <button type="button" class="scope-remove-action scope-enc-remove" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Supprimer ${escapeHtml(L.ROLE_LABELS[role] || role)} ${escapeHtml(label)}">Supprimer</button>
+              <button type="button" class="scope-icon-action scope-icon-action-neutral scope-enc-edit" data-enc-edit="${escapeHtml(p.personne_id)}" aria-label="Modifier ${escapeHtml(label)}" title="Modifier">${pencilIcon()}</button>
+              <button type="button" class="scope-remove-action scope-enc-remove scope-icon-action" data-enc-remove="${escapeHtml(p.personne_id)}" aria-label="Supprimer ${escapeHtml(label)}" title="Supprimer">${trashIcon()}</button>
             </div>`}
           </div>`;
         }).join('')}</div>
@@ -1550,6 +1550,12 @@
   function trashIcon() {
     return `<svg class="scope-trash-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 15h10l1-15"></path><path d="M10 10v7"></path><path d="M14 10v7"></path>
+    </svg>`;
+  }
+
+  function pencilIcon() {
+    return `<svg class="scope-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 20h4.5L19 9.5 14.5 5 4 15.5V20z"></path><path d="M13.5 6l4.5 4.5"></path>
     </svg>`;
   }
 
@@ -7709,8 +7715,8 @@
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" id="enc-time-mode" value="EVENT" ${state.encTimeMode !== 'CUSTOM' ? 'checked' : ''}> Événement</label>
             <label class="scope-enc-radio"><input type="radio" name="enc-time-mode" value="CUSTOM" ${customTime ? 'checked' : ''}> Individuel</label>
             <span class="scope-enc-df" id="enc-df-wrap">
-              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(displayedStart || '')}" aria-label="${customTime ? 'Début individuel' : 'Début événement'}" ${customTime ? '' : 'disabled'}>
-              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(displayedEnd || '')}" aria-label="${customTime ? 'Fin individuelle' : 'Fin événement'}" ${customTime ? '' : 'disabled'}>
+              <span>D:</span><input id="enc-debut" type="time" value="${escapeHtml(displayedStart || '')}" aria-label="${customTime ? 'Début individuel' : 'Début événement, modifiable en horaire individuel'}">
+              <span>F:</span><input id="enc-fin" type="time" value="${escapeHtml(displayedEnd || '')}" aria-label="${customTime ? 'Fin individuelle' : 'Fin événement, modifiable en horaire individuel'}">
             </span>
           </fieldset>
           <div class="scope-field scope-enc-dl-field">
@@ -10931,26 +10937,50 @@
           const hours = eventEffectiveHours();
           if (startInput) {
             startInput.value = hours.start || '';
-            startInput.disabled = true;
           }
           if (endInput) {
             endInput.value = hours.end || '';
-            endInput.disabled = true;
           }
         } else {
           if (startInput) {
             startInput.value = state.encHeureDebut || '';
-            startInput.disabled = false;
           }
           if (endInput) {
             endInput.value = state.encHeureFin || '';
-            endInput.disabled = false;
           }
         }
       });
     });
-    document.getElementById('enc-debut')?.addEventListener('change', (e) => { state.encHeureDebut = e.target.value || ''; });
-    document.getElementById('enc-fin')?.addEventListener('change', (e) => { state.encHeureFin = e.target.value || ''; });
+    const switchEncadrementToCustomFromTimeEdit = () => {
+      if (state.encTimeMode === 'CUSTOM') return;
+      const hours = eventEffectiveHours();
+      state.encTimeMode = 'CUSTOM';
+      state.encHeureDebut = document.getElementById('enc-debut')?.value || hours.start || '';
+      state.encHeureFin = document.getElementById('enc-fin')?.value || hours.end || '';
+      root.querySelectorAll('input[name="enc-time-mode"]').forEach((radio) => {
+        radio.checked = radio.value === 'CUSTOM';
+      });
+    };
+    document.getElementById('enc-debut')?.addEventListener('input', (e) => {
+      switchEncadrementToCustomFromTimeEdit();
+      state.encHeureDebut = e.target.value || '';
+      if (!state.encHeureFin) state.encHeureFin = document.getElementById('enc-fin')?.value || eventEffectiveHours().end || '';
+    });
+    document.getElementById('enc-fin')?.addEventListener('input', (e) => {
+      switchEncadrementToCustomFromTimeEdit();
+      state.encHeureFin = e.target.value || '';
+      if (!state.encHeureDebut) state.encHeureDebut = document.getElementById('enc-debut')?.value || eventEffectiveHours().start || '';
+    });
+    document.getElementById('enc-debut')?.addEventListener('change', (e) => {
+      switchEncadrementToCustomFromTimeEdit();
+      state.encHeureDebut = e.target.value || '';
+      if (!state.encHeureFin) state.encHeureFin = document.getElementById('enc-fin')?.value || eventEffectiveHours().end || '';
+    });
+    document.getElementById('enc-fin')?.addEventListener('change', (e) => {
+      switchEncadrementToCustomFromTimeEdit();
+      state.encHeureFin = e.target.value || '';
+      if (!state.encHeureDebut) state.encHeureDebut = document.getElementById('enc-debut')?.value || eventEffectiveHours().start || '';
+    });
     document.getElementById('enc-creation-dl')?.addEventListener('change', (e) => {
       state.encCreationDl = Boolean(e.target.checked);
       const wrap = document.getElementById('enc-dl-minutes-wrap');
@@ -11705,6 +11735,7 @@
       excuseMotifs: (source.excuseMotifs || []).slice().sort(),
       dispenseMotifs: (source.dispenseMotifs || []).slice().sort()
     });
+    const formationRerenderFields = new Set(['domain', 'modeOrganisation', 'sessionCount', 'policyVersionId']);
     const bindFormationField = (id, key) => {
       document.getElementById(id)?.addEventListener('input', (e) => {
         state.formationDefinitionForm[key] = e.target.value;
@@ -11728,7 +11759,8 @@
         if (key === 'modeOrganisation' && e.target.value === 'MULTI_SESSION') {
           state.formationDefinitionForm.activeStatuses = (state.formationDefinitionForm.activeStatuses || []).filter((status) => status !== 'PERMUTATION');
         }
-        render();
+        if (formationRerenderFields.has(key)) render();
+        else refreshFormationPreview();
       });
     };
     [
@@ -11877,7 +11909,7 @@
           .map((input) => String(input.getAttribute('data-formation-policy') || '').split(':')[1])
           .filter(Boolean);
         const selectedStatusesPayload = checked('status').filter((status) => !(form.modeOrganisation === 'MULTI_SESSION' && status === 'PERMUTATION'));
-        await client.createEventDefinition({
+        const savedConfiguration = await client.createEventDefinition({
           definitionVersionId: form.editDefinitionVersionId || null,
           domain: form.domain,
           label: form.label,
@@ -11896,6 +11928,24 @@
         });
         invalidateCache(['referentiels', 'formationCatalog']);
         await loadFormationCatalog();
+        if (savedConfiguration && savedConfiguration.definition && state.formationCatalog) {
+          const savedDefinition = savedConfiguration.definition;
+          const savedVersion = savedConfiguration.version || {};
+          const definitionId = savedDefinition.definition_id || savedDefinition.definitionId;
+          const versionId = savedVersion.definition_version_id || savedVersion.definitionVersionId;
+          (state.formationCatalog.definitions || []).forEach((definition) => {
+            if (String(definition.definition_id || definition.definitionId || '') === String(definitionId || '')) {
+              definition.label = savedDefinition.label || definition.label;
+              definition.description = savedDefinition.description == null ? definition.description : savedDefinition.description;
+            }
+            (definition.versions || []).forEach((version) => {
+              if (String(version.definition_version_id || version.definitionVersionId || '') === String(versionId || '')) {
+                version.definition_label = savedDefinition.label || version.definition_label;
+                version.definitionLabel = savedDefinition.label || version.definitionLabel;
+              }
+            });
+          });
+        }
         resetFormationDefinitionForm();
         state.formationFormOpen = false;
         ScopeFeedback.success(form.editDefinitionVersionId ? 'Configuration enregistrée' : 'Formation créée', form.editDefinitionVersionId ? 'Les modifications de configuration ont été enregistrées.' : `La configuration "${form.label || 'formation'}" a été enregistrée.`);
