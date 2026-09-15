@@ -430,12 +430,19 @@
     }
     const dominant = usable.length === 1 ? usable[0] : null;
     const autoCenter = Boolean(dominant) || extrasSafe.personLayout;
+    const hasOfficialRate = extrasSafe.officialPercentage !== undefined
+      || (dataset && dataset.percentage !== undefined);
+    const officialRate = extrasSafe.officialPercentage !== undefined
+      ? extrasSafe.officialPercentage
+      : (dataset && dataset.percentage);
     const centerValue = extrasSafe.centerValue != null
       ? extrasSafe.centerValue
-      : (dominant ? '100 %' : (autoCenter ? formatPct(100 * Number((usable.find((p) => p.id === 'presents' || p.token === 'present') || {}).value || 0) / total) : null));
+      : (hasOfficialRate
+        ? formatPct(officialRate)
+        : (dominant ? '100 %' : null));
     const centerLabel = extrasSafe.centerLabel != null
       ? extrasSafe.centerLabel
-      : (dominant ? dominant.label : '');
+      : (hasOfficialRate ? (extrasSafe.personLayout ? 'Taux' : '') : (dominant ? dominant.label : ''));
     const showCenter = extrasSafe.centerLabel || extrasSafe.centerValue != null || autoCenter;
     const center = showCenter && centerValue != null ? `<text x="${cx}" y="${cy - 4}" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2730">${escapeHtml(String(centerValue))}</text>
       ${centerLabel ? `<text x="${cx}" y="${cy + 14}" font-size="11" text-anchor="middle" fill="#6b7280">${escapeHtml(centerLabel)}</text>` : ''}` : '';
@@ -474,6 +481,7 @@
       palette: opts.palette,
       centerValue: opts.centerValue,
       centerLabel: opts.centerLabel,
+      officialPercentage: opts.officialPercentage,
       omitLegend: Boolean(opts.homeLayout),
       homePlot: Boolean(opts.homeLayout),
       personLayout: Boolean(opts.personLayout)

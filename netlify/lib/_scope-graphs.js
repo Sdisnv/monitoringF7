@@ -114,7 +114,10 @@ function dataset(spec){
     series: spec.series || [],
     categories: spec.categories || null,
     emptyReason: spec.emptyReason || null,
-    explain: spec.explain || null
+    explain: spec.explain || null,
+    percentage: spec.percentage,
+    numerator: spec.numerator,
+    denominator: spec.denominator
   };
 }
 
@@ -282,7 +285,10 @@ function personRepartitionDataset(officiel, explain){
       question: 'Répartition des participations',
       type: 'stacked',
       emptyReason: hasVolume ? null : 'NON_EVALUABLE',
-      explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. L’encadrement réalisé n’est pas transformé en présence. Non renseigné n’est pas transformé en absence.' }),
+      percentage: officiel && Object.prototype.hasOwnProperty.call(officiel, 'percentage') ? officiel.percentage : undefined,
+      numerator: officiel && officiel.numerator,
+      denominator: officiel && officiel.denominator,
+      explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. L’encadrement réalisé n’est pas transformé en présence. Non renseigné n’est pas transformé en absence. Le centre du donut reprend le taux officiel Personnel, distinct de la composition des secteurs.' }),
       series: [{ id: 'volumes', kind: KINDS.OFFICIEL, label: 'Volumes officiels', points: hasVolume ? points : [] }]
     });
 }

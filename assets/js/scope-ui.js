@@ -5554,6 +5554,9 @@
       variant: 'donut',
       explain: false,
       personLayout: true,
+      centerLabel: 'Taux',
+      officialPercentage: official ? kpi.percentage : undefined,
+      centerValue: official ? undefined : '—',
       size: { width: 420, height: 210 }
     }) : '';
 
