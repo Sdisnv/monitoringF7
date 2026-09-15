@@ -507,7 +507,7 @@ function createScopeAnalyticsService(repo){
         if(handledMultiSessionGroups.has(groupKey)) continue;
         const groupEvents = (bundle.events || []).filter((row) => multiSessionGroupKey(row) === groupKey);
         const allClosed = groupEvents.length > 1 && groupEvents.every(isRealisedEvenement);
-        const personConsolidate = Boolean(personneId) && groupEvents.length > 1 && realisedGroupEventIds(groupEvents).size > 0;
+        const personConsolidate = Boolean(personneId) && realisedGroupEventIds(groupEvents).size > 0;
         if(allClosed || personConsolidate){
           handledMultiSessionGroups.add(groupKey);
           const realisedIds = realisedGroupEventIds(groupEvents);

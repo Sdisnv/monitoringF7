@@ -54,6 +54,7 @@ const {
   resolveCycleCompletion,
   isCancelledEvenement: isCancelledEvenementRule,
   isHiddenEvenement: isHiddenEvenementRule,
+  describeEventSeries,
   seriesPersistenceFields
 } = require('./_scope-cycle-rules');
 const MultiSessionV2 = require('./_scope-multisession-v2');
@@ -506,10 +507,30 @@ function createScopeService(repo){
       const domain = String(evenement.domaine_code || evenement.domaineCode || '').toUpperCase();
       if(domain === 'PR' && (evenement.pr_exercise_group_key || evenement.prExerciseGroupKey || evenement.cycle_id || evenement.cycleId)){
         const exercise = evenement.exercice || (evenement.exercice_id && repo.getExercise ? await repo.getExercise(evenement.exercice_id) : null);
-        const count = Number((exercise && (exercise.nombre_sessions_attendu || exercise.nombreSessionsAttendu)) || evenement.nombre_sessions_attendu || 1);
-        const index = Number(evenement.session_index || evenement.sessionIndex || 0) || null;
+        const series = describeEventSeries(evenement);
+        const storedGroupKey = evenement.pr_exercise_group_key || evenement.prExerciseGroupKey || null;
+        const sourceEvents = evenement.exercice_id && repo.listExerciseEvents
+          ? await repo.listExerciseEvents(evenement.exercice_id)
+          : (storedGroupKey && repo.listPrExerciseEvents
+            ? await repo.listPrExerciseEvents(storedGroupKey)
+            : (evenement.cycle_id && repo.listCycleEvents ? await repo.listCycleEvents(evenement.cycle_id) : [evenement]));
+        const scoped = series && series.seriesType === 'MULTI_SESSION'
+          ? resolveSessionReportingScope({ evenements: sourceEvents || [], currentEvent: evenement })
+          : { events: [] };
+        const sessionNumbers = (scoped.events || [])
+          .map((row) => Number(describeEventSeries(row).sessionNumber || row.session_index || row.sessionIndex || 0))
+          .filter((value) => Number.isInteger(value) && value > 0);
+        const count = Number((exercise && (exercise.nombre_sessions_attendu || exercise.nombreSessionsAttendu)) || evenement.nombre_sessions_attendu || 0)
+          || (sessionNumbers.length ? Math.max(...sessionNumbers) : 0)
+          || (scoped.events || []).length
+          || 1;
+        const index = Number(evenement.session_index || evenement.sessionIndex || series.sessionNumber || 0) || null;
+        const year = String((exercise && exercise.annee) || evenement.date || '').slice(0, 4);
+        const exerciseLabel = series && series.exerciseNumber
+          ? `Exercice PR ${series.exerciseNumber}${year ? ` — ${year}` : ''}`
+          : null;
         return {
-          label: (exercise && exercise.libelle) || 'Cycle PR',
+          label: (exercise && exercise.libelle) || exerciseLabel || 'Cycle PR',
           version: null,
           validFrom: null,
           validTo: null,
