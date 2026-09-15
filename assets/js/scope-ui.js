@@ -3612,6 +3612,17 @@
           </tr></thead><tbody>${eventRows}</tbody></table>
         </div>
         <div class="scope-card scope-table-wrap scope-cycle-section">
+          <h2>Rattachements individuels</h2>
+          <table class="scope-table"><thead><tr>
+            ${sortableHeader('cycle-people', 'grade', 'Personne', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'nip', 'NIP', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'role', 'Rôle', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'statut', 'Statut', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'session', 'Session', state.cyclePeopleSort)}
+            ${sortableHeader('cycle-people', 'exception', 'Exception', state.cyclePeopleSort)}
+          </tr></thead><tbody>${peopleRows}</tbody></table>
+        </div>
+        <div class="scope-card scope-table-wrap scope-cycle-section">
           <h2>Personnel concerné</h2>
           <table class="scope-table"><thead><tr>
             ${sortableHeader('cycle-matrix', 'grade', 'Personne', state.cycleMatrixSort)}

@@ -242,6 +242,57 @@
     return code || [year, domain, target, label].join('|');
   }
 
+  const IMPORT_SERIES_FAMILIES = Object.freeze({
+    PR: [
+      { id: 'PR', labels: ['PR'], defaultForBareNotation: true },
+      { id: 'PR-ABC', labels: ['PR-ABC', 'PR ABC', 'ABC'] }
+    ],
+    AUTO: [
+      { id: 'CAR', labels: ['CAR'] },
+      { id: 'TRUCK', labels: ['TRUCK'] }
+    ]
+  });
+
+  function normalizeSeriesLabel(value) {
+    return String(value || '')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+  }
+
+  function detectSessionNotation(line) {
+    const domain = String(line.domaineStockage || line.domaine || '').toUpperCase();
+    const families = IMPORT_SERIES_FAMILIES[domain] || [];
+    if (!families.length) return null;
+    const text = String(line.libelle || '').trim();
+    const match = text.match(/\b(\d+)\s*[.]\s*(\d+)\b/);
+    if (!match) return null;
+    const before = normalizeSeriesLabel(text.slice(0, match.index));
+    const family = families
+      .slice()
+      .sort((a, b) => Math.max(...(b.labels || []).map((label) => normalizeSeriesLabel(label).length)) - Math.max(...(a.labels || []).map((label) => normalizeSeriesLabel(label).length)))
+      .find((candidate) =>
+      (candidate.labels || []).some((label) => {
+        const normalized = normalizeSeriesLabel(label);
+        return normalized && (` ${before} `).includes(` ${normalized} `);
+      })
+    ) || (before ? null : families.find((candidate) => candidate.defaultForBareNotation));
+    if (!family) return null;
+    const exerciseNumber = Number(match[1]);
+    const sessionIndex = Number(match[2]);
+    if (!Number.isInteger(exerciseNumber) || !Number.isInteger(sessionIndex) || exerciseNumber < 1 || sessionIndex < 1) return null;
+    return {
+      family: family.id,
+      exerciseNumber,
+      sessionIndex,
+      seriesKey: `${domain}:${family.id}:${exerciseNumber}`
+    };
+  }
+
   function buildDetectedExerciseProposals(lines) {
     const series = seriesApi();
     const groups = new Map();
@@ -270,6 +321,9 @@
         exercice: list[0].libelle,
         domaine: list[0].domaineStockage || list[0].domaine,
         cibleCodes: list[0].cibleCodes,
+        family: list[0]._series && list[0]._series.family,
+        exerciseNumber: list[0]._series && list[0]._series.exerciseNumber,
+        seriesKey: list[0]._series && list[0]._series.seriesKey,
         sessions: list
           .slice()
           .sort((a, b) => Number((a._series && a._series.sessionNumber) || 0) - Number((b._series && b._series.sessionNumber) || 0) || String(a.date || '').localeCompare(String(b.date || '')))

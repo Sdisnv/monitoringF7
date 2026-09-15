@@ -35,7 +35,9 @@ function payload(rows, ids){
     statut: 'NON_RENSEIGNE',
     role: 'PARTICIPANT',
     motif_absence: null,
-    commentaire: null
+    commentaire: null,
+    heureDebutIndividuelle: null,
+    heureFinIndividuelle: null
   }]);
   assert.deepStrictEqual(after, []);
 }

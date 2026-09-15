@@ -45,7 +45,7 @@ function createScopeDashboardService(repo){
     const [series, explain, alertsPayload] = await Promise.all([
       analytics.timeseries(sdisQuery),
       analytics.explain(sdisQuery),
-      alertsService.listAlerts(Object.assign({}, resolved, { summaryOnly: true }))
+      alertsService.listAlerts(resolved)
     ]);
 
     const absences = {

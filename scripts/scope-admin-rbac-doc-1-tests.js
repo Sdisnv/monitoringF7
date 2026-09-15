@@ -129,7 +129,7 @@ function renderNav(hash, permissions) {
     assert.deepStrictEqual(nav.groups.map((group) => group.id), ['activite', 'pilotage', 'administration']);
     const sections = nav.groups.find((group) => group.id === 'administration').sections;
     assert.deepStrictEqual(sections.map((section) => section.label), ['Application', 'Imports', 'Accès', '']);
-    assert.deepStrictEqual(sections[0].items.map((item) => `${item.label}:${item.permission}`), ['Objectifs:references:manage', 'Participation:references:manage', 'Suivi nominatif:personnel:manage']);
+    assert.deepStrictEqual(sections[0].items.map((item) => `${item.label}:${item.permission}`), ['Objectifs:references:manage', 'Configuration formation:references:manage', 'Participation:references:manage', 'Suivi nominatif:personnel:manage']);
     assert.deepStrictEqual(sections[1].items.map((item) => `${item.label}:${item.permission}`), ['Événements:events:create', 'Personnel:personnel:manage']);
     assert.deepStrictEqual(sections[2].items.map((item) => `${item.label}:${item.permission}`), ['Utilisateurs:users:admin']);
     assert.ok(!nav.settings.some((item) => item.href === '#/reglages/administration'), 'entree redondante Administration presente dans Acces');

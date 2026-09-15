@@ -2005,6 +2005,8 @@ function createScopeService(repo){
       if(needsResync){
         await syncExpectedPopulationForEvents(tx, [await tx.getEvent(eventId)], actor, {
           allPersons: true,
+          allowAssignedResync: true,
+          overrideCibleIdsByEvent: new Map([[eventId, nextCibles]]),
           reason: 'EVENT_EDIT_POPULATION'
         });
         current = await tx.getEvent(eventId);
@@ -2348,7 +2350,7 @@ function createScopeService(repo){
         summary.skippedUnfrozen += 1;
         continue;
       }
-      if(assignedPopulationLocked(evenement)){
+      if(assignedPopulationLocked(evenement) && options.allowAssignedResync !== true){
         summary.skippedAssigned = (summary.skippedAssigned || 0) + 1;
         continue;
       }
@@ -2524,14 +2526,16 @@ function createScopeService(repo){
   async function reconcileExpectedPopulation(options = {}, actor = {}){
     const annee = options.annee || options.year || null;
     const domaine = options.domaine || options.domaineCode || options.domaine_code || null;
+    const requestedEventIds = normalizeIdList(options.eventIds || options.event_ids);
     const events = repo.listEvenements ? await repo.listEvenements({ annee, domaine }) : [];
     const selected = (events || []).filter((event) => {
-      if(options.eventIds && Array.isArray(options.eventIds) && !options.eventIds.includes(event.evenement_id)) return false;
+      if(requestedEventIds.length && !requestedEventIds.includes(event.evenement_id)) return false;
       if(options.statut && event.statut !== options.statut) return false;
       return true;
     });
     return repo.withTransaction(async (tx) => syncExpectedPopulationForEvents(tx, selected, actor, {
       allPersons: true,
+      allowAssignedResync: requestedEventIds.length > 0,
       dryRun: options.dryRun === true || options.dry_run === true,
       reason: options.reason || 'BACKFILL_POPULATION_ATTENDUE'
     }));
@@ -2610,6 +2614,21 @@ function createScopeService(repo){
     return true;
   }
 
+  function allowsAssignedPopulationResyncForReason(reason){
+    return [
+      'CLOTURER_AFFECTATION',
+      'INACTIVER_PERSONNE',
+      'CORRIGER_INACTIVATION',
+      'OUVRIR_PERIODE',
+      'CLOTURER_PERIODE',
+      'ARCHIVER',
+      'ARCHIVER_DEJA_ARCHIVE',
+      'REACTIVER',
+      'REACTIVER_DEJA_ACTIVE',
+      'CHANGER_AFFECTATION'
+    ].includes(String(reason || '').toUpperCase());
+  }
+
   async function syncExpectedPopulationForPersonnesInRepo(dbx, personneIds, actor, options = {}){
     const ids = normalizeIdList(personneIds);
     if(!ids.length) return { ok: true, scope: 'EXPECTED_POPULATION', personnes: 0, eventsScanned: 0, eventsRecalculated: 0 };
@@ -2669,6 +2688,7 @@ function createScopeService(repo){
     });
     return syncExpectedPopulationForEvents(dbx, candidates, actor, {
       ...options,
+      allowAssignedResync: options.allowAssignedResync === true || allowsAssignedPopulationResyncForReason(options.reason),
       personneIds: ids,
       ciblesByEvent,
       attendusByEvent,

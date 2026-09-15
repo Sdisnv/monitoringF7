@@ -84,7 +84,8 @@ async function setupPr(count = 4){
   await record('D — OFF/ON transmet serieComplete false/true sans nouveau backend', () => {
     const ui = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
     assert.ok(ui.includes("const serieComplete = (role === 'FORMATEUR' && state.encSerieComplete && isFirstPrSession(state.fiche)) || v2AllSessions;"));
-    assert.ok(ui.includes('await client.ajouterEncadrement(id, { personneId, role, serieComplete, toutesSessions: v2AllSessions }, state.fiche.evenement.version);'));
+    assert.ok(ui.includes('const body = Object.assign(encadrementFormBody(personneId, role), { serieComplete, toutesSessions: v2AllSessions });'));
+    assert.ok(ui.includes('await client.ajouterEncadrement(id, body, state.fiche.evenement.version);'));
     assert.ok(!ui.includes('client.ajouterEncadrementSerie'));
   });
 

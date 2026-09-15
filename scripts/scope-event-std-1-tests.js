@@ -877,8 +877,10 @@ async function commit(service, text){
     assert.strictEqual(preview.summary.nbLignes, 139);
     assert.strictEqual(preview.summary.eventsDetected, 122);
     assert.strictEqual(preview.summary.regroupes, 15);
-    assert.strictEqual(preview.summary.aControler, 0);
+    assert.strictEqual(preview.summary.aControler, 1);
     assert.strictEqual(preview.summary.erreurs, 0);
+    assert.strictEqual((preview.detectedExerciseProposals || []).length, 6);
+    assert.ok((preview.detectedExerciseProposals || []).every((proposal) => proposal.persisted === false));
     const territorial = new Set(['DPS', 'DAP', 'JSP']);
     assert.strictEqual(preview.groups.filter((g) => territorial.has(g.domaineStockage) && (g.sourceLineNos || []).length > 1).length, 0);
     assert.ok(preview.lignes.every((l) => !String(l.statCom || '').endsWith('.')));

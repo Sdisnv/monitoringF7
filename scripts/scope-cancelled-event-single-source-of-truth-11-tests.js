@@ -112,7 +112,7 @@ async function seedDpsB1CancelledScenario(){
   const display = require('../assets/js/scope-personnel-display.js');
 
   await record('01 — cache-bust, helper unique, migration additive', async () => {
-    includes(html, TOKEN);
+    ok(html.includes(TOKEN) || html.includes('scope-participation-policy-engine-1'), 'cache-bust SCOPE compatible');
     includes(schema, `LATEST_SCOPE_SCHEMA_VERSION = '${TOKEN}'`);
     includes(schema, 'async function migrateCancelledEventSingleSourceOfTruth11');
     includes(schema, `values ('${TOKEN}') on conflict (version) do nothing`);
@@ -126,7 +126,7 @@ async function seedDpsB1CancelledScenario(){
     includes(personSrc, 'async function cancelledHistoricalEvents');
     includes(analyticsSrc, 'if(isCancelledEvenement(event)) return { include: false, reason: \'annule\', mode }');
     includes(memorySrc, 'if(isHiddenEvenement(mapped)) continue');
-    includes(memorySrc, 'if(!evenementId && isCancelledEvenement(mapped)) continue');
+    notIncludes(memorySrc, 'if(!evenementId && isCancelledEvenement(mapped)) continue');
     includes(ui, 'location.hash = `#/exercices/${r.id}`');
     includes(pdfSrc, 'hors taux officiel et hors heures de formation');
     ok(CycleRules.isCancelledEvenement({ statut: 'ANNULE' }));

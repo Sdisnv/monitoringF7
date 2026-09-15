@@ -277,8 +277,8 @@ function part(personne, statut, extra){
     assert.strictEqual(c.permutations, 1);
     assert.strictEqual(c.excuse, 1);
     assert.strictEqual(c.absent, 1);
-    assert.strictEqual(c.dispense, 0);
-    assert.strictEqual(c.open, 2);
+    assert.strictEqual(c.dispense, 1);
+    assert.strictEqual(c.open, 1);
   });
 
   await record('15 — Présences à renseigner, sans bouton Convoqué', async () => {

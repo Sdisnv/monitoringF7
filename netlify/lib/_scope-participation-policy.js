@@ -80,6 +80,42 @@ const JSP_STATUSES = Object.freeze(['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE',
 const DAP_STATUSES = Object.freeze(['NON_RENSEIGNE', 'PRESENT', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE', 'DISPENSE', 'PERMUTATION']);
 const DEFAULT_ROLES = Object.freeze(['PARTICIPANT', 'FORMATEUR', 'MONITEUR', 'SURVEILLANT', 'AUXILIAIRE', 'RENFORT', 'REMPLACANT']);
 
+const EVENT_SESSION_MODES = Object.freeze({
+  INDIVIDUAL: 'INDIVIDUAL',
+  MULTI_SESSION: 'MULTI_SESSION'
+});
+
+const DEFAULT_EVENT_CAPABILITIES = Object.freeze({
+  defaultMode: EVENT_SESSION_MODES.INDIVIDUAL,
+  supportsPermutation: false,
+  supportsCatchup: false,
+  supportsMultiSession: false,
+  seriesFamilies: []
+});
+
+const DOMAIN_EVENT_CAPABILITIES = Object.freeze({
+  DPS: Object.freeze({}),
+  DAP: Object.freeze({ supportsPermutation: true, supportsCatchup: true }),
+  JSP: Object.freeze({}),
+  FOBA: Object.freeze({}),
+  FOCA: Object.freeze({}),
+  FOSPEC: Object.freeze({}),
+  PR: Object.freeze({
+    supportsMultiSession: true,
+    seriesFamilies: Object.freeze([
+      { id: 'PR', labels: Object.freeze(['PR']), defaultForBareNotation: true },
+      { id: 'PR-ABC', labels: Object.freeze(['PR-ABC', 'PR ABC', 'ABC']) }
+    ])
+  }),
+  AUTO: Object.freeze({
+    supportsMultiSession: true,
+    seriesFamilies: Object.freeze([
+      { id: 'CAR', labels: Object.freeze(['CAR']) },
+      { id: 'TRUCK', labels: Object.freeze(['TRUCK']) }
+    ])
+  })
+});
+
 function basePolicy(domaineCode, patch = {}){
   const behavior = {
     denominatorStatuses: ['PRESENT', 'PERMUTATION', 'ABSENT_EXCUSE', 'ABSENT_NON_EXCUSE'],
@@ -95,6 +131,12 @@ function basePolicy(domaineCode, patch = {}){
     excuseMotifs: DEFAULT_EXCUSE_MOTIFS.slice(),
     dispenseMotifs: DEFAULT_DISPENSE_MOTIFS.slice(),
     roles: DEFAULT_ROLES.slice(),
+    eventCapabilities: Object.assign(
+      {},
+      DEFAULT_EVENT_CAPABILITIES,
+      DOMAIN_EVENT_CAPABILITIES[domaineCode] || {},
+      patch.eventCapabilities || {}
+    ),
     ...patch,
     behavior: Object.assign(behavior, patch.behavior || {})
   });
@@ -164,9 +206,18 @@ function mergePolicyRow(base, row){
     excuseMotifs: listFrom(config.excuseMotifs || config.excuse_motifs || base.excuseMotifs),
     dispenseMotifs: listFrom(config.dispenseMotifs || config.dispense_motifs || base.dispenseMotifs),
     roles: listFrom(config.roles || base.roles),
+    eventCapabilities: Object.assign({}, base.eventCapabilities || DEFAULT_EVENT_CAPABILITIES, config.eventCapabilities || config.event_capabilities || {}),
     behavior: Object.assign({}, base.behavior, config.behavior || {})
   };
   return next;
+}
+
+function cloneSeriesFamilies(value){
+  return (Array.isArray(value) ? value : []).map((row) => ({
+    id: String(row && row.id || '').trim().toUpperCase(),
+    labels: listFrom(row && row.labels || [row && row.id]),
+    defaultForBareNotation: Boolean(row && (row.defaultForBareNotation || row.default_for_bare_notation))
+  })).filter((row) => row.id);
 }
 
 function sanitizePolicy(policy, motifs){
@@ -181,6 +232,15 @@ function sanitizePolicy(policy, motifs){
     excuseMotifs: keep(listFrom(policy.excuseMotifs), motifIds),
     dispenseMotifs: keep(listFrom(policy.dispenseMotifs), motifIds),
     roles: keep(listFrom(policy.roles), roles),
+    eventCapabilities: {
+      defaultMode: String(policy.eventCapabilities && policy.eventCapabilities.defaultMode || '').toUpperCase() === EVENT_SESSION_MODES.MULTI_SESSION
+        ? EVENT_SESSION_MODES.MULTI_SESSION
+        : EVENT_SESSION_MODES.INDIVIDUAL,
+      supportsPermutation: Boolean(policy.eventCapabilities && policy.eventCapabilities.supportsPermutation),
+      supportsCatchup: Boolean(policy.eventCapabilities && policy.eventCapabilities.supportsCatchup),
+      supportsMultiSession: Boolean(policy.eventCapabilities && policy.eventCapabilities.supportsMultiSession),
+      seriesFamilies: cloneSeriesFamilies(policy.eventCapabilities && policy.eventCapabilities.seriesFamilies)
+    },
     behavior: {
       denominatorStatuses: keep(listFrom(policy.behavior && policy.behavior.denominatorStatuses), statuses),
       recognizedParticipationStatuses: keep(listFrom(policy.behavior && policy.behavior.recognizedParticipationStatuses), statuses),
@@ -188,6 +248,110 @@ function sanitizePolicy(policy, motifs){
       propagationScope: ['SESSION_ONLY', 'ALL_EXERCISE_SESSIONS'].includes(String(policy.behavior && policy.behavior.propagationScope)) ? policy.behavior.propagationScope : 'SESSION_ONLY',
       deduplicationScope: ['SESSION', 'EXERCISE'].includes(String(policy.behavior && policy.behavior.deduplicationScope)) ? policy.behavior.deduplicationScope : 'SESSION'
     }
+  };
+}
+
+function normalizeSeriesLabel(value){
+  return String(value || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function persistedSeriesDecision(event = {}, policy){
+  const explicitSeriesKey = event.seriesKey || event.series_key || event.pr_exercise_group_key || event.prExerciseGroupKey || event.exercice_id || event.exerciceId;
+  const explicitSessionKey = event.sessionKey || event.session_key || event.pr_session_key || event.prSessionKey;
+  if(!explicitSeriesKey) return null;
+  const family = String(event.family || event.seriesFamily || event.series_family || '').trim().toUpperCase()
+    || (policy.eventCapabilities.seriesFamilies[0] && policy.eventCapabilities.seriesFamilies[0].id)
+    || String(policy.domainCode || '').toUpperCase();
+  const exerciseNumber = Number(event.exerciseNumber || event.exercise_number || event.exerciceNumber || event.exercice_number || 0) || null;
+  const sessionNumber = Number(event.sessionNumber || event.session_number || event.sessionIndex || event.session_index || 0) || null;
+  return {
+    mode: EVENT_SESSION_MODES.MULTI_SESSION,
+    source: 'persisted',
+    persisted: true,
+    seriesKey: String(explicitSeriesKey),
+    sessionKey: explicitSessionKey ? String(explicitSessionKey) : null,
+    family,
+    exerciseNumber,
+    sessionNumber
+  };
+}
+
+function notationSeriesDecision(label, policy){
+  if(!policy.eventCapabilities.supportsMultiSession) return null;
+  const text = String(label || '').trim();
+  const match = text.match(/\b(\d+)\s*[.]\s*(\d+)\b/);
+  if(!match) return null;
+  const before = normalizeSeriesLabel(text.slice(0, match.index));
+  const family = (policy.eventCapabilities.seriesFamilies || [])
+    .slice()
+    .sort((a, b) => Math.max(...(b.labels || []).map((label) => normalizeSeriesLabel(label).length)) - Math.max(...(a.labels || []).map((label) => normalizeSeriesLabel(label).length)))
+    .find((candidate) =>
+    (candidate.labels || []).some((label) => {
+      const normalized = normalizeSeriesLabel(label);
+      return normalized && (` ${before} `).includes(` ${normalized} `);
+    })
+  ) || (before ? null : (policy.eventCapabilities.seriesFamilies || []).find((candidate) => candidate.defaultForBareNotation));
+  if(!family) return null;
+  const exerciseNumber = Number(match[1]);
+  const sessionNumber = Number(match[2]);
+  const seriesKey = `${policy.domainCode}:${family.id}:${exerciseNumber}`;
+  return {
+    mode: EVENT_SESSION_MODES.MULTI_SESSION,
+    source: 'label_notation',
+    persisted: false,
+    seriesKey,
+    sessionKey: `${seriesKey}.${sessionNumber}`,
+    family: family.id,
+    exerciseNumber,
+    sessionNumber
+  };
+}
+
+function resolveEventSessionPolicy(domaineCode, event = {}, options = {}){
+  const policy = resolveParticipationPolicy(domaineCode, options);
+  const persisted = persistedSeriesDecision(event, policy);
+  if(persisted) return Object.freeze({ ...persisted, policy });
+  const suggested = notationSeriesDecision(event.libelle || event.label || event.name || '', policy);
+  if(suggested) return Object.freeze({ ...suggested, policy });
+  return Object.freeze({
+    mode: EVENT_SESSION_MODES.INDIVIDUAL,
+    source: 'default',
+    persisted: false,
+    seriesKey: null,
+    sessionKey: null,
+    family: null,
+    exerciseNumber: null,
+    sessionNumber: null,
+    policy
+  });
+}
+
+function describeEventSeries(domaineCode, event = {}, options = {}){
+  const resolved = resolveEventSessionPolicy(domaineCode, event, options);
+  if(resolved.mode === EVENT_SESSION_MODES.INDIVIDUAL){
+    return {
+      mode: resolved.mode,
+      label: 'Événement individuel',
+      source: resolved.source,
+      persisted: resolved.persisted
+    };
+  }
+  return {
+    mode: resolved.mode,
+    label: `Plusieurs séances · ${resolved.family} ${resolved.exerciseNumber}.${resolved.sessionNumber || '?'}`,
+    source: resolved.source,
+    persisted: resolved.persisted,
+    seriesKey: resolved.seriesKey,
+    family: resolved.family,
+    exerciseNumber: resolved.exerciseNumber,
+    sessionNumber: resolved.sessionNumber
   };
 }
 
@@ -232,11 +396,16 @@ module.exports = {
   STATUS_LIBRARY,
   MOTIF_LIBRARY,
   ROLE_LIBRARY,
+  EVENT_SESSION_MODES,
+  DEFAULT_EVENT_CAPABILITIES,
+  DOMAIN_EVENT_CAPABILITIES,
   DEFAULT_DOMAIN_POLICIES,
   normalizeDomain,
   statusCatalog,
   motifCatalog,
   resolveParticipationPolicy,
+  resolveEventSessionPolicy,
+  describeEventSeries,
   policySnapshot,
   motifsForPolicy,
   listDefaultPolicies
