@@ -1642,8 +1642,10 @@ function createMemoryRepo(){
         const cibleIds = evenementCibles.get(mapped.evenement_id) || [];
         if(cibleId && !cibleIds.includes(cibleId)) continue;
         if(personneId){
+          if(inferModeSuivi(mapped) !== 'NOMINATIF') continue;
           const att = [...attendus.values()].filter((a) => a.evenement_id === mapped.evenement_id && String(a.personne_id) === String(personneId) && a.inclus !== false);
-          if(!att.length || inferModeSuivi(mapped) !== 'NOMINATIF') continue;
+          const part = [...participations.values()].filter((p) => p.evenement_id === mapped.evenement_id && String(p.personne_id) === String(personneId));
+          if(!att.length && !part.length) continue;
         }
         bundle.events.push({ ...mapped, cible_ids: cibleIds });
         bundle.cibleIdsByEvent[mapped.evenement_id] = cibleIds;

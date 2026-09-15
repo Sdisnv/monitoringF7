@@ -51,7 +51,8 @@ function emptyVolumes(){
     excusesProfessionnel: 0,
     excusesArmee: 0,
     excusesAccidentMaladie: 0,
-    excusesNonPrecise: 0
+    excusesNonPrecise: 0,
+    encadrementRealise: 0
   };
 }
 

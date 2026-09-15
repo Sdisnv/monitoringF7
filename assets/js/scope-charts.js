@@ -386,7 +386,8 @@
       professionnel: TOKENS.primary,
       armee: TOKENS.warning,
       sante: TOKENS.neutral,
-      nonPrecise: '#8a8e92'
+      nonPrecise: '#8a8e92',
+      encadrement: '#8a8e92'
     });
     const width = (size && size.width) || 280;
     const height = (size && size.height) || 220;

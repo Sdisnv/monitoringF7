@@ -176,7 +176,7 @@ function assertEncadrementRealized(row, info){
     ok(!display.ficheEventMatchesPersonnelFilter(leftover, 'presents'));
   });
 
-  await record('CAS 1 — FOBA RÉALISÉ + FORMATEUR hors population : historique réalisé, KPI 0', async () => {
+  await record('CAS 1 — FOBA RÉALISÉ + FORMATEUR hors population : historique réalisé, activité Personnel +1', async () => {
     const repo = createMemoryRepo();
     const cible = await repo.findCible('FOBA', '1');
     const trainers = [
@@ -194,7 +194,7 @@ function assertEncadrementRealized(row, info){
         source: 'ENCADREMENT'
       });
       const { fiche } = await assertFicheDirectorySync(persons, trainer.personne_id, {
-        kpi: { numerator: 0, denominator: 0, percentage: null, eventCount: 0 }
+        kpi: { numerator: 1, denominator: 1, percentage: 100, eventCount: 1 }
       });
       const row = historyRoles(fiche, 'FORMATEUR')[0];
       assertEncadrementRealized(row, 'Formateur');
@@ -202,11 +202,14 @@ function assertEncadrementRealized(row, info){
       eq(realizedRows(fiche.evenements).length, 1);
       eq(row.statutParticipation, 'NON_CONCERNE');
       const evaluated = await analytics.evaluate(Object.assign({ personneId: trainer.personne_id }, PERIOD));
-      eq(evaluated.officiel.eventCount, 0);
+      eq(evaluated.officiel.eventCount, 1);
+      eq(evaluated.officiel.numerator, 1);
+      eq(Number((evaluated.officiel.volumes || {}).presents || 0), 0);
+      eq(Number((evaluated.officiel.volumes || {}).encadrementRealise || 0), 1);
     }
   });
 
-  await record('CAS 2 — JSP RÉALISÉ + MONITEUR : historique réalisé, hors stats jeunes', async () => {
+  await record('CAS 2 — JSP RÉALISÉ + MONITEUR : historique réalisé, activité personnelle, hors stats jeunes', async () => {
     const repo = createMemoryRepo();
     const jsp = await repo.findCible('JSP', 'GEN') || await repo.findCible('JSP', '1');
     const dps = await repo.findCible('DPS', 'B1') || await repo.findCible('DPS', 'GEN');
@@ -239,8 +242,9 @@ function assertEncadrementRealized(row, info){
         kpi: { numerator: 1, denominator: 1, percentage: 100, eventCount: 1 }
       });
       const monitorFiche = await persons.fiche(moniteur.personne_id, PERIOD);
-      eq(monitorFiche.kpi.eventCount, 0);
-      eq(monitorFiche.kpi.numerator, 0);
+      eq(monitorFiche.kpi.eventCount, 1);
+      eq(monitorFiche.kpi.numerator, 1);
+      eq(Number((monitorFiche.kpi.volumes || {}).presents || 0), 0);
       const row = historyRoles(monitorFiche, 'MONITEUR')[0];
       assertEncadrementRealized(row, 'Moniteur');
       eq(toutRows(monitorFiche.evenements).length, 1);
@@ -443,7 +447,8 @@ function assertEncadrementRealized(row, info){
       const fiche = await persons.fiche(who.personne_id, PERIOD);
       const row = fiche.evenements[0];
       assertEncadrementRealized(row, spec.info);
-      eq(fiche.kpi.eventCount, 0);
+      eq(fiche.kpi.eventCount, 1);
+      eq(fiche.kpi.numerator, 1);
     }
   });
 

@@ -1229,6 +1229,15 @@ function isNonContributiveEncadrementRole(role){
   return r === 'AUXILIAIRE' || r === 'MONITEUR';
 }
 
+function isAuxiliaireRole(role){
+  return normalizeUpper(role) === 'AUXILIAIRE';
+}
+
+function isIndividualActivityEncadrementRole(role){
+  const r = normalizeUpper(role);
+  return r === 'FORMATEUR' || r === 'MONITEUR' || r === 'SURVEILLANT';
+}
+
 function isValidSessionDecision(participation){
   const role = normalizeUpper(participation && participation.role || 'PARTICIPANT');
   const statut = normalizeUpper(participation && participation.statut);
@@ -1237,6 +1246,14 @@ function isValidSessionDecision(participation){
   if(isNonContributiveEncadrementRole(role)) return false;
   if(role === 'SURVEILLANT' && source !== 'SAISIE') return false;
   return true;
+}
+
+function isIndividualActivityContribution(participation){
+  const role = normalizeUpper(participation && participation.role || 'PARTICIPANT');
+  if(!participation) return false;
+  if(isAuxiliaireRole(role)) return false;
+  if(isIndividualActivityEncadrementRole(role)) return true;
+  return isValidSessionDecision(participation);
 }
 
 function canCloseLastSession(state){
@@ -1311,7 +1328,10 @@ module.exports = {
   MOTIF_DISPENSE_LABELS,
   isValidSessionStatut,
   isNonContributiveEncadrementRole,
+  isAuxiliaireRole,
+  isIndividualActivityEncadrementRole,
   isValidSessionDecision,
+  isIndividualActivityContribution,
   canCloseLastSession,
   personHasValidStatusInSession,
   collapsePersonSessionHistory,

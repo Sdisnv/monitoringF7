@@ -2568,7 +2568,10 @@ function createPgRepo(client){
       }
       if(personneId){
         clauses.push(`coalesce(e.mode_suivi, case when e.origine = 'LEGACY_AGGREGATED' then 'LEGACY' else 'NOMINATIF' end) = 'NOMINATIF'`);
-        clauses.push(`exists (select 1 from scope_attendus a where a.evenement_id = e.evenement_id and a.personne_id = $${i} and a.inclus is not false)`);
+        clauses.push(`(
+          exists (select 1 from scope_attendus a where a.evenement_id = e.evenement_id and a.personne_id = $${i} and a.inclus is not false)
+          or exists (select 1 from scope_participations p where p.evenement_id = e.evenement_id and p.personne_id = $${i})
+        )`);
         params.push(personneId);
         i += 1;
       }

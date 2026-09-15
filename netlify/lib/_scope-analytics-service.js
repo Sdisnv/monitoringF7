@@ -25,6 +25,7 @@ const {
   computeMultiSessionParticipationState,
   isValidSessionStatut,
   isNonContributiveEncadrementRole,
+  isIndividualActivityContribution,
   isValidSessionDecision,
   prSessionLabel,
   sessionExerciseLabel,
@@ -243,6 +244,35 @@ function officialFromPersonSessionRows(rows){
   return { numerator: 0, denominator: 0, percentage: null, kind: KINDS.OFFICIEL, eventCount: 0, volumes };
 }
 
+function officialFromIndividualActivity(){
+  return {
+    numerator: 1,
+    denominator: 1,
+    percentage: 100,
+    kind: KINDS.OFFICIEL,
+    eventCount: 1,
+    volumes: Object.assign({}, emptyVolumes(), {
+      attendus: 1,
+      encadrementRealise: 1
+    })
+  };
+}
+
+// Personnel only. Population computeTaux is unchanged.
+// Formula: numerator = PRESENT (and permutation catch-up) + realized encadrement
+// activity (FORMATEUR/MONITEUR/SURVEILLANT) not already counted as a participant
+// decision; denominator = PRESENT + EXCUSE + ABSENT_NON_EXCUSE + PERMUTATION +
+// that encadrement activity; DISPENSE stays out of the rate; AUXILIAIRE = 0;
+// MULTI_SESSION remains max 1 contribution per obligation.
+function officialFromPersonActivity(rows){
+  const sessionRows = (rows || []).filter((row) => isValidSessionDecision(row));
+  const sessionOfficial = officialFromPersonSessionRows(sessionRows);
+  if(Number(sessionOfficial.eventCount || 0) > 0) return sessionOfficial;
+  const activityRows = (rows || []).filter((row) => isIndividualActivityContribution(row));
+  if(activityRows.length) return officialFromIndividualActivity();
+  return sessionOfficial;
+}
+
 function statutFromPersonSessionRows(rows){
   const statuses = new Set((rows || [])
     .map((row) => String(row && row.statut || '').toUpperCase())
@@ -388,7 +418,33 @@ function createScopeAnalyticsService(repo){
     if(personneId){
       attendusUse = attendusUse.filter((a) => String(a.personne_id) === String(personneId));
       partsUse = participations.filter((p) => String(p.personne_id) === String(personneId));
-      if(!attendusUse.length) return { include: false, reason: 'personne_hors_attendus', mode };
+      const activityOfficial = officialFromPersonActivity(partsUse);
+      const hasSessionDecision = partsUse.some((row) => isValidSessionDecision(row));
+      if(!attendusUse.length){
+        if(Number(activityOfficial.eventCount || 0) > 0){
+          return {
+            include: true,
+            reason: null,
+            mode,
+            official: activityOfficial,
+            attendus: attendusUse,
+            participations: partsUse,
+            individualActivity: true
+          };
+        }
+        return { include: false, reason: 'personne_hors_attendus', mode };
+      }
+      if(!hasSessionDecision && Number(activityOfficial.eventCount || 0) > 0){
+        return {
+          include: true,
+          reason: null,
+          mode,
+          official: activityOfficial,
+          attendus: attendusUse,
+          participations: partsUse,
+          individualActivity: true
+        };
+      }
       if(isNonContributiveEncadrementRole(partsUse[0] && partsUse[0].role)){
         return { include: false, reason: 'encadrement_non_contributif', mode };
       }
@@ -469,15 +525,12 @@ function createScopeAnalyticsService(repo){
           const personGroupParticipations = personneId
             ? groupParticipations.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId))
             : [];
-          const personValidSessionParticipations = personneId
-            ? personGroupParticipations.filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')) && isValidSessionDecision(row))
+          const personRealisedParticipations = personneId
+            ? personGroupParticipations.filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')))
             : [];
-          const personGroupAttendus = personneId
-            ? groupAttendus.filter((row) => String(row.personne_id || row.personneId || '') === String(personneId) && row.inclus !== false)
-            : [];
-          if(personneId && !personGroupAttendus.length) continue;
+          const personValidSessionParticipations = personRealisedParticipations.filter((row) => isValidSessionDecision(row));
           const official = personneId
-            ? officialFromPersonSessionRows(personValidSessionParticipations)
+            ? officialFromPersonActivity(personRealisedParticipations)
             : officialFromSessionState(state);
           if(personneId && Number(official.eventCount || 0) <= 0) continue;
           const statutParticipation = personneId ? statutFromPersonSessionRows(personValidSessionParticipations) : null;
@@ -734,10 +787,14 @@ function createScopeAnalyticsService(repo){
           const eventIds = groupEvents.map((row) => row.evenement_id);
           const groupAttendus = eventIds.flatMap((id) => bundle.attendusByEvent[id] || []);
           const groupParticipations = eventIds.flatMap((id) => bundle.participationsByEvent[id] || []);
-          const personIds = [...new Set(groupAttendus
-            .filter((row) => row && row.inclus !== false)
-            .map((row) => String(row.personne_id || row.personneId || ''))
-            .filter(Boolean))];
+          const personIds = [...new Set([
+            ...groupAttendus
+              .filter((row) => row && row.inclus !== false)
+              .map((row) => String(row.personne_id || row.personneId || '')),
+            ...groupParticipations
+              .filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')) && isIndividualActivityContribution(row))
+              .map((row) => String(row.personne_id || row.personneId || ''))
+          ].filter(Boolean))];
           const cibles = [...new Set(eventIds.flatMap((id) => bundle.cibleIdsByEvent[id] || []))];
           const objective = resolveEventObjective(
             { date: event.date, domaine_code: event.domaine_code, cible_ids: cibles },
@@ -746,9 +803,8 @@ function createScopeAnalyticsService(repo){
           for(const pid of personIds){
             const rows = groupParticipations
               .filter((row) => String(row.personne_id || row.personneId || '') === pid)
-              .filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')))
-              .filter((row) => isValidSessionDecision(row));
-            const official = officialFromPersonSessionRows(rows);
+              .filter((row) => realisedIds.has(String(row.evenement_id || row.evenementId || '')));
+            const official = officialFromPersonActivity(rows);
             if(Number(official.eventCount || 0) <= 0) continue;
             addDirectoryRate(acc, pid, official, objective);
           }
@@ -764,21 +820,35 @@ function createScopeAnalyticsService(repo){
         byPid.set(String(part.personne_id || part.personneId), part);
       }
       const fulfilledPermutationPersonIds = fulfilledPermutationPersonIdsForEvent(bundle, event);
+      const objective = resolveEventObjective(
+        {
+          date: event.date,
+          domaine_code: event.domaine_code,
+          cible_ids: bundle.cibleIdsByEvent[event.evenement_id] || event.cible_ids || []
+        },
+        { objectives, grain, queryCibleId: cibleId }
+      );
+      const processed = new Set();
       for(const attendu of filterEligibleAttendus(attendus, bundle, event.date)){
         if(attendu.inclus === false) continue;
         if(isPermutationCatchupAttendu(attendu)) continue;
         const pid = String(attendu.personne_id || attendu.personneId);
         const part = byPid.get(pid);
-        if(isNonContributiveEncadrementRole(part && part.role)) continue;
+        if(isNonContributiveEncadrementRole(part && part.role)){
+          if(isIndividualActivityContribution(part)){
+            addDirectoryRate(acc, pid, officialFromPersonActivity([part]), objective);
+            processed.add(pid);
+          }
+          continue;
+        }
         const official = officialFromTaux(computeTaux(part ? [part] : [], [attendu], { fulfilledPermutationPersonIds }));
-        addDirectoryRate(acc, pid, Object.assign({}, official, { eventCount: 1 }), resolveEventObjective(
-          {
-            date: event.date,
-            domaine_code: event.domaine_code,
-            cible_ids: bundle.cibleIdsByEvent[event.evenement_id] || event.cible_ids || []
-          },
-          { objectives, grain, queryCibleId: cibleId }
-        ));
+        addDirectoryRate(acc, pid, Object.assign({}, official, { eventCount: 1 }), objective);
+        processed.add(pid);
+      }
+      for(const part of parts){
+        const pid = String(part.personne_id || part.personneId || '');
+        if(!pid || processed.has(pid) || !isIndividualActivityContribution(part)) continue;
+        addDirectoryRate(acc, pid, officialFromPersonActivity([part]), objective);
       }
     }
     const rates = {};

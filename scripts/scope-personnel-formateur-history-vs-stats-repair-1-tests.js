@@ -247,8 +247,9 @@ function historyRoles(fiche, role){
       kpi: { numerator: 1, denominator: 1, percentage: 100, eventCount: 1 }
     });
     const monitorFiche = await persons.fiche(moniteur.personne_id, PERIOD);
-    eq(monitorFiche.kpi.eventCount, 0);
-    eq(monitorFiche.kpi.numerator, 0);
+    eq(monitorFiche.kpi.eventCount, 1);
+    eq(monitorFiche.kpi.numerator, 1);
+    eq(Number((monitorFiche.kpi.volumes || {}).presents || 0), 0);
     const monitorRows = historyRoles(monitorFiche, 'MONITEUR');
     eq(monitorRows.length, 1);
     eq(display.ficheEventInformations(monitorRows[0]), 'Moniteur');

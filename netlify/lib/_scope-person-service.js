@@ -757,7 +757,8 @@ function createScopePersonService(repo){
           permutations: Number(volumes.permutations || 0),
           realisationsDirectes: Number(volumes.realisationsDirectes ?? volumes.presents ?? 0),
           rattrapagesRealises: Number(volumes.rattrapagesRealises || 0),
-          aRattraper: Number(volumes.aRattraper || 0)
+          aRattraper: Number(volumes.aRattraper || 0),
+          encadrementRealise: Number(volumes.encadrementRealise || 0)
         },
         motifs: {
           prive: Number(volumes.excusesPrive || 0),

@@ -149,7 +149,10 @@ function realizedRows(events){
     eq(participantFiche.kpi.eventCount, 3);
     const trainerFiche = await persons.fiche(trainer.personne_id, PERIOD);
     eq(trainerFiche.evenements.length, 3);
-    eq(trainerFiche.kpi.eventCount, 0);
+    eq(trainerFiche.kpi.eventCount, 3);
+    eq(trainerFiche.kpi.numerator, 3);
+    eq(Number((trainerFiche.kpi.volumes || {}).presents || 0), 0);
+    eq(Number((trainerFiche.kpi.volumes || {}).encadrementRealise || 0), 3);
     ok(trainerFiche.evenements.every((row) => display.ficheEventStatutLabel(row) === 'Réalisé'));
     ok(trainerFiche.evenements.every((row) => display.ficheEventInformations(row) === 'Formateur'));
   });
@@ -186,7 +189,10 @@ function realizedRows(events){
     eq(jeuneFiche.kpi.eventCount, 2);
     const monitorFiche = await persons.fiche(moniteur.personne_id, PERIOD);
     eq(monitorFiche.evenements.length, 2);
-    eq(monitorFiche.kpi.eventCount, 0);
+    eq(monitorFiche.kpi.eventCount, 2);
+    eq(monitorFiche.kpi.numerator, 2);
+    eq(Number((monitorFiche.kpi.volumes || {}).presents || 0), 0);
+    eq(Number((jeuneFiche.kpi.volumes || {}).presents || 0), 2);
     ok(monitorFiche.evenements.every((row) => display.ficheEventInformations(row) === 'Moniteur'));
     eq(uniqueSeriesKeys(await repo.listEvenements({})).size, 0);
   });

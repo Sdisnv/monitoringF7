@@ -262,16 +262,27 @@ function permutationsDataset(officiel, domaineCode, explain){
 
 function personRepartitionDataset(officiel, explain){
   const base = compositionDataset(officiel, explain);
-    const points = ((((base.series || [])[0] || {}).points) || []).map((point) => (
-      point.id === 'nonExcuses' ? Object.assign({}, point, { label: 'Absents' }) : point
-    ));
+  const volumes = (officiel && officiel.volumes) || emptyVolumes();
+  let points = ((((base.series || [])[0] || {}).points) || []).map((point) => (
+    point.id === 'nonExcuses' ? Object.assign({}, point, { label: 'Absents' }) : point
+  ));
+  const encadrement = Number(volumes.encadrementRealise || 0);
+  if(encadrement > 0){
+    points = points.concat([{
+      id: 'encadrement',
+      label: 'Encadrement',
+      value: encadrement,
+      token: 'encadrement',
+      inDenominator: true
+    }]);
+  }
     const hasVolume = points.some((point) => Number(point.value || 0) > 0);
     return dataset({
       id: 'repartition',
       question: 'Répartition des participations',
       type: 'stacked',
       emptyReason: hasVolume ? null : 'NON_EVALUABLE',
-      explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. Non renseigné n’est pas transformé en absence.' }),
+      explain: explainSlice(explain, { note: 'Dispensés hors dénominateur. L’encadrement réalisé n’est pas transformé en présence. Non renseigné n’est pas transformé en absence.' }),
       series: [{ id: 'volumes', kind: KINDS.OFFICIEL, label: 'Volumes officiels', points: hasVolume ? points : [] }]
     });
 }
