@@ -213,6 +213,7 @@ async function build(){
     const { repo, service } = await build();
     const before = await repo.getStatComCode('0120F7');
     eq(before.specialization, 'FOCO_DPS_4', 'valeur initiale de recette présente');
+    eq(before.specialization_key, 'FOCO_DPS_4', 'clé technique initiale séparée');
     const payload = {
       code: '0120F7',
       label: 'Solde instruction FOCO DPS (4 DPS)',
@@ -230,13 +231,44 @@ async function build(){
     eq(saved.statCom.category, 'EXERCI', 'catégorie normalisée en majuscules');
     eq(saved.statCom.label, 'Solde instruction FOCO DPS (4 DPS)', 'libellé strictement conservé');
     eq(saved.statCom.oi, 'F7', 'OI conservé');
+    eq(saved.statCom.specialization_key, 'FOCO_DPS_4', 'clé technique héritée conservée séparément');
     eq(payload.specialization, 'FOCO 4 DPS', 'payload frontend attendu sans reconstruction');
     const persisted = await repo.getStatComCode('0120F7');
     eq(persisted.specialization, 'FOCO 4 DPS', 'stockage persiste FOCO 4 DPS');
+    eq(persisted.specialization_key, 'FOCO_DPS_4', 'stockage conserve la clé technique distincte');
     const reloaded = (await service.formationCatalog()).formationCatalog.statComCodes.find((row) => row.code === '0120F7');
     eq(reloaded.specialization, 'FOCO 4 DPS', 'reload catalogue conserve FOCO 4 DPS');
+    eq(reloaded.specialization_key, 'FOCO_DPS_4', 'reload catalogue conserve la clé technique distincte');
     const visible = logic.visibleStatComRows([reloaded], { query: 'FOCO 4 DPS', sort: { key: 'code', dir: 'asc' } });
     eq(visible.length, 1, 'affichage/recherche consomme la valeur métier persistée');
+    ok(!String(reloaded.specialization || '').includes('_'), 'aucun underscore réintroduit dans la valeur métier affichée');
+    for (const [code, specialization] of [
+      ['099CPL', 'Cond. PL'],
+      ['099ABC', 'PR-ABC'],
+      ['099NAC', 'Formation nacelle']
+    ]) {
+      await service.saveStatComCode({
+        code,
+        label: `Test ${specialization}`,
+        domain: 'auto',
+        category: 'exerci',
+        oi: 'F7',
+        specialization,
+        validFrom: '2023-01-01',
+        active: true
+      }, ACTOR);
+      const savedRow = await repo.getStatComCode(code);
+      eq(savedRow.specialization, specialization, `spécialisation littérale conservée: ${specialization}`);
+      eq(savedRow.domain, 'AUTO', `domaine normalisé pour ${specialization}`);
+      eq(savedRow.category, 'EXERCI', `catégorie normalisée pour ${specialization}`);
+      const catalogRow = (await service.formationCatalog()).formationCatalog.statComCodes.find((row) => row.code === code);
+      eq(catalogRow.specialization, specialization, `catalogue conserve ${specialization}`);
+    }
+    const pgSource = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pg.js'), 'utf8');
+    const schemaSource = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-schema.js'), 'utf8');
+    ok(pgSource.includes('specialization_label = excluded.specialization_label'), 'PostgreSQL écrit la valeur métier dans specialization_label');
+    ok(pgSource.includes('specialization_key'), 'PostgreSQL expose une clé technique séparée');
+    ok(schemaSource.includes('scope-statcom-specialisation-persistence-repair-2'), 'migration additive dédiée présente');
   });
 
   await record('11 — PDF STAT.COM SCOPE : portrait, charte commune et collection visible', async () => {

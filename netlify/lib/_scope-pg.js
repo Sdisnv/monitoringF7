@@ -175,6 +175,7 @@ function mapEventDefinitionVersion(row){
 
 function mapStatCom(row){
   if(!row) return null;
+  const businessSpecialization = row.specialization_label || row.specialization || null;
   return {
     statcom_id: row.statcom_id,
     statcomId: row.statcom_id,
@@ -185,7 +186,12 @@ function mapStatCom(row){
     oi_code: row.oi_code || null,
     oiCode: row.oi_code || null,
     oi: row.oi_code || null,
-    specialization: row.specialization || null,
+    specialization: businessSpecialization,
+    specialisation: businessSpecialization,
+    specialization_label: row.specialization_label || null,
+    specializationLabel: row.specialization_label || null,
+    specialization_key: row.specialization || null,
+    specializationKey: row.specialization || null,
     valid_from: dateOnly(row.valid_from),
     validFrom: dateOnly(row.valid_from),
     valid_to: dateOnly(row.valid_to),
@@ -2133,14 +2139,15 @@ function createPgRepo(client){
         return text || null;
       };
       const result = await q(
-        `insert into scope_statcom_referentiel(statcom_id, code, label, domain, category, oi_code, specialization, valid_from, valid_to, active, metadata)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
+        `insert into scope_statcom_referentiel(statcom_id, code, label, domain, category, oi_code, specialization, specialization_label, valid_from, valid_to, active, metadata)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)
          on conflict (code) do update set
            label = excluded.label,
            domain = excluded.domain,
            category = excluded.category,
            oi_code = excluded.oi_code,
-           specialization = excluded.specialization,
+           specialization = coalesce(scope_statcom_referentiel.specialization, excluded.specialization),
+           specialization_label = excluded.specialization_label,
            valid_from = excluded.valid_from,
            valid_to = excluded.valid_to,
            active = excluded.active,
@@ -2154,7 +2161,8 @@ function createPgRepo(client){
           clean(pick('domain', 'domain_code', 'domainCode')),
           clean(pick('category', 'categorie')),
           clean(pick('oi_code', 'oiCode', 'oi')),
-          clean(pick('specialization', 'specialisation')),
+          clean(pick('specialization_key', 'specializationKey')) || clean(pick('specialization', 'specialisation')),
+          clean(pick('specialization_label', 'specializationLabel', 'specialization', 'specialisation')),
           isoDate(pick('valid_from', 'validFrom')) || '2023-01-01',
           isoDate(pick('valid_to', 'validTo')),
           row.active !== false && row.actif !== false,

@@ -70,6 +70,7 @@ function createMemoryRepo(){
     const item = Object.assign({}, row, {
       statcom_id: randomUUID(),
       oi_code: row.oi || null,
+      specialization_label: row.specialization || null,
       created_at: now(),
       updated_at: now()
     });
@@ -199,6 +200,24 @@ function createMemoryRepo(){
 
   function cloneMap(map){
     return new Map([...map.entries()].map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]));
+  }
+
+  function mapMemoryStatCom(row){
+    const businessSpecialization = row.specialization_label || row.specialization || null;
+    return {
+      ...row,
+      statcomId: row.statcom_id,
+      oiCode: row.oi_code || null,
+      oi: row.oi_code || null,
+      specialization: businessSpecialization,
+      specialisation: businessSpecialization,
+      specializationLabel: row.specialization_label || null,
+      specialization_key: row.specialization || null,
+      specializationKey: row.specialization || null,
+      validFrom: row.valid_from,
+      validTo: row.valid_to,
+      metadata: JSON.parse(JSON.stringify(row.metadata || {}))
+    };
   }
 
   function snapshot(){
@@ -1328,28 +1347,12 @@ function createMemoryRepo(){
           return String(row.code || '').toUpperCase().includes(needle) || String(row.label || '').toUpperCase().includes(needle);
         })
         .sort((a, b) => String(a.domain || '').localeCompare(String(b.domain || '')) || String(a.category || '').localeCompare(String(b.category || '')) || String(a.code).localeCompare(String(b.code)))
-        .map((row) => ({
-          ...row,
-          statcomId: row.statcom_id,
-          oiCode: row.oi_code || null,
-          oi: row.oi_code || null,
-          validFrom: row.valid_from,
-          validTo: row.valid_to,
-          metadata: JSON.parse(JSON.stringify(row.metadata || {}))
-        }));
+        .map(mapMemoryStatCom);
     },
     async getStatComCode(code){
       const row = statComCodes.get(statcomReferential.normalizeStatComCode(code));
       if(!row) return null;
-      return {
-        ...row,
-        statcomId: row.statcom_id,
-        oiCode: row.oi_code || null,
-        oi: row.oi_code || null,
-        validFrom: row.valid_from,
-        validTo: row.valid_to,
-        metadata: JSON.parse(JSON.stringify(row.metadata || {}))
-      };
+      return mapMemoryStatCom(row);
     },
     async upsertStatComCode(row){
       const code = statcomReferential.normalizeStatComCode(row.code);
@@ -1373,7 +1376,8 @@ function createMemoryRepo(){
         domain: clean(pick('domain', 'domain_code', 'domainCode')),
         category: clean(pick('category', 'categorie')),
         oi_code: clean(pick('oi_code', 'oiCode', 'oi')),
-        specialization: clean(pick('specialization', 'specialisation')),
+        specialization: clean(pick('specialization_key', 'specializationKey')) || existing?.specialization || clean(pick('specialization', 'specialisation')),
+        specialization_label: clean(pick('specialization_label', 'specializationLabel', 'specialization', 'specialisation')),
         valid_from: isoDate(pick('valid_from', 'validFrom')) || '2023-01-01',
         valid_to: isoDate(pick('valid_to', 'validTo')),
         active: row.active !== false && row.actif !== false,

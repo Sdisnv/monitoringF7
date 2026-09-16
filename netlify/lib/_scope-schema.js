@@ -276,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-statcom-referential-config-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-statcom-specialisation-persistence-repair-2';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -402,6 +402,7 @@ async function ensureScopeSchema(){
   await migrateAttendusRetraitSchemaContractRepair1032();
   await migrateCancelledEventSingleSourceOfTruth11();
   await migrateStatComReferentialConfig1();
+  await migrateStatComSpecialisationPersistenceRepair2();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1613,6 +1614,7 @@ async function migrateStatComReferentialConfig1(){
       category text,
       oi_code text,
       specialization text,
+      specialization_label text,
       valid_from date not null default '2023-01-01',
       valid_to date,
       active boolean not null default true,
@@ -1625,6 +1627,7 @@ async function migrateStatComReferentialConfig1(){
     )
   `);
   await db.query(`create index if not exists scope_statcom_lookup_idx on scope_statcom_referentiel(domain, category, active, valid_from, valid_to)`);
+  await db.query(`alter table scope_statcom_referentiel add column if not exists specialization_label text`);
   await db.query(`create index if not exists scope_statcom_oi_idx on scope_statcom_referentiel(oi_code, specialization)`);
   await db.query(`alter table scope_event_definition_versions add column if not exists statcom_code text`);
   await db.query(`alter table scope_event_definition_versions add column if not exists statcom_snapshot jsonb`);
@@ -1636,8 +1639,8 @@ async function migrateStatComReferentialConfig1(){
   await db.query(`create index if not exists scope_event_definition_versions_statcom_idx on scope_event_definition_versions(statcom_code)`);
   for(const row of statcom.initialStatComCodes()){
     await db.query(
-      `insert into scope_statcom_referentiel(code, label, domain, category, oi_code, specialization, valid_from, valid_to, active, metadata)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
+      `insert into scope_statcom_referentiel(code, label, domain, category, oi_code, specialization, specialization_label, valid_from, valid_to, active, metadata)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
        on conflict (code) do nothing`,
       [
         row.code,
@@ -1645,6 +1648,7 @@ async function migrateStatComReferentialConfig1(){
         row.domain,
         row.category,
         row.oi,
+        row.specialization,
         row.specialization,
         row.valid_from,
         row.valid_to,
@@ -1654,6 +1658,17 @@ async function migrateStatComReferentialConfig1(){
     );
   }
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-statcom-referential-config-1') on conflict (version) do nothing`);
+}
+
+async function migrateStatComSpecialisationPersistenceRepair2(){
+  await db.query(`alter table scope_statcom_referentiel add column if not exists specialization_label text`);
+  await db.query(`
+    update scope_statcom_referentiel
+       set specialization_label = specialization
+     where specialization_label is null
+       and specialization is not null
+  `);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-statcom-specialisation-persistence-repair-2') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };
