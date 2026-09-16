@@ -144,8 +144,8 @@ async function build(){
     ok(UI_SOURCE.includes("sortableHeader('statcom', 'specialization', 'SPÉCIALISATION'"), 'libellé spécialisation utilisateur');
     ok(!UI_SOURCE.includes('<th>SPECIALIZATION</th>'), 'ancien libellé SPECIALIZATION absent du tableau');
     ok(UI_SOURCE.includes('id="statcom-export-pdf"'), 'action Exporter PDF présente');
-    ok(UI_SOURCE.includes("title: 'Référentiel STAT.COM'"), 'PDF titré Référentiel STAT.COM');
-    ok(UI_SOURCE.includes('statComPdfFilterLabel()'), 'PDF inclut filtres/recherche/tri');
+    ok(UI_SOURCE.includes('RÉFÉRENTIEL STAT.COM'), 'PDF titré RÉFÉRENTIEL STAT.COM');
+    ok(UI_SOURCE.includes('statComPdfFilterMeta()'), 'PDF inclut filtres/recherche/tri');
     ok(UI_SOURCE.includes('focusStatComForm();'), 'Modifier/Ajouter amène le formulaire dans le viewport');
   });
 
@@ -162,18 +162,9 @@ async function build(){
   });
 
   await record('08 — tri STAT.COM runtime : contrat sortRows valide au rendu initial et après tri', async () => {
-    ok(/const columns = \[\s*\{\s*key: 'code'/.test(UI_SOURCE), 'colonnes STAT.COM fournies sous forme de tableau');
-    ok(!/const columns = \{\s*code:/.test(UI_SOURCE), 'ancien contrat objet absent');
-    const columns = [
-      { key: 'code', value: (row) => row.code || '', type: 'text' },
-      { key: 'label', value: (row) => row.label || row.libelle || '', type: 'text' },
-      { key: 'domain', value: (row) => row.domain || '', type: 'text' },
-      { key: 'category', value: (row) => row.category || '', type: 'text' },
-      { key: 'oi', value: (row) => row.oi || row.oi_code || row.oiCode || '', type: 'text' },
-      { key: 'specialization', value: (row) => row.specialization || '', type: 'text' },
-      { key: 'validity', value: (row) => row.valid_from || row.validFrom || '', type: 'date' },
-      { key: 'state', value: (row) => row.active === false ? 'Inactif' : 'Actif', type: 'text' }
-    ];
+    const columns = logic.statComSortColumns();
+    ok(Array.isArray(columns), 'colonnes STAT.COM fournies sous forme de tableau');
+    ok(columns.some((column) => column.key === 'specialization'), 'colonne spécialisation déclarée');
     const rows = [
       { code: '012B1', label: 'DPS B1', domain: 'DPS', category: 'EXERCICE', oi: 'B1', specialization: '', valid_from: '2023-01-01', active: true },
       { code: '010JSP', label: 'Exercices JSP', domain: 'JSP', category: 'EXERCICE', oi: '', specialization: 'JSP', valid_from: '2023-01-01', active: true },
@@ -184,6 +175,48 @@ async function build(){
     assertions += 2;
     eq(logic.sortRows(rows, { key: 'code', dir: 'asc' }, columns)[0].code, '010JSP', 'tri code actif');
     eq(logic.sortRows(rows, { key: 'state', dir: 'asc' }, columns)[0].code, '012B1', 'tri état actif/inactif conservé');
+  });
+
+  await record('09 — export STAT.COM : même collection visible pour écran et PDF', async () => {
+    const { service } = await build();
+    const catalog = (await service.formationCatalog()).formationCatalog;
+    const rows = catalog.statComCodes;
+    const visible = (options) => logic.visibleStatComRows(rows, options).map((row) => row.code);
+    const all = visible({ sort: { key: 'code', dir: 'asc' } });
+    eq(all.length, rows.length, 'export sans filtre = toutes les lignes visibles');
+    const codeDesc = visible({ sort: { key: 'code', dir: 'desc' } });
+    eq(codeDesc[0], all[all.length - 1], 'CODE DESC inverse le premier résultat');
+    const labelAsc = visible({ sort: { key: 'label', dir: 'asc' } });
+    const labelDesc = visible({ sort: { key: 'label', dir: 'desc' } });
+    ok(labelAsc.length === labelDesc.length && labelAsc[0] !== labelDesc[0], 'LIBELLÉ ASC/DESC appliqué');
+    ['domain', 'category', 'oi', 'specialization', 'validity', 'state'].forEach((key) => {
+      ok(visible({ sort: { key, dir: 'asc' } }).length === rows.length, `tri ${key} conserve le périmètre`);
+    });
+    const dap = logic.visibleStatComRows(rows, { query: 'DAP', sort: { key: 'code', dir: 'desc' } });
+    ok(dap.length > 0 && dap.length < rows.length, 'recherche DAP réduit le nombre de résultats');
+    ok(dap.every((row) => ['code', 'label', 'domain', 'category', 'oi', 'specialization'].some((key) => logic.statComCellValue(row, key).toUpperCase().includes('DAP'))), 'recherche DAP exporte uniquement les lignes visibles');
+    const jsp = logic.visibleStatComRows(rows, { domainFilter: 'JSP', sort: { key: 'label', dir: 'asc' } });
+    ok(jsp.length > 0 && jsp.every((row) => row.domain === 'JSP'), 'filtre domaine JSP respecté');
+    const combo = logic.visibleStatComRows(rows, { query: 'JSP', domainFilter: 'JSP', sort: { key: 'code', dir: 'desc' } });
+    ok(combo.every((row) => row.domain === 'JSP'), 'combinaison recherche + filtre + tri conserve le filtre');
+    ok(UI_SOURCE.includes('exportStatComPdf(currentStatComRowsForDisplay())'), 'PDF consomme exactement la collection affichée');
+  });
+
+  await record('10 — PDF STAT.COM professionnel : tableau, libellés FR et accents', async () => {
+    ok(UI_SOURCE.includes('/MediaBox [0 0 ${width} ${height}]'), 'PDF généré en A4 paysage');
+    ok(UI_SOURCE.includes('/WinAnsiEncoding'), 'PDF utilise WinAnsiEncoding pour les accents');
+    ok(UI_SOURCE.includes('pdfWinAnsiHex'), 'texte PDF encodé en hex WinAnsi');
+    ok(UI_SOURCE.includes('RÉFÉRENTIEL STAT.COM'), 'titre institutionnel accentué');
+    ok(UI_SOURCE.includes('Référentiel des codes de ventilation statistique'), 'sous-titre institutionnel');
+    ok(UI_SOURCE.includes('SPÉCIALISATION'), 'colonne SPÉCIALISATION présente');
+    ok(!UI_SOURCE.includes('SPECIALIZATION'), 'aucun libellé utilisateur SPECIALIZATION dans le PDF');
+    ok(UI_SOURCE.includes('CATÉGORIE') && UI_SOURCE.includes('VALIDITÉ') && UI_SOURCE.includes('ÉTAT'), 'libellés français présents');
+    ok(UI_SOURCE.includes('Page ${pageIndex + 1} / ${pages.length}'), 'pagination Page X / Y');
+    ok(UI_SOURCE.includes('index % 2 === 0'), 'lignes zébrées prévues');
+    ok(!UI_SOURCE.includes(' | ${row.label'), 'ancien export séparé par pipes supprimé');
+    eq(logic.statComSortLabel({ key: 'code', dir: 'asc' }), 'Code — croissant', 'métadonnée tri code asc');
+    eq(logic.statComSortLabel({ key: 'label', dir: 'desc' }), 'Libellé — décroissant', 'métadonnée tri libellé desc');
+    ok(UI_SOURCE.includes('Nombre de codes : ${(rows || []).length}'), 'nombre de codes basé sur les résultats exportés');
   });
 
   const failed = results.filter((row) => row.status !== 'PASS');

@@ -2068,6 +2068,64 @@
       .map((item) => item.row);
   }
 
+  function statComCellValue(row, key) {
+    if (key === 'code') return row && row.code || '';
+    if (key === 'label') return row && (row.label || row.libelle) || '';
+    if (key === 'domain') return row && row.domain || '';
+    if (key === 'category') return row && row.category || '';
+    if (key === 'oi') return row && (row.oi || row.oi_code || row.oiCode) || '';
+    if (key === 'specialization') return row && row.specialization || '';
+    if (key === 'validity') return row && (row.valid_from || row.validFrom) || '';
+    if (key === 'state') return row && row.active === false ? 'Inactif' : 'Actif';
+    return '';
+  }
+
+  function statComSortColumns() {
+    return [
+      { key: 'code', value: (row) => statComCellValue(row, 'code'), type: 'text' },
+      { key: 'label', value: (row) => statComCellValue(row, 'label'), type: 'text' },
+      { key: 'domain', value: (row) => statComCellValue(row, 'domain'), type: 'text' },
+      { key: 'category', value: (row) => statComCellValue(row, 'category'), type: 'text' },
+      { key: 'oi', value: (row) => statComCellValue(row, 'oi'), type: 'text' },
+      { key: 'specialization', value: (row) => statComCellValue(row, 'specialization'), type: 'text' },
+      { key: 'validity', value: (row) => statComCellValue(row, 'validity'), type: 'date' },
+      { key: 'state', value: (row) => statComCellValue(row, 'state'), type: 'text' }
+    ];
+  }
+
+  function visibleStatComRows(rows, options) {
+    const source = Array.isArray(rows) ? rows : [];
+    const opts = options || {};
+    const query = cleanSortText(opts.query || '').toUpperCase();
+    const domainFilter = cleanSortText(opts.domainFilter || '').toUpperCase();
+    const stateFilter = cleanSortText(opts.stateFilter || 'TOUS').toUpperCase();
+    const filtered = source.filter((row) => {
+      const active = row && row.active !== false;
+      if (domainFilter && cleanSortText(row && row.domain).toUpperCase() !== domainFilter) return false;
+      if (stateFilter === 'ACTIF' && !active) return false;
+      if (stateFilter === 'INACTIF' && active) return false;
+      if (!query) return true;
+      return ['code', 'label', 'domain', 'category', 'oi', 'specialization'].some((key) => cleanSortText(statComCellValue(row, key)).toUpperCase().includes(query));
+    });
+    return sortRows(filtered, opts.sort || { key: 'code', dir: 'asc' }, statComSortColumns());
+  }
+
+  function statComSortLabel(sort) {
+    const labels = {
+      code: 'Code',
+      label: 'Libellé',
+      domain: 'Domaine',
+      category: 'Catégorie',
+      oi: 'OI',
+      specialization: 'Spécialisation',
+      validity: 'Validité',
+      state: 'État'
+    };
+    const current = sort || {};
+    const direction = current.dir === 'desc' ? 'décroissant' : 'croissant';
+    return `${labels[current.key] || 'Code'} — ${direction}`;
+  }
+
   function nextSort(current, key, defaultDir) {
     const cur = current || {};
     const initial = defaultDir || 'asc';
@@ -2327,6 +2385,10 @@
     parseSortTime,
     compareSortValues,
     sortRows,
+    statComCellValue,
+    statComSortColumns,
+    visibleStatComRows,
+    statComSortLabel,
     nextSort,
     sortHeaderState,
     isQualificationEvenement,

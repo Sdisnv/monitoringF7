@@ -9130,43 +9130,15 @@
     </div>`;
   }
 
-  function statComCell(row, key) {
-    if (key === 'code') return row.code || '';
-    if (key === 'label') return row.label || row.libelle || '';
-    if (key === 'domain') return row.domain || '';
-    if (key === 'category') return row.category || '';
-    if (key === 'oi') return row.oi || row.oi_code || row.oiCode || '';
-    if (key === 'specialization') return row.specialization || '';
-    if (key === 'validity') return row.valid_from || row.validFrom || '';
-    if (key === 'state') return row.active === false ? 'Inactif' : 'Actif';
-    return '';
-  }
-
   function currentStatComRowsForDisplay() {
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
     const statComCodes = Array.isArray(catalog.statComCodes) ? catalog.statComCodes : [];
-    const query = String(state.formationStatComQuery || '').trim().toUpperCase();
-    const domainFilter = String(state.formationStatComDomainFilter || '').trim().toUpperCase();
-    const stateFilter = String(state.formationStatComStateFilter || 'TOUS').toUpperCase();
-    const rows = statComCodes.filter((row) => {
-      const active = row.active !== false;
-      if (domainFilter && String(row.domain || '').toUpperCase() !== domainFilter) return false;
-      if (stateFilter === 'ACTIF' && !active) return false;
-      if (stateFilter === 'INACTIF' && active) return false;
-      if (!query) return true;
-      return ['code', 'label', 'domain', 'category', 'oi', 'specialization'].some((key) => String(statComCell(row, key) || '').toUpperCase().includes(query));
-    });
-    const columns = [
-      { key: 'code', value: (row) => row.code || '', type: 'text' },
-      { key: 'label', value: (row) => row.label || row.libelle || '', type: 'text' },
-      { key: 'domain', value: (row) => row.domain || '', type: 'text' },
-      { key: 'category', value: (row) => row.category || '', type: 'text' },
-      { key: 'oi', value: (row) => row.oi || row.oi_code || row.oiCode || '', type: 'text' },
-      { key: 'specialization', value: (row) => row.specialization || '', type: 'text' },
-      { key: 'validity', value: (row) => row.valid_from || row.validFrom || '', type: 'date' },
-      { key: 'state', value: (row) => row.active === false ? 'Inactif' : 'Actif', type: 'text' }
-    ];
-    return L.sortRows ? L.sortRows(rows, state.formationStatComSort, columns) : rows;
+    return L.visibleStatComRows ? L.visibleStatComRows(statComCodes, {
+      query: state.formationStatComQuery,
+      domainFilter: state.formationStatComDomainFilter,
+      stateFilter: state.formationStatComStateFilter,
+      sort: state.formationStatComSort
+    }) : statComCodes.slice();
   }
 
   function renderFormationCatalog() {
@@ -12885,68 +12857,195 @@
     });
   }
 
-  function pdfHexText(value) {
+  function pdfWinAnsiHex(value) {
+    const map = {
+      0x0152: 0x8C, 0x0153: 0x9C, 0x0160: 0x8A, 0x0161: 0x9A,
+      0x0178: 0x9F, 0x017D: 0x8E, 0x017E: 0x9E, 0x20AC: 0x80,
+      0x2013: 0x96, 0x2014: 0x97, 0x2018: 0x91, 0x2019: 0x92,
+      0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2026: 0x85
+    };
     const text = String(value == null ? '' : value).normalize('NFC');
-    const bytes = [0xFE, 0xFF];
+    const bytes = [];
     for (let i = 0; i < text.length; i += 1) {
       const code = text.charCodeAt(i);
-      bytes.push((code >> 8) & 0xFF, code & 0xFF);
+      bytes.push(map[code] || (code <= 255 ? code : 0x3F));
     }
     return `<${bytes.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('')}>`;
   }
 
-  function pdfTextLine(x, y, size, text, font = 'F1') {
-    return `BT /${font} ${size} Tf ${x} ${y} Td ${pdfHexText(text)} Tj ET`;
+  function pdfBytes(pdf) {
+    const bytes = new Uint8Array(pdf.length);
+    for (let i = 0; i < pdf.length; i += 1) bytes[i] = pdf.charCodeAt(i) & 0xFF;
+    return bytes;
   }
 
-  function statComPdfFilterLabel() {
-    const parts = [];
-    if (state.formationStatComQuery) parts.push(`Recherche: ${state.formationStatComQuery}`);
-    if (state.formationStatComDomainFilter) parts.push(`Domaine: ${state.formationStatComDomainFilter}`);
-    if (state.formationStatComStateFilter && state.formationStatComStateFilter !== 'TOUS') parts.push(`État: ${state.formationStatComStateFilter}`);
-    const sort = state.formationStatComSort || {};
-    if (sort.key) parts.push(`Tri: ${sort.key} ${String(sort.dir || 'asc').toUpperCase()}`);
-    return parts.join(' · ') || 'Aucun filtre';
+  function pdfText(x, y, size, text, font = 'F1', color = '0.13 0.13 0.13') {
+    return `BT ${color} rg /${font} ${size} Tf ${x.toFixed(1)} ${y.toFixed(1)} Td ${pdfWinAnsiHex(text)} Tj ET`;
   }
 
-  function buildSimplePdf(lines, options = {}) {
+  function pdfRect(x, y, w, h, fill, stroke) {
+    const parts = ['q'];
+    if (fill) parts.push(`${fill} rg ${x.toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f`);
+    if (stroke) parts.push(`${stroke} RG 0.5 w ${x.toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`);
+    parts.push('Q');
+    return parts.join(' ');
+  }
+
+  function wrapPdfText(text, width, size) {
+    const max = Math.max(6, Math.floor(width / (size * 0.48)));
+    const words = String(text == null ? '' : text).split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = '';
+    for (const word of words.length ? words : ['']) {
+      if (!line) {
+        line = word;
+      } else if (`${line} ${word}`.length <= max) {
+        line = `${line} ${word}`;
+      } else {
+        lines.push(line);
+        line = word;
+      }
+      while (line.length > max) {
+        lines.push(line.slice(0, max));
+        line = line.slice(max);
+      }
+    }
+    if (line || !lines.length) lines.push(line);
+    return lines;
+  }
+
+  function statComPdfGeneratedAt(date = new Date()) {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} à ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  function statComPdfFilterMeta() {
+    const stateFilter = state.formationStatComStateFilter || 'TOUS';
+    return [
+      ['Recherche', state.formationStatComQuery ? state.formationStatComQuery : 'Toutes'],
+      ['Domaine', state.formationStatComDomainFilter || 'Tous'],
+      ['État', stateFilter === 'TOUS' ? 'Tous' : stateFilter === 'ACTIF' ? 'Actifs' : 'Inactifs'],
+      ['Tri', L.statComSortLabel ? L.statComSortLabel(state.formationStatComSort) : 'Code — croissant']
+    ];
+  }
+
+  function statComPdfRow(row) {
+    const from = L.formatDate(row.valid_from || row.validFrom);
+    const to = row.valid_to || row.validTo ? L.formatDate(row.valid_to || row.validTo) : '';
+    return [
+      row.code || '',
+      row.label || row.libelle || '',
+      row.domain || '',
+      row.category || '',
+      row.oi || row.oi_code || row.oiCode || '',
+      row.specialization || '',
+      to ? `${from} - ${to}` : `Dès ${from}`,
+      row.active === false ? 'Inactif' : 'Actif'
+    ];
+  }
+
+  function buildStatComPdf(rows) {
     const width = 842;
     const height = 595;
-    const marginX = 36;
-    const topY = 552;
-    const lineHeight = 13;
-    const bodySize = 8;
-    const objects = ['<< /Type /Catalog /Pages 2 0 R >>'];
+    const margin = 28;
+    const tableX = margin;
+    const tableWidth = width - margin * 2;
+    const columns = [
+      { label: 'CODE', width: 64 },
+      { label: 'LIBELLÉ', width: 224 },
+      { label: 'DOMAINE', width: 62 },
+      { label: 'CATÉGORIE', width: 78 },
+      { label: 'OI', width: 44 },
+      { label: 'SPÉCIALISATION', width: 128 },
+      { label: 'VALIDITÉ', width: 116 },
+      { label: 'ÉTAT', width: 70 }
+    ];
+    const headerHeight = 26;
+    const tableTop = 386;
+    const bottom = 42;
+    const bodySize = 7.4;
+    const lineHeight = 8.6;
+    const rowModels = (rows || []).map((row) => {
+      const cells = statComPdfRow(row);
+      const lines = cells.map((cell, index) => wrapPdfText(cell, columns[index].width - 8, bodySize));
+      return { cells: lines, height: Math.max(20, Math.max(...lines.map((item) => item.length)) * lineHeight + 8) };
+    });
+    if (!rowModels.length) rowModels.push({ cells: [['Aucune donnée à exporter.'], [''], [''], [''], [''], [''], [''], ['']], height: 22 });
     const pages = [];
-    const perPage = 34;
-    for (let offset = 0; offset < lines.length; offset += perPage) {
-      const chunk = lines.slice(offset, offset + perPage);
-      const pageIndex = pages.length + 1;
-      const streamLines = [
-        pdfTextLine(marginX, topY, 15, options.title || 'Référentiel STAT.COM', 'F2'),
-        pdfTextLine(marginX, topY - 22, 9, options.subtitle || '', 'F1'),
-        pdfTextLine(marginX, topY - 36, 8, options.filters || '', 'F1'),
-        pdfTextLine(760, topY - 36, 8, `Page ${pageIndex}`, 'F1')
-      ];
-      let y = topY - 58;
-      for (const line of chunk) {
-        streamLines.push(pdfTextLine(marginX, y, line.bold ? 8 : bodySize, line.text, line.bold ? 'F2' : 'F1'));
-        y -= lineHeight;
+    let page = [];
+    let used = headerHeight;
+    for (const row of rowModels) {
+      if (page.length && used + row.height > tableTop - bottom) {
+        pages.push(page);
+        page = [];
+        used = headerHeight;
       }
-      const stream = streamLines.join('\n');
-      const contentObjectNumber = 4 + pageIndex * 2;
-      const pageObjectNumber = contentObjectNumber - 1;
+      page.push(row);
+      used += row.height;
+    }
+    if (page.length) pages.push(page);
+
+    const renderTableHeader = () => {
+      const commands = [pdfRect(tableX, tableTop - headerHeight, tableWidth, headerHeight, '0.46 0.09 0.15', '0.46 0.09 0.15')];
+      let x = tableX;
+      columns.forEach((column) => {
+        commands.push(pdfText(x + 4, tableTop - 17, 7.6, column.label, 'F2', '1 1 1'));
+        x += column.width;
+      });
+      return commands;
+    };
+
+    const renderPage = (rowsForPage, pageIndex) => {
+      const commands = [
+        pdfRect(0, 0, width, height, '1 1 1'),
+        pdfRect(0, height - 62, width, 62, '0.46 0.09 0.15'),
+        pdfText(margin, height - 28, 18, 'SCOPE', 'F2', '1 1 1'),
+        pdfText(margin + 96, height - 29, 15, 'RÉFÉRENTIEL STAT.COM', 'F2', '1 1 1'),
+        pdfText(margin + 96, height - 47, 8.5, 'Référentiel des codes de ventilation statistique', 'F1', '1 1 1'),
+        pdfText(width - 104, height - 36, 8, `Page ${pageIndex + 1} / ${pages.length}`, 'F1', '1 1 1'),
+        pdfText(margin, 505, 8.5, `Généré le : ${statComPdfGeneratedAt()}`, 'F1'),
+        pdfText(margin + 230, 505, 8.5, `Nombre de codes : ${(rows || []).length}`, 'F1'),
+        pdfText(margin, 480, 9.2, 'Périmètre exporté', 'F2', '0.46 0.09 0.15')
+      ];
+      let metaX = margin;
+      statComPdfFilterMeta().forEach(([label, value], index) => {
+        const x = index % 2 === 0 ? margin : margin + 390;
+        const y = index < 2 ? 462 : 444;
+        metaX = x;
+        commands.push(pdfText(metaX, y, 8, `${label} : ${value}`, 'F1'));
+      });
+      commands.push(...renderTableHeader());
+      let y = tableTop - headerHeight;
+      rowsForPage.forEach((row, index) => {
+        y -= row.height;
+        const fill = index % 2 === 0 ? '1 1 1' : '0.97 0.97 0.98';
+        commands.push(pdfRect(tableX, y, tableWidth, row.height, fill, '0.88 0.89 0.90'));
+        let x = tableX;
+        row.cells.forEach((lines, cellIndex) => {
+          let lineY = y + row.height - 12;
+          lines.forEach((line) => {
+            commands.push(pdfText(x + 4, lineY, bodySize, line, cellIndex === 0 ? 'F2' : 'F1'));
+            lineY -= lineHeight;
+          });
+          x += columns[cellIndex].width;
+        });
+      });
+      return commands.join('\n');
+    };
+
+    const objects = ['<< /Type /Catalog /Pages 2 0 R >>'];
+    const pageRefs = [];
+    pages.forEach((rowsForPage, index) => {
+      const stream = renderPage(rowsForPage, index);
+      const pageObjectNumber = 5 + index * 2;
+      const contentObjectNumber = pageObjectNumber + 1;
+      pageRefs.push(`${pageObjectNumber} 0 R`);
       objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`);
       objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-      pages.push(`${pageObjectNumber} 0 R`);
-    }
-    if (!pages.length) {
-      lines.push({ text: 'Aucune donnée à exporter.' });
-      return buildSimplePdf(lines, options);
-    }
-    objects.splice(1, 0, `<< /Type /Pages /Kids [${pages.join(' ')}] /Count ${pages.length} >>`);
-    objects.splice(2, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-    objects.splice(3, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+    });
+    objects.splice(1, 0, `<< /Type /Pages /Kids [${pageRefs.join(' ')}] /Count ${pageRefs.length} >>`);
+    objects.splice(2, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    objects.splice(3, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
     let pdf = '%PDF-1.4\n';
     const offsets = [0];
     objects.forEach((obj, index) => {
@@ -12959,28 +13058,15 @@
       pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
     });
     pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-    return new Blob([pdf], { type: 'application/pdf' });
+    return { blob: new Blob([pdfBytes(pdf)], { type: 'application/pdf' }), pages: pages.length };
   }
 
   function exportStatComPdf(rows) {
-    const generatedAt = new Date().toLocaleString('fr-CH');
-    const lines = [
-      { text: 'CODE | LIBELLÉ | DOMAINE | CATÉGORIE | OI | SPÉCIALISATION | VALIDITÉ | ÉTAT', bold: true }
-    ];
-    (rows || []).forEach((row) => {
-      const validity = `${L.formatDate(row.valid_from || row.validFrom)} → ${row.valid_to || row.validTo ? L.formatDate(row.valid_to || row.validTo) : '—'}`;
-      lines.push({
-        text: `${row.code || ''} | ${row.label || row.libelle || ''} | ${row.domain || ''} | ${row.category || ''} | ${row.oi || row.oi_code || row.oiCode || ''} | ${row.specialization || ''} | ${validity} | ${row.active === false ? 'Inactif' : 'Actif'}`
-      });
-    });
-    const blob = buildSimplePdf(lines, {
-      title: 'Référentiel STAT.COM',
-      subtitle: `Généré le ${generatedAt} · ${rows.length} code${rows.length > 1 ? 's' : ''}`,
-      filters: `Périmètre: ${statComPdfFilterLabel()}`
-    });
+    const visibleRows = Array.isArray(rows) ? rows : [];
+    const result = buildStatComPdf(visibleRows);
     const filename = `SCOPE_Referentiel_STATCOM_${new Date().toISOString().slice(0, 10)}.pdf`;
-    if (window.ScopePdfViewer) window.ScopePdfViewer.open({ blob, filename, pages: Math.max(1, Math.ceil((lines.length || 1) / 34)) });
-    else window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+    if (window.ScopePdfViewer) window.ScopePdfViewer.open({ blob: result.blob, filename, pages: result.pages });
+    else window.open(URL.createObjectURL(result.blob), '_blank', 'noopener');
   }
 
   function visibleSaisie() {
