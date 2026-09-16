@@ -70,7 +70,7 @@ assert.ok(/renderQuoVadisAlertes/.test(ui), 'alertes non consultables');
 assert.ok(/qv-year-grid/.test(ui) && /qv-mini-month/.test(ui), 'agenda annuel 12 mois manquant');
 assert.ok(/renderQuoVadisAgenda/.test(ui) && /qv-agenda-day/.test(ui), 'agenda chronologique manquant');
 assert.ok(/qvLieuOptions/.test(ui) && /qv-future-lieu-id/.test(ui) && /data-qv-proposal-lieu/.test(ui), 'lieux référentiels non sélectionnables');
-assert.ok(/Dates connues enregistrées/.test(ui) && /scope-form-section/.test(ui), 'Dates connues pas assez structurées');
+assert.ok(/Dates déjà saisies/.test(ui) && /scope-form-section/.test(ui), 'Dates connues pas assez structurées');
 assert.ok(/Cohorte 2026/.test(ui) && /Cohorte 2027/.test(ui), 'distinction cohortes CI DPS manquante');
 assert.ok(/qv-subnav/.test(css) && /qv-year-grid/.test(css) && /qv-mini-cal/.test(css) && /qv-definition-list/.test(css), 'style QUO VADIS professionnel manquant');
 assert.ok(/if \(r\.screen === 'quo-vadis'\) jobs\.push\(loadQuoVadis\(\)\)/.test(ui), 'QUO VADIS ne doit charger que sur sa route');

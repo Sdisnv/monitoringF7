@@ -131,19 +131,20 @@ html, body {
 .qv-subnav {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 2px;
-  margin: 0 0 16px;
-  padding: 0 0 10px;
+  gap: 0;
+  margin: 0 0 18px;
+  padding: 0;
   border-bottom: 1px solid var(--scope-line);
 }
 
 .qv-subnav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 6px 12px;
-  border-radius: var(--scope-radius-xs);
+  min-height: 40px;
+  padding: 8px 14px 10px;
+  border-radius: 0;
   color: var(--scope-gray-700);
   font-size: 13px;
   font-weight: 650;
@@ -154,15 +155,24 @@ html, body {
   font-weight: 600;
 }
 .qv-subnav-link:hover {
-  background: var(--scope-gray-100);
+  background: transparent;
   color: var(--scope-ink);
 }
 .qv-subnav-link.is-active {
-  background: var(--scope-red-soft);
-  color: var(--scope-red-dark);
+  background: transparent;
+  color: var(--scope-ink);
+}
+.qv-subnav-link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--scope-red);
 }
 .qv-subnav-link.is-active span {
-  color: var(--scope-red-dark);
+  color: var(--scope-ink);
 }
 
 .scope-kpis.qv-kpis {
@@ -241,6 +251,10 @@ html, body {
 
 .qv-mini-month {
   min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius-xs);
+  background: #fff;
 }
 .qv-mini-month h3 {
   margin: 0 0 8px;
@@ -280,13 +294,28 @@ html, body {
 .qv-mini-day:hover {
   background: var(--scope-gray-100);
 }
-.qv-mini-day.has-activity {
-  background: var(--scope-red);
-  color: #fff;
+.qv-mini-day.has-vacation {
+  background: rgba(23, 28, 143, .08);
+}
+.qv-mini-day.has-holiday {
+  background: rgba(255, 163, 0, .28);
   font-weight: 700;
 }
+.qv-mini-day.has-activity {
+  font-weight: 700;
+}
+.qv-mini-day.has-activity span::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 3px;
+  border-radius: 50%;
+  background: var(--scope-red);
+  vertical-align: middle;
+}
 .qv-mini-day.has-activity:hover {
-  background: var(--scope-red-dark);
+  background: var(--scope-gray-100);
 }
 .qv-mini-day.has-known:not(.has-activity)::after,
 .qv-mini-day.has-known.has-activity::after {
@@ -306,52 +335,86 @@ html, body {
   position: absolute;
   top: 1px;
   right: 2px;
+  color: var(--scope-red);
   font-size: 9px;
   font-style: normal;
+  font-weight: 800;
   line-height: 1;
 }
 
+.qv-year-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  color: var(--scope-gray-700);
+  font-size: 12px;
+  font-weight: 650;
+}
+.qv-legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: -1px;
+}
+.qv-legend-swatch.is-activity {
+  background: var(--scope-red);
+}
+.qv-legend-swatch.is-known {
+  background: var(--scope-yellow);
+}
+.qv-legend-swatch.is-holiday {
+  background: var(--scope-yellow);
+  box-shadow: inset 0 0 0 2px var(--scope-ink);
+}
+.qv-legend-swatch.is-vacation {
+  background: var(--scope-blue);
+}
+
+.qv-month-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.qv-month-nav .scope-field {
+  min-width: 180px;
+}
+
 .qv-agenda-month {
-  margin: 20px 0 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--scope-line);
-  font-size: 15px;
+  margin: 0;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-.qv-agenda-day {
-  margin: 0 0 16px;
+.qv-agenda-table {
+  min-width: 760px;
 }
-.qv-agenda-day h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
+.qv-agenda-table .qv-agenda-date-row th {
+  padding: 8px 12px;
+  background: var(--scope-ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
-
-.qv-agenda-item,
-.qv-day-list .qv-agenda-item {
-  display: grid;
-  grid-template-columns: 7.5rem 8.5rem minmax(12rem, 1.4fr) minmax(14rem, 1fr);
-  gap: 6px 14px;
-  align-items: baseline;
-  padding: 10px 12px;
-  border-top: 1px solid var(--scope-line);
-  color: var(--scope-ink);
-  text-decoration: none;
+.qv-agenda-table .qv-agenda-row {
+  cursor: pointer;
 }
-.qv-agenda-item:hover {
-  background: var(--scope-table-zebra);
-}
-.qv-agenda-item strong,
-.qv-agenda-item span,
-.qv-agenda-item small {
-  min-width: 0;
-}
-.qv-agenda-item small {
-  color: var(--scope-muted);
-}
-
-.qv-day-list {
-  display: grid;
+.qv-agenda-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--scope-red);
+  vertical-align: middle;
 }
 
 .qv-activities-table {
@@ -409,16 +472,10 @@ html, body {
   .qv-year-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .qv-agenda-item {
-    grid-template-columns: 7.5rem 1fr;
-  }
 }
 
 @media (max-width: 720px) {
   .qv-year-grid {
-    grid-template-columns: 1fr;
-  }
-  .qv-agenda-item {
     grid-template-columns: 1fr;
   }
 }

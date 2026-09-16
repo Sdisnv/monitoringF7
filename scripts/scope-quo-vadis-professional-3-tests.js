@@ -79,6 +79,21 @@ assert.ok(/operationalEventsCreated:\s*0/.test(service));
 assert.ok(!/technicalCode/.test(qvUi), 'identifiant technique encore visible');
 assert.ok(!/Vue annuelle/.test(qvUi));
 assert.ok(!/Dates futures/.test(qvUi));
+assert.ok(/qv-year-legend/.test(qvUi), 'légende agenda annuel manquante');
+assert.ok(/Janvier – mars 2028/.test(qvUi), 'consultation 2028 manquante');
+assert.ok(/qv-agenda-table/.test(qvUi) && /qv-agenda-date-row/.test(qvUi), 'agenda chronologique dense manquant');
+assert.ok(/qv-filter-lieu/.test(qvUi), 'filtre lieu manquant');
+assert.ok(/hideMonth/.test(qvUi), 'l’agenda ne doit plus dupliquer le filtre mois');
+assert.ok(/Le recalcul met à jour les propositions de planification/.test(qvUi));
+assert.ok(/Il ne crée aucun événement opérationnel/.test(qvUi));
+assert.ok(/Dates déjà saisies/.test(qvUi), 'liste dates connues manquante');
+assert.ok(/Correspondance à confirmer/.test(qvUi) || /Fiabilité/.test(qvUi), 'fiabilité 2026 manquante');
+assert.ok(/qv-home-link/.test(qvUi), 'retour synthèse manquant');
+assert.ok(!/id="qv-future-end-date"[^>]*required/.test(qvUi), 'date de fin ne doit plus être obligatoire');
+assert.ok(/if\(retained.rowCount\) return/.test(service), 'proposition retenue non préservée');
+assert.ok(/score < 55/.test(service), 'matching 2026 trop permissif');
+assert.ok(/hasVacances/.test(service) && /VACANCES_SCOLAIRES/.test(service), 'vacances non consommées par le moteur');
+assert.ok(/throw error/.test(service), 'erreur historique encore avalée');
 
 const forbiddenUi = ['THURSDAY', 'MONDAY', 'SATURDAY', 'PREFERRED', 'ALLOWED', 'FORBIDDEN', 'source_ref', 'metadata', 'CORE-1', 'seed', 'day_policy'];
 for (const word of forbiddenUi) {

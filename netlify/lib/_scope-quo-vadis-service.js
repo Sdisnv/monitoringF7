@@ -106,12 +106,20 @@ function classifyDate(date, domain, calendarRows){
   let dayClass = policy[day] || 'AUTORISE';
   const reasons = [`${WEEKDAY_LABELS[day] || day}: ${DAY_CLASS_LABELS[dayClass] || dayClass}.`];
   const special = (calendarRows || []).filter((row) => dateOnly(row.jour) === dateOnly(date));
-  if(special.length){
+  const hasFerie = special.some((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(String(row.type_jour || row.typeJour || '').toUpperCase()));
+  const hasVacances = special.some((row) => String(row.type_jour || row.typeJour || '').toUpperCase() === 'VACANCES_SCOLAIRES');
+  if(hasFerie){
+    dayClass = 'INTERDIT';
+    reasons.push(`Jour férié: ${special.filter((row) => String(row.type_jour || row.typeJour || '').toUpperCase().includes('FERIE')).map((row) => row.libelle).join(', ')}. Dérogation nécessaire.`);
+  } else if(hasVacances){
+    dayClass = 'DECONSEILLE';
+    reasons.push(`Vacances scolaires: ${special.map((row) => row.libelle).join(', ')}.`);
+  } else if(special.length){
     dayClass = 'DECONSEILLE';
     reasons.push(`Date particulière: ${special.map((row) => row.libelle).join(', ')}.`);
   }
   if(hasHolidayWeekend(calendarRows, date)){
-    dayClass = 'DECONSEILLE';
+    dayClass = dayClass === 'INTERDIT' ? 'INTERDIT' : 'DECONSEILLE';
     reasons.push('Week-end lié à un jour férié: dérogation nécessaire pour une instruction de section.');
   } else if(isWeekend(date) && dayClass === 'AUTORISE'){
     reasons.push('Week-end autorisé si compatible avec les contraintes métier.');
@@ -196,15 +204,24 @@ function mapProposal(row){
   };
 }
 
+const TYPE_JOUR_LABELS = {
+  FERIE: 'Jour férié',
+  VACANCES_SCOLAIRES: 'Vacances scolaires',
+  VEILLE_FERIE: 'Veille de férié',
+  WEEKEND_FERIE: 'Week-end férié',
+  NEUTRALISATION_INTERNE: 'Neutralisation interne',
+  DEROGATION: 'Dérogation'
+};
+
 function mapCalendarDay(row){
+  const typeJour = row.type_jour || '';
   return {
     calendarDayId: row.calendar_day_id,
     jour: dateOnly(row.jour),
-    typeJour: row.type_jour,
+    typeJour,
+    typeLabel: TYPE_JOUR_LABELS[typeJour] || 'Contrainte de calendrier',
     libelle: row.libelle,
-    source: row.source,
-    neutralise: row.neutralise === true,
-    metadata: row.metadata || {}
+    neutralise: row.neutralise === true
   };
 }
 
@@ -269,40 +286,46 @@ function titleTokens(value){
   return normalizeActivityTitle(value).split(/\s+/).filter((token) => token.length >= 4);
 }
 
-function scoreHistoricalMatch(obligation, row){
-  if(obligation.domain && row.domain && String(obligation.domain).toUpperCase() !== String(row.domain).toUpperCase()) return 0;
-  const wanted = normalizeActivityTitle(obligation.title || obligation.metadata && obligation.metadata.displayLabel);
+function scoreHistoricalMatch(activity, row){
+  const domainA = String(activity.domain || '').toUpperCase();
+  const domainB = String(row.domain || '').toUpperCase();
+  if(domainA && domainB && domainA !== domainB) return { score: 0, confidence: '', uncertain: true };
+  const wanted = normalizeActivityTitle(activity.title || (activity.metadata && activity.metadata.displayLabel));
   const found = normalizeActivityTitle(row.title);
-  if(!found) return 0;
-  if(wanted && found && (wanted.includes(found) || found.includes(wanted))) return 90;
-  const overlap = titleTokens(wanted).filter((token) => titleTokens(found).includes(token)).length;
-  if(overlap) return 45 + overlap * 12;
-  const keywords = ['kick', 'feu', 'varia', 'pionnier', 'module', 'abc', 'formation', 'instruction'];
-  const shared = keywords.filter((word) => wanted.includes(word) && found.includes(word));
-  if(shared.length) return 35 + shared.length * 10;
-  const oi = String((obligation.cibleCodes || [])[0] || '').toUpperCase();
-  if(oi && String(row.title || '').toUpperCase().includes(oi) && wanted && found){
-    const shortWanted = wanted.split(' ')[0];
-    if(shortWanted && found.includes(shortWanted)) return 40;
+  if(!wanted || !found) return { score: 0, confidence: '', uncertain: true };
+  let score = 0;
+  if(wanted === found) score += 70;
+  else if(wanted.includes(found) || found.includes(wanted)) score += 55;
+  else {
+    const overlap = titleTokens(wanted).filter((token) => titleTokens(found).includes(token));
+    if(overlap.length) score += 18 + overlap.length * 10;
   }
-  return 0;
+  const oi = String((activity.cibleCodes || [])[0] || '').toUpperCase();
+  const rowOi = String(row.sousDomaine || '').toUpperCase();
+  if(oi && (rowOi === oi || String(row.title || '').toUpperCase().includes(oi))) score += 18;
+  const exercice = normalizeActivityTitle(row.exerciceLibelle || row.codeEvenement);
+  if(exercice && wanted && (wanted.includes(exercice) || exercice.includes(wanted.split(' ')[0] || ''))) score += 12;
+  if(score < 55) return { score: 0, confidence: '', uncertain: true };
+  return {
+    score,
+    confidence: score >= 80 ? 'Correspondance probable' : 'Correspondance à confirmer',
+    uncertain: score < 80
+  };
 }
 
 function mapHistoricalEvent(row){
   return {
-    evenementId: row.evenement_id,
     date: dateOnly(row.date),
     weekday: WEEKDAY_LABELS[weekdayName(row.date)] || '',
     domain: row.domaine_code || '',
     sousDomaine: row.sous_domaine_code || '',
     title: row.libelle || row.exercice_libelle || '',
+    exerciceLibelle: row.exercice_libelle || '',
     codeEvenement: row.code_cours || row.code_source || row.exercice_code || '',
     startsAt: row.heure_debut_prevue || row.heure_debut || '',
     endsAt: row.heure_fin_prevue || row.heure_fin || '',
     lieu: String(row.salle || '').trim() || LIEU_A_DEFINIR,
-    organisation: [row.sous_domaine_code, row.session_label || (row.session_index ? String(row.session_index) : ''), row.mode_session].filter(Boolean).join(' · '),
-    session: row.session_label || (row.session_index ? String(row.session_index) : ''),
-    modeSession: row.mode_session || ''
+    organisation: [row.sous_domaine_code, row.session_label].filter(Boolean).join(' · ')
   };
 }
 
@@ -482,6 +505,25 @@ function createScopeQuoVadisService(){
         action: type === 'Information' ? 'Consulter' : 'Arbitrer'
       });
     }
+    for(const activity of qv.activities || []){
+      if(!activity.knownDateClash) continue;
+      rows.push({
+        type: 'Information',
+        proposalId: activity.proposalId || null,
+        obligationId: activity.obligationId,
+        activityId: activity.activityId,
+        title: activity.title,
+        domain: activity.domain || '',
+        domainLabel: activity.domainLabel || domainLabel(activity.domain),
+        startsAt: activity.startsAt,
+        endsAt: activity.endsAt,
+        dayClass: activity.dayClass,
+        dayClassLabel: activity.dayClassLabel || '',
+        lieu: activity.lieu || LIEU_A_DEFINIR,
+        reasons: ['Une date connue est déjà enregistrée ce jour.'],
+        action: 'Consulter la fiche'
+      });
+    }
     return rows;
   }
 
@@ -511,8 +553,9 @@ function createScopeQuoVadisService(){
       if(firstDate){
         const monthKey = firstDate.slice(0, 7);
         if(!months.has(monthKey)){
+          const year = Number(monthKey.slice(0, 4));
           const month = Number(monthKey.slice(5, 7));
-          months.set(monthKey, { month, label: monthLabel(qv.programme.annee, month), total: 0, positionnees: 0, alertes: 0 });
+          months.set(monthKey, { month, year, key: monthKey, label: monthLabel(year, month), total: 0, positionnees: 0, alertes: 0 });
         }
         const monthItem = months.get(monthKey);
         monthItem.total += 1;
@@ -522,7 +565,7 @@ function createScopeQuoVadisService(){
     }
     return {
       domains: Array.from(domains.values()).sort((a, b) => a.label.localeCompare(b.label, 'fr')),
-      months: Array.from(months.values()).sort((a, b) => a.month - b.month)
+      months: Array.from(months.values()).sort((a, b) => String(a.key || '').localeCompare(String(b.key || '')))
     };
   }
 
@@ -545,7 +588,7 @@ function createScopeQuoVadisService(){
       return result.rows.map(mapHistoricalEvent);
     } catch (error) {
       console.error('QUO VADIS: historique 2026 indisponible (lecture salle)', error && error.message ? error.message : error);
-      return [];
+      throw error;
     }
   }
 
@@ -556,11 +599,30 @@ function createScopeQuoVadisService(){
     const year = Number(qv.programme && qv.programme.annee || annee || 2027) - 1;
     const rows = await loadHistoricalEventRows(year, activity.domain || null);
     const scored = rows
-      .map((row) => ({ row, score: scoreHistoricalMatch(activity, row) }))
-      .filter((item) => item.score >= 35)
+      .map((row) => {
+        const match = scoreHistoricalMatch(activity, row);
+        return {
+          row: Object.assign({}, row, {
+            confidence: match.confidence,
+            uncertain: match.uncertain
+          }),
+          score: match.score
+        };
+      })
+      .filter((item) => item.score >= 55)
       .sort((a, b) => b.score - a.score || String(b.row.date).localeCompare(String(a.row.date)))
       .slice(0, 3)
-      .map((item) => item.row);
+      .map((item) => ({
+        date: item.row.date,
+        weekday: item.row.weekday,
+        title: item.row.title,
+        startsAt: item.row.startsAt,
+        endsAt: item.row.endsAt,
+        lieu: item.row.lieu,
+        organisation: item.row.organisation || item.row.sousDomaine || '',
+        confidence: item.row.confidence,
+        uncertain: item.row.uncertain
+      }));
     return { activityId, references: scored };
   }
 
@@ -577,7 +639,8 @@ function createScopeQuoVadisService(){
       const conflict = retained.conflictSummary || {};
       const lieu = resolveActivityLieu(obligation, retained, qv.lieux || []);
       const lieuId = (lieu && (lieu.lieuId || lieu.lieu_id)) || retained.lieuId || obligation.lieuId || null;
-      const hasAttention = conflict.conflict || conflict.requiresDerogation || conflict.constraint === 'A_VERIFIER' || conflict.prerequisite === 'A_VERIFIER' || conflict.astreinte === 'A_VERIFIER';
+      const knownSameDay = (qv.futureDates || []).some((row) => row.dateDebut && row.dateDebut === dateOnly(retained.startsAt || obligation.imposedStartAt) && obligation.sourceType !== 'FUTURE_DATE');
+      const hasAttention = conflict.conflict || conflict.requiresDerogation || conflict.constraint === 'A_VERIFIER' || conflict.prerequisite === 'A_VERIFIER' || conflict.astreinte === 'A_VERIFIER' || knownSameDay;
       const cursus = obligation.sourceType === 'CURSUS' ? 'CI DPS' : '';
       const metadata = obligation.metadata || {};
       const sourceLabels = {
@@ -607,9 +670,9 @@ function createScopeQuoVadisService(){
         lieu: displayLieuLabel(lieu, retained.lieuLibre || obligation.lieuLibre),
         dayClass: retained.dayClass || '',
         dayClassLabel: retained.dayClass ? (DAY_CLASS_LABELS[retained.dayClass] || retained.dayClass) : '',
-        reasons: retained.reasons || [],
+        reasons: (retained.reasons || []).concat(knownSameDay ? ['Une date connue est déjà enregistrée ce jour.'] : []),
         attention: hasAttention,
-        attentionType: conflict.conflict ? 'Conflit' : conflict.requiresDerogation ? 'Dérogation' : (conflict.prerequisite === 'A_VERIFIER' || conflict.astreinte === 'A_VERIFIER' || conflict.constraint === 'A_VERIFIER') ? 'À vérifier' : '',
+        attentionType: conflict.conflict ? 'Conflit' : conflict.requiresDerogation ? 'Dérogation' : (conflict.prerequisite === 'A_VERIFIER' || conflict.astreinte === 'A_VERIFIER' || conflict.constraint === 'A_VERIFIER') ? 'À vérifier' : knownSameDay ? 'Information' : '',
         proposals: proposals.map((proposal) => {
           const proposalLieu = resolveActivityLieu(obligation, proposal, qv.lieux || []);
           return Object.assign({}, proposal, {
@@ -620,7 +683,8 @@ function createScopeQuoVadisService(){
         }),
         sourceType: obligation.sourceType,
         sourceLabel: sourceLabels[obligation.sourceType] || 'Configuration annuelle',
-        knownDate: obligation.sourceType === 'FUTURE_DATE'
+        knownDate: obligation.sourceType === 'FUTURE_DATE',
+        knownDateClash: knownSameDay
       };
     });
   }
@@ -788,6 +852,10 @@ function createScopeQuoVadisService(){
     };
     result.summary = programmeSummary(result);
     result.activities = buildActivities(result);
+    const knownClashDays = new Set((result.activities || []).filter((row) => row.knownDateClash).map((row) => dateOnly(row.startsAt)));
+    result.futureDates = (result.futureDates || []).map((row) => Object.assign({}, row, {
+      statutLabel: knownClashDays.has(row.dateDebut) ? 'conflit éventuel' : row.statutLabel
+    }));
     result.alerts = buildAlerts(result);
     result.breakdown = buildAnnualBreakdown(result);
     result.planning = buildPlanning(result);
@@ -813,7 +881,8 @@ function createScopeQuoVadisService(){
       [`${programme.annee}-02-13`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - sport', 'SEED_CORE_1', true],
       [`${programme.annee}-04-10`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - printemps', 'SEED_CORE_1', true],
       [`${programme.annee}-07-03`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - ete', 'SEED_CORE_1', true],
-      [`${programme.annee}-10-16`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - automne', 'SEED_CORE_1', true]
+      [`${programme.annee}-10-16`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - automne', 'SEED_CORE_1', true],
+      [`${Number(programme.annee) + 1}-01-01`, 'FERIE', 'Nouvel An', 'SEED_CORE_1', true]
     ];
     for(const row of days){
       await db.query(
@@ -862,6 +931,11 @@ function createScopeQuoVadisService(){
   }
 
   async function insertProposal(obligation, payload){
+    const retained = await db.query(
+      `select 1 from scope_quo_vadis_proposals where obligation_id = $1 and status = 'RETENU' limit 1`,
+      [obligation.obligation_id]
+    );
+    if(retained.rowCount) return;
     await db.query(
       `insert into scope_quo_vadis_proposals(obligation_id, starts_at, ends_at, day_class, reasons, conflict_summary, lieu_id, lieu_libre)
        select $1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8
@@ -1037,12 +1111,13 @@ function createScopeQuoVadisService(){
         sourceRef: `${row.cohorte_code}:${row.step_code}`,
         cursusStepId: row.step_id,
         cohorteId: row.cohorte_id,
-        title: `${row.cohorte_code} - ${row.libelle}`,
+        title: row.libelle,
         domain: 'DPS',
         priority: 20 + index,
         statcomPolicy: row.step_code === 'M10' ? 'OBLIGATOIRE' : 'A_CONFIRMER',
         metadata: {
           source: 'QUO-VADIS-CORE-1',
+          displayLabel: `${row.libelle} · ${Number(row.logical_year) === 2 ? 'Cohorte 2026' : 'Cohorte 2027'}`,
           logicalYear: row.logical_year,
           noOperationalEventCreated: true,
           crossesMidnight: row.crosses_midnight === true,
