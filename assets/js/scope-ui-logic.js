@@ -2074,10 +2074,38 @@
     if (key === 'domain') return row && row.domain || '';
     if (key === 'category') return row && row.category || '';
     if (key === 'oi') return row && (row.oi || row.oi_code || row.oiCode) || '';
-    if (key === 'specialization') return row && row.specialization || '';
+    if (key === 'specialization') return statComBusinessSpecialization(row);
     if (key === 'validity') return row && (row.valid_from || row.validFrom) || '';
     if (key === 'state') return row && row.active === false ? 'Inactif' : 'Actif';
     return '';
+  }
+
+  function firstDefined() {
+    for (let i = 0; i < arguments.length; i += 1) {
+      if (arguments[i] !== undefined && arguments[i] !== null) return arguments[i];
+    }
+    return '';
+  }
+
+  function statComBusinessSpecialization(row) {
+    if (!row) return '';
+    return firstDefined(row.specialization, row.specializationLabel, row.specialization_label, '');
+  }
+
+  function buildStatComSavePayload(values, draft) {
+    const form = values || {};
+    const source = draft || {};
+    return {
+      code: firstDefined(form.code, source.code, ''),
+      label: firstDefined(form.label, source.label, source.libelle, ''),
+      domain: firstDefined(form.domain, source.domain, ''),
+      category: firstDefined(form.category, source.category, ''),
+      oi: firstDefined(form.oi, source.oi, source.oi_code, source.oiCode, ''),
+      specialization: firstDefined(form.specialization, statComBusinessSpecialization(source), ''),
+      validFrom: firstDefined(form.validFrom, source.validFrom, source.valid_from, '2023-01-01') || '2023-01-01',
+      validTo: firstDefined(form.validTo, source.validTo, source.valid_to, null) || null,
+      active: Boolean(firstDefined(form.active, source.active !== false))
+    };
   }
 
   function statComSortColumns() {
@@ -2386,6 +2414,8 @@
     compareSortValues,
     sortRows,
     statComCellValue,
+    statComBusinessSpecialization,
+    buildStatComSavePayload,
     statComSortColumns,
     visibleStatComRows,
     statComSortLabel,

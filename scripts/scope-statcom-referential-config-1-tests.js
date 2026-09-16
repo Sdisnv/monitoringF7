@@ -242,11 +242,38 @@ async function build(){
     const visible = logic.visibleStatComRows([reloaded], { query: 'FOCO 4 DPS', sort: { key: 'code', dir: 'asc' } });
     eq(visible.length, 1, 'affichage/recherche consomme la valeur métier persistée');
     ok(!String(reloaded.specialization || '').includes('_'), 'aucun underscore réintroduit dans la valeur métier affichée');
+    const frontendPayload = logic.buildStatComSavePayload({
+      code: '0120F7',
+      label: 'Solde instruction FOCO DPS (4 DPS)',
+      domain: 'DPS',
+      category: 'EXERCI',
+      oi: 'F7',
+      specialization: 'FOCO DPS 4',
+      validFrom: '2023-01-01',
+      validTo: null,
+      active: true
+    }, {
+      code: '0120F7',
+      label: 'Solde instruction FOCO DPS (4 DPS)',
+      domain: 'DPS',
+      category: 'EXERCI',
+      oi: 'F7',
+      specialization: 'FOCO_DPS_4',
+      specialization_key: 'FOCO_DPS_4',
+      valid_from: '2023-01-01',
+      active: true
+    });
+    eq(frontendPayload.specialization, 'FOCO DPS 4', 'payload frontend conserve la valeur saisie avant API');
+    eq(logic.statComBusinessSpecialization({ specialization: 'FOCO DPS 4', specialization_key: 'FOCO_DPS_4' }), 'FOCO DPS 4', 'affichage/reload privilégie la valeur métier');
+    ok(UI_SOURCE.includes("bindStatComDraftField('statcom-specialization', 'specialization'"), 'champ spécialisation synchronisé dans le draft avant submit');
+    ok(UI_SOURCE.includes('buildStatComSavePayloadFromForm()'), 'submit STAT.COM passe par le constructeur de payload frontend');
+    ok(!UI_SOURCE.includes("specialization: (document.getElementById('statcom-specialization') || {}).value || ''"), 'ancien payload direct DOM non borné supprimé');
     for (const [code, specialization] of [
       ['099CPL', 'Cond. PL'],
       ['099ABC', 'PR-ABC'],
       ['099NAC', 'Formation nacelle']
     ]) {
+      eq(logic.buildStatComSavePayload({ code, specialization }, { code, specialization: `${specialization}_TECH` }).specialization, specialization, `payload frontend conserve ${specialization}`);
       await service.saveStatComCode({
         code,
         label: `Test ${specialization}`,
@@ -271,7 +298,20 @@ async function build(){
     ok(schemaSource.includes('scope-statcom-specialisation-persistence-repair-2'), 'migration additive dédiée présente');
   });
 
-  await record('11 — PDF STAT.COM SCOPE : portrait, charte commune et collection visible', async () => {
+  await record('11 — recherche STAT.COM : saisie continue sans perte de focus ni curseur', async () => {
+    ok(UI_SOURCE.includes("renderPreservingInput('statcom-search')"), 'la recherche STAT.COM préserve focus et curseur après render');
+    ok(UI_SOURCE.includes('selectionStart') && UI_SOURCE.includes('setSelectionRange(selectionStart, selectionEnd)'), 'position curseur capturée et restaurée');
+    const searchHandler = UI_SOURCE.match(/document\.getElementById\('statcom-search'\)\?\.addEventListener\('input',[\s\S]{0,220}\}\);/);
+    ok(searchHandler && !searchHandler[0].includes('\n      render();'), 'le handler recherche ne lance plus un render destructeur simple');
+    const rows = [
+      { code: '0120F7', label: 'Solde instruction FOCO DPS (4 DPS)', domain: 'DPS', category: 'EXERCI', oi: 'F7', specialization: 'FOCO DPS 4', active: true },
+      { code: '011PR', label: 'PR', domain: 'PR', category: 'EXERCI', oi: '', specialization: 'PR-ABC', active: true }
+    ];
+    eq(logic.visibleStatComRows(rows, { query: '0120F7', sort: { key: 'code', dir: 'asc' } }).map((row) => row.code).join(','), '0120F7', 'saisie continue 0120F7 filtre la ligne attendue');
+    eq(logic.visibleStatComRows(rows, { query: 'FOCO DPS', sort: { key: 'code', dir: 'asc' } }).map((row) => row.code).join(','), '0120F7', 'saisie continue FOCO DPS filtre via spécialisation métier');
+  });
+
+  await record('12 — PDF STAT.COM SCOPE : portrait, charte commune et collection visible', async () => {
     const { repo, service } = await build();
     const catalog = (await service.formationCatalog()).formationCatalog;
     const visibleRows = logic.visibleStatComRows(catalog.statComCodes, {

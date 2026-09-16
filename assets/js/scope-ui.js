@@ -9141,6 +9141,54 @@
     }) : statComCodes.slice();
   }
 
+  function statComBusinessSpecialization(row) {
+    return L.statComBusinessSpecialization ? L.statComBusinessSpecialization(row) : row && (row.specialization || row.specializationLabel || row.specialization_label) || '';
+  }
+
+  function statComInputValue(id, fallback) {
+    const input = document.getElementById(id);
+    if (input && Object.prototype.hasOwnProperty.call(input, 'value')) return input.value;
+    return fallback == null ? '' : fallback;
+  }
+
+  function buildStatComSavePayloadFromForm() {
+    const draft = state.formationStatComDraft || {};
+    const values = {
+      code: statComInputValue('statcom-code', draft.code || ''),
+      label: statComInputValue('statcom-label', draft.label || draft.libelle || ''),
+      domain: statComInputValue('statcom-domain', draft.domain || ''),
+      category: statComInputValue('statcom-category', draft.category || ''),
+      oi: statComInputValue('statcom-oi', draft.oi || draft.oi_code || draft.oiCode || ''),
+      specialization: statComInputValue('statcom-specialization', statComBusinessSpecialization(draft)),
+      validFrom: statComInputValue('statcom-valid-from', draft.validFrom || draft.valid_from || '2023-01-01'),
+      validTo: statComInputValue('statcom-valid-to', draft.validTo || draft.valid_to || null),
+      active: Boolean((document.getElementById('statcom-active') || {}).checked)
+    };
+    return L.buildStatComSavePayload ? L.buildStatComSavePayload(values, draft) : values;
+  }
+
+  function renderPreservingInput(id) {
+    const active = document.getElementById(id);
+    const value = active && Object.prototype.hasOwnProperty.call(active, 'value') ? active.value : null;
+    const selectionStart = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+    const selectionEnd = active && typeof active.selectionEnd === 'number' ? active.selectionEnd : selectionStart;
+    render();
+    const next = document.getElementById(id);
+    if (!next || value === null) return;
+    next.value = value;
+    if (typeof next.focus === 'function') next.focus({ preventScroll: true });
+    if (selectionStart !== null && typeof next.setSelectionRange === 'function') next.setSelectionRange(selectionStart, selectionEnd);
+  }
+
+  function updateStatComDraftField(key, value) {
+    if (!state.formationStatComDraft) return;
+    state.formationStatComDraft[key] = value;
+    if (key === 'specialization') {
+      state.formationStatComDraft.specializationLabel = value;
+      state.formationStatComDraft.specialization_label = value;
+    }
+  }
+
   function renderFormationCatalog() {
     const canManage = hasScopePermission('references:manage');
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
@@ -9329,6 +9377,7 @@
       .filter((row) => String(row.type || row.motif_type || '').toUpperCase() === type);
     const referentialDraft = state.formationReferentialDraft;
     const statComDraft = state.formationStatComDraft;
+    const statComDraftSpecialization = statComBusinessSpecialization(statComDraft);
     const statComDomainOptions = [...new Set(statComCodes.map((row) => String(row.domain || '').trim()).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, 'fr'))
       .map((domain) => `<option value="${escapeHtml(domain)}" ${state.formationStatComDomainFilter === domain ? 'selected' : ''}>${escapeHtml(domain)}</option>`)
@@ -9342,7 +9391,7 @@
         <div class="scope-field"><label>Domaine</label><input id="statcom-domain" type="text" value="${escapeHtml(statComDraft.domain || '')}"></div>
         <div class="scope-field"><label>Catégorie</label><input id="statcom-category" type="text" value="${escapeHtml(statComDraft.category || '')}"></div>
         <div class="scope-field"><label>OI</label><input id="statcom-oi" type="text" value="${escapeHtml(statComDraft.oi || statComDraft.oi_code || '')}"></div>
-        <div class="scope-field"><label>Spécialisation</label><input id="statcom-specialization" type="text" value="${escapeHtml(statComDraft.specialization || '')}"></div>
+        <div class="scope-field"><label>Spécialisation</label><input id="statcom-specialization" type="text" value="${escapeHtml(statComDraftSpecialization)}"></div>
         <div class="scope-field"><label>Valable dès</label><input id="statcom-valid-from" type="date" value="${escapeHtml(statComDraft.valid_from || statComDraft.validFrom || '2023-01-01')}"></div>
         <div class="scope-field"><label>Valable jusqu’au</label><input id="statcom-valid-to" type="date" value="${escapeHtml(statComDraft.valid_to || statComDraft.validTo || '')}"></div>
       </div>
@@ -9357,7 +9406,7 @@
         <td>${escapeHtml(row.domain || '')}</td>
         <td>${escapeHtml(row.category || '')}</td>
         <td>${escapeHtml(row.oi || row.oi_code || row.oiCode || '')}</td>
-        <td>${escapeHtml(row.specialization || '')}</td>
+        <td>${escapeHtml(statComBusinessSpecialization(row))}</td>
         <td>${escapeHtml(L.formatDate(row.valid_from || row.validFrom))} → ${escapeHtml(row.valid_to || row.validTo ? L.formatDate(row.valid_to || row.validTo) : '—')}</td>
         <td>${active ? 'Actif' : 'Inactif'}</td>
         <td><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-statcom-edit="${escapeHtml(row.code || '')}">Modifier</button> <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-statcom-toggle="${escapeHtml(row.code || '')}">${active ? 'Désactiver' : 'Réactiver'}</button></td>
@@ -11876,7 +11925,7 @@
     });
     document.getElementById('statcom-search')?.addEventListener('input', (e) => {
       state.formationStatComQuery = e.target.value || '';
-      render();
+      renderPreservingInput('statcom-search');
     });
     document.getElementById('statcom-domain-filter')?.addEventListener('change', (e) => {
       state.formationStatComDomainFilter = e.target.value || '';
@@ -11919,20 +11968,26 @@
       state.formationStatComDraft = null;
       render();
     });
+    const bindStatComDraftField = (id, key, options) => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      const sync = () => updateStatComDraftField(key, input.type === 'checkbox' ? Boolean(input.checked) : input.value);
+      input.addEventListener(options && options.event || 'input', sync);
+      if (!options || options.event !== 'change') input.addEventListener('change', sync);
+    };
+    bindStatComDraftField('statcom-code', 'code');
+    bindStatComDraftField('statcom-label', 'label');
+    bindStatComDraftField('statcom-domain', 'domain');
+    bindStatComDraftField('statcom-category', 'category');
+    bindStatComDraftField('statcom-oi', 'oi');
+    bindStatComDraftField('statcom-specialization', 'specialization');
+    bindStatComDraftField('statcom-valid-from', 'validFrom', { event: 'change' });
+    bindStatComDraftField('statcom-valid-to', 'validTo', { event: 'change' });
+    bindStatComDraftField('statcom-active', 'active', { event: 'change' });
     document.getElementById('statcom-save')?.addEventListener('click', () => {
       if (typeof client.saveStatComCode !== 'function') return;
       withLoading(async () => {
-        await client.saveStatComCode({
-          code: (document.getElementById('statcom-code') || {}).value || (state.formationStatComDraft || {}).code || '',
-          label: (document.getElementById('statcom-label') || {}).value || '',
-          domain: (document.getElementById('statcom-domain') || {}).value || '',
-          category: (document.getElementById('statcom-category') || {}).value || '',
-          oi: (document.getElementById('statcom-oi') || {}).value || '',
-          specialization: (document.getElementById('statcom-specialization') || {}).value || '',
-          validFrom: (document.getElementById('statcom-valid-from') || {}).value || '2023-01-01',
-          validTo: (document.getElementById('statcom-valid-to') || {}).value || null,
-          active: Boolean((document.getElementById('statcom-active') || {}).checked)
-        });
+        await client.saveStatComCode(buildStatComSavePayloadFromForm());
         state.formationStatComDraft = null;
         invalidateCache(['referentiels', 'formationCatalog']);
         await loadFormationCatalog();
