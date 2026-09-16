@@ -122,7 +122,7 @@ function groupState(nav, id) {
     const nav = logic.buildSidebarNav(sampleArbre, { screen: 'statistiques', nav: 'statistiques' });
     assert.strictEqual(nav.home.label, 'Accueil');
     assert.deepStrictEqual(nav.groups.map((group) => group.id), ['activite', 'pilotage', 'administration']);
-    assert.deepStrictEqual(nav.groups[0].items.map((item) => `${item.label}:${item.href}`), ['Événements:#/evenements', 'Cycles:#/cycles']);
+    assert.deepStrictEqual(nav.groups[0].items.map((item) => `${item.label}:${item.href}`), ['Événements:#/evenements', 'Cycles:#/cycles', 'QUO VADIS:#/quo-vadis']);
     assert.deepStrictEqual(nav.groups[1].items.map((item) => `${item.label}:${item.href}`), ['Vigilance:#/vigilance', 'Analyses:#/statistiques']);
     assert.deepStrictEqual(nav.direct.map((item) => `${item.label}:${item.href}`), ['Personnel:#/personnel', 'Rapports:#/rapports']);
     assert.ok(!nav.settings.some((item) => item.label === 'Droits et profils'), 'surface Droits et profils artificielle');
@@ -130,7 +130,7 @@ function groupState(nav, id) {
 
   await record('02 — rendu menu sans grande section Domaines', async () => {
     const nav = renderNav('#/accueil', ['personnel:read', 'references:manage', 'personnel:manage', 'events:create', 'users:admin', 'settings:manage']);
-    ['Accueil', 'Activité', 'Événements', 'Cycles', 'Pilotage', 'Vigilance', 'Analyses', 'Personnel', 'Rapports', 'Administration'].forEach((label) => {
+    ['Accueil', 'Activité', 'Événements', 'Cycles', 'QUO VADIS', 'Pilotage', 'Vigilance', 'Analyses', 'Personnel', 'Rapports', 'Administration'].forEach((label) => {
       assert.ok(nav.includes(label), `${label} absent`);
     });
     assert.ok(!nav.includes('<p class="scope-nav-section">Domaines</p>'), 'section Domaines encore visible');
@@ -142,6 +142,7 @@ function groupState(nav, id) {
     assert.strictEqual(logic.parseHash('#/cycles').screen, 'cycles');
     assert.strictEqual(logic.parseHash('#/vigilance').screen, 'vigilance');
     assert.strictEqual(logic.parseHash('#/statistiques').screen, 'statistiques');
+    assert.deepStrictEqual(logic.parseHash('#/quo-vadis'), { screen: 'quo-vadis', nav: 'quo-vadis' });
     assert.strictEqual(logic.parseHash('#/personnel').screen, 'personnel');
     assert.strictEqual(logic.parseHash('#/rapports').screen, 'rapports');
     assert.deepStrictEqual(logic.parseHash('#/vue/FOSPEC/PR'), { screen: 'vue', nav: 'vue', domaine: 'FOSPEC', cible: 'PR' });

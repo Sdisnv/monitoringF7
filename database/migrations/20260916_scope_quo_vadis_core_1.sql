@@ -272,13 +272,13 @@ values ('CI-DPS', 'CI DPS', 'Cursus générique CI DPS sur deux années logiques
 on conflict (code) do nothing;
 
 insert into scope_quo_vadis_cursus_versions(cursus_id, version_code, valid_from, metadata)
-select cursus_id, '2027', '2027-01-01', '{"source":"QUO-VADIS-CORE-1"}'::jsonb
-from scope_quo_vadis_cursus_definitions
-where code = 'CI-DPS'
+select d.cursus_id, '2027', '2027-01-01', '{"source":"QUO-VADIS-CORE-1"}'::jsonb
+from scope_quo_vadis_cursus_definitions d
+where d.code = 'CI-DPS'
 on conflict (cursus_id, version_code) do nothing;
 
 insert into scope_quo_vadis_cursus_steps(cursus_version_id, step_code, libelle, ordre, logical_year, usual_start_time, usual_end_time, crosses_midnight, preferred_day, metadata)
-select v.cursus_version_id, step_code, libelle, ordre, logical_year, usual_start_time, usual_end_time, crosses_midnight, preferred_day, metadata::jsonb
+select v.cursus_version_id, s.step_code, s.libelle, s.ordre, s.logical_year, s.usual_start_time, s.usual_end_time, s.crosses_midnight, s.preferred_day, s.metadata::jsonb
 from scope_quo_vadis_cursus_versions v
 join scope_quo_vadis_cursus_definitions d on d.cursus_id = v.cursus_id
 cross join (values
@@ -297,7 +297,7 @@ where d.code = 'CI-DPS' and v.version_code = '2027'
 on conflict (cursus_version_id, step_code) do nothing;
 
 insert into scope_quo_vadis_cohortes(cursus_version_id, code, libelle, start_year, current_logical_year, metadata)
-select v.cursus_version_id, code, libelle, start_year, current_logical_year, metadata::jsonb
+select v.cursus_version_id, c.code, c.libelle, c.start_year, c.current_logical_year, c.metadata::jsonb
 from scope_quo_vadis_cursus_versions v
 join scope_quo_vadis_cursus_definitions d on d.cursus_id = v.cursus_id
 cross join (values

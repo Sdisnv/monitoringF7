@@ -40,6 +40,19 @@ function assertDpsSeed(src, label) {
   }
 }
 
+function assertNoQuoVadisAmbiguousSelects(src) {
+  assert.ok(
+    /select v\.cursus_version_id, s\.step_code, s\.libelle, s\.ordre, s\.logical_year, s\.usual_start_time, s\.usual_end_time, s\.crosses_midnight, s\.preferred_day, s\.metadata::jsonb/.test(src),
+    'cursus step seed must qualify columns from values alias s'
+  );
+  assert.ok(
+    /select v\.cursus_version_id, c\.code, c\.libelle, c\.start_year, c\.current_logical_year, c\.metadata::jsonb/.test(src),
+    'cohort seed must qualify columns from values alias c'
+  );
+  assert.ok(!/select v\.cursus_version_id, step_code, libelle, ordre/.test(src), 'ambiguous cursus step select remains');
+  assert.ok(!/select v\.cursus_version_id, code, libelle, start_year/.test(src), 'ambiguous cohort select remains');
+}
+
 for (const src of [migration, schema, service]) {
   assert.ok(!/\b(drop|truncate)\s+table\b/i.test(src), 'QUO VADIS must not drop/truncate business tables');
   assert.ok(!/delete\s+from\s+scope_(evenements|attendus|participations|personnes|affectations)\b/i.test(src), 'QUO VADIS must not delete SCOPE business data');
@@ -57,6 +70,7 @@ assert.ok(/create table if not exists scope_quo_vadis_future_dates/.test(migrati
 assert.ok(/create table if not exists scope_quo_vadis_dps_organisation_versions/.test(migration));
 assert.ok(/scope_qv_obligations_source_uq/.test(migration), 'generator obligations need an idempotent source key');
 assertDpsSeed(migration, 'migration');
+assertNoQuoVadisAmbiguousSelects(migration);
 
 assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-core-1'/.test(schema));
 assert.ok(/async function migrateQuoVadisCore1/.test(schema));
@@ -67,6 +81,7 @@ assert.ok(/DAP-VENDREDI-AUTORISE/.test(schema) && /FRIDAY":"AUTORISE/.test(schem
 assert.ok(/'M10','Module 10 - test final'.*'18:00','08:00',true,'SATURDAY'/s.test(schema), 'CI DPS module 10 overnight Saturday rule missing');
 assert.ok(!/numbering_pattern[^;]+['"][^'"]*\/[^'"]*['"]/i.test(schema), 'numbering pattern must not contain slash');
 assertDpsSeed(schema, 'runtime schema');
+assertNoQuoVadisAmbiguousSelects(schema);
 
 assert.ok(/generateProgramme/.test(service));
 assert.ok(/operationalEventsCreated:\s*0/.test(service));
@@ -88,6 +103,8 @@ assert.ok(/createQuoVadisFutureDate/.test(api));
 
 assert.ok(/parts\[0\] === 'quo-vadis'/.test(logic));
 assert.ok(/href: '#\/quo-vadis'/.test(logic));
+assert.ok(/const activity = \[[\s\S]*id: 'quo-vadis'[\s\S]*const pilotage = \[/.test(logic), 'QUO VADIS must be in Activité navigation');
+assert.ok(!/const pilotage = \[[\s\S]*id: 'quo-vadis'/.test(logic), 'QUO VADIS must not be in Pilotage navigation');
 assert.ok(/function renderQuoVadis/.test(ui));
 assert.ok(/QUO VADIS 2027/.test(ui));
 assert.ok(/data-qv-tab/.test(ui));
