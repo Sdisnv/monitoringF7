@@ -154,6 +154,25 @@ function formatDisplayDateTime(value){
   return `${pick('day')}.${pick('month')}.${pick('year')} à ${pick('hour')}:${pick('minute')}`;
 }
 
+function formatStatComValidity(row){
+  const from = formatDisplayDate(row && (row.valid_from || row.validFrom));
+  const toValue = row && (row.valid_to || row.validTo);
+  return toValue ? `${from} - ${formatDisplayDate(toValue)}` : `Dès ${from}`;
+}
+
+function statComPdfRow(row){
+  return [
+    row && row.code || '',
+    row && (row.label || row.libelle) || '',
+    row && row.domain || '',
+    row && row.category || '',
+    row && (row.oi || row.oi_code || row.oiCode) || '',
+    row && row.specialization || '',
+    formatStatComValidity(row || {}),
+    row && row.active === false ? 'Inactif' : 'Actif'
+  ];
+}
+
 function hasLogo(file){
   try { return fs.existsSync(file); } catch { return false; }
 }
@@ -702,7 +721,7 @@ class ScopePdfRenderer {
     const baseRowH = (options && options.rowH) || 18;
     const rowFontSize = (options && options.rowFontSize) || 8;
     const headerFontSize = (options && options.headerFontSize) || 7;
-    const maxRowH = (options && options.maxRowH) || 52;
+    const maxRowH = options && options.maxRowH === null ? Infinity : ((options && options.maxRowH) || 52);
     const padY = options && options.padY != null ? options.padY : 2;
     const paintRow = (cells, y, { header, zebra, rowH, highlight }) => {
       const h = header ? headerH : rowH;
@@ -759,6 +778,40 @@ class ScopePdfRenderer {
       paintRow(row, this.doc.y, { zebra: idx % 2 === 1, rowH, highlight: highlightColors[idx] || (highlightRows[idx] ? highlightColor : false) });
     });
     this.doc.y += 8;
+  }
+
+  renderStatComReferential(rows, exportMeta){
+    const meta = exportMeta || {};
+    const sourceRows = Array.isArray(rows) ? rows : [];
+    const tableRows = sourceRows.length
+      ? sourceRows.map(statComPdfRow)
+      : [['Aucune donnée à exporter.', '', '', '', '', '', '', '']];
+    this.iconHeading('plain', 'RÉFÉRENTIEL STAT.COM', 16, { after: 5 });
+    this.para('Référentiel des codes de ventilation statistique', { size: 9.2 });
+    this.doc.y += 5;
+    this.kv([
+      { label: 'Généré le', value: formatDisplayDateTime(this.meta.generatedAt || new Date().toISOString()) },
+      { label: 'Nombre de codes', value: String(sourceRows.length) },
+      { label: 'Recherche', value: meta.search || 'Toutes' },
+      { label: 'Domaine', value: meta.domain || 'Tous' },
+      { label: 'État', value: meta.state || 'Tous' },
+      { label: 'Tri', value: meta.sort || 'Code — croissant' }
+    ], { cols: 3, rowH: 23 });
+    this.doc.y += 4;
+    this.table(
+      ['CODE', 'LIBELLÉ', 'DOMAINE', 'CATÉGORIE', 'OI', 'SPÉCIALISATION', 'VALIDITÉ', 'ÉTAT'],
+      tableRows,
+      [50, 135, 40, 50, 28, 94, 56, 46],
+      {
+        wrap: [false, true, false, false, false, true, false, false],
+        rowFontSize: 6.7,
+        headerFontSize: 5.9,
+        headerH: 18,
+        rowH: 18,
+        maxRowH: null,
+        padY: 3
+      }
+    );
   }
 
   eventsTable(events){
@@ -1913,6 +1966,19 @@ class ScopePdfRenderer {
     const buffer = await ended;
     return { buffer, pages: range.count };
   }
+
+  async finalizeStatComReferential(rows, exportMeta){
+    const doc = this.doc;
+    const chunks = [];
+    doc.on('data', (c) => chunks.push(c));
+    const ended = new Promise((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
+    this.renderStatComReferential(rows, exportMeta);
+    const range = doc.bufferedPageRange();
+    this.drawFooters(range.count);
+    doc.end();
+    const buffer = await ended;
+    return { buffer, pages: range.count };
+  }
 }
 
 function renderReportPdf(model, meta){
@@ -1920,8 +1986,17 @@ function renderReportPdf(model, meta){
   return renderer.finalize();
 }
 
+function renderStatComReferentialPdf(rows, exportMeta, meta){
+  const renderer = new ScopePdfRenderer({
+    kind: 'STATCOM',
+    title: 'RÉFÉRENTIEL STAT.COM',
+    subtitle: ''
+  }, meta || {});
+  return renderer.finalizeStatComReferential(rows, exportMeta);
+}
+
 module.exports = {
-  renderReportPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE,
+  renderReportPdf, renderStatComReferentialPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE,
   PDF_SHIFT_08_CM, SIGNATURE_TEXT_TOP_GAP, SIGNATURE_TEXT_LINE_COUNT, SIGNATURE_IMAGE_RELATIVE_Y,
   SIGNATURE_FUNCTION_RELATIVE_Y, MARGIN, headerLogoLayout, headerTitleLayout, HEADER_TITLE, SCOPE_LOGO_TOP,
   resolveSignaturePrPath, PAGE_W

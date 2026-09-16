@@ -1354,17 +1354,28 @@ function createMemoryRepo(){
     async upsertStatComCode(row){
       const code = statcomReferential.normalizeStatComCode(row.code);
       const existing = statComCodes.get(code);
+      const pick = (...keys) => {
+        for(const key of keys){
+          if(Object.prototype.hasOwnProperty.call(row || {}, key)) return row[key];
+        }
+        return undefined;
+      };
+      const clean = (value) => {
+        if(value == null) return null;
+        const text = String(value).trim();
+        return text || null;
+      };
       const item = {
         ...(existing || {}),
         statcom_id: existing?.statcom_id || row.statcom_id || row.statcomId || randomUUID(),
         code,
-        label: row.label || row.libelle,
-        domain: row.domain || row.domain_code || row.domainCode || null,
-        category: row.category || row.categorie || null,
-        oi_code: row.oi_code || row.oiCode || row.oi || null,
-        specialization: row.specialization || row.specialisation || null,
-        valid_from: isoDate(row.valid_from || row.validFrom) || '2023-01-01',
-        valid_to: isoDate(row.valid_to || row.validTo),
+        label: clean(pick('label', 'libelle')),
+        domain: clean(pick('domain', 'domain_code', 'domainCode')),
+        category: clean(pick('category', 'categorie')),
+        oi_code: clean(pick('oi_code', 'oiCode', 'oi')),
+        specialization: clean(pick('specialization', 'specialisation')),
+        valid_from: isoDate(pick('valid_from', 'validFrom')) || '2023-01-01',
+        valid_to: isoDate(pick('valid_to', 'validTo')),
         active: row.active !== false && row.actif !== false,
         metadata: Object.assign({}, existing?.metadata || {}, row.metadata || {}),
         created_at: existing?.created_at || now(),

@@ -8,10 +8,17 @@ const fs = require('fs');
 const path = require('path');
 const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
 const { createScopeService } = require('../netlify/lib/_scope-service');
+const { generateStatComReferentialReport } = require('../netlify/lib/_scope-report-service');
+const { INSTITUTION } = require('../netlify/lib/_scope-chart-tokens');
 const { resolveTrainingContext } = require('../netlify/lib/_scope-training-context-resolver');
 const logic = require('../assets/js/scope-ui-logic');
 
-const ACTOR = { sub: 'scope-statcom-referential-config-1', roles: ['sdis-admin'], displayName: 'Testeur SCOPE' };
+const ACTOR = {
+  sub: 'scope-statcom-referential-config-1',
+  roles: ['sdis-admin'],
+  permissions: ['dashboard:read', 'references:manage'],
+  displayName: 'Testeur SCOPE'
+};
 const ROOT = path.join(__dirname, '..');
 const UI_SOURCE = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const results = [];
@@ -144,7 +151,7 @@ async function build(){
     ok(UI_SOURCE.includes("sortableHeader('statcom', 'specialization', 'SPÉCIALISATION'"), 'libellé spécialisation utilisateur');
     ok(!UI_SOURCE.includes('<th>SPECIALIZATION</th>'), 'ancien libellé SPECIALIZATION absent du tableau');
     ok(UI_SOURCE.includes('id="statcom-export-pdf"'), 'action Exporter PDF présente');
-    ok(UI_SOURCE.includes('RÉFÉRENTIEL STAT.COM'), 'PDF titré RÉFÉRENTIEL STAT.COM');
+    ok(UI_SOURCE.includes('client.generateStatComReport'), 'PDF STAT.COM généré par le backend SCOPE');
     ok(UI_SOURCE.includes('statComPdfFilterMeta()'), 'PDF inclut filtres/recherche/tri');
     ok(UI_SOURCE.includes('focusStatComForm();'), 'Modifier/Ajouter amène le formulaire dans le viewport');
   });
@@ -202,21 +209,72 @@ async function build(){
     ok(UI_SOURCE.includes('exportStatComPdf(currentStatComRowsForDisplay())'), 'PDF consomme exactement la collection affichée');
   });
 
-  await record('10 — PDF STAT.COM professionnel : tableau, libellés FR et accents', async () => {
-    ok(UI_SOURCE.includes('/MediaBox [0 0 ${width} ${height}]'), 'PDF généré en A4 paysage');
-    ok(UI_SOURCE.includes('/WinAnsiEncoding'), 'PDF utilise WinAnsiEncoding pour les accents');
-    ok(UI_SOURCE.includes('pdfWinAnsiHex'), 'texte PDF encodé en hex WinAnsi');
-    ok(UI_SOURCE.includes('RÉFÉRENTIEL STAT.COM'), 'titre institutionnel accentué');
-    ok(UI_SOURCE.includes('Référentiel des codes de ventilation statistique'), 'sous-titre institutionnel');
-    ok(UI_SOURCE.includes('SPÉCIALISATION'), 'colonne SPÉCIALISATION présente');
-    ok(!UI_SOURCE.includes('SPECIALIZATION'), 'aucun libellé utilisateur SPECIALIZATION dans le PDF');
-    ok(UI_SOURCE.includes('CATÉGORIE') && UI_SOURCE.includes('VALIDITÉ') && UI_SOURCE.includes('ÉTAT'), 'libellés français présents');
-    ok(UI_SOURCE.includes('Page ${pageIndex + 1} / ${pages.length}'), 'pagination Page X / Y');
-    ok(UI_SOURCE.includes('index % 2 === 0'), 'lignes zébrées prévues');
-    ok(!UI_SOURCE.includes(' | ${row.label'), 'ancien export séparé par pipes supprimé');
+  await record('10 — édition STAT.COM : spécialisation persistée et règles de casse', async () => {
+    const { repo, service } = await build();
+    const before = await repo.getStatComCode('0120F7');
+    eq(before.specialization, 'FOCO_DPS_4', 'valeur initiale de recette présente');
+    const payload = {
+      code: '0120F7',
+      label: 'Solde instruction FOCO DPS (4 DPS)',
+      domain: 'dps',
+      category: 'exerci',
+      oi: 'F7',
+      specialization: 'FOCO 4 DPS',
+      validFrom: '2023-01-01',
+      validTo: null,
+      active: true
+    };
+    const saved = await service.saveStatComCode(payload, ACTOR);
+    eq(saved.statCom.specialization, 'FOCO 4 DPS', 'réponse API conserve la spécialisation métier');
+    eq(saved.statCom.domain, 'DPS', 'domaine normalisé en majuscules');
+    eq(saved.statCom.category, 'EXERCI', 'catégorie normalisée en majuscules');
+    eq(saved.statCom.label, 'Solde instruction FOCO DPS (4 DPS)', 'libellé strictement conservé');
+    eq(saved.statCom.oi, 'F7', 'OI conservé');
+    eq(payload.specialization, 'FOCO 4 DPS', 'payload frontend attendu sans reconstruction');
+    const persisted = await repo.getStatComCode('0120F7');
+    eq(persisted.specialization, 'FOCO 4 DPS', 'stockage persiste FOCO 4 DPS');
+    const reloaded = (await service.formationCatalog()).formationCatalog.statComCodes.find((row) => row.code === '0120F7');
+    eq(reloaded.specialization, 'FOCO 4 DPS', 'reload catalogue conserve FOCO 4 DPS');
+    const visible = logic.visibleStatComRows([reloaded], { query: 'FOCO 4 DPS', sort: { key: 'code', dir: 'asc' } });
+    eq(visible.length, 1, 'affichage/recherche consomme la valeur métier persistée');
+  });
+
+  await record('11 — PDF STAT.COM SCOPE : portrait, charte commune et collection visible', async () => {
+    const { repo, service } = await build();
+    const catalog = (await service.formationCatalog()).formationCatalog;
+    const visibleRows = logic.visibleStatComRows(catalog.statComCodes, {
+      query: 'JSP',
+      domainFilter: 'JSP',
+      stateFilter: 'ACTIF',
+      sort: { key: 'label', dir: 'desc' }
+    });
+    const pdf = await generateStatComReferentialReport(repo, {
+      rows: visibleRows,
+      meta: {
+        search: 'JSP',
+        domain: 'JSP',
+        state: 'Actifs',
+        sort: logic.statComSortLabel({ key: 'label', dir: 'desc' })
+      }
+    }, ACTOR, { generatedAt: '2026-09-16T10:00:00.000Z' });
+    ok(Buffer.isBuffer(pdf.buffer), 'PDF produit un buffer');
+    ok(pdf.buffer.slice(0, 5).toString() === '%PDF-', 'PDF valide');
+    ok(pdf.pages >= 1, 'pagination calculée');
+    ok(pdf.filename.includes('SCOPE_Referentiel_STATCOM_2026-09-16'), 'nom de fichier SCOPE');
+    const pdfSource = fs.readFileSync(path.join(ROOT, 'netlify/lib/_scope-pdf-renderer.js'), 'utf8');
+    ok(pdfSource.includes("size: 'A4'"), 'format A4 portrait du moteur PDFKit');
+    ok(pdfSource.includes("['CODE', 'LIBELLÉ', 'DOMAINE', 'CATÉGORIE', 'OI', 'SPÉCIALISATION', 'VALIDITÉ', 'ÉTAT']"), 'colonnes françaises accentuées');
+    ok(pdfSource.includes('[50, 135, 40, 50, 28, 94, 56, 46]'), 'largeurs colonnes portrait optimisées');
+    ok(pdfSource.includes('wrap: [false, true, false, false, false, true, false, false]'), 'wrapping libellé/spécialisation');
+    ok(pdfSource.includes('maxRowH: null'), 'anti-troncature métier sans plafond de ligne');
+    ok(pdfSource.includes('renderStatComReferentialPdf'), 'PDF STAT.COM utilise le renderer commun');
+    eq(INSTITUTION.red, '#DE000A', 'rouge SCOPE institutionnel conservé');
+    eq(pdf.meta.rows, visibleRows.length, 'nombre de lignes PDF = collection visible');
     eq(logic.statComSortLabel({ key: 'code', dir: 'asc' }), 'Code — croissant', 'métadonnée tri code asc');
     eq(logic.statComSortLabel({ key: 'label', dir: 'desc' }), 'Libellé — décroissant', 'métadonnée tri libellé desc');
-    ok(UI_SOURCE.includes('Nombre de codes : ${(rows || []).length}'), 'nombre de codes basé sur les résultats exportés');
+    ok(!UI_SOURCE.includes('/MediaBox [0 0 ${width} ${height}]'), 'ancien PDF navigateur paysage supprimé');
+    ok(!UI_SOURCE.includes("pdfRect(0, height - 62"), 'ancien bandeau spécifique STAT.COM supprimé');
+    eq(logic.statComSortLabel({ key: 'code', dir: 'asc' }), 'Code — croissant', 'métadonnée tri code asc');
   });
 
   const failed = results.filter((row) => row.status !== 'PASS');

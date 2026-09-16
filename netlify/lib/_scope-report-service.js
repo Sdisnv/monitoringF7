@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { HttpError } = require('./_scope-rules');
 const { hasPermission } = require('./_rbac');
 const { collectReport, normalizeKind, REPORT_KINDS } = require('./_scope-report-data');
-const { renderReportPdf } = require('./_scope-pdf-renderer');
+const { renderReportPdf, renderStatComReferentialPdf } = require('./_scope-pdf-renderer');
 const contract = require('./_scope-core-contract');
 
 const ALLOWED_KEYS = new Set([
@@ -111,6 +111,75 @@ function pdfHeaders(filename, sha256, pages){
   };
 }
 
+function sanitizeStatComRows(rows){
+  const source = Array.isArray(rows) ? rows : [];
+  return source.map((row) => ({
+    code: String(row && row.code || ''),
+    label: String(row && (row.label || row.libelle) || ''),
+    domain: String(row && row.domain || ''),
+    category: String(row && row.category || ''),
+    oi: String(row && (row.oi || row.oi_code || row.oiCode) || ''),
+    specialization: String(row && row.specialization || ''),
+    valid_from: row && (row.valid_from || row.validFrom) || null,
+    valid_to: row && (row.valid_to || row.validTo) || null,
+    active: !(row && row.active === false)
+  }));
+}
+
+function sanitizeStatComExportMeta(meta){
+  const source = meta || {};
+  const clean = (value, fallback) => {
+    const text = String(value == null ? '' : value).trim();
+    return text || fallback;
+  };
+  return {
+    search: clean(source.search, 'Toutes'),
+    domain: clean(source.domain, 'Tous'),
+    state: clean(source.state, 'Tous'),
+    sort: clean(source.sort, 'Code — croissant')
+  };
+}
+
+async function generateStatComReferentialReport(repo, body, claims, options){
+  if(!hasPermission(claims, 'dashboard:read') && !hasPermission(claims, 'references:manage')){
+    throw new HttpError(403, 'forbidden', 'L’export PDF STAT.COM exige un profil habilité.');
+  }
+  const generatedAt = (options && options.generatedAt) || new Date().toISOString();
+  const rows = sanitizeStatComRows(body && body.rows);
+  const exportMeta = sanitizeStatComExportMeta(body && body.meta);
+  const meta = {
+    generatedAt,
+    authorLabel: actorLabel(claims),
+    authorId: claims && (claims.sub || claims.userId) || null
+  };
+  const { buffer, pages } = await renderStatComReferentialPdf(rows, exportMeta, meta);
+  const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
+  const filename = `SCOPE_Referentiel_STATCOM_${generatedAt.slice(0, 10)}.pdf`;
+  if(repo && typeof repo.appendJournal === 'function'){
+    await repo.appendJournal({
+      auteur_id: meta.authorId,
+      entite: 'statcom',
+      entite_id: 'referentiel',
+      action: 'EXPORTER_STATCOM_PDF',
+      apres: {
+        filename,
+        sha256,
+        pages,
+        rows: rows.length,
+        filters: exportMeta
+      },
+      commentaire: 'export_pdf'
+    });
+  }
+  return {
+    buffer,
+    filename,
+    sha256,
+    pages,
+    meta: { kind: 'STATCOM', filename, rows: rows.length }
+  };
+}
+
 async function generateReport(repo, body, claims, options){
   if(!hasPermission(claims, 'dashboard:read')){
     throw new HttpError(403, 'forbidden', 'La consultation des rapports exige dashboard:read.');
@@ -181,6 +250,7 @@ module.exports = {
   sanitizeQuery,
   validateParticipationSpecialisation,
   generateReport,
+  generateStatComReferentialReport,
   pdfResponse,
   pdfHeaders
 };

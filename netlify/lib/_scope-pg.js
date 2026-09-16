@@ -2121,6 +2121,17 @@ function createPgRepo(client){
       return mapStatCom(result.rows[0] || null);
     },
     async upsertStatComCode(row){
+      const pick = (...keys) => {
+        for(const key of keys){
+          if(Object.prototype.hasOwnProperty.call(row || {}, key)) return row[key];
+        }
+        return undefined;
+      };
+      const clean = (value) => {
+        if(value == null) return null;
+        const text = String(value).trim();
+        return text || null;
+      };
       const result = await q(
         `insert into scope_statcom_referentiel(statcom_id, code, label, domain, category, oi_code, specialization, valid_from, valid_to, active, metadata)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
@@ -2139,13 +2150,13 @@ function createPgRepo(client){
         [
           row.statcom_id || row.statcomId || randomUUID(),
           statcomReferential.normalizeStatComCode(row.code),
-          row.label || row.libelle,
-          row.domain || row.domain_code || row.domainCode || null,
-          row.category || row.categorie || null,
-          row.oi_code || row.oiCode || row.oi || null,
-          row.specialization || row.specialisation || null,
-          isoDate(row.valid_from || row.validFrom) || '2023-01-01',
-          isoDate(row.valid_to || row.validTo),
+          clean(pick('label', 'libelle')),
+          clean(pick('domain', 'domain_code', 'domainCode')),
+          clean(pick('category', 'categorie')),
+          clean(pick('oi_code', 'oiCode', 'oi')),
+          clean(pick('specialization', 'specialisation')),
+          isoDate(pick('valid_from', 'validFrom')) || '2023-01-01',
+          isoDate(pick('valid_to', 'validTo')),
           row.active !== false && row.actif !== false,
           JSON.stringify(row.metadata || {})
         ]

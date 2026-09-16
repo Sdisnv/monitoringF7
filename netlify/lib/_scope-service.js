@@ -476,9 +476,21 @@ function createScopeService(repo){
 
   async function saveStatComCode(body, actor){
     if(!repo.upsertStatComCode) throw new HttpError(501, 'statcom_indisponible', 'Le référentiel STAT.COM n’est pas disponible sur ce stockage.');
+    const pick = (...keys) => {
+      for(const key of keys){
+        if(Object.prototype.hasOwnProperty.call(body || {}, key)) return body[key];
+      }
+      return undefined;
+    };
+    const cleanText = (value, fallback) => {
+      const source = value === undefined ? fallback : value;
+      if(source == null) return null;
+      const text = String(source).trim();
+      return text || null;
+    };
     const code = statcomReferential.normalizeStatComCode(body.code);
     if(!code) throw new HttpError(400, 'statcom_code_vide', 'Le code STAT.COM est obligatoire.');
-    const label = String(body.label || body.libelle || '').trim();
+    const label = cleanText(pick('label', 'libelle'), '');
     if(!label) throw new HttpError(400, 'statcom_libelle_vide', 'Le libellé STAT.COM est obligatoire.');
     const existing = repo.getStatComCode ? await repo.getStatComCode(code) : null;
     const usage = repo.getStatComUsage ? await repo.getStatComUsage(code) : { total: 0 };
@@ -488,12 +500,12 @@ function createScopeService(repo){
     const statCom = await repo.upsertStatComCode({
       code,
       label,
-      domain: body.domain || body.domain_code || null,
-      category: body.category || body.categorie || null,
-      oi_code: body.oiCode || body.oi_code || body.oi || null,
-      specialization: body.specialization || body.specialisation || null,
-      valid_from: body.validFrom || body.valid_from || '2023-01-01',
-      valid_to: body.validTo || body.valid_to || null,
+      domain: (cleanText(pick('domain', 'domain_code', 'domainCode'), null) || '').toUpperCase() || null,
+      category: (cleanText(pick('category', 'categorie'), null) || '').toUpperCase() || null,
+      oi_code: cleanText(pick('oiCode', 'oi_code', 'oi'), null),
+      specialization: cleanText(pick('specialization', 'specialisation'), null),
+      valid_from: cleanText(pick('validFrom', 'valid_from'), '2023-01-01') || '2023-01-01',
+      valid_to: cleanText(pick('validTo', 'valid_to'), null),
       active: body.active !== false && body.actif !== false,
       metadata: Object.assign({}, body.metadata || {}, { updatedBy: actorId(actor), source: existing ? 'admin_update' : 'admin_create' })
     });

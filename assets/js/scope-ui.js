@@ -11887,7 +11887,7 @@
       render();
     });
     document.getElementById('statcom-export-pdf')?.addEventListener('click', () => {
-      exportStatComPdf(currentStatComRowsForDisplay());
+      withLoading(() => exportStatComPdf(currentStatComRowsForDisplay()));
     });
     root.querySelectorAll('[data-statcom-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -12857,68 +12857,6 @@
     });
   }
 
-  function pdfWinAnsiHex(value) {
-    const map = {
-      0x0152: 0x8C, 0x0153: 0x9C, 0x0160: 0x8A, 0x0161: 0x9A,
-      0x0178: 0x9F, 0x017D: 0x8E, 0x017E: 0x9E, 0x20AC: 0x80,
-      0x2013: 0x96, 0x2014: 0x97, 0x2018: 0x91, 0x2019: 0x92,
-      0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2026: 0x85
-    };
-    const text = String(value == null ? '' : value).normalize('NFC');
-    const bytes = [];
-    for (let i = 0; i < text.length; i += 1) {
-      const code = text.charCodeAt(i);
-      bytes.push(map[code] || (code <= 255 ? code : 0x3F));
-    }
-    return `<${bytes.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('')}>`;
-  }
-
-  function pdfBytes(pdf) {
-    const bytes = new Uint8Array(pdf.length);
-    for (let i = 0; i < pdf.length; i += 1) bytes[i] = pdf.charCodeAt(i) & 0xFF;
-    return bytes;
-  }
-
-  function pdfText(x, y, size, text, font = 'F1', color = '0.13 0.13 0.13') {
-    return `BT ${color} rg /${font} ${size} Tf ${x.toFixed(1)} ${y.toFixed(1)} Td ${pdfWinAnsiHex(text)} Tj ET`;
-  }
-
-  function pdfRect(x, y, w, h, fill, stroke) {
-    const parts = ['q'];
-    if (fill) parts.push(`${fill} rg ${x.toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f`);
-    if (stroke) parts.push(`${stroke} RG 0.5 w ${x.toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`);
-    parts.push('Q');
-    return parts.join(' ');
-  }
-
-  function wrapPdfText(text, width, size) {
-    const max = Math.max(6, Math.floor(width / (size * 0.48)));
-    const words = String(text == null ? '' : text).split(/\s+/).filter(Boolean);
-    const lines = [];
-    let line = '';
-    for (const word of words.length ? words : ['']) {
-      if (!line) {
-        line = word;
-      } else if (`${line} ${word}`.length <= max) {
-        line = `${line} ${word}`;
-      } else {
-        lines.push(line);
-        line = word;
-      }
-      while (line.length > max) {
-        lines.push(line.slice(0, max));
-        line = line.slice(max);
-      }
-    }
-    if (line || !lines.length) lines.push(line);
-    return lines;
-  }
-
-  function statComPdfGeneratedAt(date = new Date()) {
-    const pad = (value) => String(value).padStart(2, '0');
-    return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} à ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  }
-
   function statComPdfFilterMeta() {
     const stateFilter = state.formationStatComStateFilter || 'TOUS';
     return [
@@ -12929,143 +12867,18 @@
     ];
   }
 
-  function statComPdfRow(row) {
-    const from = L.formatDate(row.valid_from || row.validFrom);
-    const to = row.valid_to || row.validTo ? L.formatDate(row.valid_to || row.validTo) : '';
-    return [
-      row.code || '',
-      row.label || row.libelle || '',
-      row.domain || '',
-      row.category || '',
-      row.oi || row.oi_code || row.oiCode || '',
-      row.specialization || '',
-      to ? `${from} - ${to}` : `Dès ${from}`,
-      row.active === false ? 'Inactif' : 'Actif'
-    ];
-  }
-
-  function buildStatComPdf(rows) {
-    const width = 842;
-    const height = 595;
-    const margin = 28;
-    const tableX = margin;
-    const tableWidth = width - margin * 2;
-    const columns = [
-      { label: 'CODE', width: 64 },
-      { label: 'LIBELLÉ', width: 224 },
-      { label: 'DOMAINE', width: 62 },
-      { label: 'CATÉGORIE', width: 78 },
-      { label: 'OI', width: 44 },
-      { label: 'SPÉCIALISATION', width: 128 },
-      { label: 'VALIDITÉ', width: 116 },
-      { label: 'ÉTAT', width: 70 }
-    ];
-    const headerHeight = 26;
-    const tableTop = 386;
-    const bottom = 42;
-    const bodySize = 7.4;
-    const lineHeight = 8.6;
-    const rowModels = (rows || []).map((row) => {
-      const cells = statComPdfRow(row);
-      const lines = cells.map((cell, index) => wrapPdfText(cell, columns[index].width - 8, bodySize));
-      return { cells: lines, height: Math.max(20, Math.max(...lines.map((item) => item.length)) * lineHeight + 8) };
-    });
-    if (!rowModels.length) rowModels.push({ cells: [['Aucune donnée à exporter.'], [''], [''], [''], [''], [''], [''], ['']], height: 22 });
-    const pages = [];
-    let page = [];
-    let used = headerHeight;
-    for (const row of rowModels) {
-      if (page.length && used + row.height > tableTop - bottom) {
-        pages.push(page);
-        page = [];
-        used = headerHeight;
-      }
-      page.push(row);
-      used += row.height;
-    }
-    if (page.length) pages.push(page);
-
-    const renderTableHeader = () => {
-      const commands = [pdfRect(tableX, tableTop - headerHeight, tableWidth, headerHeight, '0.46 0.09 0.15', '0.46 0.09 0.15')];
-      let x = tableX;
-      columns.forEach((column) => {
-        commands.push(pdfText(x + 4, tableTop - 17, 7.6, column.label, 'F2', '1 1 1'));
-        x += column.width;
-      });
-      return commands;
-    };
-
-    const renderPage = (rowsForPage, pageIndex) => {
-      const commands = [
-        pdfRect(0, 0, width, height, '1 1 1'),
-        pdfRect(0, height - 62, width, 62, '0.46 0.09 0.15'),
-        pdfText(margin, height - 28, 18, 'SCOPE', 'F2', '1 1 1'),
-        pdfText(margin + 96, height - 29, 15, 'RÉFÉRENTIEL STAT.COM', 'F2', '1 1 1'),
-        pdfText(margin + 96, height - 47, 8.5, 'Référentiel des codes de ventilation statistique', 'F1', '1 1 1'),
-        pdfText(width - 104, height - 36, 8, `Page ${pageIndex + 1} / ${pages.length}`, 'F1', '1 1 1'),
-        pdfText(margin, 505, 8.5, `Généré le : ${statComPdfGeneratedAt()}`, 'F1'),
-        pdfText(margin + 230, 505, 8.5, `Nombre de codes : ${(rows || []).length}`, 'F1'),
-        pdfText(margin, 480, 9.2, 'Périmètre exporté', 'F2', '0.46 0.09 0.15')
-      ];
-      let metaX = margin;
-      statComPdfFilterMeta().forEach(([label, value], index) => {
-        const x = index % 2 === 0 ? margin : margin + 390;
-        const y = index < 2 ? 462 : 444;
-        metaX = x;
-        commands.push(pdfText(metaX, y, 8, `${label} : ${value}`, 'F1'));
-      });
-      commands.push(...renderTableHeader());
-      let y = tableTop - headerHeight;
-      rowsForPage.forEach((row, index) => {
-        y -= row.height;
-        const fill = index % 2 === 0 ? '1 1 1' : '0.97 0.97 0.98';
-        commands.push(pdfRect(tableX, y, tableWidth, row.height, fill, '0.88 0.89 0.90'));
-        let x = tableX;
-        row.cells.forEach((lines, cellIndex) => {
-          let lineY = y + row.height - 12;
-          lines.forEach((line) => {
-            commands.push(pdfText(x + 4, lineY, bodySize, line, cellIndex === 0 ? 'F2' : 'F1'));
-            lineY -= lineHeight;
-          });
-          x += columns[cellIndex].width;
-        });
-      });
-      return commands.join('\n');
-    };
-
-    const objects = ['<< /Type /Catalog /Pages 2 0 R >>'];
-    const pageRefs = [];
-    pages.forEach((rowsForPage, index) => {
-      const stream = renderPage(rowsForPage, index);
-      const pageObjectNumber = 5 + index * 2;
-      const contentObjectNumber = pageObjectNumber + 1;
-      pageRefs.push(`${pageObjectNumber} 0 R`);
-      objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`);
-      objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-    });
-    objects.splice(1, 0, `<< /Type /Pages /Kids [${pageRefs.join(' ')}] /Count ${pageRefs.length} >>`);
-    objects.splice(2, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
-    objects.splice(3, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
-    let pdf = '%PDF-1.4\n';
-    const offsets = [0];
-    objects.forEach((obj, index) => {
-      offsets.push(pdf.length);
-      pdf += `${index + 1} 0 obj\n${obj}\nendobj\n`;
-    });
-    const xref = pdf.length;
-    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-    offsets.slice(1).forEach((offset) => {
-      pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
-    });
-    pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-    return { blob: new Blob([pdfBytes(pdf)], { type: 'application/pdf' }), pages: pages.length };
-  }
-
-  function exportStatComPdf(rows) {
+  async function exportStatComPdf(rows) {
     const visibleRows = Array.isArray(rows) ? rows : [];
-    const result = buildStatComPdf(visibleRows);
-    const filename = `SCOPE_Referentiel_STATCOM_${new Date().toISOString().slice(0, 10)}.pdf`;
-    if (window.ScopePdfViewer) window.ScopePdfViewer.open({ blob: result.blob, filename, pages: result.pages });
+    if (typeof client.generateStatComReport !== 'function') return;
+    const metaRows = statComPdfFilterMeta();
+    const meta = {
+      search: metaRows[0] && metaRows[0][1],
+      domain: metaRows[1] && metaRows[1][1],
+      state: metaRows[2] && metaRows[2][1],
+      sort: metaRows[3] && metaRows[3][1]
+    };
+    const result = await client.generateStatComReport({ rows: visibleRows, meta });
+    if (window.ScopePdfViewer) window.ScopePdfViewer.open(result);
     else window.open(URL.createObjectURL(result.blob), '_blank', 'noopener');
   }
 

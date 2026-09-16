@@ -9,7 +9,7 @@ const { createScopeAlertsService } = require('../lib/_scope-alerts-service');
 const { createScopeCycleService } = require('../lib/_scope-cycle-service');
 const { createScopeJspReportingService, createScopeParticipationReportingService } = require('../lib/_scope-jsp-reporting');
 const { getPgRepo } = require('../lib/_scope-pg');
-const { generateReport, pdfResponse } = require('../lib/_scope-report-service');
+const { generateReport, generateStatComReferentialReport, pdfResponse } = require('../lib/_scope-report-service');
 const { createScopePersonService } = require('../lib/_scope-person-service');
 const users = require('../lib/_user-store');
 const { withMetrics } = require('../lib/_postgres');
@@ -531,6 +531,14 @@ async function scopeHandler(event){
         return response(403, { ok:false, error:'forbidden', message:'Le diagnostic de performance est réservé aux profils habilités.' });
       }
       return response(200, { ok:true, ...(await service.performanceDiagnostics()) });
+    }
+
+    if(method === 'POST' && path === '/reports/statcom'){
+      if(!hasPermission(claims, 'dashboard:read') && !hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'L’export PDF STAT.COM exige un profil habilité.' });
+      }
+      const result = await generateStatComReferentialReport(repo, body, claims);
+      return pdfResponse(result);
     }
 
     if((method === 'POST' || method === 'GET') && path === '/reports'){
