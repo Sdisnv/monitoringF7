@@ -9129,6 +9129,7 @@
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
     const definitions = Array.isArray(catalog.definitions) ? catalog.definitions : [];
     const policyVersions = Array.isArray(catalog.policyVersions) ? catalog.policyVersions : [];
+    const statComCodes = Array.isArray(catalog.statComCodes) ? catalog.statComCodes : [];
     const domaines = (state.referentiels && state.referentiels.domaines) || catalog.domaines || [];
     const participation = state.participationAdmin || (state.referentiels && state.referentiels.participation) || {};
     const statusCatalog = new Map(((participation && participation.statuses) || []).map((row) => [String(row.id || '').toUpperCase(), row]));
@@ -9164,6 +9165,11 @@
       .map((d) => `<option value="${escapeHtml(d.code)}" ${String(form.domain || '').toUpperCase() === String(d.code).toUpperCase() ? 'selected' : ''}>${escapeHtml(d.libelleAffiche || d.code)}</option>`)
       .join('');
     const activeDomain = String(form.domain || '').toUpperCase();
+    const statComOptions = statComCodes
+      .filter((row) => row.active !== false || String(row.code || '') === String(form.statComCode || ''))
+      .filter((row) => !activeDomain || !row.domain || String(row.domain).toUpperCase() === activeDomain || String(row.code || '') === String(form.statComCode || ''))
+      .map((row) => `<option value="${escapeHtml(row.code || '')}" ${String(form.statComCode || '') === String(row.code || '') ? 'selected' : ''}>${escapeHtml(`${row.code || ''} — ${row.label || row.libelle || ''}`)}</option>`)
+      .join('');
     const policyOptions = policyVersions
       .filter((p) => !p.domain || String(p.domain).toUpperCase() === activeDomain)
       .map((p) => `<option value="${escapeHtml(p.policy_version_id || p.policyVersionId || '')}" ${String(form.policyVersionId || '') === String(p.policy_version_id || p.policyVersionId || '') ? 'selected' : ''}>${escapeHtml(`${p.domain || activeDomain} — règles standards ${p.version_code || p.versionCode || ''}`)}</option>`)
@@ -9235,6 +9241,9 @@
       const linkedEventCount = Number(version.linkedEventCount || version.linked_event_count || 0);
       const linkedEvents = version.linkedEvents || version.linked_events || [];
       const versionId = version.definition_version_id || version.definitionVersionId || '';
+      const statComCode = version.statcom_code || version.statComCode || '';
+      const statComSnapshot = version.statcom_snapshot || version.statComSnapshot || null;
+      const statComLabel = statComSnapshot && statComSnapshot.label || (statComCodes.find((row) => String(row.code || '') === String(statComCode)) || {}).label || '—';
       const editable = canManage;
       const applicationText = mode === 'MULTI_SESSION'
         ? `Cette configuration s’applique aux événements rattachés à « ${definition.label || 'ce modèle'} », dont la date est comprise entre ${L.formatDate(version.valid_from || version.validFrom)} et ${L.formatDate(version.valid_to || version.validTo)}, et associés au Multi-session prévu de ${sessions} sessions.`
@@ -9265,7 +9274,7 @@
       </article>
       ${selected ? `<div class="scope-formation-detail">
         <div class="scope-formation-detail-grid">
-          <section><h3>Identité</h3><dl><dt>Domaine</dt><dd>${escapeHtml(definition.domain || '')}</dd><dt>Nom de la formation</dt><dd>${escapeHtml(definition.label || '')}</dd><dt>Version</dt><dd>${escapeHtml(version.version_code || version.versionCode || '')}</dd><dt>Validité</dt><dd>${escapeHtml(L.formatDate(version.valid_from || version.validFrom))} → ${escapeHtml(L.formatDate(version.valid_to || version.validTo))}</dd><dt>État</dt><dd>${definition.status === 'INACTIF' ? 'Inactif' : 'Actif'}</dd></dl></section>
+          <section><h3>Identité</h3><dl><dt>Domaine</dt><dd>${escapeHtml(definition.domain || '')}</dd><dt>Nom de la formation</dt><dd>${escapeHtml(definition.label || '')}</dd><dt>Version</dt><dd>${escapeHtml(version.version_code || version.versionCode || '')}</dd><dt>STAT.COM</dt><dd>${escapeHtml(statComCode || '—')} ${statComCode ? `— ${escapeHtml(statComLabel)}` : ''}</dd><dt>Validité</dt><dd>${escapeHtml(L.formatDate(version.valid_from || version.validFrom))} → ${escapeHtml(L.formatDate(version.valid_to || version.validTo))}</dd><dt>État</dt><dd>${definition.status === 'INACTIF' ? 'Inactif' : 'Actif'}</dd></dl></section>
           <section><h3>Organisation</h3><p>${mode === 'MULTI_SESSION' ? `Plusieurs sessions · ${escapeHtml(String(sessions))} sessions` : 'Session unique'}</p><p class="scope-muted">${mode === 'MULTI_SESSION' ? 'Une personne satisfait son obligation lorsqu’elle participe valablement à une des sessions.' : 'Une seule session porte l’exercice.'}</p></section>
           <section><h3>Participation</h3><p><strong>Statuts disponibles</strong><br>${escapeHtml(statuses)}</p><p><strong>Motifs d’excuse</strong><br>${escapeHtml(excuses)}</p><p><strong>Motifs de dispense</strong><br>${escapeHtml(dispenses)}</p><p><strong>Permutation</strong><br>${(config.activeStatuses || []).includes('PERMUTATION') ? 'Disponible selon règles DAP simple' : 'Non disponible pour cette configuration'}</p></section>
           <section><h3>Application aux événements</h3><p>${escapeHtml(applicationText)}</p><p class="scope-muted">${escapeHtml(usageText)}</p></section>
@@ -9302,6 +9311,36 @@
     const activeMotifs = (type) => (participation && participation.motifs || [])
       .filter((row) => String(row.type || row.motif_type || '').toUpperCase() === type);
     const referentialDraft = state.formationReferentialDraft;
+    const statComDraft = state.formationStatComDraft;
+    const statComForm = statComDraft ? `<section class="scope-referential-draft" id="formation-statcom-form">
+      <h3>${statComDraft.editing ? 'Modifier STAT.COM' : 'Ajouter STAT.COM'}</h3>
+      <div class="scope-report-grid">
+        <div class="scope-field"><label>Code</label><input id="statcom-code" type="text" value="${escapeHtml(statComDraft.code || '')}" ${statComDraft.editing ? 'disabled' : ''}></div>
+        <div class="scope-field"><label>Libellé</label><input id="statcom-label" type="text" value="${escapeHtml(statComDraft.label || '')}"></div>
+        <div class="scope-field"><label>Domaine</label><input id="statcom-domain" type="text" value="${escapeHtml(statComDraft.domain || '')}"></div>
+        <div class="scope-field"><label>Catégorie</label><input id="statcom-category" type="text" value="${escapeHtml(statComDraft.category || '')}"></div>
+        <div class="scope-field"><label>OI</label><input id="statcom-oi" type="text" value="${escapeHtml(statComDraft.oi || statComDraft.oi_code || '')}"></div>
+        <div class="scope-field"><label>Spécialisation</label><input id="statcom-specialization" type="text" value="${escapeHtml(statComDraft.specialization || '')}"></div>
+        <div class="scope-field"><label>Valable dès</label><input id="statcom-valid-from" type="date" value="${escapeHtml(statComDraft.valid_from || statComDraft.validFrom || '2023-01-01')}"></div>
+        <div class="scope-field"><label>Valable jusqu’au</label><input id="statcom-valid-to" type="date" value="${escapeHtml(statComDraft.valid_to || statComDraft.validTo || '')}"></div>
+      </div>
+      <label class="scope-check scope-policy-check"><input id="statcom-active" type="checkbox" ${statComDraft.active === false ? '' : 'checked'}><span class="scope-policy-check-copy"><span>Actif</span></span></label>
+      <div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" id="statcom-save">Enregistrer</button><button type="button" class="scope-btn scope-btn-secondary" id="statcom-cancel">Annuler</button></div>
+    </section>` : '';
+    const statComRows = statComCodes.map((row) => {
+      const active = row.active !== false;
+      return `<tr>
+        <td><strong>${escapeHtml(row.code || '')}</strong></td>
+        <td>${escapeHtml(row.label || row.libelle || '')}</td>
+        <td>${escapeHtml(row.domain || '')}</td>
+        <td>${escapeHtml(row.category || '')}</td>
+        <td>${escapeHtml(row.oi || row.oi_code || row.oiCode || '')}</td>
+        <td>${escapeHtml(row.specialization || '')}</td>
+        <td>${escapeHtml(L.formatDate(row.valid_from || row.validFrom))} → ${escapeHtml(row.valid_to || row.validTo ? L.formatDate(row.valid_to || row.validTo) : '—')}</td>
+        <td>${active ? 'Actif' : 'Inactif'}</td>
+        <td><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-statcom-edit="${escapeHtml(row.code || '')}">Modifier</button> <button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-statcom-toggle="${escapeHtml(row.code || '')}">${active ? 'Désactiver' : 'Réactiver'}</button></td>
+      </tr>`;
+    }).join('');
     const referentialForm = referentialDraft ? `<section class="scope-referential-draft" id="formation-referential-form">
       <h3>${referentialDraft.editing ? 'Modifier le référentiel' : (referentialDraft.type === 'status' ? 'Ajouter un statut' : (referentialDraft.type === 'excuse' ? 'Ajouter un motif d’excuse' : 'Ajouter un motif de dispense'))}</h3>
       <div class="scope-report-grid">
@@ -9320,8 +9359,10 @@
     const referentialsHtml = `<div class="scope-card scope-referentials-admin">
       <h2 style="margin-top:0">Référentiels administrables</h2>
       <p class="scope-muted">Gérez les libellés métier proposés aux configurations. Les identifiants techniques sont générés par SCOPE et l’historique est conservé par archivage.</p>
+      ${statComForm}
       ${referentialForm}
       <div class="scope-referential-grid">
+        <section><div class="scope-policy-column-head"><h3>STAT.COM</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="statcom-add">+ Ajouter un code</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>CODE</th><th>LIBELLÉ</th><th>DOMAINE</th><th>CATÉGORIE</th><th>OI</th><th>SPECIALIZATION</th><th>VALIDITÉ</th><th>ÉTAT</th><th>ACTION</th></tr></thead><tbody>${statComRows || '<tr><td colspan="9"><div class="scope-empty">Aucun code STAT.COM.</div></td></tr>'}</tbody></table></div></section>
         <section><div class="scope-policy-column-head"><h3>Statuts disponibles</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-add="status">+ Ajouter un statut</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Libellé</th><th>Comportement</th><th>Ordre</th><th>État</th><th>Action</th></tr></thead><tbody>${renderReferentialRows([...statusCatalog.values()].filter((row) => !row.system), 'status') || '<tr><td colspan="5"><div class="scope-empty">Aucun statut configurable.</div></td></tr>'}</tbody></table></div></section>
         <section><div class="scope-policy-column-head"><h3>Motifs d’excuse</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-add="excuse">+ Ajouter un motif</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Libellé</th><th>Ordre</th><th>État</th><th>Action</th></tr></thead><tbody>${renderReferentialRows(activeMotifs('EXCUSE'), 'excuse') || '<tr><td colspan="4"><div class="scope-empty">Aucun motif d’excuse.</div></td></tr>'}</tbody></table></div></section>
         <section><div class="scope-policy-column-head"><h3>Motifs de dispense</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-add="dispense">+ Ajouter un motif</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Libellé</th><th>Ordre</th><th>État</th><th>Action</th></tr></thead><tbody>${renderReferentialRows(activeMotifs('DISPENSE'), 'dispense') || '<tr><td colspan="4"><div class="scope-empty">Aucun motif de dispense.</div></td></tr>'}</tbody></table></div></section>
@@ -9362,6 +9403,7 @@
               <div class="scope-field"><label>Valable dès</label><input id="formation-valid-from" type="date" value="${escapeHtml(form.validFrom || '')}"></div>
               <div class="scope-field"><label>Valable jusqu’au</label><input id="formation-valid-to" type="date" value="${escapeHtml(form.validTo || '')}"></div>
               <div class="scope-field"><label>Règles proposées</label><select id="formation-policy">${policyOptions || '<option value="">Règles standards du domaine</option>'}</select><small>Ces règles servent de base. Vous pouvez ensuite adapter les statuts et motifs pour cette formation.</small></div>
+              <div class="scope-field"><label>STAT.COM par défaut</label><select id="formation-statcom"><option value="">Aucun code</option>${statComOptions}</select></div>
             </div>
             <div class="scope-admin-panel scope-policy-builder" style="margin-top:12px">
               <h3 style="margin-top:0">Règles de participation</h3>
@@ -11705,6 +11747,7 @@
         year: creationDefaults ? nextYear : '',
         validFrom: creationDefaults ? `${nextYear}-01-01` : '',
         validTo: creationDefaults ? `${nextYear}-12-31` : '',
+        statComCode: '',
         activeStatuses: [],
         excuseMotifs: [],
         dispenseMotifs: [],
@@ -11731,6 +11774,7 @@
       year: String(source.year || ''),
       validFrom: source.validFrom || '',
       validTo: source.validTo || '',
+      statComCode: source.statComCode || '',
       activeStatuses: (source.activeStatuses || []).slice().sort(),
       excuseMotifs: (source.excuseMotifs || []).slice().sort(),
       dispenseMotifs: (source.dispenseMotifs || []).slice().sort()
@@ -11770,6 +11814,7 @@
       ['formation-mode', 'modeOrganisation'],
       ['formation-session-count', 'sessionCount'],
       ['formation-policy', 'policyVersionId'],
+      ['formation-statcom', 'statComCode'],
       ['formation-valid-from', 'validFrom'],
       ['formation-valid-to', 'validTo']
     ].forEach(([id, key]) => bindFormationField(id, key));
@@ -11777,8 +11822,63 @@
       resetFormationDefinitionForm({ creation: true });
       state.formationFormOpen = true;
       state.formationReferentialDraft = null;
+      state.formationStatComDraft = null;
       render();
       focusFormationForm();
+    });
+    document.getElementById('statcom-add')?.addEventListener('click', () => {
+      state.formationStatComDraft = { code: '', label: '', domain: '', category: '', oi: '', specialization: '', validFrom: '2023-01-01', validTo: '', active: true, editing: false };
+      state.formationReferentialDraft = null;
+      render();
+    });
+    root.querySelectorAll('[data-statcom-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-statcom-edit') || '';
+        const catalog = state.formationCatalog || {};
+        const row = (catalog.statComCodes || []).find((item) => String(item.code || '') === String(code));
+        if (!row) return;
+        state.formationStatComDraft = Object.assign({}, row, { editing: true });
+        state.formationReferentialDraft = null;
+        render();
+      });
+    });
+    root.querySelectorAll('[data-statcom-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-statcom-toggle') || '';
+        const catalog = state.formationCatalog || {};
+        const row = (catalog.statComCodes || []).find((item) => String(item.code || '') === String(code));
+        if (!row || typeof client.saveStatComCode !== 'function') return;
+        withLoading(async () => {
+          await client.saveStatComCode(Object.assign({}, row, { active: row.active === false }));
+          invalidateCache(['referentiels', 'formationCatalog']);
+          await loadFormationCatalog();
+          render();
+        });
+      });
+    });
+    document.getElementById('statcom-cancel')?.addEventListener('click', () => {
+      state.formationStatComDraft = null;
+      render();
+    });
+    document.getElementById('statcom-save')?.addEventListener('click', () => {
+      if (typeof client.saveStatComCode !== 'function') return;
+      withLoading(async () => {
+        await client.saveStatComCode({
+          code: (document.getElementById('statcom-code') || {}).value || (state.formationStatComDraft || {}).code || '',
+          label: (document.getElementById('statcom-label') || {}).value || '',
+          domain: (document.getElementById('statcom-domain') || {}).value || '',
+          category: (document.getElementById('statcom-category') || {}).value || '',
+          oi: (document.getElementById('statcom-oi') || {}).value || '',
+          specialization: (document.getElementById('statcom-specialization') || {}).value || '',
+          validFrom: (document.getElementById('statcom-valid-from') || {}).value || '2023-01-01',
+          validTo: (document.getElementById('statcom-valid-to') || {}).value || null,
+          active: Boolean((document.getElementById('statcom-active') || {}).checked)
+        });
+        state.formationStatComDraft = null;
+        invalidateCache(['referentiels', 'formationCatalog']);
+        await loadFormationCatalog();
+        render();
+      });
     });
     root.querySelectorAll('[data-formation-policy]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -11888,6 +11988,7 @@
           year: String(found.version.version_code || found.version.versionCode || new Date().getFullYear()),
           validFrom: found.version.valid_from || found.version.validFrom || '',
           validTo: found.version.valid_to || found.version.validTo || '',
+          statComCode: found.version.statcom_code || found.version.statComCode || '',
           activeStatuses: (config.activeStatuses || []).filter((status) => status !== 'NON_RENSEIGNE'),
           excuseMotifs: (config.excuseMotifs || []).slice(),
           dispenseMotifs: (config.dispenseMotifs || []).slice(),
@@ -11924,7 +12025,8 @@
           },
           year: Number(form.year || new Date().getFullYear()),
           validFrom: form.validFrom,
-          validTo: form.validTo
+          validTo: form.validTo,
+          statComCode: form.statComCode || null
         });
         invalidateCache(['referentiels', 'formationCatalog']);
         await loadFormationCatalog();

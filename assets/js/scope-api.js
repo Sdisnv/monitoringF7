@@ -223,6 +223,8 @@
       previewImportEvenements(body) { return request('POST', '/imports/evenements/preview', body); },
       commitImportEvenements(body) { return request('POST', '/imports/evenements/commit', body); },
       formationCatalog(params) { return request('GET', `/formation/catalog${queryString(params || {})}`); },
+      saveStatComCode(body) { return request('POST', '/formation/statcom', body); },
+      resolveStatCom(body) { return request('POST', '/formation/statcom/resolve', body); },
       createEventDefinition(body) { return request('POST', '/formation/definitions', body); },
       previewFormationEventAssociation(id) { return request('GET', `/formation/definition-versions/${encodeURIComponent(id)}/association-preview`); },
       associateFormationEvents(id, body) { return request('POST', `/formation/definition-versions/${encodeURIComponent(id)}/associate-events`, body || {}); },

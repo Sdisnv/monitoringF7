@@ -480,6 +480,18 @@ async function scopeHandler(event){
       }
       return response(200, { ok:true, ...(await service.formationCatalog(queryOf(event))) });
     }
+    if(method === 'POST' && path === '/formation/statcom'){
+      if(!hasPermission(claims, 'references:manage')){
+        return response(403, { ok:false, error:'forbidden', message:'Le référentiel STAT.COM est réservé aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.saveStatComCode(body, claims)) });
+    }
+    if(method === 'POST' && path === '/formation/statcom/resolve'){
+      if(!hasPermission(claims, 'references:manage') && !hasPermission(claims, 'events:create')){
+        return response(403, { ok:false, error:'forbidden', message:'Le contrôle STAT.COM est réservé aux profils habilités.' });
+      }
+      return response(200, { ok:true, ...(await service.resolveStatComImportContract(body)) });
+    }
     if(method === 'POST' && path === '/formation/definitions'){
       if(!hasPermission(claims, 'references:manage')){
         return response(403, { ok:false, error:'forbidden', message:'La configuration formation est réservée aux profils habilités.' });

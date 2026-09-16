@@ -351,6 +351,17 @@ async function resolveTrainingContext(store, event, options = {}){
       multisessionV2: Boolean(options.v2State)
     });
   const diagnostics = [];
+  const effectiveStatComCode = text(
+    event.statcom_code || event.statComCode
+    || (snapshotVersion && snapshotVersion.statComCode)
+    || (effectiveVersion && (effectiveVersion.statcom_code || effectiveVersion.statComCode))
+    || (exercise && (exercise.statcom_code || exercise.statComCode))
+  );
+  const effectiveStatCom = event.statcom_snapshot || event.statComSnapshot
+    || (snapshotVersion && snapshotVersion.statCom)
+    || (effectiveVersion && (effectiveVersion.statcom_snapshot || effectiveVersion.statComSnapshot))
+    || (exercise && (exercise.statcom_snapshot || exercise.statComSnapshot))
+    || null;
   if(seriesContext.provenance === PROVENANCE.DETECTED_SERIES){
     diagnostics.push({
       code: 'DETECTED_SERIES_NOT_CONFIGURED',
@@ -378,6 +389,8 @@ async function resolveTrainingContext(store, event, options = {}){
     definitionVersion: effectiveVersion || null,
     exercise: exercise || null,
     formationLabel: formationLabel(event, definition, effectiveVersion, exercise, snapshot, seriesContext.series, seriesContext.sourceEvents),
+    statComCode: effectiveStatComCode || null,
+    statCom: effectiveStatCom,
     modeOrganisation: seriesContext.modeOrganisation,
     sessionIndex: seriesContext.sessionIndex,
     sessionCount: seriesContext.sessionCount,

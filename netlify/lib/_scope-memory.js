@@ -2,6 +2,7 @@ const { randomUUID } = require('crypto');
 const { DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 } = require('./_scope-schema');
 const { isoDate } = require('./_scope-rules');
 const { periodFromPersonneRow } = require('./_scope-personnel');
+const statcomReferential = require('./_scope-statcom-referential');
 
 function now(){ return new Date().toISOString(); }
 
@@ -58,12 +59,23 @@ function createMemoryRepo(){
   const exercices = new Map();
   const eventDefinitions = new Map();
   const eventDefinitionVersions = new Map();
+  const statComCodes = new Map();
   const participationPolicyVersions = new Map();
   const multisessionsV2 = new Map();
   const multisessionV2Sessions = new Map();
   const multisessionV2Population = new Map();
   const multisessionV2Participations = new Map();
   const policy = require('./_scope-participation-policy');
+  statcomReferential.initialStatComCodes().forEach((row) => {
+    const item = Object.assign({}, row, {
+      statcom_id: randomUUID(),
+      oi_code: row.oi || null,
+      created_at: now(),
+      updated_at: now()
+    });
+    delete item.oi;
+    statComCodes.set(item.code, item);
+  });
   const participationMotifs = new Map(policy.motifCatalog().map((row) => [row.id, {
     motif_id: row.id,
     motif_type: row.type,
@@ -479,6 +491,8 @@ function createMemoryRepo(){
         policy_version_id: row.policy_version_id || row.policyVersionId || null,
         engine_route: row.engine_route || row.engineRoute || null,
         engine_snapshot: row.engine_snapshot || row.engineSnapshot || null,
+        statcom_code: row.statcom_code || row.statComCode || null,
+        statcom_snapshot: row.statcom_snapshot || row.statComSnapshot || null,
         exercise_equivalence_key: row.exercise_equivalence_key || row.exerciseEquivalenceKey || null,
         population_figee: false,
         population_version: 0,
@@ -982,7 +996,9 @@ function createMemoryRepo(){
         definition_version_id: row.definition_version_id || row.definitionVersionId || null,
         policy_version_id: row.policy_version_id || row.policyVersionId || null,
         engine_route: row.engine_route || row.engineRoute || null,
-        configuration_snapshot: row.configuration_snapshot || row.configurationSnapshot || null,
+        configuration_snapshot: item.configuration_snapshot || row.configuration_snapshot || row.configurationSnapshot || null,
+        statcom_code: item.statcom_code || row.statcom_code || row.statComCode || null,
+        statcom_snapshot: item.statcom_snapshot || row.statcom_snapshot || row.statComSnapshot || null,
         metadata: Object.assign({}, item.metadata || {}, row.metadata || {}),
         updated_at: now()
       });
@@ -1300,6 +1316,74 @@ function createMemoryRepo(){
       participationPolicyVersions.set(item.policy_version_id, item);
       return { ...item, policyVersionId: item.policy_version_id, policyCode: item.policy_code, versionCode: item.version_code, config: JSON.parse(JSON.stringify(item.config || {})), metadata: JSON.parse(JSON.stringify(item.metadata || {})) };
     },
+    async listStatComCodes(filter = {}){
+      return [...statComCodes.values()]
+        .filter((row) => !filter.domain || String(row.domain || '').toUpperCase() === String(filter.domain).toUpperCase())
+        .filter((row) => !filter.category || String(row.category || '').toUpperCase() === String(filter.category).toUpperCase())
+        .filter((row) => filter.active === undefined || (row.active !== false) === (filter.active !== false))
+        .filter((row) => !filter.date || statcomReferential.isStatComValidForDate(row, filter.date))
+        .filter((row) => {
+          if(!filter.search) return true;
+          const needle = String(filter.search).toUpperCase();
+          return String(row.code || '').toUpperCase().includes(needle) || String(row.label || '').toUpperCase().includes(needle);
+        })
+        .sort((a, b) => String(a.domain || '').localeCompare(String(b.domain || '')) || String(a.category || '').localeCompare(String(b.category || '')) || String(a.code).localeCompare(String(b.code)))
+        .map((row) => ({
+          ...row,
+          statcomId: row.statcom_id,
+          oiCode: row.oi_code || null,
+          oi: row.oi_code || null,
+          validFrom: row.valid_from,
+          validTo: row.valid_to,
+          metadata: JSON.parse(JSON.stringify(row.metadata || {}))
+        }));
+    },
+    async getStatComCode(code){
+      const row = statComCodes.get(statcomReferential.normalizeStatComCode(code));
+      if(!row) return null;
+      return {
+        ...row,
+        statcomId: row.statcom_id,
+        oiCode: row.oi_code || null,
+        oi: row.oi_code || null,
+        validFrom: row.valid_from,
+        validTo: row.valid_to,
+        metadata: JSON.parse(JSON.stringify(row.metadata || {}))
+      };
+    },
+    async upsertStatComCode(row){
+      const code = statcomReferential.normalizeStatComCode(row.code);
+      const existing = statComCodes.get(code);
+      const item = {
+        ...(existing || {}),
+        statcom_id: existing?.statcom_id || row.statcom_id || row.statcomId || randomUUID(),
+        code,
+        label: row.label || row.libelle,
+        domain: row.domain || row.domain_code || row.domainCode || null,
+        category: row.category || row.categorie || null,
+        oi_code: row.oi_code || row.oiCode || row.oi || null,
+        specialization: row.specialization || row.specialisation || null,
+        valid_from: isoDate(row.valid_from || row.validFrom) || '2023-01-01',
+        valid_to: isoDate(row.valid_to || row.validTo),
+        active: row.active !== false && row.actif !== false,
+        metadata: Object.assign({}, existing?.metadata || {}, row.metadata || {}),
+        created_at: existing?.created_at || now(),
+        updated_at: now()
+      };
+      statComCodes.set(code, item);
+      return api.getStatComCode(code);
+    },
+    async getStatComUsage(code){
+      const normalized = statcomReferential.normalizeStatComCode(code);
+      const counts = {
+        eventDefinitionVersions: [...eventDefinitionVersions.values()].filter((row) => row.statcom_code === normalized).length,
+        events: [...evenements.values()].filter((row) => row.statcom_code === normalized).length,
+        exercises: [...exercices.values()].filter((row) => row.statcom_code === normalized).length,
+        cycles: [...cycles.values()].filter((row) => row.stat_com === normalized).length
+      };
+      counts.total = counts.eventDefinitionVersions + counts.events + counts.exercises + counts.cycles;
+      return counts;
+    },
     async listEventDefinitions(filter = {}){
       return [...eventDefinitions.values()]
         .filter((row) => !filter.domain || row.domain === String(filter.domain).toUpperCase())
@@ -1416,6 +1500,8 @@ function createMemoryRepo(){
         policy_version_id: row.policy_version_id || row.policyVersionId || null,
         population_rule: JSON.parse(JSON.stringify(row.population_rule || row.populationRule || {})),
         numbering_pattern: row.numbering_pattern || row.numberingPattern || null,
+        statcom_code: row.statcom_code || row.statComCode || null,
+        statcom_snapshot: row.statcom_snapshot || row.statComSnapshot || null,
         active: row.active !== false && row.actif !== false,
         metadata: Object.assign({}, existing?.metadata || {}, row.metadata || {}),
         created_at: existing?.created_at || now(),

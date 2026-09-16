@@ -62,6 +62,7 @@ const {
   seriesPersistenceFields
 } = require('./_scope-cycle-rules');
 const MultiSessionV2 = require('./_scope-multisession-v2');
+const statcomReferential = require('./_scope-statcom-referential');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 
@@ -386,12 +387,13 @@ function createScopeService(repo){
   }
 
   async function formationCatalog(filter = {}){
-    const [definitions, definitionVersions, policyVersions, domaines, cibles] = await Promise.all([
+    const [definitions, definitionVersions, policyVersions, domaines, cibles, statComCodes] = await Promise.all([
       repo.listEventDefinitions ? repo.listEventDefinitions(filter) : Promise.resolve([]),
       repo.listEventDefinitionVersions ? repo.listEventDefinitionVersions(filter) : Promise.resolve([]),
       repo.listParticipationPolicyVersions ? repo.listParticipationPolicyVersions({ active: true }) : Promise.resolve([]),
       repo.listDomaines ? repo.listDomaines() : Promise.resolve([]),
-      repo.listCibles ? repo.listCibles() : Promise.resolve([])
+      repo.listCibles ? repo.listCibles() : Promise.resolve([]),
+      repo.listStatComCodes ? repo.listStatComCodes({}) : Promise.resolve([])
     ]);
     const versionIds = (definitionVersions || []).map((row) => row.definition_version_id || row.definitionVersionId).filter(Boolean);
     const eventCounts = repo.countEventsByDefinitionVersions
@@ -433,9 +435,88 @@ function createScopeService(repo){
         })),
         definitionVersions: enrichedVersions,
         policyVersions,
+        statComCodes,
         domaines,
         cibles,
         transition: ['SIMPLE_LEGACY', 'PR_LEGACY', 'GENERIC_SIMPLE', 'GENERIC_MULTI_SESSION']
+      }
+    };
+  }
+
+  async function resolveStatComSnapshot(code, options = {}){
+    const normalized = statcomReferential.normalizeStatComCode(code);
+    if(!normalized) return { code: null, row: null, snapshot: null, status: 'EMPTY' };
+    const row = repo.getStatComCode
+      ? await repo.getStatComCode(normalized)
+      : (repo.listStatComCodes ? (await repo.listStatComCodes({})).find((item) => statcomReferential.normalizeStatComCode(item.code) === normalized) : null);
+    if(!row) return { code: normalized, row: null, snapshot: null, status: 'UNKNOWN' };
+    const valid = statcomReferential.isStatComValidForDate(row, options.date);
+    const rowDomain = String(row.domain || '').toUpperCase();
+    const expectedDomain = String(options.domain || '').toUpperCase();
+    const coherent = !expectedDomain || !rowDomain || rowDomain === expectedDomain || (expectedDomain === 'FOSPEC' && rowDomain === 'PR') || (expectedDomain === 'PR' && rowDomain === 'FOSPEC');
+    if(!valid) return { code: normalized, row, snapshot: statcomReferential.statComSnapshot(row), status: 'OUT_OF_VALIDITY' };
+    if(!coherent) return { code: normalized, row, snapshot: statcomReferential.statComSnapshot(row), status: 'INCOHERENT' };
+    return { code: normalized, row, snapshot: statcomReferential.statComSnapshot(row), status: 'KNOWN' };
+  }
+
+  async function assertWritableStatCom(code, options = {}){
+    const resolution = await resolveStatComSnapshot(code, options);
+    if(resolution.status === 'EMPTY') return resolution;
+    if(resolution.status === 'UNKNOWN'){
+      throw new HttpError(422, 'statcom_inconnu', `Code STAT.COM inconnu : ${resolution.code}.`, { code: resolution.code });
+    }
+    if(resolution.status === 'OUT_OF_VALIDITY'){
+      throw new HttpError(422, 'statcom_hors_validite', `Code STAT.COM hors période de validité : ${resolution.code}.`, { code: resolution.code });
+    }
+    if(resolution.status === 'INCOHERENT'){
+      throw new HttpError(422, 'statcom_incoherent', `Code STAT.COM incohérent avec le domaine demandé : ${resolution.code}.`, { code: resolution.code, domain: options.domain });
+    }
+    return resolution;
+  }
+
+  async function saveStatComCode(body, actor){
+    if(!repo.upsertStatComCode) throw new HttpError(501, 'statcom_indisponible', 'Le référentiel STAT.COM n’est pas disponible sur ce stockage.');
+    const code = statcomReferential.normalizeStatComCode(body.code);
+    if(!code) throw new HttpError(400, 'statcom_code_vide', 'Le code STAT.COM est obligatoire.');
+    const label = String(body.label || body.libelle || '').trim();
+    if(!label) throw new HttpError(400, 'statcom_libelle_vide', 'Le libellé STAT.COM est obligatoire.');
+    const existing = repo.getStatComCode ? await repo.getStatComCode(code) : null;
+    const usage = repo.getStatComUsage ? await repo.getStatComUsage(code) : { total: 0 };
+    if(existing && Number(usage.total || 0) > 0 && body.delete === true){
+      throw new HttpError(409, 'statcom_utilise', 'Suppression physique interdite : ce code STAT.COM est déjà utilisé historiquement.', { code, usage });
+    }
+    const statCom = await repo.upsertStatComCode({
+      code,
+      label,
+      domain: body.domain || body.domain_code || null,
+      category: body.category || body.categorie || null,
+      oi_code: body.oiCode || body.oi_code || body.oi || null,
+      specialization: body.specialization || body.specialisation || null,
+      valid_from: body.validFrom || body.valid_from || '2023-01-01',
+      valid_to: body.validTo || body.valid_to || null,
+      active: body.active !== false && body.actif !== false,
+      metadata: Object.assign({}, body.metadata || {}, { updatedBy: actorId(actor), source: existing ? 'admin_update' : 'admin_create' })
+    });
+    return { statCom, usage };
+  }
+
+  async function resolveStatComImportContract(body = {}){
+    const code = body.statCom || body.stat_com || body.code || body.statcomCode;
+    const resolution = await resolveStatComSnapshot(code, {
+      date: body.date || body.eventDate || body.date_evenement,
+      domain: body.domain || body.domaine || body.domaine_code
+    });
+    return {
+      statComResolution: {
+        status: resolution.status,
+        code: resolution.code,
+        statCom: resolution.snapshot,
+        contract: {
+          known: resolution.status !== 'UNKNOWN' && resolution.status !== 'EMPTY',
+          usable: resolution.status === 'KNOWN',
+          inactiveOrOutOfPeriod: resolution.status === 'OUT_OF_VALIDITY',
+          incoherentWithConfiguration: resolution.status === 'INCOHERENT'
+        }
       }
     };
   }
@@ -816,7 +897,9 @@ function createScopeService(repo){
           definition_version_id: version.definition_version_id || version.definitionVersionId,
           policy_version_id: version.policy_version_id || version.policyVersionId || null,
           engine_route: route,
-          engine_snapshot: eventSnapshot
+          engine_snapshot: eventSnapshot,
+          statcom_code: version.statcom_code || version.statComCode || null,
+          statcom_snapshot: version.statcom_snapshot || version.statComSnapshot || null
         };
         if(requestedSession) {
           patch.session_index = requestedSession;
@@ -1088,6 +1171,13 @@ function createScopeService(repo){
         metadata: { source: 'configuration_formation_metier', generated: true }
       });
     }
+    const statComInput = body.statComCode || body.statcomCode || body.statcom_code || body.stat_com || null;
+    const statComResolution = statComInput
+      ? await assertWritableStatCom(statComInput, {
+        domain: definition.domain,
+        date: body.validFrom || body.valid_from || `${Number(body.year || body.annee || 2026)}-01-01`
+      })
+      : { code: null, snapshot: null };
     const versionInput = genericCatalog.validateDefinitionVersion({
       ...body,
       definition_id: definition.definition_id,
@@ -1096,7 +1186,9 @@ function createScopeService(repo){
       valid_from: body.validFrom || body.valid_from || `${Number(body.year || body.annee || 2026)}-01-01`,
       valid_to: body.validTo || body.valid_to || `${Number(body.year || body.annee || 2026)}-12-31`,
       mode_organisation: body.modeOrganisation || body.mode_organisation || body.mode || body.modeSession,
-      session_count: body.sessionCount || body.session_count || body.nombreSessionsAttendu
+      session_count: body.sessionCount || body.session_count || body.nombreSessionsAttendu,
+      statcom_code: statComResolution.code,
+      statcom_snapshot: statComResolution.snapshot
     }, policyVersion && policyVersion.config);
     return repo.withTransaction(async (tx) => {
       const savedDefinition = await tx.upsertEventDefinition(definition);
@@ -1110,7 +1202,7 @@ function createScopeService(repo){
         definitionLabel: savedDefinition.label,
         domain: savedDefinition.domain
       });
-      if(body && body.policyConfig && editDefinitionVersionId && String(savedVersion.definition_version_id || savedVersion.definitionVersionId || '') === String(editDefinitionVersionId)){
+      if(body && (body.policyConfig || statComInput) && editDefinitionVersionId && String(savedVersion.definition_version_id || savedVersion.definitionVersionId || '') === String(editDefinitionVersionId)){
         const refreshedPolicy = await policySnapshotFromDefinitionVersion(tx, savedVersion);
         const eventsByVersion = tx.listEventsByDefinitionVersions ? await tx.listEventsByDefinitionVersions([editDefinitionVersionId]) : {};
         const linkedEvents = eventsByVersion[editDefinitionVersionId] || [];
@@ -1133,7 +1225,9 @@ function createScopeService(repo){
             policy_version_id: savedVersion.policy_version_id || savedVersion.policyVersionId || null,
             engine_snapshot: eventSnapshot,
             participation_policy_version: refreshedPolicy.policyVersion,
-            participation_policy_snapshot: refreshedPolicy
+            participation_policy_snapshot: refreshedPolicy,
+            statcom_code: savedVersion.statcom_code || savedVersion.statComCode || null,
+            statcom_snapshot: savedVersion.statcom_snapshot || savedVersion.statComSnapshot || null
           });
         }
       }
@@ -1533,6 +1627,14 @@ function createScopeService(repo){
     const genericEngineRoute = definitionVersion
       ? genericCatalog.resolveEngineRoute({ domaine_code: domaine }, { definitionVersion })
       : null;
+    const configuredStatComCode = definitionVersion && (definitionVersion.statcom_code || definitionVersion.statComCode);
+    const configuredStatComSnapshot = definitionVersion && (definitionVersion.statcom_snapshot || definitionVersion.statComSnapshot);
+    const eventStatCom = configuredStatComCode
+      ? {
+        code: configuredStatComCode,
+        snapshot: configuredStatComSnapshot || (await resolveStatComSnapshot(configuredStatComCode, { domain: domaine, date })).snapshot
+      }
+      : { code: null, snapshot: null };
     const definitionMode = definitionVersion && (definitionVersion.mode_organisation || definitionVersion.modeOrganisation);
     const isGenericMulti = definitionMode === genericCatalog.ORGANISATION_MODES.MULTI_SESSION;
     const sessionConfig = normalizeSessionConfig(Object.assign({}, body, isGenericMulti ? {
@@ -1562,6 +1664,8 @@ function createScopeService(repo){
           policy_version_id: definitionVersion && (definitionVersion.policy_version_id || definitionVersion.policyVersionId),
           engine_route: genericEngineRoute,
           configuration_snapshot: definitionVersion ? genericCatalog.snapshotDefinitionVersion({ code: definitionVersion.definitionCode, label: definitionVersion.definitionLabel, domain: definitionVersion.domain }, definitionVersion, { policy_version_id: definitionVersion.policy_version_id || definitionVersion.policyVersionId, policy_code: definitionVersion.policyCode, version_code: definitionVersion.policyVersionCode }) : null,
+          statcom_code: eventStatCom.code,
+          statcom_snapshot: eventStatCom.snapshot,
           metadata: { createdFrom: 'manual_event_form' }
         });
       }
@@ -1592,6 +1696,8 @@ function createScopeService(repo){
         policy_version_id: definitionVersion && (definitionVersion.policy_version_id || definitionVersion.policyVersionId),
         engine_route: genericEngineRoute,
         engine_snapshot: definitionVersion ? genericCatalog.snapshotDefinitionVersion({ code: definitionVersion.definitionCode, label: definitionVersion.definitionLabel, domain: definitionVersion.domain }, definitionVersion, { policy_version_id: definitionVersion.policy_version_id || definitionVersion.policyVersionId, policy_code: definitionVersion.policyCode, version_code: definitionVersion.policyVersionCode }) : null,
+        statcom_code: eventStatCom.code,
+        statcom_snapshot: eventStatCom.snapshot,
         ...seriesPersistenceFields({
           libelle,
           domaine_code: domaine,
@@ -1942,6 +2048,7 @@ function createScopeService(repo){
     const wantsDomaine = body.domaineCode !== undefined || body.domaine_code !== undefined;
     const wantsCibles = body.cibleIds !== undefined || body.cible_ids !== undefined;
     const wantsStatut = body.statut !== undefined;
+    const wantsStatCom = body.statComCode !== undefined || body.statcomCode !== undefined || body.statcom_code !== undefined || body.stat_com !== undefined;
     const wantsSessionCount = body.nombreSessionsAttendu !== undefined || body.nombre_sessions_attendu !== undefined || body.nbSessions !== undefined || body.nb_sessions !== undefined;
     if(wantsDomaine && evenement.population_figee){
       throw new HttpError(422, 'population_figee_immutable', 'Le domaine ne peut plus être modifié après gel.');
@@ -1980,6 +2087,20 @@ function createScopeService(repo){
     }
     if(body.salle !== undefined) patch.salle = String(body.salle || '').trim() || null;
     if(body.responsable !== undefined) patch.responsable = String(body.responsable || '').trim() || null;
+    if(wantsStatCom){
+      const statComValue = body.statComCode || body.statcomCode || body.statcom_code || body.stat_com || null;
+      if(statComValue){
+        const resolution = await assertWritableStatCom(statComValue, {
+          domain: patch.domaine_code || evenement.domaine_code || evenement.domaineCode,
+          date: patch.date || evenement.date
+        });
+        patch.statcom_code = resolution.code;
+        patch.statcom_snapshot = resolution.snapshot;
+      }else{
+        patch.statcom_code = null;
+        patch.statcom_snapshot = null;
+      }
+    }
     if(wantsStatut){
       const statut = String(body.statut || '').toUpperCase();
       if(!['PLANIFIE', 'REPORTE', 'ANNULE'].includes(statut)){
@@ -5344,13 +5465,17 @@ function createScopeService(repo){
         version_code: version.policyVersionCode
       });
       snapshot.association = { origin: 'IMPORT', label: 'Import', at: new Date().toISOString() };
+      const statComCode = version.statcom_code || version.statComCode || null;
+      const statComSnapshot = version.statcom_snapshot || version.statComSnapshot || (statComCode ? (await resolveStatComSnapshot(statComCode, { domain: definition && definition.domain || version.domain, date: line.date })).snapshot : null);
       return {
         definition,
         version,
         definitionVersionId: version.definition_version_id || version.definitionVersionId,
         policyVersionId,
         engineRoute,
-        snapshot
+        snapshot,
+        statComCode,
+        statComSnapshot
       };
     }
     const explicitCode = String(line?.eventDefinitionCode || line?.event_definition_code || '').trim();
@@ -5372,13 +5497,17 @@ function createScopeService(repo){
       version_code: version.policyVersionCode
     });
     snapshot.association = { origin: 'IMPORT', label: 'Import', at: new Date().toISOString() };
+    const statComCode = version.statcom_code || version.statComCode || null;
+    const statComSnapshot = version.statcom_snapshot || version.statComSnapshot || (statComCode ? (await resolveStatComSnapshot(statComCode, { domain: definition.domain, date: line.date })).snapshot : null);
     return {
       definition,
       version,
       definitionVersionId: version.definition_version_id || version.definitionVersionId,
       policyVersionId,
       engineRoute,
-      snapshot
+      snapshot,
+      statComCode,
+      statComSnapshot
     };
   }
 
@@ -5429,6 +5558,8 @@ function createScopeService(repo){
         policy_version_id: binding && binding.policyVersionId,
         engine_route: binding && binding.engineRoute,
         configuration_snapshot: binding && binding.snapshot,
+        statcom_code: binding && binding.statComCode,
+        statcom_snapshot: binding && binding.statComSnapshot,
         metadata: { source, sourceLineNos: list.map((item) => item.line.ligneNo) }
       });
       for(const item of list){
@@ -5443,7 +5574,9 @@ function createScopeService(repo){
           definition_version_id: binding && binding.definitionVersionId,
           policy_version_id: binding && binding.policyVersionId,
           engine_route: binding && binding.engineRoute,
-          engine_snapshot: binding && binding.snapshot
+          engine_snapshot: binding && binding.snapshot,
+          statcom_code: binding && binding.statComCode,
+          statcom_snapshot: binding && binding.statComSnapshot
         };
         patch.pr_exercise_group_key = `EXERCICE:${exercice.exercice_id}`;
         patch.pr_session_key = `EXERCICE:${exercice.exercice_id}.${sessionIndex}`;
@@ -5601,6 +5734,8 @@ function createScopeService(repo){
           policy_version_id: genericBinding && genericBinding.policyVersionId,
           engine_route: genericBinding && genericBinding.engineRoute,
           engine_snapshot: genericBinding && genericBinding.snapshot,
+          statcom_code: genericBinding && genericBinding.statComCode,
+          statcom_snapshot: genericBinding && genericBinding.statComSnapshot,
           participation_policy_version: targetPolicy.policyVersion,
           participation_policy_snapshot: targetPolicy,
           cible_ids: (group.cibles || []).map((c) => c.cibleId),
@@ -5805,6 +5940,8 @@ function createScopeService(repo){
           policy_version_id: genericBinding && genericBinding.policyVersionId,
           engine_route: genericBinding && genericBinding.engineRoute,
           engine_snapshot: genericBinding && genericBinding.snapshot,
+          statcom_code: genericBinding && genericBinding.statComCode,
+          statcom_snapshot: genericBinding && genericBinding.statComSnapshot,
           participation_policy_version: targetPolicy.policyVersion,
           participation_policy_snapshot: targetPolicy,
           cible_ids: (line.cibles || []).map((c) => c.cibleId),
@@ -6355,6 +6492,8 @@ function createScopeService(repo){
     deleteParticipationStatus,
     deleteParticipationMotif,
     formationCatalog,
+    saveStatComCode,
+    resolveStatComImportContract,
     createEventDefinition,
     previewFormationEventAssociation,
     associateEventsToFormationConfiguration,

@@ -128,6 +128,8 @@ function normalizeDefinitionVersion(input = {}){
     policy_version_id: input.policy_version_id || input.policyVersionId || null,
     population_rule: normalizePopulationRule(input.population_rule || input.populationRule, domain),
     numbering_pattern: nfc(input.numbering_pattern || input.numberingPattern || '{label} {index.major}.{index.minor}'),
+    statcom_code: input.statcom_code || input.statComCode || input.stat_com || null,
+    statcom_snapshot: input.statcom_snapshot || input.statComSnapshot || null,
     active: input.active === false || input.actif === false ? false : true,
     metadata: input.metadata || {}
   };
@@ -166,7 +168,9 @@ function snapshotDefinitionVersion(definition, version, policyVersion){
       sessionCount: Number(version.session_count || version.sessionCount || 1),
       validFrom: dateOnly(version.valid_from || version.validFrom),
       validTo: dateOnly(version.valid_to || version.validTo),
-      populationRule: version.population_rule || version.populationRule || null
+      populationRule: version.population_rule || version.populationRule || null,
+      statComCode: version.statcom_code || version.statComCode || null,
+      statCom: version.statcom_snapshot || version.statComSnapshot || null
     } : null,
     policyVersion: policyVersion ? {
       policyVersionId: policyVersion.policy_version_id || policyVersion.policyVersionId,

@@ -276,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-cancelled-event-single-source-of-truth-11';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-statcom-referential-config-1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -401,6 +401,7 @@ async function ensureScopeSchema(){
   await migrateParticipantSelectionRuntimeRootRepair1031();
   await migrateAttendusRetraitSchemaContractRepair1032();
   await migrateCancelledEventSingleSourceOfTruth11();
+  await migrateStatComReferentialConfig1();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1599,6 +1600,60 @@ async function migrateAttendusRetraitSchemaContractRepair1032(){
 
 async function migrateCancelledEventSingleSourceOfTruth11(){
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-cancelled-event-single-source-of-truth-11') on conflict (version) do nothing`);
+}
+
+async function migrateStatComReferentialConfig1(){
+  const statcom = require('./_scope-statcom-referential');
+  await db.query(`
+    create table if not exists scope_statcom_referentiel (
+      statcom_id uuid primary key default gen_random_uuid(),
+      code text not null unique,
+      label text not null,
+      domain text,
+      category text,
+      oi_code text,
+      specialization text,
+      valid_from date not null default '2023-01-01',
+      valid_to date,
+      active boolean not null default true,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_statcom_code_chk check (length(trim(code)) > 0),
+      constraint scope_statcom_label_chk check (length(trim(label)) > 0),
+      constraint scope_statcom_dates_chk check (valid_to is null or valid_from <= valid_to)
+    )
+  `);
+  await db.query(`create index if not exists scope_statcom_lookup_idx on scope_statcom_referentiel(domain, category, active, valid_from, valid_to)`);
+  await db.query(`create index if not exists scope_statcom_oi_idx on scope_statcom_referentiel(oi_code, specialization)`);
+  await db.query(`alter table scope_event_definition_versions add column if not exists statcom_code text`);
+  await db.query(`alter table scope_event_definition_versions add column if not exists statcom_snapshot jsonb`);
+  await db.query(`alter table scope_evenements add column if not exists statcom_code text`);
+  await db.query(`alter table scope_evenements add column if not exists statcom_snapshot jsonb`);
+  await db.query(`alter table scope_exercices add column if not exists statcom_code text`);
+  await db.query(`alter table scope_exercices add column if not exists statcom_snapshot jsonb`);
+  await db.query(`create index if not exists scope_evenements_statcom_idx on scope_evenements(statcom_code, date)`);
+  await db.query(`create index if not exists scope_event_definition_versions_statcom_idx on scope_event_definition_versions(statcom_code)`);
+  for(const row of statcom.initialStatComCodes()){
+    await db.query(
+      `insert into scope_statcom_referentiel(code, label, domain, category, oi_code, specialization, valid_from, valid_to, active, metadata)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
+       on conflict (code) do nothing`,
+      [
+        row.code,
+        row.label,
+        row.domain,
+        row.category,
+        row.oi,
+        row.specialization,
+        row.valid_from,
+        row.valid_to,
+        row.active,
+        JSON.stringify(row.metadata || {})
+      ]
+    );
+  }
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-statcom-referential-config-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

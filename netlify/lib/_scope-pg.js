@@ -4,6 +4,7 @@ const { ensureScopeSchema } = require('./_scope-schema');
 const { isoDate } = require('./_scope-rules');
 const { periodFromPersonneRow } = require('./_scope-personnel');
 const { pgCibleJoinCondition } = require('./_scope-target-resolution');
+const statcomReferential = require('./_scope-statcom-referential');
 
 function dateOnly(value){
   if(!value) return null;
@@ -69,6 +70,10 @@ function mapEvent(row){
     policy_version_id: row.policy_version_id || null,
     engine_route: row.engine_route || null,
     engine_snapshot: row.engine_snapshot || null,
+    statcom_code: row.statcom_code || null,
+    statComCode: row.statcom_code || null,
+    statcom_snapshot: row.statcom_snapshot || null,
+    statComSnapshot: row.statcom_snapshot || null,
     exercice_key: exercice && exercice.exercice_key,
     exercice_code: exercice && exercice.code,
     exercice_libelle: exercice && exercice.libelle,
@@ -103,6 +108,10 @@ function mapExercise(row){
     policy_version_id: row.policy_version_id || null,
     engine_route: row.engine_route || null,
     configuration_snapshot: row.configuration_snapshot || null,
+    statcom_code: row.statcom_code || null,
+    statComCode: row.statcom_code || null,
+    statcom_snapshot: row.statcom_snapshot || null,
+    statComSnapshot: row.statcom_snapshot || null,
     metadata: row.metadata || {},
     created_at: row.created_at,
     updated_at: row.updated_at
@@ -148,6 +157,10 @@ function mapEventDefinitionVersion(row){
     populationRule: row.population_rule || {},
     numbering_pattern: row.numbering_pattern || null,
     numberingPattern: row.numbering_pattern || null,
+    statcom_code: row.statcom_code || null,
+    statComCode: row.statcom_code || null,
+    statcom_snapshot: row.statcom_snapshot || null,
+    statComSnapshot: row.statcom_snapshot || null,
     active: row.active !== false,
     metadata: row.metadata || {},
     definitionCode: row.definition_code || null,
@@ -155,6 +168,30 @@ function mapEventDefinitionVersion(row){
     domain: row.domain || null,
     policyCode: row.policy_code || null,
     policyVersionCode: row.policy_version_code || null,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function mapStatCom(row){
+  if(!row) return null;
+  return {
+    statcom_id: row.statcom_id,
+    statcomId: row.statcom_id,
+    code: row.code,
+    label: row.label,
+    domain: row.domain || null,
+    category: row.category || null,
+    oi_code: row.oi_code || null,
+    oiCode: row.oi_code || null,
+    oi: row.oi_code || null,
+    specialization: row.specialization || null,
+    valid_from: dateOnly(row.valid_from),
+    validFrom: dateOnly(row.valid_from),
+    valid_to: dateOnly(row.valid_to),
+    validTo: dateOnly(row.valid_to),
+    active: row.active !== false,
+    metadata: row.metadata || {},
     created_at: row.created_at,
     updated_at: row.updated_at
   };
@@ -331,6 +368,9 @@ function mapAffectationDates(row){
 function createPgRepo(client){
   const q = (text, params) => (client || db).query(text, params);
   let participationPolicyColumnsKnown = null;
+  let eventStatComColumnsKnown = null;
+  let exerciseStatComColumnsKnown = null;
+  let definitionVersionStatComColumnsKnown = null;
   const tableExists = async (tableName) => {
     const result = await q(
       `select exists (
@@ -352,6 +392,33 @@ function createPgRepo(client){
     );
     participationPolicyColumnsKnown = Number(result.rows[0] && result.rows[0].n) === 2;
     return participationPolicyColumnsKnown;
+  };
+  const hasColumns = async (tableName, columns) => {
+    const result = await q(
+      `select column_name
+         from information_schema.columns
+        where table_schema = 'public'
+          and table_name = $1
+          and column_name = any($2::text[])`,
+      [tableName, columns]
+    );
+    const found = new Set((result.rows || []).map((row) => row.column_name));
+    return columns.every((column) => found.has(column));
+  };
+  const hasEventStatComColumns = async () => {
+    if(eventStatComColumnsKnown !== null) return eventStatComColumnsKnown;
+    eventStatComColumnsKnown = await hasColumns('scope_evenements', ['statcom_code', 'statcom_snapshot']);
+    return eventStatComColumnsKnown;
+  };
+  const hasExerciseStatComColumns = async () => {
+    if(exerciseStatComColumnsKnown !== null) return exerciseStatComColumnsKnown;
+    exerciseStatComColumnsKnown = await hasColumns('scope_exercices', ['statcom_code', 'statcom_snapshot']);
+    return exerciseStatComColumnsKnown;
+  };
+  const hasDefinitionVersionStatComColumns = async () => {
+    if(definitionVersionStatComColumnsKnown !== null) return definitionVersionStatComColumnsKnown;
+    definitionVersionStatComColumnsKnown = await hasColumns('scope_event_definition_versions', ['statcom_code', 'statcom_snapshot']);
+    return definitionVersionStatComColumnsKnown;
   };
 
   const api = {
@@ -722,7 +789,14 @@ function createPgRepo(client){
           JSON.stringify(row.engine_snapshot || row.engineSnapshot || null)
         );
       }
-      const valuePlaceholders = params.map((_, index) => `$${index + 1}${eventColumns[index] === 'participation_policy_snapshot' || eventColumns[index] === 'engine_snapshot' ? '::jsonb' : ''}`);
+      if(await hasEventStatComColumns()){
+        eventColumns.push('statcom_code', 'statcom_snapshot');
+        params.push(
+          row.statcom_code || row.statComCode || null,
+          JSON.stringify(row.statcom_snapshot || row.statComSnapshot || null)
+        );
+      }
+      const valuePlaceholders = params.map((_, index) => `$${index + 1}${['participation_policy_snapshot', 'engine_snapshot', 'statcom_snapshot'].includes(eventColumns[index]) ? '::jsonb' : ''}`);
       const result = codeCours
         ? await q(
           `with ins as (
@@ -829,11 +903,16 @@ function createPgRepo(client){
         'heure_debut_prevue','heure_fin_prevue','heure_debut_reelle','heure_fin_reelle','duree_reelle_minutes',
         'hidden_at','hidden_par',
         'exercice_id','session_index','session_label','pr_exercise_group_key','pr_session_key','exercise_equivalence_key','participation_policy_version','participation_policy_snapshot',
-        'definition_version_id','policy_version_id','engine_route','engine_snapshot'
+        'definition_version_id','policy_version_id','engine_route','engine_snapshot','statcom_code','statcom_snapshot'
       ];
       if(Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_version') || Object.prototype.hasOwnProperty.call(patch || {}, 'participation_policy_snapshot')){
         if(!(await hasParticipationPolicyColumns())){
           allowed = allowed.filter((key) => key !== 'participation_policy_version' && key !== 'participation_policy_snapshot');
+        }
+      }
+      if(Object.prototype.hasOwnProperty.call(patch || {}, 'statcom_code') || Object.prototype.hasOwnProperty.call(patch || {}, 'statcom_snapshot')){
+        if(!(await hasEventStatComColumns())){
+          allowed = allowed.filter((key) => key !== 'statcom_code' && key !== 'statcom_snapshot');
         }
       }
       const sets = ['version = version + 1', 'updated_at = now()'];
@@ -1408,12 +1487,13 @@ function createPgRepo(client){
     },
     async upsertExercise(row){
       const id = row.exercice_id || row.exerciceId || randomUUID();
+      const hasStatCom = await hasExerciseStatComColumns();
       const result = await q(
         `insert into scope_exercices(
           exercice_id, exercice_key, domaine_code, code, libelle, annee,
           mode_session, nombre_sessions_attendu, consolidation_active, source, cycle_id, metadata,
-          definition_version_id, policy_version_id, engine_route, configuration_snapshot
-        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16::jsonb)
+          definition_version_id, policy_version_id, engine_route, configuration_snapshot${hasStatCom ? ', statcom_code, statcom_snapshot' : ''}
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16::jsonb${hasStatCom ? ',$17,$18::jsonb' : ''})
         on conflict (exercice_key) where exercice_key is not null do update set
           domaine_code = excluded.domaine_code,
           code = coalesce(scope_exercices.code, excluded.code),
@@ -1426,6 +1506,7 @@ function createPgRepo(client){
           policy_version_id = coalesce(scope_exercices.policy_version_id, excluded.policy_version_id),
           engine_route = coalesce(excluded.engine_route, scope_exercices.engine_route),
           configuration_snapshot = coalesce(scope_exercices.configuration_snapshot, excluded.configuration_snapshot),
+          ${hasStatCom ? 'statcom_code = coalesce(scope_exercices.statcom_code, excluded.statcom_code), statcom_snapshot = coalesce(scope_exercices.statcom_snapshot, excluded.statcom_snapshot),' : ''}
           updated_at = now(),
           metadata = scope_exercices.metadata || excluded.metadata
         returning *`,
@@ -1445,19 +1526,29 @@ function createPgRepo(client){
           row.definition_version_id || row.definitionVersionId || null,
           row.policy_version_id || row.policyVersionId || null,
           row.engine_route || row.engineRoute || null,
-          JSON.stringify(row.configuration_snapshot || row.configurationSnapshot || null)
+          JSON.stringify(row.configuration_snapshot || row.configurationSnapshot || null),
+          ...(hasStatCom ? [
+            row.statcom_code || row.statComCode || null,
+            JSON.stringify(row.statcom_snapshot || row.statComSnapshot || null)
+          ] : [])
         ]
       );
       return mapExercise(result.rows[0]);
     },
     async updateExercise(id, patch){
-      const allowed = ['exercice_key','domaine_code','code','libelle','annee','mode_session','nombre_sessions_attendu','consolidation_active','source','cycle_id','metadata','definition_version_id','policy_version_id','engine_route','configuration_snapshot'];
+      const allowed = ['exercice_key','domaine_code','code','libelle','annee','mode_session','nombre_sessions_attendu','consolidation_active','source','cycle_id','metadata','definition_version_id','policy_version_id','engine_route','configuration_snapshot','statcom_code','statcom_snapshot'];
+      if(Object.prototype.hasOwnProperty.call(patch || {}, 'statcom_code') || Object.prototype.hasOwnProperty.call(patch || {}, 'statcom_snapshot')){
+        if(!(await hasExerciseStatComColumns())){
+          allowed.splice(allowed.indexOf('statcom_code'), 1);
+          allowed.splice(allowed.indexOf('statcom_snapshot'), 1);
+        }
+      }
       const sets = ['updated_at = now()'];
       const params = [];
       let i = 1;
       for(const key of allowed){
         if(Object.prototype.hasOwnProperty.call(patch || {}, key)){
-          if(key === 'metadata' || key === 'configuration_snapshot'){
+          if(key === 'metadata' || key === 'configuration_snapshot' || key === 'statcom_snapshot'){
             sets.push(`${key} = $${i}::jsonb`);
             params.push(JSON.stringify(patch[key] || {}));
           } else {
@@ -1996,6 +2087,94 @@ function createPgRepo(client){
       );
       return mapParticipationPolicyVersion(result.rows[0]);
     },
+    async listStatComCodes(filter = {}){
+      if(!(await tableExists('scope_statcom_referentiel'))) return [];
+      const clauses = [];
+      const params = [];
+      if(filter.domain){
+        params.push(String(filter.domain).toUpperCase());
+        clauses.push(`upper(domain) = $${params.length}`);
+      }
+      if(filter.category){
+        params.push(String(filter.category).toUpperCase());
+        clauses.push(`upper(category) = $${params.length}`);
+      }
+      if(filter.active !== undefined){
+        params.push(filter.active !== false);
+        clauses.push(`active = $${params.length}`);
+      }
+      if(filter.date){
+        params.push(isoDate(filter.date));
+        clauses.push(`valid_from <= $${params.length}::date and (valid_to is null or $${params.length}::date <= valid_to)`);
+      }
+      if(filter.search){
+        params.push(`%${String(filter.search).trim()}%`);
+        clauses.push(`(code ilike $${params.length} or label ilike $${params.length})`);
+      }
+      const where = clauses.length ? `where ${clauses.join(' and ')}` : '';
+      const result = await q(`select * from scope_statcom_referentiel ${where} order by domain nulls last, category nulls last, code`, params);
+      return result.rows.map(mapStatCom);
+    },
+    async getStatComCode(code){
+      if(!(await tableExists('scope_statcom_referentiel'))) return null;
+      const result = await q(`select * from scope_statcom_referentiel where code = $1`, [statcomReferential.normalizeStatComCode(code)]);
+      return mapStatCom(result.rows[0] || null);
+    },
+    async upsertStatComCode(row){
+      const result = await q(
+        `insert into scope_statcom_referentiel(statcom_id, code, label, domain, category, oi_code, specialization, valid_from, valid_to, active, metadata)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
+         on conflict (code) do update set
+           label = excluded.label,
+           domain = excluded.domain,
+           category = excluded.category,
+           oi_code = excluded.oi_code,
+           specialization = excluded.specialization,
+           valid_from = excluded.valid_from,
+           valid_to = excluded.valid_to,
+           active = excluded.active,
+           metadata = scope_statcom_referentiel.metadata || excluded.metadata,
+           updated_at = now()
+         returning *`,
+        [
+          row.statcom_id || row.statcomId || randomUUID(),
+          statcomReferential.normalizeStatComCode(row.code),
+          row.label || row.libelle,
+          row.domain || row.domain_code || row.domainCode || null,
+          row.category || row.categorie || null,
+          row.oi_code || row.oiCode || row.oi || null,
+          row.specialization || row.specialisation || null,
+          isoDate(row.valid_from || row.validFrom) || '2023-01-01',
+          isoDate(row.valid_to || row.validTo),
+          row.active !== false && row.actif !== false,
+          JSON.stringify(row.metadata || {})
+        ]
+      );
+      return mapStatCom(result.rows[0]);
+    },
+    async getStatComUsage(code){
+      const normalized = statcomReferential.normalizeStatComCode(code);
+      const counts = { eventDefinitionVersions: 0, events: 0, exercises: 0, cycles: 0, total: 0 };
+      if(!normalized) return counts;
+      if(await tableExists('scope_event_definition_versions')){
+        const r = await q(`select count(*)::int as count from scope_event_definition_versions where statcom_code = $1`, [normalized]);
+        counts.eventDefinitionVersions = Number(r.rows[0]?.count || 0);
+      }
+      if(await tableExists('scope_evenements')){
+        const r = await q(`select count(*)::int as count from scope_evenements where statcom_code = $1`, [normalized]);
+        counts.events = Number(r.rows[0]?.count || 0);
+      }
+      if(await tableExists('scope_exercices')){
+        const r = await q(`select count(*)::int as count from scope_exercices where statcom_code = $1`, [normalized]);
+        counts.exercises = Number(r.rows[0]?.count || 0);
+      }
+      if(await tableExists('scope_cycles')){
+        const r = await q(`select count(*)::int as count from scope_cycles where stat_com = $1`, [normalized]);
+        counts.cycles = Number(r.rows[0]?.count || 0);
+      }
+      counts.total = counts.eventDefinitionVersions + counts.events + counts.exercises + counts.cycles;
+      return counts;
+    },
     async listEventDefinitions(filter = {}){
       if(!(await tableExists('scope_event_definitions'))) return [];
       const clauses = [];
@@ -2136,11 +2315,12 @@ function createPgRepo(client){
       return mapEventDefinitionVersion(result.rows[0] || null);
     },
     async upsertEventDefinitionVersion(row){
+      const hasStatCom = await hasDefinitionVersionStatComColumns();
       const result = await q(
         `insert into scope_event_definition_versions(
           definition_version_id, definition_id, version_code, valid_from, valid_to, mode_organisation,
-          session_count, policy_version_id, population_rule, numbering_pattern, active, metadata
-        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12::jsonb)
+          session_count, policy_version_id, population_rule, numbering_pattern, active, metadata${hasStatCom ? ', statcom_code, statcom_snapshot' : ''}
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12::jsonb${hasStatCom ? ',$13,$14::jsonb' : ''})
         on conflict (definition_id, version_code) do update set
           valid_from = excluded.valid_from,
           valid_to = excluded.valid_to,
@@ -2151,6 +2331,7 @@ function createPgRepo(client){
           numbering_pattern = excluded.numbering_pattern,
           active = excluded.active,
           metadata = scope_event_definition_versions.metadata || excluded.metadata,
+          ${hasStatCom ? 'statcom_code = excluded.statcom_code, statcom_snapshot = excluded.statcom_snapshot,' : ''}
           updated_at = now()
         returning *`,
         [
@@ -2165,7 +2346,11 @@ function createPgRepo(client){
           JSON.stringify(row.population_rule || row.populationRule || {}),
           row.numbering_pattern || row.numberingPattern || null,
           row.active !== false && row.actif !== false,
-          JSON.stringify(row.metadata || {})
+          JSON.stringify(row.metadata || {}),
+          ...(hasStatCom ? [
+            row.statcom_code || row.statComCode || null,
+            JSON.stringify(row.statcom_snapshot || row.statComSnapshot || null)
+          ] : [])
         ]
       );
       return this.getEventDefinitionVersion(result.rows[0].definition_version_id);
