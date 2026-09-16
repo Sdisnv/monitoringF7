@@ -119,57 +119,74 @@ html, body {
 }
 
 /* QUO VADIS — pilotage annuel */
-.qv-nav {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
-  align-items: stretch;
+/* QUO VADIS — préparation annuelle, grammaire SCOPE */
+.qv-home-link {
+  color: inherit;
+  text-decoration: none;
+}
+.qv-home-link:hover {
+  color: var(--scope-red);
 }
 
-.qv-tab-button {
-  justify-content: flex-start;
-  min-height: 58px;
-  text-align: left;
-  white-space: normal;
+.qv-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 2px;
+  margin: 0 0 16px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--scope-line);
 }
 
-.qv-tab-button strong,
-.qv-tab-button small {
-  display: block;
-  width: 100%;
-}
-
-.qv-tab-button strong {
+.qv-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--scope-radius-xs);
+  color: var(--scope-gray-700);
   font-size: 13px;
-  line-height: 1.2;
+  font-weight: 650;
+  text-decoration: none;
+}
+.qv-subnav-link span {
+  color: var(--scope-muted);
+  font-weight: 600;
+}
+.qv-subnav-link:hover {
+  background: var(--scope-gray-100);
+  color: var(--scope-ink);
+}
+.qv-subnav-link.is-active {
+  background: var(--scope-red-soft);
+  color: var(--scope-red-dark);
+}
+.qv-subnav-link.is-active span {
+  color: var(--scope-red-dark);
 }
 
-.qv-tab-button strong span {
-  margin-left: 6px;
-  color: inherit;
-  opacity: .78;
+.scope-kpis.qv-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.qv-tab-button small {
-  margin-top: 3px;
-  font-size: 11px;
-  color: inherit;
-  opacity: .76;
+.scope-section-head {
+  flex-wrap: wrap;
 }
 
-.qv-kpis {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+.scope-section-head .scope-actions {
+  margin-top: 0;
+  flex-shrink: 0;
 }
 
 .qv-kpi-link {
+  display: block;
   width: 100%;
   border: 1px solid var(--scope-line);
   background: #fff;
   color: var(--scope-ink);
   text-align: left;
-  cursor: pointer;
+  text-decoration: none;
 }
-
 .qv-kpi-link:hover,
 .qv-kpi-link:focus {
   border-color: var(--scope-blue);
@@ -180,80 +197,35 @@ html, body {
   border-left: 4px solid var(--scope-blue);
 }
 
-.qv-actions {
-  gap: 8px;
-  flex-wrap: wrap;
+.qv-generate-actions {
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
-.qv-shortcut {
-  min-height: 34px;
+.qv-toolbar {
+  align-items: end;
+  margin-bottom: 12px;
+}
+.scope-toolbar.qv-toolbar .scope-field {
+  min-width: 140px;
+  flex: 0 1 160px;
+}
+.scope-toolbar.qv-toolbar .scope-field:first-child {
+  flex: 1 1 220px;
+}
+.qv-form-follow {
+  margin-top: 12px;
 }
 
-.qv-proposal-stack,
-.qv-day-items,
-.qv-month-strip {
-  display: grid;
-  gap: 8px;
+.scope-toolbar.qv-toolbar .scope-btn,
+.scope-toolbar.qv-toolbar .qv-attention-toggle {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
-.qv-proposal-option {
-  border: 1px solid var(--scope-line);
-  border-left: 4px solid var(--scope-gray-500);
-  border-radius: var(--scope-radius-sm);
-  padding: 10px;
-  background: #fff;
-}
-
-.qv-proposal-option.is-retained {
-  border-left-color: var(--scope-blue);
-  background: #f4f5fb;
-}
-
-.qv-proposal-option strong,
-.qv-proposal-option small {
-  display: block;
-}
-
-.qv-proposal-option p {
-  margin: 6px 0;
-  color: var(--scope-muted);
-  font-size: var(--scope-fs-secondary);
-}
-
-.qv-month-strip {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  margin-bottom: 14px;
-}
-
-.qv-month-panel h3 {
-  margin: 0 0 10px;
-  font-size: var(--scope-fs-h3);
-}
-
-.qv-day-item {
-  min-height: 44px;
-  justify-content: flex-start;
-  text-align: left;
-  white-space: normal;
-  border-left: 4px solid var(--scope-blue);
-}
-
-.qv-day-item.is-warning {
-  border-left-color: var(--scope-warning);
-  background: var(--scope-warning-soft);
-}
-
-.qv-day-item strong,
-.qv-day-item span,
-.qv-day-item small {
-  display: block;
-  width: 100%;
-}
-
-.qv-filter-grid,
-.qv-future-grid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 14px;
+.qv-export-actions {
+  margin-top: 8px;
+  margin-bottom: 12px;
 }
 
 .qv-attention-toggle {
@@ -261,111 +233,129 @@ html, body {
   min-height: var(--scope-control-h);
 }
 
-.qv-field-wide {
-  grid-column: span 2;
-}
-
-.qv-field-full {
-  grid-column: 1 / -1;
-}
-
-.qv-future-form-card h3,
-.qv-inner-card h3 {
-  margin: 0 0 10px;
-  font-size: var(--scope-fs-h3);
-}
-
-.qv-future-form-card textarea {
-  width: 100%;
-  min-height: 86px;
-  resize: vertical;
-}
-
-.qv-calendar {
+.qv-year-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border: 1px solid var(--scope-line);
-  border-radius: var(--scope-radius-sm);
-  overflow: hidden;
-  background: var(--scope-line);
-  gap: 1px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.qv-calendar-head {
-  padding: 9px 10px;
-  background: var(--scope-table-head-bg);
-  font-weight: 700;
-  font-size: var(--scope-fs-small);
+.qv-mini-month {
+  min-width: 0;
+}
+.qv-mini-month h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
   color: var(--scope-gray-700);
 }
 
-.qv-calendar-day {
-  min-height: 138px;
-  padding: 8px;
-  background: #fff;
+.qv-mini-cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
 }
 
-.qv-calendar-day.is-weekend {
-  background: #f8fafc;
-}
-
-.qv-calendar-day.is-empty {
-  background: #f1f3f6;
-}
-
-.qv-calendar-date {
+.qv-mini-head,
+.qv-mini-empty,
+.qv-mini-day {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  font-size: 11px;
 }
 
-.qv-calendar-date strong {
-  font-size: 15px;
-}
-
-.qv-calendar-date span {
-  min-width: 0;
+.qv-mini-head {
   color: var(--scope-muted);
-  font-size: 11px;
-  text-align: right;
+  font-weight: 700;
 }
 
-.qv-calendar-event {
-  display: block;
-  width: 100%;
-  margin: 0 0 6px;
-  padding: 7px 8px;
-  border: 1px solid var(--scope-line);
-  border-left: 4px solid var(--scope-blue);
-  border-radius: var(--scope-radius-sm);
-  background: #fff;
+.qv-mini-day {
+  position: relative;
+  border-radius: 3px;
   color: var(--scope-ink);
-  text-align: left;
-  cursor: pointer;
+  text-decoration: none;
+}
+.qv-mini-day:hover {
+  background: var(--scope-gray-100);
+}
+.qv-mini-day.has-activity {
+  background: var(--scope-red);
+  color: #fff;
+  font-weight: 700;
+}
+.qv-mini-day.has-activity:hover {
+  background: var(--scope-red-dark);
+}
+.qv-mini-day.has-known:not(.has-activity)::after,
+.qv-mini-day.has-known.has-activity::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--scope-yellow);
+}
+.qv-mini-day.is-selected {
+  box-shadow: inset 0 0 0 2px var(--scope-blue);
+}
+.qv-mini-day em {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1;
 }
 
-.qv-calendar-event.is-warning {
-  border-left-color: var(--scope-warning);
-  background: var(--scope-warning-soft);
+.qv-agenda-month {
+  margin: 20px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--scope-line);
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.qv-agenda-day {
+  margin: 0 0 16px;
+}
+.qv-agenda-day h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
 }
 
-.qv-calendar-event strong,
-.qv-calendar-event span,
-.qv-calendar-event small {
-  display: block;
+.qv-agenda-item,
+.qv-day-list .qv-agenda-item {
+  display: grid;
+  grid-template-columns: 7.5rem 8.5rem minmax(12rem, 1.4fr) minmax(14rem, 1fr);
+  gap: 6px 14px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border-top: 1px solid var(--scope-line);
+  color: var(--scope-ink);
+  text-decoration: none;
+}
+.qv-agenda-item:hover {
+  background: var(--scope-table-zebra);
+}
+.qv-agenda-item strong,
+.qv-agenda-item span,
+.qv-agenda-item small {
   min-width: 0;
-  overflow-wrap: anywhere;
+}
+.qv-agenda-item small {
+  color: var(--scope-muted);
 }
 
-.qv-calendar-event strong {
-  font-size: 12px;
+.qv-day-list {
+  display: grid;
 }
 
-.qv-calendar-event span,
-.qv-calendar-event small {
-  font-size: 11px;
+.qv-activities-table {
+  min-width: 980px;
 }
 
 .qv-definition-list {
@@ -374,12 +364,10 @@ html, body {
   gap: 8px 14px;
   margin: 0;
 }
-
 .qv-definition-list dt {
   color: var(--scope-muted);
   font-size: var(--scope-fs-small);
 }
-
 .qv-definition-list dd {
   margin: 0;
   font-weight: 650;
@@ -404,16 +392,34 @@ html, body {
   cursor: pointer;
 }
 
-@media (max-width: 900px) {
-  .qv-calendar {
+.qv-field-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--scope-error);
+  font-size: 12px;
+}
+
+@media (max-width: 1200px) {
+  .scope-kpis.qv-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .qv-year-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .qv-agenda-item {
+    grid-template-columns: 7.5rem 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .qv-year-grid {
     grid-template-columns: 1fr;
   }
-  .qv-calendar-head,
-  .qv-calendar-day.is-empty {
-    display: none;
-  }
-  .qv-field-wide {
-    grid-column: 1 / -1;
+  .qv-agenda-item {
+    grid-template-columns: 1fr;
   }
 }
 

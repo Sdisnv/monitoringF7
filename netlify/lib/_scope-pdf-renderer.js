@@ -1979,6 +1979,64 @@ class ScopePdfRenderer {
     const buffer = await ended;
     return { buffer, pages: range.count };
   }
+
+  renderQuoVadisProgramme(rows, exportMeta){
+    const meta = exportMeta || {};
+    const sourceRows = Array.isArray(rows) ? rows : [];
+    const tableRows = sourceRows.length
+      ? sourceRows.map((row) => [
+        String(row.date || ''),
+        String(row.horaire || ''),
+        String(row.domaine || ''),
+        String(row.oi || ''),
+        String(row.activite || ''),
+        String(row.specCursus || ''),
+        String(row.lieu || ''),
+        String(row.etat || '')
+      ])
+      : [['Aucune activité à exporter.', '', '', '', '', '', '', '']];
+    this.iconHeading('plain', 'QUO VADIS 2027', 16, { after: 5 });
+    this.para('Programme annuel préparatoire', { size: 9.2 });
+    this.doc.y += 5;
+    this.kv([
+      { label: 'Généré le', value: formatDisplayDateTime(this.meta.generatedAt || new Date().toISOString()) },
+      { label: 'Activités', value: String(sourceRows.length) },
+      { label: 'Recherche', value: meta.search || 'Toutes' },
+      { label: 'Domaine', value: meta.domain || 'Tous' },
+      { label: 'OI', value: meta.oi || 'Tous' },
+      { label: 'État', value: meta.status || 'Tous' },
+      { label: 'Mois', value: meta.month || 'Tous' },
+      { label: 'Tri', value: meta.sort || 'Date — horaire — domaine — activité' }
+    ], { cols: 4, rowH: 23 });
+    this.doc.y += 4;
+    this.table(
+      ['Date', 'Horaire', 'Domaine', 'OI', 'Activité', 'Spé. / cursus', 'Lieu', 'État'],
+      tableRows,
+      [52, 58, 42, 32, 108, 70, 80, 57],
+      {
+        wrap: [false, false, false, false, true, true, true, true],
+        rowFontSize: 6.7,
+        headerFontSize: 5.9,
+        headerH: 18,
+        rowH: 18,
+        maxRowH: null,
+        padY: 3
+      }
+    );
+  }
+
+  async finalizeQuoVadisProgramme(rows, exportMeta){
+    const doc = this.doc;
+    const chunks = [];
+    doc.on('data', (c) => chunks.push(c));
+    const ended = new Promise((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
+    this.renderQuoVadisProgramme(rows, exportMeta);
+    const range = doc.bufferedPageRange();
+    this.drawFooters(range.count);
+    doc.end();
+    const buffer = await ended;
+    return { buffer, pages: range.count };
+  }
 }
 
 function renderReportPdf(model, meta){
@@ -1995,8 +2053,17 @@ function renderStatComReferentialPdf(rows, exportMeta, meta){
   return renderer.finalizeStatComReferential(rows, exportMeta);
 }
 
+function renderQuoVadisProgrammePdf(rows, exportMeta, meta){
+  const renderer = new ScopePdfRenderer({
+    kind: 'QUO_VADIS',
+    title: 'QUO VADIS 2027',
+    subtitle: 'Programme annuel préparatoire'
+  }, meta || {});
+  return renderer.finalizeQuoVadisProgramme(rows, exportMeta);
+}
+
 module.exports = {
-  renderReportPdf, renderStatComReferentialPdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE,
+  renderReportPdf, renderStatComReferentialPdf, renderQuoVadisProgrammePdf, formatTaux, formatGap, LOGO_SCOPE, LOGO_SDIS, SIGNATURE_PR, SIGNATURE_FIT, TYPE,
   PDF_SHIFT_08_CM, SIGNATURE_TEXT_TOP_GAP, SIGNATURE_TEXT_LINE_COUNT, SIGNATURE_IMAGE_RELATIVE_Y,
   SIGNATURE_FUNCTION_RELATIVE_Y, MARGIN, headerLogoLayout, headerTitleLayout, HEADER_TITLE, SCOPE_LOGO_TOP,
   resolveSignaturePrPath, PAGE_W

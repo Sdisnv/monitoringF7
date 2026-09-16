@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { HttpError } = require('./_scope-rules');
 const { hasPermission } = require('./_rbac');
 const { collectReport, normalizeKind, REPORT_KINDS } = require('./_scope-report-data');
-const { renderReportPdf, renderStatComReferentialPdf } = require('./_scope-pdf-renderer');
+const { renderReportPdf, renderStatComReferentialPdf, renderQuoVadisProgrammePdf } = require('./_scope-pdf-renderer');
 const contract = require('./_scope-core-contract');
 
 const ALLOWED_KEYS = new Set([
@@ -180,6 +180,76 @@ async function generateStatComReferentialReport(repo, body, claims, options){
   };
 }
 
+function sanitizeQuoVadisRows(rows){
+  const source = Array.isArray(rows) ? rows : [];
+  return source.map((row) => ({
+    date: String(row && row.date || ''),
+    horaire: String(row && row.horaire || ''),
+    domaine: String(row && row.domaine || ''),
+    oi: String(row && row.oi || ''),
+    activite: String(row && row.activite || ''),
+    specCursus: String(row && (row.specCursus || row.specialisation) || ''),
+    lieu: String(row && row.lieu || ''),
+    etat: String(row && row.etat || '')
+  }));
+}
+
+function sanitizeQuoVadisExportMeta(meta){
+  const source = meta || {};
+  const clean = (value, fallback) => {
+    const text = String(value == null ? '' : value).trim();
+    return text || fallback;
+  };
+  return {
+    search: clean(source.search, 'Toutes'),
+    domain: clean(source.domain, 'Tous'),
+    oi: clean(source.oi, 'Tous'),
+    status: clean(source.status, 'Tous'),
+    month: clean(source.month, 'Tous'),
+    sort: clean(source.sort, 'Date — horaire — domaine — activité')
+  };
+}
+
+async function generateQuoVadisProgrammeReport(repo, body, claims, options){
+  if(!hasPermission(claims, 'dashboard:read')){
+    throw new HttpError(403, 'forbidden', 'L’export PDF QUO VADIS exige un profil habilité.');
+  }
+  const generatedAt = (options && options.generatedAt) || new Date().toISOString();
+  const rows = sanitizeQuoVadisRows(body && body.rows);
+  const exportMeta = sanitizeQuoVadisExportMeta(body && body.meta);
+  const meta = {
+    generatedAt,
+    authorLabel: actorLabel(claims),
+    authorId: claims && (claims.sub || claims.userId) || null
+  };
+  const { buffer, pages } = await renderQuoVadisProgrammePdf(rows, exportMeta, meta);
+  const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
+  const filename = `SCOPE_QUO_VADIS_2027_Programme.pdf`;
+  if(repo && typeof repo.appendJournal === 'function'){
+    await repo.appendJournal({
+      auteur_id: meta.authorId,
+      entite: 'quo-vadis',
+      entite_id: 'programme-2027',
+      action: 'EXPORTER_QUO_VADIS_PDF',
+      apres: {
+        filename,
+        sha256,
+        pages,
+        rows: rows.length,
+        filters: exportMeta
+      },
+      commentaire: 'export_pdf'
+    });
+  }
+  return {
+    buffer,
+    filename,
+    sha256,
+    pages,
+    meta: { kind: 'QUO_VADIS', filename, rows: rows.length }
+  };
+}
+
 async function generateReport(repo, body, claims, options){
   if(!hasPermission(claims, 'dashboard:read')){
     throw new HttpError(403, 'forbidden', 'La consultation des rapports exige dashboard:read.');
@@ -251,6 +321,7 @@ module.exports = {
   validateParticipationSpecialisation,
   generateReport,
   generateStatComReferentialReport,
+  generateQuoVadisProgrammeReport,
   pdfResponse,
   pdfHeaders
 };

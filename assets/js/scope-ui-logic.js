@@ -1142,7 +1142,44 @@
     const path = raw.split('?')[0];
     const parts = path.split('/').filter(Boolean);
     if (!parts.length || parts[0] === 'accueil') return { screen: 'accueil', nav: 'accueil' };
-    if (parts[0] === 'quo-vadis') return { screen: 'quo-vadis', nav: 'quo-vadis' };
+    if (parts[0] === 'quo-vadis') {
+      const query = {};
+      String(raw.split('?')[1] || '').split('&').filter(Boolean).forEach((pair) => {
+        const idx = pair.indexOf('=');
+        const key = decodeURIComponent((idx === -1 ? pair : pair.slice(0, idx)).replace(/\+/g, ' '));
+        const value = decodeURIComponent((idx === -1 ? '' : pair.slice(idx + 1)).replace(/\+/g, ' '));
+        query[key] = value;
+      });
+      const views = {
+        synthese: 'synthese',
+        'agenda-annuel': 'agenda-annuel',
+        agenda: 'agenda',
+        activites: 'activites',
+        'a-arbitrer': 'a-arbitrer',
+        alertes: 'alertes',
+        cursus: 'cursus',
+        regles: 'regles',
+        'dates-connues': 'dates-connues'
+      };
+      if (parts[1] === 'activites' && parts[2]) {
+        return {
+          screen: 'quo-vadis',
+          nav: 'quo-vadis',
+          qvView: 'activite',
+          qvActivityId: parts[2],
+          qvFrom: query.from || 'activites',
+          qvJour: query.jour || ''
+        };
+      }
+      const view = views[parts[1]] || 'synthese';
+      return {
+        screen: 'quo-vadis',
+        nav: 'quo-vadis',
+        qvView: view,
+        qvJour: query.jour || '',
+        qvFrom: query.from || ''
+      };
+    }
     if (parts[0] === 'vigilance') return { screen: 'vigilance', nav: 'vigilance' };
     if (parts[0] === 'statistiques') return { screen: 'statistiques', nav: 'statistiques' };
     if (parts[0] === 'cycles') {

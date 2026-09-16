@@ -142,7 +142,9 @@ function groupState(nav, id) {
     assert.strictEqual(logic.parseHash('#/cycles').screen, 'cycles');
     assert.strictEqual(logic.parseHash('#/vigilance').screen, 'vigilance');
     assert.strictEqual(logic.parseHash('#/statistiques').screen, 'statistiques');
-    assert.deepStrictEqual(logic.parseHash('#/quo-vadis'), { screen: 'quo-vadis', nav: 'quo-vadis' });
+    assert.strictEqual(logic.parseHash('#/quo-vadis').screen, 'quo-vadis');
+    assert.strictEqual(logic.parseHash('#/quo-vadis').nav, 'quo-vadis');
+    assert.strictEqual(logic.parseHash('#/quo-vadis').qvView, 'synthese');
     assert.strictEqual(logic.parseHash('#/personnel').screen, 'personnel');
     assert.strictEqual(logic.parseHash('#/rapports').screen, 'rapports');
     assert.deepStrictEqual(logic.parseHash('#/vue/FOSPEC/PR'), { screen: 'vue', nav: 'vue', domaine: 'FOSPEC', cible: 'PR' });

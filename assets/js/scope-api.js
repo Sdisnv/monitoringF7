@@ -405,6 +405,7 @@
       setQuoVadisCursus(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cursus`, body || {}); },
       retainQuoVadisProposal(id, body) { return request('POST', `/quo-vadis/proposals/${encodeURIComponent(id)}/retain`, body || {}); },
       createQuoVadisFutureDate(body) { return request('POST', '/quo-vadis/future-dates', body || {}); },
+      quoVadisActivityReferences(id, annee) { return request('GET', `/quo-vadis/activities/${encodeURIComponent(id)}/references${queryString({ annee: annee || 2027 })}`); },
       participationReferentialUsage(kind, id) { return request('GET', `/participation/referentials/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/usages`); },
       saveParticipationPolicy(domain, body) { return request('POST', `/participation/policies/${encodeURIComponent(domain)}`, body || {}); },
       saveParticipationMotif(body) { return request('POST', '/participation/motifs', body || {}); },
@@ -489,6 +490,40 @@
           const header = response.headers.get('X-Scope-Report-Filename') || '';
           return (header || 'SCOPE_Referentiel_STATCOM.pdf').normalize('NFC');
         })();
+        return {
+          buffer,
+          blob: new Blob([buffer], { type: 'application/pdf' }),
+          filename: reportFilename,
+          sha256: response.headers.get('X-Scope-Report-Sha256') || '',
+          pages: Number(response.headers.get('X-Scope-Report-Pages') || 0)
+        };
+      },
+      async generateQuoVadisReport(body) {
+        const headers = { Accept: 'application/pdf', 'Content-Type': 'application/json' };
+        let response;
+        try {
+          response = await fetchWithAuthRetry(`${base}/reports/quo-vadis`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body || {})
+          });
+        } catch (error) {
+          throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
+        }
+        const contentType = response.headers.get('content-type') || '';
+        if (!response.ok) {
+          let payload = null;
+          if (contentType.includes('application/json')) payload = await response.json();
+          else payload = { message: await response.text() };
+          throw new ScopeApiError(response.status, payload || {});
+        }
+        const buffer = await response.arrayBuffer();
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        let reportFilename = 'SCOPE_QUO_VADIS_2027_Programme.pdf';
+        if (utf8Match && utf8Match[1]) {
+          try { reportFilename = decodeURIComponent(utf8Match[1]).normalize('NFC'); } catch (_error) { /* fall back */ }
+        }
         return {
           buffer,
           blob: new Blob([buffer], { type: 'application/pdf' }),

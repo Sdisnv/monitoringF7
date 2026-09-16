@@ -9,7 +9,7 @@ const { createScopeAlertsService } = require('../lib/_scope-alerts-service');
 const { createScopeCycleService } = require('../lib/_scope-cycle-service');
 const { createScopeJspReportingService, createScopeParticipationReportingService } = require('../lib/_scope-jsp-reporting');
 const { getPgRepo } = require('../lib/_scope-pg');
-const { generateReport, generateStatComReferentialReport, pdfResponse } = require('../lib/_scope-report-service');
+const { generateReport, generateStatComReferentialReport, generateQuoVadisProgrammeReport, pdfResponse } = require('../lib/_scope-report-service');
 const { createScopePersonService } = require('../lib/_scope-person-service');
 const { createScopeQuoVadisService } = require('../lib/_scope-quo-vadis-service');
 const users = require('../lib/_user-store');
@@ -140,6 +140,10 @@ async function scopeHandler(event){
     }
     if(method === 'POST' && path === '/quo-vadis/future-dates'){
       return response(201, { ok:true, ...(await quoVadis.createFutureDate(body)) });
+    }
+    params = match(path, '/quo-vadis/activities/:id/references');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, ...(await quoVadis.listActivityReferences(queryOf(event).annee || 2027, params.id)) });
     }
     params = match(path, '/participation/referentials/:kind/:id/usages');
     if(method === 'GET' && params){
@@ -559,6 +563,13 @@ async function scopeHandler(event){
         return response(403, { ok:false, error:'forbidden', message:'L’export PDF STAT.COM exige un profil habilité.' });
       }
       const result = await generateStatComReferentialReport(repo, body, claims);
+      return pdfResponse(result);
+    }
+    if(method === 'POST' && path === '/reports/quo-vadis'){
+      if(!hasPermission(claims, 'dashboard:read')){
+        return response(403, { ok:false, error:'forbidden', message:'L’export PDF QUO VADIS exige un profil habilité.' });
+      }
+      const result = await generateQuoVadisProgrammeReport(repo, body, claims);
       return pdfResponse(result);
     }
 

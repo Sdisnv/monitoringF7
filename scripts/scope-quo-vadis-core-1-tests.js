@@ -108,7 +108,7 @@ assert.ok(/const activity = \[[\s\S]*id: 'quo-vadis'[\s\S]*const pilotage = \[/.
 assert.ok(!/const pilotage = \[[\s\S]*id: 'quo-vadis'/.test(logic), 'QUO VADIS must not be in Pilotage navigation');
 assert.ok(/function renderQuoVadis/.test(ui));
 assert.ok(/QUO VADIS 2027/.test(ui));
-assert.ok(/data-qv-tab/.test(ui));
+assert.ok(/qv-subnav/.test(ui));
 assert.ok(/qv-generate/.test(ui));
 assert.ok(/qv-future-save/.test(ui));
 assert.ok(/Aucune route QUO VADIS ne réécrit/.test(ui));
