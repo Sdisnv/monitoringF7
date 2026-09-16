@@ -9,6 +9,7 @@ const path = require('path');
 const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
 const { createScopeService } = require('../netlify/lib/_scope-service');
 const { resolveTrainingContext } = require('../netlify/lib/_scope-training-context-resolver');
+const logic = require('../assets/js/scope-ui-logic');
 
 const ACTOR = { sub: 'scope-statcom-referential-config-1', roles: ['sdis-admin'], displayName: 'Testeur SCOPE' };
 const ROOT = path.join(__dirname, '..');
@@ -158,6 +159,31 @@ async function build(){
     const dpsCodes = catalog.statComCodes.filter((row) => row.domain === 'DPS').map((row) => row.code);
     ok(dpsCodes.includes('012B1'), 'code OI DPS spécifique disponible');
     ok(dpsCodes.includes('0120F7'), 'code général DPS disponible');
+  });
+
+  await record('08 — tri STAT.COM runtime : contrat sortRows valide au rendu initial et après tri', async () => {
+    ok(/const columns = \[\s*\{\s*key: 'code'/.test(UI_SOURCE), 'colonnes STAT.COM fournies sous forme de tableau');
+    ok(!/const columns = \{\s*code:/.test(UI_SOURCE), 'ancien contrat objet absent');
+    const columns = [
+      { key: 'code', value: (row) => row.code || '', type: 'text' },
+      { key: 'label', value: (row) => row.label || row.libelle || '', type: 'text' },
+      { key: 'domain', value: (row) => row.domain || '', type: 'text' },
+      { key: 'category', value: (row) => row.category || '', type: 'text' },
+      { key: 'oi', value: (row) => row.oi || row.oi_code || row.oiCode || '', type: 'text' },
+      { key: 'specialization', value: (row) => row.specialization || '', type: 'text' },
+      { key: 'validity', value: (row) => row.valid_from || row.validFrom || '', type: 'date' },
+      { key: 'state', value: (row) => row.active === false ? 'Inactif' : 'Actif', type: 'text' }
+    ];
+    const rows = [
+      { code: '012B1', label: 'DPS B1', domain: 'DPS', category: 'EXERCICE', oi: 'B1', specialization: '', valid_from: '2023-01-01', active: true },
+      { code: '010JSP', label: 'Exercices JSP', domain: 'JSP', category: 'EXERCICE', oi: '', specialization: 'JSP', valid_from: '2023-01-01', active: true },
+      { code: '0170F7', label: 'Cadres', domain: 'FOSPEC', category: 'FORMATION', oi: '', specialization: 'TOUS_CADRES', valid_from: '2024-01-01', active: false }
+    ];
+    assert.doesNotThrow(() => logic.sortRows(rows, { key: 'code', dir: 'asc' }, columns), 'rendu initial/reload avec tri par défaut sans TypeError');
+    assert.doesNotThrow(() => logic.sortRows(rows, logic.nextSort({ key: 'code', dir: 'asc' }, 'specialization', 'asc'), columns), 'tri utilisateur spécialisation sans TypeError');
+    assertions += 2;
+    eq(logic.sortRows(rows, { key: 'code', dir: 'asc' }, columns)[0].code, '010JSP', 'tri code actif');
+    eq(logic.sortRows(rows, { key: 'state', dir: 'asc' }, columns)[0].code, '012B1', 'tri état actif/inactif conservé');
   });
 
   const failed = results.filter((row) => row.status !== 'PASS');

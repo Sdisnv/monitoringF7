@@ -9156,16 +9156,16 @@
       if (!query) return true;
       return ['code', 'label', 'domain', 'category', 'oi', 'specialization'].some((key) => String(statComCell(row, key) || '').toUpperCase().includes(query));
     });
-    const columns = {
-      code: { value: (row) => row.code || '', type: 'text' },
-      label: { value: (row) => row.label || row.libelle || '', type: 'text' },
-      domain: { value: (row) => row.domain || '', type: 'text' },
-      category: { value: (row) => row.category || '', type: 'text' },
-      oi: { value: (row) => row.oi || row.oi_code || row.oiCode || '', type: 'text' },
-      specialization: { value: (row) => row.specialization || '', type: 'text' },
-      validity: { value: (row) => row.valid_from || row.validFrom || '', type: 'date' },
-      state: { value: (row) => row.active === false ? 'Inactif' : 'Actif', type: 'text' }
-    };
+    const columns = [
+      { key: 'code', value: (row) => row.code || '', type: 'text' },
+      { key: 'label', value: (row) => row.label || row.libelle || '', type: 'text' },
+      { key: 'domain', value: (row) => row.domain || '', type: 'text' },
+      { key: 'category', value: (row) => row.category || '', type: 'text' },
+      { key: 'oi', value: (row) => row.oi || row.oi_code || row.oiCode || '', type: 'text' },
+      { key: 'specialization', value: (row) => row.specialization || '', type: 'text' },
+      { key: 'validity', value: (row) => row.valid_from || row.validFrom || '', type: 'date' },
+      { key: 'state', value: (row) => row.active === false ? 'Inactif' : 'Actif', type: 'text' }
+    ];
     return L.sortRows ? L.sortRows(rows, state.formationStatComSort, columns) : rows;
   }
 
