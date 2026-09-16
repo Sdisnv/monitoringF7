@@ -2006,7 +2006,9 @@ async function migrateQuoVadisCore1(){
     insert into scope_quo_vadis_dps_organisation_versions(oi_code, valid_from, sections, metadata)
     values
       ('G1', '2027-02-01', '[{"section":"N01","halfSections":["N01a","N01b"]},{"section":"N02","halfSections":["N02a","N02b"]},{"section":"N03","halfSections":["N03a","N03b"]},{"section":"N04","halfSections":["N04a","N04b"]},{"section":"N05","halfSections":["N05a","N05b"]},{"section":"N06","reserve":true,"label":"G1 N06"}]'::jsonb, '{"source":"QUO-VADIS-CORE-1","configurableChangeDate":true}'::jsonb),
-      ('B1', '2027-02-01', '[{"section":"N01","halfSections":["N01a","N01b"]},{"section":"N02","halfSections":["N02a","N02b"]}]'::jsonb, '{"source":"QUO-VADIS-CORE-1","configurableChangeDate":true}'::jsonb)
+      ('C1', '2027-02-01', '[{"section":"N01","halfSections":["N01a","N01b"]},{"section":"N02","halfSections":["N02a","N02b"]},{"section":"N03","halfSections":["N03a","N03b"]}]'::jsonb, '{"source":"QUO-VADIS-CORE-1","configurableChangeDate":true}'::jsonb),
+      ('B1', '2027-02-01', '[{"section":"N01","halfSections":["N01a","N01b"]},{"section":"N02","halfSections":["N02a","N02b"]},{"section":"N03","halfSections":["N03a","N03b"]}]'::jsonb, '{"source":"QUO-VADIS-CORE-1","configurableChangeDate":true}'::jsonb),
+      ('B2', '2027-02-01', '[{"section":"N01","halfSections":["N01a","N01b"]},{"section":"N02","halfSections":["N02a","N02b"]},{"section":"N03","halfSections":["N03a","N03b"]}]'::jsonb, '{"source":"QUO-VADIS-CORE-1","configurableChangeDate":true}'::jsonb)
     on conflict (oi_code, valid_from) do nothing
   `);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-core-1') on conflict (version) do nothing`);
