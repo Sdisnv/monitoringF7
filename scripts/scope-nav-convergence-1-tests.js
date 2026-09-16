@@ -122,7 +122,7 @@ function groupState(nav, id) {
     const nav = logic.buildSidebarNav(sampleArbre, { screen: 'statistiques', nav: 'statistiques' });
     assert.strictEqual(nav.home.label, 'Accueil');
     assert.deepStrictEqual(nav.groups.map((group) => group.id), ['activite', 'pilotage', 'administration']);
-    assert.deepStrictEqual(nav.groups[0].items.map((item) => `${item.label}:${item.href}`), ['Événements:#/evenements', 'Cycles:#/cycles', 'QUO VADIS:#/quo-vadis']);
+    assert.deepStrictEqual(nav.groups[0].items.map((item) => `${item.label}:${item.href}`), ['QUO VADIS:#/quo-vadis', 'Événements:#/evenements', 'Cycles:#/cycles']);
     assert.deepStrictEqual(nav.groups[1].items.map((item) => `${item.label}:${item.href}`), ['Vigilance:#/vigilance', 'Analyses:#/statistiques']);
     assert.deepStrictEqual(nav.direct.map((item) => `${item.label}:${item.href}`), ['Personnel:#/personnel', 'Rapports:#/rapports']);
     assert.ok(!nav.settings.some((item) => item.label === 'Droits et profils'), 'surface Droits et profils artificielle');

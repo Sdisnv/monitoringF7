@@ -31,6 +31,9 @@ assert.ok(/create table if not exists scope_quo_vadis_cursus_programmes/.test(mi
 assert.ok(/loadCatalogue/.test(service), 'catalogue annuel dérivé manquant');
 assert.ok(/scope_event_definitions/.test(service), 'catalogue doit exploiter les définitions SCOPE');
 assert.ok(/scope_cibles/.test(service), 'fallback référentiels SCOPE manquant');
+assert.ok(/loadHistoricalReferences/.test(service) && /scope_evenements/.test(service), 'historique SCOPE doit être consulté en lecture seule');
+assert.ok(/buildActivities/.test(service) && /historicalReferences/.test(service), 'vue activités et références historiques manquantes');
+assert.ok(/scope_lieux/.test(service) && /lieu_id/.test(service), 'référentiel lieux SCOPE non exploité');
 assert.ok(/generateCatalogueObligations/.test(service), 'génération catalogue 2027 manquante');
 assert.ok(/generateDpsInstructionObligations/.test(service), 'instructions DPS manquantes');
 assert.ok(/KICK-OFF[\s\S]*ABC[\s\S]*VARIA[\s\S]*FEU[\s\S]*PIONNIER/.test(service), 'ordre métier DPS incomplet');
@@ -52,17 +55,23 @@ assert.ok(/\/quo-vadis\/programmes\/:annee\/cursus/.test(fn), 'route choix cursu
 assert.ok(/\/quo-vadis\/proposals\/:id\/retain/.test(fn), 'route arbitrage manquante');
 
 assert.ok(/renderQuoVadisPlanning/.test(ui), 'vue planning manquante');
-assert.ok(/Vue annuelle/.test(ui) && /Planning/.test(ui) && /À arbitrer/.test(ui) && /Alertes/.test(ui) && /Cursus 2027/.test(ui), 'navigation QUO VADIS professionnelle incomplète');
+assert.ok(/Vue annuelle/.test(ui) && /Activités/.test(ui) && /Planning/.test(ui) && /À arbitrer/.test(ui) && /Alertes/.test(ui) && /Cursus 2027/.test(ui), 'navigation QUO VADIS professionnelle incomplète');
+assert.ok(/renderQuoVadisActivities/.test(ui) && /qvFilteredActivities/.test(ui) && /Réinitialiser les filtres/.test(ui), 'vue Activités et filtres manquants');
+assert.ok(/data-qv-sort/.test(ui) && /qvSortHeader/.test(ui), 'tri Activités manquant');
+assert.ok(/renderQuoVadisActivityDetail/.test(ui) && /Voir les références SCOPE/.test(ui) && /Pourquoi cette proposition/.test(ui), 'fiche activité exploitable manquante');
 assert.ok(/Fiche date future/.test(ui), 'fiche date future non refondue');
 assert.ok(/Retenir/.test(ui), 'action retenir proposition manquante');
-assert.ok(/Date début/.test(ui) && /Heure début/.test(ui) && /Date fin/.test(ui) && /Heure fin/.test(ui), 'formulaire dates futures incomplet');
+assert.ok(/Date de début/.test(ui) && /Heure de début/.test(ui) && /Date de fin/.test(ui) && /Heure de fin/.test(ui), 'formulaire dates futures incomplet');
 assert.ok(/Recalculer les propositions 2027/.test(ui), 'libellé métier du recalcul manquant');
 assert.ok(/Préparation 2027 mise à jour/.test(ui) && /nouvelles propositions/.test(ui) && /points d’attention/.test(ui), 'compte rendu génération exploitable manquant');
 assert.ok(/'alertes', 'Alertes'/.test(ui) && /renderQuoVadisAlertes/.test(ui) && /qvGoButton\('alertes'/.test(ui), 'alertes non consultables');
 assert.ok(/data-qv-month-nav/.test(ui) && /Mois précédent/.test(ui) && /Mois suivant/.test(ui), 'navigation mensuelle planning incomplète');
+assert.ok(/qv-calendar/.test(ui) && /Lundi/.test(ui) && /Dimanche/.test(ui) && /qv-calendar-event/.test(ui), 'calendrier mensuel structuré manquant');
 assert.ok(/qv-proposal-option/.test(ui) && /Retenir cette proposition/.test(ui), 'comparaison des propositions à arbitrer insuffisante');
+assert.ok(/qvLieuOptions/.test(ui) && /qv-future-lieu-id/.test(ui) && /data-qv-proposal-lieu/.test(ui), 'lieux référentiels non sélectionnables');
+assert.ok(/Dates déjà saisies/.test(ui) && /Informations principales/.test(ui) && /Activité \/ contrainte/.test(ui), 'Dates futures pas assez structurées');
 assert.ok(/Cohorte 2026/.test(ui) && /Cohorte 2027/.test(ui), 'distinction cohortes CI DPS manquante');
-assert.ok(/qv-nav/.test(css) && /qv-proposal-option/.test(css) && /qv-day-item/.test(css), 'style QUO VADIS professionnel manquant');
+assert.ok(/qv-nav/.test(css) && /qv-proposal-option/.test(css) && /qv-calendar/.test(css) && /qv-definition-list/.test(css), 'style QUO VADIS professionnel manquant');
 assert.ok(/if \(r\.screen === 'quo-vadis'\) jobs\.push\(loadQuoVadis\(\)\)/.test(ui), 'QUO VADIS ne doit charger que sur sa route');
 assert.ok(!/r\.screen === 'accueil'[\s\S]{0,120}loadQuoVadis/.test(ui), 'Accueil ne doit pas déclencher QUO VADIS');
 

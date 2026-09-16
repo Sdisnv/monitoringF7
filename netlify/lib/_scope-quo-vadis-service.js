@@ -222,6 +222,11 @@ function mapLieu(row){
   };
 }
 
+function lieuLabel(lieu){
+  if(!lieu) return '';
+  return [lieu.nomCourt || lieu.nom_court, lieu.localite].filter(Boolean).join(' · ');
+}
+
 function mapCursus(row){
   return {
     cursusId: row.cursus_id || null,
@@ -441,6 +446,94 @@ function createScopeQuoVadisService(){
     };
   }
 
+  async function loadHistoricalReferences(programme){
+    const year = Number(programme.annee || 2027) - 1;
+    const result = await db.query(`
+      select e.evenement_id, e.date, e.domaine_code, e.sous_domaine_code, e.libelle,
+             e.code_cours, e.code_source, e.heure_debut, e.heure_fin,
+             e.heure_debut_prevue, e.heure_fin_prevue, e.salle, e.session_index,
+             e.session_label, e.exercice_id, e.lieu_id,
+             x.code as exercice_code, x.libelle as exercice_libelle, x.mode_session,
+             l.nom_court as lieu_nom, l.localite as lieu_localite
+        from scope_evenements e
+        left join scope_exercices x on x.exercice_id = e.exercice_id
+        left join scope_lieux l on l.lieu_id = e.lieu_id
+       where extract(year from e.date) = $1
+         and e.hidden_at is null
+       order by e.date desc, e.libelle
+       limit 250
+    `, [year]).catch(() => ({ rows: [] }));
+    return result.rows.map((row) => ({
+      evenementId: row.evenement_id,
+      date: dateOnly(row.date),
+      weekday: WEEKDAY_LABELS[weekdayName(row.date)] || '',
+      domain: row.domaine_code || '',
+      sousDomaine: row.sous_domaine_code || '',
+      title: row.libelle || row.exercice_libelle || '',
+      codeEvenement: row.code_cours || row.code_source || row.exercice_code || '',
+      startsAt: row.heure_debut_prevue || row.heure_debut || '',
+      endsAt: row.heure_fin_prevue || row.heure_fin || '',
+      lieuId: row.lieu_id || null,
+      lieu: [row.lieu_nom || row.salle, row.lieu_localite].filter(Boolean).join(' · '),
+      session: row.session_label || (row.session_index ? String(row.session_index) : ''),
+      modeSession: row.mode_session || ''
+    }));
+  }
+
+  function buildActivities(qv, historicalRows){
+    const proposalsByObligation = new Map();
+    for(const proposal of qv.proposals || []){
+      const list = proposalsByObligation.get(proposal.obligationId) || [];
+      list.push(proposal);
+      proposalsByObligation.set(proposal.obligationId, list);
+    }
+    const lieuxById = new Map((qv.lieux || []).map((row) => [row.lieuId, row]));
+    return (qv.obligations || []).map((obligation) => {
+      const proposals = (proposalsByObligation.get(obligation.obligationId) || []).sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)));
+      const retained = proposals.find((row) => row.status === 'RETENU') || proposals[0] || {};
+      const conflict = retained.conflictSummary || {};
+      const historical = (historicalRows || [])
+        .filter((row) => !obligation.domain || row.domain === obligation.domain)
+        .filter((row) => {
+          const title = String(obligation.title || '').toLowerCase();
+          const hist = String(row.title || '').toLowerCase();
+          return hist && (title.includes(hist.slice(0, 8)) || hist.includes(title.slice(0, 8)) || row.domain === obligation.domain);
+        })
+        .slice(0, 3);
+      const lieu = lieuxById.get(retained.lieuId || obligation.lieuId) || null;
+      const hasAttention = conflict.conflict || conflict.requiresDerogation || conflict.constraint === 'A_VERIFIER' || conflict.prerequisite === 'A_VERIFIER' || conflict.astreinte === 'A_VERIFIER';
+      const cursus = obligation.sourceType === 'CURSUS' ? 'CI DPS' : '';
+      const metadata = obligation.metadata || {};
+      return {
+        activityId: obligation.obligationId,
+        obligationId: obligation.obligationId,
+        title: metadata.displayLabel || obligation.title,
+        technicalCode: metadata.codeEvenementPreview || obligation.sourceRef || '',
+        domain: obligation.domain || '',
+        domainLabel: domainLabel(obligation.domain),
+        cibleCodes: obligation.cibleCodes || [],
+        specialisation: obligation.domain === 'PR' || obligation.domain === 'AUTO' ? (obligation.cibleCodes || []).join(', ') : '',
+        cursus,
+        session: obligation.numberingPattern || '',
+        status: obligation.statut,
+        proposalId: retained.proposalId || null,
+        startsAt: retained.startsAt || obligation.imposedStartAt || null,
+        endsAt: retained.endsAt || obligation.imposedEndAt || null,
+        lieuId: retained.lieuId || obligation.lieuId || null,
+        lieu: lieuLabel(lieu) || retained.lieuLibre || obligation.lieuLibre || '',
+        dayClass: retained.dayClass || '',
+        dayClassLabel: retained.dayClass ? (DAY_CLASS_LABELS[retained.dayClass] || retained.dayClass) : '',
+        reasons: retained.reasons || [],
+        attention: hasAttention,
+        attentionType: conflict.conflict ? 'Conflit' : conflict.requiresDerogation ? 'Dérogation' : (conflict.prerequisite === 'A_VERIFIER' || conflict.astreinte === 'A_VERIFIER' || conflict.constraint === 'A_VERIFIER') ? 'À vérifier' : '',
+        proposals,
+        historicalReferences: historical,
+        sourceType: obligation.sourceType,
+        sourceLabel: obligation.sourceType === 'DEFINITION' ? 'Référentiel formation' : obligation.sourceType === 'CURSUS' ? 'Cursus retenu' : obligation.sourceType === 'DPS_RULE' ? 'Règle DPS' : obligation.sourceType === 'FUTURE_DATE' ? 'Date future' : 'Configuration annuelle'
+      };
+    });
+  }
+
   function buildPlanning(qv){
     const calendarByDate = new Map((qv.calendarDays || []).map((row) => [row.jour, row]));
     const proposalsByObligation = new Map();
@@ -493,7 +586,7 @@ function createScopeQuoVadisService(){
   async function listProgramme(annee = 2027){
     const programme = await ensureProgramme(annee);
     await ensureDefaultCursusSelections(programme);
-    const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue] = await Promise.all([
+    const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue, historical] = await Promise.all([
       db.query(
         `select o.*, count(p.proposal_id)::int as proposal_count
            from scope_quo_vadis_obligations o
@@ -536,7 +629,8 @@ function createScopeQuoVadisService(){
       db.query(`select * from scope_quo_vadis_planning_rules where active is true order by domain nulls last, code`),
       db.query(`select * from scope_quo_vadis_future_dates where target_year = $1 order by date_debut, activite_label`, [programme.annee]),
       db.query(`select * from scope_quo_vadis_dps_organisation_versions order by oi_code, valid_from`),
-      loadCatalogue()
+      loadCatalogue(),
+      loadHistoricalReferences(programme)
     ]);
     const result = {
       programme,
@@ -575,6 +669,7 @@ function createScopeQuoVadisService(){
         heureFin: row.heure_fin || '',
         activiteLabel: row.activite_label,
         domain: row.domain || '',
+        lieuId: row.lieu_id || null,
         lieuLibre: row.lieu_libre || '',
         remarque: row.remarque || '',
         convertedObligationId: row.converted_obligation_id || null
@@ -589,6 +684,8 @@ function createScopeQuoVadisService(){
       }))
     };
     result.summary = programmeSummary(result);
+    result.activities = buildActivities(result, historical);
+    result.historicalReferences = historical.slice(0, 40);
     result.alerts = buildAlerts(result);
     result.breakdown = buildAnnualBreakdown(result);
     result.planning = buildPlanning(result);
@@ -920,8 +1017,8 @@ function createScopeQuoVadisService(){
   async function createFutureDate(body){
     const targetYear = Number(body && (body.targetYear || body.annee || body.year) || 2027);
     const result = await db.query(
-      `insert into scope_quo_vadis_future_dates(target_year, date_debut, heure_debut, date_fin, heure_fin, activite_label, domain, lieu_libre, remarque, metadata)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,'{"source":"UI"}'::jsonb)
+      `insert into scope_quo_vadis_future_dates(target_year, date_debut, heure_debut, date_fin, heure_fin, activite_label, domain, lieu_id, lieu_libre, remarque, metadata)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'{"source":"UI"}'::jsonb)
        returning *`,
       [
         targetYear,
@@ -931,6 +1028,7 @@ function createScopeQuoVadisService(){
         body.heureFin || null,
         body.activiteLabel || body.label || 'Activite future',
         body.domain || body.domaine || null,
+        body.lieuId || null,
         body.lieuLibre || null,
         body.remarque || null
       ]
@@ -970,6 +1068,12 @@ function createScopeQuoVadisService(){
     );
     if(!proposal.rows[0]) return { updated: false };
     const row = proposal.rows[0];
+    if(body.lieuId || body.lieuLibre){
+      await db.query(
+        `update scope_quo_vadis_proposals set lieu_id = $2, lieu_libre = $3, updated_at = now() where proposal_id = $1`,
+        [proposalId, body.lieuId || null, body.lieuLibre || null]
+      );
+    }
     await db.query(`update scope_quo_vadis_proposals set status = case when proposal_id = $1 then 'RETENU' else 'ECARTE' end, updated_at = now() where obligation_id = $2`, [proposalId, row.obligation_id]);
     await db.query(
       `update scope_quo_vadis_obligations

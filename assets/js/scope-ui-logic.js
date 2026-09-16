@@ -885,9 +885,9 @@
     const parent = navParentCode(arbre, r.domaine);
     const home = { id: 'accueil', href: '#/accueil', label: 'Accueil', icon: 'home', current: r.screen === 'accueil' };
     const activity = [
+      { id: 'quo-vadis', href: '#/quo-vadis', label: 'QUO VADIS', icon: 'clock', current: r.nav === 'quo-vadis' },
       { id: 'exercices', href: '#/evenements', label: 'Événements', icon: 'events', current: r.nav === 'exercices' },
       { id: 'cycles', href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' },
-      { id: 'quo-vadis', href: '#/quo-vadis', label: 'QUO VADIS', icon: 'clock', current: r.nav === 'quo-vadis' },
     ];
     const pilotage = [
       { id: 'vigilance', href: '#/vigilance', label: 'Vigilance', icon: 'vigilance', current: r.nav === 'vigilance' },
