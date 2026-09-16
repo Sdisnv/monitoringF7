@@ -4,11 +4,15 @@
 /** SCOPE — STATCOM-REFERENTIAL-CONFIG-1 */
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const { createMemoryRepo } = require('../netlify/lib/_scope-memory');
 const { createScopeService } = require('../netlify/lib/_scope-service');
 const { resolveTrainingContext } = require('../netlify/lib/_scope-training-context-resolver');
 
 const ACTOR = { sub: 'scope-statcom-referential-config-1', roles: ['sdis-admin'], displayName: 'Testeur SCOPE' };
+const ROOT = path.join(__dirname, '..');
+const UI_SOURCE = fs.readFileSync(path.join(ROOT, 'assets/js/scope-ui.js'), 'utf8');
 const results = [];
 let assertions = 0;
 
@@ -132,6 +136,28 @@ async function build(){
       failed = error && error.error === 'evenement_realise_non_modifiable';
     }
     ok(failed, 'Un événement réalisé ne doit pas accepter une correction STAT.COM directe.');
+  });
+
+  await record('06 — UX finalisation : tri commun, libellés, PDF, focus Modifier', async () => {
+    ok(UI_SOURCE.includes("sortableHeader('statcom', 'code', 'CODE STAT.COM'"), 'tri CODE via sortableHeader');
+    ok(UI_SOURCE.includes("sortableHeader('statcom', 'specialization', 'SPÉCIALISATION'"), 'libellé spécialisation utilisateur');
+    ok(!UI_SOURCE.includes('<th>SPECIALIZATION</th>'), 'ancien libellé SPECIALIZATION absent du tableau');
+    ok(UI_SOURCE.includes('id="statcom-export-pdf"'), 'action Exporter PDF présente');
+    ok(UI_SOURCE.includes("title: 'Référentiel STAT.COM'"), 'PDF titré Référentiel STAT.COM');
+    ok(UI_SOURCE.includes('statComPdfFilterLabel()'), 'PDF inclut filtres/recherche/tri');
+    ok(UI_SOURCE.includes('focusStatComForm();'), 'Modifier/Ajouter amène le formulaire dans le viewport');
+  });
+
+  await record('07 — sélecteur formation : domaine seulement, général/OI/spécialisation disponibles', async () => {
+    ok(UI_SOURCE.includes('const statComOptions = statComCodes'), 'sélecteur STAT.COM construit depuis le référentiel');
+    ok(UI_SOURCE.includes("String(row.domain).toUpperCase() === activeDomain"), 'filtre par domaine compatible');
+    ok(!/formation-statcom[\s\S]{0,1200}row\.oi/.test(UI_SOURCE), 'le sélecteur ne filtre pas par OI');
+    ok(!/formation-statcom[\s\S]{0,1200}row\.specialization/.test(UI_SOURCE), 'le sélecteur ne filtre pas par spécialisation');
+    const { service } = await build();
+    const catalog = (await service.formationCatalog()).formationCatalog;
+    const dpsCodes = catalog.statComCodes.filter((row) => row.domain === 'DPS').map((row) => row.code);
+    ok(dpsCodes.includes('012B1'), 'code OI DPS spécifique disponible');
+    ok(dpsCodes.includes('0120F7'), 'code général DPS disponible');
   });
 
   const failed = results.filter((row) => row.status !== 'PASS');

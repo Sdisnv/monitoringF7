@@ -188,6 +188,11 @@
     formationFormOpen: false,
     formationFormFocus: false,
     formationReferentialDraft: null,
+    formationStatComDraft: null,
+    formationStatComQuery: '',
+    formationStatComDomainFilter: '',
+    formationStatComStateFilter: 'TOUS',
+    formationStatComSort: { key: 'code', dir: 'asc' },
     formationDefinitionForm: {
       domain: '',
       label: '',
@@ -198,6 +203,7 @@
       year: '',
       validFrom: '',
       validTo: '',
+      statComCode: '',
       activeStatuses: [],
       excuseMotifs: [],
       dispenseMotifs: [],
@@ -9124,6 +9130,45 @@
     </div>`;
   }
 
+  function statComCell(row, key) {
+    if (key === 'code') return row.code || '';
+    if (key === 'label') return row.label || row.libelle || '';
+    if (key === 'domain') return row.domain || '';
+    if (key === 'category') return row.category || '';
+    if (key === 'oi') return row.oi || row.oi_code || row.oiCode || '';
+    if (key === 'specialization') return row.specialization || '';
+    if (key === 'validity') return row.valid_from || row.validFrom || '';
+    if (key === 'state') return row.active === false ? 'Inactif' : 'Actif';
+    return '';
+  }
+
+  function currentStatComRowsForDisplay() {
+    const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
+    const statComCodes = Array.isArray(catalog.statComCodes) ? catalog.statComCodes : [];
+    const query = String(state.formationStatComQuery || '').trim().toUpperCase();
+    const domainFilter = String(state.formationStatComDomainFilter || '').trim().toUpperCase();
+    const stateFilter = String(state.formationStatComStateFilter || 'TOUS').toUpperCase();
+    const rows = statComCodes.filter((row) => {
+      const active = row.active !== false;
+      if (domainFilter && String(row.domain || '').toUpperCase() !== domainFilter) return false;
+      if (stateFilter === 'ACTIF' && !active) return false;
+      if (stateFilter === 'INACTIF' && active) return false;
+      if (!query) return true;
+      return ['code', 'label', 'domain', 'category', 'oi', 'specialization'].some((key) => String(statComCell(row, key) || '').toUpperCase().includes(query));
+    });
+    const columns = {
+      code: { value: (row) => row.code || '', type: 'text' },
+      label: { value: (row) => row.label || row.libelle || '', type: 'text' },
+      domain: { value: (row) => row.domain || '', type: 'text' },
+      category: { value: (row) => row.category || '', type: 'text' },
+      oi: { value: (row) => row.oi || row.oi_code || row.oiCode || '', type: 'text' },
+      specialization: { value: (row) => row.specialization || '', type: 'text' },
+      validity: { value: (row) => row.valid_from || row.validFrom || '', type: 'date' },
+      state: { value: (row) => row.active === false ? 'Inactif' : 'Actif', type: 'text' }
+    };
+    return L.sortRows ? L.sortRows(rows, state.formationStatComSort, columns) : rows;
+  }
+
   function renderFormationCatalog() {
     const canManage = hasScopePermission('references:manage');
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
@@ -9312,6 +9357,11 @@
       .filter((row) => String(row.type || row.motif_type || '').toUpperCase() === type);
     const referentialDraft = state.formationReferentialDraft;
     const statComDraft = state.formationStatComDraft;
+    const statComDomainOptions = [...new Set(statComCodes.map((row) => String(row.domain || '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'fr'))
+      .map((domain) => `<option value="${escapeHtml(domain)}" ${state.formationStatComDomainFilter === domain ? 'selected' : ''}>${escapeHtml(domain)}</option>`)
+      .join('');
+    const statComRowsForDisplay = currentStatComRowsForDisplay();
     const statComForm = statComDraft ? `<section class="scope-referential-draft" id="formation-statcom-form">
       <h3>${statComDraft.editing ? 'Modifier STAT.COM' : 'Ajouter STAT.COM'}</h3>
       <div class="scope-report-grid">
@@ -9327,7 +9377,7 @@
       <label class="scope-check scope-policy-check"><input id="statcom-active" type="checkbox" ${statComDraft.active === false ? '' : 'checked'}><span class="scope-policy-check-copy"><span>Actif</span></span></label>
       <div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" id="statcom-save">Enregistrer</button><button type="button" class="scope-btn scope-btn-secondary" id="statcom-cancel">Annuler</button></div>
     </section>` : '';
-    const statComRows = statComCodes.map((row) => {
+    const statComRows = statComRowsForDisplay.map((row) => {
       const active = row.active !== false;
       return `<tr>
         <td><strong>${escapeHtml(row.code || '')}</strong></td>
@@ -9362,7 +9412,14 @@
       ${statComForm}
       ${referentialForm}
       <div class="scope-referential-grid">
-        <section><div class="scope-policy-column-head"><h3>STAT.COM</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="statcom-add">+ Ajouter un code</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>CODE</th><th>LIBELLÉ</th><th>DOMAINE</th><th>CATÉGORIE</th><th>OI</th><th>SPECIALIZATION</th><th>VALIDITÉ</th><th>ÉTAT</th><th>ACTION</th></tr></thead><tbody>${statComRows || '<tr><td colspan="9"><div class="scope-empty">Aucun code STAT.COM.</div></td></tr>'}</tbody></table></div></section>
+        <section><div class="scope-policy-column-head"><h3>STAT.COM</h3><div class="scope-actions"><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="statcom-export-pdf">Exporter PDF</button><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" id="statcom-add">+ Ajouter un code</button></div></div>
+          <div class="scope-admin-toolbar">
+            <div class="scope-field"><label>Recherche</label><input id="statcom-search" type="search" value="${escapeHtml(state.formationStatComQuery || '')}" placeholder="Code, libellé, domaine, OI"></div>
+            <div class="scope-field"><label>Domaine</label><select id="statcom-domain-filter"><option value="">Tous</option>${statComDomainOptions}</select></div>
+            <div class="scope-field"><label>État</label><select id="statcom-state-filter"><option value="TOUS" ${state.formationStatComStateFilter === 'TOUS' ? 'selected' : ''}>Tous</option><option value="ACTIF" ${state.formationStatComStateFilter === 'ACTIF' ? 'selected' : ''}>Actifs</option><option value="INACTIF" ${state.formationStatComStateFilter === 'INACTIF' ? 'selected' : ''}>Inactifs</option></select></div>
+          </div>
+          <p class="scope-muted">${escapeHtml(String(statComRowsForDisplay.length))} code${statComRowsForDisplay.length > 1 ? 's' : ''} affiché${statComRowsForDisplay.length > 1 ? 's' : ''} sur ${escapeHtml(String(statComCodes.length))}.</p>
+          <div class="scope-table-wrap"><table class="scope-table"><thead><tr>${sortableHeader('statcom', 'code', 'CODE STAT.COM', state.formationStatComSort)}${sortableHeader('statcom', 'label', 'LIBELLÉ', state.formationStatComSort)}${sortableHeader('statcom', 'domain', 'DOMAINE', state.formationStatComSort)}${sortableHeader('statcom', 'category', 'CATÉGORIE', state.formationStatComSort)}${sortableHeader('statcom', 'oi', 'OI', state.formationStatComSort)}${sortableHeader('statcom', 'specialization', 'SPÉCIALISATION', state.formationStatComSort)}${sortableHeader('statcom', 'validity', 'VALIDITÉ', state.formationStatComSort)}${sortableHeader('statcom', 'state', 'ÉTAT', state.formationStatComSort)}<th>ACTION</th></tr></thead><tbody>${statComRows || '<tr><td colspan="9"><div class="scope-empty">Aucun code STAT.COM.</div></td></tr>'}</tbody></table></div></section>
         <section><div class="scope-policy-column-head"><h3>Statuts disponibles</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-add="status">+ Ajouter un statut</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Libellé</th><th>Comportement</th><th>Ordre</th><th>État</th><th>Action</th></tr></thead><tbody>${renderReferentialRows([...statusCatalog.values()].filter((row) => !row.system), 'status') || '<tr><td colspan="5"><div class="scope-empty">Aucun statut configurable.</div></td></tr>'}</tbody></table></div></section>
         <section><div class="scope-policy-column-head"><h3>Motifs d’excuse</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-add="excuse">+ Ajouter un motif</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Libellé</th><th>Ordre</th><th>État</th><th>Action</th></tr></thead><tbody>${renderReferentialRows(activeMotifs('EXCUSE'), 'excuse') || '<tr><td colspan="4"><div class="scope-empty">Aucun motif d’excuse.</div></td></tr>'}</tbody></table></div></section>
         <section><div class="scope-policy-column-head"><h3>Motifs de dispense</h3><button type="button" class="scope-btn scope-btn-secondary scope-btn-compact" data-referential-add="dispense">+ Ajouter un motif</button></div><div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Libellé</th><th>Ordre</th><th>État</th><th>Action</th></tr></thead><tbody>${renderReferentialRows(activeMotifs('DISPENSE'), 'dispense') || '<tr><td colspan="4"><div class="scope-empty">Aucun motif de dispense.</div></td></tr>'}</tbody></table></div></section>
@@ -11661,6 +11718,10 @@
           state.adminUserSort = L.nextSort ? L.nextSort(state.adminUserSort, key, key === 'lastLoginAt' ? 'desc' : 'asc') : { key, dir: 'asc' };
           render();
         }
+        if (table === 'statcom') {
+          state.formationStatComSort = L.nextSort ? L.nextSort(state.formationStatComSort, key, key === 'validity' ? 'desc' : 'asc') : { key, dir: 'asc' };
+          render();
+        }
       });
     });
     root.querySelectorAll('[data-personnel-statut]').forEach((btn) => {
@@ -11764,6 +11825,15 @@
         el.focus({ preventScroll: true });
       }, 0);
     };
+    const focusStatComForm = () => {
+      setTimeout(() => {
+        const el = document.getElementById('formation-statcom-form');
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const first = el.querySelector('input:not([disabled]), select, button');
+        if (first && typeof first.focus === 'function') first.focus({ preventScroll: true });
+      }, 0);
+    };
     const formationFormSignature = (source) => JSON.stringify({
       domain: source.domain || '',
       label: source.label || '',
@@ -11830,6 +11900,22 @@
       state.formationStatComDraft = { code: '', label: '', domain: '', category: '', oi: '', specialization: '', validFrom: '2023-01-01', validTo: '', active: true, editing: false };
       state.formationReferentialDraft = null;
       render();
+      focusStatComForm();
+    });
+    document.getElementById('statcom-search')?.addEventListener('input', (e) => {
+      state.formationStatComQuery = e.target.value || '';
+      render();
+    });
+    document.getElementById('statcom-domain-filter')?.addEventListener('change', (e) => {
+      state.formationStatComDomainFilter = e.target.value || '';
+      render();
+    });
+    document.getElementById('statcom-state-filter')?.addEventListener('change', (e) => {
+      state.formationStatComStateFilter = e.target.value || 'TOUS';
+      render();
+    });
+    document.getElementById('statcom-export-pdf')?.addEventListener('click', () => {
+      exportStatComPdf(currentStatComRowsForDisplay());
     });
     root.querySelectorAll('[data-statcom-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -11840,6 +11926,7 @@
         state.formationStatComDraft = Object.assign({}, row, { editing: true });
         state.formationReferentialDraft = null;
         render();
+        focusStatComForm();
       });
     });
     root.querySelectorAll('[data-statcom-toggle]').forEach((btn) => {
@@ -12796,6 +12883,104 @@
       const nominativeErrors = nominativeErrorDetails(error);
       ScopeFeedback.error(info.title, info.message, { errors: nominativeErrors.length ? nominativeErrors : info.errors, conflict: info.conflict, okta: info.okta });
     });
+  }
+
+  function pdfHexText(value) {
+    const text = String(value == null ? '' : value).normalize('NFC');
+    const bytes = [0xFE, 0xFF];
+    for (let i = 0; i < text.length; i += 1) {
+      const code = text.charCodeAt(i);
+      bytes.push((code >> 8) & 0xFF, code & 0xFF);
+    }
+    return `<${bytes.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('')}>`;
+  }
+
+  function pdfTextLine(x, y, size, text, font = 'F1') {
+    return `BT /${font} ${size} Tf ${x} ${y} Td ${pdfHexText(text)} Tj ET`;
+  }
+
+  function statComPdfFilterLabel() {
+    const parts = [];
+    if (state.formationStatComQuery) parts.push(`Recherche: ${state.formationStatComQuery}`);
+    if (state.formationStatComDomainFilter) parts.push(`Domaine: ${state.formationStatComDomainFilter}`);
+    if (state.formationStatComStateFilter && state.formationStatComStateFilter !== 'TOUS') parts.push(`État: ${state.formationStatComStateFilter}`);
+    const sort = state.formationStatComSort || {};
+    if (sort.key) parts.push(`Tri: ${sort.key} ${String(sort.dir || 'asc').toUpperCase()}`);
+    return parts.join(' · ') || 'Aucun filtre';
+  }
+
+  function buildSimplePdf(lines, options = {}) {
+    const width = 842;
+    const height = 595;
+    const marginX = 36;
+    const topY = 552;
+    const lineHeight = 13;
+    const bodySize = 8;
+    const objects = ['<< /Type /Catalog /Pages 2 0 R >>'];
+    const pages = [];
+    const perPage = 34;
+    for (let offset = 0; offset < lines.length; offset += perPage) {
+      const chunk = lines.slice(offset, offset + perPage);
+      const pageIndex = pages.length + 1;
+      const streamLines = [
+        pdfTextLine(marginX, topY, 15, options.title || 'Référentiel STAT.COM', 'F2'),
+        pdfTextLine(marginX, topY - 22, 9, options.subtitle || '', 'F1'),
+        pdfTextLine(marginX, topY - 36, 8, options.filters || '', 'F1'),
+        pdfTextLine(760, topY - 36, 8, `Page ${pageIndex}`, 'F1')
+      ];
+      let y = topY - 58;
+      for (const line of chunk) {
+        streamLines.push(pdfTextLine(marginX, y, line.bold ? 8 : bodySize, line.text, line.bold ? 'F2' : 'F1'));
+        y -= lineHeight;
+      }
+      const stream = streamLines.join('\n');
+      const contentObjectNumber = 4 + pageIndex * 2;
+      const pageObjectNumber = contentObjectNumber - 1;
+      objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`);
+      objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+      pages.push(`${pageObjectNumber} 0 R`);
+    }
+    if (!pages.length) {
+      lines.push({ text: 'Aucune donnée à exporter.' });
+      return buildSimplePdf(lines, options);
+    }
+    objects.splice(1, 0, `<< /Type /Pages /Kids [${pages.join(' ')}] /Count ${pages.length} >>`);
+    objects.splice(2, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+    objects.splice(3, 0, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+    objects.forEach((obj, index) => {
+      offsets.push(pdf.length);
+      pdf += `${index + 1} 0 obj\n${obj}\nendobj\n`;
+    });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    offsets.slice(1).forEach((offset) => {
+      pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+    });
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    return new Blob([pdf], { type: 'application/pdf' });
+  }
+
+  function exportStatComPdf(rows) {
+    const generatedAt = new Date().toLocaleString('fr-CH');
+    const lines = [
+      { text: 'CODE | LIBELLÉ | DOMAINE | CATÉGORIE | OI | SPÉCIALISATION | VALIDITÉ | ÉTAT', bold: true }
+    ];
+    (rows || []).forEach((row) => {
+      const validity = `${L.formatDate(row.valid_from || row.validFrom)} → ${row.valid_to || row.validTo ? L.formatDate(row.valid_to || row.validTo) : '—'}`;
+      lines.push({
+        text: `${row.code || ''} | ${row.label || row.libelle || ''} | ${row.domain || ''} | ${row.category || ''} | ${row.oi || row.oi_code || row.oiCode || ''} | ${row.specialization || ''} | ${validity} | ${row.active === false ? 'Inactif' : 'Actif'}`
+      });
+    });
+    const blob = buildSimplePdf(lines, {
+      title: 'Référentiel STAT.COM',
+      subtitle: `Généré le ${generatedAt} · ${rows.length} code${rows.length > 1 ? 's' : ''}`,
+      filters: `Périmètre: ${statComPdfFilterLabel()}`
+    });
+    const filename = `SCOPE_Referentiel_STATCOM_${new Date().toISOString().slice(0, 10)}.pdf`;
+    if (window.ScopePdfViewer) window.ScopePdfViewer.open({ blob, filename, pages: Math.max(1, Math.ceil((lines.length || 1) / 34)) });
+    else window.open(URL.createObjectURL(blob), '_blank', 'noopener');
   }
 
   function visibleSaisie() {
