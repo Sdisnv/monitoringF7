@@ -889,6 +889,7 @@
       { id: 'cycles', href: '#/cycles', label: 'Cycles', icon: 'cycles', current: r.nav === 'cycles' }
     ];
     const pilotage = [
+      { id: 'quo-vadis', href: '#/quo-vadis', label: 'QUO VADIS', icon: 'clock', current: r.nav === 'quo-vadis' },
       { id: 'vigilance', href: '#/vigilance', label: 'Vigilance', icon: 'vigilance', current: r.nav === 'vigilance' },
       { id: 'analyses', href: '#/statistiques', label: 'Analyses', icon: 'stats', current: r.screen === 'statistiques' }
     ];
@@ -1141,6 +1142,7 @@
     const path = raw.split('?')[0];
     const parts = path.split('/').filter(Boolean);
     if (!parts.length || parts[0] === 'accueil') return { screen: 'accueil', nav: 'accueil' };
+    if (parts[0] === 'quo-vadis') return { screen: 'quo-vadis', nav: 'quo-vadis' };
     if (parts[0] === 'vigilance') return { screen: 'vigilance', nav: 'vigilance' };
     if (parts[0] === 'statistiques') return { screen: 'statistiques', nav: 'statistiques' };
     if (parts[0] === 'cycles') {

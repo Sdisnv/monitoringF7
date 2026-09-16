@@ -11,6 +11,7 @@ const { createScopeJspReportingService, createScopeParticipationReportingService
 const { getPgRepo } = require('../lib/_scope-pg');
 const { generateReport, generateStatComReferentialReport, pdfResponse } = require('../lib/_scope-report-service');
 const { createScopePersonService } = require('../lib/_scope-person-service');
+const { createScopeQuoVadisService } = require('../lib/_scope-quo-vadis-service');
 const users = require('../lib/_user-store');
 const { withMetrics } = require('../lib/_postgres');
 
@@ -93,6 +94,7 @@ async function scopeHandler(event){
     const jspReporting = createScopeJspReportingService(repo);
     const participationReporting = createScopeParticipationReportingService(repo);
     const persons = createScopePersonService(repo);
+    const quoVadis = createScopeQuoVadisService(repo);
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
     const body = parsed || {};
@@ -120,7 +122,18 @@ async function scopeHandler(event){
     if(method === 'GET' && path === '/participation/policies'){
       return response(200, { ok:true, ...(await service.participationPolicies()) });
     }
-    let params = match(path, '/participation/referentials/:kind/:id/usages');
+    let params = match(path, '/quo-vadis/programmes/:annee');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, quoVadis: await quoVadis.listProgramme(params.annee) });
+    }
+    params = match(path, '/quo-vadis/programmes/:annee/generate');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, quoVadis: await quoVadis.generateProgramme(params.annee) });
+    }
+    if(method === 'POST' && path === '/quo-vadis/future-dates'){
+      return response(201, { ok:true, ...(await quoVadis.createFutureDate(body)) });
+    }
+    params = match(path, '/participation/referentials/:kind/:id/usages');
     if(method === 'GET' && params){
       if(!hasPermission(claims, 'references:manage')){
         return response(403, { ok:false, error:'forbidden', message:'La consultation des usages référentiels est réservée aux profils habilités.' });
