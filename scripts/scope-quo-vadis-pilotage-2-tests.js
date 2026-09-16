@@ -14,6 +14,7 @@ const service = read('netlify/lib/_scope-quo-vadis-service.js');
 const fn = read('netlify/functions/scope.js');
 const api = read('assets/js/scope-api.js');
 const ui = read('assets/js/scope-ui.js');
+const css = read('assets/css/scope.css');
 const qvUi = ui.slice(ui.indexOf('function quoVadisData'), ui.indexOf('function render()'));
 
 for (const src of [schema, migration, service]) {
@@ -51,12 +52,24 @@ assert.ok(/\/quo-vadis\/programmes\/:annee\/cursus/.test(fn), 'route choix cursu
 assert.ok(/\/quo-vadis\/proposals\/:id\/retain/.test(fn), 'route arbitrage manquante');
 
 assert.ok(/renderQuoVadisPlanning/.test(ui), 'vue planning manquante');
-assert.ok(/Vue annuelle/.test(ui) && /Planning/.test(ui) && /À arbitrer/.test(ui) && /Cursus 2027/.test(ui), 'navigation QUO VADIS professionnelle incomplète');
+assert.ok(/Vue annuelle/.test(ui) && /Planning/.test(ui) && /À arbitrer/.test(ui) && /Alertes/.test(ui) && /Cursus 2027/.test(ui), 'navigation QUO VADIS professionnelle incomplète');
 assert.ok(/Fiche date future/.test(ui), 'fiche date future non refondue');
 assert.ok(/Retenir/.test(ui), 'action retenir proposition manquante');
 assert.ok(/Date début/.test(ui) && /Heure début/.test(ui) && /Date fin/.test(ui) && /Heure fin/.test(ui), 'formulaire dates futures incomplet');
+assert.ok(/Recalculer les propositions 2027/.test(ui), 'libellé métier du recalcul manquant');
+assert.ok(/Préparation 2027 mise à jour/.test(ui) && /nouvelles propositions/.test(ui) && /points d’attention/.test(ui), 'compte rendu génération exploitable manquant');
+assert.ok(/'alertes', 'Alertes'/.test(ui) && /renderQuoVadisAlertes/.test(ui) && /qvGoButton\('alertes'/.test(ui), 'alertes non consultables');
+assert.ok(/data-qv-month-nav/.test(ui) && /Mois précédent/.test(ui) && /Mois suivant/.test(ui), 'navigation mensuelle planning incomplète');
+assert.ok(/qv-proposal-option/.test(ui) && /Retenir cette proposition/.test(ui), 'comparaison des propositions à arbitrer insuffisante');
+assert.ok(/Cohorte 2026/.test(ui) && /Cohorte 2027/.test(ui), 'distinction cohortes CI DPS manquante');
+assert.ok(/qv-nav/.test(css) && /qv-proposal-option/.test(css) && /qv-day-item/.test(css), 'style QUO VADIS professionnel manquant');
+assert.ok(/if \(r\.screen === 'quo-vadis'\) jobs\.push\(loadQuoVadis\(\)\)/.test(ui), 'QUO VADIS ne doit charger que sur sa route');
+assert.ok(!/r\.screen === 'accueil'[\s\S]{0,120}loadQuoVadis/.test(ui), 'Accueil ne doit pas déclencher QUO VADIS');
 
-const forbiddenUi = ['THURSDAY', 'MONDAY', 'source_ref', 'metadata', 'CORE-1'];
+assert.ok(/before: beforeSummary/.test(service) && /newProposals/.test(service) && /unchangedProposals/.test(service) && /attentionPoints/.test(service), 'bilan réel avant/après génération manquant');
+assert.ok(/buildAlerts/.test(service) && /buildAnnualBreakdown/.test(service), 'alertes ou synthèse annuelle manquantes');
+
+const forbiddenUi = ['THURSDAY', 'MONDAY', 'SATURDAY', 'PREFERRED', 'ALLOWED', 'FORBIDDEN', 'source_ref', 'metadata', 'CORE-1', 'seed', 'day_policy'];
 for (const word of forbiddenUi) {
   assert.ok(!qvUi.includes(word), `terme technique interdit dans UI QUO VADIS: ${word}`);
 }

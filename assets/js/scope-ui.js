@@ -190,6 +190,8 @@
     quoVadisError: null,
     quoVadisTab: 'programme',
     quoVadisBusy: false,
+    quoVadisGenerationReport: null,
+    quoVadisPlanningMonth: null,
     quoVadisFutureForm: {
       dateDebut: '',
       heureDebut: '',
@@ -9783,56 +9785,118 @@
     return text.length >= 16 ? text.slice(11, 16) : '';
   }
 
+  function qvDateTime(value) {
+    return [formatUiDate(value), qvTime(value)].filter(Boolean).join(' ');
+  }
+
+  function qvIssueType(row) {
+    const type = String(row && row.type || '').toLowerCase();
+    if (type.includes('conflit')) return 'warning';
+    if (type.includes('dérogation')) return 'warning';
+    if (type.includes('vérifier')) return 'warning';
+    return 'info';
+  }
+
+  function qvTabButton(id, label, help, options) {
+    const active = state.quoVadisTab === id;
+    const count = options && options.count != null ? `<span>${escapeHtml(String(options.count))}</span>` : '';
+    return `<button type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" class="scope-btn${active ? ' scope-btn-primary' : ' scope-btn-ghost'} qv-tab-button" data-qv-tab="${escapeHtml(id)}"><strong>${escapeHtml(label)}${count}</strong><small>${escapeHtml(help)}</small></button>`;
+  }
+
+  function qvGoButton(id, label, count) {
+    return `<button type="button" class="scope-btn scope-btn-secondary scope-btn-compact qv-shortcut" data-qv-tab="${escapeHtml(id)}">${escapeHtml(label)}${count == null ? '' : ` · ${escapeHtml(String(count))}`}</button>`;
+  }
+
   function renderQuoVadisTabs() {
+    const qv = quoVadisData();
+    const summary = qv.summary || {};
     const tabs = [
-      ['programme', 'Vue annuelle', 'Synthèse et progression'],
-      ['planning', 'Planning', 'Mois par mois'],
-      ['obligations', 'À arbitrer', 'Activités et dates proposées'],
-      ['cursus', 'Cursus 2027', 'Parcours retenus'],
-      ['controles', 'Règles', 'Contraintes et dérogations'],
-      ['futures', 'Dates futures', 'Pense-bête et lieux']
+      ['programme', 'Vue annuelle', 'Centre de pilotage', null],
+      ['planning', 'Planning', 'Mois par mois', summary.datesProposees || 0],
+      ['obligations', 'À arbitrer', 'Décisions à préparer', summary.aArbitrer || 0],
+      ['alertes', 'Alertes', 'Points à vérifier', (qv.alerts || []).length],
+      ['cursus', 'Cursus 2027', 'Parcours retenus', summary.cursusRetenus || 0],
+      ['controles', 'Règles', 'Contraintes métier', null],
+      ['futures', 'Dates futures', 'Contraintes connues', summary.datesFutures || 0]
     ];
-    return `<div class="scope-card qv-nav" role="tablist">${tabs.map(([id, label, help]) => `<button type="button" class="scope-btn${state.quoVadisTab === id ? ' scope-btn-primary' : ' scope-btn-ghost'}" data-qv-tab="${escapeHtml(id)}"><strong>${escapeHtml(label)}</strong><small>${escapeHtml(help)}</small></button>`).join('')}</div>`;
+    return `<nav class="scope-card qv-nav" role="tablist" aria-label="Navigation QUO VADIS">${tabs.map(([id, label, help, count]) => qvTabButton(id, label, help, { count })).join('')}</nav>`;
+  }
+
+  function renderQuoVadisGenerationReport(report) {
+    if (!report) return '';
+    const after = report.after || {};
+    return `<section class="scope-card qv-generation-report" role="status">
+      <div class="scope-card-head">
+        <div><h2>Préparation 2027 mise à jour</h2><p class="scope-muted">Le recalcul a mis à jour les activités et dates proposées, sans créer d’événement opérationnel.</p></div>
+      </div>
+      <div class="scope-kpis qv-kpis">
+        <article class="scope-kpi"><strong>${escapeHtml(String(after.totalActivites || 0))}</strong><span>activités à planifier</span><small>${escapeHtml(String(report.newObligations || 0))} nouvelle(s) activité(s)</small></article>
+        <article class="scope-kpi"><strong>${escapeHtml(String(report.newProposals || 0))}</strong><span>nouvelles propositions</span><small>${escapeHtml(String(report.unchangedProposals || 0))} proposition(s) inchangée(s)</small></article>
+        <article class="scope-kpi"><strong>${escapeHtml(String(report.attentionPoints || 0))}</strong><span>points d’attention</span><small>conflits, dérogations ou vérifications</small></article>
+      </div>
+      <div class="scope-actions qv-actions">
+        ${qvGoButton('planning', 'Voir le planning', after.datesProposees || 0)}
+        ${qvGoButton('obligations', 'Examiner les arbitrages', after.aArbitrer || 0)}
+        ${qvGoButton('alertes', 'Examiner les alertes', report.attentionPoints || 0)}
+      </div>
+    </section>`;
   }
 
   function renderQuoVadisProgramme(qv) {
     const programme = qv.programme || {};
     const obligations = qv.obligations || [];
-    const proposals = qv.proposals || [];
     const summary = qv.summary || {};
-    return `<section class="scope-card">
+    const breakdown = qv.breakdown || {};
+    const domains = breakdown.domains || [];
+    const months = breakdown.months || [];
+    return `${renderQuoVadisGenerationReport(state.quoVadisGenerationReport)}<section class="scope-card qv-annual">
       <div class="scope-card-head">
         <div>
-          <h2>Préparation du programme annuel</h2>
-          <p class="scope-muted">SCOPE propose, l’utilisateur arbitre. Aucune activité n’est transformée en événement opérationnel sans validation explicite.</p>
+          <h2>Vue annuelle — Synthèse et progression</h2>
+          <p class="scope-muted">Centre de pilotage du programme 2027. Les propositions restent préparatoires jusqu’à validation explicite.</p>
         </div>
-        <button type="button" class="scope-btn scope-btn-primary" id="qv-generate" ${state.quoVadisBusy ? 'disabled' : ''}>Actualiser les dates proposées</button>
+        <button type="button" class="scope-btn scope-btn-primary" id="qv-generate" ${state.quoVadisBusy ? 'disabled' : ''}>Recalculer les propositions 2027</button>
       </div>
-      <div class="scope-grid scope-grid-4">
+      <div class="scope-kpis qv-kpis">
       ${[
-        ['État', qvStatusLabel(programme.statut), `${programme.periodeDebut || '2027-01-01'} → ${programme.periodeFin || '2028-03-31'}`],
-        ['Activités à préparer', String(summary.totalActivites || obligations.length), 'issues du catalogue et des cursus retenus'],
-        ['À arbitrer', String(summary.aArbitrer || 0), 'dates à confirmer ou adapter'],
-        ['Alertes', String(summary.conflits || 0), 'conflits, dérogations ou vérifications']
-      ].map(([k, v, s]) => `<section class="scope-card scope-kpi"><span>${escapeHtml(k)}</span><strong>${escapeHtml(v)}</strong><small>${escapeHtml(s)}</small></section>`).join('')}
+        ['État', qvStatusLabel(programme.statut), `${programme.periodeDebut || '2027-01-01'} → ${programme.periodeFin || '2028-03-31'}`, 'programme'],
+        ['Activités prévues', String(summary.totalActivites || obligations.length), 'catalogue, cursus et contraintes connues', 'obligations'],
+        ['Dates proposées', String(summary.datesProposees || 0), 'visibles dans le planning annuel', 'planning'],
+        ['À arbitrer', String(summary.aArbitrer || 0), 'décisions à confirmer ou adapter', 'obligations'],
+        ['Alertes', String((qv.alerts || []).length), 'points à vérifier avant validation', 'alertes'],
+        ['Dates futures', String(summary.datesFutures || 0), 'contraintes déjà connues', 'futures']
+      ].map(([k, v, s, tab]) => `<button type="button" class="scope-kpi qv-kpi-link" data-qv-tab="${escapeHtml(tab)}"><span>${escapeHtml(k)}</span><strong>${escapeHtml(v)}</strong><small>${escapeHtml(s)}</small></button>`).join('')}
+      </div>
+    </section>
+    <div class="scope-grid scope-grid-2">
+    <section class="scope-card">
+      <div class="scope-card-head">
+        <div><h2>Progression par domaine</h2><p class="scope-muted">Accès direct aux activités à examiner.</p></div>
+      </div>
+      <div class="scope-table-wrap">
+        <table class="scope-table">
+          <thead><tr><th>Domaine</th><th>Activités</th><th>Positionnées</th><th>À arbitrer</th><th>Points d’attention</th></tr></thead>
+          <tbody>${domains.map((row) => `<tr data-qv-tab="obligations">
+            <td><strong>${escapeHtml(row.label)}</strong></td><td>${escapeHtml(String(row.total))}</td><td>${escapeHtml(String(row.positionnees))}</td><td>${escapeHtml(String(row.aArbitrer))}</td><td>${escapeHtml(String(row.alertes))}</td>
+          </tr>`).join('') || '<tr><td colspan="5"><div class="scope-empty">Aucun domaine planifié.</div></td></tr>'}</tbody>
+        </table>
       </div>
     </section>
     <section class="scope-card">
       <div class="scope-card-head">
-        <div><h2>Fonctions de préparation</h2><p class="scope-muted">Chaque rubrique conserve la décision humaine au centre du processus.</p></div>
+        <div><h2>Progression par mois</h2><p class="scope-muted">Lecture rapide de la répartition annuelle.</p></div>
       </div>
       <div class="scope-table-wrap">
         <table class="scope-table">
-          <thead><tr><th>Fonction</th><th>Rôle</th><th>État</th></tr></thead>
-          <tbody>
-            <tr><td>Catalogue annuel</td><td>Prépare les activités pertinentes à partir des référentiels SCOPE.</td><td><span class="scope-pill info">${escapeHtml(String((qv.catalogue || []).length))} entrées</span></td></tr>
-            <tr><td>Dates proposées</td><td>Classe les dates selon règles, calendrier et contraintes connues.</td><td><span class="scope-pill">${escapeHtml(String(proposals.length))} dates</span></td></tr>
-            <tr><td>Cursus</td><td>Planifie uniquement les cursus retenus pour 2027.</td><td><span class="scope-pill">${escapeHtml(String(summary.cursusRetenus || 0))} retenu(s)</span></td></tr>
-            <tr><td>Protection 2026</td><td>Les données historiques restent une référence, sans reconstruction.</td><td><span class="scope-pill">garantie</span></td></tr>
-          </tbody>
+          <thead><tr><th>Mois</th><th>Activités</th><th>Positionnées</th><th>Points d’attention</th><th></th></tr></thead>
+          <tbody>${months.map((row) => `<tr>
+            <td>${escapeHtml(row.label)}</td><td>${escapeHtml(String(row.total))}</td><td>${escapeHtml(String(row.positionnees))}</td><td>${escapeHtml(String(row.alertes))}</td>
+            <td><button type="button" class="scope-btn scope-btn-compact" data-qv-month="${escapeHtml(String(row.month))}">Ouvrir</button></td>
+          </tr>`).join('') || '<tr><td colspan="5"><div class="scope-empty">Aucun mois à afficher.</div></td></tr>'}</tbody>
         </table>
       </div>
-    </section>`;
+    </section>
+    </div>`;
   }
 
   function renderQuoVadisObligations(qv) {
@@ -9845,23 +9909,61 @@
     });
     if (!obligations.length) return `<section class="scope-card"><p class="scope-empty">Aucune activité à préparer pour 2027. Lancez l’actualisation des dates proposées.</p></section>`;
     return `<section class="scope-card">
-      <div class="scope-card-head"><h2>Activités à arbitrer</h2><p class="scope-muted">Plusieurs activités peuvent partager un jour ou un créneau si les contraintes restent compatibles.</p></div>
+      <div class="scope-card-head">
+        <div><h2>Activités à arbitrer</h2><p class="scope-muted">Chaque activité affiche les propositions comparables, la règle appliquée et les réserves à lever.</p></div>
+        ${qvGoButton('programme', 'Retour à la vue annuelle')}
+      </div>
       <div class="scope-table-wrap">
         <table class="scope-table">
-          <thead><tr><th>Activité</th><th>Domaine</th><th>État</th><th>Dates proposées</th><th>Explication</th><th></th></tr></thead>
+          <thead><tr><th>Activité</th><th>Domaine</th><th>État</th><th>Propositions comparables</th><th>Décision</th></tr></thead>
           <tbody>${obligations.map((row) => {
             const proposals = proposalsByObligation.get(row.obligationId) || [];
-            const first = proposals[0] || {};
-            const reasons = (first.reasons || []).slice(0, 2).join(' ');
+            const visibleProposals = proposals.length ? proposals : [{}];
             return `<tr>
               <td><strong>${escapeHtml(row.title)}</strong><small>${escapeHtml([row.domain, (row.cibleCodes || []).join(', ')].filter(Boolean).join(' · '))}</small></td>
               <td>${escapeHtml(row.domain || 'SCOPE')}</td>
               <td><span class="scope-pill">${escapeHtml(qvStatusLabel(row.statut))}</span></td>
-              <td>${escapeHtml(proposals.map((p) => `${formatUiDate(p.startsAt)} ${qvTime(p.startsAt)} · ${qvDayClassLabel(p.dayClass)}`).join(', ') || 'À proposer')}</td>
-              <td>${escapeHtml(reasons || 'À proposer')}</td>
-              <td>${first.proposalId ? `<button type="button" class="scope-btn scope-btn-ghost" data-qv-retain="${escapeHtml(first.proposalId)}">Retenir</button>` : ''}</td>
+              <td><div class="qv-proposal-stack">${visibleProposals.map((p) => {
+                const reasons = (p.reasons || []).slice(0, 3).join(' ');
+                const conflict = p.conflictSummary || {};
+                const badges = [
+                  p.dayClass ? qvDayClassLabel(p.dayClass) : '',
+                  conflict.requiresDerogation ? 'Dérogation à motiver' : '',
+                  conflict.prerequisite === 'A_VERIFIER' ? 'Prérequis à vérifier' : '',
+                  conflict.astreinte === 'A_VERIFIER' ? 'Astreinte à vérifier' : ''
+                ].filter(Boolean);
+                return `<div class="qv-proposal-option${p.status === 'RETENU' ? ' is-retained' : ''}">
+                  <strong>${escapeHtml(p.startsAt ? qvDateTime(p.startsAt) : 'Date à proposer')}</strong>
+                  <small>${escapeHtml([p.endsAt ? `fin ${qvDateTime(p.endsAt)}` : '', p.lieuLibre || row.lieuLibre || 'Lieu à confirmer'].filter(Boolean).join(' · '))}</small>
+                  <p>${escapeHtml(reasons || 'Règle à confirmer lors de l’arbitrage.')}</p>
+                  <div>${badges.map((badge) => `<span class="scope-pill${badge.includes('vérifier') || badge.includes('Dérogation') ? ' warning' : ' info'}">${escapeHtml(badge)}</span>`).join('')}</div>
+                </div>`;
+              }).join('')}</div></td>
+              <td>${proposals.map((p) => p.proposalId ? `<button type="button" class="scope-btn scope-btn-ghost scope-btn-compact" data-qv-retain="${escapeHtml(p.proposalId)}">${p.status === 'RETENU' ? 'Date retenue' : 'Retenir cette proposition'}</button>` : '').join('')}</td>
             </tr>`;
           }).join('')}</tbody>
+        </table>
+      </div>
+    </section>`;
+  }
+
+  function renderQuoVadisAlertes(qv) {
+    const alerts = qv.alerts || [];
+    return `<section class="scope-card">
+      <div class="scope-card-head">
+        <div><h2>Alertes et contrôles</h2><p class="scope-muted">Chaque point d’attention peut être examiné avant toute validation opérationnelle.</p></div>
+        ${qvGoButton('obligations', 'Ouvrir les arbitrages', alerts.length)}
+      </div>
+      <div class="scope-table-wrap">
+        <table class="scope-table">
+          <thead><tr><th>Type</th><th>Activité</th><th>Date proposée</th><th>Motif</th><th>Action</th></tr></thead>
+          <tbody>${alerts.map((row) => `<tr>
+            <td><span class="scope-pill ${qvIssueType(row)}">${escapeHtml(row.type)}</span></td>
+            <td><strong>${escapeHtml(row.title)}</strong><small>${escapeHtml(row.domainLabel || row.domain || '')}</small></td>
+            <td>${escapeHtml(qvDateTime(row.startsAt))}</td>
+            <td>${escapeHtml((row.reasons || []).join(' ') || row.dayClassLabel || 'À examiner.')}</td>
+            <td><button type="button" class="scope-btn scope-btn-compact" data-qv-tab="obligations">${escapeHtml(row.action || 'Examiner')}</button></td>
+          </tr>`).join('') || '<tr><td colspan="5"><div class="scope-empty">Aucun point d’attention pour le moment.</div></td></tr>'}</tbody>
         </table>
       </div>
     </section>`;
@@ -9880,12 +9982,13 @@
         </div>`).join('') || '<p class="scope-empty">Aucun cursus configuré.</p>'}</div>
       </section>
       <section class="scope-card">
-        <div class="scope-card-head"><h2>Étapes de cursus</h2><p class="scope-muted">CI DPS reste planifié sur deux années logiques: modules 6 à 10 pour la cohorte 2026, modules 1 à 5 pour la cohorte 2027.</p></div>
+        <div class="scope-card-head"><h2>Modules à préparer</h2><p class="scope-muted">CI DPS distingue les cohortes: année logique 2 pour la cohorte 2026, année logique 1 pour la cohorte 2027.</p></div>
         <div class="scope-table-wrap">
           <table class="scope-table">
-            <thead><tr><th>Module</th><th>Année logique</th><th>Horaire</th><th>Règle</th></tr></thead>
+            <thead><tr><th>Module</th><th>Cohorte</th><th>Année logique</th><th>Horaire</th><th>Règle</th></tr></thead>
             <tbody>${rows.map((row) => `<tr>
               <td><strong>${escapeHtml(row.stepCode)}</strong><small>${escapeHtml(row.stepLabel)}</small></td>
+              <td>${escapeHtml(row.logicalYear === 2 ? 'Cohorte 2026' : 'Cohorte 2027')}</td>
               <td>${escapeHtml(String(row.logicalYear))}</td>
               <td>${escapeHtml(`${row.usualStartTime || '—'} → ${row.usualEndTime || '—'}`)}</td>
               <td>${row.crossesMidnight ? '<span class="scope-pill warning">traverse minuit</span>' : `<span class="scope-pill">${escapeHtml(row.preferredDayLabel || 'Possible')}</span>`}</td>
@@ -9910,15 +10013,28 @@
     const months = planning.months || [];
     const visible = months.filter((month) => (month.days || []).length);
     if (!visible.length) return `<section class="scope-card"><p class="scope-empty">Aucune date proposée. Lancez l’actualisation du programme.</p></section>`;
+    const selectedMonth = Number(state.quoVadisPlanningMonth || (visible[0] && visible[0].month) || 1);
+    const current = visible.find((month) => Number(month.month) === selectedMonth) || visible[0];
+    const currentIndex = visible.findIndex((month) => Number(month.month) === Number(current.month));
+    const prev = visible[currentIndex - 1];
+    const next = visible[currentIndex + 1];
     return `<section class="scope-card">
-      <div class="scope-card-head"><h2>Planning 2027</h2><p class="scope-muted">Vue compacte des dates proposées. Les week-ends, jours particuliers et dérogations restent visibles pour l’arbitrage.</p></div>
-      <div class="scope-grid scope-grid-2">${visible.map((month) => `<div class="scope-card">
-        <h3>${escapeHtml(month.label)}</h3>
-        <div class="scope-stack">${(month.days || []).map((day) => `<div class="scope-list-row${day.weekend ? ' is-muted' : ''}">
+      <div class="scope-card-head">
+        <div><h2>Planning 2027</h2><p class="scope-muted">Vue mensuelle des dates proposées, avec horaires, domaines et points d’attention.</p></div>
+        <div class="scope-actions qv-actions">
+          ${qvGoButton('programme', 'Retour à la vue annuelle')}
+          <button type="button" class="scope-btn scope-btn-compact" data-qv-month-nav="${escapeHtml(String(prev ? prev.month : current.month))}" ${prev ? '' : 'disabled'}>Mois précédent</button>
+          <button type="button" class="scope-btn scope-btn-compact" data-qv-month-nav="${escapeHtml(String(next ? next.month : current.month))}" ${next ? '' : 'disabled'}>Mois suivant</button>
+        </div>
+      </div>
+      <div class="qv-month-strip">${visible.map((month) => `<button type="button" class="scope-btn scope-btn-compact${Number(month.month) === Number(current.month) ? ' scope-btn-primary' : ''}" data-qv-month="${escapeHtml(String(month.month))}">${escapeHtml(month.label)} · ${escapeHtml(String((month.days || []).reduce((sum, day) => sum + (day.items || []).length, 0)))}</button>`).join('')}</div>
+      <div class="qv-month-panel">
+        <h3>${escapeHtml(current.label)}</h3>
+        <div class="scope-stack">${(current.days || []).map((day) => `<div class="scope-list-row${day.weekend ? ' is-muted' : ''}">
           <div><strong>${escapeHtml(`${day.day} · ${day.weekday}`)}</strong><small>${escapeHtml(day.calendar ? day.calendar.libelle : (day.weekend ? 'Week-end' : 'Jour ouvré'))}</small></div>
-          <div class="scope-stack">${(day.items || []).slice(0, 4).map((item) => `<span class="scope-pill${item.dayClass === 'DECONSEILLE' || item.dayClass === 'INTERDIT' ? ' warning' : ''}">${escapeHtml(qvTime(item.startsAt))} · ${escapeHtml(item.title)}</span>`).join('')}${(day.items || []).length > 4 ? `<span class="scope-pill">+ ${(day.items || []).length - 4} activités</span>` : ''}</div>
+          <div class="qv-day-items">${(day.items || []).map((item) => `<button type="button" class="scope-btn scope-btn-compact qv-day-item${item.dayClass === 'DECONSEILLE' || item.dayClass === 'INTERDIT' ? ' is-warning' : ''}" data-qv-tab="obligations"><strong>${escapeHtml(qvTime(item.startsAt))}</strong><span>${escapeHtml(item.domain || 'SCOPE')} · ${escapeHtml(item.title)}</span><small>${escapeHtml(`${qvStatusLabel(item.status)} · ${item.dayClassLabel || qvDayClassLabel(item.dayClass)}`)}</small></button>`).join('')}</div>
         </div>`).join('')}</div>
-      </div>`).join('')}</div>
+      </div>
     </section>`;
   }
 
@@ -9931,10 +10047,10 @@
         <div class="scope-stack">
           ${[
             ['2026 non migré', 'Aucune route QUO VADIS ne réécrit les événements, attendus ou participations 2026.'],
-            ['Pas de référentiel parallèle', 'Personnes/NIP, événements, attendus, participations, exercices et policies restent les sources SCOPE.'],
+            ['Référentiels institutionnels', 'Personnes, événements, attendus, participations, exercices et règles de suivi restent les références.'],
             ['Aucune présence prématurée', 'La préparation crée des activités et dates proposées uniquement.'],
             ['Numérotation sans slash', slashPattern ? 'À corriger: un pattern contient /.' : 'Patterns métier attendus: 1.1, 1.2 ou libellé explicite.']
-          ].map(([title, text]) => `<div class="scope-list-row"><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)}</small></div><span class="scope-pill${title.includes('slash') && slashPattern ? ' warning' : ' success'}">${title.includes('slash') && slashPattern ? 'alerte' : 'ok'}</span></div>`).join('')}
+          ].map(([title, text]) => `<div class="scope-list-row"><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)}</small></div><span class="scope-pill${title.includes('slash') && slashPattern ? ' warning' : ' info'}">${title.includes('slash') && slashPattern ? 'alerte' : 'contrôlé'}</span></div>`).join('')}
         </div>
       </section>
       <section class="scope-card">
@@ -9943,7 +10059,7 @@
           <table class="scope-table">
             <thead><tr><th>Règle</th><th>Domaine</th><th>Jours</th><th>Horaire</th></tr></thead>
             <tbody>${rules.map((row) => `<tr>
-              <td>${escapeHtml(String(row.code || '').replace(/-/g, ' '))}</td>
+              <td>${escapeHtml(row.domainLabel ? `Règle ${row.domainLabel}` : 'Règle générale')}</td>
               <td>${escapeHtml(row.domainLabel || row.domain || 'Tous')}</td>
               <td>${escapeHtml(Object.entries(row.dayPolicyLabels || {}).map(([day, value]) => `${day}: ${value}`).join(' · ') || 'À définir')}</td>
               <td>${escapeHtml((row.timePolicy && `${row.timePolicy.usualStart || ''} → ${row.timePolicy.usualEnd || ''}`) || '—')}</td>
@@ -9960,7 +10076,7 @@
     return `<div class="scope-grid scope-grid-2">
       <section class="scope-card">
         <h2>Fiche date future</h2>
-        <p class="scope-muted">Un pense-bête peut concerner une année future sans devenir artificiellement une activité 2027.</p>
+        <p class="scope-muted">Une date future est une contrainte ou une activité déjà connue que la préparation annuelle doit prendre en compte.</p>
         <div class="scope-form-grid">
           <label>Date début<input id="qv-future-date" type="date" value="${escapeHtml(form.dateDebut || '')}"></label>
           <label>Heure début<input id="qv-future-start" type="time" value="${escapeHtml(form.heureDebut || '')}"></label>
@@ -9974,10 +10090,10 @@
         <div class="scope-actions"><button type="button" class="scope-btn scope-btn-primary" id="qv-future-save">Enregistrer</button></div>
       </section>
       <section class="scope-card">
-        <h2>Pense-bête</h2>
+        <h2>Dates déjà saisies</h2>
         <div class="scope-stack">${rows.map((row) => `<div class="scope-list-row">
           <div><strong>${escapeHtml(row.activiteLabel)}</strong><small>${escapeHtml([row.dateDebut, row.heureDebut, row.domain, row.lieuLibre].filter(Boolean).join(' · '))}</small></div>
-          <span class="scope-pill${row.convertedObligationId ? ' success' : ''}">${row.convertedObligationId ? 'converti' : 'à convertir'}</span>
+          <span class="scope-pill${row.convertedObligationId ? ' info' : ''}">${row.convertedObligationId ? 'prise en compte' : 'à prendre en compte'}</span>
         </div>`).join('') || '<p class="scope-empty">Aucune date future.</p>'}</div>
       </section>
     </div>`;
@@ -9985,16 +10101,17 @@
 
   function renderQuoVadis() {
     const qv = quoVadisData();
-    const title = `<div class="scope-page-head"><div><h1>QUO VADIS 2027</h1><p>Socle natif de préparation annuelle, au-dessus des objets SCOPE existants.</p></div></div>`;
+    const title = `<div class="scope-page-head"><div><h1>QUO VADIS 2027</h1><p>Préparation annuelle du programme de formation et d’activités.</p></div></div>`;
     if (state.quoVadisError) return `<div class="scope-main">${title}<section class="scope-card"><p class="scope-empty scope-state-error">${escapeHtml(state.quoVadisError)}</p></section></div>`;
     if (!state.quoVadisReady && !state.quoVadis) return `<div class="scope-main">${title}<section class="scope-card"><p class="scope-empty">Chargement du programme QUO VADIS…</p></section></div>`;
     const tab = state.quoVadisTab || 'programme';
     const content = tab === 'obligations' ? renderQuoVadisObligations(qv)
       : tab === 'planning' ? renderQuoVadisPlanning(qv)
-        : tab === 'cursus' ? renderQuoVadisCursus(qv)
-          : tab === 'controles' ? renderQuoVadisControles(qv)
-            : tab === 'futures' ? renderQuoVadisFutures(qv)
-              : renderQuoVadisProgramme(qv);
+        : tab === 'alertes' ? renderQuoVadisAlertes(qv)
+          : tab === 'cursus' ? renderQuoVadisCursus(qv)
+            : tab === 'controles' ? renderQuoVadisControles(qv)
+              : tab === 'futures' ? renderQuoVadisFutures(qv)
+                : renderQuoVadisProgramme(qv);
     return `<div class="scope-main">${title}${renderQuoVadisTabs()}${content}</div>`;
   }
 
@@ -10083,6 +10200,20 @@
         render();
       });
     });
+    root.querySelectorAll('[data-qv-month]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.quoVadisPlanningMonth = Number(btn.getAttribute('data-qv-month') || 1);
+        state.quoVadisTab = 'planning';
+        render();
+      });
+    });
+    root.querySelectorAll('[data-qv-month-nav]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.quoVadisPlanningMonth = Number(btn.getAttribute('data-qv-month-nav') || state.quoVadisPlanningMonth || 1);
+        state.quoVadisTab = 'planning';
+        render();
+      });
+    });
     document.getElementById('qv-generate')?.addEventListener('click', async () => {
       if (state.quoVadisBusy || typeof client.generateQuoVadisProgramme !== 'function') return;
       state.quoVadisBusy = true;
@@ -10092,7 +10223,9 @@
         invalidateCache(['quoVadis']);
         state.quoVadis = data.quoVadis || null;
         state.quoVadisReady = true;
-        toast('success', 'QUO VADIS', 'Obligations et propositions 2027 générées sans créer de présences.');
+        state.quoVadisGenerationReport = state.quoVadis && state.quoVadis.generation ? state.quoVadis.generation : null;
+        const report = state.quoVadisGenerationReport || {};
+        toast('success', 'QUO VADIS', `Préparation 2027 mise à jour: ${report.newProposals || 0} nouvelle(s) proposition(s), ${report.attentionPoints || 0} point(s) d’attention.`);
       } catch (error) {
         toast('error', 'QUO VADIS', L.friendlyError(error).message || 'Génération impossible.');
       } finally {

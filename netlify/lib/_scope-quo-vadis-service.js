@@ -138,6 +138,10 @@ function monthForDomain(domain, index){
   return Math.min(12, (order[String(domain || '').toUpperCase()] || 11) + (Number(index || 0) % 2));
 }
 
+function monthLabel(year, month){
+  return new Intl.DateTimeFormat('fr-CH', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${year}-${String(month).padStart(2, '0')}-01T12:00:00Z`));
+}
+
 function mapProgramme(row){
   if(!row) return null;
   return {
@@ -365,6 +369,78 @@ function createScopeQuoVadisService(){
     };
   }
 
+  function buildAlerts(qv){
+    const obligationsById = new Map((qv.obligations || []).map((row) => [row.obligationId, row]));
+    const rows = [];
+    for(const proposal of qv.proposals || []){
+      const summary = proposal.conflictSummary || {};
+      const obligation = obligationsById.get(proposal.obligationId) || {};
+      let type = '';
+      if(summary.conflict) type = 'Conflit';
+      else if(summary.requiresDerogation || proposal.dayClass === 'INTERDIT' || proposal.dayClass === 'DECONSEILLE') type = 'Dérogation';
+      else if(summary.constraint === 'A_VERIFIER' || summary.prerequisite === 'A_VERIFIER' || summary.astreinte === 'A_VERIFIER') type = 'À vérifier';
+      else if(summary.imposedDate) type = 'Information';
+      if(!type) continue;
+      rows.push({
+        type,
+        proposalId: proposal.proposalId,
+        obligationId: proposal.obligationId,
+        title: obligation.title || 'Activité',
+        domain: obligation.domain || '',
+        domainLabel: domainLabel(obligation.domain),
+        startsAt: proposal.startsAt,
+        endsAt: proposal.endsAt,
+        dayClass: proposal.dayClass,
+        dayClassLabel: DAY_CLASS_LABELS[proposal.dayClass] || proposal.dayClass,
+        lieuLibre: proposal.lieuLibre || obligation.lieuLibre || '',
+        reasons: proposal.reasons || [],
+        action: type === 'Information' ? 'Consulter' : 'Arbitrer'
+      });
+    }
+    return rows;
+  }
+
+  function buildAnnualBreakdown(qv){
+    const proposalsByObligation = new Map();
+    for(const proposal of qv.proposals || []){
+      const list = proposalsByObligation.get(proposal.obligationId) || [];
+      list.push(proposal);
+      proposalsByObligation.set(proposal.obligationId, list);
+    }
+    const domains = new Map();
+    const months = new Map();
+    for(const obligation of qv.obligations || []){
+      const key = obligation.domain || 'SCOPE';
+      if(!domains.has(key)) domains.set(key, { code: key, label: domainLabel(key), total: 0, positionnees: 0, aArbitrer: 0, alertes: 0 });
+      const item = domains.get(key);
+      const proposals = proposalsByObligation.get(obligation.obligationId) || [];
+      const hasAlert = proposals.some((row) => {
+        const summary = row.conflictSummary || {};
+        return summary.conflict || summary.requiresDerogation || summary.constraint === 'A_VERIFIER' || summary.prerequisite === 'A_VERIFIER' || summary.astreinte === 'A_VERIFIER';
+      });
+      item.total += 1;
+      if(obligation.statut === 'PLANIFIE' || obligation.scopeEvenementId) item.positionnees += 1;
+      else item.aArbitrer += 1;
+      if(hasAlert) item.alertes += 1;
+      const firstDate = proposals.map((row) => dateOnly(row.startsAt)).filter(Boolean).sort()[0];
+      if(firstDate){
+        const monthKey = firstDate.slice(0, 7);
+        if(!months.has(monthKey)){
+          const month = Number(monthKey.slice(5, 7));
+          months.set(monthKey, { month, label: monthLabel(qv.programme.annee, month), total: 0, positionnees: 0, alertes: 0 });
+        }
+        const monthItem = months.get(monthKey);
+        monthItem.total += 1;
+        if(obligation.statut === 'PLANIFIE' || obligation.scopeEvenementId) monthItem.positionnees += 1;
+        if(hasAlert) monthItem.alertes += 1;
+      }
+    }
+    return {
+      domains: Array.from(domains.values()).sort((a, b) => a.label.localeCompare(b.label, 'fr')),
+      months: Array.from(months.values()).sort((a, b) => a.month - b.month)
+    };
+  }
+
   function buildPlanning(qv){
     const calendarByDate = new Map((qv.calendarDays || []).map((row) => [row.jour, row]));
     const proposalsByObligation = new Map();
@@ -378,7 +454,7 @@ function createScopeQuoVadisService(){
       const month = index + 1;
       return {
         month,
-        label: new Intl.DateTimeFormat('fr-CH', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${qv.programme.annee}-${String(month).padStart(2, '0')}-01T12:00:00Z`)),
+        label: monthLabel(qv.programme.annee, month),
         days: []
       };
     });
@@ -513,6 +589,8 @@ function createScopeQuoVadisService(){
       }))
     };
     result.summary = programmeSummary(result);
+    result.alerts = buildAlerts(result);
+    result.breakdown = buildAnnualBreakdown(result);
     result.planning = buildPlanning(result);
     result.engineNotes = [
       'Les dates proposées restent indicatives: l’utilisateur arbitre.',
@@ -713,6 +791,7 @@ function createScopeQuoVadisService(){
 
   async function generateProgramme(annee = 2027){
     const programme = await ensureProgramme(annee);
+    const before = await listProgramme(programme.annee);
     await seedCalendar(programme);
     await ensureDefaultCursusSelections(programme);
     const calendarRows = (await db.query(`select * from scope_quo_vadis_calendar_days where programme_id = $1`, [programme.programmeId])).rows;
@@ -815,9 +894,19 @@ function createScopeQuoVadisService(){
       }
     }
 
-    return Object.assign(await listProgramme(programme.annee), {
+    const after = await listProgramme(programme.annee);
+    const beforeSummary = before.summary || {};
+    const afterSummary = after.summary || {};
+    const newProposals = Math.max(0, Number(afterSummary.datesProposees || 0) - Number(beforeSummary.datesProposees || 0));
+    return Object.assign(after, {
       generation: {
         ok: true,
+        before: beforeSummary,
+        after: afterSummary,
+        newObligations: Math.max(0, Number(afterSummary.totalActivites || 0) - Number(beforeSummary.totalActivites || 0)),
+        newProposals,
+        unchangedProposals: Math.max(0, Number(afterSummary.datesProposees || 0) - newProposals),
+        attentionPoints: Number(afterSummary.conflits || 0),
         obligationsTouched: created + catalogueTouched + dpsTouched + futureDates.rows.length,
         catalogueTouched,
         dpsTouched,

@@ -118,6 +118,138 @@ html, body {
   line-height: var(--scope-lh-body);
 }
 
+/* QUO VADIS — pilotage annuel */
+.qv-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.qv-tab-button {
+  justify-content: flex-start;
+  min-height: 58px;
+  text-align: left;
+  white-space: normal;
+}
+
+.qv-tab-button strong,
+.qv-tab-button small {
+  display: block;
+  width: 100%;
+}
+
+.qv-tab-button strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.qv-tab-button strong span {
+  margin-left: 6px;
+  color: inherit;
+  opacity: .78;
+}
+
+.qv-tab-button small {
+  margin-top: 3px;
+  font-size: 11px;
+  color: inherit;
+  opacity: .76;
+}
+
+.qv-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.qv-kpi-link {
+  width: 100%;
+  border: 1px solid var(--scope-line);
+  background: #fff;
+  color: var(--scope-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.qv-kpi-link:hover,
+.qv-kpi-link:focus {
+  border-color: var(--scope-blue);
+  box-shadow: 0 0 0 2px rgba(23, 28, 143, .08);
+}
+
+.qv-generation-report {
+  border-left: 4px solid var(--scope-blue);
+}
+
+.qv-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qv-shortcut {
+  min-height: 34px;
+}
+
+.qv-proposal-stack,
+.qv-day-items,
+.qv-month-strip {
+  display: grid;
+  gap: 8px;
+}
+
+.qv-proposal-option {
+  border: 1px solid var(--scope-line);
+  border-left: 4px solid var(--scope-gray-500);
+  border-radius: var(--scope-radius-sm);
+  padding: 10px;
+  background: #fff;
+}
+
+.qv-proposal-option.is-retained {
+  border-left-color: var(--scope-blue);
+  background: #f4f5fb;
+}
+
+.qv-proposal-option strong,
+.qv-proposal-option small {
+  display: block;
+}
+
+.qv-proposal-option p {
+  margin: 6px 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-fs-secondary);
+}
+
+.qv-month-strip {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: 14px;
+}
+
+.qv-month-panel h3 {
+  margin: 0 0 10px;
+  font-size: var(--scope-fs-h3);
+}
+
+.qv-day-item {
+  min-height: 44px;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+  border-left: 4px solid var(--scope-blue);
+}
+
+.qv-day-item.is-warning {
+  border-left-color: var(--scope-warning);
+  background: var(--scope-warning-soft);
+}
+
+.qv-day-item strong,
+.qv-day-item span,
+.qv-day-item small {
+  display: block;
+  width: 100%;
+}
+
 * { box-sizing: border-box; }
 
 .scope-app {
