@@ -276,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-core-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-pilotage-2';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -404,6 +404,7 @@ async function ensureScopeSchema(){
   await migrateStatComReferentialConfig1();
   await migrateStatComSpecialisationPersistenceRepair2();
   await migrateQuoVadisCore1();
+  await migrateQuoVadisPilotage2();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -1840,6 +1841,18 @@ async function migrateQuoVadisCore1(){
     )
   `);
   await db.query(`
+    create table if not exists scope_quo_vadis_cursus_programmes (
+      programme_id uuid not null references scope_quo_vadis_programmes(programme_id) on delete cascade,
+      cursus_id uuid not null references scope_quo_vadis_cursus_definitions(cursus_id) on delete cascade,
+      retenu boolean not null default false,
+      justification text,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_qv_cursus_programmes_pk primary key(programme_id, cursus_id)
+    )
+  `);
+  await db.query(`
     create table if not exists scope_quo_vadis_future_dates (
       future_date_id uuid primary key default gen_random_uuid(),
       target_year integer not null,
@@ -2003,6 +2016,14 @@ async function migrateQuoVadisCore1(){
     on conflict (code) do nothing
   `);
   await db.query(`
+    insert into scope_quo_vadis_cursus_programmes(programme_id, cursus_id, retenu, justification, metadata)
+    select p.programme_id, d.cursus_id, true, 'Cursus CI DPS retenu pour valider la planification 2027 sur deux années.', '{"source":"QUO-VADIS-PILOTAGE-2","defaultSelection":true}'::jsonb
+    from scope_quo_vadis_programmes p
+    join scope_quo_vadis_cursus_definitions d on d.code = 'CI-DPS'
+    where p.annee = 2027
+    on conflict (programme_id, cursus_id) do nothing
+  `);
+  await db.query(`
     insert into scope_quo_vadis_dps_organisation_versions(oi_code, valid_from, sections, metadata)
     values
       ('G1', '2027-02-01', '[{"section":"N01","halfSections":["N01a","N01b"]},{"section":"N02","halfSections":["N02a","N02b"]},{"section":"N03","halfSections":["N03a","N03b"]},{"section":"N04","halfSections":["N04a","N04b"]},{"section":"N05","halfSections":["N05a","N05b"]},{"section":"N06","reserve":true,"label":"G1 N06"}]'::jsonb, '{"source":"QUO-VADIS-CORE-1","configurableChangeDate":true}'::jsonb),
@@ -2012,6 +2033,30 @@ async function migrateQuoVadisCore1(){
     on conflict (oi_code, valid_from) do nothing
   `);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-core-1') on conflict (version) do nothing`);
+}
+
+async function migrateQuoVadisPilotage2(){
+  await db.query(`
+    create table if not exists scope_quo_vadis_cursus_programmes (
+      programme_id uuid not null references scope_quo_vadis_programmes(programme_id) on delete cascade,
+      cursus_id uuid not null references scope_quo_vadis_cursus_definitions(cursus_id) on delete cascade,
+      retenu boolean not null default false,
+      justification text,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_qv_cursus_programmes_pk primary key(programme_id, cursus_id)
+    )
+  `);
+  await db.query(`
+    insert into scope_quo_vadis_cursus_programmes(programme_id, cursus_id, retenu, justification, metadata)
+    select p.programme_id, d.cursus_id, true, 'Cursus CI DPS retenu pour valider la planification 2027 sur deux années.', '{"source":"QUO-VADIS-PILOTAGE-2","defaultSelection":true}'::jsonb
+    from scope_quo_vadis_programmes p
+    join scope_quo_vadis_cursus_definitions d on d.code = 'CI-DPS'
+    where p.annee = 2027
+    on conflict (programme_id, cursus_id) do nothing
+  `);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-pilotage-2') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

@@ -130,6 +130,14 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, quoVadis: await quoVadis.generateProgramme(params.annee) });
     }
+    params = match(path, '/quo-vadis/programmes/:annee/cursus');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await quoVadis.setCursusSelection(params.annee, body)) });
+    }
+    params = match(path, '/quo-vadis/proposals/:id/retain');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await quoVadis.retainProposal(params.id, body)) });
+    }
     if(method === 'POST' && path === '/quo-vadis/future-dates'){
       return response(201, { ok:true, ...(await quoVadis.createFutureDate(body)) });
     }

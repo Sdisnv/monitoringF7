@@ -72,8 +72,9 @@ assert.ok(/scope_qv_obligations_source_uq/.test(migration), 'generator obligatio
 assertDpsSeed(migration, 'migration');
 assertNoQuoVadisAmbiguousSelects(migration);
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-core-1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-pilotage-2'/.test(schema));
 assert.ok(/async function migrateQuoVadisCore1/.test(schema));
+assert.ok(/async function migrateQuoVadisPilotage2/.test(schema));
 assert.ok(/'QV-2027'/.test(schema));
 assert.ok(/'2028-03-31'/.test(schema), '2027 programme must allow period through annual report 2028');
 assert.ok(/FRIDAY":"INTERDIT/.test(schema), 'default training Friday exclusion missing');

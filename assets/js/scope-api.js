@@ -402,6 +402,8 @@
       participationPolicies() { return request('GET', '/participation/policies'); },
       quoVadisProgramme(annee) { return request('GET', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}`); },
       generateQuoVadisProgramme(annee) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/generate`, {}); },
+      setQuoVadisCursus(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cursus`, body || {}); },
+      retainQuoVadisProposal(id, body) { return request('POST', `/quo-vadis/proposals/${encodeURIComponent(id)}/retain`, body || {}); },
       createQuoVadisFutureDate(body) { return request('POST', '/quo-vadis/future-dates', body || {}); },
       participationReferentialUsage(kind, id) { return request('GET', `/participation/referentials/${encodeURIComponent(kind)}/${encodeURIComponent(id)}/usages`); },
       saveParticipationPolicy(domain, body) { return request('POST', `/participation/policies/${encodeURIComponent(domain)}`, body || {}); },
