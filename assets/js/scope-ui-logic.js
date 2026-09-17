@@ -1178,7 +1178,11 @@
         nav: 'quo-vadis',
         qvView: view,
         qvJour: query.jour || '',
-        qvFrom: query.from || ''
+        qvFrom: query.from || '',
+        qvDomaine: query.domaine || '',
+        qvFamille: query.famille || '',
+        qvMois: query.mois || '',
+        qvSeances: query.seances || ''
       };
     }
     if (parts[0] === 'vigilance') return { screen: 'vigilance', nav: 'vigilance' };

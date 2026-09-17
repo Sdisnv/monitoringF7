@@ -198,6 +198,8 @@
     quoVadisFilters: {
       q: '',
       domain: 'tous',
+      family: 'tous',
+      sessions: 'tous',
       cible: 'tous',
       specialisation: 'tous',
       cursus: 'tous',
@@ -2237,6 +2239,9 @@
 
   function pageHeaderHtml(options) {
     const o = options || {};
+    const aside = (o.asideHtml || o.logo)
+      ? `<div class="scope-page-aside">${o.asideHtml || ''}${o.logo ? '<img class="scope-page-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="150" height="45">' : ''}</div>`
+      : '';
     return `<header class="scope-page-head">
       <div>
         ${o.eyebrow ? `<p class="scope-page-eyebrow">${escapeHtml(o.eyebrow)}</p>` : ''}
@@ -2244,7 +2249,7 @@
         ${o.context ? `<p class="scope-page-context">${escapeHtml(o.context)}</p>` : ''}
         ${o.description ? `<p class="scope-page-desc">${escapeHtml(o.description)}</p>` : ''}
       </div>
-      ${o.logo ? '<img class="scope-page-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="150" height="45">' : ''}
+      ${aside}
     </header>`;
   }
 
@@ -9812,8 +9817,13 @@
       return `#/quo-vadis/activites/${encodeURIComponent(opts.id)}${params.length ? `?${params.join('&')}` : ''}`;
     }
     const path = view === 'synthese' ? '#/quo-vadis/synthese' : `#/quo-vadis/${view}`;
-    if (opts.jour) return `${path}?jour=${encodeURIComponent(opts.jour)}`;
-    return path;
+    const params = [];
+    if (opts.jour) params.push(`jour=${encodeURIComponent(opts.jour)}`);
+    if (opts.domaine) params.push(`domaine=${encodeURIComponent(opts.domaine)}`);
+    if (opts.famille) params.push(`famille=${encodeURIComponent(opts.famille)}`);
+    if (opts.mois) params.push(`mois=${encodeURIComponent(opts.mois)}`);
+    if (opts.seances) params.push(`seances=${encodeURIComponent(opts.seances)}`);
+    return params.length ? `${path}?${params.join('&')}` : path;
   }
 
   function qvStatusLabel(value) {
@@ -9878,10 +9888,58 @@
     return new Intl.DateTimeFormat('fr-CH', { month: 'long', timeZone: 'UTC' }).format(new Date(`${year || 2027}-${String(month).padStart(2, '0')}-01T12:00:00Z`));
   }
 
+  function qvMonthTitle(month, year) {
+    const label = qvMonthLabel(month, year);
+    const titled = label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+    return year ? `${titled} ${year}` : titled;
+  }
+
+  function qvFamilyOf(row) {
+    if (row && row.family) return row.family;
+    const domain = String((row && row.domain) || '').toUpperCase();
+    if (['DPS', 'DAP', 'JSP'].includes(domain)) return 'FOCO';
+    if (domain === 'FOBA') return 'FOBA';
+    if (domain === 'FOCA') return 'FOCA';
+    if (['FOSPEC', 'PR', 'AUTO', 'VPC', 'NAC', 'OFSI'].includes(domain)) return 'FOSPEC';
+    return '';
+  }
+
+  function qvIsMultiSession(row) {
+    return Number((row && row.sessionCount) || 0) > 1 || ((row && row.sessions) || []).length > 1;
+  }
+
+  function applyQuoVadisRouteContext(r) {
+    if (!r || r.screen !== 'quo-vadis') return;
+    const filters = state.quoVadisFilters || {};
+    if (r.qvView === 'activites') {
+      filters.domain = r.qvDomaine || 'tous';
+      filters.family = r.qvFamille || 'tous';
+      filters.sessions = r.qvSeances || 'tous';
+    }
+    if (r.qvView === 'agenda' && r.qvMois) state.quoVadisAgendaMonth = r.qvMois;
+    state.quoVadisFilters = filters;
+  }
+
+  function qvCockpitIcon(name) {
+    const icons = {
+      list: '<path d="M8 7h12M8 12h12M8 17h12"/><circle cx="4.5" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="17" r="1.1" fill="currentColor" stroke="none"/>',
+      calendar: '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4M16 4v4M4 10h16"/>',
+      file: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
+      gavel: '<path d="M13 3 21 11M8 16l5-5 3 3-5 5Z"/><path d="M4 21h8"/>',
+      alert: '<path d="M12 4 3.8 19h16.4L12 4Z"/><path d="M12 9v5M12 16.5h.01"/>',
+      announced: '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4M16 4v4M9 14h6M12 11v6"/>',
+      coverage: '<path d="M4 19V9M10 19V5M16 19v-7M20 19H3"/>',
+      gear: '<circle cx="12" cy="12" r="3"/><path d="M12 4.2v2.3M12 17.5v2.3M4.8 7.2l1.7 1.7M17.5 15.1l1.7 1.7M4.2 12h2.3M17.5 12h2.3M4.8 16.8l1.7-1.7M17.5 8.9l1.7-1.7"/>',
+      info: '<circle cx="12" cy="12" r="8"/><path d="M12 10.5V17M12 7.4h.01"/>',
+      check: '<circle cx="12" cy="12" r="8"/><path d="M8.2 12.2 10.8 14.8 15.8 9.4"/>'
+    };
+    return `<svg class="qv-cockpit-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[name] || icons.list}</svg>`;
+  }
+
   function qvMonthChoices() {
     const rows = [];
-    for (let month = 1; month <= 12; month += 1) rows.push({ value: `2027-${String(month).padStart(2, '0')}`, label: `${qvMonthLabel(month, 2027)} 2027` });
-    for (let month = 1; month <= 3; month += 1) rows.push({ value: `2028-${String(month).padStart(2, '0')}`, label: `${qvMonthLabel(month, 2028)} 2028` });
+    for (let month = 1; month <= 12; month += 1) rows.push({ value: `2027-${String(month).padStart(2, '0')}`, label: qvMonthTitle(month, 2027) });
+    for (let month = 1; month <= 3; month += 1) rows.push({ value: `2028-${String(month).padStart(2, '0')}`, label: qvMonthTitle(month, 2028) });
     return rows;
   }
 
@@ -9932,9 +9990,11 @@
     const monthFilter = opts.monthKey || filters.month || 'tous';
     const rows = qvActivities(qv).filter((row) => {
       const monthKey = row.startsAt ? String(row.startsAt).slice(0, 7) : '';
-      const haystack = [row.title, row.domain, row.domainLabel, (row.cibleCodes || []).join(' '), row.specialisation, row.cursus, row.lieu, row.statcomCode, row.family, row.activityKind, qvStatusLabel(row.status)].join(' ').toLowerCase();
+      const haystack = [row.title, row.domain, row.domainLabel, (row.cibleCodes || []).join(' '), row.specialisation, row.cursus, row.lieu, row.statcomCode, row.family, qvFamilyOf(row), row.activityKind, qvStatusLabel(row.status)].join(' ').toLowerCase();
       if (query && !haystack.includes(query)) return false;
       if (filters.domain && filters.domain !== 'tous' && row.domain !== filters.domain) return false;
+      if (filters.family && filters.family !== 'tous' && qvFamilyOf(row) !== filters.family) return false;
+      if (filters.sessions === 'oui' && !qvIsMultiSession(row)) return false;
       if (filters.cible && filters.cible !== 'tous' && !(row.cibleCodes || []).includes(filters.cible)) return false;
       if (filters.specialisation && filters.specialisation !== 'tous' && row.specialisation !== filters.specialisation) return false;
       if (filters.cursus && filters.cursus !== 'tous' && row.cursus !== filters.cursus) return false;
@@ -9998,12 +10058,14 @@
     return `<div class="scope-toolbar qv-toolbar">
       <div class="scope-field"><label for="qv-filter-q">Recherche</label><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Activité, domaine, lieu…"></div>
       <div class="scope-field"><label for="qv-filter-domain">Domaine</label><select id="qv-filter-domain"><option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
+      <div class="scope-field"><label for="qv-filter-family">Famille</label><select id="qv-filter-family"><option value="tous">Toutes</option>${['FOBA', 'FOCO', 'FOCA', 'FOSPEC'].map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-cible">OI</label><select id="qv-filter-cible"><option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-specialisation">Spécialisation</label><select id="qv-filter-specialisation"><option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-cursus">Cursus</label><select id="qv-filter-cursus"><option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-status">État</label><select id="qv-filter-status"><option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvStatusLabel(v))}</option>`).join('')}</select></div>
       ${opts.hideMonth ? '' : `<div class="scope-field"><label for="qv-filter-month">Mois</label><select id="qv-filter-month"><option value="tous">Tous</option>${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.month === row.value || (filters.month === row.value.slice(5, 7) && row.value.startsWith('2027-')) ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}</select></div>`}
       <div class="scope-field"><label for="qv-filter-lieu">Lieu</label><select id="qv-filter-lieu"><option value="tous">Tous</option>${lieux.map((v) => `<option value="${escapeHtml(v)}" ${filters.lieu === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
+      <label class="scope-switch qv-attention-toggle"><input id="qv-filter-sessions" type="checkbox" ${filters.sessions === 'oui' ? 'checked' : ''}><span>Séances multiples</span></label>
       <label class="scope-switch qv-attention-toggle"><input id="qv-filter-attention" type="checkbox" ${filters.attention ? 'checked' : ''}><span>Points d’attention</span></label>
       <button type="button" class="scope-btn" id="qv-filter-reset">Réinitialiser les filtres</button>
     </div>`;
@@ -10082,113 +10144,205 @@
           titleHtml: '<a class="qv-home-link" href="#/quo-vadis/synthese">QUO VADIS 2027</a>',
           context: titles[view] || 'Synthèse 2027',
           description: 'Préparation annuelle du programme de formation et d’activités.',
-          logo: true
+          logo: true,
+          asideHtml: view === 'synthese' ? qvSyntheseAsideHtml(quoVadisData()) : ''
         })}
         ${renderQuoVadisNav(quoVadisData())}
         ${content}
       </div>`;
   }
 
-  function renderQuoVadisGenerationReport(report) {
-    if (!report) return '';
-    const before = report.before || {};
-    const after = report.after || {};
-    const consolidation = report.consolidation;
-    return `<section class="scope-card qv-generation-report" role="status">
-      <div class="scope-section-head"><div><h2>Préparation 2027 mise à jour</h2><p class="scope-muted">Bilan avant / après du dernier recalcul. Aucun événement opérationnel n’a été créé.</p></div></div>
-      <div class="scope-kpis qv-kpis">
-        <article class="scope-kpi"><span>Activités examinées</span><strong>${escapeHtml(String(after.totalActivites || 0))}</strong><small>avant ${escapeHtml(String(before.totalActivites || 0))} · ${escapeHtml(String(report.newObligations || 0))} nouvelle(s)</small></article>
-        <article class="scope-kpi"><span>Nouvelles propositions</span><strong>${escapeHtml(String(report.newProposals || 0))}</strong><small>${escapeHtml(String(report.unchangedProposals || 0))} inchangée(s)</small></article>
-        <article class="scope-kpi"><span>Points d’attention</span><strong>${escapeHtml(String(report.attentionPoints || 0))}</strong><small>conflits, dérogations ou vérifications</small></article>
-      </div>
-      ${consolidation ? `<dl class="qv-definition-list">
-        <dt>Activités historiques consolidées</dt><dd>${escapeHtml(String(consolidation.historical))}</dd>
-        <dt>Compléments catalogue justifiés</dt><dd>${escapeHtml(String(consolidation.catalogue))}</dd>
-        <dt>Compléments DPS justifiés</dt><dd>${escapeHtml(String(consolidation.dps))}</dd>
-        <dt>Cursus ajoutés</dt><dd>${escapeHtml(String(consolidation.cursus))}</dd>
-        <dt>Dates annoncées ajoutées</dt><dd>${escapeHtml(String(consolidation.announcedDates))}</dd>
-        <dt>Activités supplémentaires conservées par décision humaine</dt><dd>${escapeHtml(String(consolidation.humanDecisions))}</dd>
-        <dt>Doublons évités</dt><dd>${escapeHtml(String(consolidation.duplicatesAvoided))}</dd>
-        <dt>Anciennes obligations obsolètes neutralisées</dt><dd>${escapeHtml(String(consolidation.obsoleteNeutralized))}</dd>
-        <dt>Décisions humaines préservées</dt><dd>${escapeHtml(String(consolidation.humanDecisionsPreserved))}</dd>
-      </dl>` : ''}
+  function qvDisplayCount(value) {
+    if (value == null || value === '') return '—';
+    const number = Number(value);
+    return Number.isFinite(number) ? String(number) : '—';
+  }
+
+  function qvSyntheseAsideHtml(qv) {
+    const report = state.quoVadisGenerationReport || {};
+    const stamp = report.generatedAt || (qv.programme && qv.programme.updatedAt) || '';
+    const when = stamp ? qvFormatDate(stamp) : '';
+    const clock = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(stamp)) ? String(stamp).slice(11, 16) : '';
+    return `<div class="qv-page-meta">
+      ${when ? `<p>Dernier recalcul : ${escapeHtml(when)}${clock ? ` à ${escapeHtml(clock)}` : ''}</p>` : '<p>Données du programme préparatoire</p>'}
+      <p class="qv-page-fresh">Données à jour</p>
+    </div>`;
+  }
+
+  function qvPilotKpi(options) {
+    const tone = options.tone || 'info';
+    return `<a class="qv-pilot-kpi is-${escapeHtml(tone)}" href="${escapeHtml(options.href)}">
+      <span class="qv-pilot-kpi-icon">${qvCockpitIcon(options.icon)}</span>
+      <strong>${escapeHtml(String(options.value))}</strong>
+      <span class="qv-pilot-kpi-label">${escapeHtml(options.label)}</span>
+      <small>${escapeHtml(options.detail || '')}</small>
+      <em>${escapeHtml(options.action || 'Voir')} →</em>
+    </a>`;
+  }
+
+  function renderQuoVadisGenerationReport(report, qv) {
+    const generation = report || {};
+    const consolidation = generation.consolidation || (qv && qv.coverage && qv.coverage.supplements) || null;
+    const summary = (qv && qv.summary) || {};
+    const rows = [
+      ['Activités historiques consolidées', consolidation && consolidation.historical],
+      ['Compléments catalogue justifiés', consolidation && consolidation.catalogue],
+      ['Compléments DPS justifiés', consolidation && consolidation.dps],
+      ['Cursus ajoutés', consolidation && consolidation.cursus],
+      ['Dates annoncées ajoutées', consolidation && consolidation.announcedDates],
+      ['Activités supplémentaires (décision humaine)', consolidation && consolidation.humanDecisions],
+      ['Doublons évités', consolidation && consolidation.duplicatesAvoided],
+      ['Anciennes obligations obsolètes neutralisées', consolidation && consolidation.obsoleteNeutralized],
+      ['Décisions humaines préservées', consolidation && consolidation.humanDecisionsPreserved]
+    ];
+    const active = summary.totalActivites;
+    return `<section class="scope-card qv-generation-report">
+      <div class="scope-section-head"><div><h2>${qvCockpitIcon('gear')} Préparation 2027 — statut actuel</h2><p class="scope-muted">Bilan avant / après du dernier recalcul. Aucun événement opérationnel n’a été créé.</p></div></div>
+      ${generation.after ? `<p class="qv-prep-recalc">Dernier recalcul : ${escapeHtml(String(generation.newProposals || 0))} Nouvelles propositions · ${escapeHtml(String(generation.unchangedProposals || 0))} inchangée(s) · ${escapeHtml(String(generation.attentionPoints || 0))} Points d’attention.</p>` : ''}
+      ${consolidation ? `<ul class="qv-prep-list">${rows.map(([label, value]) => `<li><span>${escapeHtml(label)}</span><strong>${escapeHtml(qvDisplayCount(value))}</strong></li>`).join('')}</ul>` : '<p class="scope-muted">Le bilan détaillé du recalcul sera affiché ici dès qu’un calcul aura été exécuté.</p>'}
+      ${active == null ? '' : `<div class="qv-prep-banner"><strong>${escapeHtml(String(active))} activités actives en 2027</strong><span>Programme cohérent et prêt pour arbitrage.</span></div>`}
     </section>`;
   }
 
   function renderQuoVadisCoverage(qv) {
     const coverage = qv.coverage || (state.quoVadisGenerationReport && state.quoVadisGenerationReport.coverage) || null;
-    if (!coverage) return '';
+    if (!coverage) return `<section class="scope-card qv-coverage-report"><div class="scope-section-head"><div><h2>${qvCockpitIcon('coverage')} Couverture 2026 → 2027</h2><p class="scope-muted">Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.</p></div></div><p class="scope-empty">La couverture sera disponible après lecture de l’historique 2026.</p></section>`;
     const reasons = Object.entries(coverage.reasonCounts || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const source = Number(coverage.sourceLines || 0);
+    const proposed = Number(coverage.proposed || coverage.generable || 0);
+    const cards = [
+      ['source', 'Lignes source 2026', coverage.sourceLines, ''],
+      ['recognized', 'Lignes reconnues', coverage.recognized, `${qvDisplayCount(coverage.recognizedActivities || coverage.proposed)} activité(s) métier`],
+      ['sessions', 'Sessions consolidées', coverage.sessions, `${qvDisplayCount(coverage.duplicated)} doublon(s)`],
+      ['excluded', 'Exclues', coverage.excluded, `${qvDisplayCount(coverage.recipeExcluded)} recette/technique`],
+      ['deferred', 'Cycliques / cursus', Number(coverage.cyclicDeferred || 0) + Number(coverage.cursusDeferred || 0), `${qvDisplayCount(coverage.optionalCount)} optionnelle(s)`],
+      ['socle', 'Socle historique 2027', proposed, `Programme actif : ${qvDisplayCount(coverage.programmeActivities ?? (qv.summary && qv.summary.totalActivites))} activité(s), compléments justifiés inclus`]
+    ];
     return `<section class="scope-card qv-coverage-report">
-      <div class="scope-section-head"><div><h2>Couverture 2026 → 2027</h2><p class="scope-muted">Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.</p></div></div>
-      <div class="scope-kpis qv-kpis">
-        <article class="scope-kpi"><span>Lignes source 2026</span><strong>${escapeHtml(String(coverage.sourceLines || 0))}</strong></article>
-        <article class="scope-kpi"><span>Lignes reconnues</span><strong>${escapeHtml(String(coverage.recognized || 0))}</strong><small>${escapeHtml(String(coverage.recognizedActivities || coverage.proposed || 0))} activité(s) métier</small></article>
-        <article class="scope-kpi"><span>Sessions consolidées</span><strong>${escapeHtml(String(coverage.sessions || 0))}</strong><small>${escapeHtml(String(coverage.duplicated || 0))} doublon(s)</small></article>
-        <article class="scope-kpi"><span>Exclues</span><strong>${escapeHtml(String(coverage.excluded || 0))}</strong><small>${escapeHtml(String(coverage.recipeExcluded || 0))} recette/technique</small></article>
-        <article class="scope-kpi"><span>Cycliques / cursus</span><strong>${escapeHtml(String((coverage.cyclicDeferred || 0) + (coverage.cursusDeferred || 0)))}</strong><small>${escapeHtml(String(coverage.optionalCount || 0))} optionnelle(s)</small></article>
-        <article class="scope-kpi"><span>Socle historique 2027</span><strong>${escapeHtml(String(coverage.proposed || coverage.generable || 0))}</strong><small>Programme actif : ${escapeHtml(String(coverage.programmeActivities ?? (qv.summary && qv.summary.totalActivites) ?? 0))} activité(s), compléments justifiés inclus</small></article>
-      </div>
-      ${reasons.length ? `<ul class="qv-reasons">${reasons.map(([reason, count]) => `<li>${escapeHtml(String(count))} — ${escapeHtml(reason)}</li>`).join('')}</ul>` : ''}
+      <div class="scope-section-head"><div><h2>${qvCockpitIcon('coverage')} Couverture 2026 → 2027</h2><p class="scope-muted">Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.</p></div></div>
+      <div class="qv-coverage-grid">${cards.map((card) => `<article class="qv-coverage-tile is-${escapeHtml(card[0])}"><strong>${escapeHtml(qvDisplayCount(card[2]))}</strong><span>${escapeHtml(card[1])}</span>${card[3] ? `<small>${escapeHtml(card[3])}</small>` : ''}</article>`).join('')}</div>
+      ${reasons.length ? `<div class="qv-coverage-gaps"><h3>Détail des écarts (${escapeHtml(String(source))} lignes → ${escapeHtml(String(proposed))} activités)</h3><ul class="qv-reasons">${reasons.map(([reason, count]) => `<li><strong>${escapeHtml(String(count))}</strong> — ${escapeHtml(reason)}</li>`).join('')}</ul></div>` : ''}
     </section>`;
+  }
+
+  function qvDomainRows(breakdown) {
+    return (breakdown.domains || []).slice();
+  }
+
+  function qvMonthRows(breakdown) {
+    const byKey = new Map((breakdown.months || []).map((row) => {
+      const key = row.key || (row.year && row.month ? `${row.year}-${String(row.month).padStart(2, '0')}` : '');
+      return [key, row];
+    }));
+    return Array.from({ length: 12 }, (_, index) => {
+      const month = index + 1;
+      const key = `2027-${String(month).padStart(2, '0')}`;
+      const existing = byKey.get(key) || {};
+      return {
+        key,
+        label: qvMonthTitle(month, 2027),
+        total: Number(existing.total || 0),
+        positionnees: Number(existing.positionnees || 0),
+        alertes: Number(existing.alertes || 0)
+      };
+    });
+  }
+
+  function qvMeter(value, max) {
+    const width = max > 0 && Number(value || 0) > 0 ? Math.max(6, Math.round((Number(value || 0) / max) * 100)) : 0;
+    return `<span class="qv-meter" aria-hidden="true"><i style="width:${width}%"></i></span>`;
   }
 
   function renderQuoVadisSynthese(qv) {
     const programme = qv.programme || {};
     const summary = qv.summary || {};
     const breakdown = qv.breakdown || {};
-    return `${renderQuoVadisGenerationReport(state.quoVadisGenerationReport)}${renderQuoVadisCoverage(qv)}<section class="scope-card">
-      <div class="scope-section-head">
-        <div>
-          <h2>Synthèse 2027</h2>
-          <p class="scope-muted">Centre de pilotage du programme préparatoire. Les compteurs ouvrent les données correspondantes.</p>
-        </div>
+    const coverage = qv.coverage || {};
+    const domains = qvDomainRows(breakdown);
+    const months = qvMonthRows(breakdown);
+    const domainMax = Math.max(0, ...domains.map((row) => Number(row.total || 0)));
+    const monthMax = Math.max(0, ...months.map((row) => Number(row.total || 0)));
+    const status = String(programme.statut || 'PREPARATION').toUpperCase();
+    const historical = Number((qv.obligations || []).filter((row) => ['HISTORIQUE', 'CYCLIQUE', 'OPTIONNELLE'].includes(row.sourceType)).length);
+    const cursusCount = Number((qv.obligations || []).filter((row) => row.sourceType === 'CURSUS').length);
+    const kpis = [
+      { href: qvHref('activites'), icon: 'list', tone: 'info', value: summary.totalActivites || 0, label: 'Activités prévues', detail: `${historical} historiques${cursusCount ? ` + ${cursusCount} cursus` : ''}`, action: 'Voir toutes les activités' },
+      { href: qvHref('activites', { seances: 'oui' }), icon: 'calendar', tone: 'info', value: coverage.sessions || 0, label: 'Séances consolidées', detail: `${qvDisplayCount(coverage.duplicated)} doublons évités`, action: 'Voir les séances' },
+      { href: qvHref('agenda'), icon: 'file', tone: 'info', value: summary.datesProposees || 0, label: 'Dates proposées', detail: 'Visibles dans l’agenda', action: 'Voir l’agenda' },
+      { href: qvHref('a-arbitrer'), icon: 'gavel', tone: 'warn', value: summary.aArbitrer || 0, label: 'À arbitrer', detail: 'vraies décisions humaines', action: 'Voir les arbitrages' },
+      { href: qvHref('alertes'), icon: 'alert', tone: 'alert', value: (qv.alerts || []).length, label: 'Alertes', detail: 'Points à vérifier', action: 'Voir les alertes' },
+      { href: qvHref('dates-connues'), icon: 'announced', tone: 'ok', value: summary.datesFutures || 0, label: 'Dates annoncées', detail: 'Déjà connues', action: 'Voir les dates' }
+    ];
+    return `<div class="qv-cockpit">
+      <div class="qv-pilot-kpis">${kpis.map((item) => qvPilotKpi(item)).join('')}</div>
+      <div class="qv-cockpit-grid">
+        ${renderQuoVadisGenerationReport(state.quoVadisGenerationReport, qv)}
+        ${renderQuoVadisCoverage(qv)}
       </div>
-      <div class="scope-actions qv-generate-actions">
-        <button type="button" class="scope-btn scope-btn-primary" id="qv-generate" ${state.quoVadisBusy ? 'disabled' : ''}>Recalculer les propositions 2027</button>
-        <label class="scope-field qv-programme-status"><span>Statut du planning</span>
-          <select id="qv-programme-status" ${state.quoVadisBusy ? 'disabled' : ''}>
-            ${[['PREPARATION','Préparation en cours'],['VALIDATION','Validation en cours'],['VALIDE','Validé']].map(([value, label]) => `<option value="${value}" ${String(programme.statut || '').toUpperCase() === value ? 'selected' : ''}>${label}</option>`).join('')}
-          </select>
-        </label>
+      <div class="qv-cockpit-grid">
+        <section class="scope-card">
+          <div class="scope-section-head"><div><h2>Progression par domaine</h2></div></div>
+          <div class="scope-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Domaine</th><th></th><th>Activités</th><th>Positionnées</th><th>À arbitrer</th><th>Attention</th><th>Action</th></tr></thead>
+            <tbody>${domains.map((row) => `<tr>
+              <td><a href="${qvHref('activites', { domaine: row.code })}">${escapeHtml(row.label)}</a></td>
+              <td>${qvMeter(row.total, domainMax)}</td>
+              <td>${escapeHtml(String(row.total))}</td>
+              <td>${escapeHtml(String(row.positionnees))}</td>
+              <td class="${Number(row.aArbitrer) > 0 ? 'is-warn' : ''}">${escapeHtml(String(row.aArbitrer))}</td>
+              <td>${escapeHtml(String(row.alertes))}</td>
+              <td><a class="qv-row-action" href="${qvHref('activites', { domaine: row.code })}">Voir →</a></td>
+            </tr>`).join('') || '<tr><td colspan="7"><div class="scope-empty">Aucun domaine planifié.</div></td></tr>'}</tbody>
+          </table></div>
+        </section>
+        <section class="scope-card">
+          <div class="scope-section-head"><div><h2>Progression par mois</h2></div></div>
+          <div class="scope-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Mois</th><th></th><th>Activités</th><th>Positionnées</th><th>Attention</th><th>Action</th></tr></thead>
+            <tbody>${months.map((row) => `<tr>
+              <td><a href="${qvHref('agenda', { mois: row.key })}">${escapeHtml(row.label)}</a></td>
+              <td>${qvMeter(row.total, monthMax)}</td>
+              <td>${escapeHtml(String(row.total))}</td>
+              <td>${escapeHtml(String(row.positionnees))}</td>
+              <td>${escapeHtml(String(row.alertes))}</td>
+              <td><a class="qv-row-action" href="${qvHref('agenda', { mois: row.key })}">Voir →</a></td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+        </section>
       </div>
-      <p class="scope-mode-hint">Le recalcul met à jour les propositions de planification. Il ne crée aucun événement opérationnel.${qv.personnelView && qv.personnelView.hideInternalPrep ? ' Planning validé: les informations internes de préparation ne seront pas exposées dans la vue personnel.' : ''}</p>
-      <div class="scope-kpis qv-kpis">
-        <article class="scope-kpi"><span>État</span><strong>${escapeHtml(qvStatusLabel(programme.statut))}</strong><small>${escapeHtml(`${qvFormatDate(programme.periodeDebut || '2027-01-01')} → ${qvFormatDate(programme.periodeFin || '2028-03-31')}`)}</small></article>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('activites')}"><span>Activités prévues</span><strong>${escapeHtml(String(summary.totalActivites || 0))}</strong><small>${escapeHtml(String(summary.planifiees || 0))} positionnée(s)</small></a>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('agenda')}"><span>Dates proposées</span><strong>${escapeHtml(String(summary.datesProposees || 0))}</strong><small>visibles dans l’agenda</small></a>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('a-arbitrer')}"><span>À arbitrer</span><strong>${escapeHtml(String(summary.aArbitrer || 0))}</strong><small>vraies décisions humaines</small></a>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('alertes')}"><span>Alertes</span><strong>${escapeHtml(String((qv.alerts || []).length))}</strong><small>points à vérifier</small></a>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('dates-connues')}"><span>Dates annoncées</span><strong>${escapeHtml(String(summary.datesFutures || 0))}</strong><small>événements, indisponibilités et contraintes déjà connus</small></a>
+      <div class="qv-cockpit-grid">
+        <section class="scope-card">
+          <div class="scope-section-head"><div><h2>Familles de formation</h2></div></div>
+          <div class="qv-family-grid">${(breakdown.families || []).map((row) => `<a class="qv-family-card" href="${qvHref('activites', { famille: row.code })}">
+            <span>${escapeHtml(row.code)}</span>
+            <strong>${escapeHtml(String(row.total || 0))}</strong>
+            <small>${escapeHtml(String(row.positionnees || 0))} positionnée(s) · ${escapeHtml(String(row.aArbitrer || 0))} à arbitrer</small>
+            <em>Voir →</em>
+          </a>`).join('')}</div>
+        </section>
+        <section class="scope-card qv-status-panel">
+          <div class="scope-section-head"><div><h2>${qvCockpitIcon('gear')} Statut du planning</h2></div></div>
+          <div class="qv-status-layout">
+            <div class="qv-status-current is-${escapeHtml(status.toLowerCase())}">
+              <span class="qv-status-mark">${qvCockpitIcon('check')}</span>
+              <div>
+                <strong>${escapeHtml(qvStatusLabel(status))}</strong>
+                <small>${escapeHtml(`${qvFormatDate(programme.periodeDebut || '2027-01-01')} → ${qvFormatDate(programme.periodeFin || '2028-03-31')}`)}</small>
+              </div>
+            </div>
+            <label class="qv-status-change"><span>Changer le statut</span>
+              <select id="qv-programme-status" ${state.quoVadisBusy ? 'disabled' : ''}>
+                ${[['PREPARATION','Préparation en cours'],['VALIDATION','Validation en cours'],['VALIDE','Validé']].map(([value, label]) => `<option value="${value}" ${status === value ? 'selected' : ''}>${label}</option>`).join('')}
+              </select>
+            </label>
+          </div>
+          <button type="button" class="scope-btn scope-btn-primary qv-recalc-btn" id="qv-generate" ${state.quoVadisBusy ? 'disabled' : ''}>Recalculer les propositions 2027</button>
+          <p class="scope-mode-hint">Le recalcul met à jour les propositions de planification. Il ne crée aucun événement opérationnel.${qv.personnelView && qv.personnelView.hideInternalPrep ? ' Planning validé: les informations internes de préparation ne seront pas exposées dans la vue personnel.' : ''}</p>
+        </section>
       </div>
-    </section>
-    <div class="scope-grid scope-grid-2">
-      <section class="scope-card">
-        <div class="scope-section-head"><div><h2>Progression par domaine</h2></div></div>
-        <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Domaine</th><th>Activités</th><th>Positionnées</th><th>À arbitrer</th><th>Attention</th></tr></thead>
-          <tbody>${(breakdown.domains || []).map((row) => `<tr><td><a href="${qvHref('activites')}">${escapeHtml(row.label)}</a></td><td>${escapeHtml(String(row.total))}</td><td>${escapeHtml(String(row.positionnees))}</td><td>${escapeHtml(String(row.aArbitrer))}</td><td>${escapeHtml(String(row.alertes))}</td></tr>`).join('') || '<tr><td colspan="5"><div class="scope-empty">Aucun domaine planifié.</div></td></tr>'}</tbody>
-        </table></div>
+      <section class="scope-card qv-quick-nav">
+        <div class="scope-section-head"><div><h2>${qvCockpitIcon('info')} Navigation rapide</h2><p class="scope-muted">Cliquez sur un indicateur, un domaine ou un mois pour accéder directement à la vue correspondante.</p></div>
+        <a class="scope-btn scope-btn-secondary" href="${qvHref('agenda-annuel')}">${qvCockpitIcon('calendar')} Ouvrir l’agenda annuel</a></div>
       </section>
-      <section class="scope-card">
-        <div class="scope-section-head"><div><h2>Progression par mois</h2></div></div>
-        <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Mois</th><th>Activités</th><th>Positionnées</th><th>Attention</th></tr></thead>
-          <tbody>${(breakdown.months || []).map((row) => `<tr><td><a href="${qvHref('agenda-annuel')}">${escapeHtml(row.label)}</a></td><td>${escapeHtml(String(row.total))}</td><td>${escapeHtml(String(row.positionnees))}</td><td>${escapeHtml(String(row.alertes))}</td></tr>`).join('') || '<tr><td colspan="4"><div class="scope-empty">Aucun mois à afficher.</div></td></tr>'}</tbody>
-        </table></div>
-      </section>
-    </div>
-    <section class="scope-card">
-      <div class="scope-section-head"><div><h2>Familles de formation</h2><p class="scope-muted">Répartition FOBA, FOCO, FOCA et FOSPEC à partir de la taxonomie SCOPE.</p></div></div>
-      <div class="scope-kpis qv-kpis">${(breakdown.families || []).map((row) => `<article class="scope-kpi"><span>${escapeHtml(row.code)}</span><strong>${escapeHtml(String(row.total || 0))}</strong><small>${escapeHtml(String(row.positionnees || 0))} positionnée(s) · ${escapeHtml(String(row.aArbitrer || 0))} à arbitrer</small></article>`).join('')}</div>
-    </section>
-    <section class="scope-card">
-      <div class="scope-section-head"><div><h2>Calendrier 2027</h2><p class="scope-muted">Vacances scolaires en fond bleu, jours fériés distingués. Consulter l’agenda annuel pour le détail.</p></div>${contextReturnHtml(qvHref('agenda-annuel'), 'Ouvrir l’agenda annuel')}</div>
-      <ul class="qv-year-legend">
-        <li><span class="qv-legend-swatch is-activity"></span>Activité</li>
-        <li><span class="qv-legend-swatch is-known"></span>Date annoncée</li>
-        <li><span class="qv-legend-swatch is-holiday"></span>Jour férié</li>
-        <li><span class="qv-legend-swatch is-vacation"></span>Vacances scolaires</li>
-      </ul>
-    </section>`;
+    </div>`;
   }
 
   function qvCalendarIndex(qv) {
@@ -10762,6 +10916,8 @@
       state.quoVadisFilters = {
         q: document.getElementById('qv-filter-q')?.value || '',
         domain: document.getElementById('qv-filter-domain')?.value || 'tous',
+        family: document.getElementById('qv-filter-family')?.value || 'tous',
+        sessions: document.getElementById('qv-filter-sessions')?.checked ? 'oui' : 'tous',
         cible: document.getElementById('qv-filter-cible')?.value || 'tous',
         specialisation: document.getElementById('qv-filter-specialisation')?.value || 'tous',
         cursus: document.getElementById('qv-filter-cursus')?.value || 'tous',
@@ -10779,11 +10935,11 @@
       readQvFilters();
       renderPreservingInput('qv-filter-q');
     });
-    ['qv-filter-domain', 'qv-filter-cible', 'qv-filter-specialisation', 'qv-filter-cursus', 'qv-filter-status', 'qv-filter-month', 'qv-filter-lieu', 'qv-filter-attention'].forEach((id) => {
+    ['qv-filter-domain', 'qv-filter-family', 'qv-filter-cible', 'qv-filter-specialisation', 'qv-filter-cursus', 'qv-filter-status', 'qv-filter-month', 'qv-filter-lieu', 'qv-filter-attention', 'qv-filter-sessions'].forEach((id) => {
       document.getElementById(id)?.addEventListener('change', syncQvFilters);
     });
     document.getElementById('qv-filter-reset')?.addEventListener('click', () => {
-      state.quoVadisFilters = { q: '', domain: 'tous', cible: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', month: 'tous', lieu: 'tous', attention: false };
+      state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', sessions: 'tous', cible: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', month: 'tous', lieu: 'tous', attention: false };
       render();
     });
     const setAgendaMonth = (value) => {
@@ -14777,6 +14933,7 @@
     prepareRouteChange(previousRoute, r);
     state.currentRoute = r;
     state.currentRouteKey = routeKey(r);
+    applyQuoVadisRouteContext(r);
     state.navigationSeq += 1;
     if (r.screen === 'liste' || r.screen === 'rapports') {
       state.listReady = false;

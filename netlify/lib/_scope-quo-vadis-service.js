@@ -163,6 +163,7 @@ function mapProgramme(row){
     periodeFin: dateOnly(row.periode_fin),
     statut: row.statut,
     revision: Number(row.revision || 1),
+    updatedAt: row.updated_at || null,
     metadata: row.metadata || {}
   };
 }
