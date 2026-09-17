@@ -134,6 +134,14 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await quoVadis.setCursusSelection(params.annee, body)) });
     }
+    params = match(path, '/quo-vadis/programmes/:annee/cursus-steps');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await quoVadis.setCursusStepSelection(params.annee, body)) });
+    }
+    params = match(path, '/quo-vadis/programmes/:annee/statut');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await quoVadis.setProgrammeStatus(params.annee, body)) });
+    }
     params = match(path, '/quo-vadis/proposals/:id/retain');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await quoVadis.retainProposal(params.id, body)) });

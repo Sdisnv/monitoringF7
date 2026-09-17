@@ -276,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-pilotage-2';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-coverage-1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -405,6 +405,7 @@ async function ensureScopeSchema(){
   await migrateStatComSpecialisationPersistenceRepair2();
   await migrateQuoVadisCore1();
   await migrateQuoVadisPilotage2();
+  await migrateQuoVadisCoverage1();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -2057,6 +2058,59 @@ async function migrateQuoVadisPilotage2(){
     on conflict (programme_id, cursus_id) do nothing
   `);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-pilotage-2') on conflict (version) do nothing`);
+}
+
+async function migrateQuoVadisCoverage1(){
+  await db.query(`alter table scope_quo_vadis_programmes drop constraint if exists scope_qv_programmes_statut_chk`);
+  await db.query(`
+    alter table scope_quo_vadis_programmes
+      add constraint scope_qv_programmes_statut_chk
+      check (statut in ('PREPARATION','VALIDATION','VALIDE','PUBLIE','ARCHIVE'))
+  `).catch((error) => {
+    if(!String(error && error.message || '').includes('already exists')) throw error;
+  });
+  await db.query(`alter table scope_quo_vadis_obligations drop constraint if exists scope_qv_obligations_source_chk`);
+  await db.query(`
+    alter table scope_quo_vadis_obligations
+      add constraint scope_qv_obligations_source_chk
+      check (source_type in ('DEFINITION','RECURRENT','MULTI_SESSION','CURSUS','DPS_RULE','FUTURE_DATE','HISTORIQUE','CYCLIQUE','OPTIONNELLE','MANUAL'))
+  `).catch((error) => {
+    if(!String(error && error.message || '').includes('already exists')) throw error;
+  });
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists activity_kind text`);
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists periodicity_years integer`);
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists include_in_programme boolean`);
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists last_occurrence date`);
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists classification jsonb not null default '{}'::jsonb`);
+  await db.query(`
+    create table if not exists scope_quo_vadis_cursus_step_programmes (
+      programme_id uuid not null references scope_quo_vadis_programmes(programme_id) on delete cascade,
+      step_id uuid not null references scope_quo_vadis_cursus_steps(step_id) on delete cascade,
+      retenu boolean not null default true,
+      metadata jsonb not null default '{}'::jsonb,
+      updated_at timestamptz not null default now(),
+      constraint scope_qv_cursus_step_programmes_pk primary key(programme_id, step_id)
+    )
+  `);
+  const policies = [
+    ['PLANIF-DPS','DPS','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"DECONSEILLE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:30","usualEnd":"21:30"}',120],
+    ['PLANIF-DAP','DAP','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"AUTORISE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:30","usualEnd":"21:30"}',120],
+    ['PLANIF-JSP','JSP','{"MONDAY":"AUTORISE","TUESDAY":"PREFERE","WEDNESDAY":"AUTORISE","THURSDAY":"AUTORISE","FRIDAY":"DECONSEILLE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"18:30","usualEnd":"20:30"}',120],
+    ['PLANIF-FOBA','FOBA','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"INTERDIT","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:00","usualEnd":"21:30"}',150],
+    ['PLANIF-FOCA','FOCA','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"INTERDIT","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:00","usualEnd":"21:30"}',150],
+    ['PLANIF-FOSPEC','FOSPEC','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"DECONSEILLE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:30","usualEnd":"21:30"}',120],
+    ['PLANIF-PR','PR','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"DECONSEILLE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:30","usualEnd":"21:30"}',120],
+    ['PLANIF-AUTO','AUTO','{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"DECONSEILLE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}','{"usualStart":"19:30","usualEnd":"21:30"}',120]
+  ];
+  for(const [code, domain, days, times, duration] of policies){
+    await db.query(
+      `insert into scope_quo_vadis_planning_rules(code, version_code, domain, day_policy, time_policy, duration_minutes, metadata)
+       values ($1,'2027',$2,$3::jsonb,$4::jsonb,$5,'{"source":"QUO-VADIS-COVERAGE-1"}'::jsonb)
+       on conflict (code, version_code) do nothing`,
+      [code, domain, days, times, duration]
+    );
+  }
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-coverage-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

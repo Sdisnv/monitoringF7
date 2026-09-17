@@ -631,7 +631,7 @@
   function formatUiDate(value) {
     const iso = toIsoDate(value);
     if (!iso) return '';
-    return `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+    return formatDate(iso);
   }
 
   function extractCalendarYear(value) {
@@ -1159,7 +1159,8 @@
         alertes: 'alertes',
         cursus: 'cursus',
         regles: 'regles',
-        'dates-connues': 'dates-connues'
+        'dates-connues': 'dates-connues',
+        'dates-annoncees': 'dates-connues'
       };
       if (parts[1] === 'activites' && parts[2]) {
         return {

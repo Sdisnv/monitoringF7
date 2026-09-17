@@ -111,7 +111,7 @@ function gitShow(file){
   await record('02 — 31/12/2027 → 2027-12-31', () => {
     assert.strictEqual(logic.toIsoDate('31/12/2027'), '2027-12-31');
     assert.strictEqual(isoDate('31/12/2027'), '2027-12-31');
-    assert.strictEqual(logic.formatUiDate('2027-12-31'), '31/12/2027');
+    assert.strictEqual(logic.formatUiDate('2027-12-31'), '31.12.2027');
   });
 
   await record('03 — jamais 0007', () => {
@@ -317,7 +317,7 @@ function gitShow(file){
   await record('cache HTML R2', () => {
     assert.ok(html.includes('scope-objectifs-participation-1-r2'));
     assert.ok(ui.includes('nextObjectifPeriod'));
-    assert.ok(ui.includes("placeholder=\"JJ/MM/AAAA\""));
+    assert.ok(ui.includes("placeholder=\"JJ.MM.AAAA\""));
   });
 
   const failed = results.filter((r) => r.status === 'NOK');

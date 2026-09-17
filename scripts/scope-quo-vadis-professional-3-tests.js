@@ -64,7 +64,7 @@ assert.ok(/Référence 2026/.test(qvUi), 'bloc référence 2026 manquant');
 assert.ok(/loadQuoVadisHistory/.test(ui), 'historique non lazy');
 assert.ok(/e\.salle/.test(service) && !/e\.lieu_id/.test(service), 'historique doit utiliser salle');
 assert.ok(/Lieu à définir/.test(qvUi), 'libellé lieu vide incorrect');
-assert.ok(/Date connue \/ contrainte/.test(qvUi) && /Enregistrer la date connue/.test(qvUi), 'formulaire dates connues incomplet');
+assert.ok(/Date annoncée/.test(qvUi) && /Enregistrer la date annoncée/.test(qvUi), 'formulaire dates annoncées incomplet');
 assert.ok(/scope-form-section/.test(qvUi) && /scope-field/.test(qvUi), 'grammaire formulaire SCOPE absente');
 assert.ok(/Annuler/.test(qvUi), 'action Annuler manquante');
 assert.ok(!/disabled>Modifier/.test(qvUi), 'bouton Modifier factice interdit');

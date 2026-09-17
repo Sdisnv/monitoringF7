@@ -23,7 +23,7 @@ for (const src of [schema, migration, service]) {
   assert.ok(!/insert into scope_(evenements|attendus|participations)\b/i.test(src), 'aucune création prématurée événement/attendu/participation');
 }
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-pilotage-2'/.test(schema), 'borne migration PILOTAGE-2 requise');
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-coverage-1'/.test(schema), 'borne migration COVERAGE-1 requise');
 assert.ok(/create table if not exists scope_quo_vadis_cursus_programmes/.test(schema), 'sélection cursus programme manquante');
 assert.ok(/scope-quo-vadis-pilotage-2/.test(schema), 'migration runtime PILOTAGE-2 non enregistrée');
 assert.ok(/create table if not exists scope_quo_vadis_cursus_programmes/.test(migration), 'migration SQL PILOTAGE-2 incomplète');
@@ -57,11 +57,11 @@ assert.ok(/\/quo-vadis\/programmes\/:annee\/cursus/.test(fn), 'route choix cursu
 assert.ok(/\/quo-vadis\/proposals\/:id\/retain/.test(fn), 'route arbitrage manquante');
 
 assert.ok(/renderQuoVadisAgendaAnnuel/.test(ui), 'vue agenda annuel manquante');
-assert.ok(/Synthèse 2027/.test(ui) && /Agenda annuel/.test(ui) && /Toutes les activités 2027/.test(ui) && /À arbitrer/.test(ui) && /Alertes/.test(ui) && /Cursus 2027/.test(ui) && /Dates connues/.test(ui), 'navigation QUO VADIS professionnelle incomplète');
+assert.ok(/Synthèse 2027/.test(ui) && /Agenda annuel/.test(ui) && /Toutes les activités 2027/.test(ui) && /À arbitrer/.test(ui) && /Alertes/.test(ui) && /Cursus 2027/.test(ui) && /Dates annoncées/.test(ui), 'navigation QUO VADIS professionnelle incomplète');
 assert.ok(/renderQuoVadisActivites/.test(ui) && /qvFilteredActivities/.test(ui) && /Réinitialiser les filtres/.test(ui), 'vue Activités et filtres manquants');
 assert.ok(/data-qv-sort/.test(ui) && /qvSortHeader/.test(ui), 'tri Activités manquant');
 assert.ok(/renderQuoVadisActivite/.test(ui) && /Référence 2026/.test(ui) && /Justification/.test(ui), 'fiche activité exploitable manquante');
-assert.ok(/Date connue \/ contrainte/.test(ui), 'fiche dates connues non refondue');
+assert.ok(/Date annoncée/.test(ui), 'fiche dates annoncées non refondue');
 assert.ok(/Retenir cette proposition/.test(ui), 'action retenir proposition manquante');
 assert.ok(/Date de début/.test(ui) && /Heure de début/.test(ui) && /Date de fin/.test(ui) && /Heure de fin/.test(ui), 'formulaire dates connues incomplet');
 assert.ok(/Recalculer les propositions 2027/.test(ui), 'libellé métier du recalcul manquant');
@@ -71,7 +71,7 @@ assert.ok(/qv-year-grid/.test(ui) && /qv-mini-month/.test(ui), 'agenda annuel 12
 assert.ok(/renderQuoVadisAgenda/.test(ui) && /qv-agenda-day/.test(ui), 'agenda chronologique manquant');
 assert.ok(/qvLieuOptions/.test(ui) && /qv-future-lieu-id/.test(ui) && /data-qv-proposal-lieu/.test(ui), 'lieux référentiels non sélectionnables');
 assert.ok(/Dates déjà saisies/.test(ui) && /scope-form-section/.test(ui), 'Dates connues pas assez structurées');
-assert.ok(/Cohorte 2026/.test(ui) && /Cohorte 2027/.test(ui), 'distinction cohortes CI DPS manquante');
+assert.ok(/Début du cursus 2026/.test(ui) && /Début du cursus 2027/.test(ui), 'distinction début de cursus CI DPS manquante');
 assert.ok(/qv-subnav/.test(css) && /qv-year-grid/.test(css) && /qv-mini-cal/.test(css) && /qv-definition-list/.test(css), 'style QUO VADIS professionnel manquant');
 assert.ok(/if \(r\.screen === 'quo-vadis'\) jobs\.push\(loadQuoVadis\(\)\)/.test(ui), 'QUO VADIS ne doit charger que sur sa route');
 assert.ok(!/r\.screen === 'accueil'[\s\S]{0,120}loadQuoVadis/.test(ui), 'Accueil ne doit pas déclencher QUO VADIS');
@@ -79,7 +79,7 @@ assert.ok(/loadQuoVadisHistory/.test(ui), 'historique 2026 doit être chargé à
 assert.ok(/generateQuoVadisReport/.test(ui) && /SCOPE_QUO_VADIS_2027_Programme\.csv/.test(ui), 'exports PDF/Excel manquants');
 assert.ok(/Lieu à définir/.test(qvUi), 'libellé lieu vide attendu');
 assert.ok(!/Vue annuelle/.test(qvUi), 'la synthèse ne doit plus s’appeler Vue annuelle');
-assert.ok(!/Dates futures/.test(qvUi), 'Dates futures doit être remplacé par Dates connues');
+assert.ok(!/Dates futures/.test(qvUi), 'Dates futures doit être remplacé par Dates annoncées');
 
 assert.ok(/before: beforeSummary/.test(service) && /newProposals/.test(service) && /unchangedProposals/.test(service) && /attentionPoints/.test(service), 'bilan réel avant/après génération manquant');
 assert.ok(/buildAlerts/.test(service) && /buildAnnualBreakdown/.test(service), 'alertes ou synthèse annuelle manquantes');

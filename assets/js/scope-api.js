@@ -403,6 +403,8 @@
       quoVadisProgramme(annee) { return request('GET', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}`); },
       generateQuoVadisProgramme(annee) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/generate`, {}); },
       setQuoVadisCursus(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cursus`, body || {}); },
+      setQuoVadisCursusStep(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/cursus-steps`, body || {}); },
+      setQuoVadisProgrammeStatus(annee, body) { return request('POST', `/quo-vadis/programmes/${encodeURIComponent(annee || 2027)}/statut`, body || {}); },
       retainQuoVadisProposal(id, body) { return request('POST', `/quo-vadis/proposals/${encodeURIComponent(id)}/retain`, body || {}); },
       createQuoVadisFutureDate(body) { return request('POST', '/quo-vadis/future-dates', body || {}); },
       quoVadisActivityReferences(id, annee) { return request('GET', `/quo-vadis/activities/${encodeURIComponent(id)}/references${queryString({ annee: annee || 2027 })}`); },
