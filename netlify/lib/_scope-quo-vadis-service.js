@@ -230,7 +230,8 @@ function mapCalendarDay(row){
     typeJour,
     typeLabel: TYPE_JOUR_LABELS[typeJour] || 'Contrainte de calendrier',
     libelle: row.libelle,
-    neutralise: row.neutralise === true
+    neutralise: row.neutralise === true,
+    metadata: row.metadata || {}
   };
 }
 

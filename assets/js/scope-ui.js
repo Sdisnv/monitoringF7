@@ -10364,11 +10364,49 @@
     </div>`;
   }
 
+  function qvCalendarMarkVisible(row) {
+    if (!row) return false;
+    const jour = qvDateKey(row.jour);
+    if (!jour) return false;
+    const kind = String(row.typeJour || row.type_jour || '').toUpperCase();
+    if (kind === 'NEUTRALISATION_INTERNE') return false;
+    if (kind.includes('FERIE') || kind === 'VACANCES_SCOLAIRES') return true;
+    return row.neutralise !== true;
+  }
+
+  function qvCalendarKind(row) {
+    return String((row && (row.typeJour || row.type_jour)) || '').toUpperCase();
+  }
+
+  function qvCalendarEndDate(row) {
+    const meta = (row && row.metadata) || {};
+    return qvDateKey(meta.dateFin || meta.date_fin || meta.endDate || meta.fin || (row && (row.dateFin || row.date_fin)));
+  }
+
+  function qvShiftDateKey(dateKey, days) {
+    const date = new Date(`${qvDateKey(dateKey)}T12:00:00Z`);
+    if (Number.isNaN(date.getTime())) return '';
+    date.setUTCDate(date.getUTCDate() + Number(days || 0));
+    return date.toISOString().slice(0, 10);
+  }
+
   function qvCalendarIndex(qv) {
     const byDate = {};
+    const push = (date, row) => {
+      if (!date) return;
+      (byDate[date] = byDate[date] || []).push(row);
+    };
     (qv.calendarDays || []).forEach((row) => {
-      if (!row.jour || row.neutralise) return;
-      (byDate[row.jour] = byDate[row.jour] || []).push(row);
+      if (!qvCalendarMarkVisible(row)) return;
+      const start = qvDateKey(row.jour);
+      const end = qvCalendarEndDate(row);
+      const kind = qvCalendarKind(row);
+      if (kind === 'VACANCES_SCOLAIRES' && end && end > start) {
+        let guard = 0;
+        for (let date = start; date && date <= end && guard < 60; date = qvShiftDateKey(date, 1), guard += 1) push(date, row);
+      } else {
+        push(start, row);
+      }
     });
     return byDate;
   }
@@ -10398,8 +10436,8 @@
         day,
         items: byDate[date] || [],
         known: known.has(date),
-        holiday: marks.some((row) => String(row.typeJour || '').includes('FERIE')),
-        vacation: marks.some((row) => row.typeJour === 'VACANCES_SCOLAIRES'),
+        holiday: marks.some((row) => qvCalendarKind(row).includes('FERIE')),
+        vacation: marks.some((row) => qvCalendarKind(row) === 'VACANCES_SCOLAIRES'),
         calendarLabel: marks.map((row) => row.libelle).join(' · ')
       });
     }
@@ -10443,14 +10481,21 @@
         </a>
         <div class="qv-mini-cal">
           ${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => `<span class="qv-mini-head">${d}</span>`).join('')}
-          ${month.cells.map((cell) => {
+          ${month.cells.map((cell, index) => {
             if (!cell) return '<span class="qv-mini-empty"></span>';
             const activityCount = (cell.items || []).length;
             const classes = ['qv-mini-day'];
             if (activityCount) classes.push('has-activity');
-            if (cell.known) classes.push('has-known');
-            if (cell.holiday) classes.push('has-holiday');
-            if (cell.vacation) classes.push('has-vacation');
+            if (cell.known) classes.push('has-known', 'has-announced-date');
+            if (cell.holiday) classes.push('has-holiday', 'is-holiday');
+            if (cell.vacation) {
+              classes.push('has-vacation', 'is-school-break');
+              const col = index % 7;
+              const prev = month.cells[index - 1];
+              const next = month.cells[index + 1];
+              if (col === 0 || !(prev && prev.vacation)) classes.push('is-break-start');
+              if (col === 6 || !(next && next.vacation)) classes.push('is-break-end');
+            }
             if (today && today === cell.date) classes.push('is-today');
             const extra = cell.calendarLabel ? ` ${cell.calendarLabel}` : '';
             const label = escapeHtml(qvDateLong(cell.date) + extra);

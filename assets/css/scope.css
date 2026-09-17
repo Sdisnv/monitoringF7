@@ -387,12 +387,35 @@ a.qv-mini-day:hover span,
 a.qv-mini-day:focus-visible span {
   background: var(--scope-navy-soft);
 }
-.qv-mini-day.has-vacation {
+.qv-mini-day.has-vacation,
+.qv-mini-day.is-school-break {
   background: #eceaf6;
+  box-shadow: -1px 0 0 #eceaf6, 1px 0 0 #eceaf6;
+  border-radius: 0;
 }
-.qv-mini-day.has-holiday {
+.qv-mini-day.is-break-start {
+  border-radius: 4px 0 0 4px;
+}
+.qv-mini-day.is-break-end {
+  border-radius: 0 4px 4px 0;
+}
+.qv-mini-day.is-break-start.is-break-end {
+  border-radius: 4px;
+}
+.qv-mini-day.has-holiday:not(.has-activity) span,
+.qv-mini-day.is-holiday:not(.has-activity) span {
+  background: #dce3f7;
   color: var(--scope-blue);
   font-weight: 700;
+}
+.qv-mini-day.has-activity.has-holiday,
+.qv-mini-day.has-activity.is-holiday {
+  background: #dce3f7;
+}
+.qv-mini-day.has-activity.has-vacation,
+.qv-mini-day.has-activity.is-school-break {
+  background: #eceaf6;
+  box-shadow: -1px 0 0 #eceaf6, 1px 0 0 #eceaf6;
 }
 .qv-mini-day.has-activity span {
   background: var(--scope-red);
