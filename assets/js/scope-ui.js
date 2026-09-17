@@ -9825,7 +9825,7 @@
       ARCHIVE: 'Archivé',
       A_PLANIFIER: 'À planifier',
       PROPOSE: 'À arbitrer',
-      PLANIFIE: 'Retenu',
+      PLANIFIE: 'Positionnée',
       NON_RETENU: 'Écarté',
       ANNULE: 'Annulé',
       RETENU: 'Retenu',
@@ -10108,14 +10108,14 @@
     if (!coverage) return '';
     const reasons = Object.entries(coverage.reasonCounts || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
     return `<section class="scope-card qv-coverage-report">
-      <div class="scope-section-head"><div><h2>Couverture 2026 → 2027</h2><p class="scope-muted">Traçabilité du programme historique. Aucune ligne n’est écartée sans motif.</p></div></div>
+      <div class="scope-section-head"><div><h2>Couverture 2026 → 2027</h2><p class="scope-muted">Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.</p></div></div>
       <div class="scope-kpis qv-kpis">
         <article class="scope-kpi"><span>Lignes source 2026</span><strong>${escapeHtml(String(coverage.sourceLines || 0))}</strong></article>
-        <article class="scope-kpi"><span>Reconnues</span><strong>${escapeHtml(String(coverage.recognized || 0))}</strong></article>
-        <article class="scope-kpi"><span>Dédupliquées</span><strong>${escapeHtml(String(coverage.duplicated || 0))}</strong><small>${escapeHtml(String(coverage.sessions || 0))} session(s)</small></article>
-        <article class="scope-kpi"><span>Exclues volontairement</span><strong>${escapeHtml(String(coverage.excluded || 0))}</strong></article>
-        <article class="scope-kpi"><span>Ignorées / perdues avant</span><strong>${escapeHtml(String(coverage.previouslyIgnored || coverage.ignored || 0))}</strong><small>${escapeHtml(String(coverage.previouslyLost || coverage.generable || 0))} désormais générables</small></article>
-        <article class="scope-kpi"><span>Activités 2027 prises en compte</span><strong>${escapeHtml(String(coverage.generable || 0))}</strong></article>
+        <article class="scope-kpi"><span>Lignes reconnues</span><strong>${escapeHtml(String(coverage.recognized || 0))}</strong><small>${escapeHtml(String(coverage.recognizedActivities || coverage.proposed || 0))} activité(s) métier</small></article>
+        <article class="scope-kpi"><span>Sessions consolidées</span><strong>${escapeHtml(String(coverage.sessions || 0))}</strong><small>${escapeHtml(String(coverage.duplicated || 0))} doublon(s)</small></article>
+        <article class="scope-kpi"><span>Exclues</span><strong>${escapeHtml(String(coverage.excluded || 0))}</strong><small>${escapeHtml(String(coverage.recipeExcluded || 0))} recette/technique</small></article>
+        <article class="scope-kpi"><span>Cycliques / cursus</span><strong>${escapeHtml(String((coverage.cyclicDeferred || 0) + (coverage.cursusDeferred || 0)))}</strong><small>${escapeHtml(String(coverage.optionalCount || 0))} optionnelle(s)</small></article>
+        <article class="scope-kpi"><span>Activités 2027 proposées</span><strong>${escapeHtml(String(coverage.proposed || coverage.generable || 0))}</strong></article>
       </div>
       ${reasons.length ? `<ul class="qv-reasons">${reasons.map(([reason, count]) => `<li>${escapeHtml(String(count))} — ${escapeHtml(reason)}</li>`).join('')}</ul>` : ''}
     </section>`;
@@ -10143,9 +10143,9 @@
       <p class="scope-mode-hint">Le recalcul met à jour les propositions de planification. Il ne crée aucun événement opérationnel.${qv.personnelView && qv.personnelView.hideInternalPrep ? ' Planning validé: les informations internes de préparation ne seront pas exposées dans la vue personnel.' : ''}</p>
       <div class="scope-kpis qv-kpis">
         <article class="scope-kpi"><span>État</span><strong>${escapeHtml(qvStatusLabel(programme.statut))}</strong><small>${escapeHtml(`${qvFormatDate(programme.periodeDebut || '2027-01-01')} → ${qvFormatDate(programme.periodeFin || '2028-03-31')}`)}</small></article>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('activites')}"><span>Activités prévues</span><strong>${escapeHtml(String(summary.totalActivites || 0))}</strong><small>programme actuellement préparé</small></a>
+        <a class="scope-kpi qv-kpi-link" href="${qvHref('activites')}"><span>Activités prévues</span><strong>${escapeHtml(String(summary.totalActivites || 0))}</strong><small>${escapeHtml(String(summary.planifiees || 0))} positionnée(s)</small></a>
         <a class="scope-kpi qv-kpi-link" href="${qvHref('agenda')}"><span>Dates proposées</span><strong>${escapeHtml(String(summary.datesProposees || 0))}</strong><small>visibles dans l’agenda</small></a>
-        <a class="scope-kpi qv-kpi-link" href="${qvHref('a-arbitrer')}"><span>À arbitrer</span><strong>${escapeHtml(String(summary.aArbitrer || 0))}</strong><small>décisions à confirmer</small></a>
+        <a class="scope-kpi qv-kpi-link" href="${qvHref('a-arbitrer')}"><span>À arbitrer</span><strong>${escapeHtml(String(summary.aArbitrer || 0))}</strong><small>vraies décisions humaines</small></a>
         <a class="scope-kpi qv-kpi-link" href="${qvHref('alertes')}"><span>Alertes</span><strong>${escapeHtml(String((qv.alerts || []).length))}</strong><small>points à vérifier</small></a>
         <a class="scope-kpi qv-kpi-link" href="${qvHref('dates-connues')}"><span>Dates annoncées</span><strong>${escapeHtml(String(summary.datesFutures || 0))}</strong><small>événements, indisponibilités et contraintes déjà connus</small></a>
       </div>
@@ -10163,7 +10163,20 @@
           <tbody>${(breakdown.months || []).map((row) => `<tr><td><a href="${qvHref('agenda-annuel')}">${escapeHtml(row.label)}</a></td><td>${escapeHtml(String(row.total))}</td><td>${escapeHtml(String(row.positionnees))}</td><td>${escapeHtml(String(row.alertes))}</td></tr>`).join('') || '<tr><td colspan="4"><div class="scope-empty">Aucun mois à afficher.</div></td></tr>'}</tbody>
         </table></div>
       </section>
-    </div>`;
+    </div>
+    <section class="scope-card">
+      <div class="scope-section-head"><div><h2>Familles de formation</h2><p class="scope-muted">Répartition FOBA, FOCO, FOCA et FOSPEC à partir de la taxonomie SCOPE.</p></div></div>
+      <div class="scope-kpis qv-kpis">${(breakdown.families || []).map((row) => `<article class="scope-kpi"><span>${escapeHtml(row.code)}</span><strong>${escapeHtml(String(row.total || 0))}</strong><small>${escapeHtml(String(row.positionnees || 0))} positionnée(s) · ${escapeHtml(String(row.aArbitrer || 0))} à arbitrer</small></article>`).join('')}</div>
+    </section>
+    <section class="scope-card">
+      <div class="scope-section-head"><div><h2>Calendrier 2027</h2><p class="scope-muted">Vacances scolaires en fond bleu, jours fériés distingués. Consulter l’agenda annuel pour le détail.</p></div>${contextReturnHtml(qvHref('agenda-annuel'), 'Ouvrir l’agenda annuel')}</div>
+      <ul class="qv-year-legend">
+        <li><span class="qv-legend-swatch is-activity"></span>Activité</li>
+        <li><span class="qv-legend-swatch is-known"></span>Date annoncée</li>
+        <li><span class="qv-legend-swatch is-holiday"></span>Jour férié</li>
+        <li><span class="qv-legend-swatch is-vacation"></span>Vacances scolaires</li>
+      </ul>
+    </section>`;
   }
 
   function qvCalendarIndex(qv) {
@@ -10297,7 +10310,7 @@
         </tr>`).join('')}`;
     }).join('');
     return `<section class="scope-card">
-      <div class="scope-section-head"><div><h2 class="qv-agenda-month">${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}</h2><p class="scope-muted">Agenda chronologique du programme préparatoire. Une ligne ouvre la fiche de l’activité.</p></div></div>
+      <div class="scope-section-head"><div><h2 class="qv-agenda-month">${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}</h2><p class="scope-muted">${route().qvJour ? `Jour sélectionné: ${qvDateLong(route().qvJour)}. ` : ''}Agenda chronologique du programme préparatoire. Une ligne ouvre la fiche de l’activité.</p></div></div>
       <div class="qv-month-nav" role="navigation" aria-label="Mois de l’agenda">
         <button type="button" class="scope-btn" id="qv-agenda-prev" ${prev === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(prev)}">Mois précédent</button>
         <div class="scope-field"><label for="qv-agenda-month">Mois</label><select id="qv-agenda-month">${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${row.value === monthKey ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}</select></div>
@@ -10394,6 +10407,17 @@
           <dt>État</dt><dd>${escapeHtml(qvStatusLabel(row.status))}</dd>
         </dl></section>
       </div>
+      ${Number(row.sessionCount || 0) > 1 || (row.sessions || []).length > 1 ? `<section class="scope-form-section">
+        <h3>Séances</h3>
+        <p class="scope-muted">Une activité métier, ${escapeHtml(String(row.sessionCount || (row.sessions || []).length))} séances prévues. Les numéros historiques sont conservés.</p>
+        <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Séance</th><th>Référence 2026</th><th>Proposition 2027</th></tr></thead>
+          <tbody>${(row.proposals || []).map((p, index) => `<tr>
+            <td>${escapeHtml((p.conflictSummary && p.conflictSummary.sessionLabel) || String(index + 1))}</td>
+            <td>${escapeHtml((row.sessions && row.sessions[index] && row.sessions[index].date) ? qvFormatDate(row.sessions[index].date, '—') : '—')}</td>
+            <td>${escapeHtml(p.startsAt ? qvFormatDate(p.startsAt) : 'À proposer')}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </section>` : ''}
       <section class="scope-form-section">
         <h3>Justification</h3>
         <p class="scope-muted">${escapeHtml([row.sourceLabel, row.dayClassLabel ? `Préférence: ${row.dayClassLabel}` : ''].filter(Boolean).join(' · ') || 'Les règles connues seront appliquées au prochain recalcul.')}</p>
@@ -10401,7 +10425,7 @@
       </section>
       <section class="scope-form-section">
         <h3>Points d’attention</h3>
-        <p>${row.attention ? escapeHtml(`${row.attentionType || 'À vérifier'}${row.knownDateClash ? ' — une date annoncée est déjà enregistrée ce jour.' : ''}`) : 'Aucun point d’attention majeur.'}</p>
+        <p>${row.arbitrationReason ? escapeHtml(row.arbitrationReason) : (row.attention ? escapeHtml(`${row.attentionType || 'À vérifier'}${row.knownDateClash ? ' — une date annoncée est déjà enregistrée ce jour.' : ''}`) : 'Aucun point d’attention majeur.')}</p>
       </section>
       <section class="scope-form-section">
         <div class="scope-section-head"><h3>Propositions alternatives</h3><p class="scope-muted">Retenir une proposition ne crée pas d’événement, de présence ou de participation.</p></div>
@@ -10445,7 +10469,7 @@
       const activity = activities.get(row.obligationId) || {};
       const proposals = activity.proposals || [];
       return `<section class="scope-card">
-      <div class="scope-section-head"><div><h2>${escapeHtml(row.title)}</h2><p class="scope-muted">${escapeHtml([activity.domainLabel || row.domain, (row.cibleCodes || []).join(', '), activity.cursus].filter(Boolean).join(' · ') || 'Comparer les propositions puis retenir une date préparatoire.')}</p></div>${contextReturnHtml(qvHref('activites', { id: row.obligationId, from: 'a-arbitrer' }), 'Ouvrir la fiche')}</div>
+      <div class="scope-section-head"><div><h2>${escapeHtml(row.title)}</h2><p class="scope-muted">${escapeHtml(activity.arbitrationReason || [activity.domainLabel || row.domain, (row.cibleCodes || []).join(', '), activity.cursus].filter(Boolean).join(' · ') || 'Comparer les propositions puis retenir une date préparatoire.')}</p></div>${contextReturnHtml(qvHref('activites', { id: row.obligationId, from: 'a-arbitrer' }), 'Ouvrir la fiche')}</div>
       <div class="scope-table-wrap"><table class="scope-table"><thead><tr><th>Date</th><th>Jour</th><th>Horaire</th><th>Lieu</th><th>Préférence</th><th>Justification</th><th>Contraintes</th><th>Action</th></tr></thead>
         <tbody>${proposals.map((p) => {
           const conflict = p.conflictSummary || {};

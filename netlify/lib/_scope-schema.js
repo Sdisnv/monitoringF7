@@ -276,7 +276,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-coverage-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-moa-recovery-1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -406,6 +406,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisCore1();
   await migrateQuoVadisPilotage2();
   await migrateQuoVadisCoverage1();
+  await migrateQuoVadisMoaRecovery1();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -2111,6 +2112,15 @@ async function migrateQuoVadisCoverage1(){
     );
   }
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-coverage-1') on conflict (version) do nothing`);
+}
+
+async function migrateQuoVadisMoaRecovery1(){
+  await db.query(
+    `insert into scope_quo_vadis_planning_rules(code, version_code, domain, day_policy, time_policy, duration_minutes, metadata)
+     values ('PLANIF-FOCO','2027',null,'{"MONDAY":"AUTORISE","TUESDAY":"AUTORISE","WEDNESDAY":"AUTORISE","THURSDAY":"PREFERE","FRIDAY":"DECONSEILLE","SATURDAY":"AUTORISE","SUNDAY":"DECONSEILLE"}'::jsonb,'{"usualStart":"19:30","usualEnd":"21:30"}'::jsonb,120,'{"source":"QUO-VADIS-MOA-RECOVERY-1","family":"FOCO"}'::jsonb)
+     on conflict (code, version_code) do nothing`
+  );
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-moa-recovery-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

@@ -295,7 +295,7 @@ html, body {
   background: var(--scope-gray-100);
 }
 .qv-mini-day.has-vacation {
-  background: rgba(23, 28, 143, .08);
+  background: rgba(23, 28, 143, .22);
 }
 .qv-mini-day.has-holiday {
   background: rgba(255, 163, 0, .28);

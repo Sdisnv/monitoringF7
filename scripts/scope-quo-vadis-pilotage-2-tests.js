@@ -23,7 +23,7 @@ for (const src of [schema, migration, service]) {
   assert.ok(!/insert into scope_(evenements|attendus|participations)\b/i.test(src), 'aucune création prématurée événement/attendu/participation');
 }
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-coverage-1'/.test(schema), 'borne migration COVERAGE-1 requise');
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-moa-recovery-1'/.test(schema), 'borne migration MOA-RECOVERY-1 requise');
 assert.ok(/create table if not exists scope_quo_vadis_cursus_programmes/.test(schema), 'sélection cursus programme manquante');
 assert.ok(/scope-quo-vadis-pilotage-2/.test(schema), 'migration runtime PILOTAGE-2 non enregistrée');
 assert.ok(/create table if not exists scope_quo_vadis_cursus_programmes/.test(migration), 'migration SQL PILOTAGE-2 incomplète');
