@@ -9931,9 +9931,20 @@
       coverage: '<path d="M4 19V9M10 19V5M16 19v-7M20 19H3"/>',
       gear: '<circle cx="12" cy="12" r="3"/><path d="M12 4.2v2.3M12 17.5v2.3M4.8 7.2l1.7 1.7M17.5 15.1l1.7 1.7M4.2 12h2.3M17.5 12h2.3M4.8 16.8l1.7-1.7M17.5 8.9l1.7-1.7"/>',
       info: '<circle cx="12" cy="12" r="8"/><path d="M12 10.5V17M12 7.4h.01"/>',
-      check: '<circle cx="12" cy="12" r="8"/><path d="M8.2 12.2 10.8 14.8 15.8 9.4"/>'
+      check: '<circle cx="12" cy="12" r="8"/><path d="M8.2 12.2 10.8 14.8 15.8 9.4"/>',
+      users: '<circle cx="9" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.3"/><path d="M4.2 18c.5-2.8 2.6-4.4 4.8-4.4s4.3 1.6 4.8 4.4M14.4 13.8c1.5-.3 3.2.5 4 2.5"/>'
     };
     return `<svg class="qv-cockpit-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[name] || icons.list}</svg>`;
+  }
+
+  function qvSectionHead(icon, title, subtitle) {
+    return `<div class="qv-section-head">
+      <span class="qv-section-icon">${qvCockpitIcon(icon)}</span>
+      <div>
+        <h2>${escapeHtml(title)}</h2>
+        ${subtitle ? `<p class="scope-muted">${escapeHtml(subtitle)}</p>` : ''}
+      </div>
+    </div>`;
   }
 
   function qvMonthChoices() {
@@ -10197,7 +10208,7 @@
     ];
     const active = summary.totalActivites;
     return `<section class="scope-card qv-generation-report">
-      <div class="scope-section-head"><div><h2>${qvCockpitIcon('gear')} Préparation 2027 — statut actuel</h2><p class="scope-muted">Bilan avant / après du dernier recalcul. Aucun événement opérationnel n’a été créé.</p></div></div>
+      ${qvSectionHead('gear', 'Préparation 2027 — statut actuel', 'Bilan avant / après du dernier recalcul. Aucun événement opérationnel n’a été créé.')}
       ${generation.after ? `<p class="qv-prep-recalc">Dernier recalcul : ${escapeHtml(String(generation.newProposals || 0))} Nouvelles propositions · ${escapeHtml(String(generation.unchangedProposals || 0))} inchangée(s) · ${escapeHtml(String(generation.attentionPoints || 0))} Points d’attention.</p>` : ''}
       ${consolidation ? `<ul class="qv-prep-list">${rows.map(([label, value]) => `<li><span>${escapeHtml(label)}</span><strong>${escapeHtml(qvDisplayCount(value))}</strong></li>`).join('')}</ul>` : '<p class="scope-muted">Le bilan détaillé du recalcul sera affiché ici dès qu’un calcul aura été exécuté.</p>'}
       ${active == null ? '' : `<div class="qv-prep-banner"><strong>${escapeHtml(String(active))} activités actives en 2027</strong><span>Programme cohérent et prêt pour arbitrage.</span></div>`}
@@ -10206,7 +10217,7 @@
 
   function renderQuoVadisCoverage(qv) {
     const coverage = qv.coverage || (state.quoVadisGenerationReport && state.quoVadisGenerationReport.coverage) || null;
-    if (!coverage) return `<section class="scope-card qv-coverage-report"><div class="scope-section-head"><div><h2>${qvCockpitIcon('coverage')} Couverture 2026 → 2027</h2><p class="scope-muted">Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.</p></div></div><p class="scope-empty">La couverture sera disponible après lecture de l’historique 2026.</p></section>`;
+    if (!coverage) return `<section class="scope-card qv-coverage-report">${qvSectionHead('coverage', 'Couverture 2026 → 2027', 'Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.')}<p class="scope-empty">La couverture sera disponible après lecture de l’historique 2026.</p></section>`;
     const reasons = Object.entries(coverage.reasonCounts || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const source = Number(coverage.sourceLines || 0);
     const proposed = Number(coverage.proposed || coverage.generable || 0);
@@ -10219,7 +10230,7 @@
       ['socle', 'Socle historique 2027', proposed, `Programme actif : ${qvDisplayCount(coverage.programmeActivities ?? (qv.summary && qv.summary.totalActivites))} activité(s), compléments justifiés inclus`]
     ];
     return `<section class="scope-card qv-coverage-report">
-      <div class="scope-section-head"><div><h2>${qvCockpitIcon('coverage')} Couverture 2026 → 2027</h2><p class="scope-muted">Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.</p></div></div>
+      ${qvSectionHead('coverage', 'Couverture 2026 → 2027', 'Une ligne source n’est pas une activité 2027. Traçabilité ligne à ligne, puis consolidation métier.')}
       <div class="qv-coverage-grid">${cards.map((card) => `<article class="qv-coverage-tile is-${escapeHtml(card[0])}"><strong>${escapeHtml(qvDisplayCount(card[2]))}</strong><span>${escapeHtml(card[1])}</span>${card[3] ? `<small>${escapeHtml(card[3])}</small>` : ''}</article>`).join('')}</div>
       ${reasons.length ? `<div class="qv-coverage-gaps"><h3>Détail des écarts (${escapeHtml(String(source))} lignes → ${escapeHtml(String(proposed))} activités)</h3><ul class="qv-reasons">${reasons.map(([reason, count]) => `<li><strong>${escapeHtml(String(count))}</strong> — ${escapeHtml(reason)}</li>`).join('')}</ul></div>` : ''}
     </section>`;
@@ -10275,13 +10286,13 @@
     ];
     return `<div class="qv-cockpit">
       <div class="qv-pilot-kpis">${kpis.map((item) => qvPilotKpi(item)).join('')}</div>
-      <div class="qv-cockpit-grid">
+      <div class="qv-cockpit-row">
         ${renderQuoVadisGenerationReport(state.quoVadisGenerationReport, qv)}
         ${renderQuoVadisCoverage(qv)}
       </div>
-      <div class="qv-cockpit-grid">
-        <section class="scope-card">
-          <div class="scope-section-head"><div><h2>Progression par domaine</h2></div></div>
+      <div class="qv-cockpit-row">
+        <section class="scope-card qv-progress-card">
+          ${qvSectionHead('list', 'Progression par domaine')}
           <div class="scope-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Domaine</th><th></th><th>Activités</th><th>Positionnées</th><th>À arbitrer</th><th>Attention</th><th>Action</th></tr></thead>
             <tbody>${domains.map((row) => `<tr>
               <td><a href="${qvHref('activites', { domaine: row.code })}">${escapeHtml(row.label)}</a></td>
@@ -10294,8 +10305,8 @@
             </tr>`).join('') || '<tr><td colspan="7"><div class="scope-empty">Aucun domaine planifié.</div></td></tr>'}</tbody>
           </table></div>
         </section>
-        <section class="scope-card">
-          <div class="scope-section-head"><div><h2>Progression par mois</h2></div></div>
+        <section class="scope-card qv-progress-card">
+          ${qvSectionHead('calendar', 'Progression par mois')}
           <div class="scope-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Mois</th><th></th><th>Activités</th><th>Positionnées</th><th>Attention</th><th>Action</th></tr></thead>
             <tbody>${months.map((row) => `<tr>
               <td><a href="${qvHref('agenda', { mois: row.key })}">${escapeHtml(row.label)}</a></td>
@@ -10308,9 +10319,9 @@
           </table></div>
         </section>
       </div>
-      <div class="qv-cockpit-grid">
-        <section class="scope-card">
-          <div class="scope-section-head"><div><h2>Familles de formation</h2></div></div>
+      <div class="qv-cockpit-row">
+        <section class="scope-card qv-families-card">
+          ${qvSectionHead('users', 'Familles de formation')}
           <div class="qv-family-grid">${(breakdown.families || []).map((row) => `<a class="qv-family-card" href="${qvHref('activites', { famille: row.code })}">
             <span>${escapeHtml(row.code)}</span>
             <strong>${escapeHtml(String(row.total || 0))}</strong>
@@ -10319,7 +10330,7 @@
           </a>`).join('')}</div>
         </section>
         <section class="scope-card qv-status-panel">
-          <div class="scope-section-head"><div><h2>${qvCockpitIcon('gear')} Statut du planning</h2></div></div>
+          ${qvSectionHead('gear', 'Statut du planning')}
           <div class="qv-status-layout">
             <div class="qv-status-current is-${escapeHtml(status.toLowerCase())}">
               <span class="qv-status-mark">${qvCockpitIcon('check')}</span>
@@ -10338,9 +10349,15 @@
           <p class="scope-mode-hint">Le recalcul met à jour les propositions de planification. Il ne crée aucun événement opérationnel.${qv.personnelView && qv.personnelView.hideInternalPrep ? ' Planning validé: les informations internes de préparation ne seront pas exposées dans la vue personnel.' : ''}</p>
         </section>
       </div>
-      <section class="scope-card qv-quick-nav">
-        <div class="scope-section-head"><div><h2>${qvCockpitIcon('info')} Navigation rapide</h2><p class="scope-muted">Cliquez sur un indicateur, un domaine ou un mois pour accéder directement à la vue correspondante.</p></div>
-        <a class="scope-btn scope-btn-secondary" href="${qvHref('agenda-annuel')}">${qvCockpitIcon('calendar')} Ouvrir l’agenda annuel</a></div>
+      <section class="qv-quick-nav">
+        <div class="qv-quick-nav-copy">
+          <span class="qv-section-icon is-circle">${qvCockpitIcon('info')}</span>
+          <div>
+            <h2>Navigation rapide</h2>
+            <p>Cliquez sur un indicateur, un domaine ou un mois pour accéder directement à la vue correspondante.</p>
+          </div>
+        </div>
+        <a class="scope-btn qv-quick-nav-btn" href="${qvHref('agenda-annuel')}">${qvCockpitIcon('calendar')} Ouvrir l’agenda annuel →</a>
       </section>
     </div>`;
   }

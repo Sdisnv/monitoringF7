@@ -396,18 +396,81 @@ html, body {
 }
 
 .qv-cockpit {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+}
+.qv-cockpit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.qv-cockpit-row > .scope-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  box-shadow: var(--scope-shadow);
+  background: #fff;
+}
+.qv-cockpit .qv-generation-report {
+  border-left: 1px solid var(--scope-line);
+}
+.qv-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.qv-section-head h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 750;
+}
+.qv-section-head .scope-muted {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.qv-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--scope-navy-soft);
+  color: var(--scope-blue);
+}
+.qv-section-icon.is-circle {
+  border-radius: 50%;
+}
+.qv-section-icon .qv-cockpit-icon,
+.qv-pilot-kpi-icon .qv-cockpit-icon,
+.qv-status-mark .qv-cockpit-icon,
+.qv-quick-nav-btn .qv-cockpit-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex: 0 0 auto;
 }
 .qv-pilot-kpis {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
+  align-items: stretch;
 }
 .qv-pilot-kpi {
   display: flex;
   flex-direction: column;
-  min-height: 148px;
+  height: 100%;
+  min-height: 156px;
   padding: 14px 14px 12px;
   border: 1px solid var(--scope-line);
   border-radius: var(--scope-radius);
@@ -469,25 +532,9 @@ html, body {
   font-weight: 700;
 }
 .qv-cockpit-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: block;
-}
-.scope-section-head h2 .qv-cockpit-icon,
-.qv-status-panel h2 .qv-cockpit-icon,
-.qv-quick-nav h2 .qv-cockpit-icon,
-.qv-generation-report h2 .qv-cockpit-icon,
-.qv-coverage-report h2 .qv-cockpit-icon {
-  display: inline-block;
-  margin-right: 8px;
-  vertical-align: -3px;
-  color: var(--scope-blue);
-}
-.qv-cockpit-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
 }
 .qv-prep-list {
   display: grid;
@@ -535,9 +582,13 @@ html, body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  align-items: stretch;
 }
 .qv-coverage-tile {
+  display: flex;
+  flex-direction: column;
   min-height: 92px;
+  height: 100%;
   padding: 12px;
   border: 1px solid var(--scope-line);
   border-radius: 8px;
@@ -572,6 +623,31 @@ html, body {
   margin: 0;
   padding-left: 18px;
 }
+.qv-progress-card .scope-table-wrap {
+  margin: 0;
+}
+.qv-pilot-table {
+  table-layout: auto;
+}
+.qv-pilot-table th,
+.qv-pilot-table td {
+  height: 38px;
+  padding: 6px 8px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+.qv-pilot-table thead th {
+  color: var(--scope-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.qv-pilot-table th:last-child,
+.qv-pilot-table td:last-child {
+  text-align: right;
+}
 .qv-pilot-table td.is-warn {
   color: #b26a00;
   font-weight: 700;
@@ -590,6 +666,7 @@ html, body {
   background: var(--scope-blue);
 }
 .qv-row-action {
+  display: inline-block;
   color: var(--scope-blue);
   font-size: 12px;
   font-weight: 700;
@@ -599,15 +676,20 @@ html, body {
 .qv-row-action:hover {
   text-decoration: underline;
 }
+.qv-families-card .qv-family-grid {
+  flex: 1;
+}
 .qv-family-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  align-items: stretch;
 }
 .qv-family-card {
   display: flex;
   flex-direction: column;
-  min-height: 118px;
+  height: 100%;
+  min-height: 124px;
   padding: 12px;
   border: 1px solid var(--scope-line);
   border-radius: 8px;
@@ -640,18 +722,22 @@ html, body {
   font-style: normal;
   font-weight: 700;
 }
+.qv-status-panel {
+  gap: 0;
+}
 .qv-status-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(180px, .8fr);
   gap: 14px;
-  align-items: center;
+  align-items: stretch;
   margin-bottom: 14px;
 }
 .qv-status-current {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
   border-radius: 8px;
   background: #e8f6ec;
 }
@@ -662,7 +748,19 @@ html, body {
   background: var(--scope-navy-soft);
 }
 .qv-status-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
   color: var(--scope-ok);
+}
+.qv-status-current.is-validation .qv-status-mark {
+  color: #b26a00;
+}
+.qv-status-current.is-valide .qv-status-mark {
+  color: var(--scope-blue);
 }
 .qv-status-current strong,
 .qv-status-current small {
@@ -671,6 +769,11 @@ html, body {
 .qv-status-current small {
   color: var(--scope-muted);
   font-size: 12px;
+}
+.qv-status-change {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .qv-status-change span {
   display: block;
@@ -695,23 +798,59 @@ html, body {
   width: 100%;
   justify-content: center;
 }
-.qv-quick-nav .scope-section-head {
-  align-items: center;
+.qv-status-panel .scope-mode-hint {
+  margin: 10px 0 0;
 }
-.qv-quick-nav .scope-btn {
-  display: inline-flex;
+.qv-quick-nav {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px 24px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid #d7def5;
+  border-radius: var(--scope-radius);
+  background: #f4f6fd;
+  box-shadow: none;
+}
+.qv-quick-nav-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.qv-quick-nav-copy h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 750;
+}
+.qv-quick-nav-copy p {
+  margin: 3px 0 0;
+  color: var(--scope-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.qv-quick-nav-btn {
+  flex: 0 0 auto;
+  background: #fff;
+  border-color: var(--scope-blue);
+  color: var(--scope-blue);
+}
+.qv-quick-nav-btn:hover,
+.qv-quick-nav-btn:focus-visible {
+  background: #eef1fb;
+  border-color: var(--scope-blue);
+  color: var(--scope-blue);
 }
 
 @media (max-width: 1200px) {
-  .qv-pilot-kpis,
-  .qv-family-grid {
+  .qv-pilot-kpis {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 @media (max-width: 900px) {
-  .qv-cockpit-grid,
+  .qv-cockpit-row,
   .qv-status-layout,
   .qv-coverage-grid {
     grid-template-columns: 1fr;
@@ -719,6 +858,13 @@ html, body {
   .qv-pilot-kpis,
   .qv-family-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .qv-quick-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .qv-quick-nav-btn {
+    justify-content: center;
   }
 }
 @media (max-width: 640px) {

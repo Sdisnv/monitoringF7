@@ -51,6 +51,10 @@ assert.ok(/Il ne crée aucun événement opérationnel/.test(qvUi));
 assert.ok(/Activités historiques consolidées/.test(qvUi));
 assert.ok(/coverage.supplements/.test(qvUi), 'bilan préparation doit lire les données CONSOLIDATION-2');
 assert.ok(/qv-pilot-kpis/.test(css) && /qv-status-current/.test(css) && /qv-family-card/.test(css));
+assert.ok(/qv-cockpit-row/.test(qvUi) && /qv-cockpit-row/.test(css));
+assert.ok((qvUi.match(/class="qv-cockpit-row"/g) || []).length === 3);
+assert.ok(/qv-section-icon/.test(qvUi));
+assert.ok(/qv-quick-nav-btn/.test(qvUi));
 
 const auto = L.parseHash('#/quo-vadis/activites?domaine=AUTO');
 assert.strictEqual(auto.qvView, 'activites');
