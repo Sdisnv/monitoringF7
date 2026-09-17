@@ -38,7 +38,7 @@ assert.ok(/buildActivities/.test(service), 'vue activités manquante');
 assert.ok(/scope_lieux/.test(service) && /lieu_id/.test(service), 'référentiel lieux SCOPE non exploité');
 assert.ok(/generateCatalogueObligations/.test(service), 'génération catalogue 2027 manquante');
 assert.ok(/generateDpsInstructionObligations/.test(service), 'instructions DPS manquantes');
-assert.ok(/KICK-OFF[\s\S]*ABC[\s\S]*VARIA[\s\S]*FEU[\s\S]*PIONNIER/.test(service), 'ordre métier DPS incomplet');
+assert.ok(/programmeActivities/.test(service) && /programmeRequirement/.test(service), 'compléments DPS doivent être configurés et justifiés');
 assert.ok(/Demi-sections concernées réalisées avant instruction de section/.test(service), 'prérequis demi-sections non représenté');
 assert.ok(/astreinte semaine N et N-1/.test(service), 'contrainte PIONNIER astreinte non représentée');
 assert.ok(/hasHolidayWeekend/.test(service), 'week-end férié non traité');

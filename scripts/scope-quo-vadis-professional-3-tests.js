@@ -91,7 +91,8 @@ assert.ok(/Correspondance à confirmer/.test(qvUi) || /Fiabilité/.test(qvUi), '
 assert.ok(/qv-home-link/.test(qvUi), 'retour synthèse manquant');
 assert.ok(!/id="qv-future-end-date"[^>]*required/.test(qvUi), 'date de fin ne doit plus être obligatoire');
 assert.ok(/resetGeneratedDrafts/.test(service), 'recalcul doit réinitialiser les brouillons QV');
-assert.ok(/selected_proposal_id is null/.test(service) && /p\.status <> 'RETENU'/.test(service), 'proposition retenue non préservée');
+assert.ok(/hasHumanDecision/.test(service) && /if\(obligation.preserveSchedule\) return/.test(service), 'arbitrage humain doit être protégé du recalcul');
+assert.ok(!/delete from scope_quo_vadis_(obligations|proposals)/.test(service), 'obligations et propositions retenues doivent être conservées en archive');
 assert.ok(/score < 55/.test(service), 'matching 2026 trop permissif');
 assert.ok(/hasVacances/.test(service) && /VACANCES_SCOLAIRES/.test(service), 'vacances non consommées par le moteur');
 assert.ok(/throw error/.test(service), 'erreur historique encore avalée');

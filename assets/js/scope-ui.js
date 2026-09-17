@@ -10093,6 +10093,7 @@
     if (!report) return '';
     const before = report.before || {};
     const after = report.after || {};
+    const consolidation = report.consolidation;
     return `<section class="scope-card qv-generation-report" role="status">
       <div class="scope-section-head"><div><h2>Préparation 2027 mise à jour</h2><p class="scope-muted">Bilan avant / après du dernier recalcul. Aucun événement opérationnel n’a été créé.</p></div></div>
       <div class="scope-kpis qv-kpis">
@@ -10100,6 +10101,17 @@
         <article class="scope-kpi"><span>Nouvelles propositions</span><strong>${escapeHtml(String(report.newProposals || 0))}</strong><small>${escapeHtml(String(report.unchangedProposals || 0))} inchangée(s)</small></article>
         <article class="scope-kpi"><span>Points d’attention</span><strong>${escapeHtml(String(report.attentionPoints || 0))}</strong><small>conflits, dérogations ou vérifications</small></article>
       </div>
+      ${consolidation ? `<dl class="qv-definition-list">
+        <dt>Activités historiques consolidées</dt><dd>${escapeHtml(String(consolidation.historical))}</dd>
+        <dt>Compléments catalogue justifiés</dt><dd>${escapeHtml(String(consolidation.catalogue))}</dd>
+        <dt>Compléments DPS justifiés</dt><dd>${escapeHtml(String(consolidation.dps))}</dd>
+        <dt>Cursus ajoutés</dt><dd>${escapeHtml(String(consolidation.cursus))}</dd>
+        <dt>Dates annoncées ajoutées</dt><dd>${escapeHtml(String(consolidation.announcedDates))}</dd>
+        <dt>Activités supplémentaires conservées par décision humaine</dt><dd>${escapeHtml(String(consolidation.humanDecisions))}</dd>
+        <dt>Doublons évités</dt><dd>${escapeHtml(String(consolidation.duplicatesAvoided))}</dd>
+        <dt>Anciennes obligations obsolètes neutralisées</dt><dd>${escapeHtml(String(consolidation.obsoleteNeutralized))}</dd>
+        <dt>Décisions humaines préservées</dt><dd>${escapeHtml(String(consolidation.humanDecisionsPreserved))}</dd>
+      </dl>` : ''}
     </section>`;
   }
 
@@ -10115,7 +10127,7 @@
         <article class="scope-kpi"><span>Sessions consolidées</span><strong>${escapeHtml(String(coverage.sessions || 0))}</strong><small>${escapeHtml(String(coverage.duplicated || 0))} doublon(s)</small></article>
         <article class="scope-kpi"><span>Exclues</span><strong>${escapeHtml(String(coverage.excluded || 0))}</strong><small>${escapeHtml(String(coverage.recipeExcluded || 0))} recette/technique</small></article>
         <article class="scope-kpi"><span>Cycliques / cursus</span><strong>${escapeHtml(String((coverage.cyclicDeferred || 0) + (coverage.cursusDeferred || 0)))}</strong><small>${escapeHtml(String(coverage.optionalCount || 0))} optionnelle(s)</small></article>
-        <article class="scope-kpi"><span>Activités 2027 proposées</span><strong>${escapeHtml(String(coverage.proposed || coverage.generable || 0))}</strong></article>
+        <article class="scope-kpi"><span>Socle historique 2027</span><strong>${escapeHtml(String(coverage.proposed || coverage.generable || 0))}</strong><small>Programme actif : ${escapeHtml(String(coverage.programmeActivities ?? (qv.summary && qv.summary.totalActivites) ?? 0))} activité(s), compléments justifiés inclus</small></article>
       </div>
       ${reasons.length ? `<ul class="qv-reasons">${reasons.map(([reason, count]) => `<li>${escapeHtml(String(count))} — ${escapeHtml(reason)}</li>`).join('')}</ul>` : ''}
     </section>`;
