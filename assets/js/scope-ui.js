@@ -9932,7 +9932,9 @@
       gear: '<circle cx="12" cy="12" r="3"/><path d="M12 4.2v2.3M12 17.5v2.3M4.8 7.2l1.7 1.7M17.5 15.1l1.7 1.7M4.2 12h2.3M17.5 12h2.3M4.8 16.8l1.7-1.7M17.5 8.9l1.7-1.7"/>',
       info: '<circle cx="12" cy="12" r="8"/><path d="M12 10.5V17M12 7.4h.01"/>',
       check: '<circle cx="12" cy="12" r="8"/><path d="M8.2 12.2 10.8 14.8 15.8 9.4"/>',
-      users: '<circle cx="9" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.3"/><path d="M4.2 18c.5-2.8 2.6-4.4 4.8-4.4s4.3 1.6 4.8 4.4M14.4 13.8c1.5-.3 3.2.5 4 2.5"/>'
+      users: '<circle cx="9" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.3"/><path d="M4.2 18c.5-2.8 2.6-4.4 4.8-4.4s4.3 1.6 4.8 4.4M14.4 13.8c1.5-.3 3.2.5 4 2.5"/>',
+      flag: '<path d="M6 21V4"/><path d="M6 5h11l-2.2 3.4L17 12H6"/>',
+      chevron: '<path d="M9 6l6 6-6 6"/>'
     };
     return `<svg class="qv-cockpit-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[name] || icons.list}</svg>`;
   }
@@ -10156,7 +10158,7 @@
           context: titles[view] || 'Synthèse 2027',
           description: 'Préparation annuelle du programme de formation et d’activités.',
           logo: true,
-          asideHtml: view === 'synthese' ? qvSyntheseAsideHtml(quoVadisData()) : ''
+          asideHtml: (view === 'synthese' || view === 'agenda-annuel') ? qvSyntheseAsideHtml(quoVadisData()) : ''
         })}
         ${renderQuoVadisNav(quoVadisData())}
         ${content}
@@ -10402,67 +10404,90 @@
       });
     }
     while (cells.length % 7) cells.push(null);
-    return { year, month, label: `${qvMonthLabel(month, year)} ${year}`, cells };
+    return {
+      year,
+      month,
+      key: `${year}-${String(month).padStart(2, '0')}`,
+      label: `${qvMonthLabel(month, year)} ${year}`,
+      cells
+    };
+  }
+
+  function qvMonthActivityCount(month) {
+    return (month.cells || []).reduce((sum, cell) => sum + ((cell && cell.items && cell.items.length) || 0), 0);
+  }
+
+  function qvActivityCountLabel(count) {
+    const n = Number(count || 0);
+    return n <= 1 ? `${n} activité` : `${n} activités`;
+  }
+
+  function qvYearHint(lines) {
+    return `<aside class="qv-year-hint">${(lines || []).map((line) => `<p>${escapeHtml(line)}</p>`).join('')}</aside>`;
   }
 
   function qvYearMonths(qv) {
     return Array.from({ length: 12 }, (_, index) => qvBuildMonth(qv, 2027, index + 1));
   }
 
-  function qvRenderMiniMonth(month, selected) {
-    return `<article class="qv-mini-month"><h3>${escapeHtml(month.label)}</h3>
+  function qvRenderMiniMonth(month, today) {
+    const count = qvMonthActivityCount(month);
+    const monthHref = qvHref('agenda', { mois: month.key });
+    return `<article class="qv-year-month qv-mini-month">
+        <a class="qv-year-month-head" href="${monthHref}">
+          <h3>${escapeHtml(month.label)}</h3>
+          <span class="qv-year-month-meta">
+            <em>${escapeHtml(qvActivityCountLabel(count))}</em>
+            ${qvCockpitIcon('chevron')}
+          </span>
+        </a>
         <div class="qv-mini-cal">
           ${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => `<span class="qv-mini-head">${d}</span>`).join('')}
           ${month.cells.map((cell) => {
             if (!cell) return '<span class="qv-mini-empty"></span>';
-            const count = (cell.items || []).length;
+            const activityCount = (cell.items || []).length;
             const classes = ['qv-mini-day'];
-            if (count) classes.push('has-activity');
+            if (activityCount) classes.push('has-activity');
             if (cell.known) classes.push('has-known');
             if (cell.holiday) classes.push('has-holiday');
             if (cell.vacation) classes.push('has-vacation');
-            if (selected === cell.date) classes.push('is-selected');
+            if (today && today === cell.date) classes.push('is-today');
             const extra = cell.calendarLabel ? ` ${cell.calendarLabel}` : '';
-            return `<a class="${classes.join(' ')}" href="${qvHref('agenda-annuel', { jour: cell.date })}" aria-label="${escapeHtml(qvDateLong(cell.date) + extra)}"><span>${escapeHtml(String(cell.day))}</span>${count > 1 ? `<em>${escapeHtml(String(count))}</em>` : ''}</a>`;
+            const label = escapeHtml(qvDateLong(cell.date) + extra);
+            if (activityCount) {
+              return `<a class="${classes.join(' ')}" href="${qvHref('agenda', { mois: month.key, jour: cell.date })}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></a>`;
+            }
+            return `<span class="${classes.join(' ')}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></span>`;
           }).join('')}
         </div>
       </article>`;
   }
 
   function renderQuoVadisAgendaAnnuel(qv) {
-    const selected = route().qvJour || '';
     const months = qvYearMonths(qv);
     const q1 = [qvBuildMonth(qv, 2028, 1), qvBuildMonth(qv, 2028, 2), qvBuildMonth(qv, 2028, 3)];
-    const allCells = months.concat(q1).flatMap((month) => month.cells);
-    const dayItems = selected ? (allCells.find((cell) => cell && cell.date === selected) || { items: [], known: false }) : null;
-    return `<section class="scope-card">
-      <div class="scope-section-head"><div><h2>Agenda annuel 2027</h2><p class="scope-muted">Vue avion du programme préparatoire jusqu’au rapport annuel de mars 2028.</p></div></div>
+    const today = qvTodayKey();
+    return `<div class="qv-year-view">
+      <section class="qv-year-intro">
+        ${qvSectionHead('calendar', 'Agenda annuel 2027', 'Vue d’ensemble du programme préparatoire jusqu’au rapport annuel de mars 2028.')}
+        ${qvYearHint(['Cliquez sur un mois pour ouvrir l’agenda mensuel.', 'Cliquez sur un jour avec une activité pour accéder directement à la journée.'])}
+      </section>
       <ul class="qv-year-legend">
-        <li><span class="qv-legend-swatch is-activity"></span>Activité proposée</li>
-        <li><span class="qv-legend-swatch is-known"></span>Date annoncée</li>
-        <li><span class="qv-legend-swatch is-holiday"></span>Jour férié</li>
-        <li><span class="qv-legend-swatch is-vacation"></span>Vacances scolaires</li>
+        <li><span class="qv-legend-swatch is-activity"></span><span><strong>Activité proposée</strong><small>Date à planifier / à confirmer</small></span></li>
+        <li><span class="qv-legend-swatch is-known"></span><span><strong>Date annoncée</strong><small>Événement déjà connu</small></span></li>
+        <li><span class="qv-legend-swatch is-holiday"></span><span><strong>Jour férié</strong><small>Jour férié officiel</small></span></li>
+        <li><span class="qv-legend-swatch is-vacation"></span><span><strong>Vacances scolaires</strong><small>Période de vacances</small></span></li>
+        ${today ? '<li><span class="qv-legend-swatch is-today"></span><span><strong>Aujourd’hui</strong><small>Jour courant</small></span></li>' : ''}
       </ul>
-      <div class="qv-year-grid">${months.map((month) => qvRenderMiniMonth(month, selected)).join('')}</div>
-    </section>
-    <section class="scope-card">
-      <div class="scope-section-head"><div><h2>Janvier – mars 2028</h2><p class="scope-muted">Période de clôture annuelle incluse dans QUO VADIS.</p></div></div>
-      <div class="qv-year-grid">${q1.map((month) => qvRenderMiniMonth(month, selected)).join('')}</div>
-    </section>
-    ${selected ? `<section class="scope-card qv-day-panel">
-      <div class="scope-section-head"><div><h2>${escapeHtml(qvDateLong(selected))}</h2><p class="scope-muted">${escapeHtml(String((dayItems.items || []).length))} activité(s)${dayItems.calendarLabel ? ` · ${escapeHtml(dayItems.calendarLabel)}` : ''}</p></div>${contextReturnHtml(qvHref('agenda-annuel'), 'Fermer le détail')}</div>
-      ${(dayItems.items || []).length ? `<div class="scope-table-wrap"><table class="scope-table qv-agenda-table"><thead><tr><th>Horaire</th><th>Domaine</th><th>OI</th><th>Activité</th><th>Stat.Com</th><th>Lieu</th><th>État</th><th>Attention</th></tr></thead>
-        <tbody>${dayItems.items.map((row) => `<tr>
-          <td><a href="${qvHref('activites', { id: row.activityId, from: 'agenda-annuel', jour: selected })}">${escapeHtml([qvTime(row.startsAt), qvTime(row.endsAt)].filter(Boolean).join('–') || 'À définir')}</a></td>
-          <td>${escapeHtml(row.domainLabel || row.domain || '')}</td>
-          <td>${escapeHtml((row.cibleCodes || []).join(', ') || '—')}</td>
-          <td><a class="scope-events-libelle" href="${qvHref('activites', { id: row.activityId, from: 'agenda-annuel', jour: selected })}">${escapeHtml(row.title)}</a></td>
-          <td>${escapeHtml(row.statcomCode || '—')}</td>
-          <td>${escapeHtml(qvLieuLabel(row))}</td>
-          <td>${escapeHtml(qvStatusLabel(row.status))}</td>
-          <td>${row.attention ? escapeHtml(row.attentionType || 'À vérifier') : '—'}</td>
-        </tr>`).join('')}</tbody></table></div>` : '<p class="scope-empty">Aucune activité ce jour. Une date annoncée ou un jour particulier peut toutefois s’y trouver.</p>'}
-    </section>` : ''}`;
+      <div class="qv-year-grid">${months.map((month) => qvRenderMiniMonth(month, today)).join('')}</div>
+      <section class="qv-year-close">
+        <div class="qv-year-intro">
+          ${qvSectionHead('flag', 'Clôture du programme — janvier à mars 2028', 'Période de clôture annuelle incluse dans QUO VADIS.')}
+          ${qvYearHint(['Janvier – mars 2028 font partie du périmètre QUO VADIS et peuvent également être ouverts dans l’agenda mensuel.'])}
+        </div>
+        <div class="qv-year-grid">${q1.map((month) => qvRenderMiniMonth(month, today)).join('')}</div>
+      </section>
+    </div>`;
   }
 
   function renderQuoVadisAgenda(qv) {

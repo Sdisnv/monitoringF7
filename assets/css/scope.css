@@ -243,25 +243,109 @@ html, body {
   min-height: var(--scope-control-h);
 }
 
+.qv-year-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.qv-year-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  background: #fff;
+  box-shadow: var(--scope-shadow);
+}
+.qv-year-intro .qv-section-head {
+  margin: 0;
+}
+.qv-year-hint {
+  max-width: 380px;
+  padding: 10px 12px;
+  border: 1px solid #d7def5;
+  border-radius: 8px;
+  background: #f4f6fd;
+  color: var(--scope-gray-700);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.qv-year-hint p {
+  margin: 0;
+}
+.qv-year-hint p + p {
+  margin-top: 4px;
+}
+.qv-year-close {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .qv-year-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
-.qv-mini-month {
+.qv-year-month {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  padding: 10px;
+  margin: 0;
+  padding: 12px 12px 14px;
   border: 1px solid var(--scope-line);
-  border-radius: var(--scope-radius-xs);
+  border-radius: var(--scope-radius);
   background: #fff;
+  box-shadow: var(--scope-shadow);
 }
-.qv-mini-month h3 {
-  margin: 0 0 8px;
+.qv-year-month-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 2px 2px 10px;
+  border-bottom: 1px solid var(--scope-line);
+  color: inherit;
+  text-decoration: none;
+}
+.qv-year-month-head:hover,
+.qv-year-month-head:focus-visible {
+  color: var(--scope-blue);
+}
+.qv-year-month-head:hover h3,
+.qv-year-month-head:focus-visible h3 {
+  color: var(--scope-blue);
+}
+.qv-year-month-head h3 {
+  margin: 0;
   font-size: 13px;
-  text-transform: uppercase;
+  font-weight: 800;
   letter-spacing: .04em;
-  color: var(--scope-gray-700);
+  text-transform: uppercase;
+  color: var(--scope-ink);
+}
+.qv-year-month-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--scope-blue);
+  white-space: nowrap;
+}
+.qv-year-month-meta em {
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 650;
+}
+.qv-year-month-head .qv-cockpit-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--scope-blue);
 }
 
 .qv-mini-cal {
@@ -276,8 +360,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 26px;
-  font-size: 11px;
+  min-height: 28px;
+  font-size: 12px;
 }
 
 .qv-mini-head {
@@ -287,79 +371,94 @@ html, body {
 
 .qv-mini-day {
   position: relative;
-  border-radius: 3px;
+  border-radius: 4px;
   color: var(--scope-ink);
   text-decoration: none;
 }
-.qv-mini-day:hover {
-  background: var(--scope-gray-100);
+.qv-mini-day span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+a.qv-mini-day:hover span,
+a.qv-mini-day:focus-visible span {
+  background: var(--scope-navy-soft);
 }
 .qv-mini-day.has-vacation {
-  background: rgba(23, 28, 143, .22);
+  background: #eceaf6;
 }
 .qv-mini-day.has-holiday {
-  background: rgba(255, 163, 0, .28);
+  color: var(--scope-blue);
   font-weight: 700;
 }
-.qv-mini-day.has-activity {
-  font-weight: 700;
-}
-.qv-mini-day.has-activity span::after {
-  content: "";
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  margin-left: 3px;
-  border-radius: 50%;
+.qv-mini-day.has-activity span {
   background: var(--scope-red);
-  vertical-align: middle;
+  color: #fff;
+  font-weight: 700;
 }
-.qv-mini-day.has-activity:hover {
-  background: var(--scope-gray-100);
+a.qv-mini-day.has-activity:hover span,
+a.qv-mini-day.has-activity:focus-visible span {
+  background: var(--scope-red-dark);
+  color: #fff;
 }
-.qv-mini-day.has-known:not(.has-activity)::after,
+.qv-mini-day.has-known:not(.has-activity) span {
+  box-shadow: inset 0 0 0 2px var(--scope-yellow);
+  font-weight: 700;
+}
 .qv-mini-day.has-known.has-activity::after {
   content: "";
   position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 5px;
-  height: 5px;
+  right: 2px;
+  bottom: 2px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--scope-yellow);
+  box-shadow: 0 0 0 1px #fff;
 }
-.qv-mini-day.is-selected {
+.qv-mini-day.is-today {
   box-shadow: inset 0 0 0 2px var(--scope-blue);
-}
-.qv-mini-day em {
-  position: absolute;
-  top: 1px;
-  right: 2px;
-  color: var(--scope-red);
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 800;
-  line-height: 1;
 }
 
 .qv-year-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 18px;
-  margin: 0 0 16px;
-  padding: 0;
+  gap: 12px 22px;
+  margin: 0;
+  padding: 12px 16px;
   list-style: none;
-  color: var(--scope-gray-700);
+  border: 1px solid var(--scope-line);
+  border-radius: var(--scope-radius);
+  background: #fff;
+  box-shadow: var(--scope-shadow);
+  color: var(--scope-ink);
   font-size: 12px;
-  font-weight: 650;
+}
+.qv-year-legend li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.qv-year-legend strong {
+  display: block;
+  font-weight: 750;
+}
+.qv-year-legend small {
+  display: block;
+  color: var(--scope-muted);
+  font-size: 11px;
+  font-weight: 500;
 }
 .qv-legend-swatch {
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-right: 6px;
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
   border-radius: 50%;
-  vertical-align: -1px;
 }
 .qv-legend-swatch.is-activity {
   background: var(--scope-red);
@@ -368,11 +467,15 @@ html, body {
   background: var(--scope-yellow);
 }
 .qv-legend-swatch.is-holiday {
-  background: var(--scope-yellow);
-  box-shadow: inset 0 0 0 2px var(--scope-ink);
+  background: var(--scope-blue);
 }
 .qv-legend-swatch.is-vacation {
-  background: var(--scope-blue);
+  background: #d9d6ee;
+  box-shadow: inset 0 0 0 1px #b7b3d4;
+}
+.qv-legend-swatch.is-today {
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--scope-blue);
 }
 
 .scope-page-aside {
@@ -973,6 +1076,13 @@ html, body {
 @media (max-width: 1100px) {
   .qv-year-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .qv-year-intro {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .qv-year-hint {
+    max-width: none;
   }
 }
 
