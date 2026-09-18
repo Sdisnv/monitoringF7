@@ -1097,22 +1097,27 @@ a.qv-mini-day.has-activity:focus-visible span {
   gap: 12px;
   margin: 0 0 16px;
 }
-.qv-agenda-nav-side {
+.scope-btn.qv-agenda-nav-side {
   justify-self: start;
   height: 36px;
   min-height: 36px;
   padding: 0 14px;
-  border: 1px solid #d4dbe6;
+  border: 1.5px solid var(--scope-blue);
   border-radius: 8px;
-  background: #eef2f7;
-  color: var(--scope-ink);
+  background: #f4f6fb;
+  color: var(--scope-blue);
   font-size: 13px;
   font-weight: 650;
   box-shadow: none;
 }
-.qv-agenda-nav-side:hover:not(:disabled) {
-  border-color: #c3ccd9;
-  background: #e7edf5;
+.scope-btn.qv-agenda-nav-side:hover:not(:disabled) {
+  border-color: var(--scope-blue);
+  background: #e8ecf8;
+  color: var(--scope-blue);
+}
+.scope-btn.qv-agenda-nav-side:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: 2px;
 }
 #qv-agenda-next.qv-agenda-nav-side {
   justify-self: end;
@@ -1220,23 +1225,27 @@ a.qv-mini-day.has-activity:focus-visible span {
 }
 .qv-agenda-filters .qv-filter-reset {
   justify-self: end;
+  width: 36px;
   height: 36px;
   min-height: 36px;
-  padding: 0 12px;
+  padding: 0;
   border: 1px solid #c9d5ea;
   border-radius: 8px;
-  background: #eef3fb;
+  background: #f4f7fb;
   color: var(--scope-blue);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 0;
 }
 .qv-agenda-filters .qv-filter-reset .qv-cockpit-icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 .qv-agenda-filters .qv-filter-reset:hover {
-  border-color: #b5c5e0;
-  background: #e6eef9;
+  border-color: #9eb0d4;
+  background: #e8eef8;
+}
+.qv-agenda-filters .qv-filter-reset:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: 2px;
 }
 .qv-agenda-meta-row {
   display: flex;
@@ -1317,18 +1326,18 @@ a.qv-mini-day.has-activity:focus-visible span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 22px;
-  padding: 2px 8px 2px 6px;
+  min-height: 26px;
+  padding: 3px 8px 3px 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: inherit;
   font-style: normal;
   font-weight: 650;
   line-height: 1.2;
   white-space: nowrap;
 }
 .qv-agenda-state .qv-agenda-swatch {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 .qv-agenda-state.is-planned {
   background: #eceff3;

@@ -139,7 +139,7 @@ assert.strictEqual(keep.updates.length, 0, 'adresse existante non écrasée');
 assert.ok(/qv-agenda-check-box/.test(css));
 assert.ok(/border-radius:\s*4px/.test(css.slice(css.indexOf('.qv-agenda-check-box'), css.indexOf('.qv-agenda-check input:checked'))));
 assert.ok(!/qv-agenda-legend[\s\S]{0,400}border-radius:\s*999/.test(css));
-assert.ok(/scope-quo-vadis-agenda-ux-2/.test(html));
+assert.ok(/scope-quo-vadis-agenda-ux-[123]/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(/qvCalendarMarkVisible/.test(logicSrc));
 

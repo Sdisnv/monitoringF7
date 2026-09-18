@@ -10161,7 +10161,7 @@
       ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
       ${check('qv-filter-sessions', 'Séances multiples', filters.sessions === 'oui')}
       ${check('qv-filter-attention', 'Points d’attention', filters.attention)}
-      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset">${qvCockpitIcon('refresh')} Réinitialiser les filtres</button>
+      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">${qvCockpitIcon('refresh')}</button>
     </div>`;
   }
 
