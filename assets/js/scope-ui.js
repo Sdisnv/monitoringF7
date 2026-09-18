@@ -206,6 +206,7 @@
       status: 'tous',
       month: 'tous',
       lieu: 'tous',
+      oi: 'tous',
       attention: false
     },
     quoVadisAgendaMonth: '',
@@ -9982,6 +9983,52 @@
     return text || 'Lieu à définir';
   }
 
+  function qvLieuRecord(qv, row) {
+    const id = row && row.lieuId;
+    if (!id) return null;
+    return ((qv && qv.lieux) || []).find((lieu) => String(lieu.lieuId) === String(id)) || null;
+  }
+
+  function qvOiCode(qv, row) {
+    const lieu = qvLieuRecord(qv, row);
+    return String((lieu && (lieu.oiCode || lieu.oi_code)) || '').trim();
+  }
+
+  function qvCibleLabel(row) {
+    return ((row && row.cibleCodes) || []).filter(Boolean).join(', ');
+  }
+
+  function qvConvocationAddress(qv, row) {
+    const lieu = qvLieuRecord(qv, row);
+    if (!lieu) return '';
+    const line1 = String(lieu.adresseLigne1 || lieu.adresse_ligne1 || '').trim();
+    const line2 = [lieu.npa, lieu.localite].filter(Boolean).join(' ').trim();
+    return [line1, line2].filter(Boolean).join('\n');
+  }
+
+  function qvAgendaState(row) {
+    const status = String((row && row.status) || '').toUpperCase();
+    if (status === 'ANNULE') return { key: 'cancelled', label: 'Annulé' };
+    if (status === 'PROPOSE' || status === 'A_PLANIFIER') return { key: 'arbitrate', label: 'À arbitrer' };
+    if (row && row.attention) return { key: 'attention', label: 'Point d’attention' };
+    if (status === 'PLANIFIE') return { key: 'validated', label: 'Validé' };
+    return { key: 'planned', label: 'Planifié' };
+  }
+
+  function qvAgendaStateBadge(row) {
+    const state = qvAgendaState(row);
+    return `<span class="qv-agenda-state is-${escapeHtml(state.key)}">${escapeHtml(state.label)}</span>`;
+  }
+
+  function qvAgendaDayTitle(date) {
+    if (!date || date === 'sans-date') return 'Date à proposer';
+    const weekday = qvWeekdayLong(date);
+    const day = Number(String(date).slice(8, 10));
+    const month = qvMonthLabel(Number(String(date).slice(5, 7)), Number(String(date).slice(0, 4)));
+    const year = String(date).slice(0, 4);
+    return `${weekday}, ${day} ${month} ${year}`.toUpperCase();
+  }
+
   function qvLieuOptions(qv, selected) {
     const rows = (qv.lieux || []).filter((row) => row.actif !== false);
     const current = String(selected || '');
@@ -10004,7 +10051,7 @@
     const monthFilter = opts.monthKey || filters.month || 'tous';
     const rows = qvActivities(qv).filter((row) => {
       const monthKey = row.startsAt ? String(row.startsAt).slice(0, 7) : '';
-      const haystack = [row.title, row.domain, row.domainLabel, (row.cibleCodes || []).join(' '), row.specialisation, row.cursus, row.lieu, row.statcomCode, row.family, qvFamilyOf(row), row.activityKind, qvStatusLabel(row.status)].join(' ').toLowerCase();
+      const haystack = [row.title, row.domain, row.domainLabel, (row.cibleCodes || []).join(' '), qvCibleLabel(row), qvOiCode(qv, row), row.specialisation, row.cursus, row.lieu, qvConvocationAddress(qv, row), row.statcomCode, row.family, qvFamilyOf(row), row.activityKind, qvStatusLabel(row.status), qvAgendaState(row).label].join(' ').toLowerCase();
       if (query && !haystack.includes(query)) return false;
       if (filters.domain && filters.domain !== 'tous' && row.domain !== filters.domain) return false;
       if (filters.family && filters.family !== 'tous' && qvFamilyOf(row) !== filters.family) return false;
@@ -10019,6 +10066,7 @@
         } else if (monthKey !== monthFilter) return false;
       }
       if (filters.lieu && filters.lieu !== 'tous' && qvLieuLabel(row) !== filters.lieu) return false;
+      if (filters.oi && filters.oi !== 'tous' && qvOiCode(qv, row) !== filters.oi) return false;
       if (filters.attention && !row.attention) return false;
       return true;
     });
@@ -10082,6 +10130,34 @@
       <label class="scope-switch qv-attention-toggle"><input id="qv-filter-sessions" type="checkbox" ${filters.sessions === 'oui' ? 'checked' : ''}><span>Séances multiples</span></label>
       <label class="scope-switch qv-attention-toggle"><input id="qv-filter-attention" type="checkbox" ${filters.attention ? 'checked' : ''}><span>Points d’attention</span></label>
       <button type="button" class="scope-btn" id="qv-filter-reset">Réinitialiser les filtres</button>
+    </div>`;
+  }
+
+  function qvAgendaFilterBar(qv) {
+    const filters = state.quoVadisFilters || {};
+    const all = qvActivities(qv);
+    const domains = qvFilterOptions(all, (row) => row.domain);
+    const families = ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
+    const ois = qvFilterOptions(all, (row) => qvOiCode(qv, row));
+    const specs = qvFilterOptions(all, (row) => row.specialisation);
+    const cibles = qvFilterOptions(all.flatMap((row) => row.cibleCodes || []), (row) => row);
+    const lieux = qvFilterOptions(all, (row) => qvLieuLabel(row));
+    const cursus = qvFilterOptions(all, (row) => row.cursus);
+    const states = qvFilterOptions(all, (row) => row.status);
+    const field = (id, label, optionsHtml) => `<div class="scope-field"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${optionsHtml}</select></div>`;
+    return `<div class="qv-agenda-filters">
+      <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div>
+      ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-specialisation', 'Spécialisation', `<option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-lieu', 'Lieu', `<option value="tous">Tous</option>${lieux.map((v) => `<option value="${escapeHtml(v)}" ${filters.lieu === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-cursus', 'Cursus', `<option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
+      <label class="scope-switch qv-attention-toggle"><input id="qv-filter-sessions" type="checkbox" ${filters.sessions === 'oui' ? 'checked' : ''}><span>Séances multiples</span></label>
+      <label class="scope-switch qv-attention-toggle"><input id="qv-filter-attention" type="checkbox" ${filters.attention ? 'checked' : ''}><span>Points d’attention</span></label>
+      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset">Réinitialiser les filtres</button>
     </div>`;
   }
 
@@ -10450,30 +10526,46 @@
           </span>
         </a>
         <div class="qv-mini-cal">
+          <span class="qv-mini-week-head" aria-hidden="true"></span>
           ${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => `<span class="qv-mini-head">${d}</span>`).join('')}
-          ${month.cells.map((cell, index) => {
-            if (!cell) return '<span class="qv-mini-empty"></span>';
-            const activityCount = (cell.items || []).length;
-            const classes = ['qv-mini-day'];
-            if (activityCount) classes.push('has-activity');
-            if (cell.known) classes.push('has-known', 'has-announced-date');
-            if (cell.holiday) classes.push('has-holiday', 'is-holiday');
-            if (cell.vacation) {
-              classes.push('has-vacation', 'is-school-break');
-              const col = index % 7;
-              const prev = month.cells[index - 1];
-              const next = month.cells[index + 1];
-              if (col === 0 || !(prev && prev.vacation)) classes.push('is-break-start');
-              if (col === 6 || !(next && next.vacation)) classes.push('is-break-end');
+          ${(() => {
+            const rows = [];
+            for (let start = 0; start < month.cells.length; start += 7) {
+              const slice = month.cells.slice(start, start + 7);
+              const dated = slice.find((cell) => cell && cell.date);
+              const week = dated ? L.qvIsoWeek(dated.date) : '';
+              rows.push(`<span class="qv-mini-week">${week ? escapeHtml(String(week)) : ''}</span>`);
+              slice.forEach((cell, offset) => {
+                const index = start + offset;
+                if (!cell) {
+                  rows.push('<span class="qv-mini-empty"></span>');
+                  return;
+                }
+                const activityCount = (cell.items || []).length;
+                const classes = ['qv-mini-day'];
+                if (activityCount) classes.push('has-activity');
+                if (cell.known) classes.push('has-known', 'has-announced-date');
+                if (cell.holiday) classes.push('has-holiday', 'is-holiday');
+                if (cell.vacation) {
+                  classes.push('has-vacation', 'is-school-break');
+                  const col = index % 7;
+                  const prev = month.cells[index - 1];
+                  const next = month.cells[index + 1];
+                  if (col === 0 || !(prev && prev.vacation)) classes.push('is-break-start');
+                  if (col === 6 || !(next && next.vacation)) classes.push('is-break-end');
+                }
+                if (today && today === cell.date) classes.push('is-today');
+                const extra = cell.calendarLabel ? ` ${cell.calendarLabel}` : '';
+                const label = escapeHtml(qvDateLong(cell.date) + extra);
+                if (activityCount) {
+                  rows.push(`<a class="${classes.join(' ')}" href="${qvHref('agenda', { mois: month.key, jour: cell.date })}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></a>`);
+                  return;
+                }
+                rows.push(`<span class="${classes.join(' ')}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></span>`);
+              });
             }
-            if (today && today === cell.date) classes.push('is-today');
-            const extra = cell.calendarLabel ? ` ${cell.calendarLabel}` : '';
-            const label = escapeHtml(qvDateLong(cell.date) + extra);
-            if (activityCount) {
-              return `<a class="${classes.join(' ')}" href="${qvHref('agenda', { mois: month.key, jour: cell.date })}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></a>`;
-            }
-            return `<span class="${classes.join(' ')}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></span>`;
-          }).join('')}
+            return rows.join('');
+          })()}
         </div>
       </article>`;
   }
@@ -10541,7 +10633,6 @@
   function renderQuoVadisAgenda(qv) {
     const monthKey = qvAgendaMonthKey(qv);
     const [year, month] = monthKey.split('-').map(Number);
-    const today = qvTodayKey();
     const prev = qvShiftAgendaMonth(monthKey, -1);
     const next = qvShiftAgendaMonth(monthKey, 1);
     const rows = qvFilteredActivities(qv, { monthKey });
@@ -10552,34 +10643,78 @@
       if (!last || last.date !== date) groups.push({ date, rows: [row] });
       else last.rows.push(row);
     });
+    const calendar = qvCalendarIndex(qv);
+    const eventCount = rows.length;
+    const dayCount = groups.filter((group) => group.date !== 'sans-date').length;
+    const eventWord = eventCount <= 1 ? 'événement' : 'événements';
+    const dayWord = dayCount <= 1 ? 'journée' : 'journées';
     const body = groups.map((group) => {
-      const dateLabel = group.date === 'sans-date' ? 'Date à proposer' : qvDateLong(group.date).toUpperCase();
-      return `<tr class="qv-agenda-day qv-agenda-date-row" id="${escapeHtml(L.qvAgendaDayAnchorId(group.date))}"><th colspan="8">${escapeHtml(dateLabel)}</th></tr>${group.rows.map((row) => `<tr class="qv-agenda-row" data-qv-open="${qvHref('activites', { id: row.activityId, from: 'agenda' })}">
+      const marks = L.qvCalendarMarksForDate(calendar, group.date);
+      const holidayRow = ((calendar[group.date] || []).find((row) => qvCalendarKind(row) === 'FERIE')) || null;
+      const dayClass = marks.holiday ? 'is-holiday' : marks.vacation ? 'is-vacation' : 'is-normal';
+      const holidayNote = marks.holiday && holidayRow && holidayRow.libelle
+        ? `<span class="qv-agenda-holiday-label">Jour férié — ${escapeHtml(holidayRow.libelle)}</span>`
+        : '';
+      const week = group.date !== 'sans-date' ? L.qvIsoWeek(group.date) : 0;
+      return `<tr class="qv-agenda-day qv-agenda-date-row ${dayClass}" id="${escapeHtml(L.qvAgendaDayAnchorId(group.date))}"><th colspan="9"><div class="qv-agenda-day-bar"><span class="qv-agenda-day-main">${escapeHtml(qvAgendaDayTitle(group.date))}${holidayNote}</span>${week ? `<span class="qv-agenda-week">Semaine ${escapeHtml(String(week))}</span>` : ''}</div></th></tr>${group.rows.map((row) => {
+        const address = qvConvocationAddress(qv, row);
+        const cancelled = String(row.status || '').toUpperCase() === 'ANNULE';
+        return `<tr class="qv-agenda-row${cancelled ? ' is-cancelled' : ''}" data-qv-open="${qvHref('activites', { id: row.activityId, from: 'agenda' })}">
           <td>${escapeHtml([qvTime(row.startsAt), qvTime(row.endsAt)].filter(Boolean).join('–') || 'À définir')}</td>
-          <td><span class="qv-agenda-dot" aria-hidden="true"></span>${escapeHtml(row.domainLabel || row.domain || '')}</td>
-          <td>${escapeHtml((row.cibleCodes || []).join(', ') || '—')}</td>
-          <td><a class="scope-events-libelle" href="${qvHref('activites', { id: row.activityId, from: 'agenda' })}">${escapeHtml(row.title)}</a></td>
+          <td>${escapeHtml(row.domainLabel || row.domain || '')}</td>
+          <td>${escapeHtml(qvOiCode(qv, row) || '—')}</td>
+          <td>${escapeHtml(qvCibleLabel(row) || '—')}</td>
+          <td><a class="scope-events-libelle qv-agenda-title" href="${qvHref('activites', { id: row.activityId, from: 'agenda' })}">${escapeHtml(row.title)}</a></td>
           <td>${escapeHtml(row.statcomCode || '—')}</td>
           <td>${escapeHtml(qvLieuLabel(row))}</td>
-          <td>${escapeHtml(qvStatusLabel(row.status))}</td>
-          <td>${row.attention ? escapeHtml(row.attentionType || 'À vérifier') : '—'}</td>
-        </tr>`).join('')}`;
+          <td class="qv-agenda-address">${address ? escapeHtml(address) : '—'}</td>
+          <td>${qvAgendaStateBadge(row)}</td>
+        </tr>`;
+      }).join('')}`;
     }).join('');
-    return `<section class="scope-card">
-      <div class="scope-section-head"><div><h2 class="qv-agenda-month">${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}</h2><p class="scope-muted">${route().qvJour ? `Jour sélectionné: ${qvDateLong(route().qvJour)}. ` : ''}Agenda chronologique du programme préparatoire. Une ligne ouvre la fiche de l’activité.</p></div></div>
-      <div class="qv-month-nav" role="navigation" aria-label="Mois de l’agenda">
-        <button type="button" class="scope-btn" id="qv-agenda-prev" ${prev === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(prev)}">Mois précédent</button>
-        <div class="scope-field"><label for="qv-agenda-month">Mois</label><select id="qv-agenda-month">${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${row.value === monthKey ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}</select></div>
-        <button type="button" class="scope-btn" id="qv-agenda-next" ${next === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(next)}">Mois suivant</button>
-        ${today ? `<button type="button" class="scope-btn" id="qv-agenda-today" data-qv-month="${escapeHtml(today.slice(0, 7))}">Aujourd’hui</button>` : ''}
+    return `<section class="scope-card qv-agenda-view">
+      <nav class="qv-agenda-nav" aria-label="Mois de l’agenda">
+        <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-prev" ${prev === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(prev)}">‹ ${escapeHtml(qvMonthTitle(Number(prev.slice(5, 7)), Number(prev.slice(0, 4))))}</button>
+        <div class="qv-agenda-nav-current">
+          <label class="visually-hidden" for="qv-agenda-month">Mois</label>
+          <select id="qv-agenda-month" class="qv-agenda-month-select">${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${row.value === monthKey ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}</select>
+          <p class="qv-agenda-nav-meta">${escapeHtml(String(eventCount))} ${eventWord} · ${escapeHtml(String(dayCount))} ${dayWord}</p>
+        </div>
+        <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-next" ${next === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(next)}">${escapeHtml(qvMonthTitle(Number(next.slice(5, 7)), Number(next.slice(0, 4))))} ›</button>
+      </nav>
+      ${qvAgendaFilterBar(qv)}
+      <div class="qv-agenda-meta-row">
+        <p class="qv-agenda-info">Affichage du mois de ${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}. ${escapeHtml(String(eventCount))} ${eventWord} planifié${eventCount > 1 ? 's' : ''} sur ${escapeHtml(String(dayCount))} ${dayWord}.</p>
+        <ul class="qv-agenda-legend">
+          <li><span class="qv-agenda-swatch is-day"></span>Jour normal</li>
+          <li><span class="qv-agenda-swatch is-vacation"></span>Vacances scolaires</li>
+          <li><span class="qv-agenda-swatch is-holiday"></span>Jour férié</li>
+          <li><span class="qv-agenda-state is-planned">Planifié</span></li>
+          <li><span class="qv-agenda-state is-validated">Validé</span></li>
+          <li><span class="qv-agenda-state is-attention">Point d’attention</span></li>
+          <li><span class="qv-agenda-state is-arbitrate">À arbitrer</span></li>
+          <li><span class="qv-agenda-state is-cancelled">Annulé</span></li>
+        </ul>
       </div>
-      ${qvFilterBar(qv, { hideMonth: true })}
-      <p class="scope-mode-hint">${escapeHtml(String(rows.length))} activité${rows.length > 1 ? 's' : ''} en ${escapeHtml(qvMonthLabel(month, year))}</p>
       <div class="scope-table-wrap">
         <table class="scope-table qv-agenda-table">
-          <thead><tr><th>Horaire</th><th>Domaine</th><th>OI</th><th>Activité</th><th>Stat.Com</th><th>Lieu</th><th>État</th><th>Attention</th></tr></thead>
-          <tbody>${body || '<tr><td colspan="8"><div class="scope-empty">Aucune activité ne correspond aux filtres pour ce mois.</div></td></tr>'}</tbody>
+          <colgroup>
+            <col class="qv-col-time"><col class="qv-col-domain"><col class="qv-col-oi"><col class="qv-col-cible"><col class="qv-col-title"><col class="qv-col-statcom"><col class="qv-col-lieu"><col class="qv-col-address"><col class="qv-col-state">
+          </colgroup>
+          <thead><tr><th>Horaire</th><th>Domaine</th><th>OI</th><th>Public cible</th><th>Événement</th><th>Stat.Com</th><th>Lieu</th><th>Adresse convocation</th><th>État</th></tr></thead>
+          <tbody>${body || '<tr><td colspan="9"><div class="scope-empty">Aucune activité ne correspond aux filtres pour ce mois.</div></td></tr>'}</tbody>
         </table>
+      </div>
+      <p class="qv-agenda-total">${escapeHtml(String(eventCount))} ${eventWord} au total sur ce mois</p>
+      <div class="qv-agenda-notes">
+        <aside class="qv-agenda-note">
+          <span class="qv-section-icon is-circle">${qvCockpitIcon('calendar')}</span>
+          <div><h3>Conseil</h3><p>Cliquez sur un événement pour ouvrir sa fiche détaillée.</p></div>
+        </aside>
+        <aside class="qv-agenda-note">
+          <span class="qv-section-icon is-circle">${qvCockpitIcon('info')}</span>
+          <div><h3>Bon à savoir</h3><p>Les jours fériés, les vacances scolaires et les contraintes de planification sont visibles dans l’Agenda annuel.</p></div>
+        </aside>
       </div>
     </section>`;
   }
@@ -11015,6 +11150,7 @@
         status: document.getElementById('qv-filter-status')?.value || 'tous',
         month: document.getElementById('qv-filter-month')?.value || state.quoVadisFilters.month || 'tous',
         lieu: document.getElementById('qv-filter-lieu')?.value || 'tous',
+        oi: document.getElementById('qv-filter-oi')?.value || 'tous',
         attention: Boolean(document.getElementById('qv-filter-attention')?.checked)
       };
     };
@@ -11026,11 +11162,11 @@
       readQvFilters();
       renderPreservingInput('qv-filter-q');
     });
-    ['qv-filter-domain', 'qv-filter-family', 'qv-filter-cible', 'qv-filter-specialisation', 'qv-filter-cursus', 'qv-filter-status', 'qv-filter-month', 'qv-filter-lieu', 'qv-filter-attention', 'qv-filter-sessions'].forEach((id) => {
+    ['qv-filter-domain', 'qv-filter-family', 'qv-filter-cible', 'qv-filter-oi', 'qv-filter-specialisation', 'qv-filter-cursus', 'qv-filter-status', 'qv-filter-month', 'qv-filter-lieu', 'qv-filter-attention', 'qv-filter-sessions'].forEach((id) => {
       document.getElementById(id)?.addEventListener('change', syncQvFilters);
     });
     document.getElementById('qv-filter-reset')?.addEventListener('click', () => {
-      state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', sessions: 'tous', cible: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', month: 'tous', lieu: 'tous', attention: false };
+      state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', sessions: 'tous', cible: 'tous', oi: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', month: 'tous', lieu: 'tous', attention: false };
       render();
     });
     const setAgendaMonth = (value) => {

@@ -27,9 +27,9 @@ const L = loadLogic();
 
 assert.ok(/function qvCalendarMarkVisible/.test(annual), 'index calendaire non diagnosticable');
 assert.ok(!/if \(!row\.jour \|\| row\.neutralise\) return/.test(annual), 'les jours fériés/vacances neutralisés pour le moteur ne doivent plus être masqués du calendrier');
-assert.ok(/kind\.includes\('FERIE'\) \|\| kind === 'VACANCES_SCOLAIRES'/.test(logicSrc.replace(/\s+/g, ' ')));
+assert.ok(/kind === 'FERIE' \|\| kind === 'VACANCES_SCOLAIRES'/.test(logicSrc.replace(/\s+/g, ' ')));
 assert.ok(/NEUTRALISATION_INTERNE/.test(logicSrc));
-assert.ok(/qvCalendarKind\(row\)\.includes\('FERIE'\)/.test(annual));
+assert.ok(/qvCalendarKind\(row\) === 'FERIE'/.test(annual));
 assert.ok(/qvCalendarKind\(row\) === 'VACANCES_SCOLAIRES'/.test(annual));
 assert.ok(/VACANCES_SCOLAIRES/.test(annual) && /FERIE/.test(annual));
 

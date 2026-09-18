@@ -61,7 +61,7 @@ assert.ok(/Familles de formation/.test(qvUi));
 assert.ok(/Séances/.test(qvUi));
 assert.ok(/Dates annoncées/.test(qvUi));
 assert.ok(/vraies décisions humaines/.test(qvUi));
-assert.ok(/Jour sélectionné/.test(qvUi));
+assert.ok(/qvAgendaDayAnchorId/.test(qvUi) || /qv-agenda-day-/.test(qvUi));
 assert.ok(/Positionnée/.test(qvUi));
 assert.ok(/renderPreservingInput\('qv-filter-q'\)/.test(ui));
 assert.ok(/has-vacation/.test(css));

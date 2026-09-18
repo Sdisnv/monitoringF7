@@ -87,7 +87,7 @@ assert.ok(/id="\$\{escapeHtml\(L\.qvAgendaDayAnchorId\(group\.date\)\)\}"/.test(
 assert.ok(/requestAnimationFrame/.test(binding) && /scrollIntoView/.test(binding));
 assert.ok(binding.indexOf('requestAnimationFrame') < binding.indexOf('scrollIntoView'));
 assert.ok(!/qvJour/.test(ui.slice(ui.indexOf('function qvFilteredActivities'), ui.indexOf('function qvActivitySortValue'))), 'jour utilisé comme filtre du mois');
-assert.ok(/scope-quo-vadis-calendar-vd-final-4/.test(read('scope.html')));
+assert.ok(/scope-quo-vadis-calendar-vd-final-4/.test(read('scope.html')) || /scope-quo-vadis-agenda-ux-1/.test(read('scope.html')));
 
 const frames = [];
 const scrolls = [];

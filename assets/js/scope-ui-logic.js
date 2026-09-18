@@ -744,6 +744,17 @@
     return key ? `qv-agenda-day-${key}` : '';
   }
 
+  function qvIsoWeek(value) {
+    const iso = qvDateKey(value);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return 0;
+    const date = new Date(`${iso}T12:00:00Z`);
+    const utc = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const day = utc.getUTCDay() || 7;
+    utc.setUTCDate(utc.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+    return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+  }
+
   function qvCalendarConstraints(calendarDays) {
     return (calendarDays || []).filter((row) => ['VEILLE_FERIE', 'NEUTRALISATION_INTERNE'].includes(qvCalendarKind(row)))
       .map((row) => {
@@ -2502,6 +2513,7 @@
     qvHolidayEntries,
     qvCalendarConstraints,
     qvAgendaDayAnchorId,
+    qvIsoWeek,
     extractCalendarYear,
     yearToObjectifPeriod,
     periodFromStart,

@@ -167,7 +167,7 @@ assert.ok(/\.qv-legend-action:focus-visible/.test(css));
 assert.ok(/\.qv-mini-day\.has-activity span\s*\{[^}]*background:\s*var\(--scope-red\)/.test(css.replace(/\s+/g, ' ')));
 assert.ok(/\.qv-mini-day\.has-holiday:not\(\.has-activity\) span/.test(css));
 assert.ok(/\.qv-mini-day\.has-vacation/.test(css) && /#eceaf6/.test(css));
-assert.ok(/scope-quo-vadis-calendar-(?:reference-complete-2|vd-final-[34])/.test(html));
+assert.ok(/scope-quo-vadis-calendar-(?:reference-complete-2|vd-final-[34])/.test(html) || /scope-quo-vadis-agenda-ux-1/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(!/interpretHistoricalProgramme\s*=/.test(ui));
 
