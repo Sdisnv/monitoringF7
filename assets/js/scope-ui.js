@@ -9930,6 +9930,9 @@
       list: '<path d="M8 7h12M8 12h12M8 17h12"/><circle cx="4.5" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="17" r="1.1" fill="currentColor" stroke="none"/>',
       calendar: '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4M16 4v4M4 10h16"/>',
       file: '<path d="M7 3h8l5 5v13H7Z"/><path d="M15 3v5h5M10 13h7M10 17h5"/>',
+      excel: '<rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16M4 15h16M9 5v14"/>',
+      building: '<path d="M4 20V7l8-4 8 4v13"/><path d="M9 20v-6h6v6M9 10h.01M15 10h.01M12 10h.01M9 14h.01M15 14h.01"/>',
+      pin: '<path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/>',
       gavel: '<path d="M13 3 21 11M8 16l5-5 3 3-5 5Z"/><path d="M4 21h8"/>',
       alert: '<path d="M12 4 3.8 19h16.4L12 4Z"/><path d="M12 9v5M12 16.5h.01"/>',
       announced: '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4M16 4v4M9 14h6M12 11v6"/>',
@@ -10268,7 +10271,7 @@
     </div>`;
     return `<div class="qv-agenda-filters qv-activites-filters">
       <div class="qv-activites-filters-primary">
-        <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control">${qvCockpitIcon('search')}<input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div></div>
+        <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher une activité, un domaine, un lieu…"></div></div>
         ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
         ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
         ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
@@ -10892,23 +10895,23 @@
 
   function qvFormatSalleRappel(rooms) {
     const list = (rooms || []).filter((row) => row && row.actif !== false);
-    if (!list.length) return 'aucune';
+    if (!list.length) return [];
     const byId = new Map(list.map((row) => [String(row.salleId), row]));
     const children = new Map();
     list.forEach((row) => {
       const parent = String(row.parentSalleId || '');
       if (parent && byId.has(parent)) {
         if (!children.has(parent)) children.set(parent, []);
-        children.get(parent).push(row.libelle);
+        children.get(parent).push(row);
       }
     });
     const parts = [];
     list.forEach((row) => {
       if (row.parentSalleId && byId.has(String(row.parentSalleId))) return;
-      const kids = children.get(String(row.salleId));
-      parts.push(kids && kids.length ? `${row.libelle} (${kids.join(', ')})` : row.libelle);
+      const kids = children.get(String(row.salleId)) || [];
+      parts.push({ libelle: row.libelle, children: kids.map((item) => item.libelle) });
     });
-    return parts.join(', ') || 'aucune';
+    return parts;
   }
 
   function qvActivitesSecondaryCards(qv) {
@@ -10922,26 +10925,40 @@
         roomsByLieu.get(key).push(row);
       });
     });
-    const salleItems = lieux.map((lieu) => {
-      const list = roomsByLieu.get(String(lieu.lieuId)) || roomsByLieu.get(String(lieu.code)) || [];
-      return `<li><strong>${escapeHtml(lieu.nomCourt || '')}</strong> — ${escapeHtml(qvFormatSalleRappel(list))}</li>`;
+    const salleBlocks = lieux.map((lieu) => {
+      const list = qvFormatSalleRappel(roomsByLieu.get(String(lieu.lieuId)) || roomsByLieu.get(String(lieu.code)) || []);
+      const body = list.length
+        ? `<ul class="qv-note-rooms">${list.map((room) => `<li>${escapeHtml(room.libelle)}${room.children.length ? `<ul>${room.children.map((child) => `<li>${escapeHtml(child)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ul>`
+        : '<p class="qv-note-none">aucune</p>';
+      return `<div class="qv-note-site"><strong>${escapeHtml(lieu.nomCourt || '')}</strong>${body}</div>`;
     }).join('');
     const addressItems = lieux.map((lieu) => {
-      const line = [lieu.adresseLigne1 || lieu.adresse_ligne1, [lieu.npa, lieu.localite].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-      return `<li><strong>${escapeHtml(lieu.nomCourt || '')}</strong>${line ? ` — ${escapeHtml(line)}` : ''}</li>`;
+      const line = [lieu.adresseLigne1 || lieu.adresse_ligne1, lieu.localite].filter(Boolean).join(', ');
+      return `<li><strong>${escapeHtml(lieu.nomCourt || '')}</strong><span>${line ? escapeHtml(line) : '—'}</span></li>`;
     }).join('');
     return `<div class="qv-activites-notes">
       <aside class="qv-agenda-note">
         <span class="qv-section-icon is-circle">${qvCockpitIcon('bulb')}</span>
-        <div><h3>Bon à savoir</h3><p>La période d’affichage réduit la liste. Le tableau reste unique et chronologique. Cliquez une ligne pour ouvrir la fiche.</p></div>
+        <div>
+          <h3>Bon à savoir</h3>
+          <p>La période d’affichage réduit la liste.</p>
+          <p>Le tableau reste unique et chronologique.</p>
+          <p>Cliquez une ligne pour ouvrir la fiche détaillée de l’activité.</p>
+        </div>
       </aside>
       <aside class="qv-agenda-note">
-        <span class="qv-section-icon is-circle">${qvCockpitIcon('calendar')}</span>
-        <div><h3>Salles de théorie</h3>${salleItems ? `<ul>${salleItems}</ul>` : '<p>Les salles officielles s’affichent dès le chargement des lieux.</p>'}</div>
+        <span class="qv-section-icon is-circle">${qvCockpitIcon('building')}</span>
+        <div>
+          <h3>Salles de théorie disponibles (rappel)</h3>
+          ${salleBlocks ? `<div class="qv-note-salles">${salleBlocks}</div>` : '<p>Les salles officielles s’affichent dès le chargement des lieux.</p>'}
+        </div>
       </aside>
       <aside class="qv-agenda-note">
-        <span class="qv-section-icon is-circle">${qvCockpitIcon('info')}</span>
-        <div><h3>Adresses des sites</h3>${addressItems ? `<ul>${addressItems}</ul>` : '<p>Les adresses officielles s’affichent dès le chargement des lieux.</p>'}</div>
+        <span class="qv-section-icon is-circle">${qvCockpitIcon('pin')}</span>
+        <div>
+          <h3>Adresses des sites</h3>
+          ${addressItems ? `<ul class="qv-note-addresses">${addressItems}</ul>` : '<p>Les adresses officielles s’affichent dès le chargement des lieux.</p>'}
+        </div>
       </aside>
     </div>`;
   }
@@ -10982,12 +10999,12 @@
           </tr>`;
     }).join('') : `<tr><td colspan="${colCount}"><div class="scope-empty">Aucune activité ne correspond aux filtres.</div></td></tr>`;
     return `<section class="scope-card qv-activites-view">
-      <div class="scope-section-head">
-        <div><h2>Toutes les activités 2027</h2><p class="scope-muted">Liste chronologique continue du programme actuellement préparé.</p></div>
-      </div>
-      <div class="scope-actions qv-export-actions">
-        <button type="button" class="scope-btn scope-btn-secondary" id="qv-export-pdf">Exporter PDF</button>
-        <button type="button" class="scope-btn scope-btn-secondary" id="qv-export-excel">Exporter pour Excel</button>
+      <div class="scope-section-head qv-activites-head">
+        <div><h2>Toutes les activités 2027</h2><p class="scope-muted">${escapeHtml(qvActivityCountLabel(rows.length))} actuellement préparée${rows.length > 1 ? 's' : ''}.</p></div>
+        <div class="scope-actions qv-export-actions">
+          <button type="button" class="scope-btn qv-agenda-nav-side qv-export-btn" id="qv-export-pdf"><span class="qv-export-icon is-pdf">${qvCockpitIcon('file')}</span> Exporter PDF</button>
+          <button type="button" class="scope-btn qv-agenda-nav-side qv-export-btn" id="qv-export-excel"><span class="qv-export-icon is-excel">${qvCockpitIcon('excel')}</span> Exporter pour Excel</button>
+        </div>
       </div>
       ${qvActivitesFilterBar(qv)}
       <div class="qv-agenda-meta-row">
@@ -11014,7 +11031,7 @@
             <th>OI</th>
             <th>Public cible</th>
             <th>Activité</th>
-            <th>Spécialisation / cursus</th>
+            <th>Spécialisation · cursus</th>
             <th>Stat.Com</th>
             <th>Lieu</th>
             <th>Salle théorie</th>
@@ -11603,7 +11620,7 @@
       });
     });
     const downloadQuoVadisCsv = (rows) => {
-      const headers = ['Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spécialisation / cursus', 'Stat.Com', 'Lieu', 'Adresse du lieu', 'Salle théorie', 'Responsable', 'État', 'Point d’attention'];
+      const headers = ['Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spécialisation · cursus', 'Stat.Com', 'Lieu', 'Adresse du lieu', 'Salle théorie', 'Responsable', 'État', 'Point d’attention'];
       const cell = (value) => `"${String(value == null ? '' : value).replace(/"/g, '""')}"`;
       const lines = [headers.map(cell).join(';')].concat(qvExportRows(rows).map((row) => [row.date, row.horaire, row.domaine, row.oi, row.publicCible, row.activite, row.specCursus, row.statcom, row.lieu, row.adresse, row.salleTheorie, row.responsable, row.etat, row.attention].map(cell).join(';')));
       const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });

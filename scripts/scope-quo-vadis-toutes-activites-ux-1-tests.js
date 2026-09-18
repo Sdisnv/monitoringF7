@@ -43,7 +43,7 @@ const L = loadLogic();
 
 assert.ok(/Date/.test(activites) && /Horaire/.test(activites) && /Domaine/.test(activites));
 assert.ok(/OI/.test(activites) && /Public cible/.test(activites) && /Activité/.test(activites));
-assert.ok(/Spécialisation \/ cursus/.test(activites) && /Stat\.Com/.test(activites));
+assert.ok(/Spécialisation · cursus/.test(activites) && /Stat\.Com/.test(activites));
 assert.ok(/Lieu/.test(activites) && /Salle théorie/.test(activites) && /Responsable/.test(activites) && /État/.test(activites));
 assert.ok(!/Point d’attention/.test(activites) || /qv-agenda-legend/.test(activites));
 assert.ok(!/<th>Point d’attention<\/th>/.test(activites));
@@ -157,7 +157,7 @@ assert.ok(/font-size:\s*10px/.test(css.slice(css.indexOf('.qv-mini-week-head,'),
 assert.ok(!/Centre SDIS/.test(ui));
 assert.ok(!/Centre SDIS/.test(schema));
 assert.ok(!/Centre SDIS/.test(service));
-assert.ok(/scope-quo-vadis-toutes-activites-ux-[12]/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[123]/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(!/data-qv-row-menu/.test(agenda) && !/>…</.test(agenda));
 

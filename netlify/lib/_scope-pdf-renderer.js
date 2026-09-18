@@ -273,8 +273,10 @@ class ScopePdfRenderer {
       doc.moveTo(MARGIN, this.pageH - FOOTER_H).lineTo(this.pageW - MARGIN, this.pageH - FOOTER_H)
         .strokeColor(rgb(INSTITUTION.red)).lineWidth(1.2).stroke();
       doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7)
-        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, this.pageH - FOOTER_H + 6, { width: 360 });
-      doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, this.pageH - FOOTER_H + 18, { width: this.pageW - 2 * MARGIN });
+        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, this.pageH - FOOTER_H + 6, { width: this.pageW - 2 * MARGIN });
+      if(this.model.kind !== 'QUO_VADIS'){
+        doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, this.pageH - FOOTER_H + 18, { width: this.pageW - 2 * MARGIN });
+      }
       doc.restore();
     }
   }
@@ -1987,17 +1989,24 @@ class ScopePdfRenderer {
   renderQuoVadisProgramme(rows, exportMeta){
     const meta = exportMeta || {};
     const sourceRows = Array.isArray(rows) ? rows : [];
-    const headers = ['Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spé. / cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
-    const widths = [52, 48, 42, 28, 52, 108, 70, 42, 70, 58, 58, 55];
+    const headers = ['Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spécialisation · cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
+    const widths = [50, 56, 44, 26, 50, 140, 88, 42, 80, 68, 76, 88];
+    const monthCounts = {};
+    sourceRows.forEach((row) => {
+      const key = row.monthKey || row.monthLabel || '';
+      monthCounts[key] = (monthCounts[key] || 0) + 1;
+    });
     const items = [];
     let currentMonth = null;
     sourceRows.forEach((row) => {
       const monthKey = row.monthKey || '';
       if((monthKey || row.monthLabel) && monthKey !== currentMonth){
         currentMonth = monthKey;
+        const count = monthCounts[monthKey] || monthCounts[row.monthLabel] || 0;
         items.push({
           type: 'month',
-          label: String(row.monthLabel || monthKey || 'DATE À PROPOSER').toUpperCase()
+          label: String(row.monthLabel || monthKey || 'DATE À PROPOSER').toUpperCase(),
+          countLabel: count <= 1 ? `${count} activité` : `${count} activités`
         });
       }
       items.push({
@@ -2022,41 +2031,70 @@ class ScopePdfRenderer {
     if(!items.length){
       items.push({ type: 'row', cells: ['Aucune activité à exporter.', '', '', '', '', '', '', '', '', '', '', ''], highlight: false });
     }
-    this.iconHeading('plain', 'QUO VADIS 2027', 16, { after: 5 });
-    this.para('Programme annuel préparatoire — liste chronologique continue', { size: 9.2 });
-    this.doc.y += 5;
-    this.kv([
+    this.doc.y = HEADER_H + 12;
+    this.iconHeading('plain', 'QUO VADIS 2027', 13, { after: 1 });
+    this.para('Programme annuel préparatoire', { size: 9 });
+    this.para('Toutes les activités', { size: 10, bold: true });
+    this.doc.y += 6;
+    this.qvExportMeta([
       { label: 'Généré le', value: formatDisplayDateTime(this.meta.generatedAt || new Date().toISOString()) },
       { label: 'Activités', value: String(sourceRows.length) },
+      { label: 'Période', value: meta.month || 'Tous' },
       { label: 'Recherche', value: meta.search || 'Toutes' },
       { label: 'Domaine', value: meta.domain || 'Tous' },
       { label: 'OI', value: meta.oi || 'Tous' },
       { label: 'État', value: meta.status || 'Tous' },
-      { label: 'Période', value: meta.month || 'Tous' },
       { label: 'Tri', value: meta.sort || 'Date — horaire — domaine — activité' }
-    ], { cols: 4, rowH: 23 });
-    this.doc.y += 4;
+    ]);
     this.qvProgrammeTable(headers, items, widths);
+  }
+
+  qvExportMeta(rows){
+    const cols = 4;
+    const colW = (this.pageW - 2 * MARGIN) / cols;
+    const rowH = 16;
+    const y0 = this.doc.y;
+    (rows || []).forEach((row, i) => {
+      const x = MARGIN + (i % cols) * colW;
+      const y = y0 + Math.floor(i / cols) * rowH;
+      this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(6.5)
+        .text(`${row.label} : ${row.value || ''}`, x, y, { width: colW - 10, lineBreak: false });
+      this.doc.y = y0;
+    });
+    this.doc.y = y0 + Math.ceil((rows || []).length / cols) * rowH + 8;
   }
 
   qvProgrammeTable(headers, items, widths){
     const width = this.pageW - 2 * MARGIN;
-    const cols = widths;
-    const headerH = 18;
+    const raw = (widths && widths.length === headers.length) ? widths : [50, 56, 44, 26, 50, 140, 88, 42, 80, 68, 76, 88];
+    const sum = raw.reduce((total, value) => total + value, 0) || 1;
+    const cols = raw.map((value, index) => (index === raw.length - 1 ? 0 : Math.floor((width * value) / sum)));
+    cols[cols.length - 1] = width - cols.reduce((total, value) => total + value, 0);
+    const headerH = 28;
     const monthH = 16;
-    const baseRowH = 16;
-    const rowFontSize = 6.2;
-    const headerFontSize = 5.6;
-    const wrap = [false, false, false, false, false, true, true, false, true, true, true, false];
+    const baseRowH = 15;
+    const rowFontSize = 7.4;
+    const headerFontSize = 6.8;
+    const wrap = [false, false, false, false, true, true, true, false, true, true, true, false];
+    const stateStyle = (label) => {
+      const key = String(label || '');
+      if(key === 'Validé') return { fill: '#e4f4ea', mark: '#2f9e5a', text: '#1f7a45' };
+      if(key === 'Point d’attention') return { fill: '#fff1d6', mark: '#e0a21a', text: '#9a6d0c' };
+      if(key === 'À arbitrer') return { fill: '#fdecee', mark: '#DE000A', text: '#DE000A' };
+      if(key === 'Annulé') return { fill: '#e6e8eb', mark: '#8b949e', text: '#6b7785' };
+      return { fill: '#eceff3', mark: '#4f84d6', text: '#4a5160' };
+    };
     const paintHeader = () => {
-      this.doc.rect(MARGIN, this.doc.y, width, headerH).fill(rgb('#f4f5f8'));
+      const y = this.doc.y;
+      this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
       let x = MARGIN;
       headers.forEach((cell, i) => {
         this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(headerFontSize)
-          .text(cell, x + 2, this.doc.y + 5, { width: cols[i] - 4, height: headerH - 6, ellipsis: true, lineBreak: false });
+          .text(cell, x + 2, y + 4, { width: cols[i] - 4, height: headerH - 6, lineBreak: true });
+        this.doc.y = y;
         x += cols[i];
       });
-      this.doc.y += headerH;
+      this.doc.y = y + headerH;
     };
     const measureRow = (cells) => {
       let h = baseRowH;
@@ -2064,11 +2102,12 @@ class ScopePdfRenderer {
         if(!wrap[i]) return;
         this.doc.font('Helvetica').fontSize(rowFontSize);
         const textH = this.doc.heightOfString(String(cell || ''), { width: cols[i] - 4 });
-        h = Math.max(h, Math.min(36, textH + 6));
+        h = Math.max(h, Math.min(34, textH + 6));
       });
       return h;
     };
     paintHeader();
+    let dataIndex = 0;
     items.forEach((item, index) => {
       if(item.type === 'month'){
         const next = items[index + 1];
@@ -2077,10 +2116,14 @@ class ScopePdfRenderer {
           this.nextPage();
           paintHeader();
         }
-        this.doc.rect(MARGIN, this.doc.y, width, monthH).fill(rgb('#5b6570'));
-        this.doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7.2)
-          .text(item.label, MARGIN + 4, this.doc.y + 4, { width: width - 8, lineBreak: false });
-        this.doc.y += monthH;
+        const y = this.doc.y;
+        this.doc.rect(MARGIN, y, width, monthH).fill(rgb('#5b6570'));
+        this.doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8)
+          .text(item.label, MARGIN + 5, y + 4, { width: width * 0.62, lineBreak: false });
+        this.doc.y = y;
+        this.doc.font('Helvetica').fontSize(7.5)
+          .text(item.countLabel || '', MARGIN + width * 0.62, y + 4, { width: width * 0.38 - 8, align: 'right', lineBreak: false });
+        this.doc.y = y + monthH;
         return;
       }
       const rowH = measureRow(item.cells);
@@ -2089,20 +2132,34 @@ class ScopePdfRenderer {
         paintHeader();
       }
       const y = this.doc.y;
+      const style = stateStyle(item.cells[11]);
       if(item.highlight) this.doc.rect(MARGIN, y, width, rowH).fill(rgb(item.highlight));
-      else if(index % 2 === 1) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
+      else if(dataIndex % 2 === 1) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
       let x = MARGIN;
       item.cells.forEach((cell, i) => {
-        this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(rowFontSize)
-          .text(String(cell || ''), x + 2, y + 3, {
-            width: cols[i] - 4,
-            height: rowH - 4,
-            ellipsis: !wrap[i],
-            lineBreak: Boolean(wrap[i])
-          });
+        if(i === 11){
+          const chipH = 12;
+          const box = typeof this.doc.roundedRect === 'function'
+            ? this.doc.roundedRect(x + 2, y + 2, cols[i] - 4, chipH, 2)
+            : this.doc.rect(x + 2, y + 2, cols[i] - 4, chipH);
+          box.fill(rgb(style.fill));
+          this.doc.rect(x + 5, y + 5, 6, 6).fill(rgb(style.mark));
+          this.doc.fillColor(rgb(style.text)).font('Helvetica').fontSize(rowFontSize)
+            .text(String(cell || ''), x + 14, y + 3, { width: cols[i] - 18, height: chipH, lineBreak: false });
+        } else {
+          this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(rowFontSize)
+            .text(String(cell || ''), x + 2, y + 3, {
+              width: cols[i] - 4,
+              height: rowH - 4,
+              ellipsis: !wrap[i],
+              lineBreak: Boolean(wrap[i])
+            });
+        }
+        this.doc.y = y;
         x += cols[i];
       });
       this.doc.y = y + rowH;
+      dataIndex += 1;
     });
     this.doc.y += 8;
   }
