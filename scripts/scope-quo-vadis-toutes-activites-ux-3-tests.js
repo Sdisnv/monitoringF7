@@ -78,7 +78,7 @@ assert.ok(!/Spé\. \/ cursus/.test(qvPdf));
 
 assert.ok(!/scope-pagination/.test(activites));
 assert.ok(!/qv-activites-page|pageSize|EVENT_LIST_PAGE/.test(activites));
-assert.ok(/return qvSortActivities\(rows\)/.test(filtered));
+assert.ok(/return qvSortActivities\(rows(?:, qv)?\)/.test(filtered));
 assert.ok(/qv-month-separator/.test(activites));
 assert.ok(/background:\s*#5b6570/.test(laterTableCss));
 assert.ok(/qvAgendaStateBadge\(row\)/.test(activites));
@@ -124,8 +124,8 @@ assert.ok(/\.qv-mini-week \{\s*color:\s*#3d4650;\s*font-size:\s*11px;\s*font-wei
 assert.ok(/font-size:\s*11px/.test(css.slice(css.indexOf('.qv-mini-week {'), css.indexOf('.qv-mini-day.has-vacation'))));
 assert.ok(/font-weight:\s*700/.test(css.slice(css.indexOf('.qv-mini-week {'), css.indexOf('.qv-mini-day.has-vacation'))));
 
-assert.ok(/scope-quo-vadis-toutes-activites-ux-3/.test(html));
-assert.ok(/scope-quo-vadis-toutes-activites-ux-3/.test(css));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[34]/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[34]/.test(css));
 assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 

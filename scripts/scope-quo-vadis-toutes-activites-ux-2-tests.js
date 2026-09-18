@@ -44,7 +44,7 @@ assert.ok(!/scope-pagination/.test(activites), 'aucune pagination écran');
 assert.ok(!/qv-activites-page|pageSize|EVENT_LIST_PAGE/.test(activites));
 assert.ok(!/ sur \$\{/.test(activites), 'compteur sans tranche paginée');
 assert.ok(/qvActivityCountLabel\(rows\.length\)/.test(activites));
-assert.ok(/return qvSortActivities\(rows\)/.test(filtered));
+assert.ok(/return qvSortActivities\(rows(?:, qv)?\)/.test(filtered));
 assert.ok(!/pageSize|scope-pagination/.test(filtered));
 
 assert.ok(/qv-month-separator/.test(activites));
@@ -118,8 +118,8 @@ assert.ok(/L\.qvIsoWeek\(dated\.date\)/.test(annual));
 assert.strictEqual(L.qvIsoWeek('2027-02-02'), 5);
 assert.ok(/font-size:\s*10px/.test(css.slice(css.indexOf('.qv-mini-week-head,'), css.indexOf('.qv-mini-day.has-vacation'))));
 
-assert.ok(/scope-quo-vadis-toutes-activites-ux-[23]/.test(html));
-assert.ok(/scope-quo-vadis-toutes-activites-ux-[23]/.test(css));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[234]/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[234]/.test(css));
 assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(/--scope-blue/.test(css.slice(css.indexOf('.qv-period-seg-btn.is-active'), css.indexOf('.qv-period-seg-btn:focus-visible'))));

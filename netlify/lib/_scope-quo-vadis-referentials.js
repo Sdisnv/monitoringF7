@@ -58,9 +58,31 @@ const RESPONSIBLE_FUNCTIONS = Object.freeze([
   'Resp VPC'
 ]);
 
+const SCOPE_SITE_ORDER = Object.freeze(OFFICIAL_LIEUX.map((row) => String(row.oiCode)));
+
 function extractSiteCode(value){
   const match = String(value || '').toUpperCase().match(/\b([GBC][12]|Y[1-4])\b/);
   return match ? match[1] : '';
+}
+
+function scopeSiteRank(value){
+  const code = extractSiteCode(value);
+  if(!code) return SCOPE_SITE_ORDER.length;
+  const index = SCOPE_SITE_ORDER.indexOf(code);
+  return index < 0 ? SCOPE_SITE_ORDER.length : index;
+}
+
+function compareScopeSites(a, b){
+  return scopeSiteRank(a) - scopeSiteRank(b);
+}
+
+function sortByScopeSiteOrder(rows, getter){
+  const get = getter || ((row) => row && (row.oiCode || row.oi_code || row.nomCourt || row.code || row.lieu || row));
+  return (rows || []).slice().sort((a, b) => {
+    const cmp = compareScopeSites(get(a), get(b));
+    if(cmp) return cmp;
+    return String(get(a) || '').localeCompare(String(get(b) || ''), 'fr');
+  });
 }
 
 function siteCodeFromActivity(activity){
@@ -140,7 +162,11 @@ module.exports = {
   THEORY_ROOMS,
   SITES_WITHOUT_THEORY_ROOMS,
   RESPONSIBLE_FUNCTIONS,
+  SCOPE_SITE_ORDER,
   extractSiteCode,
+  scopeSiteRank,
+  compareScopeSites,
+  sortByScopeSiteOrder,
   siteCodeFromActivity,
   lieuByOiCode,
   suggestLieu,

@@ -10149,7 +10149,7 @@
       if (filters.attention && !row.attention) return false;
       return true;
     });
-    return qvSortActivities(rows);
+    return qvSortActivities(rows, qv);
   }
 
   function qvActivitySortValue(row, key) {
@@ -10163,16 +10163,27 @@
     return row.title || '';
   }
 
-  function qvSortActivities(rows) {
+  function qvRowSiteCode(qv, row) {
+    return qvOiCode(qv, row) || L.qvActivitySiteCode(row);
+  }
+
+  function qvActivityCompareRow(qv, row) {
+    return {
+      startsAt: row && row.startsAt,
+      siteCode: qvRowSiteCode(qv, row),
+      activityId: row && (row.activityId || row.codeEvent || '')
+    };
+  }
+
+  function qvSortActivities(rows, qv) {
     const sort = state.quoVadisSort || { key: 'date', dir: 'asc' };
     const dir = sort.dir === 'desc' ? -1 : 1;
-    const keys = sort.key === 'date' ? ['date', 'time', 'domain', 'title'] : [sort.key, 'date', 'time', 'title'];
-    return rows.slice().sort((a, b) => {
-      for (const key of keys) {
-        const cmp = String(qvActivitySortValue(a, key)).localeCompare(String(qvActivitySortValue(b, key)), 'fr', { numeric: true });
-        if (cmp) return cmp * (key === sort.key ? dir : 1);
+    return (rows || []).slice().sort((a, b) => {
+      if (sort.key && sort.key !== 'date') {
+        const cmp = String(qvActivitySortValue(a, sort.key)).localeCompare(String(qvActivitySortValue(b, sort.key)), 'fr', { numeric: true });
+        if (cmp) return cmp * dir;
       }
-      return 0;
+      return L.compareQvActivities(qvActivityCompareRow(qv, a), qvActivityCompareRow(qv, b)) * (sort.key === 'date' ? dir : 1);
     });
   }
 
@@ -10655,7 +10666,7 @@
       cells.push({
         date,
         day,
-        items: byDate[date] || [],
+        items: qvSortActivities(byDate[date] || [], qv),
         known: known.has(date),
         holiday: marks.some((row) => qvCalendarKind(row) === 'FERIE'),
         vacation: marks.some((row) => qvCalendarKind(row) === 'VACANCES_SCOLAIRES'),
@@ -10914,8 +10925,12 @@
     return parts;
   }
 
+  function qvOfficialLieux(qv) {
+    return L.sortByScopeSiteOrder(((qv && qv.lieux) || []).filter((row) => row && row.actif !== false));
+  }
+
   function qvActivitesSecondaryCards(qv) {
-    const lieux = ((qv && qv.lieux) || []).filter((row) => row.actif !== false);
+    const lieux = qvOfficialLieux(qv);
     const rooms = (qv && qv.sallesTheorie) || [];
     const roomsByLieu = new Map();
     rooms.forEach((row) => {
@@ -10925,16 +10940,18 @@
         roomsByLieu.get(key).push(row);
       });
     });
-    const salleBlocks = lieux.map((lieu) => {
+    const salleLieux = lieux.filter((lieu) => ['G1', 'C1', 'B1', 'B2'].includes(L.extractSiteCode(lieu.oiCode || lieu.nomCourt)));
+    const salleBlocks = salleLieux.map((lieu) => {
       const list = qvFormatSalleRappel(roomsByLieu.get(String(lieu.lieuId)) || roomsByLieu.get(String(lieu.code)) || []);
+      const localite = lieu.localite ? `<span class="qv-note-site-meta">${escapeHtml(lieu.localite)}</span>` : '';
       const body = list.length
         ? `<ul class="qv-note-rooms">${list.map((room) => `<li>${escapeHtml(room.libelle)}${room.children.length ? `<ul>${room.children.map((child) => `<li>${escapeHtml(child)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ul>`
-        : '<p class="qv-note-none">aucune</p>';
-      return `<div class="qv-note-site"><strong>${escapeHtml(lieu.nomCourt || '')}</strong>${body}</div>`;
+        : '<p class="qv-note-none">Aucune salle de théorie</p>';
+      return `<div class="qv-note-site"><strong class="qv-note-site-name">${escapeHtml(lieu.nomCourt || '')}</strong>${localite}${body}</div>`;
     }).join('');
     const addressItems = lieux.map((lieu) => {
       const line = [lieu.adresseLigne1 || lieu.adresse_ligne1, lieu.localite].filter(Boolean).join(', ');
-      return `<li><strong>${escapeHtml(lieu.nomCourt || '')}</strong><span>${line ? escapeHtml(line) : '—'}</span></li>`;
+      return `<li><strong class="qv-note-site-name">${escapeHtml(lieu.nomCourt || '')}</strong><span class="qv-note-address">${line ? escapeHtml(line) : '—'}</span></li>`;
     }).join('');
     return `<div class="qv-activites-notes">
       <aside class="qv-agenda-note">
@@ -10946,14 +10963,14 @@
           <p>Cliquez une ligne pour ouvrir la fiche détaillée de l’activité.</p>
         </div>
       </aside>
-      <aside class="qv-agenda-note">
+      <aside class="qv-agenda-note qv-note-salles-card">
         <span class="qv-section-icon is-circle">${qvCockpitIcon('building')}</span>
         <div>
           <h3>Salles de théorie disponibles (rappel)</h3>
           ${salleBlocks ? `<div class="qv-note-salles">${salleBlocks}</div>` : '<p>Les salles officielles s’affichent dès le chargement des lieux.</p>'}
         </div>
       </aside>
-      <aside class="qv-agenda-note">
+      <aside class="qv-agenda-note qv-note-addresses-card">
         <span class="qv-section-icon is-circle">${qvCockpitIcon('pin')}</span>
         <div>
           <h3>Adresses des sites</h3>

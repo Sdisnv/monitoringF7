@@ -755,6 +755,71 @@
     return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
   }
 
+  const SCOPE_SITE_ORDER = Object.freeze(['G1', 'C1', 'B1', 'B2', 'Y1', 'Y2', 'Y3', 'Y4']);
+
+  function extractSiteCode(value) {
+    const match = String(value || '').toUpperCase().match(/\b([GBC][12]|Y[1-4])\b/);
+    return match ? match[1] : '';
+  }
+
+  function scopeSiteRank(value) {
+    const code = extractSiteCode(value);
+    if (!code) return SCOPE_SITE_ORDER.length;
+    const index = SCOPE_SITE_ORDER.indexOf(code);
+    return index < 0 ? SCOPE_SITE_ORDER.length : index;
+  }
+
+  function compareScopeSites(a, b) {
+    return scopeSiteRank(a) - scopeSiteRank(b);
+  }
+
+  function sortByScopeSiteOrder(rows, getter) {
+    const get = getter || ((row) => row && (row.oiCode || row.oi_code || row.nomCourt || row.code || row.lieu || row));
+    return (rows || []).slice().sort((a, b) => {
+      const cmp = compareScopeSites(get(a), get(b));
+      if (cmp) return cmp;
+      return String(get(a) || '').localeCompare(String(get(b) || ''), 'fr');
+    });
+  }
+
+  function qvStartTimeKey(value) {
+    const raw = String(value || '');
+    const match = raw.match(/T(\d{2}:\d{2})/) || raw.match(/\b(\d{2}:\d{2})\b/);
+    return match ? match[1] : '';
+  }
+
+  function qvActivitySiteCode(row) {
+    const sources = [
+      row && row.siteCode,
+      row && row.oiCode,
+      row && row.oi,
+      row && row.lieu,
+      row && row.nomCourt,
+      row && row.lieuCode,
+      ...((row && row.cibleCodes) || []),
+      row && row.title
+    ];
+    for (let i = 0; i < sources.length; i += 1) {
+      const code = extractSiteCode(sources[i]);
+      if (code) return code;
+    }
+    return '';
+  }
+
+  function qvActivityStableId(row) {
+    return String((row && (row.activityId || row.codeEvent || row.id || row.title)) || '');
+  }
+
+  function compareQvActivities(a, b) {
+    const dateCmp = String(qvDateKey((a && (a.startsAt || a.date)) || '') || '').localeCompare(String(qvDateKey((b && (b.startsAt || b.date)) || '') || ''));
+    if (dateCmp) return dateCmp;
+    const timeCmp = qvStartTimeKey((a && (a.startsAt || a.time)) || '').localeCompare(qvStartTimeKey((b && (b.startsAt || b.time)) || ''));
+    if (timeCmp) return timeCmp;
+    const siteCmp = compareScopeSites(qvActivitySiteCode(a), qvActivitySiteCode(b));
+    if (siteCmp) return siteCmp;
+    return qvActivityStableId(a).localeCompare(qvActivityStableId(b), 'fr');
+  }
+
   function qvCalendarConstraints(calendarDays) {
     return (calendarDays || []).filter((row) => ['VEILLE_FERIE', 'NEUTRALISATION_INTERNE'].includes(qvCalendarKind(row)))
       .map((row) => {
@@ -2514,6 +2579,13 @@
     qvCalendarConstraints,
     qvAgendaDayAnchorId,
     qvIsoWeek,
+    SCOPE_SITE_ORDER,
+    extractSiteCode,
+    scopeSiteRank,
+    compareScopeSites,
+    sortByScopeSiteOrder,
+    qvActivitySiteCode,
+    compareQvActivities,
     extractCalendarYear,
     yearToObjectifPeriod,
     periodFromStart,
