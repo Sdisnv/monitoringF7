@@ -54,6 +54,37 @@ function weekdayName(date){
   return ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][new Date(`${dateOnly(date)}T12:00:00Z`).getUTCDay()];
 }
 
+function addDays(date, days){
+  const d = new Date(`${dateOnly(date)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + Number(days || 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function calendarDate(row){
+  return dateOnly(row && (row.jour || row.date));
+}
+
+function calendarType(row){
+  return String(row && (row.type_jour || row.typeJour) || '').toUpperCase();
+}
+
+function calendarEndDate(row){
+  const metadata = row && row.metadata || {};
+  return dateOnly(metadata.dateFin || metadata.date_fin || metadata.endDate || metadata.fin || calendarDate(row));
+}
+
+function enrichCalendarRows(calendarRows){
+  const rows = Array.isArray(calendarRows) ? calendarRows.slice() : [];
+  const existing = new Set(rows.map((row) => `${calendarDate(row)}|${calendarType(row)}`));
+  rows.filter((row) => calendarType(row) === 'FERIE').forEach((holiday) => {
+    const eve = addDays(calendarDate(holiday), -1);
+    if(existing.has(`${eve}|VEILLE_FERIE`)) return;
+    existing.add(`${eve}|VEILLE_FERIE`);
+    rows.push({ jour: eve, type_jour: 'VEILLE_FERIE', libelle: `Veille de ${holiday.libelle || 'jour férié'}`, neutralise: true });
+  });
+  return rows;
+}
+
 function normalizeTitle(value){
   return String(value || '')
     .normalize('NFD')
@@ -532,15 +563,24 @@ function classifyCandidateDate(date, policy, calendarRows){
   const day = weekdayName(date);
   let dayClass = (policy && policy[day]) || 'AUTORISE';
   const reasons = [`${WEEKDAY_LABELS[day] || day}: ${DAY_CLASS_LABELS[dayClass] || dayClass}.`];
-  const special = (calendarRows || []).filter((row) => dateOnly(row.jour || row.date) === dateOnly(date) && row.neutralise !== true);
-  const hasFerie = special.some((row) => String(row.type_jour || row.typeJour || '').toUpperCase().includes('FERIE'));
-  const hasVacances = special.some((row) => String(row.type_jour || row.typeJour || '').toUpperCase() === 'VACANCES_SCOLAIRES');
+  const target = dateOnly(date);
+  const special = enrichCalendarRows(calendarRows).filter((row) => {
+    const start = calendarDate(row);
+    const inVacation = calendarType(row) === 'VACANCES_SCOLAIRES' && start <= target && target <= calendarEndDate(row);
+    return (start === target || inVacation) && row.neutralise !== false;
+  });
+  const hasFerie = special.some((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(calendarType(row)));
+  const hasVacances = special.some((row) => calendarType(row) === 'VACANCES_SCOLAIRES');
+  const hasConstraint = special.some((row) => calendarType(row) === 'NEUTRALISATION_INTERNE');
   if(hasFerie){
     dayClass = 'INTERDIT';
     reasons.push('Jour férié: proposition interdite.');
-  } else if(hasVacances && dayClass !== 'INTERDIT'){
-    dayClass = 'DECONSEILLE';
-    reasons.push('Vacances scolaires: date déconseillée.');
+  } else if(hasVacances){
+    dayClass = 'INTERDIT';
+    reasons.push('Vacances scolaires: proposition interdite.');
+  } else if(hasConstraint){
+    dayClass = 'INTERDIT';
+    reasons.push('Contrainte de planification: proposition interdite.');
   }
   return { date: dateOnly(date), weekday: day, dayClass, reasons, rank: DAY_RANK[dayClass] == null ? 9 : DAY_RANK[dayClass] };
 }

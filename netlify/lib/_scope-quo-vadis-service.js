@@ -18,6 +18,69 @@ function addMinutesIso(date, time, minutes){
   return d.toISOString().replace('.000Z', '+00:00');
 }
 
+function addDays(date, days){
+  const d = new Date(`${dateOnly(date)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + Number(days || 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function calendarType(row){
+  return String(row && (row.type_jour || row.typeJour) || '').toUpperCase();
+}
+
+function calendarDate(row){
+  return dateOnly(row && (row.jour || row.date));
+}
+
+function calendarEndDate(row){
+  const metadata = row && row.metadata || {};
+  return dateOnly(metadata.dateFin || metadata.date_fin || metadata.endDate || metadata.fin || calendarDate(row));
+}
+
+function isHolidayCalendarRow(row){
+  return calendarType(row) === 'FERIE';
+}
+
+function isBlockingCalendarRow(row){
+  return ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE', 'VACANCES_SCOLAIRES', 'NEUTRALISATION_INTERNE'].includes(calendarType(row))
+    && row && row.neutralise !== false;
+}
+
+function deriveHolidayEves(calendarRows){
+  const rows = Array.isArray(calendarRows) ? calendarRows : [];
+  const existing = new Set(rows.map((row) => `${calendarDate(row)}|${calendarType(row)}`));
+  return rows.filter(isHolidayCalendarRow).map((holiday) => {
+    const holidayDate = calendarDate(holiday);
+    const eve = addDays(holidayDate, -1);
+    if(existing.has(`${eve}|VEILLE_FERIE`)) return null;
+    existing.add(`${eve}|VEILLE_FERIE`);
+    return {
+      calendar_day_id: null,
+      programme_id: holiday.programme_id || holiday.programmeId || null,
+      jour: eve,
+      type_jour: 'VEILLE_FERIE',
+      libelle: `Veille de ${holiday.libelle || 'jour férié'}`,
+      source: 'DERIVED_HOLIDAY_EVE',
+      neutralise: true,
+      metadata: { derivedFromHoliday: holidayDate }
+    };
+  }).filter(Boolean).sort((a, b) => calendarDate(a).localeCompare(calendarDate(b)));
+}
+
+function enrichCalendarRows(calendarRows){
+  const rows = Array.isArray(calendarRows) ? calendarRows.slice() : [];
+  return rows.concat(deriveHolidayEves(rows));
+}
+
+function calendarRowsForDate(calendarRows, date){
+  const target = dateOnly(date);
+  return enrichCalendarRows(calendarRows).filter((row) => {
+    const start = calendarDate(row);
+    const end = calendarEndDate(row);
+    return target === start || (calendarType(row) === 'VACANCES_SCOLAIRES' && start <= target && target <= end);
+  });
+}
+
 function weekdayName(date){
   return ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][new Date(`${dateOnly(date)}T12:00:00Z`).getUTCDay()];
 }
@@ -38,12 +101,6 @@ const DAY_CLASS_LABELS = {
   DECONSEILLE: 'Déconseillée',
   INTERDIT: 'Interdite'
 };
-
-function addDays(date, days){
-  const d = new Date(`${dateOnly(date)}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + Number(days || 0));
-  return d.toISOString().slice(0, 10);
-}
 
 function monthStart(year, month){
   return `${year}-${String(month).padStart(2, '0')}-01`;
@@ -95,9 +152,9 @@ function hasHolidayWeekend(calendarRows, date){
   if(day !== 'SATURDAY' && day !== 'SUNDAY') return false;
   const saturday = day === 'SATURDAY' ? dateOnly(date) : addDays(date, -1);
   const sunday = day === 'SUNDAY' ? dateOnly(date) : addDays(date, 1);
-  return (calendarRows || []).some((row) => {
-    const kind = String(row.type_jour || row.typeJour || '').toUpperCase();
-    const d = dateOnly(row.jour);
+  return enrichCalendarRows(calendarRows).some((row) => {
+    const kind = calendarType(row);
+    const d = calendarDate(row);
     return (kind === 'FERIE' || kind === 'WEEKEND_FERIE') && (d === saturday || d === sunday);
   });
 }
@@ -107,18 +164,19 @@ function classifyDate(date, domain, calendarRows){
   const policy = dayPolicyForDomain(domain);
   let dayClass = policy[day] || 'AUTORISE';
   const reasons = [`${WEEKDAY_LABELS[day] || day}: ${DAY_CLASS_LABELS[dayClass] || dayClass}.`];
-  const special = (calendarRows || []).filter((row) => dateOnly(row.jour) === dateOnly(date));
-  const hasFerie = special.some((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(String(row.type_jour || row.typeJour || '').toUpperCase()));
-  const hasVacances = special.some((row) => String(row.type_jour || row.typeJour || '').toUpperCase() === 'VACANCES_SCOLAIRES');
+  const special = calendarRowsForDate(calendarRows, date);
+  const blocking = special.filter(isBlockingCalendarRow);
+  const hasFerie = blocking.some((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(calendarType(row)));
+  const hasVacances = blocking.some((row) => calendarType(row) === 'VACANCES_SCOLAIRES');
   if(hasFerie){
     dayClass = 'INTERDIT';
-    reasons.push(`Jour férié: ${special.filter((row) => String(row.type_jour || row.typeJour || '').toUpperCase().includes('FERIE')).map((row) => row.libelle).join(', ')}. Dérogation nécessaire.`);
+    reasons.push(`Contrainte fériée: ${blocking.filter((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(calendarType(row))).map((row) => row.libelle).join(', ')}. Dérogation nécessaire.`);
   } else if(hasVacances){
-    dayClass = 'DECONSEILLE';
+    dayClass = 'INTERDIT';
     reasons.push(`Vacances scolaires: ${special.map((row) => row.libelle).join(', ')}.`);
-  } else if(special.length){
-    dayClass = 'DECONSEILLE';
-    reasons.push(`Date particulière: ${special.map((row) => row.libelle).join(', ')}.`);
+  } else if(blocking.length){
+    dayClass = 'INTERDIT';
+    reasons.push(`Contrainte de planification: ${blocking.map((row) => row.libelle).join(', ')}.`);
   }
   if(hasHolidayWeekend(calendarRows, date)){
     dayClass = dayClass === 'INTERDIT' ? 'INTERDIT' : 'DECONSEILLE';
@@ -856,7 +914,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       programme,
       obligations: population.obligations,
       proposals: population.proposals,
-      calendarDays: calendar.rows.map(mapCalendarDay),
+      calendarDays: enrichCalendarRows(calendar.rows).map(mapCalendarDay),
       lieux: lieux.rows.map(mapLieu),
       cursus: cursus.rows.map(mapCursus),
       cursusSelections: cursusSelections.rows.map((row) => ({
@@ -965,33 +1023,38 @@ function createScopeQuoVadisService({ database = db } = {}){
     const next = year + 1;
     const holidays = [
       [`${year}-01-01`, 'Nouvel An'],
-      [`${year}-04-02`, 'Vendredi saint'],
-      [`${year}-04-05`, 'Lundi de Paques'],
-      [`${year}-05-13`, 'Ascension'],
-      [`${year}-05-24`, 'Lundi de Pentecote'],
+      [`${year}-01-02`, 'Saint-Berchtold'],
+      [`${year}-03-26`, 'Vendredi saint'],
+      [`${year}-03-29`, 'Lundi de Paques'],
+      [`${year}-05-06`, 'Ascension'],
+      [`${year}-05-17`, 'Lundi de Pentecote'],
       [`${year}-08-01`, 'Fete nationale'],
       [`${year}-09-20`, 'Lundi du Jeune federal'],
       [`${year}-12-25`, 'Noel'],
-      [`${next}-01-01`, 'Nouvel An']
+      [`${next}-01-01`, 'Nouvel An'],
+      [`${next}-01-02`, 'Saint-Berchtold']
     ];
-    // Plages: calendrier scolaire vaudois 2023–2031 (État de Vaud / vd.ch/vacances).
-    // Les samedis historiques CORE-1 sont conservés pour ON CONFLICT ; le frontend étend via metadata.dateFin.
+    // Plages du calendrier scolaire vaudois ; le frontend les étend via metadata.dateFin.
     const vacations = [
-      [`${year}-01-01`, `${year}-01-10`, 'Vacances scolaires vaudoises - hiver'],
+      [`${year - 1}-12-24`, `${year}-01-10`, 'Vacances scolaires vaudoises - hiver'],
       [`${year}-02-06`, `${year}-02-14`, 'Vacances scolaires vaudoises - sport'],
-      [`${year}-02-13`, `${year}-02-14`, 'Vacances scolaires vaudoises - sport'],
       [`${year}-03-26`, `${year}-04-11`, 'Vacances scolaires vaudoises - printemps'],
-      [`${year}-04-10`, `${year}-04-11`, 'Vacances scolaires vaudoises - printemps'],
       [`${year}-07-03`, `${year}-08-22`, 'Vacances scolaires vaudoises - ete'],
       [`${year}-10-09`, `${year}-10-24`, 'Vacances scolaires vaudoises - automne'],
-      [`${year}-10-16`, `${year}-10-24`, 'Vacances scolaires vaudoises - automne'],
-      [`${year}-12-24`, `${next}-01-09`, 'Vacances scolaires vaudoises - hiver'],
-      [`${next}-02-12`, `${next}-02-20`, 'Vacances scolaires vaudoises - sport']
+      [`${year}-12-24`, `${next}-01-09`, 'Vacances scolaires vaudoises - hiver']
     ];
+    const constraints = [
+      [`${year}-05-07`, 'Pont de l’Ascension', { constraintKind: 'PONT_ASCENSION', derivedFromHoliday: `${year}-05-06` }]
+    ];
+    await db.query(
+      `delete from scope_quo_vadis_calendar_days
+        where programme_id = $1 and source in ('SEED_CORE_1', 'CALENDAR_VD_FINAL_3')`,
+      [programme.programmeId]
+    );
     for (const [jour, libelle] of holidays) {
       await db.query(
         `insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata)
-         values ($1,$2,'FERIE',$3,'SEED_CORE_1', true, '{"historizedForProgramme":true}'::jsonb)
+         values ($1,$2,'FERIE',$3,'CALENDAR_VD_FINAL_3', true, '{"historizedForProgramme":true}'::jsonb)
          on conflict (programme_id, jour, type_jour, libelle) do update
            set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
         [programme.programmeId, jour, libelle]
@@ -1000,10 +1063,19 @@ function createScopeQuoVadisService({ database = db } = {}){
     for (const [debut, fin, libelle] of vacations) {
       await db.query(
         `insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata)
-         values ($1,$2,'VACANCES_SCOLAIRES',$3,'SEED_CORE_1', true, $4::jsonb)
+         values ($1,$2,'VACANCES_SCOLAIRES',$3,'CALENDAR_VD_FINAL_3', true, $4::jsonb)
          on conflict (programme_id, jour, type_jour, libelle) do update
            set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
         [programme.programmeId, debut, libelle, JSON.stringify({ historizedForProgramme: true, dateFin: fin })]
+      );
+    }
+    for (const [jour, libelle, metadata] of constraints) {
+      await db.query(
+        `insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata)
+         values ($1,$2,'NEUTRALISATION_INTERNE',$3,'CALENDAR_VD_FINAL_3', true, $4::jsonb)
+         on conflict (programme_id, jour, type_jour, libelle) do update
+           set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
+        [programme.programmeId, jour, libelle, JSON.stringify(metadata)]
       );
     }
   }
@@ -1664,7 +1736,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     await ensureDefaultCursusSelections(programme);
     await ensureDefaultCursusStepSelections(programme);
     await resetGeneratedDrafts(programme);
-    const calendarRows = (await db.query(`select * from scope_quo_vadis_calendar_days where programme_id = $1`, [programme.programmeId])).rows;
+    const calendarRows = enrichCalendarRows((await db.query(`select * from scope_quo_vadis_calendar_days where programme_id = $1`, [programme.programmeId])).rows);
     const rulesByDomain = await loadRulesByDomain();
     const lieuxRows = (await db.query(`select * from scope_lieux where actif is not false`)).rows.map(mapLieu);
     const announcedRows = (await db.query(`select * from scope_quo_vadis_future_dates where target_year = $1`, [programme.annee])).rows;
@@ -1895,4 +1967,18 @@ function createScopeQuoVadisService({ database = db } = {}){
   return { listProgramme, generateProgramme, createFutureDate, setCursusSelection, setCursusStepSelection, setProgrammeStatus, retainProposal, listActivityReferences };
 }
 
-module.exports = { createScopeQuoVadisService };
+module.exports = {
+  createScopeQuoVadisService,
+  _calendar: {
+    addDays,
+    calendarDate,
+    calendarEndDate,
+    calendarRowsForDate,
+    calendarType,
+    classifyDate,
+    deriveHolidayEves,
+    enrichCalendarRows,
+    isBlockingCalendarRow,
+    isHolidayCalendarRow
+  }
+};

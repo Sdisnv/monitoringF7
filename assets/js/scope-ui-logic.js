@@ -663,7 +663,7 @@
     if (!jour) return false;
     const kind = qvCalendarKind(row);
     if (kind === 'NEUTRALISATION_INTERNE') return false;
-    if (kind.includes('FERIE') || kind === 'VACANCES_SCOLAIRES') return true;
+    if (kind === 'FERIE' || kind === 'VACANCES_SCOLAIRES') return true;
     return row.neutralise !== true;
   }
 
@@ -691,7 +691,7 @@
   function qvCalendarMarksForDate(byDate, date) {
     const marks = (byDate && byDate[qvDateKey(date)]) || [];
     return {
-      holiday: marks.some((row) => qvCalendarKind(row).includes('FERIE')),
+      holiday: marks.some((row) => qvCalendarKind(row) === 'FERIE'),
       vacation: marks.some((row) => qvCalendarKind(row) === 'VACANCES_SCOLAIRES'),
       labels: marks.map((row) => row.libelle).filter(Boolean)
     };
@@ -729,7 +729,7 @@
     const entries = [];
     const seen = new Set();
     (calendarDays || []).forEach((row) => {
-      if (!qvCalendarMarkVisible(row) || !qvCalendarKind(row).includes('FERIE')) return;
+      if (!qvCalendarMarkVisible(row) || qvCalendarKind(row) !== 'FERIE') return;
       const date = qvDateKey(row.jour);
       const key = `${date}|${row.libelle || ''}`;
       if (!date || seen.has(key)) return;
@@ -742,6 +742,13 @@
   function qvAgendaDayAnchorId(date) {
     const key = qvDateKey(date);
     return key ? `qv-agenda-day-${key}` : '';
+  }
+
+  function qvCalendarConstraints(calendarDays) {
+    return (calendarDays || []).filter((row) => qvCalendarKind(row) === 'NEUTRALISATION_INTERNE')
+      .map((row) => ({ date: qvDateKey(row.jour), libelle: row.libelle || 'Contrainte de planification' }))
+      .filter((row) => row.date)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   }
 
   function extractCalendarYear(value) {
@@ -2485,6 +2492,7 @@
     qvCalendarMarksForDate,
     qvVacationPeriods,
     qvHolidayEntries,
+    qvCalendarConstraints,
     qvAgendaDayAnchorId,
     extractCalendarYear,
     yearToObjectifPeriod,

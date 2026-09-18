@@ -152,7 +152,7 @@ assert.ok(/qvExpandCalendarDays/.test(annual) || /L\.qvExpandCalendarDays/.test(
 assert.ok(/calendarDays/.test(annual));
 assert.ok(/metadata\.dateFin/.test(logicSrc) || /meta\.dateFin/.test(logicSrc));
 assert.ok(/async function listProgramme[\s\S]*?await seedCalendar\(programme\)/.test(service));
-assert.ok(/dateOnly\(row\.jour\) === dateOnly\(date\)/.test(service));
+assert.ok(/calendarRowsForDate\(calendarRows, date\)/.test(service));
 assert.ok(!/qvExpandCalendarDays/.test(service), 'le moteur CONSOLIDATION-2 ne doit pas étendre les plages');
 
 assert.ok(/id="qv-legend-holidays"/.test(annual) && /id="qv-legend-vacations"/.test(annual));
@@ -167,7 +167,7 @@ assert.ok(/\.qv-legend-action:focus-visible/.test(css));
 assert.ok(/\.qv-mini-day\.has-activity span\s*\{[^}]*background:\s*var\(--scope-red\)/.test(css.replace(/\s+/g, ' ')));
 assert.ok(/\.qv-mini-day\.has-holiday:not\(\.has-activity\) span/.test(css));
 assert.ok(/\.qv-mini-day\.has-vacation/.test(css) && /#eceaf6/.test(css));
-assert.ok(/scope-quo-vadis-calendar-reference-complete-2/.test(html));
+assert.ok(/scope-quo-vadis-calendar-(?:reference-complete-2|vd-final-3)/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(!/interpretHistoricalProgramme\s*=/.test(ui));
 

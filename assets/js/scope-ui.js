@@ -10406,7 +10406,7 @@
         day,
         items: byDate[date] || [],
         known: known.has(date),
-        holiday: marks.some((row) => qvCalendarKind(row).includes('FERIE')),
+        holiday: marks.some((row) => qvCalendarKind(row) === 'FERIE'),
         vacation: marks.some((row) => qvCalendarKind(row) === 'VACANCES_SCOLAIRES'),
         calendarLabel: [...new Set(marks.map((row) => row.libelle).filter(Boolean))].join(' · ')
       });
@@ -10510,6 +10510,7 @@
     if (!focus) return '';
     const vacations = L.qvVacationPeriods((qv && qv.calendarDays) || []);
     const holidays = L.qvHolidayEntries((qv && qv.calendarDays) || []);
+    const constraints = L.qvCalendarConstraints((qv && qv.calendarDays) || []);
     const vacationFirst = focus === 'vacations';
     const vacationBlock = `<section class="qv-calendar-dialog-section${vacationFirst ? ' is-focus' : ''}">
       <h3>Vacances scolaires</h3>
@@ -10518,7 +10519,12 @@
     const holidayBlock = `<section class="qv-calendar-dialog-section${!vacationFirst ? ' is-focus' : ''}">
       <h3>Jours fériés</h3>
       ${holidays.length ? `<ul>${holidays.map((row) => `<li><strong>${escapeHtml(qvFormatDate(row.date))}</strong><span>${escapeHtml(row.libelle)}</span></li>`).join('')}</ul>` : '<p class="scope-empty">Aucune période renseignée pour le périmètre QUO VADIS.</p>'}
+      <p class="scope-muted">La veille de chaque jour férié est automatiquement neutralisée pour la planification des formations.</p>
     </section>`;
+    const constraintBlock = constraints.length ? `<section class="qv-calendar-dialog-section">
+      <h3>Contraintes de planification</h3>
+      <ul>${constraints.map((row) => `<li><strong>${escapeHtml(qvFormatDate(row.date))}</strong><span>${escapeHtml(row.libelle)}</span></li>`).join('')}</ul>
+    </section>` : '';
     return `<div class="scope-modal" id="qv-calendar-dialog" role="dialog" aria-modal="true" aria-labelledby="qv-calendar-dialog-title">
       <div class="scope-card qv-calendar-dialog">
         <div class="scope-modal-header">
@@ -10526,7 +10532,7 @@
           <button type="button" class="scope-btn" id="qv-calendar-dialog-close" aria-label="Fermer">×</button>
         </div>
         <div class="qv-calendar-dialog-body">
-          ${vacationFirst ? `${vacationBlock}${holidayBlock}` : `${holidayBlock}${vacationBlock}`}
+          ${vacationFirst ? `${vacationBlock}${holidayBlock}${constraintBlock}` : `${holidayBlock}${constraintBlock}${vacationBlock}`}
         </div>
       </div>
     </div>`;
