@@ -184,13 +184,21 @@ function sanitizeQuoVadisRows(rows){
   const source = Array.isArray(rows) ? rows : [];
   return source.map((row) => ({
     date: String(row && row.date || ''),
+    monthKey: String(row && row.monthKey || ''),
+    monthLabel: String(row && row.monthLabel || ''),
     horaire: String(row && row.horaire || ''),
     domaine: String(row && row.domaine || ''),
     oi: String(row && row.oi || ''),
+    publicCible: String(row && (row.publicCible || row.cible) || ''),
     activite: String(row && row.activite || ''),
     specCursus: String(row && (row.specCursus || row.specialisation) || ''),
+    statcom: String(row && row.statcom || ''),
     lieu: String(row && row.lieu || ''),
-    etat: String(row && row.etat || '')
+    adresse: String(row && row.adresse || ''),
+    salleTheorie: String(row && (row.salleTheorie || row.salle) || ''),
+    responsable: String(row && row.responsable || ''),
+    etat: String(row && row.etat || ''),
+    calendarKind: String(row && row.calendarKind || '')
   }));
 }
 

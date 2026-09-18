@@ -147,6 +147,7 @@ function planLieuAddressConsolidation(lieux, salles){
 module.exports = {
   normalizeLieuName,
   parseSwissAddress,
+  extractOi,
   matchLieu,
   planLieuAddressConsolidation
 };

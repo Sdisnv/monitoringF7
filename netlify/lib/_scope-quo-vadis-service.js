@@ -1,6 +1,7 @@
 const db = require('./_postgres');
 const coverage = require('./_scope-quo-vadis-coverage');
 const consolidation = require('./_scope-quo-vadis-consolidation');
+const qvReferentials = require('./_scope-quo-vadis-referentials');
 
 function dateOnly(value){
   if(!value) return null;
@@ -271,6 +272,8 @@ function mapObligation(row){
     statcomCode: row.statcom_code || null,
     lieuId: row.lieu_id || null,
     lieuLibre: row.lieu_libre || null,
+    salleTheorieId: row.salle_theorie_id || null,
+    responsableFonctionCode: row.responsable_fonction_code || null,
     numberingPattern: row.numbering_pattern || null,
     activityKind: row.activity_kind || (row.metadata && row.metadata.activityKind) || '',
     periodicityYears: row.periodicity_years == null ? null : Number(row.periodicity_years),
@@ -329,6 +332,28 @@ function mapLieu(row){
     npa: row.npa || '',
     localite: row.localite || '',
     oiCode: row.oi_code || '',
+    siteCode: row.site_code || row.oi_code || '',
+    actif: row.actif !== false
+  };
+}
+
+function mapSalleTheorie(row){
+  return {
+    salleId: row.salle_id,
+    code: row.code,
+    libelle: row.libelle,
+    lieuId: row.lieu_id,
+    parentSalleId: row.parent_salle_id || null,
+    parentCode: row.parent_code || (row.metadata && row.metadata.parentCode) || '',
+    lieuCode: (row.metadata && row.metadata.lieuCode) || '',
+    actif: row.actif !== false
+  };
+}
+
+function mapResponsableFonction(row){
+  return {
+    code: row.code,
+    libelle: row.libelle,
     actif: row.actif !== false
   };
 }
@@ -361,6 +386,12 @@ function resolveActivityLieu(obligation, retained, lieux){
   const index = indexLieux(lieux);
   const lieuId = (retained && retained.lieuId) || obligation.lieuId || null;
   if(lieuId && index.byId.get(String(lieuId))) return index.byId.get(String(lieuId));
+  const suggested = qvReferentials.suggestLieu({
+    title: obligation && obligation.title,
+    cibleCodes: obligation && obligation.cibleCodes,
+    oi: obligation && (obligation.oi || obligation.oiCode)
+  }, lieux, null);
+  if(suggested.lieuId && index.byId.get(String(suggested.lieuId))) return index.byId.get(String(suggested.lieuId));
   const oi = String((obligation.cibleCodes || [])[0] || '').toUpperCase();
   if(oi && index.byOi.get(oi)) return index.byOi.get(oi);
   return null;
@@ -805,6 +836,10 @@ function createScopeQuoVadisService({ database = db } = {}){
         weekday: retained.startsAt ? (WEEKDAY_LABELS[weekdayName(retained.startsAt)] || '') : '',
         lieuId,
         lieu: displayLieuLabel(lieu, retained.lieuLibre || obligation.lieuLibre),
+        salleTheorieId: obligation.salleTheorieId || null,
+        salleTheorie: ((qv.sallesTheorie || []).find((row) => String(row.salleId) === String(obligation.salleTheorieId || '')) || {}).libelle || '',
+        responsableFonctionCode: obligation.responsableFonctionCode || '',
+        responsable: ((qv.responsableFonctions || []).find((row) => row.code === obligation.responsableFonctionCode) || {}).libelle || obligation.responsableFonctionCode || '',
         dayClass: retained.dayClass || '',
         dayClassLabel: retained.dayClass ? (DAY_CLASS_LABELS[retained.dayClass] || retained.dayClass) : '',
         reasons: (retained.reasons || []).concat(knownSameDay ? ['Une date annoncée est déjà enregistrée ce jour.'] : []),
@@ -889,7 +924,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     await seedCalendar(programme);
     await ensureDefaultCursusSelections(programme);
     await ensureDefaultCursusStepSelections(programme);
-    const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue] = await Promise.all([
+    const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue, sallesTheorie, responsableFonctions] = await Promise.all([
       db.query(
         `select o.*, count(p.proposal_id)::int as proposal_count
            from scope_quo_vadis_obligations o
@@ -933,7 +968,14 @@ function createScopeQuoVadisService({ database = db } = {}){
       db.query(`select * from scope_quo_vadis_planning_rules where active is true order by domain nulls last, code`),
       db.query(`select * from scope_quo_vadis_future_dates where target_year = $1 order by date_debut, activite_label`, [programme.annee]),
       db.query(`select * from scope_quo_vadis_dps_organisation_versions order by oi_code, valid_from`),
-      loadCatalogue()
+      loadCatalogue(),
+      db.query(`
+        select s.*, p.code as parent_code
+          from scope_salles_theorie s
+          left join scope_salles_theorie p on p.salle_id = s.parent_salle_id
+         order by s.libelle
+      `).catch(() => ({ rows: [] })),
+      db.query(`select * from scope_responsable_fonctions where actif is true order by sort_order, libelle`).catch(() => ({ rows: [] }))
     ]);
     const population = consolidation.activePopulation(obligations.rows.map(mapObligation), proposals.rows.map(mapProposal));
     const result = {
@@ -942,6 +984,8 @@ function createScopeQuoVadisService({ database = db } = {}){
       proposals: population.proposals,
       calendarDays: enrichCalendarRows(calendar.rows).map(mapCalendarDay),
       lieux: lieux.rows.map(mapLieu),
+      sallesTheorie: (sallesTheorie.rows || []).map(mapSalleTheorie),
+      responsableFonctions: (responsableFonctions.rows || []).map(mapResponsableFonction),
       cursus: cursus.rows.map(mapCursus),
       cursusSelections: cursusSelections.rows.map((row) => ({
         cursusId: row.cursus_id,
@@ -1978,7 +2022,46 @@ function createScopeQuoVadisService({ database = db } = {}){
     return { updated: true, quoVadis: await listProgramme(programme.rows[0] && programme.rows[0].annee || 2027) };
   }
 
-  return { listProgramme, generateProgramme, createFutureDate, setCursusSelection, setCursusStepSelection, setProgrammeStatus, retainProposal, listActivityReferences };
+  async function updateActivityPlanning(activityId, body = {}){
+    const found = await db.query(`select obligation_id, programme_id, lieu_id from scope_quo_vadis_obligations where obligation_id = $1`, [activityId]);
+    if(!found.rows[0]) return { updated: false };
+    const row = found.rows[0];
+    const sets = [];
+    const params = [activityId];
+    if(Object.prototype.hasOwnProperty.call(body, 'salleTheorieId')){
+      let salleId = body.salleTheorieId || null;
+      if(salleId){
+        const salle = await db.query(`select salle_id, lieu_id from scope_salles_theorie where salle_id = $1`, [salleId]);
+        if(!salle.rows[0]) salleId = null;
+        else if(row.lieu_id && String(salle.rows[0].lieu_id) !== String(row.lieu_id)) salleId = null;
+      }
+      params.push(salleId);
+      sets.push(`salle_theorie_id = $${params.length}`);
+    }
+    if(Object.prototype.hasOwnProperty.call(body, 'responsableFonctionCode')){
+      let code = body.responsableFonctionCode || null;
+      if(code){
+        const fn = await db.query(`select code from scope_responsable_fonctions where code = $1`, [code]);
+        if(!fn.rows[0]) code = null;
+      }
+      params.push(code);
+      sets.push(`responsable_fonction_code = $${params.length}`);
+    }
+    if(!sets.length) return { updated: false };
+    params.push(JSON.stringify({ planningFields: { updatedAt: new Date().toISOString() } }));
+    await db.query(
+      `update scope_quo_vadis_obligations
+          set ${sets.join(', ')},
+              metadata = coalesce(metadata, '{}'::jsonb) || $${params.length}::jsonb,
+              updated_at = now()
+        where obligation_id = $1`,
+      params
+    );
+    const programme = await db.query(`select annee from scope_quo_vadis_programmes where programme_id = $1`, [row.programme_id]);
+    return { updated: true, quoVadis: await listProgramme(programme.rows[0] && programme.rows[0].annee || 2027) };
+  }
+
+  return { listProgramme, generateProgramme, createFutureDate, setCursusSelection, setCursusStepSelection, setProgrammeStatus, retainProposal, updateActivityPlanning, listActivityReferences };
 }
 
 module.exports = {

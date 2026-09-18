@@ -61,7 +61,7 @@ const SIGNATURE_PR = (() => {
   catch (_err) { return SIGNATURE_CANDIDATES[0]; }
 })();
 
-function headerLogoLayout(){
+function headerLogoLayout(pageW){
   const fitted = (imgW, imgH, fitW, fitH) => {
     const s = Math.min(fitW / imgW, fitH / imgH);
     return { w: imgW * s, h: imgH * s, s };
@@ -71,7 +71,7 @@ function headerLogoLayout(){
   const scopePadL = (16 / 300) * scope.w;
   const sdisPadR = ((715 - 1 - 714) / 715) * sdis.w;
   const scopeX = MARGIN - scopePadL;
-  const sdisX = PAGE_W - MARGIN - sdis.w + sdisPadR;
+  const sdisX = (pageW || PAGE_W) - MARGIN - sdis.w + sdisPadR;
   return {
     inset: MARGIN,
     scopeX,
@@ -203,9 +203,13 @@ class ScopePdfRenderer {
   constructor(model, meta){
     this.model = model;
     this.meta = meta || {};
+    const landscape = Boolean(model && model.landscape);
+    this.pageW = landscape ? 841.89 : PAGE_W;
+    this.pageH = landscape ? 595.28 : PAGE_H;
+    this.contentBottom = this.pageH - FOOTER_H - 6;
     const generated = new Date((meta && meta.generatedAt) || Date.now());
     this.doc = new PDFDocument({
-      size: 'A4',
+      size: [this.pageW, this.pageH],
       margin: MARGIN,
       compress: false,
       bufferPages: true,
@@ -240,10 +244,10 @@ class ScopePdfRenderer {
 
   drawChrome(){
     const doc = this.doc;
-    const logos = headerLogoLayout();
+    const logos = headerLogoLayout(this.pageW);
     const title = headerTitleLayout();
     doc.save();
-    doc.rect(0, 0, PAGE_W, HEADER_H).fill(rgb(INSTITUTION.red));
+    doc.rect(0, 0, this.pageW, HEADER_H).fill(rgb(INSTITUTION.red));
     if(hasLogo(LOGO_SCOPE)){
       doc.image(LOGO_SCOPE, logos.scopeX, logos.scopeTop, { fit: logos.scopeFit, valign: 'center' });
     }
@@ -266,17 +270,17 @@ class ScopePdfRenderer {
     for(let i = 0; i < pageCount; i += 1){
       doc.switchToPage(i);
       doc.save();
-      doc.moveTo(MARGIN, PAGE_H - FOOTER_H).lineTo(PAGE_W - MARGIN, PAGE_H - FOOTER_H)
+      doc.moveTo(MARGIN, this.pageH - FOOTER_H).lineTo(this.pageW - MARGIN, this.pageH - FOOTER_H)
         .strokeColor(rgb(INSTITUTION.red)).lineWidth(1.2).stroke();
       doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7)
-        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, PAGE_H - FOOTER_H + 6, { width: 360 });
-      doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, PAGE_H - FOOTER_H + 18, { width: PAGE_W - 2 * MARGIN });
+        .text(`Page ${i + 1} / ${pageCount}  ·  Généré le ${formatDisplayDateTime(generated) || date}  ·  SCOPE`, MARGIN, this.pageH - FOOTER_H + 6, { width: 360 });
+      doc.text('Taux officiels : moteur SCOPE. Les données LEGACY, lorsqu’elles sont affichées, restent distinctes du KPI officiel.', MARGIN, this.pageH - FOOTER_H + 18, { width: this.pageW - 2 * MARGIN });
       doc.restore();
     }
   }
 
   ensure(h){
-    if(this.doc.y + h > CONTENT_BOTTOM){
+    if(this.doc.y + h > this.contentBottom){
       this.nextPage();
     }
   }
@@ -318,7 +322,7 @@ class ScopePdfRenderer {
     }
     const textX = plain ? x : x + 16;
     this.doc.fillColor(rgb(INSTITUTION.anthracite || INSTITUTION.ink)).font('Helvetica-Bold').fontSize(fontSize)
-      .text(text, textX, startY, { width: PAGE_W - textX - MARGIN, lineBreak: false });
+      .text(text, textX, startY, { width: this.pageW - textX - MARGIN, lineBreak: false });
     this.doc.y = startY + lineH + after;
   }
 
@@ -332,7 +336,7 @@ class ScopePdfRenderer {
   }
 
   para(text, opts){
-    const width = PAGE_W - 2 * MARGIN;
+    const width = this.pageW - 2 * MARGIN;
     const size = (opts && opts.size) || 8.5;
     const rest = Object.assign({}, opts || {});
     delete rest.size;
@@ -487,7 +491,7 @@ class ScopePdfRenderer {
   kv(rows, options){
     const cols = (options && options.cols) || 2;
     const rowH = (options && options.rowH) || 28;
-    const col = (PAGE_W - 2 * MARGIN) / cols;
+    const col = (this.pageW - 2 * MARGIN) / cols;
     let x = MARGIN;
     let y = this.doc.y;
     rows.forEach((row, i) => {
@@ -710,7 +714,7 @@ class ScopePdfRenderer {
   }
 
   table(headers, rows, widths, options){
-    const width = PAGE_W - 2 * MARGIN;
+    const width = this.pageW - 2 * MARGIN;
     const cols = widths || headers.map(() => width / headers.length);
     const aligns = (options && options.align) || [];
     const wrap = (options && options.wrap) || [];
@@ -771,7 +775,7 @@ class ScopePdfRenderer {
     drawHeader();
     rows.forEach((row, idx) => {
       const rowH = measureRowH(row);
-      if(this.doc.y + rowH > CONTENT_BOTTOM){
+      if(this.doc.y + rowH > this.contentBottom){
         this.nextPage();
         drawHeader();
       }
@@ -1983,20 +1987,43 @@ class ScopePdfRenderer {
   renderQuoVadisProgramme(rows, exportMeta){
     const meta = exportMeta || {};
     const sourceRows = Array.isArray(rows) ? rows : [];
-    const tableRows = sourceRows.length
-      ? sourceRows.map((row) => [
-        String(row.date || ''),
-        String(row.horaire || ''),
-        String(row.domaine || ''),
-        String(row.oi || ''),
-        String(row.activite || ''),
-        String(row.specCursus || ''),
-        String(row.lieu || ''),
-        String(row.etat || '')
-      ])
-      : [['Aucune activité à exporter.', '', '', '', '', '', '', '']];
+    const headers = ['Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spé. / cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
+    const widths = [52, 48, 42, 28, 52, 108, 70, 42, 70, 58, 58, 55];
+    const items = [];
+    let currentMonth = null;
+    sourceRows.forEach((row) => {
+      const monthKey = row.monthKey || '';
+      if((monthKey || row.monthLabel) && monthKey !== currentMonth){
+        currentMonth = monthKey;
+        items.push({
+          type: 'month',
+          label: String(row.monthLabel || monthKey || 'DATE À PROPOSER').toUpperCase()
+        });
+      }
+      items.push({
+        type: 'row',
+        cells: [
+          String(row.date || ''),
+          String(row.horaire || ''),
+          String(row.domaine || ''),
+          String(row.oi || ''),
+          String(row.publicCible || ''),
+          String(row.activite || ''),
+          String(row.specCursus || ''),
+          String(row.statcom || ''),
+          String(row.lieu || ''),
+          String(row.salleTheorie || ''),
+          String(row.responsable || ''),
+          String(row.etat || '')
+        ],
+        highlight: row.calendarKind === 'is-holiday' ? '#dce3f7' : (row.calendarKind === 'is-vacation' ? '#eceaf6' : false)
+      });
+    });
+    if(!items.length){
+      items.push({ type: 'row', cells: ['Aucune activité à exporter.', '', '', '', '', '', '', '', '', '', '', ''], highlight: false });
+    }
     this.iconHeading('plain', 'QUO VADIS 2027', 16, { after: 5 });
-    this.para('Programme annuel préparatoire', { size: 9.2 });
+    this.para('Programme annuel préparatoire — liste chronologique continue', { size: 9.2 });
     this.doc.y += 5;
     this.kv([
       { label: 'Généré le', value: formatDisplayDateTime(this.meta.generatedAt || new Date().toISOString()) },
@@ -2005,24 +2032,79 @@ class ScopePdfRenderer {
       { label: 'Domaine', value: meta.domain || 'Tous' },
       { label: 'OI', value: meta.oi || 'Tous' },
       { label: 'État', value: meta.status || 'Tous' },
-      { label: 'Mois', value: meta.month || 'Tous' },
+      { label: 'Période', value: meta.month || 'Tous' },
       { label: 'Tri', value: meta.sort || 'Date — horaire — domaine — activité' }
     ], { cols: 4, rowH: 23 });
     this.doc.y += 4;
-    this.table(
-      ['Date', 'Horaire', 'Domaine', 'OI', 'Activité', 'Spé. / cursus', 'Lieu', 'État'],
-      tableRows,
-      [52, 58, 42, 32, 108, 70, 80, 57],
-      {
-        wrap: [false, false, false, false, true, true, true, true],
-        rowFontSize: 6.7,
-        headerFontSize: 5.9,
-        headerH: 18,
-        rowH: 18,
-        maxRowH: null,
-        padY: 3
+    this.qvProgrammeTable(headers, items, widths);
+  }
+
+  qvProgrammeTable(headers, items, widths){
+    const width = this.pageW - 2 * MARGIN;
+    const cols = widths;
+    const headerH = 18;
+    const monthH = 16;
+    const baseRowH = 16;
+    const rowFontSize = 6.2;
+    const headerFontSize = 5.6;
+    const wrap = [false, false, false, false, false, true, true, false, true, true, true, false];
+    const paintHeader = () => {
+      this.doc.rect(MARGIN, this.doc.y, width, headerH).fill(rgb('#f4f5f8'));
+      let x = MARGIN;
+      headers.forEach((cell, i) => {
+        this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(headerFontSize)
+          .text(cell, x + 2, this.doc.y + 5, { width: cols[i] - 4, height: headerH - 6, ellipsis: true, lineBreak: false });
+        x += cols[i];
+      });
+      this.doc.y += headerH;
+    };
+    const measureRow = (cells) => {
+      let h = baseRowH;
+      cells.forEach((cell, i) => {
+        if(!wrap[i]) return;
+        this.doc.font('Helvetica').fontSize(rowFontSize);
+        const textH = this.doc.heightOfString(String(cell || ''), { width: cols[i] - 4 });
+        h = Math.max(h, Math.min(36, textH + 6));
+      });
+      return h;
+    };
+    paintHeader();
+    items.forEach((item, index) => {
+      if(item.type === 'month'){
+        const next = items[index + 1];
+        const nextH = next && next.type === 'row' ? measureRow(next.cells) : baseRowH;
+        if(this.doc.y + monthH + nextH > this.contentBottom){
+          this.nextPage();
+          paintHeader();
+        }
+        this.doc.rect(MARGIN, this.doc.y, width, monthH).fill(rgb('#5b6570'));
+        this.doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7.2)
+          .text(item.label, MARGIN + 4, this.doc.y + 4, { width: width - 8, lineBreak: false });
+        this.doc.y += monthH;
+        return;
       }
-    );
+      const rowH = measureRow(item.cells);
+      if(this.doc.y + rowH > this.contentBottom){
+        this.nextPage();
+        paintHeader();
+      }
+      const y = this.doc.y;
+      if(item.highlight) this.doc.rect(MARGIN, y, width, rowH).fill(rgb(item.highlight));
+      else if(index % 2 === 1) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
+      let x = MARGIN;
+      item.cells.forEach((cell, i) => {
+        this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(rowFontSize)
+          .text(String(cell || ''), x + 2, y + 3, {
+            width: cols[i] - 4,
+            height: rowH - 4,
+            ellipsis: !wrap[i],
+            lineBreak: Boolean(wrap[i])
+          });
+        x += cols[i];
+      });
+      this.doc.y = y + rowH;
+    });
+    this.doc.y += 8;
   }
 
   async finalizeQuoVadisProgramme(rows, exportMeta){
@@ -2057,7 +2139,8 @@ function renderQuoVadisProgrammePdf(rows, exportMeta, meta){
   const renderer = new ScopePdfRenderer({
     kind: 'QUO_VADIS',
     title: 'QUO VADIS 2027',
-    subtitle: 'Programme annuel préparatoire'
+    subtitle: 'Programme annuel préparatoire',
+    landscape: true
   }, meta || {});
   return renderer.finalizeQuoVadisProgramme(rows, exportMeta);
 }

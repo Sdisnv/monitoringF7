@@ -1,6 +1,7 @@
 const { randomUUID } = require('crypto');
 const db = require('./_postgres');
 const qvLieux = require('./_scope-quo-vadis-lieux');
+const qvReferentials = require('./_scope-quo-vadis-referentials');
 
 const DOMAINES = [
   { code: 'FOBA', libelle: 'Formation de base' },
@@ -277,7 +278,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-agenda-ux-2';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -409,6 +410,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisCoverage1();
   await migrateQuoVadisMoaRecovery1();
   await migrateQuoVadisAgendaUx2();
+  await migrateQuoVadisToutesActivitesUx1();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -2167,6 +2169,101 @@ async function migrateQuoVadisAgendaUx2(){
     );
   }
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-agenda-ux-2') on conflict (version) do nothing`);
+}
+
+async function migrateQuoVadisToutesActivitesUx1(){
+  if(await hasMigration('scope-quo-vadis-toutes-activites-ux-1')) return;
+  for(const lieu of qvReferentials.OFFICIAL_LIEUX){
+    await db.query(
+      `insert into scope_lieux(code, nom_court, adresse_ligne1, npa, localite, oi_code, site_code, metadata)
+       values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)
+       on conflict (code) do update set
+         nom_court = coalesce(nullif(btrim(scope_lieux.nom_court), ''), excluded.nom_court),
+         adresse_ligne1 = case when coalesce(nullif(btrim(scope_lieux.adresse_ligne1), ''), '') = '' then excluded.adresse_ligne1 else scope_lieux.adresse_ligne1 end,
+         npa = case when coalesce(nullif(btrim(scope_lieux.npa), ''), '') = '' then excluded.npa else scope_lieux.npa end,
+         localite = case when coalesce(nullif(btrim(scope_lieux.localite), ''), '') = '' then excluded.localite else scope_lieux.localite end,
+         oi_code = coalesce(nullif(btrim(scope_lieux.oi_code), ''), excluded.oi_code),
+         site_code = coalesce(nullif(btrim(scope_lieux.site_code), ''), excluded.site_code),
+         metadata = coalesce(scope_lieux.metadata, '{}'::jsonb) || excluded.metadata,
+         updated_at = now()`,
+      [
+        lieu.code,
+        lieu.nomCourt,
+        lieu.adresseLigne1 || null,
+        lieu.npa || null,
+        lieu.localite || null,
+        lieu.oiCode,
+        lieu.oiCode,
+        JSON.stringify({
+          source: 'QUO-VADIS-TOUTES-ACTIVITES-UX-1',
+          kind: lieu.kind,
+          addressKnown: Boolean(lieu.adresseLigne1 || lieu.localite)
+        })
+      ]
+    );
+  }
+  await db.query(`
+    create table if not exists scope_responsable_fonctions (
+      code text primary key,
+      libelle text not null,
+      actif boolean not null default true,
+      sort_order integer not null default 100,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_resp_fn_code_chk check (length(trim(code)) > 0),
+      constraint scope_resp_fn_libelle_chk check (length(trim(libelle)) > 0)
+    )
+  `);
+  for(const [index, libelle] of qvReferentials.RESPONSIBLE_FUNCTIONS.entries()){
+    await db.query(
+      `insert into scope_responsable_fonctions(code, libelle, sort_order, metadata)
+       values ($1,$2,$3,$4::jsonb)
+       on conflict (code) do update set libelle = excluded.libelle, sort_order = excluded.sort_order, updated_at = now()`,
+      [libelle, libelle, index + 1, JSON.stringify({ source: 'QUO-VADIS-TOUTES-ACTIVITES-UX-1' })]
+    );
+  }
+  await db.query(`
+    create table if not exists scope_salles_theorie (
+      salle_id uuid primary key default gen_random_uuid(),
+      code text not null unique,
+      libelle text not null,
+      lieu_id uuid not null references scope_lieux(lieu_id),
+      parent_salle_id uuid references scope_salles_theorie(salle_id),
+      actif boolean not null default true,
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      constraint scope_salles_theorie_code_chk check (length(trim(code)) > 0),
+      constraint scope_salles_theorie_libelle_chk check (length(trim(libelle)) > 0)
+    )
+  `);
+  const lieux = (await db.query(`select lieu_id, code from scope_lieux`)).rows || [];
+  const lieuIdByCode = new Map(lieux.map((row) => [row.code, row.lieu_id]));
+  const salleIdByCode = new Map();
+  for(const room of qvReferentials.THEORY_ROOMS){
+    const lieuId = lieuIdByCode.get(room.lieuCode);
+    if(!lieuId) continue;
+    const inserted = await db.query(
+      `insert into scope_salles_theorie(code, libelle, lieu_id, metadata)
+       values ($1,$2,$3,$4::jsonb)
+       on conflict (code) do update set libelle = excluded.libelle, lieu_id = excluded.lieu_id, updated_at = now()
+       returning salle_id, code`,
+      [room.code, room.libelle, lieuId, JSON.stringify({ source: 'QUO-VADIS-TOUTES-ACTIVITES-UX-1', lieuCode: room.lieuCode, parentCode: room.parentCode })]
+    );
+    const row = inserted.rows && inserted.rows[0];
+    if(row) salleIdByCode.set(row.code, row.salle_id);
+  }
+  for(const room of qvReferentials.THEORY_ROOMS){
+    if(!room.parentCode) continue;
+    const salleId = salleIdByCode.get(room.code);
+    const parentId = salleIdByCode.get(room.parentCode);
+    if(!salleId || !parentId) continue;
+    await db.query(`update scope_salles_theorie set parent_salle_id = $2, updated_at = now() where salle_id = $1`, [salleId, parentId]);
+  }
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists salle_theorie_id uuid references scope_salles_theorie(salle_id)`);
+  await db.query(`alter table scope_quo_vadis_obligations add column if not exists responsable_fonction_code text references scope_responsable_fonctions(code)`);
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-toutes-activites-ux-1') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

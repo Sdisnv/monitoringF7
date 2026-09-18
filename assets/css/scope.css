@@ -374,8 +374,8 @@ html, body {
   align-items: center;
   justify-content: center;
   min-height: 28px;
-  color: var(--scope-muted);
-  font-size: 9px;
+  color: #5b6570;
+  font-size: 10px;
   font-style: normal;
   font-weight: 650;
   letter-spacing: 0;
@@ -1331,7 +1331,7 @@ a.qv-mini-day.has-activity:focus-visible span {
   border-radius: 4px;
   font-size: inherit;
   font-style: normal;
-  font-weight: 650;
+  font-weight: 400;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -1475,7 +1475,70 @@ a.qv-mini-day.has-activity:focus-visible span {
 }
 
 .qv-activities-table {
-  min-width: 980px;
+  min-width: 1280px;
+  border-collapse: collapse;
+}
+.qv-activites-wrap {
+  overflow-x: auto;
+}
+.qv-activites-filters {
+  grid-template-columns: minmax(240px, 1.7fr) repeat(5, minmax(100px, 1fr));
+}
+.qv-activites-title {
+  min-width: 220px;
+  font-weight: 650;
+}
+.qv-activites-action {
+  width: 36px;
+  text-align: center;
+}
+.qv-row-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--scope-blue);
+  text-decoration: none;
+}
+.qv-row-open .qv-cockpit-icon {
+  width: 16px;
+  height: 16px;
+}
+.qv-activites-row {
+  cursor: pointer;
+}
+.qv-activites-row.is-vacation td {
+  background: #eceaf6;
+}
+.qv-activites-row.is-holiday td {
+  background: #dce3f7;
+}
+.qv-activites-row:hover td {
+  filter: brightness(0.985);
+}
+.qv-month-separator th {
+  padding: 8px 12px;
+  background: #5b6570;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.qv-month-separator th {
+  display: table-cell;
+}
+.qv-month-separator span:last-child {
+  float: right;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.qv-activity-salle,
+.qv-activity-responsable {
+  min-width: 190px;
 }
 
 .qv-definition-list {

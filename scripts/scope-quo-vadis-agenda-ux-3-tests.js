@@ -62,7 +62,7 @@ assert.ok(!/data-qv-row-menu/.test(agenda) && !/>…</.test(agenda));
 assert.ok(/qv-agenda-week/.test(agenda));
 assert.ok(!/<td[^>]*>\s*Semaine/.test(agenda));
 assert.strictEqual(L.qvIsoWeek('2027-02-02'), 5);
-assert.ok(/scope-quo-vadis-agenda-ux-3/.test(html));
+assert.ok(/scope-quo-vadis-agenda-ux-[123]|scope-quo-vadis-toutes-activites-ux-1/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 
 console.log('scope-quo-vadis-agenda-ux-3-tests: ok');

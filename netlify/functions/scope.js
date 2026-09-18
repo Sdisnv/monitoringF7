@@ -149,6 +149,10 @@ async function scopeHandler(event){
     if(method === 'POST' && path === '/quo-vadis/future-dates'){
       return response(201, { ok:true, ...(await quoVadis.createFutureDate(body)) });
     }
+    params = match(path, '/quo-vadis/activities/:id');
+    if(method === 'POST' && params){
+      return response(200, { ok:true, ...(await quoVadis.updateActivityPlanning(params.id, body)) });
+    }
     params = match(path, '/quo-vadis/activities/:id/references');
     if(method === 'GET' && params){
       return response(200, { ok:true, ...(await quoVadis.listActivityReferences(queryOf(event).annee || 2027, params.id)) });
