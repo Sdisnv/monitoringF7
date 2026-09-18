@@ -1,5 +1,6 @@
 const { randomUUID } = require('crypto');
 const db = require('./_postgres');
+const qvLieux = require('./_scope-quo-vadis-lieux');
 
 const DOMAINES = [
   { code: 'FOBA', libelle: 'Formation de base' },
@@ -276,7 +277,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-moa-recovery-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-agenda-ux-2';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -407,6 +408,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisPilotage2();
   await migrateQuoVadisCoverage1();
   await migrateQuoVadisMoaRecovery1();
+  await migrateQuoVadisAgendaUx2();
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-configuration-formation-ux-referentials-finish-5') on conflict (version) do nothing`
   );
@@ -2121,6 +2123,50 @@ async function migrateQuoVadisMoaRecovery1(){
      on conflict (code, version_code) do nothing`
   );
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-moa-recovery-1') on conflict (version) do nothing`);
+}
+
+async function migrateQuoVadisAgendaUx2(){
+  if(await hasMigration('scope-quo-vadis-agenda-ux-2')) return;
+  let lieuxRows = [];
+  let salles = [];
+  try {
+    lieuxRows = (await db.query(`select * from scope_lieux`)).rows || [];
+  } catch (_error) {
+    lieuxRows = [];
+  }
+  try {
+    salles = ((await db.query(`select distinct btrim(salle) as salle from scope_evenements where salle is not null and btrim(salle) <> ''`)).rows || [])
+      .map((row) => row.salle);
+  } catch (_error) {
+    salles = [];
+  }
+  const plan = qvLieux.planLieuAddressConsolidation(lieuxRows, salles);
+  for(const update of plan.updates){
+    if(!update.lieuId) continue;
+    await db.query(
+      `update scope_lieux
+          set adresse_ligne1 = case when coalesce(nullif(btrim(adresse_ligne1), ''), '') = '' then $2 else adresse_ligne1 end,
+              npa = case when coalesce(nullif(btrim(npa), ''), '') = '' then $3 else npa end,
+              localite = case when coalesce(nullif(btrim(localite), ''), '') = '' then $4 else localite end,
+              metadata = coalesce(metadata, '{}'::jsonb) || $5::jsonb,
+              updated_at = now()
+        where lieu_id = $1`,
+      [update.lieuId, update.adresseLigne1 || '', update.npa || '', update.localite || '', JSON.stringify({
+        source: 'QUO-VADIS-AGENDA-UX-2',
+        addressKnown: Boolean(update.adresseLigne1 || update.npa || update.localite)
+      })]
+    );
+  }
+  for(const insert of plan.inserts){
+    await db.query(
+      `insert into scope_lieux(code, nom_court, adresse_ligne1, npa, localite, oi_code, metadata)
+       values ($1,$2,$3,$4,$5,$6,$7::jsonb)
+       on conflict (code) do nothing`,
+      [insert.code, insert.nomCourt, insert.adresseLigne1 || null, insert.npa || null, insert.localite || null, insert.oiCode,
+        JSON.stringify({ source: 'QUO-VADIS-AGENDA-UX-2', addressKnown: Boolean(insert.adresseLigne1 || insert.npa || insert.localite) })]
+    );
+  }
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-agenda-ux-2') on conflict (version) do nothing`);
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

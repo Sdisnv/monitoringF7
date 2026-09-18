@@ -9936,7 +9936,10 @@
       check: '<circle cx="12" cy="12" r="8"/><path d="M8.2 12.2 10.8 14.8 15.8 9.4"/>',
       users: '<circle cx="9" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.3"/><path d="M4.2 18c.5-2.8 2.6-4.4 4.8-4.4s4.3 1.6 4.8 4.4M14.4 13.8c1.5-.3 3.2.5 4 2.5"/>',
       flag: '<path d="M6 21V4"/><path d="M6 5h11l-2.2 3.4L17 12H6"/>',
-      chevron: '<path d="M9 6l6 6-6 6"/>'
+      chevron: '<path d="M9 6l6 6-6 6"/>',
+      search: '<circle cx="11" cy="11" r="6.2"/><path d="M16 16.5 20 20.5"/>',
+      refresh: '<path d="M19.2 12a7.2 7.2 0 1 1-2.1-5.1"/><path d="M19.2 5.2V8.8H15.7"/>',
+      bulb: '<path d="M9 18h6M10 21h4"/><path d="M8.2 15.2A5.8 5.8 0 1 1 15.8 15.2C14.4 16.6 14 17.6 14 18.6h-4c0-1-.4-2-1.8-3.4Z"/>'
     };
     return `<svg class="qv-cockpit-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">${icons[name] || icons.list}</svg>`;
   }
@@ -10017,7 +10020,7 @@
 
   function qvAgendaStateBadge(row) {
     const state = qvAgendaState(row);
-    return `<span class="qv-agenda-state is-${escapeHtml(state.key)}">${escapeHtml(state.label)}</span>`;
+    return `<span class="qv-agenda-state is-${escapeHtml(state.key)}"><span class="qv-agenda-swatch is-${escapeHtml(state.key)}"></span>${escapeHtml(state.label)}</span>`;
   }
 
   function qvAgendaDayTitle(date) {
@@ -10145,8 +10148,9 @@
     const cursus = qvFilterOptions(all, (row) => row.cursus);
     const states = qvFilterOptions(all, (row) => row.status);
     const field = (id, label, optionsHtml) => `<div class="scope-field"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${optionsHtml}</select></div>`;
+    const check = (id, label, checked) => `<label class="qv-agenda-check" for="${id}"><input id="${id}" type="checkbox" ${checked ? 'checked' : ''}><span class="qv-agenda-check-box" aria-hidden="true"></span><span>${escapeHtml(label)}</span></label>`;
     return `<div class="qv-agenda-filters">
-      <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div>
+      <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control">${qvCockpitIcon('search')}<input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div></div>
       ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
@@ -10155,9 +10159,9 @@
       ${field('qv-filter-lieu', 'Lieu', `<option value="tous">Tous</option>${lieux.map((v) => `<option value="${escapeHtml(v)}" ${filters.lieu === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-cursus', 'Cursus', `<option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
-      <label class="scope-switch qv-attention-toggle"><input id="qv-filter-sessions" type="checkbox" ${filters.sessions === 'oui' ? 'checked' : ''}><span>Séances multiples</span></label>
-      <label class="scope-switch qv-attention-toggle"><input id="qv-filter-attention" type="checkbox" ${filters.attention ? 'checked' : ''}><span>Points d’attention</span></label>
-      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset">Réinitialiser les filtres</button>
+      ${check('qv-filter-sessions', 'Séances multiples', filters.sessions === 'oui')}
+      ${check('qv-filter-attention', 'Points d’attention', filters.attention)}
+      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset">${qvCockpitIcon('refresh')} Réinitialiser les filtres</button>
     </div>`;
   }
 
@@ -10674,26 +10678,25 @@
     }).join('');
     return `<section class="scope-card qv-agenda-view">
       <nav class="qv-agenda-nav" aria-label="Mois de l’agenda">
-        <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-prev" ${prev === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(prev)}">‹ ${escapeHtml(qvMonthTitle(Number(prev.slice(5, 7)), Number(prev.slice(0, 4))))}</button>
+        <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-prev" ${prev === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(prev)}"><span class="qv-agenda-nav-chevron" aria-hidden="true">‹</span> ${escapeHtml(qvMonthTitle(Number(prev.slice(5, 7)), Number(prev.slice(0, 4))))}</button>
         <div class="qv-agenda-nav-current">
           <label class="visually-hidden" for="qv-agenda-month">Mois</label>
           <select id="qv-agenda-month" class="qv-agenda-month-select">${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${row.value === monthKey ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}</select>
           <p class="qv-agenda-nav-meta">${escapeHtml(String(eventCount))} ${eventWord} · ${escapeHtml(String(dayCount))} ${dayWord}</p>
         </div>
-        <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-next" ${next === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(next)}">${escapeHtml(qvMonthTitle(Number(next.slice(5, 7)), Number(next.slice(0, 4))))} ›</button>
+        <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-next" ${next === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(next)}">${escapeHtml(qvMonthTitle(Number(next.slice(5, 7)), Number(next.slice(0, 4))))} <span class="qv-agenda-nav-chevron" aria-hidden="true">›</span></button>
       </nav>
       ${qvAgendaFilterBar(qv)}
       <div class="qv-agenda-meta-row">
-        <p class="qv-agenda-info">Affichage du mois de ${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}. ${escapeHtml(String(eventCount))} ${eventWord} planifié${eventCount > 1 ? 's' : ''} sur ${escapeHtml(String(dayCount))} ${dayWord}.</p>
+        <p class="qv-agenda-info"><span class="qv-agenda-info-mark" aria-hidden="true">i</span>Affichage du mois de ${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}. ${escapeHtml(String(eventCount))} ${eventWord} planifié${eventCount > 1 ? 's' : ''} sur ${escapeHtml(String(dayCount))} ${dayWord}.</p>
         <ul class="qv-agenda-legend">
-          <li><span class="qv-agenda-swatch is-day"></span>Jour normal</li>
           <li><span class="qv-agenda-swatch is-vacation"></span>Vacances scolaires</li>
           <li><span class="qv-agenda-swatch is-holiday"></span>Jour férié</li>
-          <li><span class="qv-agenda-state is-planned">Planifié</span></li>
-          <li><span class="qv-agenda-state is-validated">Validé</span></li>
-          <li><span class="qv-agenda-state is-attention">Point d’attention</span></li>
-          <li><span class="qv-agenda-state is-arbitrate">À arbitrer</span></li>
-          <li><span class="qv-agenda-state is-cancelled">Annulé</span></li>
+          <li><span class="qv-agenda-swatch is-planned"></span>Planifié</li>
+          <li><span class="qv-agenda-swatch is-validated"></span>Validé</li>
+          <li><span class="qv-agenda-swatch is-attention"></span>Point d’attention</li>
+          <li><span class="qv-agenda-swatch is-arbitrate"></span>À arbitrer</li>
+          <li><span class="qv-agenda-swatch is-cancelled"></span>Annulé</li>
         </ul>
       </div>
       <div class="scope-table-wrap">
@@ -10712,7 +10715,7 @@
           <div><h3>Conseil</h3><p>Cliquez sur un événement pour ouvrir sa fiche détaillée.</p></div>
         </aside>
         <aside class="qv-agenda-note">
-          <span class="qv-section-icon is-circle">${qvCockpitIcon('info')}</span>
+          <span class="qv-section-icon is-circle">${qvCockpitIcon('bulb')}</span>
           <div><h3>Bon à savoir</h3><p>Les jours fériés, les vacances scolaires et les contraintes de planification sont visibles dans l’Agenda annuel.</p></div>
         </aside>
       </div>

@@ -72,7 +72,7 @@ assert.ok(/CALENDRIER 2027–2028/.test(ui));
 assert.ok(/Contraintes de planification/.test(ui) && /veille de chaque jour férié/.test(ui));
 assert.ok(/qvHref\('agenda', \{ mois: month\.key, jour: cell\.date \}\)/.test(ui));
 assert.ok(/scrollIntoView/.test(ui));
-assert.ok(/scope-quo-vadis-calendar-vd-final-[34]/.test(read('scope.html')) || /scope-quo-vadis-agenda-ux-1/.test(read('scope.html')));
+assert.ok(/scope-quo-vadis-calendar-vd-final-[34]/.test(read('scope.html')) || /scope-quo-vadis-agenda-ux-[12]/.test(read('scope.html')));
 
 const sandbox = { window: {}, document: { addEventListener() {} }, console };
 sandbox.window = sandbox;
