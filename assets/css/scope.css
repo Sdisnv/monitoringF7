@@ -1806,6 +1806,273 @@ a.qv-mini-day.has-activity:focus-visible span {
   min-width: 190px;
 }
 
+/* scope-quo-vadis-a-arbitrer-redesign-1 */
+.qv-arbitrer-view {
+  min-width: 0;
+  max-width: 100%;
+}
+.qv-arbitrer-kpi {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 0 16px;
+  border: 1px solid var(--scope-border);
+  border-radius: 8px;
+  background: var(--scope-surface);
+}
+.qv-arbitrer-kpi-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 16px;
+  border-right: 1px solid var(--scope-line);
+}
+.qv-arbitrer-kpi-item:last-child {
+  border-right: 0;
+}
+.qv-arbitrer-kpi-item strong {
+  color: var(--scope-ink);
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.1;
+}
+.qv-arbitrer-kpi-item span {
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  font-weight: 400;
+  line-height: 1.3;
+}
+.qv-agenda-filters.qv-arbitrer-filters {
+  grid-template-columns: minmax(280px, 2.2fr) repeat(5, minmax(96px, 1fr)) auto;
+  margin: 0 0 14px;
+}
+.qv-arbitrer-filters .qv-filter-search-control input[type="search"] {
+  padding: 0 12px 0 4px;
+}
+.qv-arbitrer-reset {
+  justify-self: end;
+  align-self: end;
+  min-height: var(--scope-h-control);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--scope-blue);
+  font: inherit;
+  font-size: var(--scope-type-secondary);
+  font-weight: 500;
+  cursor: pointer;
+}
+.qv-arbitrer-reset:hover {
+  text-decoration: underline;
+}
+.qv-arbitrer-reset:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.qv-arbitrer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0 0 12px;
+}
+.qv-period-seg.qv-arbitrer-seg {
+  width: auto;
+  min-width: 280px;
+  flex: 0 1 320px;
+}
+.qv-arbitrer-sort {
+  flex: 1 1 320px;
+  min-width: 240px;
+  max-width: none;
+}
+.qv-arbitrer-group {
+  margin: 0 0 8px;
+  border: 1px solid var(--scope-border);
+  border-radius: 8px;
+  background: var(--scope-surface);
+}
+.qv-arbitrer-group-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px 14px;
+  width: 100%;
+  margin: 0;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #fbfcfe;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.qv-arbitrer-group-head.is-static {
+  cursor: default;
+}
+.qv-arbitrer-group-head:hover:not(.is-static) {
+  background: #f7f8fb;
+}
+.qv-arbitrer-group-head:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: -2px;
+}
+.qv-arbitrer-domain {
+  color: var(--scope-ink);
+  font-size: var(--scope-type-h2);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.qv-arbitrer-domain-label {
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  font-weight: 400;
+}
+.qv-arbitrer-count {
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.qv-arbitrer-chevron {
+  color: var(--scope-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+.qv-arbitrer-table-wrap,
+.scope-table-wrap.qv-arbitrer-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border-top: 1px solid var(--scope-line);
+}
+.qv-arbitrer-table {
+  width: 100%;
+  min-width: 720px;
+}
+.qv-arbitrer-table th {
+  color: var(--scope-muted);
+  font-size: var(--scope-type-label);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.qv-arbitrer-table td,
+.qv-arbitrer-table th {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+.qv-arbitrer-title {
+  display: block;
+  font-weight: 650;
+}
+.qv-arbitrer-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  font-weight: 400;
+}
+.qv-arbitrer-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--scope-blue);
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.qv-arbitrer-action .qv-cockpit-icon {
+  width: 14px;
+  height: 14px;
+}
+.qv-arbitrer-action:hover {
+  text-decoration: underline;
+}
+.qv-arbitrer-detail-activity {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--scope-line);
+}
+.qv-arbitrer-detail-activity:first-child {
+  border-top: 0;
+}
+.qv-arbitrer-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+.qv-arbitrer-detail-head h3 {
+  margin: 0;
+  font-size: var(--scope-type-h2);
+}
+.qv-arbitrer-legend {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.qv-arbitrer-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+.qv-arbitrer-notes {
+  margin-top: 16px;
+}
+.qv-arbitrer-view .qv-arbitrer-group,
+.qv-arbitrer-view .qv-arbitrer-kpi,
+.qv-arbitrer-view .qv-arbitrer-group-head {
+  box-shadow: none;
+}
+
+@media (max-width: 1100px) {
+  .qv-arbitrer-kpi {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .qv-arbitrer-kpi-item:nth-child(3) {
+    border-right: 0;
+  }
+  .qv-arbitrer-kpi-item:nth-child(n + 4) {
+    border-top: 1px solid var(--scope-line);
+  }
+  .qv-agenda-filters.qv-arbitrer-filters {
+    grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 1fr));
+  }
+  .qv-agenda-filters.qv-arbitrer-filters .qv-filter-search {
+    grid-column: 1 / -1;
+  }
+  .qv-arbitrer-reset {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .qv-arbitrer-kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .qv-arbitrer-kpi-item:nth-child(3) {
+    border-right: 1px solid var(--scope-line);
+  }
+  .qv-arbitrer-kpi-item:nth-child(2n) {
+    border-right: 0;
+  }
+  .qv-arbitrer-group-head {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .qv-arbitrer-count {
+    grid-column: 1 / -2;
+  }
+}
+
 .qv-definition-list {
   display: grid;
   grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);

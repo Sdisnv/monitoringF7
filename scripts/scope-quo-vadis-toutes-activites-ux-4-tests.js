@@ -128,7 +128,7 @@ assert.ok(/qv-agenda-nav-side qv-export-btn/.test(activites));
 assert.ok(/Spécialisation · cursus/.test(activites));
 assert.ok(!/<th>Point d’attention<\/th>/.test(activites));
 
-assert.ok(/scope-quo-vadis-toutes-activites-ux-4/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-4|scope-quo-vadis-a-arbitrer-redesign-1/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ux-4/.test(css));
 assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));

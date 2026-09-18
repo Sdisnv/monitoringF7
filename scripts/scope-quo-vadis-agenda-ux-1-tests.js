@@ -126,7 +126,7 @@ assert.strictEqual(L.qvAgendaDayAnchorId('2027-03-06'), 'qv-agenda-day-2027-03-0
 assert.ok(/Conseil/.test(agenda) && /Bon à savoir/.test(agenda));
 assert.ok(/fiche détaillée/.test(agenda));
 assert.ok(/Agenda annuel/.test(agenda));
-assert.ok(/scope-quo-vadis-agenda-ux-[123]|scope-quo-vadis-toutes-activites-ux-[1234]/.test(html));
+assert.ok(/scope-quo-vadis-agenda-ux-[123]|scope-quo-vadis-toutes-activites-ux-[1234]|scope-quo-vadis-a-arbitrer-redesign-1/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(!/interpretHistoricalProgramme\s*=/.test(ui));
 assert.ok(/qvCalendarMarkVisible/.test(logicSrc));

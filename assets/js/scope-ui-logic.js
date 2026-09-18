@@ -756,6 +756,18 @@
   }
 
   const SCOPE_SITE_ORDER = Object.freeze(['G1', 'C1', 'B1', 'B2', 'Y1', 'Y2', 'Y3', 'Y4']);
+  const SCOPE_DOMAIN_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']);
+  const SCOPE_DOMAIN_LABELS = Object.freeze({
+    DPS: 'Détachement de premier secours',
+    DAP: 'Détachement d’appui',
+    JSP: 'Jeunes sapeurs-pompiers',
+    FOBA: 'Formation de base',
+    FOCO: 'Formation continue',
+    FOCA: 'Formation cadres',
+    FOSPEC: 'Formations spécialisées',
+    AUTO: 'Formation automobile',
+    PR: 'Formation PR'
+  });
 
   function extractSiteCode(value) {
     const match = String(value || '').toUpperCase().match(/\b([GBC][12]|Y[1-4])\b/);
@@ -810,14 +822,205 @@
     return String((row && (row.activityId || row.codeEvent || row.id || row.title)) || '');
   }
 
+  function normalizeScopeDomainCode(value) {
+    const raw = String(value || '').trim().toUpperCase();
+    if (raw === 'PAPR') return 'PR';
+    return raw;
+  }
+
+  function qvActivityDomainCode(row) {
+    return normalizeScopeDomainCode(row && (row.domain || row.domaine || row.domainCode || row.domainLabel));
+  }
+
+  function scopeDomainBand(value) {
+    const code = normalizeScopeDomainCode(value);
+    if (code === 'DPS') return [1, 10, code];
+    if (code === 'DAP') return [1, 20, code];
+    if (code === 'JSP') return [1, 30, code];
+    if (code.startsWith('FO')) {
+      const known = { FOBA: 10, FOCO: 20, FOCA: 30, FOSPEC: 40 };
+      return [2, Object.prototype.hasOwnProperty.call(known, code) ? known[code] : 50, code];
+    }
+    if (code === 'AUTO') return [3, 10, code];
+    if (code === 'PR') return [4, 10, code];
+    return [5, 10, code];
+  }
+
+  function scopeDomainRank(value) {
+    const band = scopeDomainBand(value);
+    return (band[0] * 1000) + band[1];
+  }
+
+  function compareScopeDomains(a, b) {
+    const left = scopeDomainBand(a);
+    const right = scopeDomainBand(b);
+    if (left[0] !== right[0]) return left[0] - right[0];
+    if (left[1] !== right[1]) return left[1] - right[1];
+    return String(left[2] || '').localeCompare(String(right[2] || ''), 'fr');
+  }
+
+  function sortByScopeDomainOrder(rows, getter) {
+    const get = getter || ((row) => row && (row.domain || row.domainCode || row.code || row));
+    return (rows || []).slice().sort((a, b) => {
+      const cmp = compareScopeDomains(get(a), get(b));
+      if (cmp) return cmp;
+      return String(get(a) || '').localeCompare(String(get(b) || ''), 'fr');
+    });
+  }
+
+  function scopeDomainLabel(value) {
+    const code = normalizeScopeDomainCode(value);
+    return SCOPE_DOMAIN_LABELS[code] || code || '';
+  }
+
+  function scopeDomainOrderTrail() {
+    return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR';
+  }
+
   function compareQvActivities(a, b) {
     const dateCmp = String(qvDateKey((a && (a.startsAt || a.date)) || '') || '').localeCompare(String(qvDateKey((b && (b.startsAt || b.date)) || '') || ''));
     if (dateCmp) return dateCmp;
     const timeCmp = qvStartTimeKey((a && (a.startsAt || a.time)) || '').localeCompare(qvStartTimeKey((b && (b.startsAt || b.time)) || ''));
     if (timeCmp) return timeCmp;
+    const domainCmp = compareScopeDomains(qvActivityDomainCode(a), qvActivityDomainCode(b));
+    if (domainCmp) return domainCmp;
     const siteCmp = compareScopeSites(qvActivitySiteCode(a), qvActivitySiteCode(b));
     if (siteCmp) return siteCmp;
     return qvActivityStableId(a).localeCompare(qvActivityStableId(b), 'fr');
+  }
+
+  function qvStripSessionSuffix(title) {
+    const text = String(title || '').trim();
+    return text.replace(/\.(\d+)\s*$/, '').trim() || text;
+  }
+
+  function qvIsMultiSessionRow(row) {
+    return Number((row && row.sessionCount) || 0) > 1
+      || ((row && row.sessions) || []).length > 1
+      || Boolean(row && row.numberingPattern);
+  }
+
+  function qvPrincipalActivityKey(row) {
+    const domain = qvActivityDomainCode(row);
+    const explicit = String((row && (row.groupKey || row.historicalActivityKey || row.seriesKey)) || '').trim();
+    if (explicit) return `${domain}|KEY:${explicit}`;
+    const title = (row && row.title) || '';
+    const stripped = qvStripSessionSuffix(title);
+    const cibles = ((row && row.cibleCodes) || []).join(',');
+    if (stripped && stripped !== String(title).trim()) return `${domain}|SERIES:${cibles}|${stripped}`;
+    const cursus = String((row && row.cursus) || '').trim();
+    if (cursus && qvIsMultiSessionRow(row)) return `${domain}|CURSUS:${cursus}|${stripped}`;
+    if (qvIsMultiSessionRow(row)) return `${domain}|MULTI:${cibles}|${stripped}`;
+    return `${domain}|ID:${qvActivityStableId(row)}`;
+  }
+
+  function qvProposalSessionNumber(proposal, fallback) {
+    const conflict = (proposal && proposal.conflictSummary) || {};
+    const raw = conflict.sessionNumber || conflict.sessionIndex || (proposal && (proposal.sessionNumber || proposal.sessionIndex)) || fallback || 0;
+    const number = Number(raw);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function compareQvProposals(a, b) {
+    const dateCmp = String(qvDateKey((a && a.startsAt) || '') || '').localeCompare(String(qvDateKey((b && b.startsAt) || '') || ''));
+    if (dateCmp) return dateCmp;
+    const timeCmp = qvStartTimeKey((a && a.startsAt) || '').localeCompare(qvStartTimeKey((b && b.startsAt) || ''));
+    if (timeCmp) return timeCmp;
+    const sessionCmp = qvProposalSessionNumber(a, 0) - qvProposalSessionNumber(b, 0);
+    if (sessionCmp) return sessionCmp;
+    return String((a && (a.proposalId || a.id)) || '').localeCompare(String((b && (b.proposalId || b.id)) || ''), 'fr');
+  }
+
+  function qvArbitragePeriodLabel(dates, multi) {
+    const unique = Array.from(new Set((dates || []).map((value) => qvDateKey(value)).filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value)))).sort();
+    if (!unique.length) return '';
+    if (!multi || unique.length === 1) return formatDate(unique[0]);
+    return `${formatDate(unique[0])} → ${formatDate(unique[unique.length - 1])}`;
+  }
+
+  function qvNeedsArbitrationRow(row) {
+    const status = String((row && (row.status || row.statut)) || '').toUpperCase();
+    return Boolean(row && row.needsArbitration) || status === 'A_PLANIFIER' || status === 'PROPOSE';
+  }
+
+  function qvBuildArbitrageGroups(activities) {
+    const map = new Map();
+    (activities || []).forEach((row) => {
+      const key = qvPrincipalActivityKey(row);
+      const bucket = map.get(key) || { key, domain: qvActivityDomainCode(row), rows: [], proposals: [] };
+      bucket.rows.push(row);
+      ((row && row.proposals) || []).forEach((proposal) => bucket.proposals.push(proposal));
+      map.set(key, bucket);
+    });
+    return Array.from(map.values()).map((group) => {
+      const rows = group.rows.slice().sort(compareQvActivities);
+      const primary = rows[0] || {};
+      const proposals = group.proposals.slice().sort(compareQvProposals);
+      const multi = rows.some(qvIsMultiSessionRow) || rows.length > 1;
+      const dates = multi
+        ? proposals.map((row) => row.startsAt).concat(rows.map((row) => row.startsAt))
+        : [primary.startsAt || (proposals[0] && proposals[0].startsAt)];
+      const lieux = Array.from(new Set(rows.map((row) => row.lieu).concat(proposals.map((row) => row.lieu)).filter(Boolean)));
+      const firstStartsAt = (dates.map(qvDateKey).filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value)).sort()[0]) || primary.startsAt || '';
+      return {
+        key: group.key,
+        domain: group.domain,
+        domainLabel: scopeDomainLabel(group.domain),
+        title: qvStripSessionSuffix(primary.title) || primary.title || '',
+        cursus: String(primary.cursus || '').trim(),
+        type: multi ? 'Multi-session' : 'Activité unique',
+        multi,
+        proposalCount: multi
+          ? Math.max(proposals.length, rows.length, Number(primary.sessionCount) || 0, ((primary.sessions) || []).length)
+          : Math.max(proposals.length, rows.length),
+        periodLabel: qvArbitragePeriodLabel(dates, multi),
+        lieu: lieux[0] || '',
+        attention: rows.some((row) => row.attention),
+        validated: rows.length > 0 && rows.every((row) => ['PLANIFIE', 'RETENU'].includes(String(row.status || '').toUpperCase())),
+        needsArbitration: rows.some(qvNeedsArbitrationRow),
+        status: primary.status,
+        statcomCode: primary.statcomCode || '',
+        activityId: primary.activityId || primary.obligationId || '',
+        rows,
+        proposals,
+        firstStartsAt
+      };
+    }).sort((a, b) => {
+      const domainCmp = compareScopeDomains(a.domain, b.domain);
+      if (domainCmp) return domainCmp;
+      const titleCmp = String(a.title || '').localeCompare(String(b.title || ''), 'fr', { numeric: true });
+      if (titleCmp) return titleCmp;
+      const dateCmp = String(qvDateKey(a.firstStartsAt) || '9999-12-31').localeCompare(String(qvDateKey(b.firstStartsAt) || '9999-12-31'));
+      if (dateCmp) return dateCmp;
+      return String(a.activityId || '').localeCompare(String(b.activityId || ''), 'fr');
+    });
+  }
+
+  function qvGroupArbitrageByDomain(groups) {
+    const map = new Map();
+    (groups || []).forEach((group) => {
+      const code = group.domain || 'SCOPE';
+      if (!map.has(code)) map.set(code, { code, label: scopeDomainLabel(code), groups: [] });
+      map.get(code).groups.push(group);
+    });
+    return Array.from(map.values()).sort((a, b) => compareScopeDomains(a.code, b.code));
+  }
+
+  function qvInitialOpenDomain(domainGroups) {
+    const first = (domainGroups || []).find((row) => ((row && row.groups) || []).length);
+    return first ? first.code : '';
+  }
+
+  function qvArbitrageKpis(groups, allGroups) {
+    const shown = groups || [];
+    const universe = allGroups || shown;
+    return {
+      aArbitrer: shown.filter((group) => group.needsArbitration).length,
+      propositions: shown.reduce((sum, group) => sum + Number(group.proposalCount || 0), 0),
+      cursusMulti: shown.filter((group) => group.multi || group.cursus).length,
+      attention: shown.filter((group) => group.attention).length,
+      validees: universe.filter((group) => group.validated).length
+    };
   }
 
   function qvCalendarConstraints(calendarDays) {
@@ -2580,12 +2783,31 @@
     qvAgendaDayAnchorId,
     qvIsoWeek,
     SCOPE_SITE_ORDER,
+    SCOPE_DOMAIN_ORDER,
+    SCOPE_DOMAIN_LABELS,
     extractSiteCode,
     scopeSiteRank,
     compareScopeSites,
     sortByScopeSiteOrder,
     qvActivitySiteCode,
+    qvActivityDomainCode,
+    normalizeScopeDomainCode,
+    scopeDomainRank,
+    compareScopeDomains,
+    sortByScopeDomainOrder,
+    scopeDomainLabel,
+    scopeDomainOrderTrail,
     compareQvActivities,
+    qvStripSessionSuffix,
+    qvIsMultiSessionRow,
+    qvPrincipalActivityKey,
+    compareQvProposals,
+    qvArbitragePeriodLabel,
+    qvNeedsArbitrationRow,
+    qvBuildArbitrageGroups,
+    qvGroupArbitrageByDomain,
+    qvInitialOpenDomain,
+    qvArbitrageKpis,
     extractCalendarYear,
     yearToObjectifPeriod,
     periodFromStart,

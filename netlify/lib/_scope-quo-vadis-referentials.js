@@ -60,6 +60,20 @@ const RESPONSIBLE_FUNCTIONS = Object.freeze([
 
 const SCOPE_SITE_ORDER = Object.freeze(OFFICIAL_LIEUX.map((row) => String(row.oiCode)));
 
+const SCOPE_DOMAIN_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']);
+
+const SCOPE_DOMAIN_LABELS = Object.freeze({
+  DPS: 'Détachement de premier secours',
+  DAP: 'Détachement d’appui',
+  JSP: 'Jeunes sapeurs-pompiers',
+  FOBA: 'Formation de base',
+  FOCO: 'Formation continue',
+  FOCA: 'Formation cadres',
+  FOSPEC: 'Formations spécialisées',
+  AUTO: 'Formation automobile',
+  PR: 'Formation PR'
+});
+
 function extractSiteCode(value){
   const match = String(value || '').toUpperCase().match(/\b([GBC][12]|Y[1-4])\b/);
   return match ? match[1] : '';
@@ -157,12 +171,65 @@ function hasTheoryRooms(lieuCode){
   return !SITES_WITHOUT_THEORY_ROOMS.includes(String(lieuCode || ''));
 }
 
+function normalizeScopeDomainCode(value){
+  const raw = String(value || '').trim().toUpperCase();
+  if(raw === 'PAPR') return 'PR';
+  return raw;
+}
+
+function scopeDomainBand(value){
+  const code = normalizeScopeDomainCode(value);
+  if(code === 'DPS') return [1, 10, code];
+  if(code === 'DAP') return [1, 20, code];
+  if(code === 'JSP') return [1, 30, code];
+  if(code.startsWith('FO')){
+    const known = { FOBA: 10, FOCO: 20, FOCA: 30, FOSPEC: 40 };
+    return [2, Object.prototype.hasOwnProperty.call(known, code) ? known[code] : 50, code];
+  }
+  if(code === 'AUTO') return [3, 10, code];
+  if(code === 'PR') return [4, 10, code];
+  return [5, 10, code];
+}
+
+function scopeDomainRank(value){
+  const band = scopeDomainBand(value);
+  return (band[0] * 1000) + band[1];
+}
+
+function compareScopeDomains(a, b){
+  const left = scopeDomainBand(a);
+  const right = scopeDomainBand(b);
+  if(left[0] !== right[0]) return left[0] - right[0];
+  if(left[1] !== right[1]) return left[1] - right[1];
+  return String(left[2] || '').localeCompare(String(right[2] || ''), 'fr');
+}
+
+function sortByScopeDomainOrder(rows, getter){
+  const get = getter || ((row) => row && (row.domain || row.domainCode || row.code || row));
+  return (rows || []).slice().sort((a, b) => {
+    const cmp = compareScopeDomains(get(a), get(b));
+    if(cmp) return cmp;
+    return String(get(a) || '').localeCompare(String(get(b) || ''), 'fr');
+  });
+}
+
+function scopeDomainLabel(value){
+  const code = normalizeScopeDomainCode(value);
+  return SCOPE_DOMAIN_LABELS[code] || code || '';
+}
+
+function scopeDomainOrderTrail(){
+  return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR';
+}
+
 module.exports = {
   OFFICIAL_LIEUX,
   THEORY_ROOMS,
   SITES_WITHOUT_THEORY_ROOMS,
   RESPONSIBLE_FUNCTIONS,
   SCOPE_SITE_ORDER,
+  SCOPE_DOMAIN_ORDER,
+  SCOPE_DOMAIN_LABELS,
   extractSiteCode,
   scopeSiteRank,
   compareScopeSites,
@@ -172,5 +239,11 @@ module.exports = {
   suggestLieu,
   roomsForLieu,
   roomsConflict,
-  hasTheoryRooms
+  hasTheoryRooms,
+  normalizeScopeDomainCode,
+  scopeDomainRank,
+  compareScopeDomains,
+  sortByScopeDomainOrder,
+  scopeDomainLabel,
+  scopeDomainOrderTrail
 };

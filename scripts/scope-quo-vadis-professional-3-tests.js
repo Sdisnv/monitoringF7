@@ -59,7 +59,7 @@ assert.ok((qvUi.match(/qv-mini-month/g) || []).length >= 1, 'mini-calendriers ab
 assert.ok(/qv-agenda-day/.test(qvUi), 'agenda chronologique absent');
 assert.ok(/qvFormatDate/.test(qvUi), 'dates ISO datetime doivent être affichées');
 assert.ok(/\[qvTime\(row\.startsAt\), qvTime\(row\.endsAt\)\]/.test(qvUi) || /Horaire/.test(qvUi), 'horaire métier manquant');
-assert.ok(/sort\.key === 'date' \? \['date', 'time', 'domain', 'title'\]/.test(qvUi), 'tri DATE → HEURE → DOMAINE → ACTIVITÉ manquant');
+assert.ok(/compareQvActivities/.test(qvUi), 'tri DATE → HEURE → DOMAINE → ACTIVITÉ manquant');
 assert.ok(/Référence 2026/.test(qvUi), 'bloc référence 2026 manquant');
 assert.ok(/loadQuoVadisHistory/.test(ui), 'historique non lazy');
 assert.ok(/e\.salle/.test(service) && !/e\.lieu_id/.test(service), 'historique doit utiliser salle');
