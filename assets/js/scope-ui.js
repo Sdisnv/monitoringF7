@@ -10250,30 +10250,41 @@
     const cursus = qvFilterOptions(all, (row) => row.cursus);
     const states = qvFilterOptions(all, (row) => row.status);
     const period = filters.period || 'tous';
-    const field = (id, label, optionsHtml) => `<div class="scope-field"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${optionsHtml}</select></div>`;
+    const field = (id, label, optionsHtml, extraClass) => `<div class="scope-field${extraClass ? ' ' + extraClass : ''}"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${optionsHtml}</select></div>`;
     const check = (id, label, checked) => `<label class="qv-agenda-check" for="${id}"><input id="${id}" type="checkbox" ${checked ? 'checked' : ''}><span class="qv-agenda-check-box" aria-hidden="true"></span><span>${escapeHtml(label)}</span></label>`;
     const periodControl = period === 'mois'
-      ? field('qv-filter-month', 'Mois', `<option value="tous">Tous</option>${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.month === row.value || (filters.month === row.value.slice(5, 7) && row.value.startsWith('2027-')) ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`)
+      ? field('qv-filter-month', 'Mois', `<option value="tous">Tous</option>${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.month === row.value || (filters.month === row.value.slice(5, 7) && row.value.startsWith('2027-')) ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`, 'qv-period-extra')
       : period === 'trimestre'
-        ? field('qv-filter-quarter', 'Trimestre', `<option value="tous">Tous</option>${qvQuarterChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.quarter === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`)
+        ? field('qv-filter-quarter', 'Trimestre', `<option value="tous">Tous</option>${qvQuarterChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.quarter === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`, 'qv-period-extra')
         : period === 'semestre'
-          ? field('qv-filter-semester', 'Semestre', `<option value="tous">Tous</option>${qvSemesterChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.semester === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`)
+          ? field('qv-filter-semester', 'Semestre', `<option value="tous">Tous</option>${qvSemesterChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.semester === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`, 'qv-period-extra')
           : '';
+    const periodSeg = `<div class="scope-field qv-filter-period">
+      <span class="qv-period-label" id="qv-period-label">Période d’affichage</span>
+      <div class="qv-period-seg" role="group" aria-labelledby="qv-period-label">
+        ${qvPeriodChoices().map((row) => `<button type="button" class="qv-period-seg-btn${period === row.value ? ' is-active' : ''}" data-qv-period="${escapeHtml(row.value)}" aria-pressed="${period === row.value ? 'true' : 'false'}">${escapeHtml(row.label)}</button>`).join('')}
+      </div>
+      <input type="hidden" id="qv-filter-period" value="${escapeHtml(period)}">
+    </div>`;
     return `<div class="qv-agenda-filters qv-activites-filters">
-      <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control">${qvCockpitIcon('search')}<input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div></div>
-      ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-specialisation', 'Spécialisation', `<option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-cursus', 'Cursus', `<option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
-      ${field('qv-filter-period', 'Période d’affichage', qvPeriodChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${period === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join(''))}
-      ${periodControl}
-      ${field('qv-filter-lieu', 'Lieu', `<option value="tous">Tous</option>${lieux.map((v) => `<option value="${escapeHtml(v)}" ${filters.lieu === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      ${check('qv-filter-sessions', 'Séances multiples', filters.sessions === 'oui')}
-      ${check('qv-filter-attention', 'Points d’attention', filters.attention)}
-      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">${qvCockpitIcon('refresh')}</button>
+      <div class="qv-activites-filters-primary">
+        <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control">${qvCockpitIcon('search')}<input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher un événement, un domaine, un public cible, un lieu…"></div></div>
+        ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${field('qv-filter-specialisation', 'Spécialisation', `<option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      </div>
+      <div class="qv-activites-filters-secondary">
+        ${field('qv-filter-cursus', 'Cursus', `<option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
+        ${periodSeg}
+        ${periodControl}
+        ${field('qv-filter-lieu', 'Lieu', `<option value="tous">Tous</option>${lieux.map((v) => `<option value="${escapeHtml(v)}" ${filters.lieu === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+        ${check('qv-filter-sessions', 'Séances multiples', filters.sessions === 'oui')}
+        ${check('qv-filter-attention', 'Points d’attention', filters.attention)}
+        <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">${qvCockpitIcon('refresh')}</button>
+      </div>
     </div>`;
   }
 
@@ -10879,9 +10890,64 @@
     </section>`;
   }
 
+  function qvFormatSalleRappel(rooms) {
+    const list = (rooms || []).filter((row) => row && row.actif !== false);
+    if (!list.length) return 'aucune';
+    const byId = new Map(list.map((row) => [String(row.salleId), row]));
+    const children = new Map();
+    list.forEach((row) => {
+      const parent = String(row.parentSalleId || '');
+      if (parent && byId.has(parent)) {
+        if (!children.has(parent)) children.set(parent, []);
+        children.get(parent).push(row.libelle);
+      }
+    });
+    const parts = [];
+    list.forEach((row) => {
+      if (row.parentSalleId && byId.has(String(row.parentSalleId))) return;
+      const kids = children.get(String(row.salleId));
+      parts.push(kids && kids.length ? `${row.libelle} (${kids.join(', ')})` : row.libelle);
+    });
+    return parts.join(', ') || 'aucune';
+  }
+
+  function qvActivitesSecondaryCards(qv) {
+    const lieux = ((qv && qv.lieux) || []).filter((row) => row.actif !== false);
+    const rooms = (qv && qv.sallesTheorie) || [];
+    const roomsByLieu = new Map();
+    rooms.forEach((row) => {
+      const keys = [row.lieuId, row.lieuCode].filter(Boolean).map((value) => String(value));
+      keys.forEach((key) => {
+        if (!roomsByLieu.has(key)) roomsByLieu.set(key, []);
+        roomsByLieu.get(key).push(row);
+      });
+    });
+    const salleItems = lieux.map((lieu) => {
+      const list = roomsByLieu.get(String(lieu.lieuId)) || roomsByLieu.get(String(lieu.code)) || [];
+      return `<li><strong>${escapeHtml(lieu.nomCourt || '')}</strong> — ${escapeHtml(qvFormatSalleRappel(list))}</li>`;
+    }).join('');
+    const addressItems = lieux.map((lieu) => {
+      const line = [lieu.adresseLigne1 || lieu.adresse_ligne1, [lieu.npa, lieu.localite].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+      return `<li><strong>${escapeHtml(lieu.nomCourt || '')}</strong>${line ? ` — ${escapeHtml(line)}` : ''}</li>`;
+    }).join('');
+    return `<div class="qv-activites-notes">
+      <aside class="qv-agenda-note">
+        <span class="qv-section-icon is-circle">${qvCockpitIcon('bulb')}</span>
+        <div><h3>Bon à savoir</h3><p>La période d’affichage réduit la liste. Le tableau reste unique et chronologique. Cliquez une ligne pour ouvrir la fiche.</p></div>
+      </aside>
+      <aside class="qv-agenda-note">
+        <span class="qv-section-icon is-circle">${qvCockpitIcon('calendar')}</span>
+        <div><h3>Salles de théorie</h3>${salleItems ? `<ul>${salleItems}</ul>` : '<p>Les salles officielles s’affichent dès le chargement des lieux.</p>'}</div>
+      </aside>
+      <aside class="qv-agenda-note">
+        <span class="qv-section-icon is-circle">${qvCockpitIcon('info')}</span>
+        <div><h3>Adresses des sites</h3>${addressItems ? `<ul>${addressItems}</ul>` : '<p>Les adresses officielles s’affichent dès le chargement des lieux.</p>'}</div>
+      </aside>
+    </div>`;
+  }
+
   function renderQuoVadisActivites(qv) {
     const rows = qvFilteredActivities(qv);
-    const all = qvActivities(qv);
     const colCount = 13;
     let currentMonth = null;
     const monthCounts = {};
@@ -10897,7 +10963,7 @@
       if (monthKey !== currentMonth) {
         currentMonth = monthKey;
         const count = monthCounts[monthKey] || 0;
-        separator = `<tr class="qv-month-separator"><th colspan="${colCount}"><span>${escapeHtml(qvMonthSeparatorLabel(monthKey))}</span><span>${escapeHtml(qvActivityCountLabel(count))}</span></th></tr>`;
+        separator = `<tr class="qv-month-separator"><th colspan="${colCount}"><div class="qv-month-bar"><span class="qv-month-bar-label">${escapeHtml(qvMonthSeparatorLabel(monthKey))}</span><span class="qv-month-bar-count">${escapeHtml(qvActivityCountLabel(count))}</span></div></th></tr>`;
       }
       return `${separator}<tr class="qv-activites-row ${dayClass}" data-qv-open="${href}">
             <td>${escapeHtml(row.startsAt ? qvFormatDate(row.startsAt) : 'À proposer')}</td>
@@ -10925,7 +10991,7 @@
       </div>
       ${qvActivitesFilterBar(qv)}
       <div class="qv-agenda-meta-row">
-        <p class="qv-agenda-info">${escapeHtml(String(rows.length))} activité${rows.length > 1 ? 's' : ''} affichée${rows.length > 1 ? 's' : ''}${rows.length === all.length ? '' : ` sur ${escapeHtml(String(all.length))}`}</p>
+        <p class="qv-agenda-info">${escapeHtml(qvActivityCountLabel(rows.length))} affichée${rows.length > 1 ? 's' : ''}</p>
         <ul class="qv-agenda-legend">
           <li><span class="qv-agenda-swatch is-vacation"></span>Vacances scolaires</li>
           <li><span class="qv-agenda-swatch is-holiday"></span>Jour férié</li>
@@ -10938,6 +11004,9 @@
       </div>
       <div class="scope-table-wrap qv-activites-wrap">
         <table class="scope-table qv-activities-table">
+          <colgroup>
+            <col class="qv-col-date"><col class="qv-col-time"><col class="qv-col-domain"><col class="qv-col-oi"><col class="qv-col-cible"><col class="qv-col-title"><col class="qv-col-spec"><col class="qv-col-statcom"><col class="qv-col-lieu"><col class="qv-col-salle"><col class="qv-col-resp"><col class="qv-col-state"><col class="qv-col-action">
+          </colgroup>
           <thead><tr>
             <th>Date</th>
             <th>Horaire</th>
@@ -10956,6 +11025,7 @@
           <tbody>${body}</tbody>
         </table>
       </div>
+      ${qvActivitesSecondaryCards(qv)}
     </section>`;
   }
 
@@ -11364,6 +11434,16 @@
     });
     ['qv-filter-domain', 'qv-filter-family', 'qv-filter-cible', 'qv-filter-oi', 'qv-filter-specialisation', 'qv-filter-cursus', 'qv-filter-status', 'qv-filter-period', 'qv-filter-month', 'qv-filter-quarter', 'qv-filter-semester', 'qv-filter-lieu', 'qv-filter-attention', 'qv-filter-sessions'].forEach((id) => {
       document.getElementById(id)?.addEventListener('change', syncQvFilters);
+    });
+    document.querySelectorAll('[data-qv-period]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const period = btn.getAttribute('data-qv-period') || 'tous';
+        const hidden = document.getElementById('qv-filter-period');
+        if (hidden) hidden.value = period;
+        readQvFilters();
+        state.quoVadisFilters.period = period;
+        render();
+      });
     });
     document.getElementById('qv-filter-reset')?.addEventListener('click', () => {
       state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', sessions: 'tous', cible: 'tous', oi: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', period: 'tous', month: 'tous', quarter: 'tous', semester: 'tous', lieu: 'tous', attention: false };

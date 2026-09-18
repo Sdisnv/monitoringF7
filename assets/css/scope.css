@@ -1474,18 +1474,129 @@ a.qv-mini-day.has-activity:focus-visible span {
   letter-spacing: .04em;
 }
 
+/* scope-quo-vadis-toutes-activites-ux-2 */
+.qv-activites-view {
+  min-width: 0;
+  max-width: 100%;
+}
 .qv-activities-table {
-  min-width: 1280px;
+  width: 100%;
+  min-width: 1180px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
-.qv-activites-wrap {
+.qv-activites-wrap,
+.scope-table-wrap.qv-activites-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
 }
-.qv-activites-filters {
-  grid-template-columns: minmax(240px, 1.7fr) repeat(5, minmax(100px, 1fr));
+.qv-agenda-filters.qv-activites-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  margin: 0 0 16px;
 }
+.qv-activites-filters-primary {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(5, minmax(118px, 1fr));
+  gap: 12px 14px;
+  align-items: end;
+}
+.qv-activites-filters-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: end;
+}
+.qv-activites-filters-secondary > .scope-field {
+  flex: 1 1 132px;
+  min-width: 124px;
+}
+.qv-activites-filters-secondary > .qv-filter-period {
+  flex: 1 1 300px;
+  min-width: 268px;
+}
+.qv-activites-filters-secondary > .qv-period-extra {
+  flex: 1 1 148px;
+  min-width: 132px;
+}
+.qv-activites-filters-secondary > .qv-agenda-check {
+  flex: 0 1 auto;
+  min-height: 40px;
+  padding-bottom: 2px;
+}
+.qv-activites-filters .qv-filter-reset {
+  flex: 0 0 36px;
+  justify-self: end;
+  margin-left: auto;
+}
+.qv-period-label {
+  display: block;
+  font-size: var(--scope-type-label);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--scope-muted);
+  margin-bottom: 6px;
+}
+.qv-period-seg {
+  display: inline-flex;
+  width: 100%;
+  min-height: var(--scope-h-control);
+  border: 1px solid #c9d5ea;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.qv-period-seg-btn {
+  flex: 1 1 0;
+  margin: 0;
+  border: 0;
+  border-right: 1px solid #c9d5ea;
+  background: #fff;
+  color: var(--scope-ink);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+.qv-period-seg-btn:last-child {
+  border-right: 0;
+}
+.qv-period-seg-btn:hover {
+  background: #eef2fb;
+}
+.qv-period-seg-btn.is-active,
+.qv-period-seg-btn[aria-pressed="true"] {
+  background: var(--scope-blue);
+  color: #fff;
+  font-weight: 650;
+}
+.qv-period-seg-btn:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: -2px;
+  z-index: 1;
+}
+.qv-activities-table .qv-col-date { width: 7%; }
+.qv-activities-table .qv-col-time { width: 8%; }
+.qv-activities-table .qv-col-domain { width: 6.5%; }
+.qv-activities-table .qv-col-oi { width: 4%; }
+.qv-activities-table .qv-col-cible { width: 8%; }
+.qv-activities-table .qv-col-title { width: 16%; }
+.qv-activities-table .qv-col-spec { width: 8.5%; }
+.qv-activities-table .qv-col-statcom { width: 6.5%; }
+.qv-activities-table .qv-col-lieu { width: 9.5%; }
+.qv-activities-table .qv-col-salle { width: 8.5%; }
+.qv-activities-table .qv-col-resp { width: 9%; }
+.qv-activities-table .qv-col-state { width: 10%; }
+.qv-activities-table .qv-col-action { width: 2.5%; }
 .qv-activites-title {
-  min-width: 220px;
+  min-width: 0;
   font-weight: 650;
 }
 .qv-activites-action {
@@ -1514,27 +1625,48 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-activites-row.is-holiday td {
   background: #dce3f7;
 }
-.qv-activites-row:hover td {
-  filter: brightness(0.985);
-}
 .qv-month-separator th {
   padding: 8px 12px;
   background: #5b6570;
   color: #fff;
   font-size: 12px;
-  font-weight: 650;
-  letter-spacing: .04em;
+  font-weight: 700;
+  letter-spacing: .03em;
   text-align: left;
   text-transform: uppercase;
+  border-bottom: 0;
 }
-.qv-month-separator th {
-  display: table-cell;
+.qv-month-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
-.qv-month-separator span:last-child {
-  float: right;
-  font-weight: 500;
+.qv-month-bar-label {
+  font-weight: 700;
+}
+.qv-month-bar-count {
+  font-weight: 650;
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap;
+}
+.qv-activites-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.qv-activites-notes .qv-agenda-note {
+  padding: 10px 12px;
+}
+.qv-activites-notes ul {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--scope-muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 .qv-activity-salle,
 .qv-activity-responsable {
@@ -1611,6 +1743,15 @@ a.qv-mini-day.has-activity:focus-visible span {
   .qv-agenda-filters .qv-filter-reset {
     justify-self: start;
   }
+  .qv-activites-filters-primary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .qv-activites-filters-primary .qv-filter-search {
+    grid-column: 1 / -1;
+  }
+  .qv-activites-notes {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1624,6 +1765,9 @@ a.qv-mini-day.has-activity:focus-visible span {
     justify-self: start;
   }
   .qv-agenda-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .qv-activites-filters-primary {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -2330,6 +2474,7 @@ a.qv-mini-day.has-activity:focus-visible span {
 .scope-content {
   width: 100%;
   max-width: var(--scope-max);
+  min-width: 0;
   margin: 0 auto;
 }
 
@@ -3493,6 +3638,7 @@ a.qv-mini-day.has-activity:focus-visible span {
 
 .scope-main {
   padding: var(--scope-pad);
+  min-width: 0;
 }
 
 .scope-card {
@@ -3731,6 +3877,82 @@ a.qv-mini-day.has-activity:focus-visible span {
 
 .scope-table tbody tr.scope-row-catchup {
   box-shadow: inset 3px 0 0 #5fb6f5;
+}
+
+.scope-table.qv-activities-table th,
+.scope-table.qv-activities-table td {
+  white-space: normal;
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+.scope-table.qv-activities-table thead th {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+.scope-table.qv-activities-table thead th:nth-child(1),
+.scope-table.qv-activities-table thead th:nth-child(2),
+.scope-table.qv-activities-table thead th:nth-child(3),
+.scope-table.qv-activities-table thead th:nth-child(4),
+.scope-table.qv-activities-table thead th:nth-child(8),
+.scope-table.qv-activities-table thead th:nth-child(12),
+.scope-table.qv-activities-table .qv-col-date,
+.scope-table.qv-activities-table .qv-col-time,
+.scope-table.qv-activities-table .qv-col-oi,
+.scope-table.qv-activities-table .qv-col-statcom,
+.scope-table.qv-activities-table .qv-col-action,
+.scope-table.qv-activities-table td:nth-child(1),
+.scope-table.qv-activities-table td:nth-child(2),
+.scope-table.qv-activities-table td:nth-child(4),
+.scope-table.qv-activities-table td:nth-child(8),
+.scope-table.qv-activities-table td:nth-child(13) {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.scope-table.qv-activities-table td:nth-child(12) {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.scope-table.qv-activities-table tbody tr.qv-month-separator,
+.scope-table.qv-activities-table tbody tr.qv-month-separator:nth-child(odd),
+.scope-table.qv-activities-table tbody tr.qv-month-separator:nth-child(even),
+.scope-table.qv-activities-table tbody tr.qv-month-separator:hover {
+  background: #5b6570;
+}
+.scope-table.qv-activities-table tbody tr.qv-month-separator th,
+.scope-table.qv-activities-table tbody tr.qv-month-separator:nth-child(odd) th,
+.scope-table.qv-activities-table tbody tr.qv-month-separator:nth-child(even) th,
+.scope-table.qv-activities-table tbody tr.qv-month-separator:hover th {
+  padding: 8px 12px;
+  background: #5b6570;
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 0;
+  filter: none;
+}
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-vacation td,
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-vacation:nth-child(odd) td,
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-vacation:nth-child(even) td {
+  background: #eceaf6;
+}
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-holiday td,
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-holiday:nth-child(odd) td,
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-holiday:nth-child(even) td {
+  background: #dce3f7;
+}
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-vacation:hover td {
+  background: #e4e1f0;
+}
+.scope-table.qv-activities-table tbody tr.qv-activites-row.is-holiday:hover td {
+  background: #d0d9f2;
+}
+.scope-table.qv-activities-table tbody tr.qv-activites-row:hover td {
+  filter: none;
 }
 
 .scope-multisession-v2-band {
