@@ -209,6 +209,7 @@
       attention: false
     },
     quoVadisAgendaMonth: '',
+    quoVadisCalendarModal: '',
     quoVadisFutureForm: {
       dateDebut: '',
       heureDebut: '',
@@ -10365,50 +10366,19 @@
   }
 
   function qvCalendarMarkVisible(row) {
-    if (!row) return false;
-    const jour = qvDateKey(row.jour);
-    if (!jour) return false;
-    const kind = String(row.typeJour || row.type_jour || '').toUpperCase();
-    if (kind === 'NEUTRALISATION_INTERNE') return false;
-    if (kind.includes('FERIE') || kind === 'VACANCES_SCOLAIRES') return true;
-    return row.neutralise !== true;
+    return L.qvCalendarMarkVisible(row);
   }
 
   function qvCalendarKind(row) {
-    return String((row && (row.typeJour || row.type_jour)) || '').toUpperCase();
+    return L.qvCalendarKind(row);
   }
 
   function qvCalendarEndDate(row) {
-    const meta = (row && row.metadata) || {};
-    return qvDateKey(meta.dateFin || meta.date_fin || meta.endDate || meta.fin || (row && (row.dateFin || row.date_fin)));
-  }
-
-  function qvShiftDateKey(dateKey, days) {
-    const date = new Date(`${qvDateKey(dateKey)}T12:00:00Z`);
-    if (Number.isNaN(date.getTime())) return '';
-    date.setUTCDate(date.getUTCDate() + Number(days || 0));
-    return date.toISOString().slice(0, 10);
+    return L.qvCalendarEndDate(row);
   }
 
   function qvCalendarIndex(qv) {
-    const byDate = {};
-    const push = (date, row) => {
-      if (!date) return;
-      (byDate[date] = byDate[date] || []).push(row);
-    };
-    (qv.calendarDays || []).forEach((row) => {
-      if (!qvCalendarMarkVisible(row)) return;
-      const start = qvDateKey(row.jour);
-      const end = qvCalendarEndDate(row);
-      const kind = qvCalendarKind(row);
-      if (kind === 'VACANCES_SCOLAIRES' && end && end > start) {
-        let guard = 0;
-        for (let date = start; date && date <= end && guard < 60; date = qvShiftDateKey(date, 1), guard += 1) push(date, row);
-      } else {
-        push(start, row);
-      }
-    });
-    return byDate;
+    return L.qvExpandCalendarDays((qv && qv.calendarDays) || []);
   }
 
   function qvBuildMonth(qv, year, month) {
@@ -10438,7 +10408,7 @@
         known: known.has(date),
         holiday: marks.some((row) => qvCalendarKind(row).includes('FERIE')),
         vacation: marks.some((row) => qvCalendarKind(row) === 'VACANCES_SCOLAIRES'),
-        calendarLabel: marks.map((row) => row.libelle).join(' · ')
+        calendarLabel: [...new Set(marks.map((row) => row.libelle).filter(Boolean))].join(' · ')
       });
     }
     while (cells.length % 7) cells.push(null);
@@ -10520,8 +10490,8 @@
       <ul class="qv-year-legend">
         <li><span class="qv-legend-swatch is-activity"></span><span><strong>Activité proposée</strong><small>Date à planifier / à confirmer</small></span></li>
         <li><span class="qv-legend-swatch is-known"></span><span><strong>Date annoncée</strong><small>Événement déjà connu</small></span></li>
-        <li><span class="qv-legend-swatch is-holiday"></span><span><strong>Jour férié</strong><small>Jour férié officiel</small></span></li>
-        <li><span class="qv-legend-swatch is-vacation"></span><span><strong>Vacances scolaires</strong><small>Période de vacances</small></span></li>
+        <li><button type="button" class="qv-legend-action" id="qv-legend-holidays" aria-haspopup="dialog" aria-controls="qv-calendar-dialog" aria-expanded="${state.quoVadisCalendarModal === 'holidays' ? 'true' : 'false'}"><span class="qv-legend-swatch is-holiday"></span><span><strong>Jour férié</strong><small>Jour férié officiel</small></span></button></li>
+        <li><button type="button" class="qv-legend-action" id="qv-legend-vacations" aria-haspopup="dialog" aria-controls="qv-calendar-dialog" aria-expanded="${state.quoVadisCalendarModal === 'vacations' ? 'true' : 'false'}"><span class="qv-legend-swatch is-vacation"></span><span><strong>Vacances scolaires</strong><small>Période de vacances</small></span></button></li>
         ${today ? '<li><span class="qv-legend-swatch is-today"></span><span><strong>Aujourd’hui</strong><small>Jour courant</small></span></li>' : ''}
       </ul>
       <div class="qv-year-grid">${months.map((month) => qvRenderMiniMonth(month, today)).join('')}</div>
@@ -10532,6 +10502,33 @@
         </div>
         <div class="qv-year-grid">${q1.map((month) => qvRenderMiniMonth(month, today)).join('')}</div>
       </section>
+    </div>`;
+  }
+
+  function renderQuoVadisCalendarModal(qv) {
+    const focus = state.quoVadisCalendarModal;
+    if (!focus) return '';
+    const vacations = L.qvVacationPeriods((qv && qv.calendarDays) || []);
+    const holidays = L.qvHolidayEntries((qv && qv.calendarDays) || []);
+    const vacationFirst = focus === 'vacations';
+    const vacationBlock = `<section class="qv-calendar-dialog-section${vacationFirst ? ' is-focus' : ''}">
+      <h3>Vacances scolaires</h3>
+      ${vacations.length ? `<ul>${vacations.map((row) => `<li><strong>${escapeHtml(row.libelle)}</strong><span>du ${escapeHtml(qvFormatDate(row.debut))} au ${escapeHtml(qvFormatDate(row.fin))}</span></li>`).join('')}</ul>` : '<p class="scope-empty">Aucune période renseignée pour le périmètre QUO VADIS.</p>'}
+    </section>`;
+    const holidayBlock = `<section class="qv-calendar-dialog-section${!vacationFirst ? ' is-focus' : ''}">
+      <h3>Jours fériés</h3>
+      ${holidays.length ? `<ul>${holidays.map((row) => `<li><strong>${escapeHtml(qvFormatDate(row.date))}</strong><span>${escapeHtml(row.libelle)}</span></li>`).join('')}</ul>` : '<p class="scope-empty">Aucune période renseignée pour le périmètre QUO VADIS.</p>'}
+    </section>`;
+    return `<div class="scope-modal" id="qv-calendar-dialog" role="dialog" aria-modal="true" aria-labelledby="qv-calendar-dialog-title">
+      <div class="scope-card qv-calendar-dialog">
+        <div class="scope-modal-header">
+          <h2 id="qv-calendar-dialog-title">CALENDRIER 2027–2028</h2>
+          <button type="button" class="scope-btn" id="qv-calendar-dialog-close" aria-label="Fermer">×</button>
+        </div>
+        <div class="qv-calendar-dialog-body">
+          ${vacationFirst ? `${vacationBlock}${holidayBlock}` : `${holidayBlock}${vacationBlock}`}
+        </div>
+      </div>
     </div>`;
   }
 
@@ -10551,7 +10548,7 @@
     });
     const body = groups.map((group) => {
       const dateLabel = group.date === 'sans-date' ? 'Date à proposer' : qvDateLong(group.date).toUpperCase();
-      return `<tr class="qv-agenda-day qv-agenda-date-row"><th colspan="8">${escapeHtml(dateLabel)}</th></tr>${group.rows.map((row) => `<tr class="qv-agenda-row" data-qv-open="${qvHref('activites', { id: row.activityId, from: 'agenda' })}">
+      return `<tr class="qv-agenda-day qv-agenda-date-row" id="${escapeHtml(L.qvAgendaDayAnchorId(group.date))}"><th colspan="8">${escapeHtml(dateLabel)}</th></tr>${group.rows.map((row) => `<tr class="qv-agenda-row" data-qv-open="${qvHref('activites', { id: row.activityId, from: 'agenda' })}">
           <td>${escapeHtml([qvTime(row.startsAt), qvTime(row.endsAt)].filter(Boolean).join('–') || 'À définir')}</td>
           <td><span class="qv-agenda-dot" aria-hidden="true"></span>${escapeHtml(row.domainLabel || row.domain || '')}</td>
           <td>${escapeHtml((row.cibleCodes || []).join(', ') || '—')}</td>
@@ -10917,7 +10914,8 @@
                   : view === 'regles' ? renderQuoVadisRegles(qv)
                     : view === 'dates-connues' ? renderQuoVadisDatesConnues(qv)
                       : renderQuoVadisSynthese(qv);
-    return renderQuoVadisShell(content);
+    const calendarModal = view === 'agenda-annuel' ? renderQuoVadisCalendarModal(qv) : '';
+    return renderQuoVadisShell(content) + calendarModal;
   }
 
   function render() {
@@ -11038,6 +11036,30 @@
     ['qv-agenda-prev', 'qv-agenda-next', 'qv-agenda-today'].forEach((id) => {
       document.getElementById(id)?.addEventListener('click', (event) => setAgendaMonth(event.currentTarget.getAttribute('data-qv-month')));
     });
+    const openCalendarModal = (focus) => {
+      state.quoVadisCalendarModal = focus;
+      render();
+    };
+    const closeCalendarModal = () => {
+      if (!state.quoVadisCalendarModal) return;
+      state.quoVadisCalendarModal = '';
+      render();
+    };
+    document.getElementById('qv-legend-holidays')?.addEventListener('click', () => openCalendarModal('holidays'));
+    document.getElementById('qv-legend-vacations')?.addEventListener('click', () => openCalendarModal('vacations'));
+    document.getElementById('qv-calendar-dialog-close')?.addEventListener('click', closeCalendarModal);
+    document.getElementById('qv-calendar-dialog')?.addEventListener('click', (event) => {
+      if (event.target && event.target.id === 'qv-calendar-dialog') closeCalendarModal();
+    });
+    const agendaDay = route().qvJour;
+    if (qvView() === 'agenda' && agendaDay) {
+      const anchor = document.getElementById(L.qvAgendaDayAnchorId(agendaDay));
+      if (anchor) {
+        anchor.setAttribute('tabindex', '-1');
+        anchor.scrollIntoView({ block: 'start' });
+        anchor.focus({ preventScroll: true });
+      }
+    }
     root.querySelectorAll('[data-qv-open]').forEach((el) => {
       el.addEventListener('click', (event) => {
         if (event.target.closest('a, button, select, input, label')) return;
@@ -15234,6 +15256,11 @@
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (state.quoVadisCalendarModal) {
+        state.quoVadisCalendarModal = '';
+        render();
+        return;
+      }
       if (state.personnelInactivate) {
         closePersonnelActivityModal();
         return;

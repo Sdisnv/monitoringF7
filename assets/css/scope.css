@@ -413,9 +413,69 @@ a.qv-mini-day:focus-visible span {
   background: #dce3f7;
 }
 .qv-mini-day.has-activity.has-vacation,
-.qv-mini-day.has-activity.is-school-break {
+.qv-mini-day.has-activity.is-school-break,
+.qv-mini-day.has-activity.has-holiday.has-vacation,
+.qv-mini-day.has-activity.is-holiday.is-school-break {
   background: #eceaf6;
   box-shadow: -1px 0 0 #eceaf6, 1px 0 0 #eceaf6;
+}
+.qv-legend-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.qv-legend-action:hover,
+.qv-legend-action:focus-visible {
+  background: var(--scope-navy-soft);
+}
+.qv-legend-action:focus-visible {
+  outline: 2px solid var(--scope-blue);
+  outline-offset: 2px;
+}
+.qv-calendar-dialog {
+  width: min(var(--scope-modal-m), 100%);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+}
+.qv-calendar-dialog-body {
+  display: grid;
+  gap: 18px;
+  padding: 0 4px 8px;
+}
+.qv-calendar-dialog-section h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.qv-calendar-dialog-section.is-focus h3 {
+  color: var(--scope-blue);
+}
+.qv-calendar-dialog-section ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.qv-calendar-dialog-section li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-top: 1px solid var(--scope-line);
+}
+.qv-calendar-dialog-section li span {
+  color: var(--scope-muted);
+  font-size: 12px;
 }
 .qv-mini-day.has-activity span {
   background: var(--scope-red);

@@ -802,6 +802,7 @@ function createScopeQuoVadisService({ database = db } = {}){
 
   async function listProgramme(annee = 2027){
     const programme = await ensureProgramme(annee);
+    await seedCalendar(programme);
     await ensureDefaultCursusSelections(programme);
     await ensureDefaultCursusStepSelections(programme);
     const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue] = await Promise.all([
@@ -960,27 +961,49 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function seedCalendar(programme){
-    const days = [
-      [`${programme.annee}-01-01`, 'FERIE', 'Nouvel An', 'SEED_CORE_1', true],
-      [`${programme.annee}-04-02`, 'FERIE', 'Vendredi saint', 'SEED_CORE_1', true],
-      [`${programme.annee}-04-05`, 'FERIE', 'Lundi de Paques', 'SEED_CORE_1', true],
-      [`${programme.annee}-05-13`, 'FERIE', 'Ascension', 'SEED_CORE_1', true],
-      [`${programme.annee}-05-24`, 'FERIE', 'Lundi de Pentecote', 'SEED_CORE_1', true],
-      [`${programme.annee}-08-01`, 'FERIE', 'Fete nationale', 'SEED_CORE_1', true],
-      [`${programme.annee}-09-20`, 'FERIE', 'Lundi du Jeune federal', 'SEED_CORE_1', true],
-      [`${programme.annee}-12-25`, 'FERIE', 'Noel', 'SEED_CORE_1', true],
-      [`${programme.annee}-02-13`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - sport', 'SEED_CORE_1', true],
-      [`${programme.annee}-04-10`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - printemps', 'SEED_CORE_1', true],
-      [`${programme.annee}-07-03`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - ete', 'SEED_CORE_1', true],
-      [`${programme.annee}-10-16`, 'VACANCES_SCOLAIRES', 'Vacances scolaires vaudoises - automne', 'SEED_CORE_1', true],
-      [`${Number(programme.annee) + 1}-01-01`, 'FERIE', 'Nouvel An', 'SEED_CORE_1', true]
+    const year = Number(programme.annee);
+    const next = year + 1;
+    const holidays = [
+      [`${year}-01-01`, 'Nouvel An'],
+      [`${year}-04-02`, 'Vendredi saint'],
+      [`${year}-04-05`, 'Lundi de Paques'],
+      [`${year}-05-13`, 'Ascension'],
+      [`${year}-05-24`, 'Lundi de Pentecote'],
+      [`${year}-08-01`, 'Fete nationale'],
+      [`${year}-09-20`, 'Lundi du Jeune federal'],
+      [`${year}-12-25`, 'Noel'],
+      [`${next}-01-01`, 'Nouvel An']
     ];
-    for(const row of days){
+    // Plages: calendrier scolaire vaudois 2023–2031 (État de Vaud / vd.ch/vacances).
+    // Les samedis historiques CORE-1 sont conservés pour ON CONFLICT ; le frontend étend via metadata.dateFin.
+    const vacations = [
+      [`${year}-01-01`, `${year}-01-10`, 'Vacances scolaires vaudoises - hiver'],
+      [`${year}-02-06`, `${year}-02-14`, 'Vacances scolaires vaudoises - sport'],
+      [`${year}-02-13`, `${year}-02-14`, 'Vacances scolaires vaudoises - sport'],
+      [`${year}-03-26`, `${year}-04-11`, 'Vacances scolaires vaudoises - printemps'],
+      [`${year}-04-10`, `${year}-04-11`, 'Vacances scolaires vaudoises - printemps'],
+      [`${year}-07-03`, `${year}-08-22`, 'Vacances scolaires vaudoises - ete'],
+      [`${year}-10-09`, `${year}-10-24`, 'Vacances scolaires vaudoises - automne'],
+      [`${year}-10-16`, `${year}-10-24`, 'Vacances scolaires vaudoises - automne'],
+      [`${year}-12-24`, `${next}-01-09`, 'Vacances scolaires vaudoises - hiver'],
+      [`${next}-02-12`, `${next}-02-20`, 'Vacances scolaires vaudoises - sport']
+    ];
+    for (const [jour, libelle] of holidays) {
       await db.query(
         `insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata)
-         values ($1,$2,$3,$4,$5,$6,'{"historizedForProgramme":true}'::jsonb)
-         on conflict (programme_id, jour, type_jour, libelle) do nothing`,
-        [programme.programmeId, ...row]
+         values ($1,$2,'FERIE',$3,'SEED_CORE_1', true, '{"historizedForProgramme":true}'::jsonb)
+         on conflict (programme_id, jour, type_jour, libelle) do update
+           set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
+        [programme.programmeId, jour, libelle]
+      );
+    }
+    for (const [debut, fin, libelle] of vacations) {
+      await db.query(
+        `insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata)
+         values ($1,$2,'VACANCES_SCOLAIRES',$3,'SEED_CORE_1', true, $4::jsonb)
+         on conflict (programme_id, jour, type_jour, libelle) do update
+           set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
+        [programme.programmeId, debut, libelle, JSON.stringify({ historizedForProgramme: true, dateFin: fin })]
       );
     }
   }
