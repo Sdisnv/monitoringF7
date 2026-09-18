@@ -745,8 +745,16 @@
   }
 
   function qvCalendarConstraints(calendarDays) {
-    return (calendarDays || []).filter((row) => qvCalendarKind(row) === 'NEUTRALISATION_INTERNE')
-      .map((row) => ({ date: qvDateKey(row.jour), libelle: row.libelle || 'Contrainte de planification' }))
+    return (calendarDays || []).filter((row) => ['VEILLE_FERIE', 'NEUTRALISATION_INTERNE'].includes(qvCalendarKind(row)))
+      .map((row) => {
+        const kind = qvCalendarKind(row);
+        const metadata = row && row.metadata || {};
+        return {
+          date: qvDateKey(row.jour),
+          type: kind === 'VEILLE_FERIE' ? 'Veille de jour férié' : (metadata.constraintKind === 'PONT_ASCENSION' ? 'Pont de l’Ascension' : 'Neutralisation interne'),
+          motif: metadata.constraintKind === 'PONT_ASCENSION' ? 'Formation neutralisée' : (row.libelle || 'Formation neutralisée')
+        };
+      })
       .filter((row) => row.date)
       .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   }

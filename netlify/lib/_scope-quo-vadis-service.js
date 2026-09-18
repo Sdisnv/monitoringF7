@@ -67,9 +67,35 @@ function deriveHolidayEves(calendarRows){
   }).filter(Boolean).sort((a, b) => calendarDate(a).localeCompare(calendarDate(b)));
 }
 
+function isAscensionHoliday(row){
+  const label = String(row && row.libelle || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  return isHolidayCalendarRow(row) && label.includes('ASCENSION') && weekdayName(calendarDate(row)) === 'THURSDAY';
+}
+
+function deriveAscensionBridges(calendarRows){
+  const rows = Array.isArray(calendarRows) ? calendarRows : [];
+  const existing = new Set(rows.map((row) => `${calendarDate(row)}|${calendarType(row)}`));
+  return rows.filter(isAscensionHoliday).map((holiday) => {
+    const holidayDate = calendarDate(holiday);
+    const bridgeDate = addDays(holidayDate, 1);
+    if(existing.has(`${bridgeDate}|NEUTRALISATION_INTERNE`)) return null;
+    existing.add(`${bridgeDate}|NEUTRALISATION_INTERNE`);
+    return {
+      calendar_day_id: null,
+      programme_id: holiday.programme_id || holiday.programmeId || null,
+      jour: bridgeDate,
+      type_jour: 'NEUTRALISATION_INTERNE',
+      libelle: 'Pont de l’Ascension',
+      source: 'DERIVED_ASCENSION_BRIDGE',
+      neutralise: true,
+      metadata: { constraintKind: 'PONT_ASCENSION', derivedFromHoliday: holidayDate }
+    };
+  }).filter(Boolean).sort((a, b) => calendarDate(a).localeCompare(calendarDate(b)));
+}
+
 function enrichCalendarRows(calendarRows){
   const rows = Array.isArray(calendarRows) ? calendarRows.slice() : [];
-  return rows.concat(deriveHolidayEves(rows));
+  return rows.concat(deriveHolidayEves(rows), deriveAscensionBridges(rows));
 }
 
 function calendarRowsForDate(calendarRows, date){
@@ -1043,9 +1069,6 @@ function createScopeQuoVadisService({ database = db } = {}){
       [`${year}-10-09`, `${year}-10-24`, 'Vacances scolaires vaudoises - automne'],
       [`${year}-12-24`, `${next}-01-09`, 'Vacances scolaires vaudoises - hiver']
     ];
-    const constraints = [
-      [`${year}-05-07`, 'Pont de l’Ascension', { constraintKind: 'PONT_ASCENSION', derivedFromHoliday: `${year}-05-06` }]
-    ];
     await db.query(
       `delete from scope_quo_vadis_calendar_days
         where programme_id = $1 and source in ('SEED_CORE_1', 'CALENDAR_VD_FINAL_3')`,
@@ -1067,15 +1090,6 @@ function createScopeQuoVadisService({ database = db } = {}){
          on conflict (programme_id, jour, type_jour, libelle) do update
            set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
         [programme.programmeId, debut, libelle, JSON.stringify({ historizedForProgramme: true, dateFin: fin })]
-      );
-    }
-    for (const [jour, libelle, metadata] of constraints) {
-      await db.query(
-        `insert into scope_quo_vadis_calendar_days(programme_id, jour, type_jour, libelle, source, neutralise, metadata)
-         values ($1,$2,'NEUTRALISATION_INTERNE',$3,'CALENDAR_VD_FINAL_3', true, $4::jsonb)
-         on conflict (programme_id, jour, type_jour, libelle) do update
-           set metadata = coalesce(scope_quo_vadis_calendar_days.metadata, '{}'::jsonb) || excluded.metadata`,
-        [programme.programmeId, jour, libelle, JSON.stringify(metadata)]
       );
     }
   }
@@ -1976,6 +1990,7 @@ module.exports = {
     calendarRowsForDate,
     calendarType,
     classifyDate,
+    deriveAscensionBridges,
     deriveHolidayEves,
     enrichCalendarRows,
     isBlockingCalendarRow,

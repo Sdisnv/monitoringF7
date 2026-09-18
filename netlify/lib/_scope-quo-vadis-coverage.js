@@ -82,6 +82,21 @@ function enrichCalendarRows(calendarRows){
     existing.add(`${eve}|VEILLE_FERIE`);
     rows.push({ jour: eve, type_jour: 'VEILLE_FERIE', libelle: `Veille de ${holiday.libelle || 'jour férié'}`, neutralise: true });
   });
+  rows.filter((row) => {
+    const label = String(row && row.libelle || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    return calendarType(row) === 'FERIE' && label.includes('ASCENSION') && weekdayName(calendarDate(row)) === 'THURSDAY';
+  }).forEach((holiday) => {
+    const bridge = addDays(calendarDate(holiday), 1);
+    if(existing.has(`${bridge}|NEUTRALISATION_INTERNE`)) return;
+    existing.add(`${bridge}|NEUTRALISATION_INTERNE`);
+    rows.push({
+      jour: bridge,
+      type_jour: 'NEUTRALISATION_INTERNE',
+      libelle: 'Pont de l’Ascension',
+      neutralise: true,
+      metadata: { constraintKind: 'PONT_ASCENSION', derivedFromHoliday: calendarDate(holiday) }
+    });
+  });
   return rows;
 }
 

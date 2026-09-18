@@ -62,7 +62,8 @@ assert.ok(august && august.date >= '2027-08-23', `proposition pendant les vacanc
 const serviceSource = read('netlify/lib/_scope-quo-vadis-service.js');
 assert.ok(serviceSource.includes("source in ('SEED_CORE_1', 'CALENDAR_VD_FINAL_3')"));
 assert.ok(serviceSource.includes("`${year}-03-26`, 'Vendredi saint'"));
-assert.ok(serviceSource.includes("`${year}-05-07`, 'Pont de l’Ascension'"));
+assert.ok(/deriveAscensionBridges/.test(serviceSource));
+assert.ok(!serviceSource.includes("`${year}-05-07`, 'Pont de l’Ascension'"));
 
 const ui = read('assets/js/scope-ui.js');
 const logicSource = read('assets/js/scope-ui-logic.js');
@@ -71,7 +72,7 @@ assert.ok(/CALENDRIER 2027–2028/.test(ui));
 assert.ok(/Contraintes de planification/.test(ui) && /veille de chaque jour férié/.test(ui));
 assert.ok(/qvHref\('agenda', \{ mois: month\.key, jour: cell\.date \}\)/.test(ui));
 assert.ok(/scrollIntoView/.test(ui));
-assert.ok(/scope-quo-vadis-calendar-vd-final-3/.test(read('scope.html')));
+assert.ok(/scope-quo-vadis-calendar-vd-final-[34]/.test(read('scope.html')));
 
 const sandbox = { window: {}, document: { addEventListener() {} }, console };
 sandbox.window = sandbox;

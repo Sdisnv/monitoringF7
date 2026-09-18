@@ -10523,7 +10523,7 @@
     </section>`;
     const constraintBlock = constraints.length ? `<section class="qv-calendar-dialog-section">
       <h3>Contraintes de planification</h3>
-      <ul>${constraints.map((row) => `<li><strong>${escapeHtml(qvFormatDate(row.date))}</strong><span>${escapeHtml(row.libelle)}</span></li>`).join('')}</ul>
+      <ul>${constraints.map((row) => `<li><strong>${escapeHtml(qvFormatDate(row.date))}</strong><span>${escapeHtml(row.type)} — ${escapeHtml(row.motif)}</span></li>`).join('')}</ul>
     </section>` : '';
     return `<div class="scope-modal" id="qv-calendar-dialog" role="dialog" aria-modal="true" aria-labelledby="qv-calendar-dialog-title">
       <div class="scope-card qv-calendar-dialog">
@@ -11059,12 +11059,14 @@
     });
     const agendaDay = route().qvJour;
     if (qvView() === 'agenda' && agendaDay) {
-      const anchor = document.getElementById(L.qvAgendaDayAnchorId(agendaDay));
-      if (anchor) {
+      window.requestAnimationFrame(() => {
+        if (qvView() !== 'agenda' || route().qvJour !== agendaDay) return;
+        const anchor = document.getElementById(L.qvAgendaDayAnchorId(agendaDay));
+        if (!anchor) return;
         anchor.setAttribute('tabindex', '-1');
         anchor.scrollIntoView({ block: 'start' });
         anchor.focus({ preventScroll: true });
-      }
+      });
     }
     root.querySelectorAll('[data-qv-open]').forEach((el) => {
       el.addEventListener('click', (event) => {
