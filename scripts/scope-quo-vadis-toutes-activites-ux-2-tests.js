@@ -56,7 +56,7 @@ assert.ok(/font-weight:\s*700/.test(laterTableCss));
 assert.ok(/text-transform:\s*uppercase/.test(laterTableCss));
 assert.ok(!/float:\s*right/.test(css.slice(css.indexOf('.qv-month-bar'), css.indexOf('.qv-activites-notes'))));
 
-assert.ok(/qvAgendaStateBadge\(row\)/.test(activites));
+assert.ok(/qvActivityStateHtml\(row\)/.test(activites));
 assert.ok(/qv-agenda-state/.test(badge));
 assert.ok(/qv-agenda-swatch/.test(badge));
 assert.ok(/font-weight:\s*400/.test(stateCss));

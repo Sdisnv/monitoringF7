@@ -51,7 +51,7 @@ assert.ok(!/>Ouvrir</.test(activites));
 assert.ok(/qv-month-separator/.test(activites));
 assert.ok(/qvMonthSeparatorLabel/.test(activites));
 assert.ok(/qvActivityCountLabel/.test(activites));
-assert.ok(/qvAgendaStateBadge\(row\)/.test(activites));
+assert.ok(/qvActivityStateHtml\(row\)/.test(activites));
 assert.ok(/qvActivityCalendarClass/.test(activites));
 assert.ok(/is-holiday/.test(activites) && /is-vacation/.test(activites));
 assert.ok(/qvOiCode\(qv, row\)/.test(activites));
@@ -131,7 +131,7 @@ assert.ok(/background:\s*#5b6570/.test(css.slice(css.indexOf('.qv-month-separato
 
 assert.ok(!/Jour normal/.test(legend));
 assert.ok(/Vacances scolaires/.test(legend) && /Jour férié/.test(legend));
-assert.ok((legend.match(/qv-agenda-swatch/g) || []).length === 7);
+assert.ok((legend.match(/qv-agenda-swatch/g) || []).length === 2);
 assert.ok(!/<span class="qv-agenda-state/.test(legend));
 
 assert.ok(/Adresse du lieu/.test(csv));

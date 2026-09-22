@@ -10022,11 +10022,11 @@
 
   function qvAgendaState(row) {
     const status = String((row && row.status) || '').toUpperCase();
-    if (status === 'ANNULE') return { key: 'cancelled', label: 'Annulé' };
-    if (status === 'PROPOSE' || status === 'A_PLANIFIER') return { key: 'arbitrate', label: 'À arbitrer' };
-    if (row && row.attention) return { key: 'attention', label: 'Point d’attention' };
-    if (status === 'PLANIFIE') return { key: 'validated', label: 'Validé' };
-    return { key: 'planned', label: 'Planifié' };
+    if (status === 'ANNULE') return { key: 'cancelled', tone: 'inactive', label: 'Annulé' };
+    if (status === 'PROPOSE' || status === 'A_PLANIFIER') return { key: 'arbitrate', tone: 'block', label: 'À arbitrer' };
+    if (row && row.attention) return { key: 'attention', tone: 'attention', label: 'Point d’attention' };
+    if (status === 'PLANIFIE') return { key: 'validated', tone: 'positive', label: 'Validé' };
+    return { key: 'planned', tone: 'info', label: 'Planifié' };
   }
 
   function qvAgendaStateBadge(row) {
@@ -10036,6 +10036,11 @@
 
   function scopeStateHtml(tone, label) {
     return `<span class="scope-state"><span class="scope-state-swatch is-${escapeHtml(tone)}" aria-hidden="true"></span><span class="scope-state-label">${escapeHtml(label)}</span></span>`;
+  }
+
+  function qvActivityStateHtml(row) {
+    const current = qvAgendaState(row);
+    return scopeStateHtml(current.tone, current.label);
   }
 
   function qvNeutralCell(value) {
@@ -11026,7 +11031,7 @@
             <td>${escapeHtml(qvLieuLabel(row))}</td>
             <td>${escapeHtml(row.salleTheorie || '—')}</td>
             <td>${escapeHtml(row.responsable || '—')}</td>
-            <td>${qvAgendaStateBadge(row)}</td>
+            <td>${qvActivityStateHtml(row)}</td>
             <td class="qv-activites-action"><a class="qv-row-open" href="${href}" aria-label="Ouvrir la fiche">${qvCockpitIcon('chevron')}</a></td>
           </tr>`;
     }).join('') : `<tr><td colspan="${colCount}"><div class="scope-empty">Aucune activité ne correspond aux filtres.</div></td></tr>`;
@@ -11041,14 +11046,14 @@
       ${qvActivitesFilterBar(qv)}
       <div class="qv-agenda-meta-row">
         <p class="qv-agenda-info">${escapeHtml(qvActivityCountLabel(rows.length))} affichée${rows.length > 1 ? 's' : ''}</p>
-        <ul class="qv-agenda-legend">
+        <ul class="qv-agenda-legend scope-state-legend">
           <li><span class="qv-agenda-swatch is-vacation"></span>Vacances scolaires</li>
           <li><span class="qv-agenda-swatch is-holiday"></span>Jour férié</li>
-          <li><span class="qv-agenda-swatch is-planned"></span>Planifié</li>
-          <li><span class="qv-agenda-swatch is-validated"></span>Validé</li>
-          <li><span class="qv-agenda-swatch is-attention"></span>Point d’attention</li>
-          <li><span class="qv-agenda-swatch is-arbitrate"></span>À arbitrer</li>
-          <li><span class="qv-agenda-swatch is-cancelled"></span>Annulé</li>
+          <li>${scopeStateHtml('block', 'À arbitrer')}</li>
+          <li>${scopeStateHtml('attention', 'Point d’attention')}</li>
+          <li>${scopeStateHtml('positive', 'Validé')}</li>
+          <li>${scopeStateHtml('info', 'Planifié')}</li>
+          <li>${scopeStateHtml('inactive', 'Annulé')}</li>
         </ul>
       </div>
       <div class="scope-table-wrap qv-activites-wrap">

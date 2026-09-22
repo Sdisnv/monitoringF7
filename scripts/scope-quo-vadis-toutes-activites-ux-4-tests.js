@@ -123,7 +123,7 @@ assert.ok(!referentials.THEORY_ROOMS.some((row) => /Y[1-4]/.test(row.lieuCode)))
 
 assert.ok(!/scope-pagination/.test(activites));
 assert.ok(/qv-month-separator/.test(activites));
-assert.ok(/qvAgendaStateBadge\(row\)/.test(activites));
+assert.ok(/qvActivityStateHtml\(row\)/.test(activites));
 assert.ok(/qv-agenda-nav-side qv-export-btn/.test(activites));
 assert.ok(/Spécialisation · cursus/.test(activites));
 assert.ok(!/<th>Point d’attention<\/th>/.test(activites));

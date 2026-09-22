@@ -81,7 +81,7 @@ assert.ok(!/qv-activites-page|pageSize|EVENT_LIST_PAGE/.test(activites));
 assert.ok(/return qvSortActivities\(rows(?:, qv)?\)/.test(filtered));
 assert.ok(/qv-month-separator/.test(activites));
 assert.ok(/background:\s*#5b6570/.test(laterTableCss));
-assert.ok(/qvAgendaStateBadge\(row\)/.test(activites));
+assert.ok(/qvActivityStateHtml\(row\)/.test(activites));
 assert.ok(/qv-agenda-state/.test(badge));
 assert.ok(/font-weight:\s*400/.test(stateCss));
 assert.ok(/font-size:\s*inherit/.test(stateCss));
