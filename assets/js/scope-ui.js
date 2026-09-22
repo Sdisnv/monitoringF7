@@ -11327,19 +11327,34 @@
   }
 
   function qvArbitrerSortHeader(key, label) {
-    return sortableHeader('qv-arbitrer', key, label, state.quoVadisArbitrerSort);
+    const colClass = {
+      codeCours: 'qv-col-code',
+      title: 'qv-col-title',
+      statCom: 'qv-col-statcom',
+      date: 'qv-col-date',
+      horaire: 'qv-col-time',
+      oi: 'qv-col-oi',
+      cible: 'qv-col-cible',
+      responsable: 'qv-col-resp',
+      lieu: 'qv-col-lieu',
+      etat: 'qv-col-state'
+    }[key];
+    const html = sortableHeader('qv-arbitrer', key, label, state.quoVadisArbitrerSort);
+    return colClass
+      ? html.replace('class="scope-table-sort-header', `class="${colClass} scope-table-sort-header`)
+      : html;
   }
 
   function qvRenderArbitrerGroupTable(groups) {
     return `<div class="scope-table-wrap qv-arbitrer-table-wrap qv-arbitrer-nested-wrap"><table class="scope-table qv-arbitrer-table qv-arbitrer-nested-table">
-      <thead><tr>${qvArbitrerSortHeader('title', 'Activité')}${qvArbitrerSortHeader('date', 'Période proposée')}<th>Propositions</th>${qvArbitrerSortHeader('lieu', 'Lieu')}${qvArbitrerSortHeader('etat', 'État')}<th>Action</th></tr></thead>
+      <thead><tr>${qvArbitrerSortHeader('title', 'Activité')}${qvArbitrerSortHeader('date', 'Période proposée')}<th>Propositions</th>${qvArbitrerSortHeader('lieu', 'Lieu')}${qvArbitrerSortHeader('etat', 'État')}<th class="qv-col-action">Action</th></tr></thead>
       <tbody>${qvArbitrerSortedGroups(groups).map((group) => `<tr>
-        <td><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${L.qvArbitrerKindSubtitle(group) ? `<span class="qv-arbitrer-sub">${escapeHtml(L.qvArbitrerKindSubtitle(group))}</span>` : ''}</td>
-        <td>${escapeHtml(group.periodLabel || '—')}</td>
-        <td>${escapeHtml(String(group.proposalCount || 0))}</td>
-        <td>${escapeHtml(qvNeutralCell(group.lieu || 'Lieu à définir'))}</td>
-        <td>${qvArbitrerEtat(group)}</td>
-        <td>${qvArbitrerAction(group)}</td>
+        <td class="qv-col-title"><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${L.qvArbitrerKindSubtitle(group) ? `<span class="qv-arbitrer-sub">${escapeHtml(L.qvArbitrerKindSubtitle(group))}</span>` : ''}</td>
+        <td class="qv-col-period">${escapeHtml(group.periodLabel || '—')}</td>
+        <td class="qv-col-num">${escapeHtml(String(group.proposalCount || 0))}</td>
+        <td class="qv-col-lieu">${escapeHtml(qvNeutralCell(group.lieu || 'Lieu à définir'))}</td>
+        <td class="qv-col-state">${qvArbitrerEtat(group)}</td>
+        <td class="qv-col-action">${qvArbitrerAction(group)}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   }
@@ -11398,7 +11413,7 @@
           ${qvArbitrerSortHeader('responsable', 'Responsable')}
           ${qvArbitrerSortHeader('lieu', 'Lieu')}
           ${qvArbitrerSortHeader('etat', 'État')}
-          <th>Action</th>
+          <th class="qv-col-action">Action</th>
         </tr></thead>
         <tbody>${groups.map((group) => `<tr>
           <td class="qv-col-code">${escapeHtml(qvNeutralCell(group.codeCours))}</td>

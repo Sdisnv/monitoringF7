@@ -191,7 +191,7 @@ assert.strictEqual(oiOrdered.join(','), 'G1,C1,B1,B2,Y1,Y2');
   assert.ok(L.qvArbitrerSortColumns().some((column) => column.key === key), `colonne triable manquante: ${key}`);
   assert.ok(new RegExp(`qvArbitrerSortHeader\\('${key}'`).test(arbitrer), `en-tête triable manquant: ${key}`);
 });
-assert.ok(/<th>Action<\/th>/.test(arbitrer));
+assert.ok(/<th[^>]*>Action<\/th>/.test(arbitrer));
 assert.ok(!/qvArbitrerSortHeader\('action'/.test(arbitrer));
 assert.ok(/scope-table-sort-header:not\(\.is-asc\):not\(\.is-desc\)/.test(css));
 assert.ok(/Consulter la fiche/.test(arbitrer));
