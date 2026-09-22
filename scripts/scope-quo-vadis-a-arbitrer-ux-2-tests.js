@@ -52,7 +52,7 @@ assert.ok(!/id="qv-arbitrer-sort"/.test(ui));
 
 assert.deepStrictEqual([...referentials.SCOPE_DOMAIN_ORDER], [...L.SCOPE_DOMAIN_ORDER]);
 assert.strictEqual(L.scopeDomainOrderTrail(), 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR');
-assert.ok(/scopeDomainOrderTrail/.test(arbitrer));
+assert.ok(!/scopeDomainOrderTrail/.test(arbitrer));
 
 assert.ok(/Code cours/.test(arbitrer));
 assert.ok(/Stat\.Com/.test(arbitrer));
@@ -177,7 +177,7 @@ assert.strictEqual(sorted.map((row) => row.statcomCode).join(','), '010FOBA,012B
 assert.ok(/scope-text-action/.test(arbitrer));
 assert.ok(/box-shadow:\s*none/.test(uxCss));
 assert.ok(/overflow-x:\s*auto/.test(uxCss));
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]|scope-quo-vadis-a-arbitrer-ux-final-1/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-2/.test(packageJson));
 assert.ok(!/netlify deploy/.test(arbitrer));
 

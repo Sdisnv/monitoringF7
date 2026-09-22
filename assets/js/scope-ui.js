@@ -11168,21 +11168,26 @@
     </section>`;
   }
 
-  function qvArbitrerFilterBar(qv, activities) {
+  function qvArbitrerFilterBar(qv, activities, mode) {
     const filters = state.quoVadisFilters || {};
     const rows = activities || qvActivities(qv);
     const domains = L.sortByScopeDomainOrder(qvFilterOptions(rows, (row) => row.domain), (value) => value);
     const ois = qvFilterOptions(rows, (row) => qvOiCode(qv, row));
     const states = qvFilterOptions(rows, (row) => row.status);
     const families = ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
+    const current = mode === 'detaillee' ? 'detaillee' : 'groupes';
     const field = (id, label, optionsHtml) => `<div class="scope-field"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${optionsHtml}</select></div>`;
     return `<div class="qv-agenda-filters qv-arbitrer-filters">
-      <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher une activité, un cursus, un lieu…"></div></div>
+      <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Rechercher une activité, un code cours, un lieu…"></div></div>
       ${field('qv-filter-domain', 'Domaine', `<option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(qvAgendaState({ status: v }).label)}</option>`).join('')}`)}
       <button type="button" class="qv-arbitrer-reset scope-text-action" id="qv-filter-reset">Réinitialiser</button>
+      <div class="qv-period-seg qv-arbitrer-seg" role="group" aria-label="Mode d’affichage">
+        <button type="button" class="qv-period-seg-btn${current === 'groupes' ? ' is-active' : ''}" data-qv-arbitrer-mode="groupes" aria-pressed="${current === 'groupes' ? 'true' : 'false'}">Vue par groupes</button>
+        <button type="button" class="qv-period-seg-btn${current === 'detaillee' ? ' is-active' : ''}" data-qv-arbitrer-mode="detaillee" aria-pressed="${current === 'detaillee' ? 'true' : 'false'}">Vue détaillée</button>
+      </div>
     </div>`;
   }
 
@@ -11280,7 +11285,24 @@
 
   function qvArbitrerAction(group) {
     const href = qvHref('activites', { id: group.activityId, from: 'a-arbitrer' });
-    return `<a class="qv-arbitrer-action scope-text-action" href="${href}">Consulter la fiche</a>`;
+    return `<a class="qv-arbitrer-action scope-text-action" href="${href}">Consulter la fiche<span class="qv-arbitrer-action-chevron" aria-hidden="true">›</span></a>`;
+  }
+
+  function qvDomainPeriodLabel(groups) {
+    const dates = (groups || []).flatMap((group) => [group.firstStartsAt]
+      .concat((group.proposals || []).map((row) => row && row.startsAt))
+      .concat((group.rows || []).map((row) => row && row.startsAt)));
+    return L.qvArbitragePeriodLabel(dates, true) || '—';
+  }
+
+  function qvDomainEtat(groups) {
+    const current = L.qvArbitrageState({
+      validated: (groups || []).length > 0 && (groups || []).every((group) => group.validated),
+      attention: (groups || []).some((group) => group.attention),
+      needsArbitration: (groups || []).some((group) => group.needsArbitration),
+      status: (((groups || []).find((group) => group.needsArbitration) || (groups || [])[0]) || {}).status
+    });
+    return scopeStateHtml(current.tone, current.label);
   }
 
   function qvRenderArbitrerKpis(kpis) {
@@ -11299,7 +11321,7 @@
   }
 
   function qvRenderArbitrerGroupTable(groups) {
-    return `<div class="scope-table-wrap qv-arbitrer-table-wrap"><table class="scope-table qv-arbitrer-table">
+    return `<div class="scope-table-wrap qv-arbitrer-table-wrap qv-arbitrer-nested-wrap"><table class="scope-table qv-arbitrer-table qv-arbitrer-nested-table">
       <thead><tr>${qvArbitrerSortHeader('title', 'Activité')}${qvArbitrerSortHeader('date', 'Période proposée')}<th>Propositions</th>${qvArbitrerSortHeader('lieu', 'Lieu')}${qvArbitrerSortHeader('etat', 'État')}<th>Action</th></tr></thead>
       <tbody>${qvArbitrerSortedGroups(groups).map((group) => `<tr>
         <td><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${L.qvArbitrerKindSubtitle(group) ? `<span class="qv-arbitrer-sub">${escapeHtml(L.qvArbitrerKindSubtitle(group))}</span>` : ''}</td>
@@ -11312,15 +11334,49 @@
     </table></div>`;
   }
 
+  function qvRenderArbitrerDomainsTable(domainGroups, openMap) {
+    return `<div class="scope-table-wrap qv-arbitrer-table-wrap"><table class="scope-table qv-arbitrer-table qv-arbitrer-group-table">
+      <thead><tr>
+        <th>Domaine</th>
+        <th>Description</th>
+        <th>Activités</th>
+        <th>Propositions</th>
+        <th>Période proposée</th>
+        <th>État</th>
+        <th>Action</th>
+      </tr></thead>
+      ${domainGroups.map((domain) => {
+        const open = Boolean(openMap[domain.code]);
+        const groups = domain.groups || [];
+        const proposalCount = groups.reduce((sum, group) => sum + Number(group.proposalCount || 0), 0);
+        return `<tbody class="${open ? 'is-open' : ''}">
+        <tr class="qv-arbitrer-domain-row${open ? ' is-open' : ''}">
+          <td class="qv-col-domain">
+            <button type="button" class="qv-arbitrer-domain-toggle" data-qv-arbitrer-group="${escapeHtml(domain.code)}" aria-expanded="${open ? 'true' : 'false'}">
+              <span class="qv-arbitrer-chevron" aria-hidden="true">${open ? '⌃' : '⌄'}</span>
+              <strong class="qv-arbitrer-domain">${escapeHtml(domain.code)}</strong>
+            </button>
+          </td>
+          <td class="qv-col-desc"><span class="qv-arbitrer-domain-label">${escapeHtml(domain.label || '')}</span></td>
+          <td class="qv-col-num">${escapeHtml(String(groups.length))}</td>
+          <td class="qv-col-num">${escapeHtml(String(proposalCount))}</td>
+          <td class="qv-col-period">${escapeHtml(qvDomainPeriodLabel(groups))}</td>
+          <td class="qv-col-state">${qvDomainEtat(groups)}</td>
+          <td class="qv-col-action"><button type="button" class="qv-arbitrer-action scope-text-action" data-qv-arbitrer-group="${escapeHtml(domain.code)}" aria-expanded="${open ? 'true' : 'false'}">Consulter<span class="qv-arbitrer-action-chevron" aria-hidden="true">›</span></button></td>
+        </tr>
+        ${open ? `<tr class="qv-arbitrer-expand-row"><td colspan="7">${qvRenderArbitrerGroupTable(groups)}</td></tr>` : ''}
+      </tbody>`;
+      }).join('')}
+    </table></div>`;
+  }
+
   function qvRenderArbitrerDetail(qv, domainGroups) {
     return domainGroups.map((domain) => {
       const groups = qvArbitrerSortedGroups((domain.groups || []).map((group) => qvArbitrerEnrichGroup(qv, group)));
-      const proposalCount = domain.groups.reduce((sum, group) => sum + Number(group.proposalCount || 0), 0);
       return `<section class="qv-arbitrer-domain-block scope-table-hierarchy">
       <div class="qv-arbitrer-group-head is-static">
         <strong class="qv-arbitrer-domain">${escapeHtml(domain.code)}</strong>
         <span class="qv-arbitrer-domain-label">${escapeHtml(domain.label || '')}</span>
-        <span class="qv-arbitrer-count">${escapeHtml(String(domain.groups.length))} activité${domain.groups.length > 1 ? 's' : ''} | ${escapeHtml(String(proposalCount))} proposition${proposalCount > 1 ? 's' : ''}</span>
       </div>
       <div class="scope-table-wrap qv-arbitrer-table-wrap"><table class="scope-table qv-arbitrer-table qv-arbitrer-detail-table">
         <thead><tr>
@@ -11368,61 +11424,18 @@
     const openMap = qvArbitrerOpenMap(domainGroups);
     const body = !visibleGroups.length
       ? `<section class="scope-card"><p class="scope-empty">${activities.some((row) => L.qvNeedsArbitrationRow(row)) ? 'Aucune activité ne correspond aux filtres.' : 'Aucune activité à arbitrer pour le moment.'}</p>${contextReturnHtml(qvHref('synthese'), 'Retour à la synthèse')}</section>`
-      : (mode === 'detaillee'
-        ? qvRenderArbitrerDetail(qv, domainGroups)
-        : domainGroups.map((domain) => {
-          const open = Boolean(openMap[domain.code]);
-          const proposalCount = domain.groups.reduce((sum, group) => sum + Number(group.proposalCount || 0), 0);
-          return `<section class="qv-arbitrer-group${open ? ' is-open' : ''}">
-            <button type="button" class="qv-arbitrer-group-head" data-qv-arbitrer-group="${escapeHtml(domain.code)}" aria-expanded="${open ? 'true' : 'false'}">
-              <strong class="qv-arbitrer-domain">${escapeHtml(domain.code)}</strong>
-              <span class="qv-arbitrer-domain-label">${escapeHtml(domain.label || '')}</span>
-              <span class="qv-arbitrer-count">${escapeHtml(String(domain.groups.length))} activité${domain.groups.length > 1 ? 's' : ''} | ${escapeHtml(String(proposalCount))} proposition${proposalCount > 1 ? 's' : ''}</span>
-              <span class="qv-arbitrer-chevron" aria-hidden="true">${open ? '⌃' : '⌄'}</span>
-            </button>
-            ${open ? qvRenderArbitrerGroupTable(domain.groups) : ''}
-          </section>`;
-        }).join(''));
+      : (mode === 'detaillee' ? qvRenderArbitrerDetail(qv, domainGroups) : qvRenderArbitrerDomainsTable(domainGroups, openMap));
     return `<section class="scope-card qv-arbitrer-view">
       ${qvRenderArbitrerKpis(kpis)}
-      ${qvArbitrerFilterBar(qv, activities)}
-      <div class="qv-arbitrer-toolbar">
-        <div class="qv-period-seg qv-arbitrer-seg" role="group" aria-label="Mode d’affichage">
-          <button type="button" class="qv-period-seg-btn${mode === 'groupes' ? ' is-active' : ''}" data-qv-arbitrer-mode="groupes" aria-pressed="${mode === 'groupes' ? 'true' : 'false'}">Vue par groupes</button>
-          <button type="button" class="qv-period-seg-btn${mode === 'detaillee' ? ' is-active' : ''}" data-qv-arbitrer-mode="detaillee" aria-pressed="${mode === 'detaillee' ? 'true' : 'false'}">Vue détaillée</button>
-        </div>
-      </div>
+      ${qvArbitrerFilterBar(qv, activities, mode)}
       ${body}
-      <div class="qv-activites-notes qv-arbitrer-notes">
-        <aside class="qv-agenda-note">
-          <div>
-            <h3>Bon à savoir</h3>
-            <p>Cette vue regroupe les activités par domaine, selon l’ordre métier.</p>
-            <p>Une activité peut porter plusieurs séances ou plusieurs sites.</p>
-            <p>Cliquer sur « Consulter la fiche » ouvre les propositions à retenir.</p>
-          </div>
-        </aside>
-        <aside class="qv-agenda-note">
-          <div>
-            <h3>États</h3>
-            <ul class="scope-state-legend">
-              <li>${scopeStateHtml('block', 'À arbitrer')}</li>
-              <li>${scopeStateHtml('attention', 'Point d’attention')}</li>
-              <li>${scopeStateHtml('positive', 'Validé')}<span>Proposition retenue</span></li>
-              <li>${scopeStateHtml('info', 'Planifié')}</li>
-              <li>${scopeStateHtml('inactive', 'Annulé')}</li>
-            </ul>
-          </div>
-        </aside>
-        <aside class="qv-agenda-note">
-          <div>
-            <h3>Ordre d’affichage des domaines</h3>
-            <p>Ordre métier automatique :</p>
-            <p>${escapeHtml(L.scopeDomainOrderTrail())}</p>
-            <p>Même ordre utilisé dans l’agenda et les autres vues.</p>
-          </div>
-        </aside>
-      </div>
+      <ul class="scope-state-legend qv-arbitrer-legend" aria-label="Légende des états">
+        <li>${scopeStateHtml('block', 'À arbitrer')}</li>
+        <li>${scopeStateHtml('attention', 'Point d’attention')}</li>
+        <li>${scopeStateHtml('positive', 'Validé')}</li>
+        <li>${scopeStateHtml('info', 'Planifié')}</li>
+        <li>${scopeStateHtml('inactive', 'Annulé')}</li>
+      </ul>
     </section>`;
   }
 

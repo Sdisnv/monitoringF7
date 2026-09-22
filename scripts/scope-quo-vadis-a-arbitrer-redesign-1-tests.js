@@ -168,10 +168,10 @@ assert.ok(!/Type d’activité/.test(arbitrer));
 assert.ok(!/Tri des groupes/.test(arbitrer));
 assert.ok(/data-qv-arbitrer-group/.test(arbitrer));
 assert.ok(/qvRenderArbitrerDetail/.test(ui));
-assert.ok(/Bon à savoir/.test(arbitrer));
-assert.ok(/Ordre d’affichage des domaines/.test(arbitrer));
+assert.ok(!/Bon à savoir/.test(arbitrer));
+assert.ok(!/Ordre d’affichage des domaines/.test(arbitrer));
 assert.strictEqual(L.scopeDomainOrderTrail(), 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR');
-assert.ok(/scopeDomainOrderTrail/.test(arbitrer));
+assert.ok(!/scopeDomainOrderTrail/.test(arbitrer));
 assert.ok(/scope-state/.test(arbitrer));
 assert.ok(/Stat\.Com/.test(arbitrer));
 assert.ok(!/bandeau PR|is-pr-red|domain-color/.test(arbitrer));
@@ -198,7 +198,7 @@ assert.ok(/box-shadow:\s*none/.test(css.slice(css.indexOf('.qv-arbitrer-view .qv
 assert.ok(!/\.scope-app\s*\{/.test(redesignCss));
 assert.ok(/overflow-x:\s*auto/.test(redesignCss));
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]|scope-quo-vadis-a-arbitrer-ux-final-1/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-redesign-1/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-redesign-1-tests: ok');
