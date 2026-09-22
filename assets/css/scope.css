@@ -1898,6 +1898,7 @@ a.qv-mini-day.has-activity:focus-visible span {
 /* scope-quo-vadis-a-arbitrer-redesign-1 */
 /* scope-quo-vadis-a-arbitrer-ux-2 */
 /* scope-quo-vadis-a-arbitrer-ux-final-1 */
+/* scope-quo-vadis-a-arbitrer-ux-final-2 */
 .qv-arbitrer-view {
   min-width: 0;
   max-width: 100%;
@@ -2040,9 +2041,17 @@ a.qv-mini-day.has-activity:focus-visible span {
   font-weight: 400;
 }
 .qv-arbitrer-chevron {
-  color: var(--scope-muted);
-  font-size: 12px;
-  line-height: 1;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  flex: 0 0 auto;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #3a424c;
+}
+.qv-arbitrer-domain-toggle[aria-expanded="true"] .qv-arbitrer-chevron {
+  border-top: 0;
+  border-bottom: 7px solid #3a424c;
 }
 .qv-arbitrer-domain-toggle {
   display: inline-flex;
@@ -2076,11 +2085,12 @@ a.qv-mini-day.has-activity:focus-visible span {
   min-width: 720px;
 }
 .qv-arbitrer-table.qv-arbitrer-group-table {
-  min-width: 880px;
+  min-width: 760px;
 }
 .qv-arbitrer-table.qv-arbitrer-detail-table {
-  min-width: 1180px;
-  table-layout: auto;
+  width: 100%;
+  min-width: 960px;
+  table-layout: fixed;
 }
 .qv-arbitrer-table.qv-arbitrer-nested-table {
   min-width: 640px;
@@ -2097,26 +2107,38 @@ a.qv-mini-day.has-activity:focus-visible span {
   padding: 7px 10px;
   vertical-align: middle;
 }
-.qv-arbitrer-group-table .qv-col-domain { width: 10%; white-space: nowrap; }
-.qv-arbitrer-group-table .qv-col-desc { width: 28%; }
+.qv-arbitrer-group-table .qv-col-domain { width: 11%; white-space: nowrap; }
+.qv-arbitrer-group-table .qv-col-desc { width: 32%; }
 .qv-arbitrer-group-table .qv-col-num {
-  width: 9%;
+  width: 10%;
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .qv-arbitrer-group-table .qv-col-period { width: 16%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-code { width: 7%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-title { width: 18%; min-width: 160px; }
-.qv-arbitrer-table .qv-col-statcom { width: 7%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-date { width: 9%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-time { width: 8%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-oi { width: 6%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-cible { width: 12%; min-width: 110px; }
-.qv-arbitrer-table .qv-col-resp { width: 11%; min-width: 110px; }
-.qv-arbitrer-table .qv-col-lieu { width: 12%; min-width: 110px; }
-.qv-arbitrer-table .qv-col-state { width: 12%; white-space: nowrap; }
-.qv-arbitrer-table .qv-col-action { width: 10%; white-space: nowrap; }
+.qv-arbitrer-group-table .qv-col-state { width: 14%; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-code { width: 7.2rem; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-title { width: 18%; min-width: 0; }
+.qv-arbitrer-detail-table .qv-col-statcom { width: 5.6rem; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-date { width: 6.4rem; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-time { width: 6.6rem; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-oi { width: 3.8rem; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-cible { width: 11%; min-width: 0; }
+.qv-arbitrer-detail-table .qv-col-resp { width: 11%; min-width: 0; }
+.qv-arbitrer-detail-table .qv-col-lieu { width: 10%; min-width: 0; }
+.qv-arbitrer-detail-table .qv-col-state { width: 8.8rem; white-space: nowrap; }
+.qv-arbitrer-detail-table .qv-col-action { width: 9.6rem; white-space: nowrap; }
+.qv-arbitrer-period {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.qv-arbitrer-period-end {
+  display: block;
+}
 .qv-arbitrer-group-table > tbody:nth-of-type(odd) > tr.qv-arbitrer-domain-row td {
   background: #fff;
 }

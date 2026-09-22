@@ -11288,6 +11288,16 @@
     return `<a class="qv-arbitrer-action scope-text-action" href="${href}">Consulter la fiche<span class="qv-arbitrer-action-chevron" aria-hidden="true">›</span></a>`;
   }
 
+  function qvArbitrerPeriodHtml(label) {
+    const text = String(label || '').trim();
+    if (!text || text === '—') return '—';
+    const parts = text.split(' → ');
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      return `<span class="qv-arbitrer-period"><span class="qv-arbitrer-period-start">${escapeHtml(parts[0])}</span><span class="qv-arbitrer-period-end">→ ${escapeHtml(parts[1])}</span></span>`;
+    }
+    return escapeHtml(text);
+  }
+
   function qvDomainPeriodLabel(groups) {
     const dates = (groups || []).flatMap((group) => [group.firstStartsAt]
       .concat((group.proposals || []).map((row) => row && row.startsAt))
@@ -11343,7 +11353,6 @@
         <th>Propositions</th>
         <th>Période proposée</th>
         <th>État</th>
-        <th>Action</th>
       </tr></thead>
       ${domainGroups.map((domain) => {
         const open = Boolean(openMap[domain.code]);
@@ -11353,7 +11362,7 @@
         <tr class="qv-arbitrer-domain-row${open ? ' is-open' : ''}">
           <td class="qv-col-domain">
             <button type="button" class="qv-arbitrer-domain-toggle" data-qv-arbitrer-group="${escapeHtml(domain.code)}" aria-expanded="${open ? 'true' : 'false'}">
-              <span class="qv-arbitrer-chevron" aria-hidden="true">${open ? '⌃' : '⌄'}</span>
+              <span class="qv-arbitrer-chevron" aria-hidden="true"></span>
               <strong class="qv-arbitrer-domain">${escapeHtml(domain.code)}</strong>
             </button>
           </td>
@@ -11362,9 +11371,8 @@
           <td class="qv-col-num">${escapeHtml(String(proposalCount))}</td>
           <td class="qv-col-period">${escapeHtml(qvDomainPeriodLabel(groups))}</td>
           <td class="qv-col-state">${qvDomainEtat(groups)}</td>
-          <td class="qv-col-action"><button type="button" class="qv-arbitrer-action scope-text-action" data-qv-arbitrer-group="${escapeHtml(domain.code)}" aria-expanded="${open ? 'true' : 'false'}">Consulter<span class="qv-arbitrer-action-chevron" aria-hidden="true">›</span></button></td>
         </tr>
-        ${open ? `<tr class="qv-arbitrer-expand-row"><td colspan="7">${qvRenderArbitrerGroupTable(groups)}</td></tr>` : ''}
+        ${open ? `<tr class="qv-arbitrer-expand-row"><td colspan="6">${qvRenderArbitrerGroupTable(groups)}</td></tr>` : ''}
       </tbody>`;
       }).join('')}
     </table></div>`;
@@ -11396,7 +11404,7 @@
           <td class="qv-col-code">${escapeHtml(qvNeutralCell(group.codeCours))}</td>
           <td class="qv-col-title"><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${L.qvArbitrerKindSubtitle(group) ? `<span class="qv-arbitrer-sub">${escapeHtml(L.qvArbitrerKindSubtitle(group))}</span>` : ''}</td>
           <td class="qv-col-statcom">${escapeHtml(qvNeutralCell(group.statcomCode))}</td>
-          <td class="qv-col-date">${escapeHtml(group.periodLabel || '—')}</td>
+          <td class="qv-col-date">${qvArbitrerPeriodHtml(group.periodLabel)}</td>
           <td class="qv-col-time">${escapeHtml(qvNeutralCell(group.horaire))}</td>
           <td class="qv-col-oi">${escapeHtml(qvNeutralCell((group.oiCodes || []).join(', ')))}</td>
           <td class="qv-col-cible">${escapeHtml(qvNeutralCell(group.cibleLabel))}</td>

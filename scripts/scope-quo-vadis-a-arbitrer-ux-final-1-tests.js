@@ -93,7 +93,7 @@ const serviceSha = execFileSync('git', ['hash-object', 'netlify/lib/_scope-quo-v
 const headServiceSha = execFileSync('git', ['rev-parse', 'HEAD:netlify/lib/_scope-quo-vadis-service.js'], { cwd: root, encoding: 'utf8' }).trim();
 assert.strictEqual(serviceSha, headServiceSha, 'service QUO VADIS ne doit pas changer dans ce lot UX');
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-1|scope-quo-vadis-a-arbitrer-ux-final-1/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-[12]|scope-quo-vadis-a-arbitrer-ux-final-[12]/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-final-1/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-ux-final-1-tests: ok');
