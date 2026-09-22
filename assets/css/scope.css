@@ -1900,6 +1900,11 @@ a.qv-mini-day.has-activity:focus-visible span {
 /* scope-quo-vadis-a-arbitrer-ux-final-1 */
 /* scope-quo-vadis-a-arbitrer-ux-final-2 */
 /* scope-quo-vadis-a-arbitrer-ux-final-3 */
+/* scope-quo-vadis-a-arbitrer-phase-2 */
+.scope-shell:has(.qv-arbitrer-view),
+.scope-content:has(.qv-arbitrer-view) {
+  max-width: 1520px;
+}
 .qv-arbitrer-view {
   min-width: 0;
   max-width: 100%;
@@ -2007,36 +2012,46 @@ a.qv-mini-day.has-activity:focus-visible span {
   font-weight: 650;
   box-shadow: none;
 }
-.qv-arbitrer-group {
-  box-shadow: none;
-}
-.qv-arbitrer-group-head {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: 6px 14px;
+.qv-arbitrer-domain-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
   width: 100%;
+  min-width: 0;
   margin: 0;
-  padding: 0 2px 8px;
+  padding: 8px 12px;
   border: 0;
-  border-bottom: 1px solid var(--scope-ink);
-  border-radius: 0;
-  background: none;
+  border-bottom: 1px solid #d5dcec;
+  background: var(--scope-navy-soft);
   color: inherit;
   font: inherit;
-  text-align: left;
-  box-shadow: none;
 }
-.qv-arbitrer-group-head.is-static {
-  cursor: default;
+.qv-arbitrer-domain-head-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
-.qv-arbitrer-group-head:focus-visible {
-  outline: 2px solid var(--scope-blue);
-  outline-offset: -2px;
+.qv-arbitrer-domain-head-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  font-weight: 400;
+}
+.qv-arbitrer-domain-head-period .qv-arbitrer-period {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0 6px;
 }
 .qv-arbitrer-domain {
-  color: var(--scope-ink);
-  font-size: 16px;
+  color: var(--scope-navy);
+  font-size: 15px;
   font-weight: 750;
   letter-spacing: 0.05em;
 }
@@ -2050,13 +2065,16 @@ a.qv-mini-day.has-activity:focus-visible span {
   width: 0;
   height: 0;
   flex: 0 0 auto;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid var(--scope-navy);
+}
+.qv-arbitrer-domain-toggle[aria-expanded="true"] .qv-arbitrer-chevron,
+.qv-arbitrer-domain-head .qv-arbitrer-chevron {
+  border-top: 7px solid var(--scope-navy);
+  border-bottom: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 7px solid #3a424c;
-}
-.qv-arbitrer-domain-toggle[aria-expanded="true"] .qv-arbitrer-chevron {
-  border-top: 0;
-  border-bottom: 7px solid #3a424c;
 }
 .qv-arbitrer-domain-toggle {
   display: inline-flex;
@@ -2082,9 +2100,9 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-arbitrer-table-wrap,
 .scope-table-wrap.qv-arbitrer-table-wrap {
   display: block;
-  width: 100%;
+  width: 0;
   max-width: 100%;
-  min-width: 0;
+  min-width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
 }
@@ -2096,13 +2114,11 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-arbitrer-table.qv-arbitrer-group-table {
   min-width: 820px;
 }
+.qv-arbitrer-table.qv-arbitrer-activity-table,
 .qv-arbitrer-table.qv-arbitrer-detail-table {
   width: 100%;
   min-width: 1180px;
   table-layout: auto;
-}
-.qv-arbitrer-table.qv-arbitrer-nested-table {
-  min-width: 880px;
 }
 .qv-arbitrer-table th {
   color: var(--scope-muted);
@@ -2127,75 +2143,84 @@ a.qv-mini-day.has-activity:focus-visible span {
 }
 .qv-arbitrer-group-table .qv-col-domain { width: 11%; white-space: nowrap; }
 .qv-arbitrer-group-table .qv-col-desc { width: 32%; }
-.qv-arbitrer-group-table .qv-col-num {
+.qv-arbitrer-group-table .qv-col-num,
+.qv-arbitrer-group-table th.qv-col-num {
   width: 10%;
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.qv-arbitrer-group-table .qv-col-period { width: 16%; white-space: nowrap; }
+.qv-arbitrer-group-table .qv-col-period { width: 16%; }
 .qv-arbitrer-group-table .qv-col-state { width: 14%; white-space: nowrap; }
+.qv-arbitrer-activity-table .qv-col-code,
 .qv-arbitrer-detail-table .qv-col-code { white-space: nowrap; }
+.qv-arbitrer-activity-table .qv-col-title,
 .qv-arbitrer-detail-table .qv-col-title { min-width: 11.5rem; }
+.qv-arbitrer-activity-table .qv-col-statcom,
 .qv-arbitrer-detail-table .qv-col-statcom { white-space: nowrap; }
+.qv-arbitrer-activity-table .qv-col-date,
 .qv-arbitrer-detail-table .qv-col-date { white-space: nowrap; }
+.qv-arbitrer-activity-table .qv-col-time,
 .qv-arbitrer-detail-table .qv-col-time { white-space: nowrap; }
+.qv-arbitrer-activity-table .qv-col-oi,
 .qv-arbitrer-detail-table .qv-col-oi { white-space: nowrap; }
+.qv-arbitrer-activity-table .qv-col-cible,
 .qv-arbitrer-detail-table .qv-col-cible,
+.qv-arbitrer-activity-table .qv-col-resp,
 .qv-arbitrer-detail-table .qv-col-resp {
   min-width: 8rem;
-  padding-left: 12px;
-  padding-right: 12px;
 }
-.qv-arbitrer-detail-table .qv-col-lieu { min-width: 7rem; }
+.qv-arbitrer-activity-table .qv-col-lieu,
+.qv-arbitrer-detail-table .qv-col-lieu,
+.qv-arbitrer-table th.qv-col-lieu,
+.qv-arbitrer-table td.qv-col-lieu {
+  min-width: 7rem;
+  text-align: left;
+}
+.qv-arbitrer-activity-table .qv-col-state,
 .qv-arbitrer-detail-table .qv-col-state { white-space: nowrap; }
-.qv-arbitrer-detail-table .qv-col-action,
-.qv-arbitrer-nested-table .qv-col-action {
+.qv-arbitrer-activity-table .qv-col-action,
+.qv-arbitrer-detail-table .qv-col-action {
   min-width: 10rem;
   white-space: nowrap;
   overflow: visible;
 }
-.qv-arbitrer-nested-table .qv-col-title { min-width: 12rem; }
-.qv-arbitrer-nested-table .qv-col-period { white-space: nowrap; }
-.qv-arbitrer-nested-table .qv-col-num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.qv-arbitrer-nested-table .qv-col-state { white-space: nowrap; }
 .qv-arbitrer-period {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
-  line-height: 1.25;
+  line-height: 1.3;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
+.qv-arbitrer-period-start,
 .qv-arbitrer-period-end {
   display: block;
+  text-align: left;
 }
-.qv-arbitrer-group-table > tbody:nth-of-type(odd) > tr.qv-arbitrer-domain-row td {
+.qv-arbitrer-group-table > tbody:not(.is-open):nth-of-type(odd) > tr.qv-arbitrer-domain-row td {
   background: #fff;
 }
-.qv-arbitrer-group-table > tbody:nth-of-type(even) > tr.qv-arbitrer-domain-row td {
+.qv-arbitrer-group-table > tbody:not(.is-open):nth-of-type(even) > tr.qv-arbitrer-domain-row td {
   background: #f4f6f8;
 }
-.qv-arbitrer-group-table > tbody > tr.qv-arbitrer-domain-row:hover td {
+.qv-arbitrer-group-table > tbody:not(.is-open) > tr.qv-arbitrer-domain-row:hover td {
   background: #f7f8fb;
+}
+.qv-arbitrer-group-table > tbody.is-open > tr.qv-arbitrer-domain-row td,
+.qv-arbitrer-group-table > tbody.is-open > tr.qv-arbitrer-domain-row:hover td {
+  background: var(--scope-navy-soft);
+  border-bottom-color: #d5dcec;
 }
 .qv-arbitrer-group-table > tbody > tr.qv-arbitrer-expand-row > td,
 .qv-arbitrer-group-table > tbody > tr.qv-arbitrer-expand-row:hover > td {
-  padding: 0 0 8px 28px;
+  padding: 0;
   background: #fff;
   border-bottom: 1px solid var(--scope-line);
 }
-.qv-arbitrer-nested-wrap {
-  border-top: 1px solid var(--scope-line);
-}
 .qv-arbitrer-table th[data-sort-key="statCom"],
-.qv-arbitrer-table th[data-sort-key="statCom"] .scope-table-sort-label,
-.qv-arbitrer-detail-table thead th:nth-child(3),
-.qv-arbitrer-detail-table thead th:nth-child(3) .scope-table-sort-label {
+.qv-arbitrer-table th[data-sort-key="statCom"] .scope-table-sort-label {
   text-transform: none;
   letter-spacing: 0.02em;
 }
@@ -2242,21 +2267,13 @@ a.qv-mini-day.has-activity:focus-visible span {
   line-height: 1;
 }
 .qv-arbitrer-domain-block {
-  margin: 32px 0 16px;
+  margin: 20px 0 0;
   padding: 0;
   border: 0;
   background: none;
 }
 .qv-arbitrer-domain-block:first-child {
-  margin-top: 4px;
-}
-.qv-arbitrer-domain-block .qv-arbitrer-group-head {
-  margin: 0;
-  padding: 0 2px 8px;
-  border: 0;
-  border-bottom: 1px solid var(--scope-ink);
-  background: none;
-  box-shadow: none;
+  margin-top: 0;
 }
 .qv-arbitrer-legend {
   display: flex;
@@ -2279,9 +2296,8 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-arbitrer-legend .scope-state {
   min-width: 0;
 }
-.qv-arbitrer-view .qv-arbitrer-group,
 .qv-arbitrer-view .qv-arbitrer-kpi,
-.qv-arbitrer-view .qv-arbitrer-group-head {
+.qv-arbitrer-view .qv-arbitrer-domain-head {
   box-shadow: none;
 }
 

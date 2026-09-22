@@ -194,11 +194,11 @@ const redesignCss = css.slice(css.indexOf('/* scope-quo-vadis-a-arbitrer-redesig
 assert.ok(/\.qv-arbitrer-kpi \{/.test(css));
 assert.ok(!/\.qv-arbitrer-group\.is-pr/.test(css));
 assert.ok(!/\.qv-arbitrer-domain-dps/.test(css));
-assert.ok(/box-shadow:\s*none/.test(css.slice(css.indexOf('.qv-arbitrer-view .qv-arbitrer-group'))));
+assert.ok(/box-shadow:\s*none/.test(css.slice(css.indexOf('.qv-arbitrer-view .qv-arbitrer-kpi'))));
 assert.ok(!/\.scope-app\s*\{/.test(redesignCss));
 assert.ok(/overflow-x:\s*auto/.test(redesignCss));
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]|scope-quo-vadis-a-arbitrer-ux-final-1/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]|scope-quo-vadis-a-arbitrer-ux-final-1|scope-quo-vadis-a-arbitrer-phase-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-redesign-1/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-redesign-1-tests: ok');

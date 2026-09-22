@@ -177,7 +177,7 @@ assert.strictEqual(sorted.map((row) => row.statcomCode).join(','), '010FOBA,012B
 assert.ok(/scope-text-action/.test(arbitrer));
 assert.ok(/box-shadow:\s*none/.test(uxCss));
 assert.ok(/overflow-x:\s*auto/.test(uxCss));
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]|scope-quo-vadis-a-arbitrer-ux-final-1/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]|scope-quo-vadis-a-arbitrer-ux-final-1|scope-quo-vadis-a-arbitrer-phase-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-2/.test(packageJson));
 assert.ok(!/netlify deploy/.test(arbitrer));
 

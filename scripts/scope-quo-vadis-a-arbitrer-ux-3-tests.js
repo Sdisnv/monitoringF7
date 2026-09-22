@@ -201,7 +201,7 @@ assert.ok(/#2f9e5a/.test(css) && /#DE000A/.test(css) && /#c98412/.test(css) && /
 assert.ok(!/scope-pill/.test(arbitrer));
 assert.ok(!/qvArbitrerEtatBadge/.test(arbitrer));
 assert.ok(/width:\s*var\(--scope-state-swatch-size\)/.test(rulesetCss));
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-3/.test(html) || /scope-quo-vadis-a-arbitrer-ux-final-1/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-3/.test(html) || /scope-quo-vadis-a-arbitrer-ux-final-1/.test(html) || /scope-quo-vadis-a-arbitrer-phase-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-3/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-ux-3-tests: ok');

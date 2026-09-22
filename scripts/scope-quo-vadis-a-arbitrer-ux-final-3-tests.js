@@ -38,19 +38,19 @@ assert.ok(!/>Consulter</.test(domainsFn));
 assert.ok(!/Consulter<span class="qv-arbitrer-action-chevron"/.test(domainsFn));
 assert.ok(/Consulter la fiche/.test(arbitrer));
 assert.ok(/qvArbitrerAction\(group\)/.test(nestedFn));
-assert.ok(/qvArbitrerAction\(group\)/.test(detailFn));
+assert.ok(/qvRenderArbitrerGroupTable\(groups\)/.test(detailFn));
 assert.ok(/class="qv-col-action"/.test(nestedFn));
-assert.ok(/class="qv-col-action"/.test(detailFn));
+assert.ok(/qvRenderArbitrerDomainHead\(domain, groups\)/.test(detailFn));
 
-assert.ok(/qvArbitrerPeriodHtml/.test(detailFn));
+assert.ok(/qvArbitrerPeriodHtml/.test(nestedFn));
 assert.ok(/split\(' → '\)/.test(arbitrer));
 const dateCol = (L.qvArbitrerSortColumns() || []).find((column) => column.key === 'date');
 assert.strictEqual(dateCol.value({ firstStartsAt: '2027-05-06', periodLabel: '06.05.2027 → 17.06.2027' }), '2027-05-06');
 
 ['Code cours', 'Activité', 'Stat.Com', 'Date', 'Horaire', 'OI', 'Public cible', 'Responsable', 'Lieu', 'État'].forEach((label) => {
-  assert.ok(detailFn.includes(`'${label}'`), `colonne manquante: ${label}`);
+  assert.ok(nestedFn.includes(`'${label}'`), `colonne manquante: ${label}`);
 });
-assert.ok(/Action/.test(detailFn));
+assert.ok(/Action/.test(nestedFn));
 
 assert.ok(!/Bon à savoir/.test(arbitrer));
 assert.ok(!/Ordre d’affichage des domaines/.test(arbitrer));
@@ -91,7 +91,7 @@ const logicSha = execFileSync('git', ['hash-object', 'assets/js/scope-ui-logic.j
 const headLogicSha = execFileSync('git', ['rev-parse', 'HEAD:assets/js/scope-ui-logic.js'], { cwd: root, encoding: 'utf8' }).trim();
 assert.strictEqual(logicSha, headLogicSha, 'scope-ui-logic.js ne doit pas changer');
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-3/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-3|scope-quo-vadis-a-arbitrer-phase-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-final-3/.test(packageJson));
 assert.ok(!/netlify deploy/.test(arbitrer));
 

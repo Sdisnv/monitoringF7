@@ -43,36 +43,35 @@ assert.ok(/<th>État<\/th>/.test(domainsFn));
 
 assert.ok(/qvArbitrerAction\(group\)/.test(nestedFn));
 assert.ok(/<th class="qv-col-action">Action<\/th>/.test(nestedFn));
-assert.ok(/qvArbitrerAction\(group\)/.test(detailFn));
+assert.ok(/qvRenderArbitrerGroupTable\(groups\)/.test(detailFn));
 assert.ok(/Consulter la fiche/.test(arbitrer));
-assert.ok(/<th class="qv-col-action">Action<\/th>/.test(detailFn));
+assert.ok(/<th class="qv-col-action">Action<\/th>/.test(nestedFn));
 assert.ok(!/Voir \/ arbitrer/.test(arbitrer));
 assert.ok(!/Voir les activités/.test(arbitrer));
 assert.ok(!/Bon à savoir/.test(arbitrer));
 assert.ok(!/Ordre d’affichage des domaines/.test(arbitrer));
 
-assert.ok(/qvArbitrerPeriodHtml/.test(detailFn));
+assert.ok(/qvArbitrerPeriodHtml/.test(nestedFn));
 assert.ok(/split\(' → '\)/.test(arbitrer));
 assert.ok(/qv-arbitrer-period-end/.test(arbitrer));
-assert.ok(!/qvArbitrerPeriodHtml/.test(nestedFn));
-assert.ok(/escapeHtml\(group\.periodLabel/.test(nestedFn));
+assert.ok(/qvArbitrerPeriodHtml\(group\.periodLabel\)/.test(nestedFn));
 
 const dateCol = (L.qvArbitrerSortColumns() || []).find((column) => column.key === 'date');
 assert.ok(dateCol);
 assert.strictEqual(dateCol.value({ firstStartsAt: '2027-05-06', periodLabel: '06.05.2027 → 17.06.2027' }), '2027-05-06');
-assert.ok(/qvArbitrerSortHeader\('date'/.test(detailFn));
+assert.ok(/qvArbitrerSortHeader\('date'/.test(nestedFn));
 
 ['Code cours', 'Activité', 'Stat.Com', 'Date', 'Horaire', 'OI', 'Public cible', 'Responsable', 'Lieu', 'État'].forEach((label) => {
-  assert.ok(detailFn.includes(`'${label}'`) || detailFn.includes(`>${label}<`), `colonne manquante: ${label}`);
+  assert.ok(nestedFn.includes(`'${label}'`) || nestedFn.includes(`>${label}<`), `colonne manquante: ${label}`);
 });
-assert.ok(/<th class="qv-col-action">Action<\/th>/.test(detailFn));
+assert.ok(/<th class="qv-col-action">Action<\/th>/.test(nestedFn));
 
 assert.ok(/--scope-state-swatch-size:\s*8px/.test(css));
 assert.ok(/width:\s*var\(--scope-state-swatch-size\)/.test(rulesetCss));
 assert.ok(/#2f9e5a/.test(css) && /#DE000A/.test(css) && /#c98412/.test(css) && /#4f84d6/.test(css) && /#8b949e/.test(css));
 assert.ok(!/scope-pill/.test(arbitrer));
 assert.ok(/scopeStateHtml/.test(arbitrer));
-assert.ok(/border-top:\s*7px solid #3a424c/.test(finalCss));
+assert.ok(/border-top:\s*7px solid var\(--scope-navy\)/.test(finalCss));
 assert.ok(/table-layout:\s*auto/.test(finalCss.slice(finalCss.indexOf('.qv-arbitrer-detail-table'))));
 assert.ok(/\.qv-arbitrer-period \{/.test(finalCss));
 assert.ok(/flex-direction:\s*column/.test(finalCss.slice(finalCss.indexOf('.qv-arbitrer-period'))));
@@ -85,7 +84,7 @@ const logicSha = execFileSync('git', ['hash-object', 'assets/js/scope-ui-logic.j
 const headLogicSha = execFileSync('git', ['rev-parse', 'HEAD:assets/js/scope-ui-logic.js'], { cwd: root, encoding: 'utf8' }).trim();
 assert.strictEqual(logicSha, headLogicSha, 'scope-ui-logic.js ne doit pas changer dans ce lot UX');
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-[23]/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-[23]|scope-quo-vadis-a-arbitrer-phase-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-final-2/.test(packageJson));
 assert.ok(!/netlify deploy/.test(arbitrer));
 

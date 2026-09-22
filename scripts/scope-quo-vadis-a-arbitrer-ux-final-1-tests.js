@@ -38,8 +38,8 @@ assert.ok(/Consulter la fiche/.test(arbitrer));
 assert.ok(/qvRenderArbitrerDomainsTable/.test(arbitrer));
 assert.ok(/<th>Domaine<\/th>/.test(arbitrer));
 assert.ok(/<th>Description<\/th>/.test(arbitrer));
-assert.ok(/<th>Activités<\/th>/.test(arbitrer));
-assert.ok(/<th>Propositions<\/th>/.test(arbitrer));
+assert.ok(/<th[^>]*>Activités<\/th>/.test(arbitrer));
+assert.ok(/<th[^>]*>Propositions<\/th>/.test(arbitrer));
 assert.ok(/<th>Période proposée<\/th>/.test(arbitrer));
 assert.ok(/qv-arbitrer-group-table/.test(arbitrer));
 assert.ok(!/<section class="qv-arbitrer-group/.test(arbitrer));
@@ -93,7 +93,7 @@ const serviceSha = execFileSync('git', ['hash-object', 'netlify/lib/_scope-quo-v
 const headServiceSha = execFileSync('git', ['rev-parse', 'HEAD:netlify/lib/_scope-quo-vadis-service.js'], { cwd: root, encoding: 'utf8' }).trim();
 assert.strictEqual(serviceSha, headServiceSha, 'service QUO VADIS ne doit pas changer dans ce lot UX');
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-[123]|scope-quo-vadis-a-arbitrer-ux-final-[123]/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-3-final-[123]|scope-quo-vadis-a-arbitrer-ux-final-[123]|scope-quo-vadis-a-arbitrer-phase-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-final-1/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-ux-final-1-tests: ok');
