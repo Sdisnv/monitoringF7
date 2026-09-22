@@ -1802,6 +1802,20 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-cursus-search {
   margin: 0 0 12px;
 }
+.qv-cursus-create {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.qv-cursus-create input {
+  width: 100%;
+  min-width: 0;
+}
+.qv-cursus-create-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .qv-cursus-list {
   display: flex;
   flex-direction: column;
@@ -1833,9 +1847,12 @@ a.qv-mini-day.has-activity:focus-visible span {
 }
 .qv-cursus-list-name {
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .qv-cursus-list button .scope-state {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  white-space: normal;
 }
 .qv-cursus-plan {
   display: flex;

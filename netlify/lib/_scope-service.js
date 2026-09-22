@@ -44,6 +44,7 @@ const {
 } = require('./_scope-model');
 const participationPolicy = require('./_scope-participation-policy');
 const genericCatalog = require('./_scope-generic-event-catalog');
+const qvReferentials = require('./_scope-quo-vadis-referentials');
 const {
   PROVENANCE: TRAINING_CONTEXT_PROVENANCE,
   resolveTrainingContext
@@ -1493,7 +1494,7 @@ function createScopeService(repo){
       participationPolicies(),
       formationCatalog()
     ]);
-    const mappedDomaines = domaines.map(d => ({
+    const mappedDomaines = qvReferentials.sortByScopeDomainOrder(domaines, (d) => d.code).map(d => ({
       code: d.code,
       libelle: d.libelle,
       libelleAffiche: domaineAffiche(d.code, d),

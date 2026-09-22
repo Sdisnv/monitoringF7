@@ -283,8 +283,7 @@
 
   const SHARED_DOMAIN_GROUPS = Object.freeze([
     { label: 'Opérationnel', codes: Object.freeze(['DPS', 'DAP', 'JSP']) },
-    { label: 'Formation', codes: Object.freeze(['FOBA', 'FOCO', 'FOCA', 'FOSPEC']) },
-    { label: 'Spécialisation', codes: Object.freeze(['PR', 'AUTO']) }
+    { label: 'Formation', codes: Object.freeze(['FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']), separatorBefore: 'PR' }
   ]);
 
   const SHARED_OI_BY_DOMAIN = Object.freeze({
@@ -312,7 +311,9 @@
     ]),
     FOCO: Object.freeze([
       { value: '', label: 'Non précisé' },
-      { value: 'GEN', label: 'Général' }
+      { value: 'DPS', label: 'DPS' },
+      { value: 'DAP', label: 'DAP' },
+      { value: 'JSP', label: 'JSP' }
     ]),
     FOCA: Object.freeze([
       { value: '', label: 'Non précisé' },
@@ -354,7 +355,7 @@
   }
 
   function domainTaxonomyGroups() {
-    return SHARED_DOMAIN_GROUPS.map((group) => ({ label: group.label, codes: group.codes.slice() }));
+    return SHARED_DOMAIN_GROUPS.map((group) => ({ label: group.label, codes: group.codes.slice(), separatorBefore: group.separatorBefore || '' }));
   }
 
   function sharedOiOptions(domain) {
@@ -382,6 +383,7 @@
       if (compact === 'PAPR') return 'PAPR';
       if (compact === 'ABC' || compact === 'PRABC' || compact === 'PABC') return 'ABC';
     }
+    if (code === 'FOCO' && ['DPS', 'DAP', 'JSP'].includes(compact)) return compact;
     if (code === 'AUTO') {
       if (compact === 'PL' || compact === 'CONDPL') return 'PL';
       if (compact === 'TP9' || compact === 'CONDTP9') return 'TP9';
@@ -710,7 +712,7 @@
     if (arbre && arbre.length) return arbre;
     const list = (domaines || []).map((d) => {
       const code = d.code;
-      const inferredParent = (code === 'PR' || code === 'AUTO') ? 'FOSPEC' : (d.parentCode || d.parent_code || null);
+      const inferredParent = d.parentCode || d.parent_code || null;
       return {
         code,
         libelle: d.libelle,
@@ -730,11 +732,7 @@
     }));
   }
 
-  const EVENT_DOMAIN_GROUPS = Object.freeze([
-    ['AUTO', 'PR'],
-    ['DPS', 'DAP', 'JSP'],
-    ['FOBA', 'FOCA', 'FOSPEC']
-  ]);
+  const EVENT_DOMAIN_GROUPS = Object.freeze(SHARED_DOMAIN_GROUPS.map((group) => group.codes));
 
   const OBJECTIF_PORTEE_LABELS = Object.freeze({
     GLOBAL: 'Général',
@@ -908,7 +906,7 @@
   }
 
   const SCOPE_SITE_ORDER = Object.freeze(['G1', 'C1', 'B1', 'B2', 'Y1', 'Y2', 'Y3', 'Y4']);
-  const SCOPE_DOMAIN_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']);
+  const SCOPE_DOMAIN_ORDER = Object.freeze(SHARED_DOMAIN_GROUPS.flatMap((group) => group.codes));
   const SCOPE_DOMAIN_LABELS = Object.freeze({
     DPS: 'Détachement de premier secours',
     DAP: 'Détachement d’appui',
@@ -986,16 +984,9 @@
 
   function scopeDomainBand(value) {
     const code = normalizeScopeDomainCode(value);
-    if (code === 'DPS') return [1, 10, code];
-    if (code === 'DAP') return [1, 20, code];
-    if (code === 'JSP') return [1, 30, code];
-    if (code.startsWith('FO')) {
-      const known = { FOBA: 10, FOCO: 20, FOCA: 30, FOSPEC: 40 };
-      return [2, Object.prototype.hasOwnProperty.call(known, code) ? known[code] : 50, code];
-    }
-    if (code === 'AUTO') return [3, 10, code];
-    if (code === 'PR') return [4, 10, code];
-    return [5, 10, code];
+    const index = SCOPE_DOMAIN_ORDER.indexOf(code);
+    if (index >= 0) return [1, index, code];
+    return [2, 0, code];
   }
 
   function scopeDomainRank(value) {
@@ -1026,7 +1017,7 @@
   }
 
   function scopeDomainOrderTrail() {
-    return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR';
+    return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → PR → AUTO';
   }
 
   function compareQvActivities(a, b) {
@@ -1567,7 +1558,7 @@
     return OBJECTIF_UX_DOMAINES.map((code) => ({ type: 'domain', code, label: code }));
   }
 
-  const EVENT_DOMAIN_FILTER_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']);
+  const EVENT_DOMAIN_FILTER_ORDER = SCOPE_DOMAIN_ORDER;
 
   function eventDomainFilterItems(domaines) {
     const list = (domaines || []).filter((d) => {

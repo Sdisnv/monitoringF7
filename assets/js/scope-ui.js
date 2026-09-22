@@ -698,13 +698,9 @@
     const emptyValue = options.emptyValue == null ? '' : options.emptyValue;
     const emptyLabel = options.emptyLabel || 'Choisir un domaine';
     const selectedValue = String(selected == null ? emptyValue : selected);
-    const groups = (L.domainTaxonomyGroups && L.domainTaxonomyGroups()) || [
-      { label: 'Opérationnel', codes: ['DPS', 'DAP', 'JSP'] },
-      { label: 'Formation', codes: ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'] },
-      { label: 'Spécialisation', codes: ['PR', 'AUTO'] }
-    ];
+    const groups = L.domainTaxonomyGroups();
     return `<option value="${escapeHtml(String(emptyValue))}" ${String(selectedValue) === String(emptyValue) ? 'selected' : ''}>${escapeHtml(emptyLabel)}</option>`
-      + groups.map((group) => `<optgroup label="${escapeHtml(group.label)}">${group.codes.map((code) => `<option value="${escapeHtml(code)}" ${String(selectedValue) === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')}</optgroup>`).join('');
+      + groups.map((group) => `<optgroup label="${escapeHtml(group.label)}">${group.codes.map((code) => `${code === group.separatorBefore ? '<option disabled>────────</option>' : ''}<option value="${escapeHtml(code)}" ${String(selectedValue) === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')}</optgroup>`).join('');
   }
 
   function sharedOptionsHtml(rows, selected) {
@@ -6859,7 +6855,7 @@
         </div>
         <div class="scope-card" style="margin-top:12px">
           <h2 style="margin-top:0">Référentiel</h2>
-          <p class="scope-mode-hint">PR (PAPR) et AUTO sont des sous-domaines de FOSPEC. Les codes domaine PR/AUTO sont conservés pour les événements et les cibles.</p>
+          <p class="scope-mode-hint">PR et AUTO sont des domaines de formation.</p>
           ${tree.map((d) => `
             <p><strong>${escapeHtml(d.libelleAffiche || d.code)}</strong> — ${escapeHtml(d.libelle || '')}</p>
             ${(d.sousDomaines || []).map((s) => `<p style="margin-left:16px">${escapeHtml(s.libelleAffiche || s.code)} — ${escapeHtml(s.libelle || '')}</p>`).join('')}
@@ -10143,15 +10139,7 @@
   }
 
   function qvCursusNavRows(qv) {
-    const selections = qv.cursusSelections || [];
-    if (selections.length) return selections;
-    const seen = {};
-    return (qv.cursus || []).filter((row) => {
-      const code = String(row.code || '');
-      if (!code || seen[code]) return false;
-      seen[code] = true;
-      return true;
-    });
+    return qv.cursusSelections || [];
   }
 
   function qvCursusStepPeriod(qv, row) {
@@ -10168,7 +10156,7 @@
   }
 
   function qvCursusStepState(qv, row, planned) {
-    if (!planned) return { tone: 'inactive', label: 'Planifié' };
+    if (!planned || row.stepRetenu === false) return { tone: 'inactive', label: 'Non prévu' };
     const related = qvActivities(qv).filter((item) => item.cursus && (item.cursus === row.libelle || (item.cursus === 'CI DPS' && row.code === 'CI-DPS')));
     if (!related.length) return { tone: 'info', label: 'Planifié' };
     if (related.some((item) => qvAgendaState(item).tone === 'block')) return { tone: 'block', label: 'À arbitrer' };
@@ -11692,6 +11680,7 @@
   }
 
   function renderQuoVadisCursus(qv) {
+    const year = Number((qv.programme || {}).annee || 2027);
     const navRows = qvCursusNavRows(qv);
     const query = String(state.quoVadisCursusQuery || '').trim().toLowerCase();
     const visible = navRows.filter((row) => !query || [row.libelle, row.code, row.justification].join(' ').toLowerCase().indexOf(query) >= 0);
@@ -11701,16 +11690,18 @@
     state.quoVadisCursusCode = selectedCode;
     const selected = navRows.find((row) => row.code === selectedCode) || visible[0] || null;
     const planned = Boolean(selected && selected.retenu);
-    const steps = (qv.cursus || []).filter((row) => row.code === selectedCode).slice().sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0));
+    const manageable = Boolean(selected && selected.statut === 'ACTIF');
+    const steps = (qv.cursus || []).filter((row) => row.code === selectedCode && row.stepId).slice().sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0));
     const dps = (selected && (selected.code === 'CI-DPS' || selected.libelle === 'CI DPS')) ? (qv.dpsOrganisation || []) : [];
     return `<div class="qv-cursus-view qv-pilot-view">
       <section class="scope-card qv-cursus-nav">
-        <div class="scope-section-head"><div><h2>Cursus</h2></div></div>
+        <div class="scope-section-head"><div><h2>Cursus</h2></div>${hasScopePermission('references:manage') ? qvSoftBtn('qv-cursus-new', '＋ Nouveau cursus') : ''}</div>
+        ${state.quoVadisNewCursus ? `<form id="qv-cursus-create" class="qv-cursus-create scope-field"><label for="qv-cursus-name">Nom du cursus</label><input id="qv-cursus-name" type="text" required maxlength="160" autocomplete="off"><div class="qv-cursus-create-actions"><button type="submit" class="scope-btn qv-soft-btn">Créer</button><button type="button" class="scope-btn qv-soft-btn" id="qv-cursus-cancel">Annuler</button></div></form>` : ''}
         <div class="scope-field qv-cursus-search"><label class="visually-hidden" for="qv-cursus-q">Rechercher un cursus</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-cursus-q" type="search" value="${escapeHtml(state.quoVadisCursusQuery || '')}" placeholder="Rechercher un cursus…"></div></div>
         <ul class="qv-cursus-list">${visible.map((row) => `<li>
           <button type="button" class="${row.code === selectedCode ? 'is-active' : ''}" data-qv-cursus-select="${escapeHtml(row.code)}">
             <span class="qv-cursus-list-name">${escapeHtml(row.libelle)}</span>
-            ${scopeStateHtml(row.retenu ? 'positive' : 'inactive', row.retenu ? 'Prévu en 2027' : 'Non prévu en 2027')}
+            ${scopeStateHtml(row.retenu ? 'positive' : 'inactive', row.retenu ? `Prévu en ${year}` : `Non prévu en ${year}`)}
           </button>
         </li>`).join('') || '<li><p class="qv-pilot-empty">Aucun cursus configuré.</p></li>'}</ul>
       </section>
@@ -11718,22 +11709,22 @@
         ${selected ? `<div class="scope-section-head">
           <div>
             <h2>Cursus ${escapeHtml(selected.libelle)}</h2>
-            ${scopeStateHtml(planned ? 'positive' : 'inactive', planned ? 'Prévu en 2027' : 'Non prévu en 2027')}
-            <p class="qv-pilot-kicker">${escapeHtml(selected.justification || 'Cursus de formation pour la préparation 2027.')}</p>
+            ${scopeStateHtml(planned ? 'positive' : 'inactive', planned ? `Prévu en ${year}` : `Non prévu en ${year}`)}
+            ${selected.justification ? `<p class="qv-pilot-kicker">${escapeHtml(selected.justification)}</p>` : ''}
           </div>
-          ${qvSoftBtn('qv-cursus-save', '＋ Enregistrer')}
+          ${manageable ? qvSoftBtn('qv-cursus-save', '＋ Enregistrer') : ''}
         </div>
         <section class="scope-form-section">
-          <h3>1. Planning 2027</h3>
+          <h3>1. Planning ${year}</h3>
           <div class="qv-cursus-plan">
-            <label><input type="radio" name="qv-cursus-plan" data-qv-cursus-plan="${escapeHtml(selected.code)}" value="1" ${planned ? 'checked' : ''}> Prévu en 2027</label>
-            <label><input type="radio" name="qv-cursus-plan" data-qv-cursus-plan="${escapeHtml(selected.code)}" value="0" ${planned ? '' : 'checked'}> Non prévu en 2027</label>
+            <label><input type="radio" name="qv-cursus-plan" data-qv-cursus-plan="${escapeHtml(selected.code)}" value="1" ${planned ? 'checked' : ''} ${manageable ? '' : 'disabled'}> Prévu en ${year}</label>
+            <label><input type="radio" name="qv-cursus-plan" data-qv-cursus-plan="${escapeHtml(selected.code)}" value="0" ${planned ? '' : 'checked'} ${manageable ? '' : 'disabled'}> Non prévu en ${year}</label>
           </div>
-          ${qvPilotHintHtml('Si un cursus n’est pas planifié en 2027, tous ses modules 2027 sont automatiquement décochés et considérés comme inactifs.')}
+          ${qvPilotHintHtml(`Si un cursus n’est pas planifié en ${year}, ses modules sont décochés et deviennent indisponibles pour cette année.`)}
         </section>
         <section class="scope-form-section qv-cursus-modules">
           <h3>2. Modules du cursus</h3>
-          <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Module</th><th>Libellé</th><th>Année</th><th>Période proposée</th><th>État</th><th>Inclus 2027</th></tr></thead>
+          <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Module</th><th>Libellé</th><th>Année</th><th>Période proposée</th><th>État</th><th>Inclus ${year}</th></tr></thead>
             <tbody>${steps.map((row, index) => {
               const visual = qvCursusStepState(qv, row, planned);
               const included = planned && row.stepRetenu !== false;
@@ -11743,7 +11734,7 @@
               <td>${escapeHtml(row.yearLabel || (row.logicalYear === 2 ? 'Année 2' : 'Année 1'))}<small>${escapeHtml(row.startYearLabel || (row.logicalYear === 2 ? 'Début du cursus 2026' : 'Début du cursus 2027'))}</small></td>
               <td>${escapeHtml(qvCursusStepPeriod(qv, row))}</td>
               <td>${scopeStateHtml(visual.tone, visual.label)}</td>
-              <td><input type="checkbox" data-qv-cursus-step="${escapeHtml(row.stepId || '')}" ${included ? 'checked' : ''} ${planned ? '' : 'disabled'}></td>
+              <td><input type="checkbox" data-qv-cursus-step="${escapeHtml(row.stepId || '')}" ${included ? 'checked' : ''} ${planned && manageable ? '' : 'disabled'}></td>
             </tr>`;
             }).join('') || '<tr><td colspan="6"><p class="qv-pilot-empty">Aucun module pour ce cursus.</p></td></tr>'}</tbody>
           </table></div>
@@ -11809,8 +11800,14 @@
     const pageRows = pager.slice(rows);
     const autre = String(form.lieuId || '') === 'autre';
     const domain = form.domain || '';
+    const formationDomains = (L.domainTaxonomyGroups().find((group) => group.label === 'Formation') || {}).codes || [];
     const oiOptions = L.sharedOiOptions ? L.sharedOiOptions(domain) : [{ value: '', label: 'Non précisé' }];
-    const specOptions = L.sharedSpecOptions ? L.sharedSpecOptions(domain) : [{ value: '', label: 'Non précisé' }];
+    const specOptions = [{ value: '', label: 'Non précisé' }]
+      .concat((L.sharedSpecOptions ? L.sharedSpecOptions(domain) : []).filter((row) => row.value).map((row) => ({ value: `SPEC:${row.value}`, label: row.label })))
+      .concat(formationDomains.includes(domain)
+        ? (qv.cursusSelections || []).filter((row) => row.retenu).map((row) => ({ value: `CURSUS:${row.cursusId}`, label: row.libelle }))
+        : []);
+    const selectedSpec = form.cursusId ? `CURSUS:${form.cursusId}` : (form.specialisation ? `SPEC:${form.specialisation}` : '');
     const selectedOi = L.normalizeOiCode ? L.normalizeOiCode(domain, form.cibleCode) : (form.cibleCode || '');
     const multi = Boolean(state.quoVadisFutureMulti);
     return `<div class="qv-dates-view qv-pilot-view">
@@ -11828,7 +11825,7 @@
             <div class="scope-field"><label for="qv-future-domain">Domaine *</label><select id="qv-future-domain">${domainTaxonomySelectHtml(form.domain || '', { emptyLabel: 'Sélectionner…' })}</select></div>
             <div class="scope-field"><label for="qv-future-cible">OI / Cible</label><select id="qv-future-cible">${sharedOptionsHtml(oiOptions, selectedOi)}</select></div>
           </div>
-          <div class="scope-field qv-form-follow"><label for="qv-future-spec">Cursus / Spécialisation</label><select id="qv-future-spec">${sharedOptionsHtml(specOptions, form.specialisation || '')}</select></div>
+          <div class="scope-field qv-form-follow"><label for="qv-future-spec">Cursus / Spécialisation</label><select id="qv-future-spec">${sharedOptionsHtml(specOptions, selectedSpec)}</select></div>
         </section>
         <section class="scope-form-section is-wide">
           <h3>2. Date et horaire</h3>
@@ -12171,17 +12168,45 @@
         const code = input.getAttribute('data-qv-cursus-plan');
         if (!code || typeof client.setQuoVadisCursus !== 'function') return;
         const retenu = input.value === '1';
+        const year = Number(((state.quoVadis || {}).programme || {}).annee || 2027);
         try {
-          const data = await client.setQuoVadisCursus(2027, { code, retenu, justification: retenu ? 'Retenu pour le programme 2027.' : 'Non retenu pour le programme 2027.' });
+          const data = await client.setQuoVadisCursus(year, { code, retenu, justification: retenu ? `Retenu pour le programme ${year}.` : `Non retenu pour le programme ${year}.` });
           invalidateCache(['quoVadis']);
           state.quoVadis = data.quoVadis || state.quoVadis;
-          toast('success', 'Cursus', retenu ? 'Cursus retenu.' : 'Cursus écarté pour 2027.');
+          toast('success', 'Cursus', retenu ? 'Cursus retenu.' : `Cursus écarté pour ${year}.`);
         } catch (error) {
           toast('error', 'Cursus', L.friendlyError(error).message || 'Le choix du cursus n’a pas pu être enregistré.');
         } finally {
           render();
         }
       });
+    });
+    document.getElementById('qv-cursus-new')?.addEventListener('click', () => {
+      state.quoVadisNewCursus = true;
+      render();
+      document.getElementById('qv-cursus-name')?.focus();
+    });
+    document.getElementById('qv-cursus-cancel')?.addEventListener('click', () => {
+      state.quoVadisNewCursus = false;
+      render();
+    });
+    document.getElementById('qv-cursus-create')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const libelle = String(document.getElementById('qv-cursus-name')?.value || '').trim();
+      if (!libelle) return;
+      try {
+        const data = await client.createQuoVadisCursus({ libelle });
+        invalidateCache(['quoVadis']);
+        await loadQuoVadis();
+        state.quoVadisCursusCode = data.cursus.code;
+        state.quoVadisCursusQuery = '';
+        state.quoVadisNewCursus = false;
+        toast('success', 'Cursus', 'Cursus créé.');
+      } catch (error) {
+        toast('error', 'Cursus', L.friendlyError(error).message || 'Le cursus n’a pas pu être créé.');
+      } finally {
+        render();
+      }
     });
     document.getElementById('qv-cursus-save')?.addEventListener('click', () => {
       const selected = root.querySelector('[data-qv-cursus-plan]:checked');
@@ -12226,8 +12251,9 @@
       input.addEventListener('change', async () => {
         const stepId = input.getAttribute('data-qv-cursus-step');
         if (!stepId || typeof client.setQuoVadisCursusStep !== 'function') return;
+        const year = Number(((state.quoVadis || {}).programme || {}).annee || 2027);
         try {
-          const data = await client.setQuoVadisCursusStep(2027, { stepId, retenu: Boolean(input.checked) });
+          const data = await client.setQuoVadisCursusStep(year, { stepId, retenu: Boolean(input.checked) });
           invalidateCache(['quoVadis']);
           state.quoVadis = data.quoVadis || state.quoVadis;
           toast('success', 'Cursus', input.checked ? 'Module prévu en 2027.' : 'Module non prévu en 2027.');
@@ -12274,7 +12300,8 @@
         activiteLabel: document.getElementById('qv-future-label')?.value || '',
         domain: document.getElementById('qv-future-domain')?.value || '',
         cibleCode: document.getElementById('qv-future-cible')?.value || '',
-        specialisation: document.getElementById('qv-future-spec')?.value || '',
+        specialisation: (document.getElementById('qv-future-spec')?.value || '').startsWith('SPEC:') ? document.getElementById('qv-future-spec').value.slice(5) : '',
+        cursusId: (document.getElementById('qv-future-spec')?.value || '').startsWith('CURSUS:') ? document.getElementById('qv-future-spec').value.slice(7) : '',
         lieuId: document.getElementById('qv-future-lieu-id')?.value || '',
         lieuLibre: document.getElementById('qv-future-lieu')?.value || '',
         remarque: document.getElementById('qv-future-note')?.value || ''
@@ -12292,8 +12319,11 @@
       const canonicalOi = L.normalizeOiCode ? L.normalizeOiCode(form.domain, form.cibleCode) : (form.cibleCode || '');
       const oiOk = (L.sharedOiOptions ? L.sharedOiOptions(form.domain) : []).some((row) => String(row.value) === String(canonicalOi));
       const specOk = (L.sharedSpecOptions ? L.sharedSpecOptions(form.domain) : []).some((row) => String(row.value) === String(form.specialisation || ''));
+      const cursusOk = ((L.domainTaxonomyGroups().find((group) => group.label === 'Formation') || {}).codes || []).includes(form.domain)
+        && ((state.quoVadis || {}).cursusSelections || []).some((row) => row.retenu && String(row.cursusId) === String(form.cursusId));
       form.cibleCode = oiOk ? canonicalOi : '';
       if (!specOk) form.specialisation = '';
+      if (!cursusOk) form.cursusId = '';
       state.quoVadisFutureForm = form;
       render();
     });
@@ -12337,7 +12367,7 @@
         return;
       }
       try {
-        const payload = Object.assign({ targetYear: 2027, autreLieu: form.lieuId === 'autre' }, form);
+        const payload = Object.assign({ targetYear: Number(((state.quoVadis || {}).programme || {}).annee || 2027), autreLieu: form.lieuId === 'autre' }, form);
         if (!state.quoVadisFutureMulti) payload.dateFin = '';
         await client.createQuoVadisFutureDate(payload);
         state.quoVadisFutureForm = { dateDebut: '', heureDebut: '', dateFin: '', heureFin: '', activiteLabel: '', domain: '', cibleCode: '', specialisation: '', lieuId: '', lieuLibre: '', remarque: '' };

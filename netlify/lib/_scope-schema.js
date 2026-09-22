@@ -4,14 +4,15 @@ const qvLieux = require('./_scope-quo-vadis-lieux');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 
 const DOMAINES = [
-  { code: 'FOBA', libelle: 'Formation de base' },
-  { code: 'FOCA', libelle: 'Formation des cadres' },
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
   { code: 'DAP', libelle: 'Détachement d’appui' },
-  { code: 'PR', libelle: 'Premiers secours' },
-  { code: 'AUTO', libelle: 'Automobile' },
+  { code: 'JSP', libelle: 'Jeunes sapeurs-pompiers' },
+  { code: 'FOBA', libelle: 'Formation de base' },
+  { code: 'FOCO', libelle: 'Formation continue' },
+  { code: 'FOCA', libelle: 'Formation des cadres' },
   { code: 'FOSPEC', libelle: 'Formations spéciales' },
-  { code: 'JSP', libelle: 'Jeunes sapeurs-pompiers' }
+  { code: 'PR', libelle: 'Premiers secours' },
+  { code: 'AUTO', libelle: 'Automobile' }
 ];
 
 const DOMAINES_MODEL_2 = {
@@ -19,8 +20,8 @@ const DOMAINES_MODEL_2 = {
   FOCA: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'FOCA' },
   DPS: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'DPS' },
   DAP: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'DAP' },
-  PR: { nature: 'SOUS_DOMAINE', parentCode: 'FOSPEC', libelleAffiche: 'PAPR', libelle: 'Protection respiratoire' },
-  AUTO: { nature: 'SOUS_DOMAINE', parentCode: 'FOSPEC', libelleAffiche: 'AUTO' },
+  PR: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'PR', libelle: 'Protection respiratoire' },
+  AUTO: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'AUTO' },
   FOSPEC: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'FOSPEC' },
   JSP: { nature: 'DOMAINE', parentCode: null, libelleAffiche: 'JSP' }
 };
@@ -34,6 +35,9 @@ const CIBLES = [
   ['FOBA', '1', 'FOBA 1'],
   ['FOBA', '2', 'FOBA 2'],
   ['FOBA', '3', 'FOBA 3'],
+  ['FOCO', 'DPS', 'DPS'],
+  ['FOCO', 'DAP', 'DAP'],
+  ['FOCO', 'JSP', 'JSP'],
   ['FOCA', 'GEN', 'FOCA'],
   ['DPS', 'GEN', 'DPS'],
   ['DPS', 'G1', 'DPS G1'],
@@ -50,9 +54,14 @@ const CIBLES = [
   ['PR', 'B1', 'PAPR B1'],
   ['PR', 'B2', 'PAPR B2'],
   ['PR', 'GEN', 'PAPR GEN'],
+  ['PR', 'PAPR', 'PAPR'],
   ['PR', 'ABC', 'PR-ABC'],
   ['AUTO', 'VL', 'AUTO VL'],
   ['AUTO', 'PL', 'AUTO PL'],
+  ['AUTO', 'TP9', 'cond TP9'],
+  ['AUTO', 'GRUTIER', 'Grutier'],
+  ['AUTO', 'MEA', 'MEA'],
+  ['AUTO', 'BAT', 'Pilote BAT'],
   ['FOSPEC', 'GEN', 'FOSPEC'],
   ['JSP', 'G1', 'JSP G1'],
   ['JSP', 'C1', 'JSP C1'],
@@ -68,7 +77,7 @@ const DDL = [
     actif boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    constraint scope_domaines_code_chk check (code in ('FOBA','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP'))
+    constraint scope_domaines_code_chk check (code in ('FOBA','FOCO','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP'))
   )`,
   `create table if not exists scope_cibles (
     cible_id uuid primary key,
@@ -278,7 +287,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-referentiel-cursus-taxonomie-2';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -314,6 +323,8 @@ async function ensureScopeSchema(){
   for(const sql of DDL){
     await db.query(sql);
   }
+  await db.query(`alter table scope_domaines drop constraint if exists scope_domaines_code_chk`);
+  await db.query(`alter table scope_domaines add constraint scope_domaines_code_chk check (code in ('FOBA','FOCO','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP'))`);
   for(const domaine of DOMAINES){
     await db.query(
       `insert into scope_domaines(code, libelle, actif) values ($1,$2,true)
@@ -420,6 +431,7 @@ async function ensureScopeSchema(){
   await db.query(
     `insert into monitoring_f7_schema_migrations(version) values ('scope-event-temporal-configuration-foundation-9') on conflict (version) do nothing`
   );
+  await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-referentiel-cursus-taxonomie-2') on conflict (version) do nothing`);
   ready = true;
   return true;
   });
@@ -595,14 +607,14 @@ async function migrateModel2(){
   `);
   await db.query(`
     update scope_domaines
-    set parent_code = 'FOSPEC',
-        nature = 'SOUS_DOMAINE',
-        libelle_affiche = case when code = 'PR' then 'PAPR' else 'AUTO' end
+    set parent_code = null,
+        nature = 'DOMAINE',
+        libelle_affiche = code
     where code in ('PR', 'AUTO')
   `);
   await db.query(`
     update scope_domaines
-    set libelle = 'Protection respiratoire', libelle_affiche = 'PAPR'
+    set libelle = 'Protection respiratoire', libelle_affiche = 'PR'
     where code = 'PR'
   `);
   await db.query(`alter table scope_domaines drop constraint if exists scope_domaines_nature_chk`);
@@ -2091,7 +2103,7 @@ async function migrateQuoVadisCoverage1(){
     create table if not exists scope_quo_vadis_cursus_step_programmes (
       programme_id uuid not null references scope_quo_vadis_programmes(programme_id) on delete cascade,
       step_id uuid not null references scope_quo_vadis_cursus_steps(step_id) on delete cascade,
-      retenu boolean not null default true,
+      retenu boolean not null default false,
       metadata jsonb not null default '{}'::jsonb,
       updated_at timestamptz not null default now(),
       constraint scope_qv_cursus_step_programmes_pk primary key(programme_id, step_id)
@@ -2264,6 +2276,15 @@ async function migrateQuoVadisToutesActivitesUx1(){
   await db.query(`alter table scope_quo_vadis_obligations add column if not exists salle_theorie_id uuid references scope_salles_theorie(salle_id)`);
   await db.query(`alter table scope_quo_vadis_obligations add column if not exists responsable_fonction_code text references scope_responsable_fonctions(code)`);
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-toutes-activites-ux-1') on conflict (version) do nothing`);
+  await db.query(`alter table scope_quo_vadis_cursus_step_programmes alter column retenu set default false`);
+  await db.query(`alter table scope_quo_vadis_future_dates add column if not exists cursus_id uuid references scope_quo_vadis_cursus_definitions(cursus_id)`);
+  for(const table of ['scope_domaines', 'scope_cibles', 'scope_quo_vadis_cursus_definitions', 'scope_quo_vadis_cursus_versions', 'scope_quo_vadis_cursus_steps', 'scope_quo_vadis_cursus_programmes', 'scope_quo_vadis_cursus_step_programmes', 'scope_quo_vadis_future_dates']){
+    await db.query(`alter table ${table} enable row level security`);
+    for(const role of ['anon', 'authenticated']){
+      const exists = await db.query(`select 1 from pg_roles where rolname = $1`, [role]);
+      if(exists.rows[0]) await db.query(`revoke all on ${table} from ${role}`);
+    }
+  }
 }
 
 module.exports = { ensureScopeSchema, DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 };

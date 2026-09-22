@@ -73,9 +73,8 @@ function codesOf(logic, domain, rows){
     eq(groups[0].label, 'Opérationnel');
     eq(groups[0].codes.join(','), 'DPS,DAP,JSP');
     eq(groups[1].label, 'Formation');
-    eq(groups[1].codes.join(','), 'FOBA,FOCO,FOCA,FOSPEC');
-    eq(groups[2].label, 'Spécialisation');
-    eq(groups[2].codes.join(','), 'PR,AUTO');
+    eq(groups[1].codes.join(','), 'FOBA,FOCO,FOCA,FOSPEC,PR,AUTO');
+    eq(groups[1].separatorBefore, 'PR');
     includes(ui, 'function domainTaxonomySelectHtml');
     includes(ui, 'id="filter-domaine"');
     includes(ui, 'id="new-domaine"');
@@ -83,8 +82,8 @@ function codesOf(logic, domain, rows){
     includes(ui, "domainTaxonomySelectHtml(state.domaine === 'tous'");
   });
 
-  await record('03 — PR/AUTO groupés visuellement sous Spécialisation', async () => {
-    includes(ui, "label: 'Spécialisation'");
+  await record('03 — PR/AUTO à la fin du groupe Formation', async () => {
+    notIncludes(ui, "label: 'Spécialisation'");
     notIncludes(ui, 'Spécialisations FOSPEC');
     notIncludes(ui, 'Domaines opérationnels');
     const helper = sourceBlock(ui, 'function domainTaxonomySelectHtml', 900);

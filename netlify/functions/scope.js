@@ -126,6 +126,11 @@ async function scopeHandler(event){
     if(method === 'GET' && params){
       return response(200, { ok:true, quoVadis: await quoVadis.listProgramme(params.annee) });
     }
+    if(method === 'POST' && path === '/quo-vadis/cursus'){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = await quoVadis.createCursus(body);
+      return response(result.created ? 201 : 400, { ok: result.created, ...result });
+    }
     params = match(path, '/quo-vadis/programmes/:annee/generate');
     if(method === 'POST' && params){
       return response(200, { ok:true, quoVadis: await quoVadis.generateProgramme(params.annee) });
@@ -147,7 +152,8 @@ async function scopeHandler(event){
       return response(200, { ok:true, ...(await quoVadis.retainProposal(params.id, body)) });
     }
     if(method === 'POST' && path === '/quo-vadis/future-dates'){
-      return response(201, { ok:true, ...(await quoVadis.createFutureDate(body)) });
+      const result = await quoVadis.createFutureDate(body);
+      return response(result.created ? 201 : 400, { ok: result.created, ...result });
     }
     params = match(path, '/quo-vadis/activities/:id');
     if(method === 'POST' && params){

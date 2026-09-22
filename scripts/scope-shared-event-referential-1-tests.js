@@ -44,25 +44,23 @@ function valuesOf(options) {
   }));
 
   const groups = logic.domainTaxonomyGroups();
-  assert.strictEqual(groups.map((g) => g.label).join('|'), 'Opérationnel|Formation|Spécialisation');
+  assert.strictEqual(groups.map((g) => g.label).join('|'), 'Opérationnel|Formation');
   assert.strictEqual(groups[0].codes.join(','), 'DPS,DAP,JSP');
-  assert.strictEqual(groups[1].codes.join(','), 'FOBA,FOCO,FOCA,FOSPEC');
-  assert.strictEqual(groups[2].codes.join(','), 'PR,AUTO');
-  assert.ok(!groups[1].codes.includes('PR') && !groups[1].codes.includes('AUTO'), 'PR/AUTO hors Formation');
+  assert.strictEqual(groups[1].codes.join(','), 'FOBA,FOCO,FOCA,FOSPEC,PR,AUTO');
+  assert.strictEqual(groups[1].separatorBefore, 'PR');
   assert.ok(!ui.includes('Domaines opérationnels'));
   assert.ok(!ui.includes('Spécialisations FOSPEC'));
-  assert.ok(ui.includes("label: 'Opérationnel'"));
-  assert.ok(ui.includes("label: 'Formation'"));
-  assert.ok(ui.includes("label: 'Spécialisation'"));
+  assert.ok(ui.includes('const groups = L.domainTaxonomyGroups()'));
+  assert.ok(!ui.includes("label: 'Spécialisation'"));
 
-  assert.ok(groups[1].codes.join(',') === 'FOBA,FOCO,FOCA,FOSPEC');
+  assert.ok(groups[1].codes.join(',') === 'FOBA,FOCO,FOCA,FOSPEC,PR,AUTO');
 
   assert.strictEqual(valuesOf(logic.sharedOiOptions('DPS')).join(','), ',G1,C1,B1,B2');
   assert.strictEqual(codesOf(logic, 'DPS', repoCibles).join(','), 'G1,C1,B1,B2');
   assert.strictEqual(valuesOf(logic.sharedOiOptions('DAP')).join(','), ',Y1,Y2,Y3,Y4');
 
-  assert.ok(!groups[2].codes.includes('FOSPEC'));
-  assert.strictEqual(groups[2].codes.join(','), 'PR,AUTO');
+  assert.strictEqual(valuesOf(logic.sharedOiOptions('FOCO')).join(','), ',DPS,DAP,JSP');
+  assert.strictEqual(codesOf(logic, 'FOCO', repoCibles).join(','), 'DPS,DAP,JSP');
 
   assert.strictEqual(labelsOf(logic.sharedSpecOptions('FOSPEC')).join('|'), 'Non précisé|Antichute|NAC|OFSI|OP VPC');
   assert.ok(!valuesOf(logic.sharedSpecOptions('FOSPEC')).includes('PR'));
@@ -119,12 +117,12 @@ function valuesOf(options) {
   assert.ok(ui.includes('id="new-domaine"') && ui.includes('eventCiblesForForm'));
   assert.ok(ui.includes('id="filter-domaine"') && ui.includes('id="cycle-filter-domaine"'));
   assert.ok(ui.includes('Cursus / Spécialisation'));
-  assert.ok(html.includes('scope-ui-logic.js?v=scope-shared-event-referential-1'));
-  assert.ok(html.includes('scope-ui.js?v=scope-shared-event-referential-1'));
+  assert.ok(html.includes('scope-ui-logic.js?v=scope-referentiel-cursus-taxonomie-2'));
+  assert.ok(html.includes('scope-ui.js?v=scope-referentiel-cursus-taxonomie-2'));
 
   assert.strictEqual(logic.eventListDomainParam('FOSPEC'), 'FOSPEC');
   assert.notStrictEqual(logic.eventListDomainParam('FOSPEC'), 'FOSPEC,PR,AUTO');
-  assert.strictEqual(codesOf(logic, 'AUTO', repoCibles).join(','), 'PL,VL');
+  assert.strictEqual(codesOf(logic, 'AUTO', repoCibles).join(','), 'PL,TP9,VL,GRUTIER,MEA,BAT');
 
   console.log('scope-shared-event-referential-1-tests: ok');
 })().catch((error) => {

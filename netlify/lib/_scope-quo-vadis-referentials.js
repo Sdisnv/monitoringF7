@@ -60,7 +60,7 @@ const RESPONSIBLE_FUNCTIONS = Object.freeze([
 
 const SCOPE_SITE_ORDER = Object.freeze(OFFICIAL_LIEUX.map((row) => String(row.oiCode)));
 
-const SCOPE_DOMAIN_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']);
+const SCOPE_DOMAIN_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']);
 
 const SCOPE_DOMAIN_LABELS = Object.freeze({
   DPS: 'Détachement de premier secours',
@@ -179,16 +179,9 @@ function normalizeScopeDomainCode(value){
 
 function scopeDomainBand(value){
   const code = normalizeScopeDomainCode(value);
-  if(code === 'DPS') return [1, 10, code];
-  if(code === 'DAP') return [1, 20, code];
-  if(code === 'JSP') return [1, 30, code];
-  if(code.startsWith('FO')){
-    const known = { FOBA: 10, FOCO: 20, FOCA: 30, FOSPEC: 40 };
-    return [2, Object.prototype.hasOwnProperty.call(known, code) ? known[code] : 50, code];
-  }
-  if(code === 'AUTO') return [3, 10, code];
-  if(code === 'PR') return [4, 10, code];
-  return [5, 10, code];
+  const index = SCOPE_DOMAIN_ORDER.indexOf(code);
+  if(index >= 0) return [1, index, code];
+  return [2, 0, code];
 }
 
 function scopeDomainRank(value){
@@ -219,7 +212,7 @@ function scopeDomainLabel(value){
 }
 
 function scopeDomainOrderTrail(){
-  return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR';
+  return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → PR → AUTO';
 }
 
 module.exports = {
