@@ -10641,7 +10641,7 @@
     const active = summary.totalActivites;
     return `<section class="scope-card qv-generation-report">
       ${qvSectionHead('gear', 'Préparation 2027 — statut actuel', 'Bilan avant / après du dernier recalcul. Aucun événement opérationnel n’a été créé.')}
-      ${generation.after ? `<p class="qv-prep-recalc">Dernier recalcul : ${escapeHtml(String(generation.newProposals || 0))} Nouvelles propositions · ${escapeHtml(String(generation.unchangedProposals || 0))} inchangée(s) · ${escapeHtml(String(generation.attentionPoints || 0))} Points d’attention.</p>` : ''}
+      ${generation.after ? `<p class="qv-prep-recalc">Dernier recalcul : ${escapeHtml(String(generation.newProposals || 0))} nouvelles propositions · ${escapeHtml(String(generation.attentionPoints || 0))} points d’attention.</p>` : ''}
       ${consolidation ? `<ul class="qv-prep-list">${rows.map(([label, value]) => `<li><span>${escapeHtml(label)}</span><strong>${escapeHtml(qvDisplayCount(value))}</strong></li>`).join('')}</ul>` : '<p class="scope-muted">Le bilan détaillé du recalcul sera affiché ici dès qu’un calcul aura été exécuté.</p>'}
       ${active == null ? '' : `<div class="qv-prep-banner"><strong>${escapeHtml(String(active))} activités actives en 2027</strong><span>Programme cohérent et prêt pour arbitrage.</span></div>`}
     </section>`;
@@ -10710,7 +10710,7 @@
     const cursusCount = Number((qv.obligations || []).filter((row) => row.sourceType === 'CURSUS').length);
     const kpis = [
       { href: qvHref('activites'), icon: 'list', tone: 'info', value: summary.totalActivites || 0, label: 'Activités prévues', detail: `${historical} historiques${cursusCount ? ` + ${cursusCount} cursus` : ''}`, action: 'Voir toutes les activités' },
-      { href: qvHref('activites', { seances: 'oui' }), icon: 'calendar', tone: 'info', value: coverage.sessions || 0, label: 'Séances consolidées', detail: `${qvDisplayCount(coverage.duplicated)} doublons évités`, action: 'Voir les séances' },
+      { href: qvHref('activites', { seances: 'oui' }), icon: 'calendar', tone: 'info', value: coverage.sessions || 0, label: 'Séances consolidées', detail: 'Programme 2027', action: 'Voir les séances' },
       { href: qvHref('agenda'), icon: 'file', tone: 'info', value: summary.datesProposees || 0, label: 'Dates proposées', detail: 'Visibles dans l’agenda', action: 'Voir l’agenda' },
       { href: qvHref('a-arbitrer'), icon: 'gavel', tone: 'warn', value: summary.aArbitrer || 0, label: 'À arbitrer', detail: 'vraies décisions humaines', action: 'Voir les arbitrages' },
       { href: qvHref('alertes'), icon: 'alert', tone: 'alert', value: (qv.alerts || []).length, label: 'Alertes', detail: 'Points à vérifier', action: 'Voir les alertes' },
@@ -10718,10 +10718,10 @@
     ];
     return `<div class="qv-cockpit">
       <div class="qv-pilot-kpis">${kpis.map((item) => qvPilotKpi(item)).join('')}</div>
-      <div class="qv-cockpit-row">
+      <details class="qv-consolidation-details"><summary>Détails de consolidation</summary><div class="qv-cockpit-row">
         ${renderQuoVadisGenerationReport(state.quoVadisGenerationReport, qv)}
         ${renderQuoVadisCoverage(qv)}
-      </div>
+      </div></details>
       <div class="qv-cockpit-row">
         <section class="scope-card qv-progress-card">
           ${qvSectionHead('list', 'Progression par domaine')}
@@ -10778,19 +10778,9 @@
             </label>
           </div>
           <button type="button" class="scope-btn scope-btn-primary qv-recalc-btn" id="qv-generate" ${state.quoVadisBusy ? 'disabled' : ''}>Recalculer les propositions 2027</button>
-          <p class="scope-mode-hint">Le recalcul met à jour les propositions de planification. Il ne crée aucun événement opérationnel.${qv.personnelView && qv.personnelView.hideInternalPrep ? ' Planning validé: les informations internes de préparation ne seront pas exposées dans la vue personnel.' : ''}</p>
+          <p class="scope-mode-hint">Le recalcul ajuste le planning préparatoire sans créer d’événement.${qv.personnelView && qv.personnelView.hideInternalPrep ? ' La préparation interne reste masquée dans la vue personnel.' : ''}</p>
         </section>
       </div>
-      <section class="qv-quick-nav">
-        <div class="qv-quick-nav-copy">
-          <span class="qv-section-icon is-circle">${qvCockpitIcon('info')}</span>
-          <div>
-            <h2>Navigation rapide</h2>
-            <p>Cliquez sur un indicateur, un domaine ou un mois pour accéder directement à la vue correspondante.</p>
-          </div>
-        </div>
-        <a class="scope-btn qv-quick-nav-btn" href="${qvHref('agenda-annuel')}">${qvCockpitIcon('calendar')} Ouvrir l’agenda annuel →</a>
-      </section>
     </div>`;
   }
 
@@ -11029,8 +11019,11 @@
       <nav class="qv-agenda-nav" aria-label="Mois de l’agenda">
         <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-prev" ${prev === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(prev)}"><span class="qv-agenda-nav-chevron" aria-hidden="true">‹</span> ${escapeHtml(qvMonthTitle(Number(prev.slice(5, 7)), Number(prev.slice(0, 4))))}</button>
         <div class="qv-agenda-nav-current">
-          <label class="visually-hidden" for="qv-agenda-month">Mois</label>
-          <select id="qv-agenda-month" class="qv-agenda-month-select">${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${row.value === monthKey ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}</select>
+          <button type="button" id="qv-agenda-month" class="qv-agenda-month-trigger" aria-haspopup="true" aria-expanded="${state.quoVadisMonthPickerOpen ? 'true' : 'false'}" aria-controls="qv-agenda-month-panel">${escapeHtml(qvMonthTitle(month, year))} <span aria-hidden="true">⌄</span></button>
+          ${state.quoVadisMonthPickerOpen ? `<div id="qv-agenda-month-panel" class="qv-agenda-month-panel" role="group" aria-label="Choisir un mois">
+            <div class="qv-agenda-year-tabs">${[2027, 2028].map((value) => `<button type="button" data-qv-picker-year="${value}" class="${Number(state.quoVadisMonthPickerYear || year) === value ? 'is-active' : ''}" aria-pressed="${Number(state.quoVadisMonthPickerYear || year) === value}">${value}</button>`).join('')}</div>
+            <div class="qv-agenda-month-grid">${qvMonthChoices().filter((row) => row.value.startsWith(`${state.quoVadisMonthPickerYear || year}-`)).map((row) => `<button type="button" data-qv-picker-month="${escapeHtml(row.value)}" class="${row.value === monthKey ? 'is-active' : ''}" aria-current="${row.value === monthKey ? 'date' : 'false'}">${escapeHtml(qvMonthLabel(Number(row.value.slice(5)), Number(row.value.slice(0, 4))).slice(0, 3))}</button>`).join('')}</div>
+          </div>` : ''}
           <p class="qv-agenda-nav-meta">${escapeHtml(String(eventCount))} ${eventWord} · ${escapeHtml(String(dayCount))} ${dayWord}</p>
         </div>
         <button type="button" class="scope-btn qv-agenda-nav-side" id="qv-agenda-next" ${next === monthKey ? 'disabled' : ''} data-qv-month="${escapeHtml(next)}">${escapeHtml(qvMonthTitle(Number(next.slice(5, 7)), Number(next.slice(0, 4))))} <span class="qv-agenda-nav-chevron" aria-hidden="true">›</span></button>
@@ -11692,7 +11685,7 @@
     const planned = Boolean(selected && selected.retenu);
     const manageable = Boolean(selected && selected.statut === 'ACTIF');
     const steps = (qv.cursus || []).filter((row) => row.code === selectedCode && row.stepId).slice().sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0));
-    const dps = (selected && (selected.code === 'CI-DPS' || selected.libelle === 'CI DPS')) ? (qv.dpsOrganisation || []) : [];
+    const dps = (selected && (selected.code === 'CI-DPS' || selected.libelle === 'CI DPS')) ? L.sortByScopeSiteOrder(qv.dpsOrganisation || [], (row) => row.oiCode) : [];
     return `<div class="qv-cursus-view qv-pilot-view">
       <section class="scope-card qv-cursus-nav">
         <div class="scope-section-head"><div><h2>Cursus</h2></div>${hasScopePermission('references:manage') ? qvSoftBtn('qv-cursus-new', '＋ Nouveau cursus') : ''}</div>
@@ -11757,7 +11750,7 @@
         </div>
         ${qvSoftBtn('qv-rules-edit', '⚙ Modifier les réglages')}
       </div>
-      <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Domaine</th><th>OI / cible</th><th>Jours de la semaine</th><th>Horaire habituel</th><th>Préférence</th><th>Contraintes</th><th>Période</th></tr></thead>
+      <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Domaine</th><th>Portée</th><th>Jours de la semaine</th><th>Horaire habituel</th><th>Préférence</th><th>Contraintes</th><th>Période</th></tr></thead>
         <tbody>${rules.map((row) => {
           const days = Object.entries(row.dayPolicyLabels || {});
           const preferred = days.filter(([, value]) => value === 'Préférée').map(([day]) => day);
@@ -11766,7 +11759,7 @@
           const time = row.timePolicy && `${row.timePolicy.usualStart || row.timePolicy.usual_start || ''} – ${row.timePolicy.usualEnd || row.timePolicy.usual_end || ''}`.replace(/^ – | – $/g, '');
           return `<tr>
             <td>${escapeHtml(row.domainLabel || row.domain || 'Tous')}</td>
-            <td>${escapeHtml(row.cibleLabel || 'Toutes')}</td>
+            <td>${escapeHtml(row.scopeLabel || row.cibleLabel || 'Règle générale')}</td>
             <td>${qvDayChipsHtml(row.dayPolicyLabels)}</td>
             <td>${escapeHtml(time || '—')}</td>
             <td>${escapeHtml(preferred[0] || 'Possible')}</td>
@@ -11802,12 +11795,9 @@
     const domain = form.domain || '';
     const formationDomains = (L.domainTaxonomyGroups().find((group) => group.label === 'Formation') || {}).codes || [];
     const oiOptions = L.sharedOiOptions ? L.sharedOiOptions(domain) : [{ value: '', label: 'Non précisé' }];
-    const specOptions = [{ value: '', label: 'Non précisé' }]
-      .concat((L.sharedSpecOptions ? L.sharedSpecOptions(domain) : []).filter((row) => row.value).map((row) => ({ value: `SPEC:${row.value}`, label: row.label })))
-      .concat(formationDomains.includes(domain)
-        ? (qv.cursusSelections || []).filter((row) => row.retenu).map((row) => ({ value: `CURSUS:${row.cursusId}`, label: row.libelle }))
-        : []);
-    const selectedSpec = form.cursusId ? `CURSUS:${form.cursusId}` : (form.specialisation ? `SPEC:${form.specialisation}` : '');
+    const specOptions = L.sharedSpecOptions ? L.sharedSpecOptions(domain) : [];
+    const cursusOptions = [{ value: '', label: 'Non précisé' }].concat(formationDomains.includes(domain)
+      ? (qv.cursusSelections || []).filter((row) => row.retenu).map((row) => ({ value: row.cursusId, label: row.libelle })) : []);
     const selectedOi = L.normalizeOiCode ? L.normalizeOiCode(domain, form.cibleCode) : (form.cibleCode || '');
     const multi = Boolean(state.quoVadisFutureMulti);
     return `<div class="qv-dates-view qv-pilot-view">
@@ -11823,9 +11813,10 @@
           <div class="scope-field"><label for="qv-future-label">Libellé de l’activité *</label><input id="qv-future-label" type="text" value="${escapeHtml(form.activiteLabel || '')}" placeholder="Ex. Exercice DPS" required>${qvFieldError('activiteLabel')}</div>
           <div class="scope-form-two qv-form-follow">
             <div class="scope-field"><label for="qv-future-domain">Domaine *</label><select id="qv-future-domain">${domainTaxonomySelectHtml(form.domain || '', { emptyLabel: 'Sélectionner…' })}</select></div>
-            <div class="scope-field"><label for="qv-future-cible">OI / Cible</label><select id="qv-future-cible">${sharedOptionsHtml(oiOptions, selectedOi)}</select></div>
+            <div class="scope-field"><label for="qv-future-cible">OI</label><select id="qv-future-cible">${sharedOptionsHtml(oiOptions, selectedOi)}</select></div>
           </div>
-          <div class="scope-field qv-form-follow"><label for="qv-future-spec">Cursus / Spécialisation</label><select id="qv-future-spec">${sharedOptionsHtml(specOptions, selectedSpec)}</select></div>
+          ${domain === 'FOSPEC' ? `<div class="scope-field qv-form-follow"><label for="qv-future-spec">Spécialisation</label><select id="qv-future-spec">${sharedOptionsHtml(specOptions, form.specialisation)}</select></div>` : ''}
+          ${cursusOptions.length > 1 ? `<div class="scope-field qv-form-follow"><label for="qv-future-cursus">Cursus</label><select id="qv-future-cursus">${sharedOptionsHtml(cursusOptions, form.cursusId)}</select></div>` : ''}
         </section>
         <section class="scope-form-section is-wide">
           <h3>2. Date et horaire</h3>
@@ -12045,9 +12036,27 @@
     const setAgendaMonth = (value) => {
       if (!value) return;
       state.quoVadisAgendaMonth = String(value).slice(0, 7);
+      state.quoVadisMonthPickerOpen = false;
       render();
     };
-    document.getElementById('qv-agenda-month')?.addEventListener('change', (event) => setAgendaMonth(event.target.value));
+    document.getElementById('qv-agenda-month')?.addEventListener('click', () => {
+      state.quoVadisMonthPickerOpen = !state.quoVadisMonthPickerOpen;
+      state.quoVadisMonthPickerYear = Number(qvAgendaMonthKey(quoVadisData()).slice(0, 4));
+      render();
+      if (state.quoVadisMonthPickerOpen) document.getElementById('qv-agenda-month')?.focus();
+    });
+    document.querySelectorAll('[data-qv-picker-year]').forEach((button) => button.addEventListener('click', () => {
+      state.quoVadisMonthPickerYear = Number(button.dataset.qvPickerYear);
+      render();
+      document.querySelector(`[data-qv-picker-year="${state.quoVadisMonthPickerYear}"]`)?.focus();
+    }));
+    document.querySelectorAll('[data-qv-picker-month]').forEach((button) => button.addEventListener('click', () => setAgendaMonth(button.dataset.qvPickerMonth)));
+    document.getElementById('qv-agenda-month-panel')?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      state.quoVadisMonthPickerOpen = false;
+      render();
+      document.getElementById('qv-agenda-month')?.focus();
+    });
     ['qv-agenda-prev', 'qv-agenda-next', 'qv-agenda-today'].forEach((id) => {
       document.getElementById(id)?.addEventListener('click', (event) => setAgendaMonth(event.currentTarget.getAttribute('data-qv-month')));
     });
@@ -12300,22 +12309,28 @@
         activiteLabel: document.getElementById('qv-future-label')?.value || '',
         domain: document.getElementById('qv-future-domain')?.value || '',
         cibleCode: document.getElementById('qv-future-cible')?.value || '',
-        specialisation: (document.getElementById('qv-future-spec')?.value || '').startsWith('SPEC:') ? document.getElementById('qv-future-spec').value.slice(5) : '',
-        cursusId: (document.getElementById('qv-future-spec')?.value || '').startsWith('CURSUS:') ? document.getElementById('qv-future-spec').value.slice(7) : '',
+        specialisation: document.getElementById('qv-future-spec')?.value || '',
+        cursusId: document.getElementById('qv-future-cursus')?.value || '',
         lieuId: document.getElementById('qv-future-lieu-id')?.value || '',
         lieuLibre: document.getElementById('qv-future-lieu')?.value || '',
         remarque: document.getElementById('qv-future-note')?.value || ''
       };
       if (rerender && previousLieu !== state.quoVadisFutureForm.lieuId) render();
     };
-    ['qv-future-date', 'qv-future-start', 'qv-future-end-date', 'qv-future-end', 'qv-future-label', 'qv-future-domain', 'qv-future-cible', 'qv-future-spec', 'qv-future-lieu', 'qv-future-note'].forEach((id) => {
+    ['qv-future-date', 'qv-future-start', 'qv-future-end-date', 'qv-future-end', 'qv-future-label', 'qv-future-cible', 'qv-future-spec', 'qv-future-cursus', 'qv-future-lieu', 'qv-future-note'].forEach((id) => {
       document.getElementById(id)?.addEventListener('input', () => syncFutureForm(false));
       document.getElementById(id)?.addEventListener('change', () => syncFutureForm(false));
     });
     document.getElementById('qv-future-lieu-id')?.addEventListener('change', () => syncFutureForm(true));
     document.getElementById('qv-future-domain')?.addEventListener('change', () => {
+      const previous = state.quoVadisFutureForm || {};
       syncFutureForm(false);
       const form = state.quoVadisFutureForm || {};
+      if (form.domain !== previous.domain) {
+        form.cibleCode = '';
+        form.specialisation = '';
+        form.cursusId = '';
+      }
       const canonicalOi = L.normalizeOiCode ? L.normalizeOiCode(form.domain, form.cibleCode) : (form.cibleCode || '');
       const oiOk = (L.sharedOiOptions ? L.sharedOiOptions(form.domain) : []).some((row) => String(row.value) === String(canonicalOi));
       const specOk = (L.sharedSpecOptions ? L.sharedSpecOptions(form.domain) : []).some((row) => String(row.value) === String(form.specialisation || ''));
@@ -12326,6 +12341,7 @@
       if (!cursusOk) form.cursusId = '';
       state.quoVadisFutureForm = form;
       render();
+      document.getElementById('qv-future-cible')?.focus();
     });
     document.getElementById('qv-future-multi')?.addEventListener('change', (event) => {
       state.quoVadisFutureMulti = Boolean(event.target.checked);

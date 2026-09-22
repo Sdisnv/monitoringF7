@@ -33,7 +33,7 @@ const L = loadLogic();
 
 assert.ok(/id="qv-agenda-prev"/.test(agenda) && /id="qv-agenda-next"/.test(agenda));
 assert.ok(/qv-agenda-nav-chevron/.test(agenda));
-assert.ok(/qv-agenda-month-select/.test(agenda));
+assert.ok(/qv-agenda-month-trigger/.test(agenda) && /qv-agenda-month-panel/.test(agenda));
 assert.ok(/événement/.test(agenda) && /journées/.test(agenda));
 assert.ok(/background:\s*#eef2f7/.test(css));
 assert.ok(/\.qv-agenda-nav-chevron[\s\S]{0,80}scope-blue/.test(css));
@@ -139,7 +139,7 @@ assert.strictEqual(keep.updates.length, 0, 'adresse existante non écrasée');
 assert.ok(/qv-agenda-check-box/.test(css));
 assert.ok(/border-radius:\s*4px/.test(css.slice(css.indexOf('.qv-agenda-check-box'), css.indexOf('.qv-agenda-check input:checked'))));
 assert.ok(!/qv-agenda-legend[\s\S]{0,400}border-radius:\s*999/.test(css));
-assert.ok(/scope-quo-vadis-agenda-ux-[123]|scope-quo-vadis-toutes-activites-ux-[1234]|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
+assert.ok(/scope-quo-vadis-final-ux-referential-3/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(/qvCalendarMarkVisible/.test(logicSrc));
 

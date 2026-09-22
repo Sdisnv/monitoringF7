@@ -116,9 +116,10 @@ function valuesOf(options) {
   assert.ok(ui.includes('canonicalOi'));
   assert.ok(ui.includes('id="new-domaine"') && ui.includes('eventCiblesForForm'));
   assert.ok(ui.includes('id="filter-domaine"') && ui.includes('id="cycle-filter-domaine"'));
-  assert.ok(ui.includes('Cursus / Spécialisation'));
+  assert.ok(ui.includes('<label for="qv-future-spec">Spécialisation</label>'));
+  assert.ok(ui.includes('<label for="qv-future-cursus">Cursus</label>'));
   assert.ok(html.includes('scope-ui-logic.js?v=scope-referentiel-cursus-taxonomie-2'));
-  assert.ok(html.includes('scope-ui.js?v=scope-referentiel-cursus-taxonomie-2'));
+  assert.ok(html.includes('scope-ui.js?v=scope-quo-vadis-final-ux-referential-3'));
 
   assert.strictEqual(logic.eventListDomainParam('FOSPEC'), 'FOSPEC');
   assert.notStrictEqual(logic.eventListDomainParam('FOSPEC'), 'FOSPEC,PR,AUTO');

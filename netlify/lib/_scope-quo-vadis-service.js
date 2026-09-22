@@ -3,6 +3,21 @@ const coverage = require('./_scope-quo-vadis-coverage');
 const consolidation = require('./_scope-quo-vadis-consolidation');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 
+function planningRuleDomain(row){
+  return qvReferentials.normalizeScopeDomainCode(row.domain || (row.metadata && row.metadata.family));
+}
+
+function effectivePlanningRules(rows){
+  const active = (rows || []).filter((row) => row.active !== false);
+  const canonical = new Set(active.filter((row) => row.code === `PLANIF-${planningRuleDomain(row)}`)
+    .map((row) => planningRuleDomain(row)));
+  const superseded = new Set(['FORMATION-GENERALE', 'DAP-VENDREDI-AUTORISE']);
+  return qvReferentials.sortByScopeDomainOrder(active.filter((row) => {
+    const domain = planningRuleDomain(row);
+    return domain && !(canonical.has(domain) && superseded.has(row.code));
+  }), planningRuleDomain);
+}
+
 function dateOnly(value){
   if(!value) return null;
   if(value instanceof Date) return value.toISOString().slice(0, 10);
@@ -1000,12 +1015,13 @@ function createScopeQuoVadisService({ database = db } = {}){
         justification: row.justification || ''
       })),
       catalogue,
-      rules: rules.rows.map((row) => ({
+      rules: effectivePlanningRules(rules.rows).map((row) => ({
         ruleId: row.rule_id,
         code: row.code,
         versionCode: row.version_code,
-        domain: row.domain,
-        domainLabel: domainLabel(row.domain),
+        domain: planningRuleDomain(row),
+        domainLabel: domainLabel(planningRuleDomain(row)),
+        scopeLabel: row.code === `PLANIF-${planningRuleDomain(row)}` ? 'Règle générale' : row.code,
         dayPolicy: row.day_policy || {},
         dayPolicyLabels: Object.fromEntries(Object.entries(row.day_policy || {}).map(([day, value]) => [WEEKDAY_LABELS[day] || day, DAY_CLASS_LABELS[value] || value])),
         timePolicy: row.time_policy || {},
@@ -1324,13 +1340,10 @@ function createScopeQuoVadisService({ database = db } = {}){
   async function loadRulesByDomain(){
     const result = await db.query(`select * from scope_quo_vadis_planning_rules where active is true`);
     const map = {};
-    result.rows.forEach((row) => {
-      if(!row.domain){
-      const family = String((row.metadata && row.metadata.family) || 'FOCO').toUpperCase();
-      map[family] = { dayPolicy: row.day_policy || {}, timePolicy: row.time_policy || {} };
-      return;
-    }
-      map[String(row.domain).toUpperCase()] = {
+    effectivePlanningRules(result.rows).filter((row) => !row.definition_version_id).forEach((row) => {
+      const domain = planningRuleDomain(row);
+      if(map[domain] && row.code !== `PLANIF-${domain}`) return;
+      map[domain] = {
         dayPolicy: row.day_policy || {},
         timePolicy: row.time_policy || {}
       };
@@ -2145,6 +2158,7 @@ function createScopeQuoVadisService({ database = db } = {}){
 
 module.exports = {
   createScopeQuoVadisService,
+  _effectivePlanningRules: effectivePlanningRules,
   _calendar: {
     addDays,
     calendarDate,
