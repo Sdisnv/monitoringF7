@@ -863,6 +863,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         family: (obligation.classification && obligation.classification.family) || metadata.family || '',
         subcategory: (obligation.classification && obligation.classification.subcategory) || metadata.subcategory || '',
         statcomCode: obligation.statcomCode || metadata.statcomCode || '',
+        codeCours: metadata.codeCours || metadata.code_cours || '',
         knownDate: obligation.sourceType === 'FUTURE_DATE',
         knownDateClash: knownSameDay
       };
@@ -1461,6 +1462,7 @@ function createScopeQuoVadisService({ database = db } = {}){
           instructionKind: item.instructionKind,
           theme: item.theme,
           statcomCode: item.statcomCode,
+          codeCours: item.codeCours || '',
           lastOccurrence: item.date,
           sessionCount: item.sessionCount,
           sessions: item.sessions,

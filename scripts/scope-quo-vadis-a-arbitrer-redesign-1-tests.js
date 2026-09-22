@@ -158,20 +158,22 @@ assert.ok(!/scope-btn-primary/.test(arbitrer));
 assert.ok(/Vue par groupes/.test(arbitrer) && /Vue détaillée/.test(arbitrer));
 assert.ok(/data-qv-arbitrer-mode="groupes"/.test(arbitrer));
 assert.ok(/qvInitialOpenDomain/.test(arbitrer));
-assert.ok(/Voir \/ arbitrer/.test(arbitrer));
+assert.ok(/Consulter la fiche/.test(arbitrer));
+assert.ok(!/Voir \/ arbitrer/.test(arbitrer));
 assert.ok(/Réinitialiser/.test(arbitrer));
 assert.ok(!/RÉINITIALISER/.test(arbitrer));
 assert.ok(/qv-filter-search-control/.test(arbitrer));
 assert.ok(/qv-filter-search-icon/.test(arbitrer));
-assert.ok(/Type d’activité/.test(arbitrer));
+assert.ok(!/Type d’activité/.test(arbitrer));
+assert.ok(!/Tri des groupes/.test(arbitrer));
 assert.ok(/data-qv-arbitrer-group/.test(arbitrer));
 assert.ok(/qvRenderArbitrerDetail/.test(ui));
 assert.ok(/Bon à savoir/.test(arbitrer));
 assert.ok(/Ordre d’affichage des domaines/.test(arbitrer));
 assert.strictEqual(L.scopeDomainOrderTrail(), 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR');
 assert.ok(/scopeDomainOrderTrail/.test(arbitrer));
-assert.ok(/qv-agenda-state/.test(arbitrer));
-assert.ok(/STAT\.COM/.test(arbitrer));
+assert.ok(/scope-state/.test(arbitrer));
+assert.ok(/Stat\.Com/.test(arbitrer));
 assert.ok(!/bandeau PR|is-pr-red|domain-color/.test(arbitrer));
 assert.ok(!/#FFA300/.test(arbitrer));
 assert.ok(!/FOCO 1/.test(arbitrer) && !/FOCA 1/.test(arbitrer) && !/FOSPEC 1/.test(arbitrer));
@@ -196,8 +198,7 @@ assert.ok(/box-shadow:\s*none/.test(css.slice(css.indexOf('.qv-arbitrer-view .qv
 assert.ok(!/\.scope-app\s*\{/.test(redesignCss));
 assert.ok(/overflow-x:\s*auto/.test(redesignCss));
 
-assert.ok(/scope-quo-vadis-a-arbitrer-redesign-1/.test(html));
-assert.ok(/scope-quo-vadis-a-arbitrer-redesign-1/.test(packageJson));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-2/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-redesign-1/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-redesign-1-tests: ok');

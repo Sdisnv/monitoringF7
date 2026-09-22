@@ -340,6 +340,7 @@ function classifyLine(row){
     subcategory: formationSubcategory(domain, oi, identity.title),
     specialisation: ['PR', 'AUTO'].includes(domain) ? (oi || domain) : '',
     statcomCode: row.statcom_code || row.exercice_statcom || '',
+    codeCours: String(row.code_cours || row.codeCours || '').trim(),
     salle: String(row.salle || '').trim(),
     startsAt: row.heure_debut_prevue || row.heure_debut || '',
     endsAt: row.heure_fin_prevue || row.heure_fin || '',
@@ -467,6 +468,7 @@ function interpretHistoricalProgramme(rows, targetYear){
           statcomCode: item.statcomCode
         });
         if(item.statcomCode && !bucket.statcomCode) bucket.statcomCode = item.statcomCode;
+        if(item.codeCours && !bucket.codeCours) bucket.codeCours = item.codeCours;
         if(item.salle && !bucket.salle) bucket.salle = item.salle;
         if(item.oi && bucket.cibleCodes && !bucket.cibleCodes.includes(item.oi)) bucket.cibleCodes.push(item.oi);
       }

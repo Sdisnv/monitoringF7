@@ -894,24 +894,64 @@
     return text.replace(/\.(\d+)\s*$/, '').trim() || text;
   }
 
+  function qvHumanActivityTitle(title) {
+    const text = String(title || '').trim();
+    if (!text) return '';
+    const grouped = text.match(/^([A-Z]{2,8})\s+FORMATION_GROUPEE\s+(\d+)\s*$/i);
+    if (grouped) return `Formation groupée ${grouped[1].toUpperCase()} ${grouped[2]}`;
+    const inverted = text.match(/^FORMATION_GROUPEE\s+([A-Z]{2,8})\s+(\d+)\s*$/i);
+    if (inverted) return `Formation groupée ${inverted[1].toUpperCase()} ${inverted[2]}`;
+    return text;
+  }
+
+  function qvCodeCoursValue(row) {
+    const raw = String((row && (row.codeCours || row.code_cours || row.codeEvenement)) || '').trim();
+    if (!raw || raw.length > 10) return '';
+    return raw;
+  }
+
+  function qvHasXySessionNotation(value) {
+    return /\d+\.\d+/.test(String(value || ''));
+  }
+
+  function qvCollectSessionNumbers(row) {
+    const nums = new Set();
+    ((row && row.sessions) || []).forEach((session) => {
+      const n = Number((session && (session.sessionNumber || session.sessionIndex)) || 0);
+      if (n > 0) nums.add(n);
+    });
+    ((row && row.proposals) || []).forEach((proposal) => {
+      const n = qvProposalSessionNumber(proposal, 0);
+      if (n > 0) nums.add(n);
+    });
+    return nums;
+  }
+
   function qvIsMultiSessionRow(row) {
-    return Number((row && row.sessionCount) || 0) > 1
-      || ((row && row.sessions) || []).length > 1
-      || Boolean(row && row.numberingPattern);
+    if (!row) return false;
+    if (qvHasXySessionNotation(row.title)) return true;
+    if (((row.sessions) || []).length > 1) return true;
+    if (qvCollectSessionNumbers(row).size > 1) return true;
+    return false;
+  }
+
+  function qvSiteAgnosticKey(value) {
+    return String(value || '').replace(/\|(?:[GBC][12]|Y[1-4])\|/g, '|SITE|');
   }
 
   function qvPrincipalActivityKey(row) {
     const domain = qvActivityDomainCode(row);
-    const explicit = String((row && (row.groupKey || row.historicalActivityKey || row.seriesKey)) || '').trim();
-    if (explicit) return `${domain}|KEY:${explicit}`;
-    const title = (row && row.title) || '';
-    const stripped = qvStripSessionSuffix(title);
-    const cibles = ((row && row.cibleCodes) || []).join(',');
-    if (stripped && stripped !== String(title).trim()) return `${domain}|SERIES:${cibles}|${stripped}`;
-    const cursus = String((row && row.cursus) || '').trim();
-    if (cursus && qvIsMultiSessionRow(row)) return `${domain}|CURSUS:${cursus}|${stripped}`;
-    if (qvIsMultiSessionRow(row)) return `${domain}|MULTI:${cibles}|${stripped}`;
-    return `${domain}|ID:${qvActivityStableId(row)}`;
+    const displayTitle = qvHumanActivityTitle(qvStripSessionSuffix((row && row.title) || ''));
+    const explicit = String((row && (row.seriesKey || row.groupKey || row.historicalActivityKey)) || '').trim();
+    if (qvIsMultiSessionRow(row) || qvHasXySessionNotation(row.title)) {
+      if (explicit) return `${domain}|MS:${qvSiteAgnosticKey(explicit)}`;
+      return `${domain}|MS:${displayTitle || qvActivityStableId(row)}`;
+    }
+    const stripped = qvStripSessionSuffix((row && row.title) || '');
+    if (stripped && stripped !== String((row && row.title) || '').trim()) {
+      return `${domain}|MS:${qvHumanActivityTitle(stripped)}`;
+    }
+    return `${domain}|U:${displayTitle || qvActivityStableId(row)}`;
   }
 
   function qvProposalSessionNumber(proposal, fallback) {
@@ -956,30 +996,49 @@
       const rows = group.rows.slice().sort(compareQvActivities);
       const primary = rows[0] || {};
       const proposals = group.proposals.slice().sort(compareQvProposals);
-      const multi = rows.some(qvIsMultiSessionRow) || rows.length > 1;
+      const titles = rows.map((row) => String(row.title || '').trim());
+      const strippedTitles = titles.map((title) => qvStripSessionSuffix(title));
+      const suffixSplit = titles.some((title, index) => title && title !== strippedTitles[index]);
+      const sessionNums = new Set();
+      rows.forEach((row) => qvCollectSessionNumbers(row).forEach((n) => sessionNums.add(n)));
+      proposals.forEach((proposal) => {
+        const n = qvProposalSessionNumber(proposal, 0);
+        if (n > 0) sessionNums.add(n);
+      });
+      const sites = Array.from(new Set(rows.flatMap((row) => (row.cibleCodes || []).map((code) => String(code || '').trim()).filter(Boolean))));
+      const lieux = Array.from(new Set(rows.map((row) => row.lieu).concat(proposals.map((row) => row.lieu)).filter(Boolean)));
+      const engineSeries = rows.some((row) => Number(row.sessionCount || 0) > 1 && Boolean(row.numberingPattern));
+      const multi = rows.some(qvIsMultiSessionRow) || suffixSplit || sessionNums.size > 1 || (engineSeries && sites.length <= 1 && lieux.length <= 1);
+      const multiSite = !multi && (sites.length > 1 || lieux.length > 1);
       const dates = multi
         ? proposals.map((row) => row.startsAt).concat(rows.map((row) => row.startsAt))
         : [primary.startsAt || (proposals[0] && proposals[0].startsAt)];
-      const lieux = Array.from(new Set(rows.map((row) => row.lieu).concat(proposals.map((row) => row.lieu)).filter(Boolean)));
       const firstStartsAt = (dates.map(qvDateKey).filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value)).sort()[0]) || primary.startsAt || '';
+      const responsables = Array.from(new Set(rows.map((row) => String(row.responsable || '').trim()).filter(Boolean)));
+      const codeCours = qvCodeCoursValue(rows.find((row) => qvCodeCoursValue(row)) || primary);
       return {
         key: group.key,
         domain: group.domain,
         domainLabel: scopeDomainLabel(group.domain),
-        title: qvStripSessionSuffix(primary.title) || primary.title || '',
+        title: qvHumanActivityTitle(qvStripSessionSuffix(primary.title) || primary.title || ''),
+        storedTitle: primary.title || '',
         cursus: String(primary.cursus || '').trim(),
         type: multi ? 'Multi-session' : 'Activité unique',
         multi,
+        multiSite,
         proposalCount: multi
           ? Math.max(proposals.length, rows.length, Number(primary.sessionCount) || 0, ((primary.sessions) || []).length)
           : Math.max(proposals.length, rows.length),
         periodLabel: qvArbitragePeriodLabel(dates, multi),
-        lieu: lieux[0] || '',
+        lieu: lieux.join(' · ') || '',
+        cibleCodes: sites,
+        responsable: responsables[0] || '',
+        codeCours,
         attention: rows.some((row) => row.attention),
         validated: rows.length > 0 && rows.every((row) => ['PLANIFIE', 'RETENU'].includes(String(row.status || '').toUpperCase())),
         needsArbitration: rows.some(qvNeedsArbitrationRow),
         status: primary.status,
-        statcomCode: primary.statcomCode || '',
+        statcomCode: rows.map((row) => row.statcomCode).find(Boolean) || primary.statcomCode || '',
         activityId: primary.activityId || primary.obligationId || '',
         rows,
         proposals,
@@ -1021,6 +1080,37 @@
       attention: shown.filter((group) => group.attention).length,
       validees: universe.filter((group) => group.validated).length
     };
+  }
+
+  function qvArbitrageState(group) {
+    if (group && group.validated) return { key: 'validated', tone: 'positive', label: 'Validé' };
+    if (group && group.attention) return { key: 'attention', tone: 'attention', label: 'Point d’attention' };
+    if (group && group.needsArbitration) return { key: 'arbitrate', tone: 'block', label: 'À arbitrer' };
+    const status = String((group && group.status) || '').toUpperCase();
+    if (status === 'ANNULE') return { key: 'cancelled', tone: 'inactive', label: 'Annulé' };
+    return { key: 'planned', tone: 'info', label: 'Planifié' };
+  }
+
+  function qvUniqueTexts(values) {
+    return Array.from(new Set((values || []).map((value) => String(value || '').trim()).filter(Boolean)));
+  }
+
+  function qvArbitrerSortColumns() {
+    return [
+      { key: 'codeCours', type: 'text', value: (group) => qvCodeCoursValue(group) },
+      { key: 'title', type: 'text', value: (group) => qvHumanActivityTitle(group && group.title) },
+      { key: 'statCom', type: 'text', value: (group) => (group && group.statcomCode) || '' },
+      { key: 'date', type: 'date', value: (group) => (group && group.firstStartsAt) || '' },
+      { key: 'horaire', type: 'time', value: (group) => {
+        const row = group && ((group.rows && group.rows[0]) || (group.proposals && group.proposals[0]) || {});
+        return (row && row.startsAt) || '';
+      } },
+      { key: 'oi', type: 'text', value: (group) => ((group && group.oiCodes) || []).join(', ') },
+      { key: 'cible', type: 'text', value: (group) => ((group && group.cibleCodes) || []).join(', ') },
+      { key: 'responsable', type: 'text', value: (group) => (group && group.responsable) || '' },
+      { key: 'lieu', type: 'text', value: (group) => (group && group.lieu) || '' },
+      { key: 'etat', type: 'text', value: (group) => qvArbitrageState(group).label }
+    ];
   }
 
   function qvCalendarConstraints(calendarDays) {
@@ -2799,6 +2889,8 @@
     scopeDomainOrderTrail,
     compareQvActivities,
     qvStripSessionSuffix,
+    qvHumanActivityTitle,
+    qvCodeCoursValue,
     qvIsMultiSessionRow,
     qvPrincipalActivityKey,
     compareQvProposals,
@@ -2808,6 +2900,9 @@
     qvGroupArbitrageByDomain,
     qvInitialOpenDomain,
     qvArbitrageKpis,
+    qvArbitrageState,
+    qvUniqueTexts,
+    qvArbitrerSortColumns,
     extractCalendarYear,
     yearToObjectifPeriod,
     periodFromStart,
