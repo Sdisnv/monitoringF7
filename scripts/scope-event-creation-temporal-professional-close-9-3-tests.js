@@ -70,11 +70,11 @@ function codesOf(logic, domain, rows){
 
   await record('02 — taxonomie domaine conforme liste Événements', async () => {
     const groups = logic.domainTaxonomyGroups();
-    eq(groups[0].label, 'Domaines opérationnels');
+    eq(groups[0].label, 'Opérationnel');
     eq(groups[0].codes.join(','), 'DPS,DAP,JSP');
-    eq(groups[1].label, 'Formations');
-    eq(groups[1].codes.join(','), 'FOBA,FOCA,FOSPEC');
-    eq(groups[2].label, 'Spécialisations FOSPEC');
+    eq(groups[1].label, 'Formation');
+    eq(groups[1].codes.join(','), 'FOBA,FOCO,FOCA,FOSPEC');
+    eq(groups[2].label, 'Spécialisation');
     eq(groups[2].codes.join(','), 'PR,AUTO');
     includes(ui, 'function domainTaxonomySelectHtml');
     includes(ui, 'id="filter-domaine"');
@@ -83,28 +83,29 @@ function codesOf(logic, domain, rows){
     includes(ui, "domainTaxonomySelectHtml(state.domaine === 'tous'");
   });
 
-  await record('03 — PR/AUTO groupés visuellement sous FOSPEC', async () => {
-    includes(ui, "label: 'Spécialisations FOSPEC'");
+  await record('03 — PR/AUTO groupés visuellement sous Spécialisation', async () => {
+    includes(ui, "label: 'Spécialisation'");
+    notIncludes(ui, 'Spécialisations FOSPEC');
+    notIncludes(ui, 'Domaines opérationnels');
     const helper = sourceBlock(ui, 'function domainTaxonomySelectHtml', 900);
     includes(helper, 'optgroup');
   });
 
   await record('04 — ordre DPS', async () => {
-    eq(codesOf(logic, 'DPS', repoCibles).filter((code) => code !== 'GEN').join(','), 'G1,C1,B1,B2');
-    eq(codesOf(logic, 'DPS', repoCibles).slice(-1)[0], 'GEN');
+    eq(codesOf(logic, 'DPS', repoCibles).join(','), 'G1,C1,B1,B2');
   });
 
   await record('05 — ordre DAP', async () => {
-    eq(codesOf(logic, 'DAP', repoCibles).filter((code) => code !== 'GEN').join(','), 'Y1,Y2,Y3,Y4');
+    eq(codesOf(logic, 'DAP', repoCibles).join(','), 'Y1,Y2,Y3,Y4');
   });
 
   await record('06 — ordre JSP', async () => {
-    eq(codesOf(logic, 'JSP', repoCibles).filter((code) => code !== 'GEN').join(','), 'G1,C1,B1,CAD');
+    eq(codesOf(logic, 'JSP', repoCibles).join(','), 'GEN');
   });
 
-  await record('07 — Cadets après sites JSP', async () => {
+  await record('07 — Cadets hors liste OI JSP, libellé historique conservé', async () => {
     const jsp = codesOf(logic, 'JSP', repoCibles);
-    ok(jsp.indexOf('CAD') > jsp.indexOf('B1'), 'CAD après B1');
+    eq(jsp.includes('CAD'), false);
     eq(logic.cibleMetierLabel('JSP', 'CAD'), 'Cadets');
   });
 

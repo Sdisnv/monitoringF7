@@ -240,7 +240,8 @@ async function createDpsMulti(service, sessionCount = 6, year = 2026, label = 'F
   });
 
   await record('10 — protections R6.2, R7.4, DAP Multi-session et PR legacy présentes', () => {
-    includes(read('assets/js/scope-ui-logic.js'), "return 'FOSPEC,PR,AUTO'");
+    includes(read('assets/js/scope-ui-logic.js'), "label: 'Spécialisation'");
+    ok(!read('assets/js/scope-ui-logic.js').includes("return 'FOSPEC,PR,AUTO'"), 'agrégateur UI FOSPEC/PR/AUTO retiré');
     includes(read('netlify/lib/_scope-service.js'), 'dissociation_partielle_multisession_interdite');
     includes(read('netlify/lib/_scope-multisession-v2.js'), 'MULTI_SESSION_V2');
     includes(read('netlify/lib/_scope-cycle-rules.js'), 'prSessionKey');

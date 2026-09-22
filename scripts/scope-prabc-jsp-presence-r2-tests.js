@@ -88,7 +88,7 @@ function part(person, statut, extra){
     const fiche = await ctx.service.lireEvenement(frozen.eventId);
     const ids = await ctx.repo.listEventCibleIds(frozen.eventId);
     assert.deepStrictEqual(ids, [ctx.papr.cible_id]);
-    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'Général / PAPR');
+    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'Général');
     assert.strictEqual(logic.saisieAttendusFromFiche(fiche).length, 76);
   });
 
@@ -100,7 +100,7 @@ function part(person, statut, extra){
       cibleIds: [ctx.abc.cible_id]
     }, ACTOR);
     const fiche = await ctx.service.lireEvenement(frozen.eventId);
-    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'PR-ABC');
+    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'PABC');
     assert.deepStrictEqual(await ctx.repo.listEventCibleIds(frozen.eventId), [ctx.abc.cible_id]);
   });
 
@@ -164,7 +164,7 @@ function part(person, statut, extra){
       cibleIds: [ctx.abc.cible_id]
     }, ACTOR);
     const otherFiche = await ctx.service.lireEvenement(other.eventId);
-    assert.strictEqual(logic.ciblesLabel(otherFiche.cibles), 'Général / PAPR');
+    assert.strictEqual(logic.ciblesLabel(otherFiche.cibles), 'Général');
     assert.strictEqual(logic.saisieAttendusFromFiche(otherFiche).length, 76);
   });
 

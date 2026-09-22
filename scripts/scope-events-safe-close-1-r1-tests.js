@@ -126,7 +126,7 @@ function part(person, statut){
     const frozen = await freezeOn(ctx.service, ctx.papr, '2026-05-10', 'PR général saisie');
     const fiche = await ctx.service.lireEvenement(frozen.eventId);
     const rows = logic.saisieAttendusFromFiche(fiche);
-    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'Général / PAPR');
+    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'Général');
     assert.strictEqual(rows.length, 76);
     const saisie = renderSaisieSource();
     assert.ok(saisie.includes('id="save-part"'));
@@ -138,7 +138,7 @@ function part(person, statut){
     const frozen = await freezeOn(ctx.service, ctx.abc, '2026-05-10', 'Exercice PR-ABC | Refresh');
     const fiche = await ctx.service.lireEvenement(frozen.eventId);
     const rows = logic.saisieAttendusFromFiche(fiche);
-    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'PR-ABC');
+    assert.strictEqual(logic.ciblesLabel(fiche.cibles), 'PABC');
     assert.strictEqual(rows.length, 18);
     assert.ok(rows.every((row) => ctx.abcPeople.some((p) => p.personne_id === row.personne_id)));
   });
@@ -260,7 +260,7 @@ function part(person, statut){
     const item = listed.evenements.find((row) => row.evenement.evenement_id === frozen.eventId);
     assert.ok(item);
     assert.strictEqual(item.attendusInclus, 18);
-    assert.strictEqual(logic.ciblesLabel(item.cibles || (await ctx.service.lireEvenement(frozen.eventId)).cibles), 'PR-ABC');
+    assert.strictEqual(logic.ciblesLabel(item.cibles || (await ctx.service.lireEvenement(frozen.eventId)).cibles), 'PABC');
   });
 
   await record('18 — aucun doublon', async () => {
@@ -287,8 +287,8 @@ function part(person, statut){
     const ui = readUi();
     assert.ok(ui.includes('Général / PAPR'));
     assert.ok(ui.includes('id="edit-event"'));
-    assert.strictEqual(logic.niveauAffiche('PR', 'ABC'), 'PR-ABC');
-    assert.strictEqual(logic.niveauAffiche('PR', 'GEN'), 'Général / PAPR');
+    assert.strictEqual(logic.niveauAffiche('PR', 'ABC'), 'PABC');
+    assert.strictEqual(logic.niveauAffiche('PR', 'GEN'), 'Général');
   });
 
   await record('20 — événement réalisé non resync', async () => {
@@ -332,7 +332,7 @@ function part(person, statut){
     const ctx = await setupPrWorld();
     const frozen = await freezeOn(ctx.service, ctx.papr, '2026-05-10', 'Exercice PR-ABC | Refresh');
     const before = await ctx.service.lireEvenement(frozen.eventId);
-    assert.strictEqual(logic.ciblesLabel(before.cibles), 'Général / PAPR');
+    assert.strictEqual(logic.ciblesLabel(before.cibles), 'Général');
     assert.strictEqual(logic.saisieAttendusFromFiche(before).length, 76);
     const patched = await ctx.service.patchEvenement(frozen.eventId, {
       baseVersion: frozen.version,
@@ -340,7 +340,7 @@ function part(person, statut){
     }, ACTOR);
     const after = await ctx.service.lireEvenement(frozen.eventId);
     assert.ok(patched.version > frozen.version);
-    assert.strictEqual(logic.ciblesLabel(after.cibles), 'PR-ABC');
+    assert.strictEqual(logic.ciblesLabel(after.cibles), 'PABC');
     assert.strictEqual(logic.saisieAttendusFromFiche(after).length, 18);
     const listed = await ctx.service.listEvenements({ annee: 2026 });
     const item = listed.evenements.find((row) => row.evenement.evenement_id === frozen.eventId);

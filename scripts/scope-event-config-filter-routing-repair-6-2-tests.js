@@ -196,8 +196,8 @@ async function seedContext(options = {}){
 
   await record('08 — filtre Domaine ordre et agrégateur FOSPEC', async () => {
     const logic = read('assets/js/scope-ui-logic.js');
-    includes(logic, "['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC', 'PR', 'AUTO']");
-    includes(logic, "return 'FOSPEC,PR,AUTO'");
+    includes(logic, "['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']");
+    ok(!logic.includes("return 'FOSPEC,PR,AUTO'"), 'agrégateur UI FOSPEC/PR/AUTO retiré');
     const { service, repo } = await seedContext({ modeOrganisation: 'SIMPLE', sessionCount: 1 });
     await repo.insertEvenement({ date: '2026-06-01', domaine_code: 'FOSPEC', libelle: 'FOSPEC R6.2', statut: 'PLANIFIE', cible_ids: [] });
     await repo.insertEvenement({ date: '2026-06-02', domaine_code: 'PR', libelle: 'PR R6.2', statut: 'PLANIFIE', cible_ids: [] });

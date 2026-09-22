@@ -208,8 +208,10 @@ async function seedMultiSessionRepo(){
   await record('09 — finitions R6.2 conservées', () => {
     const ui = read('assets/js/scope-ui.js');
     const logic = read('assets/js/scope-ui-logic.js');
-    ok(ui.includes('Spécialisations FOSPEC'), 'hiérarchie visuelle PR/AUTO');
-    ok(logic.includes("return 'FOSPEC,PR,AUTO'"), 'filtre FOSPEC fonctionnel conservé');
+    ok(ui.includes("label: 'Spécialisation'"), 'hiérarchie visuelle PR/AUTO');
+    ok(!ui.includes('Spécialisations FOSPEC'), 'PR/AUTO hors FOSPEC');
+    ok(logic.includes("label: 'Opérationnel'"), 'groupe Opérationnel');
+    ok(!logic.includes("return 'FOSPEC,PR,AUTO'"), 'agrégateur FOSPEC/PR/AUTO retiré');
     ok(ui.includes('formationStatusLabel'), 'règles concernées sans codes statut');
     ok(ui.includes('formationMotifLabel'), 'règles concernées sans codes motif');
     ok(ui.includes('scope-association-check-mark'), 'cases association professionnelles');

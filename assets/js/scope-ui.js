@@ -699,12 +699,29 @@
     const emptyLabel = options.emptyLabel || 'Choisir un domaine';
     const selectedValue = String(selected == null ? emptyValue : selected);
     const groups = (L.domainTaxonomyGroups && L.domainTaxonomyGroups()) || [
-      { label: 'Domaines opérationnels', codes: ['DPS', 'DAP', 'JSP'] },
-      { label: 'Formations', codes: ['FOBA', 'FOCA', 'FOSPEC'] },
-      { label: 'Spécialisations FOSPEC', codes: ['PR', 'AUTO'] }
+      { label: 'Opérationnel', codes: ['DPS', 'DAP', 'JSP'] },
+      { label: 'Formation', codes: ['FOBA', 'FOCO', 'FOCA', 'FOSPEC'] },
+      { label: 'Spécialisation', codes: ['PR', 'AUTO'] }
     ];
     return `<option value="${escapeHtml(String(emptyValue))}" ${String(selectedValue) === String(emptyValue) ? 'selected' : ''}>${escapeHtml(emptyLabel)}</option>`
       + groups.map((group) => `<optgroup label="${escapeHtml(group.label)}">${group.codes.map((code) => `<option value="${escapeHtml(code)}" ${String(selectedValue) === code ? 'selected' : ''}>${escapeHtml(code)}</option>`).join('')}</optgroup>`).join('');
+  }
+
+  function sharedOptionsHtml(rows, selected) {
+    const current = String(selected == null ? '' : selected);
+    const seen = new Set();
+    const list = [];
+    (rows || []).forEach((row) => {
+      const value = String(row.value == null ? '' : row.value);
+      if (seen.has(value)) return;
+      seen.add(value);
+      list.push({ value, label: row.label || value || 'Non précisé' });
+    });
+    if (current && !seen.has(current)) {
+      const label = typeof L.niveauAffiche === 'function' ? L.niveauAffiche('', current) : current;
+      list.push({ value: current, label: label || current });
+    }
+    return list.map((row) => `<option value="${escapeHtml(row.value)}" ${current === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('');
   }
 
   function domaineLabel(code) {
@@ -6631,15 +6648,15 @@
   function renderNouveau() {
     const domaine = String(state.domaineForm || '');
     const hasDomaine = Boolean(domaine);
-    const cibles = L.sortCiblesForEventForm
-      ? L.sortCiblesForEventForm(hasDomaine ? state.referentiels.cibles.filter((c) => c.domaineCode === domaine) : [])
-      : (hasDomaine ? state.referentiels.cibles.filter((c) => c.domaineCode === domaine) : []);
+    const cibles = L.eventCiblesForForm
+      ? L.eventCiblesForForm(domaine, state.referentiels.cibles, state.cibleForm)
+      : (L.sortCiblesForEventForm
+        ? L.sortCiblesForEventForm(hasDomaine ? state.referentiels.cibles.filter((c) => c.domaineCode === domaine) : [], state.cibleForm)
+        : (hasDomaine ? state.referentiels.cibles.filter((c) => c.domaineCode === domaine) : []));
     const suggestion = state.modeSuggestion;
     const chosen = state.modeChoice;
     const requireExplicit = Boolean(suggestion && suggestion.requireExplicit);
-    const prHint = domaine === 'PR'
-      ? '<p class="scope-mode-hint">Général / PAPR = tous les PAPR actifs à la date, y compris PR-ABC. PR-ABC = uniquement les personnes PR-ABC actives. Le ciblage est stocké sur la cible, jamais déduit du libellé.</p>'
-      : '';
+    const prHint = '';
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
     const definitions = Array.isArray(catalog.definitions) ? catalog.definitions : [];
     const eventDate = state.dateForm || `${state.year}-03-12`;
@@ -7320,9 +7337,11 @@
   function renderEditEventModal(ev, fiche) {
     const form = state.editEventForm || {};
     const domaine = String(ev.domaine_code || ev.domaineCode || '');
-    const cibles = L.sortCiblesForEventForm
-      ? L.sortCiblesForEventForm((state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine))
-      : (state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine);
+    const cibles = L.eventCiblesForForm
+      ? L.eventCiblesForForm(domaine, state.referentiels.cibles || [], form.cibleIds)
+      : (L.sortCiblesForEventForm
+        ? L.sortCiblesForEventForm((state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine), form.cibleIds)
+        : (state.referentiels.cibles || []).filter((c) => c.domaineCode === domaine));
     const selected = new Set(form.cibleIds || []);
     const cibleDisabled = ev.statut !== 'PLANIFIE';
     const warning = form.warning
@@ -10001,7 +10020,12 @@
   }
 
   function qvLieuLabel(row, fallback) {
-    if (row && (row.lieu || row.nomCourt)) return row.lieu || [row.nomCourt, row.localite].filter(Boolean).join(' · ');
+    if (row && row.lieu) return row.lieu;
+    if (row && L.eventLieuDisplayLabel) {
+      const label = L.eventLieuDisplayLabel(row);
+      if (label) return label;
+    }
+    if (row && (row.nomCourt || row.localite)) return [row.nomCourt, row.localite].filter(Boolean).join(' – ');
     const text = String(fallback || '').trim();
     return text || 'Lieu à définir';
   }
@@ -10191,10 +10215,12 @@
   }
 
   function qvLieuOptions(qv, selected) {
-    const rows = (qv.lieux || []).filter((row) => row.actif !== false);
+    const raw = (qv.lieux || []).filter((row) => row.actif !== false);
+    const rows = L.sortEventLieux ? L.sortEventLieux(raw) : raw;
     const current = String(selected || '');
     const autre = current === 'autre';
-    return `<option value="">Lieu à définir</option>${rows.map((row) => `<option value="${escapeHtml(row.lieuId)}" ${String(row.lieuId) === current ? 'selected' : ''}>${escapeHtml([row.nomCourt, row.localite, row.oiCode].filter(Boolean).join(' · '))}</option>`).join('')}<option value="autre" ${autre ? 'selected' : ''}>Autre lieu</option>`;
+    const labelOf = (row) => (L.eventLieuDisplayLabel ? L.eventLieuDisplayLabel(row) : [row.nomCourt, row.localite].filter(Boolean).join(' – '));
+    return `<option value="">Lieu à définir</option>${rows.map((row) => `<option value="${escapeHtml(row.lieuId)}" ${String(row.lieuId) === current ? 'selected' : ''}>${escapeHtml(labelOf(row))}</option>`).join('')}<option value="autre" ${autre ? 'selected' : ''}>Autre lieu</option>`;
   }
 
   function qvActivities(qv) {
@@ -11782,7 +11808,10 @@
     state.quoVadisFuturePageSize = pager.size;
     const pageRows = pager.slice(rows);
     const autre = String(form.lieuId || '') === 'autre';
-    const cibles = (state.referentiels && state.referentiels.cibles) || [];
+    const domain = form.domain || '';
+    const oiOptions = L.sharedOiOptions ? L.sharedOiOptions(domain) : [{ value: '', label: 'Non précisé' }];
+    const specOptions = L.sharedSpecOptions ? L.sharedSpecOptions(domain) : [{ value: '', label: 'Non précisé' }];
+    const selectedOi = L.normalizeOiCode ? L.normalizeOiCode(domain, form.cibleCode) : (form.cibleCode || '');
     const multi = Boolean(state.quoVadisFutureMulti);
     return `<div class="qv-dates-view qv-pilot-view">
       <section class="scope-card qv-dates-form">
@@ -11797,12 +11826,9 @@
           <div class="scope-field"><label for="qv-future-label">Libellé de l’activité *</label><input id="qv-future-label" type="text" value="${escapeHtml(form.activiteLabel || '')}" placeholder="Ex. Exercice DPS" required>${qvFieldError('activiteLabel')}</div>
           <div class="scope-form-two qv-form-follow">
             <div class="scope-field"><label for="qv-future-domain">Domaine *</label><select id="qv-future-domain">${domainTaxonomySelectHtml(form.domain || '', { emptyLabel: 'Sélectionner…' })}</select></div>
-            <div class="scope-field"><label for="qv-future-cible">OI / Cible</label><select id="qv-future-cible"><option value="">Non précisé</option>${cibles.map((c) => {
-            const n = c.niveauCode || c.niveau_code || c.libelle || '';
-            return `<option value="${escapeHtml(n)}" ${form.cibleCode === n ? 'selected' : ''}>${escapeHtml(L.niveauAffiche ? L.niveauAffiche(c.domaineCode || c.domaine_code || '', n) : (c.libelle || n))}</option>`;
-          }).join('')}</select></div>
+            <div class="scope-field"><label for="qv-future-cible">OI / Cible</label><select id="qv-future-cible">${sharedOptionsHtml(oiOptions, selectedOi)}</select></div>
           </div>
-          <div class="scope-field qv-form-follow"><label for="qv-future-spec">Spécialisation / Cursus</label><input id="qv-future-spec" type="text" value="${escapeHtml(form.specialisation || '')}"></div>
+          <div class="scope-field qv-form-follow"><label for="qv-future-spec">Cursus / Spécialisation</label><select id="qv-future-spec">${sharedOptionsHtml(specOptions, form.specialisation || '')}</select></div>
         </section>
         <section class="scope-form-section is-wide">
           <h3>2. Date et horaire</h3>
@@ -11836,7 +11862,7 @@
             <td>${escapeHtml(qvFormatDate(row.dateDebut, '—'))}</td>
             <td>${escapeHtml([row.heureDebut, row.heureFin].filter(Boolean).join(' – ') || '—')}</td>
             <td>${escapeHtml(row.activiteLabel)}</td>
-            <td>${escapeHtml([row.domain, row.cibleCode].filter(Boolean).join(' · ') || '—')}</td>
+            <td>${escapeHtml([row.domain, (row.cibleCode && L.niveauAffiche ? L.niveauAffiche(row.domain, row.cibleCode) : row.cibleCode)].filter(Boolean).join(' · ') || '—')}</td>
             <td>${escapeHtml(row.lieu || 'Lieu à définir')}</td>
             <td>${qvFutureStateHtml(row)}</td>
           </tr>`).join('') || '<tr><td colspan="6"><p class="qv-pilot-empty">Aucune date annoncée.</p></td></tr>'}</tbody>
@@ -12260,6 +12286,17 @@
       document.getElementById(id)?.addEventListener('change', () => syncFutureForm(false));
     });
     document.getElementById('qv-future-lieu-id')?.addEventListener('change', () => syncFutureForm(true));
+    document.getElementById('qv-future-domain')?.addEventListener('change', () => {
+      syncFutureForm(false);
+      const form = state.quoVadisFutureForm || {};
+      const canonicalOi = L.normalizeOiCode ? L.normalizeOiCode(form.domain, form.cibleCode) : (form.cibleCode || '');
+      const oiOk = (L.sharedOiOptions ? L.sharedOiOptions(form.domain) : []).some((row) => String(row.value) === String(canonicalOi));
+      const specOk = (L.sharedSpecOptions ? L.sharedSpecOptions(form.domain) : []).some((row) => String(row.value) === String(form.specialisation || ''));
+      form.cibleCode = oiOk ? canonicalOi : '';
+      if (!specOk) form.specialisation = '';
+      state.quoVadisFutureForm = form;
+      render();
+    });
     document.getElementById('qv-future-multi')?.addEventListener('change', (event) => {
       state.quoVadisFutureMulti = Boolean(event.target.checked);
       if (!state.quoVadisFutureMulti) {

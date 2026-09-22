@@ -105,8 +105,8 @@ async function record(name, fn){
 
   await record('08 — PL affiché cond PL', async () => {
     eq(logic.cibleMetierLabel('AUTO', 'PL'), 'cond PL');
-    eq(logic.niveauAffiche('AUTO', 'VL'), 'VL');
-    eq(logic.niveauAffiche('JSP', 'CAD'), 'CAD');
+    eq(logic.niveauAffiche('AUTO', 'VL'), 'cond VL');
+    eq(logic.niveauAffiche('JSP', 'CAD'), 'Cadets');
   });
 
   await record('09 — absence grosses tuiles/bulles actuelles', async () => {

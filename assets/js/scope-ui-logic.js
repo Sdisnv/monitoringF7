@@ -281,19 +281,180 @@
     return value === 'PR' || value === 'PAPR';
   }
 
+  const SHARED_DOMAIN_GROUPS = Object.freeze([
+    { label: 'Opérationnel', codes: Object.freeze(['DPS', 'DAP', 'JSP']) },
+    { label: 'Formation', codes: Object.freeze(['FOBA', 'FOCO', 'FOCA', 'FOSPEC']) },
+    { label: 'Spécialisation', codes: Object.freeze(['PR', 'AUTO']) }
+  ]);
+
+  const SHARED_OI_BY_DOMAIN = Object.freeze({
+    DPS: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'G1', label: 'G1' },
+      { value: 'C1', label: 'C1' },
+      { value: 'B1', label: 'B1' },
+      { value: 'B2', label: 'B2' }
+    ]),
+    DAP: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'Y1', label: 'Y1' },
+      { value: 'Y2', label: 'Y2' },
+      { value: 'Y3', label: 'Y3' },
+      { value: 'Y4', label: 'Y4' }
+    ]),
+    JSP: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' }
+    ]),
+    FOBA: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' }
+    ]),
+    FOCO: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' }
+    ]),
+    FOCA: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' }
+    ]),
+    FOSPEC: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' }
+    ]),
+    PR: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' },
+      { value: 'PAPR', label: 'PAPR' },
+      { value: 'ABC', label: 'PABC' }
+    ]),
+    AUTO: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'PL', label: 'cond PL' },
+      { value: 'TP9', label: 'cond TP9' },
+      { value: 'VL', label: 'cond VL' },
+      { value: 'GRUTIER', label: 'Grutier' },
+      { value: 'MEA', label: 'MEA' },
+      { value: 'BAT', label: 'Pilote BAT' }
+    ])
+  });
+
+  const SHARED_SPEC_BY_DOMAIN = Object.freeze({
+    FOSPEC: Object.freeze([
+      { value: '', label: 'Non précisé' },
+      { value: 'Antichute', label: 'Antichute' },
+      { value: 'NAC', label: 'NAC' },
+      { value: 'OFSI', label: 'OFSI' },
+      { value: 'OP VPC', label: 'OP VPC' }
+    ])
+  });
+
+  function compactReferentialCode(value) {
+    return String(value || '').toUpperCase().replace(/[\s/_-]+/g, '');
+  }
+
+  function domainTaxonomyGroups() {
+    return SHARED_DOMAIN_GROUPS.map((group) => ({ label: group.label, codes: group.codes.slice() }));
+  }
+
+  function sharedOiOptions(domain) {
+    const code = String(domain || '').trim().toUpperCase() === 'PAPR' ? 'PR' : String(domain || '').trim().toUpperCase();
+    if (!code) return [{ value: '', label: 'Non précisé' }];
+    const rows = SHARED_OI_BY_DOMAIN[code] || [
+      { value: '', label: 'Non précisé' },
+      { value: 'GEN', label: 'Général' }
+    ];
+    return rows.map((row) => ({ value: row.value, label: row.label }));
+  }
+
+  function sharedSpecOptions(domain) {
+    const code = String(domain || '').toUpperCase();
+    const rows = SHARED_SPEC_BY_DOMAIN[code] || [{ value: '', label: 'Non précisé' }];
+    return rows.map((row) => ({ value: row.value, label: row.label }));
+  }
+
+  function normalizeOiCode(domain, raw) {
+    const code = String(domain || '').trim().toUpperCase() === 'PAPR' ? 'PR' : String(domain || '').trim().toUpperCase();
+    const compact = compactReferentialCode(raw);
+    if (!compact) return '';
+    if (code === 'PR') {
+      if (compact === 'GEN' || compact === 'GENERAL') return 'GEN';
+      if (compact === 'PAPR') return 'PAPR';
+      if (compact === 'ABC' || compact === 'PRABC' || compact === 'PABC') return 'ABC';
+    }
+    if (code === 'AUTO') {
+      if (compact === 'PL' || compact === 'CONDPL') return 'PL';
+      if (compact === 'TP9' || compact === 'CONDTP9') return 'TP9';
+      if (compact === 'VL' || compact === 'CONDVL') return 'VL';
+      if (compact === 'GRUTIER') return 'GRUTIER';
+      if (compact === 'MEA') return 'MEA';
+      if (compact === 'BAT' || compact === 'PILOTEBAT') return 'BAT';
+    }
+    if (compact === 'GEN' || compact === 'GENERAL') return 'GEN';
+    return String(raw || '').toUpperCase();
+  }
+
+  function hasDuplicateOiValues(options) {
+    const seen = new Set();
+    for (const row of options || []) {
+      const key = String(row.value == null ? '' : row.value);
+      if (seen.has(key)) return true;
+      seen.add(key);
+    }
+    return false;
+  }
+
+  function eventCiblesForForm(domain, dbCibles, selectedIds) {
+    const code = String(domain || '').toUpperCase();
+    const selected = new Set((selectedIds || []).map((id) => String(id)));
+    const domainRows = (dbCibles || []).filter((cible) => String(cible.domaineCode || cible.domaine_code || '').toUpperCase() === code);
+    const entries = sharedOiOptions(code).filter((row) => row.value);
+    const seen = new Set();
+    const out = [];
+    entries.forEach((entry) => {
+      const match = domainRows.find((cible) => normalizeOiCode(code, cible.niveauCode || cible.niveau_code) === entry.value);
+      if (!match || seen.has(entry.value)) return;
+      seen.add(entry.value);
+      out.push(match);
+    });
+    domainRows.forEach((cible) => {
+      const id = String(cible.cibleId || cible.cible_id || '');
+      const key = normalizeOiCode(code, cible.niveauCode || cible.niveau_code) || id;
+      if (!selected.has(id) || seen.has(key) || seen.has(id)) return;
+      seen.add(key);
+      seen.add(id);
+      out.push(cible);
+    });
+    return out;
+  }
+
+  function eventLieuDisplayLabel(lieu) {
+    if (!lieu) return '';
+    const name = String(lieu.nomCourt || lieu.nom_court || lieu.nomComplet || lieu.nom_complet || '').trim();
+    const loc = String(lieu.localite || '').trim();
+    if (name && loc && name.toLowerCase().indexOf(loc.toLowerCase()) < 0) return `${name} – ${loc}`;
+    return name || loc || '';
+  }
+
+  function sortEventLieux(lieux) {
+    return sortByScopeSiteOrder(lieux || [], (row) => row && (row.oiCode || row.oi_code || row.siteCode || row.nomCourt || row.nom_court));
+  }
+
   function niveauAffiche(domaineCode, niveauCode) {
     const domaine = String(domaineCode || '');
     const niveau = String(niveauCode || '');
-    const compactNiveau = niveau.toUpperCase().replace(/[\s/_-]+/g, '');
-    if (isPrDomaine(domaine) && (niveau === 'GEN' || compactNiveau === 'GEN')) return 'Général / PAPR';
-    if (isPrDomaine(domaine) && (compactNiveau === 'ABC' || compactNiveau === 'PRABC')) return 'PR-ABC';
-    if (niveau === 'GEN') return 'Général';
+    const compactNiveau = compactReferentialCode(niveau);
+    const normalized = normalizeOiCode(domaine, niveau);
+    const shared = sharedOiOptions(domaine).find((row) => row.value && (row.value === normalized || row.value === niveau || row.value === compactNiveau));
+    if (shared) return shared.label;
+    if (niveau === 'GEN' || compactNiveau === 'GEN') return 'Général';
     if (domaine === 'FOBA' && /^[123]$/.test(niveau)) return `FOBA ${niveau}`;
     if (domaine === 'FOCA') {
       if (niveau === 'I') return 'Échelon I';
       if (niveau === 'II') return 'Échelon II';
       if (niveau === 'III_IV' || niveau === 'III-IV' || niveau === 'III/IV') return 'Échelons III et IV';
     }
+    if (domaine === 'JSP' && compactNiveau === 'CAD') return 'Cadets';
     return niveau;
   }
 
@@ -309,10 +470,8 @@
       domaine = String(cible || '');
       niveau = String(niveauCode || '');
     }
-    const compact = niveau.toUpperCase().replace(/[\s/_-]+/g, '');
+    const compact = compactReferentialCode(niveau);
     if (domaine === 'JSP' && compact === 'CAD') return 'Cadets';
-    if (domaine === 'AUTO' && compact === 'VL') return 'cond VL';
-    if (domaine === 'AUTO' && compact === 'PL') return 'cond PL';
     const affiche = niveauAffiche(domaine, niveau);
     if (affiche && affiche !== niveau) return affiche;
     if (libelle) {
@@ -441,13 +600,6 @@
     return String(statut || '').toUpperCase() === 'PRESENT';
   }
 
-  function domainTaxonomyGroups() {
-    return [
-      { label: 'Domaines opérationnels', codes: ['DPS', 'DAP', 'JSP'] },
-      { label: 'Formations', codes: ['FOBA', 'FOCA', 'FOSPEC'] },
-      { label: 'Spécialisations FOSPEC', codes: ['PR', 'AUTO'] }
-    ];
-  }
 
   function formatTaux(percentage) {
     if (percentage === null || percentage === undefined || percentage === '') return '—';
@@ -1415,7 +1567,7 @@
     return OBJECTIF_UX_DOMAINES.map((code) => ({ type: 'domain', code, label: code }));
   }
 
-  const EVENT_DOMAIN_FILTER_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC', 'PR', 'AUTO']);
+  const EVENT_DOMAIN_FILTER_ORDER = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']);
 
   function eventDomainFilterItems(domaines) {
     const list = (domaines || []).filter((d) => {
@@ -1446,13 +1598,12 @@
   function eventListDomainParam(domaine) {
     const code = String(domaine || '').toUpperCase();
     if (!code || code === 'TOUS') return '';
-    if (code === 'FOSPEC') return 'FOSPEC,PR,AUTO';
     return code;
   }
 
   function buildSidebarNav(arbre, route) {
     const r = route || {};
-    const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
+    const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
     const rank = (code) => {
       const idx = order.indexOf(code);
       return idx === -1 ? order.length + 1 : idx;
@@ -2505,44 +2656,11 @@
     }).join(' · ');
   }
 
-  function sortCiblesForEventForm(cibles) {
-    const METIER_ORDER = {
-      DPS: ['G1', 'C1', 'B1', 'B2', 'GEN'],
-      DAP: ['Y1', 'Y2', 'Y3', 'Y4', 'GEN'],
-      JSP: ['G1', 'C1', 'B1', 'CAD', 'GEN'],
-      AUTO: ['VL', 'PL'],
-      PR: ['G1', 'C1', 'B1', 'B2', 'ABC', 'GEN'],
-      FOBA: ['1', '2', '3'],
-      FOCA: ['I', 'II', 'III_IV', 'GEN']
-    };
-    const explicitOrder = (cible) => {
-      const value = cible && (cible.displayOrder != null ? cible.displayOrder : (cible.display_order != null ? cible.display_order : cible.ordre));
-      const n = Number(value);
-      return Number.isFinite(n) ? n : null;
-    };
-    const rank = (cible) => {
-      const explicit = explicitOrder(cible);
-      if (explicit != null && explicit !== 999) return explicit;
-      const domain = String(cible && (cible.domaineCode || cible.domaine_code) || '').toUpperCase();
-      const code = String(cible && (cible.niveauCode || cible.niveau_code) || '').toUpperCase();
-      const list = METIER_ORDER[domain];
-      if (list) {
-        const idx = list.indexOf(code);
-        if (idx >= 0) return idx;
-      }
-      if (code === 'GEN') return 90;
-      return 50;
-    };
-    return (cibles || []).slice().sort((a, b) => {
-      const da = String(a.domaineCode || a.domaine_code || '');
-      const db = String(b.domaineCode || b.domaine_code || '');
-      if (da !== db) return da.localeCompare(db, 'fr');
-      const diff = rank(a) - rank(b);
-      if (diff) return diff;
-      const na = String(a.niveauCode || a.niveau_code || '');
-      const nb = String(b.niveauCode || b.niveau_code || '');
-      return na.localeCompare(nb, 'fr');
-    });
+  function sortCiblesForEventForm(cibles, selectedIds) {
+    const rows = cibles || [];
+    if (!rows.length) return [];
+    const domain = String(rows[0].domaineCode || rows[0].domaine_code || '');
+    return eventCiblesForForm(domain, rows, selectedIds);
   }
 
   function displayTauxForList(statut, officiel, percentage, extra) {
@@ -2928,6 +3046,13 @@
     formatDurationHoursMinutes,
     isEffectiveParticipationStatut,
     domainTaxonomyGroups,
+    sharedOiOptions,
+    sharedSpecOptions,
+    normalizeOiCode,
+    hasDuplicateOiValues,
+    eventCiblesForForm,
+    eventLieuDisplayLabel,
+    sortEventLieux,
     statutLabel,
     formatPrSessionList,
     formatFormateurPrTooltip,
