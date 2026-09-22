@@ -1642,6 +1642,369 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-agenda-view .qv-agenda-legend .scope-state {
   min-width: 0;
 }
+
+/* scope-quo-vadis-pilot-tabs-1 */
+.scope-btn.qv-soft-btn {
+  height: 36px;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--scope-blue);
+  background: #f4f6fb;
+  color: var(--scope-blue);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.scope-btn.qv-soft-btn:hover:not(:disabled) {
+  background: var(--scope-navy-soft);
+  border-color: var(--scope-blue);
+  color: var(--scope-blue);
+}
+.qv-pilot-view {
+  min-width: 0;
+  max-width: 100%;
+}
+.qv-pilot-view .scope-section-head {
+  align-items: flex-start;
+  gap: 16px;
+}
+.qv-pilot-view .scope-section-head h2 {
+  margin: 0;
+}
+.qv-pilot-kicker {
+  margin: 4px 0 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  line-height: 1.45;
+}
+.qv-pilot-view .scope-text-action {
+  text-decoration: none;
+  font-weight: 600;
+}
+.qv-agenda-filters.qv-pilot-filters {
+  grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(110px, 0.85fr)) auto;
+  align-items: end;
+  margin: 0 0 14px;
+}
+.qv-agenda-filters.qv-pilot-filters .qv-filter-search {
+  grid-column: auto;
+}
+.qv-pilot-table td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--scope-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.qv-pilot-table-wrap {
+  overflow-x: auto;
+}
+.qv-pilot-table {
+  width: 100%;
+}
+.qv-alertes-view .qv-pilot-table {
+  min-width: 980px;
+}
+.qv-cursus-detail .qv-pilot-table {
+  min-width: 720px;
+}
+.qv-cursus-detail .qv-pilot-table th:last-child,
+.qv-cursus-detail .qv-pilot-table td:last-child {
+  width: 108px;
+  white-space: nowrap;
+  text-align: center;
+}
+.qv-regles-view .qv-pilot-table {
+  min-width: 860px;
+}
+.qv-cursus-plan input {
+  accent-color: var(--scope-blue);
+}
+.qv-pilot-table.scope-table tbody tr:nth-child(even) {
+  background: #f7f8fb;
+}
+.qv-pilot-empty {
+  margin: 0;
+  padding: 28px 8px;
+  color: var(--scope-muted);
+  text-align: center;
+}
+.qv-pilot-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-top: 12px;
+}
+.qv-pilot-count {
+  margin: 0;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+.qv-pilot-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.qv-pilot-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+.qv-pilot-page-size select {
+  min-width: 72px;
+}
+.qv-pilot-hint {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--scope-line);
+  border-radius: 10px;
+  background: #f7f8fb;
+  color: var(--scope-ink);
+  font-size: var(--scope-type-secondary);
+  line-height: 1.5;
+}
+.qv-pilot-hint-mark {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--scope-navy-soft);
+  color: var(--scope-blue);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.qv-pilot-hint p {
+  margin: 0;
+}
+.qv-cursus-view {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.qv-cursus-nav,
+.qv-cursus-detail,
+.qv-dates-form,
+.qv-dates-list {
+  min-width: 0;
+}
+.qv-cursus-search {
+  margin: 0 0 12px;
+}
+.qv-cursus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.qv-cursus-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--scope-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.qv-cursus-list button:hover {
+  background: #f4f6fb;
+}
+.qv-cursus-list button.is-active {
+  background: var(--scope-navy-soft);
+}
+.qv-cursus-list-name {
+  font-weight: 700;
+}
+.qv-cursus-list button .scope-state {
+  flex: 0 0 auto;
+}
+.qv-cursus-plan {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin: 4px 0 0;
+}
+.qv-cursus-plan label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--scope-type-secondary);
+}
+.qv-cursus-modules {
+  margin-top: 14px;
+}
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--scope-line);
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+.qv-cursus-org h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.qv-cursus-org-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.qv-cursus-org-list li {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  gap: 8px 16px;
+  padding: 6px 0;
+  border-top: 1px solid var(--scope-line);
+  font-size: var(--scope-type-secondary);
+}
+.qv-cursus-org-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.qv-cursus-org-list strong {
+  font-weight: 600;
+}
+.qv-day-chips {
+  display: inline-flex;
+  gap: 3px;
+  white-space: nowrap;
+}
+.qv-day-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.qv-day-chip.is-pref {
+  background: #cfe8d6;
+  border-color: #b7d8c0;
+  color: #215e38;
+}
+.qv-day-chip.is-ok {
+  background: #edf6ef;
+  border-color: #dce9df;
+  color: #3d6b4c;
+}
+.qv-day-chip.is-warn {
+  background: #f7ead0;
+  border-color: #eed9b0;
+  color: #8a5a12;
+}
+.qv-day-chip.is-off {
+  background: #f6d9db;
+  border-color: #ebc4c7;
+  color: #8a2a32;
+}
+.qv-day-chip.is-neutral {
+  background: #eef0f3;
+  border-color: #e2e5ea;
+  color: #667085;
+}
+.qv-day-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.qv-day-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--scope-type-secondary);
+  color: var(--scope-ink);
+}
+.qv-dates-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.qv-dates-when {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.qv-dates-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.qv-dates-form .scope-form-section + .scope-form-section {
+  margin-top: 12px;
+}
+.qv-dates-list .qv-filter-search-control {
+  margin-bottom: 12px;
+}
+.qv-cursus-detail .scope-section-head > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.qv-cursus-detail .qv-pilot-kicker {
+  flex: 1 1 100%;
+}
+.qv-dates-multi {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: var(--scope-ink);
+  font-size: var(--scope-type-secondary);
+}
+.qv-dates-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+.qv-dates-table {
+  min-width: 640px;
+}
+@media (max-width: 1180px) {
+  .qv-cursus-view,
+  .qv-dates-view {
+    grid-template-columns: 1fr;
+  }
+  .qv-dates-when {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .qv-dates-when,
+  .qv-dates-place,
+  .qv-cursus-org-list li {
+    grid-template-columns: 1fr;
+  }
+}
 .qv-activities-table {
   width: 100%;
   min-width: 1180px;
@@ -2286,7 +2649,8 @@ a.qv-mini-day.has-activity:focus-visible span {
 .qv-arbitrer-domain-block:first-child {
   margin-top: 0;
 }
-.qv-arbitrer-legend {
+.qv-arbitrer-legend,
+.qv-pilot-legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2296,7 +2660,8 @@ a.qv-mini-day.has-activity:focus-visible span {
   list-style: none;
   background: none;
 }
-.qv-arbitrer-legend li {
+.qv-arbitrer-legend li,
+.qv-pilot-legend li {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2304,7 +2669,8 @@ a.qv-mini-day.has-activity:focus-visible span {
   font-size: var(--scope-type-secondary);
   font-weight: 400;
 }
-.qv-arbitrer-legend .scope-state {
+.qv-arbitrer-legend .scope-state,
+.qv-pilot-legend .scope-state {
   min-width: 0;
 }
 .qv-arbitrer-view .qv-arbitrer-kpi,
