@@ -565,7 +565,8 @@ function dayPolicyForActivity(domain, activity, rulesByDomain){
   const d = String(domain || '').toUpperCase();
   if(d === 'DAP') base.FRIDAY = 'AUTORISE';
   if(d === 'FOBA' || d === 'FOCA') base.FRIDAY = 'INTERDIT';
-  const rule = rulesByDomain && (rulesByDomain[d] || rulesByDomain['*']);
+  const cible = String(activity && ((activity.cibleCodes || [])[0] || activity.cibleCode || activity.oi || activity.publicCible) || '').toUpperCase();
+  const rule = rulesByDomain && ((cible && rulesByDomain[`${d}:${cible}`]) || rulesByDomain[d] || rulesByDomain['*']);
   const fromRule = rule && (rule.dayPolicy || rule.day_policy);
   const policy = fromRule ? Object.assign({}, DEFAULT_DAY_POLICY, fromRule) : base;
   if(activity && activity.instructionKind === 'section' && SECTION_SITES.has(String(activity.oi || '').toUpperCase())){

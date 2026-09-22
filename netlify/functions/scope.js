@@ -129,7 +129,42 @@ async function scopeHandler(event){
     if(method === 'POST' && path === '/quo-vadis/cursus'){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
       const result = await quoVadis.createCursus(body);
-      return response(result.created ? 201 : 400, { ok: result.created, ...result });
+      return response(result.ok ? 201 : 400, result);
+    }
+    params = match(path, '/quo-vadis/cursus/:id');
+    if(params && ['PATCH','DELETE'].includes(method)){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = method === 'PATCH' ? await quoVadis.updateCursus(params.id, body) : await quoVadis.removeCursus(params.id);
+      return response(result.ok ? 200 : 400, result);
+    }
+    params = match(path, '/quo-vadis/cursus/:id/modules');
+    if(params && method === 'POST'){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = await quoVadis.addModule(params.id, body);
+      return response(result.ok ? 201 : 400, result);
+    }
+    params = match(path, '/quo-vadis/cursus/:id/modules/order');
+    if(params && method === 'PATCH'){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = await quoVadis.reorderModules(params.id, body.stepIds);
+      return response(result.ok ? 200 : 400, result);
+    }
+    params = match(path, '/quo-vadis/cursus/modules/:id');
+    if(params && ['PATCH','DELETE'].includes(method)){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = method === 'PATCH' ? await quoVadis.updateModule(params.id, body) : await quoVadis.removeModule(params.id);
+      return response(result.ok ? 200 : 400, result);
+    }
+    if(method === 'POST' && path === '/quo-vadis/rules'){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = await quoVadis.createRule(body);
+      return response(result.ok ? 201 : 400, result);
+    }
+    params = match(path, '/quo-vadis/rules/:id');
+    if(params && ['PATCH','DELETE'].includes(method)){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = method === 'PATCH' ? await quoVadis.updateRule(params.id, body) : await quoVadis.removeRule(params.id);
+      return response(result.ok ? 200 : 400, result);
     }
     params = match(path, '/quo-vadis/programmes/:annee/generate');
     if(method === 'POST' && params){
@@ -142,6 +177,12 @@ async function scopeHandler(event){
     params = match(path, '/quo-vadis/programmes/:annee/cursus-steps');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await quoVadis.setCursusStepSelection(params.annee, body)) });
+    }
+    params = match(path, '/quo-vadis/programmes/:annee/cursus-step-schedule');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = await quoVadis.setCursusStepSchedule(params.annee, body);
+      return response(result.updated ? 200 : 400, { ok: result.updated, ...result });
     }
     params = match(path, '/quo-vadis/programmes/:annee/statut');
     if(method === 'POST' && params){

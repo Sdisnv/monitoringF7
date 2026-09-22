@@ -53,7 +53,8 @@ const expected = {
 };
 for (const [domain, labels] of Object.entries(expected)) {
   state.quoVadisFutureForm = { domain };
-  const html = context.renderQuoVadisDatesConnues({ futureDates: [], cursusSelections: [] });
+  const cibles = L.sharedOiOptions(domain).filter((row) => row.value).map((row, index) => ({ cibleId: `${domain}-${index}`, domaineCode: domain, niveauCode: row.value, libelle: row.label, actif: true }));
+  const html = context.renderQuoVadisDatesConnues({ futureDates: [], cursusSelections: [], cibles });
   const select = html.match(/<select id="qv-future-cible">([\s\S]*?)<\/select>/);
   assert.ok(select, `${domain}: OI rendered`);
   const actual = [...select[1].matchAll(/<option[^>]*>(.*?)<\/option>/g)].map((match) => match[1]);
@@ -61,6 +62,9 @@ for (const [domain, labels] of Object.entries(expected)) {
   assert.ok(!/OI \/ Cible|Cursus \/ Spécialisation/.test(html));
   assert.equal(html.includes('>Spécialisation</label>'), domain === 'FOSPEC');
 }
+state.quoVadisFutureForm = { domain: 'DPS' };
+const extended = context.renderQuoVadisDatesConnues({ futureDates: [], cursusSelections: [], cibles: [{ cibleId: 'extra', domaineCode: 'DPS', niveauCode: 'B3', libelle: 'B3', actif: true }] });
+assert.match(extended, />B3<\/option>/, 'new active target is available without a static UI entry');
 state.quoVadisFutureForm = { domain: 'FOCO', cursusId: 'id-1' };
 assert.match(context.renderQuoVadisDatesConnues({ futureDates: [], cursusSelections: [{ cursusId: 'id-1', libelle: 'CI DPS', retenu: true }] }), /<label for="qv-future-cursus">Cursus<\/label>/);
 assert.equal(L.normalizeOiCode('PR', 'PR-ABC'), 'ABC');

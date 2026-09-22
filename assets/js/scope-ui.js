@@ -10202,13 +10202,13 @@
     return `${weekday}, ${day} ${month} ${year}`.toUpperCase();
   }
 
-  function qvLieuOptions(qv, selected) {
+  function qvLieuOptions(qv, selected, includeOther = true) {
     const raw = (qv.lieux || []).filter((row) => row.actif !== false);
     const rows = L.sortEventLieux ? L.sortEventLieux(raw) : raw;
     const current = String(selected || '');
     const autre = current === 'autre';
     const labelOf = (row) => (L.eventLieuDisplayLabel ? L.eventLieuDisplayLabel(row) : [row.nomCourt, row.localite].filter(Boolean).join(' – '));
-    return `<option value="">Lieu à définir</option>${rows.map((row) => `<option value="${escapeHtml(row.lieuId)}" ${String(row.lieuId) === current ? 'selected' : ''}>${escapeHtml(labelOf(row))}</option>`).join('')}<option value="autre" ${autre ? 'selected' : ''}>Autre lieu</option>`;
+    return `<option value="">Lieu à définir</option>${rows.map((row) => `<option value="${escapeHtml(row.lieuId)}" ${String(row.lieuId) === current ? 'selected' : ''}>${escapeHtml(labelOf(row))}</option>`).join('')}${includeOther ? `<option value="autre" ${autre ? 'selected' : ''}>Autre lieu</option>` : ''}`;
   }
 
   function qvActivities(qv) {
@@ -11684,12 +11684,16 @@
     const selected = navRows.find((row) => row.code === selectedCode) || visible[0] || null;
     const planned = Boolean(selected && selected.retenu);
     const manageable = Boolean(selected && selected.statut === 'ACTIF');
-    const steps = (qv.cursus || []).filter((row) => row.code === selectedCode && row.stepId).slice().sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0));
+    const steps = (qv.cursus || []).filter((row) => row.code === selectedCode && row.stepId && row.active !== false).slice().sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0));
+    const editing = state.quoVadisCursusEdit === selectedCode;
+    const stepEdit = steps.find((row) => row.stepId === state.quoVadisModuleEdit);
+    const scheduleStep = steps.find((row) => row.stepId === state.quoVadisScheduleStepId);
+    const targetOptions = (domain, value) => sharedOptionsHtml([{ value: '', label: 'Aucun public particulier' }].concat((L.eventCiblesForForm ? L.eventCiblesForForm(domain, qv.cibles || [], value ? [value] : []) : []).map((row) => ({ value: row.cibleId, label: row.libelle || row.niveauCode }))), value || '');
     const dps = (selected && (selected.code === 'CI-DPS' || selected.libelle === 'CI DPS')) ? L.sortByScopeSiteOrder(qv.dpsOrganisation || [], (row) => row.oiCode) : [];
     return `<div class="qv-cursus-view qv-pilot-view">
       <section class="scope-card qv-cursus-nav">
         <div class="scope-section-head"><div><h2>Cursus</h2></div>${hasScopePermission('references:manage') ? qvSoftBtn('qv-cursus-new', '＋ Nouveau cursus') : ''}</div>
-        ${state.quoVadisNewCursus ? `<form id="qv-cursus-create" class="qv-cursus-create scope-field"><label for="qv-cursus-name">Nom du cursus</label><input id="qv-cursus-name" type="text" required maxlength="160" autocomplete="off"><div class="qv-cursus-create-actions"><button type="submit" class="scope-btn qv-soft-btn">Créer</button><button type="button" class="scope-btn qv-soft-btn" id="qv-cursus-cancel">Annuler</button></div></form>` : ''}
+        ${state.quoVadisNewCursus ? `<form id="qv-cursus-create" class="qv-cursus-create scope-field"><label for="qv-cursus-name">Nom du cursus</label><input id="qv-cursus-name" type="text" required maxlength="160" autocomplete="off"><label for="qv-cursus-code">Code (facultatif)</label><input id="qv-cursus-code" type="text" maxlength="80"><label for="qv-cursus-domain">Domaine</label><select id="qv-cursus-domain" required>${domainTaxonomySelectHtml('', { emptyLabel: 'Sélectionner…' })}</select><label for="qv-cursus-target">Public cible</label><select id="qv-cursus-target"><option value="">Aucun public particulier</option></select><label for="qv-cursus-duration">Durée (mois)</label><input id="qv-cursus-duration" type="number" min="1" max="240" required value="12"><label for="qv-cursus-description">Description</label><textarea id="qv-cursus-description" rows="2"></textarea><div class="qv-cursus-create-actions"><button type="submit" class="scope-btn qv-soft-btn">Créer</button><button type="button" class="scope-btn qv-soft-btn" id="qv-cursus-cancel">Annuler</button></div></form>` : ''}
         <div class="scope-field qv-cursus-search"><label class="visually-hidden" for="qv-cursus-q">Rechercher un cursus</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-cursus-q" type="search" value="${escapeHtml(state.quoVadisCursusQuery || '')}" placeholder="Rechercher un cursus…"></div></div>
         <ul class="qv-cursus-list">${visible.map((row) => `<li>
           <button type="button" class="${row.code === selectedCode ? 'is-active' : ''}" data-qv-cursus-select="${escapeHtml(row.code)}">
@@ -11705,8 +11709,15 @@
             ${scopeStateHtml(planned ? 'positive' : 'inactive', planned ? `Prévu en ${year}` : `Non prévu en ${year}`)}
             ${selected.justification ? `<p class="qv-pilot-kicker">${escapeHtml(selected.justification)}</p>` : ''}
           </div>
-          ${manageable ? qvSoftBtn('qv-cursus-save', '＋ Enregistrer') : ''}
+          ${hasScopePermission('references:manage') ? `<div>${qvSoftBtn('qv-cursus-edit', 'Modifier le référentiel')}${qvSoftBtn('qv-cursus-delete', 'Archiver / supprimer')}</div>` : ''}
         </div>
+        <div class="qv-local-feedback" id="qv-cursus-feedback" role="status">${escapeHtml(state.quoVadisCursusFeedback || '')}</div>
+        ${editing ? `<form id="qv-cursus-edit-form" class="qv-reference-form scope-form-section">
+          <div class="scope-form-two"><div class="scope-field"><label for="qv-cursus-edit-name">Nom</label><input id="qv-cursus-edit-name" required value="${escapeHtml(selected.libelle)}"></div><div class="scope-field"><label for="qv-cursus-edit-duration">Durée (mois)</label><input id="qv-cursus-edit-duration" type="number" min="1" max="240" required value="${escapeHtml(selected.durationMonths || '')}"></div></div>
+          <div class="scope-form-two"><div class="scope-field"><label for="qv-cursus-edit-domain">Domaine</label><select id="qv-cursus-edit-domain">${domainTaxonomySelectHtml(selected.domainCode || '', { emptyLabel: 'Sélectionner…' })}</select></div><div class="scope-field"><label for="qv-cursus-edit-target">Public cible</label><select id="qv-cursus-edit-target">${targetOptions(selected.domainCode, selected.cibleId)}</select></div></div>
+          <div class="scope-form-two"><div class="scope-field"><label for="qv-cursus-edit-description">Description</label><textarea id="qv-cursus-edit-description" rows="2">${escapeHtml(selected.description || '')}</textarea></div><div class="scope-field"><label for="qv-cursus-edit-status">État</label><select id="qv-cursus-edit-status"><option value="ACTIF" ${selected.statut === 'ACTIF' ? 'selected' : ''}>Actif</option><option value="INACTIF" ${selected.statut === 'INACTIF' ? 'selected' : ''}>Inactif</option><option value="ARCHIVE" ${selected.statut === 'ARCHIVE' ? 'selected' : ''}>Archivé</option></select></div></div>
+          <button type="submit" class="scope-btn qv-soft-btn">Enregistrer</button><button type="button" class="scope-btn" id="qv-cursus-edit-cancel">Annuler</button>
+        </form>` : ''}
         <section class="scope-form-section">
           <h3>1. Planning ${year}</h3>
           <div class="qv-cursus-plan">
@@ -11716,8 +11727,8 @@
           ${qvPilotHintHtml(`Si un cursus n’est pas planifié en ${year}, ses modules sont décochés et deviennent indisponibles pour cette année.`)}
         </section>
         <section class="scope-form-section qv-cursus-modules">
-          <h3>2. Modules du cursus</h3>
-          <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Module</th><th>Libellé</th><th>Année</th><th>Période proposée</th><th>État</th><th>Inclus ${year}</th></tr></thead>
+          <h3>2. Modules du cursus <small>(${steps.length})</small></h3>
+          <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Module</th><th>Libellé</th><th>Année</th><th>Période proposée</th><th>État</th><th>Inclus ${year}</th><th>Gestion</th></tr></thead>
             <tbody>${steps.map((row, index) => {
               const visual = qvCursusStepState(qv, row, planned);
               const included = planned && row.stepRetenu !== false;
@@ -11725,12 +11736,26 @@
               <td>${index + 1}</td>
               <td>${escapeHtml(row.stepLabel)}</td>
               <td>${escapeHtml(row.yearLabel || (row.logicalYear === 2 ? 'Année 2' : 'Année 1'))}<small>${escapeHtml(row.startYearLabel || (row.logicalYear === 2 ? 'Début du cursus 2026' : 'Début du cursus 2027'))}</small></td>
-              <td>${escapeHtml(qvCursusStepPeriod(qv, row))}</td>
+              <td>${escapeHtml((row.annualSchedule || {}).date || qvCursusStepPeriod(qv, row))}</td>
               <td>${scopeStateHtml(visual.tone, visual.label)}</td>
               <td><input type="checkbox" data-qv-cursus-step="${escapeHtml(row.stepId || '')}" ${included ? 'checked' : ''} ${planned && manageable ? '' : 'disabled'}></td>
+              <td>${hasScopePermission('references:manage') ? `<button type="button" class="scope-text-action" data-qv-module-edit="${escapeHtml(row.stepId)}">Modifier</button><button type="button" class="scope-text-action" data-qv-module-delete="${escapeHtml(row.stepId)}">Archiver</button><button type="button" class="scope-text-action" data-qv-module-move="${escapeHtml(row.stepId)}" data-direction="-1" ${index === 0 ? 'disabled' : ''} title="Monter">↑</button><button type="button" class="scope-text-action" data-qv-module-move="${escapeHtml(row.stepId)}" data-direction="1" ${index === steps.length - 1 ? 'disabled' : ''} title="Descendre">↓</button>${planned && included && selected.code !== 'CI-DPS' ? `<button type="button" class="scope-text-action" data-qv-step-schedule="${escapeHtml(row.stepId)}">Planifier</button>` : ''}` : ''}</td>
             </tr>`;
-            }).join('') || '<tr><td colspan="6"><p class="qv-pilot-empty">Aucun module pour ce cursus.</p></td></tr>'}</tbody>
+            }).join('') || '<tr><td colspan="7"><p class="qv-pilot-empty">Aucun module pour ce cursus.</p></td></tr>'}</tbody>
           </table></div>
+          ${scheduleStep && planned && scheduleStep.stepRetenu ? `<form id="qv-step-schedule-form" class="qv-reference-form" data-step-id="${escapeHtml(scheduleStep.stepId)}"><h4>Occurrence ${year} · ${escapeHtml(scheduleStep.stepLabel)}</h4>
+            <div class="scope-form-two"><div class="scope-field"><label for="qv-step-date">Date</label><input id="qv-step-date" type="date" required value="${escapeHtml((scheduleStep.annualSchedule || {}).date || '')}"></div><div class="scope-field"><label for="qv-step-duration">Durée (minutes)</label><input id="qv-step-duration" type="number" min="1" max="10080" required value="${escapeHtml((scheduleStep.annualSchedule || {}).durationMinutes || scheduleStep.durationMinutes || '')}"></div></div>
+            <div class="scope-form-two"><div class="scope-field"><label for="qv-step-start">Début</label><input id="qv-step-start" type="time" required value="${escapeHtml((scheduleStep.annualSchedule || {}).start || scheduleStep.usualStartTime || '')}"></div><div class="scope-field"><label for="qv-step-end">Fin</label><input id="qv-step-end" type="time" required value="${escapeHtml((scheduleStep.annualSchedule || {}).end || scheduleStep.usualEndTime || '')}"></div></div>
+            <div class="scope-field"><label for="qv-step-place">Lieu</label><select id="qv-step-place">${qvLieuOptions(qv, (scheduleStep.annualSchedule || {}).lieuId || scheduleStep.lieuId || '', false)}</select></div>
+            <button type="submit" class="scope-btn qv-soft-btn">Enregistrer l’occurrence</button><button type="button" id="qv-step-schedule-cancel" class="scope-btn">Annuler</button>
+          </form>` : ''}
+          ${hasScopePermission('references:manage') && manageable ? `${qvSoftBtn('qv-module-new', '＋ Ajouter un module')}${(state.quoVadisModuleNew || stepEdit) ? `<form id="qv-module-form" class="qv-reference-form" data-step-id="${escapeHtml(stepEdit && stepEdit.stepId || '')}">
+            <div class="scope-form-two"><div class="scope-field"><label for="qv-module-name">Libellé</label><input id="qv-module-name" required value="${escapeHtml(stepEdit && stepEdit.stepLabel || '')}"></div><div class="scope-field"><label for="qv-module-year">Année du cursus</label><input id="qv-module-year" type="number" min="1" max="30" required value="${escapeHtml(stepEdit && stepEdit.logicalYear || 1)}"></div></div>
+            <div class="scope-form-two"><div class="scope-field"><label for="qv-module-minutes">Durée (minutes)</label><input id="qv-module-minutes" type="number" min="1" max="10080" required value="${escapeHtml(stepEdit && stepEdit.durationMinutes || '')}"></div><div class="scope-field"><label for="qv-module-month">Mois habituel</label><input id="qv-module-month" type="number" min="1" max="12" value="${escapeHtml(stepEdit && stepEdit.preferredMonth || '')}"></div></div>
+            <div class="scope-form-two"><div class="scope-field"><label for="qv-module-start">Début habituel</label><input id="qv-module-start" type="time" value="${escapeHtml(stepEdit && stepEdit.usualStartTime || '')}"></div><div class="scope-field"><label for="qv-module-end">Fin habituelle</label><input id="qv-module-end" type="time" value="${escapeHtml(stepEdit && stepEdit.usualEndTime || '')}"></div></div>
+            <div class="scope-form-two"><div class="scope-field"><label for="qv-module-place">Lieu</label><select id="qv-module-place">${qvLieuOptions(qv, stepEdit && stepEdit.lieuId || '', false)}</select></div><div class="scope-field"><label for="qv-module-target">Public cible</label><select id="qv-module-target">${targetOptions(selected.domainCode, stepEdit && stepEdit.cibleId)}</select></div></div>
+            <button type="submit" class="scope-btn qv-soft-btn">Enregistrer</button><button type="button" id="qv-module-cancel" class="scope-btn">Annuler</button>
+          </form>` : ''}` : ''}
         </section>
         ${dps.length ? `<div class="qv-cursus-org">
           <h4>Organisation DPS</h4>
@@ -11742,15 +11767,29 @@
 
   function renderQuoVadisRegles(qv) {
     const rules = qv.rules || [];
+    const editor = state.quoVadisRuleEditor;
+    const activeRule = editor && editor !== 'new' ? rules.find((row) => row.ruleId === editor) : null;
+    const rule = activeRule || {};
+    const weekdays = [['MONDAY','Lundi'],['TUESDAY','Mardi'],['WEDNESDAY','Mercredi'],['THURSDAY','Jeudi'],['FRIDAY','Vendredi'],['SATURDAY','Samedi'],['SUNDAY','Dimanche']];
     return `<section class="scope-card qv-pilot-view qv-regles-view">
       <div class="scope-section-head">
         <div>
           <h2>Règles de planification</h2>
           <p class="qv-pilot-kicker">Définissent les jours recommandés, possibles ou déconseillés pour la planification des exercices par domaine.</p>
         </div>
-        ${qvSoftBtn('qv-rules-edit', '⚙ Modifier les réglages')}
+        ${hasScopePermission('references:manage') ? qvSoftBtn('qv-rules-edit', '＋ Nouvelle règle') : ''}
       </div>
-      <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Domaine</th><th>Portée</th><th>Jours de la semaine</th><th>Horaire habituel</th><th>Préférence</th><th>Contraintes</th><th>Période</th></tr></thead>
+      <div class="qv-local-feedback" id="qv-rules-feedback" role="status">${escapeHtml(state.quoVadisRulesFeedback || '')}</div>
+      ${editor ? `<form id="qv-rule-form" class="qv-reference-form" data-rule-id="${escapeHtml(activeRule && activeRule.ruleId || '')}">
+        <div class="scope-form-two"><div class="scope-field"><label for="qv-rule-domain">Domaine</label><select id="qv-rule-domain" required>${domainTaxonomySelectHtml(rule.domain || '', { emptyLabel: 'Sélectionner…' })}</select></div><div class="scope-field"><label for="qv-rule-target">Public cible</label><select id="qv-rule-target">${sharedOptionsHtml([{ value: '', label: 'Règle générale' }].concat((L.eventCiblesForForm ? L.eventCiblesForForm(rule.domain, qv.cibles || [], rule.cibleId ? [rule.cibleId] : []) : []).map((row) => ({ value: row.cibleId, label: row.libelle || row.niveauCode }))), rule.cibleId || '')}</select></div></div>
+        <div class="qv-rule-days">${weekdays.map(([day, label]) => `<div class="scope-field"><label for="qv-rule-${day}">${label}</label><select id="qv-rule-${day}" data-qv-rule-day="${day}">${[['PREFERE','Préféré'],['AUTORISE','Autorisé'],['DECONSEILLE','Déconseillé'],['INTERDIT','Interdit']].map(([value, title]) => `<option value="${value}" ${((rule.dayPolicy || {})[day] || 'AUTORISE') === value ? 'selected' : ''}>${title}</option>`).join('')}</select></div>`).join('')}</div>
+        <div class="scope-form-two"><div class="scope-field"><label for="qv-rule-start">Début habituel</label><input id="qv-rule-start" type="time" required value="${escapeHtml((rule.timePolicy || {}).usualStart || '')}"></div><div class="scope-field"><label for="qv-rule-end">Fin habituelle</label><input id="qv-rule-end" type="time" required value="${escapeHtml((rule.timePolicy || {}).usualEnd || '')}"></div></div>
+        <div class="scope-form-two"><div class="scope-field"><label for="qv-rule-preferred">Jour principal</label><select id="qv-rule-preferred"><option value="">Aucun</option>${weekdays.map(([day, label]) => `<option value="${day}" ${rule.preferredDay === day ? 'selected' : ''}>${label}</option>`).join('')}</select></div><div class="scope-field"><label for="qv-rule-minutes">Durée (minutes)</label><input id="qv-rule-minutes" type="number" min="1" max="10080" value="${escapeHtml(rule.durationMinutes || '')}"></div></div>
+        <div class="scope-form-two"><div class="scope-field"><label for="qv-rule-from">Valide dès</label><input id="qv-rule-from" type="date" value="${escapeHtml(rule.validFrom || '')}"></div><div class="scope-field"><label for="qv-rule-to">Valide jusqu’au</label><input id="qv-rule-to" type="date" value="${escapeHtml(rule.validTo || '')}"></div></div>
+        <div class="scope-field"><label for="qv-rule-constraints">Contraintes</label><textarea id="qv-rule-constraints" rows="2">${escapeHtml(rule.constraints || '')}</textarea></div><label><input id="qv-rule-derogation" type="checkbox" ${rule.derogationAllowed !== false ? 'checked' : ''}> Dérogation autorisée</label>
+        <div><button type="submit" class="scope-btn qv-soft-btn">Enregistrer</button><button type="button" id="qv-rule-cancel" class="scope-btn">Annuler</button></div>
+      </form>` : ''}
+      <div class="scope-table-wrap qv-pilot-table-wrap"><table class="scope-table qv-pilot-table"><thead><tr><th>Domaine</th><th>Portée</th><th>Jours de la semaine</th><th>Horaire habituel</th><th>Préférence</th><th>Contraintes</th><th>Période</th>${hasScopePermission('references:manage') ? '<th>Gestion</th>' : ''}</tr></thead>
         <tbody>${rules.map((row) => {
           const days = Object.entries(row.dayPolicyLabels || {});
           const preferred = days.filter(([, value]) => value === 'Préférée').map(([day]) => day);
@@ -11763,8 +11802,9 @@
             <td>${qvDayChipsHtml(row.dayPolicyLabels)}</td>
             <td>${escapeHtml(time || '—')}</td>
             <td>${escapeHtml(preferred[0] || 'Possible')}</td>
-            <td>${escapeHtml([row.derogationAllowed === false ? 'Dérogation interdite' : 'Dérogation possible', forbidden.length ? `Jours exclus : ${forbidden.join(', ')}` : (discouraged.length ? `Jours exclus : ${discouraged.join(', ')}` : '')].filter(Boolean).join(' · '))}</td>
-            <td>Janvier 2027 → mars 2028</td>
+            <td>${escapeHtml([row.constraints, row.derogationAllowed === false ? 'Dérogation interdite' : 'Dérogation possible', forbidden.length ? `Jours exclus : ${forbidden.join(', ')}` : (discouraged.length ? `Jours déconseillés : ${discouraged.join(', ')}` : '')].filter(Boolean).join(' · '))}</td>
+            <td>${escapeHtml([row.validFrom || 'Sans début', row.validTo || 'Sans fin'].join(' → '))}</td>
+            ${hasScopePermission('references:manage') ? `<td>${row.definitionVersionId ? '' : `<button type="button" class="scope-text-action" data-qv-rule-edit="${escapeHtml(row.ruleId)}">Modifier</button><button type="button" class="scope-text-action" data-qv-rule-delete="${escapeHtml(row.ruleId)}">Archiver</button>`}</td>` : ''}
           </tr>`;
         }).join('') || '<tr><td colspan="7"><p class="qv-pilot-empty">Aucune règle de planification.</p></td></tr>'}</tbody>
       </table></div>
@@ -11794,7 +11834,8 @@
     const autre = String(form.lieuId || '') === 'autre';
     const domain = form.domain || '';
     const formationDomains = (L.domainTaxonomyGroups().find((group) => group.label === 'Formation') || {}).codes || [];
-    const oiOptions = L.sharedOiOptions ? L.sharedOiOptions(domain) : [{ value: '', label: 'Non précisé' }];
+    const oiOptions = [{ value: '', label: 'Non précisé' }].concat((L.eventCiblesForForm ? L.eventCiblesForForm(domain, qv.cibles || [], []) : [])
+      .map((row) => ({ value: row.niveauCode, label: row.libelle || (L.niveauAffiche ? L.niveauAffiche(domain, row.niveauCode) : row.niveauCode) })));
     const specOptions = L.sharedSpecOptions ? L.sharedSpecOptions(domain) : [];
     const cursusOptions = [{ value: '', label: 'Non précisé' }].concat(formationDomains.includes(domain)
       ? (qv.cursusSelections || []).filter((row) => row.retenu).map((row) => ({ value: row.cursusId, label: row.libelle })) : []);
@@ -11813,7 +11854,7 @@
           <div class="scope-field"><label for="qv-future-label">Libellé de l’activité *</label><input id="qv-future-label" type="text" value="${escapeHtml(form.activiteLabel || '')}" placeholder="Ex. Exercice DPS" required>${qvFieldError('activiteLabel')}</div>
           <div class="scope-form-two qv-form-follow">
             <div class="scope-field"><label for="qv-future-domain">Domaine *</label><select id="qv-future-domain">${domainTaxonomySelectHtml(form.domain || '', { emptyLabel: 'Sélectionner…' })}</select></div>
-            <div class="scope-field"><label for="qv-future-cible">OI</label><select id="qv-future-cible">${sharedOptionsHtml(oiOptions, selectedOi)}</select></div>
+            <div class="scope-field"><label for="qv-future-cible">OI OU PUBLIC CIBLE</label><select id="qv-future-cible">${sharedOptionsHtml(oiOptions, selectedOi)}</select></div>
           </div>
           ${domain === 'FOSPEC' ? `<div class="scope-field qv-form-follow"><label for="qv-future-spec">Spécialisation</label><select id="qv-future-spec">${sharedOptionsHtml(specOptions, form.specialisation)}</select></div>` : ''}
           ${cursusOptions.length > 1 ? `<div class="scope-field qv-form-follow"><label for="qv-future-cursus">Cursus</label><select id="qv-future-cursus">${sharedOptionsHtml(cursusOptions, form.cursusId)}</select></div>` : ''}
@@ -12199,28 +12240,96 @@
       state.quoVadisNewCursus = false;
       render();
     });
+    document.getElementById('qv-cursus-domain')?.addEventListener('change', (event) => {
+      const rows = L.eventCiblesForForm(event.target.value, ((state.quoVadis || {}).cibles || []), []);
+      document.getElementById('qv-cursus-target').innerHTML = sharedOptionsHtml([{ value: '', label: 'Aucun public particulier' }].concat(rows.map((row) => ({ value: row.cibleId, label: row.libelle || row.niveauCode }))), '');
+    });
     document.getElementById('qv-cursus-create')?.addEventListener('submit', async (event) => {
       event.preventDefault();
       const libelle = String(document.getElementById('qv-cursus-name')?.value || '').trim();
       if (!libelle) return;
       try {
-        const data = await client.createQuoVadisCursus({ libelle });
+        const data = await client.createQuoVadisCursus({ libelle, code: document.getElementById('qv-cursus-code')?.value, domainCode: document.getElementById('qv-cursus-domain')?.value, cibleId: document.getElementById('qv-cursus-target')?.value || null, durationMonths: document.getElementById('qv-cursus-duration')?.value, description: document.getElementById('qv-cursus-description')?.value });
         invalidateCache(['quoVadis']);
         await loadQuoVadis();
         state.quoVadisCursusCode = data.cursus.code;
         state.quoVadisCursusQuery = '';
         state.quoVadisNewCursus = false;
-        toast('success', 'Cursus', 'Cursus créé.');
+        state.quoVadisCursusFeedback = 'Cursus créé.';
+        window.setTimeout(() => { if (state.quoVadisCursusFeedback === 'Cursus créé.') { state.quoVadisCursusFeedback = ''; render(); } }, 3500);
       } catch (error) {
         toast('error', 'Cursus', L.friendlyError(error).message || 'Le cursus n’a pas pu être créé.');
       } finally {
         render();
       }
     });
-    document.getElementById('qv-cursus-save')?.addEventListener('click', () => {
-      const selected = root.querySelector('[data-qv-cursus-plan]:checked');
-      if (selected) selected.dispatchEvent(new Event('change'));
-      else toast('success', 'Cursus', 'Aucun changement à enregistrer.');
+    const qvRefreshReference = async (message) => {
+      invalidateCache(['quoVadis']);
+      await loadQuoVadis();
+      state.quoVadisCursusFeedback = message;
+      render();
+      window.setTimeout(() => { if (state.quoVadisCursusFeedback === message) { state.quoVadisCursusFeedback = ''; render(); } }, 3500);
+    };
+    document.getElementById('qv-cursus-edit')?.addEventListener('click', () => { state.quoVadisCursusEdit = state.quoVadisCursusCode; render(); });
+    document.getElementById('qv-cursus-edit-cancel')?.addEventListener('click', () => { state.quoVadisCursusEdit = ''; render(); });
+    document.getElementById('qv-cursus-edit-domain')?.addEventListener('change', (event) => {
+      const domain = event.target.value;
+      const rows = L.eventCiblesForForm(domain, ((state.quoVadis || {}).cibles || []), []);
+      document.getElementById('qv-cursus-edit-target').innerHTML = sharedOptionsHtml([{ value: '', label: 'Aucun public particulier' }].concat(rows.map((row) => ({ value: row.cibleId, label: row.libelle || row.niveauCode }))), '');
+    });
+    document.getElementById('qv-cursus-edit-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const selected = ((state.quoVadis || {}).cursusSelections || []).find((row) => row.code === state.quoVadisCursusCode);
+      if (!selected) return;
+      try {
+        await client.updateQuoVadisCursus(selected.cursusId, { libelle: document.getElementById('qv-cursus-edit-name').value, durationMonths: document.getElementById('qv-cursus-edit-duration').value, domainCode: document.getElementById('qv-cursus-edit-domain').value, cibleId: document.getElementById('qv-cursus-edit-target').value || null, description: document.getElementById('qv-cursus-edit-description').value, statut: document.getElementById('qv-cursus-edit-status').value });
+        state.quoVadisCursusEdit = '';
+        await qvRefreshReference('Cursus mis à jour.');
+      } catch (error) { state.quoVadisCursusFeedback = L.friendlyError(error).message; render(); }
+    });
+    document.getElementById('qv-cursus-delete')?.addEventListener('click', async () => {
+      const selected = ((state.quoVadis || {}).cursusSelections || []).find((row) => row.code === state.quoVadisCursusCode);
+      if (!selected || !window.confirm(`Archiver ou supprimer ${selected.libelle} selon ses liens historiques ?`)) return;
+      try { const result = await client.deleteQuoVadisCursus(selected.cursusId); await qvRefreshReference(result.archived ? 'Cursus archivé ; historique conservé.' : 'Cursus supprimé.'); }
+      catch (error) { state.quoVadisCursusFeedback = L.friendlyError(error).message; render(); }
+    });
+    document.getElementById('qv-module-new')?.addEventListener('click', () => { state.quoVadisModuleNew = true; state.quoVadisModuleEdit = ''; render(); });
+    document.getElementById('qv-module-cancel')?.addEventListener('click', () => { state.quoVadisModuleNew = false; state.quoVadisModuleEdit = ''; render(); });
+    root.querySelectorAll('[data-qv-module-edit]').forEach((button) => button.addEventListener('click', () => { state.quoVadisModuleEdit = button.dataset.qvModuleEdit; state.quoVadisModuleNew = false; render(); }));
+    document.getElementById('qv-module-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const selected = ((state.quoVadis || {}).cursusSelections || []).find((row) => row.code === state.quoVadisCursusCode);
+      const stepId = event.target.dataset.stepId;
+      const body = { libelle: document.getElementById('qv-module-name').value, logicalYear: document.getElementById('qv-module-year').value, durationMinutes: document.getElementById('qv-module-minutes').value, preferredMonth: document.getElementById('qv-module-month').value || null, usualStartTime: document.getElementById('qv-module-start').value || null, usualEndTime: document.getElementById('qv-module-end').value || null, lieuId: document.getElementById('qv-module-place').value || null, cibleId: document.getElementById('qv-module-target').value || null };
+      try {
+        if (stepId) await client.updateQuoVadisModule(stepId, body);
+        else await client.createQuoVadisModule(selected.cursusId, body);
+        state.quoVadisModuleEdit = ''; state.quoVadisModuleNew = false;
+        await qvRefreshReference('Module enregistré.');
+      } catch (error) { state.quoVadisCursusFeedback = L.friendlyError(error).message; render(); }
+    });
+    root.querySelectorAll('[data-qv-module-delete]').forEach((button) => button.addEventListener('click', async () => {
+      if (!window.confirm('Archiver ou supprimer ce module selon ses liens historiques ?')) return;
+      try { const result = await client.deleteQuoVadisModule(button.dataset.qvModuleDelete); await qvRefreshReference(result.archived ? 'Module archivé ; historique conservé.' : 'Module supprimé.'); }
+      catch (error) { state.quoVadisCursusFeedback = L.friendlyError(error).message; render(); }
+    }));
+    root.querySelectorAll('[data-qv-module-move]').forEach((button) => button.addEventListener('click', async () => {
+      const selected = ((state.quoVadis || {}).cursusSelections || []).find((row) => row.code === state.quoVadisCursusCode);
+      const ids = ((state.quoVadis || {}).cursus || []).filter((row) => row.code === selected.code && row.stepId && row.active).sort((a, b) => a.ordre - b.ordre).map((row) => row.stepId);
+      const from = ids.indexOf(button.dataset.qvModuleMove), to = from + Number(button.dataset.direction);
+      if (from < 0 || to < 0 || to >= ids.length) return;
+      [ids[from], ids[to]] = [ids[to], ids[from]];
+      try { await client.reorderQuoVadisModules(selected.cursusId, ids); await qvRefreshReference('Ordre des modules enregistré.'); }
+      catch (error) { state.quoVadisCursusFeedback = L.friendlyError(error).message; render(); }
+    }));
+    root.querySelectorAll('[data-qv-step-schedule]').forEach((button) => button.addEventListener('click', () => { state.quoVadisScheduleStepId = button.dataset.qvStepSchedule; render(); }));
+    document.getElementById('qv-step-schedule-cancel')?.addEventListener('click', () => { state.quoVadisScheduleStepId = ''; render(); });
+    document.getElementById('qv-step-schedule-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const year = Number(((state.quoVadis || {}).programme || {}).annee || 2027);
+      const body = { stepId: event.target.dataset.stepId, date: document.getElementById('qv-step-date').value, start: document.getElementById('qv-step-start').value, end: document.getElementById('qv-step-end').value, durationMinutes: document.getElementById('qv-step-duration').value, lieuId: document.getElementById('qv-step-place').value || null };
+      try { await client.setQuoVadisCursusStepSchedule(year, body); state.quoVadisScheduleStepId = ''; await qvRefreshReference('Occurrence annuelle enregistrée.'); }
+      catch (error) { state.quoVadisCursusFeedback = L.friendlyError(error).message; render(); }
     });
     document.getElementById('qv-cursus-q')?.addEventListener('input', () => {
       state.quoVadisCursusQuery = document.getElementById('qv-cursus-q')?.value || '';
@@ -12236,8 +12345,34 @@
       toast('info', 'Alertes', 'Les alertes sont générées automatiquement à partir des propositions 2027. La création manuelle n’est pas ouverte dans cet écran.');
     });
     document.getElementById('qv-rules-edit')?.addEventListener('click', () => {
-      toast('info', 'Règles', 'Les règles de planification proviennent des référentiels. L’édition n’est pas ouverte dans cet écran.');
+      state.quoVadisRuleEditor = 'new'; render();
     });
+    document.getElementById('qv-rule-cancel')?.addEventListener('click', () => { state.quoVadisRuleEditor = ''; render(); });
+    root.querySelectorAll('[data-qv-rule-edit]').forEach((button) => button.addEventListener('click', () => { state.quoVadisRuleEditor = button.dataset.qvRuleEdit; render(); }));
+    document.getElementById('qv-rule-domain')?.addEventListener('change', (event) => {
+      const rows = L.eventCiblesForForm(event.target.value, ((state.quoVadis || {}).cibles || []), []);
+      document.getElementById('qv-rule-target').innerHTML = sharedOptionsHtml([{ value: '', label: 'Règle générale' }].concat(rows.map((row) => ({ value: row.cibleId, label: row.libelle || row.niveauCode }))), '');
+    });
+    document.getElementById('qv-rule-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const ruleId = event.target.dataset.ruleId;
+      const cibleId = document.getElementById('qv-rule-target').value || null;
+      const target = ((state.quoVadis || {}).cibles || []).find((row) => row.cibleId === cibleId);
+      const dayPolicy = Object.fromEntries(Array.from(root.querySelectorAll('[data-qv-rule-day]')).map((input) => [input.dataset.qvRuleDay, input.value]));
+      const body = { domain: document.getElementById('qv-rule-domain').value, cibleId, cibleCode: target && target.niveauCode || '', dayPolicy, usualStart: document.getElementById('qv-rule-start').value, usualEnd: document.getElementById('qv-rule-end').value, preferredDay: document.getElementById('qv-rule-preferred').value, durationMinutes: document.getElementById('qv-rule-minutes').value || null, validFrom: document.getElementById('qv-rule-from').value || null, validTo: document.getElementById('qv-rule-to').value || null, constraints: document.getElementById('qv-rule-constraints').value, derogationAllowed: document.getElementById('qv-rule-derogation').checked };
+      try {
+        if (ruleId) await client.updateQuoVadisRule(ruleId, body);
+        else await client.createQuoVadisRule(body);
+        invalidateCache(['quoVadis']); await loadQuoVadis();
+        state.quoVadisRuleEditor = ''; state.quoVadisRulesFeedback = 'Règle enregistrée.'; render();
+        window.setTimeout(() => { if (state.quoVadisRulesFeedback === 'Règle enregistrée.') { state.quoVadisRulesFeedback = ''; render(); } }, 3500);
+      } catch (error) { state.quoVadisRulesFeedback = L.friendlyError(error).message; render(); }
+    });
+    root.querySelectorAll('[data-qv-rule-delete]').forEach((button) => button.addEventListener('click', async () => {
+      if (!window.confirm('Archiver cette règle ?')) return;
+      try { await client.deleteQuoVadisRule(button.dataset.qvRuleDelete); invalidateCache(['quoVadis']); await loadQuoVadis(); state.quoVadisRulesFeedback = 'Règle archivée.'; render(); window.setTimeout(() => { if (state.quoVadisRulesFeedback === 'Règle archivée.') { state.quoVadisRulesFeedback = ''; render(); } }, 3500); }
+      catch (error) { state.quoVadisRulesFeedback = L.friendlyError(error).message; render(); }
+    }));
     const bindPilotPager = (prefix, pageKey, sizeKey) => {
       document.getElementById(`${prefix}-prev`)?.addEventListener('click', () => {
         state[pageKey] = Math.max(1, Number(state[pageKey] || 1) - 1);
@@ -12332,7 +12467,7 @@
         form.cursusId = '';
       }
       const canonicalOi = L.normalizeOiCode ? L.normalizeOiCode(form.domain, form.cibleCode) : (form.cibleCode || '');
-      const oiOk = (L.sharedOiOptions ? L.sharedOiOptions(form.domain) : []).some((row) => String(row.value) === String(canonicalOi));
+      const oiOk = (L.eventCiblesForForm ? L.eventCiblesForForm(form.domain, ((state.quoVadis || {}).cibles || []), []) : []).some((row) => String(row.niveauCode) === String(canonicalOi));
       const specOk = (L.sharedSpecOptions ? L.sharedSpecOptions(form.domain) : []).some((row) => String(row.value) === String(form.specialisation || ''));
       const cursusOk = ((L.domainTaxonomyGroups().find((group) => group.label === 'Formation') || {}).codes || []).includes(form.domain)
         && ((state.quoVadis || {}).cursusSelections || []).some((row) => row.retenu && String(row.cursusId) === String(form.cursusId));

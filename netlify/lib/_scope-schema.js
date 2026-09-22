@@ -287,7 +287,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-referentiel-cursus-taxonomie-2';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-referential-management-4';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -298,12 +298,10 @@ async function hasMigration(version){
 }
 
 async function withSchemaLock(callback){
-  await db.query('select pg_advisory_lock($1)', [SCOPE_SCHEMA_LOCK_KEY]);
-  try{
-    return await callback();
-  }finally{
-    await db.query('select pg_advisory_unlock($1)', [SCOPE_SCHEMA_LOCK_KEY]);
-  }
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [SCOPE_SCHEMA_LOCK_KEY]);
+    return callback();
+  });
 }
 
 async function ensureScopeSchema(){
@@ -312,6 +310,11 @@ async function ensureScopeSchema(){
   readyPromise = (async () => {
   await db.ensureCoreSchema();
   if(await hasMigration(LATEST_SCOPE_SCHEMA_VERSION)){
+    ready = true;
+    return true;
+  }
+  if(await hasMigration('scope-referentiel-cursus-taxonomie-2')){
+    await migrateQuoVadisReferentialManagement4();
     ready = true;
     return true;
   }
@@ -432,6 +435,7 @@ async function ensureScopeSchema(){
     `insert into monitoring_f7_schema_migrations(version) values ('scope-event-temporal-configuration-foundation-9') on conflict (version) do nothing`
   );
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-referentiel-cursus-taxonomie-2') on conflict (version) do nothing`);
+  await migrateQuoVadisReferentialManagement4();
   ready = true;
   return true;
   });
@@ -441,6 +445,41 @@ async function ensureScopeSchema(){
   }finally{
     readyPromise = null;
   }
+}
+
+async function migrateQuoVadisReferentialManagement4(){
+  return db.transaction(async (client) => {
+  await client.query('select pg_advisory_xact_lock($1)', [671902274]);
+  const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version = 'scope-quo-vadis-referential-management-4'`);
+  if(done.rows[0]) return;
+  await client.query(`alter table scope_quo_vadis_cursus_definitions
+    add column if not exists domain_code text references scope_domaines(code),
+    add column if not exists cible_id uuid references scope_cibles(cible_id),
+    add column if not exists duration_months integer`);
+  await client.query(`alter table scope_quo_vadis_cursus_steps
+    add column if not exists duration_minutes integer,
+    add column if not exists lieu_id uuid references scope_lieux(lieu_id),
+    add column if not exists cible_id uuid references scope_cibles(cible_id),
+    add column if not exists preferred_month integer,
+    add column if not exists active boolean not null default true`);
+  await client.query(`alter table scope_quo_vadis_planning_rules add column if not exists cible_id uuid references scope_cibles(cible_id)`);
+  for(const [table, name, expression] of [
+    ['scope_quo_vadis_cursus_definitions','scope_qv_cursus_duration_months_chk','duration_months is null or duration_months > 0'],
+    ['scope_quo_vadis_cursus_steps','scope_qv_cursus_step_duration_minutes_chk','duration_minutes is null or duration_minutes > 0'],
+    ['scope_quo_vadis_cursus_steps','scope_qv_cursus_step_preferred_month_chk','preferred_month is null or preferred_month between 1 and 12']
+  ]){
+    const exists = await client.query(`select 1 from pg_constraint where conname = $1`, [name]);
+    if(!exists.rows[0]) await client.query(`alter table ${table} add constraint ${name} check (${expression})`);
+  }
+  for(const table of ['scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps','scope_quo_vadis_planning_rules']){
+    await client.query(`alter table ${table} enable row level security`);
+    for(const role of ['anon','authenticated']){
+      const exists = await client.query(`select 1 from pg_roles where rolname = $1`, [role]);
+      if(exists.rows[0]) await client.query(`revoke all on ${table} from ${role}`);
+    }
+  }
+  await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-referential-management-4') on conflict (version) do nothing`);
+  });
 }
 
 async function migrateAlerts1(){

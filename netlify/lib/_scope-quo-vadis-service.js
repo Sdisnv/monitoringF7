@@ -2,6 +2,7 @@ const db = require('./_postgres');
 const coverage = require('./_scope-quo-vadis-coverage');
 const consolidation = require('./_scope-quo-vadis-consolidation');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
+const { createQvReferentialManagement } = require('./_scope-qv-referential-management');
 
 function planningRuleDomain(row){
   return qvReferentials.normalizeScopeDomainCode(row.domain || (row.metadata && row.metadata.family));
@@ -9,13 +10,19 @@ function planningRuleDomain(row){
 
 function effectivePlanningRules(rows){
   const active = (rows || []).filter((row) => row.active !== false);
-  const canonical = new Set(active.filter((row) => row.code === `PLANIF-${planningRuleDomain(row)}`)
-    .map((row) => planningRuleDomain(row)));
-  const superseded = new Set(['FORMATION-GENERALE', 'DAP-VENDREDI-AUTORISE']);
-  return qvReferentials.sortByScopeDomainOrder(active.filter((row) => {
+  const effective = new Map();
+  const scoped = [];
+  for(const row of active){
     const domain = planningRuleDomain(row);
-    return domain && !(canonical.has(domain) && superseded.has(row.code));
-  }), planningRuleDomain);
+    if(!domain) continue;
+    if(row.definition_version_id){ scoped.push(row); continue; }
+    const key = `${domain}:${row.cible_id || ''}`;
+    const previous = effective.get(key);
+    const canonical = row.code === (row.cible_id ? `PLANIF-${domain}-${String(row.cible_code || '').toUpperCase()}` : `PLANIF-${domain}`);
+    const previousCanonical = previous && previous.code === `PLANIF-${domain}`;
+    if(!previous || (canonical && !previousCanonical) || (canonical === previousCanonical && Number(new Date(row.created_at || 0)) > Number(new Date(previous.created_at || 0)))) effective.set(key, row);
+  }
+  return qvReferentials.sortByScopeDomainOrder([...effective.values(), ...scoped], planningRuleDomain);
 }
 
 function dateOnly(value){
@@ -491,8 +498,14 @@ function mapCursus(row, targetYear = 2027){
     crossesMidnight: row.crosses_midnight === true,
     preferredDay: row.preferred_day,
     preferredDayLabel: WEEKDAY_LABELS[row.preferred_day] || row.preferred_day || '',
+    durationMinutes: row.duration_minutes == null ? null : Number(row.duration_minutes),
+    lieuId: row.lieu_id || null,
+    cibleId: row.cible_id || null,
+    preferredMonth: row.preferred_month == null ? null : Number(row.preferred_month),
+    active: row.active !== false,
     retenu: row.retenu === true,
     stepRetenu: row.step_retenu === true,
+    annualSchedule: (row.annual_metadata || {}).schedule || null,
     justification: row.justification || ''
   };
 }
@@ -518,6 +531,7 @@ function mapCatalogue(row){
 
 function createScopeQuoVadisService({ database = db } = {}){
   const db = database;
+  const management = createQvReferentialManagement(db);
   let reconciliation = null;
   async function getProgrammeByYear(annee){
     const result = await db.query('select * from scope_quo_vadis_programmes where annee = $1', [Number(annee)]);
@@ -564,7 +578,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         from scope_quo_vadis_cursus_steps s
         join scope_quo_vadis_cursus_versions v on v.cursus_version_id = s.cursus_version_id
         join scope_quo_vadis_cursus_definitions d on d.cursus_id = v.cursus_id
-       where d.statut = 'ACTIF'
+       where d.statut = 'ACTIF' and s.active is true
       on conflict (programme_id, step_id) do nothing
     `, [programme.programmeId]);
   }
@@ -944,7 +958,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     await seedCalendar(programme);
     await ensureDefaultCursusSelections(programme);
     await ensureDefaultCursusStepSelections(programme);
-    const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue, sallesTheorie, responsableFonctions] = await Promise.all([
+    const [obligations, proposals, calendar, lieux, cursus, cursusSelections, rules, futureDates, dps, catalogue, sallesTheorie, responsableFonctions, cibles] = await Promise.all([
       db.query(
         `select o.*, count(p.proposal_id)::int as proposal_count
            from scope_quo_vadis_obligations o
@@ -970,16 +984,19 @@ function createScopeQuoVadisService({ database = db } = {}){
       db.query(`
         select d.cursus_id, d.code, d.libelle, v.version_code, s.step_id, s.step_code, s.libelle as step_label, s.ordre,
                s.logical_year, s.usual_start_time, s.usual_end_time, s.crosses_midnight, s.preferred_day,
-               cp.retenu, cp.justification, coalesce(csp.retenu, false) as step_retenu
+               s.duration_minutes, s.lieu_id, s.cible_id, s.preferred_month, s.active,
+               cp.retenu, cp.justification, coalesce(csp.retenu, false) as step_retenu,
+               csp.metadata as annual_metadata
           from scope_quo_vadis_cursus_definitions d
-          left join scope_quo_vadis_cursus_versions v on v.cursus_id = d.cursus_id
+          left join scope_quo_vadis_cursus_versions v on v.cursus_id = d.cursus_id and v.active is true
           left join scope_quo_vadis_cursus_steps s on s.cursus_version_id = v.cursus_version_id
           left join scope_quo_vadis_cursus_programmes cp on cp.cursus_id = d.cursus_id and cp.programme_id = $1
           left join scope_quo_vadis_cursus_step_programmes csp on csp.programme_id = $1 and csp.step_id = s.step_id
          order by d.code, v.version_code, s.ordre
       `, [programme.programmeId]),
       db.query(`
-        select d.cursus_id, d.code, d.libelle, d.statut, cp.retenu, cp.justification
+        select d.cursus_id, d.code, d.libelle, d.description, d.domain_code, d.cible_id, d.duration_months,
+               d.statut, cp.retenu, cp.justification
           from scope_quo_vadis_cursus_definitions d
           left join scope_quo_vadis_cursus_programmes cp on cp.cursus_id = d.cursus_id and cp.programme_id = $1
          order by d.libelle
@@ -994,7 +1011,8 @@ function createScopeQuoVadisService({ database = db } = {}){
           left join scope_salles_theorie p on p.salle_id = s.parent_salle_id
          order by s.libelle
       `).catch(() => ({ rows: [] })),
-      db.query(`select * from scope_responsable_fonctions where actif is true order by sort_order, libelle`).catch(() => ({ rows: [] }))
+      db.query(`select * from scope_responsable_fonctions where actif is true order by sort_order, libelle`).catch(() => ({ rows: [] })),
+      db.query(`select cible_id, domaine_code, niveau_code, libelle, actif from scope_cibles where actif is true order by domaine_code, niveau_code`)
     ]);
     const population = consolidation.activePopulation(obligations.rows.map(mapObligation), proposals.rows.map(mapProposal));
     const result = {
@@ -1005,27 +1023,39 @@ function createScopeQuoVadisService({ database = db } = {}){
       lieux: lieux.rows.map(mapLieu),
       sallesTheorie: (sallesTheorie.rows || []).map(mapSalleTheorie),
       responsableFonctions: (responsableFonctions.rows || []).map(mapResponsableFonction),
+      cibles: (cibles.rows || []).map((row) => ({ cibleId: row.cible_id, domaineCode: row.domaine_code, niveauCode: row.niveau_code, libelle: row.libelle })),
       cursus: cursus.rows.map((row) => mapCursus(row, programme.annee)),
       cursusSelections: cursusSelections.rows.map((row) => ({
         cursusId: row.cursus_id,
         code: row.code,
         libelle: row.libelle,
         statut: row.statut,
+        description: row.description || '',
+        domainCode: row.domain_code || '',
+        cibleId: row.cible_id || null,
+        durationMonths: row.duration_months == null ? null : Number(row.duration_months),
         retenu: row.retenu === true,
         justification: row.justification || ''
       })),
       catalogue,
       rules: effectivePlanningRules(rules.rows).map((row) => ({
         ruleId: row.rule_id,
+        definitionVersionId: row.definition_version_id || null,
         code: row.code,
         versionCode: row.version_code,
         domain: planningRuleDomain(row),
+        cibleId: row.cible_id || null,
+        cibleCode: ((cibles.rows || []).find((item) => String(item.cible_id) === String(row.cible_id)) || {}).niveau_code || '',
         domainLabel: domainLabel(planningRuleDomain(row)),
-        scopeLabel: row.code === `PLANIF-${planningRuleDomain(row)}` ? 'Règle générale' : row.code,
+        scopeLabel: row.cible_id ? (((cibles.rows || []).find((item) => String(item.cible_id) === String(row.cible_id)) || {}).libelle || row.code) : 'Règle générale',
         dayPolicy: row.day_policy || {},
         dayPolicyLabels: Object.fromEntries(Object.entries(row.day_policy || {}).map(([day, value]) => [WEEKDAY_LABELS[day] || day, DAY_CLASS_LABELS[value] || value])),
         timePolicy: row.time_policy || {},
         durationMinutes: row.duration_minutes == null ? null : Number(row.duration_minutes),
+        validFrom: dateOnly(row.valid_from),
+        validTo: dateOnly(row.valid_to),
+        preferredDay: (row.metadata || {}).preferredDay || '',
+        constraints: (row.metadata || {}).constraints || '',
         derogationAllowed: row.derogation_allowed !== false,
         metadata: row.metadata || {}
       })),
@@ -1338,12 +1368,13 @@ function createScopeQuoVadisService({ database = db } = {}){
   }
 
   async function loadRulesByDomain(){
-    const result = await db.query(`select * from scope_quo_vadis_planning_rules where active is true`);
+    const result = await db.query(`select r.*, c.niveau_code as cible_code from scope_quo_vadis_planning_rules r left join scope_cibles c on c.cible_id = r.cible_id where r.active is true`);
     const map = {};
     effectivePlanningRules(result.rows).filter((row) => !row.definition_version_id).forEach((row) => {
       const domain = planningRuleDomain(row);
-      if(map[domain] && row.code !== `PLANIF-${domain}`) return;
-      map[domain] = {
+      const key = row.cible_id && row.cible_code ? `${domain}:${row.cible_code}` : domain;
+      if(map[key] && row.code !== `PLANIF-${domain}`) return;
+      map[key] = {
         dayPolicy: row.day_policy || {},
         timePolicy: row.time_policy || {}
       };
@@ -1804,6 +1835,44 @@ function createScopeQuoVadisService({ database = db } = {}){
     return created;
   }
 
+  async function generateManagedCursusObligations(programme, calendarRows){
+    const result = await db.query(`select s.*, d.code as cursus_code, d.libelle as cursus_label, d.domain_code,
+        d.cible_id as cursus_cible_id, c.niveau_code as cible_code, csp.metadata as annual_metadata
+      from scope_quo_vadis_cursus_steps s
+      join scope_quo_vadis_cursus_versions v on v.cursus_version_id = s.cursus_version_id and v.active is true
+      join scope_quo_vadis_cursus_definitions d on d.cursus_id = v.cursus_id and d.statut = 'ACTIF'
+      join scope_quo_vadis_cursus_programmes cp on cp.cursus_id = d.cursus_id and cp.programme_id = $1 and cp.retenu is true
+      join scope_quo_vadis_cursus_step_programmes csp on csp.step_id = s.step_id and csp.programme_id = $1 and csp.retenu is true
+      left join scope_cibles c on c.cible_id = coalesce(s.cible_id, d.cible_id)
+      where d.code <> 'CI-DPS' and s.active is true
+      order by d.code, s.ordre`, [programme.programmeId]);
+    let created = 0;
+    for(const [index, row] of result.rows.entries()){
+      const schedule = (row.annual_metadata || {}).schedule || null;
+      const obligation = await upsertObligation(programme, {
+        sourceType: 'CURSUS', sourceRef: `${row.cursus_code}:${row.step_code}`, cursusStepId: row.step_id,
+        title: row.libelle, domain: row.domain_code, cibleCodes: row.cible_code ? [row.cible_code] : [],
+        priority: 30 + index, statut: schedule ? 'PROPOSE' : 'A_PLANIFIER', lieuId: schedule && schedule.lieuId || row.lieu_id,
+        metadata: { source: 'QUO-VADIS-REFERENTIAL-MANAGEMENT-4', activityKind: 'CURSUS', cursus: row.cursus_label,
+          cursusCode: row.cursus_code, logicalYear: row.logical_year, selectedCursus: true,
+          defaultDurationMinutes: row.duration_minutes, defaultStartTime: row.usual_start_time,
+          defaultEndTime: row.usual_end_time, defaultLieuId: row.lieu_id, preferredMonth: row.preferred_month,
+          annualSchedule: schedule, businessJustification: `Module ${row.step_code} du cursus ${row.cursus_code} retenu pour ${programme.annee}` }
+      });
+      if(!obligation) continue;
+      created += 1;
+      if(schedule){
+        const endDate = schedule.end <= schedule.start ? addDays(schedule.date, 1) : schedule.date;
+        const classification = classifyDate(schedule.date, row.domain_code, calendarRows);
+        await insertProposal(obligation, { startsAt: `${isoLocalDateTime(schedule.date, schedule.start)}+00:00`,
+          endsAt: `${isoLocalDateTime(endDate, schedule.end)}+00:00`, dayClass: classification.dayClass,
+          lieuId: schedule.lieuId || row.lieu_id, reasons: ['Horaire annuel adapté au module de cursus.', ...classification.reasons],
+          conflictSummary: { requiresDerogation: classification.dayClass === 'INTERDIT' }, status: 'PROPOSE' });
+      }
+    }
+    return created;
+  }
+
   async function generateProgramme(annee = 2027){
     if(typeof db.transaction === 'function'){
       return db.transaction(async (client) => {
@@ -1823,7 +1892,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     const announcedRows = (await db.query(`select * from scope_quo_vadis_future_dates where target_year = $1`, [programme.annee])).rows;
 
     const historical = await generateHistoricalObligations(programme, calendarRows, rulesByDomain, lieuxRows, announcedRows);
-    const created = await generateCursusObligations(programme, calendarRows);
+    const created = await generateCursusObligations(programme, calendarRows) + await generateManagedCursusObligations(programme, calendarRows);
     const catalogueTouched = await generateCatalogueObligations(programme, calendarRows, rulesByDomain);
     const dpsTouched = await generateDpsInstructionObligations(programme, calendarRows, rulesByDomain);
 
@@ -1967,21 +2036,6 @@ function createScopeQuoVadisService({ database = db } = {}){
     return { created: true, futureDate: result.rows[0] };
   }
 
-  async function createCursus(body = {}){
-    const libelle = String(body.libelle || body.nom || '').trim();
-    if(!libelle) return { created: false, error: 'Le nom du cursus est obligatoire.' };
-    const code = normalizeCode(libelle);
-    if(!code) return { created: false, error: 'Le nom du cursus est invalide.' };
-    const result = await db.query(
-      `insert into scope_quo_vadis_cursus_definitions(code, libelle, statut, metadata)
-       values ($1,$2,'ACTIF','{"source":"REFERENTIEL-CURSUS-TAXONOMIE-2"}'::jsonb)
-       on conflict (code) do nothing returning cursus_id, code, libelle`,
-      [code, libelle]
-    );
-    if(!result.rows[0]) return { created: false, error: 'Ce cursus existe déjà.' };
-    return { created: true, cursus: result.rows[0] };
-  }
-
   async function setCursusSelection(annee, body = {}){
     if(typeof db.transaction === 'function'){
       return db.transaction((client) => createScopeQuoVadisService({ database: client }).setCursusSelection(annee, body));
@@ -2059,6 +2113,35 @@ function createScopeQuoVadisService({ database = db } = {}){
         where programme_id = $1 and cursus_step_id = $2 and source_type = 'CURSUS'`, [programme.programmeId, stepId]);
     }
     return { updated: true, step: result.rows[0], quoVadis: await listProgramme(programme.annee) };
+  }
+
+  async function setCursusStepSchedule(annee, body = {}){
+    if(typeof db.transaction === 'function') return db.transaction((client) => createScopeQuoVadisService({ database: client }).setCursusStepSchedule(annee, body));
+    const programme = await ensureProgramme(annee);
+    const stepId = String(body.stepId || '');
+    const date = String(body.date || '');
+    const start = String(body.start || '');
+    const end = String(body.end || '');
+    const minutes = Number(body.durationMinutes);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < dateOnly(programme.periodeDebut) || date > dateOnly(programme.periodeFin)
+      || !/^([01]\d|2[0-3]):[0-5]\d$/.test(start) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(end)
+      || !Number.isInteger(minutes) || minutes < 1 || minutes > 10080) return { updated: false, error: 'Date, horaires ou durée invalides.' };
+    const selected = await db.query(`select s.step_id from scope_quo_vadis_cursus_steps s
+      join scope_quo_vadis_cursus_versions v on v.cursus_version_id = s.cursus_version_id
+      join scope_quo_vadis_cursus_definitions d on d.cursus_id = v.cursus_id
+      join scope_quo_vadis_cursus_programmes cp on cp.cursus_id = d.cursus_id and cp.programme_id = $1 and cp.retenu is true
+      join scope_quo_vadis_cursus_step_programmes csp on csp.step_id = s.step_id and csp.programme_id = $1 and csp.retenu is true
+      where s.step_id = $2 and s.active is true and v.active is true and d.statut = 'ACTIF'`, [programme.programmeId, stepId]);
+    if(!selected.rows[0]) return { updated: false, error: 'Module non retenu pour cette année.' };
+    const lieuId = body.lieuId || null;
+    if(lieuId){
+      const lieu = await db.query(`select 1 from scope_lieux where lieu_id = $1 and actif is true`, [lieuId]);
+      if(!lieu.rows[0]) return { updated: false, error: 'Lieu invalide.' };
+    }
+    await db.query(`update scope_quo_vadis_cursus_step_programmes
+      set metadata = metadata || jsonb_build_object('schedule', $3::jsonb, 'userSelection', true), updated_at = now()
+      where programme_id = $1 and step_id = $2`, [programme.programmeId, stepId, JSON.stringify({ date, start, end, durationMinutes: minutes, lieuId })]);
+    return { updated: true, quoVadis: await listProgramme(programme.annee) };
   }
 
   async function setProgrammeStatus(annee, body = {}){
@@ -2153,7 +2236,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     return { updated: true, quoVadis: await listProgramme(programme.rows[0] && programme.rows[0].annee || 2027) };
   }
 
-  return { listProgramme, generateProgramme, createFutureDate, createCursus, setCursusSelection, setCursusStepSelection, setProgrammeStatus, retainProposal, updateActivityPlanning, listActivityReferences };
+  return { listProgramme, generateProgramme, createFutureDate, ...management, setCursusSelection, setCursusStepSelection, setCursusStepSchedule, setProgrammeStatus, retainProposal, updateActivityPlanning, listActivityReferences };
 }
 
 module.exports = {

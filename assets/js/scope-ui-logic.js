@@ -422,11 +422,12 @@
     domainRows.forEach((cible) => {
       const id = String(cible.cibleId || cible.cible_id || '');
       const key = normalizeOiCode(code, cible.niveauCode || cible.niveau_code) || id;
-      if (!selected.has(id) || seen.has(key) || seen.has(id)) return;
+      if ((cible.actif === false && !selected.has(id)) || seen.has(key) || seen.has(id)) return;
       seen.add(key);
       seen.add(id);
       out.push(cible);
     });
+    if (code === 'AUTO') out.sort((a, b) => String(a.libelle || a.niveauCode || '').localeCompare(String(b.libelle || b.niveauCode || ''), 'fr'));
     return out;
   }
 

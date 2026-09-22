@@ -1851,6 +1851,28 @@ a.qv-mini-day.has-activity:focus-visible span {
   flex-wrap: wrap;
   gap: 8px;
 }
+.qv-reference-form {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--scope-border, #d8dee2);
+}
+.qv-reference-form .scope-form-two { min-width: 0; }
+.qv-reference-form input,
+.qv-reference-form select,
+.qv-reference-form textarea { width: 100%; min-width: 0; }
+.qv-rule-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+.qv-local-feedback:empty { display: none; }
+.qv-local-feedback:not(:empty) {
+  margin: 8px 0;
+  color: #176b54;
+  font-size: 13px;
+}
 .qv-cursus-list {
   display: flex;
   flex-direction: column;
