@@ -57,7 +57,7 @@ assert.ok(!/Jour normal/.test(legend));
 assert.ok(/Vacances scolaires/.test(legend) && /Jour férié/.test(legend));
 assert.ok(/Planifié/.test(legend) && /Validé/.test(legend));
 assert.ok(!/<span class="qv-agenda-state/.test(legend));
-assert.ok((legend.match(/qv-agenda-swatch/g) || []).length === 7);
+assert.ok((legend.match(/qv-agenda-swatch/g) || []).length === 2);
 assert.ok(!/data-qv-row-menu/.test(agenda) && !/>…</.test(agenda));
 assert.ok(/qv-agenda-week/.test(agenda));
 assert.ok(!/<td[^>]*>\s*Semaine/.test(agenda));

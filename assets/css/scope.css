@@ -1628,15 +1628,18 @@ a.qv-mini-day.has-activity:focus-visible span {
 
 /* scope-quo-vadis-toutes-activites-ux-4 */
 /* scope-quo-vadis-toutes-activites-ui-ruleset-1 */
+/* scope-quo-vadis-agenda-ui-ruleset-1 */
 .qv-activites-view {
   min-width: 0;
   max-width: 100%;
 }
-.qv-activites-view .qv-agenda-legend.scope-state-legend li {
+.qv-activites-view .qv-agenda-legend.scope-state-legend li,
+.qv-agenda-view .qv-agenda-legend.scope-state-legend li {
   font-size: inherit;
   font-weight: inherit;
 }
-.qv-activites-view .qv-agenda-legend .scope-state {
+.qv-activites-view .qv-agenda-legend .scope-state,
+.qv-agenda-view .qv-agenda-legend .scope-state {
   min-width: 0;
 }
 .qv-activities-table {

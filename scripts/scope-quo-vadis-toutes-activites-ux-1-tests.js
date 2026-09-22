@@ -118,7 +118,7 @@ assert.ok(/sallesTheorie/.test(service) && /responsableFonctions/.test(service))
 assert.ok(/suggestLieu/.test(service));
 assert.ok(/salleTheorie/.test(service) && /responsableFonctionCode/.test(service));
 
-assert.ok(/qvAgendaStateBadge\(row\)/.test(agenda));
+assert.ok(/qvActivityStateHtml\(row\)/.test(agenda));
 assert.ok(/font-weight:\s*400/.test(stateCss));
 assert.ok(/font-size:\s*inherit/.test(stateCss));
 assert.ok(/min-height:\s*26px/.test(stateCss));

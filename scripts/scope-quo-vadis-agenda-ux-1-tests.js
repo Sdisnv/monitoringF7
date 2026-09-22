@@ -64,7 +64,7 @@ assert.ok(/lieu\.npa/.test(ui) && /lieu\.localite/.test(ui));
 assert.ok(!/Av\. des Sports 2/.test(agenda));
 assert.ok(!/Yverdon-les-Bains/.test(agenda));
 
-assert.ok(/qvAgendaState/.test(agenda));
+assert.ok(/qvActivityStateHtml/.test(agenda));
 assert.ok(/Validé/.test(agenda));
 assert.ok(/Planifié/.test(agenda));
 assert.ok(/Point d’attention/.test(agenda));

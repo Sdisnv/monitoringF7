@@ -33,7 +33,7 @@ assert.ok(/function qvActivityStateHtml/.test(ui));
 assert.ok(/qvActivityStateHtml\(row\)/.test(activites));
 assert.ok(/scopeStateHtml\(current\.tone, current\.label\)/.test(activityStateFn));
 assert.ok(!/qvAgendaStateBadge\(row\)/.test(activites));
-assert.ok(/qvAgendaStateBadge\(row\)/.test(agenda));
+assert.ok(/qvActivityStateHtml\(row\)/.test(agenda));
 assert.ok(/qvAgendaStateBadge/.test(fiche));
 assert.ok(!/qv-agenda-state/.test(activites));
 assert.ok(!/scope-pill/.test(activites));
@@ -111,7 +111,7 @@ assert.ok(!/CREATE TABLE|ALTER TABLE/.test(service));
 assert.ok(!/CREATE TABLE|ALTER TABLE/.test(coverage));
 assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
 
-assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1|scope-quo-vadis-agenda-ui-ruleset-1/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1/.test(css));
 assert.ok(/test:scope-quo-vadis-toutes-activites-ui-ruleset-1/.test(packageJson));
 

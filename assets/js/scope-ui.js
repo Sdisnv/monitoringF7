@@ -10874,7 +10874,7 @@
           <td>${escapeHtml(row.statcomCode || '—')}</td>
           <td>${escapeHtml(qvLieuLabel(row))}</td>
           <td class="qv-agenda-address">${address ? escapeHtml(address) : '—'}</td>
-          <td>${qvAgendaStateBadge(row)}</td>
+          <td>${qvActivityStateHtml(row)}</td>
         </tr>`;
       }).join('')}`;
     }).join('');
@@ -10891,14 +10891,14 @@
       ${qvAgendaFilterBar(qv)}
       <div class="qv-agenda-meta-row">
         <p class="qv-agenda-info"><span class="qv-agenda-info-mark" aria-hidden="true">i</span>Affichage du mois de ${escapeHtml(qvMonthLabel(month, year))} ${escapeHtml(String(year))}. ${escapeHtml(String(eventCount))} ${eventWord} planifié${eventCount > 1 ? 's' : ''} sur ${escapeHtml(String(dayCount))} ${dayWord}.</p>
-        <ul class="qv-agenda-legend">
+        <ul class="qv-agenda-legend scope-state-legend">
           <li><span class="qv-agenda-swatch is-vacation"></span>Vacances scolaires</li>
           <li><span class="qv-agenda-swatch is-holiday"></span>Jour férié</li>
-          <li><span class="qv-agenda-swatch is-planned"></span>Planifié</li>
-          <li><span class="qv-agenda-swatch is-validated"></span>Validé</li>
-          <li><span class="qv-agenda-swatch is-attention"></span>Point d’attention</li>
-          <li><span class="qv-agenda-swatch is-arbitrate"></span>À arbitrer</li>
-          <li><span class="qv-agenda-swatch is-cancelled"></span>Annulé</li>
+          <li>${scopeStateHtml('block', 'À arbitrer')}</li>
+          <li>${scopeStateHtml('attention', 'Point d’attention')}</li>
+          <li>${scopeStateHtml('positive', 'Validé')}</li>
+          <li>${scopeStateHtml('info', 'Planifié')}</li>
+          <li>${scopeStateHtml('inactive', 'Annulé')}</li>
         </ul>
       </div>
       <div class="scope-table-wrap">

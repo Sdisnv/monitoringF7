@@ -23,6 +23,7 @@
     "test:scope-quo-vadis-agenda-ux-1": "node scripts/scope-quo-vadis-agenda-ux-1-tests.js",
     "test:scope-quo-vadis-agenda-ux-2": "node scripts/scope-quo-vadis-agenda-ux-2-tests.js",
     "test:scope-quo-vadis-agenda-ux-3": "node scripts/scope-quo-vadis-agenda-ux-3-tests.js",
+    "test:scope-quo-vadis-agenda-ui-ruleset-1": "node scripts/scope-quo-vadis-agenda-ui-ruleset-1-tests.js",
     "test:scope-quo-vadis-toutes-activites-ux-1": "node scripts/scope-quo-vadis-toutes-activites-ux-1-tests.js",
     "test:scope-quo-vadis-toutes-activites-ux-2": "node scripts/scope-quo-vadis-toutes-activites-ux-2-tests.js",
     "test:scope-quo-vadis-toutes-activites-ux-3": "node scripts/scope-quo-vadis-toutes-activites-ux-3-tests.js",

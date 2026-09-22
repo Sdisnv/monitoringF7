@@ -62,7 +62,7 @@ assert.ok(/Point d’attention/.test(legend));
 assert.ok(/À arbitrer/.test(legend));
 assert.ok(/Annulé/.test(legend));
 assert.ok(!/<span class="qv-agenda-state/.test(legend));
-assert.ok((legend.match(/qv-agenda-swatch/g) || []).length === 7);
+assert.ok((legend.match(/qv-agenda-swatch/g) || []).length === 2);
 
 assert.ok(/Horaire/.test(agenda) && /Domaine/.test(agenda) && />OI</.test(agenda));
 assert.ok(/Public cible/.test(agenda) && /Événement/.test(agenda));
@@ -74,7 +74,7 @@ assert.ok(!/data-qv-row-menu/.test(agenda) && !/>…</.test(agenda));
 assert.ok(/qv-agenda-week/.test(agenda));
 assert.ok(!/<td[^>]*>\s*Semaine/.test(agenda));
 assert.ok(/font-style:\s*normal/.test(css.slice(css.indexOf('.qv-agenda-week'), css.indexOf('.qv-agenda-table .qv-agenda-row'))));
-assert.ok(/qvAgendaStateBadge/.test(agenda));
+assert.ok(/qvActivityStateHtml/.test(agenda));
 assert.ok(/qv-agenda-swatch/.test(ui.slice(ui.indexOf('function qvAgendaStateBadge'), ui.indexOf('function qvAgendaDayTitle'))));
 assert.ok(/status === 'PLANIFIE'/.test(ui) && /validated/.test(ui));
 assert.ok(/PLANIFIE: 'Positionnée'/.test(ui));
