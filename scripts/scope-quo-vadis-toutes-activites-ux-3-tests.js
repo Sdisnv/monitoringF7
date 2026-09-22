@@ -124,7 +124,7 @@ assert.ok(/\.qv-mini-week \{\s*color:\s*#3d4650;\s*font-size:\s*11px;\s*font-wei
 assert.ok(/font-size:\s*11px/.test(css.slice(css.indexOf('.qv-mini-week {'), css.indexOf('.qv-mini-day.has-vacation'))));
 assert.ok(/font-weight:\s*700/.test(css.slice(css.indexOf('.qv-mini-week {'), css.indexOf('.qv-mini-day.has-vacation'))));
 
-assert.ok(/scope-quo-vadis-toutes-activites-ux-[34]|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-2/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[34]|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ux-[34]/.test(css));
 assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));

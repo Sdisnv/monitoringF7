@@ -842,8 +842,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         lieu: displayLieuLabel(lieu, retained.lieuLibre || obligation.lieuLibre),
         salleTheorieId: obligation.salleTheorieId || null,
         salleTheorie: ((qv.sallesTheorie || []).find((row) => String(row.salleId) === String(obligation.salleTheorieId || '')) || {}).libelle || '',
-        responsableFonctionCode: obligation.responsableFonctionCode || '',
-        responsable: ((qv.responsableFonctions || []).find((row) => row.code === obligation.responsableFonctionCode) || {}).libelle || obligation.responsableFonctionCode || '',
+        responsableFonctionCode: obligation.responsableFonctionCode || metadata.responsableFonctionCode || '',
+        responsable: ((qv.responsableFonctions || []).find((row) => row.code === (obligation.responsableFonctionCode || metadata.responsableFonctionCode)) || {}).libelle || obligation.responsableFonctionCode || metadata.responsableFonctionCode || '',
         dayClass: retained.dayClass || '',
         dayClassLabel: retained.dayClass ? (DAY_CLASS_LABELS[retained.dayClass] || retained.dayClass) : '',
         reasons: (retained.reasons || []).concat(knownSameDay ? ['Une date annoncée est déjà enregistrée ce jour.'] : []),
@@ -862,8 +862,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         activityKind: obligation.activityKind || metadata.activityKind || '',
         family: (obligation.classification && obligation.classification.family) || metadata.family || '',
         subcategory: (obligation.classification && obligation.classification.subcategory) || metadata.subcategory || '',
-        statcomCode: obligation.statcomCode || metadata.statcomCode || '',
-        codeCours: metadata.codeCours || metadata.code_cours || '',
+        statcomCode: obligation.statcomCode || metadata.statcomCode || ((metadata.sessions || []).map((row) => row && row.statcomCode).find(Boolean) || ''),
+        codeCours: metadata.codeCours || metadata.code_cours || ((metadata.sessions || []).map((row) => row && (row.codeCours || row.code_cours)).find(Boolean) || ''),
         knownDate: obligation.sourceType === 'FUTURE_DATE',
         knownDateClash: knownSameDay
       };

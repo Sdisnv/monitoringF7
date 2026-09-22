@@ -157,7 +157,7 @@ assert.ok(/font-size:\s*10px/.test(css.slice(css.indexOf('.qv-mini-week-head,'),
 assert.ok(!/Centre SDIS/.test(ui));
 assert.ok(!/Centre SDIS/.test(schema));
 assert.ok(!/Centre SDIS/.test(service));
-assert.ok(/scope-quo-vadis-toutes-activites-ux-[1234]|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-2/.test(html));
+assert.ok(/scope-quo-vadis-toutes-activites-ux-[1234]|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(!/data-qv-row-menu/.test(agenda) && !/>…</.test(agenda));
 

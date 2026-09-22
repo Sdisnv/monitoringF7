@@ -11248,17 +11248,24 @@
 
   function qvArbitrerEnrichGroup(qv, group) {
     const rows = (group && group.rows) || [];
-    const oiCodes = L.qvUniqueTexts(rows.map((row) => qvOiCode(qv, row)));
-    const cibles = L.qvUniqueTexts((group.cibleCodes || []).concat(rows.flatMap((row) => row.cibleCodes || [])));
+    const cibles = (state.referentiels && state.referentiels.cibles) || [];
+    const oiCodes = L.qvSortOiCodes((group.oiCodes || []).concat(rows.flatMap((row) => L.qvCollectOiCodes(row))));
+    const cibleCodes = L.qvUniqueTexts((group.cibleCodes || []).concat(rows.flatMap((row) => row.cibleCodes || [])));
     const first = rows[0] || {};
     const horaire = [qvTime(first.startsAt || (group.proposals && group.proposals[0] && group.proposals[0].startsAt)), qvTime(first.endsAt || (group.proposals && group.proposals[0] && group.proposals[0].endsAt))].filter(Boolean).join(' – ');
+    const responsableCode = group.responsableFonctionCode || first.responsableFonctionCode || '';
+    const responsable = group.responsable
+      || ((qv.responsableFonctions || []).find((row) => String(row.code || '') === String(responsableCode)) || {}).libelle
+      || '';
     return Object.assign({}, group, {
       oiCodes,
-      cibleCodes: cibles,
-      cibleLabel: cibles.join(', '),
+      cibleCodes,
+      cibleLabel: L.qvPublicCibleLabel(group.domain, cibleCodes, cibles),
       horaire,
       codeCours: L.qvCodeCoursValue(group) || L.qvCodeCoursValue(rows.find((row) => L.qvCodeCoursValue(row)) || {}),
-      title: L.qvHumanActivityTitle(group.title || first.title || '')
+      title: L.qvHumanActivityTitle(group.title || first.title || ''),
+      responsable,
+      statcomCode: group.statcomCode || rows.map((row) => row.statcomCode).find(Boolean) || ''
     });
   }
 
@@ -11295,7 +11302,7 @@
     return `<div class="scope-table-wrap qv-arbitrer-table-wrap"><table class="scope-table qv-arbitrer-table">
       <thead><tr>${qvArbitrerSortHeader('title', 'Activité')}${qvArbitrerSortHeader('date', 'Période proposée')}<th>Propositions</th>${qvArbitrerSortHeader('lieu', 'Lieu')}${qvArbitrerSortHeader('etat', 'État')}<th>Action</th></tr></thead>
       <tbody>${qvArbitrerSortedGroups(groups).map((group) => `<tr>
-        <td><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${group.multiSite ? '<span class="qv-arbitrer-sub">Plusieurs sites</span>' : ''}</td>
+        <td><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${L.qvArbitrerKindSubtitle(group) ? `<span class="qv-arbitrer-sub">${escapeHtml(L.qvArbitrerKindSubtitle(group))}</span>` : ''}</td>
         <td>${escapeHtml(group.periodLabel || '—')}</td>
         <td>${escapeHtml(String(group.proposalCount || 0))}</td>
         <td>${escapeHtml(qvNeutralCell(group.lieu || 'Lieu à définir'))}</td>
@@ -11331,7 +11338,7 @@
         </tr></thead>
         <tbody>${groups.map((group) => `<tr>
           <td class="qv-col-code">${escapeHtml(qvNeutralCell(group.codeCours))}</td>
-          <td class="qv-col-title"><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${group.multi ? `<span class="qv-arbitrer-sub">${escapeHtml(String(group.proposalCount || 0))} séances</span>` : (group.multiSite ? '<span class="qv-arbitrer-sub">Plusieurs sites</span>' : '')}</td>
+          <td class="qv-col-title"><strong class="qv-arbitrer-title">${escapeHtml(group.title || '—')}</strong>${group.cursus ? `<span class="qv-arbitrer-sub">${escapeHtml(group.cursus)}</span>` : ''}${L.qvArbitrerKindSubtitle(group) ? `<span class="qv-arbitrer-sub">${escapeHtml(L.qvArbitrerKindSubtitle(group))}</span>` : ''}</td>
           <td class="qv-col-statcom">${escapeHtml(qvNeutralCell(group.statcomCode))}</td>
           <td class="qv-col-date">${escapeHtml(group.periodLabel || '—')}</td>
           <td class="qv-col-time">${escapeHtml(qvNeutralCell(group.horaire))}</td>

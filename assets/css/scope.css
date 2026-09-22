@@ -2008,9 +2008,9 @@ a.qv-mini-day.has-activity:focus-visible span {
 }
 .qv-arbitrer-domain {
   color: var(--scope-ink);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
 }
 .qv-arbitrer-domain-label {
   color: var(--scope-muted);
@@ -2101,10 +2101,13 @@ a.qv-mini-day.has-activity:focus-visible span {
   outline-offset: 3px;
 }
 .qv-arbitrer-domain-block {
-  margin: 0 0 22px;
+  margin: 22px 0 18px;
   padding: 0;
   border: 0;
   background: none;
+}
+.qv-arbitrer-domain-block:first-child {
+  margin-top: 4px;
 }
 .qv-arbitrer-domain-block .qv-arbitrer-group-head {
   margin: 0 0 0;
@@ -7352,6 +7355,21 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-sortable.is-desc .scope-sort-indicator{
   opacity: 1;
   color: var(--scope-red);
+}
+.scope-table-sort-header:not(.is-asc):not(.is-desc) .scope-table-sort-control::after {
+  content: "↕";
+  flex: 0 0 auto;
+  margin-left: 4px;
+  color: #7b8491;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1;
+  opacity: .42;
+  transform: none;
+}
+.scope-table-sort-header.is-asc .scope-table-sort-control::after,
+.scope-table-sort-header.is-desc .scope-table-sort-control::after {
+  content: none;
 }
 .scope-person-table th[data-sort]::after{
   content: "";

@@ -102,7 +102,7 @@ assert.ok(/codeCours: metadata.codeCours/.test(service));
 assert.ok(/codeCours: String\(row.code_cours/.test(coverage));
 assert.ok(/qvCodeCoursValue/.test(logicSrc));
 assert.strictEqual(L.qvCodeCoursValue({ codeCours: '010JB1.445' }), '010JB1.445');
-assert.strictEqual(L.qvCodeCoursValue({ codeCours: '010FOBAFOBA.7' }), '');
+assert.strictEqual(L.qvCodeCoursValue({ codeCours: '010FOBAFOBA.7' }), '010FOBAFOBA.7');
 assert.strictEqual(L.qvCodeCoursValue({ codeCours: '' }), '');
 assert.ok(L.qvCodeCoursValue({ codeCours: '010JB1.445' }).length <= 10);
 
@@ -177,7 +177,7 @@ assert.strictEqual(sorted.map((row) => row.statcomCode).join(','), '010FOBA,012B
 assert.ok(/scope-text-action/.test(arbitrer));
 assert.ok(/box-shadow:\s*none/.test(uxCss));
 assert.ok(/overflow-x:\s*auto/.test(uxCss));
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-2/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-ux-2/.test(packageJson));
 assert.ok(!/netlify deploy/.test(arbitrer));
 

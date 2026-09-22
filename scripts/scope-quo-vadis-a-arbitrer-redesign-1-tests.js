@@ -198,7 +198,7 @@ assert.ok(/box-shadow:\s*none/.test(css.slice(css.indexOf('.qv-arbitrer-view .qv
 assert.ok(!/\.scope-app\s*\{/.test(redesignCss));
 assert.ok(/overflow-x:\s*auto/.test(redesignCss));
 
-assert.ok(/scope-quo-vadis-a-arbitrer-ux-2/.test(html));
+assert.ok(/scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
 assert.ok(/test:scope-quo-vadis-a-arbitrer-redesign-1/.test(packageJson));
 
 console.log('scope-quo-vadis-a-arbitrer-redesign-1-tests: ok');

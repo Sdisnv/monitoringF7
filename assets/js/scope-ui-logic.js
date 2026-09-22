@@ -906,12 +906,84 @@
 
   function qvCodeCoursValue(row) {
     const raw = String((row && (row.codeCours || row.code_cours || row.codeEvenement)) || '').trim();
-    if (!raw || raw.length > 10) return '';
     return raw;
   }
 
   function qvHasXySessionNotation(value) {
     return /\d+\.\d+/.test(String(value || ''));
+  }
+
+  function qvSeriesIdentity(row) {
+    return String((row && (row.seriesKey || row.groupKey || row.historicalActivityKey)) || '');
+  }
+
+  function qvIsGroupedFormation(row) {
+    return /FORMATION_GROUPEE|formation group[ée]e/i.test(`${(row && row.title) || ''} ${qvSeriesIdentity(row)}`);
+  }
+
+  function qvIsRecurringExerciseIdentity(row) {
+    if (/RECUR:/.test(qvSeriesIdentity(row))) return true;
+    const title = qvHumanActivityTitle(qvStripSessionSuffix((row && row.title) || ''));
+    return /^Exercice\s+[A-Z0-9]{2,8}$/i.test(title);
+  }
+
+  function qvTitleXySuffix(title) {
+    const match = String(title || '').trim().match(/(\d+)\.(\d+)\s*$/);
+    return match ? `${match[1]}.${match[2]}` : '';
+  }
+
+  function qvCollectOiCodes(row) {
+    const codes = [];
+    const push = (value) => {
+      const raw = String(value || '').trim().toUpperCase();
+      const code = extractSiteCode(raw) || (SCOPE_SITE_ORDER.indexOf(raw) >= 0 ? raw : '');
+      if (code && codes.indexOf(code) < 0) codes.push(code);
+    };
+    ((row && row.cibleCodes) || []).forEach(push);
+    ((row && row.oiCodes) || []).forEach(push);
+    push(row && (row.oiCode || row.oi || row.siteCode));
+    qvSeriesIdentity(row).split('|').forEach(push);
+    push(qvActivitySiteCode(row));
+    return codes;
+  }
+
+  function qvSortOiCodes(codes) {
+    return Array.from(new Set((codes || []).filter(Boolean))).sort(compareScopeSites);
+  }
+
+  function qvCibleCodesOf(row) {
+    return Array.from(new Set(((row && row.cibleCodes) || []).map((code) => String(code || '').trim()).filter(Boolean)));
+  }
+
+  function qvPublicCibleLabel(domain, codes, cibles) {
+    return (codes || []).map((code) => {
+      const wanted = String(code || '').trim();
+      if (!wanted) return '';
+      const row = (cibles || []).find((cible) => {
+        const niveau = String(cible.niveauCode || cible.niveau_code || '').trim();
+        const domaine = String(cible.domaineCode || cible.domaine_code || '').toUpperCase();
+        if (niveau !== wanted && String(niveau).toUpperCase() !== wanted.toUpperCase()) return false;
+        if (!domain) return true;
+        return !domaine || domaine === String(domain || '').toUpperCase();
+      });
+      return row ? cibleMetierLabel(row) : (cibleMetierLabel(domain, wanted) || wanted);
+    }).filter(Boolean).join(', ');
+  }
+
+  function qvSessionLabelValues(row) {
+    return []
+      .concat(((row && row.sessions) || []).map((session) => session && (session.sessionLabel || session.label)))
+      .concat(((row && row.proposals) || []).map((proposal) => proposal && (proposal.sessionLabel || ((proposal.conflictSummary) || {}).sessionLabel)));
+  }
+
+  function qvIsStructuredMultiSession(row) {
+    if (!row) return false;
+    if (String(row.sourceType || '').toUpperCase() === 'CURSUS') return true;
+    if (qvIsGroupedFormation(row)) return true;
+    if (qvIsRecurringExerciseIdentity(row)) return false;
+    if (qvHasXySessionNotation(row.title)) return true;
+    if ((qvSessionLabelValues(row) || []).some(qvHasXySessionNotation)) return true;
+    return false;
   }
 
   function qvCollectSessionNumbers(row) {
@@ -928,11 +1000,7 @@
   }
 
   function qvIsMultiSessionRow(row) {
-    if (!row) return false;
-    if (qvHasXySessionNotation(row.title)) return true;
-    if (((row.sessions) || []).length > 1) return true;
-    if (qvCollectSessionNumbers(row).size > 1) return true;
-    return false;
+    return qvIsStructuredMultiSession(row);
   }
 
   function qvSiteAgnosticKey(value) {
@@ -997,25 +1065,37 @@
       const primary = rows[0] || {};
       const proposals = group.proposals.slice().sort(compareQvProposals);
       const titles = rows.map((row) => String(row.title || '').trim());
-      const strippedTitles = titles.map((title) => qvStripSessionSuffix(title));
-      const suffixSplit = titles.some((title, index) => title && title !== strippedTitles[index]);
+      const xySuffixes = Array.from(new Set(titles.map(qvTitleXySuffix).filter(Boolean)));
+      const suffixSplit = xySuffixes.length > 1;
       const sessionNums = new Set();
       rows.forEach((row) => qvCollectSessionNumbers(row).forEach((n) => sessionNums.add(n)));
       proposals.forEach((proposal) => {
         const n = qvProposalSessionNumber(proposal, 0);
         if (n > 0) sessionNums.add(n);
       });
-      const sites = Array.from(new Set(rows.flatMap((row) => (row.cibleCodes || []).map((code) => String(code || '').trim()).filter(Boolean))));
+      const sites = qvUniqueTexts(rows.flatMap(qvCibleCodesOf));
+      const oiCodes = qvSortOiCodes(rows.flatMap(qvCollectOiCodes));
       const lieux = Array.from(new Set(rows.map((row) => row.lieu).concat(proposals.map((row) => row.lieu)).filter(Boolean)));
-      const engineSeries = rows.some((row) => Number(row.sessionCount || 0) > 1 && Boolean(row.numberingPattern));
-      const multi = rows.some(qvIsMultiSessionRow) || suffixSplit || sessionNums.size > 1 || (engineSeries && sites.length <= 1 && lieux.length <= 1);
-      const multiSite = !multi && (sites.length > 1 || lieux.length > 1);
+      const groupedFormation = rows.some(qvIsGroupedFormation);
+      const cursus = rows.some((row) => String(row.sourceType || '').toUpperCase() === 'CURSUS' || String(row.cursus || '').trim());
+      const xyTitle = suffixSplit || rows.some((row) => qvHasXySessionNotation(row.title));
+      const xyLabels = rows.some((row) => (qvSessionLabelValues(row) || []).some(qvHasXySessionNotation));
+      const siteReplica = oiCodes.length > 1 || (lieux.length > 1 && !xyTitle && !groupedFormation);
+      const engineSeries = !rows.some(qvIsRecurringExerciseIdentity) && rows.some((row) => (
+        qvHasXySessionNotation(row.numberingPattern) && (qvCollectSessionNumbers(row).size > 1 || Number(row.sessionCount || 0) > 1 || ((row.sessions) || []).length > 1)
+      ));
+      const multi = Boolean(cursus || groupedFormation || suffixSplit || (xyTitle && xySuffixes.length > 1) || (!siteReplica && (xyLabels || engineSeries || rows.some(qvIsStructuredMultiSession))));
+      const multiSite = siteReplica && !multi;
+      const sessionCount = multi
+        ? Math.max(sessionNums.size, xySuffixes.length, Number(primary.sessionCount) || 0, ((primary.sessions) || []).length, 1)
+        : 1;
       const dates = multi
         ? proposals.map((row) => row.startsAt).concat(rows.map((row) => row.startsAt))
         : [primary.startsAt || (proposals[0] && proposals[0].startsAt)];
       const firstStartsAt = (dates.map(qvDateKey).filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value)).sort()[0]) || primary.startsAt || '';
       const responsables = Array.from(new Set(rows.map((row) => String(row.responsable || '').trim()).filter(Boolean)));
       const codeCours = qvCodeCoursValue(rows.find((row) => qvCodeCoursValue(row)) || primary);
+      const statcomCode = rows.map((row) => row.statcomCode || row.statComCode).find(Boolean) || primary.statcomCode || '';
       return {
         key: group.key,
         domain: group.domain,
@@ -1026,19 +1106,20 @@
         type: multi ? 'Multi-session' : 'Activité unique',
         multi,
         multiSite,
-        proposalCount: multi
-          ? Math.max(proposals.length, rows.length, Number(primary.sessionCount) || 0, ((primary.sessions) || []).length)
-          : Math.max(proposals.length, rows.length),
+        sessionCount,
+        proposalCount: Math.max(proposals.length, rows.length),
         periodLabel: qvArbitragePeriodLabel(dates, multi),
         lieu: lieux.join(' · ') || '',
         cibleCodes: sites,
+        oiCodes,
         responsable: responsables[0] || '',
+        responsableFonctionCode: rows.map((row) => row.responsableFonctionCode).find(Boolean) || '',
         codeCours,
         attention: rows.some((row) => row.attention),
         validated: rows.length > 0 && rows.every((row) => ['PLANIFIE', 'RETENU'].includes(String(row.status || '').toUpperCase())),
         needsArbitration: rows.some(qvNeedsArbitrationRow),
         status: primary.status,
-        statcomCode: rows.map((row) => row.statcomCode).find(Boolean) || primary.statcomCode || '',
+        statcomCode,
         activityId: primary.activityId || primary.obligationId || '',
         rows,
         proposals,
@@ -1082,6 +1163,15 @@
     };
   }
 
+  function qvArbitrerKindSubtitle(group) {
+    if (group && group.multi) {
+      const count = Math.max(2, Number(group.sessionCount || 0));
+      return `${count} séances`;
+    }
+    if (group && group.multiSite) return 'Plusieurs sites';
+    return '';
+  }
+
   function qvArbitrageState(group) {
     if (group && group.validated) return { key: 'validated', tone: 'positive', label: 'Validé' };
     if (group && group.attention) return { key: 'attention', tone: 'attention', label: 'Point d’attention' };
@@ -1105,8 +1195,8 @@
         const row = group && ((group.rows && group.rows[0]) || (group.proposals && group.proposals[0]) || {});
         return (row && row.startsAt) || '';
       } },
-      { key: 'oi', type: 'text', value: (group) => ((group && group.oiCodes) || []).join(', ') },
-      { key: 'cible', type: 'text', value: (group) => ((group && group.cibleCodes) || []).join(', ') },
+      { key: 'oi', type: 'text', value: (group) => qvSortOiCodes((group && group.oiCodes) || []).join(', ') },
+      { key: 'cible', type: 'text', value: (group) => (group && (group.cibleLabel || ((group.cibleCodes) || []).join(', '))) || '' },
       { key: 'responsable', type: 'text', value: (group) => (group && group.responsable) || '' },
       { key: 'lieu', type: 'text', value: (group) => (group && group.lieu) || '' },
       { key: 'etat', type: 'text', value: (group) => qvArbitrageState(group).label }
@@ -2891,7 +2981,12 @@
     qvStripSessionSuffix,
     qvHumanActivityTitle,
     qvCodeCoursValue,
+    qvCollectOiCodes,
+    qvSortOiCodes,
+    qvPublicCibleLabel,
+    qvIsStructuredMultiSession,
     qvIsMultiSessionRow,
+    qvArbitrerKindSubtitle,
     qvPrincipalActivityKey,
     compareQvProposals,
     qvArbitragePeriodLabel,
