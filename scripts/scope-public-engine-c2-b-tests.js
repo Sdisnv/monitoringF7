@@ -311,7 +311,7 @@ for(const fragment of [
   assert.ok(migration.includes(fragment), `standalone lifecycle missing: ${fragment}`);
   assert.ok(schema.includes(fragment), `runtime lifecycle missing: ${fragment}`);
 }
-assert.ok(schema.includes("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b'"));
+assert.ok(schema.includes("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-person-qualifications-c3-b'"));
 assert.ok(!/references scope_(evenements|attendus|exercices|cibles)/i.test(migration));
 assert.ok(!/\b(update|delete from|alter table)\s+scope_(evenements|attendus|participations|cibles)\b/i.test(migration));
 assert.ok(!/insert into scope_(evenements|attendus|participations|cibles)\b/i.test(migration));

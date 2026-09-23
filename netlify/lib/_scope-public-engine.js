@@ -47,7 +47,10 @@ function validationError(path, message){
   return error;
 }
 
-function normalizePublicRule(expression){
+function normalizePublicRule(expression, options = {}){
+  const competenceCatalog = options.competenceCodes
+    ? new Set(normalizedCodes(options.competenceCodes))
+    : COMPETENCE_CODES;
   let nodeCount = 0;
   const bytes = Buffer.byteLength(JSON.stringify(expression === undefined ? null : expression));
   if(bytes > LIMITS.maxJsonBytes) throw validationError('$', `expression exceeds ${LIMITS.maxJsonBytes} bytes`);
@@ -76,7 +79,7 @@ function normalizePublicRule(expression){
       PERSON_ELIGIBLE_AT: { fields: [], arrays: [] },
       HAS_DOMAIN_ASSIGNMENT: { fields: ['domainCodes'], arrays: [['domainCodes', DOMAIN_CODES]] },
       HAS_OI: { fields: ['domainCode', 'oiCodes'], arrays: [['oiCodes', OI_CODES]], scalar: ['domainCode', DOMAIN_CODES] },
-      HAS_COMPETENCE: { fields: ['competenceCodes'], arrays: [['competenceCodes', COMPETENCE_CODES]] },
+      HAS_COMPETENCE: { fields: ['competenceCodes'], arrays: [['competenceCodes', competenceCatalog]] },
       HAS_FOBA_LEVEL: { fields: ['levelCodes'], arrays: [['levelCodes', FOBA_CODES]] },
       HAS_JSP_ROLE: { fields: ['roles', 'oiCodes'], arrays: [['roles', JSP_ROLES], ['oiCodes', OI_CODES]] }
     };
@@ -111,17 +114,17 @@ function normalizePublicRule(expression){
   return visit(expression, '$', 1);
 }
 
-function validatePublicRule(expression){
+function validatePublicRule(expression, options){
   try{
-    const normalized = normalizePublicRule(expression);
+    const normalized = normalizePublicRule(expression, options);
     return { valid: true, normalized, errors: [] };
   }catch(error){
     return { valid: false, normalized: null, errors: [{ code: error.code || 'SCOPE_PUBLIC_RULE_INVALID', message: error.message }] };
   }
 }
 
-function fingerprintPublicRule(expression){
-  return sha256(stableStringify(normalizePublicRule(expression)));
+function fingerprintPublicRule(expression, options){
+  return sha256(stableStringify(normalizePublicRule(expression, options)));
 }
 
 function dateOnly(value, field){
@@ -266,8 +269,9 @@ function evaluatePublicRule(input){
   const args = input || {};
   const date = dateOnly(args.evaluationDate, 'evaluationDate');
   const version = args.ruleVersion || {};
-  const expression = normalizePublicRule(version.expression);
-  const ruleFingerprint = fingerprintPublicRule(expression);
+  const validationOptions = args.competenceCodes ? { competenceCodes: args.competenceCodes } : undefined;
+  const expression = normalizePublicRule(version.expression, validationOptions);
+  const ruleFingerprint = fingerprintPublicRule(expression, validationOptions);
   if(version.fingerprint && version.fingerprint !== ruleFingerprint) throw validationError('ruleVersion.fingerprint', 'does not match normalized expression');
   const resolutionStatus = upper(version.resolutionStatus || 'COMPLETE');
   if(!RESOLUTION_STATES.includes(resolutionStatus)) throw validationError('ruleVersion.resolutionStatus', 'unknown state');
@@ -330,7 +334,8 @@ function explainPersonExclusion(input){
   if(!person) return { personId: id, found: false, matched: false, complete: true, warning: 'PERSON_NOT_FOUND' };
   if(evaluated.tracesByPerson[id]) return { ...evaluated.tracesByPerson[id], found: true, complete: true };
   const date = dateOnly(args.evaluationDate, 'evaluationDate');
-  const expression = normalizePublicRule((args.ruleVersion || {}).expression);
+  const validationOptions = args.competenceCodes ? { competenceCodes: args.competenceCodes } : undefined;
+  const expression = normalizePublicRule((args.ruleVersion || {}).expression, validationOptions);
   const trace = evaluateNode(expression, person, {
     date, periods: args.periods || [], assignments: args.assignments || [], competencies: args.competencies || [],
     fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || []

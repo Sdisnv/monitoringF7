@@ -4,6 +4,8 @@ const qvLieux = require('./_scope-quo-vadis-lieux');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 const canonicalFoundations = require('./_scope-canonical-foundations');
 const publicFoundations = require('./_scope-public-foundations');
+const personQualifications = require('./_scope-person-qualifications');
+const personQualificationDdl = require('./_scope-person-qualifications-ddl');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -289,7 +291,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-person-qualifications-c3-b';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -318,6 +320,7 @@ async function ensureScopeSchema(){
   if(await hasMigration('scope-quo-vadis-referential-management-4')){
     await migrateCanonicalFoundationsC1();
     await migratePublicEngineMirrorC2B();
+    await migratePersonQualificationsC3B();
     ready = true;
     return true;
   }
@@ -325,6 +328,7 @@ async function ensureScopeSchema(){
     await migrateQuoVadisReferentialManagement4();
     await migrateCanonicalFoundationsC1();
     await migratePublicEngineMirrorC2B();
+    await migratePersonQualificationsC3B();
     ready = true;
     return true;
   }
@@ -448,6 +452,7 @@ async function ensureScopeSchema(){
   await migrateQuoVadisReferentialManagement4();
   await migrateCanonicalFoundationsC1();
   await migratePublicEngineMirrorC2B();
+  await migratePersonQualificationsC3B();
   ready = true;
   return true;
   });
@@ -764,6 +769,95 @@ async function migratePublicEngineMirrorC2B(){
       }
     }
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-public-engine-mirror-c2-b') on conflict (version) do nothing`);
+  });
+}
+
+async function migratePersonQualificationsC3B(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902278]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-person-qualifications-c3-b'`);
+    if(done.rows[0]) return;
+    await client.query(personQualificationDdl.NORMALIZE_VPC_SQL);
+    const metadata = JSON.stringify({ source: 'PERSON_QUALIFICATIONS_C3_B' });
+    for(const row of personQualifications.QUALIFICATION_DEFINITIONS_C3){
+      await client.query(`insert into scope_competence_definitions(code,libelle,type,domaine_code,sort_order,metadata)
+        values ($1,$2,$3,$4,$5,$6::jsonb) on conflict (code) do nothing`,
+      [row.code,row.label,row.type,row.domainCode,row.sortOrder,metadata]);
+    }
+    const definitions = (await client.query(`select competence_id,code from scope_competence_definitions`)).rows || [];
+    const idByCode = new Map(definitions.map((row) => [row.code,row.competence_id]));
+    const aliases = [
+      ...personQualifications.QUALIFICATION_ALIASES_C3,
+      ...canonicalFoundations.COMPETENCE_ALIASES.map((row) => ({
+        domainCode: row.domainCode,alias: row.alias,
+        qualificationCode: row.competenceCode === 'OP_VPC' ? 'VPC' : row.competenceCode,
+        legacyContext: row.legacyContext || null
+      }))
+    ];
+    for(const row of aliases){
+      const competenceId = idByCode.get(row.qualificationCode);
+      if(!competenceId) throw new Error(`C3-B missing qualification ${row.qualificationCode}`);
+      await client.query(`insert into scope_competence_aliases(domaine_code,alias,competence_id,legacy_context,metadata)
+        values ($1,$2,$3,$4,$5::jsonb) on conflict (domaine_code,alias) do update
+        set competence_id=excluded.competence_id,legacy_context=excluded.legacy_context,
+            metadata=scope_competence_aliases.metadata || excluded.metadata`,
+      [row.domainCode,row.alias,competenceId,row.legacyContext || null,metadata]);
+    }
+    for(const sql of personQualificationDdl.DDL) await client.query(sql);
+    await client.query(personQualificationDdl.GUARD_SQL);
+    await client.query(`drop trigger if exists scope_person_qualifications_guard_trg on scope_person_qualifications`);
+    await client.query(`create trigger scope_person_qualifications_guard_trg before insert or update or delete on scope_person_qualifications
+      for each row execute function scope_person_qualifications_guard()`);
+    await client.query(personQualificationDdl.SUPERSESSION_SQL);
+    await client.query(personQualificationDdl.EVIDENCE_GUARD_SQL);
+    await client.query(`drop trigger if exists scope_person_qualification_evidence_guard_trg on scope_person_qualification_evidence`);
+    await client.query(`create trigger scope_person_qualification_evidence_guard_trg before update or delete on scope_person_qualification_evidence
+      for each row execute function scope_person_qualification_evidence_guard()`);
+    await client.query(`insert into scope_competence_implications(competence_id,implied_competence_id,metadata)
+      values ($1,$2,$3::jsonb) on conflict (competence_id,implied_competence_id) do nothing`,
+    [idByCode.get('PABC'),idByCode.get('PAPR'),JSON.stringify({ source: 'PERSON_QUALIFICATIONS_C3_B',rule: 'PABC_IMPLIES_PAPR',synthesize: false })]);
+    for(const role of personQualifications.EVENT_ROLE_DEFINITIONS){
+      await client.query(`insert into scope_event_role_definitions(code,label,domain_code,metadata)
+        values ($1,$2,$3,$4::jsonb) on conflict (code) do nothing`, [role.code,role.label,role.domainCode,metadata]);
+      const inserted = await client.query(`select event_role_definition_id from scope_event_role_definitions where code=$1`, [role.code]);
+      for(const alias of role.aliases || []){
+        await client.query(`insert into scope_event_role_aliases(alias,event_role_definition_id,metadata)
+          values ($1,$2,$3::jsonb) on conflict (alias) do nothing`,
+        [alias,inserted.rows[0].event_role_definition_id,metadata]);
+      }
+    }
+    await client.query(`update scope_public_rule_versions version set status='RETIRED',updated_at=now()
+      from scope_public_definitions definition where version.public_definition_id=definition.public_definition_id
+      and definition.code='FOSPEC-OP-VPC' and version.status='ACTIVE'`);
+    await client.query(`update scope_public_definitions set status='ARCHIVED',
+      metadata=metadata || '{"canonicalReplacement":"FOSPEC-VPC"}'::jsonb,updated_at=now() where code='FOSPEC-OP-VPC'`);
+    for(const row of personQualifications.PUBLIC_DEFINITIONS_C3){
+      await client.query(`insert into scope_public_definitions(code,label,description,status,owner_type,owner_code,domain_hints,metadata)
+        values ($1,$2,$3,'ACTIVE','DOMAIN',$4,$5,$6::jsonb) on conflict (code) do nothing`,
+      [row.code,row.label,row.description,row.ownerCode,row.domainHints,metadata]);
+      const inserted = await client.query(`select public_definition_id from scope_public_definitions where code=$1`, [row.code]);
+      await client.query(`insert into scope_public_rule_versions(public_definition_id,version_number,version_code,status,schema_version,expression,fingerprint,approved_at,approved_by,metadata)
+        values ($1,1,$2,'ACTIVE',1,$3::jsonb,$4,now(),'C3-B-SEED',$5::jsonb)
+        on conflict (public_definition_id,version_number) do nothing`,
+      [inserted.rows[0].public_definition_id,row.version.versionCode,JSON.stringify(row.version.expression),row.version.fingerprint,metadata]);
+    }
+    for(const row of personQualifications.UNRESOLVED_PUBLICS_C3){
+      await client.query(`insert into scope_public_definitions(code,label,description,status,owner_type,owner_code,domain_hints,metadata)
+        values ($1,$2,$3,'INACTIVE','DOMAIN',$4,$5,$6::jsonb) on conflict (code) do nothing`,
+      [row.code,row.label,row.description,row.ownerCode,[row.ownerCode],
+        JSON.stringify({ source: 'PERSON_QUALIFICATIONS_C3_B',resolutionStatus: row.resolutionStatus,reason: row.reason })]);
+    }
+    for(const table of [
+      'scope_competence_implications','scope_person_qualifications','scope_person_qualification_evidence',
+      'scope_event_role_definitions','scope_event_role_aliases','scope_event_person_roles'
+    ]){
+      await client.query(`alter table ${table} enable row level security`);
+      for(const role of ['anon','authenticated']){
+        const exists = await client.query(`select 1 from pg_roles where rolname=$1`,[role]);
+        if(exists.rows[0]) await client.query(`revoke all on ${table} from ${role}`);
+      }
+    }
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-person-qualifications-c3-b') on conflict (version) do nothing`);
   });
 }
 

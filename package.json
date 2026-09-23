@@ -9,6 +9,7 @@
     "scope:preflight": "node scripts/assert-scope-netlify-target.js",
     "test:scope-canonical-foundations-c1": "node scripts/scope-canonical-foundations-c1-tests.js",
     "test:scope-public-engine-c2-b": "node scripts/scope-public-engine-c2-b-tests.js && node scripts/scope-public-engine-c2-b-real-parity-tests.js",
+    "test:scope-person-qualifications-c3-b": "node scripts/scope-person-qualifications-c3-b-tests.js && node scripts/scope-person-qualifications-c3-b-real-parity-tests.js",
     "test:scope-quo-vadis-core-1": "node scripts/scope-quo-vadis-core-1-tests.js",
     "test:scope-quo-vadis-pilotage-2": "node scripts/scope-quo-vadis-pilotage-2-tests.js",
     "test:scope-quo-vadis-professional-3": "node scripts/scope-quo-vadis-professional-3-tests.js",
