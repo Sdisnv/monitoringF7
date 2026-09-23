@@ -236,7 +236,7 @@ for(const fragment of [
   assert.ok(runtime.includes(fragment), `runtime missing ${fragment}`);
 }
 assert.ok(migration.includes('synthesize":false') && schema.includes('synthesize: false'));
-assert.ok(schema.includes("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-person-qualifications-c3-b'"));
+assert.ok(schema.includes("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-annual-catalog-c4-b'"));
 assert.ok(!/\b(insert into|update|delete from)\s+scope_(attendus|participations|evenements)\b/i.test(migration));
 assert.ok(!/\b(alter table|delete from|update)\s+scope_(attendus|participations|evenements)\b/i.test(migration));
 assert.ok(!migration.includes('insert into scope_person_qualifications') && !migration.includes('insert into scope_person_qualification_evidence'),
