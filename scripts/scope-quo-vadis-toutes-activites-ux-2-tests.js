@@ -120,7 +120,7 @@ assert.ok(/font-size:\s*10px/.test(css.slice(css.indexOf('.qv-mini-week-head,'),
 
 assert.ok(/scope-quo-vadis-toutes-activites-ux-[234]|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ux-[234]/.test(css));
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b'/.test(schema));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 assert.ok(/--scope-blue/.test(css.slice(css.indexOf('.qv-period-seg-btn.is-active'), css.indexOf('.qv-period-seg-btn:focus-visible'))));
 assert.ok(!/#de000a|#c41230|var\(--scope-red\)/.test(css.slice(css.indexOf('.qv-period-seg {'), css.indexOf('.qv-activities-table .qv-col-date'))));

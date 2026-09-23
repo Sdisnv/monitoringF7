@@ -3,6 +3,7 @@ const db = require('./_postgres');
 const qvLieux = require('./_scope-quo-vadis-lieux');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 const canonicalFoundations = require('./_scope-canonical-foundations');
+const publicFoundations = require('./_scope-public-foundations');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -288,7 +289,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -316,12 +317,14 @@ async function ensureScopeSchema(){
   }
   if(await hasMigration('scope-quo-vadis-referential-management-4')){
     await migrateCanonicalFoundationsC1();
+    await migratePublicEngineMirrorC2B();
     ready = true;
     return true;
   }
   if(await hasMigration('scope-referentiel-cursus-taxonomie-2')){
     await migrateQuoVadisReferentialManagement4();
     await migrateCanonicalFoundationsC1();
+    await migratePublicEngineMirrorC2B();
     ready = true;
     return true;
   }
@@ -444,6 +447,7 @@ async function ensureScopeSchema(){
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-referentiel-cursus-taxonomie-2') on conflict (version) do nothing`);
   await migrateQuoVadisReferentialManagement4();
   await migrateCanonicalFoundationsC1();
+  await migratePublicEngineMirrorC2B();
   ready = true;
   return true;
   });
@@ -665,6 +669,101 @@ async function migrateCanonicalFoundationsC1(){
       }
     }
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-canonical-foundations-c1') on conflict (version) do nothing`);
+  });
+}
+
+async function migratePublicEngineMirrorC2B(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902276]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version = 'scope-public-engine-mirror-c2-b'`);
+    if(done.rows[0]) return;
+    await client.query(`create table if not exists scope_public_definitions (
+      public_definition_id uuid primary key default gen_random_uuid(), code text not null unique,
+      label text not null, description text not null, status text not null default 'INACTIVE',
+      owner_type text, owner_code text, domain_hints text[] not null default '{}',
+      valid_from date, valid_to date, metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+      constraint scope_public_definitions_status_chk check (status in ('ACTIVE','INACTIVE','ARCHIVED')),
+      constraint scope_public_definitions_code_chk check (code ~ '^[A-Z0-9][A-Z0-9_-]*$'),
+      constraint scope_public_definitions_dates_chk check (valid_to is null or valid_from is null or valid_from <= valid_to))`);
+    await client.query(`create table if not exists scope_public_rule_versions (
+      public_rule_version_id uuid primary key default gen_random_uuid(),
+      public_definition_id uuid not null references scope_public_definitions(public_definition_id) on delete restrict,
+      version_number integer not null, version_code text not null, status text not null default 'DRAFT',
+      valid_from date, valid_to date, schema_version integer not null default 1,
+      expression jsonb not null, fingerprint text not null, approved_at timestamptz, approved_by text,
+      metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+      constraint scope_public_rule_versions_number_chk check (version_number > 0),
+      constraint scope_public_rule_versions_status_chk check (status in ('DRAFT','ACTIVE','RETIRED')),
+      constraint scope_public_rule_versions_dates_chk check (valid_to is null or valid_from is null or valid_from <= valid_to),
+      constraint scope_public_rule_versions_expression_chk check (jsonb_typeof(expression) = 'object'),
+      constraint scope_public_rule_versions_fingerprint_chk check (fingerprint ~ '^[0-9a-f]{64}$'),
+      constraint scope_public_rule_versions_number_uk unique (public_definition_id, version_number),
+      constraint scope_public_rule_versions_code_uk unique (public_definition_id, version_code))`);
+    await client.query(`create index if not exists scope_public_rule_versions_lookup_idx
+      on scope_public_rule_versions(public_definition_id, status, valid_from, valid_to)`);
+    await client.query(`create or replace function scope_public_definitions_guard_code()
+      returns trigger language plpgsql as $$
+      begin
+        if new.code is distinct from old.code then raise exception 'public definition code is immutable'; end if;
+        return new;
+      end; $$`);
+    await client.query(`drop trigger if exists scope_public_definitions_guard_code_trg on scope_public_definitions`);
+    await client.query(`create trigger scope_public_definitions_guard_code_trg before update on scope_public_definitions
+      for each row execute function scope_public_definitions_guard_code()`);
+    await client.query(`create or replace function scope_public_rule_versions_guard_active()
+      returns trigger language plpgsql as $$
+      begin
+        perform pg_advisory_xact_lock(671902277, hashtext(new.public_definition_id::text));
+        if tg_op = 'UPDATE' and not (
+          (old.status = 'DRAFT' and new.status in ('DRAFT','ACTIVE')) or
+          (old.status = 'ACTIVE' and new.status in ('ACTIVE','RETIRED')) or
+          (old.status = 'RETIRED' and new.status = 'RETIRED')
+        ) then raise exception 'invalid public rule version status transition: % -> %', old.status, new.status; end if;
+        if tg_op = 'UPDATE' and old.status = 'ACTIVE' and (
+          new.public_definition_id is distinct from old.public_definition_id or new.version_number is distinct from old.version_number or
+          new.version_code is distinct from old.version_code or new.valid_from is distinct from old.valid_from or
+          new.valid_to is distinct from old.valid_to or new.schema_version is distinct from old.schema_version or
+          new.expression is distinct from old.expression or new.fingerprint is distinct from old.fingerprint
+        ) then raise exception 'active public rule versions are semantically immutable'; end if;
+        if new.status = 'ACTIVE' and exists (
+          select 1 from scope_public_rule_versions existing
+          where existing.public_definition_id = new.public_definition_id and existing.status = 'ACTIVE'
+            and existing.public_rule_version_id <> new.public_rule_version_id
+            and daterange(coalesce(existing.valid_from, date '0001-01-01'), coalesce(existing.valid_to, date '9999-12-31'), '[]')
+              && daterange(coalesce(new.valid_from, date '0001-01-01'), coalesce(new.valid_to, date '9999-12-31'), '[]')
+        ) then raise exception 'overlapping active public rule versions are forbidden'; end if;
+        return new;
+      end; $$`);
+    await client.query(`drop trigger if exists scope_public_rule_versions_guard_active_trg on scope_public_rule_versions`);
+    await client.query(`create trigger scope_public_rule_versions_guard_active_trg before insert or update on scope_public_rule_versions
+      for each row execute function scope_public_rule_versions_guard_active()`);
+    const metadata = JSON.stringify({ source: 'PUBLIC_ENGINE_MIRROR_C2_B' });
+    for(const row of publicFoundations.PUBLIC_DEFINITIONS){
+      await client.query(`insert into scope_public_definitions(code,label,description,status,owner_type,owner_code,domain_hints,metadata)
+        values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb) on conflict (code) do nothing`,
+      [row.code, row.label, row.description, row.status, row.ownerType, row.ownerCode, row.domainHints, metadata]);
+    }
+    const definitions = (await client.query(`select public_definition_id, code from scope_public_definitions`)).rows || [];
+    const definitionByCode = new Map(definitions.map((row) => [row.code, row.public_definition_id]));
+    for(const row of publicFoundations.PUBLIC_DEFINITIONS){
+      const version = row.version;
+      await client.query(`insert into scope_public_rule_versions(
+        public_definition_id,version_number,version_code,status,schema_version,expression,fingerprint,approved_at,approved_by,metadata)
+        select $1,$2,$3,$4,$5,$6::jsonb,$7,now(),'C2-B-SEED',$8::jsonb
+        where not exists (select 1 from scope_public_rule_versions where public_definition_id = $1 and version_number = $2)
+        on conflict (public_definition_id,version_number) do nothing`,
+      [definitionByCode.get(row.code), version.versionNumber, version.versionCode, version.status, version.schemaVersion,
+        JSON.stringify(version.expression), version.fingerprint, metadata]);
+    }
+    for(const table of ['scope_public_definitions', 'scope_public_rule_versions']){
+      await client.query(`alter table ${table} enable row level security`);
+      for(const role of ['anon', 'authenticated']){
+        const exists = await client.query(`select 1 from pg_roles where rolname = $1`, [role]);
+        if(exists.rows[0]) await client.query(`revoke all on ${table} from ${role}`);
+      }
+    }
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-public-engine-mirror-c2-b') on conflict (version) do nothing`);
   });
 }
 

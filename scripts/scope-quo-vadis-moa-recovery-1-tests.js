@@ -48,7 +48,7 @@ for (const src of [schema, service, migration]) {
   assert.ok(!/insert into scope_(evenements|attendus|participations)\b/i.test(src), 'aucune écriture événement/présence/participation');
 }
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b'/.test(schema));
 assert.ok(/migrateQuoVadisMoaRecovery1/.test(schema));
 assert.ok(/PLANIF-FOCO/.test(schema) && /PLANIF-FOCO/.test(migration));
 assert.ok(/interpretHistoricalProgramme/.test(service));

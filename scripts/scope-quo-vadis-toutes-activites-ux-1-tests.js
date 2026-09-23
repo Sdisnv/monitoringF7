@@ -110,7 +110,7 @@ assert.ok(referentials.suggestLieu({ title: 'G1 — Exercice' }, [{ lieuId: '1',
 assert.ok(/scope_salles_theorie/.test(schema));
 assert.ok(/scope_responsable_fonctions/.test(schema));
 assert.ok(/migrateQuoVadisToutesActivitesUx1/.test(schema));
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b'/.test(schema));
 assert.ok(/salle_theorie_id/.test(schema) && /responsable_fonction_code/.test(schema));
 assert.ok(!/GRANT |ENABLE ROW LEVEL|ALTER POLICY/.test(schema.slice(schema.indexOf('migrateQuoVadisToutesActivitesUx1'))));
 

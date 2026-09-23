@@ -4,7 +4,9 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { createHash } = require('crypto');
 const { execFileSync } = require('child_process');
+const publicFoundations = require('../netlify/lib/_scope-public-foundations');
 
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -104,12 +106,62 @@ assert.strictEqual(serviceSha, headServiceSha, 'service QUO VADIS ne doit pas ch
 const coverageSha = execFileSync('git', ['hash-object', 'netlify/lib/_scope-quo-vadis-coverage.js'], { cwd: root, encoding: 'utf8' }).trim();
 const headCoverageSha = execFileSync('git', ['rev-parse', 'HEAD:netlify/lib/_scope-quo-vadis-coverage.js'], { cwd: root, encoding: 'utf8' }).trim();
 assert.strictEqual(coverageSha, headCoverageSha, 'coverage QUO VADIS ne doit pas changer');
-const schemaSha = execFileSync('git', ['hash-object', 'netlify/lib/_scope-schema.js'], { cwd: root, encoding: 'utf8' }).trim();
-const headSchemaSha = execFileSync('git', ['rev-parse', 'HEAD:netlify/lib/_scope-schema.js'], { cwd: root, encoding: 'utf8' }).trim();
-assert.strictEqual(schemaSha, headSchemaSha, 'schéma SCOPE ne doit pas changer');
+const headSchema = execFileSync('git', ['show', 'HEAD:netlify/lib/_scope-schema.js'], { cwd: root, encoding: 'utf8' });
+const EXPECTED_C2_SCHEMA_BLOCK_SHA256 = '8be76a4f21d6111ae98e955059645847b90df95fe4c711358010a389a32e4697';
+const EXPECTED_C2_SCOPE_IDENTIFIERS = [
+  'scope_public_definitions',
+  'scope_public_definitions_code_chk',
+  'scope_public_definitions_dates_chk',
+  'scope_public_definitions_guard_code',
+  'scope_public_definitions_guard_code_trg',
+  'scope_public_definitions_status_chk',
+  'scope_public_rule_versions',
+  'scope_public_rule_versions_code_uk',
+  'scope_public_rule_versions_dates_chk',
+  'scope_public_rule_versions_expression_chk',
+  'scope_public_rule_versions_fingerprint_chk',
+  'scope_public_rule_versions_guard_active',
+  'scope_public_rule_versions_guard_active_trg',
+  'scope_public_rule_versions_lookup_idx',
+  'scope_public_rule_versions_number_chk',
+  'scope_public_rule_versions_number_uk',
+  'scope_public_rule_versions_status_chk'
+];
+function extractC2SchemaBlock(candidate){
+  const start = candidate.indexOf('async function migratePublicEngineMirrorC2B()');
+  const end = candidate.indexOf('async function migrateAlerts1()', start);
+  assert.ok(start > 0 && end > start, 'bloc schéma C2-B introuvable');
+  return { start, end, block: candidate.slice(start, end) };
+}
+function assertExactC2SchemaBlock(block){
+  const scopeIdentifiers = [...new Set(block.match(/scope_[a-z0-9_]+/g) || [])].sort();
+  assert.deepStrictEqual(scopeIdentifiers, EXPECTED_C2_SCOPE_IDENTIFIERS, 'identifiant SQL étranger au périmètre C2-B');
+  assert.strictEqual(publicFoundations.PUBLIC_DEFINITIONS.length, 21, 'les seeds C2-B doivent contenir exactement 21 publics');
+  assert.ok(/for\(const row of publicFoundations\.PUBLIC_DEFINITIONS\)/.test(block), 'boucle des 21 définitions C2-B absente');
+  assert.strictEqual((block.match(/for\(const row of publicFoundations\.PUBLIC_DEFINITIONS\)/g) || []).length, 2, 'définitions et versions C2-B doivent être seedées exactement une fois');
+  assert.strictEqual(createHash('sha256').update(block).digest('hex'), EXPECTED_C2_SCHEMA_BLOCK_SHA256, 'contenu du bloc schéma C2-B hors allowlist exacte');
+}
+function assertOnlyC2SchemaChanges(candidate){
+  const { start, end, block } = extractC2SchemaBlock(candidate);
+  assertExactC2SchemaBlock(block);
+  const normalized = `${candidate.slice(0, start)}${candidate.slice(end)}`
+    .replace("\nconst publicFoundations = require('./_scope-public-foundations');", '')
+    .replace("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b';", "const LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1';")
+    .replace(/^(\s*)await migratePublicEngineMirrorC2B\(\);\n/gm, '');
+  assert.strictEqual(normalized, headSchema, 'seules les différences schéma C2-B explicitement allowlistées sont autorisées');
+}
+assertOnlyC2SchemaChanges(schema);
+assert.throws(() => assertOnlyC2SchemaChanges(schema.replace('const DDL = [', 'alter table scope_evenements add column fuite text;\nconst DDL = [')));
+for(const table of ['scope_evenements', 'scope_attendus', 'scope_participations']){
+  const mutated = schema.replace(
+    'async function migratePublicEngineMirrorC2B(){',
+    `async function migratePublicEngineMirrorC2B(){\n  await db.query(\`alter table ${table} add column fuite text\`);`
+  );
+  assert.throws(() => assertOnlyC2SchemaChanges(mutated), `une mutation interne de ${table} doit être rejetée`);
+}
 assert.ok(!/CREATE TABLE|ALTER TABLE/.test(service));
 assert.ok(!/CREATE TABLE|ALTER TABLE/.test(coverage));
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-public-engine-mirror-c2-b'/.test(schema));
 
 assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1|scope-quo-vadis-agenda-ui-ruleset-1|scope-quo-vadis-pilot-tabs-1/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1/.test(css));
