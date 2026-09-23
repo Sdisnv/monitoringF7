@@ -130,7 +130,7 @@ assert.ok(!/<th>Point d’attention<\/th>/.test(activites));
 
 assert.ok(/scope-quo-vadis-toutes-activites-ux-4|scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-[23]/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ux-4/.test(css));
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
 assert.ok(service.includes('QUO-VADIS-MOA-CONSOLIDATION-2'));
 
 console.log('scope-quo-vadis-toutes-activites-ux-4-tests: ok');

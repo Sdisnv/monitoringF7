@@ -109,7 +109,7 @@ const headSchemaSha = execFileSync('git', ['rev-parse', 'HEAD:netlify/lib/_scope
 assert.strictEqual(schemaSha, headSchemaSha, 'schéma SCOPE ne doit pas changer');
 assert.ok(!/CREATE TABLE|ALTER TABLE/.test(service));
 assert.ok(!/CREATE TABLE|ALTER TABLE/.test(coverage));
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
 
 assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1|scope-quo-vadis-agenda-ui-ruleset-1|scope-quo-vadis-pilot-tabs-1/.test(html));
 assert.ok(/scope-quo-vadis-toutes-activites-ui-ruleset-1/.test(css));

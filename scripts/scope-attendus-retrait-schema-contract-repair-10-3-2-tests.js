@@ -142,7 +142,7 @@ async function seedDpsB1Population(count, libelle){
   });
 
   await record('04 — migration production idempotente, sans écrasement de données', async () => {
-    includes(schema, "LATEST_SCOPE_SCHEMA_VERSION = 'scope-cancelled-event-single-source-of-truth-11'");
+    includes(schema, "LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'");
     includes(schema, 'async function migrateAttendusRetraitSchemaContractRepair1032');
     includes(schema, 'drop constraint if exists scope_attendus_retrait_chk');
     includes(schema, 'add constraint scope_attendus_retrait_chk');

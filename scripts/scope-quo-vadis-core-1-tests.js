@@ -72,7 +72,7 @@ assert.ok(/scope_qv_obligations_source_uq/.test(migration), 'generator obligatio
 assertDpsSeed(migration, 'migration');
 assertNoQuoVadisAmbiguousSelects(migration);
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-agenda-ux-2'/.test(schema) || /LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-moa-recovery-1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
 assert.ok(/async function migrateQuoVadisCore1/.test(schema));
 assert.ok(/async function migrateQuoVadisPilotage2/.test(schema));
 assert.ok(/'QV-2027'/.test(schema));
@@ -111,6 +111,6 @@ assert.ok(/QUO VADIS 2027/.test(ui));
 assert.ok(/qv-subnav/.test(ui));
 assert.ok(/qv-generate/.test(ui));
 assert.ok(/qv-future-save/.test(ui));
-assert.ok(/Aucune route QUO VADIS ne réécrit/.test(ui));
+assert.ok(/Aucun événement opérationnel n’a été créé/.test(ui));
 
 console.log('scope-quo-vadis-core-1-tests: ok');

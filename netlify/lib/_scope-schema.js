@@ -2,6 +2,7 @@ const { randomUUID } = require('crypto');
 const db = require('./_postgres');
 const qvLieux = require('./_scope-quo-vadis-lieux');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
+const canonicalFoundations = require('./_scope-canonical-foundations');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -287,7 +288,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-referential-management-4';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -313,8 +314,14 @@ async function ensureScopeSchema(){
     ready = true;
     return true;
   }
+  if(await hasMigration('scope-quo-vadis-referential-management-4')){
+    await migrateCanonicalFoundationsC1();
+    ready = true;
+    return true;
+  }
   if(await hasMigration('scope-referentiel-cursus-taxonomie-2')){
     await migrateQuoVadisReferentialManagement4();
+    await migrateCanonicalFoundationsC1();
     ready = true;
     return true;
   }
@@ -436,6 +443,7 @@ async function ensureScopeSchema(){
   );
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-referentiel-cursus-taxonomie-2') on conflict (version) do nothing`);
   await migrateQuoVadisReferentialManagement4();
+  await migrateCanonicalFoundationsC1();
   ready = true;
   return true;
   });
@@ -479,6 +487,184 @@ async function migrateQuoVadisReferentialManagement4(){
     }
   }
   await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-quo-vadis-referential-management-4') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateCanonicalFoundationsC1(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902275]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version = 'scope-canonical-foundations-c1'`);
+    if(done.rows[0]) return;
+    const ddl = [
+      `create table if not exists scope_ois (
+        oi_id uuid primary key default gen_random_uuid(), code text not null unique, libelle text not null,
+        actif boolean not null default true, sort_order integer not null default 100,
+        metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_ois_code_chk check (length(trim(code)) > 0), constraint scope_ois_libelle_chk check (length(trim(libelle)) > 0))`,
+      `create table if not exists scope_domaine_ois (
+        domaine_oi_id uuid primary key default gen_random_uuid(), domaine_code text not null references scope_domaines(code),
+        oi_id uuid not null references scope_ois(oi_id), valid_from date not null default date '1900-01-01', valid_to date,
+        actif boolean not null default true, metadata jsonb not null default '{}'::jsonb,
+        created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_domaine_ois_dates_chk check (valid_to is null or valid_from <= valid_to),
+        constraint scope_domaine_ois_unique unique (domaine_code, oi_id, valid_from))`,
+      `create index if not exists scope_domaine_ois_active_idx on scope_domaine_ois(domaine_code, oi_id, valid_from, valid_to) where actif is true`,
+      `create table if not exists scope_pr_parcours (
+        parcours_id uuid primary key default gen_random_uuid(), code text not null unique, libelle text not null,
+        actif boolean not null default true, sort_order integer not null default 100,
+        metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_pr_parcours_code_chk check (length(trim(code)) > 0), constraint scope_pr_parcours_libelle_chk check (length(trim(libelle)) > 0))`,
+      `create table if not exists scope_pr_parcours_aliases (
+        alias text primary key, parcours_id uuid not null references scope_pr_parcours(parcours_id),
+        metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(),
+        constraint scope_pr_parcours_alias_chk check (length(trim(alias)) > 0))`,
+      `create table if not exists scope_competence_definitions (
+        competence_id uuid primary key default gen_random_uuid(), code text not null unique, libelle text not null, type text not null,
+        domaine_code text references scope_domaines(code), actif boolean not null default true, sort_order integer not null default 100,
+        metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_competence_type_chk check (type in ('QUALIFICATION','SPECIALITE','HABILITATION','AUTRE')),
+        constraint scope_competence_code_chk check (length(trim(code)) > 0), constraint scope_competence_libelle_chk check (length(trim(libelle)) > 0))`,
+      `create index if not exists scope_competence_domain_type_idx on scope_competence_definitions(domaine_code, type, actif, sort_order)`,
+      `create table if not exists scope_competence_aliases (
+        domaine_code text not null references scope_domaines(code), alias text not null,
+        competence_id uuid not null references scope_competence_definitions(competence_id), legacy_context text,
+        metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(),
+        constraint scope_competence_alias_pk primary key (domaine_code, alias),
+        constraint scope_competence_alias_chk check (length(trim(alias)) > 0))`,
+      `create table if not exists scope_foba_niveaux (
+        niveau_id uuid primary key default gen_random_uuid(), code text not null unique, libelle text not null,
+        actif boolean not null default true, sort_order integer not null default 100,
+        metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_foba_niveaux_code_chk check (length(trim(code)) > 0), constraint scope_foba_niveaux_libelle_chk check (length(trim(libelle)) > 0))`,
+      `create table if not exists scope_legacy_cible_oi_mappings (
+        cible_id uuid not null references scope_cibles(cible_id) on delete restrict, oi_id uuid not null references scope_ois(oi_id) on delete restrict,
+        mapping_method text not null default 'SEEDED_C1', mapping_status text not null, confidence numeric(4,3) not null default 1,
+        validated_at timestamptz, validated_by text, metadata jsonb not null default '{}'::jsonb,
+        created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_legacy_cible_oi_pk primary key (cible_id, oi_id),
+        constraint scope_legacy_cible_oi_status_chk check (mapping_status in ('CONFIRMED','COMPOSITE','AMBIGUOUS','REVIEW_REQUIRED')),
+        constraint scope_legacy_cible_oi_confidence_chk check (confidence between 0 and 1))`,
+      `create table if not exists scope_legacy_cible_pr_parcours_mappings (
+        cible_id uuid not null references scope_cibles(cible_id) on delete restrict, parcours_id uuid not null references scope_pr_parcours(parcours_id) on delete restrict,
+        mapping_method text not null default 'SEEDED_C1', mapping_status text not null, confidence numeric(4,3) not null default 1,
+        validated_at timestamptz, validated_by text, metadata jsonb not null default '{}'::jsonb,
+        created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_legacy_cible_pr_pk primary key (cible_id, parcours_id),
+        constraint scope_legacy_cible_pr_status_chk check (mapping_status in ('CONFIRMED','COMPOSITE','AMBIGUOUS','REVIEW_REQUIRED')),
+        constraint scope_legacy_cible_pr_confidence_chk check (confidence between 0 and 1))`,
+      `create table if not exists scope_legacy_cible_competence_mappings (
+        cible_id uuid not null references scope_cibles(cible_id) on delete restrict, competence_id uuid not null references scope_competence_definitions(competence_id) on delete restrict,
+        mapping_method text not null default 'SEEDED_C1', mapping_status text not null, confidence numeric(4,3) not null default 1,
+        validated_at timestamptz, validated_by text, metadata jsonb not null default '{}'::jsonb,
+        created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_legacy_cible_competence_pk primary key (cible_id, competence_id),
+        constraint scope_legacy_cible_competence_status_chk check (mapping_status in ('CONFIRMED','COMPOSITE','AMBIGUOUS','REVIEW_REQUIRED')),
+        constraint scope_legacy_cible_competence_confidence_chk check (confidence between 0 and 1))`,
+      `create table if not exists scope_legacy_cible_foba_niveau_mappings (
+        cible_id uuid not null references scope_cibles(cible_id) on delete restrict, niveau_id uuid not null references scope_foba_niveaux(niveau_id) on delete restrict,
+        mapping_method text not null default 'SEEDED_C1', mapping_status text not null, confidence numeric(4,3) not null default 1,
+        validated_at timestamptz, validated_by text, metadata jsonb not null default '{}'::jsonb,
+        created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_legacy_cible_foba_pk primary key (cible_id, niveau_id),
+        constraint scope_legacy_cible_foba_status_chk check (mapping_status in ('CONFIRMED','COMPOSITE','AMBIGUOUS','REVIEW_REQUIRED')),
+        constraint scope_legacy_cible_foba_confidence_chk check (confidence between 0 and 1))`,
+      `create table if not exists scope_legacy_cible_reviews (
+        cible_id uuid primary key references scope_cibles(cible_id) on delete restrict, classification text not null, reason text not null,
+        metadata jsonb not null default '{}'::jsonb, reviewed_at timestamptz, reviewed_by text,
+        created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+        constraint scope_legacy_cible_reviews_class_chk check (classification in ('AMBIGUOUS','REVIEW_REQUIRED','UNMAPPED')),
+        constraint scope_legacy_cible_reviews_reason_chk check (length(trim(reason)) > 0))`
+    ];
+    for(const sql of ddl) await client.query(sql);
+
+    const sourceMetadata = JSON.stringify({ source: 'CANONICAL_FOUNDATIONS_C1' });
+    for(const row of canonicalFoundations.ORGANISATIONAL_UNITS){
+      await client.query(`insert into scope_ois(code, libelle, sort_order, metadata) values ($1,$2,$3,$4::jsonb) on conflict (code) do nothing`,
+        [row.code, row.label, row.sortOrder, sourceMetadata]);
+    }
+    const oiRows = (await client.query(`select oi_id, code from scope_ois`)).rows || [];
+    const oiByCode = new Map(oiRows.map((row) => [row.code, row.oi_id]));
+    for(const [domainCode, oiCodes] of Object.entries(canonicalFoundations.DOMAIN_ORGANISATIONAL_UNITS)){
+      for(const oiCode of oiCodes){
+        await client.query(`insert into scope_domaine_ois(domaine_code, oi_id, valid_from, metadata)
+          values ($1,$2,date '1900-01-01',$3::jsonb) on conflict (domaine_code, oi_id, valid_from) do nothing`,
+        [domainCode, oiByCode.get(oiCode), JSON.stringify({ source: 'CANONICAL_FOUNDATIONS_C1', validity: 'UNBOUNDED_LEGACY' })]);
+      }
+    }
+    for(const row of canonicalFoundations.PR_ACTIVITY_TRACKS){
+      await client.query(`insert into scope_pr_parcours(code, libelle, sort_order, metadata) values ($1,$2,$3,$4::jsonb) on conflict (code) do nothing`,
+        [row.code, row.label, row.sortOrder, sourceMetadata]);
+    }
+    const prRows = (await client.query(`select parcours_id, code from scope_pr_parcours`)).rows || [];
+    const prByCode = new Map(prRows.map((row) => [row.code, row.parcours_id]));
+    for(const [alias, trackCode] of Object.entries(canonicalFoundations.PR_ACTIVITY_TRACK_ALIASES)){
+      await client.query(`insert into scope_pr_parcours_aliases(alias, parcours_id, metadata) values ($1,$2,$3::jsonb) on conflict (alias) do nothing`,
+        [alias, prByCode.get(trackCode), JSON.stringify({ source: 'CANONICAL_FOUNDATIONS_C1', legacy: alias !== trackCode })]);
+    }
+    for(const row of canonicalFoundations.COMPETENCE_DEFINITIONS){
+      await client.query(`insert into scope_competence_definitions(code, libelle, type, domaine_code, sort_order, metadata)
+        values ($1,$2,$3,$4,$5,$6::jsonb) on conflict (code) do nothing`,
+      [row.code, row.label, row.type, row.domainCode, row.sortOrder, sourceMetadata]);
+    }
+    const competenceRows = (await client.query(`select competence_id, code from scope_competence_definitions`)).rows || [];
+    const competenceByCode = new Map(competenceRows.map((row) => [row.code, row.competence_id]));
+    for(const row of canonicalFoundations.COMPETENCE_ALIASES){
+      await client.query(`insert into scope_competence_aliases(domaine_code, alias, competence_id, legacy_context, metadata)
+        values ($1,$2,$3,$4,$5::jsonb) on conflict (domaine_code, alias) do nothing`,
+      [row.domainCode, row.alias, competenceByCode.get(row.competenceCode), row.legacyContext || null,
+        JSON.stringify({ source: 'CANONICAL_FOUNDATIONS_C1', preserveLegacyContext: Boolean(row.legacyContext) })]);
+    }
+    for(const row of canonicalFoundations.FOBA_LEVELS){
+      await client.query(`insert into scope_foba_niveaux(code, libelle, sort_order, metadata) values ($1,$2,$3,$4::jsonb) on conflict (code) do nothing`,
+        [row.code, row.label, row.sortOrder, sourceMetadata]);
+    }
+    const levelRows = (await client.query(`select niveau_id, code from scope_foba_niveaux`)).rows || [];
+    const levelByCode = new Map(levelRows.map((row) => [row.code, row.niveau_id]));
+    const targets = (await client.query(`select cible_id, domaine_code, niveau_code, libelle from scope_cibles`)).rows || [];
+    for(const target of targets){
+      const classification = canonicalFoundations.classifyLegacyTarget(target);
+      for(const mapping of classification.mappings){
+        const metadata = JSON.stringify({ source: 'CANONICAL_FOUNDATIONS_C1', legacyKey: classification.key });
+        const confidence = mapping.status === 'COMPOSITE' ? 0.950 : 1.000;
+        if(mapping.type === 'OI'){
+          await client.query(`insert into scope_legacy_cible_oi_mappings(cible_id, oi_id, mapping_status, confidence, metadata)
+            values ($1,$2,$3,$4,$5::jsonb) on conflict (cible_id, oi_id) do nothing`,
+          [target.cible_id, oiByCode.get(mapping.code), mapping.status, confidence, metadata]);
+        }else if(mapping.type === 'PR_ACTIVITY_TRACK'){
+          await client.query(`insert into scope_legacy_cible_pr_parcours_mappings(cible_id, parcours_id, mapping_status, confidence, metadata)
+            values ($1,$2,$3,$4,$5::jsonb) on conflict (cible_id, parcours_id) do nothing`,
+          [target.cible_id, prByCode.get(mapping.code), mapping.status, confidence, metadata]);
+        }else if(mapping.type === 'COMPETENCE'){
+          await client.query(`insert into scope_legacy_cible_competence_mappings(cible_id, competence_id, mapping_status, confidence, metadata)
+            values ($1,$2,$3,$4,$5::jsonb) on conflict (cible_id, competence_id) do nothing`,
+          [target.cible_id, competenceByCode.get(mapping.code), mapping.status, confidence, metadata]);
+        }else if(mapping.type === 'FOBA_LEVEL'){
+          await client.query(`insert into scope_legacy_cible_foba_niveau_mappings(cible_id, niveau_id, mapping_status, confidence, metadata)
+            values ($1,$2,$3,$4,$5::jsonb) on conflict (cible_id, niveau_id) do nothing`,
+          [target.cible_id, levelByCode.get(mapping.code), mapping.status, confidence, metadata]);
+        }
+      }
+      if(['AMBIGUOUS', 'UNMAPPED'].includes(classification.classification)){
+        await client.query(`insert into scope_legacy_cible_reviews(cible_id, classification, reason, metadata)
+          values ($1,$2,$3,$4::jsonb) on conflict (cible_id) do nothing`,
+        [target.cible_id, classification.classification, classification.reason,
+          JSON.stringify({ source: 'CANONICAL_FOUNDATIONS_C1', legacyKey: classification.key })]);
+      }
+    }
+    const protectedTables = [
+      'scope_ois','scope_domaine_ois','scope_pr_parcours','scope_pr_parcours_aliases',
+      'scope_competence_definitions','scope_competence_aliases','scope_foba_niveaux',
+      'scope_legacy_cible_oi_mappings','scope_legacy_cible_pr_parcours_mappings',
+      'scope_legacy_cible_competence_mappings','scope_legacy_cible_foba_niveau_mappings','scope_legacy_cible_reviews'
+    ];
+    for(const table of protectedTables){
+      await client.query(`alter table ${table} enable row level security`);
+      for(const role of ['anon', 'authenticated']){
+        const exists = await client.query(`select 1 from pg_roles where rolname = $1`, [role]);
+        if(exists.rows[0]) await client.query(`revoke all on ${table} from ${role}`);
+      }
+    }
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-canonical-foundations-c1') on conflict (version) do nothing`);
   });
 }
 

@@ -34,7 +34,7 @@ for (const src of [schema, migration, service]) {
   assert.ok(!/insert into scope_(evenements|attendus|participations)\b/i.test(src), 'aucune écriture événement/présence/participation');
 }
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-moa-recovery-1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
 assert.ok(/migrateQuoVadisCoverage1/.test(schema));
 assert.ok(/migrateQuoVadisMoaRecovery1/.test(schema));
 assert.ok(/scope_quo_vadis_cursus_step_programmes/.test(schema) && /scope_quo_vadis_cursus_step_programmes/.test(migration));

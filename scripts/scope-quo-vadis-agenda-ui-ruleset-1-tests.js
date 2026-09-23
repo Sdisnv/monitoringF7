@@ -85,7 +85,7 @@ const serviceSha = execFileSync('git', ['hash-object', 'netlify/lib/_scope-quo-v
 const headServiceSha = execFileSync('git', ['rev-parse', 'HEAD:netlify/lib/_scope-quo-vadis-service.js'], { cwd: root, encoding: 'utf8' }).trim();
 assert.strictEqual(serviceSha, headServiceSha, 'service QUO VADIS ne doit pas changer');
 assert.ok(!/CREATE TABLE|ALTER TABLE/.test(service));
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-quo-vadis-toutes-activites-ux-1'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-canonical-foundations-c1'/.test(schema));
 
 assert.ok(/scope-quo-vadis-agenda-ui-ruleset-1|scope-quo-vadis-pilot-tabs-1/.test(html));
 assert.ok(/scope-quo-vadis-agenda-ui-ruleset-1/.test(css));

@@ -425,7 +425,8 @@ async function createNominatif(service, repo, { date, domaine, niveau, libelle, 
     });
     assert.strictEqual(evenement.mode_suivi, 'NOMINATIF');
     const refs = await service.referentiels();
-    assert.ok(refs.arbre.some((d) => d.code === 'FOSPEC' && d.sousDomaines.some((s) => s.code === 'PR')));
+    assert.ok(refs.arbre.some((d) => d.code === 'PR'));
+    assert.ok(!refs.arbre.some((d) => d.code === 'FOSPEC' && d.sousDomaines.some((s) => ['PR', 'AUTO'].includes(s.code))));
     assert.strictEqual(domaineAffiche('PR'), 'PR');
   });
 
