@@ -334,6 +334,16 @@ function resolveAliasedField(row,keys){
 function projectToQuoVadis(input = {}){
   const requirement = input.requirement || {};
   const definition = input.definition || {};
+  const domainBindings = (input.domainBindings || requirement.snapshot && requirement.snapshot.domainBindings || [])
+    .map((row) => ({ domainCode: upper(row.domainCode || row.domain_code),bindingRole: upper(row.bindingRole || row.binding_role || 'SECONDARY') }))
+    .filter((row) => row.domainCode)
+    .sort((a,b) => (a.bindingRole === 'PRIMARY' ? -1 : 1) - (b.bindingRole === 'PRIMARY' ? -1 : 1) || a.domainCode.localeCompare(b.domainCode));
+  const fallbackDomain = upper(definition.domain || definition.domainCode);
+  const domainCodes = [...new Set(domainBindings.map((row) => row.domainCode).concat(fallbackDomain || []).filter(Boolean))];
+  const primaryDomain = (domainBindings.find((row) => row.bindingRole === 'PRIMARY') || {}).domainCode || fallbackDomain || domainCodes[0] || '';
+  const publicBindings = input.publicBindings || requirement.snapshot && requirement.snapshot.publicBindings || [];
+  const statisticalContributions = input.statisticalContributions || requirement.snapshot && requirement.snapshot.statisticalContributions || [];
+  const definitionCode = upper(definition.code || definition.definitionCode || definition.definition_code);
   const sessionsByOccurrence = new Map();
   for(const session of input.sessions || []){
     if(!sessionsByOccurrence.has(session.plannedOccurrenceId)) sessionsByOccurrence.set(session.plannedOccurrenceId,[]);
@@ -341,7 +351,11 @@ function projectToQuoVadis(input = {}){
   }
   return {
     obligations: (input.occurrences || []).map((row) => ({ sourceType: 'CATALOG_C4',sourceRef: row.plannedOccurrenceId,
-      plannedOccurrenceId: row.plannedOccurrenceId,title: text(requirement.label || definition.label),domain: upper(definition.domain || definition.domainCode),
+      plannedOccurrenceId: row.plannedOccurrenceId,annualRequirementId: row.annualRequirementId,definitionCode,
+      title: text(requirement.label || definition.label),domain: primaryDomain,primaryDomain,domainCodes,
+      publicBindings: canonicalize(publicBindings),statisticalContributions: canonicalize(statisticalContributions),
+      publicCodes: [...new Set(publicBindings.map((binding) => text(binding.publicCode || binding.code)).filter(Boolean))],
+      statComCodes: [...new Set(statisticalContributions.map((entry) => text(entry.statcomCode || entry.statcom_code)).filter(Boolean))],
       status: 'A_PLANIFIER',noOperationalEventCreated: true })),
     sessionIntents: (input.occurrences || []).flatMap((row) => (sessionsByOccurrence.get(row.plannedOccurrenceId) || [])
       .sort((a,b) => a.sequence - b.sequence).map((session) => ({ plannedOccurrenceSessionId: session.plannedOccurrenceSessionId,

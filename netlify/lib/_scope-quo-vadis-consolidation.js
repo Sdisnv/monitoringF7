@@ -2,7 +2,7 @@
 
 const coverage = require('./_scope-quo-vadis-coverage');
 
-const GENERATED_SOURCES = new Set(['HISTORIQUE', 'CYCLIQUE', 'OPTIONNELLE', 'DEFINITION', 'RECURRENT', 'DPS_RULE', 'CURSUS']);
+const GENERATED_SOURCES = new Set(['HISTORIQUE', 'CYCLIQUE', 'OPTIONNELLE', 'DEFINITION', 'RECURRENT', 'DPS_RULE', 'CURSUS', 'CATALOG_C4']);
 
 function identity(row){
   const metadata = row.metadata || {};

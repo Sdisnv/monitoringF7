@@ -841,6 +841,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         CYCLIQUE: 'Activité cyclique',
         OPTIONNELLE: 'Activité optionnelle',
         RECURRENT: 'Configuration annuelle',
+        CATALOG_C4: 'Catalogue canonique C4',
         MANUAL: 'Saisie manuelle',
         HUMAN_DECISION: 'Décision humaine conservée'
       };
@@ -1331,7 +1332,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       if(row.preserveDecision) reconciliation.preserved.push(row.obligation_id);
     }
     const counts = { historical: 0, catalogue: 0, dps: 0, cursus: 0, announcedDates: 0, humanDecisions: 0 };
-    const categories = { HISTORIQUE: 'historical', CYCLIQUE: 'historical', OPTIONNELLE: 'historical', DEFINITION: 'catalogue', RECURRENT: 'catalogue', DPS_RULE: 'dps', CURSUS: 'cursus', FUTURE_DATE: 'announcedDates', HUMAN_DECISION: 'humanDecisions' };
+    const categories = { HISTORIQUE: 'historical', CYCLIQUE: 'historical', OPTIONNELLE: 'historical', DEFINITION: 'catalogue', RECURRENT: 'catalogue', CATALOG_C4: 'catalogue', DPS_RULE: 'dps', CURSUS: 'cursus', FUTURE_DATE: 'announcedDates', HUMAN_DECISION: 'humanDecisions' };
     const activities = reconciliation.active.map(({ row, payload }) => {
       counts[categories[payload.sourceType] || 'humanDecisions'] += 1;
       return { obligationId: row.obligation_id, businessKey: consolidation.identity(payload).key, sourceType: payload.sourceType, sourceRef: payload.sourceRef || payload.source_ref, justification: payload.metadata.businessJustification };

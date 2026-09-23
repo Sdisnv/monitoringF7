@@ -7,6 +7,7 @@ const publicFoundations = require('./_scope-public-foundations');
 const personQualifications = require('./_scope-person-qualifications');
 const personQualificationDdl = require('./_scope-person-qualifications-ddl');
 const annualCatalogDdl = require('./_scope-annual-catalog-ddl');
+const catalogConvergenceDdl = require('./_scope-catalog-convergence-ddl');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -292,7 +293,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-annual-catalog-c4-b';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-catalog-convergence-c5-b';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -320,6 +321,7 @@ async function ensureScopeSchema(){
   }
   if(await hasMigration('scope-person-qualifications-c3-b')){
     await migrateAnnualCatalogC4B();
+    await migrateCatalogConvergenceC5B();
     ready = true;
     return true;
   }
@@ -328,6 +330,7 @@ async function ensureScopeSchema(){
     await migratePublicEngineMirrorC2B();
     await migratePersonQualificationsC3B();
     await migrateAnnualCatalogC4B();
+    await migrateCatalogConvergenceC5B();
     ready = true;
     return true;
   }
@@ -337,6 +340,7 @@ async function ensureScopeSchema(){
     await migratePublicEngineMirrorC2B();
     await migratePersonQualificationsC3B();
     await migrateAnnualCatalogC4B();
+    await migrateCatalogConvergenceC5B();
     ready = true;
     return true;
   }
@@ -462,6 +466,7 @@ async function ensureScopeSchema(){
   await migratePublicEngineMirrorC2B();
   await migratePersonQualificationsC3B();
   await migrateAnnualCatalogC4B();
+  await migrateCatalogConvergenceC5B();
   ready = true;
   return true;
   });
@@ -880,6 +885,18 @@ async function migrateAnnualCatalogC4B(){
     for(const table of annualCatalogDdl.CHILD_TABLES) await client.query(annualCatalogDdl.childTriggerSql(table));
     await client.query(annualCatalogDdl.PROTECTION_SQL);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-annual-catalog-c4-b') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateCatalogConvergenceC5B(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902281]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-catalog-convergence-c5-b'`);
+    if(done.rows[0]) return;
+    for(const sql of catalogConvergenceDdl.DDL) await client.query(sql);
+    await client.query(catalogConvergenceDdl.SEED_SQL);
+    await client.query(catalogConvergenceDdl.PROTECTION_SQL);
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-catalog-convergence-c5-b') on conflict (version) do nothing`);
   });
 }
 

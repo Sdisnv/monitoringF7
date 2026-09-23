@@ -72,7 +72,7 @@ assert.ok(/scope_qv_obligations_source_uq/.test(migration), 'generator obligatio
 assertDpsSeed(migration, 'migration');
 assertNoQuoVadisAmbiguousSelects(migration);
 
-assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-annual-catalog-c4-b'/.test(schema));
+assert.ok(/LATEST_SCOPE_SCHEMA_VERSION = 'scope-catalog-convergence-c5-b'/.test(schema));
 assert.ok(/async function migrateQuoVadisCore1/.test(schema));
 assert.ok(/async function migrateQuoVadisPilotage2/.test(schema));
 assert.ok(/'QV-2027'/.test(schema));
