@@ -99,8 +99,8 @@ test('23 technical enums have business labels',() => {
 test('24 business domain order is exact',() => assert.deepEqual(DOMAIN_ORDER,['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR']));
 test('25 future families are not blocked by nine-code SQL',() => assert.doesNotMatch(read('netlify/lib/_scope-annual-catalog-service.js'),/d\.code=any\(\$2::text\[\]\)/));
 test('26 date placeholder is never a field value',() => {
-  assert.equal(ui.annualDraftDateValue({ value: '',placeholder: '24/09/2026' }),null);
-  assert.match(read('assets/js/scope-ui.js'),/placeholder="24\/09\/2026" value="\$\{escapeHtml\(requirement/);
+  assert.equal(ui.annualDraftDateValue({ value: '',placeholder: 'jj/mm/aaaa' }),null);
+  assert.match(read('assets/js/scope-ui.js'),/placeholder="jj\/mm\/aaaa" value="\$\{escapeHtml\(requirement/);
 });
 test('27 contradictory theme aliases fail before writes',async () => {
   const writes = []; const database = { transaction: (fn) => fn(database),query: async (sql) => {
@@ -132,11 +132,11 @@ test('32 DDL has lifecycle, RLS and revoke guards',() => {
 });
 test('33 list and detail use the approved MOA vocabulary',() => {
   const source = read('assets/js/scope-ui.js');
-  for(const label of ['Besoin annuel','Période','Contenus','Préparation QV','Consulter','Valider pour QUO VADIS','Détails internes']) assert(source.includes(label),label);
+  for(const label of ['Besoin annuel','Période','Contenus','Préparation QV','Consulter','Valider le besoin','Détails internes']) assert(source.includes(label),label);
   assert.match(source,/annualThemeAssignments/);
 });
 test('34 buttons are softer than state red and responsive breakpoints exist',() => {
-  const css = read('assets/css/scope.css'); assert.match(css,/annual-button-draft\{background:#d96f72/); assert.doesNotMatch(css,/annual-button-draft\{background:#de000a/);
+  const css = read('assets/css/scope.css'); assert.match(css,/annual-button-primary\{background:#5f91c7/); assert.doesNotMatch(css,/annual-button-primary\{background:#de000a/);
   for(const width of ['1150','960','800']) assert(css.includes(`max-width:${width}px`),width);
 });
 test('35 no canonical theme is seeded or promoted automatically',() => {

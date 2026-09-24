@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { inspectCanonicalReadiness } = require('../netlify/lib/_scope-canonical-readiness');
-const { createScopeAnnualCatalogService,INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,validateDraftInput } = require('../netlify/lib/_scope-annual-catalog-service');
+const { createScopeAnnualCatalogService,INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,validateDraftInput,inspectReadyTransition,toPublicReadyTransition } = require('../netlify/lib/_scope-annual-catalog-service');
 const { prepareAnnualRequirementReady,generateAnnualProgram } = require('../netlify/lib/_scope-annual-catalog');
 const uiLogic = require('../assets/js/scope-ui-logic');
 
@@ -236,6 +236,50 @@ function memoryServiceDb(options = {}){
     const result = await service.markReady(context.requirement.annualRequirementId,{ sub: 'tester' });
     assert.match(result.annualRequirement.fingerprint,/^[0-9a-f]{64}$/); assert.equal(result.publicBindings[0].publicRuleVersionId,'60000000-0000-4000-8000-000000000001');
   });
+  await test('read contract exposes an allowed READY transition only for a valid DRAFT',async () => {
+    const result = await inspectReadyTransition(memoryServiceDb(),fixture('DRAFT'));
+    assert.deepEqual(result,{ allowed:true,message:null });
+    assert.doesNotMatch(JSON.stringify(result),/MISSING_PUBLIC_RULE_VERSION|SESSION_TEMPLATE_REQUIRED|PublicRuleVersion|SessionTemplate/);
+  });
+  await test('activity read serializes the server READY transition contract',async () => {
+    const context = fixture('DRAFT'); const database = memoryServiceDb();
+    const service = createScopeAnnualCatalogService({ database,readinessInspector: async () => ({ status:'SCHEMA_READY',ready:true }),contextLoader: async () => context });
+    const result = await service.getActivity('DPS-EXERCICE',{ year:2027 });
+    assert.deepEqual(result.readyTransition,{ allowed:true,message:null });
+  });
+  await test('read contract explains a missing applicable public rule',async () => {
+    const database = memoryServiceDb(); const query = database.query.bind(database);
+    database.query = async (sql,params) => sql.includes('scope_public_rule_versions where') ? { rows: [] } : query(sql,params);
+    const result = await inspectReadyTransition(database,fixture('DRAFT'));
+    const serialized = JSON.stringify(result);
+    assert.equal(result.allowed,false); assert.match(result.message,/règle de public applicable/);
+    assert.doesNotMatch(serialized,/MISSING_PUBLIC_RULE_VERSION|PublicRuleVersion|[0-9a-f]{8}-[0-9a-f-]{27,}|\bSQL\b|scope_public_/i);
+  });
+  await test('read contract fails closed for an incomplete activity contract',async () => {
+    const context = fixture('DRAFT'); context.sessionTemplates = [];
+    const result = await inspectReadyTransition(memoryServiceDb(),context);
+    assert.equal(result.allowed,false); assert.match(result.message,/séances/);
+    assert.doesNotMatch(JSON.stringify(result),/SESSION_TEMPLATE_REQUIRED|SessionTemplate/);
+  });
+  await test('read contract masks an unknown future READY error with a safe fallback',async () => {
+    const result = toPublicReadyTransition({ valid:false,errors: [{ code:'SOME_FUTURE_INTERNAL_ERROR',details: { table:'scope_internal' } }] });
+    assert.deepEqual(result,{ allowed:false,message:'Le besoin annuel n’est pas encore prêt à être validé.' });
+    assert.doesNotMatch(JSON.stringify(result),/SOME_FUTURE_INTERNAL_ERROR|scope_internal/);
+  });
+  await test('read contract maps multiple READY causes deterministically without duplicates',async () => {
+    const errors = [{ code:'SESSION_TEMPLATE_REQUIRED' },{ code:'MISSING_PUBLIC_RULE_VERSION' },{ code:'SESSION_TEMPLATE_REQUIRED' }];
+    const result = toPublicReadyTransition({ valid:false,errors });
+    const reversed = toPublicReadyTransition({ valid:false,errors: [...errors].reverse() });
+    assert.deepEqual(result,reversed);
+    assert.equal(result.message,'La règle de public applicable doit encore être validée. L’organisation des séances doit encore être complétée.');
+    assert.doesNotMatch(JSON.stringify(result),/MISSING_PUBLIC_RULE_VERSION|SESSION_TEMPLATE_REQUIRED/);
+  });
+  await test('read contract never offers READY twice or after lifecycle closure',async () => {
+    for(const status of ['READY','SUPERSEDED','CANCELLED']){
+      const result = await inspectReadyTransition(memoryServiceDb(),fixture(status));
+      assert.deepEqual(result,{ allowed:false,message:null });
+    }
+  });
   await test('READY error is expressed as a business error',async () => {
     const database = memoryServiceDb(); const context = fixture('DRAFT');
     const query = database.query.bind(database);
@@ -288,7 +332,7 @@ function memoryServiceDb(options = {}){
   });
   await test('frontend exposes required controls and exact action wording',async () => {
     const source = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');
-    for(const label of ['Année','Recherche','Domaine','État','Réinitialiser','Consulter','Valider pour QUO VADIS','Préparation QUO VADIS']) assert(source.includes(label),label);
+    for(const label of ['Année','Recherche','Domaine','État','Réinitialiser','Consulter','Valider le besoin','Préparation QUO VADIS']) assert(source.includes(label),label);
   });
   await test('frontend presents migration-required state without SQL detail',async () => {
     const source = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');

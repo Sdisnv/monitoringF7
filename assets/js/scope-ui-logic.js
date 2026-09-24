@@ -3047,6 +3047,32 @@
     const missing = Math.max(0,required - defined);
     return { defined,missing,label: required ? `${defined} défini${defined > 1 ? 's' : ''}${missing ? ` · ${missing} à préciser` : ''}` : '—' };
   }
+  function annualCountLabel(count,singular,plural){
+    const value = Number(count || 0);
+    return `${value} ${value === 1 ? singular : (plural || `${singular}s`)}`;
+  }
+  function annualSummary(requirement,assignments,preparedOccurrenceCount){
+    if(!requirement) return {
+      requirement: 'Besoin non défini',period: 'Période à définir',contents: 'Contenus à définir',quoVadis: 'Non préparé dans QUO VADIS'
+    };
+    const required = Number(requirement.requiredOccurrences ?? requirement.required_occurrences ?? 0);
+    const themes = annualThemeSummary(required,assignments);
+    const contents = themes.missing
+      ? `${annualCountLabel(themes.defined,'thème défini','thèmes définis')} · ${annualCountLabel(themes.missing,'à préciser','à préciser')}`
+      : annualCountLabel(themes.defined,'thème défini','thèmes définis');
+    return {
+      requirement: annualCountLabel(required,'occurrence'),period: annualPeriodLabel(requirement.windowStart || requirement.window_start,requirement.windowEnd || requirement.window_end),
+      contents,quoVadis: `${Number(preparedOccurrenceCount || 0)}/${required} préparée${required === 1 ? '' : 's'} dans QUO VADIS`
+    };
+  }
+  function annualReadyAction(requirement,readyTransition){
+    const visible = String(requirement && requirement.status || '').toUpperCase() === 'DRAFT';
+    const enabled = visible && Boolean(readyTransition && readyTransition.allowed);
+    return {
+      visible,enabled,
+      message: visible && !enabled ? String(readyTransition && readyTransition.message || 'La configuration de l’activité doit encore être complétée.') : ''
+    };
+  }
   function annualSectionHasData(value){ return Array.isArray(value) ? value.length > 0 : Boolean(value && Object.keys(value).length); }
   function annualDraftDateValue(input){ return input && String(input.value || '').trim() ? String(input.value).trim() : null; }
 
@@ -3263,6 +3289,9 @@
     annualMonthLabel,
     annualPeriodLabel,
     annualThemeSummary,
+    annualCountLabel,
+    annualSummary,
+    annualReadyAction,
     annualSectionHasData,
     annualDraftDateValue,
     sortHeaderState,

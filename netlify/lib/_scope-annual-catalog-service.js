@@ -82,6 +82,35 @@ function readyErrorMessage(errors){
   return `Le besoin annuel ne peut pas passer à READY (${codes.join(', ') || 'contrat incomplet'}).`;
 }
 
+function readyTransitionMessages(errors){
+  const codes = new Set((errors || []).map((error) => text(error && error.code)).filter(Boolean));
+  const messages = [];
+  const consume = (predicate,message) => {
+    let matched = false;
+    for(const code of [...codes]){
+      if(predicate(code)){ codes.delete(code); matched = true; }
+    }
+    if(matched) messages.push(message);
+  };
+  consume((code) => code === 'MISSING_PUBLIC_RULE_VERSION','La règle de public applicable doit encore être validée.');
+  consume((code) => code === 'AMBIGUOUS_PUBLIC_RULE_VERSION','Plusieurs règles de public sont applicables. Un arbitrage est nécessaire.');
+  consume((code) => code === 'PUBLIC_DEFINITION_NOT_ACTIVE' || code === 'PUBLIC_DEFINITION_REQUIRED','Le public annuel doit encore être défini.');
+  consume((code) => code.includes('SESSION'),'L’organisation des séances doit encore être complétée.');
+  consume((code) => code.includes('PERIODICITY'),'La périodicité de l’activité doit encore être complétée.');
+  consume((code) => code.includes('THEME'),'Les contenus annuels doivent encore être corrigés.');
+  if(codes.size || !messages.length) messages.push('Le besoin annuel n’est pas encore prêt à être validé.');
+  return [...new Set(messages)];
+}
+
+function readyTransitionMessage(errors){
+  return readyTransitionMessages(errors).join(' ');
+}
+
+function toPublicReadyTransition(prepared){
+  const allowed = Boolean(prepared && prepared.valid);
+  return { allowed,message: allowed ? null : readyTransitionMessage(prepared && prepared.errors) };
+}
+
 function readinessForClient(readiness){
   const missing = readiness && readiness.missing || {};
   return {
@@ -202,14 +231,30 @@ async function loadContext(database,options = {}){
   };
 }
 
-function serializeContext(context,readiness){
-  return { readiness,activity: { ...context.definition,version: context.version },annualRequirement: context.requirement,
+function serializeContext(context,readiness,readyTransition){
+  return { readiness,readyTransition,activity: { ...context.definition,version: context.version },annualRequirement: context.requirement,
     configuration: { domains: context.domainBindings,sessions: context.sessionTemplates,periodicity: context.periodicity,publics: context.publicBindings,
       pinnedPublics: context.requirement && context.requirement.snapshot && context.requirement.snapshot.publicBindings || [],
       qualifications: context.qualificationBindings,roles: context.roleRequirements,locations: context.locationRequirements,responsibles: context.responsibleRequirements,
       constraints: context.planningConstraints,statCom: context.statisticalContributions,availableThemes: context.availableThemes },
     annualThemeAssignments: context.themeAssignments,
     generation: { occurrences: context.occurrences,sessions: context.sessions,preparedOccurrenceCount: context.preparedOccurrenceCount || 0 } };
+}
+
+async function inspectReadyTransition(database,context){
+  const requirement = context && context.requirement;
+  if(!requirement || requirement.status !== 'DRAFT') return { allowed: false,message: null };
+  try{
+    const publicIds = [...new Set((context.publicBindings || []).map((row) => row.publicDefinitionId).filter(Boolean))];
+    const publicDefinitions = publicIds.length
+      ? rows(await database.query(`select * from scope_public_definitions where public_definition_id=any($1::uuid[])`,[publicIds])) : [];
+    const publicRuleVersions = publicIds.length
+      ? rows(await database.query(`select * from scope_public_rule_versions where public_definition_id=any($1::uuid[])`,[publicIds])) : [];
+    const prepared = prepareAnnualRequirementReady({ ...context,publicDefinitions,publicRuleVersions,themeVersions: context.availableThemes });
+    return toPublicReadyTransition(prepared);
+  }catch(_error){
+    return { allowed: false,message: 'La validation du besoin est momentanément indisponible.' };
+  }
 }
 
 function createScopeAnnualCatalogService(options = {}){
@@ -266,7 +311,7 @@ function createScopeAnnualCatalogService(options = {}){
       const readiness = await requireReady(database,readinessInspector);
       const context = await contextLoader(database,{ code,year: integer(filters.year) || new Date().getUTCFullYear() });
       if(!context) throw new HttpError(404,'activite_catalogue_introuvable','Activité annuelle introuvable.');
-      return serializeContext(context,readiness);
+      return serializeContext(context,readiness,await inspectReadyTransition(database,context));
     },
 
     async createDraft(body,actor){
@@ -418,4 +463,4 @@ function createScopeAnnualCatalogService(options = {}){
   };
 }
 
-module.exports = { INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,validateDraftInput,readyErrorMessage,readinessForClient,createScopeAnnualCatalogService,loadContext };
+module.exports = { INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,validateDraftInput,readyErrorMessage,readyTransitionMessage,toPublicReadyTransition,readinessForClient,inspectReadyTransition,createScopeAnnualCatalogService,loadContext };
