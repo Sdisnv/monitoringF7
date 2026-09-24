@@ -25,7 +25,7 @@ const EXPECTED_TABLES = [
   'scope_event_definitions','scope_event_definition_versions','scope_quo_vadis_obligations','scope_quo_vadis_proposals'
 ];
 const EXPECTED_COLUMNS = {
-  scope_event_definitions: ['definition_id','code','label','domain','family_code','activity_type','active','metadata'],
+  scope_event_definitions: ['definition_id','code','label','domain','family_code','activity_type','status','metadata'],
   scope_event_definition_versions: ['definition_version_id','definition_id','version_code','status','description','fingerprint','metadata'],
   scope_annual_requirements: ['annual_requirement_id','year','definition_version_id','variant_code','required_occurrences','window_start','window_end','status','snapshot','fingerprint'],
   scope_planned_occurrences: ['planned_occurrence_id','annual_requirement_id','occurrence_number','status'],
@@ -152,6 +152,14 @@ function memoryServiceDb(options = {}){
   await test('readiness executes SELECT statements only',async () => {
     const database = metadataDb(); await inspectCanonicalReadiness({ database });
     assert(database.queries.length >= 5); assert(database.queries.every((sql) => /^\s*select\b/i.test(sql)));
+  });
+  await test('service maps the real definition status to active',async () => {
+    const source = fs.readFileSync(path.join(root,'netlify/lib/_scope-annual-catalog-service.js'),'utf8');
+    assert.equal((source.match(/\(d\.status='ACTIF'\) as active/g) || []).length,2);
+    assert(!/d\.active/.test(source));
+    assert(source.includes('c.libelle as competence_label'));
+    assert(!source.includes('c.label as competence_label'));
+    assert(source.includes("value.toISOString().slice(0,10)"));
   });
   await test('readiness distinguishes another missing table from migration state',async () => {
     const result = await inspectCanonicalReadiness({ database: metadataDb({ tables: EXPECTED_TABLES.filter((name) => name !== 'scope_annual_requirements') }) });

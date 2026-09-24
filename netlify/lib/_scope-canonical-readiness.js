@@ -21,7 +21,7 @@ const REQUIRED_TABLES = Object.freeze([
 ]);
 
 const REQUIRED_COLUMNS = Object.freeze({
-  scope_event_definitions: ['definition_id','code','label','domain','family_code','activity_type','active','metadata'],
+  scope_event_definitions: ['definition_id','code','label','domain','family_code','activity_type','status','metadata'],
   scope_event_definition_versions: ['definition_version_id','definition_id','version_code','status','description','fingerprint','metadata'],
   scope_annual_requirements: ['annual_requirement_id','year','definition_version_id','variant_code','required_occurrences','window_start','window_end','status','snapshot','fingerprint'],
   scope_planned_occurrences: ['planned_occurrence_id','annual_requirement_id','occurrence_number','status'],

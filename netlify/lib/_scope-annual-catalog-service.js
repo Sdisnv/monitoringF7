@@ -12,7 +12,11 @@ const INITIAL_ACTIVITY_CODES = Object.freeze([
 const DOMAIN_ORDER = Object.freeze(['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR']);
 
 function text(value){ return String(value == null ? '' : value).trim(); }
-function dateOnly(value){ return value ? String(value).slice(0,10) : null; }
+function dateOnly(value){
+  if(!value) return null;
+  if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0,10);
+  return String(value).slice(0,10);
+}
 function integer(value){ const parsed = Number(value); return Number.isInteger(parsed) ? parsed : null; }
 function actorId(actor){ return text(actor && (actor.sub || actor.subject || actor.email)) || 'scope-user'; }
 function rows(result){ return result && Array.isArray(result.rows) ? result.rows : []; }
@@ -100,7 +104,7 @@ async function requireReady(database,readinessInspector){
 
 async function findDefinition(database,code){
   return one(await database.query(
-    `select d.definition_id,d.code,d.label,d.domain,d.family_code,d.activity_type,d.active,d.metadata as definition_metadata,
+    `select d.definition_id,d.code,d.label,d.domain,d.family_code,d.activity_type,(d.status='ACTIF') as active,d.metadata as definition_metadata,
             v.definition_version_id,v.version_code,v.status as version_status,v.description,v.fingerprint as version_fingerprint,v.metadata as version_metadata
        from scope_event_definitions d
        join scope_event_definition_versions v on v.definition_id=d.definition_id and v.version_code='C5-B-V1' and v.status='ACTIVE'
@@ -125,7 +129,7 @@ async function loadContext(database,options = {}){
   let base;
   if(options.requirementId){
     base = one(await database.query(
-      `select d.definition_id,d.code,d.label,d.domain,d.family_code,d.activity_type,d.active,d.metadata as definition_metadata,
+      `select d.definition_id,d.code,d.label,d.domain,d.family_code,d.activity_type,(d.status='ACTIF') as active,d.metadata as definition_metadata,
               v.definition_version_id,v.version_code,v.status as version_status,v.description,v.fingerprint as version_fingerprint,v.metadata as version_metadata,
               r.*
          from scope_annual_requirements r join scope_event_definition_versions v on v.definition_version_id=r.definition_version_id
@@ -150,7 +154,7 @@ async function loadContext(database,options = {}){
     `select b.*,p.code as public_code,p.label as public_label from scope_activity_public_bindings b join scope_public_definitions p on p.public_definition_id=b.public_definition_id where b.definition_version_id=$1 order by p.code`
   )).map(publicRow);
   const qualificationBindings = await query(
-    `select b.*,c.code as competence_code,c.label as competence_label from scope_activity_qualification_bindings b join scope_competence_definitions c on c.competence_id=b.competence_id where b.definition_version_id=$1 order by b.binding_type,c.code`
+    `select b.*,c.code as competence_code,c.libelle as competence_label from scope_activity_qualification_bindings b join scope_competence_definitions c on c.competence_id=b.competence_id where b.definition_version_id=$1 order by b.binding_type,c.code`
   );
   const roleRequirements = await query(
     `select r.*,d.code as role_code,d.label as role_label,c.code as competence_code from scope_activity_role_requirements r join scope_event_role_definitions d on d.event_role_definition_id=r.role_definition_id left join scope_competence_definitions c on c.competence_id=r.qualification_competence_id where r.definition_version_id=$1 order by d.code`
