@@ -7,6 +7,7 @@ const catalog = require('../netlify/lib/_scope-annual-catalog');
 const ddl = require('../netlify/lib/_scope-annual-theme-ddl');
 const { createScopeAnnualCatalogService,DOMAIN_ORDER,validateDraftInput } = require('../netlify/lib/_scope-annual-catalog-service');
 const ui = require('../assets/js/scope-ui-logic');
+const { createCatalogUiHarness,catalogPayload,activityPayload,draftRequirement,visibleText } = require('./scope-annual-catalog-ui-harness');
 
 const ROOT = path.resolve(__dirname,'..');
 const MIGRATION = path.join(ROOT,'database/migrations/20260924_scope_annual_catalog_themes_c8_b.sql');
@@ -131,9 +132,12 @@ test('32 DDL has lifecycle, RLS and revoke guards',() => {
   assert.match(ddl.GUARD_SQL,/theme version is not active and bound to the activity/); assert.match(ddl.PROTECTION_SQL,/enable row level security/); assert.match(ddl.PROTECTION_SQL,/revoke all/);
 });
 test('33 list and detail use the approved MOA vocabulary',() => {
-  const source = read('assets/js/scope-ui.js');
-  for(const label of ['Besoin annuel','Période','Contenus','Préparation QV','Consulter','Valider le besoin','Détails internes']) assert(source.includes(label),label);
-  assert.match(source,/annualThemeAssignments/);
+  const { hooks } = createCatalogUiHarness();
+  const list = visibleText(hooks.renderAnnualCatalogHtml(catalogPayload()));
+  const detail = visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),readyTransition:{ allowed:true,message:null } })));
+  for(const label of ['Besoin 2027','Période','Contenus','Préparation QV','Consulter ›']) assert(list.includes(label),label);
+  for(const label of ['Contenus 2027','Préparation QUO VADIS','Valider le besoin','Détails internes']) assert(detail.includes(label),label);
+  assert.match(read('assets/js/scope-ui.js'),/annualThemeAssignments/);
 });
 test('34 buttons are softer than state red and responsive breakpoints exist',() => {
   const css = read('assets/css/scope.css'); assert.match(css,/annual-button-primary\{background:#5f91c7/); assert.doesNotMatch(css,/annual-button-primary\{background:#de000a/);

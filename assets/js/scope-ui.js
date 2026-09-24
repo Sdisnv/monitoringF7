@@ -11999,50 +11999,6 @@
     return `<h4>${escapeHtml(label)}</h4>${annualList(selected,(row) => `<li>${escapeHtml(row.competence_code || row.competence_label || '')}${row.mandatory === false ? ' · optionnelle' : ''}</li>`)}`;
   }
 
-  function renderAnnualCatalogActivityLegacy() {
-    if (state.annualCatalogError) return `<section class="annual-readiness"><p class="scope-state-error">${escapeHtml(state.annualCatalogError)}</p></section>`;
-    if (!state.annualCatalogActivityReady) return '<p class="scope-empty">Chargement de la fiche activité…</p>';
-    const payload = state.annualCatalogActivity || {};
-    if (payload.readiness && payload.readiness.status !== 'SCHEMA_READY') return annualReadinessHtml(payload.readiness);
-    const activity = payload.activity || {};
-    const config = payload.configuration || {};
-    const requirement = payload.annualRequirement || null;
-    const generation = payload.generation || { occurrences: [],sessions: [] };
-    const canManage = hasScopePermission('references:manage');
-    const status = requirement ? requirement.status : 'A_DEFINIR';
-    return `<div class="annual-activity">
-      <a class="annual-back" href="#/quo-vadis/catalogue-annuel">‹ Catalogue annuel</a>
-      <header><div><span>${escapeHtml(activity.domain || '')}</span><h2>${escapeHtml(activity.label || activity.code || '')}</h2><p>${escapeHtml(activity.code || '')} · ${escapeHtml(activity.activityType || '')} · version ${escapeHtml(activity.version && activity.version.versionCode || '')}</p></div>${annualStatusHtml(status)}</header>
-      <section><h3>Identité</h3><dl><dt>Code</dt><dd>${escapeHtml(activity.code || '—')}</dd><dt>Activité</dt><dd>${escapeHtml(activity.label || '—')}</dd><dt>Domaines</dt><dd>${escapeHtml((config.domains || []).map((row) => `${row.domain_code} (${row.binding_role})`).join(', ') || '—')}</dd><dt>Famille</dt><dd>${escapeHtml(activity.familyCode || '—')}</dd><dt>Type</dt><dd>${escapeHtml(activity.activityType || '—')}</dd><dt>Version</dt><dd>${escapeHtml(activity.version && activity.version.versionCode || '—')}</dd></dl></section>
-      <section><h3>Structure</h3><dl><dt>Périodicité</dt><dd>${escapeHtml(config.periodicity && config.periodicity.periodicity_type || '—')}</dd><dt>Séances</dt><dd>${escapeHtml(String((config.sessions || []).length))}</dd></dl>${annualList(config.sessions,(row) => `<li>${escapeHtml(String(row.sequence))}. ${escapeHtml(row.label)} · ${escapeHtml(String(row.duration_minutes))} min · dépendance ${escapeHtml(row.depends_on_session_template_id || 'aucune')} · continuité public ${escapeHtml(row.public_continuity || 'INHERIT')} / lieu ${escapeHtml(row.location_continuity || 'INHERIT')}</li>`)}</section>
-      <section><h3>Publics</h3>${annualList(config.publics,(row) => `<li><strong>${escapeHtml(row.public_code || '')}</strong> · ${escapeHtml(row.public_label || '')} · ${escapeHtml(row.operator || '')}</li>`)}<p>${requirement && requirement.status === 'READY' ? `${escapeHtml(String((config.pinnedPublics || []).length))} règle(s) applicable(s) épinglée(s) dans le snapshot.` : 'Résolution : règle applicable à épingler lors du passage READY.'}</p></section>
-      <section><h3>Qualifications</h3>${annualQualificationGroup(config.qualifications,'PREREQUISITE','Prérequis')}${annualQualificationGroup(config.qualifications,'TAUGHT','Enseignées')}${annualQualificationGroup(config.qualifications,'RENEWED','Renouvelées')}</section>
-      <section><h3>Rôles</h3>${annualList(config.roles,(row) => `<li>${escapeHtml(row.role_label || row.role_code || '')} · minimum ${escapeHtml(String(row.minimum_count))}</li>`)}</section>
-      <section><h3>Lieux et responsables</h3>${annualList(config.locations,(row) => `<li>${escapeHtml(row.requirement_type)} · ${escapeHtml(row.location_category_label || 'Emplacement défini')}</li>`)}${annualList(config.responsibles,(row) => `<li>${escapeHtml(row.responsable_fonction_code || row.role_definition_id || row.qualification_competence_id || '')}</li>`)}</section>
-      <section><h3>Contraintes et Stat.Com</h3>${annualList(config.constraints,(row) => `<li>${escapeHtml(row.code)} · ${escapeHtml(row.constraint_type)} · ${escapeHtml(row.severity)}</li>`)}${annualList(config.statCom,(row) => `<li>${escapeHtml(row.statcom_code)} · ${escapeHtml(row.mode)} · ${escapeHtml(row.aggregation_rule)}</li>`)}</section>
-      <section class="annual-moa"><h3>Besoin annuel ${escapeHtml(String(state.annualCatalogFilters.year))}</h3>
-        ${requirement && requirement.status === 'READY' ? '<p>Ce besoin est figé avec ses règles de public versionnées.</p>' : ''}
-        <form id="annual-requirement-form"><div class="annual-form-grid">
-          <label>Occurrences requises<input id="annual-required-occurrences" type="number" min="1" value="${escapeHtml(String(requirement && requirement.requiredOccurrences || 1))}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-          <label>Début de fenêtre<input id="annual-window-start" type="date" value="${escapeHtml(requirement && requirement.windowStart || '')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-          <label>Fin de fenêtre<input id="annual-window-end" type="date" value="${escapeHtml(requirement && requirement.windowEnd || '')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-          <label>Variante<input id="annual-variant-code" value="${escapeHtml(requirement && requirement.variantCode || 'DEFAULT')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-        </div><div class="annual-actions">
-          ${canManage && (!requirement || requirement.status === 'DRAFT') ? '<button class="scope-button" type="submit">Enregistrer le brouillon</button>' : ''}
-          ${canManage && requirement && requirement.status === 'DRAFT' ? '<button id="annual-ready" class="scope-button scope-button-primary" type="button">Passer à READY</button>' : ''}
-          ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-generate" class="scope-button scope-button-primary" type="button">Générer les occurrences</button>' : ''}
-          ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-revise" class="scope-button" type="button">Créer une révision</button>' : ''}
-          ${requirement && requirement.status === 'READY' ? '<button id="annual-preview" class="scope-button" type="button">Préparer dans QUO VADIS</button>' : ''}
-        </div></form>
-        <p>${escapeHtml(String((generation.occurrences || []).length))} occurrence(s) et ${escapeHtml(String((generation.sessions || []).length))} séance(s) planifiée(s). Aucun événement opérationnel créé.</p>
-      </section>
-      ${state.annualCatalogPreview ? `<section class="annual-preview"><h3>Aperçu QUO VADIS</h3><p>Mode miroir · aucune publication</p>
-        <dl><dt>Activité</dt><dd>${escapeHtml(activity.label || '')}</dd><dt>Domaines</dt><dd>${escapeHtml((state.annualCatalogPreview.projection.obligations[0] && state.annualCatalogPreview.projection.obligations[0].domainCodes || []).join(', ') || '—')}</dd><dt>Publics</dt><dd>${escapeHtml((state.annualCatalogPreview.projection.obligations[0] && state.annualCatalogPreview.projection.obligations[0].publicCodes || []).join(', ') || '—')}</dd><dt>Période</dt><dd>${escapeHtml([state.annualCatalogPreview.annualRequirement.windowStart,state.annualCatalogPreview.annualRequirement.windowEnd].filter(Boolean).join(' → ') || 'Année complète')}</dd><dt>Stat.Com</dt><dd>${escapeHtml((state.annualCatalogPreview.projection.obligations[0] && state.annualCatalogPreview.projection.obligations[0].statComCodes || []).join(', ') || '—')}</dd><dt>Contraintes</dt><dd>${escapeHtml(String((state.annualCatalogPreview.constraints || []).length))}</dd></dl>
-        <div class="annual-table-wrap"><table class="annual-table"><thead><tr><th>Occurrence</th><th>État</th><th>Sessions</th></tr></thead><tbody>${(state.annualCatalogPreview.projection.obligations || []).map((obligation,index) => `<tr><td>Occurrence ${index + 1}</td><td>${escapeHtml(obligation.status)}</td><td>${escapeHtml(String((state.annualCatalogPreview.projection.sessionIntents || []).filter((session) => session.plannedOccurrenceId === obligation.plannedOccurrenceId).length))}</td></tr>`).join('')}</tbody></table></div>
-      </section>` : ''}
-    </div>`;
-  }
-
   function renderAnnualCatalogActivity() {
     if (state.annualCatalogError) return `<section class="annual-readiness"><p class="scope-state-error">${escapeHtml(state.annualCatalogError)}</p></section>`;
     if (!state.annualCatalogActivityReady) return '<p class="scope-empty">Chargement de la fiche activité…</p>';

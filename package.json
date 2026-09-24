@@ -15,6 +15,7 @@
     "test:scope-annual-catalog-moa-c6-b": "node scripts/scope-annual-catalog-moa-c6-b-tests.js",
     "test:scope-annual-catalog-themes-c8-b": "node scripts/scope-annual-catalog-themes-c8-b-tests.js",
     "test:scope-annual-catalog-c10": "node scripts/scope-annual-catalog-c10-tests.js",
+    "test:scope-c11-ux-repair-1": "node scripts/scope-c11-ux-repair-1-tests.js",
     "diagnostic:scope-annual-catalog-c10": "node scripts/scope-annual-catalog-c10-preview.js",
     "diagnostic:scope-annual-catalog-moa-c6-b": "node scripts/scope-annual-catalog-moa-c6-b-diagnostic.js",
     "diagnostic:scope-catalog-convergence-c5-b": "node scripts/scope-catalog-convergence-c5-b-diagnostic.js",

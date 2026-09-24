@@ -7,6 +7,7 @@ const { inspectCanonicalReadiness } = require('../netlify/lib/_scope-canonical-r
 const { createScopeAnnualCatalogService,INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,validateDraftInput,inspectReadyTransition,toPublicReadyTransition } = require('../netlify/lib/_scope-annual-catalog-service');
 const { prepareAnnualRequirementReady,generateAnnualProgram } = require('../netlify/lib/_scope-annual-catalog');
 const uiLogic = require('../assets/js/scope-ui-logic');
+const { createCatalogUiHarness,activityPayload,draftRequirement,visibleText } = require('./scope-annual-catalog-ui-harness');
 
 const root = path.resolve(__dirname,'..');
 let passed = 0;
@@ -345,7 +346,11 @@ function memoryServiceDb(options = {}){
   await test('API and UI never offer event publication from annual catalog',async () => {
     const api = fs.readFileSync(path.join(root,'assets/js/scope-api.js'),'utf8');
     const ui = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');
-    assert(!/publishAnnual|publier.*événement/i.test(api + ui)); assert(ui.includes('Aucun événement opérationnel créé.'));
+    assert(!/publishAnnual|publier.*événement/i.test(api + ui));
+    const { hooks } = createCatalogUiHarness();
+    const detail = visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),readyTransition:{ allowed:true,message:null } })));
+    assert.doesNotMatch(detail,/publier|publication|créer un événement/i);
+    assert.match(detail,/Préparation QUO VADIS/);
   });
   process.stdout.write(`C6-B ${passed}/${passed} PASS\n`);
 })().catch((error) => { console.error(error); process.exitCode = 1; });

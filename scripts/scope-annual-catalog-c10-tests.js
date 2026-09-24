@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const ui = require('../assets/js/scope-ui-logic');
 const preview = require('./scope-annual-catalog-c10-preview');
+const { createCatalogUiHarness,catalogPayload,activityPayload,draftRequirement,visibleText } = require('./scope-annual-catalog-ui-harness');
 const { DOMAIN_ORDER } = require('../netlify/lib/_scope-annual-catalog-service');
 
 const ROOT = path.resolve(__dirname,'..');
@@ -14,9 +15,15 @@ const css = read('assets/css/scope.css');
 const tests = [];
 const test = (name,fn) => tests.push({ name,fn });
 
-test('01 undefined annual need has a business summary',() => assert.deepEqual(ui.annualSummary(null,[],0),{
-  requirement:'Besoin non défini',period:'Période à définir',contents:'Contenus à définir',quoVadis:'Non préparé dans QUO VADIS'
-}));
+test('01 undefined annual need has a business summary',() => {
+  assert.deepEqual(ui.annualSummary(null,[],0),{
+    requirement:'Besoin non défini',period:'Période à définir',contents:'Contenus à définir',quoVadis:'Non préparé dans QUO VADIS'
+  });
+  const { hooks } = createCatalogUiHarness();
+  const text = visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload()));
+  for(const label of ['Besoin non défini','Période à définir','Contenus à définir','Non préparé dans QUO VADIS']) assert(text.includes(label),label);
+  assert.doesNotMatch(text,/0 occurrence à préciser|— occurrences/);
+});
 test('02 defined annual need has correct counts and plurals',() => {
   const one=ui.annualSummary({ requiredOccurrences:1,windowStart:'2027-03-01',windowEnd:'2027-03-31' },[{ occurrenceNumber:1 }],1);
   assert.equal(one.requirement,'1 occurrence'); assert.equal(one.contents,'1 thème défini'); assert.equal(one.quoVadis,'1/1 préparée dans QUO VADIS');
@@ -27,15 +34,31 @@ test('03 variants stay internal until a canonical business model exists',() => {
   const activeRenderer=source.slice(source.indexOf('function renderAnnualCatalogActivity()'),source.indexOf('function renderQuoVadis()'));
   assert.doesNotMatch(source,/availableVariants/); assert.doesNotMatch(activeRenderer,/annual-variant-code/);
   assert.match(source,/variantCode: requirement && requirement\.variantCode \|\| 'DEFAULT'/);
+  const { hooks } = createCatalogUiHarness();
+  const html = hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement() }));
+  assert.doesNotMatch(html,/annual-variant-code/); assert.doesNotMatch(visibleText(html),/DEFAULT/);
 });
-test('04 technical activity code is absent from list cell',() => assert.doesNotMatch(source,/row\.label\)}<\/strong><small>\$\{escapeHtml\(row\.code\)/));
+test('04 technical activity code is absent from list cell',() => {
+  assert.doesNotMatch(source,/row\.label\)}<\/strong><small>\$\{escapeHtml\(row\.code\)/);
+  const { hooks } = createCatalogUiHarness();
+  const text = visibleText(hooks.renderAnnualCatalogHtml(catalogPayload()));
+  assert.doesNotMatch(text,/DPS-EXERCICE|DPS-INSTRUCTION-SECTION|TECHNICAL-CODE/);
+  assert.match(text,/Consulter ›/);
+});
 test('05 date fields describe a period and use neutral placeholders',() => {
   assert.match(source,/Début de période/); assert.match(source,/Fin de période/); assert.match(source,/placeholder="jj\/mm\/aaaa"/); assert.doesNotMatch(source,/24\/09\/2026/);
+  const { hooks } = createCatalogUiHarness();
+  const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
+  assert.match(html,/placeholder="jj\/mm\/aaaa"/); assert.doesNotMatch(visibleText(html),/24\/09\/2026/);
 });
 test('06 annual catalog domain order remains business-defined',() => assert.deepEqual([...DOMAIN_ORDER],['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR']));
 test('07 workflow vocabulary is MOA-facing',() => {
   for(const label of ['Enregistrer','Valider le besoin','Préparer dans QUO VADIS','Consulter la préparation']) assert(source.includes(label),label);
   assert.equal(ui.annualStatusLabel('DRAFT'),'En préparation'); assert.equal(ui.annualStatusLabel('READY'),'Prêt pour QUO VADIS');
+  const { hooks } = createCatalogUiHarness();
+  const html = hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),readyTransition:{ allowed:true,message:null } }));
+  assert.match(html,/>Enregistrer<\/button>/); assert.match(html,/>Valider le besoin<\/button>/);
+  assert.doesNotMatch(html,/Enregistrer le brouillon/);
 });
 test('08 themes stay occurrence-based and free themes remain available',() => {
   assert.match(source,/Occurrence \$\{occurrence\}/); assert.match(source,/Thème libre/); assert.match(source,/Ajouter un thème/); assert.match(source,/\(thème libre\)/); assert.match(source,/<details class="annual-theme-editor">/);
@@ -44,9 +67,18 @@ test('09 empty permanent sections remain conditional',() => assert.match(source,
 test('10 family FOCO is technical detail, not normal business frame',() => {
   const frame=source.slice(source.indexOf('<div class="annual-reference-grid">'),source.indexOf('${canManage ? `<details class="annual-internal">'));
   assert.doesNotMatch(frame,/Famille/); assert.match(source,/Famille technique/);
+  const { hooks } = createCatalogUiHarness();
+  const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
+  const business = html.split('<details class="annual-internal">')[0];
+  assert.doesNotMatch(business,/Famille technique|<dt>Famille<\/dt>/);
+  assert.match(html,/<details class="annual-internal">[\s\S]*Famille technique/);
 });
 test('11 C10 uses open sections rather than nested catalog cards',() => {
   assert.match(css,/annual-activity-c10 \.annual-primary\{border:0;border-bottom:/); assert.doesNotMatch(css,/annual-qv-preparation\{background:/);
+  const { hooks } = createCatalogUiHarness();
+  const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
+  assert.match(html,/class="annual-activity annual-activity-c10"/); assert.match(html,/class="annual-primary annual-qv-preparation"/);
+  assert.doesNotMatch(html,/annual-workspace|annual-activity-c8/);
 });
 test('12 status convention remains eight-pixel square plus black text',() => {
   assert.match(css,/annual-status i\{width:8px;height:8px/); assert.match(css,/annual-status\{[^}]*color:#202830/);

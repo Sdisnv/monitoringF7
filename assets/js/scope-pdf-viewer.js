@@ -2,6 +2,9 @@
 (function (root) {
   'use strict';
 
+  const PDF_WORKER_RELATIVE_URL = '../vendor/pdfjs/pdf.worker.min.js'; // SCOPE_BUILD_ASSET:PDF_WORKER
+  const PDF_STANDARD_FONTS_RELATIVE_URL = '../vendor/pdfjs/standard_fonts/'; // SCOPE_BUILD_ASSET:PDF_STANDARD_FONTS
+
   function viewerScriptSrc() {
     const scripts = root.document ? root.document.getElementsByTagName('script') : [];
     for (let i = scripts.length - 1; i >= 0; i -= 1) {
@@ -13,13 +16,13 @@
 
   function workerSrc() {
     const src = viewerScriptSrc();
-    if (src) return new URL('../vendor/pdfjs/pdf.worker.min.js', src).href;
+    if (src) return new URL(PDF_WORKER_RELATIVE_URL, src).href;
     return 'assets/vendor/pdfjs/pdf.worker.min.js';
   }
 
   function standardFontDataUrl() {
     const src = viewerScriptSrc();
-    if (src) return new URL('../vendor/pdfjs/standard_fonts/', src).href;
+    if (src) return new URL(PDF_STANDARD_FONTS_RELATIVE_URL, src).href;
     return 'assets/vendor/pdfjs/standard_fonts/';
   }
 
@@ -259,5 +262,5 @@
     }
   });
 
-  root.ScopePdfViewer = { open, close, download, _test: { safePdfFilename, isSafariBrowser, supportsDownloadAttribute, ensureDownloadUrl, revokeDownloadUrl, scheduleDownloadUrlRevoke } };
+  root.ScopePdfViewer = { open, close, download, _test: { safePdfFilename, isSafariBrowser, supportsDownloadAttribute, ensureDownloadUrl, revokeDownloadUrl, scheduleDownloadUrlRevoke, workerSrc, standardFontDataUrl } };
 })(typeof window !== 'undefined' ? window : globalThis);
