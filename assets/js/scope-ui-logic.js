@@ -1879,6 +1879,7 @@
       });
       const views = {
         synthese: 'synthese',
+        'catalogue-annuel': 'catalogue-annuel',
         'agenda-annuel': 'agenda-annuel',
         agenda: 'agenda',
         activites: 'activites',
@@ -1889,6 +1890,15 @@
         'dates-connues': 'dates-connues',
         'dates-annoncees': 'dates-connues'
       };
+      if (parts[1] === 'catalogue-annuel' && parts[2]) {
+        return {
+          screen: 'quo-vadis',
+          nav: 'quo-vadis',
+          qvView: 'catalogue-activite',
+          qvCatalogCode: decodeURIComponent(parts[2]),
+          qvYear: query.annee || '2027'
+        };
+      }
       if (parts[1] === 'activites' && parts[2]) {
         return {
           screen: 'quo-vadis',

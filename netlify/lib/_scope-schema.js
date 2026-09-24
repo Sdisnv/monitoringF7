@@ -320,27 +320,16 @@ async function ensureScopeSchema(){
     return true;
   }
   if(await hasMigration('scope-person-qualifications-c3-b')){
-    await migrateAnnualCatalogC4B();
-    await migrateCatalogConvergenceC5B();
+    // Canonical C1-C5 migrations are operator-run and never applied from user traffic.
     ready = true;
     return true;
   }
   if(await hasMigration('scope-quo-vadis-referential-management-4')){
-    await migrateCanonicalFoundationsC1();
-    await migratePublicEngineMirrorC2B();
-    await migratePersonQualificationsC3B();
-    await migrateAnnualCatalogC4B();
-    await migrateCatalogConvergenceC5B();
     ready = true;
     return true;
   }
   if(await hasMigration('scope-referentiel-cursus-taxonomie-2')){
     await migrateQuoVadisReferentialManagement4();
-    await migrateCanonicalFoundationsC1();
-    await migratePublicEngineMirrorC2B();
-    await migratePersonQualificationsC3B();
-    await migrateAnnualCatalogC4B();
-    await migrateCatalogConvergenceC5B();
     ready = true;
     return true;
   }
@@ -462,11 +451,8 @@ async function ensureScopeSchema(){
   );
   await db.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-referentiel-cursus-taxonomie-2') on conflict (version) do nothing`);
   await migrateQuoVadisReferentialManagement4();
-  await migrateCanonicalFoundationsC1();
-  await migratePublicEngineMirrorC2B();
-  await migratePersonQualificationsC3B();
-  await migrateAnnualCatalogC4B();
-  await migrateCatalogConvergenceC5B();
+  // The historical bootstrap stops here. Canonical C1-C5 migrations require an
+  // explicit operator action and are guarded by the read-only readiness check.
   ready = true;
   return true;
   });

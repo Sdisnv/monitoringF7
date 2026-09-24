@@ -188,6 +188,14 @@
     quoVadis: null,
     quoVadisReady: false,
     quoVadisError: null,
+    annualCatalog: null,
+    annualCatalogReady: false,
+    annualCatalogError: null,
+    annualCatalogActivity: null,
+    annualCatalogActivityReady: false,
+    annualCatalogPreview: null,
+    annualCatalogBusy: false,
+    annualCatalogFilters: { year: 2027,query: '',domain: 'tous',status: 'tous' },
     quoVadisBusy: false,
     quoVadisGenerationReport: null,
     quoVadisHistory: [],
@@ -1069,6 +1077,38 @@
       state.quoVadis = null;
       state.quoVadisReady = true;
       state.quoVadisError = L.friendlyError(error).message || 'Le programme QUO VADIS n’a pas pu être chargé.';
+      return null;
+    }
+  }
+
+  async function loadAnnualCatalog() {
+    state.annualCatalogReady = false;
+    state.annualCatalogError = null;
+    try {
+      const data = await client.annualCatalog(state.annualCatalogFilters);
+      state.annualCatalog = data;
+      state.annualCatalogReady = true;
+      return data;
+    } catch (error) {
+      state.annualCatalog = null;
+      state.annualCatalogReady = true;
+      state.annualCatalogError = L.friendlyError(error).message || 'Le catalogue annuel n’a pas pu être chargé.';
+      return null;
+    }
+  }
+
+  async function loadAnnualCatalogActivity(code) {
+    state.annualCatalogActivityReady = false;
+    state.annualCatalogError = null;
+    try {
+      const data = await client.annualCatalogActivity(code,{ year: state.annualCatalogFilters.year });
+      state.annualCatalogActivity = data;
+      state.annualCatalogActivityReady = true;
+      return data;
+    } catch (error) {
+      state.annualCatalogActivity = null;
+      state.annualCatalogActivityReady = true;
+      state.annualCatalogError = L.friendlyError(error).message || 'La fiche catalogue n’a pas pu être chargée.';
       return null;
     }
   }
@@ -10553,6 +10593,7 @@
     const summary = qv.summary || {};
     const items = [
       ['synthese', 'Synthèse', null],
+      ['catalogue-annuel', 'Catalogue annuel', null],
       ['agenda-annuel', 'Agenda annuel', null],
       ['agenda', 'Agenda', summary.datesProposees || null],
       ['activites', 'Toutes les activités', summary.totalActivites || 0],
@@ -10562,7 +10603,7 @@
       ['regles', 'Règles', null],
       ['dates-connues', 'Dates annoncées', summary.datesFutures || 0]
     ];
-    const current = view === 'activite' ? (route().qvFrom || 'activites') : view;
+    const current = view === 'activite' ? (route().qvFrom || 'activites') : view === 'catalogue-activite' ? 'catalogue-annuel' : view;
     return `<nav class="qv-subnav" aria-label="Navigation QUO VADIS">${items.map(([id, label, count]) => `<a class="qv-subnav-link${current === id ? ' is-active' : ''}" href="${qvHref(id)}">${escapeHtml(label)}${count == null ? '' : ` <span>${escapeHtml(String(count))}</span>`}</a>`).join('')}</nav>`;
   }
 
@@ -10570,6 +10611,8 @@
     const view = qvView();
     const titles = {
       synthese: 'Synthèse 2027',
+      'catalogue-annuel': 'Catalogue annuel 2027',
+      'catalogue-activite': 'Fiche du catalogue annuel',
       'agenda-annuel': 'Agenda annuel 2027',
       agenda: 'Agenda 2027',
       activites: 'Toutes les activités 2027',
@@ -11903,11 +11946,103 @@
     </div>`;
   }
 
+  function annualStatusHtml(status) {
+    const value = String(status || 'A_DEFINIR').toUpperCase();
+    const labels = { A_DEFINIR: 'À définir',DRAFT: 'Brouillon',READY: 'Prêt',REVIEW_REQUIRED: 'À revoir',MIGRATION_REQUIRED: 'Migration requise',SCHEMA_INCOMPATIBLE: 'Schéma incompatible' };
+    return `<span class="annual-status annual-status-${escapeHtml(value.toLowerCase().replace(/_/g,'-'))}"><i aria-hidden="true"></i>${escapeHtml(labels[value] || value)}</span>`;
+  }
+
+  function annualReadinessHtml(readiness) {
+    if (!readiness || readiness.status === 'SCHEMA_READY') return '';
+    const message = readiness.status === 'SCHEMA_INCOMPATIBLE'
+      ? 'Le schéma canonique est incomplet. Une intervention opérateur est requise.'
+      : 'Le catalogue annuel n’est pas encore activé sur cet environnement.';
+    return `<section class="annual-readiness" role="status"><h2>${annualStatusHtml(readiness.status)}</h2><p>${escapeHtml(message)}</p><p>Aucune migration n’est lancée depuis cet écran.</p></section>`;
+  }
+
+  function renderAnnualCatalog() {
+    if (state.annualCatalogError) return `<section class="annual-readiness"><p class="scope-state-error">${escapeHtml(state.annualCatalogError)}</p></section>`;
+    if (!state.annualCatalogReady) return '<p class="scope-empty">Chargement du catalogue annuel…</p>';
+    const catalog = state.annualCatalog || {};
+    if (catalog.readiness && catalog.readiness.status !== 'SCHEMA_READY') return annualReadinessHtml(catalog.readiness);
+    const filters = state.annualCatalogFilters;
+    const activities = catalog.activities || [];
+    const domains = [...new Set(activities.map((row) => row.domain).filter(Boolean))];
+    return `<section class="annual-catalogue" aria-labelledby="annual-catalog-title">
+      <div class="annual-toolbar">
+        <div><h2 id="annual-catalog-title">Catalogue annuel</h2><p>Préparation du programme annuel · ${escapeHtml(String(activities.length))} activité(s) · ${escapeHtml(String(catalog.year || filters.year))}</p></div>
+        <label>Année<input id="annual-filter-year" type="number" min="2000" max="2200" value="${escapeHtml(String(filters.year))}"></label>
+        <label>Recherche<input id="annual-filter-query" type="search" value="${escapeHtml(filters.query)}" placeholder="Code ou libellé"></label>
+        <label>Domaine<select id="annual-filter-domain"><option value="tous">Tous</option>${domains.map((domain) => `<option value="${escapeHtml(domain)}"${filters.domain === domain ? ' selected' : ''}>${escapeHtml(domain)}</option>`).join('')}</select></label>
+        <label>État<select id="annual-filter-status"><option value="tous">Tous</option><option value="A_DEFINIR"${filters.status === 'A_DEFINIR' ? ' selected' : ''}>À définir</option><option value="DRAFT"${filters.status === 'DRAFT' ? ' selected' : ''}>Brouillon</option><option value="READY"${filters.status === 'READY' ? ' selected' : ''}>Prêt</option><option value="REVIEW_REQUIRED"${filters.status === 'REVIEW_REQUIRED' ? ' selected' : ''}>À revoir</option></select></label>
+        <button id="annual-filter-reset" class="scope-button" type="button">Réinitialiser</button>
+      </div>
+      <div class="annual-table-wrap"><table class="annual-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Sessions</th><th>Public</th><th>Occurrences</th><th>Période</th><th>État</th><th>QUO VADIS</th><th>Action</th></tr></thead>
+        <tbody>${activities.map((row) => `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.label)}</strong><small>${escapeHtml(row.code)}</small></td><td>${escapeHtml(String(row.sessionCount || 0))}</td><td>${escapeHtml(row.publicCodes || '—')}</td><td>${row.requiredOccurrences == null ? '—' : escapeHtml(String(row.requiredOccurrences))}</td><td>${escapeHtml([row.windowStart,row.windowEnd].filter(Boolean).join(' → ') || '—')}</td><td>${annualStatusHtml(row.status)}</td><td>${row.occurrenceCount ? 'Préparé' : 'Non préparé'}</td><td><a href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Consulter la fiche ›</a></td></tr>`).join('') || '<tr><td colspan="9" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
+      </table></div>
+    </section>`;
+  }
+
+  function annualList(items,renderItem) {
+    return items && items.length ? `<ul>${items.map(renderItem).join('')}</ul>` : '<p class="scope-empty">Aucune donnée configurée.</p>';
+  }
+
+  function annualQualificationGroup(items,type,label) {
+    const selected = (items || []).filter((row) => row.binding_type === type);
+    return `<h4>${escapeHtml(label)}</h4>${annualList(selected,(row) => `<li>${escapeHtml(row.competence_code || row.competence_label || '')}${row.mandatory === false ? ' · optionnelle' : ''}</li>`)}`;
+  }
+
+  function renderAnnualCatalogActivity() {
+    if (state.annualCatalogError) return `<section class="annual-readiness"><p class="scope-state-error">${escapeHtml(state.annualCatalogError)}</p></section>`;
+    if (!state.annualCatalogActivityReady) return '<p class="scope-empty">Chargement de la fiche activité…</p>';
+    const payload = state.annualCatalogActivity || {};
+    if (payload.readiness && payload.readiness.status !== 'SCHEMA_READY') return annualReadinessHtml(payload.readiness);
+    const activity = payload.activity || {};
+    const config = payload.configuration || {};
+    const requirement = payload.annualRequirement || null;
+    const generation = payload.generation || { occurrences: [],sessions: [] };
+    const canManage = hasScopePermission('references:manage');
+    const status = requirement ? requirement.status : 'A_DEFINIR';
+    return `<div class="annual-activity">
+      <a class="annual-back" href="#/quo-vadis/catalogue-annuel">‹ Catalogue annuel</a>
+      <header><div><span>${escapeHtml(activity.domain || '')}</span><h2>${escapeHtml(activity.label || activity.code || '')}</h2><p>${escapeHtml(activity.code || '')} · ${escapeHtml(activity.activityType || '')} · version ${escapeHtml(activity.version && activity.version.versionCode || '')}</p></div>${annualStatusHtml(status)}</header>
+      <section><h3>Identité</h3><dl><dt>Code</dt><dd>${escapeHtml(activity.code || '—')}</dd><dt>Activité</dt><dd>${escapeHtml(activity.label || '—')}</dd><dt>Domaines</dt><dd>${escapeHtml((config.domains || []).map((row) => `${row.domain_code} (${row.binding_role})`).join(', ') || '—')}</dd><dt>Famille</dt><dd>${escapeHtml(activity.familyCode || '—')}</dd><dt>Type</dt><dd>${escapeHtml(activity.activityType || '—')}</dd><dt>Version</dt><dd>${escapeHtml(activity.version && activity.version.versionCode || '—')}</dd></dl></section>
+      <section><h3>Structure</h3><dl><dt>Périodicité</dt><dd>${escapeHtml(config.periodicity && config.periodicity.periodicity_type || '—')}</dd><dt>Séances</dt><dd>${escapeHtml(String((config.sessions || []).length))}</dd></dl>${annualList(config.sessions,(row) => `<li>${escapeHtml(String(row.sequence))}. ${escapeHtml(row.label)} · ${escapeHtml(String(row.duration_minutes))} min · dépendance ${escapeHtml(row.depends_on_session_template_id || 'aucune')} · continuité public ${escapeHtml(row.public_continuity || 'INHERIT')} / lieu ${escapeHtml(row.location_continuity || 'INHERIT')}</li>`)}</section>
+      <section><h3>Publics</h3>${annualList(config.publics,(row) => `<li><strong>${escapeHtml(row.public_code || '')}</strong> · ${escapeHtml(row.public_label || '')} · ${escapeHtml(row.operator || '')}</li>`)}<p>${requirement && requirement.status === 'READY' ? `${escapeHtml(String((config.pinnedPublics || []).length))} règle(s) applicable(s) épinglée(s) dans le snapshot.` : 'Résolution : règle applicable à épingler lors du passage READY.'}</p></section>
+      <section><h3>Qualifications</h3>${annualQualificationGroup(config.qualifications,'PREREQUISITE','Prérequis')}${annualQualificationGroup(config.qualifications,'TAUGHT','Enseignées')}${annualQualificationGroup(config.qualifications,'RENEWED','Renouvelées')}</section>
+      <section><h3>Rôles</h3>${annualList(config.roles,(row) => `<li>${escapeHtml(row.role_label || row.role_code || '')} · minimum ${escapeHtml(String(row.minimum_count))}</li>`)}</section>
+      <section><h3>Lieux et responsables</h3>${annualList(config.locations,(row) => `<li>${escapeHtml(row.requirement_type)} · ${escapeHtml(row.location_category_label || 'Emplacement défini')}</li>`)}${annualList(config.responsibles,(row) => `<li>${escapeHtml(row.responsable_fonction_code || row.role_definition_id || row.qualification_competence_id || '')}</li>`)}</section>
+      <section><h3>Contraintes et Stat.Com</h3>${annualList(config.constraints,(row) => `<li>${escapeHtml(row.code)} · ${escapeHtml(row.constraint_type)} · ${escapeHtml(row.severity)}</li>`)}${annualList(config.statCom,(row) => `<li>${escapeHtml(row.statcom_code)} · ${escapeHtml(row.mode)} · ${escapeHtml(row.aggregation_rule)}</li>`)}</section>
+      <section class="annual-moa"><h3>Besoin annuel ${escapeHtml(String(state.annualCatalogFilters.year))}</h3>
+        ${requirement && requirement.status === 'READY' ? '<p>Ce besoin est figé avec ses règles de public versionnées.</p>' : ''}
+        <form id="annual-requirement-form"><div class="annual-form-grid">
+          <label>Occurrences requises<input id="annual-required-occurrences" type="number" min="1" value="${escapeHtml(String(requirement && requirement.requiredOccurrences || 1))}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+          <label>Début de fenêtre<input id="annual-window-start" type="date" value="${escapeHtml(requirement && requirement.windowStart || '')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+          <label>Fin de fenêtre<input id="annual-window-end" type="date" value="${escapeHtml(requirement && requirement.windowEnd || '')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+          <label>Variante<input id="annual-variant-code" value="${escapeHtml(requirement && requirement.variantCode || 'DEFAULT')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+        </div><div class="annual-actions">
+          ${canManage && (!requirement || requirement.status === 'DRAFT') ? '<button class="scope-button" type="submit">Enregistrer le brouillon</button>' : ''}
+          ${canManage && requirement && requirement.status === 'DRAFT' ? '<button id="annual-ready" class="scope-button scope-button-primary" type="button">Passer à READY</button>' : ''}
+          ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-generate" class="scope-button scope-button-primary" type="button">Générer les occurrences</button>' : ''}
+          ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-revise" class="scope-button" type="button">Créer une révision</button>' : ''}
+          ${requirement && requirement.status === 'READY' ? '<button id="annual-preview" class="scope-button" type="button">Préparer dans QUO VADIS</button>' : ''}
+        </div></form>
+        <p>${escapeHtml(String((generation.occurrences || []).length))} occurrence(s) et ${escapeHtml(String((generation.sessions || []).length))} séance(s) planifiée(s). Aucun événement opérationnel créé.</p>
+      </section>
+      ${state.annualCatalogPreview ? `<section class="annual-preview"><h3>Aperçu QUO VADIS</h3><p>Mode miroir · aucune publication</p>
+        <dl><dt>Activité</dt><dd>${escapeHtml(activity.label || '')}</dd><dt>Domaines</dt><dd>${escapeHtml((state.annualCatalogPreview.projection.obligations[0] && state.annualCatalogPreview.projection.obligations[0].domainCodes || []).join(', ') || '—')}</dd><dt>Publics</dt><dd>${escapeHtml((state.annualCatalogPreview.projection.obligations[0] && state.annualCatalogPreview.projection.obligations[0].publicCodes || []).join(', ') || '—')}</dd><dt>Période</dt><dd>${escapeHtml([state.annualCatalogPreview.annualRequirement.windowStart,state.annualCatalogPreview.annualRequirement.windowEnd].filter(Boolean).join(' → ') || 'Année complète')}</dd><dt>Stat.Com</dt><dd>${escapeHtml((state.annualCatalogPreview.projection.obligations[0] && state.annualCatalogPreview.projection.obligations[0].statComCodes || []).join(', ') || '—')}</dd><dt>Contraintes</dt><dd>${escapeHtml(String((state.annualCatalogPreview.constraints || []).length))}</dd></dl>
+        <div class="annual-table-wrap"><table class="annual-table"><thead><tr><th>Occurrence</th><th>État</th><th>Sessions</th></tr></thead><tbody>${(state.annualCatalogPreview.projection.obligations || []).map((obligation,index) => `<tr><td>Occurrence ${index + 1}</td><td>${escapeHtml(obligation.status)}</td><td>${escapeHtml(String((state.annualCatalogPreview.projection.sessionIntents || []).filter((session) => session.plannedOccurrenceId === obligation.plannedOccurrenceId).length))}</td></tr>`).join('')}</tbody></table></div>
+      </section>` : ''}
+    </div>`;
+  }
+
   function renderQuoVadis() {
+    const view = qvView();
+    if (view === 'catalogue-annuel') return renderQuoVadisShell(renderAnnualCatalog());
+    if (view === 'catalogue-activite') return renderQuoVadisShell(renderAnnualCatalogActivity());
     const qv = quoVadisData();
     if (state.quoVadisError) return renderQuoVadisShell(`<section class="scope-card"><p class="scope-empty scope-state-error">${escapeHtml(state.quoVadisError)}</p></section>`);
     if (!state.quoVadisReady && !state.quoVadis) return renderQuoVadisShell(`<section class="scope-card"><p class="scope-empty">Chargement du programme QUO VADIS…</p></section>`);
-    const view = qvView();
     const content = view === 'agenda-annuel' ? renderQuoVadisAgendaAnnuel(qv)
       : view === 'agenda' ? renderQuoVadisAgenda(qv)
         : view === 'activites' ? renderQuoVadisActivites(qv)
@@ -11995,6 +12130,73 @@
       state.feedbackAction = null;
       render();
       if (typeof action === 'function') await action();
+    });
+    const refreshAnnualCatalog = async () => {
+      state.annualCatalogFilters = {
+        year: Number(document.getElementById('annual-filter-year')?.value || state.annualCatalogFilters.year || 2027),
+        query: document.getElementById('annual-filter-query')?.value || '',
+        domain: document.getElementById('annual-filter-domain')?.value || 'tous',
+        status: document.getElementById('annual-filter-status')?.value || 'tous'
+      };
+      await loadAnnualCatalog();
+      render();
+    };
+    ['annual-filter-year','annual-filter-query','annual-filter-domain','annual-filter-status'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('change',refreshAnnualCatalog);
+    });
+    document.getElementById('annual-filter-reset')?.addEventListener('click',async () => {
+      state.annualCatalogFilters = { year: 2027,query: '',domain: 'tous',status: 'tous' };
+      await loadAnnualCatalog();
+      render();
+    });
+    const annualAction = async (action,success) => {
+      if (state.annualCatalogBusy) return;
+      state.annualCatalogBusy = true;
+      try {
+        await action();
+        state.annualCatalogPreview = null;
+        await loadAnnualCatalogActivity(route().qvCatalogCode);
+        toast('success','Catalogue annuel',success);
+      } catch (error) {
+        toast('error','Catalogue annuel',L.friendlyError(error).message || 'L’action n’a pas pu être terminée.');
+      } finally {
+        state.annualCatalogBusy = false;
+        render();
+      }
+    };
+    document.getElementById('annual-requirement-form')?.addEventListener('submit',async (event) => {
+      event.preventDefault();
+      const payload = {
+        code: route().qvCatalogCode,year: state.annualCatalogFilters.year,
+        requiredOccurrences: Number(document.getElementById('annual-required-occurrences')?.value || 0),
+        windowStart: document.getElementById('annual-window-start')?.value || null,
+        windowEnd: document.getElementById('annual-window-end')?.value || null,
+        variantCode: document.getElementById('annual-variant-code')?.value || 'DEFAULT'
+      };
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      await annualAction(
+        () => requirement ? client.updateAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id,payload) : client.createAnnualRequirement(payload),
+        'Le brouillon annuel a été enregistré.'
+      );
+    });
+    document.getElementById('annual-ready')?.addEventListener('click',async () => {
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      await annualAction(() => client.readyAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id),'Le besoin annuel est READY et ses règles sont figées.');
+    });
+    document.getElementById('annual-generate')?.addEventListener('click',async () => {
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      await annualAction(() => client.generateAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id),'Les occurrences planifiées ont été générées sans créer d’événement.');
+    });
+    document.getElementById('annual-revise')?.addEventListener('click',async () => {
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      await annualAction(() => client.reviseAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id),'Une révision DRAFT a été créée; la version READY reste dans l’historique.');
+    });
+    document.getElementById('annual-preview')?.addEventListener('click',async () => {
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      try {
+        state.annualCatalogPreview = await client.previewAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id);
+        render();
+      } catch (error) { toast('error','Aperçu QUO VADIS',L.friendlyError(error).message || 'Aperçu indisponible.'); }
     });
     document.getElementById('scope-include-qual')?.addEventListener('change', (e) => {
       state.includeQualification = Boolean(e.target.checked);
@@ -16347,6 +16549,11 @@
       state.quoVadisHistory = [];
       state.quoVadisHistoryError = null;
     }
+    if (r.screen === 'quo-vadis' && r.qvView === 'catalogue-activite') {
+      state.annualCatalogActivityReady = false;
+      state.annualCatalogPreview = null;
+      state.annualCatalogFilters.year = Number(r.qvYear || state.annualCatalogFilters.year || 2027);
+    }
     if (r.screen === 'cycles') {
       state.cyclesReady = false;
       state.cyclesError = null;
@@ -16389,7 +16596,9 @@
       const jobs = [];
       if (r.screen === 'objectifs') jobs.push(loadObjectifs());
       if (r.screen === 'formation-catalog' || r.screen === 'nouveau') jobs.push(loadFormationCatalog());
-      if (r.screen === 'quo-vadis') jobs.push(loadQuoVadis());
+      if (r.screen === 'quo-vadis' && r.qvView === 'catalogue-annuel') jobs.push(loadAnnualCatalog());
+      else if (r.screen === 'quo-vadis' && r.qvView === 'catalogue-activite' && r.qvCatalogCode) jobs.push(loadAnnualCatalogActivity(r.qvCatalogCode));
+      else if (r.screen === 'quo-vadis') jobs.push(loadQuoVadis());
       if (r.screen === 'quo-vadis' && r.qvView === 'activite' && r.qvActivityId) jobs.push(loadQuoVadisHistory(r.qvActivityId));
       if (r.screen === 'formation-catalog') jobs.push(loadParticipationAdmin());
       if (r.screen === 'participation-admin') jobs.push(loadParticipationAdmin());
@@ -16482,6 +16691,20 @@
         state.session = { name: 'Test SCOPE', roles: ['ADMINISTRATEUR'], permissions: ['references:manage'] };
         window.CurrentPermissions = ['references:manage'];
         return renderFormationCatalog();
+      },
+      renderAnnualCatalogHtml(payload) {
+        state.annualCatalog = payload || { readiness: { status: 'SCHEMA_READY' },year: 2027,activities: [] };
+        state.annualCatalogReady = true;
+        state.annualCatalogError = null;
+        return renderAnnualCatalog();
+      },
+      renderAnnualCatalogActivityHtml(payload) {
+        state.annualCatalogActivity = payload || null;
+        state.annualCatalogActivityReady = true;
+        state.annualCatalogError = null;
+        state.session = { name: 'Test SCOPE',roles: ['ADMINISTRATEUR'],permissions: ['references:manage'] };
+        window.CurrentPermissions = ['references:manage'];
+        return renderAnnualCatalogActivity();
       },
       mountFormationCatalogHtml(payload, selectedVersionId) {
         this.renderFormationCatalogHtml(payload, selectedVersionId);

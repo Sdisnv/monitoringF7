@@ -12,6 +12,7 @@ const { getPgRepo } = require('../lib/_scope-pg');
 const { generateReport, generateStatComReferentialReport, generateQuoVadisProgrammeReport, pdfResponse } = require('../lib/_scope-report-service');
 const { createScopePersonService } = require('../lib/_scope-person-service');
 const { createScopeQuoVadisService } = require('../lib/_scope-quo-vadis-service');
+const { createScopeAnnualCatalogService } = require('../lib/_scope-annual-catalog-service');
 const users = require('../lib/_user-store');
 const { withMetrics } = require('../lib/_postgres');
 
@@ -95,6 +96,7 @@ async function scopeHandler(event){
     const participationReporting = createScopeParticipationReportingService(repo);
     const persons = createScopePersonService(repo);
     const quoVadis = createScopeQuoVadisService(repo);
+    const annualCatalog = createScopeAnnualCatalogService();
     const parsed = method === 'GET' ? {} : parseBody(event);
     if(method !== 'GET' && parsed === null) return response(400, { ok:false, error:'invalid_json' });
     const body = parsed || {};
@@ -122,7 +124,45 @@ async function scopeHandler(event){
     if(method === 'GET' && path === '/participation/policies'){
       return response(200, { ok:true, ...(await service.participationPolicies()) });
     }
-    let params = match(path, '/quo-vadis/programmes/:annee');
+    if(method === 'GET' && path === '/annual-catalog/readiness'){
+      return response(200, { ok:true,readiness: await annualCatalog.readiness() });
+    }
+    if(method === 'GET' && path === '/annual-catalog'){
+      return response(200, { ok:true,...(await annualCatalog.listCatalog(queryOf(event))) });
+    }
+    let params = match(path, '/annual-catalog/activities/:code');
+    if(method === 'GET' && params){
+      return response(200, { ok:true,...(await annualCatalog.getActivity(params.code,queryOf(event))) });
+    }
+    if(method === 'POST' && path === '/annual-catalog/requirements'){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(201, { ok:true,...(await annualCatalog.createDraft(body,claims)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id');
+    if(method === 'PATCH' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.updateDraft(params.id,body,claims)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id/ready');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.markReady(params.id,claims)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id/revise');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(201, { ok:true,...(await annualCatalog.reviseReady(params.id,claims)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id/generate');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.generate(params.id,claims)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id/quo-vadis-preview');
+    if(method === 'GET' && params){
+      return response(200, { ok:true,...(await annualCatalog.previewQuoVadis(params.id)) });
+    }
+    params = match(path, '/quo-vadis/programmes/:annee');
     if(method === 'GET' && params){
       return response(200, { ok:true, quoVadis: await quoVadis.listProgramme(params.annee) });
     }
