@@ -7,7 +7,8 @@ const CANONICAL_MIGRATIONS = Object.freeze([
   'scope-public-engine-mirror-c2-b',
   'scope-person-qualifications-c3-b',
   'scope-annual-catalog-c4-b',
-  'scope-catalog-convergence-c5-b'
+  'scope-catalog-convergence-c5-b',
+  'scope-annual-catalog-themes-c8-b'
 ]);
 
 const REQUIRED_TABLES = Object.freeze([
@@ -17,7 +18,8 @@ const REQUIRED_TABLES = Object.freeze([
   'scope_activity_public_bindings','scope_activity_qualification_bindings','scope_activity_role_requirements',
   'scope_activity_location_requirements','scope_activity_responsible_requirements',
   'scope_activity_planning_constraints','scope_activity_statistical_contributions',
-  'scope_location_categories','scope_planned_occurrences','scope_planned_occurrence_sessions','scope_activity_legacy_aliases'
+  'scope_location_categories','scope_planned_occurrences','scope_planned_occurrence_sessions','scope_activity_legacy_aliases',
+  'scope_theme_definitions','scope_theme_versions','scope_activity_theme_bindings','scope_annual_requirement_theme_assignments'
 ]);
 
 const REQUIRED_COLUMNS = Object.freeze({
@@ -26,6 +28,9 @@ const REQUIRED_COLUMNS = Object.freeze({
   scope_annual_requirements: ['annual_requirement_id','year','definition_version_id','variant_code','required_occurrences','window_start','window_end','status','snapshot','fingerprint'],
   scope_planned_occurrences: ['planned_occurrence_id','annual_requirement_id','occurrence_number','status'],
   scope_planned_occurrence_sessions: ['planned_occurrence_session_id','planned_occurrence_id','session_template_id','sequence','status'],
+  scope_theme_definitions: ['theme_definition_id','code','status','metadata'],
+  scope_theme_versions: ['theme_version_id','theme_definition_id','version_number','label','status','fingerprint'],
+  scope_annual_requirement_theme_assignments: ['annual_theme_assignment_id','annual_requirement_id','occurrence_number','theme_version_id','free_label','session_template_id'],
   scope_quo_vadis_obligations: ['planned_occurrence_id'],
   scope_quo_vadis_proposals: ['planned_occurrence_session_id']
 });
@@ -34,14 +39,18 @@ const REQUIRED_FUNCTIONS = Object.freeze([
   'scope_public_definitions_guard_code','scope_public_rule_versions_guard_active',
   'scope_person_qualifications_guard','scope_activity_definition_version_guard',
   'scope_annual_requirement_guard','scope_planned_occurrence_session_guard',
-  'scope_qv_proposal_catalog_link_guard','scope_qv_obligation_catalog_link_guard'
+  'scope_qv_proposal_catalog_link_guard','scope_qv_obligation_catalog_link_guard',
+  'scope_normalize_theme_label','scope_theme_definitions_guard_code','scope_theme_versions_guard_active','scope_activity_theme_binding_guard',
+  'scope_annual_requirement_theme_count_guard','scope_annual_theme_assignment_guard'
 ]);
 
 const REQUIRED_TRIGGERS = Object.freeze([
   'scope_public_definitions_guard_code_trg','scope_public_rule_versions_guard_active_trg',
   'scope_person_qualifications_guard_trg','scope_activity_definition_version_guard_trg',
   'scope_annual_requirement_guard_trg','scope_planned_occurrence_session_guard_trg',
-  'scope_qv_proposal_catalog_link_guard_trg','scope_qv_obligation_catalog_link_guard_trg'
+  'scope_qv_proposal_catalog_link_guard_trg','scope_qv_obligation_catalog_link_guard_trg',
+  'scope_theme_definitions_guard_code_trg','scope_theme_versions_guard_active_trg','scope_activity_theme_binding_guard_trg',
+  'scope_annual_requirement_theme_count_guard_trg','scope_annual_theme_assignment_guard_trg'
 ]);
 
 function values(rows,key){ return new Set((rows || []).map((row) => String(row[key] || ''))); }
@@ -73,7 +82,8 @@ async function inspectCanonicalReadiness(options = {}){
     const capabilities = {
       canonicalFoundations: migrations.has(CANONICAL_MIGRATIONS[0]),publicEngine: migrations.has(CANONICAL_MIGRATIONS[1]),
       personQualifications: migrations.has(CANONICAL_MIGRATIONS[2]),annualCatalog: migrations.has(CANONICAL_MIGRATIONS[3]) && status === 'SCHEMA_READY',
-      catalogConvergence: migrations.has(CANONICAL_MIGRATIONS[4]) && status === 'SCHEMA_READY',quoVadisMirror: status === 'SCHEMA_READY'
+      catalogConvergence: migrations.has(CANONICAL_MIGRATIONS[4]) && status === 'SCHEMA_READY',
+      annualThemes: migrations.has(CANONICAL_MIGRATIONS[5]) && status === 'SCHEMA_READY',quoVadisMirror: status === 'SCHEMA_READY'
     };
     return {
       status,

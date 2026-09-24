@@ -67,7 +67,7 @@ function forbiddenPersonnel(){
 
 async function scopeHandler(event){
     if(event.httpMethod === 'OPTIONS'){
-    return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS' }, body: '' };
+    return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS' }, body: '' };
   }
 
   let claims;
@@ -147,6 +147,11 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
       return response(200, { ok:true,...(await annualCatalog.markReady(params.id,claims)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id/themes');
+    if(method === 'PUT' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.replaceThemeAssignments(params.id,body,claims)) });
     }
     params = match(path, '/annual-catalog/requirements/:id/revise');
     if(method === 'POST' && params){

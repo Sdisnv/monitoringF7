@@ -3017,6 +3017,39 @@
     return (order.map((id) => (filters || []).find((f) => f.id === id)).find(Boolean) || (filters || [])[0] || { id: 'TOUS' }).id;
   }
 
+  const ANNUAL_STATUS_LABELS = Object.freeze({
+    A_DEFINIR: 'À définir',DRAFT: 'En préparation',READY: 'Prêt pour QUO VADIS',SUPERSEDED: 'Remplacé',CANCELLED: 'Annulé',
+    REVIEW_REQUIRED: 'À arbitrer',MIGRATION_REQUIRED: 'Migration requise',SCHEMA_INCOMPATIBLE: 'Schéma incompatible',SCHEMA_READY: 'Disponible'
+  });
+  const ANNUAL_ENUM_LABELS = Object.freeze({
+    ON_DEMAND: 'Selon besoin',ANNUAL: 'Chaque année',TIMES_PER_YEAR: 'Plusieurs fois par année',PRIMARY: 'Domaine principal',SECONDARY: 'Domaine associé',
+    UNION: 'Publics réunis',INTERSECTION: 'Publics communs',EXCLUSION: 'Publics exclus',INHERIT: 'Repris de l’activité',SAME: 'Identique',INDEPENDENT: 'Indépendant',
+    FULL_DURATION: 'Toute la durée',FIXED_MINUTES: 'Durée fixe',PERCENTAGE: 'Part de la durée',MANUAL: 'Saisie manuelle',
+    PER_PARTICIPANT: 'Pour chaque participant',PER_SESSION: 'Par séance',PER_OCCURRENCE: 'Par occurrence',
+    PREREQUISITE: 'Prérequis',TAUGHT: 'Enseignée',RENEWED: 'Renouvelée'
+  });
+  const ANNUAL_MONTHS = Object.freeze(['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre']);
+
+  function annualStatusLabel(value){ return ANNUAL_STATUS_LABELS[String(value || 'A_DEFINIR').toUpperCase()] || 'À arbitrer'; }
+  function annualEnumLabel(value){ const key = String(value || '').toUpperCase(); return ANNUAL_ENUM_LABELS[key] || String(value || ''); }
+  function annualMonthLabel(value){
+    const match = String(value || '').match(/^\d{4}-(\d{2})-\d{2}$/);
+    return match && ANNUAL_MONTHS[Number(match[1]) - 1] || '';
+  }
+  function annualPeriodLabel(start,end){
+    const first = annualMonthLabel(start); const last = annualMonthLabel(end);
+    if(first && last) return first === last ? first : `${first} – ${last}`;
+    return first || last || 'Année complète';
+  }
+  function annualThemeSummary(requiredOccurrences,assignments){
+    const required = Number(requiredOccurrences || 0);
+    const defined = new Set((assignments || []).map((row) => Number(row.occurrenceNumber ?? row.occurrence_number)).filter((value) => value > 0 && value <= required)).size;
+    const missing = Math.max(0,required - defined);
+    return { defined,missing,label: required ? `${defined} défini${defined > 1 ? 's' : ''}${missing ? ` · ${missing} à préciser` : ''}` : '—' };
+  }
+  function annualSectionHasData(value){ return Array.isArray(value) ? value.length > 0 : Boolean(value && Object.keys(value).length); }
+  function annualDraftDateValue(input){ return input && String(input.value || '').trim() ? String(input.value).trim() : null; }
+
   return {
     MOTIFS,
     MOTIFS_JSP,
@@ -3223,6 +3256,15 @@
     visibleStatComRows,
     statComSortLabel,
     nextSort,
+    ANNUAL_STATUS_LABELS,
+    ANNUAL_ENUM_LABELS,
+    annualStatusLabel,
+    annualEnumLabel,
+    annualMonthLabel,
+    annualPeriodLabel,
+    annualThemeSummary,
+    annualSectionHasData,
+    annualDraftDateValue,
     sortHeaderState,
     isQualificationEvenement,
     isTestPersonnelNip,

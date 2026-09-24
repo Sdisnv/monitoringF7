@@ -8,6 +8,7 @@ const personQualifications = require('./_scope-person-qualifications');
 const personQualificationDdl = require('./_scope-person-qualifications-ddl');
 const annualCatalogDdl = require('./_scope-annual-catalog-ddl');
 const catalogConvergenceDdl = require('./_scope-catalog-convergence-ddl');
+const annualThemeDdl = require('./_scope-annual-theme-ddl');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -293,7 +294,7 @@ const DDL = [
   `alter table scope_legacy_aggregates add column if not exists fingerprint text`
 ];
 
-const LATEST_SCOPE_SCHEMA_VERSION = 'scope-catalog-convergence-c5-b';
+const LATEST_SCOPE_SCHEMA_VERSION = 'scope-annual-catalog-themes-c8-b';
 const SCOPE_SCHEMA_LOCK_KEY = 671902270;
 let ready = false;
 let readyPromise = null;
@@ -883,6 +884,18 @@ async function migrateCatalogConvergenceC5B(){
     await client.query(catalogConvergenceDdl.SEED_SQL);
     await client.query(catalogConvergenceDdl.PROTECTION_SQL);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-catalog-convergence-c5-b') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateAnnualCatalogThemesC8B(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902283]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-annual-catalog-themes-c8-b'`);
+    if(done.rows[0]) return;
+    for(const sql of annualThemeDdl.DDL) await client.query(sql);
+    await client.query(annualThemeDdl.GUARD_SQL);
+    await client.query(annualThemeDdl.PROTECTION_SQL);
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-annual-catalog-themes-c8-b') on conflict (version) do nothing`);
   });
 }
 

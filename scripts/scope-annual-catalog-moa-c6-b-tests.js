@@ -14,7 +14,7 @@ async function test(name,fn){ await fn(); passed += 1; process.stdout.write(`PAS
 
 const EXPECTED_MIGRATIONS = [
   'scope-canonical-foundations-c1','scope-public-engine-mirror-c2-b','scope-person-qualifications-c3-b',
-  'scope-annual-catalog-c4-b','scope-catalog-convergence-c5-b'
+  'scope-annual-catalog-c4-b','scope-catalog-convergence-c5-b','scope-annual-catalog-themes-c8-b'
 ];
 const EXPECTED_TABLES = [
   'scope_ois','scope_competence_definitions','scope_public_definitions','scope_public_rule_versions','scope_person_qualifications',
@@ -22,6 +22,7 @@ const EXPECTED_TABLES = [
   'scope_annual_requirements','scope_activity_public_bindings','scope_activity_qualification_bindings','scope_activity_role_requirements',
   'scope_location_categories','scope_activity_location_requirements','scope_activity_responsible_requirements','scope_activity_planning_constraints',
   'scope_activity_statistical_contributions','scope_planned_occurrences','scope_planned_occurrence_sessions','scope_activity_legacy_aliases',
+  'scope_theme_definitions','scope_theme_versions','scope_activity_theme_bindings','scope_annual_requirement_theme_assignments',
   'scope_event_definitions','scope_event_definition_versions','scope_quo_vadis_obligations','scope_quo_vadis_proposals'
 ];
 const EXPECTED_COLUMNS = {
@@ -30,17 +31,22 @@ const EXPECTED_COLUMNS = {
   scope_annual_requirements: ['annual_requirement_id','year','definition_version_id','variant_code','required_occurrences','window_start','window_end','status','snapshot','fingerprint'],
   scope_planned_occurrences: ['planned_occurrence_id','annual_requirement_id','occurrence_number','status'],
   scope_planned_occurrence_sessions: ['planned_occurrence_session_id','planned_occurrence_id','session_template_id','sequence','status'],
+  scope_theme_definitions: ['theme_definition_id','code','status','metadata'],
+  scope_theme_versions: ['theme_version_id','theme_definition_id','version_number','label','status','fingerprint'],
+  scope_annual_requirement_theme_assignments: ['annual_theme_assignment_id','annual_requirement_id','occurrence_number','theme_version_id','free_label','session_template_id'],
   scope_quo_vadis_obligations: ['planned_occurrence_id'],scope_quo_vadis_proposals: ['planned_occurrence_session_id']
 };
 const EXPECTED_FUNCTIONS = [
   'scope_public_definitions_guard_code','scope_public_rule_versions_guard_active','scope_person_qualifications_guard',
   'scope_activity_definition_version_guard','scope_annual_requirement_guard','scope_planned_occurrence_session_guard',
-  'scope_qv_proposal_catalog_link_guard','scope_qv_obligation_catalog_link_guard'
+  'scope_qv_proposal_catalog_link_guard','scope_qv_obligation_catalog_link_guard','scope_theme_definitions_guard_code',
+  'scope_normalize_theme_label','scope_theme_versions_guard_active','scope_activity_theme_binding_guard','scope_annual_requirement_theme_count_guard','scope_annual_theme_assignment_guard'
 ];
 const EXPECTED_TRIGGERS = [
   'scope_public_definitions_guard_code_trg','scope_public_rule_versions_guard_active_trg','scope_person_qualifications_guard_trg',
   'scope_activity_definition_version_guard_trg','scope_annual_requirement_guard_trg','scope_planned_occurrence_session_guard_trg',
-  'scope_qv_proposal_catalog_link_guard_trg','scope_qv_obligation_catalog_link_guard_trg'
+  'scope_qv_proposal_catalog_link_guard_trg','scope_qv_obligation_catalog_link_guard_trg','scope_theme_definitions_guard_code_trg',
+  'scope_theme_versions_guard_active_trg','scope_activity_theme_binding_guard_trg','scope_annual_requirement_theme_count_guard_trg','scope_annual_theme_assignment_guard_trg'
 ];
 
 function metadataDb(options = {}){
@@ -103,6 +109,7 @@ function memoryServiceDb(options = {}){
       if(sql.includes('scope_public_definitions where')) return { rows: [{ public_definition_id: '50000000-0000-4000-8000-000000000001',status: 'ACTIVE' }] };
       if(sql.includes('scope_public_rule_versions where')) return { rows: [{ public_rule_version_id: '60000000-0000-4000-8000-000000000001',public_definition_id: '50000000-0000-4000-8000-000000000001',status: 'ACTIVE',valid_from: '2027-01-01',valid_to: '2027-12-31' }] };
       if(sql.includes('insert into scope_activity_public_bindings')) return { rows: [] };
+      if(sql.includes('insert into scope_annual_requirement_theme_assignments') && sql.includes('select $1')) return { rows: [] };
       if(sql.includes("set status='READY'")) return { rows: [{ annual_requirement_id: params[0],status: 'READY',snapshot: JSON.parse(params[1]),fingerprint: params[2] }] };
       if(sql.includes("set status='SUPERSEDED'")) return { rows: [] };
       if(sql.includes('update scope_annual_requirements set required_occurrences=')) return { rows: [{ ...scopedRequirement,annual_requirement_id: params[0],required_occurrences: params[1],window_start: params[2],window_end: params[3],variant_code: params[4],priority: params[5] }] };
@@ -128,8 +135,8 @@ function memoryServiceDb(options = {}){
     assert.equal(result.status,'SCHEMA_READY'); assert.equal(result.missing.columns.length,0); assert.equal(result.missing.tables.length,0);
   });
   await test('readiness reports MIGRATION_REQUIRED',async () => {
-    const result = await inspectCanonicalReadiness({ database: metadataDb({ migrations: EXPECTED_MIGRATIONS.slice(0,4) }) });
-    assert.equal(result.status,'MIGRATION_REQUIRED'); assert.equal(result.missing.migrations[0],EXPECTED_MIGRATIONS[4]);
+    const result = await inspectCanonicalReadiness({ database: metadataDb({ migrations: EXPECTED_MIGRATIONS.slice(0,5) }) });
+    assert.equal(result.status,'MIGRATION_REQUIRED'); assert.equal(result.missing.migrations[0],EXPECTED_MIGRATIONS[5]);
   });
   await test('readiness rejects a missing critical table',async () => {
     const result = await inspectCanonicalReadiness({ database: metadataDb({ tables: EXPECTED_TABLES.filter((name) => name !== 'scope_location_categories') }) });
@@ -211,18 +218,17 @@ function memoryServiceDb(options = {}){
     const result = await service.updateDraft('10000000-0000-4000-8000-000000000001',{ required_occurrences: 4,window_start: '2027-03-01',window_end: '2027-10-31',variant_code: 'winter' },{});
     assert.equal(result.annualRequirement.required_occurrences,4); assert.equal(result.annualRequirement.variant_code,'WINTER');
   });
-  await test('all mutative operations reject requirements outside the C6-B allowlist',async () => {
-    for(const [status,operation] of [
-      ['DRAFT',(service) => service.updateDraft('10000000-0000-4000-8000-000000000001',{ requiredOccurrences: 3 },{})],
-      ['DRAFT',(service) => service.markReady('10000000-0000-4000-8000-000000000001',{})],
-      ['READY',(service) => service.reviseReady('10000000-0000-4000-8000-000000000001',{})],
-      ['READY',(service) => service.generate('10000000-0000-4000-8000-000000000001')]
-    ]){
-      const database = memoryServiceDb({ scopedRequirement: { annual_requirement_id: '10000000-0000-4000-8000-000000000001',definition_version_id: '20000000-0000-4000-8000-000000000001',definition_code: 'OUTSIDE-C6-B',year: 2027,required_occurrences: 2,variant_code: 'DEFAULT',priority: 100,status } });
-      const service = createScopeAnnualCatalogService({ database,readinessInspector: async () => ({ status: 'SCHEMA_READY',ready: true }),contextLoader: async () => { throw new Error('Guard must run before context loading.'); } });
-      await assert.rejects(() => operation(service),(error) => error.error === 'ANNUAL_REQUIREMENT_OUT_OF_SCOPE' && error.status === 422);
-      assert(!database.statements.some((sql) => /^\s*(insert|update|delete)\b/i.test(sql)));
-    }
+  await test('future canonical activities are data-driven behind structural guards',async () => {
+    const database = memoryServiceDb();
+    const service = createScopeAnnualCatalogService({ database,readinessInspector: async () => ({ status: 'SCHEMA_READY',ready: true }),
+      definitionFinder: async () => ({ code: 'FUTURE-FOCA',definition_version_id: '20000000-0000-4000-8000-000000000001' }) });
+    const result = await service.createDraft({ code: 'FUTURE-FOCA',year: 2027,requiredOccurrences: 1 },{});
+    assert.equal(result.annualRequirement.status,'DRAFT');
+    const source = fs.readFileSync(path.join(root,'netlify/lib/_scope-annual-catalog-service.js'),'utf8');
+    assert.match(source,/exists \(select 1 from scope_activity_domain_bindings/);
+    assert.match(source,/exists \(select 1 from scope_activity_session_templates/);
+    assert.match(source,/exists \(select 1 from scope_activity_periodicities/);
+    assert(!/d\.code=any\(\$2::text\[\]\)/.test(source));
   });
   await test('READY pins a public rule and persists snapshot/fingerprint',async () => {
     const database = memoryServiceDb(); const context = fixture('DRAFT');
@@ -282,7 +288,7 @@ function memoryServiceDb(options = {}){
   });
   await test('frontend exposes required controls and exact action wording',async () => {
     const source = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');
-    for(const label of ['Année','Recherche','Domaine','État','Réinitialiser','Consulter la fiche ›','Passer à READY','Préparer dans QUO VADIS']) assert(source.includes(label),label);
+    for(const label of ['Année','Recherche','Domaine','État','Réinitialiser','Consulter','Valider pour QUO VADIS','Préparation QUO VADIS']) assert(source.includes(label),label);
   });
   await test('frontend presents migration-required state without SQL detail',async () => {
     const source = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');

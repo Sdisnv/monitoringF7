@@ -40,6 +40,10 @@ function canonicalize(value){
 
 function canonicalJson(value){ return JSON.stringify(canonicalize(value)); }
 function fingerprint(value){ return crypto.createHash('sha256').update(canonicalJson(value)).digest('hex'); }
+function normalizeThemeLabel(value){
+  return text(value).replace(/œ/gi,'oe').replace(/æ/gi,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/gi,' ').trim().toUpperCase();
+}
 function deterministicUuid(namespace, ...parts){
   const hex = crypto.createHash('sha256').update([namespace,...parts].join('|')).digest('hex').slice(0, 32).split('');
   hex[12] = '5';
@@ -215,11 +219,64 @@ function applicableRuleVersions(publicDefinitionId, date, versions){
     && (!row.validTo && !row.valid_to || date <= dateOnly(row.validTo || row.valid_to)));
 }
 
+function normalizeThemeAssignment(row = {}){
+  const themeVersionId = idOf(row,'themeVersionId','theme_version_id') || null;
+  const freeLabel = text(row.freeLabel ?? row.free_label) || null;
+  return {
+    annualThemeAssignmentId: idOf(row,'annualThemeAssignmentId','annual_theme_assignment_id','id') || null,
+    annualRequirementId: idOf(row,'annualRequirementId','annual_requirement_id') || null,
+    occurrenceNumber: integer(row.occurrenceNumber ?? row.occurrence_number),
+    themeVersionId,freeLabel,freeNormalized: freeLabel ? normalizeThemeLabel(freeLabel) : null,
+    sessionTemplateId: idOf(row,'sessionTemplateId','session_template_id') || null,
+    sortOrder: integer(row.sortOrder ?? row.sort_order ?? 100),
+    themeDefinitionId: idOf(row,'themeDefinitionId','theme_definition_id') || null,
+    code: upper(row.code || row.themeCode || row.theme_code) || null,
+    label: text(row.label || row.themeLabel || row.theme_label || freeLabel) || null,
+    kind: themeVersionId ? 'CANONICAL' : 'FREE'
+  };
+}
+
+function validateThemeAssignments(input = {}){
+  const requirement = input.requirement || {};
+  const count = integer(requirement.requiredOccurrences ?? requirement.required_occurrences);
+  const definitionId = idOf(input.definition,'definitionId','definition_id','id') || idOf(input.version,'definitionId','definition_id');
+  const sessions = new Set((input.sessionTemplates || []).map((row) => idOf(row,'sessionTemplateId','session_template_id','id')).filter(Boolean));
+  const versions = new Map((input.themeVersions || input.availableThemes || []).map((row) => [idOf(row,'themeVersionId','theme_version_id','id'),row]));
+  const bindings = new Set((input.activityThemeBindings || []).filter((row) => upper(row.status || 'ACTIVE') === 'ACTIVE')
+    .map((row) => `${idOf(row,'definitionId','definition_id')}|${idOf(row,'themeDefinitionId','theme_definition_id')}`));
+  const errors = [];
+  const normalized = (input.themeAssignments || []).map(normalizeThemeAssignment);
+  const identities = new Set();
+  for(const row of normalized){
+    if(Boolean(row.themeVersionId) === Boolean(row.freeLabel)) errors.push({ code: 'THEME_CANONICAL_XOR_FREE_REQUIRED',occurrenceNumber: row.occurrenceNumber });
+    if(!(row.occurrenceNumber > 0) || !(count > 0) || row.occurrenceNumber > count) errors.push({ code: 'THEME_OCCURRENCE_OUT_OF_RANGE',occurrenceNumber: row.occurrenceNumber });
+    if(!(row.sortOrder > 0)) errors.push({ code: 'INVALID_THEME_SORT_ORDER',occurrenceNumber: row.occurrenceNumber });
+    if(row.freeLabel && (!row.freeNormalized || row.freeLabel.length > 160)) errors.push({ code: 'INVALID_FREE_THEME_LABEL',occurrenceNumber: row.occurrenceNumber });
+    if(row.sessionTemplateId && !sessions.has(row.sessionTemplateId)) errors.push({ code: 'THEME_SESSION_TEMPLATE_OUTSIDE_ACTIVITY',sessionTemplateId: row.sessionTemplateId });
+    if(row.themeVersionId){
+      const version = versions.get(row.themeVersionId);
+      const themeDefinitionId = idOf(version,'themeDefinitionId','theme_definition_id');
+      if(!version || upper(version.status) !== 'ACTIVE') errors.push({ code: 'THEME_VERSION_NOT_ACTIVE',themeVersionId: row.themeVersionId });
+      else if(!bindings.has(`${definitionId}|${themeDefinitionId}`)) errors.push({ code: 'THEME_NOT_BOUND_TO_ACTIVITY',themeVersionId: row.themeVersionId });
+      row.themeDefinitionId = themeDefinitionId || row.themeDefinitionId;
+      row.code = upper(version && (version.code || version.theme_code)) || row.code;
+      row.label = text(version && (version.label || version.theme_label)) || row.label;
+    }
+    const identity = `${row.occurrenceNumber}|${row.sessionTemplateId || ''}|${row.themeVersionId || `FREE:${row.freeNormalized}`}`;
+    if(identities.has(identity)) errors.push({ code: 'DUPLICATE_THEME_ASSIGNMENT',occurrenceNumber: row.occurrenceNumber });
+    identities.add(identity);
+  }
+  normalized.sort((a,b) => a.occurrenceNumber - b.occurrenceNumber || a.sortOrder - b.sortOrder || (a.label || '').localeCompare(b.label || '','fr'));
+  return { valid: errors.length === 0,errors,value: normalized };
+}
+
 function prepareAnnualRequirementReady(input = {}){
   const requirement = input.requirement || {};
   const publicDefinitions = new Map((input.publicDefinitions || []).map((row) => [idOf(row,'publicDefinitionId','public_definition_id'),row]));
   const errors = [];
   errors.push(...validateDefinitionContract(input).errors);
+  const themes = validateThemeAssignments(input);
+  errors.push(...themes.errors);
   if(!idOf(input.version,'definitionVersionId','definition_version_id','id')) errors.push({ code: 'ACTIVITY_DEFINITION_VERSION_REQUIRED' });
   if(upper(requirement.status) !== 'DRAFT') errors.push({ code: 'ANNUAL_REQUIREMENT_NOT_DRAFT' });
   const year = integer(requirement.year);
@@ -246,7 +303,8 @@ function prepareAnnualRequirementReady(input = {}){
     domainBindings: input.domainBindings || [],sessionTemplates: input.sessionTemplates || [],periodicity: input.periodicity || null,
     publicBindings: pinnedBindings,qualificationBindings: input.qualificationBindings || [],roleRequirements: input.roleRequirements || [],
     locationRequirements: input.locationRequirements || [],responsibleRequirements: input.responsibleRequirements || [],
-    planningConstraints: input.planningConstraints || [],statisticalContributions: input.statisticalContributions || []
+    planningConstraints: input.planningConstraints || [],statisticalContributions: input.statisticalContributions || [],
+    themeAssignments: themes.value
   });
   return { valid: errors.length === 0,errors,publicBindings: pinnedBindings,
     requirement: errors.length ? requirement : { ...requirement,status: 'READY',snapshot,fingerprint: fingerprint(snapshot) } };
@@ -267,9 +325,11 @@ function generateAnnualProgram(input = {}){
   errors.push(...sessions.errors);
   const periodicity = validatePeriodicity(input.periodicity || {});
   errors.push(...periodicity.errors);
+  const themes = validateThemeAssignments(input);
+  errors.push(...themes.errors);
   if(requirement.snapshot && typeof requirement.snapshot === 'object' && !Array.isArray(requirement.snapshot)){
-    const expected = generationSemanticConfig(requirement.snapshot.requirement || {},requirement.snapshot.sessionTemplates || [],requirement.snapshot.periodicity || {});
-    const actual = generationSemanticConfig(requirement,input.sessionTemplates || [],input.periodicity || {});
+    const expected = generationSemanticConfig(requirement.snapshot.requirement || {},requirement.snapshot.sessionTemplates || [],requirement.snapshot.periodicity || {},requirement.snapshot.themeAssignments || []);
+    const actual = generationSemanticConfig(requirement,input.sessionTemplates || [],input.periodicity || {},themes.value);
     if(expected.errors.length || canonicalJson(expected.value) !== canonicalJson(actual.value)) errors.push({ code: 'GENERATION_INPUT_DIVERGES_FROM_SNAPSHOT' });
   }
   if(errors.length) return { complete: false,errors,warnings,occurrences: [],sessions: [] };
@@ -287,7 +347,7 @@ function generateAnnualProgram(input = {}){
         preferredDate: null,preferredStartTime: null,preferredEndTime: null,metadata: {} });
     }
   }
-  return { complete: true,errors,warnings,occurrences,sessions: generatedSessions };
+  return { complete: true,errors,warnings,occurrences,sessions: generatedSessions,themeAssignments: themes.value };
 }
 
 function validAnnualSnapshot(snapshot){
@@ -296,14 +356,17 @@ function validAnnualSnapshot(snapshot){
     'responsibleRequirements','planningConstraints','statisticalContributions'].every((key) => Array.isArray(snapshot[key]));
 }
 
-function generationSemanticConfig(requirement,sessionTemplates,periodicity){
+function generationSemanticConfig(requirement,sessionTemplates,periodicity,themeAssignments = []){
   const sessions = validateSessionTemplates(sessionTemplates);
   const periodic = validatePeriodicity(periodicity);
   const requiredOccurrences = integer(requirement.requiredOccurrences ?? requirement.required_occurrences);
   const value = {
     annualRequirementId: idOf(requirement,'annualRequirementId','annual_requirement_id','id'),requiredOccurrences,
     windowStart: dateOnly(requirement.windowStart || requirement.window_start),windowEnd: dateOnly(requirement.windowEnd || requirement.window_end),
-    sessionTemplates: sessions.value,periodicity: periodic.value
+    sessionTemplates: sessions.value,periodicity: periodic.value,
+    themeAssignments: (themeAssignments || []).map(normalizeThemeAssignment).map((row) => ({ occurrenceNumber: row.occurrenceNumber,
+      themeVersionId: row.themeVersionId,freeLabel: row.freeLabel,freeNormalized: row.freeNormalized,
+      sessionTemplateId: row.sessionTemplateId,sortOrder: row.sortOrder }))
   };
   const errors = [...sessions.errors,...periodic.errors];
   if(!(requiredOccurrences > 0)) errors.push({ code: 'INVALID_REQUIRED_OCCURRENCES' });
@@ -349,17 +412,26 @@ function projectToQuoVadis(input = {}){
     if(!sessionsByOccurrence.has(session.plannedOccurrenceId)) sessionsByOccurrence.set(session.plannedOccurrenceId,[]);
     sessionsByOccurrence.get(session.plannedOccurrenceId).push(session);
   }
+  const themes = (input.themeAssignments || requirement.snapshot && requirement.snapshot.themeAssignments || []).map(normalizeThemeAssignment);
+  const projectedTheme = (row) => ({ kind: row.kind,themeVersionId: row.themeVersionId,code: row.code,label: row.label || row.freeLabel,
+    free: row.kind === 'FREE',sessionTemplateId: row.sessionTemplateId || null });
+  const themesForOccurrence = (number) => themes.filter((row) => row.occurrenceNumber === number).map(projectedTheme);
   return {
     obligations: (input.occurrences || []).map((row) => ({ sourceType: 'CATALOG_C4',sourceRef: row.plannedOccurrenceId,
       plannedOccurrenceId: row.plannedOccurrenceId,annualRequirementId: row.annualRequirementId,definitionCode,
       title: text(requirement.label || definition.label),domain: primaryDomain,primaryDomain,domainCodes,
       publicBindings: canonicalize(publicBindings),statisticalContributions: canonicalize(statisticalContributions),
+      themes: themesForOccurrence(integer(row.occurrenceNumber ?? row.occurrence_number)),
+      preferredWindowStart: dateOnly(requirement.windowStart || requirement.window_start),preferredWindowEnd: dateOnly(requirement.windowEnd || requirement.window_end),
+      constraints: canonicalize(input.planningConstraints || requirement.snapshot && requirement.snapshot.planningConstraints || []),
       publicCodes: [...new Set(publicBindings.map((binding) => text(binding.publicCode || binding.code)).filter(Boolean))],
       statComCodes: [...new Set(statisticalContributions.map((entry) => text(entry.statcomCode || entry.statcom_code)).filter(Boolean))],
       status: 'A_PLANIFIER',noOperationalEventCreated: true })),
     sessionIntents: (input.occurrences || []).flatMap((row) => (sessionsByOccurrence.get(row.plannedOccurrenceId) || [])
       .sort((a,b) => a.sequence - b.sequence).map((session) => ({ plannedOccurrenceSessionId: session.plannedOccurrenceSessionId,
-        plannedOccurrenceId: row.plannedOccurrenceId,sequence: session.sequence,status: 'A_PROPOSER',startsAt: null,endsAt: null })))
+        plannedOccurrenceId: row.plannedOccurrenceId,sequence: session.sequence,status: 'A_PROPOSER',startsAt: null,endsAt: null,
+        themes: themes.filter((theme) => theme.occurrenceNumber === integer(row.occurrenceNumber ?? row.occurrence_number)
+          && theme.sessionTemplateId === session.sessionTemplateId).map(projectedTheme) })))
   };
 }
 
@@ -381,6 +453,6 @@ function classifyLegacyCandidates(rows = []){
 
 module.exports = {
   ACTIVITY_TYPES,PERIODICITY_TYPES,PUBLIC_OPERATORS,QUALIFICATION_BINDING_TYPES,CONSTRAINT_SEVERITIES,CONSTRAINT_TYPES,CONTRIBUTION_MODES,
-  canonicalJson,fingerprint,validatePeriodicity,validateSessionTemplates,validatePlanningConstraint,validateStatisticalContribution,
+  canonicalJson,fingerprint,normalizeThemeLabel,normalizeThemeAssignment,validateThemeAssignments,validatePeriodicity,validateSessionTemplates,validatePlanningConstraint,validateStatisticalContribution,
   validateDefinitionContract,prepareAnnualRequirementReady,generateAnnualProgram,validateAnnualRequirementMutation,projectToQuoVadis,classifyLegacyCandidates
 };

@@ -405,6 +405,7 @@
       annualCatalogActivity(code, params) { return request('GET', `/annual-catalog/activities/${encodeURIComponent(code)}${queryString(params || {})}`); },
       createAnnualRequirement(body) { return request('POST', '/annual-catalog/requirements', body || {}); },
       updateAnnualRequirement(id, body) { return request('PATCH', `/annual-catalog/requirements/${encodeURIComponent(id)}`, body || {}); },
+      replaceAnnualRequirementThemes(id, body) { return request('PUT', `/annual-catalog/requirements/${encodeURIComponent(id)}/themes`, body || {}); },
       readyAnnualRequirement(id) { return request('POST', `/annual-catalog/requirements/${encodeURIComponent(id)}/ready`, {}); },
       reviseAnnualRequirement(id) { return request('POST', `/annual-catalog/requirements/${encodeURIComponent(id)}/revise`, {}); },
       generateAnnualRequirement(id) { return request('POST', `/annual-catalog/requirements/${encodeURIComponent(id)}/generate`, {}); },
