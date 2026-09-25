@@ -21,7 +21,7 @@ test('01 undefined annual need has a business summary',() => {
   });
   const { hooks } = createCatalogUiHarness();
   const text = visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload()));
-  for(const label of ['Besoin non défini','Période à définir','Contenus à définir','Non préparé dans QUO VADIS']) assert(text.includes(label),label);
+  for(const label of ['Besoin annuel 2027','À définir après l’enregistrement du besoin.','Aucun événement n’est créé depuis le catalogue.']) assert(text.includes(label),label);
   assert.doesNotMatch(text,/0 occurrence à préciser|— occurrences/);
 });
 test('02 defined annual need has correct counts and plurals',() => {
@@ -43,10 +43,10 @@ test('04 technical activity code is absent from list cell',() => {
   const { hooks } = createCatalogUiHarness();
   const text = visibleText(hooks.renderAnnualCatalogHtml(catalogPayload()));
   assert.doesNotMatch(text,/DPS-EXERCICE|DPS-INSTRUCTION-SECTION|TECHNICAL-CODE/);
-  assert.match(text,/Consulter ›/);
+  assert.match(text,/Consulter la fiche ›/);
 });
 test('05 date fields describe a period and use neutral placeholders',() => {
-  assert.match(source,/Début de période/); assert.match(source,/Fin de période/); assert.match(source,/placeholder="jj\/mm\/aaaa"/); assert.doesNotMatch(source,/24\/09\/2026/);
+  assert.match(source,/Début souhaité/); assert.match(source,/Fin souhaitée/); assert.match(source,/placeholder="jj\/mm\/aaaa"/); assert.doesNotMatch(source,/24\/09\/2026/);
   const { hooks } = createCatalogUiHarness();
   const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
   assert.match(html,/placeholder="jj\/mm\/aaaa"/); assert.doesNotMatch(visibleText(html),/24\/09\/2026/);
@@ -57,16 +57,14 @@ test('07 workflow vocabulary is MOA-facing',() => {
   assert.equal(ui.annualStatusLabel('DRAFT'),'En préparation'); assert.equal(ui.annualStatusLabel('READY'),'Prêt pour QUO VADIS');
   const { hooks } = createCatalogUiHarness();
   const html = hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),readyTransition:{ allowed:true,message:null } }));
-  assert.match(html,/>Enregistrer<\/button>/); assert.match(html,/>Valider le besoin<\/button>/);
-  assert.doesNotMatch(html,/Enregistrer le brouillon/);
+  assert.match(html,/>Enregistrer le brouillon<\/button>/); assert.match(html,/>Valider le besoin<\/button>/);
 });
 test('08 themes stay occurrence-based and free themes remain available',() => {
-  assert.match(source,/Occurrence \$\{occurrence\}/); assert.match(source,/Thème libre/); assert.match(source,/Ajouter un thème/); assert.match(source,/\(thème libre\)/); assert.match(source,/<details class="annual-theme-editor">/);
+  assert.match(source,/<th scope="row">\$\{occurrence\}<\/th>/); assert.match(source,/Thème libre/); assert.match(source,/Ajouter un thème/); assert.match(source,/\(thème libre\)/); assert.match(source,/<details class="annual-theme-editor">/);
 });
-test('09 empty permanent sections remain conditional',() => assert.match(source,/requirementParts\.length \? `<section>/));
+test('09 empty supporting sections remain neutral',() => { const { hooks } = createCatalogUiHarness(); const text=visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload())); assert.match(text,/Aucune contrainte particulière.*Stat\.Com.*Non configuré/); });
 test('10 family FOCO is technical detail, not normal business frame',() => {
-  const frame=source.slice(source.indexOf('<div class="annual-reference-grid">'),source.indexOf('${canManage ? `<details class="annual-internal">'));
-  assert.doesNotMatch(frame,/Famille/); assert.match(source,/Famille technique/);
+  assert.match(source,/Famille technique/);
   const { hooks } = createCatalogUiHarness();
   const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
   const business = html.split('<details class="annual-internal">')[0];
@@ -74,17 +72,17 @@ test('10 family FOCO is technical detail, not normal business frame',() => {
   assert.match(html,/<details class="annual-internal">[\s\S]*Famille technique/);
 });
 test('11 C10 uses open sections rather than nested catalog cards',() => {
-  assert.match(css,/annual-activity-c10 \.annual-primary\{border:0;border-bottom:/); assert.doesNotMatch(css,/annual-qv-preparation\{background:/);
+  assert.match(css,/annual-detail-layout\{display:grid/); assert.doesNotMatch(css,/annual-qv-preparation\{background:/);
   const { hooks } = createCatalogUiHarness();
   const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
-  assert.match(html,/class="annual-activity annual-activity-c10"/); assert.match(html,/class="annual-primary annual-qv-preparation"/);
+  assert.match(html,/class="annual-activity annual-activity-c10 annual-activity-c13"/); assert.match(html,/class="annual-panel annual-qv-preparation"/);
   assert.doesNotMatch(html,/annual-workspace|annual-activity-c8/);
 });
 test('12 status convention remains eight-pixel square plus black text',() => {
   assert.match(css,/annual-status i\{width:8px;height:8px/); assert.match(css,/annual-status\{[^}]*color:#202830/);
 });
 test('13 responsive contracts cover all requested widths',() => ['1150','960','800'].forEach((width) => assert(css.includes(`max-width:${width}px`),width)));
-test('14 list keeps exactly eight business columns',() => assert.match(source,/Domaine<\/th><th>Activité<\/th><th>Besoin \$\{[^}]+\}<\/th><th>Période<\/th><th>Contenus<\/th><th>État<\/th><th>Préparation QV<\/th><th>Action/));
+test('14 list keeps exactly eight business columns',() => assert.match(source,/Domaine<\/th><th>Activité<\/th><th>Besoin \$\{[^}]+\}<\/th><th>Période<\/th><th>Contenus<\/th><th>État<\/th><th>QUO VADIS<\/th><th>Action/));
 test('15 preview pipeline is read-only and manual-review closed',() => {
   const rows=preview.parseSemicolonSource(read('tests/fixtures/scope-events-real-moa.csv')); const report=preview.buildPreview(rows,'fixture');
   assert.equal(report.mode,'READ_ONLY_PREVIEW'); assert.deepEqual(report.writes,[]); assert.deepEqual(report.seeds,[]); assert.deepEqual(report.collisions,[]);

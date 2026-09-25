@@ -135,8 +135,8 @@ test('33 list and detail use the approved MOA vocabulary',() => {
   const { hooks } = createCatalogUiHarness();
   const list = visibleText(hooks.renderAnnualCatalogHtml(catalogPayload()));
   const detail = visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),readyTransition:{ allowed:true,message:null } })));
-  for(const label of ['Besoin 2027','Période','Contenus','Préparation QV','Consulter ›']) assert(list.includes(label),label);
-  for(const label of ['Contenus 2027','Préparation QUO VADIS','Valider le besoin','Détails internes']) assert(detail.includes(label),label);
+  for(const label of ['Besoin 2027','Période','Contenus','QUO VADIS','Consulter la fiche ›']) assert(list.includes(label),label);
+  for(const label of ['Thèmes par occurrence','Préparation dans QUO VADIS','Valider le besoin','Détails techniques']) assert(detail.includes(label),label);
   assert.match(read('assets/js/scope-ui.js'),/annualThemeAssignments/);
 });
 test('34 buttons are softer than state red and responsive breakpoints exist',() => {

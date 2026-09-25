@@ -96,7 +96,7 @@ function runtimePdfUrls(result,fontName = 'FoxitSymbol.pfb'){
   await test('05 list DOM exposes eight business columns and no visible technical code',() => {
     const { hooks } = createCatalogUiHarness();
     const html = hooks.renderAnnualCatalogHtml(catalogPayload()); const text = visibleText(html);
-    for(const label of ['Domaine','Activité','Besoin 2027','Période','Contenus','État','Préparation QV','Action','Consulter ›']) assert(text.includes(label),label);
+    for(const label of ['Domaine','Activité','Besoin 2027','Période','Contenus','État','QUO VADIS','Action','Consulter la fiche ›']) assert(text.includes(label),label);
     assert.doesNotMatch(text,/DPS-EXERCICE|DPS-INSTRUCTION-SECTION|TECHNICAL-CODE|Sessions|Public/);
     assert.doesNotMatch(html,/badge|pill|<small>/i);
     assert.match(html,/annual-status annual-status-a-definir"><i/);
@@ -109,12 +109,12 @@ function runtimePdfUrls(result,fontName = 'FoxitSymbol.pfb'){
     const { hooks } = createCatalogUiHarness();
     const html = hooks.renderAnnualCatalogActivityHtml(activityPayload());
     const business = html.split('<details class="annual-internal">')[0]; const text = visibleText(html);
-    for(const label of ['Besoin non défini','Période à définir','Contenus à définir','Non préparé dans QUO VADIS','Enregistrer','Préparation QUO VADIS','Détails internes','Famille technique','FOCO']) assert(text.includes(label),label);
+    for(const label of ['Besoin annuel 2027','À définir après l’enregistrement du besoin.','Aucun événement n’est créé depuis le catalogue.','Enregistrer le brouillon','Préparation dans QUO VADIS','Détails techniques','Famille technique','FOCO']) assert(text.includes(label),label);
     assert.match(html,/placeholder="jj\/mm\/aaaa"/);
-    assert.doesNotMatch(text,/— occurrences|0 occurrence à préciser|DEFAULT|24\/09\/2026|Enregistrer le brouillon/);
+    assert.doesNotMatch(text,/— occurrences|0 occurrence à préciser|DEFAULT|24\/09\/2026/);
     assert.doesNotMatch(business,/DPS-INSTRUCTION-SECTION|<dt>Famille<\/dt>|annual-workspace|annual-activity-c8/);
-    assert.match(html,/class="annual-activity annual-activity-c10"/);
-    assert.match(html,/<section class="annual-primary annual-qv-preparation">/);
+    assert.match(html,/class="annual-activity annual-activity-c10 annual-activity-c13"/);
+    assert.match(html,/<section class="annual-panel annual-qv-preparation">/);
     assert.match(html,/<details class="annual-internal">/); assert.doesNotMatch(html,/<details class="annual-internal"[^>]*open/);
   });
 
@@ -122,8 +122,8 @@ function runtimePdfUrls(result,fontName = 'FoxitSymbol.pfb'){
     const requirement = draftRequirement();
     const allowedHarness = createCatalogUiHarness();
     const allowed = allowedHarness.hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement,readyTransition:{ allowed:true,message:null },assignments:[{ occurrenceNumber:1,label:'Feu',themeVersionId:'theme-v1' }] }));
-    assert.match(allowed,/>1 occurrence</); assert.match(allowed,/1 thème défini/); assert.match(allowed,/>Enregistrer</); assert.match(allowed,/>Valider le besoin</);
-    assert.doesNotMatch(allowed,/id="annual-ready"[^>]*disabled|DEFAULT|Enregistrer le brouillon|annual-activity-c8/);
+    assert.match(allowed,/1 occurrence/); assert.match(allowed,/1 thème défini/); assert.match(allowed,/>Enregistrer le brouillon</); assert.match(allowed,/>Valider le besoin</);
+    assert.doesNotMatch(allowed,/id="annual-ready"[^>]*disabled|DEFAULT|annual-activity-c8/);
     const deniedHarness = createCatalogUiHarness();
     const denied = deniedHarness.hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement,readyTransition:{ allowed:false,message:'Le public de référence doit être configuré avant validation.' } }));
     assert.match(denied,/id="annual-ready"[^>]* disabled/); assert.match(denied,/Le public de référence doit être configuré avant validation/);
@@ -137,13 +137,13 @@ function runtimePdfUrls(result,fontName = 'FoxitSymbol.pfb'){
       assignments:[{ occurrenceNumber:1,label:'Feu',themeVersionId:'theme-v1' },{ occurrenceNumber:2,freeLabel:'Manœuvre hydraulique' }]
     }));
     assert.match(html,/2 occurrences/); assert.match(html,/2 thèmes définis/); assert.match(html,/1 \/ 2 occurrences préparées/);
-    assert.match(html,/Occurrence 1<\/th><td>[\s\S]*Feu/); assert.match(html,/Occurrence 2<\/th><td>[\s\S]*Manœuvre hydraulique[\s\S]*\(thème libre\)/);
+    assert.match(html,/<th scope="row">1<\/th><td>[\s\S]*Feu/); assert.match(html,/<th scope="row">2<\/th><td>[\s\S]*Manœuvre hydraulique[\s\S]*\(thème libre\)/);
     assert.doesNotMatch(html,/promotion|annual-workspace|annual-activity-c8/i);
   });
 
   await test('09 C10 CSS remains scoped, open and responsive at required breakpoints',() => {
     const css = fs.readFileSync(path.join(ROOT,'assets/css/scope.css'),'utf8');
-    assert.match(css,/\.annual-activity-c10 \.annual-primary\{border:0;border-bottom:/);
+    assert.match(css,/\.annual-detail-layout\{display:grid/);
     assert.match(css,/\.annual-catalogue \.annual-row-action\{text-decoration:none!important\}/);
     assert.match(css,/\.annual-status i\{width:8px;height:8px/); assert.match(css,/\.annual-status\{[^}]*color:#202830/);
     for(const width of ['1150','960','800']) assert(css.includes(`max-width:${width}px`),width);

@@ -333,7 +333,7 @@ function memoryServiceDb(options = {}){
   });
   await test('frontend exposes required controls and exact action wording',async () => {
     const source = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');
-    for(const label of ['Année','Recherche','Domaine','État','Réinitialiser','Consulter','Valider le besoin','Préparation QUO VADIS']) assert(source.includes(label),label);
+    for(const label of ['Année','Recherche','Domaine','État','Réinitialiser','Consulter la fiche','Valider le besoin','Préparation dans QUO VADIS']) assert(source.includes(label),label);
   });
   await test('frontend presents migration-required state without SQL detail',async () => {
     const source = fs.readFileSync(path.join(root,'assets/js/scope-ui.js'),'utf8');
@@ -350,7 +350,7 @@ function memoryServiceDb(options = {}){
     const { hooks } = createCatalogUiHarness();
     const detail = visibleText(hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),readyTransition:{ allowed:true,message:null } })));
     assert.doesNotMatch(detail,/publier|publication|créer un événement/i);
-    assert.match(detail,/Préparation QUO VADIS/);
+    assert.match(detail,/Préparation dans QUO VADIS/);
   });
   process.stdout.write(`C6-B ${passed}/${passed} PASS\n`);
 })().catch((error) => { console.error(error); process.exitCode = 1; });

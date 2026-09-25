@@ -63,15 +63,17 @@ function catalogPayload(){
 
 function activityPayload(options = {}){
   const requirement = Object.prototype.hasOwnProperty.call(options,'requirement') ? options.requirement : null;
+  const configuration = {
+    publics:[{ public_label:'DPS général',public_code:'DPS-GEN' }],
+    sessions:[{ label:'Instruction',duration_minutes:120 }],periodicity:{ periodicity_type:'ANNUAL' },
+    qualifications:[],roles:[],locations:[],constraints:[],statCom:[],availableThemes:options.availableThemes || [],
+    ...(options.configuration || {})
+  };
   return {
     readiness:{ status:'SCHEMA_READY' },readyTransition:options.readyTransition || { allowed:false,message:null },
     activity:{ definitionId:'definition-dps',code:'DPS-INSTRUCTION-SECTION',label:'Instruction de section DPS',domain:'DPS',familyCode:'FOCO',activityType:'INSTRUCTION',version:{ versionCode:'V1',fingerprint:'f'.repeat(64),description:'Instruction opérationnelle de section.' } },
     annualRequirement:requirement,
-    configuration:{
-      publics:[{ public_label:'DPS général',public_code:'DPS-GEN' }],
-      sessions:[{ label:'Instruction',duration_minutes:120 }],periodicity:{ periodicity_type:'ANNUAL' },
-      qualifications:[],roles:[],locations:[],constraints:[],statCom:[],availableThemes:options.availableThemes || []
-    },
+    configuration,
     annualThemeAssignments:options.assignments || [],
     generation:{ occurrences:[],sessions:[],preparedOccurrenceCount:options.preparedOccurrenceCount || 0 }
   };
@@ -86,4 +88,30 @@ function visibleText(html){
     .replace(/<[^>]+>/g,' ').replace(/&rsaquo;|&#8250;/g,'›').replace(/\s+/g,' ').trim();
 }
 
-module.exports = { createCatalogUiHarness,catalogPayload,activityPayload,draftRequirement,visibleText };
+function multiOccurrenceActivityPayload(overrides = {}){
+  return activityPayload({
+    requirement:draftRequirement({ requiredOccurrences:4,windowStart:'2027-03-01',windowEnd:'2027-11-30' }),
+    readyTransition:{ allowed:false,message:'Un thème doit encore être défini avant validation.' },
+    preparedOccurrenceCount:0,
+    availableThemes:[
+      { themeVersionId:'theme-feu',label:'FEU' },
+      { themeVersionId:'theme-pionnier',label:'PIONNIER' },
+      { themeVersionId:'theme-abc',label:'ABC' }
+    ],
+    assignments:[
+      { annualThemeAssignmentId:'assignment-1',occurrenceNumber:1,label:'FEU',themeVersionId:'theme-feu' },
+      { annualThemeAssignmentId:'assignment-2',occurrenceNumber:2,label:'PIONNIER',themeVersionId:'theme-pionnier' },
+      { annualThemeAssignmentId:'assignment-3',occurrenceNumber:2,label:'ABC',themeVersionId:'theme-abc' },
+      { annualThemeAssignmentId:'assignment-4',occurrenceNumber:4,freeLabel:'Manœuvre hydraulique' }
+    ],
+    configuration:{
+      publics:[{ public_label:'Sapeurs-pompiers (DPS)',public_code:'DPS-GEN' }],
+      sessions:[{ label:'Instruction',duration_minutes:120 }],periodicity:{ periodicity_type:'ANNUAL' },
+      qualifications:[],roles:[],locations:[],
+      constraints:[],statCom:[{ statcom_code:'0120F7',mode:'FULL_DURATION',aggregation_rule:'PER_PARTICIPANT' }]
+    },
+    ...overrides
+  });
+}
+
+module.exports = { createCatalogUiHarness,catalogPayload,activityPayload,multiOccurrenceActivityPayload,draftRequirement,visibleText };
