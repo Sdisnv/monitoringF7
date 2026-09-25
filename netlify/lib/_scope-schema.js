@@ -10,6 +10,7 @@ const annualCatalogDdl = require('./_scope-annual-catalog-ddl');
 const catalogConvergenceDdl = require('./_scope-catalog-convergence-ddl');
 const annualThemeDdl = require('./_scope-annual-theme-ddl');
 const annualCatalogImportDdl = require('./_scope-annual-catalog-import-ddl');
+const statComReferential = require('./_scope-statcom-referential');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -909,6 +910,24 @@ async function migrateAnnualCatalogImportC15(){
     await client.query(annualCatalogImportDdl.GUARD_SQL);
     await client.query(annualCatalogImportDdl.PROTECTION_SQL);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-annual-catalog-import-c15') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateStatComJspRepair2(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902286]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-statcom-jsp-repair-2'`);
+    if(done.rows[0]) return;
+    const codes = new Set(['010JB1','010JC1','010JG1','COURJSP']);
+    for(const row of statComReferential.initialStatComCodes().filter((item) => codes.has(item.code))){
+      await client.query(
+        `insert into scope_statcom_referentiel(code,label,domain,category,oi_code,specialization,specialization_label,valid_from,valid_to,active,metadata)
+         values ($1,$2,$3,$4,$5,$6,$6,$7,$8,$9,$10::jsonb)
+         on conflict (code) do nothing`,
+        [row.code,row.label,row.domain,row.category,row.oi,row.specialization,row.valid_from,row.valid_to,row.active,JSON.stringify(row.metadata || {})]
+      );
+    }
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-statcom-jsp-repair-2') on conflict (version) do nothing`);
   });
 }
 

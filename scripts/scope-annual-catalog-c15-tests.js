@@ -266,9 +266,12 @@ test('32b crée les liaisons VPC canoniques et rejette une référence absente',
   } };
   const service = createScopeAnnualCatalogService({ database:{ transaction:async (fn) => fn(client),query:client.query },readinessInspector:async () => ({ ready:true,status:'SCHEMA_READY' }) });
   await service.createActivity({ label:'Formation VPC',primaryDomain:'FOSPEC',activityType:'TRAINING',durationMinutes:120,
-    publicCodes:['FOSPEC-VPC'],qualificationCodes:['VPC'] },{ sub:'reviewer' });
+    publicCodes:['FOSPEC-VPC'],qualificationCodes:['VPC'],statComCodes:['010FOBA'] },{ sub:'reviewer' });
   assert(calls.some((call) => /scope_activity_public_bindings/.test(call.sql) && call.params[1] === 'FOSPEC-VPC'));
   assert(calls.some((call) => /scope_activity_qualification_bindings/.test(call.sql) && call.params[1] === 'VPC' && /actif=true/.test(call.sql)));
+  const statComCall = calls.find((call) => /scope_statcom_referentiel/.test(call.sql));
+  assert(statComCall && statComCall.params[1] === '010FOBA');
+  assert(/\bactive=true\b/.test(statComCall.sql) && !/\bactif=true\b/.test(statComCall.sql));
 
   let activated = false;
   const invalid = { async query(sql){

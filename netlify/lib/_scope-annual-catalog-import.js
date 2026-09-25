@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const { readXlsx } = require('./_scope-xlsx-reader');
+const statComReferential = require('./_scope-statcom-referential');
 const { clean,splitActivityThemeLabel,formatActivityThemeLabel } = require('../../assets/js/scope-activity-label');
 
 const SHEET_NAME = "QUO VADIS '26";
@@ -15,7 +16,7 @@ const REQUIRED_COLUMNS = Object.freeze([
   'ÉVÉNEMENT','LIEU','PERSONNEL CONCERNÉ','DOMAINE','SOUS-DOMAINE','QUI','RESPONSABLE','SALLE','COURS CADRES','CODE ACTIVITÉS','STAT.COM.',...CROSS_COLUMNS
 ]);
 const PRIMARY_SUBDOMAINS = new Set(['DPS','DAP','JSP','FOBA','FOCA','FOSPEC','AUTO','PR']);
-const PIPELINE_VERSION = 'C15-REPAIR-1';
+const PIPELINE_VERSION = 'C16-REPAIR-2';
 
 function normalize(value){
   return clean(value).replace(/œ/gi,'oe').replace(/æ/gi,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
@@ -60,6 +61,8 @@ function rowsFromWorkbook(input,options = {}){
     if(!rawLabel) return null;
     const split = splitActivityThemeLabel(rawLabel);
     const crosses = Object.fromEntries(CROSS_COLUMNS.map((name) => [name,marked(value(row,name))]));
+    const sourceStatCom = clean(value(row,'STAT.COM.')) || null;
+    const statComResolution = statComReferential.resolveStatComCode(sourceStatCom,excelDate(value(row,'DATE')));
     return {
       sourceRow: index + HEADER_ROW + 1,rawLabel,activityLabel: split.activity,theme: split.theme,
       displayLabel: formatActivityThemeLabel(split.activity,split.theme),
@@ -69,7 +72,7 @@ function rowsFromWorkbook(input,options = {}){
       historicalSubdomain: clean(value(row,'SOUS-DOMAINE')) || null,qui: clean(value(row,'QUI')) || null,
       responsible: clean(value(row,'RESPONSABLE')) || null,room: clean(value(row,'SALLE')) || null,
       cadreCourse: marked(value(row,'COURS CADRES')),activityCode: clean(value(row,'CODE ACTIVITÉS')) || null,
-      statCom: clean(value(row,'STAT.COM.')) || null,inactive: marked(value(row,'INACTIF')),crosses
+      sourceStatCom,statCom:statComResolution.canonicalCode,statComResolution,inactive: marked(value(row,'INACTIF')),crosses
     };
   }).filter(Boolean);
   return { sheetName: workbook.sheetName,sheetNames: workbook.sheetNames,physicalRows: workbook.rows.length,usedColumns: indexes.size,headers: [...indexes.keys()],rows };
@@ -194,7 +197,10 @@ function buildProposals(sourceRows,options = {}){
       sites: unique(rows.map((row) => row.location)).sort((a,b) => a.localeCompare(b,'fr')),
       historicalDomains: unique(rows.map((row) => row.historicalDomain).filter(Boolean)).sort(),
       historicalSubdomains: unique(rows.map((row) => row.historicalSubdomain).filter(Boolean)).sort(),
-      qui: unique(rows.map((row) => row.qui).filter(Boolean)).sort(),statComCodes: unique(rows.map((row) => row.statCom).filter(Boolean)).sort(),
+      qui: unique(rows.map((row) => row.qui).filter(Boolean)).sort(),
+      sourceStatComCodes:unique(rows.map((row) => row.sourceStatCom).filter(Boolean)).sort(),
+      statComCodes: unique(rows.map((row) => row.statCom).filter(Boolean)).sort(),
+      statComResolutions:unique(rows.filter((row) => row.sourceStatCom).map((row) => canonicalJson(row.statComResolution))).sort().map((row) => JSON.parse(row)),
       activityCodes: unique(rows.map((row) => row.activityCode).filter(Boolean)).sort(),
       majorPopulations: unique(rows.flatMap((row) => row.inferred.majorPopulations)).sort(),
       activityType: inferActivityType(label),inactiveRows: rows.filter((row) => row.inactive).length,

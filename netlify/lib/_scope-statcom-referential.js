@@ -85,7 +85,11 @@ const INITIAL_STATCOM_CODES = [
   ['050F71', 'Heure administrative Formation PR', 'PR', 'ADMIN', 'F7', null],
   ['050F75', 'Heure administrative Formation AUTO', 'AUTO', 'ADMIN', 'F7', null],
   ['050F76', 'Heure administrative Formation FOSPEC', 'FOSPEC', 'ADMIN', 'F7', null],
-  ['050F77', 'Heure administrative Formation FOCA', 'FOCA', 'ADMIN', 'F7', null]
+  ['050F77', 'Heure administrative Formation FOCA', 'FOCA', 'ADMIN', 'F7', null],
+  ['010JB1', 'Exercices JSP B1', 'JSP', 'EXERCI', 'B1', null, '2026-01-01', "QUO VADIS '26"],
+  ['010JC1', 'Exercices JSP C1', 'JSP', 'EXERCI', 'C1', null, '2026-01-01', "QUO VADIS '26"],
+  ['010JG1', 'Exercices JSP G1', 'JSP', 'EXERCI', 'G1', null, '2026-01-01', "QUO VADIS '26"],
+  ['COURJSP', 'Cours JSP', 'JSP', 'COURS', null, null, '2026-01-01', "QUO VADIS '26"]
 ];
 
 function normalizeStatComCode(value){
@@ -93,22 +97,36 @@ function normalizeStatComCode(value){
 }
 
 function initialStatComCodes(){
-  return INITIAL_STATCOM_CODES.map(([code, label, domain, category, oi, specialization], index) => ({
+  return INITIAL_STATCOM_CODES.map(([code, label, domain, category, oi, specialization, validFrom = '2023-01-01', source = "Plan comptable - StatCOM QuoVadis'23.pdf"], index) => ({
     code,
     label,
     domain,
     category,
     oi: oi || null,
     specialization: specialization || null,
-    valid_from: '2023-01-01',
+    valid_from: validFrom,
     valid_to: null,
     active: true,
     metadata: {
-      source: "Plan comptable - StatCOM QuoVadis'23.pdf",
+      source,
       sourceList: 'Liste des activités et Stat COMM pour saisie dans ECAWIN',
       sourceOrder: index + 1
     }
   }));
+}
+
+const STATCOM_SUCCESSIONS = Object.freeze([
+  Object.freeze({ sourceCode:'010JY3',canonicalCode:'010JC1',effectiveFrom:'2026-01-01' })
+]);
+
+function resolveStatComCode(value,date){
+  const sourceCode = normalizeStatComCode(value);
+  if(!sourceCode) return { sourceCode:null,canonicalCode:null,successionApplied:false,effectiveFrom:null };
+  const day = date ? String(date).slice(0,10) : null;
+  const succession = STATCOM_SUCCESSIONS.find((row) => row.sourceCode === sourceCode && day && day >= row.effectiveFrom);
+  return succession
+    ? { sourceCode,canonicalCode:succession.canonicalCode,successionApplied:true,effectiveFrom:succession.effectiveFrom }
+    : { sourceCode,canonicalCode:sourceCode,successionApplied:false,effectiveFrom:null };
 }
 
 function isStatComValidForDate(row, date){
@@ -141,5 +159,7 @@ module.exports = {
   initialStatComCodes,
   isStatComValidForDate,
   normalizeStatComCode,
+  resolveStatComCode,
+  STATCOM_SUCCESSIONS,
   statComSnapshot
 };

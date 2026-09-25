@@ -151,7 +151,7 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
      on conflict (definition_version_id,competence_id,binding_type) do nothing`,[versionId,code,JSON.stringify(metadata)]);
   for(const code of input.statComCodes) await insertRequiredReference(client,'STAT_COM',code,
     `insert into scope_activity_statistical_contributions(definition_version_id,statcom_code,mode,aggregation_rule,metadata)
-     select $1,code,'FULL_DURATION','PER_PARTICIPANT',$3::jsonb from scope_statcom_referentiel where code=$2 and actif=true
+     select $1,code,'FULL_DURATION','PER_PARTICIPANT',$3::jsonb from scope_statcom_referentiel where code=$2 and active=true
      on conflict on constraint scope_activity_statistical_contributions_uk do nothing`,[versionId,code,JSON.stringify(metadata)]);
   if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
   return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
@@ -536,8 +536,8 @@ function createScopeAnnualCatalogService(options = {}){
               target = one(await client.query(
                 `insert into scope_event_definitions(code,label,domain,description,status,metadata,family_code,activity_type)
                  values ($1,$2,$3,$4,'ACTIF',$5::jsonb,$6,$7) returning definition_id,code`,
-                [proposal.definitionCode,input.label,input.primaryDomain,input.description,JSON.stringify({ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId,sourceRows:proposal.sourceRows }),input.familyCode,input.activityType]));
-              await insertActivityVersion(client,target,input,actor,{ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId,sourceSha256:preview.source.sha256 });
+                [proposal.definitionCode,input.label,input.primaryDomain,input.description,JSON.stringify({ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId,sourceRows:proposal.sourceRows,sourceStatComCodes:proposal.sourceStatComCodes,statComResolutions:proposal.statComResolutions }),input.familyCode,input.activityType]));
+              await insertActivityVersion(client,target,input,actor,{ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId,sourceSha256:preview.source.sha256,sourceStatComCodes:proposal.sourceStatComCodes,statComResolutions:proposal.statComResolutions });
               await bindThemes(client,target.definition_id,input.themes,actor,{ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId });
             }
             imported.push(proposal.proposalId);
