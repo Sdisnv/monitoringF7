@@ -9,6 +9,7 @@ const personQualificationDdl = require('./_scope-person-qualifications-ddl');
 const annualCatalogDdl = require('./_scope-annual-catalog-ddl');
 const catalogConvergenceDdl = require('./_scope-catalog-convergence-ddl');
 const annualThemeDdl = require('./_scope-annual-theme-ddl');
+const annualCatalogImportDdl = require('./_scope-annual-catalog-import-ddl');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -896,6 +897,18 @@ async function migrateAnnualCatalogThemesC8B(){
     await client.query(annualThemeDdl.GUARD_SQL);
     await client.query(annualThemeDdl.PROTECTION_SQL);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-annual-catalog-themes-c8-b') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateAnnualCatalogImportC15(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902285]);
+    const done = await client.query(`select 1 from monitoring_f7_schema_migrations where version='scope-annual-catalog-import-c15'`);
+    if(done.rows[0]) return;
+    for(const sql of annualCatalogImportDdl.DDL) await client.query(sql);
+    await client.query(annualCatalogImportDdl.GUARD_SQL);
+    await client.query(annualCatalogImportDdl.PROTECTION_SQL);
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-annual-catalog-import-c15') on conflict (version) do nothing`);
   });
 }
 

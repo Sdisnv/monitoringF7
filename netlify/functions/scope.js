@@ -130,9 +130,39 @@ async function scopeHandler(event){
     if(method === 'GET' && path === '/annual-catalog'){
       return response(200, { ok:true,...(await annualCatalog.listCatalog(queryOf(event))) });
     }
+    if(method === 'POST' && path === '/annual-catalog/import/preview'){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.previewImport(body)) });
+    }
+    if(method === 'POST' && path === '/annual-catalog/import/apply'){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(201, { ok:true,...(await annualCatalog.applyImport(body,claims)) });
+    }
+    if(method === 'POST' && path === '/annual-catalog/activities'){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(201, { ok:true,...(await annualCatalog.createActivity(body,claims)) });
+    }
     let params = match(path, '/annual-catalog/activities/:code');
     if(method === 'GET' && params){
       return response(200, { ok:true,...(await annualCatalog.getActivity(params.code,queryOf(event))) });
+    }
+    if(method === 'PATCH' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.updateActivity(params.code,body,claims)) });
+    }
+    if(method === 'DELETE' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.deleteUnusedActivity(params.code)) });
+    }
+    params = match(path, '/annual-catalog/activities/:code/archive');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.archiveActivity(params.code,claims)) });
+    }
+    params = match(path, '/annual-catalog/activities/:code/restore');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200, { ok:true,...(await annualCatalog.restoreActivity(params.code,claims)) });
     }
     if(method === 'POST' && path === '/annual-catalog/requirements'){
       if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });

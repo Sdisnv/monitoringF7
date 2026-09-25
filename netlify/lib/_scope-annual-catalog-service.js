@@ -3,7 +3,9 @@
 const db = require('./_postgres');
 const { HttpError } = require('./_scope-rules');
 const { inspectCanonicalReadiness } = require('./_scope-canonical-readiness');
-const { prepareAnnualRequirementReady,generateAnnualProgram,projectToQuoVadis,validateThemeAssignments } = require('./_scope-annual-catalog');
+const annualCatalogCore = require('./_scope-annual-catalog');
+const { prepareAnnualRequirementReady,generateAnnualProgram,projectToQuoVadis,validateThemeAssignments } = annualCatalogCore;
+const catalogImport = require('./_scope-annual-catalog-import');
 
 const INITIAL_ACTIVITY_CODES = Object.freeze([
   'DPS-EXERCICE','DPS-INSTRUCTION-SECTION','DPS-INSTRUCTION-DEMI-SECTION','DPS-DAP-EXERCICE',
@@ -22,6 +24,157 @@ function integer(value){ const parsed = Number(value); return Number.isInteger(p
 function actorId(actor){ return text(actor && (actor.sub || actor.subject || actor.email)) || 'scope-user'; }
 function rows(result){ return result && Array.isArray(result.rows) ? result.rows : []; }
 function one(result){ return rows(result)[0] || null; }
+
+function upperList(value){ return [...new Set((Array.isArray(value) ? value : []).map((item) => text(item).toUpperCase()).filter(Boolean))]; }
+function slug(value){
+  return text(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,56);
+}
+function normalizeActivityInput(body = {},defaults = {}){
+  const label = text(body.label ?? defaults.label);
+  const primaryDomain = text(body.primaryDomain ?? body.domain ?? defaults.primaryDomain ?? defaults.domain).toUpperCase();
+  const domainCodes = upperList(body.domainCodes || defaults.domainCodes || [primaryDomain]);
+  if(primaryDomain && !domainCodes.includes(primaryDomain)) domainCodes.unshift(primaryDomain);
+  const activityType = text(body.activityType ?? defaults.activityType ?? 'OTHER').toUpperCase();
+  const periodicityType = text(body.periodicityType ?? defaults.periodicityType ?? 'ANNUAL').toUpperCase();
+  const durationMinutes = integer(body.durationMinutes ?? defaults.durationMinutes ?? 120);
+  const familyCode = text(body.familyCode ?? defaults.familyCode).toUpperCase() || null;
+  if(!label || label.length > 180) throw new HttpError(422,'activite_libelle_invalide','Le libellé de l’activité est obligatoire et limité à 180 caractères.');
+  if(!DOMAIN_ORDER.includes(primaryDomain) || domainCodes.some((code) => !DOMAIN_ORDER.includes(code))) throw new HttpError(422,'activite_domaines_invalides','Les domaines canoniques de l’activité sont invalides.');
+  if(!annualCatalogCore.ACTIVITY_TYPES.includes(activityType)) throw new HttpError(422,'activite_type_invalide','Le type d’activité est invalide.');
+  if(!annualCatalogCore.PERIODICITY_TYPES.includes(periodicityType)) throw new HttpError(422,'activite_periodicite_invalide','La périodicité est invalide.');
+  if(!(durationMinutes > 0)) throw new HttpError(422,'activite_duree_invalide','La durée de séance doit être positive.');
+  if(familyCode && familyCode === primaryDomain) throw new HttpError(422,'activite_famille_invalide','La famille technique ne doit pas dupliquer le domaine canonique.');
+  return { label,description:text(body.description ?? defaults.description) || null,primaryDomain,domainCodes,activityType,periodicityType,
+    durationMinutes,familyCode,publicCodes:upperList(body.publicCodes || defaults.publicCodes),statComCodes:upperList(body.statComCodes || defaults.statComCodes),
+    qualificationCodes:upperList(body.qualificationCodes || defaults.qualificationCodes),themes:[...new Set((body.themes || defaults.themes || []).map(text).filter(Boolean))] };
+}
+
+async function insertRequiredReference(client,referenceType,code,sql,params){
+  const result = await client.query(sql,params);
+  if(Number(result && result.rowCount || 0) !== 1){
+    throw new HttpError(422,'reference_canonique_introuvable',`La référence canonique ${code} (${referenceType}) est introuvable ou inactive.`,{
+      referenceType,code
+    });
+  }
+}
+
+async function insertActivityVersion(client,definition,input,actor,metadata = {},options = {}){
+  const next = Number((one(await client.query(`select coalesce(max((regexp_match(version_code,'([0-9]+)$'))[1]::integer),0)+1 as value from scope_event_definition_versions where definition_id=$1`,[definition.definition_id])) || {}).value || 1);
+  const versionCode = `C15-V${next}`;
+  const contract = { definition:{ activityType:input.activityType },domainBindings:input.domainCodes.map((code) => ({ domainCode:code,bindingRole:code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY' })),
+    sessionTemplates:[{ code:'S1',sequence:1,label:input.label,durationMinutes:input.durationMinutes }],periodicity:{ type:input.periodicityType },
+    publicBindings:[],qualificationBindings:[],roleRequirements:[],planningConstraints:[],statisticalContributions:[] };
+  const checked = annualCatalogCore.validateDefinitionContract(contract);
+  if(!checked.valid) throw new HttpError(422,'activite_contrat_invalide','La définition de l’activité est incomplète.',{ errors:checked.errors });
+  const versionFingerprint = annualCatalogCore.fingerprint({ ...input,metadata });
+  const inserted = one(await client.query(
+    `insert into scope_event_definition_versions(definition_id,version_code,status,description,fingerprint,metadata,created_at,updated_at)
+     values ($1,$2,'DRAFT',$3,$4,$5::jsonb,now(),now()) returning definition_version_id`,
+    [definition.definition_id,versionCode,input.description,versionFingerprint,JSON.stringify({ ...metadata,label:input.label })]));
+  const versionId = inserted.definition_version_id;
+  if(options.cloneFromVersionId){
+    for(const code of input.domainCodes) await client.query(
+      `insert into scope_activity_domain_bindings(definition_version_id,domain_code,binding_role,metadata) values ($1,$2,$3,$4::jsonb)`,
+      [versionId,code,code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY',JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_session_templates(definition_version_id,code,sequence,label,mandatory,duration_minutes,min_offset_minutes,max_offset_minutes,
+         depends_on_session_template_id,public_continuity,location_continuity,metadata)
+       select $1,code,sequence,label,mandatory,case when sequence=1 then $3 else duration_minutes end,min_offset_minutes,max_offset_minutes,
+         null,public_continuity,location_continuity,metadata || $4::jsonb
+       from scope_activity_session_templates where definition_version_id=$2 order by sequence`,
+      [versionId,options.cloneFromVersionId,input.durationMinutes,JSON.stringify(metadata)]);
+    await client.query(
+      `update scope_activity_session_templates child set depends_on_session_template_id=parent_new.session_template_id
+       from scope_activity_session_templates child_old
+       join scope_activity_session_templates parent_old on parent_old.session_template_id=child_old.depends_on_session_template_id
+       join scope_activity_session_templates parent_new on parent_new.definition_version_id=$1 and parent_new.code=parent_old.code
+       where child.definition_version_id=$1 and child_old.definition_version_id=$2 and child.code=child_old.code`,
+      [versionId,options.cloneFromVersionId]);
+    await client.query(
+      `insert into scope_activity_periodicities(definition_version_id,periodicity_type,interval_value,anchor_date,anchor_year,occurrences_per_cycle,
+         tolerance_before_days,tolerance_after_days,metadata)
+       select $1,periodicity_type,interval_value,anchor_date,anchor_year,occurrences_per_cycle,tolerance_before_days,tolerance_after_days,metadata || $3::jsonb
+       from scope_activity_periodicities where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_public_bindings(definition_version_id,annual_requirement_id,public_definition_id,public_rule_version_id,group_code,operator,binding_type,metadata)
+       select $1,null,public_definition_id,public_rule_version_id,group_code,operator,binding_type,metadata || $3::jsonb
+       from scope_activity_public_bindings where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_qualification_bindings(definition_version_id,competence_id,binding_type,mandatory,metadata)
+       select $1,competence_id,binding_type,mandatory,metadata || $3::jsonb from scope_activity_qualification_bindings where definition_version_id=$2`,
+      [versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_role_requirements(definition_version_id,role_definition_id,qualification_competence_id,minimum_count,recommended_count,mandatory,metadata)
+       select $1,role_definition_id,qualification_competence_id,minimum_count,recommended_count,mandatory,metadata || $3::jsonb
+       from scope_activity_role_requirements where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_location_requirements(definition_version_id,requirement_type,lieu_id,salle_id,location_category_id,alternative_group,minimum_count,mandatory,metadata)
+       select $1,requirement_type,lieu_id,salle_id,location_category_id,alternative_group,minimum_count,mandatory,metadata || $3::jsonb
+       from scope_activity_location_requirements where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_responsible_requirements(definition_version_id,responsable_fonction_code,role_definition_id,qualification_competence_id,minimum_count,recommended_count,mandatory,metadata)
+       select $1,responsable_fonction_code,role_definition_id,qualification_competence_id,minimum_count,recommended_count,mandatory,metadata || $3::jsonb
+       from scope_activity_responsible_requirements where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_planning_constraints(definition_version_id,session_template_id,code,constraint_type,severity,config,metadata)
+       select $1,new_session.session_template_id,c.code,c.constraint_type,c.severity,c.config,c.metadata || $3::jsonb
+       from scope_activity_planning_constraints c
+       left join scope_activity_session_templates old_session on old_session.session_template_id=c.session_template_id
+       left join scope_activity_session_templates new_session on new_session.definition_version_id=$1 and new_session.code=old_session.code
+       where c.definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    await client.query(
+      `insert into scope_activity_statistical_contributions(definition_version_id,session_template_id,statcom_code,mode,value,aggregation_rule,metadata)
+       select $1,new_session.session_template_id,c.statcom_code,c.mode,c.value,c.aggregation_rule,c.metadata || $3::jsonb
+       from scope_activity_statistical_contributions c
+       left join scope_activity_session_templates old_session on old_session.session_template_id=c.session_template_id
+       left join scope_activity_session_templates new_session on new_session.definition_version_id=$1 and new_session.code=old_session.code
+       where c.definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+    if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
+    return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
+  }
+  for(const code of input.domainCodes) await client.query(
+    `insert into scope_activity_domain_bindings(definition_version_id,domain_code,binding_role,metadata) values ($1,$2,$3,$4::jsonb)`,
+    [versionId,code,code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY',JSON.stringify(metadata)]);
+  await client.query(
+    `insert into scope_activity_session_templates(definition_version_id,code,sequence,label,mandatory,duration_minutes,public_continuity,location_continuity,metadata)
+     values ($1,'S1',1,$2,true,$3,'INHERIT','INHERIT',$4::jsonb)`,[versionId,input.label,input.durationMinutes,JSON.stringify(metadata)]);
+  await client.query(
+    `insert into scope_activity_periodicities(definition_version_id,periodicity_type,metadata) values ($1,$2,$3::jsonb)`,
+    [versionId,input.periodicityType,JSON.stringify(metadata)]);
+  for(const code of input.publicCodes) await insertRequiredReference(client,'PUBLIC',code,
+    `insert into scope_activity_public_bindings(definition_version_id,public_definition_id,group_code,operator,binding_type,metadata)
+     select $1,public_definition_id,'DEFAULT','UNION','TARGET',$3::jsonb from scope_public_definitions where code=$2 and status='ACTIVE'
+     on conflict on constraint scope_activity_public_bindings_uk do nothing`,[versionId,code,JSON.stringify(metadata)]);
+  for(const code of input.qualificationCodes) await insertRequiredReference(client,'QUALIFICATION',code,
+    `insert into scope_activity_qualification_bindings(definition_version_id,competence_id,binding_type,mandatory,metadata)
+     select $1,competence_id,'PREREQUISITE',true,$3::jsonb from scope_competence_definitions where code=$2 and actif=true
+     on conflict (definition_version_id,competence_id,binding_type) do nothing`,[versionId,code,JSON.stringify(metadata)]);
+  for(const code of input.statComCodes) await insertRequiredReference(client,'STAT_COM',code,
+    `insert into scope_activity_statistical_contributions(definition_version_id,statcom_code,mode,aggregation_rule,metadata)
+     select $1,code,'FULL_DURATION','PER_PARTICIPANT',$3::jsonb from scope_statcom_referentiel where code=$2 and actif=true
+     on conflict on constraint scope_activity_statistical_contributions_uk do nothing`,[versionId,code,JSON.stringify(metadata)]);
+  if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
+  return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
+}
+
+async function bindThemes(client,definitionId,themes,actor,metadata = {}){
+  for(const label of themes || []){
+    const normalized = annualCatalogCore.normalizeThemeLabel(label);
+    const code = `QV26-${slug(label).slice(0,60)}-${annualCatalogCore.fingerprint(normalized).slice(0,6).toUpperCase()}`;
+    const definition = one(await client.query(
+      `insert into scope_theme_definitions(code,status,metadata,created_by,updated_by) values ($1,'ACTIVE',$2::jsonb,$3,$3)
+       on conflict (code) do update set updated_at=scope_theme_definitions.updated_at returning theme_definition_id`,
+      [code,JSON.stringify(metadata),actorId(actor)]));
+    await client.query(
+      `insert into scope_theme_versions(theme_definition_id,version_number,label,description,status,provenance,fingerprint,metadata,created_by,updated_by)
+       values ($1,1,$2,null,'ACTIVE','QUO_VADIS_2026',$3,$4::jsonb,$5,$5) on conflict (theme_definition_id,version_number) do nothing`,
+      [definition.theme_definition_id,label,annualCatalogCore.fingerprint({ label:normalized }),JSON.stringify(metadata),actorId(actor)]);
+    await client.query(
+      `insert into scope_activity_theme_bindings(definition_id,theme_definition_id,status,metadata,created_by,updated_by)
+       values ($1,$2,'ACTIVE',$3::jsonb,$4,$4) on conflict (definition_id,theme_definition_id) do nothing`,
+      [definitionId,definition.theme_definition_id,JSON.stringify(metadata),actorId(actor)]);
+  }
+}
 
 function strictDate(value){
   if(value == null || value === '') return null;
@@ -132,17 +285,26 @@ async function requireReady(database,readinessInspector){
   return clientReadiness;
 }
 
-async function findDefinition(database,code){
+async function persistedImportDecisions(database,sourceSha256){
+  return rows(await database.query(
+    `select d.proposal_id,d.decision as action,target.code as target_definition_code,d.comment
+       from scope_catalog_import_decisions d left join scope_event_definitions target on target.definition_id=d.target_definition_id
+      where d.source_sha256=$1 and d.payload ? 'humanDecision' order by d.decided_at,d.import_decision_id`,[sourceSha256]))
+    .map((row) => ({ proposalId:row.proposal_id,action:row.action,targetDefinitionCode:row.target_definition_code || null,comment:row.comment || null }));
+}
+
+async function findDefinition(database,code,options = {}){
+  const statuses = options.includeArchived ? ['ACTIF','ARCHIVE'] : ['ACTIF'];
   return one(await database.query(
     `select d.definition_id,d.code,d.label,d.domain,d.family_code,d.activity_type,(d.status='ACTIF') as active,d.metadata as definition_metadata,
             v.definition_version_id,v.version_code,v.status as version_status,v.description,v.fingerprint as version_fingerprint,v.metadata as version_metadata
        from scope_event_definitions d
        join scope_event_definition_versions v on v.definition_id=d.definition_id and v.status='ACTIVE'
-      where d.code=$1 and d.status='ACTIF'
+      where d.code=$1 and d.status=any($2::text[])
         and exists (select 1 from scope_activity_domain_bindings b where b.definition_version_id=v.definition_version_id and b.binding_role='PRIMARY')
         and exists (select 1 from scope_activity_session_templates s where s.definition_version_id=v.definition_version_id)
         and exists (select 1 from scope_activity_periodicities p where p.definition_version_id=v.definition_version_id)
-      order by v.valid_from desc nulls last,v.version_code desc limit 1`, [text(code).toUpperCase()]));
+      order by v.valid_from desc nulls last,v.version_code desc limit 1`, [text(code).toUpperCase(),statuses]));
 }
 
 async function requireScopedRequirement(database,requirementId){
@@ -170,7 +332,7 @@ async function loadContext(database,options = {}){
          join scope_event_definitions d on d.definition_id=v.definition_id
         where r.annual_requirement_id=$1 and d.status='ACTIF' and v.status='ACTIVE'`, [options.requirementId]));
   }else{
-    const definition = await findDefinition(database,options.code);
+    const definition = await findDefinition(database,options.code,{ includeArchived:true });
     if(!definition) return null;
     const requirement = one(await database.query(
       `select * from scope_annual_requirements where definition_version_id=$1 and year=$2 and status in ('DRAFT','READY') order by updated_at desc limit 1`,
@@ -269,8 +431,10 @@ function createScopeAnnualCatalogService(options = {}){
       const readiness = readinessForClient(await readinessInspector({ database }));
       if(!readiness.ready) return { readiness,year: integer(filters.year) || new Date().getUTCFullYear(),activities: [] };
       const year = integer(filters.year) || new Date().getUTCFullYear();
+      const archiveMode = text(filters.archives).toUpperCase();
+      const definitionStatuses = archiveMode === 'UNIQUEMENT' ? ['ARCHIVE'] : archiveMode === 'AVEC' ? ['ACTIF','ARCHIVE'] : ['ACTIF'];
       const result = await database.query(
-        `select d.code,d.label,d.domain,d.family_code,d.activity_type,v.definition_version_id,v.version_code,
+        `select d.code,d.label,d.domain,d.family_code,d.activity_type,d.status,v.definition_version_id,v.version_code,
                 r.annual_requirement_id,r.required_occurrences,r.variant_code,r.window_start,r.window_end,r.status as requirement_status,
                 (select count(*)::integer from scope_activity_session_templates st where st.definition_version_id=v.definition_version_id) as template_session_count,
                 (select string_agg(p.code,', ' order by p.code) from scope_activity_public_bindings pb join scope_public_definitions p on p.public_definition_id=pb.public_definition_id where pb.definition_version_id=v.definition_version_id) as public_codes,
@@ -286,21 +450,21 @@ function createScopeAnnualCatalogService(options = {}){
            left join lateral (select count(distinct qo.planned_occurrence_id) as prepared_occurrence_count
              from scope_planned_occurrences po join scope_quo_vadis_obligations qo on qo.planned_occurrence_id=po.planned_occurrence_id
             where po.annual_requirement_id=r.annual_requirement_id) q on true
-          where d.status='ACTIF'
+          where d.status=any($2::text[])
             and exists (select 1 from scope_activity_domain_bindings b where b.definition_version_id=v.definition_version_id and b.binding_role='PRIMARY')
             and exists (select 1 from scope_activity_session_templates s where s.definition_version_id=v.definition_version_id)
-            and exists (select 1 from scope_activity_periodicities p where p.definition_version_id=v.definition_version_id)`, [year]);
+            and exists (select 1 from scope_activity_periodicities p where p.definition_version_id=v.definition_version_id)`, [year,definitionStatuses]);
       const query = text(filters.query || filters.q).toLocaleLowerCase('fr');
       const domain = text(filters.domain).toUpperCase();
       const status = text(filters.status).toUpperCase();
       const activities = rows(result).filter((row) => !query || `${row.code} ${row.label}`.toLocaleLowerCase('fr').includes(query))
         .filter((row) => !domain || domain === 'TOUS' || row.domain === domain)
-        .filter((row) => !status || status === 'TOUS' || (row.requirement_status || 'A_DEFINIR') === status)
+        .filter((row) => !status || status === 'TOUS' || (row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR') === status)
         .sort((a,b) => domainRank(a.domain) - domainRank(b.domain) || a.label.localeCompare(b.label,'fr'))
-        .map((row) => ({ code: row.code,label: row.label,domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,
+        .map((row) => ({ code: row.code,label: row.label,domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,archived: row.status === 'ARCHIVE',
           definitionVersionId: row.definition_version_id,versionCode: row.version_code,annualRequirementId: row.annual_requirement_id || null,
           requiredOccurrences: row.required_occurrences || null,variantCode: row.variant_code || null,windowStart: dateOnly(row.window_start),windowEnd: dateOnly(row.window_end),
-          status: row.requirement_status || 'A_DEFINIR',occurrenceCount: row.occurrence_count,sessionCount: row.template_session_count,
+          status: row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR',occurrenceCount: row.occurrence_count,sessionCount: row.template_session_count,
           generatedSessionCount: row.generated_session_count,publicCodes: row.public_codes || '',themedOccurrenceCount: row.themed_occurrence_count,
           unthemedOccurrenceCount: row.required_occurrences == null ? null : Math.max(0,row.required_occurrences - row.themed_occurrence_count),
           preparedOccurrenceCount: row.prepared_occurrence_count }));
@@ -314,11 +478,195 @@ function createScopeAnnualCatalogService(options = {}){
       return serializeContext(context,readiness,await inspectReadyTransition(database,context));
     },
 
+    async previewImport(body = {}){
+      await requireReady(database,readinessInspector);
+      const encoded = text(body.xlsxBase64 || body.fileBase64);
+      if(!encoded) throw new HttpError(422,'classeur_requis','Sélectionnez le classeur QUO VADIS au format XLSX.');
+      const buffer = Buffer.from(encoded,'base64');
+      if(!buffer.length || buffer.length > 6 * 1024 * 1024) throw new HttpError(422,'classeur_invalide','Le classeur est vide ou dépasse 6 Mo.');
+      const aliases = rows(await database.query(
+        `select a.normalized_value,d.code from scope_activity_legacy_aliases a join scope_event_definitions d on d.definition_id=a.definition_id where a.status='CONFIRMED'`
+      ));
+      const existing = new Map(aliases.map((row) => [catalogImport.normalize(row.normalized_value),row.code]));
+      let preview = catalogImport.analyzeWorkbook(buffer,{ fileName:text(body.fileName) || 'QUO VADIS.xlsx',existing });
+      preview = catalogImport.applyHumanDecisions(preview,await persistedImportDecisions(database,preview.source.sha256));
+      return { preview };
+    },
+
+    async applyImport(body = {},actor){
+      await requireReady(database,readinessInspector);
+      const encoded = text(body.xlsxBase64 || body.fileBase64);
+      const buffer = Buffer.from(encoded,'base64');
+      if(!buffer.length || buffer.length > 6 * 1024 * 1024) throw new HttpError(422,'classeur_invalide','Le classeur est vide ou dépasse 6 Mo.');
+      return database.transaction(async (client) => {
+        const aliases = rows(await client.query(
+          `select a.normalized_value,d.code from scope_activity_legacy_aliases a join scope_event_definitions d on d.definition_id=a.definition_id where a.status='CONFIRMED'`
+        ));
+        const existing = new Map(aliases.map((row) => [catalogImport.normalize(row.normalized_value),row.code]));
+        let preview = catalogImport.analyzeWorkbook(buffer,{ fileName:text(body.fileName) || 'QUO VADIS.xlsx',existing });
+        if(text(body.previewFingerprint) !== preview.previewFingerprint) throw new HttpError(409,'apercu_import_obsolete','Le classeur ou les règles ont changé depuis l’aperçu. Relancez le dry-run.');
+        preview = catalogImport.applyHumanDecisions(preview,await persistedImportDecisions(client,preview.source.sha256));
+        preview = catalogImport.applyHumanDecisions(preview,body.decisions || []);
+        const unresolved = preview.proposals.filter((row) => ['REVIEW_REQUIRED','UNRESOLVED'].includes(row.classification) && !row.humanDecision);
+        if(unresolved.length) throw new HttpError(422,'arbitrages_import_requis',`${unresolved.length} proposition(s) nécessitent encore une décision humaine.`,{ proposalIds:unresolved.map((row) => row.proposalId) });
+        const importFingerprint = catalogImport.importFingerprint(preview);
+        const previous = one(await client.query(
+          `select import_run_id,status from scope_catalog_import_runs where source_sha256=$1 and preview_fingerprint=$2`,
+          [preview.source.sha256,importFingerprint]));
+        if(previous) return { importRunId:previous.import_run_id,status:previous.status,importFingerprint,idempotent:true,operationalWrites:false,eventPublication:false };
+        const imported = []; const merged = []; const skipped = [];
+        for(const proposal of preview.proposals){
+          const decision = proposal.humanDecision && proposal.humanDecision.action;
+          if(proposal.classification === 'IGNORED' || decision === 'IGNORE' || decision === 'REVIEW_REQUIRED'){
+            skipped.push(proposal.proposalId); continue;
+          }
+          let target = null;
+          const targetCode = proposal.targetDefinitionCode || proposal.humanDecision && proposal.humanDecision.targetDefinitionCode;
+          if(proposal.classification === 'MERGE'){
+            target = one(await client.query(`select definition_id,code from scope_event_definitions where code=$1`,[targetCode]));
+            if(!target) throw new HttpError(422,'cible_fusion_introuvable',`La cible ${targetCode || 'indiquée'} est introuvable.`);
+            merged.push(proposal.proposalId);
+          }else{
+            target = one(await client.query(`select definition_id,code from scope_event_definitions where code=$1`,[proposal.definitionCode]));
+            if(!target){
+              const input = normalizeActivityInput({ label:proposal.activityLabel,description:`Activité issue de QUO VADIS 2026 (${proposal.sourceRowCount} ligne(s) source).`,
+                primaryDomain:proposal.primaryDomain,domainCodes:proposal.domainCodes,activityType:proposal.activityType,periodicityType:'ANNUAL',durationMinutes:120,
+                familyCode:proposal.familyCodes[0] || null,publicCodes:proposal.publicCodes,statComCodes:proposal.statComCodes,
+                qualificationCodes:proposal.specializations,themes:proposal.themes });
+              target = one(await client.query(
+                `insert into scope_event_definitions(code,label,domain,description,status,metadata,family_code,activity_type)
+                 values ($1,$2,$3,$4,'ACTIF',$5::jsonb,$6,$7) returning definition_id,code`,
+                [proposal.definitionCode,input.label,input.primaryDomain,input.description,JSON.stringify({ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId,sourceRows:proposal.sourceRows }),input.familyCode,input.activityType]));
+              await insertActivityVersion(client,target,input,actor,{ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId,sourceSha256:preview.source.sha256 });
+              await bindThemes(client,target.definition_id,input.themes,actor,{ source:'C15_QUO_VADIS_2026',proposalId:proposal.proposalId });
+            }
+            imported.push(proposal.proposalId);
+          }
+          await client.query(
+            `insert into scope_activity_legacy_aliases(source_type,source_value,normalized_value,definition_id,confidence,provenance,justification,status,metadata)
+             values ('QUO_VADIS_2026',$1,$2,$3,$4,'C15_IMPORT',$5,'CONFIRMED',$6::jsonb)
+             on conflict (source_type,normalized_value) do nothing`,
+            [proposal.activityLabel,catalogImport.normalize(proposal.activityLabel),target.definition_id,proposal.confidence === 'HIGH' ? 1 : 0.8,proposal.reason,JSON.stringify({ proposalId:proposal.proposalId,sourceSha256:preview.source.sha256 })]);
+        }
+        const status = skipped.length ? 'PARTIAL' : 'APPLIED';
+        const run = one(await client.query(
+          `insert into scope_catalog_import_runs(source_sha256,source_name,source_year,preview_fingerprint,status,summary,metadata,created_by,applied_at,applied_by)
+           values ($1,$2,2026,$3,$4,$5::jsonb,$6::jsonb,$7,now(),$7) returning import_run_id`,
+          [preview.source.sha256,preview.source.fileName || 'QUO VADIS 2026.xlsx',importFingerprint,status,JSON.stringify(preview.summary),JSON.stringify({ source:'C15',previewFingerprint:preview.previewFingerprint }),actorId(actor)]));
+        for(const proposal of preview.proposals){
+          const action = proposal.humanDecision && proposal.humanDecision.action || (proposal.classification === 'MERGE' ? 'MERGE' : proposal.classification === 'AUTO_IMPORT' ? 'IMPORT' : proposal.classification === 'IGNORED' ? 'IGNORE' : 'REVIEW_REQUIRED');
+          const targetCode = proposal.targetDefinitionCode || proposal.humanDecision && proposal.humanDecision.targetDefinitionCode;
+          await client.query(
+            `insert into scope_catalog_import_decisions(import_run_id,source_sha256,proposal_key,proposal_id,decision,target_definition_id,payload,comment,decided_by)
+             values ($1,$2,$3,$4,$5,(select definition_id from scope_event_definitions where code=$6),$7::jsonb,$8,$9)
+             on conflict (source_sha256,proposal_key) do nothing`,
+            [run.import_run_id,preview.source.sha256,proposal.proposalKey,proposal.proposalId,action,targetCode || proposal.definitionCode,JSON.stringify(proposal),proposal.humanDecision && proposal.humanDecision.comment || null,actorId(actor)]);
+        }
+        return { importRunId:run.import_run_id,status,importFingerprint,imported:imported.length,merged:merged.length,skipped:skipped.length,idempotent:false,operationalWrites:false,eventPublication:false };
+      });
+    },
+
+    async createActivity(body = {},actor){
+      await requireReady(database,readinessInspector);
+      const input = normalizeActivityInput(body);
+      return database.transaction(async (client) => {
+        const code = `${input.primaryDomain}-${slug(input.label)}`.slice(0,80);
+        if(one(await client.query(`select definition_id from scope_event_definitions where code=$1`,[code]))) throw new HttpError(409,'activite_existante','Une activité portant cette identité existe déjà.');
+        const definition = one(await client.query(
+          `insert into scope_event_definitions(code,label,domain,description,status,metadata,family_code,activity_type)
+           values ($1,$2,$3,$4,'ACTIF',$5::jsonb,$6,$7) returning definition_id,code`,
+          [code,input.label,input.primaryDomain,input.description,JSON.stringify({ source:'C15_MANUAL',createdBy:actorId(actor) }),input.familyCode,input.activityType]));
+        const version = await insertActivityVersion(client,definition,input,actor,{ source:'C15_MANUAL' });
+        await bindThemes(client,definition.definition_id,input.themes,actor,{ source:'C15_MANUAL' });
+        return { activity:{ code:definition.code,label:input.label,...version },operationalWrites:false,eventPublication:false };
+      });
+    },
+
+    async updateActivity(code,body = {},actor){
+      await requireReady(database,readinessInspector);
+      return database.transaction(async (client) => {
+        const current = await findDefinition(client,code,{ includeArchived:false });
+        if(!current) throw new HttpError(404,'activite_catalogue_introuvable','Activité annuelle introuvable.');
+        const domainRows = rows(await client.query(`select domain_code,binding_role from scope_activity_domain_bindings where definition_version_id=$1`,[current.definition_version_id]));
+        const session = one(await client.query(`select duration_minutes from scope_activity_session_templates where definition_version_id=$1 order by sequence limit 1`,[current.definition_version_id]));
+        const periodicity = one(await client.query(`select periodicity_type from scope_activity_periodicities where definition_version_id=$1`,[current.definition_version_id]));
+        const publicRows = rows(await client.query(
+          `select p.code from scope_activity_public_bindings b join scope_public_definitions p on p.public_definition_id=b.public_definition_id where b.definition_version_id=$1 order by p.code`,
+          [current.definition_version_id]));
+        const qualificationRows = rows(await client.query(
+          `select c.code from scope_activity_qualification_bindings b join scope_competence_definitions c on c.competence_id=b.competence_id where b.definition_version_id=$1 order by c.code`,
+          [current.definition_version_id]));
+        const statComRows = rows(await client.query(
+          `select statcom_code as code from scope_activity_statistical_contributions where definition_version_id=$1 order by statcom_code`,
+          [current.definition_version_id]));
+        const themeRows = rows(await client.query(
+          `select v.label from scope_activity_theme_bindings b join scope_theme_definitions d on d.theme_definition_id=b.theme_definition_id
+             join scope_theme_versions v on v.theme_definition_id=d.theme_definition_id and v.status='ACTIVE'
+            where b.definition_id=$1 and b.status='ACTIVE' order by v.label`,[current.definition_id]));
+        const input = normalizeActivityInput(body,{ label:current.label,description:current.description,primaryDomain:(domainRows.find((row) => row.binding_role === 'PRIMARY') || {}).domain_code || current.domain,
+          domainCodes:domainRows.map((row) => row.domain_code),activityType:current.activity_type,familyCode:current.family_code,durationMinutes:session && session.duration_minutes,
+          periodicityType:periodicity && periodicity.periodicity_type,publicCodes:publicRows.map((row) => row.code),qualificationCodes:qualificationRows.map((row) => row.code),
+          statComCodes:statComRows.map((row) => row.code),themes:themeRows.map((row) => row.label) });
+        const version = await insertActivityVersion(client,current,input,actor,{ source:'C15_MANUAL_REVISION',supersedes:current.definition_version_id },{ deferActivation:true,cloneFromVersionId:current.definition_version_id });
+        await client.query(`update scope_event_definition_versions set status='RETIRED',updated_at=now() where definition_version_id=$1 and status='ACTIVE'`,[current.definition_version_id]);
+        await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[version.definitionVersionId]);
+        await client.query(`update scope_event_definitions set label=$2,domain=$3,description=$4,family_code=$5,activity_type=$6,metadata=metadata || $7::jsonb,updated_at=now() where definition_id=$1`,
+          [current.definition_id,input.label,input.primaryDomain,input.description,input.familyCode,input.activityType,JSON.stringify({ lastEditedBy:actorId(actor),lastEditedAt:new Date().toISOString() })]);
+        await bindThemes(client,current.definition_id,input.themes,actor,{ source:'C15_MANUAL_REVISION' });
+        return { activity:{ code:current.code,label:input.label,...version },versioned:true,operationalWrites:false,eventPublication:false };
+      });
+    },
+
+    async archiveActivity(code,actor){
+      await requireReady(database,readinessInspector);
+      const archived = one(await database.query(
+        `update scope_event_definitions set status='ARCHIVE',metadata=metadata || $2::jsonb,updated_at=now() where code=$1 and status='ACTIF' returning code,label`,
+        [text(code).toUpperCase(),JSON.stringify({ archivedBy:actorId(actor),archivedAt:new Date().toISOString() })]));
+      if(!archived) throw new HttpError(404,'activite_catalogue_introuvable','Activité active introuvable.');
+      return { activity:archived,archived:true };
+    },
+
+    async restoreActivity(code,actor){
+      await requireReady(database,readinessInspector);
+      const restored = one(await database.query(
+        `update scope_event_definitions set status='ACTIF',metadata=metadata || $2::jsonb,updated_at=now() where code=$1 and status='ARCHIVE' returning code,label`,
+        [text(code).toUpperCase(),JSON.stringify({ restoredBy:actorId(actor),restoredAt:new Date().toISOString() })]));
+      if(!restored) throw new HttpError(404,'activite_archivee_introuvable','Activité archivée introuvable.');
+      return { activity:restored,restored:true };
+    },
+
+    async deleteUnusedActivity(code){
+      await requireReady(database,readinessInspector);
+      return database.transaction(async (client) => {
+        const definition = one(await client.query(`select definition_id,code from scope_event_definitions where code=$1 for update`,[text(code).toUpperCase()]));
+        if(!definition) throw new HttpError(404,'activite_catalogue_introuvable','Activité annuelle introuvable.');
+        const usage = one(await client.query(
+          `select
+             (select count(*) from scope_annual_requirements r join scope_event_definition_versions v on v.definition_version_id=r.definition_version_id where v.definition_id=$1) as annual_requirement_count,
+             (select count(*) from scope_evenements e join scope_event_definition_versions v on v.definition_version_id=e.definition_version_id where v.definition_id=$1) as event_count,
+             (select count(*) from scope_activity_legacy_aliases a where a.definition_id=$1) as alias_count,
+             (select count(*) from scope_catalog_import_decisions d where d.target_definition_id=$1) as import_decision_count`,[definition.definition_id]));
+        if(['annual_requirement_count','event_count','alias_count','import_decision_count'].some((key) => Number(usage && usage[key] || 0) > 0)){
+          throw new HttpError(409,'activite_utilisee_archivage_requis','Cette activité est historisée et doit être archivée, pas supprimée.');
+        }
+        const versions = rows(await client.query(`select definition_version_id from scope_event_definition_versions where definition_id=$1`,[definition.definition_id])).map((row) => row.definition_version_id);
+        await client.query(`update scope_event_definition_versions set status='RETIRED' where definition_id=$1 and status='ACTIVE'`,[definition.definition_id]);
+        for(const table of ['scope_activity_statistical_contributions','scope_activity_planning_constraints','scope_activity_responsible_requirements','scope_activity_location_requirements','scope_activity_role_requirements','scope_activity_qualification_bindings','scope_activity_public_bindings','scope_activity_periodicities','scope_activity_session_templates','scope_activity_domain_bindings']){
+          await client.query(`delete from ${table} where definition_version_id=any($1::uuid[])`,[versions]);
+        }
+        await client.query(`delete from scope_activity_theme_bindings where definition_id=$1`,[definition.definition_id]);
+        await client.query(`delete from scope_event_definition_versions where definition_id=$1`,[definition.definition_id]);
+        await client.query(`delete from scope_event_definitions where definition_id=$1`,[definition.definition_id]);
+        return { deleted:true,code:definition.code };
+      });
+    },
+
     async createDraft(body,actor){
       const readiness = await requireReady(database,readinessInspector);
       const input = validateDraftInput(body);
       const definition = await definitionFinder(database,body.code);
       if(!definition) throw new HttpError(404,'activite_catalogue_introuvable','Activité annuelle introuvable.');
+      if(definition.active === false) throw new HttpError(409,'activite_archivee','Une activité archivée ne peut pas recevoir un nouveau besoin annuel.');
       const sourceId = `C6_B_MOA:${definition.code}:${input.variantCode}`;
       let created;
       try{

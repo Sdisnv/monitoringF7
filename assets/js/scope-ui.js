@@ -196,7 +196,10 @@
     annualCatalogPreview: null,
     annualCatalogBusy: false,
     annualThemeBusy: false,
-    annualCatalogFilters: { year: 2027,query: '',domain: 'tous',status: 'tous' },
+    annualCatalogFilters: { year: 2027,query: '',domain: 'tous',status: 'tous',archives: 'sans' },
+    annualCatalogMode: '',
+    annualCatalogDefinitionEdit: false,
+    annualCatalogImport: { fileName:'',fileBase64:'',preview:null,decisions:{},error:'' },
     quoVadisBusy: false,
     quoVadisGenerationReport: null,
     quoVadisHistory: [],
@@ -3153,7 +3156,7 @@
     const eventBody = events.length
       ? events.slice(0, 80).map((ev) => `<tr>
           <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-          <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(ev.libelle)}</a></td>
+          <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</a></td>
           <td data-label="Domaine">${escapeHtml(domaineLabel(ev.domaine))}</td>
           <td data-label="Mode">${escapeHtml(L.modeLabel(ev.modeSuivi))}</td>
           <td data-label="Taux">${escapeHtml(ev.denominator ? L.formatTaux(ev.percentage) : 'Non évaluable')}</td>
@@ -3401,7 +3404,7 @@
       const effectifHtml = `<span class="scope-events-effectif-main">${escapeHtml(String(attendusCell))}</span>${effectifBits.length ? `<small class="scope-events-effectif-sub">${escapeHtml(effectifBits.join(' · '))}</small>` : ''}`;
       return `<tr>
         <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-        <td data-label="Événement"><a class="scope-events-libelle" href="${escapeHtml(directSaisie ? href : `#/exercices/${ev.evenement_id}`)}">${escapeHtml(ev.libelle)}</a>${v2Badge}</td>
+        <td data-label="Événement"><a class="scope-events-libelle" href="${escapeHtml(directSaisie ? href : `#/exercices/${ev.evenement_id}`)}">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</a>${v2Badge}</td>
         <td data-label="Domaine"><span class="scope-events-domain">${escapeHtml(domaineLabel(ev.domaine_code))}</span></td>
         <td data-label="Public / OI">${escapeHtml(L.ciblesLabel(item.cibles))}</td>
         <td data-label="Effectif">${effectifHtml}</td>
@@ -3695,7 +3698,7 @@
     const eventRows = evenements.length ? evenements.map((ev) => `<tr>
       <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
       <td data-label="Code">${escapeHtml(ev.code_cours || ev.identifiant_externe || '—')}</td>
-      <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(ev.libelle)}</a></td>
+      <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</a></td>
       <td data-label="État">${statutBadge(ev.statut)}</td>
     </tr>`).join('') : '<tr><td colspan="4"><div class="scope-empty">Aucune session rattachée.</div></td></tr>';
     const peopleRows = personnes.length ? personnes.map((p) => `<tr>
@@ -3975,7 +3978,7 @@
     const absHtml = state.absencesOpen && abs.events && abs.events.length ? `
       <div class="scope-card scope-panel">
         <h2>Absences non excusées</h2>
-        <ul>${abs.events.map((ev) => `<li><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine))} · ${escapeHtml(ev.libelle)}</a> — ${escapeHtml(String(ev.nonExcuses))}</li>`).join('')}</ul>
+        <ul>${abs.events.map((ev) => `<li><a href="#/exercices/${escapeHtml(ev.evenementId)}">${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine))} · ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</a> — ${escapeHtml(String(ev.nonExcuses))}</li>`).join('')}</ul>
       </div>` : '';
 
     const p0Html = p0Alerts.length
@@ -4001,7 +4004,7 @@
             <thead><tr><th>Date</th><th>Libellé</th><th>Mode</th><th>Taux</th><th></th></tr></thead>
             <tbody>${dash.evenements.map((ev) => `<tr>
               <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-              <td data-label="Libellé">${escapeHtml(ev.libelle)}</td>
+              <td data-label="Libellé">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</td>
               <td data-label="Mode">${escapeHtml(L.modeLabel(ev.modeSuivi))}</td>
               <td data-label="Taux">${escapeHtml(L.formatTaux(ev.percentage))}</td>
               <td data-label="Action"><a class="scope-btn" href="#/exercices/${escapeHtml(ev.evenementId)}">${ev.modeSuivi === 'NOMINATIF' ? 'Ouvrir' : 'Agrégats'}</a></td>
@@ -5839,7 +5842,7 @@
                     : ev.href;
                   return `<tr${display && display.isPermutationCatchup && display.isPermutationCatchup(ev) ? ' class="scope-row-catchup"' : ''}>
                   <td data-label="DATE">${escapeHtml(L.formatDate(ev.date) || '—')}</td>
-                  <td data-label="ÉVÉNEMENT">${href ? `<a class="scope-events-libelle" href="${escapeHtml(href)}">${escapeHtml(ev.libelle || '—')}</a>` : escapeHtml(ev.libelle || '—')}</td>
+                  <td data-label="ÉVÉNEMENT">${href ? `<a class="scope-events-libelle" href="${escapeHtml(href)}">${escapeHtml(L.formatActivityThemeLabel(ev.libelle || '—'))}</a>` : escapeHtml(L.formatActivityThemeLabel(ev.libelle || '—'))}</td>
                   <td data-label="DOMAINE">${escapeHtml(domaineLabel(ev.domaine))}</td>
                   <td data-label="CIBLE / OI">${escapeHtml(eventCible(ev))}</td>
                   <td data-label="STATUT">${escapeHtml(eventStatut(ev))}</td>
@@ -5950,7 +5953,7 @@
               <select id="report-event">
                 ${events.map((item) => {
                   const ev = item.evenement || item;
-                  return `<option value="${escapeHtml(ev.evenement_id)}" ${form.evenementId === ev.evenement_id ? 'selected' : ''}>${escapeHtml(ev.date)} · ${escapeHtml(ev.libelle)}</option>`;
+                  return `<option value="${escapeHtml(ev.evenement_id)}" ${form.evenementId === ev.evenement_id ? 'selected' : ''}>${escapeHtml(ev.date)} · ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</option>`;
                 }).join('') || '<option value="">Aucun événement sur l’année</option>'}
               </select>
             </div>` : ''}
@@ -6953,7 +6956,7 @@
     else if (mode !== 'QUANTITATIF' && ev.population_figee) bits.push(fiche && fiche.attendus ? `Effectif assigné : ${fiche.attendus.length}` : 'Participants assignés');
     else if (mode !== 'QUANTITATIF' && preview) bits.push('Preview prête');
     return `<header class="scope-event-identity">
-      <h1 class="scope-event-title">${escapeHtml(ev.libelle)}</h1>
+      <h1 class="scope-event-title">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</h1>
       <p class="scope-event-meta">${bits.map((bit) => `<span class="scope-event-meta-item">${escapeHtml(bit)}</span>`).join('<span class="scope-event-meta-sep">·</span>')}
         ${isLegacy ? '<span class="scope-badge"><span class="scope-dot LEGACY"></span>Historique agrégé</span>' : statutBadge(ev.statut)}
       </p>
@@ -7065,7 +7068,7 @@
     return `<header class="scope-fiche-identity">
       <div>
         <p class="scope-page-eyebrow">Événement</p>
-        <h1>${escapeHtml(ev.libelle)}</h1>
+        <h1>${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</h1>
         <p class="scope-fiche-meta-line">${meta.map((bit) => `<span>${escapeHtml(bit)}</span>`).join('<span class="scope-event-meta-sep">·</span>')}</p>
         ${eventTemporalSummaryHtml(ev, fiche)}
         <div class="scope-fiche-identity-status">
@@ -7213,7 +7216,7 @@
     ].join('');
     const lifecycleActions = renderFicheLifecycleActions(ev, isLegacy, qty);
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)}</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</div>
       <div class="scope-main scope-event-fiche">
         ${renderFicheIdentity(ev, fiche)}
         ${renderEventFormationConfiguration(fiche)}
@@ -7570,7 +7573,7 @@
     const saveState = presenceSaveLabel();
     const lifecycleActions = renderFicheLifecycleActions(ev, ev.origine === 'LEGACY_AGGREGATED', false);
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Saisie</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))} / Saisie</div>
       <div class="scope-main scope-event-saisie">
         ${eventIdentityBand(ev, fiche)}
         ${renderEventFormationConfiguration(fiche)}
@@ -7992,12 +7995,12 @@
     const preview = state.qtyPreview;
     const previewTaux = preview && preview.taux;
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Présences</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))} / Présences</div>
       <div class="scope-main">
         ${renderFichePrimaryAction(null, renderFicheLifecycleActions(ev, ev.origine === 'LEGACY_AGGREGATED', true))}
         <div class="scope-card">
           <h2 style="margin-top:0">Saisir les présences</h2>
-          <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(ev.libelle)} · ${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))} · Quantitatif</p>
+          <p style="color:var(--scope-muted);margin-top:0">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))} · ${escapeHtml(L.formatDate(ev.date))} · ${escapeHtml(domaineLabel(ev.domaine_code))} · ${escapeHtml(L.ciblesLabel(ciblesOf(fiche)))} · Quantitatif</p>
           <form class="scope-qty-form" id="qty-form" autocomplete="off">
             <div class="scope-field scope-qty-field"><label for="qty-attendus">Attendus</label><input id="qty-attendus" name="attendus" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.attendus)}"></div>
             <div class="scope-field scope-qty-field"><label for="qty-presents">Présents</label><input id="qty-presents" name="presents" type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(v.presents)}"></div>
@@ -8336,7 +8339,7 @@
     if (mode === 'QUANTITATIF') {
       const saisie = fiche.saisieQuantitative || {};
       return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
         ${renderEventFormationConfiguration(fiche)}
@@ -8355,7 +8358,7 @@
     const filtersActive = Boolean(state.realiseQuery || state.realiseGrade || state.realiseOi || state.realiseCible || state.realiseStatut);
     const domaineCode = ev.domaine_code || ev.domaineCode;
     return `
-      <div class="scope-crumb">Événements / ${escapeHtml(ev.libelle)} / Réalisé</div>
+      <div class="scope-crumb">Événements / ${escapeHtml(L.formatActivityThemeLabel(ev.libelle))} / Réalisé</div>
       <div class="scope-main scope-event-realise">
         ${eventIdentityBand(ev, fiche)}
         ${renderEventFormationConfiguration(fiche)}
@@ -11934,7 +11937,7 @@
           <tbody>${pageRows.map((row) => `<tr>
             <td>${escapeHtml(qvFormatDate(row.dateDebut, '—'))}</td>
             <td>${escapeHtml([row.heureDebut, row.heureFin].filter(Boolean).join(' – ') || '—')}</td>
-            <td>${escapeHtml(row.activiteLabel)}</td>
+            <td>${escapeHtml(L.formatActivityThemeLabel(row.activiteLabel))}</td>
             <td>${escapeHtml([row.domain, (row.cibleCode && L.niveauAffiche ? L.niveauAffiche(row.domain, row.cibleCode) : row.cibleCode)].filter(Boolean).join(' · ') || '—')}</td>
             <td>${escapeHtml(row.lieu || 'Lieu à définir')}</td>
             <td>${qvFutureStateHtml(row)}</td>
@@ -11960,6 +11963,49 @@
     return `<section class="annual-readiness" role="status"><h2>${annualStatusHtml(readiness.status)}</h2><p>${escapeHtml(message)}</p><p>Aucune migration n’est lancée depuis cet écran.</p></section>`;
   }
 
+  function renderAnnualCatalogCreate() {
+    if (state.annualCatalogMode !== 'create') return '';
+    return `<section class="annual-catalog-workspace" aria-labelledby="annual-create-title">
+      <div class="annual-workspace-head"><div><h3 id="annual-create-title">Nouvelle activité</h3><p>Définition métier réutilisable dans les besoins annuels.</p></div><button class="scope-icon-button" type="button" data-annual-close title="Fermer" aria-label="Fermer">×</button></div>
+      <form id="annual-activity-create" class="annual-definition-form">
+        <label>Libellé<input id="annual-activity-label" required maxlength="180" placeholder="Ex. Formation antichute"></label>
+        <label>Domaine<select id="annual-activity-domain">${['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'].map((value) => `<option value="${value}">${value}</option>`).join('')}</select></label>
+        <label>Type<select id="annual-activity-type"><option value="EXERCISE">Exercice</option><option value="TRAINING">Formation</option><option value="INSTRUCTION">Instruction</option><option value="CURRICULUM">Cursus</option><option value="TEST">Test</option><option value="OTHER">Autre</option></select></label>
+        <label>Durée d’une séance<input id="annual-activity-duration" type="number" min="1" value="120"><span>minutes</span></label>
+        <label class="annual-definition-description">Description<textarea id="annual-activity-description" rows="2" maxlength="600"></textarea></label>
+        <div class="annual-form-actions"><button class="scope-button annual-button-primary" type="submit">Créer l’activité</button><button class="scope-button annual-button-quiet" type="button" data-annual-close>Annuler</button></div>
+      </form>
+    </section>`;
+  }
+
+  function annualImportClassLabel(value) {
+    return ({ AUTO_IMPORT:'Prête à importer',MERGE:'Enrichissement',REVIEW_REQUIRED:'À arbitrer',UNRESOLVED:'Non résolue',IGNORED:'Ignorée' })[value] || value;
+  }
+
+  function renderAnnualCatalogImport() {
+    if (state.annualCatalogMode !== 'import') return '';
+    const model = state.annualCatalogImport || {};
+    const preview = model.preview;
+    if (!preview) return `<section class="annual-catalog-workspace annual-import-workspace" aria-labelledby="annual-import-title">
+      <div class="annual-workspace-head"><div><h3 id="annual-import-title">Importer QUO VADIS</h3><p>Le dry-run analyse, regroupe et classe le classeur sans aucune écriture.</p></div><button class="scope-icon-button" type="button" data-annual-close title="Fermer" aria-label="Fermer">×</button></div>
+      <form id="annual-import-preview-form" class="annual-import-form"><label>Classeur XLSX<input id="annual-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></label>
+        ${model.fileName ? `<span class="annual-import-file">${escapeHtml(model.fileName)}</span>` : ''}${model.error ? `<p class="scope-state-error">${escapeHtml(model.error)}</p>` : ''}
+        <div class="annual-form-actions"><button class="scope-button annual-button-primary" type="submit"${model.fileBase64 ? '' : ' disabled'}>Analyser le classeur</button><button class="scope-button annual-button-quiet" type="button" data-annual-close>Annuler</button></div>
+      </form></section>`;
+    const summary = preview.summary || {}; const source = summary.source || {}; const normalization = summary.normalization || {}; const target = summary.target || {}; const decisions = summary.decisions || {};
+    const open = (preview.proposals || []).filter((row) => ['REVIEW_REQUIRED','UNRESOLVED'].includes(row.classification));
+    const allDecided = open.every((row) => model.decisions && model.decisions[row.proposalId]);
+    return `<section class="annual-catalog-workspace annual-import-workspace" aria-labelledby="annual-import-title">
+      <div class="annual-workspace-head"><div><h3 id="annual-import-title">Aperçu QUO VADIS 2026</h3><p>${escapeHtml(model.fileName || preview.source && preview.source.fileName || '')} · dry-run sans écriture</p></div><button class="scope-icon-button" type="button" data-annual-close title="Fermer" aria-label="Fermer">×</button></div>
+      <div class="annual-import-metrics"><div><strong>${source.eventRows || 0}</strong><span>Lignes analysées</span></div><div><strong>${source.distinctRawLabels || 0}</strong><span>Libellés sources</span></div><div><strong>${normalization.activityRoots || 0}</strong><span>Activités racines</span></div><div><strong>${normalization.distinctThemes || 0}</strong><span>Thèmes</span></div><div><strong>${target.multiPopulationRows || 0}</strong><span>Lignes multi-populations</span></div><div><strong>${decisions.REVIEW_REQUIRED + decisions.UNRESOLVED || 0}</strong><span>Décisions requises</span></div></div>
+      <div class="annual-import-reconciliation"><strong>Réconciliation</strong><span>${source.eventRows || 0} lignes → ${summary.grouping && summary.grouping.groups || 0} groupes → ${target.proposedActivities || 0} propositions</span><span>${decisions.AUTO_IMPORT || 0} prêtes · ${decisions.MERGE || 0} enrichissements · ${decisions.REVIEW_REQUIRED || 0} à arbitrer · ${decisions.UNRESOLVED || 0} non résolues · ${decisions.IGNORED || 0} ignorées</span></div>
+      <div class="annual-table-wrap annual-import-table-wrap"><table class="annual-table annual-import-table"><thead><tr><th>Activité proposée</th><th>Domaine</th><th>Sources</th><th>Publics / thèmes</th><th>Décision</th></tr></thead><tbody>
+        ${(preview.proposals || []).map((row) => { const choice = model.decisions && model.decisions[row.proposalId] || ''; const needsDecision = ['REVIEW_REQUIRED','UNRESOLVED'].includes(row.classification); return `<tr class="annual-import-${escapeHtml(row.classification.toLowerCase().replace('_','-'))}"><td><strong>${escapeHtml(row.activityLabel)}</strong><span>${escapeHtml(row.reason)}</span></td><td>${escapeHtml(row.primaryDomain || 'À déterminer')}</td><td>${row.sourceRowCount} ligne${row.sourceRowCount > 1 ? 's' : ''} · ${row.occurrenceCount} occurrence${row.occurrenceCount > 1 ? 's' : ''}</td><td>${escapeHtml((row.majorPopulations || []).join(', ') || '—')}<span>${escapeHtml((row.themes || []).slice(0,3).join(' · ') || 'Sans thème')}</span></td><td>${needsDecision ? `<select data-annual-import-decision="${escapeHtml(row.proposalId)}"><option value="">Décider…</option><option value="IMPORT"${choice === 'IMPORT' ? ' selected' : ''}>Importer</option><option value="REVIEW_REQUIRED"${choice === 'REVIEW_REQUIRED' ? ' selected' : ''}>Conserver à arbitrer</option><option value="IGNORE"${choice === 'IGNORE' ? ' selected' : ''}>Ignorer</option></select>` : `<span>${escapeHtml(annualImportClassLabel(row.classification))}</span>`}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="annual-import-commit"><label><input id="annual-import-confirm" type="checkbox"> Je confirme les regroupements et décisions ci-dessus.</label><div class="annual-form-actions"><button id="annual-import-apply" class="scope-button annual-button-primary" type="button" disabled>Importer dans le Catalogue</button><button id="annual-import-restart" class="scope-button annual-button-quiet" type="button">Choisir un autre fichier</button></div>${!allDecided ? `<p>${open.length} proposition(s) doivent encore recevoir une décision.</p>` : ''}</div>
+    </section>`;
+  }
+
   function renderAnnualCatalog() {
     if (state.annualCatalogError) return `<section class="annual-readiness"><p class="scope-state-error">${escapeHtml(state.annualCatalogError)}</p></section>`;
     if (!state.annualCatalogReady) return '<p class="scope-empty">Chargement du catalogue annuel…</p>';
@@ -11974,15 +12020,18 @@
       return rank(leftRank) - rank(rightRank) || String(left.label || '').localeCompare(String(right.label || ''),'fr');
     });
     const domains = [...new Set(activities.map((row) => row.domain).filter(Boolean))];
+    const canManage = hasScopePermission('references:manage');
     return `<section class="annual-catalogue" aria-labelledby="annual-catalog-title">
       <div class="annual-toolbar">
-        <div><h2 id="annual-catalog-title">Catalogue annuel</h2><p>${escapeHtml(String(activities.length))} activité(s) · Année ${escapeHtml(String(catalog.year || filters.year))}</p></div>
+        <div class="annual-toolbar-title"><h2 id="annual-catalog-title">Catalogue annuel</h2><p>${escapeHtml(String(activities.length))} activité(s) · Année ${escapeHtml(String(catalog.year || filters.year))}</p>${canManage ? '<div class="annual-toolbar-actions"><button id="annual-create-open" class="scope-button annual-button-primary" type="button"><span aria-hidden="true">＋</span> Créer</button><button id="annual-import-open" class="scope-button annual-button-secondary" type="button"><span aria-hidden="true">⇩</span> Importer</button></div>' : ''}</div>
         <label>Année<input id="annual-filter-year" type="number" min="2000" max="2200" value="${escapeHtml(String(filters.year))}"></label>
         <label>Recherche<input id="annual-filter-query" type="search" value="${escapeHtml(filters.query)}" placeholder="Code ou libellé"></label>
         <label>Domaine<select id="annual-filter-domain"><option value="tous">Tous</option>${domains.map((domain) => `<option value="${escapeHtml(domain)}"${filters.domain === domain ? ' selected' : ''}>${escapeHtml(domain)}</option>`).join('')}</select></label>
-        <label>État<select id="annual-filter-status"><option value="tous">Tous</option><option value="A_DEFINIR"${filters.status === 'A_DEFINIR' ? ' selected' : ''}>À définir</option><option value="DRAFT"${filters.status === 'DRAFT' ? ' selected' : ''}>Brouillon</option><option value="READY"${filters.status === 'READY' ? ' selected' : ''}>Prêt</option><option value="REVIEW_REQUIRED"${filters.status === 'REVIEW_REQUIRED' ? ' selected' : ''}>À revoir</option></select></label>
-        <button id="annual-filter-reset" class="scope-button" type="button">Réinitialiser</button>
+        <label>État<select id="annual-filter-status"><option value="tous">Tous</option><option value="A_DEFINIR"${filters.status === 'A_DEFINIR' ? ' selected' : ''}>À définir</option><option value="DRAFT"${filters.status === 'DRAFT' ? ' selected' : ''}>Brouillon</option><option value="READY"${filters.status === 'READY' ? ' selected' : ''}>Prêt</option><option value="REVIEW_REQUIRED"${filters.status === 'REVIEW_REQUIRED' ? ' selected' : ''}>À revoir</option><option value="ARCHIVE"${filters.status === 'ARCHIVE' ? ' selected' : ''}>Archivée</option></select></label>
+        <label>Archives<select id="annual-filter-archives"><option value="sans"${filters.archives === 'sans' ? ' selected' : ''}>Masquées</option><option value="avec"${filters.archives === 'avec' ? ' selected' : ''}>Avec les actives</option><option value="uniquement"${filters.archives === 'uniquement' ? ' selected' : ''}>Archives seules</option></select></label>
+        <button id="annual-filter-reset" class="scope-button annual-button-quiet" type="button">Réinitialiser</button>
       </div>
+      ${renderAnnualCatalogCreate()}${renderAnnualCatalogImport()}
       <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Besoin ${escapeHtml(String(catalog.year || filters.year))}</th><th>Période</th><th>Contenus</th><th>État</th><th>QUO VADIS</th><th>Action</th></tr></thead>
         <tbody>${activities.map((row) => {
           const required = Number(row.requiredOccurrences || 0);
@@ -12017,7 +12066,8 @@
     const assignments = payload.annualThemeAssignments || [];
     const availableThemes = config.availableThemes || [];
     const canManage = hasScopePermission('references:manage');
-    const status = requirement ? requirement.status : 'A_DEFINIR';
+    const archived = activity.active === false;
+    const status = archived ? 'ARCHIVE' : requirement ? requirement.status : 'A_DEFINIR';
     const year = Number(state.annualCatalogFilters.year || requirement && requirement.year || 2027);
     const required = Number(requirement && requirement.requiredOccurrences || 0);
     const priority = Number(requirement && requirement.priority || 100);
@@ -12059,16 +12109,24 @@
     return `<div class="annual-activity annual-activity-c10 annual-activity-c13">
       <nav class="annual-breadcrumb" aria-label="Fil d’Ariane">QUO VADIS ${escapeHtml(String(year))} / Catalogue annuel / ${escapeHtml(activity.label || activity.code || '')}</nav>
       <a class="annual-back" href="#/quo-vadis/catalogue-annuel">‹ Retour au catalogue</a>
-      <header><div class="annual-title"><span>${escapeHtml(activity.domain || '')}</span><div><h2>${escapeHtml(activity.label || activity.code || '')}</h2>${activity.version && activity.version.description ? `<p>${escapeHtml(activity.version.description)}</p>` : ''}</div></div><div class="annual-head-state"><span class="annual-year">Année ${escapeHtml(String(year))}</span>${annualStatusHtml(status)}</div></header>
+      <header><div class="annual-title"><span>${escapeHtml(activity.domain || '')}</span><div><h2>${escapeHtml(activity.label || activity.code || '')}</h2>${activity.version && activity.version.description ? `<p>${escapeHtml(activity.version.description)}</p>` : ''}</div></div><div class="annual-head-actions"><div class="annual-head-state"><span class="annual-year">Année ${escapeHtml(String(year))}</span>${annualStatusHtml(status)}</div>${canManage ? `<div class="annual-lifecycle-actions">${archived ? '<button id="annual-activity-restore" class="scope-button annual-button-primary" type="button">Restaurer</button>' : '<button id="annual-activity-edit" class="scope-button annual-button-secondary" type="button">Modifier</button><button id="annual-activity-archive" class="scope-button annual-button-quiet" type="button">Archiver</button>'}<button id="annual-activity-delete" class="scope-text-action annual-delete-action" type="button">Supprimer</button></div>` : ''}</div></header>
+      ${state.annualCatalogDefinitionEdit && !archived ? `<section class="annual-catalog-workspace annual-definition-edit"><div class="annual-workspace-head"><div><h3>Modifier l’activité</h3><p>Une nouvelle version sera créée; les besoins déjà validés restent figés.</p></div><button class="scope-icon-button" id="annual-activity-edit-cancel" type="button" title="Fermer" aria-label="Fermer">×</button></div><form id="annual-activity-edit-form" class="annual-definition-form">
+        <label>Libellé<input id="annual-edit-label" required maxlength="180" value="${escapeHtml(activity.label || '')}"></label>
+        <label>Domaine<select id="annual-edit-domain">${['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'].map((value) => `<option value="${value}"${activity.domain === value ? ' selected' : ''}>${value}</option>`).join('')}</select></label>
+        <label>Type<select id="annual-edit-type">${[['EXERCISE','Exercice'],['TRAINING','Formation'],['INSTRUCTION','Instruction'],['CURRICULUM','Cursus'],['TEST','Test'],['OTHER','Autre']].map(([value,label]) => `<option value="${value}"${activity.activityType === value ? ' selected' : ''}>${label}</option>`).join('')}</select></label>
+        <label>Durée d’une séance<input id="annual-edit-duration" type="number" min="1" value="${escapeHtml(String(config.sessions && config.sessions[0] && config.sessions[0].duration_minutes || 120))}"><span>minutes</span></label>
+        <label class="annual-definition-description">Description<textarea id="annual-edit-description" rows="2" maxlength="600">${escapeHtml(activity.version && activity.version.description || '')}</textarea></label>
+        <div class="annual-form-actions"><button class="scope-button annual-button-primary" type="submit">Enregistrer la nouvelle version</button><button class="scope-button annual-button-quiet" id="annual-activity-edit-cancel-secondary" type="button">Annuler</button></div>
+      </form></section>` : ''}
       <div class="annual-detail-layout">
       <section class="annual-panel annual-need"><h3>Besoin annuel ${escapeHtml(String(year))}</h3>
           <form id="annual-requirement-form"><div class="annual-form-grid">
-            <label>Occurrences requises<input id="annual-required-occurrences" type="number" min="1" value="${escapeHtml(String(requirement && requirement.requiredOccurrences || 1))}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-            <label>Début souhaité<input id="annual-window-start" type="date" placeholder="jj/mm/aaaa" value="${escapeHtml(requirement && requirement.windowStart || '')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-            <label>Fin souhaitée<input id="annual-window-end" type="date" placeholder="jj/mm/aaaa" value="${escapeHtml(requirement && requirement.windowEnd || '')}" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
-            <label>Priorité<select id="annual-priority" ${!canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}><option value="100"${priority === 100 ? ' selected' : ''}>Normale</option><option value="50"${priority === 50 ? ' selected' : ''}>Haute</option><option value="150"${priority === 150 ? ' selected' : ''}>Basse</option></select></label>
+            <label>Occurrences requises<input id="annual-required-occurrences" type="number" min="1" value="${escapeHtml(String(requirement && requirement.requiredOccurrences || 1))}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+            <label>Début souhaité<input id="annual-window-start" type="date" placeholder="jj/mm/aaaa" value="${escapeHtml(requirement && requirement.windowStart || '')}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+            <label>Fin souhaitée<input id="annual-window-end" type="date" placeholder="jj/mm/aaaa" value="${escapeHtml(requirement && requirement.windowEnd || '')}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+            <label>Priorité<select id="annual-priority" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}><option value="100"${priority === 100 ? ' selected' : ''}>Normale</option><option value="50"${priority === 50 ? ' selected' : ''}>Haute</option><option value="150"${priority === 150 ? ' selected' : ''}>Basse</option></select></label>
           </div><div class="annual-need-summary"><strong>Contenus / thèmes</strong><span>${required ? escapeHtml(summary.contents) : 'À définir après l’enregistrement du besoin.'}</span><a href="#annual-themes">Voir le détail des occurrences ↓</a></div><div class="annual-actions">
-            ${canManage && (!requirement || requirement.status === 'DRAFT') ? '<button class="scope-button annual-button-secondary" type="submit">Enregistrer le brouillon</button>' : ''}
+            ${canManage && !archived && (!requirement || requirement.status === 'DRAFT') ? '<button class="scope-button annual-button-secondary" type="submit">Enregistrer le brouillon</button>' : ''}
             ${canManage && readyAction.visible ? `<button id="annual-ready" class="scope-button annual-button-primary" type="button"${readyAction.enabled ? '' : ' disabled'}>Valider le besoin</button>${readyAction.message ? `<span class="annual-ready-hint">${escapeHtml(readyAction.message)}</span>` : ''}` : ''}
             ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-generate" class="scope-button annual-button-primary" type="button">Préparer dans QUO VADIS</button><button id="annual-revise" class="scope-button" type="button">Créer une révision</button>' : ''}
           </div></form>
@@ -12182,27 +12240,77 @@
         year: Number(document.getElementById('annual-filter-year')?.value || state.annualCatalogFilters.year || 2027),
         query: document.getElementById('annual-filter-query')?.value || '',
         domain: document.getElementById('annual-filter-domain')?.value || 'tous',
-        status: document.getElementById('annual-filter-status')?.value || 'tous'
+        status: document.getElementById('annual-filter-status')?.value || 'tous',
+        archives: document.getElementById('annual-filter-archives')?.value || 'sans'
       };
       await loadAnnualCatalog();
       render();
     };
-    ['annual-filter-year','annual-filter-query','annual-filter-domain','annual-filter-status'].forEach((id) => {
+    ['annual-filter-year','annual-filter-query','annual-filter-domain','annual-filter-status','annual-filter-archives'].forEach((id) => {
       document.getElementById(id)?.addEventListener('change',refreshAnnualCatalog);
     });
     document.getElementById('annual-filter-reset')?.addEventListener('click',async () => {
-      state.annualCatalogFilters = { year: 2027,query: '',domain: 'tous',status: 'tous' };
+      state.annualCatalogFilters = { year: 2027,query: '',domain: 'tous',status: 'tous',archives:'sans' };
       await loadAnnualCatalog();
       render();
+    });
+    document.getElementById('annual-create-open')?.addEventListener('click',() => { state.annualCatalogMode = 'create';render(); });
+    document.getElementById('annual-import-open')?.addEventListener('click',() => { state.annualCatalogMode = 'import';render(); });
+    document.querySelectorAll('[data-annual-close]').forEach((button) => button.addEventListener('click',() => { state.annualCatalogMode = '';render(); }));
+    const catalogListAction = async (action,success) => {
+      if (state.annualCatalogBusy) return;
+      state.annualCatalogBusy = true;
+      try { const result = await action();await loadAnnualCatalog();state.annualCatalogMode = '';toast('success','Catalogue annuel',success);render();return result; }
+      catch (error) { toast('error','Catalogue annuel',L.friendlyError(error).message || 'L’action n’a pas pu être terminée.');render();return null; }
+      finally { state.annualCatalogBusy = false; }
+    };
+    document.getElementById('annual-activity-create')?.addEventListener('submit',async (event) => {
+      event.preventDefault();
+      await catalogListAction(() => client.createAnnualCatalogActivity({
+        label:document.getElementById('annual-activity-label')?.value || '',primaryDomain:document.getElementById('annual-activity-domain')?.value || '',
+        activityType:document.getElementById('annual-activity-type')?.value || 'OTHER',durationMinutes:Number(document.getElementById('annual-activity-duration')?.value || 120),
+        description:document.getElementById('annual-activity-description')?.value || ''
+      }),'L’activité a été créée dans le Catalogue.');
+    });
+    document.getElementById('annual-import-file')?.addEventListener('change',async (event) => {
+      const file = event.target && event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer()); let binary = '';
+        for (let offset = 0;offset < bytes.length;offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset,offset + 0x8000));
+        state.annualCatalogImport = { fileName:file.name,fileBase64:btoa(binary),preview:null,decisions:{},error:'' };render();
+      } catch (_error) { state.annualCatalogImport = { fileName:file.name,fileBase64:'',preview:null,decisions:{},error:'Le classeur n’a pas pu être lu.' };render(); }
+    });
+    document.getElementById('annual-import-preview-form')?.addEventListener('submit',async (event) => {
+      event.preventDefault(); const model = state.annualCatalogImport;
+      if (!model.fileBase64 || state.annualCatalogBusy) return;
+      state.annualCatalogBusy = true;
+      try { const result = await client.previewAnnualCatalogImport({ fileName:model.fileName,xlsxBase64:model.fileBase64 });model.preview = result.preview;model.error = ''; }
+      catch (error) { model.error = L.friendlyError(error).message || 'Le dry-run a échoué.'; }
+      finally { state.annualCatalogBusy = false;render(); }
+    });
+    document.querySelectorAll('[data-annual-import-decision]').forEach((select) => select.addEventListener('change',() => {
+      state.annualCatalogImport.decisions[select.dataset.annualImportDecision] = select.value;render();
+    }));
+    document.getElementById('annual-import-confirm')?.addEventListener('change',(event) => {
+      const preview = state.annualCatalogImport.preview; const open = (preview.proposals || []).filter((row) => ['REVIEW_REQUIRED','UNRESOLVED'].includes(row.classification));
+      const complete = open.every((row) => state.annualCatalogImport.decisions[row.proposalId]);
+      const button = document.getElementById('annual-import-apply'); if (button) button.disabled = !(event.target.checked && complete);
+    });
+    document.getElementById('annual-import-restart')?.addEventListener('click',() => { state.annualCatalogImport = { fileName:'',fileBase64:'',preview:null,decisions:{},error:'' };render(); });
+    document.getElementById('annual-import-apply')?.addEventListener('click',async () => {
+      const model = state.annualCatalogImport; const decisions = Object.entries(model.decisions).filter(([,action]) => action).map(([proposalId,action]) => ({ proposalId,action }));
+      await catalogListAction(() => client.applyAnnualCatalogImport({ fileName:model.fileName,xlsxBase64:model.fileBase64,previewFingerprint:model.preview.previewFingerprint,decisions }),'Les décisions validées ont été importées de manière idempotente.');
     });
     const annualAction = async (action,success) => {
       if (state.annualCatalogBusy) return;
       state.annualCatalogBusy = true;
       try {
-        await action();
+        const result = await action();
         state.annualCatalogPreview = null;
         await loadAnnualCatalogActivity(route().qvCatalogCode);
         toast('success','Catalogue annuel',success);
+        return result;
       } catch (error) {
         toast('error','Catalogue annuel',L.friendlyError(error).message || 'L’action n’a pas pu être terminée.');
       } finally {
@@ -12210,6 +12318,24 @@
         render();
       }
     };
+    document.getElementById('annual-activity-edit')?.addEventListener('click',() => { state.annualCatalogDefinitionEdit = true;render(); });
+    ['annual-activity-edit-cancel','annual-activity-edit-cancel-secondary'].forEach((id) => document.getElementById(id)?.addEventListener('click',() => { state.annualCatalogDefinitionEdit = false;render(); }));
+    document.getElementById('annual-activity-edit-form')?.addEventListener('submit',async (event) => {
+      event.preventDefault();
+      await annualAction(() => client.updateAnnualCatalogActivity(route().qvCatalogCode,{
+        label:document.getElementById('annual-edit-label')?.value || '',primaryDomain:document.getElementById('annual-edit-domain')?.value || '',
+        activityType:document.getElementById('annual-edit-type')?.value || 'OTHER',durationMinutes:Number(document.getElementById('annual-edit-duration')?.value || 120),
+        description:document.getElementById('annual-edit-description')?.value || ''
+      }),'Une nouvelle version de l’activité a été créée.'); state.annualCatalogDefinitionEdit = false;
+    });
+    document.getElementById('annual-activity-archive')?.addEventListener('click',() => ScopeFeedback.confirm({ title:'Archiver l’activité',message:'Elle restera disponible dans l’historique et ne sera plus proposée pour de nouveaux besoins.',confirmText:'Archiver',cancelText:'Annuler' },async () => {
+      await annualAction(() => client.archiveAnnualCatalogActivity(route().qvCatalogCode),'L’activité a été archivée.');
+    }));
+    document.getElementById('annual-activity-restore')?.addEventListener('click',async () => { await annualAction(() => client.restoreAnnualCatalogActivity(route().qvCatalogCode),'L’activité est de nouveau disponible.'); });
+    document.getElementById('annual-activity-delete')?.addEventListener('click',() => ScopeFeedback.confirm({ title:'Supprimer l’activité inutilisée',message:'La suppression sera refusée si cette activité est déjà référencée. Dans ce cas, utilisez l’archivage.',confirmText:'Supprimer',cancelText:'Annuler' },async () => {
+      try { await client.deleteAnnualCatalogActivity(route().qvCatalogCode);toast('success','Catalogue annuel','L’activité inutilisée a été supprimée.');go('#/quo-vadis/catalogue-annuel'); }
+      catch (error) { toast('error','Catalogue annuel',L.friendlyError(error).message || 'La suppression a été refusée.'); }
+    }));
     document.getElementById('annual-requirement-form')?.addEventListener('submit',async (event) => {
       event.preventDefault();
       const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;

@@ -6,6 +6,8 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
 
+  const ActivityLabel = globalThis.ScopeActivityLabel || (typeof require === 'function' ? require('./scope-activity-label') : null);
+
   const MOTIFS = [
     { value: 'PRIVE', label: 'Privé' },
     { value: 'PROFESSIONNEL', label: 'Professionnel' },
@@ -3019,7 +3021,7 @@
 
   const ANNUAL_STATUS_LABELS = Object.freeze({
     A_DEFINIR: 'À définir',DRAFT: 'En préparation',READY: 'Prêt pour QUO VADIS',SUPERSEDED: 'Remplacé',CANCELLED: 'Annulé',
-    REVIEW_REQUIRED: 'À arbitrer',MIGRATION_REQUIRED: 'Migration requise',SCHEMA_INCOMPATIBLE: 'Schéma incompatible',SCHEMA_READY: 'Disponible'
+    ARCHIVE: 'Archivée',REVIEW_REQUIRED: 'À arbitrer',MIGRATION_REQUIRED: 'Migration requise',SCHEMA_INCOMPATIBLE: 'Schéma incompatible',SCHEMA_READY: 'Disponible'
   });
   const ANNUAL_ENUM_LABELS = Object.freeze({
     ON_DEMAND: 'Selon besoin',ANNUAL: 'Chaque année',TIMES_PER_YEAR: 'Plusieurs fois par année',PRIMARY: 'Domaine principal',SECONDARY: 'Domaine associé',
@@ -3075,6 +3077,8 @@
   }
   function annualSectionHasData(value){ return Array.isArray(value) ? value.length > 0 : Boolean(value && Object.keys(value).length); }
   function annualDraftDateValue(input){ return input && String(input.value || '').trim() ? String(input.value).trim() : null; }
+  function splitActivityThemeLabel(value){ return ActivityLabel.splitActivityThemeLabel(value); }
+  function formatActivityThemeLabel(activityOrLabel,theme){ return ActivityLabel.formatActivityThemeLabel(activityOrLabel,theme); }
 
   return {
     MOTIFS,
@@ -3294,6 +3298,8 @@
     annualReadyAction,
     annualSectionHasData,
     annualDraftDateValue,
+    splitActivityThemeLabel,
+    formatActivityThemeLabel,
     sortHeaderState,
     isQualificationEvenement,
     isTestPersonnelNip,
