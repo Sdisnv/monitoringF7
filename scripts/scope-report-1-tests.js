@@ -179,7 +179,7 @@ async function gen(repo, body, claims){
     assert.ok(text.includes('Taux officiel') || text.includes('officiel'));
   });
 
-  await record('5 — rapport cible / OI DAP Y4 et FOSPEC/PR', async () => {
+  await record('5 — rapport cible / OI DAP Y4 et domaine PR', async () => {
     const { repo, service } = ctx();
     await enableDap(repo);
     const y4 = await repo.findCible('DAP', 'Y4');
@@ -196,10 +196,10 @@ async function gen(repo, body, claims){
     await closeWithStatuses(service, e2.evenement.evenement_id, pPr, Array(4).fill('PRESENT'));
     const dap = await gen(repo, { kind: 'TARGET', domaine: 'DAP', cible: 'Y4', year: 2026, preset: 'YEAR' });
     assert.strictEqual(dap.filename, 'SCOPE_DAP_Y4_2026.pdf');
-    const fospec = await gen(repo, { kind: 'TARGET', domaine: 'PR', cible: 'G1', year: 2026, preset: 'YEAR' });
-    const text = pdfText(fospec.buffer);
-    assert.ok(text.includes('FOSPEC') || text.includes('Protection respiratoire'));
-    assert.ok(!text.includes('domaine principal PR inventé'));
+    const prReport = await gen(repo, { kind: 'TARGET', domaine: 'PR', cible: 'G1', year: 2026, preset: 'YEAR' });
+    assert.strictEqual(prReport.filename, 'SCOPE_PR_G1_2026.pdf');
+    const text = pdfText(prReport.buffer);
+    assert.ok(!text.includes('FOSPEC / PR'));
   });
 
   await record('6 — rapport période SDIS NON_EVALUABLE + LEGACY distinct', async () => {

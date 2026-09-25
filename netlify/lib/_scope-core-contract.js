@@ -7,12 +7,11 @@ const ORDERS = Object.freeze({
   DPS: Object.freeze(['G1', 'C1', 'B1', 'B2']),
   DAP: Object.freeze(['Y1', 'Y2', 'Y3', 'Y4']),
   JSP: Object.freeze(['G1', 'C1', 'B1']),
-  FOSPEC_SUBDOMAINES: Object.freeze(['PR', 'AUTO']),
   PR_SPECIALISATIONS: Object.freeze(['GEN', 'ABC']),
   AUTO_SPECIALISATIONS: Object.freeze(['VL', 'PL'])
 });
 
-const FORMATION_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOSPEC', 'FOBA', 'FOCA']);
+const FORMATION_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOSPEC', 'FOBA', 'FOCA', 'AUTO', 'PR']);
 const AUTO_VL_PERIMETERS = Object.freeze(['G1', 'C1', 'B1', 'B2', 'Y1', 'Y2', 'Y3', 'Y4']);
 const AUTO_PL_PERIMETERS = Object.freeze(['G1', 'C1', 'B1', 'B2']);
 
@@ -31,10 +30,10 @@ function normalizePerimeter(raw){
   return text === 'TOUS' || text === 'GLOBAL' ? '' : text;
 }
 
-function fospecSpecialisationLabel(subdomain, code){
-  const sub = clean(subdomain).toUpperCase();
+function domainSpecialisationLabel(domain, code){
+  const sub = clean(domain).toUpperCase();
   const value = clean(code).toUpperCase();
-  if(sub === 'PR') return value === 'ABC' ? 'PAPR ABC' : 'PAPR';
+  if(sub === 'PR') return value === 'ABC' ? 'PABC' : 'PAPR';
   if(sub === 'AUTO') return value === 'PL' ? 'Cond PL' : 'Cond VL';
   return value;
 }
@@ -44,8 +43,8 @@ function perimeterLabel(domain, code, options = {}){
   const value = normalizePerimeter(code);
   if(!value) return d === 'JSP' ? 'Tous les sites' : 'Global';
   if(d === 'JSP') return `JSP ${value}`;
-  if(d === 'PR' || (d === 'FOSPEC' && clean(options.sousDomaine).toUpperCase() === 'PR')) return `DPS ${value}`;
-  if(d === 'FOSPEC' && clean(options.sousDomaine).toUpperCase() === 'AUTO'){
+  if(d === 'PR') return `DPS ${value}`;
+  if(d === 'AUTO'){
     return value.startsWith('Y') ? `DAP ${value}` : `DPS ${value}`;
   }
   if(d === 'DAP') return `DAP ${value}`;
@@ -77,18 +76,15 @@ function compareInstitutional(a, b, options = {}){
   return clean(a.nip || a.personneId).localeCompare(clean(b.nip || b.personneId), 'fr', { numeric: true });
 }
 
-function effectiveFospecDomaine(domaineCode, sousDomaineCode){
+// Read-only adapter for rows written before PR and AUTO became autonomous domains.
+function canonicalEventDomaineFromLegacy(domaineCode, sousDomaineCode){
   const d = normalizeDomaine(domaineCode);
   const sub = clean(sousDomaineCode).toUpperCase();
   return d === 'FOSPEC' && (sub === 'PR' || sub === 'AUTO') ? sub : d;
 }
 
-function acceptedEventDomains(domaineCode, sousDomaineCode){
-  const d = normalizeDomaine(domaineCode);
-  const sub = clean(sousDomaineCode).toUpperCase();
-  if(d === 'FOSPEC' && (sub === 'PR' || sub === 'AUTO')) return new Set([sub]);
-  if(d === 'FOSPEC') return new Set(['PR', 'AUTO']);
-  return new Set([d]);
+function acceptedEventDomains(domaineCode){
+  return new Set([normalizeDomaine(domaineCode)]);
 }
 
 function autoPerimeterCodes(specialisationCode){
@@ -98,7 +94,7 @@ function autoPerimeterCodes(specialisationCode){
 }
 
 function participationFactKey({ eventId, pKey, effectiveDomaineCode, sousDomaineCode, specialisationCode, perimeterCode } = {}){
-  const effective = effectiveFospecDomaine(effectiveDomaineCode, sousDomaineCode);
+  const effective = canonicalEventDomaineFromLegacy(effectiveDomaineCode, sousDomaineCode);
   if(effective === 'PR'){
     return ['PR', pKey, clean(specialisationCode || 'GEN').toUpperCase()].join('::');
   }
@@ -113,10 +109,10 @@ module.exports = {
   clean,
   normalizeDomaine,
   normalizePerimeter,
-  fospecSpecialisationLabel,
+  domainSpecialisationLabel,
   perimeterLabel,
   compareInstitutional,
-  effectiveFospecDomaine,
+  canonicalEventDomaineFromLegacy,
   acceptedEventDomains,
   autoPerimeterCodes,
   participationFactKey,

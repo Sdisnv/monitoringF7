@@ -329,10 +329,7 @@ function createScopeObjectivesService(repo){
     let domaineCode = query.domaineCode || query.domaine_code || query.domaine || null;
     let cibleId = query.cibleId || query.cible_id || null;
     const cibleCode = String(query.cible || query.cibleCode || query.niveau || '').toUpperCase();
-    if(String(domaineCode || '').toUpperCase() === 'FOSPEC' && (cibleCode === 'PR' || cibleCode === 'AUTO')){
-      domaineCode = cibleCode;
-      cibleId = null;
-    } else if(!cibleId && cibleCode && domaineCode && typeof repo.findCible === 'function'){
+    if(!cibleId && cibleCode && domaineCode && typeof repo.findCible === 'function'){
       const cible = await repo.findCible(String(domaineCode).toUpperCase(), cibleCode);
       if(cible) cibleId = cible.cible_id;
     }

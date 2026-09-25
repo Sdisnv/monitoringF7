@@ -19,6 +19,7 @@
     "test:scope-annual-catalog-c13": "node scripts/scope-annual-catalog-c13-tests.js",
     "test:scope-annual-catalog-c15": "node scripts/scope-annual-catalog-c15-tests.js",
     "test:scope-c16-repair-2": "node scripts/scope-c16-repair-2-tests.js",
+    "test:scope-g1-final": "node scripts/scope-g1-final-tests.js",
     "diagnostic:scope-annual-catalog-c15": "node scripts/scope-annual-catalog-c15-diagnostic.js",
     "preview:scope-annual-catalog-c15": "node scripts/scope-annual-catalog-c15-preview.js",
     "diagnostic:scope-annual-catalog-c13": "node scripts/scope-annual-catalog-c13-preview.js",

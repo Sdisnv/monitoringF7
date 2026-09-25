@@ -285,7 +285,7 @@
 
   const SHARED_DOMAIN_GROUPS = Object.freeze([
     { label: 'Opérationnel', codes: Object.freeze(['DPS', 'DAP', 'JSP']) },
-    { label: 'Formation', codes: Object.freeze(['FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'PR', 'AUTO']), separatorBefore: 'PR' }
+    { label: 'Formation', codes: Object.freeze(['FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']), separatorBefore: 'AUTO' }
   ]);
 
   const SHARED_OI_BY_DOMAIN = Object.freeze({
@@ -743,14 +743,17 @@
     CIBLE: 'Cible'
   });
 
-  const OBJECTIF_UX_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC']);
+  const OBJECTIF_UX_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']);
   const OBJECTIF_UX_CIBLES = Object.freeze({
     DPS: ['G1', 'C1', 'B1', 'B2'],
     DAP: ['Y1', 'Y2', 'Y3', 'Y4'],
     JSP: ['G1', 'C1', 'B1'],
     FOBA: ['1', '2', '3'],
+    FOCO: [],
     FOCA: [],
-    FOSPEC: ['AUTO', 'PR']
+    FOSPEC: [],
+    AUTO: [],
+    PR: []
   });
   // Niveau UX futur (hors lot) : Domaine → Cible → PÉRIMÈTRE. Non implémenté.
   const OBJECTIF_FUTURE_LEVEL = 'PERIMETRE';
@@ -1020,7 +1023,7 @@
   }
 
   function scopeDomainOrderTrail() {
-    return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → PR → AUTO';
+    return 'DPS → DAP → JSP → FOBA → FOCO → FOCA → FOSPEC → … → AUTO → PR';
   }
 
   function compareQvActivities(a, b) {
@@ -1450,9 +1453,6 @@
     if (scope === 'GLOBAL' || (!scope && !domaine)) {
       return { portee: 'GLOBAL', porteeLabel: 'Général', domaineUx: '', cibleUx: '', cibleLabel: '—' };
     }
-    if (domaine === 'PR' || domaine === 'AUTO') {
-      return { portee: 'CIBLE', porteeLabel: 'Cible', domaineUx: 'FOSPEC', cibleUx: domaine, cibleLabel: domaine };
-    }
     if (scope === 'CIBLE') {
       const cible = (cibles || []).find((c) => c.cibleId === cibleId || c.cible_id === cibleId);
       const niveau = cible ? String(cible.niveauCode || cible.niveau_code || '') : '';
@@ -1469,9 +1469,6 @@
     const cibleCode = String((form && (form.cibleCode || form.cibleId)) || '').toUpperCase();
     if (portee === 'GLOBAL') return { portee: 'GLOBAL', domaineCode: null, cibleId: null };
     if (portee === 'DOMAINE') return { portee: 'DOMAINE', domaineCode: domaine || null, cibleId: null };
-    if (domaine === 'FOSPEC' && (cibleCode === 'PR' || cibleCode === 'AUTO')) {
-      return { portee: 'DOMAINE', domaineCode: cibleCode, cibleId: null };
-    }
     const row = (cibles || []).find((c) => String(c.domaineCode).toUpperCase() === domaine && String(c.niveauCode).toUpperCase() === cibleCode);
     return { portee: 'CIBLE', domaineCode: domaine || null, cibleId: (row && row.cibleId) || null };
   }
@@ -1480,9 +1477,6 @@
     const domaine = String((preview && preview.domaine) || '').toUpperCase();
     const cibleCode = String((preview && preview.cibleCode) || '').toUpperCase();
     if (!domaine) return { analysisGrain: 'GLOBAL' };
-    if (domaine === 'FOSPEC' && (cibleCode === 'PR' || cibleCode === 'AUTO')) {
-      return { domaine: cibleCode, analysisGrain: 'DOMAINE' };
-    }
     if (cibleCode) return { domaine, cible: cibleCode, analysisGrain: 'CIBLE' };
     return { domaine, analysisGrain: 'DOMAINE' };
   }
@@ -1491,7 +1485,6 @@
     const code = String(domaine || '').toUpperCase();
     const allowed = OBJECTIF_UX_CIBLES[code] || [];
     return allowed.map((niveau) => {
-      if (code === 'FOSPEC') return { code: niveau, label: niveau, cibleId: '' };
       const row = (cibles || []).find((c) => String(c.domaineCode).toUpperCase() === code && String(c.niveauCode) === niveau);
       return {
         code: niveau,
@@ -1508,9 +1501,6 @@
     if (portee === 'GLOBAL') return 'Cet objectif sera utilisé lorsqu’aucun objectif de domaine ou de cible plus précis n’existe.';
     if (portee === 'DOMAINE' && domaine) {
       return `Cet objectif s’appliquera à l’ensemble du domaine ${domaine} sauf lorsqu’un objectif plus précis existe pour une cible ${domaine}.`;
-    }
-    if (portee === 'CIBLE' && domaine === 'FOSPEC' && cible) {
-      return `Cet objectif s’appliquera uniquement au sous-domaine ${cible} de FOSPEC.`;
     }
     if (portee === 'CIBLE' && domaine && cible) {
       const label = domaine === 'FOBA' ? `FOBA ${cible}` : `${domaine} ${cible}`;
@@ -1597,7 +1587,7 @@
 
   function buildSidebarNav(arbre, route) {
     const r = route || {};
-    const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC'];
+    const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'];
     const rank = (code) => {
       const idx = order.indexOf(code);
       return idx === -1 ? order.length + 1 : idx;

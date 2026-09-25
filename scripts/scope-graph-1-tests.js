@@ -102,7 +102,7 @@ async function enableDap(repo, dateBascule){
     const { dashboard } = ctx();
     const dash = await dashboard.dashboard({ year: 2026, preset: 'YEAR' });
     const points = dash.graphs.domaines.series[0].points;
-    assert.strictEqual(points.length, 6);
+    assert.strictEqual(points.length, ROOT_DOMAINES.length);
     assert.ok(points.every((p) => p.percentage == null && p.analyticStatus === STATUTS.NON_EVALUABLE));
     const svg = charts.renderBarChart(dash.graphs.domaines);
     assert.ok(svg.includes('Non évaluable'));
@@ -186,12 +186,9 @@ async function enableDap(repo, dateBascule){
     await closeWithStatuses(service, b.evenement.evenement_id, p2, Array(4).fill('PRESENT'));
     const dash = await dashboard.dashboard({ year: 2026, preset: 'YEAR' });
     const fospec = dash.graphs.domaines.series[0].points.find((p) => p.id === 'FOSPEC');
-    assert.ok(fospec.objectiveContext && fospec.objectiveContext.homogeneous === false);
-    assert.strictEqual(fospec.objective, null);
-    assert.strictEqual(fospec.gapPct, null);
-    const bar = charts.renderBarChart(dash.graphs.domaines);
-    const fospecBlock = bar.split('FOSPEC')[1] || '';
-    assert.ok(!fospecBlock.split('</a>')[0].includes('stroke-dasharray'));
+    assert.ok(fospec.objectiveContext && fospec.objectiveContext.homogeneous === true);
+    assert.strictEqual(fospec.objective.thresholdPct, 80);
+    assert.strictEqual(fospec.gapPct, 20);
   });
 
   await record('6-7 — LEGACY séparé, jamais fusionné', async () => {
@@ -233,7 +230,7 @@ async function enableDap(repo, dateBascule){
     assert.strictEqual(dps.percentage, dash.officiel.percentage);
   });
 
-  await record('9-13 — domaines MODEL-2, PR/AUTO sous FOSPEC', async () => {
+  await record('9-13 — domaines MODEL-2, PR/AUTO autonomes de FOSPEC', async () => {
     const { repo, service, dashboard } = ctx();
     const g1 = await repo.findCible('DPS', 'G1');
     const pr = await repo.findCible('PR', 'G1');
@@ -252,23 +249,23 @@ async function enableDap(repo, dateBascule){
     const e4 = await service.createEvenement({ date: '2026-05-04', domaineCode: 'AUTO', libelle: 'AUTO', cibleIds: [auto.cible_id] }, { sub: 'test' });
     await closeWithStatuses(service, e4.evenement.evenement_id, pAuto, Array(4).fill('PRESENT'));
     const sdis = await dashboard.dashboard({ year: 2026, preset: 'YEAR' });
-    assert.strictEqual(sdis.domaines.length, 8);
+    assert.strictEqual(sdis.domaines.length, ROOT_DOMAINES.length);
     const ids = sdis.graphs.domaines.series[0].points.map((p) => p.id);
     assert.deepStrictEqual(ids, ROOT_DOMAINES.slice());
-    assert.ok(!ids.includes('PR'));
-    assert.ok(!ids.includes('AUTO'));
+    assert.ok(ids.includes('PR'));
+    assert.ok(ids.includes('AUTO'));
     const fospec = sdis.graphs.domaines.series[0].points.find((p) => p.id === 'FOSPEC');
-    assert.strictEqual(fospec.numerator, 14);
-    assert.strictEqual(fospec.denominator, 19);
+    assert.strictEqual(fospec.numerator, 10);
+    assert.strictEqual(fospec.denominator, 10);
+    assert.strictEqual(sdis.graphs.domaines.series[0].points.find((p) => p.id === 'PR').denominator, 5);
+    assert.strictEqual(sdis.graphs.domaines.series[0].points.find((p) => p.id === 'AUTO').percentage, 100);
     assert.ok(fospec.href.includes('#/vue/FOSPEC'));
     const fospecView = await dashboard.dashboard({ year: 2026, preset: 'YEAR', domaine: 'FOSPEC' });
     assert.strictEqual(fospecView.graphs.domaines.emptyReason, 'CONTEXTE_DRILL');
     const kids = fospecView.graphs.children.series[0].points;
-    assert.deepStrictEqual(kids.map((p) => p.id).sort(), ['AUTO', 'PR']);
-    assert.ok(kids.find((p) => p.id === 'PR').label.includes('Protection respiratoire'));
-    assert.strictEqual(kids.find((p) => p.id === 'PR').numerator, 0);
-    assert.strictEqual(kids.find((p) => p.id === 'PR').denominator, 5);
-    assert.strictEqual(kids.find((p) => p.id === 'AUTO').percentage, 100);
+    assert.deepStrictEqual(kids.map((p) => p.id), ['GEN']);
+    assert.strictEqual(kids[0].numerator, 10);
+    assert.strictEqual(kids[0].denominator, 10);
     const dpsView = await dashboard.dashboard({ year: 2026, preset: 'YEAR', domaine: 'DPS' });
     const oi = dpsView.graphs.children.series[0].points.map((p) => p.id);
     assert.ok(oi.includes('G1') && oi.includes('C1') && oi.includes('B1') && oi.includes('B2'));

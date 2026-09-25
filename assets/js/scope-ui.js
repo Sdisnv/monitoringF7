@@ -643,8 +643,8 @@
       }
       if (next.screen === 'rapport-jsp' || next.screen === 'rapport-participation') {
         if (next.screen === 'rapport-jsp') state.participationReportDomain = 'JSP';
-        if (state.participationReportDomain !== 'FOSPEC') state.participationReportSubdomain = '';
-        if (state.participationReportDomain !== 'FOSPEC') state.participationReportSpecialisation = 'GEN';
+        state.participationReportSubdomain = '';
+        if (!['PR', 'AUTO'].includes(state.participationReportDomain)) state.participationReportSpecialisation = 'GEN';
         state.jspReport = null;
         state.jspReportReady = false;
         state.jspReportError = null;
@@ -2405,8 +2405,7 @@
 
   function homeTreatDomainKey(code) {
     const raw = String(code || '').toUpperCase();
-    if (raw === 'PR' || raw === 'AUTO') return 'FOSPEC';
-    return ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'].indexOf(raw) >= 0 ? raw : null;
+    return ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].indexOf(raw) >= 0 ? raw : null;
   }
 
   function homeEventEffectif(alert) {
@@ -2889,14 +2888,14 @@
   }
 
   function analysisDomaineOptions() {
-    const codes = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'];
+    const codes = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'];
     return ['tous'].concat(codes).map((code) => `<option value="${escapeHtml(code)}" ${state.analysesFilters.domaine === code ? 'selected' : ''}>${escapeHtml(code === 'tous' ? 'Tous domaines' : domaineLabel(code))}</option>`).join('');
   }
 
   function analysisCibleOptions() {
     const domain = String((state.analysesFilters && state.analysesFilters.domaine) || 'tous').toUpperCase();
     if (!domain || domain === 'TOUS') return '<option value="tous">Toutes OI / spécialisations</option>';
-    const family = domain === 'FOSPEC' ? new Set(['FOSPEC', 'PR', 'PAPR', 'AUTO']) : new Set([domain]);
+    const family = new Set([domain]);
     const cibles = (state.referentiels.cibles || []).filter((cible) => {
       const d = String(cible.domaineCode || cible.domaine_code || '').toUpperCase();
       const niveau = String(cible.niveauCode || cible.niveau_code || '').toUpperCase();
@@ -2919,7 +2918,9 @@
     const byDomain = {
       FOBA: ['FOBA 1', 'FOBA 2', 'FOBA 3'],
       FOCA: ['Échelon I', 'Échelon II', 'Échelons III et IV'],
-      FOSPEC: ['Général / PAPR', 'PR-ABC', 'AUTO VL', 'AUTO PL'],
+      FOSPEC: [],
+      PR: ['Général / PAPR', 'PR-ABC'],
+      AUTO: ['AUTO VL', 'AUTO PL'],
       DPS: [],
       DAP: [],
       JSP: []
@@ -5591,7 +5592,7 @@
     const display = personnelDisplay();
     const filtered = (fiche.evenements || []).filter((row) => {
       if (domaine) {
-        const codes = domaine === 'FOSPEC' ? ['FOSPEC', 'PR', 'AUTO'] : [domaine];
+        const codes = [domaine];
         if (!codes.includes(row.domaine)) return false;
       }
       const s = String(row.statutParticipation || row.statut || '').toUpperCase();
@@ -6008,37 +6009,31 @@
   }
 
   function participationDomainOptions() {
-    const preferred = ['DPS', 'DAP', 'JSP', 'FOSPEC', 'FOBA', 'FOCA'];
+    const preferred = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'];
     const present = new Set((state.referentiels.domaines || []).map((d) => d.code).filter(Boolean));
     return preferred.filter((code) => present.has(code) || code === 'FOSPEC');
   }
 
   function participationSubdomainOptions(domain) {
-    return String(domain || '').toUpperCase() === 'FOSPEC'
-      ? [['', 'Tous les sous-domaines'], ['PR', 'PR'], ['AUTO', 'AUTO']]
-      : [];
+    return [];
   }
 
   function participationSpecialisationOptions(domain) {
     const code = String(domain || '').toUpperCase();
-    const sub = String(state.participationReportSubdomain || '').toUpperCase();
-    if (code === 'FOSPEC' && sub === 'PR') return [['GEN', 'PAPR'], ['ABC', 'PAPR ABC']];
-    if (code === 'FOSPEC' && sub === 'AUTO') return [['VL', 'Cond VL'], ['PL', 'Cond PL']];
+    if (code === 'PR') return [['GEN', 'PAPR'], ['ABC', 'PABC']];
+    if (code === 'AUTO') return [['VL', 'Cond VL'], ['PL', 'Cond PL']];
     return [];
   }
 
   function participationPerimeterOptions(domain) {
     const code = String(domain || 'JSP').toUpperCase();
-    const sub = String(state.participationReportSubdomain || '').toUpperCase();
     if (code === 'JSP') return [['TOUS', 'Global du domaine'], ['G1', 'JSP G1'], ['C1', 'JSP C1'], ['B1', 'JSP B1']];
     if (code === 'PR') return [['TOUS', 'Global du domaine'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
-    if (code === 'FOSPEC' && sub === 'PR') return [['TOUS', 'Global'], ['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
-    if (code === 'FOSPEC' && sub === 'AUTO') {
+    if (code === 'AUTO') {
       const dps = [['G1', 'DPS G1'], ['C1', 'DPS C1'], ['B1', 'DPS B1'], ['B2', 'DPS B2']];
       const dap = [['Y1', 'DAP Y1'], ['Y2', 'DAP Y2'], ['Y3', 'DAP Y3'], ['Y4', 'DAP Y4']];
       return [['TOUS', 'Global']].concat(state.participationReportSpecialisation === 'PL' ? dps : dps.concat(dap));
     }
-    if (code === 'FOSPEC') return [['TOUS', 'Global du domaine'], ['PR', 'PR'], ['AUTO', 'AUTO']];
     const rows = (state.referentiels.cibles || [])
       .filter((c) => String(c.domaineCode || c.domaine_code || '').toUpperCase() === code)
       .filter((c) => String(c.niveauCode || c.niveau_code || '').toUpperCase() !== 'GEN')
@@ -9973,12 +9968,13 @@
   }
 
   function qvFamilyOf(row) {
-    if (row && row.family) return row.family;
     const domain = String((row && row.domain) || '').toUpperCase();
+    if (domain === 'PR' || domain === 'AUTO') return domain;
+    if (row && row.family) return row.family;
     if (['DPS', 'DAP', 'JSP'].includes(domain)) return 'FOCO';
     if (domain === 'FOBA') return 'FOBA';
     if (domain === 'FOCA') return 'FOCA';
-    if (['FOSPEC', 'PR', 'AUTO', 'VPC', 'NAC', 'OFSI'].includes(domain)) return 'FOSPEC';
+    if (['FOSPEC', 'VPC', 'NAC', 'OFSI'].includes(domain)) return 'FOSPEC';
     return '';
   }
 
@@ -10421,7 +10417,7 @@
     return `<div class="scope-toolbar qv-toolbar">
       <div class="scope-field"><label for="qv-filter-q">Recherche</label><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Activité, domaine, lieu…"></div>
       <div class="scope-field"><label for="qv-filter-domain">Domaine</label><select id="qv-filter-domain"><option value="tous">Tous</option>${domains.map((v) => `<option value="${escapeHtml(v)}" ${filters.domain === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
-      <div class="scope-field"><label for="qv-filter-family">Famille</label><select id="qv-filter-family"><option value="tous">Toutes</option>${['FOBA', 'FOCO', 'FOCA', 'FOSPEC'].map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
+      <div class="scope-field"><label for="qv-filter-family">Famille</label><select id="qv-filter-family"><option value="tous">Toutes</option>${['FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-cible">OI</label><select id="qv-filter-cible"><option value="tous">Tous</option>${cibles.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-specialisation">Spécialisation</label><select id="qv-filter-specialisation"><option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
       <div class="scope-field"><label for="qv-filter-cursus">Cursus</label><select id="qv-filter-cursus"><option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}</select></div>
@@ -15938,13 +15934,11 @@
 
   function participationReportParams(base) {
     const domain = String(state.participationReportDomain || 'JSP').toUpperCase();
-    const subdomain = domain === 'FOSPEC' ? String(state.participationReportSubdomain || '').toUpperCase() : '';
     const payload = Object.assign({}, base || {}, {
       domaine: domain,
       blocks: (state.participationReportBlocks || []).join(',')
     });
-    if (subdomain) {
-      payload.sousDomaine = subdomain;
+    if (domain === 'PR' || domain === 'AUTO') {
       const specialisation = String(state.participationReportSpecialisation || '').toUpperCase();
       if (specialisation) payload.specialisation = specialisation;
     }
@@ -15955,18 +15949,16 @@
   function openParticipationReportFromVue(domaine, cible) {
     const domain = String(domaine || '').toUpperCase();
     const target = String(cible || '').toUpperCase();
-    state.participationReportDomain = domain === 'PR' || domain === 'AUTO' ? 'FOSPEC' : (domain || 'JSP');
-    state.participationReportSubdomain = domain === 'PR' || domain === 'AUTO'
-      ? domain
-      : (state.participationReportDomain === 'FOSPEC' && (target === 'PR' || target === 'AUTO') ? target : '');
-    if (state.participationReportSubdomain === 'AUTO') {
+    state.participationReportDomain = domain || 'JSP';
+    state.participationReportSubdomain = '';
+    if (domain === 'AUTO') {
       state.participationReportSpecialisation = target === 'PL' ? 'PL' : 'VL';
-    } else if (state.participationReportSubdomain === 'PR') {
+    } else if (domain === 'PR') {
       state.participationReportSpecialisation = target === 'ABC' ? 'ABC' : 'GEN';
     } else {
       state.participationReportSpecialisation = 'GEN';
     }
-    state.jspReportSite = state.participationReportSubdomain ? 'TOUS' : (target || 'TOUS');
+    state.jspReportSite = ['PR', 'AUTO'].includes(domain) ? 'TOUS' : (target || 'TOUS');
     state.jspReport = null;
     state.jspReportReady = false;
     state.jspReportError = null;

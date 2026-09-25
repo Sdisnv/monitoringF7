@@ -2,8 +2,8 @@
 /**
  * SCOPE-MODEL-2 — vérité métier structurée.
  *
- * PR / AUTO : codes domaine conservés (FK, cibles, événements).
- * Ils sont aussi des SOUS-DOMAINES de FOSPEC. Pas de détournement de « cible ».
+ * PR, AUTO et FOSPEC sont trois domaines autonomes. Les anciens marqueurs
+ * FOSPEC/PR et FOSPEC/AUTO relèvent exclusivement de la lecture historique.
  *
  * Motifs d’excuse canoniques : PRIVE, PROFESSIONNEL, ARMEE, ACCIDENT_MALADIE.
  * Historique : MALADIE, ACCIDENT, AUTRE lus, jamais inventés.
@@ -125,12 +125,11 @@ function domaineAffiche(code, domaine){
 function domaineCodesForFilter(code){
   if(!code) return null;
   const text = String(code).toUpperCase();
-  if(text === 'FOSPEC') return ['FOSPEC', 'PR', 'AUTO'];
   return [text];
 }
 
 function isSousDomaineFospec(code){
-  return code === 'PR' || code === 'AUTO';
+  return false;
 }
 
 function normalizeMotifKey(motif){

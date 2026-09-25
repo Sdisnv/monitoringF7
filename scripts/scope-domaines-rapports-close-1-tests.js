@@ -96,7 +96,7 @@ function ciblesFor(domain){
 
 (async () => {
   await record('01 domaines V1 presents dans le modele central sans menu Domaines principal', () => {
-    ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC'].forEach((domain) => {
+    ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].forEach((domain) => {
       assert.ok(DOMAINES_MODEL_2[domain], `${domain} absent du modele`);
     });
     ['G1', 'C1', 'B1', 'B2'].forEach((target) => assert.ok(ciblesFor('DPS').includes(target), `DPS ${target} absent`));
@@ -104,8 +104,8 @@ function ciblesFor(domain){
     ['G1', 'C1', 'B1'].forEach((target) => assert.ok(ciblesFor('JSP').includes(target), `JSP ${target} absent`));
     assert.deepStrictEqual(ciblesFor('FOBA'), ['1', '2', '3']);
     assert.deepStrictEqual(ciblesFor('FOCA'), ['GEN']);
-    assert.strictEqual(DOMAINES_MODEL_2.PR.parentCode, 'FOSPEC');
-    assert.strictEqual(DOMAINES_MODEL_2.AUTO.parentCode, 'FOSPEC');
+    assert.strictEqual(DOMAINES_MODEL_2.PR.parentCode, null);
+    assert.strictEqual(DOMAINES_MODEL_2.AUTO.parentCode, null);
     const nav = logic.buildSidebarNav([], { screen: 'accueil', nav: 'accueil' });
     assert.ok(!nav.groups.some((group) => group.id === 'domaines'));
     assert.ok(!uiSource.includes('<p class="scope-nav-section">Domaines</p>'));
@@ -118,8 +118,8 @@ function ciblesFor(domain){
       ['#/vue/JSP/B1', 'JSP', 'B1'],
       ['#/vue/FOBA/1', 'FOBA', '1'],
       ['#/vue/FOCA/GEN', 'FOCA', 'GEN'],
-      ['#/vue/FOSPEC/PR', 'FOSPEC', 'PR'],
-      ['#/vue/FOSPEC/AUTO', 'FOSPEC', 'AUTO']
+      ['#/vue/PR/ABC', 'PR', 'ABC'],
+      ['#/vue/AUTO/PL', 'AUTO', 'PL']
     ].forEach(([hash, domain, target]) => {
       assert.deepStrictEqual(logic.parseHash(hash), { screen: 'vue', nav: 'vue', domaine: domain, cible: target });
       const html = uiHooks(hash).renderShellHtml(hash, { counts: {}, alerts: [] });
@@ -133,18 +133,18 @@ function ciblesFor(domain){
   });
 
   await record('03 navigation contextuelle Domaines conserve PR/ABC et AUTO/PL distincts', () => {
-    const hooks = uiHooks('#/vue/FOSPEC/PR');
+    const hooks = uiHooks('#/vue/PR/ABC');
     hooks.openParticipationReportFromVue('DAP', 'Y4');
     assert.strictEqual(hooks.state.participationReportDomain, 'DAP');
     assert.strictEqual(hooks.state.participationReportSubdomain, '');
     assert.strictEqual(hooks.state.jspReportSite, 'Y4');
     hooks.openParticipationReportFromVue('PR', 'ABC');
-    assert.strictEqual(hooks.state.participationReportDomain, 'FOSPEC');
-    assert.strictEqual(hooks.state.participationReportSubdomain, 'PR');
+    assert.strictEqual(hooks.state.participationReportDomain, 'PR');
+    assert.strictEqual(hooks.state.participationReportSubdomain, '');
     assert.strictEqual(hooks.state.participationReportSpecialisation, 'ABC');
     hooks.openParticipationReportFromVue('AUTO', 'PL');
-    assert.strictEqual(hooks.state.participationReportDomain, 'FOSPEC');
-    assert.strictEqual(hooks.state.participationReportSubdomain, 'AUTO');
+    assert.strictEqual(hooks.state.participationReportDomain, 'AUTO');
+    assert.strictEqual(hooks.state.participationReportSubdomain, '');
     assert.strictEqual(hooks.state.participationReportSpecialisation, 'PL');
     assert.strictEqual(hooks.state.jspReportSite, 'TOUS');
   });
@@ -204,11 +204,11 @@ function ciblesFor(domain){
       (error) => error instanceof HttpError && error.error === 'payload_invalide'
     );
     assert.deepStrictEqual(
-      sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'FOSPEC', sousDomaine: 'PR', specialisation: 'ABC', year: 2026 }).specialisation,
+      sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'PR', specialisation: 'ABC', year: 2026 }).specialisation,
       'ABC'
     );
     assert.deepStrictEqual(
-      sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'FOSPEC', sousDomaine: 'AUTO', specialisation: 'PL', year: 2026 }).specialisation,
+      sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'AUTO', specialisation: 'PL', year: 2026 }).specialisation,
       'PL'
     );
     assert.ok(reportServiceSource.includes("hasPermission(claims, 'dashboard:read')"));

@@ -83,16 +83,17 @@ function sanitizeQuery(body){
 function validateParticipationSpecialisation({ kind, domaine, sousDomaine, specialisation }){
   const value = contract.clean(specialisation).toUpperCase();
   if(!value) return null;
-  const domainCode = contract.normalizeDomaine(domaine);
+  const requestedDomainCode = contract.normalizeDomaine(domaine);
   const subdomainCode = contract.clean(sousDomaine).toUpperCase();
-  if(kind !== 'PARTICIPATION' || domainCode !== 'FOSPEC' || !['PR', 'AUTO'].includes(subdomainCode)){
-    throw new HttpError(400, 'payload_invalide', 'Le champ specialisation est autorisé uniquement pour un rapport de participation FOSPEC spécialisé.');
+  const domainCode = contract.canonicalEventDomaineFromLegacy(requestedDomainCode, subdomainCode);
+  if(kind !== 'PARTICIPATION' || !['PR', 'AUTO'].includes(domainCode)){
+    throw new HttpError(400, 'payload_invalide', 'Le champ specialisation est autorisé uniquement pour un rapport de participation PR ou AUTO.');
   }
-  const allowed = subdomainCode === 'PR'
+  const allowed = domainCode === 'PR'
     ? contract.ORDERS.PR_SPECIALISATIONS
     : contract.ORDERS.AUTO_SPECIALISATIONS;
   if(!allowed.includes(value)){
-    throw new HttpError(400, 'payload_invalide', `Spécialisation ${value} non autorisée pour ${subdomainCode}.`);
+    throw new HttpError(400, 'payload_invalide', `Spécialisation ${value} non autorisée pour ${domainCode}.`);
   }
   return value;
 }

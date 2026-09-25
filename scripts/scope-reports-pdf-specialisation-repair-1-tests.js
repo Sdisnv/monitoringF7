@@ -72,19 +72,19 @@ function expectInvalidSpecialisation(body){
     expectInvalidSpecialisation({ kind: 'PARTICIPATION', domaine: 'JSP', year: 2026, specialisation: 'ABC' });
   });
 
-  await record('03 PDF FOSPEC PR accepte specialisation valide', () => {
-    const q = sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'FOSPEC', sousDomaine: 'PR', specialisation: 'ABC', year: 2026 });
-    assert.strictEqual(q.domaine, 'FOSPEC');
-    assert.strictEqual(q.sousDomaine, 'PR');
+  await record('03 PDF PR autonome accepte specialisation valide', () => {
+    const q = sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'PR', specialisation: 'ABC', year: 2026 });
+    assert.strictEqual(q.domaine, 'PR');
+    assert.strictEqual(q.sousDomaine, null);
     assert.strictEqual(q.specialisation, 'ABC');
   });
 
-  await record('04 PDF FOSPEC AUTO accepte specialisation valide', () => {
-    const q = sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'FOSPEC', sousDomaine: 'AUTO', specialization: 'VL', year: 2026 });
+  await record('04 PDF AUTO autonome accepte specialisation valide', () => {
+    const q = sanitizeQuery({ kind: 'PARTICIPATION', domaine: 'AUTO', specialization: 'VL', year: 2026 });
     assert.strictEqual(q.specialisation, 'VL');
   });
 
-  await record('05 PDF refuse specialisation hors Participation/FOSPEC', () => {
+  await record('05 PDF refuse specialisation hors Participation PR/AUTO', () => {
     expectInvalidSpecialisation({ kind: 'DOMAIN', domaine: 'DPS', year: 2026, specialisation: 'ABC' });
     expectInvalidSpecialisation({ kind: 'PARTICIPATION', domaine: 'FOSPEC', year: 2026, specialisation: 'ABC' });
     expectInvalidSpecialisation({ kind: 'PARTICIPATION', domaine: 'FOSPEC', sousDomaine: 'AUTO', specialisation: 'ABC' });
@@ -105,10 +105,10 @@ function expectInvalidSpecialisation(body){
     }
   });
 
-  await record('07 UI FOSPEC specialise transmet la specialisation legitime', () => {
+  await record('07 UI PR autonome transmet la specialisation legitime', () => {
     const hooks = uiHooks();
-    hooks.state.participationReportDomain = 'FOSPEC';
-    hooks.state.participationReportSubdomain = 'PR';
+    hooks.state.participationReportDomain = 'PR';
+    hooks.state.participationReportSubdomain = '';
     hooks.state.participationReportSpecialisation = 'ABC';
     hooks.state.jspReportSite = 'B2';
     const payload = hooks.buildParticipationReportParams({ kind: 'PARTICIPATION', year: 2026 });
@@ -118,8 +118,8 @@ function expectInvalidSpecialisation(body){
       specialisation: payload.specialisation,
       perimeter: payload.perimeter
     }, {
-      domaine: 'FOSPEC',
-      sousDomaine: 'PR',
+      domaine: 'PR',
+      sousDomaine: undefined,
       specialisation: 'ABC',
       perimeter: 'B2'
     });
@@ -127,8 +127,8 @@ function expectInvalidSpecialisation(body){
 
   await record('08 UI passage specialise vers JSP nettoie la specialisation obsolette', () => {
     const hooks = uiHooks();
-    hooks.state.participationReportDomain = 'FOSPEC';
-    hooks.state.participationReportSubdomain = 'AUTO';
+    hooks.state.participationReportDomain = 'AUTO';
+    hooks.state.participationReportSubdomain = '';
     hooks.state.participationReportSpecialisation = 'PL';
     hooks.state.jspReportSite = 'G1';
     assert.strictEqual(hooks.buildParticipationReportParams({ kind: 'PARTICIPATION' }).specialisation, 'PL');
@@ -145,15 +145,15 @@ function expectInvalidSpecialisation(body){
   await record('09 generation PDF Participation specialisee reste fonctionnelle', async () => {
     const generated = await generateReport(createMemoryRepo(), {
       kind: 'PARTICIPATION',
-      domaine: 'FOSPEC',
-      sousDomaine: 'PR',
+      domaine: 'PR',
       specialisation: 'ABC',
       year: 2026,
       preset: 'YEAR'
     }, CLAIMS, { generatedAt: '2026-09-06T10:00:00.000Z' });
     assert.ok(Buffer.isBuffer(generated.buffer));
     assert.strictEqual(generated.buffer.subarray(0, 4).toString('ascii'), '%PDF');
-    assert.ok(generated.filename.includes('Participation_FOSPEC'));
+    assert.ok(generated.filename.includes('Participation_PR'));
+    assert.ok(!generated.filename.includes('FOSPEC'));
   });
 
   const failed = results.filter((r) => r.status !== 'PASS');

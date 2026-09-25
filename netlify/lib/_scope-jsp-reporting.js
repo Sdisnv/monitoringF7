@@ -13,7 +13,7 @@ const DEFAULT_SUBDIVISIONS = Object.freeze({
   PR: ['G1', 'C1', 'B1', 'B2'],
   AUTO: ['VL', 'PL'],
   FOBA: ['1', '2', '3'],
-  FOSPEC: ['PR', 'AUTO']
+  FOSPEC: []
 });
 
 const FORMATION_DOMAINES = contract.FORMATION_DOMAINES;
@@ -148,8 +148,7 @@ function siteForPersonAt(assignments, date){
 function reportSubdivisionForPersonAt(assignments, date, domaineCode, fallbackSite, sousDomaineCode, specialisationCode){
   if(domaineCode === 'JSP') return siteForPersonAt(assignments, date) || normalizeSite(fallbackSite);
   if(domaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
-  if(domaineCode === 'FOSPEC' && sousDomaineCode === 'PR') return subdivisionForPersonAt(assignments, date, 'DPS') || subdivisionForPersonAt(assignments, date, 'PR') || fallbackSite;
-  if(domaineCode === 'FOSPEC' && sousDomaineCode === 'AUTO'){
+  if(domaineCode === 'AUTO'){
     const dps = subdivisionForPersonAt(assignments, date, 'DPS');
     if(dps) return dps;
     if(String(specialisationCode || '').toUpperCase() === 'PL') return '';
@@ -194,10 +193,6 @@ async function assignmentsByPerson(repo){
 }
 
 function eventSubdivision(event, cibles, domaineCode){
-  if(domaineCode === 'FOSPEC'){
-    const eventDomain = normalizeDomaine(event.domaine_code || event.domaineCode);
-    if(eventDomain === 'PR' || eventDomain === 'AUTO') return eventDomain;
-  }
   const hit = (cibles || []).find((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === domaineCode
     && clean(row.niveau_code || row.niveauCode || row.cible));
   return hit ? clean(hit.niveau_code || hit.niveauCode || hit.cible).toUpperCase() : '';
@@ -227,7 +222,7 @@ function graphPayload(siteRows, exercises, motifs){
 }
 
 function subtypeLabel(domaineCode, code){
-  if(domaineCode === 'PR' || domaineCode === 'AUTO') return contract.fospecSpecialisationLabel(domaineCode, code);
+  if(domaineCode === 'PR' || domaineCode === 'AUTO') return contract.domainSpecialisationLabel(domaineCode, code);
   return `${domaineCode} ${code}`;
 }
 
@@ -245,38 +240,22 @@ async function subdivisionsFor(repo, domaineCode, sousDomaineCode, specialisatio
     const byCode = new Map(rows.map((row) => [row.code, row]));
     return DEFAULT_SUBDIVISIONS.PR.map((code) => byCode.get(code) || { code, label: `DPS ${code}`, cibleId: null });
   }
+  if(domaineCode === 'AUTO'){
+    const geoDomains = new Set(['DPS', 'DAP']);
+    const rows = (cibles || [])
+      .filter((row) => geoDomains.has(clean(row.domaine_code || row.domaineCode).toUpperCase()))
+      .map((row) => {
+        const code = clean(row.niveau_code || row.niveauCode).toUpperCase();
+        return { code, label: contract.perimeterLabel('AUTO', code), cibleId: null };
+      })
+      .filter((row) => contract.autoPerimeterCodes(specialisationCode).includes(row.code));
+    const byCode = new Map(rows.map((row) => [row.code, row]));
+    return contract.autoPerimeterCodes(specialisationCode).map((code) =>
+      byCode.get(code) || { code, label: contract.perimeterLabel('AUTO', code), cibleId: null }
+    );
+  }
   if(domaineCode === 'FOSPEC'){
-    if(sousDomaineCode === 'PR' || sousDomaineCode === 'AUTO'){
-      if(sousDomaineCode === 'PR'){
-        const rows = (cibles || [])
-          .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === 'DPS')
-          .map((row) => ({
-            code: clean(row.niveau_code || row.niveauCode).toUpperCase(),
-            label: contract.perimeterLabel('FOSPEC', clean(row.niveau_code || row.niveauCode), { sousDomaine: 'PR' }),
-            cibleId: null
-          }))
-          .filter((row) => row.code && row.code !== 'GEN');
-        const byCode = new Map(rows.map((row) => [row.code, row]));
-        return DEFAULT_SUBDIVISIONS.PR.map((code) => byCode.get(code) || { code, label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'PR' }), cibleId: null });
-      }
-      const geoDomains = new Set(['DPS', 'DAP']);
-      const rows = (cibles || [])
-        .filter((row) => geoDomains.has(clean(row.domaine_code || row.domaineCode).toUpperCase()))
-        .map((row) => {
-          const code = clean(row.niveau_code || row.niveauCode).toUpperCase();
-          return {
-            code,
-            label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'AUTO' }),
-            cibleId: null
-          };
-        })
-        .filter((row) => contract.autoPerimeterCodes(specialisationCode).includes(row.code));
-      const byCode = new Map(rows.map((row) => [row.code, row]));
-      return contract.autoPerimeterCodes(specialisationCode).map((code) =>
-        byCode.get(code) || { code, label: contract.perimeterLabel('FOSPEC', code, { sousDomaine: 'AUTO' }), cibleId: null }
-      );
-    }
-    return DEFAULT_SUBDIVISIONS.FOSPEC.map((code) => ({ code, label: code, cibleId: null }));
+    return [];
   }
   const rows = (cibles || [])
     .filter((row) => clean(row.domaine_code || row.domaineCode).toUpperCase() === domaineCode)
@@ -308,14 +287,12 @@ function objectiveFor({ objectives, date, domaineCode, cibleId }){
   });
 }
 
-function eventDomainsFor(domaineCode, sousDomaineCode){
-  return contract.acceptedEventDomains(domaineCode, sousDomaineCode);
+function eventDomainsFor(domaineCode){
+  return contract.acceptedEventDomains(domaineCode);
 }
 
 function domaineLabel(code){
   const canon = normalizeDomaine(code);
-  if(canon === 'PR') return 'FOSPEC / PR';
-  if(canon === 'AUTO') return 'FOSPEC / AUTO';
   return canon;
 }
 
@@ -358,10 +335,14 @@ function emptyReport({ domaineCode, period, blocks }){
 function createScopeParticipationReportingService(repo){
   async function report(query = {}){
     const period = parsePeriod(query);
-    const domaineCode = normalizeDomaine(query.domaine || query.domaineCode || 'JSP');
-    const sousDomaineCode = domaineCode === 'FOSPEC' ? normalizeDomaine(query.sousDomaine || query.sous_domaine || query.subdomain || '') : '';
-    const effectiveDomaineCode = sousDomaineCode || domaineCode;
-    const acceptedDomains = eventDomainsFor(domaineCode, sousDomaineCode);
+    const requestedDomaineCode = normalizeDomaine(query.domaine || query.domaineCode || 'JSP');
+    const requestedSousDomaineCode = requestedDomaineCode === 'FOSPEC'
+      ? clean(query.sousDomaine || query.sous_domaine || query.subdomain || '').toUpperCase()
+      : '';
+    const domaineCode = contract.canonicalEventDomaineFromLegacy(requestedDomaineCode, requestedSousDomaineCode);
+    const sousDomaineCode = '';
+    const effectiveDomaineCode = domaineCode;
+    const acceptedDomains = eventDomainsFor(domaineCode);
     const blocks = selectedBlocks(query.blocks);
     const wantedRaw = normalizePerimeter(query.site || query.perimeter || query.cible || query.niveau);
     const wantedPerimeter = domaineCode === 'JSP' ? normalizeSite(wantedRaw) : wantedRaw;
@@ -370,12 +351,15 @@ function createScopeParticipationReportingService(repo){
     const [people, assignments, eventsRaw] = await Promise.all([
       peopleById(repo),
       assignmentsByPerson(repo),
-      domaineCode === 'FOSPEC'
+      ['FOSPEC', 'PR', 'AUTO'].includes(domaineCode)
         ? repo.listEvenements({ from: period.from, to: period.to })
         : repo.listEvenements({ domaine: domaineCode, from: period.from, to: period.to })
     ]);
     const countableEvents = (eventsRaw || [])
-      .filter((event) => acceptedDomains.has(normalizeDomaine(event.domaine_code || event.domaineCode)))
+      .filter((event) => acceptedDomains.has(contract.canonicalEventDomaineFromLegacy(
+        event.domaine_code || event.domaineCode,
+        event.sous_domaine_code || event.sousDomaineCode
+      )))
       .filter((event) => inPeriod(event.date, period))
       .filter((event) => clean(event.statut).toUpperCase() === 'REALISE');
     const ids = countableEvents.map((event) => event.evenement_id || event.evenementId).filter(Boolean);

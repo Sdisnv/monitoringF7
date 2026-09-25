@@ -14,11 +14,11 @@ const {
 } = require('./_scope-analytics');
 const { collectObjectiveContext } = require('./_scope-objectives');
 
-const ROOT_DOMAINES = Object.freeze(['FOBA', 'FOCA', 'DPS', 'DAP', 'FOSPEC', 'JSP']);
-const FOSPEC_FAMILY = Object.freeze(['FOSPEC', 'PR', 'AUTO']);
+const ROOT_DOMAINES = Object.freeze(['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR']);
+const FOSPEC_FAMILY = Object.freeze(['FOSPEC']);
 
 function hasSousDomaines(code){
-  return SOUS_DOMAINES.some((row) => row.domaineParent === code);
+  return SOUS_DOMAINES.some((row) => row.actif !== false && row.domaineParent === code);
 }
 
 function sousDomaineLabel(code){
@@ -29,7 +29,7 @@ function sousDomaineLabel(code){
 }
 
 function familyCodes(code){
-  const kids = SOUS_DOMAINES.filter((row) => row.domaineParent === code).map((row) => row.code);
+  const kids = SOUS_DOMAINES.filter((row) => row.actif !== false && row.domaineParent === code).map((row) => row.code);
   return kids.length ? [code].concat(kids) : [code];
 }
 
@@ -479,7 +479,7 @@ async function buildScopeGraphs({
     childEmpty = 'CONTEXTE_CIBLE';
   } else if(domaineCode){
     childGrain = hasSousDomaines(domaineCode) ? 'SOUS_DOMAINE' : 'CIBLE';
-    const sous = SOUS_DOMAINES.filter((row) => row.domaineParent === domaineCode);
+    const sous = SOUS_DOMAINES.filter((row) => row.actif !== false && row.domaineParent === domaineCode);
     if(sous.length){
       childEmpty = null;
       for(const item of sous){

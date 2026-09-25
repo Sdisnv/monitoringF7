@@ -134,27 +134,29 @@ async function commitNative(service, csvText, extra = {}){
     assert.strictEqual(preview.lignes[0].cibleCodes, 'G1');
   });
 
-  await record('11 — FOSPEC/PR', async () => {
+  await record('11 — FOSPEC/PR legacy normalisé vers PR canonique', async () => {
     const repo = createMemoryRepo();
     const { preview, rapport } = await commitNative(createScopeService(repo), csv([
       '2026-10-01;FOSPEC;PR;G1;TEST IMPORT SCOPE — PAPR;AUTO;oui;;'
     ]));
-    assert.strictEqual(preview.lignes[0].domaine, 'FOSPEC');
-    assert.strictEqual(preview.lignes[0].sousDomaine, 'PR');
-    assert.strictEqual(preview.lignes[0].sousDomaineAffiche, 'PAPR');
+    assert.strictEqual(preview.lignes[0].domaine, 'PR');
+    assert.strictEqual(preview.lignes[0].sousDomaine, null);
+    assert.strictEqual(preview.lignes[0].sousDomaineAffiche, null);
     const ev = await repo.getEvent(rapport.created[0].evenementId);
     assert.strictEqual(ev.domaine_code, 'PR');
-    assert.strictEqual(ev.sous_domaine_code, 'PR');
+    assert.strictEqual(ev.sous_domaine_code, null);
   });
 
-  await record('12 — FOSPEC/AUTO', async () => {
+  await record('12 — FOSPEC/AUTO legacy normalisé vers AUTO canonique', async () => {
     const repo = createMemoryRepo();
     const { preview, rapport } = await commitNative(createScopeService(repo), csv([
       '2026-10-15;FOSPEC;AUTO;VL;TEST IMPORT SCOPE — VL;QUANTITATIF;oui;;'
     ]));
-    assert.strictEqual(preview.lignes[0].sousDomaine, 'AUTO');
+    assert.strictEqual(preview.lignes[0].domaine, 'AUTO');
+    assert.strictEqual(preview.lignes[0].sousDomaine, null);
     const ev = await repo.getEvent(rapport.created[0].evenementId);
     assert.strictEqual(ev.domaine_code, 'AUTO');
+    assert.strictEqual(ev.sous_domaine_code, null);
     assert.notStrictEqual(ev.domaine_code, 'FOSPEC');
   });
 

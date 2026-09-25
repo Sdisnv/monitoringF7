@@ -55,7 +55,7 @@
     '0171F7', '0172F7', '0173F7', '0174F7', '0175F7', '0170F7',
     '0120F7', '0130F7', '070F7'
   ]);
-  const SOUS_DOMAINES = { PR: 'FOSPEC', AUTO: 'FOSPEC' };
+  const LEGACY_FOSPEC_SUBDOMAINES = new Set(['PR', 'AUTO']);
   const MODES = ['NOMINATIF', 'QUANTITATIF', 'AUTO'];
 
   const STATUT_LABELS = {
@@ -438,27 +438,20 @@
     }
     const storage = domaine === 'PAPR' ? 'PR' : domaine;
     if (sous) {
-      if (!SOUS_DOMAINES[sous] && sous !== 'PAPR') {
+      if (!LEGACY_FOSPEC_SUBDOMAINES.has(sous) && sous !== 'PAPR') {
         return { error: 'referentiel_inconnu', message: `Sous-domaine inconnu : ${sous}` };
       }
       const leaf = sous === 'PAPR' ? 'PR' : sous;
       if (storage === 'FOSPEC' || storage === leaf) {
         return {
           domaineStockage: leaf,
-          sousDomaine: leaf,
-          domaineAffiche: 'FOSPEC',
-          sousDomaineAffiche: leaf === 'PR' ? 'PAPR' : 'AUTO'
+          sousDomaine: null,
+          domaineAffiche: leaf,
+          sousDomaineAffiche: null,
+          legacyNormalized: storage === 'FOSPEC'
         };
       }
       return { error: 'sous_domaine_incoherent', message: `Sous-domaine ${sous} incompatible avec ${domaine}` };
-    }
-    if (SOUS_DOMAINES[storage]) {
-      return {
-        domaineStockage: storage,
-        sousDomaine: storage,
-        domaineAffiche: 'FOSPEC',
-        sousDomaineAffiche: storage === 'PR' ? 'PAPR' : 'AUTO'
-      };
     }
     return {
       domaineStockage: storage,
@@ -1009,8 +1002,6 @@
     const byDomaine = {};
     aCreer.forEach((l) => {
       let key = l.domaineStockage || l.domaine || '—';
-      if (l.sousDomaine === 'PR') key = 'FOSPEC/PR';
-      else if (l.sousDomaine === 'AUTO') key = 'FOSPEC/AUTO';
       byDomaine[key] = (byDomaine[key] || 0) + 1;
     });
 
@@ -1104,7 +1095,7 @@
       if (!DOMAINES_CONNUS.includes(domaine)) errors.push({ error: 'domaine_inconnu', message: `Domaine inconnu : ${domaine || '(vide)'}` });
       const explicitDomaine = String(f.domaine || '').trim().toUpperCase();
       const quiDomaine = normalizeQuiDomain(f.qui);
-      const compatibleSousDomaine = explicitDomaine === 'FOSPEC' && SOUS_DOMAINES[quiDomaine] === 'FOSPEC';
+      const compatibleSousDomaine = explicitDomaine === 'FOSPEC' && LEGACY_FOSPEC_SUBDOMAINES.has(quiDomaine);
       if (explicitDomaine && DOMAINES_CONNUS.includes(explicitDomaine) && DOMAINES_CONNUS.includes(quiDomaine) && explicitDomaine !== quiDomaine && !compatibleSousDomaine) {
         errors.push({ error: 'domaine_qui_contradictoire', reviewRequired: true, message: `QUI (${quiDomaine}) et DOMAINE (${explicitDomaine}) sont contradictoires.` });
       }

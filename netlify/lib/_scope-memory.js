@@ -29,7 +29,7 @@ function createMemoryRepo(){
     domaine_parent: row.domaineParent,
     libelle: row.libelle,
     libelle_affiche: row.libelleAffiche,
-    actif: true
+    actif: row.actif !== false
   }));
   const cibles = CIBLES.map(([domaine_code, niveau_code, libelle]) => ({
     cible_id: randomUUID(),

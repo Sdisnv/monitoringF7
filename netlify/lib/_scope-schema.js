@@ -36,8 +36,8 @@ const DOMAINES_MODEL_2 = {
 };
 
 const SOUS_DOMAINES = [
-  { code: 'PR', domaineParent: 'FOSPEC', libelle: 'Protection respiratoire', libelleAffiche: 'PAPR' },
-  { code: 'AUTO', domaineParent: 'FOSPEC', libelle: 'Automobile', libelleAffiche: 'AUTO' }
+  { code: 'PR', domaineParent: 'FOSPEC', libelle: 'Protection respiratoire', libelleAffiche: 'PAPR', actif: false, legacy: true },
+  { code: 'AUTO', domaineParent: 'FOSPEC', libelle: 'Automobile', libelleAffiche: 'AUTO', actif: false, legacy: true }
 ];
 
 const CIBLES = [
@@ -1134,13 +1134,14 @@ async function migrateModel2(){
   for(const row of SOUS_DOMAINES){
     await db.query(
       `insert into scope_sous_domaines(code, domaine_code, libelle, libelle_affiche, actif)
-       values ($1,$2,$3,$4,true)
+       values ($1,$2,$3,$4,$5)
        on conflict (code) do update set
          domaine_code = excluded.domaine_code,
          libelle = excluded.libelle,
          libelle_affiche = excluded.libelle_affiche,
+         actif = excluded.actif,
          updated_at = now()`,
-      [row.code, row.domaineParent, row.libelle, row.libelleAffiche]
+      [row.code, row.domaineParent, row.libelle, row.libelleAffiche, row.actif !== false]
     );
   }
 
@@ -1149,8 +1150,14 @@ async function migrateModel2(){
   await db.query(`create index if not exists scope_evenements_equivalence_idx on scope_evenements (domaine_code, exercise_equivalence_key)`);
   await db.query(`
     update scope_evenements
-    set sous_domaine_code = domaine_code
-    where domaine_code in ('PR', 'AUTO') and sous_domaine_code is null
+    set domaine_code = sous_domaine_code,
+        sous_domaine_code = null
+    where domaine_code = 'FOSPEC' and sous_domaine_code in ('PR', 'AUTO')
+  `);
+  await db.query(`
+    update scope_evenements
+    set sous_domaine_code = null
+    where domaine_code in ('PR', 'AUTO') and sous_domaine_code = domaine_code
   `);
   await db.query(`
     do $$ begin

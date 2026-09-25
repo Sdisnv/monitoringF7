@@ -34,7 +34,6 @@ const {
 } = require('./_scope-analytics');
 const {
   domaineAffiche,
-  isSousDomaineFospec,
   resolveSuiviNominatif,
   STATUT_PERMUTATION,
   PERMUTATION_STATUS,
@@ -454,7 +453,7 @@ function createScopeService(repo){
     const valid = statcomReferential.isStatComValidForDate(row, options.date);
     const rowDomain = String(row.domain || '').toUpperCase();
     const expectedDomain = String(options.domain || '').toUpperCase();
-    const coherent = !expectedDomain || !rowDomain || rowDomain === expectedDomain || (expectedDomain === 'FOSPEC' && rowDomain === 'PR') || (expectedDomain === 'PR' && rowDomain === 'FOSPEC');
+    const coherent = !expectedDomain || !rowDomain || rowDomain === expectedDomain;
     if(!valid) return { code: normalized, row, snapshot: statcomReferential.statComSnapshot(row), status: 'OUT_OF_VALIDITY' };
     if(!coherent) return { code: normalized, row, snapshot: statcomReferential.statComSnapshot(row), status: 'INCOHERENT' };
     return { code: normalized, row, snapshot: statcomReferential.statComSnapshot(row), status: 'KNOWN' };
@@ -1583,6 +1582,7 @@ function createScopeService(repo){
     if(!domaines.some(d => d.code === domaine && d.actif !== false)){
       throw new HttpError(400, 'domaine_inconnu', 'Domaine inconnu.');
     }
+    // Accept the old request shape only as a one-way normalization to canonical storage.
     if(domaine === 'FOSPEC' && (sousDomaineRequested === 'PR' || sousDomaineRequested === 'AUTO')){
       domaine = sousDomaineRequested;
     }
@@ -1602,7 +1602,7 @@ function createScopeService(repo){
     const leafDomaines = [...new Set(resolvedCibles.map((c) => c.domaine_code))];
     const leaf = leafDomaines[0];
     if(leafDomaines.length === 1 && domaine !== leaf){
-      if(domaine === 'FOSPEC' && isSousDomaineFospec(leaf)) domaine = leaf;
+      if(domaine === 'FOSPEC' && (leaf === 'PR' || leaf === 'AUTO')) domaine = leaf;
       else throw new HttpError(400, 'cible_invalide', 'Cible inconnue ou hors domaine.');
     }
     const origine = body.origine === 'LEGACY_AGGREGATED' ? 'LEGACY_AGGREGATED' : 'NOMINATIF';
@@ -1622,7 +1622,7 @@ function createScopeService(repo){
       const resolution = resolveSuiviNominatif(rules, {
         date,
         domaineCode: domaine,
-        sousDomaineCode: isSousDomaineFospec(domaine) ? domaine : null,
+        sousDomaineCode: null,
         cibleId: cibleIds[0]
       });
       if(resolution.possible === false){
@@ -1685,7 +1685,7 @@ function createScopeService(repo){
       const evenement = await tx.insertEvenement({
         date,
         domaine_code: domaine,
-        sous_domaine_code: isSousDomaineFospec(domaine) ? domaine : null,
+        sous_domaine_code: null,
         libelle,
         statut: 'PLANIFIE',
         origine,
