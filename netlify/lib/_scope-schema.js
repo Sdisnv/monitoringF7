@@ -10,6 +10,7 @@ const annualCatalogDdl = require('./_scope-annual-catalog-ddl');
 const catalogConvergenceDdl = require('./_scope-catalog-convergence-ddl');
 const annualThemeDdl = require('./_scope-annual-theme-ddl');
 const annualCatalogImportDdl = require('./_scope-annual-catalog-import-ddl');
+const functionalCatalogDdl = require('./_scope-functional-catalog-ddl');
 const statComReferential = require('./_scope-statcom-referential');
 
 const DOMAINES = [
@@ -910,6 +911,16 @@ async function migrateAnnualCatalogImportC15(){
     await client.query(annualCatalogImportDdl.GUARD_SQL);
     await client.query(annualCatalogImportDdl.PROTECTION_SQL);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-annual-catalog-import-c15') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateFunctionalCatalogC18(){
+  return db.transaction(async (client) => {
+    await client.query('select pg_advisory_xact_lock($1)', [671902296]);
+    for(const sql of functionalCatalogDdl.DDL) await client.query(sql);
+    await client.query(functionalCatalogDdl.PROTECTION_SQL);
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-functional-catalog-c18') on conflict (version) do nothing`);
+    await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-functional-catalog-c19') on conflict (version) do nothing`);
   });
 }
 

@@ -38,6 +38,7 @@ function slug(value){
   return normalize(value).replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,52) || 'ACTIVITE';
 }
 function excelDate(value){
+  if(value == null || clean(value) === '') return null;
   if(!Number.isFinite(Number(value))) return clean(value) || null;
   const date = new Date(Date.UTC(1899,11,30) + Number(value) * 86400000);
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0,10);

@@ -11255,3 +11255,18 @@ body.scope-pdf-open { overflow: hidden; }
 @media(max-width:1150px){.annual-catalogue .annual-toolbar{grid-template-columns:minmax(230px,1.2fr) repeat(3,minmax(140px,1fr))}.annual-toolbar-title{grid-column:1/-1!important}.annual-import-metrics{grid-template-columns:repeat(3,1fr)}.annual-import-metrics>div:nth-child(3){border-right:0}.annual-definition-form{grid-template-columns:repeat(2,minmax(0,1fr))}.annual-definition-description{grid-column:1}.annual-head-actions{align-items:flex-end;flex-direction:column}}
 @media(max-width:960px){.annual-catalogue .annual-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.annual-toolbar-title{grid-template-columns:1fr}.annual-toolbar-actions{grid-column:1;grid-row:auto}.annual-import-form{grid-template-columns:1fr}.annual-lifecycle-actions{flex-wrap:wrap;justify-content:flex-end}}
 @media(max-width:800px){.annual-catalogue .annual-toolbar{grid-template-columns:1fr 1fr}.annual-toolbar-title{grid-column:1/-1}.annual-definition-form{grid-template-columns:1fr}.annual-definition-description{grid-column:auto}.annual-form-actions{flex-wrap:wrap}.annual-import-metrics{grid-template-columns:repeat(2,1fr)}.annual-import-metrics>div:nth-child(2n){border-right:0}.annual-import-commit{align-items:flex-start;flex-direction:column}.annual-head-actions{width:100%;align-items:flex-start}.annual-lifecycle-actions{justify-content:flex-start}.annual-activity-c13>header{display:grid}.annual-import-table-wrap{max-width:100%}}
+
+/* C18 functional catalogue and annual programming */
+.annual-catalogue .annual-toolbar{grid-template-columns:minmax(280px,1.7fr) repeat(7,minmax(104px,.72fr))}
+.annual-detail-layout{grid-template-areas:"need qv info" "sessions sessions side" "planning planning planning" "conflicts conflicts conflicts" "themes themes themes"}
+.annual-sessions{grid-area:sessions}.annual-site-planning{grid-area:planning}.annual-conflicts{grid-area:conflicts}
+.annual-site-selector{display:flex;flex-wrap:wrap;gap:7px 14px;margin:9px 0 0;padding:8px 10px;border:1px solid #d7dfe7}
+.annual-site-selector legend{padding:0 5px;font-size:.7rem;font-weight:750}.annual-site-selector label{display:flex;align-items:center;gap:5px;font-size:.76rem}
+.annual-site-planning input,.annual-site-planning select{width:100%;min-width:110px;min-height:30px;border:1px solid #aeb7c1;border-radius:3px;padding:4px 6px}.annual-conflicts strong{color:#b4232c}
+.annual-slot-final{display:block;margin-top:5px;color:#2f3b48;font-size:.74rem;font-weight:700;line-height:1.25}
+.annual-site-planning [data-annual-slot-final]{display:block;min-width:190px;margin-bottom:6px;color:#1f2933;font-size:.78rem;line-height:1.3}
+.annual-site-planning select[multiple]{min-width:180px;min-height:70px;padding:4px;border-radius:4px}
+.annual-definition-form select[multiple]{min-height:112px;padding:4px;border-radius:4px}
+@media(max-width:1150px){.annual-detail-layout{grid-template-areas:"need qv" "info info" "sessions side" "planning planning" "conflicts conflicts" "themes themes"}}
+@media(max-width:960px){.annual-detail-layout{grid-template-areas:"need need" "qv info" "sessions sessions" "planning planning" "conflicts conflicts" "themes themes" "side side"}}
+@media(max-width:800px){.annual-detail-layout{grid-template-areas:"need" "qv" "info" "sessions" "planning" "conflicts" "themes" "side"}}

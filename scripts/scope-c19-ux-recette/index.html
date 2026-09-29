@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCOPE - Recette QUO VADIS 2027</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><strong>SCOPE</strong><span>QUO VADIS</span></div>
+    <div class="recipe-notice"><strong>RECETTE LOCALE</strong><span>Aucune donnée SCOPE réelle modifiée</span></div>
+    <button class="quiet-button" id="reset-recipe" type="button">Réinitialiser</button>
+  </header>
+  <div class="shell">
+    <nav class="sidebar" aria-label="Parcours de recette">
+      <p class="nav-title">Programme annuel 2027</p>
+      <button data-view="catalogue" class="active">1. Catalogue annuel</button>
+      <button data-view="definition">2. Créer une activité</button>
+      <button data-view="automations">3. Automatismes</button>
+      <button data-view="annual">4. Besoin annuel</button>
+      <button data-view="occurrences">5. Occurrences / sessions</button>
+      <button data-view="placement">6. Placement automatique</button>
+      <button data-view="proposals">7. Propositions</button>
+      <button data-view="known-event">8. Événement connu</button>
+      <button data-view="conflicts">9. Conflits</button>
+      <button data-view="activities">10. Toutes les activités</button>
+      <button data-view="agenda">11. QUO VADIS '27</button>
+      <button data-view="move">12. Déplacement</button>
+    </nav>
+    <main id="app" tabindex="-1"></main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./model.js"></script>
+  <script src="./preprod-data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -168,10 +168,33 @@ async function scopeHandler(event){
       if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
       return response(201, { ok:true,...(await annualCatalog.createDraft(body,claims)) });
     }
+    params = match(path, '/annual-catalog/programmes/:year/activities/:code');
+    if(method === 'PUT' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200,{ ok:true,...(await annualCatalog.saveAnnualProgram(params.code,{ ...body,year:Number(params.year) },claims)) });
+    }
+    params = match(path, '/annual-catalog/programmes/:year/conflicts');
+    if(method === 'GET' && params){
+      return response(200,{ ok:true,...(await annualCatalog.listPublicConflicts(params.year)) });
+    }
     params = match(path, '/annual-catalog/requirements/:id');
     if(method === 'PATCH' && params){
       if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
       return response(200, { ok:true,...(await annualCatalog.updateDraft(params.id,body,claims)) });
+    }
+    if(method === 'DELETE' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200,{ ok:true,...(await annualCatalog.removeAnnualProgram(params.id)) });
+    }
+    params = match(path, '/annual-catalog/requirements/:id/propose-schedule');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200,{ ok:true,...(await annualCatalog.proposeSchedule(params.id,body,claims)) });
+    }
+    params = match(path, '/annual-catalog/site-slots/:id');
+    if(method === 'PATCH' && params){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200,{ ok:true,...(await annualCatalog.updateSiteSlot(params.id,body)) });
     }
     params = match(path, '/annual-catalog/requirements/:id/ready');
     if(method === 'POST' && params){

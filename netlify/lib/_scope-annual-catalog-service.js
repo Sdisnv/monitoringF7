@@ -6,6 +6,7 @@ const { inspectCanonicalReadiness } = require('./_scope-canonical-readiness');
 const annualCatalogCore = require('./_scope-annual-catalog');
 const { prepareAnnualRequirementReady,generateAnnualProgram,projectToQuoVadis,validateThemeAssignments } = annualCatalogCore;
 const catalogImport = require('./_scope-annual-catalog-import');
+const functionalCatalog = require('./_scope-functional-catalog');
 
 const INITIAL_ACTIVITY_CODES = Object.freeze([
   'DPS-EXERCICE','DPS-INSTRUCTION-SECTION','DPS-INSTRUCTION-DEMI-SECTION','DPS-DAP-EXERCICE',
@@ -24,6 +25,12 @@ function integer(value){ const parsed = Number(value); return Number.isInteger(p
 function actorId(actor){ return text(actor && (actor.sub || actor.subject || actor.email)) || 'scope-user'; }
 function rows(result){ return result && Array.isArray(result.rows) ? result.rows : []; }
 function one(result){ return rows(result)[0] || null; }
+function strictTime(value){
+  if(value == null || value === '') return null;
+  const candidate = text(value).slice(0,5);
+  if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(candidate)) throw new HttpError(422,'INVALID_TIME','L’heure doit respecter le format HH:MM.');
+  return candidate;
+}
 
 function upperList(value){ return [...new Set((Array.isArray(value) ? value : []).map((item) => text(item).toUpperCase()).filter(Boolean))]; }
 function slug(value){
@@ -44,9 +51,27 @@ function normalizeActivityInput(body = {},defaults = {}){
   if(!annualCatalogCore.PERIODICITY_TYPES.includes(periodicityType)) throw new HttpError(422,'activite_periodicite_invalide','La périodicité est invalide.');
   if(!(durationMinutes > 0)) throw new HttpError(422,'activite_duree_invalide','La durée de séance doit être positive.');
   if(familyCode && familyCode === primaryDomain) throw new HttpError(422,'activite_famille_invalide','La famille technique ne doit pas dupliquer le domaine canonique.');
+  const explicitSessionCount = integer(body.sessionCount);
+  const sourceSessions = Array.isArray(body.sessionTemplates) ? body.sessionTemplates
+    : explicitSessionCount != null ? [] : defaults.sessionTemplates || [];
+  const sessionTemplates = sourceSessions.map((row,index) => ({
+    code:text(row.code || `S${index + 1}`).toUpperCase(),sequence:integer(row.sequence) || index + 1,label:text(row.label || `${label} ${index + 1}`),
+    durationMinutes:integer(row.durationMinutes ?? row.duration_minutes ?? durationMinutes),mandatory:row.mandatory !== false
+  }));
+  const sessionCount = explicitSessionCount ?? integer(defaults.sessionCount);
+  const generatedSessions = sessionCount > 1 && !sessionTemplates.length
+    ? Array.from({ length:sessionCount },(_,index) => ({ code:`S${index + 1}`,sequence:index + 1,label:`Séance ${index + 1}`,durationMinutes,mandatory:true }))
+    : sessionTemplates;
+  const profile = functionalCatalog.normalizeFunctionalProfile({
+    recurrenceKind:body.recurrenceKind ?? defaults.recurrenceKind ?? (periodicityType === 'ONE_OFF' ? 'NON_RECURRENT' : 'RECURRENT'),
+    defaultOccurrences:body.defaultOccurrences ?? defaults.defaultOccurrences ?? 1,
+    defaultSites:body.defaultSites ?? defaults.defaultSites ?? [],ruleMode:body.ruleMode ?? defaults.ruleMode ?? 'GENERAL',customRule:body.customRule ?? defaults.customRule
+  });
+  if(!profile.valid) throw new HttpError(422,'activite_profil_invalide','La configuration permanente de l’activité est invalide.',{ errors:profile.errors });
   return { label,description:text(body.description ?? defaults.description) || null,primaryDomain,domainCodes,activityType,periodicityType,
     durationMinutes,familyCode,publicCodes:upperList(body.publicCodes || defaults.publicCodes),statComCodes:upperList(body.statComCodes || defaults.statComCodes),
-    qualificationCodes:upperList(body.qualificationCodes || defaults.qualificationCodes),themes:[...new Set((body.themes || defaults.themes || []).map(text).filter(Boolean))] };
+    qualificationCodes:upperList(body.qualificationCodes || defaults.qualificationCodes),themes:[...new Set((body.themes || defaults.themes || []).map(text).filter(Boolean))],
+    sessionTemplates:generatedSessions.length ? generatedSessions : [{ code:'S1',sequence:1,label,durationMinutes,mandatory:true }],...profile.value };
 }
 
 async function insertRequiredReference(client,referenceType,code,sql,params){
@@ -59,10 +84,12 @@ async function insertRequiredReference(client,referenceType,code,sql,params){
 }
 
 async function insertActivityVersion(client,definition,input,actor,metadata = {},options = {}){
+  await requireCanonicalCodes(client,input.defaultSites,'SITE');
+  await requireCanonicalCodes(client,input.publicCodes,'PUBLIC');
   const next = Number((one(await client.query(`select coalesce(max((regexp_match(version_code,'([0-9]+)$'))[1]::integer),0)+1 as value from scope_event_definition_versions where definition_id=$1`,[definition.definition_id])) || {}).value || 1);
   const versionCode = `C15-V${next}`;
   const contract = { definition:{ activityType:input.activityType },domainBindings:input.domainCodes.map((code) => ({ domainCode:code,bindingRole:code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY' })),
-    sessionTemplates:[{ code:'S1',sequence:1,label:input.label,durationMinutes:input.durationMinutes }],periodicity:{ type:input.periodicityType },
+    sessionTemplates:input.sessionTemplates,periodicity:{ type:input.defaultOccurrences > 1 ? 'TIMES_PER_YEAR' : input.periodicityType,occurrencesPerCycle:input.defaultOccurrences > 1 ? input.defaultOccurrences : null },
     publicBindings:[],qualificationBindings:[],roleRequirements:[],planningConstraints:[],statisticalContributions:[] };
   const checked = annualCatalogCore.validateDefinitionContract(contract);
   if(!checked.valid) throw new HttpError(422,'activite_contrat_invalide','La définition de l’activité est incomplète.',{ errors:checked.errors });
@@ -76,29 +103,18 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
     for(const code of input.domainCodes) await client.query(
       `insert into scope_activity_domain_bindings(definition_version_id,domain_code,binding_role,metadata) values ($1,$2,$3,$4::jsonb)`,
       [versionId,code,code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY',JSON.stringify(metadata)]);
+    for(const session of input.sessionTemplates) await client.query(
+      `insert into scope_activity_session_templates(definition_version_id,code,sequence,label,mandatory,duration_minutes,public_continuity,location_continuity,metadata)
+       values ($1,$2,$3,$4,$5,$6,'INHERIT','INHERIT',$7::jsonb)`,
+      [versionId,session.code,session.sequence,session.label,session.mandatory,session.durationMinutes,JSON.stringify(metadata)]);
     await client.query(
-      `insert into scope_activity_session_templates(definition_version_id,code,sequence,label,mandatory,duration_minutes,min_offset_minutes,max_offset_minutes,
-         depends_on_session_template_id,public_continuity,location_continuity,metadata)
-       select $1,code,sequence,label,mandatory,case when sequence=1 then $3 else duration_minutes end,min_offset_minutes,max_offset_minutes,
-         null,public_continuity,location_continuity,metadata || $4::jsonb
-       from scope_activity_session_templates where definition_version_id=$2 order by sequence`,
-      [versionId,options.cloneFromVersionId,input.durationMinutes,JSON.stringify(metadata)]);
-    await client.query(
-      `update scope_activity_session_templates child set depends_on_session_template_id=parent_new.session_template_id
-       from scope_activity_session_templates child_old
-       join scope_activity_session_templates parent_old on parent_old.session_template_id=child_old.depends_on_session_template_id
-       join scope_activity_session_templates parent_new on parent_new.definition_version_id=$1 and parent_new.code=parent_old.code
-       where child.definition_version_id=$1 and child_old.definition_version_id=$2 and child.code=child_old.code`,
-      [versionId,options.cloneFromVersionId]);
-    await client.query(
-      `insert into scope_activity_periodicities(definition_version_id,periodicity_type,interval_value,anchor_date,anchor_year,occurrences_per_cycle,
-         tolerance_before_days,tolerance_after_days,metadata)
-       select $1,periodicity_type,interval_value,anchor_date,anchor_year,occurrences_per_cycle,tolerance_before_days,tolerance_after_days,metadata || $3::jsonb
-       from scope_activity_periodicities where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
-    await client.query(
-      `insert into scope_activity_public_bindings(definition_version_id,annual_requirement_id,public_definition_id,public_rule_version_id,group_code,operator,binding_type,metadata)
-       select $1,null,public_definition_id,public_rule_version_id,group_code,operator,binding_type,metadata || $3::jsonb
-       from scope_activity_public_bindings where definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+      `insert into scope_activity_periodicities(definition_version_id,periodicity_type,occurrences_per_cycle,metadata)
+       values ($1,$2,$3,$4::jsonb)`,[versionId,input.defaultOccurrences > 1 ? 'TIMES_PER_YEAR' : input.periodicityType,
+        input.defaultOccurrences > 1 ? input.defaultOccurrences : null,JSON.stringify(metadata)]);
+    for(const code of input.publicCodes) await insertRequiredReference(client,'PUBLIC',code,
+      `insert into scope_activity_public_bindings(definition_version_id,public_definition_id,group_code,operator,binding_type,metadata)
+       select $1,public_definition_id,'DEFAULT','UNION','TARGET',$3::jsonb from scope_public_definitions where code=$2 and status='ACTIVE'
+       on conflict on constraint scope_activity_public_bindings_uk do nothing`,[versionId,code,JSON.stringify(metadata)]);
     await client.query(
       `insert into scope_activity_qualification_bindings(definition_version_id,competence_id,binding_type,mandatory,metadata)
        select $1,competence_id,binding_type,mandatory,metadata || $3::jsonb from scope_activity_qualification_bindings where definition_version_id=$2`,
@@ -130,17 +146,19 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
        left join scope_activity_session_templates new_session on new_session.definition_version_id=$1 and new_session.code=old_session.code
        where c.definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
     if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
+    await client.query(`insert into scope_activity_functional_profiles(definition_version_id,recurrence_kind,default_occurrences,default_sites,rule_mode,custom_rule,metadata)
+      values ($1,$2,$3,$4::text[],$5,$6::jsonb,$7::jsonb)`,[versionId,input.recurrenceKind,input.defaultOccurrences,input.defaultSites,input.ruleMode,JSON.stringify(input.customRule),JSON.stringify(metadata)]);
     return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
   }
   for(const code of input.domainCodes) await client.query(
     `insert into scope_activity_domain_bindings(definition_version_id,domain_code,binding_role,metadata) values ($1,$2,$3,$4::jsonb)`,
     [versionId,code,code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY',JSON.stringify(metadata)]);
-  await client.query(
+  for(const session of input.sessionTemplates) await client.query(
     `insert into scope_activity_session_templates(definition_version_id,code,sequence,label,mandatory,duration_minutes,public_continuity,location_continuity,metadata)
-     values ($1,'S1',1,$2,true,$3,'INHERIT','INHERIT',$4::jsonb)`,[versionId,input.label,input.durationMinutes,JSON.stringify(metadata)]);
+     values ($1,$2,$3,$4,$5,$6,'INHERIT','INHERIT',$7::jsonb)`,[versionId,session.code,session.sequence,session.label,session.mandatory,session.durationMinutes,JSON.stringify(metadata)]);
   await client.query(
-    `insert into scope_activity_periodicities(definition_version_id,periodicity_type,metadata) values ($1,$2,$3::jsonb)`,
-    [versionId,input.periodicityType,JSON.stringify(metadata)]);
+    `insert into scope_activity_periodicities(definition_version_id,periodicity_type,occurrences_per_cycle,metadata) values ($1,$2,$3,$4::jsonb)`,
+    [versionId,input.defaultOccurrences > 1 ? 'TIMES_PER_YEAR' : input.periodicityType,input.defaultOccurrences > 1 ? input.defaultOccurrences : null,JSON.stringify(metadata)]);
   for(const code of input.publicCodes) await insertRequiredReference(client,'PUBLIC',code,
     `insert into scope_activity_public_bindings(definition_version_id,public_definition_id,group_code,operator,binding_type,metadata)
      select $1,public_definition_id,'DEFAULT','UNION','TARGET',$3::jsonb from scope_public_definitions where code=$2 and status='ACTIVE'
@@ -153,6 +171,8 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
     `insert into scope_activity_statistical_contributions(definition_version_id,statcom_code,mode,aggregation_rule,metadata)
      select $1,code,'FULL_DURATION','PER_PARTICIPANT',$3::jsonb from scope_statcom_referentiel where code=$2 and active=true
      on conflict on constraint scope_activity_statistical_contributions_uk do nothing`,[versionId,code,JSON.stringify(metadata)]);
+  await client.query(`insert into scope_activity_functional_profiles(definition_version_id,recurrence_kind,default_occurrences,default_sites,rule_mode,custom_rule,metadata)
+    values ($1,$2,$3,$4::text[],$5,$6::jsonb,$7::jsonb)`,[versionId,input.recurrenceKind,input.defaultOccurrences,input.defaultSites,input.ruleMode,JSON.stringify(input.customRule),JSON.stringify(metadata)]);
   if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
   return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
 }
@@ -278,6 +298,32 @@ function publicRow(row){
   return { ...row,publicDefinitionId: row.public_definition_id,publicRuleVersionId: row.public_rule_version_id,publicCode: row.public_code };
 }
 
+async function loadCatalogReferences(database){
+  const [publicResult,siteResult] = await Promise.all([
+    database.query(`select p.code,p.label,p.owner_code from scope_public_definitions p
+      where p.status='ACTIVE' and exists (select 1 from scope_public_rule_versions v where v.public_definition_id=p.public_definition_id and v.status='ACTIVE')
+      order by p.owner_code,p.label,p.code`),
+    database.query(`select code,nom_court,localite,oi_code from scope_lieux where actif=true and nullif(btrim(oi_code),'') is not null order by code`)
+  ]);
+  const siteOrder = ['G1','C1','B1','B2','Y1','Y2','Y3','Y4'];
+  const sites = rows(siteResult).filter((row) => siteOrder.includes(text(row.oi_code).toUpperCase()))
+    .sort((a,b) => siteOrder.indexOf(text(a.oi_code).toUpperCase()) - siteOrder.indexOf(text(b.oi_code).toUpperCase()))
+    .map((row) => ({ code:text(row.oi_code).toUpperCase(),locationCode:row.code,label:[row.nom_court,row.localite].filter(Boolean).join(' – ') }));
+  return { publics:rows(publicResult).map((row) => ({ code:row.code,label:row.label,domain:row.owner_code })),sites };
+}
+
+async function requireCanonicalCodes(database,codes,kind){
+  const values = upperList(codes);
+  if(!values.length) return values;
+  const result = kind === 'PUBLIC'
+    ? await database.query(`select code from scope_public_definitions where status='ACTIVE' and code=any($1::text[])`,[values])
+    : await database.query(`select distinct upper(oi_code) as code from scope_lieux where actif=true and upper(oi_code)=any($1::text[])`,[values]);
+  const found = new Set(rows(result).map((row) => text(row.code).toUpperCase()));
+  const missing = values.filter((code) => !found.has(code));
+  if(missing.length) throw new HttpError(422,'reference_canonique_introuvable',`Référence(s) ${kind === 'PUBLIC' ? 'de public' : 'de site/OI'} invalide(s): ${missing.join(', ')}.`,{ kind,codes:missing });
+  return values;
+}
+
 async function requireReady(database,readinessInspector){
   const readiness = await readinessInspector({ database });
   const clientReadiness = readinessForClient(readiness);
@@ -346,6 +392,7 @@ async function loadContext(database,options = {}){
   const domainBindings = await query(`select domain_code,binding_role,metadata from scope_activity_domain_bindings where definition_version_id=$1 order by case binding_role when 'PRIMARY' then 0 else 1 end,domain_code`);
   const sessionTemplates = await query(`select * from scope_activity_session_templates where definition_version_id=$1 order by sequence`);
   const periodicity = one(await database.query(`select * from scope_activity_periodicities where definition_version_id=$1`,[versionId]));
+  const functionalProfile = one(await database.query(`select * from scope_activity_functional_profiles where definition_version_id=$1`,[versionId]));
   const publicBindings = (await query(
     `select b.*,p.code as public_code,p.label as public_label from scope_activity_public_bindings b join scope_public_definitions p on p.public_definition_id=b.public_definition_id where b.definition_version_id=$1 order by p.code`
   )).map(publicRow);
@@ -374,8 +421,33 @@ async function loadContext(database,options = {}){
   const occurrences = requirementId ? await query(`select * from scope_planned_occurrences where annual_requirement_id=$1 order by occurrence_number`,[requirementId]) : [];
   const occurrenceIds = occurrences.map((row) => row.planned_occurrence_id);
   const sessions = occurrenceIds.length ? await query(`select * from scope_planned_occurrence_sessions where planned_occurrence_id=any($1::uuid[]) order by planned_occurrence_id,sequence`,[occurrenceIds]) : [];
-  const preparedOccurrenceCount = occurrenceIds.length ? Number((one(await database.query(
-    `select count(distinct planned_occurrence_id)::integer as count from scope_quo_vadis_obligations where planned_occurrence_id=any($1::uuid[])`,[occurrenceIds])) || {}).count || 0) : 0;
+  const sessionIds = sessions.map((row) => row.planned_occurrence_session_id);
+  let siteSlots = sessionIds.length ? await query(
+    `select slots.*,po.occurrence_number,pos.sequence as session_sequence,st.code as session_code,st.label as session_label,
+            max(pos.sequence) over (partition by po.planned_occurrence_id) as occurrence_session_count,
+            case when slots.preferred_start_time is not null and slots.preferred_end_time is not null and slots.preferred_end_time>slots.preferred_start_time
+              then extract(epoch from (slots.preferred_end_time-slots.preferred_start_time))::integer/60 else null end as duration_minutes
+       from scope_planned_site_slots slots
+       join scope_planned_occurrence_sessions pos on pos.planned_occurrence_session_id=slots.planned_occurrence_session_id
+       join scope_planned_occurrences po on po.planned_occurrence_id=pos.planned_occurrence_id
+       left join scope_activity_session_templates st on st.session_template_id=pos.session_template_id
+      where slots.planned_occurrence_session_id=any($1::uuid[])
+      order by po.occurrence_number,pos.sequence,slots.site_code`,[sessionIds]) : [];
+  const programEntry = requirementId ? one(await database.query(`select * from scope_annual_program_entries where annual_requirement_id=$1`,[requirementId])) : null;
+  const definitionPublicCodes = publicBindings.map((row) => row.publicCode);
+  siteSlots = siteSlots.map((slot) => {
+    const publicCodes = upperList(slot.public_codes && slot.public_codes.length ? slot.public_codes : definitionPublicCodes);
+    const finalLabel = functionalCatalog.scheduledActivityLabel(base.label,slot.occurrence_number,slot.session_sequence,slot.occurrence_session_count,slot.label_complement);
+    return { ...slot,public_codes:publicCodes,effective_public_codes:publicCodes,public_source:slot.public_codes && slot.public_codes.length ? 'SLOT_OVERRIDE' : 'DEFINITION',final_label:finalLabel };
+  });
+  const expectedSites = upperList(programEntry && programEntry.site_codes || functionalProfile && functionalProfile.default_sites || []);
+  const completeSlot = (slot) => slot.status !== 'DISABLED' && slot.preferred_date && slot.preferred_start_time && slot.preferred_end_time
+    && slot.site_code && slot.effective_public_codes.length;
+  const preparedOccurrenceCount = occurrences.filter((occurrence) => {
+    const occurrenceSessions = sessions.filter((session) => session.planned_occurrence_id === occurrence.planned_occurrence_id);
+    return occurrenceSessions.length > 0 && occurrenceSessions.every((session) => expectedSites.every((site) =>
+      siteSlots.some((slot) => slot.planned_occurrence_session_id === session.planned_occurrence_session_id && slot.site_code === site && completeSlot(slot))));
+  }).length;
   return {
     definition: { definitionId: base.definition_id,code: base.code,label: base.label,domain: base.domain,familyCode: base.family_code,activityType: base.activity_type,active: base.active,metadata: base.definition_metadata || {} },
     version: { definitionVersionId: versionId,versionCode: base.version_code,status: base.version_status,description: base.description,fingerprint: base.version_fingerprint,metadata: base.version_metadata || {} },
@@ -386,20 +458,22 @@ async function loadContext(database,options = {}){
       snapshot: base.snapshot || {},fingerprint: base.fingerprint || null,metadata: base.metadata || {}
     } : null,
     domainBindings,sessionTemplates,periodicity,publicBindings,qualificationBindings,roleRequirements,locationRequirements,
-    responsibleRequirements,planningConstraints,statisticalContributions,activityThemeBindings,
+    responsibleRequirements,planningConstraints,statisticalContributions,activityThemeBindings,functionalProfile,programEntry,siteSlots,
     availableThemes: activityThemeBindings.map((row) => ({ themeVersionId: row.theme_version_id,themeDefinitionId: row.theme_definition_id,
       definitionId: base.definition_id,code: row.code,label: row.label,description: row.description,status: row.theme_version_status,versionNumber: row.version_number })),
     themeAssignments,occurrences,sessions,preparedOccurrenceCount
   };
 }
 
-function serializeContext(context,readiness,readyTransition){
+function serializeContext(context,readiness,readyTransition,references){
   return { readiness,readyTransition,activity: { ...context.definition,version: context.version },annualRequirement: context.requirement,
+    references:references || { publics:[],sites:[] },
     configuration: { domains: context.domainBindings,sessions: context.sessionTemplates,periodicity: context.periodicity,publics: context.publicBindings,
       pinnedPublics: context.requirement && context.requirement.snapshot && context.requirement.snapshot.publicBindings || [],
       qualifications: context.qualificationBindings,roles: context.roleRequirements,locations: context.locationRequirements,responsibles: context.responsibleRequirements,
-      constraints: context.planningConstraints,statCom: context.statisticalContributions,availableThemes: context.availableThemes },
+      constraints: context.planningConstraints,statCom: context.statisticalContributions,availableThemes: context.availableThemes,functionalProfile: context.functionalProfile },
     annualThemeAssignments: context.themeAssignments,
+    annualProgramEntry: context.programEntry,siteSlots: context.siteSlots || [],
     generation: { occurrences: context.occurrences,sessions: context.sessions,preparedOccurrenceCount: context.preparedOccurrenceCount || 0 } };
 }
 
@@ -436,12 +510,15 @@ function createScopeAnnualCatalogService(options = {}){
       const result = await database.query(
         `select d.code,d.label,d.domain,d.family_code,d.activity_type,d.status,v.definition_version_id,v.version_code,
                 r.annual_requirement_id,r.required_occurrences,r.variant_code,r.window_start,r.window_end,r.status as requirement_status,
+                fp.recurrence_kind,fp.default_occurrences,fp.default_sites,ape.program_state,ape.extraordinary,ape.site_codes,
                 (select count(*)::integer from scope_activity_session_templates st where st.definition_version_id=v.definition_version_id) as template_session_count,
                 (select string_agg(p.code,', ' order by p.code) from scope_activity_public_bindings pb join scope_public_definitions p on p.public_definition_id=pb.public_definition_id where pb.definition_version_id=v.definition_version_id) as public_codes,
                 coalesce(o.occurrence_count,0)::integer as occurrence_count,coalesce(o.session_count,0)::integer as generated_session_count,
                 coalesce(t.themed_occurrence_count,0)::integer as themed_occurrence_count,coalesce(q.prepared_occurrence_count,0)::integer as prepared_occurrence_count
            from scope_event_definitions d join scope_event_definition_versions v on v.definition_id=d.definition_id and v.status='ACTIVE'
+           left join scope_activity_functional_profiles fp on fp.definition_version_id=v.definition_version_id
            left join scope_annual_requirements r on r.definition_version_id=v.definition_version_id and r.year=$1 and r.status in ('DRAFT','READY')
+           left join scope_annual_program_entries ape on ape.annual_requirement_id=r.annual_requirement_id
            left join lateral (select count(distinct po.planned_occurrence_id) as occurrence_count,count(pos.planned_occurrence_session_id) as session_count
              from scope_planned_occurrences po left join scope_planned_occurrence_sessions pos on pos.planned_occurrence_id=po.planned_occurrence_id
             where po.annual_requirement_id=r.annual_requirement_id) o on true
@@ -456,9 +533,11 @@ function createScopeAnnualCatalogService(options = {}){
             and exists (select 1 from scope_activity_periodicities p where p.definition_version_id=v.definition_version_id)`, [year,definitionStatuses]);
       const query = text(filters.query || filters.q).toLocaleLowerCase('fr');
       const domain = text(filters.domain).toUpperCase();
+      const site = text(filters.site).toUpperCase();
       const status = text(filters.status).toUpperCase();
       const activities = rows(result).filter((row) => !query || `${row.code} ${row.label}`.toLocaleLowerCase('fr').includes(query))
         .filter((row) => !domain || domain === 'TOUS' || row.domain === domain)
+        .filter((row) => !site || site === 'TOUS' || (row.site_codes && row.site_codes.length ? row.site_codes : row.default_sites || []).map((value) => text(value).toUpperCase()).includes(site))
         .filter((row) => !status || status === 'TOUS' || (row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR') === status)
         .sort((a,b) => domainRank(a.domain) - domainRank(b.domain) || a.label.localeCompare(b.label,'fr'))
         .map((row) => ({ code: row.code,label: row.label,domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,archived: row.status === 'ARCHIVE',
@@ -467,15 +546,16 @@ function createScopeAnnualCatalogService(options = {}){
           status: row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR',occurrenceCount: row.occurrence_count,sessionCount: row.template_session_count,
           generatedSessionCount: row.generated_session_count,publicCodes: row.public_codes || '',themedOccurrenceCount: row.themed_occurrence_count,
           unthemedOccurrenceCount: row.required_occurrences == null ? null : Math.max(0,row.required_occurrences - row.themed_occurrence_count),
-          preparedOccurrenceCount: row.prepared_occurrence_count }));
-      return { readiness,year,activities };
+          preparedOccurrenceCount: row.prepared_occurrence_count,recurrenceKind:row.recurrence_kind || 'NON_RECURRENT',defaultOccurrences:row.default_occurrences || 1,
+          defaultSites:row.default_sites || [],programState:row.program_state || null,extraordinary:Boolean(row.extraordinary),siteCodes:row.site_codes || [] }));
+      return { readiness,year,activities,references:await loadCatalogReferences(database) };
     },
 
     async getActivity(code,filters = {}){
       const readiness = await requireReady(database,readinessInspector);
       const context = await contextLoader(database,{ code,year: integer(filters.year) || new Date().getUTCFullYear() });
       if(!context) throw new HttpError(404,'activite_catalogue_introuvable','Activité annuelle introuvable.');
-      return serializeContext(context,readiness,await inspectReadyTransition(database,context));
+      return serializeContext(context,readiness,await inspectReadyTransition(database,context),await loadCatalogReferences(database));
     },
 
     async previewImport(body = {}){
@@ -589,7 +669,9 @@ function createScopeAnnualCatalogService(options = {}){
         if(!current) throw new HttpError(404,'activite_catalogue_introuvable','Activité annuelle introuvable.');
         const domainRows = rows(await client.query(`select domain_code,binding_role from scope_activity_domain_bindings where definition_version_id=$1`,[current.definition_version_id]));
         const session = one(await client.query(`select duration_minutes from scope_activity_session_templates where definition_version_id=$1 order by sequence limit 1`,[current.definition_version_id]));
-        const periodicity = one(await client.query(`select periodicity_type from scope_activity_periodicities where definition_version_id=$1`,[current.definition_version_id]));
+        const periodicity = one(await client.query(`select periodicity_type,occurrences_per_cycle from scope_activity_periodicities where definition_version_id=$1`,[current.definition_version_id]));
+        const existingSessions = rows(await client.query(`select code,sequence,label,mandatory,duration_minutes from scope_activity_session_templates where definition_version_id=$1 order by sequence`,[current.definition_version_id]));
+        const profile = one(await client.query(`select * from scope_activity_functional_profiles where definition_version_id=$1`,[current.definition_version_id]));
         const publicRows = rows(await client.query(
           `select p.code from scope_activity_public_bindings b join scope_public_definitions p on p.public_definition_id=b.public_definition_id where b.definition_version_id=$1 order by p.code`,
           [current.definition_version_id]));
@@ -605,7 +687,10 @@ function createScopeAnnualCatalogService(options = {}){
             where b.definition_id=$1 and b.status='ACTIVE' order by v.label`,[current.definition_id]));
         const input = normalizeActivityInput(body,{ label:current.label,description:current.description,primaryDomain:(domainRows.find((row) => row.binding_role === 'PRIMARY') || {}).domain_code || current.domain,
           domainCodes:domainRows.map((row) => row.domain_code),activityType:current.activity_type,familyCode:current.family_code,durationMinutes:session && session.duration_minutes,
-          periodicityType:periodicity && periodicity.periodicity_type,publicCodes:publicRows.map((row) => row.code),qualificationCodes:qualificationRows.map((row) => row.code),
+          sessionCount:existingSessions.length,
+          periodicityType:periodicity && periodicity.periodicity_type,sessionTemplates:existingSessions,defaultOccurrences:profile && profile.default_occurrences || periodicity && periodicity.occurrences_per_cycle || 1,
+          defaultSites:profile && profile.default_sites || [],recurrenceKind:profile && profile.recurrence_kind || 'RECURRENT',ruleMode:profile && profile.rule_mode || 'GENERAL',customRule:profile && profile.custom_rule,
+          publicCodes:publicRows.map((row) => row.code),qualificationCodes:qualificationRows.map((row) => row.code),
           statComCodes:statComRows.map((row) => row.code),themes:themeRows.map((row) => row.label) });
         const version = await insertActivityVersion(client,current,input,actor,{ source:'C15_MANUAL_REVISION',supersedes:current.definition_version_id },{ deferActivation:true,cloneFromVersionId:current.definition_version_id });
         await client.query(`update scope_event_definition_versions set status='RETIRED',updated_at=now() where definition_version_id=$1 and status='ACTIVE'`,[current.definition_version_id]);
@@ -645,13 +730,14 @@ function createScopeAnnualCatalogService(options = {}){
              (select count(*) from scope_annual_requirements r join scope_event_definition_versions v on v.definition_version_id=r.definition_version_id where v.definition_id=$1) as annual_requirement_count,
              (select count(*) from scope_evenements e join scope_event_definition_versions v on v.definition_version_id=e.definition_version_id where v.definition_id=$1) as event_count,
              (select count(*) from scope_activity_legacy_aliases a where a.definition_id=$1) as alias_count,
-             (select count(*) from scope_catalog_import_decisions d where d.target_definition_id=$1) as import_decision_count`,[definition.definition_id]));
-        if(['annual_requirement_count','event_count','alias_count','import_decision_count'].some((key) => Number(usage && usage[key] || 0) > 0)){
+             (select count(*) from scope_catalog_import_decisions d where d.target_definition_id=$1) as import_decision_count,
+             (select count(*) from scope_catalog_convergence_links l where l.source_definition_id=$1 or l.target_definition_id=$1) as convergence_link_count`,[definition.definition_id]));
+        if(['annual_requirement_count','event_count','alias_count','import_decision_count','convergence_link_count'].some((key) => Number(usage && usage[key] || 0) > 0)){
           throw new HttpError(409,'activite_utilisee_archivage_requis','Cette activité est historisée et doit être archivée, pas supprimée.');
         }
         const versions = rows(await client.query(`select definition_version_id from scope_event_definition_versions where definition_id=$1`,[definition.definition_id])).map((row) => row.definition_version_id);
         await client.query(`update scope_event_definition_versions set status='RETIRED' where definition_id=$1 and status='ACTIVE'`,[definition.definition_id]);
-        for(const table of ['scope_activity_statistical_contributions','scope_activity_planning_constraints','scope_activity_responsible_requirements','scope_activity_location_requirements','scope_activity_role_requirements','scope_activity_qualification_bindings','scope_activity_public_bindings','scope_activity_periodicities','scope_activity_session_templates','scope_activity_domain_bindings']){
+        for(const table of ['scope_activity_functional_profiles','scope_activity_statistical_contributions','scope_activity_planning_constraints','scope_activity_responsible_requirements','scope_activity_location_requirements','scope_activity_role_requirements','scope_activity_qualification_bindings','scope_activity_public_bindings','scope_activity_periodicities','scope_activity_session_templates','scope_activity_domain_bindings']){
           await client.query(`delete from ${table} where definition_version_id=any($1::uuid[])`,[versions]);
         }
         await client.query(`delete from scope_activity_theme_bindings where definition_id=$1`,[definition.definition_id]);
@@ -795,6 +881,149 @@ function createScopeAnnualCatalogService(options = {}){
         const refreshed = await contextLoader(client,{ requirementId,refresh: true });
         return { readiness,generation: { occurrences: refreshed.occurrences,sessions: refreshed.sessions },idempotent: true,operationalWrites: false };
       });
+    },
+
+    async saveAnnualProgram(code,body = {},actor){
+      const readiness = await requireReady(database,readinessInspector);
+      return database.transaction(async (client) => {
+        const definition = await findDefinition(client,code,{ includeArchived:false });
+        if(!definition) throw new HttpError(404,'activite_catalogue_introuvable','Activité du Catalogue introuvable.');
+        const profile = one(await client.query(`select * from scope_activity_functional_profiles where definition_version_id=$1`,[definition.definition_version_id]));
+        const configured = functionalCatalog.annualConfiguration({
+          recurrenceKind:profile && profile.recurrence_kind || 'NON_RECURRENT',defaultOccurrences:profile && profile.default_occurrences || 1,
+          defaultSites:profile && profile.default_sites || [],ruleMode:profile && profile.rule_mode || 'GENERAL',customRule:profile && profile.custom_rule
+        },{ state:body.state,occurrences:body.occurrences,sites:body.sites,extraordinary:body.extraordinary });
+        if(!configured.valid) throw new HttpError(422,'programmation_annuelle_invalide','La programmation annuelle est incomplète.',{ errors:configured.errors });
+        await requireCanonicalCodes(client,configured.value.sites,'SITE');
+        const year=integer(body.year);
+        if(!(year>=2000 && year<=2200)) throw new HttpError(422,'annee_invalide','L’année est invalide.');
+        let requirement=one(await client.query(`select * from scope_annual_requirements where year=$1 and definition_version_id=$2 and status in ('DRAFT','READY') order by updated_at desc limit 1`,[year,definition.definition_version_id]));
+        if(!requirement){
+          requirement=one(await client.query(`insert into scope_annual_requirements(year,definition_version_id,variant_code,required_occurrences,window_start,window_end,priority,status,source_type,source_id,metadata,created_by,updated_by)
+            values ($1,$2,'DEFAULT',$3,$4,$5,$6,'DRAFT','MANUAL',$7,$8::jsonb,$9,$9) returning *`,[year,definition.definition_version_id,configured.value.occurrences,
+            body.windowStart || `${year}-01-01`,body.windowEnd || `${year}-12-31`,integer(body.priority) || 100,`C18_PROGRAM:${definition.code}:${year}`,
+            JSON.stringify({ source:'C18',extraordinary:configured.value.extraordinary }),actorId(actor)]));
+        }else if(requirement.status === 'DRAFT'){
+          requirement=one(await client.query(`update scope_annual_requirements set required_occurrences=$2,window_start=$3,window_end=$4,priority=$5,updated_by=$6,updated_at=now()
+            where annual_requirement_id=$1 returning *`,[requirement.annual_requirement_id,configured.value.occurrences,body.windowStart || requirement.window_start,
+            body.windowEnd || requirement.window_end,integer(body.priority) || requirement.priority,actorId(actor)]));
+        }else if(Number(requirement.required_occurrences) !== Number(configured.value.occurrences)){
+          throw new HttpError(409,'programmation_verrouillee','Le nombre de réalisations d’une programmation READY doit être révisé par supersession.');
+        }
+        const entry=one(await client.query(`insert into scope_annual_program_entries(annual_requirement_id,program_state,extraordinary,occurrence_override,site_codes,config_override,metadata,created_by,updated_by)
+          values ($1,$2,$3,$4,$5::text[],$6::jsonb,$7::jsonb,$8,$8)
+          on conflict (annual_requirement_id) do update set program_state=excluded.program_state,extraordinary=excluded.extraordinary,occurrence_override=excluded.occurrence_override,
+            site_codes=excluded.site_codes,config_override=excluded.config_override,updated_by=excluded.updated_by,updated_at=now() returning *`,[
+          requirement.annual_requirement_id,configured.value.state,configured.value.extraordinary,configured.value.overrides.occurrences ? configured.value.occurrences : null,
+          configured.value.sites,JSON.stringify(body.overrides || {}),JSON.stringify({ source:'C18' }),actorId(actor)]));
+        return { readiness,annualRequirement:requirement,annualProgramEntry:entry,operationalWrites:false,eventPublication:false };
+      });
+    },
+
+    async removeAnnualProgram(requirementId){
+      const readiness = await requireReady(database,readinessInspector);
+      return database.transaction(async (client) => {
+        const requirement=await requireScopedRequirement(client,requirementId);
+        if(requirement.status !== 'DRAFT') throw new HttpError(409,'programmation_verrouillee','Une programmation READY doit être révisée, pas retirée.');
+        const generated=Number((one(await client.query(`select count(*)::integer as count from scope_planned_occurrences where annual_requirement_id=$1`,[requirementId])) || {}).count || 0);
+        if(generated) throw new HttpError(409,'programmation_deja_generee','Retirez ou révisez les réalisations avant de supprimer la programmation.');
+        await client.query(`delete from scope_annual_program_entries where annual_requirement_id=$1`,[requirementId]);
+        await client.query(`delete from scope_annual_requirement_theme_assignments where annual_requirement_id=$1`,[requirementId]);
+        await client.query(`delete from scope_annual_requirements where annual_requirement_id=$1 and status='DRAFT'`,[requirementId]);
+        return { readiness,removed:true,operationalWrites:false,eventPublication:false };
+      });
+    },
+
+    async proposeSchedule(requirementId,body = {},actor){
+      const readiness = await requireReady(database,readinessInspector);
+      return database.transaction(async (client) => {
+        const context=await contextLoader(client,{ requirementId });
+        if(!context || !context.requirement) throw new HttpError(404,'programmation_introuvable','Programmation annuelle introuvable.');
+        if(!context.occurrences.length || !context.sessions.length) throw new HttpError(409,'realisations_non_generees','Générez d’abord les réalisations et leurs séances.');
+        const entry=context.programEntry || {};
+        const existing=rows(await client.query(`select s.*,ps.sequence as session_sequence,d.label as activity_label,d.code as definition_code,r.year
+          from scope_planned_site_slots s join scope_planned_occurrence_sessions ps on ps.planned_occurrence_session_id=s.planned_occurrence_session_id
+          join scope_planned_occurrences po on po.planned_occurrence_id=ps.planned_occurrence_id join scope_annual_requirements r on r.annual_requirement_id=po.annual_requirement_id
+          join scope_event_definition_versions v on v.definition_version_id=r.definition_version_id join scope_event_definitions d on d.definition_id=v.definition_id where r.year=$1`,[context.requirement.year]));
+        const occupiedSlots=existing.map((row) => ({ slotId:row.planned_site_slot_id,definitionCode:row.definition_code,activityLabel:row.activity_label,
+          date:dateOnly(row.preferred_date),startTime:String(row.preferred_start_time || '').slice(0,5),endTime:String(row.preferred_end_time || '').slice(0,5),
+          siteCode:row.site_code,sessionSequence:row.session_sequence,publicCodes:row.public_codes || [],roleCodes:row.role_codes || [],resourceCodes:row.resource_codes || [],
+          fixedDate:row.fixed_date,dayExclusive:row.day_exclusive,permutationAllowed:row.permutation_allowed,priority:row.priority,status:row.status }));
+        const proposed=functionalCatalog.proposeAnnualSchedule({ definitionCode:context.definition.code,activityLabel:context.definition.label,year:context.requirement.year,
+          profile:{ recurrenceKind:context.functionalProfile && context.functionalProfile.recurrence_kind || 'RECURRENT',defaultOccurrences:context.functionalProfile && context.functionalProfile.default_occurrences || context.requirement.requiredOccurrences,
+            defaultSites:context.functionalProfile && context.functionalProfile.default_sites || [],ruleMode:context.functionalProfile && context.functionalProfile.rule_mode || 'GENERAL',customRule:context.functionalProfile && context.functionalProfile.custom_rule },
+          override:{ state:entry.program_state || 'ACTIVE',occurrences:context.requirement.requiredOccurrences,sites:entry.site_codes || body.sites,extraordinary:entry.extraordinary },
+          sessions:context.sessionTemplates.map((row) => ({ code:row.code,sequence:row.sequence,label:row.label,durationMinutes:row.duration_minutes })),
+          publicCodes:context.publicBindings.map((row) => row.publicCode),windowStart:body.windowStart || context.requirement.windowStart,startTime:body.startTime || '19:30',
+          endTime:body.endTime || '21:30',location:body.location,responsible:body.responsible,occupiedSlots });
+        if(!proposed.valid) throw new HttpError(422,'proposition_planning_invalide','La proposition de planning est invalide.',{ errors:proposed.errors });
+        const occurrencesByNumber=new Map(context.occurrences.map((row) => [Number(row.occurrence_number),row]));
+        const templatesByCode=new Map(context.sessionTemplates.map((row) => [row.code,row]));
+        const sessionsByKey=new Map(context.sessions.map((row) => [`${row.planned_occurrence_id}|${row.session_template_id}`,row]));
+        for(const slot of proposed.slots){
+          const occurrence=occurrencesByNumber.get(slot.occurrenceNumber); const template=templatesByCode.get(slot.sessionCode);
+          const session=occurrence && template && sessionsByKey.get(`${occurrence.planned_occurrence_id}|${template.session_template_id}`);
+          if(!session) continue;
+          await client.query(`insert into scope_planned_site_slots(planned_site_slot_id,planned_occurrence_session_id,site_code,preferred_date,preferred_start_time,preferred_end_time,location_label,responsible_label,label_complement,final_label,status,public_codes,metadata)
+            values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PROPOSED',$11::text[],$12::jsonb)
+            on conflict (planned_occurrence_session_id,site_code) do update set preferred_date=excluded.preferred_date,preferred_start_time=excluded.preferred_start_time,
+              preferred_end_time=excluded.preferred_end_time,location_label=excluded.location_label,responsible_label=excluded.responsible_label,
+              label_complement=coalesce(scope_planned_site_slots.label_complement,excluded.label_complement),final_label=coalesce(scope_planned_site_slots.final_label,excluded.final_label),
+              public_codes=excluded.public_codes,updated_at=now()`,[
+            slot.slotId,session.planned_occurrence_session_id,slot.siteCode,slot.date,slot.startTime,slot.endTime,slot.location,slot.responsible,
+            slot.labelComplement,slot.finalLabel,slot.publicCodes,JSON.stringify({ source:'C18_PROPOSAL',actor:actorId(actor) })]);
+        }
+        return { readiness,slots:proposed.slots,conflicts:functionalCatalog.detectCompatibilityConflicts(occupiedSlots.concat(proposed.slots)),operationalWrites:false,eventPublication:false };
+      });
+    },
+
+    async updateSiteSlot(slotId,body = {}){
+      const readiness = await requireReady(database,readinessInspector);
+      const status=text(body.status || 'PROPOSED').toUpperCase();
+      if(!functionalCatalog.SLOT_STATES.includes(status)) throw new HttpError(422,'statut_creneau_invalide','Le statut du créneau est invalide.');
+      const startTime = strictTime(body.startTime);
+      const endTime = strictTime(body.endTime);
+      if(startTime && endTime && functionalCatalog.durationMinutes(startTime,endTime) == null){
+        throw new HttpError(422,'horaire_creneau_invalide','L’heure de fin doit suivre l’heure de début. Le passage de minuit n’est pas activé pour cette programmation.');
+      }
+      const current=one(await database.query(
+        `select s.*,d.label as activity_label,po.occurrence_number,ps.sequence as session_sequence,
+                (select count(*) from scope_planned_occurrence_sessions siblings where siblings.planned_occurrence_id=po.planned_occurrence_id) as session_count
+           from scope_planned_site_slots s
+           join scope_planned_occurrence_sessions ps on ps.planned_occurrence_session_id=s.planned_occurrence_session_id
+           join scope_planned_occurrences po on po.planned_occurrence_id=ps.planned_occurrence_id
+           join scope_annual_requirements r on r.annual_requirement_id=po.annual_requirement_id
+           join scope_event_definition_versions v on v.definition_version_id=r.definition_version_id
+           join scope_event_definitions d on d.definition_id=v.definition_id
+          where s.planned_site_slot_id=$1`,[slotId]));
+      if(!current) throw new HttpError(404,'creneau_introuvable','Créneau planifié introuvable.');
+      const complement = text(body.labelComplement ?? body.label_complement ?? current.label_complement) || null;
+      const publicCodes = Object.prototype.hasOwnProperty.call(body,'publicCodes') || Object.prototype.hasOwnProperty.call(body,'public_codes')
+        ? await requireCanonicalCodes(database,body.publicCodes || body.public_codes || [],'PUBLIC') : upperList(current.public_codes || []);
+      if(!publicCodes.length) throw new HttpError(422,'public_effectif_requis','Sélectionnez au moins un public canonique pour ce créneau.');
+      const finalLabel = functionalCatalog.scheduledActivityLabel(current.activity_label,current.occurrence_number,current.session_sequence,current.session_count,complement);
+      const updated=one(await database.query(`update scope_planned_site_slots set preferred_date=$2,preferred_start_time=$3,preferred_end_time=$4,location_label=$5,
+        responsible_label=$6,label_complement=$7,final_label=$8,status=$9,public_codes=$10::text[],updated_at=now() where planned_site_slot_id=$1 returning *`,[slotId,strictDate(body.date),startTime,endTime,
+        text(body.location) || null,text(body.responsible) || null,complement,finalLabel,status,publicCodes]));
+      if(!updated) throw new HttpError(404,'creneau_introuvable','Créneau planifié introuvable.');
+      return { readiness,slot:updated,operationalWrites:false,eventPublication:false };
+    },
+
+    async listPublicConflicts(year){
+      const readiness = await requireReady(database,readinessInspector);
+      const slots=rows(await database.query(`select s.planned_site_slot_id as slot_id,s.site_code,date(s.preferred_date) as date,
+        to_char(s.preferred_start_time,'HH24:MI') as start_time,to_char(s.preferred_end_time,'HH24:MI') as end_time,s.status,s.public_codes,
+        s.role_codes,s.resource_codes,s.fixed_date,s.day_exclusive,s.permutation_allowed,s.priority,
+        po.occurrence_number,ps.sequence as session_sequence,d.code as definition_code,d.label as activity_label
+        from scope_planned_site_slots s join scope_planned_occurrence_sessions ps on ps.planned_occurrence_session_id=s.planned_occurrence_session_id
+        join scope_planned_occurrences po on po.planned_occurrence_id=ps.planned_occurrence_id join scope_annual_requirements r on r.annual_requirement_id=po.annual_requirement_id
+        join scope_event_definition_versions v on v.definition_version_id=r.definition_version_id join scope_event_definitions d on d.definition_id=v.definition_id
+        where r.year=$1 and s.preferred_date is not null and s.preferred_start_time is not null and s.preferred_end_time is not null`,[integer(year)]));
+      const normalized=slots.map((row) => ({ slotId:row.slot_id,siteCode:row.site_code,date:dateOnly(row.date),startTime:row.start_time,endTime:row.end_time,status:row.status,
+        publicCodes:row.public_codes || [],roleCodes:row.role_codes || [],resourceCodes:row.resource_codes || [],fixedDate:row.fixed_date,
+        dayExclusive:row.day_exclusive,permutationAllowed:row.permutation_allowed,priority:row.priority,occurrenceNumber:row.occurrence_number,sessionSequence:row.session_sequence,
+        definitionCode:row.definition_code,activityLabel:row.activity_label }));
+      return { readiness,year:integer(year),conflicts:functionalCatalog.detectCompatibilityConflicts(normalized),operationalWrites:false,eventPublication:false };
     },
 
     async previewQuoVadis(requirementId){

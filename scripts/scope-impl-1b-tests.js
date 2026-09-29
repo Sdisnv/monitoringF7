@@ -131,7 +131,8 @@ function record(name, fn){
 
   await record('Test UI 5 — tablette 768, pas de débordement horizontal', async () => {
     const css = fs.readFileSync(path.join(ROOT, 'assets/css/scope.css'), 'utf8');
-    assert.ok(!/min-width:\s*980px/.test(css));
+    assert.ok(/\.qv-pilot-table-wrap\s*{[^}]*overflow-x:\s*auto/s.test(css));
+    assert.ok(/\.annual-catalogue \.annual-table-wrap\s*{[^}]*overflow-x:\s*auto/s.test(css));
     assert.ok(/max-width:\s*1340px/.test(css) || /--scope-max:\s*1340px/.test(css));
     assert.ok(/overflow-x:\s*hidden/.test(css));
     assert.ok(/@media \(max-width: 800px\)/.test(css));

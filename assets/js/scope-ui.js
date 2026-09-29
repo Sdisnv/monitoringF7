@@ -194,9 +194,10 @@
     annualCatalogActivity: null,
     annualCatalogActivityReady: false,
     annualCatalogPreview: null,
+    annualCatalogConflicts: [],
     annualCatalogBusy: false,
     annualThemeBusy: false,
-    annualCatalogFilters: { year: 2027,query: '',domain: 'tous',status: 'tous',archives: 'sans' },
+    annualCatalogFilters: { year: 2027,query: '',domain: 'tous',site: 'tous',status: 'tous',archives: 'sans' },
     annualCatalogMode: '',
     annualCatalogDefinitionEdit: false,
     annualCatalogImport: { fileName:'',fileBase64:'',preview:null,decisions:{},error:'' },
@@ -1105,8 +1106,12 @@
     state.annualCatalogActivityReady = false;
     state.annualCatalogError = null;
     try {
-      const data = await client.annualCatalogActivity(code,{ year: state.annualCatalogFilters.year });
+      const [data,conflicts] = await Promise.all([
+        client.annualCatalogActivity(code,{ year: state.annualCatalogFilters.year }),
+        client.annualPublicConflicts(state.annualCatalogFilters.year).catch(() => ({ conflicts:[] }))
+      ]);
       state.annualCatalogActivity = data;
+      state.annualCatalogConflicts = conflicts.conflicts || [];
       state.annualCatalogActivityReady = true;
       return data;
     } catch (error) {
@@ -11951,6 +11956,28 @@
     return `<span class="annual-status annual-status-${escapeHtml(value.toLowerCase().replace(/_/g,'-'))}"><i aria-hidden="true"></i>${escapeHtml(L.annualStatusLabel(value))}</span>`;
   }
 
+  function annualActivityTypeLabel(value) {
+    return ({ EXERCISE:'Exercice',TRAINING:'Formation',INSTRUCTION:'Instruction',CURRICULUM:'Cursus',TEST:'Test',OTHER:'Autre' })[String(value || '').toUpperCase()] || L.annualEnumLabel(value || 'OTHER');
+  }
+
+  function annualConstructedLabel(baseLabel,occurrenceNumber,sessionNumber,sessionCount,complement) {
+    const base = String(baseLabel || '').trim();
+    const occurrence = Number(occurrenceNumber);
+    const session = Number(sessionNumber);
+    const numbered = base && occurrence > 0 ? `${base} ${occurrence}${Number(sessionCount) > 1 && session > 0 ? `.${session}` : ''}` : base;
+    const suffix = String(complement || '').trim();
+    return suffix ? `${numbered} · ${suffix}` : numbered;
+  }
+
+  function annualReferenceOptions(rows,selected,kind) {
+    const selectedCodes = new Set((selected || []).map((value) => String(value).toUpperCase()));
+    return (rows || []).map((row) => {
+      const code = String(row.code || '').toUpperCase();
+      const label = kind === 'site' ? `${code} — ${row.label || code}` : `${row.label || code} (${code})`;
+      return `<option value="${escapeHtml(code)}"${selectedCodes.has(code) ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+    }).join('');
+  }
+
   function annualReadinessHtml(readiness) {
     if (!readiness || readiness.status === 'SCHEMA_READY') return '';
     const message = readiness.status === 'SCHEMA_INCOMPATIBLE'
@@ -11961,6 +11988,7 @@
 
   function renderAnnualCatalogCreate() {
     if (state.annualCatalogMode !== 'create') return '';
+    const references = state.annualCatalog && state.annualCatalog.references || {};
     return `<section class="annual-catalog-workspace" aria-labelledby="annual-create-title">
       <div class="annual-workspace-head"><div><h3 id="annual-create-title">Nouvelle activité</h3><p>Définition métier réutilisable dans les besoins annuels.</p></div><button class="scope-icon-button" type="button" data-annual-close title="Fermer" aria-label="Fermer">×</button></div>
       <form id="annual-activity-create" class="annual-definition-form">
@@ -11968,6 +11996,13 @@
         <label>Domaine<select id="annual-activity-domain">${['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'].map((value) => `<option value="${value}">${value}</option>`).join('')}</select></label>
         <label>Type<select id="annual-activity-type"><option value="EXERCISE">Exercice</option><option value="TRAINING">Formation</option><option value="INSTRUCTION">Instruction</option><option value="CURRICULUM">Cursus</option><option value="TEST">Test</option><option value="OTHER">Autre</option></select></label>
         <label>Durée d’une séance<input id="annual-activity-duration" type="number" min="1" value="120"><span>minutes</span></label>
+        <label>Récurrence<select id="annual-activity-recurrence"><option value="RECURRENT">Récurrente</option><option value="NON_RECURRENT">Non récurrente</option></select></label>
+        <label>Réalisations habituelles<input id="annual-activity-occurrences" type="number" min="1" value="1"></label>
+        <label>Séances constitutives<input id="annual-activity-sessions" type="number" min="1" value="1"></label>
+        <label>Sites/OI habituels<select id="annual-activity-sites" multiple size="5">${annualReferenceOptions(references.sites,[],'site')}</select></label>
+        <label>Publics de référence<select id="annual-activity-publics" multiple size="5">${annualReferenceOptions(references.publics,[],'public')}</select></label>
+        <label>Règle<select id="annual-activity-rule-mode"><option value="GENERAL">Règle générale du domaine</option><option value="CUSTOM">Règle propre à l’activité</option></select></label>
+        <label>Règle propre<input id="annual-activity-custom-rule" maxlength="300" required disabled></label>
         <label class="annual-definition-description">Description<textarea id="annual-activity-description" rows="2" maxlength="600"></textarea></label>
         <div class="annual-form-actions"><button class="scope-button annual-button-primary" type="submit">Créer l’activité</button><button class="scope-button annual-button-quiet" type="button" data-annual-close>Annuler</button></div>
       </form>
@@ -12016,6 +12051,7 @@
       return rank(leftRank) - rank(rightRank) || String(left.label || '').localeCompare(String(right.label || ''),'fr');
     });
     const domains = [...new Set(activities.map((row) => row.domain).filter(Boolean))];
+    const sites = [...new Set(activities.flatMap((row) => row.siteCodes && row.siteCodes.length ? row.siteCodes : row.defaultSites || []))].sort();
     const canManage = hasScopePermission('references:manage');
     return `<section class="annual-catalogue" aria-labelledby="annual-catalog-title">
       <div class="annual-toolbar">
@@ -12023,20 +12059,22 @@
         <label>Année<input id="annual-filter-year" type="number" min="2000" max="2200" value="${escapeHtml(String(filters.year))}"></label>
         <label>Recherche<input id="annual-filter-query" type="search" value="${escapeHtml(filters.query)}" placeholder="Code ou libellé"></label>
         <label>Domaine<select id="annual-filter-domain"><option value="tous">Tous</option>${domains.map((domain) => `<option value="${escapeHtml(domain)}"${filters.domain === domain ? ' selected' : ''}>${escapeHtml(domain)}</option>`).join('')}</select></label>
+        <label>Site<select id="annual-filter-site"><option value="tous">Tous</option>${sites.map((site) => `<option value="${escapeHtml(site)}"${filters.site === site ? ' selected' : ''}>${escapeHtml(site)}</option>`).join('')}</select></label>
         <label>État<select id="annual-filter-status"><option value="tous">Tous</option><option value="A_DEFINIR"${filters.status === 'A_DEFINIR' ? ' selected' : ''}>À définir</option><option value="DRAFT"${filters.status === 'DRAFT' ? ' selected' : ''}>Brouillon</option><option value="READY"${filters.status === 'READY' ? ' selected' : ''}>Prêt</option><option value="REVIEW_REQUIRED"${filters.status === 'REVIEW_REQUIRED' ? ' selected' : ''}>À revoir</option><option value="ARCHIVE"${filters.status === 'ARCHIVE' ? ' selected' : ''}>Archivée</option></select></label>
         <label>Archives<select id="annual-filter-archives"><option value="sans"${filters.archives === 'sans' ? ' selected' : ''}>Masquées</option><option value="avec"${filters.archives === 'avec' ? ' selected' : ''}>Avec les actives</option><option value="uniquement"${filters.archives === 'uniquement' ? ' selected' : ''}>Archives seules</option></select></label>
         <button id="annual-filter-reset" class="scope-button annual-button-quiet" type="button">Réinitialiser</button>
       </div>
       ${renderAnnualCatalogCreate()}${renderAnnualCatalogImport()}
-      <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Besoin ${escapeHtml(String(catalog.year || filters.year))}</th><th>Période</th><th>Contenus</th><th>État</th><th>QUO VADIS</th><th>Action</th></tr></thead>
+      <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Récurrence</th><th>Réalisations</th><th>Sites</th><th>État ${escapeHtml(String(catalog.year || filters.year))}</th><th>Action</th></tr></thead>
         <tbody>${activities.map((row) => {
           const required = Number(row.requiredOccurrences || 0);
           const defined = Number(row.themedOccurrenceCount || 0);
           const missing = row.unthemedOccurrenceCount == null ? 0 : Number(row.unthemedOccurrenceCount);
-          const contents = required ? `${defined} défini${defined > 1 ? 's' : ''}${missing ? ` · ${missing} à préciser` : ''}` : '—';
-          const qv = required ? `${Number(row.preparedOccurrenceCount || 0)}/${required} préparée${required > 1 ? 's' : ''}` : 'Non préparé';
-          return `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.label)}</strong></td><td>${required ? `${escapeHtml(String(required))} occurrence${required > 1 ? 's' : ''}` : 'Non défini'}</td><td>${required ? escapeHtml(L.annualPeriodLabel(row.windowStart,row.windowEnd)) : '—'}</td><td>${escapeHtml(contents)}</td><td>${annualStatusHtml(row.status)}</td><td>${escapeHtml(qv)}</td><td><a class="annual-row-action" href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Consulter la fiche <span aria-hidden="true">›</span></a></td></tr>`;
-        }).join('') || '<tr><td colspan="8" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
+          const usual = Number(row.defaultOccurrences || 1);
+          const annual = required || usual;
+          const sites = row.siteCodes && row.siteCodes.length ? row.siteCodes : row.defaultSites || [];
+          return `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.label)}</strong><span>${escapeHtml(annualActivityTypeLabel(row.activityType))}</span></td><td>${row.recurrenceKind === 'RECURRENT' ? 'Récurrente' : 'Non récurrente'}</td><td>${escapeHtml(String(annual))}${required && required !== usual ? ` <span class="annual-muted">(${usual} habituellement)</span>` : ''}</td><td>${escapeHtml(sites.join(', ') || 'À définir')}</td><td>${annualStatusHtml(row.programState === 'INACTIVE' ? 'CANCELLED' : row.status)}</td><td><a class="annual-row-action" href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Configurer <span aria-hidden="true">›</span></a></td></tr>`;
+        }).join('') || '<tr><td colspan="7" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
       </table></div>
     </section>`;
   }
@@ -12058,6 +12096,10 @@
     const activity = payload.activity || {};
     const config = payload.configuration || {};
     const requirement = payload.annualRequirement || null;
+    const profile = config.functionalProfile || {};
+    const programEntry = payload.annualProgramEntry || null;
+    const siteSlots = payload.siteSlots || [];
+    const references = payload.references || { publics:[],sites:[] };
     const generation = payload.generation || { occurrences: [],sessions: [] };
     const assignments = payload.annualThemeAssignments || [];
     const availableThemes = config.availableThemes || [];
@@ -12084,11 +12126,11 @@
         const id = row.annualThemeAssignmentId || row.annual_theme_assignment_id || '';
         const label = row.label || row.freeLabel || row.free_label || 'Thème';
         const free = !row.themeVersionId && !row.theme_version_id;
-        return `<span class="annual-theme-value">${escapeHtml(label)}${free ? ' <em>(thème libre)</em>' : ''}${editable ? ` <button type="button" class="scope-text-action" data-annual-theme-remove="${escapeHtml(id)}" aria-label="Retirer ${escapeHtml(label)}">Retirer</button>` : ''}</span>`;
+        return `<span class="annual-theme-value">${escapeHtml(label)}${free ? ' <em>(contenu libre)</em>' : ''}${editable ? ` <button type="button" class="scope-text-action" data-annual-theme-remove="${escapeHtml(id)}" aria-label="Retirer ${escapeHtml(label)}">Retirer</button>` : ''}</span>`;
       }).join('<span class="annual-theme-separator"> · </span>') : '<span class="annual-muted">À préciser</span>';
       const canonicalOptions = availableThemes.map((theme) => `<option value="${escapeHtml(theme.themeVersionId || theme.theme_version_id || '')}">${escapeHtml(theme.label || theme.code || '')}</option>`).join('');
       return `<tr><th scope="row">${occurrence}</th><td>${labels}</td><td>
-        ${editable ? `<details class="annual-theme-editor"><summary>${rows.length ? 'Modifier' : 'Ajouter un thème'}</summary><div><label>Thème existant<select data-annual-theme-select="${occurrence}"><option value="">Choisir…</option>${canonicalOptions}</select></label><span>ou</span><label>Thème libre<input data-annual-theme-free="${occurrence}" maxlength="160" placeholder="Ex. Manœuvre hydraulique"></label><button type="button" class="scope-text-action" data-annual-theme-add="${occurrence}">Ajouter</button></div></details>` : '<span class="annual-muted">—</span>'}
+        ${editable ? `<details class="annual-theme-editor"><summary>${rows.length ? 'Modifier' : 'Ajouter un contenu'}</summary><div><label>Contenu référentiel<select data-annual-theme-select="${occurrence}"><option value="">Choisir…</option>${canonicalOptions}</select></label><span>ou</span><label>Contenu libre<input data-annual-theme-free="${occurrence}" maxlength="160" placeholder="Ex. Manœuvre hydraulique"></label><button type="button" class="scope-text-action" data-annual-theme-add="${occurrence}">Ajouter</button></div></details>` : '<span class="annual-muted">—</span>'}
       </td></tr>`;
     }).join('') : '<tr><td colspan="3" class="annual-muted">Enregistrez d’abord le besoin annuel pour définir ses contenus.</td></tr>';
     const publicLabels = (config.publics || []).map((row) => row.public_label || row.public_code).filter(Boolean);
@@ -12102,6 +12144,32 @@
     const statComLabels = (config.statCom || []).map((row) => `${row.statcom_code} · ${L.annualEnumLabel(row.mode)} · ${L.annualEnumLabel(row.aggregation_rule)}`);
     const locationLabels = (config.locations || []).map((row) => row.location_category_label || 'Emplacement défini').filter(Boolean);
     const preview = state.annualCatalogPreview;
+    const selectedSites = programEntry && programEntry.site_codes && programEntry.site_codes.length ? programEntry.site_codes : profile.default_sites || [];
+    const siteChoices = (references.sites || []).filter((site) => activity.domain !== 'JSP' || ['G1','C1','B1'].includes(site.code));
+    const siteByCode = new Map((references.sites || []).map((site) => [site.code,site]));
+    const annualConflictCause = (row) => {
+      const causes = row.causes || [];
+      if (!causes.length) return (row.publicCodes || []).length ? `Publics : ${(row.publicCodes || []).join(', ')}` : 'Cause à préciser';
+      return causes.map((cause) => {
+        if (cause.code === 'ROLE_CONFLICT') return `Rôle indispensable : ${(cause.roleCodes || []).join(', ')}`;
+        if (cause.code === 'PUBLIC_CONFLICT') return `Public : ${(cause.publicCodes || []).join(', ')}`;
+        if (cause.code === 'DAY_EXCLUSIVE') return `Exclusivité journée : ${cause.activity || 'activité'}`;
+        if (cause.code === 'RESOURCE_CONFLICT') return `Ressource : ${(cause.resourceCodes || []).join(', ')}`;
+        return cause.label || cause.code;
+      }).filter(Boolean).join(' · ');
+    };
+    const relevantConflicts = (state.annualCatalogConflicts || []).filter((row) => row.activityA === activity.label || row.activityB === activity.label);
+    const slotRows = siteSlots.map((slot) => {
+      const start = String(slot.preferred_start_time || '').slice(0,5);
+      const end = String(slot.preferred_end_time || '').slice(0,5);
+      const duration = formatPlannedDurationLabel(start,end) || (slot.duration_minutes ? `${slot.duration_minutes} min` : '—');
+      const complement = slot.label_complement || '';
+      const finalLabel = slot.final_label || annualConstructedLabel(activity.label || activity.code,slot.occurrence_number,slot.session_sequence,slot.occurrence_session_count,complement);
+      const effectivePublics = slot.effective_public_codes || slot.public_codes || [];
+      const site = siteByCode.get(slot.site_code);
+      const siteLabel = site ? `${site.code} — ${site.label}` : slot.site_code;
+      return `<tr data-annual-slot-row="${escapeHtml(slot.planned_site_slot_id)}" data-annual-slot-base-label="${escapeHtml(annualConstructedLabel(activity.label || activity.code,slot.occurrence_number,slot.session_sequence,slot.occurrence_session_count,''))}"><td>${escapeHtml(String(slot.occurrence_number || '—'))}</td><td>${escapeHtml(Number(slot.occurrence_session_count) > 1 ? String(slot.session_sequence || '—') : 'Unique')}</td><td>${escapeHtml(siteLabel)}</td><td>${canManage ? `<input data-annual-slot-date type="date" value="${escapeHtml(String(slot.preferred_date || '').slice(0,10))}">` : escapeHtml(String(slot.preferred_date || '').slice(0,10) || 'À planifier')}</td><td>${canManage ? `<input data-annual-slot-start type="time" value="${escapeHtml(start)}"> <input data-annual-slot-end type="time" value="${escapeHtml(end)}">` : `${escapeHtml(start || '—')}–${escapeHtml(end || '—')}`}</td><td data-annual-slot-duration>${escapeHtml(duration)}</td><td>${canManage ? `<input data-annual-slot-location list="annual-location-options" value="${escapeHtml(slot.location_label || '')}" placeholder="Lieu">` : escapeHtml(slot.location_label || 'À définir')}</td><td>${canManage ? `<input data-annual-slot-responsible value="${escapeHtml(slot.responsible_label || '')}" placeholder="Responsable">` : escapeHtml(slot.responsible_label || 'À définir')}</td><td><strong data-annual-slot-final>${escapeHtml(finalLabel)}</strong>${canManage ? `<input data-annual-slot-complement value="${escapeHtml(complement)}" placeholder="Compléter le libellé (facultatif)">` : ''}</td><td>${canManage ? `<select data-annual-slot-publics multiple size="3">${annualReferenceOptions(references.publics,effectivePublics,'public')}</select>` : escapeHtml(effectivePublics.join(', ') || 'À définir')}</td><td>${canManage ? `<select data-annual-slot-status><option value="PROPOSED"${slot.status === 'PROPOSED' ? ' selected' : ''}>Proposé</option><option value="CONFIRMED"${slot.status === 'CONFIRMED' ? ' selected' : ''}>Confirmé</option><option value="DISABLED"${slot.status === 'DISABLED' ? ' selected' : ''}>Désactivé</option></select>` : escapeHtml(slot.status || 'PROPOSED')}</td><td>${canManage ? `<button class="scope-text-action" data-annual-slot-save="${escapeHtml(slot.planned_site_slot_id)}" type="button">Enregistrer</button>` : '—'}</td></tr>`;
+    }).join('');
     return `<div class="annual-activity annual-activity-c10 annual-activity-c13">
       <nav class="annual-breadcrumb" aria-label="Fil d’Ariane">QUO VADIS ${escapeHtml(String(year))} / Catalogue annuel / ${escapeHtml(activity.label || activity.code || '')}</nav>
       <a class="annual-back" href="#/quo-vadis/catalogue-annuel">‹ Retour au catalogue</a>
@@ -12111,25 +12179,37 @@
         <label>Domaine<select id="annual-edit-domain">${['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'].map((value) => `<option value="${value}"${activity.domain === value ? ' selected' : ''}>${value}</option>`).join('')}</select></label>
         <label>Type<select id="annual-edit-type">${[['EXERCISE','Exercice'],['TRAINING','Formation'],['INSTRUCTION','Instruction'],['CURRICULUM','Cursus'],['TEST','Test'],['OTHER','Autre']].map(([value,label]) => `<option value="${value}"${activity.activityType === value ? ' selected' : ''}>${label}</option>`).join('')}</select></label>
         <label>Durée d’une séance<input id="annual-edit-duration" type="number" min="1" value="${escapeHtml(String(config.sessions && config.sessions[0] && config.sessions[0].duration_minutes || 120))}"><span>minutes</span></label>
+        <label>Récurrence<select id="annual-edit-recurrence"><option value="RECURRENT"${profile.recurrence_kind === 'RECURRENT' ? ' selected' : ''}>Récurrente</option><option value="NON_RECURRENT"${profile.recurrence_kind !== 'RECURRENT' ? ' selected' : ''}>Non récurrente</option></select></label>
+        <label>Réalisations habituelles<input id="annual-edit-occurrences" type="number" min="1" value="${escapeHtml(String(profile.default_occurrences || 1))}"></label>
+        <label>Séances constitutives<input id="annual-edit-sessions" type="number" min="1" value="${escapeHtml(String(config.sessions && config.sessions.length || 1))}"></label>
+        <label>Sites/OI habituels<select id="annual-edit-sites" multiple size="5">${annualReferenceOptions(references.sites,profile.default_sites || [],'site')}</select></label>
+        <label>Publics de référence<select id="annual-edit-publics" multiple size="5">${annualReferenceOptions(references.publics,(config.publics || []).map((row) => row.public_code || row.publicCode).filter(Boolean),'public')}</select></label>
+        <label>Règle<select id="annual-edit-rule-mode"><option value="GENERAL"${profile.rule_mode !== 'CUSTOM' ? ' selected' : ''}>Règle générale du domaine</option><option value="CUSTOM"${profile.rule_mode === 'CUSTOM' ? ' selected' : ''}>Règle propre à l’activité</option></select></label>
+        <label>Règle propre<input id="annual-edit-custom-rule" maxlength="300" required value="${escapeHtml(profile.custom_rule && profile.custom_rule.description || '')}"${profile.rule_mode === 'CUSTOM' ? '' : ' disabled'}></label>
         <label class="annual-definition-description">Description<textarea id="annual-edit-description" rows="2" maxlength="600">${escapeHtml(activity.version && activity.version.description || '')}</textarea></label>
         <div class="annual-form-actions"><button class="scope-button annual-button-primary" type="submit">Enregistrer la nouvelle version</button><button class="scope-button annual-button-quiet" id="annual-activity-edit-cancel-secondary" type="button">Annuler</button></div>
       </form></section>` : ''}
       <div class="annual-detail-layout">
-      <section class="annual-panel annual-need"><h3>Besoin annuel ${escapeHtml(String(year))}</h3>
+      <section class="annual-panel annual-need"><h3>Programmation ${escapeHtml(String(year))}</h3>
           <form id="annual-requirement-form"><div class="annual-form-grid">
-            <label>Occurrences requises<input id="annual-required-occurrences" type="number" min="1" value="${escapeHtml(String(requirement && requirement.requiredOccurrences || 1))}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
+            <label>État annuel<select id="annual-program-state" ${archived || !canManage ? 'disabled' : ''}><option value="ACTIVE"${!programEntry || programEntry.program_state === 'ACTIVE' ? ' selected' : ''}>Active</option><option value="INACTIVE"${programEntry && programEntry.program_state === 'INACTIVE' ? ' selected' : ''}>Désactivée</option></select></label>
+            <label>Occurrences requises<input id="annual-required-occurrences" type="number" min="1" value="${escapeHtml(String(requirement && requirement.requiredOccurrences || profile.default_occurrences || 1))}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
             <label>Début souhaité<input id="annual-window-start" type="date" placeholder="jj/mm/aaaa" value="${escapeHtml(requirement && requirement.windowStart || '')}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
             <label>Fin souhaitée<input id="annual-window-end" type="date" placeholder="jj/mm/aaaa" value="${escapeHtml(requirement && requirement.windowEnd || '')}" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}></label>
             <label>Priorité<select id="annual-priority" ${archived || !canManage || requirement && requirement.status !== 'DRAFT' ? 'disabled' : ''}><option value="100"${priority === 100 ? ' selected' : ''}>Normale</option><option value="50"${priority === 50 ? ' selected' : ''}>Haute</option><option value="150"${priority === 150 ? ' selected' : ''}>Basse</option></select></label>
-          </div><div class="annual-need-summary"><strong>Contenus / thèmes</strong><span>${required ? escapeHtml(summary.contents) : 'À définir après l’enregistrement du besoin.'}</span><a href="#annual-themes">Voir le détail des occurrences ↓</a></div><div class="annual-actions">
+          </div><fieldset class="annual-site-selector"><legend>Sites / OI concernés</legend>${siteChoices.map((site) => `<label><input type="checkbox" name="annual-program-site" value="${escapeHtml(site.code)}"${selectedSites.includes(site.code) ? ' checked' : ''}${archived || !canManage ? ' disabled' : ''}> ${escapeHtml(`${site.code} — ${site.label}`)}</label>`).join('')}<label><input id="annual-program-extraordinary" type="checkbox"${programEntry && programEntry.extraordinary ? ' checked' : ''}${archived || !canManage ? ' disabled' : ''}> Activité extraordinaire</label></fieldset><div class="annual-need-summary"><strong>Programmation</strong><span>Le complément de libellé reste facultatif.</span><a href="#annual-slots">Préparer les créneaux ↓</a></div><div class="annual-actions">
             ${canManage && !archived && (!requirement || requirement.status === 'DRAFT') ? '<button class="scope-button annual-button-secondary" type="submit">Enregistrer le brouillon</button>' : ''}
             ${canManage && readyAction.visible ? `<button id="annual-ready" class="scope-button annual-button-primary" type="button"${readyAction.enabled ? '' : ' disabled'}>Valider le besoin</button>${readyAction.message ? `<span class="annual-ready-hint">${escapeHtml(readyAction.message)}</span>` : ''}` : ''}
-            ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-generate" class="scope-button annual-button-primary" type="button">Préparer dans QUO VADIS</button><button id="annual-revise" class="scope-button" type="button">Créer une révision</button>' : ''}
+            ${canManage && requirement && requirement.status === 'READY' ? '<button id="annual-generate" class="scope-button annual-button-primary" type="button">Générer les réalisations</button><button id="annual-propose-schedule" class="scope-button annual-button-secondary" type="button">Proposer les dates</button><button id="annual-revise" class="scope-button" type="button">Créer une révision</button>' : ''}
+            ${canManage && requirement && requirement.status === 'DRAFT' ? '<button id="annual-program-remove" class="scope-text-action" type="button">Retirer de cette année</button>' : ''}
           </div></form>
       </section>
-      <section class="annual-panel annual-qv-preparation"><h3>Préparation dans QUO VADIS</h3><p>Ce besoin sera transmis à QUO VADIS après validation.</p><p>Les dates, lieux et affectations seront définis dans QUO VADIS.</p><strong>${required ? `${prepared} / ${required} occurrence${required === 1 ? '' : 's'} préparée${required === 1 ? '' : 's'}` : 'Aucun événement n’est créé depuis le catalogue.'}</strong>${requirement && requirement.status === 'READY' ? '<button id="annual-preview" class="scope-text-action" type="button">Consulter la préparation ›</button>' : '<span class="annual-muted">Disponible après validation du besoin.</span>'}${preview ? `<div class="annual-preview"><strong>Préparation miroir</strong><span>${escapeHtml(String((preview.projection && preview.projection.obligations || []).length))} occurrence(s), sans écriture opérationnelle.</span></div>` : ''}</section>
-      <section class="annual-panel annual-activity-info"><h3>Informations sur l’activité</h3><dl><dt>Domaine</dt><dd>${escapeHtml(activity.domain || '—')}</dd><dt>Type d’activité</dt><dd>${escapeHtml(L.annualEnumLabel(activity.activityType || '—'))}</dd><dt>Périodicité</dt><dd>${escapeHtml(L.annualEnumLabel(config.periodicity && config.periodicity.periodicity_type || 'ON_DEMAND'))}</dd><dt>Nombre de séances</dt><dd>${sessionLabels.length ? `${escapeHtml(String(sessionLabels.length))} modèle${sessionLabels.length > 1 ? 's' : ''}` : 'Selon besoin'}</dd><dt>Public de référence</dt><dd>${escapeHtml(publicLabels.join(', ') || 'Selon besoin')}</dd><dt>Description</dt><dd>${escapeHtml(activity.version && activity.version.description || 'Non précisée.')}</dd></dl></section>
-      <section id="annual-themes" class="annual-panel annual-themes"><div class="annual-section-heading"><div><h3>Thèmes par occurrence</h3><p>${required ? escapeHtml(summary.contents) : 'Les contenus seront définis par occurrence après l’enregistrement du besoin.'}</p></div></div><div class="annual-table-wrap"><table class="annual-table annual-theme-table"><thead><tr><th>Occurrence</th><th>Thème(s)</th><th>Action</th></tr></thead><tbody>${themeRows}</tbody></table></div></section>
+      <section class="annual-panel annual-qv-preparation"><h3>Préparation dans QUO VADIS</h3><p>Le Catalogue annuel prépare les réalisations, dates, horaires, sites/OI, lieux et responsables sans publier d’événement opérationnel.</p><strong>${required ? `${prepared} / ${required} occurrence${required === 1 ? '' : 's'} préparée${required === 1 ? '' : 's'}` : 'Aucun événement n’est créé depuis le catalogue.'}</strong>${requirement && requirement.status === 'READY' ? '<button id="annual-preview" class="scope-text-action" type="button">Consulter la préparation ›</button>' : '<span class="annual-muted">Disponible après validation du besoin.</span>'}${preview ? `<div class="annual-preview"><strong>Préparation miroir</strong><span>${escapeHtml(String((preview.projection && preview.projection.obligations || []).length))} occurrence(s), sans écriture opérationnelle.</span></div>` : ''}</section>
+      <section class="annual-panel annual-activity-info"><h3>Configuration permanente</h3><dl><dt>Domaine</dt><dd>${escapeHtml(activity.domain || '—')}</dd><dt>Type d’activité</dt><dd>${escapeHtml(annualActivityTypeLabel(activity.activityType))}</dd><dt>Récurrence</dt><dd>${profile.recurrence_kind === 'RECURRENT' ? 'Récurrente' : 'Non récurrente'}</dd><dt>Réalisations habituelles</dt><dd>${escapeHtml(String(profile.default_occurrences || 1))}</dd><dt>Sites habituels</dt><dd>${escapeHtml((profile.default_sites || []).join(', ') || 'Selon besoin')}</dd><dt>Règle</dt><dd>${profile.rule_mode === 'CUSTOM' ? 'Personnalisée' : 'Règle générale du domaine'}</dd><dt>Nombre de séances</dt><dd>${sessionLabels.length ? `${escapeHtml(String(sessionLabels.length))} séance${sessionLabels.length > 1 ? 's' : ''}` : 'Selon besoin'}</dd><dt>Public de référence</dt><dd>${escapeHtml(publicLabels.join(', ') || 'Selon besoin')}</dd><dt>Description</dt><dd>${escapeHtml(activity.version && activity.version.description || 'Non précisée.')}</dd></dl></section>
+      <section class="annual-panel annual-sessions"><h3>Séances</h3>${annualList(config.sessions || [],(row) => `<li><strong>${escapeHtml(row.code)}</strong> · ${escapeHtml(row.label)} · ${escapeHtml(String(row.duration_minutes))} min${row.mandatory === false ? ' · optionnelle' : ''}</li>`)}</section>
+      <section id="annual-slots" class="annual-panel annual-site-planning"><div class="annual-section-heading"><div><h3>Occurrences, sessions et créneaux</h3><p>Chaque créneau porte son site/OI, ses publics effectifs, sa date, ses horaires, son lieu et son libellé final.</p></div></div><datalist id="annual-location-options">${(references.sites || []).map((site) => `<option value="${escapeHtml(site.label || '')}"></option>`).join('')}</datalist><div class="annual-table-wrap"><table class="annual-table"><thead><tr><th>Occurrence</th><th>Session</th><th>Site/OI</th><th>Date</th><th>Horaire</th><th>Durée</th><th>Lieu</th><th>Responsable</th><th>Libellé</th><th>Publics effectifs</th><th>État</th><th>Action</th></tr></thead><tbody>${slotRows || '<tr><td colspan="12" class="annual-muted">Aucun créneau généré.</td></tr>'}</tbody></table></div></section>
+      <section class="annual-panel annual-conflicts"><h3>Compatibilité et conflits</h3>${relevantConflicts.length ? `<ul>${relevantConflicts.map((row) => `<li><strong>CONFLIT</strong> · ${escapeHtml(row.activityA)} / ${escapeHtml(row.activityB)} · ${escapeHtml(row.date)} · ${escapeHtml(annualConflictCause(row))}${row.priorityWinner ? ` · Priorité: ${escapeHtml(row.priorityWinner)}` : ''}</li>`).join('')}</ul>` : '<p class="annual-muted">Aucun conflit détecté pour cette activité.</p>'}</section>
+      <section id="annual-themes" class="annual-panel annual-themes"><div class="annual-section-heading"><div><h3>Contenus de référence facultatifs</h3><p>${required ? escapeHtml(summary.contents) : 'Les contenus de référence restent facultatifs; les créneaux utilisent le complément de libellé.'}</p></div></div><div class="annual-table-wrap"><table class="annual-table annual-theme-table"><thead><tr><th>Occurrence</th><th>Contenu(s)</th><th>Action</th></tr></thead><tbody>${themeRows}</tbody></table></div></section>
       <aside class="annual-side-stack" aria-label="Informations complémentaires"><section class="annual-panel annual-requirements"><h3>Exigences et comptabilisation</h3><dl><dt>Contraintes</dt><dd>${escapeHtml(constraintLabels.join(' · ') || 'Aucune contrainte particulière.')}</dd><dt>Stat.Com</dt><dd>${escapeHtml(statComLabels.join(' · ') || 'Non configuré.')}</dd></dl></section><section class="annual-panel annual-organisation"><h3>Public et organisation</h3><dl><dt>Publics</dt><dd>${escapeHtml(publicLabels.join(', ') || 'Selon besoin')}</dd><dt>Lieux</dt><dd>${escapeHtml(locationLabels.join(', ') || 'Selon le scénario défini dans QUO VADIS.')}</dd><dt>Responsables</dt><dd>Non précisé.</dd></dl></section></aside>
       </div>
       ${canManage ? `<details class="annual-internal"><summary>Détails techniques — réservé aux profils autorisés</summary><dl><dt>Code</dt><dd>${escapeHtml(activity.code || '—')}</dd>${activity.familyCode ? `<dt>Famille technique</dt><dd>${escapeHtml(activity.familyCode)}</dd>` : ''}<dt>Version</dt><dd>${escapeHtml(activity.version && activity.version.versionCode || '—')}</dd><dt>Identifiant</dt><dd>${escapeHtml(activity.definitionId || '—')}</dd><dt>Fingerprint</dt><dd>${escapeHtml(activity.version && activity.version.fingerprint || '—')}</dd><dt>Type interne</dt><dd>${escapeHtml(activity.activityType || '—')}</dd></dl></details>` : ''}
@@ -12236,17 +12316,18 @@
         year: Number(document.getElementById('annual-filter-year')?.value || state.annualCatalogFilters.year || 2027),
         query: document.getElementById('annual-filter-query')?.value || '',
         domain: document.getElementById('annual-filter-domain')?.value || 'tous',
+        site: document.getElementById('annual-filter-site')?.value || 'tous',
         status: document.getElementById('annual-filter-status')?.value || 'tous',
         archives: document.getElementById('annual-filter-archives')?.value || 'sans'
       };
       await loadAnnualCatalog();
       render();
     };
-    ['annual-filter-year','annual-filter-query','annual-filter-domain','annual-filter-status','annual-filter-archives'].forEach((id) => {
+    ['annual-filter-year','annual-filter-query','annual-filter-domain','annual-filter-site','annual-filter-status','annual-filter-archives'].forEach((id) => {
       document.getElementById(id)?.addEventListener('change',refreshAnnualCatalog);
     });
     document.getElementById('annual-filter-reset')?.addEventListener('click',async () => {
-      state.annualCatalogFilters = { year: 2027,query: '',domain: 'tous',status: 'tous',archives:'sans' };
+      state.annualCatalogFilters = { year: 2027,query: '',domain: 'tous',site:'tous',status: 'tous',archives:'sans' };
       await loadAnnualCatalog();
       render();
     });
@@ -12265,6 +12346,13 @@
       await catalogListAction(() => client.createAnnualCatalogActivity({
         label:document.getElementById('annual-activity-label')?.value || '',primaryDomain:document.getElementById('annual-activity-domain')?.value || '',
         activityType:document.getElementById('annual-activity-type')?.value || 'OTHER',durationMinutes:Number(document.getElementById('annual-activity-duration')?.value || 120),
+        sessionCount:Number(document.getElementById('annual-activity-sessions')?.value || 1),
+        recurrenceKind:document.getElementById('annual-activity-recurrence')?.value || 'NON_RECURRENT',
+        defaultOccurrences:Number(document.getElementById('annual-activity-occurrences')?.value || 1),
+        defaultSites:[...(document.getElementById('annual-activity-sites')?.selectedOptions || [])].map((option) => option.value),
+        publicCodes:[...(document.getElementById('annual-activity-publics')?.selectedOptions || [])].map((option) => option.value),
+        ruleMode:document.getElementById('annual-activity-rule-mode')?.value || 'GENERAL',
+        customRule:document.getElementById('annual-activity-rule-mode')?.value === 'CUSTOM' ? { description:document.getElementById('annual-activity-custom-rule')?.value || '' } : null,
         description:document.getElementById('annual-activity-description')?.value || ''
       }),'L’activité a été créée dans le Catalogue.');
     });
@@ -12321,8 +12409,20 @@
       await annualAction(() => client.updateAnnualCatalogActivity(route().qvCatalogCode,{
         label:document.getElementById('annual-edit-label')?.value || '',primaryDomain:document.getElementById('annual-edit-domain')?.value || '',
         activityType:document.getElementById('annual-edit-type')?.value || 'OTHER',durationMinutes:Number(document.getElementById('annual-edit-duration')?.value || 120),
+        sessionCount:Number(document.getElementById('annual-edit-sessions')?.value || 1),
+        recurrenceKind:document.getElementById('annual-edit-recurrence')?.value || 'NON_RECURRENT',
+        defaultOccurrences:Number(document.getElementById('annual-edit-occurrences')?.value || 1),
+        defaultSites:[...(document.getElementById('annual-edit-sites')?.selectedOptions || [])].map((option) => option.value),
+        publicCodes:[...(document.getElementById('annual-edit-publics')?.selectedOptions || [])].map((option) => option.value),
+        ruleMode:document.getElementById('annual-edit-rule-mode')?.value || 'GENERAL',
+        customRule:document.getElementById('annual-edit-rule-mode')?.value === 'CUSTOM' ? { description:document.getElementById('annual-edit-custom-rule')?.value || '' } : null,
         description:document.getElementById('annual-edit-description')?.value || ''
       }),'Une nouvelle version de l’activité a été créée.'); state.annualCatalogDefinitionEdit = false;
+    });
+    [['annual-activity-rule-mode','annual-activity-custom-rule'],['annual-edit-rule-mode','annual-edit-custom-rule']].forEach(([selectId,inputId]) => {
+      document.getElementById(selectId)?.addEventListener('change',(event) => {
+        const input=document.getElementById(inputId); if(input) input.disabled=event.target.value !== 'CUSTOM';
+      });
     });
     document.getElementById('annual-activity-archive')?.addEventListener('click',() => ScopeFeedback.confirm({ title:'Archiver l’activité',message:'Elle restera disponible dans l’historique et ne sera plus proposée pour de nouveaux besoins.',confirmText:'Archiver',cancelText:'Annuler' },async () => {
       await annualAction(() => client.archiveAnnualCatalogActivity(route().qvCatalogCode),'L’activité a été archivée.');
@@ -12337,15 +12437,18 @@
       const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
       const payload = {
         code: route().qvCatalogCode,year: state.annualCatalogFilters.year,
-        requiredOccurrences: Number(document.getElementById('annual-required-occurrences')?.value || 0),
+        state:document.getElementById('annual-program-state')?.value || 'ACTIVE',
+        occurrences: Number(document.getElementById('annual-required-occurrences')?.value || 0),
+        sites:[...document.querySelectorAll('input[name="annual-program-site"]:checked')].map((input) => input.value),
+        extraordinary:Boolean(document.getElementById('annual-program-extraordinary')?.checked),
         windowStart: L.annualDraftDateValue(document.getElementById('annual-window-start')),
         windowEnd: L.annualDraftDateValue(document.getElementById('annual-window-end')),
         variantCode: requirement && requirement.variantCode || 'DEFAULT',
         priority: Number(document.getElementById('annual-priority')?.value || 100)
       };
       await annualAction(
-        () => requirement ? client.updateAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id,payload) : client.createAnnualRequirement(payload),
-        'Le brouillon annuel a été enregistré.'
+        () => client.saveAnnualProgram(state.annualCatalogFilters.year,route().qvCatalogCode,payload),
+        'La programmation annuelle a été enregistrée.'
       );
     });
     document.getElementById('annual-ready')?.addEventListener('click',async () => {
@@ -12355,6 +12458,39 @@
     document.getElementById('annual-generate')?.addEventListener('click',async () => {
       const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
       await annualAction(() => client.generateAnnualRequirement(requirement.annualRequirementId || requirement.annual_requirement_id),'Les occurrences planifiées ont été générées sans créer d’événement.');
+    });
+    document.getElementById('annual-propose-schedule')?.addEventListener('click',async () => {
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      await annualAction(() => client.proposeAnnualSchedule(requirement.annualRequirementId || requirement.annual_requirement_id,{}),'Une proposition de dates par site a été générée.');
+    });
+    document.getElementById('annual-program-remove')?.addEventListener('click',() => ScopeFeedback.confirm({ title:'Retirer de cette année',message:'La définition permanente restera dans le Catalogue.',confirmText:'Retirer',cancelText:'Annuler' },async () => {
+      const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
+      await client.removeAnnualProgram(requirement.annualRequirementId || requirement.annual_requirement_id);
+      await loadAnnualCatalogActivity(route().qvCatalogCode);render();
+    }));
+    document.querySelectorAll('[data-annual-slot-save]').forEach((button) => button.addEventListener('click',async () => {
+      const row = button.closest('[data-annual-slot-row]');
+      await annualAction(() => client.updateAnnualSiteSlot(button.dataset.annualSlotSave,{
+        date:row.querySelector('[data-annual-slot-date]')?.value || null,startTime:row.querySelector('[data-annual-slot-start]')?.value || null,
+        endTime:row.querySelector('[data-annual-slot-end]')?.value || null,location:row.querySelector('[data-annual-slot-location]')?.value || null,
+        responsible:row.querySelector('[data-annual-slot-responsible]')?.value || null,labelComplement:row.querySelector('[data-annual-slot-complement]')?.value || null,
+        publicCodes:[...(row.querySelector('[data-annual-slot-publics]')?.selectedOptions || [])].map((option) => option.value),
+        status:row.querySelector('[data-annual-slot-status]')?.value || 'PROPOSED'
+      }),'Le créneau a été mis à jour.');
+    }));
+    document.querySelectorAll('[data-annual-slot-row]').forEach((row) => {
+      const updateDerived = () => {
+        const start = row.querySelector('[data-annual-slot-start]')?.value || '';
+        const end = row.querySelector('[data-annual-slot-end]')?.value || '';
+        const duration = row.querySelector('[data-annual-slot-duration]');
+        if (duration) duration.textContent = formatPlannedDurationLabel(start,end) || 'Horaire incohérent';
+        const finalLabel = row.querySelector('[data-annual-slot-final]');
+        const complement = row.querySelector('[data-annual-slot-complement]')?.value.trim() || '';
+        if (finalLabel) finalLabel.textContent = `${row.dataset.annualSlotBaseLabel || ''}${complement ? ` · ${complement}` : ''}`;
+      };
+      row.querySelector('[data-annual-slot-start]')?.addEventListener('input',updateDerived);
+      row.querySelector('[data-annual-slot-end]')?.addEventListener('input',updateDerived);
+      row.querySelector('[data-annual-slot-complement]')?.addEventListener('input',updateDerived);
     });
     document.getElementById('annual-revise')?.addEventListener('click',async () => {
       const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;
@@ -12381,7 +12517,7 @@
       const themeVersionId = select && select.value || null;
       const freeLabel = freeInput && freeInput.value.trim() || null;
       if (Boolean(themeVersionId) === Boolean(freeLabel)) {
-        toast('error','Contenus annuels','Choisissez un thème existant ou saisissez un thème libre.');
+        toast('error','Contenus annuels','Choisissez un contenu existant ou saisissez un contenu libre.');
         return;
       }
       const requirement = state.annualCatalogActivity && state.annualCatalogActivity.annualRequirement;

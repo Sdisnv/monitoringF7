@@ -252,10 +252,10 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     assert.ok(!/scope_/.test(pgStore));
   });
 
-  await record('Test 9 — référentiel SQL initial + cibles runtime enrichies', async () => {
-    assert.strictEqual(DOMAINES.length, 8);
-    assert.strictEqual(CIBLES.length, 28);
-    assert.deepStrictEqual(DOMAINES.map(d => d.code), ['FOBA','FOCA','DPS','DAP','PR','AUTO','FOSPEC','JSP']);
+  await record('Test 9 — référentiel SQL initial + domaines/cibles runtime enrichis', async () => {
+    assert.strictEqual(DOMAINES.length, 9);
+    assert.strictEqual(CIBLES.length, 36);
+    assert.deepStrictEqual(DOMAINES.map(d => d.code), ['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','PR','AUTO']);
 
     const sql = fs.readFileSync(path.join(ROOT, 'database/migrations/20260819_scope_impl_1a.sql'), 'utf8');
     assert.ok(!/\bdrop\b/i.test(sql));
@@ -277,7 +277,7 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
 
     assert.strictEqual(sqlDomaines.length, 8);
     assert.strictEqual(sqlCibles.length, 27);
-    assert.deepStrictEqual(sqlDomaines, DOMAINES);
+    assert.ok(sqlDomaines.every((row) => DOMAINES.some((domaine) => domaine.code === row.code && domaine.libelle === row.libelle)));
     assert.ok(sqlCibles.every((row) => CIBLES.some((cible) => cible[0] === row[0] && cible[1] === row[1] && cible[2] === row[2])));
 
     function applyOnConflict(first, second){
@@ -296,8 +296,8 @@ async function closeWithStatuses(service, repo, eventId, people, statuses){
     const jsFirst = CIBLES.map((row, i) => [row[0], row[1], `js-${i}`]);
     const casA = applyOnConflict(sqlFirst, jsFirst);
     const casB = applyOnConflict(jsFirst, sqlFirst);
-    assert.strictEqual(casA.length, 28);
-    assert.strictEqual(casB.length, 28);
+    assert.strictEqual(casA.length, 36);
+    assert.strictEqual(casB.length, 36);
     assert.deepStrictEqual(casA.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
     assert.deepStrictEqual(casB.map(r => `${r[0]}:${r[1]}`).sort(), CIBLES.map(r => `${r[0]}:${r[1]}`).sort());
     const sqlKeys = new Set(sqlCibles.map((row) => `${row[0]}:${row[1]}`));

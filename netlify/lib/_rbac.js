@@ -11,6 +11,7 @@ const ROLE_PERMISSIONS = Object.freeze({
     'dashboard:read',
     'events:create',
     'events:update',
+    'events:publish',
     'effectifs:manage',
     'personnel:read',
     'personnel:manage',
@@ -24,6 +25,7 @@ const ROLE_PERMISSIONS = Object.freeze({
     'dashboard:read',
     'events:create',
     'events:update',
+    'events:publish',
     'events:delete',
     'effectifs:manage',
     'personnel:read',
@@ -65,7 +67,7 @@ const ROLE_ALIASES = Object.freeze({
 
 const ROLE_PRIORITY = Object.freeze(['ADMINISTRATEUR', 'GESTIONNAIRE', 'UTILISATEUR']);
 const KNOWN_ROLES = Object.freeze(ROLE_PRIORITY.slice().reverse());
-const WRITE_PERMISSIONS = new Set(['events:create', 'events:update', 'data:import', 'effectifs:manage', 'personnel:manage', 'references:manage', 'settings:manage']);
+const WRITE_PERMISSIONS = new Set(['events:create', 'events:update', 'events:publish', 'data:import', 'effectifs:manage', 'personnel:manage', 'references:manage', 'settings:manage']);
 
 function roleKey(value){
   return String(value || '')
