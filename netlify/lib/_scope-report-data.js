@@ -576,6 +576,12 @@ function cycleTypeLabel(cycle){
 
 function cyclePilotageStateLabel(code){
   const value = String(code || '').toUpperCase();
+  if(value === 'SATISFAIT') return 'Satisfait';
+  if(value === 'SATISFAIT_PAR_RATTRAPAGE') return 'Satisfait par rattrapage';
+  if(value === 'EN_COURS') return 'En cours';
+  if(value === 'A_REALISER') return 'À réaliser';
+  if(value === 'RATTRAPAGE_REQUIS') return 'Rattrapage requis';
+  if(value === 'A_CONTROLER') return 'À contrôler';
   if(value === 'COMPLET') return 'Présent';
   if(value === 'INCOMPLET') return 'À traiter';
   if(value === 'DISPENSE') return 'Dispensé';
@@ -635,7 +641,7 @@ function cycleGraphs(detail){
   const sessions = (detail.evenements || []).map((event, index) => {
     const rows = ((detail.pilotage && detail.pilotage.individualRows) || []).filter((row) => (
       row.isPopulation
-      && String(row.globalState || '').toUpperCase() === 'COMPLET'
+      && ['SATISFAIT', 'SATISFAIT_PAR_RATTRAPAGE', 'COMPLET'].includes(String(row.consolidatedState || row.globalState || '').toUpperCase())
       && String(row.primaryEventId || '') === String(event.evenement_id || event.event_id || '')
     ));
     const tokens = ['primary', 'secondary', 'warning', 'neutral'];
@@ -663,7 +669,9 @@ function cycleGraphs(detail){
 
 function cyclePrimaryResultLabel(row){
   if(!row) return '—';
-  const state = String(row.globalState || '').toUpperCase();
+  const state = String(row.consolidatedState || row.globalState || '').toUpperCase();
+  if(state === 'SATISFAIT') return compactCycleResultLabel(row.primaryResultLabel) || 'Satisfait';
+  if(state === 'SATISFAIT_PAR_RATTRAPAGE') return compactCycleResultLabel(row.primaryResultLabel) || 'Satisfait par rattrapage';
   if(state === 'COMPLET') return compactCycleResultLabel(row.primaryResultLabel) || 'Présent';
   if(state === 'EXCUSE') return 'Statut reconnu';
   if(state === 'DISPENSE') return 'Statut reconnu';
@@ -674,7 +682,15 @@ function cyclePrimaryResultLabel(row){
 
 function cycleInformationLabel(row){
   if(!row) return '—';
-  const state = String(row.globalState || '').toUpperCase();
+  const state = String(row.consolidatedState || row.globalState || '').toUpperCase();
+  if(state === 'SATISFAIT') return '—';
+  if(state === 'SATISFAIT_PAR_RATTRAPAGE') return 'Provenance du rattrapage conservée';
+  if(state === 'RATTRAPAGE_REQUIS') return 'Obligation source non satisfaite';
+  if(state === 'A_CONTROLER') return 'Décision humaine à contrôler';
+  if(state === 'A_REALISER'){
+    const recorded = (row.obligations || []).find((cell) => ['EXCUSE', 'ABSENT'].includes(String(cell && cell.status || '').toUpperCase()));
+    if(recorded) return 'Statut renseigné · obligation à réaliser';
+  }
   if(state === 'COMPLET') return '—';
   if(state === 'ABSENT') return 'Statut renseigné';
   if(['EXCUSE', 'DISPENSE'].includes(state)){
@@ -695,7 +711,7 @@ function cycleReportRows(rows){
     prenom: row.prenom || '',
     nip: row.nip || '',
     roles: cycleRoleSummaryLabel(row.roles),
-    etat: cyclePilotageStateLabel(row.globalState),
+    etat: cyclePilotageStateLabel(row.consolidatedState || row.globalState),
     resultat: cyclePrimaryResultLabel(row),
     information: cycleInformationLabel(row)
   }));
@@ -1055,7 +1071,7 @@ async function collectReport(repo, query, options){
     const kpis = pilotage.kpis || {};
     const populationRows = (pilotage.individualRows || []).filter((row) => row && row.isPopulation);
     const encadrementRows = (pilotage.individualRows || []).filter((row) => row && row.isEncadrement);
-    const remainingRows = populationRows.filter((row) => String(row.globalState || '').toUpperCase() === 'INCOMPLET');
+    const remainingRows = populationRows.filter((row) => !['SATISFAIT', 'SATISFAIT_PAR_RATTRAPAGE', 'DISPENSE', 'NON_CONCERNE'].includes(String(row.consolidatedState || row.globalState || '').toUpperCase()));
     const eventCount = (detail.evenements || []).length;
     const realisedSessions = (detail.evenements || []).filter((row) => ['REALISE', 'CLOTUREE', 'CLOTURE'].includes(String(row.statut || row.status || '').toUpperCase())).length;
     const period = {

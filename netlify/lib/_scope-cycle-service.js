@@ -1,6 +1,7 @@
 const { HttpError, isoDate } = require('./_scope-rules');
 const { buildCyclePilotage, computeCycleMetrics, proposeCycleLink, resolveCycleCompletion } = require('./_scope-cycle-rules');
 const MultiSessionV2 = require('./_scope-multisession-v2');
+const { consolidatePilotage } = require('./_scope-obligation-consolidation');
 
 const DOMAINES_CYCLE = new Set(['PR', 'AUTO']);
 const STATUTS_CYCLE = new Set(['PLANIFIE', 'REALISE', 'REPORTE', 'ANNULE']);
@@ -249,9 +250,10 @@ function createScopeCycleService(repo){
 
   async function cyclePilotage(cycle, evenements, cyclePersonnes){
     const ids = (evenements || []).map((e) => e.evenement_id).filter(Boolean);
-    const [attendus, participations] = await Promise.all([
+    const [attendus, participations, permutations] = await Promise.all([
       repo.listAttendusForEvents && ids.length ? repo.listAttendusForEvents(ids) : [],
-      repo.listParticipationsForEvents && ids.length ? repo.listParticipationsForEvents(ids) : []
+      repo.listParticipationsForEvents && ids.length ? repo.listParticipationsForEvents(ids) : [],
+      repo.listPermutations && ids.length ? repo.listPermutations({ sourceEvenementIds: ids }) : []
     ]);
     const personnes = {};
     const hydrateIds = [
@@ -268,7 +270,8 @@ function createScopeCycleService(repo){
       }
       personnes[row.personne_id] = merged;
     }
-    return buildCyclePilotage({ cycle, evenements, cyclePersonnes, attendus, participations, personnes });
+    const pilotage = buildCyclePilotage({ cycle, evenements, cyclePersonnes, attendus, participations, personnes });
+    return consolidatePilotage(pilotage, { evenements, participations, permutations });
   }
 
   async function detail(cycleId){
@@ -321,15 +324,15 @@ function createScopeCycleService(repo){
 
   function multiSessionPilotageFromState(state, populationRows, participations, personnes){
     const sessions = state.sessions || [];
-    const obligations = sessions.map((event, index) => ({
-      obligationKey: eventId(event),
-      label: `Session ${index + 1}/${sessions.length}`,
+    const obligations = [{
+      obligationKey: `MULTISESSION_V2:${state.multisessionId}`,
+      label: state.label || state.multisession && state.multisession.label || 'Formation Multi-session',
       domaine: state.multisession && state.multisession.domain || '',
-      order: index + 1,
-      eventIds: [eventId(event)].filter(Boolean),
-      sessions: [event],
-      sessionLocked: ['REALISE', 'CLOTUREE', 'ANNULEE'].includes(String(event.statut || event.status || '').toUpperCase())
-    }));
+      order: 1,
+      eventIds: sessions.map(eventId).filter(Boolean),
+      sessions,
+      sessionLocked: sessions.length > 0 && sessions.every((event) => ['REALISE', 'CLOTUREE', 'ANNULEE'].includes(String(event.statut || event.status || '').toUpperCase()))
+    }];
     const peopleByKey = new Map();
     for(const row of populationRows || []){
       const id = row.personne_id || row.person_id || row.personneId;
@@ -367,7 +370,8 @@ function createScopeCycleService(repo){
       const roleSet = new Set(isPopulation ? ['PARTICIPANT'] : []);
       for(const role of supportByKey.get(key) || []) roleSet.add(role);
       const cells = obligations.map((obligation) => {
-        const p = (participations || []).find((row) => eventId(row) === obligation.obligationKey && personDedupeKey({ ...(personnes[row.personne_id] || {}), ...row }) === key) || null;
+        const obligationEventIds = new Set(obligation.eventIds || []);
+        const p = (participations || []).find((row) => obligationEventIds.has(eventId(row)) && personDedupeKey({ ...(personnes[row.personne_id] || {}), ...row }) === key) || null;
         const statut = String(p && p.statut || '').toUpperCase();
         let status = 'NON_CONCERNE';
         if(isPopulation){
@@ -481,7 +485,11 @@ function createScopeCycleService(repo){
       source_type: 'CONFIGURATION',
       metadata: { engine: MultiSessionV2.ENGINE.MULTI_SESSION_V2, multisessionId }
     };
-    const pilotage = multiSessionPilotageFromState(state, populationRows, participations, personnes);
+    const rawPilotage = multiSessionPilotageFromState(state, populationRows, participations, personnes);
+    const permutations = repo.listPermutations && eventIds.length
+      ? await repo.listPermutations({ sourceEvenementIds: eventIds })
+      : [];
+    const pilotage = consolidatePilotage(rawPilotage, { evenements: sessions, participations, permutations });
     const metrics = {
       populationDistincte: state.statistics.population,
       participantsReconnusDistincts: state.statistics.presents,
@@ -532,9 +540,10 @@ function createScopeCycleService(repo){
   async function derivedCycleMetrics(cycle, evenements){
     const scopedEvents = (evenements || []).map((event) => ({ ...event, cycle_id: cycle.cycle_id }));
     const ids = evenements.map(eventId).filter(Boolean);
-    const [attendus, participations] = await Promise.all([
+    const [attendus, participations, permutations] = await Promise.all([
       repo.listAttendusForEvents && ids.length ? repo.listAttendusForEvents(ids) : [],
-      repo.listParticipationsForEvents && ids.length ? repo.listParticipationsForEvents(ids) : []
+      repo.listParticipationsForEvents && ids.length ? repo.listParticipationsForEvents(ids) : [],
+      repo.listPermutations && ids.length ? repo.listPermutations({ sourceEvenementIds: ids }) : []
     ]);
     const personneIds = [
       ...attendus.map((row) => row.personne_id || row.personneId),
@@ -558,7 +567,8 @@ function createScopeCycleService(repo){
       });
     }
     const metrics = computeCycleMetrics({ cycle, evenements: scopedEvents, cyclePersonnes, participations, personnes });
-    const pilotage = buildCyclePilotage({ cycle, evenements: scopedEvents, cyclePersonnes, attendus, participations, personnes });
+    const rawPilotage = buildCyclePilotage({ cycle, evenements: scopedEvents, cyclePersonnes, attendus, participations, personnes });
+    const pilotage = consolidatePilotage(rawPilotage, { evenements: scopedEvents, participations, permutations });
     return { metrics, personnes: cyclePersonnes, pilotage };
   }
 

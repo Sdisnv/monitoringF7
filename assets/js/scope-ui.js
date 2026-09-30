@@ -3492,6 +3492,12 @@
 
   function cyclePilotageStateLabel(statut) {
     const code = String(statut || '').toUpperCase();
+    if (code === 'SATISFAIT') return 'Satisfait';
+    if (code === 'SATISFAIT_PAR_RATTRAPAGE') return 'Satisfait par rattrapage';
+    if (code === 'EN_COURS') return 'En cours';
+    if (code === 'A_REALISER') return 'À réaliser';
+    if (code === 'RATTRAPAGE_REQUIS') return 'Rattrapage requis';
+    if (code === 'A_CONTROLER') return 'À contrôler';
     if (code === 'COMPLET') return 'Présent';
     if (code === 'INCOMPLET') return 'À renseigner';
     if (code === 'DISPENSE') return 'Dispensé';
@@ -3526,20 +3532,31 @@
 
   function cyclePrimaryResult(row) {
     if (!row) return '—';
-    const state = String(row.globalState || '').toUpperCase();
+    const state = String(row.consolidatedState || row.globalState || '').toUpperCase();
+    if (state === 'SATISFAIT') return row.primaryResultLabel || 'Participation validée';
+    if (state === 'SATISFAIT_PAR_RATTRAPAGE') return row.primaryResultLabel || 'Rattrapage validé';
+    if (state === 'RATTRAPAGE_REQUIS') return row.primaryResultLabel || 'Rattrapage à réaliser';
     if (state === 'COMPLET') return row.primaryResultLabel || 'Participation validée';
     if (state === 'EXCUSE') return 'Statut reconnu';
     if (state === 'DISPENSE') return 'Statut reconnu';
     if (state === 'ABSENT') return row.primaryResultLabel || 'Statut renseigné';
     if (row.primaryResultLabel) return row.primaryResultLabel;
-    const active = (row.obligations || []).filter((cell) => cell && cell.status && cell.status !== 'NON_CONCERNE');
-    if (!active.length) return cyclePilotageStateLabel(row.globalState);
-    return active.map((cell) => [cell.label, cyclePilotageStateLabel(cell.status)].filter(Boolean).join(' · ')).join(' | ');
+    const active = (row.obligations || []).filter((cell) => cell && (cell.consolidatedState || cell.status) && (cell.consolidatedState || cell.status) !== 'NON_CONCERNE');
+    if (!active.length) return cyclePilotageStateLabel(row.consolidatedState || row.globalState);
+    return active.map((cell) => [cell.label, cyclePilotageStateLabel(cell.consolidatedState || cell.status)].filter(Boolean).join(' · ')).join(' | ');
   }
 
   function cycleInformation(row) {
     if (!row) return '—';
-    const state = String(row.globalState || '').toUpperCase();
+    const state = String(row.consolidatedState || row.globalState || '').toUpperCase();
+    if (state === 'SATISFAIT') return 'Participation validée';
+    if (state === 'SATISFAIT_PAR_RATTRAPAGE') return 'Provenance du rattrapage conservée';
+    if (state === 'RATTRAPAGE_REQUIS') return 'Obligation source non satisfaite';
+    if (state === 'A_CONTROLER') return 'Décision humaine à contrôler';
+    if (state === 'A_REALISER') {
+      const recorded = (row.obligations || []).find((cell) => ['EXCUSE', 'ABSENT'].includes(String(cell && cell.status || '').toUpperCase()));
+      if (recorded) return 'Statut renseigné · obligation à réaliser';
+    }
     if (state === 'COMPLET') return 'Participation validée';
     if (state === 'ABSENT') return 'Statut renseigné';
     if (['EXCUSE', 'DISPENSE'].includes(state)) {
@@ -3727,7 +3744,7 @@
       return `<tr>
         <td data-label="Personne">${escapeHtml(name)}<small>${escapeHtml(row.nip || 'NIP non renseigné')}</small></td>
         <td data-label="Rôles">${escapeHtml((row.roles || []).map(cycleRoleLabel).join(', ') || '—')}</td>
-        <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.globalState))}</td>
+        <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.consolidatedState || row.globalState))}</td>
         ${cells}
       </tr>`;
     }).join('') : `<tr><td colspan="${escapeHtml(String(3 + obligations.length))}"><div class="scope-empty">Aucune matrice individuelle disponible pour ce cycle.</div></td></tr>`;
@@ -3738,7 +3755,7 @@
       { key: 'grade', type: 'number', value: (row) => gradeRank(row && row.grade), tieBreakers: [{ key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') }] },
       { key: 'personne', type: 'text', value: (row) => [row && row.nom, row && row.prenom].filter(Boolean).join(' ') },
       { key: 'role', type: 'text', value: (row) => (row && row.roles || []).map(cycleRoleLabel).join(', ') },
-      { key: 'etat', type: 'status', value: (row) => row && row.globalState },
+      { key: 'etat', type: 'status', value: (row) => row && (row.consolidatedState || row.globalState) },
       { key: 'resultat', type: 'text', value: cyclePrimaryResult }
     ];
     const sortedPopulationRows = L.sortRows ? L.sortRows(populationRows, state.cycleMatrixSort, matrixCols) : populationRows;
@@ -3747,9 +3764,9 @@
     const populationHtml = sortedPopulationRows.length ? sortedPopulationRows.map((row) => `<tr>
       <td data-label="Personne">${personCell(row)}</td>
       <td data-label="Rôle">${escapeHtml((row.roles || []).map(cycleRoleLabel).join(', ') || 'Participant')}</td>
-      <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.globalState))}</td>
+      <td data-label="État">${escapeHtml(cyclePilotageStateLabel(row.consolidatedState || row.globalState))}</td>
       <td data-label="Résultat">${escapeHtml(cyclePrimaryResult(row))}</td>
-      <td data-label="Information">${(row.primaryEventId && String(row.globalState || '').toUpperCase() === 'INCOMPLET') ? `<a href="#/exercices/${escapeHtml(row.primaryEventId)}">Ouvrir la session</a>` : escapeHtml(cycleInformation(row))}</td>
+      <td data-label="Information">${(row.primaryEventId && ['INCOMPLET', 'A_REALISER', 'EN_COURS', 'RATTRAPAGE_REQUIS'].includes(String(row.consolidatedState || row.globalState || '').toUpperCase())) ? `<a href="#/exercices/${escapeHtml(row.primaryEventId)}">Ouvrir la session</a>` : escapeHtml(cycleInformation(row))}</td>
     </tr>`).join('') : '<tr><td colspan="5"><div class="scope-empty">Aucune personne concernée par ce cycle.</div></td></tr>';
     const encadrementHtml = sortedEncadrementRows.length ? sortedEncadrementRows.map((row) => `<tr>
       <td data-label="Personne">${personCell(row)}</td>

@@ -7,6 +7,8 @@
   "scripts": {
     "check": "./scripts/check-local.sh",
     "scope:preflight": "node scripts/assert-scope-netlify-target.js",
+    "test:scope-pilotage-consolidation-1": "node scripts/scope-pilotage-consolidation-1-tests.js",
+    "diagnostic:scope-pilotage-consolidation-1": "node scripts/scope-pilotage-consolidation-1-diagnostic.js",
     "test:scope-assignments-constraints-1": "node scripts/scope-assignments-constraints-1-tests.js",
     "test:scope-canonical-foundations-c1": "node scripts/scope-canonical-foundations-c1-tests.js",
     "test:scope-public-engine-c2-b": "node scripts/scope-public-engine-c2-b-tests.js && node scripts/scope-public-engine-c2-b-real-parity-tests.js",
