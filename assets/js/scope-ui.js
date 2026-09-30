@@ -7507,6 +7507,44 @@
     </div>`;
   }
 
+  function assignmentConstraintTone(level) {
+    if (level === 'BLOQUANT') return 'block';
+    if (level === 'ATTENTION') return 'attention';
+    if (level === 'INFORMATION') return 'info';
+    return 'positive';
+  }
+
+  function assignmentConstraintLabel(issue, constraints) {
+    const identities = constraints && constraints.identities || {};
+    const people = (issue.personIds || []).map((id) => {
+      const person = identities[id] || {};
+      const name = [person.prenom, person.nom].filter(Boolean).join(' ');
+      return [name, person.nip].filter(Boolean).join(' - ') || id;
+    });
+    const event = [issue.conflictingEventLabel, issue.date].filter(Boolean).join(' - ');
+    if (issue.code === 'PERSONNE_TEMPOREL') return `${people.join(', ')} déjà attendu${people.length > 1 ? 's' : ''} sur ${event || 'un autre événement'}`;
+    if (issue.code === 'ENCADREMENT_TEMPOREL') return `${people.join(', ')} mobilisé${people.length > 1 ? 's' : ''} en encadrement sur ${event || 'un autre événement'}`;
+    if (issue.code === 'SALLE_EXCLUSIVE') return `Salle déjà utilisée par ${event || 'un autre événement'}`;
+    if (issue.code === 'RESSOURCE_EXCLUSIVE') return `Ressource ${issue.resourceCodes.join(', ')} déjà utilisée par ${event || 'un autre événement'}`;
+    if (issue.code === 'OI_SIMULTANE') return `OI ${issue.oiCodes.join(', ')} également engagé sur ${event || 'un autre événement'} - contrôle requis`;
+    if (issue.code === 'ORDRE_SESSIONS') return `Ordre des sessions incompatible avec ${event || 'un autre événement'}`;
+    return event || 'Contrainte opérationnelle à contrôler';
+  }
+
+  function renderAssignmentConstraints(constraints) {
+    if (!constraints) return '';
+    const issues = constraints.issues || [];
+    const status = constraints.status || 'COMPATIBLE';
+    const heading = status === 'BLOQUANT' ? 'Conflit bloquant' : (status === 'ATTENTION' ? 'Contrôle requis' : 'Aucun conflit détecté');
+    return `<section class="scope-fiche-section" aria-label="Contraintes d’affectation">
+      <h3 class="scope-section-sub">Contraintes d’affectation</h3>
+      <ul class="scope-state-legend">
+        <li><span class="scope-state"><span class="scope-state-swatch is-${assignmentConstraintTone(status)}" aria-hidden="true"></span><span class="scope-state-label">${escapeHtml(heading)}</span></span></li>
+        ${issues.map((issue) => `<li><span class="scope-state"><span class="scope-state-swatch is-${assignmentConstraintTone(issue.level)}" aria-hidden="true"></span><span class="scope-state-label">${escapeHtml(issue.level)}</span></span><span>${escapeHtml(assignmentConstraintLabel(issue, constraints))}</span></li>`).join('')}
+      </ul>
+    </section>`;
+  }
+
   function renderPreviewList() {
     const allPeople = (state.preview.personnes || []);
     const extras = state.pendingExceptions || [];
@@ -7536,6 +7574,7 @@
         ${previewTableHtml(jeunes)}
         ${extras.length ? `<h3 class="scope-section-sub">Ajouts manuels · ${extras.length}</h3>
         ${previewTableHtml(extras)}` : ''}` : previewTableHtml(rows)}
+        ${renderAssignmentConstraints(state.preview.constraints)}
         <p class="scope-fiche-tech-note">Les personnes décochées restent visibles. Seules les personnes sélectionnées seront assignées à l’événement.</p>
       </section>
     `;
@@ -7590,6 +7629,7 @@
           ${isV2 ? `<button type="button" class="scope-btn scope-btn-primary scope-btn-compact" id="cloturer-multisession" ${saveBusy || closeBusy || !v2CanFinalize ? 'disabled' : ''} ${v2CanFinalize ? '' : 'title="Disponible lorsque toutes les sessions sont clôturées"'}>Clôturer le Multi-session</button>` : ''}
         </div>
         ${saveState ? `<p class="scope-save-state" role="status">${escapeHtml(saveState)}</p>` : ''}
+        ${renderAssignmentConstraints(fiche.constraints)}
         ${renderEncadrementBlock()}
         <section class="scope-presence-section" id="scope-saisie-presences">
           <div class="scope-section-header">

@@ -65,6 +65,7 @@ const MultiSessionV2 = require('./_scope-multisession-v2');
 const statcomReferential = require('./_scope-statcom-referential');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
+const { evaluateAssignmentConstraints, intervalForEvent, overlap } = require('./_scope-assignment-constraints');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -3014,6 +3015,91 @@ function createScopeService(repo){
     return display.classifyJspRole(person, affs, date);
   }
 
+  async function assignmentConstraints(eventId, options = {}){
+    const evenement = options.evenement || await repo.getEvent(eventId);
+    if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+    throwIfEventHidden(evenement);
+    const year = String(evenement.date || '').slice(0, 4);
+    const events = repo.listEvenements ? await repo.listEvenements({ annee: year }) : [evenement];
+    const eventIds = events.map((row) => row.evenement_id).filter(Boolean);
+    const [attendus, participations, relations, eventCibles] = await Promise.all([
+      repo.listAttendusForEvents && eventIds.length ? repo.listAttendusForEvents(eventIds) : [],
+      repo.listParticipationsForEvents && eventIds.length ? repo.listParticipationsForEvents(eventIds) : [],
+      repo.listEventConstraintRelations && eventIds.length ? repo.listEventConstraintRelations(eventIds) : [],
+      repo.listEventCiblesForEvents && eventIds.length ? repo.listEventCiblesForEvents(eventIds) : []
+    ]);
+    let candidatePersonIds = normalizeIdList(options.candidatePersonIds || options.personneIds);
+    const activeAttendusByEvent = new Map();
+    for(const row of attendus){
+      if(row.inclus === false) continue;
+      const id = String(row.evenement_id);
+      if(!activeAttendusByEvent.has(id)) activeAttendusByEvent.set(id, []);
+      activeAttendusByEvent.get(id).push(String(row.personne_id));
+    }
+    const ciblesByEvent = new Map();
+    for(const row of eventCibles){
+      const id = String(row.evenement_id);
+      if(!ciblesByEvent.has(id)) ciblesByEvent.set(id, []);
+      ciblesByEvent.get(id).push(row.cible_id);
+    }
+    const currentInterval = intervalForEvent(evenement);
+    const previewStore = previewPopulationStore();
+    if(!candidatePersonIds.length && !activeAttendusByEvent.has(String(eventId))
+      && !evenement.population_figee && !isQuantitatif(evenement) && evenement.origine !== 'LEGACY_AGGREGATED'){
+      const currentCibleIds = ciblesByEvent.get(String(eventId)) || [];
+      if(currentCibleIds.length){
+        const currentPopulation = await resolveEligiblePopulation({
+          eventDate: evenement.date,
+          domaineCode: evenement.domaine_code,
+          sousDomaineCode: evenement.sous_domaine_code,
+          cibleIds: currentCibleIds,
+          store: previewStore
+        });
+        candidatePersonIds = currentPopulation.personnes.map((row) => row.personneId || row.personne_id);
+      }
+    }
+    const candidatePersonIdsByEvent = { [String(eventId)]: candidatePersonIds };
+    for(const other of events){
+      const otherId = String(other.evenement_id || '');
+      if(!otherId || otherId === String(eventId) || activeAttendusByEvent.has(otherId)) continue;
+      if(isCancelledEvenement(other) || isQuantitatif(other) || other.origine === 'LEGACY_AGGREGATED') continue;
+      if(!overlap(currentInterval, intervalForEvent(other)).overlaps) continue;
+      const cibleIds = ciblesByEvent.get(otherId) || [];
+      if(!cibleIds.length) continue;
+      const population = await resolveEligiblePopulation({
+        eventDate: other.date,
+        domaineCode: other.domaine_code,
+        sousDomaineCode: other.sous_domaine_code,
+        cibleIds,
+        store: previewStore
+      });
+      candidatePersonIdsByEvent[otherId] = population.personnes.map((row) => row.personneId || row.personne_id);
+    }
+    const result = evaluateAssignmentConstraints({
+      currentEvent: evenement,
+      events,
+      attendus,
+      participations,
+      relations,
+      candidatePersonIds,
+      candidatePersonIdsByEvent
+    });
+    const conflictPersonIds = normalizeIdList(result.issues.flatMap((row) => row.personIds || []));
+    const identities = {};
+    for(const personneId of conflictPersonIds){
+      const personne = repo.getPersonne ? await repo.getPersonne(personneId) : null;
+      if(personne){
+        identities[personneId] = {
+          personneId,
+          nip: personne.nip || null,
+          nom: personne.nom || null,
+          prenom: personne.prenom || null
+        };
+      }
+    }
+    return { ...result, identities };
+  }
+
   async function previewAttendus(eventId){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
@@ -3029,7 +3115,11 @@ function createScopeService(repo){
     }
     if(evenement.population_figee){
       const frozen = await photographieFigee(eventId);
-      return decorateJspEventPopulations(evenement, frozen);
+      const decorated = await decorateJspEventPopulations(evenement, frozen);
+      return { ...decorated, constraints: await assignmentConstraints(eventId, {
+        evenement,
+        candidatePersonIds: decorated.personnes.map((row) => row.personneId || row.personne_id)
+      }) };
     }
     const cibleIds = await repo.listEventCibleIds(eventId);
     const preview = await resolveEligiblePopulation({
@@ -3038,7 +3128,11 @@ function createScopeService(repo){
       sousDomaineCode: evenement.sous_domaine_code,
       cibleIds
     });
-    return decorateJspEventPopulations(evenement, preview);
+    const decorated = await decorateJspEventPopulations(evenement, preview);
+    return { ...decorated, constraints: await assignmentConstraints(eventId, {
+      evenement,
+      candidatePersonIds: decorated.personnes.map((row) => row.personneId || row.personne_id)
+    }) };
   }
 
   async function listPeriodes(personneId){
@@ -5273,6 +5367,15 @@ function createScopeService(repo){
       : businessEtatForEvenement(evenement, { participations, attendus: attendusActifs, saisie, today: null }));
     const formationConfiguration = formationConfigurationFromContext(evenement, trainingContext, v2State);
     const temporal = eventTemporalPayload(evenement);
+    const constraints = modeSuivi === MODES.NOMINATIF && !isCancelledEvenement(evenement)
+      ? await assignmentConstraints(eventId, {
+        evenement,
+        candidatePersonIds: [
+          ...attendusActifs.map((row) => row.personne_id),
+          ...encadrement.map((row) => row.personne_id)
+        ]
+      })
+      : { status: 'COMPATIBLE', summary: { BLOQUANT: 0, ATTENTION: 0, INFORMATION: 0 }, issues: [], evaluatedPersonIds: [], identities: {}, readOnly: true };
     return {
       evenement: { ...evenement, mode_suivi: modeSuivi, temporal },
       exercice: exerciceInfo,
@@ -5309,6 +5412,7 @@ function createScopeService(repo){
       creationDlLocks,
       creation_dl_locks: creationDlLocks,
       populationCoherence: expectedPopulationCoherence(coherenceAttendus, participations),
+      constraints,
       participationPolicy: policyPayload(eventPolicy, await participationMotifRows(repo)),
       version: evenement.version
     };
@@ -6522,6 +6626,7 @@ function createScopeService(repo){
     patchEvenement,
     previewModifierEvenement,
     previewAttendus,
+    assignmentConstraints,
     resolveEligiblePopulation,
     figerPopulation,
     ajouterException,

@@ -478,6 +478,7 @@ function createMemoryRepo(){
       const item = {
         evenement_id: row.evenement_id || randomUUID(),
         date: isoDate(row.date),
+        date_fin: isoDate(row.date_fin || row.dateFin) || isoDate(row.date),
         domaine_code: row.domaine_code,
         sous_domaine_code: row.sous_domaine_code || null,
         libelle: String(row.libelle).trim(),
@@ -497,6 +498,10 @@ function createMemoryRepo(){
         heure_fin_reelle: row.heure_fin_reelle || row.heureFinReelle || row.heure_fin_prevue || row.heureFinPrevue || row.heure_fin || row.heureFin || null,
         duree_reelle_minutes: row.duree_reelle_minutes == null ? (row.dureeReelleMinutes == null ? null : Number(row.dureeReelleMinutes)) : Number(row.duree_reelle_minutes),
         salle: row.salle || null,
+        salle_theorie_id: row.salle_theorie_id || row.salleTheorieId || null,
+        lieu_id: row.lieu_id || row.lieuId || null,
+        oi_codes: [...(row.oi_codes || row.oiCodes || [])],
+        resource_codes: [...(row.resource_codes || row.resourceCodes || [])],
         responsable: row.responsable || null,
         cycle_id: row.cycle_id || row.cycleId || null,
         exercice_id: row.exercice_id || row.exerciceId || null,
@@ -551,6 +556,22 @@ function createMemoryRepo(){
     },
     async getEventForUpdate(id){ return api.getEvent(id); },
     async listEventCibleIds(id){ return evenementCibles.get(id) || []; },
+    async listEventConstraintRelations(ids){
+      const selected = new Set((ids || []).map(String));
+      return [...evenements.values()]
+        .filter((row) => selected.has(String(row.evenement_id)))
+        .map((row) => {
+          const v2 = [...multisessionV2Sessions.values()].find((item) => String(item.event_id) === String(row.evenement_id));
+          return {
+            evenement_id: row.evenement_id,
+            oi_codes: [...(row.oi_codes || [])],
+            resource_codes: [...(row.resource_codes || [])],
+            room_id: row.salle_theorie_id || null,
+            session_group_id: v2?.multisession_id || row.exercice_id || row.pr_exercise_group_key || null,
+            session_index: v2?.sequence || row.session_index || null
+          };
+        });
+    },
     async setEventCibles(id, cibleIds){ evenementCibles.set(id, [...cibleIds]); },
     async updateEventIfVersion(id, baseVersion, patch){
       const item = evenements.get(id);

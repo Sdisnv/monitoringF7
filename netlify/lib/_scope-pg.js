@@ -31,6 +31,7 @@ function mapEvent(row){
   return {
     evenement_id: row.evenement_id,
     date: dateOnly(row.date),
+    date_fin: dateOnly(row.date_fin || row.date),
     domaine_code: row.domaine_code,
     sous_domaine_code: row.sous_domaine_code || null,
     libelle: row.libelle,
@@ -61,6 +62,8 @@ function mapEvent(row){
     hidden_at: row.hidden_at || null,
     hidden_par: row.hidden_par || null,
     salle: row.salle || null,
+    salle_theorie_id: row.salle_theorie_id || null,
+    lieu_id: row.lieu_id || null,
     responsable: row.responsable || null,
     cycle_id: row.cycle_id || null,
     exercice_id: exerciceId,
@@ -884,6 +887,26 @@ function createPgRepo(client){
     async listEventCibleIds(id){
       const result = await q('select cible_id from scope_evenement_cibles where evenement_id = $1', [id]);
       return result.rows.map(r => r.cible_id);
+    },
+    async listEventConstraintRelations(ids){
+      if(!ids || !ids.length) return [];
+      const result = await q(
+        `select e.evenement_id,
+          coalesce((select array_agg(o.code order by o.code)
+            from scope_evenement_ois eo join scope_ois o on o.oi_id=eo.oi_id
+            where eo.evenement_id=e.evenement_id), '{}'::text[]) as oi_codes,
+          coalesce((select array_agg(r.ressource_code order by r.ressource_code)
+            from scope_evenement_ressources_qv r where r.evenement_id=e.evenement_id), '{}'::text[]) as resource_codes,
+          e.salle_theorie_id::text as room_id,
+          coalesce(qs.session_group_id, ms.multisession_id::text, e.exercice_id::text, e.pr_exercise_group_key) as session_group_id,
+          coalesce(qs.session_index, ms.sequence, e.session_index) as session_index
+         from scope_evenements e
+         left join scope_qv_session_events qs on qs.evenement_id=e.evenement_id
+         left join scope_multisession_v2_sessions ms on ms.event_id=e.evenement_id
+         where e.evenement_id=any($1::uuid[])`,
+        [ids]
+      );
+      return result.rows;
     },
     async listEventCiblesForEvents(ids){
       if(!ids || !ids.length) return [];

@@ -175,6 +175,7 @@
       patchEvenement(id, body, baseVersion) { return request('PATCH', `/evenements/${encodeURIComponent(id)}`, withBaseVersion(body, baseVersion)); },
       previewModifierEvenement(id, body) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-modifier`, body || {}); },
       previewAttendus(id) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-attendus`, {}); },
+      assignmentConstraints(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/contraintes`); },
       figer(id, bodyOrBaseVersion, maybeBaseVersion) {
         const body = (bodyOrBaseVersion && typeof bodyOrBaseVersion === 'object') ? bodyOrBaseVersion : {};
         const baseVersion = (bodyOrBaseVersion && typeof bodyOrBaseVersion === 'object') ? maybeBaseVersion : bodyOrBaseVersion;

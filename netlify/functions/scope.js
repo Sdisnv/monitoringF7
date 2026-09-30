@@ -430,6 +430,10 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.previewAttendus(params.id)) });
     }
+    params = match(path, '/evenements/:id/contraintes');
+    if(method === 'GET' && params){
+      return response(200, { ok:true, constraints: await service.assignmentConstraints(params.id) });
+    }
     params = match(path, '/evenements/:id/figer');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await service.figerPopulation(params.id, body, claims)) });
