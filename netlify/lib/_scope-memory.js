@@ -388,6 +388,11 @@ function createMemoryRepo(){
       return item;
     },
     async getPersonne(id){ return personnes.get(id) || null; },
+    async getPersonnesByIds(ids){
+      return [...new Set((ids || []).map(String).filter(Boolean))]
+        .map((id) => personnes.get(id))
+        .filter(Boolean);
+    },
     async getPersonneByNip(nip){
       return [...personnes.values()].find((p) => p.nip === String(nip)) || null;
     },

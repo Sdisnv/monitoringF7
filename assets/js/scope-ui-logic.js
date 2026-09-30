@@ -2911,6 +2911,87 @@
     };
   }
 
+  const CYCLE_CONSOLIDATED_STATES = Object.freeze([
+    'SATISFAIT',
+    'SATISFAIT_PAR_RATTRAPAGE',
+    'EN_COURS',
+    'A_REALISER',
+    'RATTRAPAGE_REQUIS',
+    'DISPENSE',
+    'NON_CONCERNE',
+    'A_CONTROLER'
+  ]);
+
+  function cycleConsolidatedState(row, obligationKey) {
+    if (!row) return 'NON_CONCERNE';
+    if (obligationKey && obligationKey !== 'tous') {
+      const cell = (row.obligations || []).find((item) => item && item.obligationKey === obligationKey);
+      return String(cell && cell.consolidatedState || 'NON_CONCERNE').toUpperCase();
+    }
+    return String(row.consolidatedState || row.globalState || 'NON_CONCERNE').toUpperCase();
+  }
+
+  function filterCyclePilotageRows(rows, filters) {
+    const opts = filters || {};
+    const query = cleanSortText(opts.query || '').toUpperCase();
+    const stateFilter = String(opts.state || 'tous').toUpperCase();
+    const obligationKey = String(opts.obligation || 'tous');
+    return (rows || []).filter((row) => {
+      if (!row || !row.isPopulation) return false;
+      const cells = row.obligations || [];
+      if (obligationKey !== 'tous' && !cells.some((cell) => cell && cell.expected && cell.obligationKey === obligationKey)) return false;
+      const consolidatedState = cycleConsolidatedState(row, obligationKey);
+      if (stateFilter !== 'TOUS' && consolidatedState !== stateFilter) return false;
+      if (!query) return true;
+      const obligationLabels = cells.filter((cell) => cell && cell.expected).map((cell) => cell.label).join(' ');
+      const haystack = cleanSortText([row.grade, row.nom, row.prenom, row.nip, obligationLabels].filter(Boolean).join(' ')).toUpperCase();
+      return haystack.includes(query);
+    });
+  }
+
+  function cyclePilotageSummary(rows, obligationKey) {
+    const selectedKey = String(obligationKey || 'tous');
+    const populationRows = (rows || []).filter((row) => row && row.isPopulation);
+    const cells = populationRows.flatMap((row) => (row.obligations || []).filter((cell) => (
+      cell && cell.expected && (selectedKey === 'tous' || cell.obligationKey === selectedKey)
+    )));
+    const count = (state) => cells.filter((cell) => String(cell.consolidatedState || '').toUpperCase() === state).length;
+    const nonConcerne = count('NON_CONCERNE');
+    const dispenses = count('DISPENSE');
+    const satisfies = count('SATISFAIT');
+    const satisfiedByCatchup = count('SATISFAIT_PAR_RATTRAPAGE');
+    const denominator = Math.max(0, cells.length - nonConcerne - dispenses);
+    const personKeys = new Set(populationRows.filter((row) => (
+      (row.obligations || []).some((cell) => cell && cell.expected && (selectedKey === 'tous' || cell.obligationKey === selectedKey) && cell.consolidatedState !== 'NON_CONCERNE')
+    )).map((row) => row.personKey || row.personneId || row.nip).filter(Boolean));
+    return {
+      personnes: personKeys.size,
+      obligations: cells.length - nonConcerne,
+      satisfaites: satisfies,
+      satisfaitesParRattrapage: satisfiedByCatchup,
+      enCours: count('EN_COURS'),
+      aRealiser: count('A_REALISER'),
+      rattrapageRequis: count('RATTRAPAGE_REQUIS'),
+      dispenses,
+      nonConcernes: nonConcerne,
+      aControler: count('A_CONTROLER'),
+      denominator,
+      satisfactionPct: denominator ? Math.round((1000 * (satisfies + satisfiedByCatchup)) / denominator) / 10 : null
+    };
+  }
+
+  function cycleObligationSummaries(rows, obligations) {
+    return (obligations || []).map((obligation) => {
+      const scopedRows = (rows || []).filter((row) => (row.obligations || []).some((cell) => cell && cell.expected && cell.obligationKey === obligation.obligationKey));
+      return Object.assign({
+        obligationKey: obligation.obligationKey,
+        label: obligation.label,
+        eventIds: obligation.eventIds || [],
+        sessions: obligation.sessions || []
+      }, cyclePilotageSummary(scopedRows, obligation.obligationKey));
+    });
+  }
+
   function isQualificationEvenement(row) {
     const origine = String((row && (row.origine || row.origine_code)) || '').toUpperCase();
     const mode = String((row && (row.mode_suivi || row.modeSuivi)) || '').toUpperCase();
@@ -3276,6 +3357,11 @@
     visibleStatComRows,
     statComSortLabel,
     nextSort,
+    CYCLE_CONSOLIDATED_STATES,
+    cycleConsolidatedState,
+    filterCyclePilotageRows,
+    cyclePilotageSummary,
+    cycleObligationSummaries,
     ANNUAL_STATUS_LABELS,
     ANNUAL_ENUM_LABELS,
     annualStatusLabel,

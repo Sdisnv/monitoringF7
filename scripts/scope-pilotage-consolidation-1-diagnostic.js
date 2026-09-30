@@ -20,6 +20,7 @@ async function grouped(client, sql, key){
 }
 
 async function main(){
+  const diagnosticStartedAt = Date.now();
   const connectionString = databaseUrl();
   if(!connectionString) throw new Error('SCOPE_DATABASE_URL absent.');
   const client = new Client({
@@ -33,8 +34,10 @@ async function main(){
     await client.query('begin read only');
     const transactionReadOnly = (await client.query('show transaction_read_only')).rows[0].transaction_read_only;
     let queryQueue = Promise.resolve();
+    let repoQueryCount = 0;
     const serialClient = {
       query(...args){
+        repoQueryCount += 1;
         const run = queryQueue.then(() => client.query(...args));
         queryQueue = run.catch(() => undefined);
         return run;
@@ -43,11 +46,19 @@ async function main(){
     const repo = createPgRepo(serialClient);
     const cycles = createScopeCycleService(repo);
     const cycleDetails = [];
+    const listDurations = [];
+    const detailDurations = [];
     for(const year of [2026, 2027]){
+      const queriesBeforeList = repoQueryCount;
+      const listStartedAt = Date.now();
       const list = await cycles.listCycles({ annee: year });
+      listDurations.push({ year, durationMs: Date.now() - listStartedAt, cycles: (list.cycles || []).length, repoQueries: repoQueryCount - queriesBeforeList });
       for(const cycle of list.cycles || []){
         if(cycleDetails.some((item) => item.cycle.cycle_id === cycle.cycle_id)) continue;
+        const queriesBeforeDetail = repoQueryCount;
+        const detailStartedAt = Date.now();
         cycleDetails.push(await cycles.getCycle(cycle.cycle_id));
+        detailDurations.push({ cycleId: cycle.cycle_id, durationMs: Date.now() - detailStartedAt, repoQueries: repoQueryCount - queriesBeforeDetail });
       }
     }
     const scopedRows = cycleDetails.flatMap((detail) => (detail.pilotage && detail.pilotage.individualRows || [])
@@ -95,6 +106,16 @@ async function main(){
             provenance: cell.provenance
           }))
         }))
+      },
+      performance: {
+        diagnosticElapsedMs: Date.now() - diagnosticStartedAt,
+        repoQueryCount,
+        listCycles: listDurations,
+        detailCalls: detailDurations.length,
+        detailAverageMs: detailDurations.length ? Math.round(detailDurations.reduce((sum, item) => sum + item.durationMs, 0) / detailDurations.length) : 0,
+        detailMaxMs: detailDurations.length ? Math.max(...detailDurations.map((item) => item.durationMs)) : 0,
+        detailAverageRepoQueries: detailDurations.length ? Math.round((10 * detailDurations.reduce((sum, item) => sum + item.repoQueries, 0)) / detailDurations.length) / 10 : 0,
+        detailMaxRepoQueries: detailDurations.length ? Math.max(...detailDurations.map((item) => item.repoQueries)) : 0
       }
     };
     console.log(JSON.stringify(report, null, 2));

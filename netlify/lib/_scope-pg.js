@@ -621,6 +621,12 @@ function createPgRepo(client){
       const result = await q(`select ${PERSONNE_SELECT} from scope_personnes where id = $1`, [id]);
       return mapPersonneDates(result.rows[0] || null);
     },
+    async getPersonnesByIds(ids){
+      const uniqueIds = [...new Set((ids || []).map(String).filter(Boolean))];
+      if(!uniqueIds.length) return [];
+      const result = await q(`select ${PERSONNE_SELECT} from scope_personnes where id = any($1::text[])`, [uniqueIds]);
+      return result.rows.map(mapPersonneDates);
+    },
     async listPersonnes({ q: search } = {}){
       if(!search){
         const result = await q(`select ${PERSONNE_SELECT} from scope_personnes order by nom, prenom`);

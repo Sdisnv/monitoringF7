@@ -6916,6 +6916,128 @@ a.qv-mini-day.has-activity:focus-visible span {
   margin-top: 12px;
 }
 
+.scope-operational-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 18px 0 4px;
+  padding: 14px 0;
+  border-top: 1px solid var(--scope-line);
+  border-bottom: 1px solid var(--scope-line);
+}
+
+.scope-operational-summary > div {
+  min-width: 0;
+  padding: 0 14px;
+  border-left: 1px solid var(--scope-line);
+}
+
+.scope-operational-summary > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.scope-operational-summary dt {
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+  font-weight: 400;
+}
+
+.scope-operational-summary dd {
+  margin: 4px 0 0;
+  color: var(--scope-ink);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.scope-operational-controls .scope-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(180px, 1fr) minmax(220px, 1.5fr);
+  margin: 0;
+}
+
+.scope-operational-controls .scope-field,
+.scope-operational-controls input,
+.scope-operational-controls select {
+  width: 100%;
+  min-width: 0;
+}
+
+.scope-cycle-proof-details summary,
+.scope-cycle-page > details > summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--scope-blue);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.scope-cycle-page > details > summary {
+  margin-bottom: 12px;
+  color: var(--scope-ink);
+  font-size: 18px;
+}
+
+.scope-cycle-proof-details[open] summary {
+  margin-bottom: 10px;
+}
+
+.scope-cycle-proof + .scope-cycle-proof {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--scope-line);
+}
+
+.scope-cycle-proof > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.scope-cycle-proof ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--scope-muted);
+  font-size: var(--scope-type-secondary);
+}
+
+.scope-cycle-proof li + li {
+  margin-top: 4px;
+}
+
+@media (max-width: 1100px) {
+  .scope-operational-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+
+  .scope-operational-summary > div:nth-child(4) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .scope-operational-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scope-operational-summary > div:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .scope-operational-summary > div:nth-child(4) {
+    padding-left: 14px;
+    border-left: 1px solid var(--scope-line);
+  }
+
+  .scope-operational-controls .scope-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 900px) {
   .scope-cycles-list-table th:nth-child(1),
   .scope-cycles-list-table td:nth-child(1),

@@ -162,7 +162,16 @@ function personDedupeKey(row){
 
 async function hydratePeople(repo, ids){
   const personnes = {};
-  for(const id of [...new Set((ids || []).map(String).filter(Boolean))]){
+  const uniqueIds = [...new Set((ids || []).map(String).filter(Boolean))];
+  if(repo.getPersonnesByIds && uniqueIds.length){
+    const rows = await repo.getPersonnesByIds(uniqueIds);
+    for(const p of rows || []){
+      const id = text(p.personne_id || p.id);
+      if(id) personnes[id] = { nip: p.nip, nom: p.nom, prenom: p.prenom, grade: p.grade };
+    }
+    return personnes;
+  }
+  for(const id of uniqueIds){
     if(repo.getPersonne){
       const p = await repo.getPersonne(id);
       if(p) personnes[id] = { nip: p.nip, nom: p.nom, prenom: p.prenom, grade: p.grade };

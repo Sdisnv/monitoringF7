@@ -279,12 +279,12 @@ function sampleAutoInput(){
     };
     const html = hooks.renderCycleHtml(detail);
     ok(html.includes('Matrice détaillée'));
-    ok(html.includes('Personnel concerné'));
+    ok(html.includes('Personnes concernées'));
     ok(html.includes('Obligations satisfaites'));
-    ok(html.includes('Dossiers traités'));
-    ok(html.includes('Traitement'));
+    ok(html.includes('Lecture par obligation'));
+    ok(html.includes('Lecture par personne'));
     ok(html.includes('#/exercices/pr1-a'));
-    ok(!html.includes('data-label="Progression"'));
+    ok(html.includes('data-label="Progression"'));
   });
 
   for(const result of results){
