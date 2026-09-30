@@ -201,6 +201,24 @@
       masquer(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/masquer`, withBaseVersion({ motif }, baseVersion)); },
       supprimerOuAnnuler(id, motif, baseVersion) { return request('POST', `/evenements/${encodeURIComponent(id)}/supprimer-ou-annuler`, withBaseVersion({ motif }, baseVersion)); },
       taux(id) { return request('GET', `/evenements/${encodeURIComponent(id)}/taux`); },
+      async exportEventPersonnel(id) {
+        let response;
+        try {
+          response = await fetchWithAuthRetry(`${base}/evenements/${encodeURIComponent(id)}/personnel.csv`, {
+            method: 'GET', headers: { Accept: 'text/csv' }
+          });
+        } catch (error) {
+          throw new ScopeApiError(0, { error: 'network', message: String(error && error.message || error) });
+        }
+        if (!response.ok) {
+          const contentType = response.headers.get('content-type') || '';
+          const payload = contentType.includes('application/json') ? await response.json() : { message: await response.text() };
+          throw new ScopeApiError(response.status, payload || {});
+        }
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="([^"]+)"/i);
+        return { blob: await response.blob(), filename: match && match[1] || 'SCOPE_Personnel.csv' };
+      },
       suggestModeSuivi(params) { return request('GET', `/mode-suivi-suggere${queryString(params || {})}`); },
       previewTauxQuantitatif(id, body) { return request('POST', `/evenements/${encodeURIComponent(id)}/preview-taux-quantitatif`, body || {}); },
       enregistrerSaisieQuantitative(id, body, baseVersion) {

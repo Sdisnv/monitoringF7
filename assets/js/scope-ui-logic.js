@@ -1871,6 +1871,7 @@
       });
       const views = {
         synthese: 'synthese',
+        programme: 'programme',
         'catalogue-annuel': 'catalogue-annuel',
         'agenda-annuel': 'agenda-annuel',
         agenda: 'agenda',
@@ -1901,7 +1902,16 @@
           qvJour: query.jour || ''
         };
       }
-      const view = views[parts[1]] || 'synthese';
+      if (parts[1] === 'programme' && parts[2]) {
+        return {
+          screen: 'quo-vadis',
+          nav: 'quo-vadis',
+          qvView: 'programme-fiche',
+          qvProgrammeItemId: decodeURIComponent(parts.slice(2).join('/')),
+          qvFrom: query.from || 'programme'
+        };
+      }
+      const view = views[parts[1]] || 'programme';
       return {
         screen: 'quo-vadis',
         nav: 'quo-vadis',

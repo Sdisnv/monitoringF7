@@ -65,6 +65,44 @@ function forbiddenPersonnel(){
   });
 }
 
+function csvCell(value){
+  const text = String(value == null ? '' : value).replace(/\r?\n/g, ' ');
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function personnelCsvResponse(fiche){
+  const evenement = fiche.evenement || {};
+  const personnes = fiche.personnes || {};
+  const participations = new Map((fiche.participations || []).map((row) => [String(row.personne_id || row.personneId), row]));
+  const rows = (fiche.attendus || []).map((attendu) => {
+    const id = String(attendu.personne_id || attendu.personneId || '');
+    const person = personnes[id] || {};
+    const participation = participations.get(id) || {};
+    return [
+      person.nip || attendu.nip || '', person.nom || attendu.nom || '', person.prenom || attendu.prenom || '',
+      person.oi_code || person.oiCode || attendu.oi_code || attendu.oiCode || '',
+      participation.role || attendu.role || '',
+      attendu.origine || 'ATTENDU', participation.statut || 'NON_RENSEIGNE'
+    ];
+  }).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'fr') || String(a[2]).localeCompare(String(b[2]), 'fr'));
+  const lines = [
+    ['NIP', 'Nom', 'Prénom', 'OI', 'Rôle / fonction', 'Statut assignation', 'Statut présence'],
+    ...rows
+  ].map((row) => row.map(csvCell).join(';'));
+  const date = String(evenement.date || '').slice(0, 10) || 'sans-date';
+  const filename = `SCOPE_Personnel_${date}_${String(evenement.evenement_id || '').slice(0, 8)}.csv`;
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff'
+    },
+    body: `\uFEFF${lines.join('\r\n')}`
+  };
+}
+
 async function scopeHandler(event){
     if(event.httpMethod === 'OPTIONS'){
     return { statusCode: 204, headers: { 'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS' }, body: '' };
@@ -524,6 +562,13 @@ async function scopeHandler(event){
     params = match(path, '/evenements/:id/taux');
     if(method === 'GET' && params){
       return response(200, { ok:true, taux: await service.tauxEvenement(params.id) });
+    }
+    params = match(path, '/evenements/:id/personnel.csv');
+    if(method === 'GET' && params){
+      if(!hasPermission(claims, 'personnel:read') || !hasPermission(claims, 'data:export') || !hasPermission(claims, 'reports:nominatif')){
+        return response(403, { ok:false, error:'forbidden', message:'L’export nominatif exige les permissions personnel:read, data:export et reports:nominatif.' });
+      }
+      return personnelCsvResponse(await service.lireEvenement(params.id));
     }
     params = match(path, '/evenements/:id');
     if(method === 'GET' && params){

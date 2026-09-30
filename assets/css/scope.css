@@ -11392,3 +11392,19 @@ body.scope-pdf-open { overflow: hidden; }
 @media(max-width:1150px){.annual-detail-layout{grid-template-areas:"need qv" "info info" "sessions side" "planning planning" "conflicts conflicts" "themes themes"}}
 @media(max-width:960px){.annual-detail-layout{grid-template-areas:"need need" "qv info" "sessions sessions" "planning planning" "conflicts conflicts" "themes themes" "side side"}}
 @media(max-width:800px){.annual-detail-layout{grid-template-areas:"need" "qv" "info" "sessions" "planning" "conflicts" "themes" "side"}}
+.qv-programme-kpis{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:1px;margin:16px 0;background:#dfe3e8;border:1px solid #dfe3e8}
+.qv-programme-kpis>div{display:grid;gap:4px;min-height:92px;padding:14px;background:#fff}
+.qv-programme-kpis span{font-size:12px;color:#59616b}
+.qv-programme-kpis strong{font-size:24px;font-weight:700;color:#20262d}
+.qv-programme-kpis small{font-size:11px;color:#6b737d}
+.qv-programme-lineage{margin:0 0 16px;border-left:3px solid #4f84d6;padding:8px 12px;background:#f7f9fb}
+.qv-programme-lineage summary{cursor:pointer;font-weight:650}
+.qv-programme-lineage p{margin:8px 0 0;line-height:1.5}
+.qv-programme-filters{grid-template-columns:minmax(240px,2fr) repeat(6,minmax(120px,1fr)) auto}
+.qv-programme-table-wrap{max-width:100%;overflow-x:auto}
+.qv-programme-table{min-width:1680px}
+.qv-programme-table td{vertical-align:top}
+.qv-programme-table td:nth-child(2){min-width:240px}
+.qv-programme-origin{display:block;margin-top:4px;color:#6b737d;font-size:11px}
+@media(max-width:1150px){.qv-programme-kpis{grid-template-columns:repeat(3,minmax(130px,1fr))}.qv-programme-filters{grid-template-columns:repeat(3,minmax(140px,1fr))}}
+@media(max-width:800px){.qv-programme-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.qv-programme-filters{grid-template-columns:1fr 1fr}.qv-programme-filters .qv-filter-search{grid-column:1/-1}}

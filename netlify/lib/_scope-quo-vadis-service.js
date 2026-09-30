@@ -3,6 +3,7 @@ const coverage = require('./_scope-quo-vadis-coverage');
 const consolidation = require('./_scope-quo-vadis-consolidation');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 const { createQvReferentialManagement } = require('./_scope-qv-referential-management');
+const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
 
 function planningRuleDomain(row){
   return qvReferentials.normalizeScopeDomainCode(row.domain || (row.metadata && row.metadata.family));
@@ -1139,6 +1140,33 @@ function createScopeQuoVadisService({ database = db } = {}){
     result.personnelView = {
       hideInternalPrep: String(programme.statut || '').toUpperCase() === 'VALIDE'
     };
+    if(Number(programme.annee) === 2027){
+      const published = await db.query(`
+        select l.publication_unit_id, l.evenement_id, e.libelle, e.date, e.heure_debut,
+               e.heure_fin, e.statut, e.version
+          from scope_qv_publication_links l
+          join scope_evenements e on e.evenement_id = l.evenement_id
+         where l.source_year = $1
+      `, [Number(programme.annee)]).catch(() => ({ rows: [] }));
+      const publishedByUnit = new Map((published.rows || []).map((row) => [String(row.publication_unit_id), row]));
+      result.canonicalProgramme = {
+        source: canonicalProgramme2027.source,
+        target: canonicalProgramme2027.target,
+        equation: canonicalProgramme2027.equation,
+        rows: canonicalProgramme2027.rows.map((row) => {
+          const event = publishedByUnit.get(String(row.id));
+          return Object.assign({}, row, event ? {
+            publishedEventId: event.evenement_id,
+            publishedEventStatus: event.statut,
+            publishedEventVersion: Number(event.version || 0),
+            publishedEventLabel: event.libelle,
+            publishedEventDate: dateOnly(event.date),
+            publishedEventStart: event.heure_debut || null,
+            publishedEventEnd: event.heure_fin || null
+          } : {});
+        })
+      };
+    }
     return result;
   }
 
