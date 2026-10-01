@@ -1,0 +1,32 @@
+{
+  "scope": "C19-PREPROD-CANONICAL-TRUTH-1",
+  "measuredAt": "2026-09-29T07:15:23Z",
+  "head": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+  "targeted": [
+    { "suite": "scope-c19-preprod-canonical-truth-1-tests.js", "result": "25/25 PASS", "passed": 25, "failed": 0 },
+    { "suite": "scope-c19-preprod-gate-1-r1-tests.js", "result": "PASS", "status": "PASS" },
+    { "suite": "scope-c19-preprod-gate-2-tests.js", "result": "17/17 PASS", "passed": 17, "failed": 0 },
+    { "suite": "scope-c19-preprod-gate-3-tests.js", "result": "15/15 PASS", "passed": 15, "failed": 0 },
+    { "suite": "scope-c19-preprod-moa-final-1-tests.js", "result": "20/20 PASS", "passed": 20, "failed": 0 },
+    { "suite": "scope-functional-catalog-c18-tests.js", "result": "18/18 PASS", "passed": 18, "failed": 0 },
+    { "suite": "scope-functional-catalog-c19-tests.js", "result": "9/9 PASS", "passed": 9, "failed": 0 },
+    { "suite": "scope-functional-catalog-c19-ux-tests.js", "result": "67/67 PASS", "passed": 67, "failed": 0 },
+    { "suite": "scope-impl-1a-tests.js", "result": "10/10 PASS", "passed": 10, "failed": 0 },
+    { "suite": "scope-impl-1b-tests.js", "result": "8/8 PASS", "passed": 8, "failed": 0 }
+  ],
+  "syntaxChecks": [
+    "scripts/scope-c19-ux-recette/app.js",
+    "scripts/scope-c19-preprod-canonical-truth-1.js",
+    "scripts/scope-c19-preprod-canonical-truth-1-tests.js"
+  ],
+  "global": {
+    "command": "npm run test:scope",
+    "result": "FAIL connu hors C19",
+    "exitCode": 1,
+    "newC19Failure": false,
+    "newC19Regression": false,
+    "firstFailure": "scripts/scope-login-visual-alignment-orion-1-tests.js — cache-bust SCOPE visuel uniquement",
+    "knownFailure": "scripts/scope-login-visual-alignment-orion-1-tests.js — cache-bust SCOPE visuel uniquement",
+    "rerun": false
+  }
+}

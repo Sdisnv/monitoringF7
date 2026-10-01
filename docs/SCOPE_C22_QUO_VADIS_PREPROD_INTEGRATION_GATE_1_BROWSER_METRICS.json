@@ -1,0 +1,999 @@
+{
+  "scope": "C22-QUO-VADIS-PREPROD-INTEGRATION-GATE-1",
+  "generatedAt": "2026-09-29T13:43:10.020Z",
+  "url": "http://127.0.0.1:4186/?preprod=1&closure=final",
+  "viewports": [
+    1500,
+    1150,
+    960,
+    800
+  ],
+  "screens": [
+    "catalogue",
+    "definition",
+    "automations",
+    "annual",
+    "occurrences",
+    "placement",
+    "proposals",
+    "known",
+    "conflicts",
+    "activities",
+    "agenda",
+    "move"
+  ],
+  "summary": {
+    "total": 48,
+    "pass": 48,
+    "nok": 0
+  },
+  "checks": [
+    {
+      "controlCount": 2,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Catalogue annuel",
+      "pass": true,
+      "screen": "catalogue",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 18,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Définition permanente",
+      "pass": true,
+      "screen": "definition",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Automatismes",
+      "pass": true,
+      "screen": "automations",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 14,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Besoin annuel 2027",
+      "pass": true,
+      "screen": "annual",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 9,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Nouvelle activité — besoin 2027",
+      "pass": true,
+      "screen": "occurrences",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Placement automatique",
+      "pass": true,
+      "screen": "placement",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Propositions",
+      "pass": true,
+      "screen": "proposals",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Ajouter un événement connu",
+      "pass": true,
+      "screen": "known",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Compatibilités et conflits",
+      "pass": true,
+      "screen": "conflicts",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 8,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Toutes les activités",
+      "pass": true,
+      "screen": "activities",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "QUO VADIS '27",
+      "pass": true,
+      "screen": "agenda",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 1,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1500,
+      "globalOverflow": false,
+      "heading": "Déplacement chronologique",
+      "pass": true,
+      "screen": "move",
+      "truncatedActions": [],
+      "viewportWidth": 1500,
+      "width": 1500
+    },
+    {
+      "controlCount": 2,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Catalogue annuel",
+      "pass": true,
+      "screen": "catalogue",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 18,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Définition permanente",
+      "pass": true,
+      "screen": "definition",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Automatismes",
+      "pass": true,
+      "screen": "automations",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 14,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Besoin annuel 2027",
+      "pass": true,
+      "screen": "annual",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 9,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Nouvelle activité — besoin 2027",
+      "pass": true,
+      "screen": "occurrences",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Placement automatique",
+      "pass": true,
+      "screen": "placement",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Propositions",
+      "pass": true,
+      "screen": "proposals",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Ajouter un événement connu",
+      "pass": true,
+      "screen": "known",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Compatibilités et conflits",
+      "pass": true,
+      "screen": "conflicts",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 8,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Toutes les activités",
+      "pass": true,
+      "screen": "activities",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "QUO VADIS '27",
+      "pass": true,
+      "screen": "agenda",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 1,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 1150,
+      "globalOverflow": false,
+      "heading": "Déplacement chronologique",
+      "pass": true,
+      "screen": "move",
+      "truncatedActions": [],
+      "viewportWidth": 1150,
+      "width": 1150
+    },
+    {
+      "controlCount": 2,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Catalogue annuel",
+      "pass": true,
+      "screen": "catalogue",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 18,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Définition permanente",
+      "pass": true,
+      "screen": "definition",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Automatismes",
+      "pass": true,
+      "screen": "automations",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 14,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Besoin annuel 2027",
+      "pass": true,
+      "screen": "annual",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 9,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Nouvelle activité — besoin 2027",
+      "pass": true,
+      "screen": "occurrences",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Placement automatique",
+      "pass": true,
+      "screen": "placement",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Propositions",
+      "pass": true,
+      "screen": "proposals",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Ajouter un événement connu",
+      "pass": true,
+      "screen": "known",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Compatibilités et conflits",
+      "pass": true,
+      "screen": "conflicts",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 8,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Toutes les activités",
+      "pass": true,
+      "screen": "activities",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "QUO VADIS '27",
+      "pass": true,
+      "screen": "agenda",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 1,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 960,
+      "globalOverflow": false,
+      "heading": "Déplacement chronologique",
+      "pass": true,
+      "screen": "move",
+      "truncatedActions": [],
+      "viewportWidth": 960,
+      "width": 960
+    },
+    {
+      "controlCount": 2,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Catalogue annuel",
+      "pass": true,
+      "screen": "catalogue",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 18,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Définition permanente",
+      "pass": true,
+      "screen": "definition",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Automatismes",
+      "pass": true,
+      "screen": "automations",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 14,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Besoin annuel 2027",
+      "pass": true,
+      "screen": "annual",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 9,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Nouvelle activité — besoin 2027",
+      "pass": true,
+      "screen": "occurrences",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Placement automatique",
+      "pass": true,
+      "screen": "placement",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Propositions",
+      "pass": true,
+      "screen": "proposals",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 13,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Ajouter un événement connu",
+      "pass": true,
+      "screen": "known",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Compatibilités et conflits",
+      "pass": true,
+      "screen": "conflicts",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 8,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Toutes les activités",
+      "pass": true,
+      "screen": "activities",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 0,
+      "controlHeights": [],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "QUO VADIS '27",
+      "pass": true,
+      "screen": "agenda",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    },
+    {
+      "controlCount": 1,
+      "controlHeights": [
+        36
+      ],
+      "documentWidth": 800,
+      "globalOverflow": false,
+      "heading": "Déplacement chronologique",
+      "pass": true,
+      "screen": "move",
+      "truncatedActions": [],
+      "viewportWidth": 800,
+      "width": 800
+    }
+  ],
+  "controlHeights": [
+    {
+      "screen": "catalogue",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "definition",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "automations",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "annual",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "occurrences",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "known",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "activities",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "move",
+      "width": 1500,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "catalogue",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "definition",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "automations",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "annual",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "occurrences",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "known",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "activities",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "move",
+      "width": 1150,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "catalogue",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "definition",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "automations",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "annual",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "occurrences",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "known",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "activities",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "move",
+      "width": 960,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "catalogue",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "definition",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "automations",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "annual",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "occurrences",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "known",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "activities",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    },
+    {
+      "screen": "move",
+      "width": 800,
+      "height": 36,
+      "expected": 36,
+      "status": "PASS"
+    }
+  ],
+  "navigation": {
+    "steps": [
+      {
+        "context": null,
+        "heading": "Catalogue annuel",
+        "index": 1
+      },
+      {
+        "context": "Nouvelle activité",
+        "heading": "Définition permanente",
+        "index": 2
+      },
+      {
+        "context": "Nouvelle activité",
+        "heading": "Automatismes",
+        "index": 3
+      },
+      {
+        "context": "Nouvelle activité",
+        "heading": "Besoin annuel 2027",
+        "index": 4
+      },
+      {
+        "context": "Nouvelle activité",
+        "heading": "Nouvelle activité — besoin 2027",
+        "index": 5
+      },
+      {
+        "context": "Nouvelle activité",
+        "heading": "Placement automatique",
+        "index": 6
+      },
+      {
+        "context": "Nouvelle activité",
+        "heading": "Propositions",
+        "index": 7
+      },
+      {
+        "context": null,
+        "heading": "Ajouter un événement connu",
+        "index": 8
+      },
+      {
+        "context": null,
+        "heading": "Compatibilités et conflits",
+        "index": 9
+      },
+      {
+        "context": null,
+        "heading": "Toutes les activités",
+        "index": 10
+      },
+      {
+        "context": null,
+        "heading": "QUO VADIS '27",
+        "index": 11
+      },
+      {
+        "context": null,
+        "heading": "Déplacement chronologique",
+        "index": 12
+      }
+    ],
+    "contextPreservedScreens2to7": true,
+    "conflictRecheck": 1,
+    "openedActivityEditor": 1,
+    "returnedToConflictContext": true
+  },
+  "interactions": {
+    "programmeSearch": {
+      "query": "Permanence CTA",
+      "result": "53 ligne(s) affichée(s) · 622 objets au programme 2027 + 13 traces historiques/non reconduites = 635 lignes de cycle de vie.",
+      "durationMs": 96
+    },
+    "agenda": {
+      "heading": "QUO VADIS '27",
+      "eventDays": 229,
+      "specialDots": 77,
+      "renderMs": 41
+    },
+    "move": {
+      "rows": 125,
+      "fixedRows": 53,
+      "renderMs": 43
+    }
+  },
+  "consoleErrors": [],
+  "captures": [
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/01-catalogue.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/02-activite.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/03-automatismes.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/04-besoin-annuel.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/05-occurrences-sessions.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/06-placement.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/07-propositions.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/08-evenement-connu.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/09-conflits.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/10-programme.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/11-quo-vadis-27.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/12-deplacement.png"
+  ]
+}

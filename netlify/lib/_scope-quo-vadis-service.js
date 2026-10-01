@@ -3,6 +3,8 @@ const coverage = require('./_scope-quo-vadis-coverage');
 const consolidation = require('./_scope-quo-vadis-consolidation');
 const qvReferentials = require('./_scope-quo-vadis-referentials');
 const { createQvReferentialManagement } = require('./_scope-qv-referential-management');
+const functionalCatalog = require('./_scope-functional-catalog');
+const eventCodes = require('./_scope-event-code');
 const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
 
 function planningRuleDomain(row){
@@ -28,7 +30,12 @@ function effectivePlanningRules(rows){
 
 function dateOnly(value){
   if(!value) return null;
-  if(value instanceof Date) return value.toISOString().slice(0, 10);
+  if(value instanceof Date){
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
   return String(value).slice(0, 10);
 }
 
@@ -235,11 +242,6 @@ function classifyDate(date, domain, calendarRows){
     reasons.push('Week-end autorisé si compatible avec les contraintes métier.');
   }
   return { dayClass, reasons, weekday: WEEKDAY_LABELS[day] || day };
-}
-
-function compactEventCode(prefix, index){
-  const raw = `${normalizeCode(prefix).replace(/-/g, '').slice(0, 9)}${String(index).padStart(3, '0')}`;
-  return raw.slice(0, 15);
 }
 
 function monthForDomain(domain, index){
@@ -451,7 +453,7 @@ function scoreHistoricalMatch(activity, row){
   const oi = String((activity.cibleCodes || [])[0] || '').toUpperCase();
   const rowOi = String(row.sousDomaine || '').toUpperCase();
   if(oi && (rowOi === oi || String(row.title || '').toUpperCase().includes(oi))) score += 18;
-  const exercice = normalizeActivityTitle(row.exerciceLibelle || row.codeEvenement);
+  const exercice = normalizeActivityTitle(row.exerciceLibelle || row.exerciseCode || row.codeSource);
   if(exercice && wanted && (wanted.includes(exercice) || exercice.includes(wanted.split(' ')[0] || ''))) score += 12;
   if(score < 55) return { score: 0, confidence: '', uncertain: true };
   return {
@@ -469,7 +471,9 @@ function mapHistoricalEvent(row){
     sousDomaine: row.sous_domaine_code || '',
     title: row.libelle || row.exercice_libelle || '',
     exerciceLibelle: row.exercice_libelle || '',
-    codeEvenement: row.code_cours || row.code_source || row.exercice_code || '',
+    codeEvenement: row.code_cours || '',
+    codeSource: row.code_source || '',
+    exerciseCode: row.exercice_code || '',
     startsAt: row.heure_debut_prevue || row.heure_debut || '',
     endsAt: row.heure_fin_prevue || row.heure_fin || '',
     lieu: String(row.salle || '').trim() || LIEU_A_DEFINIR,
@@ -1143,17 +1147,43 @@ function createScopeQuoVadisService({ database = db } = {}){
     if(Number(programme.annee) === 2027){
       const published = await db.query(`
         select l.publication_unit_id, l.evenement_id, e.libelle, e.date, e.heure_debut,
-               e.heure_fin, e.statut, e.version
+               e.heure_fin, e.statut, e.version, e.code_cours, e.statcom_code, e.publication_key,
+               coalesce((select array_agg(o.code order by o.sort_order,o.code)
+                           from scope_evenement_ois eo join scope_ois o using(oi_id)
+                          where eo.evenement_id=e.evenement_id),'{}'::text[]) as oi_codes,
+               coalesce((select array_agg(p.public_code order by p.public_code)
+                           from scope_evenement_publics_qv p
+                          where p.evenement_id=e.evenement_id),'{}'::text[]) as public_codes
           from scope_qv_publication_links l
           join scope_evenements e on e.evenement_id = l.evenement_id
          where l.source_year = $1
       `, [Number(programme.annee)]).catch(() => ({ rows: [] }));
+      const publishedEventIds = (published.rows || []).map((row) => row.evenement_id).filter(Boolean);
+      const allocated = publishedEventIds.length ? await db.query(`
+        select evenement_id,event_code
+          from scope_event_code_allocations
+         where evenement_id = any($1::uuid[])
+      `, [publishedEventIds]).catch(() => ({ rows: [] })) : { rows: [] };
+      const allocatedByEvent = new Map((allocated.rows || []).map((row) => [String(row.evenement_id), row.event_code]));
+      const previewEnabled = process.env.SCOPE_LOCAL_EVENT_CODE_PREVIEW === 'YES';
+      let previewByEvent = new Map();
+      if(previewEnabled){
+        const issued = await db.query(`select code_cours from scope_evenements
+          where code_cours is not null and trim(code_cours) <> ''`).catch(() => ({ rows: [] }));
+        const candidates = (published.rows || []).map((row) => ({
+          eventId:row.evenement_id,eventCode:row.code_cours,statCom:row.statcom_code,
+          startsAt:row.date ? `${dateOnly(row.date)}T${String(row.heure_debut || '00:00').slice(0,5)}` : '',
+          oiCodes:row.oi_codes || [],publicCodes:row.public_codes || [],publicationKey:row.publication_key
+        }));
+        previewByEvent = new Map(eventCodes.initialAllocations(candidates,(issued.rows || []).map((row) => row.code_cours))
+          .map((row) => [String(row.eventId),row.eventCode]));
+      }
       const publishedByUnit = new Map((published.rows || []).map((row) => [String(row.publication_unit_id), row]));
       result.canonicalProgramme = {
         source: canonicalProgramme2027.source,
         target: canonicalProgramme2027.target,
         equation: canonicalProgramme2027.equation,
-        rows: canonicalProgramme2027.rows.map((row) => {
+        rows: functionalCatalog.programmeActivityPresentation(canonicalProgramme2027.rows).map((row) => {
           const event = publishedByUnit.get(String(row.id));
           return Object.assign({}, row, event ? {
             publishedEventId: event.evenement_id,
@@ -1162,7 +1192,9 @@ function createScopeQuoVadisService({ database = db } = {}){
             publishedEventLabel: event.libelle,
             publishedEventDate: dateOnly(event.date),
             publishedEventStart: event.heure_debut || null,
-            publishedEventEnd: event.heure_fin || null
+            publishedEventEnd: event.heure_fin || null,
+            publishedEventCode: event.code_cours || allocatedByEvent.get(String(event.evenement_id)) || previewByEvent.get(String(event.evenement_id)) || null,
+            publishedEventCodeState: event.code_cours || allocatedByEvent.has(String(event.evenement_id)) ? 'PERSISTED' : (previewByEvent.has(String(event.evenement_id)) ? 'LOCAL_BACKFILL_PREVIEW' : 'NOT_DEMONSTRATED')
           } : {});
         })
       };
@@ -1649,7 +1681,6 @@ function createScopeQuoVadisService({ database = db } = {}){
           family: coverage.formationFamily(item.domain),
           subcategory: coverage.formationSubcategory(item.domain, '', item.title),
           statcomCode: item.statcomCode || '',
-          codeEvenementPreview: compactEventCode(item.domain || item.title, index),
           noOperationalEventCreated: true,
           businessJustification: requirement.justification
         }
@@ -2270,6 +2301,7 @@ function createScopeQuoVadisService({ database = db } = {}){
 
 module.exports = {
   createScopeQuoVadisService,
+  _dateOnly: dateOnly,
   _effectivePlanningRules: effectivePlanningRules,
   _calendar: {
     addDays,

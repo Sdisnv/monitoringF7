@@ -1,0 +1,25 @@
+{
+  "campaign": "C19-PREPROD-MOA-FINAL-1",
+  "targeted": [
+    {"suite": "Gate 1 R1", "result": "PASS"},
+    {"suite": "Gate 2", "result": "17/17 PASS"},
+    {"suite": "Gate 3", "result": "15/15 PASS"},
+    {"suite": "C18", "result": "18/18 PASS"},
+    {"suite": "C19 moteur", "result": "9/9 PASS"},
+    {"suite": "C19 UX", "result": "67/67 PASS"},
+    {"suite": "Implémentation 1A", "result": "10/10 PASS"},
+    {"suite": "Implémentation 1B", "result": "8/8 PASS"},
+    {"suite": "MOA FINAL 1", "result": "20/20 PASS"},
+    {"suite": "git diff --check", "result": "PASS"},
+    {"suite": "Syntaxe", "result": "PASS"}
+  ],
+  "global": {
+    "command": "npm run test:scope",
+    "runs": 1,
+    "result": "KNOWN_PREEXISTING_FAILURE",
+    "exitCode": 1,
+    "firstFailure": "scope-login-visual-alignment-orion-1-tests.js · cache-bust SCOPE visuel uniquement",
+    "newC19Regression": false,
+    "passedBeforeFailure": ["Implémentation 1A", "Implémentation 1B", "QUAL", "LOGIN", "LOGIN visuel tests 01-05"]
+  }
+}

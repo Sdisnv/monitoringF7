@@ -1,0 +1,3705 @@
+{
+  "contractVersion": 1,
+  "scope": "C19-PREPROD-GATE-1-R1",
+  "generatedAt": "2026-09-29",
+  "verdict": "PASS",
+  "restrictions": {
+    "generated2027": false,
+    "databaseWrites": false,
+    "productionMigration": false,
+    "publication": false,
+    "deployment": false
+  },
+  "git": {
+    "branch": "main",
+    "head": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "referenceHead": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "status": [
+      "M assets/css/scope.css",
+      " M assets/js/scope-api.js",
+      " M assets/js/scope-ui.js",
+      " M netlify/functions/scope.js",
+      " M netlify/lib/_scope-annual-catalog-import.js",
+      " M netlify/lib/_scope-annual-catalog-service.js",
+      " M netlify/lib/_scope-schema.js",
+      " M package.json",
+      " M scripts/scope-impl-1a-tests.js",
+      " M scripts/scope-impl-1b-tests.js",
+      "?? database/migrations/20260925_scope_functional_catalog_c18.sql",
+      "?? docs/SCOPE_C18_CONVERGENCE_MATRIX.json",
+      "?? docs/SCOPE_C18_CONVERGENCE_MATRIX.md",
+      "?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.json",
+      "?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.md",
+      "?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_BROWSER_METRICS.json",
+      "?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_TEST_RESULTS.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_1.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_1.md",
+      "?? docs/SCOPE_C19_PREPROD_GATE_1_R1.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_1_R1.md",
+      "?? docs/SCOPE_C19_PREPROD_GATE_2.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_2.md",
+      "?? docs/SCOPE_C19_PREPROD_GATE_2_BROWSER_METRICS.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_2_TEST_RESULTS.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_3.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_3.md",
+      "?? docs/SCOPE_C19_PREPROD_GATE_3_BROWSER_METRICS.json",
+      "?? docs/SCOPE_C19_PREPROD_GATE_3_TEST_RESULTS.json",
+      "?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.json",
+      "?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.md",
+      "?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_BROWSER_METRICS.json",
+      "?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_TEST_RESULTS.json",
+      "?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.json",
+      "?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.md",
+      "?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1_BROWSER_METRICS.json",
+      "?? netlify/lib/_scope-functional-catalog-ddl.js",
+      "?? netlify/lib/_scope-functional-catalog.js",
+      "?? scripts/scope-c19-preprod-canonical-truth-1-tests.js",
+      "?? scripts/scope-c19-preprod-canonical-truth-1.js",
+      "?? scripts/scope-c19-preprod-gate-1-r1-tests.js",
+      "?? scripts/scope-c19-preprod-gate-1-r1.js",
+      "?? scripts/scope-c19-preprod-gate-1-tests.js",
+      "?? scripts/scope-c19-preprod-gate-1.js",
+      "?? scripts/scope-c19-preprod-gate-2-tests.js",
+      "?? scripts/scope-c19-preprod-gate-2.js",
+      "?? scripts/scope-c19-preprod-gate-3-tests.js",
+      "?? scripts/scope-c19-preprod-gate-3.js",
+      "?? scripts/scope-c19-preprod-moa-final-1-tests.js",
+      "?? scripts/scope-c19-preprod-moa-final-1.js",
+      "?? scripts/scope-c19-preprod-moa-ux-code-final-1-tests.js",
+      "?? scripts/scope-c19-preprod-moa-ux-code-final-1.js",
+      "?? scripts/scope-c19-ux-recette/",
+      "?? scripts/scope-functional-catalog-c18-diagnostic.js",
+      "?? scripts/scope-functional-catalog-c18-preview-server.js",
+      "?? scripts/scope-functional-catalog-c18-preview.js",
+      "?? scripts/scope-functional-catalog-c18-tests.js",
+      "?? scripts/scope-functional-catalog-c19-preview.js",
+      "?? scripts/scope-functional-catalog-c19-tests.js",
+      "?? scripts/scope-functional-catalog-c19-ux-preview-server.js",
+      "?? scripts/scope-functional-catalog-c19-ux-tests.js"
+    ]
+  },
+  "method": [
+    "Schéma et migrations",
+    "Référentiels et services",
+    "Repositories et API",
+    "UI et statistiques",
+    "Moteurs de règles et conflits",
+    "Tests ciblés",
+    "Réconciliation du classeur QUO VADIS 2026"
+  ],
+  "statCom": {
+    "canonical": {
+      "table": "scope_statcom_referentiel",
+      "seed": "netlify/lib/_scope-statcom-referential.js",
+      "schema": "netlify/lib/_scope-schema.js",
+      "repositories": [
+        "netlify/lib/_scope-pg.js",
+        "netlify/lib/_scope-memory.js"
+      ],
+      "service": "netlify/lib/_scope-service.js",
+      "api": [
+        "/formation/statcom",
+        "/formation/statcom/resolve",
+        "/reports/statcom"
+      ],
+      "ui": "assets/js/scope-ui.js",
+      "statistics": "scope_activity_statistical_contributions",
+      "tests": "scripts/scope-statcom-referential-config-1-tests.js",
+      "count": 91
+    },
+    "missingRows": [
+      {
+        "sourceRow": 5,
+        "date": "2026-01-23",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 30,
+        "date": "2026-02-23",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 33,
+        "date": "2026-02-24",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 44,
+        "date": "2026-02-25",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 47,
+        "date": "2026-02-26",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 132,
+        "date": "2026-03-13",
+        "activity": "Cours ECA FB01 - formation de base recrues",
+        "domain": "FOBA",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 138,
+        "date": "2026-03-14",
+        "activity": "Cours ECA FB01 - formation de base recrues",
+        "domain": "FOBA",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 195,
+        "date": "2026-03-27",
+        "activity": "Assemblée générale de la SIC",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 223,
+        "date": "2026-04-07",
+        "activity": "Formation continue OACP CarPostal",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 225,
+        "date": "2026-04-08",
+        "activity": "Formation continue OACP CarPostal",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 227,
+        "date": "2026-04-09",
+        "activity": "Formation continue OACP CarPostal",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 294,
+        "date": "2026-05-07",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 299,
+        "date": "2026-05-08",
+        "activity": "Assemblée des délégués de la FVSP",
+        "domain": "FVSP",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 328,
+        "date": "2026-05-21",
+        "activity": "Visite du Conseil d'État",
+        "domain": "SDIS",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 366,
+        "date": "2026-06-02",
+        "activity": "Cours ECA SP19 - ventilation opérationnelle",
+        "domain": "ECAFORM",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 367,
+        "date": "2026-06-02",
+        "activity": "Formation personnel CFF",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 388,
+        "date": "2026-06-09",
+        "activity": "Cours ECA SA10 - cours de cadres - répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 390,
+        "date": "2026-06-10",
+        "activity": "Cours ECA SA10 - répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 394,
+        "date": "2026-06-11",
+        "activity": "Cours ECA SA10 - répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 406,
+        "date": "2026-06-12",
+        "activity": "Cours ECA SA11 - recyclage répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 437,
+        "date": "2026-06-19",
+        "activity": "Journée des familles",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 443,
+        "date": "2026-06-20",
+        "activity": "Journée des familles",
+        "domain": "DAP",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 445,
+        "date": "2026-06-21",
+        "activity": "Journée des familles",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 446,
+        "date": "2026-06-21",
+        "activity": "Journée des familles",
+        "domain": "DAP",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 465,
+        "date": "2026-06-26",
+        "activity": "Repas du Permanent",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 499,
+        "date": "2026-08-14",
+        "activity": "8 km du SDIS",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 502,
+        "date": "2026-08-15",
+        "activity": "Journée des familles",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 581,
+        "date": "2026-09-05",
+        "activity": "Journée des familles",
+        "domain": "DAP",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 646,
+        "date": "2026-09-22",
+        "activity": "Cours ECA SA10 - cours de cadres - répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 653,
+        "date": "2026-09-23",
+        "activity": "Cours ECA SA10 - répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 654,
+        "date": "2026-09-23",
+        "activity": "Cours ECA SP19 - ventilation opérationnelle",
+        "domain": "ECAFORM",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 661,
+        "date": "2026-09-24",
+        "activity": "Cours ECA SA10 - répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 665,
+        "date": "2026-09-25",
+        "activity": "Cours ECA SA11 - recyclage répondant de la formation antichute",
+        "domain": "FOSPEC",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 730,
+        "date": "2026-10-21",
+        "activity": "Formation continue OACP CarPostal",
+        "domain": "F5/6",
+        "nature": "EXTERIEURE",
+        "external": true,
+        "statisticalTrackingExpected": false,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "A",
+        "verdict": "ABSENCE LÉGITIME — activité explicitement HORS SDIS, sans suivi Stat.Com dans la source"
+      },
+      {
+        "sourceRow": 833,
+        "date": "2026-12-05",
+        "activity": "Téléthon",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 834,
+        "date": "2026-12-06",
+        "activity": "Noël des familles",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 844,
+        "date": "2026-12-11",
+        "activity": "Souper annuel",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": "070F1",
+        "expectedStatCom": "070F1",
+        "category": "B",
+        "verdict": "STAT.COM RETROUVÉ DANS SCOPE/historique source: 070F1"
+      },
+      {
+        "sourceRow": 846,
+        "date": "2026-12-12",
+        "activity": "Noël des familles",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      },
+      {
+        "sourceRow": 847,
+        "date": "2026-12-13",
+        "activity": "Noël des familles",
+        "domain": "DPS",
+        "nature": "SDIS",
+        "external": false,
+        "statisticalTrackingExpected": true,
+        "scopeMatch": null,
+        "expectedStatCom": null,
+        "category": "C",
+        "verdict": "ACTIVITÉ SDIS — Stat.Com réellement manquant"
+      }
+    ],
+    "totals": {
+      "A": 26,
+      "C": 12,
+      "B": 1
+    },
+    "emsea": {
+      "rows": [
+        {
+          "sourceRow": 51,
+          "date": "2026-02-26",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 207,
+          "date": "2026-03-31",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 291,
+          "date": "2026-05-06",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 393,
+          "date": "2026-06-10",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 505,
+          "date": "2026-08-18",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 559,
+          "date": "2026-09-01",
+          "activity": "Séance EM | Cadres et spécialistes",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 680,
+          "date": "2026-09-29",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 767,
+          "date": "2026-11-04",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 837,
+          "date": "2026-12-08",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 862,
+          "date": "2027-01-12",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        },
+        {
+          "sourceRow": 921,
+          "date": "2027-02-24",
+          "activity": "Séance EM",
+          "historicalDomain": "F0",
+          "historicalSubdomain": "SDIS",
+          "personnel": "EM",
+          "room": "Salle EM"
+        }
+      ],
+      "verdict": "Code source QUO VADIS utilisé pour les séances EM de 2026 à 2027; absent du référentiel canonique SCOPE et sans succession démontrée. Ne pas convertir automatiquement; correspondance canonique à confirmer."
+    },
+    "succession": [
+      {
+        "sourceCode": "010JY3",
+        "canonicalCode": "010JC1",
+        "effectiveFrom": "2026-01-01"
+      }
+    ]
+  },
+  "cta": {
+    "organisationTable": "scope_quo_vadis_dps_organisation_versions",
+    "effectiveFrom": "2027-02-01",
+    "naming": "Nxx / Nxxa / Nxxb",
+    "sections": {
+      "G1": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05",
+        "N06"
+      ],
+      "C1": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "B1": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "B2": [
+        "N01",
+        "N02",
+        "N03"
+      ]
+    },
+    "capacities": {
+      "G1": {
+        "halfSectionMaximum": 8,
+        "sectionMaximum": 15,
+        "implemented": false
+      },
+      "C1": null,
+      "B1": null,
+      "B2": null
+    },
+    "reserve": {
+      "site": "G1",
+      "section": "N06",
+      "represented": true,
+      "assignmentAndRecommendationImplemented": false,
+      "finalDecision": "HUMAN"
+    },
+    "permanence": {
+      "generalRule": "FRIDAY 18:00 -> MONDAY 06:00",
+      "implemented": false,
+      "holidayException": "A_CONFIRMER"
+    },
+    "rotations": {
+      "cta": {
+        "distinct": true,
+        "implemented": false
+      },
+      "halfSections": {
+        "distinct": true,
+        "implemented": false
+      }
+    },
+    "scopes": {
+      "dpsExercise": "FULL_OI",
+      "sectionInstruction": "PARTIAL",
+      "halfSectionInstruction": "PARTIAL"
+    }
+  },
+  "conflicts": {
+    "fullOi": "IMPLEMENTED",
+    "jspDpsSameOi": "IMPLEMENTED",
+    "partialPopulation": "IMPLEMENTED",
+    "oiIndependence": "IMPLEMENTED"
+  },
+  "definitions2026AbsentFromPartial2027": {
+    "rows": [
+      {
+        "activity": "Assemblée CI",
+        "definitionCode": "QV26-ASSEMBLEE-CI-FCF435B1",
+        "domain": null,
+        "sourceRows": 2,
+        "category": "G",
+        "reason": "SCOPE classe cette activité comme optionnelle; reconduction humaine requise."
+      },
+      {
+        "activity": "Assemblée des délégués de la FVSP",
+        "definitionCode": "QV26-ASSEMBLEE-DES-DELEGUES-DE-LA-FVSP-662AE3DD",
+        "domain": null,
+        "sourceRows": 1,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Assemblée générale de la SIC",
+        "definitionCode": "QV26-ASSEMBLEE-GENERALE-DE-LA-SIC-8D1D7C8F",
+        "domain": null,
+        "sourceRows": 1,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Conférence des Commandants",
+        "definitionCode": "QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769",
+        "domain": null,
+        "sourceRows": 1,
+        "category": "H",
+        "reason": "Aucun domaine canonique démontrable après rapprochement SCOPE."
+      },
+      {
+        "activity": "Cours ECA SP19 - ventilation opérationnelle",
+        "definitionCode": "QV26-COURS-ECA-SP19-VENTILATION-OPERATIONNELLE-53ED2027",
+        "domain": null,
+        "sourceRows": 2,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Formation continue OACP CarPostal",
+        "definitionCode": "QV26-FORMATION-CONTINUE-OACP-CARPOSTAL-EA90C59F",
+        "domain": null,
+        "sourceRows": 4,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Formation personnel CFF",
+        "definitionCode": "QV26-FORMATION-PERSONNEL-CFF-358CBEA6",
+        "domain": null,
+        "sourceRows": 7,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Journée « Oser tous les métiers » (JOM)",
+        "definitionCode": "QV26-JOURNEE-OSER-TOUS-LES-METIERS-JOM-55EDEBFB",
+        "domain": null,
+        "sourceRows": 1,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Séance Codir + repas",
+        "definitionCode": "QV26-SEANCE-CODIR-REPAS-81897EA7",
+        "domain": null,
+        "sourceRows": 2,
+        "category": "H",
+        "reason": "Aucun domaine canonique démontrable après rapprochement SCOPE."
+      },
+      {
+        "activity": "Séance COSEC",
+        "definitionCode": "QV26-SEANCE-COSEC-B710F41E",
+        "domain": null,
+        "sourceRows": 5,
+        "category": "H",
+        "reason": "Aucun domaine canonique démontrable après rapprochement SCOPE."
+      },
+      {
+        "activity": "Séance CRDIS",
+        "definitionCode": "QV26-SEANCE-CRDIS-B8654449",
+        "domain": null,
+        "sourceRows": 2,
+        "category": "H",
+        "reason": "Aucun domaine canonique démontrable après rapprochement SCOPE."
+      },
+      {
+        "activity": "Séance interSDIS",
+        "definitionCode": "QV26-SEANCE-INTERSDIS-4B877B98",
+        "domain": null,
+        "sourceRows": 1,
+        "category": "H",
+        "reason": "Aucun domaine canonique démontrable après rapprochement SCOPE."
+      },
+      {
+        "activity": "Table ouverte avec le Commandant",
+        "definitionCode": "QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54",
+        "domain": null,
+        "sourceRows": 2,
+        "category": "H",
+        "reason": "Aucun domaine canonique démontrable après rapprochement SCOPE."
+      },
+      {
+        "activity": "Visite du Conseil d'État",
+        "definitionCode": "QV26-VISITE-DU-CONSEIL-D-ETAT-49AC4722",
+        "domain": null,
+        "sourceRows": 1,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "8 km du SDIS",
+        "definitionCode": "QV26-8-KM-DU-SDIS-D2C38C47",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cérémonie de promotion et nomination",
+        "definitionCode": "QV26-CEREMONIE-DE-PROMOTION-ET-NOMINATION-70010353",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "G",
+        "reason": "SCOPE classe cette activité comme optionnelle; reconduction humaine requise."
+      },
+      {
+        "activity": "Concours de la FVSP",
+        "definitionCode": "QV26-CONCOURS-DE-LA-FVSP-B2CCD55A",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Cours de cadres exercice DPS 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DPS 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DPS 3",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DPS-DAP 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres Formation groupée DPS",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres interSDIS",
+        "definitionCode": "QV26-COURS-DE-CADRES-INTERSDIS-50C39DFD",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres SDIS Nord vaudois",
+        "definitionCode": "QV26-COURS-DE-CADRES-SDIS-NORD-VAUDOIS-865AE6FF",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cursus « Notions d'administration publique »",
+        "definitionCode": "QV26-CURSUS-NOTIONS-D-ADMINISTRATION-PUBLIQUE-4CEA871D",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus c groupe - module 1",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-1-3E17590D",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus c groupe - module 2",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-2-A1379DBB",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus c groupe - module 3",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-3-24F5F741",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus c groupe - module 4",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-4-9E2411FE",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - cours de cadres pour évaluateurs",
+        "definitionCode": "QV26-CURSUS-CI-DPS-COURS-DE-CADRES-POUR-EVALUATEURS-14F3F6CD",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 1",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-1-E5FE8296",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 10",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-10-1E0103E4",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 2",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-2-CDB3F9CB",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 3",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-3-82B182F9",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 4",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-4-4249F631",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 5",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-5-E051011F",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 6",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-6-28B8DB4B",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 7",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-7-ACA6B242",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 8",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-8-68719C42",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DPS - module 9",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-9-231F815C",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Entretien postulant échelons I et II",
+        "definitionCode": "QV26-ENTRETIEN-POSTULANT-ECHELONS-I-ET-II-8B706B77",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "category": "E",
+        "reason": "Toutes les lignes historiques sont inactives."
+      },
+      {
+        "activity": "Exercice DPS 1",
+        "definitionCode": "QV26-EXERCICE-DPS-1-6A16603D",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DPS 2",
+        "definitionCode": "QV26-EXERCICE-DPS-2-54E09232",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DPS 3",
+        "definitionCode": "QV26-EXERCICE-DPS-3-29F948D1",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DPS-DAP 1",
+        "definitionCode": "QV26-EXERCICE-DPS-DAP-1-7F1E9444",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DPS-DAP 2",
+        "definitionCode": "QV26-EXERCICE-DPS-DAP-2-668A88B6",
+        "domain": "DPS",
+        "sourceRows": 16,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice engagement Incyte Biosciences",
+        "definitionCode": "QV26-EXERCICE-ENGAGEMENT-INCYTE-BIOSCIENCES-1E54BDD9",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Fête Eau Lac",
+        "definitionCode": "QV26-FETE-EAU-LAC-4EDEF9EF",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation BIKABLO",
+        "definitionCode": "QV26-FORMATION-BIKABLO-AA5C6437",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée 1.1",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée 1.2",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-2-9B1FEFA5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée 1.3",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-3-FA3DE5E5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée 1.4",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-4-7B861481",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée 1.5",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-5-42EFC15A",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée 1.6",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-6-A72C88FD",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation permanents",
+        "definitionCode": "QV26-FORMATION-PERMANENTS-4F48A9D0",
+        "domain": "DPS",
+        "sourceRows": 7,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation relation avec la presse",
+        "definitionCode": "QV26-FORMATION-RELATION-AVEC-LA-PRESSE-63E476BF",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Instr demi-sct - FEU",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-FEU-8D0C9417",
+        "domain": "DPS",
+        "sourceRows": 18,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr demi-sct - VARIA",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-VARIA-D51E6F19",
+        "domain": "DPS",
+        "sourceRows": 28,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr sct - FEU",
+        "definitionCode": "QV26-INSTR-SCT-FEU-2495DFDB",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr sct - KICK-OFF",
+        "definitionCode": "QV26-INSTR-SCT-KICK-OFF-5DBF1193",
+        "domain": "DPS",
+        "sourceRows": 13,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr sct - VARIA",
+        "definitionCode": "QV26-INSTR-SCT-VARIA-D13856BA",
+        "domain": "DPS",
+        "sourceRows": 13,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Journée des familles",
+        "definitionCode": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB",
+        "domain": "DPS",
+        "sourceRows": 6,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Journée des nouveaux habitants",
+        "definitionCode": "QV26-JOURNEE-DES-NOUVEAUX-HABITANTS-E7CDB734",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Mise à niveau annuelle OSR",
+        "definitionCode": "QV26-MISE-A-NIVEAU-ANNUELLE-OSR-9977BB10",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Nettoyage annuel caserne",
+        "definitionCode": "QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Noël des familles",
+        "definitionCode": "QV26-NOEL-DES-FAMILLES-F3E5E4E3",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Passeport-Vacances",
+        "definitionCode": "QV26-PASSEPORT-VACANCES-55E662D2",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Préparation concours de la FVSP",
+        "definitionCode": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Préparation cours de cadres SDIS Nord vaudois",
+        "definitionCode": "QV26-PREPARATION-COURS-DE-CADRES-SDIS-NORD-VAUDOIS-B96ED2B5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Préparation Revue Quinquennale",
+        "definitionCode": "QV26-PREPARATION-REVUE-QUINQUENNALE-51010471",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Préparation Xmas",
+        "definitionCode": "QV26-PREPARATION-XMAS-39727CE7",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Reconnaissance DPS",
+        "definitionCode": "QV26-RECONNAISSANCE-DPS-C5EFD73F",
+        "domain": "DPS",
+        "sourceRows": 7,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Recrutement cantonal",
+        "definitionCode": "QV26-RECRUTEMENT-CANTONAL-62C39398",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Refresh CI",
+        "definitionCode": "QV26-REFRESH-CI-1A3A4D1F",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Repas du Permanent",
+        "definitionCode": "QV26-REPAS-DU-PERMANENT-73FAEE93",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Revue Quinquennale SDIS Nord vaudois",
+        "definitionCode": "QV26-REVUE-QUINQUENNALE-SDIS-NORD-VAUDOIS-D4687112",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance commission d'instruction",
+        "definitionCode": "QV26-SEANCE-COMMISSION-D-INSTRUCTION-C422B338",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance de préparation Téléthon",
+        "definitionCode": "QV26-SEANCE-DE-PREPARATION-TELETHON-566F5A97",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance OSR",
+        "definitionCode": "QV26-SEANCE-OSR-69425BF1",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo du personnel DPS",
+        "definitionCode": "QV26-SEANCE-PHOTO-DU-PERSONNEL-DPS-B724AB97",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo personnel DPS B1",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-B1-BA4C9FBB",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo personnel DPS B2",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-B2-C4D907C6",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo personnel DPS C1",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-C1-D4083E20",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Sécurité feu · Fête Médiévale",
+        "definitionCode": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Sécurité feu・Fête Nationale",
+        "definitionCode": "QV26-SECURITE-FEU-FETE-NATIONALE-C29B7F0B",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Sécurité feu・les Zôtres Brandons",
+        "definitionCode": "QV26-SECURITE-FEU-LES-ZOTRES-BRANDONS-D97AC03D",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Souper annuel",
+        "definitionCode": "QV26-SOUPER-ANNUEL-31E8AC57",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Téléthon",
+        "definitionCode": "QV26-TELETHON-BA07D05D",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Test de sélection échelons I, II N'26",
+        "definitionCode": "QV26-TEST-DE-SELECTION-ECHELONS-I-II-N-26-782AA084",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "E",
+        "reason": "Toutes les lignes historiques sont inactives."
+      },
+      {
+        "activity": "Test de sélection NUOVO",
+        "definitionCode": "QV26-TEST-DE-SELECTION-NUOVO-F2DFA988",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Tir inter-unités",
+        "definitionCode": "QV26-TIR-INTER-UNITES-E27F621E",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Tour de France Femmes '26",
+        "definitionCode": "QV26-TOUR-DE-FRANCE-FEMMES-26-4BF12176",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Vision locale DPS",
+        "definitionCode": "QV26-VISION-LOCALE-DPS-EA8354D4",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DAP 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DAP 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DAP 3",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice DAP 4",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cursus CI DAP - module 1",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-1-00AE593E",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DAP - module 2",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-2-A9F30492",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DAP - module 3",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-3-F98571DB",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DAP - module 4",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-4-027EBCA6",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus CI DAP - module 5",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-5-0E5FEF66",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Exercice DAP 1",
+        "definitionCode": "QV26-EXERCICE-DAP-1-9890D687",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DAP 2",
+        "definitionCode": "QV26-EXERCICE-DAP-2-6285EF74",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DAP 3",
+        "definitionCode": "QV26-EXERCICE-DAP-3-618B0715",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DAP 4",
+        "definitionCode": "QV26-EXERCICE-DAP-4-46753B3A",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice DAP 5",
+        "definitionCode": "QV26-EXERCICE-DAP-5-195CBA90",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation cadres DAP",
+        "definitionCode": "QV26-FORMATION-CADRES-DAP-2B042598",
+        "domain": "DAP",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Reconnaissance DAP",
+        "definitionCode": "QV26-RECONNAISSANCE-DAP-BAA3FFE5",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance cadres",
+        "definitionCode": "QV26-SEANCE-CADRES-0972877C",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo du personnel DAP",
+        "definitionCode": "QV26-SEANCE-PHOTO-DU-PERSONNEL-DAP-E17BA848",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo personnel DAP",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DAP-A0F7204B",
+        "domain": "DAP",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance photo personnel DAP Y1",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DAP-Y1-40B161E2",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Soirée information DAP Y1",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y1-9C1AF689",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Soirée information DAP Y2",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y2-5AAA8CF4",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Soirée information DAP Y3",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y3-594760FB",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Soirée information DAP Y4",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y4-728FEE44",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Vision locale DAP",
+        "definitionCode": "QV26-VISION-LOCALE-DAP-F8783089",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Assemblée GVJSP",
+        "definitionCode": "QV26-ASSEMBLEE-GVJSP-8BBE58A9",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "G",
+        "reason": "SCOPE classe cette activité comme optionnelle; reconduction humaine requise."
+      },
+      {
+        "activity": "Championnat suisses JSP",
+        "definitionCode": "QV26-CHAMPIONNAT-SUISSES-JSP-2156FD86",
+        "domain": "JSP",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres formation groupée JSP",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-JSP-C9F22B73",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS03 - flamme 3 JSP",
+        "definitionCode": "QV26-COURS-JSP-JS03-FLAMME-3-JSP-FF520D88",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Cours JSP JS11 - Journée d'instruction JSP (après-midi)",
+        "definitionCode": "QV26-COURS-JSP-JS11-JOURNEE-D-INSTRUCTION-JSP-APRES-MIDI-953A1740",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS11 - Journée d'instruction JSP (matin)",
+        "definitionCode": "QV26-COURS-JSP-JS11-JOURNEE-D-INSTRUCTION-JSP-MATIN-B29F2187",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS12 - Journée d'instruction des Moniteurs Cadets",
+        "definitionCode": "QV26-COURS-JSP-JS12-JOURNEE-D-INSTRUCTION-DES-MONITEURS-C-86DB0273",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS21 - valorisation moniteurs - module I",
+        "definitionCode": "QV26-COURS-JSP-JS21-VALORISATION-MONITEURS-MODULE-I-C4F05BC3",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS22 - valorisation moniteurs - module II",
+        "definitionCode": "QV26-COURS-JSP-JS22-VALORISATION-MONITEURS-MODULE-II-ACAC9F4D",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS23 - formation moniteurs - simulateur (après-midi)",
+        "definitionCode": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-APRES--A4FA0328",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS23 - formation moniteurs - simulateur (matin)",
+        "definitionCode": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-MATIN-8E3AD201",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours JSP JS24 - valorisation moniteurs - module III",
+        "definitionCode": "QV26-COURS-JSP-JS24-VALORISATION-MONITEURS-MODULE-III-D8DEC6A2",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 10",
+        "definitionCode": "QV26-EXERCICE-JSP-10-8D3FE965",
+        "domain": "JSP",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 3",
+        "definitionCode": "QV26-EXERCICE-JSP-3-0AFB4398",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 4",
+        "definitionCode": "QV26-EXERCICE-JSP-4-E8680A47",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 5",
+        "definitionCode": "QV26-EXERCICE-JSP-5-AFD39D59",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 6",
+        "definitionCode": "QV26-EXERCICE-JSP-6-0F4137C4",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 7",
+        "definitionCode": "QV26-EXERCICE-JSP-7-FDFC679C",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 8",
+        "definitionCode": "QV26-EXERCICE-JSP-8-1A631BAF",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP 9",
+        "definitionCode": "QV26-EXERCICE-JSP-9-4C059910",
+        "domain": "JSP",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP Cadets 1",
+        "definitionCode": "QV26-EXERCICE-JSP-CADETS-1-0B869038",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice JSP Cadets 2",
+        "definitionCode": "QV26-EXERCICE-JSP-CADETS-2-DE49BBCD",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation CEMEA, module 1",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-1-345181CE",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation CEMEA, module 2",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-2-E7D2BFB8",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation CEMEA, module 3",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-3-4425518E",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation CEMEA, module 4",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-4-F7E51360",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation groupée JSP",
+        "definitionCode": "QV26-FORMATION-GROUPEE-JSP-9B5BDE99",
+        "domain": "JSP",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Grillades des JSP Nord vaudois",
+        "definitionCode": "QV26-GRILLADES-DES-JSP-NORD-VAUDOIS-FAB9001B",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Groupe de travail JSP",
+        "definitionCode": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E",
+        "domain": "JSP",
+        "sourceRows": 6,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance d'information JSP '26",
+        "definitionCode": "QV26-SEANCE-D-INFORMATION-JSP-26-8AF725E5",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance instruction JSP",
+        "definitionCode": "QV26-SEANCE-INSTRUCTION-JSP-49B17B96",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance interne cadres JSP",
+        "definitionCode": "QV26-SEANCE-INTERNE-CADRES-JSP-21EF2225",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Soirée des présidents JSP",
+        "definitionCode": "QV26-SOIREE-DES-PRESIDENTS-JSP-94AEF2C2",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Test flammes 1",
+        "definitionCode": "QV26-TEST-FLAMMES-1-620C8786",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Test flammes 2",
+        "definitionCode": "QV26-TEST-FLAMMES-2-2A7A6665",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours ECA FB01 - formation de base recrues",
+        "definitionCode": "QV26-COURS-ECA-FB01-FORMATION-DE-BASE-RECRUES-20723C97",
+        "domain": "FOBA",
+        "sourceRows": 2,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Entretien de collaboration avec Commandant",
+        "definitionCode": "QV26-ENTRETIEN-DE-COLLABORATION-AVEC-COMMANDANT-B80CFF32",
+        "domain": "FOBA",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Équipement personnel DPS + photo individuelle",
+        "definitionCode": "QV26-EQUIPEMENT-PERSONNEL-DPS-PHOTO-INDIVIDUELLE-1204623F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA",
+        "definitionCode": "QV26-EXERCICE-FOBA-2ED42E4A",
+        "domain": "FOBA",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 1",
+        "definitionCode": "QV26-EXERCICE-FOBA-1-F0BC308F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 10",
+        "definitionCode": "QV26-EXERCICE-FOBA-10-B13BB01B",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 2",
+        "definitionCode": "QV26-EXERCICE-FOBA-2-86E92B65",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 3",
+        "definitionCode": "QV26-EXERCICE-FOBA-3-F2E05A2F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 4",
+        "definitionCode": "QV26-EXERCICE-FOBA-4-FEF301C5",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 5",
+        "definitionCode": "QV26-EXERCICE-FOBA-5-63606E72",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 6",
+        "definitionCode": "QV26-EXERCICE-FOBA-6-2B762B67",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 7",
+        "definitionCode": "QV26-EXERCICE-FOBA-7-8157833F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 8",
+        "definitionCode": "QV26-EXERCICE-FOBA-8-AE81E3A7",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice FOBA 9",
+        "definitionCode": "QV26-EXERCICE-FOBA-9-9A33FAE7",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Introduction PIONNIER",
+        "definitionCode": "QV26-INTRODUCTION-PIONNIER-999BBC8C",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Remise équipement des recrues FOBA 1",
+        "definitionCode": "QV26-REMISE-EQUIPEMENT-DES-RECRUES-FOBA-1-65C22FF6",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Test annuel FOBA",
+        "definitionCode": "QV26-TEST-ANNUEL-FOBA-7BE50D02",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "BLS",
+        "definitionCode": "QV26-BLS-34715DC9",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "category": "E",
+        "reason": "Toutes les lignes historiques sont inactives."
+      },
+      {
+        "activity": "Cours de cadres Formation ABC",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-ABC-308D766F",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "E",
+        "reason": "Toutes les lignes historiques sont inactives."
+      },
+      {
+        "activity": "Cours de cadres Formation cadres ABC",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-CADRES-ABC-4688CD68",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres recyclage BLS",
+        "definitionCode": "QV26-COURS-DE-CADRES-RECYCLAGE-BLS-5AA9AC4A",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours ECA SA10 - cours de cadres - répondant de la formation antichute",
+        "definitionCode": "QV26-COURS-ECA-SA10-COURS-DE-CADRES-REPONDANT-DE-LA-FORMA-5E614096",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Cours ECA SA10 - répondant de la formation antichute",
+        "definitionCode": "QV26-COURS-ECA-SA10-REPONDANT-DE-LA-FORMATION-ANTICHUTE-7F8EFFD8",
+        "domain": "FOSPEC",
+        "sourceRows": 4,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Cours ECA SA11 - recyclage répondant de la formation antichute",
+        "definitionCode": "QV26-COURS-ECA-SA11-RECYCLAGE-REPONDANT-DE-LA-FORMATION-A-2354EFF8",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "category": "D",
+        "reason": "Toutes les lignes sont explicitement HORS SDIS; aucune reconduction automatique."
+      },
+      {
+        "activity": "Cursus OFSI - formation de base",
+        "definitionCode": "QV26-CURSUS-OFSI-FORMATION-DE-BASE-E06A786F",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus opérateur VPC - module 1",
+        "definitionCode": "QV26-CURSUS-OPERATEUR-VPC-MODULE-1-ECEE563E",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Exercice OFSI・infrastructures CFF",
+        "definitionCode": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574",
+        "domain": "FOSPEC",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation ABC",
+        "definitionCode": "QV26-FORMATION-ABC-A2DC927B",
+        "domain": "FOSPEC",
+        "sourceRows": 3,
+        "category": "E",
+        "reason": "Toutes les lignes historiques sont inactives."
+      },
+      {
+        "activity": "Formation antichute",
+        "definitionCode": "QV26-FORMATION-ANTICHUTE-4D06A7F8",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation cadres ABC",
+        "definitionCode": "QV26-FORMATION-CADRES-ABC-1829EE30",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation NAC 1.1",
+        "definitionCode": "QV26-FORMATION-NAC-1-1-53CE66B7",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation NAC 1.2",
+        "definitionCode": "QV26-FORMATION-NAC-1-2-5A7F1A12",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 1.1",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-1-659BBC90",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 1.2",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-2-44AAB164",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 1.3",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-3-2CD0B182",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 1.4",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-4-C69575A3",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 2.1",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-1-94666EC6",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 2.2",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-2-8C4B05CB",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 2.3",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-3-8EFB3C59",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation opérateur VPC 2.4",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-4-C93ABF2A",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation Travail en hauteur et antichute",
+        "definitionCode": "QV26-FORMATION-TRAVAIL-EN-HAUTEUR-ET-ANTICHUTE-07B1FB7F",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Instr demi-sct - ABC",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-ABC-C49C7121",
+        "domain": "FOSPEC",
+        "sourceRows": 10,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr demi-sct - PIONNIER",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59",
+        "domain": "FOSPEC",
+        "sourceRows": 10,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr sct - ABC",
+        "definitionCode": "QV26-INSTR-SCT-ABC-6026BBEC",
+        "domain": "FOSPEC",
+        "sourceRows": 5,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Instr sct - PIONNIER CSU-nvb",
+        "definitionCode": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1",
+        "domain": "FOSPEC",
+        "sourceRows": 5,
+        "category": "C",
+        "reason": "Instruction section/demi-section reconnue par le moteur QUO VADIS."
+      },
+      {
+        "activity": "Journée des Commandants ABC",
+        "definitionCode": "QV26-JOURNEE-DES-COMMANDANTS-ABC-E74C5612",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Recyclage BLS",
+        "definitionCode": "QV26-RECYCLAGE-BLS-3A2ED7C4",
+        "domain": "FOSPEC",
+        "sourceRows": 6,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Conduite TP9000, formation continue 1.0",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-0-E4E9FC21",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Conduite TP9000, formation continue 1.1",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-1-47FCC17A",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Conduite TP9000, formation continue 1.2",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90",
+        "domain": "AUTO",
+        "sourceRows": 7,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Conduite TP9000, formation continue 2.0",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-0-E3E851DD",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Conduite TP9000, formation continue 2.1",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-1-695292DE",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Conduite TP9000, formation continue 2.2",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E",
+        "domain": "AUTO",
+        "sourceRows": 8,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice CAR",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-CAR-FB6A81CD",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres exercice TRUCK",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-TRUCK-220DF695",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres Formateurs MEA 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-2-40EAD3D2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres formation pilote BAT 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-PILOTE-BAT-1-61D567E4",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cours de cadres formation pilote BAT 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-PILOTE-BAT-2-E52B954F",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cursus cond VL - module 2.0",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-2-0-3115D5A1",
+        "domain": "AUTO",
+        "sourceRows": 7,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus cond VL - module 3.1",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-3-1-D3CE2E10",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus cond VL - module 3.2",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-3-2-D54F7BB2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus cond VL - module 4.1",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-4-1-D3FF03EE",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus cond VL - module 4.2",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-4-2-CB5286E9",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus élévateur à timon S2 - module 1",
+        "definitionCode": "QV26-CURSUS-ELEVATEUR-A-TIMON-S2-MODULE-1-5D474C4F",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 2.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-2-1-E0ED946A",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 2.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-2-2-EEB4B060",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 3.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-3-1-C05FC618",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 3.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-3-2-D333D87D",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 4.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-4-1-9BBB5C5B",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 4.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-4-2-15869F61",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 5.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-5-1-9DB3C5FC",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 5.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-5-2-6FD93D00",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 6.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-6-1-3DA3F9CF",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 6.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-6-2-015FCFEE",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 7.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-7-1-07AD39A2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 7.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-7-2-C6EB0687",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 8.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-8-1-FCB57273",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 8.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-8-2-206599E2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 9.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-9-1-F3816B0D",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus MEA - module 9.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-9-2-83347F5E",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus TP9 - conduite libre",
+        "definitionCode": "QV26-CURSUS-TP9-CONDUITE-LIBRE-5FE77FE2",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus TP9 - module 1",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-1-198A1A31",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus TP9 - module 2",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-2-6ACECBE7",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus TP9 - module 3.1",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-3-1-A485728E",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus TP9 - module 3.2",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-3-2-56F3C734",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Exercice CAR 1.1",
+        "definitionCode": "QV26-EXERCICE-CAR-1-1-B757E011",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice CAR 1.2",
+        "definitionCode": "QV26-EXERCICE-CAR-1-2-0B60C469",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice CAR 1.3",
+        "definitionCode": "QV26-EXERCICE-CAR-1-3-27A2CDBA",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice CAR 1.4",
+        "definitionCode": "QV26-EXERCICE-CAR-1-4-7289BE09",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice CAR 1.5",
+        "definitionCode": "QV26-EXERCICE-CAR-1-5-5D540753",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice TRUCK 1.1",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-1-202AC9BA",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice TRUCK 1.2",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-2-B2637E39",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice TRUCK 1.3",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-3-94F967E5",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice TRUCK 1.4",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-4-6B104BDE",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation grutier 1.0",
+        "definitionCode": "QV26-FORMATION-GRUTIER-1-0-035858B9",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation grutier 1.2",
+        "definitionCode": "QV26-FORMATION-GRUTIER-1-2-DA4AD8FE",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation grutier 2.0",
+        "definitionCode": "QV26-FORMATION-GRUTIER-2-0-1FD0227E",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation grutier 2.2",
+        "definitionCode": "QV26-FORMATION-GRUTIER-2-2-9B0CC0FE",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation MEA 1.0",
+        "definitionCode": "QV26-FORMATION-MEA-1-0-7408CDDA",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation MEA 1.1",
+        "definitionCode": "QV26-FORMATION-MEA-1-1-5CB7E5CE",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation MEA 1.2",
+        "definitionCode": "QV26-FORMATION-MEA-1-2-7A5BA540",
+        "domain": "AUTO",
+        "sourceRows": 9,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation MEA 2.0",
+        "definitionCode": "QV26-FORMATION-MEA-2-0-E0CF962E",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation MEA 2.1",
+        "definitionCode": "QV26-FORMATION-MEA-2-1-AEA25DC7",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation MEA 2.2",
+        "definitionCode": "QV26-FORMATION-MEA-2-2-83EDC4A8",
+        "domain": "AUTO",
+        "sourceRows": 9,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation pilote BAT 1",
+        "definitionCode": "QV26-FORMATION-PILOTE-BAT-1-27197BC2",
+        "domain": "AUTO",
+        "sourceRows": 6,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation pilote BAT 2",
+        "definitionCode": "QV26-FORMATION-PILOTE-BAT-2-F69F375C",
+        "domain": "AUTO",
+        "sourceRows": 6,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation véhicule d'urgence",
+        "definitionCode": "QV26-FORMATION-VEHICULE-D-URGENCE-867B1995",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Test de sélection cond PL N'26",
+        "definitionCode": "QV26-TEST-DE-SELECTION-COND-PL-N-26-EE280D9B",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Cursus PAPR - module 2",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-2-9A012A39",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus PAPR - module 3",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-3-88F70409",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus PAPR - module 4",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-4-5EC1568A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus PAPR - module 5",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-5-298B150A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus PAPR - module 6",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-6-CBCCBFD9",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Cursus PAPR - module 7",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-7-E2FEB769",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "B",
+        "reason": "Cursus reconnu; SCOPE conditionne la reconduction à son activation annuelle."
+      },
+      {
+        "activity": "Exercice PR 1.1",
+        "definitionCode": "QV26-EXERCICE-PR-1-1-30B1E01A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 1.2",
+        "definitionCode": "QV26-EXERCICE-PR-1-2-A4FDA43C",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 1.3",
+        "definitionCode": "QV26-EXERCICE-PR-1-3-391FD1A4",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 1.4",
+        "definitionCode": "QV26-EXERCICE-PR-1-4-05672DF4",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 1.5",
+        "definitionCode": "QV26-EXERCICE-PR-1-5-9E9A60D0",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 1.6",
+        "definitionCode": "QV26-EXERCICE-PR-1-6-09414D98",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 2.1",
+        "definitionCode": "QV26-EXERCICE-PR-2-1-45588F47",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 2.2",
+        "definitionCode": "QV26-EXERCICE-PR-2-2-4CAB2E94",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 2.3",
+        "definitionCode": "QV26-EXERCICE-PR-2-3-5B63EA54",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 2.4",
+        "definitionCode": "QV26-EXERCICE-PR-2-4-68D0B0F1",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 2.5",
+        "definitionCode": "QV26-EXERCICE-PR-2-5-10E2D2B9",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 2.6",
+        "definitionCode": "QV26-EXERCICE-PR-2-6-38AAE638",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 3.1",
+        "definitionCode": "QV26-EXERCICE-PR-3-1-D96B09DB",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 3.2",
+        "definitionCode": "QV26-EXERCICE-PR-3-2-9759EEEC",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 3.3",
+        "definitionCode": "QV26-EXERCICE-PR-3-3-9A2F199A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 3.4",
+        "definitionCode": "QV26-EXERCICE-PR-3-4-E1C6C663",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 3.5",
+        "definitionCode": "QV26-EXERCICE-PR-3-5-DB2C8980",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 3.6",
+        "definitionCode": "QV26-EXERCICE-PR-3-6-ECD69510",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 4.1",
+        "definitionCode": "QV26-EXERCICE-PR-4-1-C882C1EA",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 4.2",
+        "definitionCode": "QV26-EXERCICE-PR-4-2-3E5EE567",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 4.3",
+        "definitionCode": "QV26-EXERCICE-PR-4-3-E71C19DA",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 4.4",
+        "definitionCode": "QV26-EXERCICE-PR-4-4-C4008BC3",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 4.5",
+        "definitionCode": "QV26-EXERCICE-PR-4-5-7CF12C15",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR 4.6",
+        "definitionCode": "QV26-EXERCICE-PR-4-6-BBE76EDB",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Exercice PR-ABC",
+        "definitionCode": "QV26-EXERCICE-PR-ABC-75229C6D",
+        "domain": "PR",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Formation engagement pratique PR",
+        "definitionCode": "QV26-FORMATION-ENGAGEMENT-PRATIQUE-PR-98965239",
+        "domain": "PR",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Piste entraînement PAPR 1",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-1-F7485257",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Piste entraînement PAPR 2",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-2-694EA573",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Piste entraînement PAPR 3",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-3-20D2082F",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Piste entraînement PAPR 4",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-4-CB7628F6",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Séance préposés APR",
+        "definitionCode": "QV26-SEANCE-PREPOSES-APR-1BD9CB6F",
+        "domain": "PR",
+        "sourceRows": 3,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Sortie des formateurs PR",
+        "definitionCode": "QV26-SORTIE-DES-FORMATEURS-PR-5C9DE16E",
+        "domain": "PR",
+        "sourceRows": 1,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      },
+      {
+        "activity": "Test de sélection PAPR N'27",
+        "definitionCode": "QV26-TEST-DE-SELECTION-PAPR-N-27-A9E7D22D",
+        "domain": "PR",
+        "sourceRows": 2,
+        "category": "A",
+        "reason": "Domaine canonique reconnu; le moteur de coverage classe par défaut l’activité comme annuelle."
+      }
+    ],
+    "totals": {
+      "G": 3,
+      "D": 13,
+      "H": 6,
+      "A": 210,
+      "B": 56,
+      "E": 5,
+      "C": 9
+    },
+    "trueMoaCount": 9
+  },
+  "undatedFoca": {
+    "rows": [
+      {
+        "sourceRow": 924,
+        "activity": "Groupe de travail FOCA",
+        "time": "16:00-19:00",
+        "statCom": "0175F7",
+        "location": "Caserne G1",
+        "room": "Salle EM",
+        "verdict": "DATE NON DEMONTREE — arbitrage requis"
+      },
+      {
+        "sourceRow": 925,
+        "activity": "Groupe de travail FOCA",
+        "time": "16:00-19:00",
+        "statCom": "0175F7",
+        "location": "Caserne G1",
+        "room": "Salle EM",
+        "verdict": "DATE NON DEMONTREE — arbitrage requis"
+      },
+      {
+        "sourceRow": 926,
+        "activity": "Groupe de travail FOCA",
+        "time": "16:00-19:00",
+        "statCom": "0175F7",
+        "location": "Caserne G1",
+        "room": "Salle EM",
+        "verdict": "DATE NON DEMONTREE — arbitrage requis"
+      },
+      {
+        "sourceRow": 927,
+        "activity": "Groupe de travail FOCA",
+        "time": "16:00-19:00",
+        "statCom": "0175F7",
+        "location": "Caserne G1",
+        "room": "Salle EM",
+        "verdict": "DATE NON DEMONTREE — arbitrage requis"
+      },
+      {
+        "sourceRow": 928,
+        "activity": "Groupe de travail FOCA",
+        "time": "16:00-19:00",
+        "statCom": "0175F7",
+        "location": "Caserne G1",
+        "room": "Salle EM",
+        "verdict": "DATE NON DEMONTREE — arbitrage requis"
+      },
+      {
+        "sourceRow": 929,
+        "activity": "Groupe de travail FOCA",
+        "time": "16:00-19:00",
+        "statCom": "0175F7",
+        "location": "Caserne G1",
+        "room": "Salle EM",
+        "verdict": "DATE NON DEMONTREE — arbitrage requis"
+      }
+    ],
+    "total": 6,
+    "catalogueDefinitionFound": "QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38",
+    "statCom": "0175F7",
+    "dateFound": false
+  },
+  "publicCandidates": {
+    "rows": [
+      {
+        "code": "DPS-GEN",
+        "classification": "CORRESPONDANCE CANONIQUE RETROUVEE",
+        "evidence": "database/migrations/20260923_scope_person_qualifications_c3_b.sql"
+      },
+      {
+        "code": "DAP-GEN",
+        "classification": "CORRESPONDANCE CANONIQUE RETROUVEE",
+        "evidence": "database/migrations/20260923_scope_person_qualifications_c3_b.sql"
+      },
+      {
+        "code": "JSP-GEN",
+        "classification": "CORRESPONDANCE CANONIQUE RETROUVEE",
+        "evidence": "database/migrations/20260923_scope_person_qualifications_c3_b.sql"
+      },
+      {
+        "code": "JSP-CAD",
+        "classification": "REELLEMENT INCONNUE",
+        "evidence": "Le rôle JSP CAD reste à arbitrer."
+      },
+      {
+        "code": "FOCO-DPS",
+        "classification": "VALEUR EXTERIEURE AU REFERENTIEL PUBLIC",
+        "evidence": "Dimension statistique, pas qualification personnelle."
+      },
+      {
+        "code": "FOCO-DAP",
+        "classification": "VALEUR EXTERIEURE AU REFERENTIEL PUBLIC",
+        "evidence": "Dimension statistique, pas qualification personnelle."
+      },
+      {
+        "code": "FOCO-JSP",
+        "classification": "VALEUR EXTERIEURE AU REFERENTIEL PUBLIC",
+        "evidence": "Dimension statistique, pas qualification personnelle."
+      },
+      {
+        "code": "FOCA-GEN",
+        "classification": "REELLEMENT INCONNUE",
+        "evidence": "FOCA/GEN ne permet pas de conclure à un niveau ou parcours."
+      },
+      {
+        "code": "FOSPEC-GEN",
+        "classification": "VALEUR EXTERIEURE AU REFERENTIEL PUBLIC",
+        "evidence": "Périmètre statistique, pas qualification personnelle."
+      },
+      {
+        "code": "PR-GEN",
+        "classification": "REELLEMENT INCONNUE",
+        "evidence": "PR/GEN ne doit pas être assimilé automatiquement à PAPR."
+      },
+      {
+        "code": "PR-PAPR",
+        "classification": "CORRESPONDANCE CANONIQUE RETROUVEE",
+        "evidence": "database/migrations/20260923_scope_person_qualifications_c3_b.sql"
+      },
+      {
+        "code": "PR-PABC",
+        "classification": "CORRESPONDANCE CANONIQUE RETROUVEE",
+        "evidence": "database/migrations/20260923_scope_person_qualifications_c3_b.sql"
+      }
+    ],
+    "totals": {
+      "CORRESPONDANCE CANONIQUE RETROUVEE": 5,
+      "REELLEMENT INCONNUE": 3,
+      "VALEUR EXTERIEURE AU REFERENTIEL PUBLIC": 4
+    }
+  },
+  "roles": {
+    "referential": true,
+    "automaticRequirements": true,
+    "evidence": [
+      "scope_event_role_definitions",
+      "scope_event_role_aliases",
+      "scope_activity_role_requirements"
+    ],
+    "assignments2027Complete": false
+  },
+  "resources": {
+    "conflictDimension": true,
+    "automaticRequirementsComplete": false,
+    "evidence": [
+      "resourceCodes",
+      "RESOURCE_CONFLICT",
+      "scope_activity_location_requirements"
+    ]
+  },
+  "calendarRules": {
+    "officialCalendarsRetained": true,
+    "genericWeekdayPolicies": true,
+    "dayStatuses": [
+      "PUBLIC_HOLIDAY",
+      "PUBLIC_HOLIDAY_EVE",
+      "SCHOOL_VACATION",
+      "SCHOOL_VACATION_EVE"
+    ],
+    "neutralizedPeriods": true,
+    "ctaHolidayExtension": false
+  },
+  "recoveryMatrix": [
+    {
+      "subject": "Stat.Com canonique",
+      "known": "OUI",
+      "businessSource": "_scope-statcom-referential.js + scope_statcom_referentiel",
+      "implementation": "OUI",
+      "technicalEvidence": "Schéma, repositories, service, API, UI, rapports et tests",
+      "gap": "Aucun second référentiel C19",
+      "action": "Consommer SCOPE",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Historique 010JY3 → 010JC1",
+      "known": "OUI",
+      "businessSource": "Décision SCOPE effective au 01.01.2026",
+      "implementation": "OUI",
+      "technicalEvidence": "STATCOM_SUCCESSIONS + résolution datée",
+      "gap": "Aucun",
+      "action": "Conserver code source et snapshot canonique",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Sections DPS",
+      "known": "OUI",
+      "businessSource": "SCOPE QUO-VADIS-CORE-1",
+      "implementation": "OUI",
+      "technicalEvidence": "scope_quo_vadis_dps_organisation_versions.sections",
+      "gap": "Aucun",
+      "action": "Réutiliser les versions actives",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Demi-sections Nxxa/Nxxb",
+      "known": "OUI",
+      "businessSource": "SCOPE QUO-VADIS-CORE-1",
+      "implementation": "OUI",
+      "technicalEvidence": "Seeds G1/C1/B1/B2 et tests core",
+      "gap": "Aucun",
+      "action": "Réutiliser la convention",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Versionnement CTA",
+      "known": "OUI",
+      "businessSource": "SCOPE QUO-VADIS-CORE-1",
+      "implementation": "OUI",
+      "technicalEvidence": "valid_from, valid_to, unique(oi_code, valid_from)",
+      "gap": "Administration limitée à la lecture dans l’UI",
+      "action": "Conserver la sélection temporelle",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Capacité G1 demi-section = 8",
+      "known": "OUI",
+      "businessSource": "Décision métier C19 R1",
+      "implementation": "NON",
+      "technicalEvidence": "Aucune capacité portée par les versions DPS",
+      "gap": "Contrôle absent",
+      "action": "Implémenter au lot ultérieur",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Capacité G1 section = 15",
+      "known": "OUI",
+      "businessSource": "Décision métier C19 R1",
+      "implementation": "NON",
+      "technicalEvidence": "Aucune capacité portée par les versions DPS",
+      "gap": "Contrôle absent",
+      "action": "Implémenter au lot ultérieur",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Capacité C1/B1/B2",
+      "known": "OUI: aucune limite",
+      "businessSource": "Décision métier C19 R1",
+      "implementation": "OUI par absence de règle",
+      "technicalEvidence": "Aucun 8/15 trouvé hors G1",
+      "gap": "Aucun",
+      "action": "Ne jamais généraliser G1",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Réserve G1 N06",
+      "known": "OUI",
+      "businessSource": "SCOPE QUO-VADIS-CORE-1",
+      "implementation": "PARTIEL",
+      "technicalEvidence": "N06 reserve=true, sans halfSections",
+      "gap": "Affectation/recommandation non automatisée",
+      "action": "Garder une affectation réelle et décision humaine",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Permanence CTA vendredi 18:00 → lundi 06:00",
+      "known": "OUI",
+      "businessSource": "Décision métier C19 R1",
+      "implementation": "NON",
+      "technicalEvidence": "Aucun modèle/algorithme retrouvé",
+      "gap": "Automatisme absent",
+      "action": "Implémenter séparément",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Exception permanence jours fériés",
+      "known": "PARTIEL",
+      "businessSource": "Principe d’adaptation connu",
+      "implementation": "NON",
+      "technicalEvidence": "Aucune règle exacte retrouvée",
+      "gap": "Détail de prolongation non démontré",
+      "action": "Conserver à confirmer",
+      "moaArbitration": "OUI"
+    },
+    {
+      "subject": "Tournus CTA",
+      "known": "OUI comme notion distincte",
+      "businessSource": "Décisions métier SCOPE",
+      "implementation": "NON",
+      "technicalEvidence": "Aucun ordre/algorithme consommable retrouvé",
+      "gap": "Implémentation absente",
+      "action": "Récupérer/implémenter sans fusion",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Tournus demi-sections",
+      "known": "OUI comme notion distincte",
+      "businessSource": "Décisions métier SCOPE",
+      "implementation": "NON",
+      "technicalEvidence": "Aucun ordre/algorithme consommable retrouvé",
+      "gap": "Implémentation absente",
+      "action": "Récupérer/implémenter séparément",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Portée section/demi-section",
+      "known": "OUI",
+      "businessSource": "SCOPE coverage + catalogue",
+      "implementation": "OUI",
+      "technicalEvidence": "instructionKind section/demi-section; définitions distinctes",
+      "gap": "Cible Nxx/Nxxa/b à enrichir lors de la génération",
+      "action": "Conserver portée partielle",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Exercice DPS FULL_OI",
+      "known": "OUI",
+      "businessSource": "Moteur de compatibilité C19",
+      "implementation": "OUI",
+      "technicalEvidence": "coverage FULL_OI + FULL_OI_CONFLICT",
+      "gap": "Aucun",
+      "action": "Conserver",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "JSP/DPS même site",
+      "known": "OUI",
+      "businessSource": "Moteur de compatibilité C19",
+      "implementation": "OUI",
+      "technicalEvidence": "JSP_DPS_DEPENDENCY sur même OI et chevauchement",
+      "gap": "Aucun blocage global",
+      "action": "Conserver",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Indépendance des OI",
+      "known": "OUI",
+      "businessSource": "Fondations canoniques + moteur C19",
+      "implementation": "OUI",
+      "technicalEvidence": "organisationUnit et sameUnit",
+      "gap": "Aucun",
+      "action": "Conserver",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Rôles",
+      "known": "OUI référentiel",
+      "businessSource": "C3-B + catalogue annuel",
+      "implementation": "PARTIEL",
+      "technicalEvidence": "role definitions, aliases, role requirements",
+      "gap": "Affectations par définition incomplètes",
+      "action": "Configurer sans inventer",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Ressources",
+      "known": "OUI au niveau conflit",
+      "businessSource": "Catalogue fonctionnel C19",
+      "implementation": "PARTIEL",
+      "technicalEvidence": "resourceCodes + RESOURCE_CONFLICT",
+      "gap": "Pas de référentiel/exigences automatiques complets",
+      "action": "Configurer sans inventer",
+      "moaArbitration": "NON"
+    },
+    {
+      "subject": "Règles calendaires",
+      "known": "OUI",
+      "businessSource": "Catalogue fonctionnel + QUO VADIS coverage",
+      "implementation": "PARTIEL",
+      "technicalEvidence": "weekdays, dayStatuses, périodes neutralisées",
+      "gap": "Exception CTA fériée absente",
+      "action": "Réutiliser les règles génériques",
+      "moaArbitration": "OUI pour l’exception CTA seulement"
+    }
+  ],
+  "oldGateRequalification": [
+    {
+      "oldVerdict": "Stat.Com partiel / 39 anomalies",
+      "evidence": "Référentiel SCOPE complet et règle HORS SDIS",
+      "newVerdict": "Référentiel implémenté; A=26, B=1, C=12, D=0"
+    },
+    {
+      "oldVerdict": "CTA inconnu",
+      "evidence": "Organisation versionnée, sections, demi-sections et réserve",
+      "newVerdict": "Structure connue et implémentée; capacités/permanence/tournus restent des écarts d’implémentation"
+    },
+    {
+      "oldVerdict": "302 arbitrages",
+      "evidence": "Moteur SCOPE de coverage, cursus, règles CTA et marqueurs HORS SDIS",
+      "newVerdict": "9 arbitrages/insuffisances résiduels, pas 302"
+    },
+    {
+      "oldVerdict": "12 publics non résolus",
+      "evidence": "Migration C3-B",
+      "newVerdict": "5 canoniques retrouvés, 4 valeurs non-Public, 3 réellement inconnus"
+    },
+    {
+      "oldVerdict": "Rôles/ressources absents",
+      "evidence": "Référentiels et exigences du catalogue",
+      "newVerdict": "Référentiels présents; affectations 2027 incomplètes"
+    }
+  ],
+  "residualMoa": [
+    {
+      "subject": "Stat.Com activités SDIS",
+      "count": 12,
+      "detail": "5 activités internes sans code démontré"
+    },
+    {
+      "subject": "EMSEA",
+      "count": 1,
+      "detail": "Correspondance canonique à confirmer"
+    },
+    {
+      "subject": "Dates Groupe de travail FOCA",
+      "count": 6,
+      "detail": "Six occurrences sans date"
+    },
+    {
+      "subject": "Publics réellement inconnus",
+      "count": 3,
+      "detail": "JSP-CAD, PR-GEN, FOCA-GEN"
+    },
+    {
+      "subject": "Reconduction 2027",
+      "count": 9,
+      "detail": "3 optionnelles + 6 sans domaine canonique"
+    },
+    {
+      "subject": "Exception CTA jours fériés",
+      "count": 1,
+      "detail": "Règle exacte non démontrée"
+    }
+  ],
+  "knownNotImplemented": [
+    "Capacités G1 8/15",
+    "Affectation/recommandation N06",
+    "Permanence CTA vendredi 18:00 à lundi 06:00",
+    "Tournus CTA",
+    "Tournus demi-sections",
+    "Exception fériée CTA",
+    "Affectations exhaustives rôles/ressources 2027"
+  ],
+  "findings": {
+    "p1": [],
+    "p2": [
+      "Les capacités G1 8/15 ne sont pas implémentées.",
+      "La permanence et les deux tournus CTA ne sont pas implémentés.",
+      "EMSEA n’a pas de correspondance canonique démontrée.",
+      "Douze lignes SDIS restent sans Stat.Com.",
+      "Six occurrences FOCA restent sans date.",
+      "Trois candidats Public restent réellement inconnus."
+    ]
+  },
+  "targetedTests": [
+    {
+      "command": "node scripts/scope-c19-preprod-gate-1-r1-tests.js",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/scope-quo-vadis-core-1-tests.js",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/scope-functional-catalog-c19-tests.js",
+      "result": "PASS 9/9"
+    },
+    {
+      "command": "node scripts/scope-statcom-referential-config-1-tests.js",
+      "result": "PARTIAL 11/12",
+      "note": "Échec préexistant du contrôle textuel size: 'A4'; le renderer courant utilise size: [pageW, pageH]. Le PDF est produit."
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ]
+}

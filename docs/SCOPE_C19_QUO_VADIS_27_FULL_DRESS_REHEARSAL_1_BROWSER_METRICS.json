@@ -1,0 +1,3940 @@
+{
+  "scope": "C19-QUO-VADIS-27-FULL-DRESS-REHEARSAL-1",
+  "generatedAt": "2026-09-29T09:12:56.021Z",
+  "url": "http://127.0.0.1:4186/?preprod=1",
+  "globalVerdict": "PASS",
+  "widths": [
+    1500,
+    1150,
+    960,
+    800
+  ],
+  "checks": 48,
+  "screens": {
+    "1": {
+      "verdict": "PASS",
+      "summary": "345 définitions; codes métier canoniques; externes sans code ni Stat.Com.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 392.7
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 196.3
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Catalogue annuel",
+          "screen": 1,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 1212,
+              "overflowX": "visible",
+              "scrollWidth": 1212
+            }
+          ],
+          "viewportWidth": 1500,
+          "visibleControls": 361,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 423
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 138
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Catalogue annuel",
+          "screen": 1,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 862,
+              "overflowX": "auto",
+              "scrollWidth": 863
+            }
+          ],
+          "viewportWidth": 1150,
+          "visibleControls": 361,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 446.3
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 218.7
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Catalogue annuel",
+          "screen": 1,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 672,
+              "overflowX": "auto",
+              "scrollWidth": 685
+            }
+          ],
+          "viewportWidth": 960,
+          "visibleControls": 361,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 509
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 250
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Catalogue annuel",
+          "screen": 1,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 766,
+              "overflowX": "auto",
+              "scrollWidth": 766
+            }
+          ],
+          "viewportWidth": 800,
+          "visibleControls": 361,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "2": {
+      "verdict": "PASS",
+      "summary": "Présentation et alignements professionnels; primitives à 36 px.",
+      "checks": [
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Stat.Com",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 319.3
+            },
+            {
+              "height": 36,
+              "label": "Code",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 268.2
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 173.7
+            },
+            {
+              "height": 36,
+              "label": "Famille",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 173.7
+            },
+            {
+              "height": 36,
+              "label": "Type d’événement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 199.2
+            },
+            {
+              "height": 36,
+              "label": "Occurrences habituelles",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 180
+            },
+            {
+              "height": 36,
+              "label": "Sessions constitutives par occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 260
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 476.7
+            },
+            {
+              "height": 36,
+              "label": "Durée (minutes)",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 184.7
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 476.7
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 393.8
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 184.7
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 282
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 184.7
+            },
+            {
+              "height": 36,
+              "label": "Cible administrée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 238.8
+            },
+            {
+              "height": 36,
+              "label": "Libellé de la Cible",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 298.5
+            },
+            {
+              "height": 36,
+              "label": "Public administré",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 238.8
+            },
+            {
+              "height": 36,
+              "label": "Libellé du Public",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 298.5
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Définition permanente",
+          "screen": 2,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 42,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Stat.Com",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 269.3
+            },
+            {
+              "height": 36,
+              "label": "Code",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 269.3
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 269.3
+            },
+            {
+              "height": 36,
+              "label": "Famille",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 269.3
+            },
+            {
+              "height": 36,
+              "label": "Type d’événement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 269.3
+            },
+            {
+              "height": 36,
+              "label": "Occurrences habituelles",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 180
+            },
+            {
+              "height": 36,
+              "label": "Sessions constitutives par occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 260
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 535.3
+            },
+            {
+              "height": 36,
+              "label": "Durée (minutes)",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 262.7
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 399
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 316.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 262.7
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 262.7
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 262.7
+            },
+            {
+              "height": 36,
+              "label": "Cible administrée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 262.2
+            },
+            {
+              "height": 36,
+              "label": "Libellé de la Cible",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 327.7
+            },
+            {
+              "height": 36,
+              "label": "Public administré",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 262.2
+            },
+            {
+              "height": 36,
+              "label": "Libellé du Public",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 327.7
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Définition permanente",
+          "screen": 2,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 42,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Stat.Com",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Code",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Famille",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Type d’événement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Occurrences habituelles",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Sessions constitutives par occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 408.7
+            },
+            {
+              "height": 36,
+              "label": "Durée (minutes)",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 199.3
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 304
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 221.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 199.3
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 199.3
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 199.3
+            },
+            {
+              "height": 36,
+              "label": "Cible administrée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 177.7
+            },
+            {
+              "height": 36,
+              "label": "Libellé de la Cible",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 222.2
+            },
+            {
+              "height": 36,
+              "label": "Public administré",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 177.7
+            },
+            {
+              "height": 36,
+              "label": "Libellé du Public",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 222.2
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Définition permanente",
+          "screen": 2,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 42,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Stat.Com",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Code",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Famille",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Type d’événement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Occurrences habituelles",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Sessions constitutives par occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 712
+            },
+            {
+              "height": 36,
+              "label": "Durée (minutes)",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 712
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 712
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 629.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 712
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 712
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 712
+            },
+            {
+              "height": 36,
+              "label": "Cible administrée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Libellé de la Cible",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Public administré",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Libellé du Public",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Définition permanente",
+          "screen": 2,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 42,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "3": {
+      "verdict": "PASS",
+      "summary": "Automatismes lisibles; multi-valeurs distinguées; protections calendaires visibles.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lundi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Mardi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Mercredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Jeudi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Vendredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Samedi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Dimanche",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 162
+            },
+            {
+              "height": 36,
+              "label": "Jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 288
+            },
+            {
+              "height": 36,
+              "label": "Veille de jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 288
+            },
+            {
+              "height": 36,
+              "label": "Vacances scolaires",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 288
+            },
+            {
+              "height": 36,
+              "label": "Veille de vacances",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 288
+            },
+            {
+              "height": 36,
+              "label": "Importance pour le placement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 293.1
+            },
+            {
+              "height": 76,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 307.8
+            },
+            {
+              "height": 76,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 340
+            },
+            {
+              "height": 36,
+              "label": "Contraintes horaires",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 205.2
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Automatismes",
+          "screen": 3,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 32,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lundi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Mardi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Mercredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Jeudi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Vendredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Samedi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Dimanche",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 200.5
+            },
+            {
+              "height": 36,
+              "label": "Veille de jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 200.5
+            },
+            {
+              "height": 36,
+              "label": "Vacances scolaires",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 200.5
+            },
+            {
+              "height": 36,
+              "label": "Veille de vacances",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 200.5
+            },
+            {
+              "height": 36,
+              "label": "Importance pour le placement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 410
+            },
+            {
+              "height": 76,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 410
+            },
+            {
+              "height": 76,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Contraintes horaires",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 410
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Automatismes",
+          "screen": 3,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 32,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lundi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Mardi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Mercredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Jeudi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Vendredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Samedi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Dimanche",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 154.5
+            },
+            {
+              "height": 36,
+              "label": "Jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 153
+            },
+            {
+              "height": 36,
+              "label": "Veille de jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 153
+            },
+            {
+              "height": 36,
+              "label": "Vacances scolaires",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 153
+            },
+            {
+              "height": 36,
+              "label": "Veille de vacances",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 153
+            },
+            {
+              "height": 36,
+              "label": "Importance pour le placement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 76,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 315
+            },
+            {
+              "height": 76,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Contraintes horaires",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Automatismes",
+          "screen": 3,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 32,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lundi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Mardi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Mercredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Jeudi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Vendredi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Samedi",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Dimanche",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 364
+            },
+            {
+              "height": 36,
+              "label": "Jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 363
+            },
+            {
+              "height": 36,
+              "label": "Veille de jour férié",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 363
+            },
+            {
+              "height": 36,
+              "label": "Vacances scolaires",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 363
+            },
+            {
+              "height": 36,
+              "label": "Veille de vacances",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 363
+            },
+            {
+              "height": 36,
+              "label": "Importance pour le placement",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 76,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 736
+            },
+            {
+              "height": 76,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Contraintes horaires",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Automatismes",
+          "screen": 3,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 32,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "4": {
+      "verdict": "PASS",
+      "summary": "Besoin annuel EMSEA 2027 et contexte transverse continus.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 386
+            },
+            {
+              "height": 36,
+              "label": "Année",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 187
+            },
+            {
+              "height": 36,
+              "label": "Nombre d’occurrences",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 187
+            },
+            {
+              "height": 36,
+              "label": "Début de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 187
+            },
+            {
+              "height": 36,
+              "label": "Fin de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 187
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 203.6
+            },
+            {
+              "height": 36,
+              "label": "Lieu concerné",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Salle concernée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Date annoncée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 150
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 382.2
+            },
+            {
+              "height": 36,
+              "label": "Activité",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 273
+            },
+            {
+              "height": 36,
+              "label": "Occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 100
+            },
+            {
+              "height": 36,
+              "label": "Session",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 100
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Besoin annuel 2027",
+          "screen": 4,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 31,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Année",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Nombre d’occurrences",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Début de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Fin de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 327.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu concerné",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Salle concernée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Date annoncée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 270.7
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 270.7
+            },
+            {
+              "height": 36,
+              "label": "Activité",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 270.7
+            },
+            {
+              "height": 36,
+              "label": "Occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 270.7
+            },
+            {
+              "height": 36,
+              "label": "Session",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 270.7
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Besoin annuel 2027",
+          "screen": 4,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 31,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 642
+            },
+            {
+              "height": 36,
+              "label": "Année",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Nombre d’occurrences",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Début de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Fin de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 559.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu concerné",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Salle concernée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Date annoncée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 207.3
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 207.3
+            },
+            {
+              "height": 36,
+              "label": "Activité",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 207.3
+            },
+            {
+              "height": 36,
+              "label": "Occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 207.3
+            },
+            {
+              "height": 36,
+              "label": "Session",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 207.3
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Besoin annuel 2027",
+          "screen": 4,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 31,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Année",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Nombre d’occurrences",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Début de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Fin de période",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 653.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu concerné",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Salle concernée",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Date annoncée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 238.7
+            },
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 238.7
+            },
+            {
+              "height": 36,
+              "label": "Activité",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 238.7
+            },
+            {
+              "height": 36,
+              "label": "Occurrence",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 238.7
+            },
+            {
+              "height": 36,
+              "label": "Session",
+              "tag": "INPUT",
+              "type": "number",
+              "width": 238.7
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Besoin annuel 2027",
+          "screen": 4,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 31,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "5": {
+      "verdict": "PASS",
+      "summary": "11 occurrences EMSEA, dont 2 datées et 9 à positionner.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Date imposée éventuelle",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Durée calculée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Complément facultatif",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 585
+            },
+            {
+              "height": 76,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 585
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Séance État-major — besoin 2027",
+          "screen": 5,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 36,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Date imposée éventuelle",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Durée calculée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Complément facultatif",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 410
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 832
+            },
+            {
+              "height": 76,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 832
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Séance État-major — besoin 2027",
+          "screen": 5,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 36,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Date imposée éventuelle",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Durée calculée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Complément facultatif",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 642
+            },
+            {
+              "height": 76,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 642
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Séance État-major — besoin 2027",
+          "screen": 5,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 36,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Date imposée éventuelle",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Durée calculée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Complément facultatif",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 362
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 76,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-multiple",
+              "width": 736
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Séance État-major — besoin 2027",
+          "screen": 5,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 36,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "6": {
+      "verdict": "PASS",
+      "summary": "Demande de placement EMSEA 18:00–21:00 et contrôles moteur visibles.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1500,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Placement automatique",
+          "screen": 6,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1150,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Placement automatique",
+          "screen": 6,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 960,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Placement automatique",
+          "screen": 6,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 800,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Placement automatique",
+          "screen": 6,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "7": {
+      "verdict": "PASS",
+      "summary": "3 propositions réelles de mars, mardis compatibles; choix réinjecté dans l’activité canonique.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1500,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Propositions",
+          "screen": 7,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": [
+            "Mardi 02.03.2027 · 18:00–21:00",
+            "Mardi 09.03.2027 · 18:00–21:00",
+            "Mardi 16.03.2027 · 18:00–21:00"
+          ],
+          "screen7Proposals": 3,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 17,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 1150,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Propositions",
+          "screen": 7,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": [
+            "Mardi 02.03.2027 · 18:00–21:00",
+            "Mardi 09.03.2027 · 18:00–21:00",
+            "Mardi 16.03.2027 · 18:00–21:00"
+          ],
+          "screen7Proposals": 3,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 17,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 960,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Propositions",
+          "screen": 7,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": [
+            "Mardi 02.03.2027 · 18:00–21:00",
+            "Mardi 09.03.2027 · 18:00–21:00",
+            "Mardi 16.03.2027 · 18:00–21:00"
+          ],
+          "screen7Proposals": 3,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 17,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": true,
+          "documentWidth": 800,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Propositions",
+          "screen": 7,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": [
+            "Mardi 02.03.2027 · 18:00–21:00",
+            "Mardi 09.03.2027 · 18:00–21:00",
+            "Mardi 16.03.2027 · 18:00–21:00"
+          ],
+          "screen7Proposals": 3,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 17,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "8": {
+      "verdict": "PASS",
+      "summary": "Date, Début, Fin et Durée alignés à 36 px.",
+      "checks": [
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 906
+            },
+            {
+              "height": 36,
+              "label": "Date",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Durée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 286.5
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 206.5
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 226.8
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 150
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 180
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 279.8
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 270.2
+            },
+            {
+              "height": 36,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 341.7
+            },
+            {
+              "height": 36,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 380.3
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Ajouter un événement connu",
+          "screen": 8,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 33,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 556
+            },
+            {
+              "height": 36,
+              "label": "Date",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Durée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 199
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 328
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 409.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 202
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 228.9
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 377.1
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 832
+            },
+            {
+              "height": 36,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 327.1
+            },
+            {
+              "height": 36,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 327.1
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Ajouter un événement connu",
+          "screen": 8,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 33,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 642
+            },
+            {
+              "height": 36,
+              "label": "Date",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 151.5
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 151.5
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 151.5
+            },
+            {
+              "height": 36,
+              "label": "Durée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 151.5
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 232.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 315
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 642
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 642
+            },
+            {
+              "height": 36,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 232.1
+            },
+            {
+              "height": 36,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 232.1
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Ajouter un événement connu",
+          "screen": 8,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 33,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Libellé",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Date",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Début",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Fin",
+              "tag": "INPUT",
+              "type": "time",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Durée",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Publics concernés",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 653.1
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Entrée en service",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Responsable",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 736
+            },
+            {
+              "height": 36,
+              "label": "Rôles indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 653.1
+            },
+            {
+              "height": 36,
+              "label": "Ressources indispensables",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 653.1
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Ajouter un événement connu",
+          "screen": 8,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 33,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": false
+        }
+      ]
+    },
+    "9": {
+      "verdict": "PASS",
+      "summary": "4 conflits source et 4 compatibles; liens A/B et Revérifier fonctionnels.",
+      "checks": [
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1500,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Compatibilités et conflits",
+          "screen": 9,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 37,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1150,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Compatibilités et conflits",
+          "screen": 9,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 37,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 960,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Compatibilités et conflits",
+          "screen": 9,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 37,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 800,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "Compatibilités et conflits",
+          "screen": 9,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 37,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": false
+        }
+      ]
+    },
+    "10": {
+      "verdict": "PASS",
+      "summary": "635 lignes, 13 non reconduites filtrables, scroll interne aux quatre largeurs.",
+      "checks": [
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 290
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 145
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 145
+            },
+            {
+              "height": 36,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 145
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 145
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 145
+            },
+            {
+              "height": 36,
+              "label": "État",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 145
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Toutes les activités",
+          "screen": 10,
+          "screen10InternalScroll": true,
+          "screen10NonReconductedOption": true,
+          "screen10Rows": 635,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 1212,
+              "overflowX": "auto",
+              "scrollWidth": 1329
+            }
+          ],
+          "viewportWidth": 1500,
+          "visibleControls": 158,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 573
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 282
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 282
+            },
+            {
+              "height": 36,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 282
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 282
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 282
+            },
+            {
+              "height": 36,
+              "label": "État",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 282
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Toutes les activités",
+          "screen": 10,
+          "screen10InternalScroll": true,
+          "screen10NonReconductedOption": true,
+          "screen10Rows": 635,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 862,
+              "overflowX": "auto",
+              "scrollWidth": 1329
+            }
+          ],
+          "viewportWidth": 1150,
+          "visibleControls": 156,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 674
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 332.5
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 332.5
+            },
+            {
+              "height": 36,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 332.5
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 332.5
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 332.5
+            },
+            {
+              "height": 36,
+              "label": "État",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 332.5
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Toutes les activités",
+          "screen": 10,
+          "screen10InternalScroll": true,
+          "screen10NonReconductedOption": true,
+          "screen10Rows": 635,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 672,
+              "overflowX": "auto",
+              "scrollWidth": 1329
+            }
+          ],
+          "viewportWidth": 960,
+          "visibleControls": 156,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": true,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Recherche",
+              "tag": "INPUT",
+              "type": "text",
+              "width": 768
+            },
+            {
+              "height": 36,
+              "label": "Domaine",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 379.5
+            },
+            {
+              "height": 36,
+              "label": "Cible",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 379.5
+            },
+            {
+              "height": 36,
+              "label": "Public",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 379.5
+            },
+            {
+              "height": 36,
+              "label": "Lieu",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 379.5
+            },
+            {
+              "height": 36,
+              "label": "Salle",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 379.5
+            },
+            {
+              "height": 36,
+              "label": "État",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 379.5
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Toutes les activités",
+          "screen": 10,
+          "screen10InternalScroll": true,
+          "screen10NonReconductedOption": true,
+          "screen10Rows": 635,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [
+            {
+              "clientWidth": 766,
+              "overflowX": "auto",
+              "scrollWidth": 1320
+            }
+          ],
+          "viewportWidth": 800,
+          "visibleControls": 152,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "11": {
+      "verdict": "PASS",
+      "summary": "QUO VADIS '27; 12 mois; permanence CTA visible le 01.01 férié et vacances.",
+      "checks": [
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1500,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "QUO VADIS '27",
+          "screen": 11,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": "QUO VADIS '27",
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 382,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1150,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "QUO VADIS '27",
+          "screen": 11,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": "QUO VADIS '27",
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 382,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 960,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "QUO VADIS '27",
+          "screen": 11,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": "QUO VADIS '27",
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 382,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 800,
+          "fieldHeights": [],
+          "globalOverflow": false,
+          "heading": "QUO VADIS '27",
+          "screen": 11,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": "QUO VADIS '27",
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 382,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    },
+    "12": {
+      "verdict": "PASS",
+      "summary": "125 lignes annuelles; dates fixées verrouillées; première et dernière activité mobile ciblables.",
+      "checks": [
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1500,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Période",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 180
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Déplacement chronologique",
+          "screen": 12,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1500,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 1500,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 1150,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Période",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 180
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Déplacement chronologique",
+          "screen": 12,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 1150,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 1150,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 960,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Période",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 180
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Déplacement chronologique",
+          "screen": 12,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 960,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 960,
+          "workflowContextPass": true,
+          "yearContext": true
+        },
+        {
+          "activityContext": false,
+          "clippedButtons": [],
+          "codeContext": false,
+          "documentWidth": 800,
+          "fieldHeights": [
+            {
+              "height": 36,
+              "label": "Période",
+              "tag": "SELECT",
+              "type": "select-one",
+              "width": 180
+            }
+          ],
+          "globalOverflow": false,
+          "heading": "Déplacement chronologique",
+          "screen": 12,
+          "screen10InternalScroll": null,
+          "screen10NonReconductedOption": false,
+          "screen10Rows": null,
+          "screen11Title": null,
+          "screen7Dates": null,
+          "screen7Proposals": null,
+          "tableWraps": [],
+          "viewportWidth": 800,
+          "visibleControls": 15,
+          "visibleLegacyBusinessCode": false,
+          "width": 800,
+          "workflowContextPass": true,
+          "yearContext": true
+        }
+      ]
+    }
+  },
+  "globalOverflowFailures": 0,
+  "clippedActionFailures": 0,
+  "workflowContextFailures": 0,
+  "visibleLegacyBusinessCodes": 0,
+  "consoleErrors": 0,
+  "boundingBoxMeasurements": 320,
+  "dateTimeSummary": "Date, Début, Fin et Durée mesurent 36 px sur les écrans 2, 4, 8 et dans l’éditeur de conflit.",
+  "controlHeightSummary": "320 mesures: inputs et selects simples 36 px; seuls les multi-selects consultables font 76 px par fonction.",
+  "alignmentSummary": "0 action tronquée; 0 débordement horizontal global sur 48 contrôles.",
+  "widthSummary": "1500, 1150, 960 et 800 px validés; écran 10 conserve un scroll horizontal interne.",
+  "scrollableSummary": "Écran 10: table interne scrollable aux 4 largeurs; écran 3: multi-valeurs à hauteur dédiée.",
+  "desktopCaptures": 12,
+  "responsiveCaptures": 0,
+  "captures": [
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen01-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen02-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen03-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen04-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen05-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen06-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen07-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen08-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen09-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen10-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen11-1500.png",
+    "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1/c19-full-dress-screen12-1500.png"
+  ],
+  "screen7": {
+    "proposalCount": 3,
+    "dates": [
+      "Mardi 02.03.2027 · 18:00–21:00",
+      "Mardi 09.03.2027 · 18:00–21:00",
+      "Mardi 16.03.2027 · 18:00–21:00"
+    ],
+    "choiceResult": {
+      "heading": "Séance État-major — besoin 2027",
+      "validated": [
+        "Séance État-major 1",
+        "Séance État-major 2",
+        "Séance État-major 3"
+      ]
+    }
+  },
+  "screen9": {
+    "sourceConflictCards": 4,
+    "compatibleCards": 4,
+    "recheckButtons": 4,
+    "analysis": {
+      "analysis": true,
+      "text": "Conflit source détecté\nNIVEAU : BLOQUANT\n18.01.2027 · 18:30–19:00\nSéance de préparation concours de la FVSP\nCible : OI DPS G1 DPS C1 DPS B1 DPS B2 DAP Y1 DAP Y2 DAP Y3 DAP Y4 JSP G1 JSP C1 JSP B1\nPublic : JSP, FOBA 2\n↔\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n\nSalle ou emplacement déjà occupé sur cet horaire.\n\nSalle concernée : Salle Vulcain"
+    },
+    "openActivity": {
+      "back": true,
+      "dateHeight": 36,
+      "editor": true,
+      "heading": "Toutes les activités"
+    },
+    "returnHeading": "Compatibilités et conflits"
+  },
+  "screen10": {
+    "rows": 635,
+    "nonReconductedFilterCount": 13,
+    "nonReconductedCountText": "13 activité(s) affichée(s).",
+    "internalScrollAllWidths": true
+  },
+  "screen11": {
+    "title": "QUO VADIS '27",
+    "months": 12,
+    "january1": {
+      "classes": "year-day holiday vacation has-events selected-date",
+      "detail": "01.01.2027 · Nouvel An\n18:00–23:59\nPermanence CTA · vendredi 18:00 au lundi 06:00\nDPS\nCible : DPS G1\nPublic : —\nCaserne G1\n—\nResponsable : À affecter\nContrainte : —\nOuvrir",
+      "title": "Nouvel An · Vacances d’hiver · 1 activité(s)"
+    }
+  },
+  "screen12": {
+    "events": 125,
+    "first": "Vendredi 01.01.2027\n18:00–23:59\nPermanence CTA · vendredi 18:00 au lundi 06:00\nCaserne G1 · —\nDate fixée",
+    "firstMovable": "Intégration personnel DPS, phase I · date modifiable",
+    "firstTargetable": "0",
+    "last": "Vendredi 31.12.2027\n18:00–23:59\nPermanence CTA · vendredi 18:00 au lundi 06:00\nCaserne G1 · —\nDate fixée",
+    "lastMovable": "Rapport annuel · date modifiable",
+    "lastTargetable": "0",
+    "rows": 125
+  },
+  "controlMeasurements": {
+    "screens2_3_4_8_10": {
+      "2": {
+        "800": {
+          "heights": [
+            36
+          ],
+          "count": 18,
+          "dateTime": [
+            {
+              "label": "Durée (minutes)",
+              "height": 36
+            }
+          ]
+        },
+        "960": {
+          "heights": [
+            36
+          ],
+          "count": 18,
+          "dateTime": [
+            {
+              "label": "Durée (minutes)",
+              "height": 36
+            }
+          ]
+        },
+        "1150": {
+          "heights": [
+            36
+          ],
+          "count": 18,
+          "dateTime": [
+            {
+              "label": "Durée (minutes)",
+              "height": 36
+            }
+          ]
+        },
+        "1500": {
+          "heights": [
+            36
+          ],
+          "count": 18,
+          "dateTime": [
+            {
+              "label": "Durée (minutes)",
+              "height": 36
+            }
+          ]
+        }
+      },
+      "3": {
+        "800": {
+          "heights": [
+            36,
+            76
+          ],
+          "count": 15,
+          "dateTime": [
+            {
+              "label": "Contraintes horaires",
+              "height": 36
+            }
+          ]
+        },
+        "960": {
+          "heights": [
+            36,
+            76
+          ],
+          "count": 15,
+          "dateTime": [
+            {
+              "label": "Contraintes horaires",
+              "height": 36
+            }
+          ]
+        },
+        "1150": {
+          "heights": [
+            36,
+            76
+          ],
+          "count": 15,
+          "dateTime": [
+            {
+              "label": "Contraintes horaires",
+              "height": 36
+            }
+          ]
+        },
+        "1500": {
+          "heights": [
+            36,
+            76
+          ],
+          "count": 15,
+          "dateTime": [
+            {
+              "label": "Contraintes horaires",
+              "height": 36
+            }
+          ]
+        }
+      },
+      "4": {
+        "800": {
+          "heights": [
+            36
+          ],
+          "count": 14,
+          "dateTime": [
+            {
+              "label": "Début de période",
+              "height": 36
+            },
+            {
+              "label": "Fin de période",
+              "height": 36
+            },
+            {
+              "label": "Date annoncée",
+              "height": 36
+            }
+          ]
+        },
+        "960": {
+          "heights": [
+            36
+          ],
+          "count": 14,
+          "dateTime": [
+            {
+              "label": "Début de période",
+              "height": 36
+            },
+            {
+              "label": "Fin de période",
+              "height": 36
+            },
+            {
+              "label": "Date annoncée",
+              "height": 36
+            }
+          ]
+        },
+        "1150": {
+          "heights": [
+            36
+          ],
+          "count": 14,
+          "dateTime": [
+            {
+              "label": "Début de période",
+              "height": 36
+            },
+            {
+              "label": "Fin de période",
+              "height": 36
+            },
+            {
+              "label": "Date annoncée",
+              "height": 36
+            }
+          ]
+        },
+        "1500": {
+          "heights": [
+            36
+          ],
+          "count": 14,
+          "dateTime": [
+            {
+              "label": "Début de période",
+              "height": 36
+            },
+            {
+              "label": "Fin de période",
+              "height": 36
+            },
+            {
+              "label": "Date annoncée",
+              "height": 36
+            }
+          ]
+        }
+      },
+      "8": {
+        "800": {
+          "heights": [
+            36
+          ],
+          "count": 13,
+          "dateTime": [
+            {
+              "label": "Date",
+              "height": 36
+            },
+            {
+              "label": "Début",
+              "height": 36
+            },
+            {
+              "label": "Fin",
+              "height": 36
+            },
+            {
+              "label": "Durée",
+              "height": 36
+            }
+          ]
+        },
+        "960": {
+          "heights": [
+            36
+          ],
+          "count": 13,
+          "dateTime": [
+            {
+              "label": "Date",
+              "height": 36
+            },
+            {
+              "label": "Début",
+              "height": 36
+            },
+            {
+              "label": "Fin",
+              "height": 36
+            },
+            {
+              "label": "Durée",
+              "height": 36
+            }
+          ]
+        },
+        "1150": {
+          "heights": [
+            36
+          ],
+          "count": 13,
+          "dateTime": [
+            {
+              "label": "Date",
+              "height": 36
+            },
+            {
+              "label": "Début",
+              "height": 36
+            },
+            {
+              "label": "Fin",
+              "height": 36
+            },
+            {
+              "label": "Durée",
+              "height": 36
+            }
+          ]
+        },
+        "1500": {
+          "heights": [
+            36
+          ],
+          "count": 13,
+          "dateTime": [
+            {
+              "label": "Date",
+              "height": 36
+            },
+            {
+              "label": "Début",
+              "height": 36
+            },
+            {
+              "label": "Fin",
+              "height": 36
+            },
+            {
+              "label": "Durée",
+              "height": 36
+            }
+          ]
+        }
+      },
+      "10": {
+        "800": {
+          "heights": [
+            36
+          ],
+          "count": 7,
+          "dateTime": []
+        },
+        "960": {
+          "heights": [
+            36
+          ],
+          "count": 7,
+          "dateTime": []
+        },
+        "1150": {
+          "heights": [
+            36
+          ],
+          "count": 7,
+          "dateTime": []
+        },
+        "1500": {
+          "heights": [
+            36
+          ],
+          "count": 7,
+          "dateTime": []
+        }
+      }
+    },
+    "allDistinctHeights": [
+      36,
+      76
+    ]
+  },
+  "openMoaPoints": [
+    "479 objets sans horaire et règle discriminante",
+    "9 choix finaux EMSEA",
+    "3 arbitrages explicites",
+    "6 informations insuffisantes",
+    "4 conflits source bloquants"
+  ]
+}

@@ -201,6 +201,9 @@ async function executePublicationPlan(inputPlan, context = {}){
       const checkpoint = createCheckpoint(context);
       const counts = { created: 0, updated: 0, unchanged: 0, blocked: 0, notPublished: 0 };
       const eventIds = [];
+      if(typeof store.prepareEventCodes === 'function'){
+        await store.prepareEventCodes(plan.decisions.filter((decision) => decision.action === planner.ACTIONS.CREATE).map((decision) => decision.target));
+      }
 
       for(const decision of plan.decisions){
         if(decision.action === planner.ACTIONS.BLOCKED){ counts.blocked += 1; continue; }

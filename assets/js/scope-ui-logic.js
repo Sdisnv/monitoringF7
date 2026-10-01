@@ -1911,7 +1911,7 @@
           qvFrom: query.from || 'programme'
         };
       }
-      const view = views[parts[1]] || 'programme';
+      const view = views[parts[1]] || 'agenda-annuel';
       return {
         screen: 'quo-vadis',
         nav: 'quo-vadis',
@@ -1921,6 +1921,7 @@
         qvDomaine: query.domaine || '',
         qvFamille: query.famille || '',
         qvMois: query.mois || '',
+        qvMode: query.mode || '',
         qvSeances: query.seances || ''
       };
     }

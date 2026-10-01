@@ -1,0 +1,10 @@
+{
+  "scope": "C19-PREPROD-MOA-UX-CODE-FINAL-1",
+  "newLot": "31/31 PASS",
+  "related": "10 suites C18/C19 PASS: catalogue C18 18/18, moteur C19 9/9, UX C19 67 contrôles, Gate 1 10/10, Gate 1 R1 PASS, Gate 2 17/17, Gate 3 15/15, MOA final 20/20, Canonical Truth 25/25, nouveau lot 31/31.",
+  "global": "npm run test:scope exécuté une seule fois: exit 1 sur le défaut préexistant de cache-bust SCOPE visuel dans scope-login-visual-alignment-orion-1-tests.js (test 06); aucune nouvelle régression C19 observée avant cet arrêt.",
+  "globalExitCode": 1,
+  "globalFirstFailure": "scope-login-visual-alignment-orion-1-tests.js — 06 cache-bust SCOPE visuel uniquement",
+  "newC19Regression": false,
+  "globalRerun": false
+}

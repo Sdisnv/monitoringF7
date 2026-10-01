@@ -1,0 +1,69 @@
+{
+  "scope": "C19-PREPROD-CANONICAL-TRUTH-1",
+  "measuredAt": "2026-09-29T07:15:23Z",
+  "url": "http://127.0.0.1:4186/?preprod=1",
+  "checksTotal": 48,
+  "checksPassed": 48,
+  "consoleErrors": 0,
+  "globalHorizontalOverflows": 0,
+  "performance": { "activitiesOpenMs": 279 },
+  "viewportMatrix": {
+    "screens": 12,
+    "widths": [1500, 1150, 960, 800],
+    "checks": 48,
+    "passed": 48,
+    "failures": []
+  },
+  "screen10FinalRecheck": [
+    { "width": 1500, "rows": 622, "filterHeightPx": 36, "duplicatePublicLabels": 0, "globalOverflow": false },
+    { "width": 1150, "rows": 622, "filterHeightPx": 36, "duplicatePublicLabels": 0, "globalOverflow": false },
+    { "width": 960, "rows": 622, "filterHeightPx": 36, "duplicatePublicLabels": 0, "globalOverflow": false },
+    { "width": 800, "rows": 622, "filterHeightPx": 36, "duplicatePublicLabels": 0, "globalOverflow": false }
+  ],
+  "screen9": {
+    "title": "Compatibilités et conflits",
+    "scenarios": 8,
+    "compatibleScenarios": 4,
+    "openActivityAButtons": 8,
+    "openActivityBButtons": 8,
+    "analysisVisible": true,
+    "constraintLevelVisible": true
+  },
+  "screen10": {
+    "title": "Toutes les activités",
+    "rows": 622,
+    "emseaRows": 11,
+    "publicFilterOptionsIncludingAll": 34,
+    "duplicatePublicLabels": 0,
+    "foba1FilterMatches": 33,
+    "foba1FilterExact": true,
+    "renderMs": 279
+  },
+  "screen11": {
+    "title": "QUO VADIS '27",
+    "calendarDays": 365,
+    "ordinaryActivityDays": 58,
+    "ordinaryMarkerDisplay": "none",
+    "specialActivityDays": 22,
+    "specialMarkerPx": 5,
+    "announcedOnlyDays": 0,
+    "globalOverflow": false
+  },
+  "screen12": {
+    "title": "Déplacement chronologique",
+    "timelineRows": 125,
+    "lockedRows": 53,
+    "priorityRows": 1,
+    "movableRows": 71,
+    "draggableRows": 72,
+    "periods": ["Mois", "Trimestre", "Semestre", "Année"],
+    "globalOverflow": false
+  },
+  "consoleWarningsOrErrors": [],
+  "screenshots": [
+    "/private/tmp/c19-canonical-screen09-1500.png",
+    "/private/tmp/c19-canonical-screen10-1500.png",
+    "/private/tmp/c19-canonical-screen11-1500.png",
+    "/private/tmp/c19-canonical-screen12-1500.png"
+  ]
+}

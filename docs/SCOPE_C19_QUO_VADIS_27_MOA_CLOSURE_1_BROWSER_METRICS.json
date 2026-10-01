@@ -1,0 +1,528 @@
+{
+  "scope": "C19-QUO-VADIS-27-MOA-CLOSURE-1",
+  "url": "http://127.0.0.1:4186/?preprod=1",
+  "viewports": [
+    1500,
+    1150,
+    960,
+    800
+  ],
+  "screens": [
+    "conflicts",
+    "activities",
+    "agenda",
+    "move"
+  ],
+  "checks": 16,
+  "passed": 16,
+  "failed": 0,
+  "consoleErrors": 0,
+  "metrics": [
+    {
+      "contentCount": 8,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Compatibilités et conflits",
+      "view": "conflicts",
+      "visibleControls": 37,
+      "width": 1500,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 622,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 108,
+      "tableScrollable": "auto",
+      "title": "Toutes les activités",
+      "view": "activities",
+      "visibleControls": 159,
+      "width": 1500,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 12,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "QUO VADIS '27",
+      "view": "agenda",
+      "visibleControls": 382,
+      "width": 1500,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 125,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Déplacement chronologique",
+      "view": "move",
+      "visibleControls": 15,
+      "width": 1500,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 8,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Compatibilités et conflits",
+      "view": "conflicts",
+      "visibleControls": 37,
+      "width": 1150,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 622,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 458,
+      "tableScrollable": "auto",
+      "title": "Toutes les activités",
+      "view": "activities",
+      "visibleControls": 157,
+      "width": 1150,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 12,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "QUO VADIS '27",
+      "view": "agenda",
+      "visibleControls": 382,
+      "width": 1150,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 125,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Déplacement chronologique",
+      "view": "move",
+      "visibleControls": 15,
+      "width": 1150,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 8,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Compatibilités et conflits",
+      "view": "conflicts",
+      "visibleControls": 37,
+      "width": 960,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 622,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 648,
+      "tableScrollable": "auto",
+      "title": "Toutes les activités",
+      "view": "activities",
+      "visibleControls": 157,
+      "width": 960,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 12,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "QUO VADIS '27",
+      "view": "agenda",
+      "visibleControls": 382,
+      "width": 960,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 125,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Déplacement chronologique",
+      "view": "move",
+      "visibleControls": 15,
+      "width": 960,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 8,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Compatibilités et conflits",
+      "view": "conflicts",
+      "visibleControls": 37,
+      "width": 800,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 622,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 554,
+      "tableScrollable": "auto",
+      "title": "Toutes les activités",
+      "view": "activities",
+      "visibleControls": 153,
+      "width": 800,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 12,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "QUO VADIS '27",
+      "view": "agenda",
+      "visibleControls": 382,
+      "width": 800,
+      "zeroWidthControls": 0,
+      "pass": true
+    },
+    {
+      "contentCount": 125,
+      "globalOverflow": 0,
+      "mainOverflow": 0,
+      "returnLabel": "QUO VADIS '27",
+      "tableInternalOverflow": 0,
+      "tableScrollable": "n/a",
+      "title": "Déplacement chronologique",
+      "view": "move",
+      "visibleControls": 15,
+      "width": 800,
+      "zeroWidthControls": 0,
+      "pass": true
+    }
+  ],
+  "proofs": {
+    "conflictA": {
+      "before": {
+        "active": "source-1",
+        "result": "Conflit source détecté\nNIVEAU : BLOQUANT\n18.01.2027 · 18:30–19:00\nSéance de préparation concours de la FVSP\nCible : OI DPS G1 DPS C1 DPS B1 DPS B2 DAP Y1 DAP Y2 DAP Y3 DAP Y4 JSP G1 JSP C1 JSP B1\nPublic : JSP, FOBA 2\n↔\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n\nSalle ou emplacement déjà occupé sur cet horaire.\n\nSalle concernée : Salle Vulcain"
+      },
+      "returned": {
+        "active": "source-1",
+        "pending": "Conflit source détecté\n\nDonnées modifiées. Le résultat précédent a été retiré : cliquez sur Revérifier pour recalculer ce même contexte.",
+        "staleConflict": null,
+        "view": "conflicts"
+      },
+      "after": {
+        "active": "source-1",
+        "result": "Conflit source détecté\nNIVEAU : COMPATIBLE\n18.01.2027 · 12:00–13:00 / 18:30–20:00\nSéance de préparation concours de la FVSP\nCible : OI DPS G1 DPS C1 DPS B1 DPS B2 DAP Y1 DAP Y2 DAP Y3 DAP Y4 JSP G1 JSP C1 JSP B1\nPublic : JSP, FOBA 2\n↔\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n\nDate compatible."
+      }
+    },
+    "conflictB": {
+      "before": {
+        "active": "source-2",
+        "result": "Conflit source détecté\nNIVEAU : BLOQUANT\n18.01.2027 · 19:00–20:00\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n↔\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n\nPopulation commune de l’unité Y4 mobilisée sur les deux activités. · Ressource commune : personnel de l’unité Y4. · Salle ou emplacement déjà occupé sur cet horaire.\n\nCible concernée : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic concerné : cond PL\nSalle concernée : Salle Vulcain"
+      },
+      "returned": {
+        "active": "source-2",
+        "pending": "Conflit source détecté\n\nDonnées modifiées. Le résultat précédent a été retiré : cliquez sur Revérifier pour recalculer ce même contexte.",
+        "staleConflict": null
+      },
+      "after": {
+        "active": "source-2",
+        "overflow": 0,
+        "result": "Conflit source détecté\nNIVEAU : COMPATIBLE\n18.01.2027 · 18:30–20:00 / 12:00–13:00\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n↔\nCours de cadres moniteurs AUTO\nCible : OI DAP Y1 DAP Y2 DAP Y3 DAP Y4\nPublic : cond PL\n\nDate compatible."
+      }
+    },
+    "screen10": {
+      "cta": [
+        [
+          "Vendredi\n01.01.2027",
+          "Vendredi 01.01.2027 18:00 → Lundi 04.01.2027 06:00",
+          "DPS",
+          "DPS G1",
+          "—",
+          "Permanence CTA · vendredi 18:00 au lundi 06:00",
+          "",
+          "",
+          "Caserne G1",
+          "—",
+          "À affecter",
+          "",
+          "Déplacer"
+        ]
+      ],
+      "emsea": [
+        [
+          "Mardi\n12.01.2027",
+          "18:00–21:00",
+          "Institutionnel",
+          "État-major",
+          "—",
+          "Séance État-major",
+          "",
+          "Non applicable",
+          "Caserne G1",
+          "—",
+          "Cdt",
+          "",
+          "Déplacer"
+        ],
+        [
+          "Mercredi\n24.02.2027",
+          "18:00–21:00",
+          "Institutionnel",
+          "État-major",
+          "—",
+          "Séance État-major",
+          "",
+          "Non applicable",
+          "Caserne G1",
+          "—",
+          "Cdt",
+          "",
+          "Déplacer"
+        ]
+      ],
+      "external": [
+        [
+          "Non reconduitSOURCE_2026_EXTERNAL+EXTERNAL_NOT_RECONDUCTED",
+          "—",
+          "Externe",
+          "Public externe",
+          "—",
+          "Assemblée des délégués de la FVSP",
+          "",
+          "",
+          "Non déterminé",
+          "—",
+          "À affecter",
+          "",
+          "Aucune action"
+        ]
+      ],
+      "jan5": [
+        [
+          "Mardi\n05.01.2027",
+          "18:00–22:00",
+          "DPS",
+          "OI DPS G1 DPS C1 DPS B1 DPS B2",
+          "FOBA 2",
+          "Intégration personnel DPS, phase I",
+          "070F1.004",
+          "070F1",
+          "Caserne G1",
+          "Salle Vulcain",
+          "C FOBA",
+          "",
+          "Déplacer"
+        ]
+      ],
+      "jan6": [
+        [
+          "Mercredi\n06.01.2027",
+          "18:00–20:00",
+          "DPS",
+          "DPS G1",
+          "FOBA 2",
+          "Intégration personnel DPS, phase II",
+          "070F1.005",
+          "070F1",
+          "Caserne G1",
+          "—",
+          "C site",
+          "",
+          "Déplacer"
+        ],
+        [
+          "Mercredi\n06.01.2027",
+          "18:00–20:00",
+          "DPS",
+          "DPS C1",
+          "FOBA 2",
+          "Intégration personnel DPS, phase II",
+          "070F1.005",
+          "070F1",
+          "Caserne C1",
+          "—",
+          "C site",
+          "",
+          "Déplacer"
+        ],
+        [
+          "Mercredi\n06.01.2027",
+          "18:00–20:00",
+          "DPS",
+          "DPS B1",
+          "FOBA 2",
+          "Intégration personnel DPS, phase II",
+          "070F1.005",
+          "070F1",
+          "Caserne B1",
+          "—",
+          "C site",
+          "",
+          "Déplacer"
+        ],
+        [
+          "Mercredi\n06.01.2027",
+          "18:00–20:00",
+          "DPS",
+          "DPS B2",
+          "FOBA 2",
+          "Intégration personnel DPS, phase II",
+          "070F1.005",
+          "070F1",
+          "Caserne B2",
+          "—",
+          "C site",
+          "",
+          "Déplacer"
+        ]
+      ],
+      "jsp": [
+        [
+          "Mercredi\n06.01.2027",
+          "17:00–19:00",
+          "JSP",
+          "OI JSP G1 JSP C1 JSP B1",
+          "JSP",
+          "Échange tenue · équipement nouveaux JSP",
+          "010JSP.010",
+          "010JSP",
+          "Caserne G1",
+          "—",
+          "Resp mat JSP",
+          "",
+          "Déplacer"
+        ],
+        [
+          "Jeudi\n07.01.2027",
+          "17:00–19:00",
+          "JSP",
+          "OI JSP G1 JSP C1 JSP B1",
+          "JSP",
+          "Échange tenue · équipement nouveaux JSP",
+          "010JSP.010",
+          "010JSP",
+          "Caserne G1",
+          "—",
+          "Resp mat JSP",
+          "",
+          "Déplacer"
+        ]
+      ],
+      "programVisible": 622,
+      "total": 635
+    },
+    "agenda": {
+      "cta": "Vendredi 01.01.2027 18:00 → Lundi 04.01.2027 06:00\nPermanence CTA · vendredi 18:00 au lundi 06:00\nDPS\nCible : DPS G1\nPublic : —\nCaserne G1\n—\nResponsable : À affecter\nContrainte : —\nOuvrir",
+      "holiday": "year-day holiday vacation has-events selected-date",
+      "menu": "11. QUO VADIS '27",
+      "open": true,
+      "overflow": 0,
+      "selected": "02.01.2027 · 2 janvier",
+      "title": "QUO VADIS '27"
+    },
+    "move": {
+      "cta": "Vendredi 01.01.2027 18:00 → Lundi 04.01.2027 06:00\nPermanence CTA · vendredi 18:00 au lundi 06:00\nCaserne G1 · —\nDate fixée",
+      "ctaDraggable": "false",
+      "overflow": 0,
+      "returnButton": "QUO VADIS '27",
+      "tableOverflow": [
+        0
+      ],
+      "title": "Déplacement chronologique"
+    },
+    "location": {
+      "selectedLocation": "",
+      "selectedLabel": "Non déterminé",
+      "hasCaserneSdis": false,
+      "externalCode": "Non applicable"
+    }
+  },
+  "captures": [
+    "docs/captures/C19_QUO_VADIS_27_MOA_CLOSURE_1/ecran-09-1500.jpg",
+    "docs/captures/C19_QUO_VADIS_27_MOA_CLOSURE_1/ecran-10-1500.jpg",
+    "docs/captures/C19_QUO_VADIS_27_MOA_CLOSURE_1/ecran-11-1500.jpg",
+    "docs/captures/C19_QUO_VADIS_27_MOA_CLOSURE_1/ecran-12-1500.jpg"
+  ],
+  "globalVerdict": "PASS",
+  "navigationAudit": [
+    {
+      "action": "",
+      "agendaAnnualOccurrences": 0,
+      "menu": "11. QUO VADIS '27",
+      "quoVadisOccurrences": 1,
+      "title": "Compatibilités et conflits",
+      "view": "conflicts"
+    },
+    {
+      "action": "QUO VADIS '27",
+      "agendaAnnualOccurrences": 0,
+      "menu": "11. QUO VADIS '27",
+      "quoVadisOccurrences": 2,
+      "title": "Toutes les activités",
+      "view": "activities"
+    },
+    {
+      "action": "",
+      "agendaAnnualOccurrences": 0,
+      "menu": "11. QUO VADIS '27",
+      "quoVadisOccurrences": 2,
+      "title": "QUO VADIS '27",
+      "view": "agenda"
+    },
+    {
+      "action": "QUO VADIS '27",
+      "agendaAnnualOccurrences": 0,
+      "menu": "11. QUO VADIS '27",
+      "quoVadisOccurrences": 2,
+      "title": "Déplacement chronologique",
+      "view": "move"
+    }
+  ],
+  "runtimeAgendaAnnualOccurrences": 0
+}

@@ -697,9 +697,11 @@
         .join('|');
       const ext = String(e.identifiant_externe || e.identifiantExterne || '').trim();
       const codeCours = String(e.code_cours || e.codeCours || '').trim();
+      const codeSource = String(e.code_source || e.codeSource || '').trim();
       const codeParts = splitCodeCours(codeCours, e.stat_com || e.statCom, e.qui);
       if (ext) byExt.add(ext);
       if (codeCours) byCodeCours.set(codeCours, e);
+      if (codeSource) byCodeCours.set(codeSource, e);
       const base = `nat:${date}|${domaine}|${sous}|${codes}|${libelle}`;
       const loose = `nat:${date}|${domaine}|${sous}|${libelle}`;
       byIdentity.add(base);

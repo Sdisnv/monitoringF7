@@ -1,0 +1,15 @@
+{
+  "measuredAt": "2026-09-29",
+  "url": "http://127.0.0.1:4186/?preprod=1",
+  "catalogue": { "rows": 345, "openMs": 325 },
+  "annualNeed": { "openMs": 341 },
+  "occurrences": { "rows": 10, "openMs": 308 },
+  "placement": { "openMs": 326 },
+  "proposals": { "rows": 3, "openMs": 309 },
+  "conflicts": { "scenarios": 8, "openMs": 305, "controlMs": 343, "analysisVisible": true },
+  "activities": { "rows": 72, "openMs": 321, "searchMs": 43, "jspMatches": 15, "sortMs": 318 },
+  "agenda": { "months": 12, "daysWithEvents": 28, "openMs": 326, "openDayMs": 308, "availableYears": [2027] },
+  "movement": { "monthRows": 1, "yearRows": 72, "openMs": 319 },
+  "mobile": { "viewport": "390x844", "bodyOverflow": false, "tableScrollContained": true, "overlaps": 0 },
+  "consoleErrors": 0
+}

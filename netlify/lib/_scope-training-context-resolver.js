@@ -378,7 +378,7 @@ async function resolveTrainingContext(store, event, options = {}){
   }
   return Object.freeze({
     eventId: eventId(event),
-    eventCode: text(event.code_cours || event.codeCours || event.code_source || event.codeSource),
+    eventCode: text(event.code_cours || event.codeCours),
     domain,
     definition: definition || (snapshotDefinition ? {
       definitionId: snapshotDefinition.definitionId,

@@ -1,0 +1,64 @@
+{
+  "campaign": "C19-PREPROD-MOA-FINAL-1",
+  "url": "http://127.0.0.1:4186/?preprod=1",
+  "httpStatus": 200,
+  "widths": [1500, 1150, 960, 800],
+  "screens": 12,
+  "checksTotal": 48,
+  "checksPassed": 48,
+  "globalOverflowFailures": 0,
+  "clippedControlFailures": 0,
+  "consoleErrors": 0,
+  "screen2": {
+    "occurrences": 10,
+    "collapsedOccurrences": 9,
+    "entryServiceFields": 10,
+    "globalOverflow": false
+  },
+  "screen9": {
+    "compatibleCasesCollapsed": true,
+    "analysisLevel": "BLOQUANT",
+    "activityAOpened": true,
+    "edited": true,
+    "returnedToConflicts": true,
+    "rechecked": true
+  },
+  "screen10": {
+    "rows": 613,
+    "uniformFilters": true,
+    "publicDeduplicated": true,
+    "zebra": true,
+    "internalScroll": true,
+    "actionClipped": false
+  },
+  "screen11": {
+    "title": "QUO VADIS ’27",
+    "titleExact": true,
+    "agendaDaysWithEvents": 80,
+    "protectedPeriodPermanenceVisible": true
+  },
+  "screen12": {
+    "rows": 125,
+    "moveCandidates": 72,
+    "sharedConstraintEngine": true
+  },
+  "performance": {
+    "datasetObjects": 613,
+    "activitiesOpenMs": 397,
+    "searchMs": 108,
+    "searchVisibleRows": 97,
+    "filterMs": 88,
+    "filterVisibleRows": 24,
+    "sortMs": 347,
+    "agendaOpenMs": 391,
+    "conflictsOpenMs": 383,
+    "moveOpenMs": 372
+  },
+  "captures": [
+    "/private/tmp/c19-moa-final-definition-1500.png",
+    "/private/tmp/c19-moa-final-conflicts-1150.png",
+    "/private/tmp/c19-moa-final-activities-1150.png",
+    "/private/tmp/c19-moa-final-agenda-960.png",
+    "/private/tmp/c19-moa-final-move-800.png"
+  ]
+}
