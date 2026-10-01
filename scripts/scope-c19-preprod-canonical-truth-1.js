@@ -186,13 +186,25 @@ function emseaTruth(base) {
     return { ...row, weekday };
   });
   return {
-    businessCode: 'EMSEA', canonicalLabel: 'Séance État-major', statCom: null,
-    statComConclusion: 'Aucun Stat.Com explicitement démontré; le champ reste indépendant et vide.',
+    businessCode: 'EMSEA', canonicalLabel: 'Séance État-major', statCom: 'EMSEA',
+    statComConclusion: 'Stat.Com EMSEA démontré par les 11 lignes du classeur QUO VADIS et conservé par le résolveur canonique.',
     sourceDefinitionId: EMSEA_DEFINITION, historicalOccurrences: historical.length,
     weekdays: countBy(historical, 'weekday'), placementRule: { TUESDAY: 'PRIORITY', otherWeekdays: 'ALLOWED', automaticFinalDate: false },
     historicalEvidence: historical,
     mappingProof: ['Classeur QUO VADIS 2026: sourceStatCom EMSEA sur 11 lignes libellées Séance EM', 'Catalogue C19: QV26-SEANCE-EM-ED042EBD', 'Décision MOA C19-PREPROD-CANONICAL-TRUTH-1: EMSEA = Séance État-major']
   };
+}
+
+const CMDT_LABELS = new Set([
+  'Assemblée CI', 'Conférence des Commandants', 'Séance Codir', 'Séance Codir + repas',
+  'Séance COSEC', 'Séance CRDIS', 'Séance interSDIS', 'Séance État-major',
+  'Table ouverte avec le Commandant'
+]);
+
+function asCmdt(row) {
+  return CMDT_LABELS.has(row.label)
+    ? { ...row, domain: 'CMDT', family: '', target: 'SDIS-ALL', ois: ['SDIS'] }
+    : row;
 }
 
 function identityFor(row, definition) {
@@ -223,9 +235,10 @@ function consolidateProgram(base, cta, emsea) {
   const corrected = base.program.map((sourceRow) => {
     let row = clone(sourceRow);
     row.legacyObjectId = sourceRow.id;
+    row = asCmdt(row);
     if (row.definitionCode === EMSEA_DEFINITION) {
       const number = emseaNumber.get(row.id);
-      row = { ...row, label: emsea.canonicalLabel, businessCode: 'EMSEA', statCom: '', domain: 'Institutionnel', status: 'VALIDATED', occurrenceNumber: number, occurrenceId: `QV27:EMSEA:O${String(number).padStart(2, '0')}`, programSessionId: `QV27:EMSEA:S${String(number).padStart(2, '0')}`, provenance: 'SOURCE_2027_EXPLICIT+MOA_CANONICAL_EMSEA', reason: null };
+      row = { ...row, label: emsea.canonicalLabel, businessCode: 'EMSEA', statCom: 'EMSEA', domain: 'CMDT', family: '', target: 'SDIS-EM', ois: ['SDIS'], status: 'VALIDATED', occurrenceNumber: number, occurrenceId: `QV27:EMSEA:O${String(number).padStart(2, '0')}`, programSessionId: `QV27:EMSEA:S${String(number).padStart(2, '0')}`, provenance: 'SOURCE_2027_EXPLICIT+MOA_CANONICAL_EMSEA', reason: null };
     }
     if (row.definitionCode === 'CTA-PERMANENCE') {
       row.ctaAssignments = clone(ctaByDate.get(row.isoDate));
@@ -238,7 +251,7 @@ function consolidateProgram(base, cta, emsea) {
     const suffix = String(number).padStart(2, '0');
     return identityFor({
       id: `QV27:EMSEA:SESSION:${suffix}`, programSessionId: `QV27:EMSEA:S${suffix}`, occurrenceId: `QV27:EMSEA:O${suffix}`,
-      definitionCode: EMSEA_DEFINITION, label: emsea.canonicalLabel, businessCode: 'EMSEA', statCom: '', domain: 'Institutionnel', family: 'Événement',
+      definitionCode: EMSEA_DEFINITION, label: emsea.canonicalLabel, businessCode: 'EMSEA', statCom: 'EMSEA', domain: 'CMDT', family: '', ois: ['SDIS'],
       target: 'SDIS-EM', publics: [], location: 'L-G1', room: 'R-G1-EM', entryService: '', responsible: 'Cdt', roles: [], resources: [],
       date: '', isoDate: null, start: '18:00', end: '21:00', status: 'A_POSITIONNER', fixedDate: false, dayExclusive: false, permutationAllowed: false,
       sessionCount: 1, occurrenceNumber: number, priority: 80, provenance: 'RECURRENCE_RULE+MOA_CANONICAL_EMSEA',
@@ -266,10 +279,13 @@ function consolidateProgram(base, cta, emsea) {
 }
 
 function updateDefinitions(base, emsea) {
-  const patch = (row) => row.code === EMSEA_DEFINITION || row.uid === EMSEA_DEFINITION ? {
-    ...row, label: emsea.canonicalLabel, businessCode: 'EMSEA', sourceBusinessCode: 'EMSEA', statCom: '', occurrences: 11,
-    rules: { ...(row.rules || {}), TUESDAY: 'PRIORITY' }, priorityClass: 'TUESDAY_PRIORITY', provenance: `${row.provenance || 'SOURCE_WORKBOOK'}+MOA_CANONICAL_EMSEA`
-  } : row;
+  const patch = (row) => {
+    if (row.code === EMSEA_DEFINITION || row.uid === EMSEA_DEFINITION) return {
+      ...row, label: emsea.canonicalLabel, businessCode: 'EMSEA', sourceBusinessCode: 'EMSEA', statCom: 'EMSEA', domain: 'CMDT', family: '', target: 'SDIS-EM', ois: ['SDIS'], occurrences: 11,
+      rules: { ...(row.rules || {}), TUESDAY: 'PRIORITY' }, priorityClass: 'TUESDAY_PRIORITY', provenance: `${row.provenance || 'SOURCE_WORKBOOK'}+MOA_CANONICAL_EMSEA`
+    };
+    return asCmdt(row);
+  };
   base.sourceDefinitions = base.sourceDefinitions.map(patch);
   base.preview.definitions = base.preview.definitions.map(patch);
 }

@@ -1,0 +1,115 @@
+{
+  "scope": "C19-PREPROD-MOA-UX-CODE-FINAL-1",
+  "globalVerdict": "PASS",
+  "viewport": {
+    "desktop": "1500x900",
+    "responsiveWidths": [1150, 960, 800]
+  },
+  "desktopCaptures": 12,
+  "responsiveCaptures": 12,
+  "boundingBoxMeasurements": 55,
+  "consoleErrors": 0,
+  "dateTimeSummary": "Écran 8: Date, Début, Fin et Durée mesurent 36 px; 07:00–19:30 produit 12 h 30.",
+  "controlHeightSummary": "Tous les contrôles métier des écrans 2, 3, 4 et 8 mesurent 36 px, hors listes multiples volontairement hautes à 76 px et cases à cocher natives.",
+  "alignmentSummary": "Écran 2: les cinq champs d’identité partagent y=282.5; écran 4: les cinq champs annuels partagent y=298.5 et les cinq champs de date annoncée partagent y=540; écran 8: Date/Début/Fin/Durée partagent y=333.",
+  "widthSummary": "Écran 2: Stat.Com 319.3 px, Code 268.2 px, Domaine/Famille 173.7 px, Type 199.2 px; occurrences 180 px et sessions 260 px. Écran 3: ressources 340 px, rôles 307.8 px, horaires 205.2 px, importance 293.1 px.",
+  "scrollableSummary": "Les listes multiples Rôles et Ressources de l’écran 3 sont scrollables (hauteur 76 px, scrollHeight supérieur à clientHeight).",
+  "codeChecks": {
+    "allocator": ["070F7.001", "070F7.002"],
+    "stableAcrossReload": true,
+    "programRows": 622,
+    "invalidVisibleCodes": 0,
+    "codeStatComMismatches": 0,
+    "visibleTechnicalIds": 0,
+    "rowsWithoutDemonstratedStatCom": 75,
+    "externalCode": "",
+    "externalStatCom": ""
+  },
+  "interactiveChecks": {
+    "externalEventSavedWithoutBusinessCode": true,
+    "externalDuration": "12 h 30",
+    "externalLocation": "Caserne SDIS",
+    "yverdonRemovedFromVisibleLocations": true,
+    "conflictCanBeRechecked": true,
+    "conflictActivityEditorHidesTechnicalId": true,
+    "draftCodeStatus": "Code à attribuer"
+  },
+  "responsiveChecks": {
+    "screens": [2, 3, 4, 8],
+    "widths": [1150, 960, 800],
+    "cases": 12,
+    "horizontalOverflows": 0,
+    "clippedControls": 0,
+    "visibleTechnicalIds": 0
+  },
+  "measurements": {
+    "screen2": {
+      "identityY": 282.5,
+      "identityHeights": [36, 36, 36, 36, 36],
+      "identityWidths": [319.3, 268.2, 173.7, 173.7, 199.2],
+      "occurrencesWidth": 180,
+      "sessionsWidth": 260
+    },
+    "screen3": {
+      "weekdayHeights": [36, 36, 36, 36, 36, 36, 36],
+      "priorityWidth": 293.1,
+      "rolesWidth": 307.8,
+      "resourcesWidth": 340,
+      "hoursWidth": 205.2,
+      "multipleHeight": 76
+    },
+    "screen4": {
+      "annualY": 298.5,
+      "annualHeights": [36, 36, 36, 36, 36],
+      "announcementY": 540,
+      "announcementHeights": [36, 36, 36, 36, 36],
+      "activityLabel": "Activité"
+    },
+    "screen8": {
+      "scheduleY": 333,
+      "scheduleHeights": [36, 36, 36, 36],
+      "scheduleWidths": [286.5, 286.5, 286.5, 286.5]
+    }
+  },
+  "screens": {
+    "1": {"verdict":"PASS","summary":"345 définitions, colonnes Code et Stat.Com séparées, aucun QV visible.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "2": {"verdict":"PASS","summary":"Identité métier sur cinq colonnes, Code attribué à l’enregistrement, structure occurrence lisible.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "3": {"verdict":"PASS","summary":"Préférences et contraintes alignées; rôles/ressources scrollables et proportions MOA respectées.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "4": {"verdict":"PASS","summary":"Contexte annuel explicite, multi-public et administration des dates annoncées alignée à 36 px.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "5": {"verdict":"PASS","summary":"Occurrences et sessions conservent Code, Stat.Com et contexte métier sans identifiant technique visible.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "6": {"verdict":"PASS","summary":"Placement automatique conserve Code, Stat.Com, cible, public et lieu.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "7": {"verdict":"PASS","summary":"Propositions lisibles et cohérentes avec le moteur métier existant.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "8": {"verdict":"PASS","summary":"Événement externe sans code; Date/Début/Fin/Durée alignés et durée 12 h 30 exacte.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "9": {"verdict":"PASS","summary":"Conflits réels, liens A/B, analyse et revérification opérationnels sans QV visible.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "10": {"verdict":"PASS","summary":"622 activités, colonnes Code/Stat.Com cohérentes, filtres sans débordement et éditeur métier propre.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "11": {"verdict":"PASS","summary":"Agenda annuel QUO VADIS '27 lisible, couleurs et détails journaliers conservés.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"},
+    "12": {"verdict":"PASS","summary":"Déplacement chronologique conserve codes métier, états et moteur de compatibilité commun.","functional":"PASS","business":"PASS","heights":"PASS","alignments":"PASS","widths":"PASS","labels":"PASS","responsive":"PASS"}
+  },
+  "captures": [
+    "/private/tmp/c19-moa-ux-after-screen01-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen02-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen03-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen04-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen05-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen06-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen07-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen08-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen09-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen10-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen11-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen12-1500.png",
+    "/private/tmp/c19-moa-ux-after-screen02-1150.png",
+    "/private/tmp/c19-moa-ux-after-screen03-1150.png",
+    "/private/tmp/c19-moa-ux-after-screen04-1150.png",
+    "/private/tmp/c19-moa-ux-after-screen08-1150.png",
+    "/private/tmp/c19-moa-ux-after-screen02-960.png",
+    "/private/tmp/c19-moa-ux-after-screen03-960.png",
+    "/private/tmp/c19-moa-ux-after-screen04-960.png",
+    "/private/tmp/c19-moa-ux-after-screen08-960.png",
+    "/private/tmp/c19-moa-ux-after-screen02-800.png",
+    "/private/tmp/c19-moa-ux-after-screen03-800.png",
+    "/private/tmp/c19-moa-ux-after-screen04-800.png",
+    "/private/tmp/c19-moa-ux-after-screen08-800.png"
+  ],
+  "openMoaPoints": []
+}

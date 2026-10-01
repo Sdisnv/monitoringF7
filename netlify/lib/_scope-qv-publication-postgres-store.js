@@ -3,6 +3,7 @@
 const { createHash } = require('crypto');
 const { Pool } = require('pg');
 const planner = require('./_scope-qv-publication-plan');
+const eventCodes = require('./_scope-event-code');
 
 const ADAPTER_KIND = 'SCOPE_QV_POSTGRES_PRODUCTION';
 const MIGRATION_VERSION = 'scope-qv-publication-c23-repair-1';
@@ -198,6 +199,28 @@ class ScopeQvPostgresStore {
     return existing.publication_activity_id;
   }
 
+  async prepareEventCodes(targets = []){
+    const candidates = targets.map((target) => ({
+      eventId:deterministicUuid(`EVT|${target.publicationKey}`),
+      statCom:target.activity.statComCode,
+      startsAt:target.event.startsAt,
+      oiCodes:target.relations.oiCodes,
+      publicCodes:target.relations.publicCodes,
+      siteCode:target.event.locationCode,
+      publicationKey:target.publicationKey
+    })).filter((row) => row.statCom);
+    return eventCodes.preparePersistedInitialCodes(this.query.bind(this),candidates,{
+      timestamp:isoTimestamp(this.clock),metadata:{ allocation:'INITIAL_CHRONOLOGICAL',source:'QUO_VADIS' }
+    });
+  }
+
+  async eventCodeFor(eventId,target){
+    return eventCodes.appendPersistedEventCode(this.query.bind(this),{
+      eventId,statCom:target.activity.statComCode,timestamp:isoTimestamp(this.clock),
+      metadata:{ allocation:'APPEND_AFTER_VALIDATION',source:'QUO_VADIS',publicationKey:target.publicationKey }
+    });
+  }
+
   async resolveReferences(target){
     const domains = [...new Set(target.relations.domainCodes || [])];
     const domainRows = domains.length ? (await this.query('select code from scope_domaines where actif and code=any($1::text[])', [domains])).rows : [];
@@ -267,6 +290,7 @@ class ScopeQvPostgresStore {
     const activityId = await this.ensureActivity(target);
     const references = await this.resolveReferences(target);
     const eventId = deterministicUuid(`EVT|${target.publicationKey}`);
+    const eventCode = await this.eventCodeFor(eventId,target);
     const timestamp = isoTimestamp(this.clock);
     await this.query(`insert into scope_evenements(
       evenement_id,date,date_fin,domaine_code,libelle,statut,origine,mode_suivi,population_figee,population_version,
@@ -276,7 +300,7 @@ class ScopeQvPostgresStore {
     ) values ($1,$2,$3,$4,$5,$6,'NOMINATIF','NOMINATIF',false,1,1,$7,$8,$9,'QUO_VADIS',$10,$11,$12,$13,$14,
       $15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$28)`, [
       eventId, target.event.startDate, target.event.endDate, target.event.primaryDomain, target.event.label,
-      target.event.status, `QV:${target.publicationKey}`, null, target.source.definitionId,
+      target.event.status, `QV:${target.publicationKey}`, eventCode, target.source.definitionId,
       target.event.startTime, target.event.endTime, target.event.roomCode, target.event.responsibleId,
       target.activity.statComCode, target.publicationKey, target.fingerprint, target.event.family, target.event.eventType,
       references.location && references.location.lieu_id, references.room && references.room.salle_id,
@@ -308,6 +332,7 @@ class ScopeQvPostgresStore {
       throw storeError('BUSINESS_CODE_IMMUTABLE', 'Canonical activity code is immutable.');
     }
     const references = await this.resolveReferences(target);
+    const eventCode = await this.eventCodeFor(existing.eventId,target);
     const timestamp = isoTimestamp(this.clock);
     await this.query(`update scope_evenements set date=$1,date_fin=$2,domaine_code=$3,libelle=$4,statut=$5,
       code_cours=$6,code_source=$7,heure_debut=$8,heure_fin=$9,salle=$10,responsable=$11,statcom_code=$12,
@@ -315,7 +340,7 @@ class ScopeQvPostgresStore {
       entree_service=$18,duree_planifiee_minutes=$19,priorite=$20,date_fixe=$21,journee_reservee=$22,
       permutation_autorisee=$23,exception_metier=$24,version=version+1,updated_at=$25 where evenement_id=$26`, [
       target.event.startDate, target.event.endDate, target.event.primaryDomain, target.event.label, target.event.status,
-      null, target.source.definitionId, target.event.startTime, target.event.endTime,
+      eventCode, target.source.definitionId, target.event.startTime, target.event.endTime,
       target.event.roomCode, target.event.responsibleId, target.activity.statComCode, target.fingerprint,
       target.event.family, target.event.eventType, references.location && references.location.lieu_id,
       references.room && references.room.salle_id, target.event.entryService, target.event.durationMinutes,

@@ -5,6 +5,7 @@ const { isoDate } = require('./_scope-rules');
 const { periodFromPersonneRow } = require('./_scope-personnel');
 const { pgCibleJoinCondition } = require('./_scope-target-resolution');
 const statcomReferential = require('./_scope-statcom-referential');
+const eventCodes = require('./_scope-event-code');
 
 function dateOnly(value){
   if(!value) return null;
@@ -434,6 +435,9 @@ function createPgRepo(client){
     async withTransaction(fn){
       if(client) return fn(api);
       return db.transaction(async (txClient) => fn(createPgRepo(txClient)));
+    },
+    async allocateEventCode(input){
+      return eventCodes.appendPersistedEventCode(q,input);
     },
     async listDomaines(){
       const result = await q('select * from scope_domaines where actif = true order by code');

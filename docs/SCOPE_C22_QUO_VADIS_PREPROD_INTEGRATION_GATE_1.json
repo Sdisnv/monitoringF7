@@ -1,0 +1,2825 @@
+{
+  "scope": "C22-QUO-VADIS-PREPROD-INTEGRATION-GATE-1",
+  "generatedAt": "2026-09-29T14:02:24.318Z",
+  "verdict": "PASS",
+  "recommendation": "GO GATE PRODUCTION",
+  "git": {
+    "initialHead": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "initialStatus": "M assets/css/scope.css\n M assets/js/scope-api.js\n M assets/js/scope-ui.js\n M netlify/functions/scope.js\n M netlify/lib/_rbac.js\n M netlify/lib/_scope-annual-catalog-import.js\n M netlify/lib/_scope-annual-catalog-service.js\n M netlify/lib/_scope-schema.js\n M package.json\n M scripts/scope-impl-1a-tests.js\n M scripts/scope-impl-1b-tests.js\n?? database/fixtures/\n?? database/migrations/20260925_scope_functional_catalog_c18.sql\n?? database/migrations/20260929_scope_qv_publication_c20.sql\n?? database/migrations/20260929_scope_qv_publication_c21.sql\n?? database/migrations/20260929_scope_qv_publication_c22_preprod_gate.sql\n?? docs/SCOPE_C18_CONVERGENCE_MATRIX.json\n?? docs/SCOPE_C18_CONVERGENCE_MATRIX.md\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.json\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.md\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_GATE_1.json\n?? docs/SCOPE_C19_PREPROD_GATE_1.md\n?? docs/SCOPE_C19_PREPROD_GATE_1_R1.json\n?? docs/SCOPE_C19_PREPROD_GATE_1_R1.md\n?? docs/SCOPE_C19_PREPROD_GATE_2.json\n?? docs/SCOPE_C19_PREPROD_GATE_2.md\n?? docs/SCOPE_C19_PREPROD_GATE_2_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_GATE_2_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_GATE_3.json\n?? docs/SCOPE_C19_PREPROD_GATE_3.md\n?? docs/SCOPE_C19_PREPROD_GATE_3_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_GATE_3_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.json\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.md\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.json\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.md\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1.md\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_ARBITRATIONS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_AUTO_PLACEMENTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_CONFLICTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_CTA_2027.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_MATRIX_2026_2027.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_PROGRAM_2027.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_TO_POSITION.json\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1.json\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1.md\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1_TEST_RESULTS.json\n?? docs/SCOPE_C20_QUO_VADIS_INTEGRATION_ARCHITECTURE_1.json\n?? docs/SCOPE_C20_QUO_VADIS_INTEGRATION_ARCHITECTURE_1.md\n?? docs/SCOPE_C21_QUO_VADIS_PUBLICATION_EXECUTION_1.json\n?? docs/SCOPE_C21_QUO_VADIS_PUBLICATION_EXECUTION_1.md\n?? docs/SCOPE_C22_QUO_VADIS_PREPROD_INTEGRATION_GATE_1.json\n?? docs/SCOPE_C22_QUO_VADIS_PREPROD_INTEGRATION_GATE_1.md\n?? docs/SCOPE_C22_QUO_VADIS_PREPROD_INTEGRATION_GATE_1_BROWSER_METRICS.json\n?? docs/captures/\n?? netlify/lib/_scope-functional-catalog-ddl.js\n?? netlify/lib/_scope-functional-catalog.js\n?? netlify/lib/_scope-qv-publication-executor.js\n?? netlify/lib/_scope-qv-publication-plan.js\n?? netlify/lib/_scope-qv-publication-reconciliation.js\n?? scripts/lib/\n?? scripts/scope-c19-preprod-canonical-truth-1-tests.js\n?? scripts/scope-c19-preprod-canonical-truth-1.js\n?? scripts/scope-c19-preprod-gate-1-r1-tests.js\n?? scripts/scope-c19-preprod-gate-1-r1.js\n?? scripts/scope-c19-preprod-gate-1-tests.js\n?? scripts/scope-c19-preprod-gate-1.js\n?? scripts/scope-c19-preprod-gate-2-tests.js\n?? scripts/scope-c19-preprod-gate-2.js\n?? scripts/scope-c19-preprod-gate-3-tests.js\n?? scripts/scope-c19-preprod-gate-3.js\n?? scripts/scope-c19-preprod-moa-final-1-tests.js\n?? scripts/scope-c19-preprod-moa-final-1.js\n?? scripts/scope-c19-preprod-moa-ux-code-final-1-tests.js\n?? scripts/scope-c19-preprod-moa-ux-code-final-1.js\n?? scripts/scope-c19-quo-vadis-27-full-dress-rehearsal-1-tests.js\n?? scripts/scope-c19-quo-vadis-27-full-dress-rehearsal-1.js\n?? scripts/scope-c19-quo-vadis-27-moa-closure-1-tests.js\n?? scripts/scope-c19-quo-vadis-27-moa-closure-1.js\n?? scripts/scope-c19-ux-recette/\n?? scripts/scope-c20-quo-vadis-integration-architecture-1-tests.js\n?? scripts/scope-c20-quo-vadis-integration-architecture-1.js\n?? scripts/scope-c21-quo-vadis-publication-execution-1-tests.js\n?? scripts/scope-c21-quo-vadis-publication-execution-1.js\n?? scripts/scope-c22-quo-vadis-preprod-integration-gate-1-tests.js\n?? scripts/scope-c22-quo-vadis-preprod-integration-gate-1.js\n?? scripts/scope-functional-catalog-c18-diagnostic.js\n?? scripts/scope-functional-catalog-c18-preview-server.js\n?? scripts/scope-functional-catalog-c18-preview.js\n?? scripts/scope-functional-catalog-c18-tests.js\n?? scripts/scope-functional-catalog-c19-preview.js\n?? scripts/scope-functional-catalog-c19-tests.js\n?? scripts/scope-functional-catalog-c19-ux-preview-server.js\n?? scripts/scope-functional-catalog-c19-ux-tests.js",
+    "finalHead": "362d6c41381ae106c318d9c9081cb83fc23588f4"
+  },
+  "environment": {
+    "target": {
+      "host": "127.0.0.1",
+      "port": 55432,
+      "database": "scope_c22_preprod"
+    },
+    "server": {
+      "database": "scope_c22_preprod",
+      "host": "127.0.0.1/32",
+      "port": 55432,
+      "version": "18.6 (Homebrew)"
+    },
+    "schema": "c22_gate",
+    "productionTouched": false
+  },
+  "protection": {
+    "productionRefused": true,
+    "bulkThreshold": 50,
+    "bulkApprovalBoundToExactPlan": true
+  },
+  "dataset": {
+    "definitions": 345,
+    "quoVadisObjects": 622,
+    "externalHistorical": 13,
+    "lifecycle": 635,
+    "explicitSourceDates": 72,
+    "cta": 53,
+    "dated": 125,
+    "underdetermined": 479,
+    "emseaChoices": 9,
+    "arbitrations": 3,
+    "insufficient": 6,
+    "sourceConflicts": 4,
+    "equation": "118 READY + 19 HUMAN_REVIEW + 485 BLOCKED + 13 NOT_PUBLISHED = 635; the 7 objects in 4 source-conflict pairs are excluded from the 125 dated objects."
+  },
+  "plan": {
+    "planId": "C20-4D97B1FDD8017623C3DC",
+    "planFingerprint": "d0daee2d709dcda2c0675ed23cb3b6bfa002bf43c877147adcd8dc1d5cf483f5",
+    "volumes": {
+      "TOTAL": 635,
+      "READY_TO_PUBLISH": 118,
+      "CREATE": 118,
+      "UPDATE": 0,
+      "UNCHANGED": 0,
+      "BLOCKED": 485,
+      "HUMAN_REVIEW_REQUIRED": 19,
+      "NOT_PUBLISHED": 13
+    },
+    "summary": {
+      "CREATE": 118,
+      "UPDATE": 0,
+      "UNCHANGED": 0,
+      "BLOCKED": 504,
+      "NOT_PUBLISHED": 13
+    }
+  },
+  "execution": {
+    "A": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-A",
+      "sourcePlanId": "C20-4D97B1FDD8017623C3DC",
+      "sourcePlanFingerprint": "d0daee2d709dcda2c0675ed23cb3b6bfa002bf43c877147adcd8dc1d5cf483f5",
+      "status": "SUCCESS",
+      "counts": {
+        "created": 118,
+        "updated": 0,
+        "unchanged": 0,
+        "blocked": 504,
+        "notPublished": 13
+      },
+      "eventIds": [
+        "19a119e6-d73d-4ae5-ab6a-317e6799b813",
+        "b3194a86-0a33-43b3-aa83-c8b8103f5af5",
+        "7240a0b9-1ce0-4cee-aabf-f65df71365ef",
+        "857e7864-832b-43f0-a72d-c616096507c2",
+        "8410aef6-7ea3-4ff7-a785-a2754ba99094",
+        "86530710-9f7f-4425-a9e6-b5d7323309d9",
+        "e7414e1a-7d71-4642-a7ce-300901280baa",
+        "dcdc425a-c3d5-4db5-ab51-600cbac89a0c",
+        "c00701f7-20b9-48b5-a51a-4bd0263857b5",
+        "57d5f372-7b75-426b-ab61-7d6e2080b04e",
+        "2cd23045-e3f5-43ee-a5b8-e624be9f864e",
+        "c38406b2-77f4-4ed5-a03e-340d4efbd412",
+        "94ecf6ea-de9e-4ec3-a1e7-340863a13e99",
+        "655e588a-9ad8-416d-a19c-96a2092dd55b",
+        "cca551d5-93ef-43e6-a241-532df8932559",
+        "ddce6280-5d60-4f37-a821-6c56f245b406",
+        "4e38524d-87b8-47c9-ac01-2c0c1544fba3",
+        "81175e0e-cd2e-4024-a665-2b87d5420a88",
+        "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+        "80e928aa-5c6e-4b34-abb2-d096b983fb64",
+        "69748e94-149f-413e-a0e6-a2adbede725f",
+        "71cd21a6-5fae-4dba-aaba-9511e4367f14",
+        "91b999c7-5dc8-449a-a115-7e2d01255ad8",
+        "b426ba98-7486-4743-a8c6-68bc961ad36a",
+        "3e441c5f-006a-49f8-a645-439a92c4a236",
+        "a0748a09-b218-403d-a794-563c0c1e7757",
+        "6f285860-78ec-409e-aa26-175987eb4878",
+        "1de2e5ec-7707-46ff-a047-953228e4786e",
+        "78249b77-62cd-4204-a277-c904996899ae",
+        "ef1cc5d1-77aa-471c-a8bf-52d75417d8b3",
+        "1faccfe9-6e47-4975-a790-c0a597ab6b71",
+        "d6665edf-8a6b-4701-a909-f410f11ff66b",
+        "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "efaeded9-02a7-4f7d-a530-7db49b47b239",
+        "20c0f051-2456-4251-ac8e-815db773be12",
+        "38400e04-a1df-49f6-a1ce-e4122436078f",
+        "cfd3a179-b1ca-4e96-a3b5-346f849d2c75",
+        "90071fa0-5dbd-4afe-a8ae-2237d06d458f",
+        "dcddacef-87ef-4fc5-afbe-37b04b0e3f42",
+        "948518b8-8704-4bd0-ac14-96ad3a3ac430",
+        "82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+        "c341eec8-2f88-4001-abd6-ed5bfa6767b7",
+        "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "fa9e849f-2a34-4e91-ad78-e76460afd088",
+        "21ca41be-5ddf-4789-a67c-29db60a8d8c4",
+        "6cbb3566-eaa8-4725-a8de-40cf532a3973",
+        "46022384-3f4e-4ffd-a6de-0ff4dd460b61",
+        "75915e85-5575-476d-af87-e05d05f20248",
+        "d686786b-4ca9-497d-a488-604b9fe202e2",
+        "321cf8ac-329d-49d2-a28b-e60a6adc8693",
+        "4d3c9f06-1428-4c1d-a11c-e1c22a2f673d",
+        "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+        "0087925c-e1c5-4e65-a612-22be4041ab7f",
+        "2e9e7d39-afb2-4b96-a071-84085a828dad",
+        "1dac136d-978a-454d-a545-220ffbcfb7fe",
+        "2334d228-ac3b-4119-ad73-c7ba1245f7f1",
+        "835f85a3-6e9c-452e-a186-98a78921f368",
+        "279111b9-184c-4ae7-ab39-a082e1d559d8",
+        "cd7b97ec-4c2a-46b4-ad52-cd64d02fe7d0",
+        "6e4cb21b-0758-4b0b-a448-321225e19c18",
+        "8f13d18a-a100-45ea-ad08-8fb88abb3da0",
+        "f17aaa7b-62ec-490b-af90-c8889646e133",
+        "94270d92-c9a3-4770-a37b-230f9a5e8dd0",
+        "11ab0cd8-bf59-437a-aa7e-78633330315b",
+        "f71d5d23-8d30-4cb5-ab60-9d3531c8a91f",
+        "06da4d2a-ea85-4443-a152-687415d0b63c",
+        "5355c313-924c-4f6a-a19c-41fa9315b59d",
+        "2755f318-be80-4ac4-a77b-cc49e16cbcc2",
+        "a7fbd443-0d26-4b5f-af7f-1adda6a8ab9f",
+        "aa3a77bd-a264-4357-a5e7-17bf0467559d",
+        "64c00fad-9112-4073-ae02-8521a5a45e48",
+        "291c8de9-cb50-4f3d-a4cc-d5ba0db1c378",
+        "b426a0dc-00e7-4f3d-aeba-39245bd3b6be",
+        "bee52c5c-62f6-4c2f-a696-5d5797e7f79c",
+        "e3e14b74-9c0c-4e2a-a5ad-bfd80c22b50e",
+        "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+        "09c857b0-e5eb-42af-a532-fe3c60d15947",
+        "a580572d-cd17-4dae-acf4-e82a4c834e04",
+        "349ad106-b51b-4c4f-aeba-d04f48589730",
+        "a55f51f0-0c2c-4a7d-adac-92f0cc02592a",
+        "a9d4e392-64e8-49be-a266-305f9668fc3a",
+        "5a100068-6e80-41b0-a6a9-76f6a1c74de4",
+        "811d94fd-b9fe-4452-a37b-1d4692a86cf3",
+        "19e5dfdc-6723-42e0-a4b1-95cd72f2e157",
+        "54700050-d617-4cda-a823-0292b1dc6f84",
+        "01870408-c283-49f5-a59b-a9cb81fb5ac2",
+        "2b8bc2bf-77d0-4fbd-a27a-e5d26c5989c6",
+        "4bb5f56e-819d-419a-a405-991a6edf8b8c",
+        "f41ac669-92bd-4c18-aee2-d08bcd861930",
+        "ed39f9e0-3b21-486c-ae9b-d5cc9e77742e",
+        "53f95424-f1bb-41ad-abe6-f98b1afccecf",
+        "20e72a57-696a-4f36-ae32-b3dc0cbf4e68",
+        "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+        "cab2aea6-0aad-4326-a06d-231c1a479409",
+        "54e641c8-a66c-4972-a395-ceaf5e4aa894",
+        "9aff6df6-3446-4495-ad12-4ccc4499a247",
+        "7b9dad11-b846-43b6-a75a-d7fb9216e87f",
+        "48bbc27d-7112-4f71-a905-4de0d62e05b4",
+        "86efb20b-5135-47c8-a23c-b8f5dfb4a29d",
+        "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+        "eb3c38fa-7098-4865-a50f-b349c207d5c0",
+        "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "35c06ed9-50d2-4ac7-a752-32fa30ccd02c",
+        "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+        "b2881fb7-27a6-4ad7-a9da-fbaf97eae6d5",
+        "5c0dbada-82d4-4f78-a0aa-9b5fd6d7fb30",
+        "9d2dc0ba-5c10-4efb-a4a9-96914c20da75",
+        "c5ac438e-1be5-48b7-aa9a-6a743e72d6e6",
+        "55a8007b-a82f-49c1-a90f-e85c46426b34",
+        "86e471da-1452-4b5b-a236-ff49f9c455d7",
+        "4d5e3fae-2975-4939-a0cb-b082920b134f",
+        "829e1861-952c-428c-ab5b-c52a1e15b12f",
+        "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+        "98652ef5-c0b2-4498-a8ff-02d1d877fe2b",
+        "dd6f8e1a-bb91-44f7-ac33-1c3e7d4a61e2",
+        "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "88aeebcb-bf2b-47a0-a892-5829998597b3",
+        "b533c5bf-9fdf-400a-a28b-b1e99c0fad5c"
+      ],
+      "transaction": "COMMITTED",
+      "environment": "ISOLATED_TEST_FIXTURE",
+      "bulkApproval": {
+        "required": true,
+        "operationCount": 118,
+        "approvedBy": "C22_MOA_GATE"
+      }
+    },
+    "B": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-B",
+      "sourcePlanId": "C20-F07AB91754380F1F88CE",
+      "sourcePlanFingerprint": "011b0aca3fa6076eefc47dbbb02ee2d42a29d7eb4f3539498c6e2ab9456db8b3",
+      "status": "NO_OP",
+      "counts": {
+        "created": 0,
+        "updated": 0,
+        "unchanged": 118,
+        "blocked": 504,
+        "notPublished": 13
+      },
+      "eventIds": [
+        "19a119e6-d73d-4ae5-ab6a-317e6799b813",
+        "b3194a86-0a33-43b3-aa83-c8b8103f5af5",
+        "7240a0b9-1ce0-4cee-aabf-f65df71365ef",
+        "857e7864-832b-43f0-a72d-c616096507c2",
+        "8410aef6-7ea3-4ff7-a785-a2754ba99094",
+        "86530710-9f7f-4425-a9e6-b5d7323309d9",
+        "e7414e1a-7d71-4642-a7ce-300901280baa",
+        "dcdc425a-c3d5-4db5-ab51-600cbac89a0c",
+        "c00701f7-20b9-48b5-a51a-4bd0263857b5",
+        "57d5f372-7b75-426b-ab61-7d6e2080b04e",
+        "2cd23045-e3f5-43ee-a5b8-e624be9f864e",
+        "c38406b2-77f4-4ed5-a03e-340d4efbd412",
+        "94ecf6ea-de9e-4ec3-a1e7-340863a13e99",
+        "655e588a-9ad8-416d-a19c-96a2092dd55b",
+        "cca551d5-93ef-43e6-a241-532df8932559",
+        "ddce6280-5d60-4f37-a821-6c56f245b406",
+        "4e38524d-87b8-47c9-ac01-2c0c1544fba3",
+        "81175e0e-cd2e-4024-a665-2b87d5420a88",
+        "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+        "80e928aa-5c6e-4b34-abb2-d096b983fb64",
+        "69748e94-149f-413e-a0e6-a2adbede725f",
+        "71cd21a6-5fae-4dba-aaba-9511e4367f14",
+        "91b999c7-5dc8-449a-a115-7e2d01255ad8",
+        "b426ba98-7486-4743-a8c6-68bc961ad36a",
+        "3e441c5f-006a-49f8-a645-439a92c4a236",
+        "a0748a09-b218-403d-a794-563c0c1e7757",
+        "6f285860-78ec-409e-aa26-175987eb4878",
+        "1de2e5ec-7707-46ff-a047-953228e4786e",
+        "78249b77-62cd-4204-a277-c904996899ae",
+        "ef1cc5d1-77aa-471c-a8bf-52d75417d8b3",
+        "1faccfe9-6e47-4975-a790-c0a597ab6b71",
+        "d6665edf-8a6b-4701-a909-f410f11ff66b",
+        "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "efaeded9-02a7-4f7d-a530-7db49b47b239",
+        "20c0f051-2456-4251-ac8e-815db773be12",
+        "38400e04-a1df-49f6-a1ce-e4122436078f",
+        "cfd3a179-b1ca-4e96-a3b5-346f849d2c75",
+        "90071fa0-5dbd-4afe-a8ae-2237d06d458f",
+        "dcddacef-87ef-4fc5-afbe-37b04b0e3f42",
+        "948518b8-8704-4bd0-ac14-96ad3a3ac430",
+        "82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+        "c341eec8-2f88-4001-abd6-ed5bfa6767b7",
+        "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "fa9e849f-2a34-4e91-ad78-e76460afd088",
+        "21ca41be-5ddf-4789-a67c-29db60a8d8c4",
+        "6cbb3566-eaa8-4725-a8de-40cf532a3973",
+        "46022384-3f4e-4ffd-a6de-0ff4dd460b61",
+        "75915e85-5575-476d-af87-e05d05f20248",
+        "d686786b-4ca9-497d-a488-604b9fe202e2",
+        "321cf8ac-329d-49d2-a28b-e60a6adc8693",
+        "4d3c9f06-1428-4c1d-a11c-e1c22a2f673d",
+        "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+        "0087925c-e1c5-4e65-a612-22be4041ab7f",
+        "2e9e7d39-afb2-4b96-a071-84085a828dad",
+        "1dac136d-978a-454d-a545-220ffbcfb7fe",
+        "2334d228-ac3b-4119-ad73-c7ba1245f7f1",
+        "835f85a3-6e9c-452e-a186-98a78921f368",
+        "279111b9-184c-4ae7-ab39-a082e1d559d8",
+        "cd7b97ec-4c2a-46b4-ad52-cd64d02fe7d0",
+        "6e4cb21b-0758-4b0b-a448-321225e19c18",
+        "8f13d18a-a100-45ea-ad08-8fb88abb3da0",
+        "f17aaa7b-62ec-490b-af90-c8889646e133",
+        "94270d92-c9a3-4770-a37b-230f9a5e8dd0",
+        "11ab0cd8-bf59-437a-aa7e-78633330315b",
+        "f71d5d23-8d30-4cb5-ab60-9d3531c8a91f",
+        "06da4d2a-ea85-4443-a152-687415d0b63c",
+        "5355c313-924c-4f6a-a19c-41fa9315b59d",
+        "2755f318-be80-4ac4-a77b-cc49e16cbcc2",
+        "a7fbd443-0d26-4b5f-af7f-1adda6a8ab9f",
+        "aa3a77bd-a264-4357-a5e7-17bf0467559d",
+        "64c00fad-9112-4073-ae02-8521a5a45e48",
+        "291c8de9-cb50-4f3d-a4cc-d5ba0db1c378",
+        "b426a0dc-00e7-4f3d-aeba-39245bd3b6be",
+        "bee52c5c-62f6-4c2f-a696-5d5797e7f79c",
+        "e3e14b74-9c0c-4e2a-a5ad-bfd80c22b50e",
+        "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+        "09c857b0-e5eb-42af-a532-fe3c60d15947",
+        "a580572d-cd17-4dae-acf4-e82a4c834e04",
+        "349ad106-b51b-4c4f-aeba-d04f48589730",
+        "a55f51f0-0c2c-4a7d-adac-92f0cc02592a",
+        "a9d4e392-64e8-49be-a266-305f9668fc3a",
+        "5a100068-6e80-41b0-a6a9-76f6a1c74de4",
+        "811d94fd-b9fe-4452-a37b-1d4692a86cf3",
+        "19e5dfdc-6723-42e0-a4b1-95cd72f2e157",
+        "54700050-d617-4cda-a823-0292b1dc6f84",
+        "01870408-c283-49f5-a59b-a9cb81fb5ac2",
+        "2b8bc2bf-77d0-4fbd-a27a-e5d26c5989c6",
+        "4bb5f56e-819d-419a-a405-991a6edf8b8c",
+        "f41ac669-92bd-4c18-aee2-d08bcd861930",
+        "ed39f9e0-3b21-486c-ae9b-d5cc9e77742e",
+        "53f95424-f1bb-41ad-abe6-f98b1afccecf",
+        "20e72a57-696a-4f36-ae32-b3dc0cbf4e68",
+        "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+        "cab2aea6-0aad-4326-a06d-231c1a479409",
+        "54e641c8-a66c-4972-a395-ceaf5e4aa894",
+        "9aff6df6-3446-4495-ad12-4ccc4499a247",
+        "7b9dad11-b846-43b6-a75a-d7fb9216e87f",
+        "48bbc27d-7112-4f71-a905-4de0d62e05b4",
+        "86efb20b-5135-47c8-a23c-b8f5dfb4a29d",
+        "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+        "eb3c38fa-7098-4865-a50f-b349c207d5c0",
+        "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "35c06ed9-50d2-4ac7-a752-32fa30ccd02c",
+        "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+        "b2881fb7-27a6-4ad7-a9da-fbaf97eae6d5",
+        "5c0dbada-82d4-4f78-a0aa-9b5fd6d7fb30",
+        "9d2dc0ba-5c10-4efb-a4a9-96914c20da75",
+        "c5ac438e-1be5-48b7-aa9a-6a743e72d6e6",
+        "55a8007b-a82f-49c1-a90f-e85c46426b34",
+        "86e471da-1452-4b5b-a236-ff49f9c455d7",
+        "4d5e3fae-2975-4939-a0cb-b082920b134f",
+        "829e1861-952c-428c-ab5b-c52a1e15b12f",
+        "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+        "98652ef5-c0b2-4498-a8ff-02d1d877fe2b",
+        "dd6f8e1a-bb91-44f7-ac33-1c3e7d4a61e2",
+        "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "88aeebcb-bf2b-47a0-a892-5829998597b3",
+        "b533c5bf-9fdf-400a-a28b-b1e99c0fad5c"
+      ],
+      "transaction": "COMMITTED",
+      "environment": "ISOLATED_TEST_FIXTURE",
+      "bulkApproval": {
+        "required": false,
+        "operationCount": 0
+      }
+    },
+    "C": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-C",
+      "sourcePlanId": "C20-443A36271D1AC5F4625F",
+      "sourcePlanFingerprint": "3b66c8482f35b7231cfc1e06e072a9af75d2b928e72371a948c54b4b3bbd35b4",
+      "status": "SUCCESS",
+      "counts": {
+        "created": 0,
+        "updated": 1,
+        "unchanged": 117,
+        "blocked": 504,
+        "notPublished": 13
+      },
+      "eventIds": [
+        "19a119e6-d73d-4ae5-ab6a-317e6799b813",
+        "b3194a86-0a33-43b3-aa83-c8b8103f5af5",
+        "7240a0b9-1ce0-4cee-aabf-f65df71365ef",
+        "857e7864-832b-43f0-a72d-c616096507c2",
+        "8410aef6-7ea3-4ff7-a785-a2754ba99094",
+        "86530710-9f7f-4425-a9e6-b5d7323309d9",
+        "e7414e1a-7d71-4642-a7ce-300901280baa",
+        "dcdc425a-c3d5-4db5-ab51-600cbac89a0c",
+        "c00701f7-20b9-48b5-a51a-4bd0263857b5",
+        "57d5f372-7b75-426b-ab61-7d6e2080b04e",
+        "2cd23045-e3f5-43ee-a5b8-e624be9f864e",
+        "c38406b2-77f4-4ed5-a03e-340d4efbd412",
+        "94ecf6ea-de9e-4ec3-a1e7-340863a13e99",
+        "655e588a-9ad8-416d-a19c-96a2092dd55b",
+        "cca551d5-93ef-43e6-a241-532df8932559",
+        "ddce6280-5d60-4f37-a821-6c56f245b406",
+        "4e38524d-87b8-47c9-ac01-2c0c1544fba3",
+        "81175e0e-cd2e-4024-a665-2b87d5420a88",
+        "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+        "80e928aa-5c6e-4b34-abb2-d096b983fb64",
+        "69748e94-149f-413e-a0e6-a2adbede725f",
+        "71cd21a6-5fae-4dba-aaba-9511e4367f14",
+        "91b999c7-5dc8-449a-a115-7e2d01255ad8",
+        "b426ba98-7486-4743-a8c6-68bc961ad36a",
+        "3e441c5f-006a-49f8-a645-439a92c4a236",
+        "a0748a09-b218-403d-a794-563c0c1e7757",
+        "6f285860-78ec-409e-aa26-175987eb4878",
+        "1de2e5ec-7707-46ff-a047-953228e4786e",
+        "78249b77-62cd-4204-a277-c904996899ae",
+        "ef1cc5d1-77aa-471c-a8bf-52d75417d8b3",
+        "1faccfe9-6e47-4975-a790-c0a597ab6b71",
+        "d6665edf-8a6b-4701-a909-f410f11ff66b",
+        "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "efaeded9-02a7-4f7d-a530-7db49b47b239",
+        "20c0f051-2456-4251-ac8e-815db773be12",
+        "38400e04-a1df-49f6-a1ce-e4122436078f",
+        "cfd3a179-b1ca-4e96-a3b5-346f849d2c75",
+        "90071fa0-5dbd-4afe-a8ae-2237d06d458f",
+        "dcddacef-87ef-4fc5-afbe-37b04b0e3f42",
+        "948518b8-8704-4bd0-ac14-96ad3a3ac430",
+        "82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+        "c341eec8-2f88-4001-abd6-ed5bfa6767b7",
+        "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "fa9e849f-2a34-4e91-ad78-e76460afd088",
+        "21ca41be-5ddf-4789-a67c-29db60a8d8c4",
+        "6cbb3566-eaa8-4725-a8de-40cf532a3973",
+        "46022384-3f4e-4ffd-a6de-0ff4dd460b61",
+        "75915e85-5575-476d-af87-e05d05f20248",
+        "d686786b-4ca9-497d-a488-604b9fe202e2",
+        "321cf8ac-329d-49d2-a28b-e60a6adc8693",
+        "4d3c9f06-1428-4c1d-a11c-e1c22a2f673d",
+        "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+        "0087925c-e1c5-4e65-a612-22be4041ab7f",
+        "2e9e7d39-afb2-4b96-a071-84085a828dad",
+        "1dac136d-978a-454d-a545-220ffbcfb7fe",
+        "2334d228-ac3b-4119-ad73-c7ba1245f7f1",
+        "835f85a3-6e9c-452e-a186-98a78921f368",
+        "279111b9-184c-4ae7-ab39-a082e1d559d8",
+        "cd7b97ec-4c2a-46b4-ad52-cd64d02fe7d0",
+        "6e4cb21b-0758-4b0b-a448-321225e19c18",
+        "8f13d18a-a100-45ea-ad08-8fb88abb3da0",
+        "f17aaa7b-62ec-490b-af90-c8889646e133",
+        "94270d92-c9a3-4770-a37b-230f9a5e8dd0",
+        "11ab0cd8-bf59-437a-aa7e-78633330315b",
+        "f71d5d23-8d30-4cb5-ab60-9d3531c8a91f",
+        "06da4d2a-ea85-4443-a152-687415d0b63c",
+        "5355c313-924c-4f6a-a19c-41fa9315b59d",
+        "2755f318-be80-4ac4-a77b-cc49e16cbcc2",
+        "a7fbd443-0d26-4b5f-af7f-1adda6a8ab9f",
+        "aa3a77bd-a264-4357-a5e7-17bf0467559d",
+        "64c00fad-9112-4073-ae02-8521a5a45e48",
+        "291c8de9-cb50-4f3d-a4cc-d5ba0db1c378",
+        "b426a0dc-00e7-4f3d-aeba-39245bd3b6be",
+        "bee52c5c-62f6-4c2f-a696-5d5797e7f79c",
+        "e3e14b74-9c0c-4e2a-a5ad-bfd80c22b50e",
+        "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+        "09c857b0-e5eb-42af-a532-fe3c60d15947",
+        "a580572d-cd17-4dae-acf4-e82a4c834e04",
+        "349ad106-b51b-4c4f-aeba-d04f48589730",
+        "a55f51f0-0c2c-4a7d-adac-92f0cc02592a",
+        "a9d4e392-64e8-49be-a266-305f9668fc3a",
+        "5a100068-6e80-41b0-a6a9-76f6a1c74de4",
+        "811d94fd-b9fe-4452-a37b-1d4692a86cf3",
+        "19e5dfdc-6723-42e0-a4b1-95cd72f2e157",
+        "54700050-d617-4cda-a823-0292b1dc6f84",
+        "01870408-c283-49f5-a59b-a9cb81fb5ac2",
+        "2b8bc2bf-77d0-4fbd-a27a-e5d26c5989c6",
+        "4bb5f56e-819d-419a-a405-991a6edf8b8c",
+        "f41ac669-92bd-4c18-aee2-d08bcd861930",
+        "ed39f9e0-3b21-486c-ae9b-d5cc9e77742e",
+        "53f95424-f1bb-41ad-abe6-f98b1afccecf",
+        "20e72a57-696a-4f36-ae32-b3dc0cbf4e68",
+        "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+        "cab2aea6-0aad-4326-a06d-231c1a479409",
+        "54e641c8-a66c-4972-a395-ceaf5e4aa894",
+        "9aff6df6-3446-4495-ad12-4ccc4499a247",
+        "7b9dad11-b846-43b6-a75a-d7fb9216e87f",
+        "48bbc27d-7112-4f71-a905-4de0d62e05b4",
+        "86efb20b-5135-47c8-a23c-b8f5dfb4a29d",
+        "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+        "eb3c38fa-7098-4865-a50f-b349c207d5c0",
+        "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "35c06ed9-50d2-4ac7-a752-32fa30ccd02c",
+        "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+        "b2881fb7-27a6-4ad7-a9da-fbaf97eae6d5",
+        "5c0dbada-82d4-4f78-a0aa-9b5fd6d7fb30",
+        "9d2dc0ba-5c10-4efb-a4a9-96914c20da75",
+        "c5ac438e-1be5-48b7-aa9a-6a743e72d6e6",
+        "55a8007b-a82f-49c1-a90f-e85c46426b34",
+        "86e471da-1452-4b5b-a236-ff49f9c455d7",
+        "4d5e3fae-2975-4939-a0cb-b082920b134f",
+        "829e1861-952c-428c-ab5b-c52a1e15b12f",
+        "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+        "98652ef5-c0b2-4498-a8ff-02d1d877fe2b",
+        "dd6f8e1a-bb91-44f7-ac33-1c3e7d4a61e2",
+        "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "88aeebcb-bf2b-47a0-a892-5829998597b3",
+        "b533c5bf-9fdf-400a-a28b-b1e99c0fad5c"
+      ],
+      "transaction": "COMMITTED",
+      "environment": "ISOLATED_TEST_FIXTURE",
+      "bulkApproval": {
+        "required": false,
+        "operationCount": 1
+      }
+    },
+    "D": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-D",
+      "sourcePlanId": "C20-C69075B63E45D5603F87",
+      "sourcePlanFingerprint": "33c8e9c01f860f9f58dbc8bfa23767d9c299f0b7055f2fad3e623b955e8defbf",
+      "status": "SUCCESS",
+      "counts": {
+        "created": 0,
+        "updated": 1,
+        "unchanged": 117,
+        "blocked": 504,
+        "notPublished": 13
+      },
+      "eventIds": [
+        "19a119e6-d73d-4ae5-ab6a-317e6799b813",
+        "b3194a86-0a33-43b3-aa83-c8b8103f5af5",
+        "7240a0b9-1ce0-4cee-aabf-f65df71365ef",
+        "857e7864-832b-43f0-a72d-c616096507c2",
+        "8410aef6-7ea3-4ff7-a785-a2754ba99094",
+        "86530710-9f7f-4425-a9e6-b5d7323309d9",
+        "e7414e1a-7d71-4642-a7ce-300901280baa",
+        "dcdc425a-c3d5-4db5-ab51-600cbac89a0c",
+        "c00701f7-20b9-48b5-a51a-4bd0263857b5",
+        "57d5f372-7b75-426b-ab61-7d6e2080b04e",
+        "2cd23045-e3f5-43ee-a5b8-e624be9f864e",
+        "c38406b2-77f4-4ed5-a03e-340d4efbd412",
+        "94ecf6ea-de9e-4ec3-a1e7-340863a13e99",
+        "655e588a-9ad8-416d-a19c-96a2092dd55b",
+        "cca551d5-93ef-43e6-a241-532df8932559",
+        "ddce6280-5d60-4f37-a821-6c56f245b406",
+        "4e38524d-87b8-47c9-ac01-2c0c1544fba3",
+        "81175e0e-cd2e-4024-a665-2b87d5420a88",
+        "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+        "80e928aa-5c6e-4b34-abb2-d096b983fb64",
+        "69748e94-149f-413e-a0e6-a2adbede725f",
+        "71cd21a6-5fae-4dba-aaba-9511e4367f14",
+        "91b999c7-5dc8-449a-a115-7e2d01255ad8",
+        "b426ba98-7486-4743-a8c6-68bc961ad36a",
+        "3e441c5f-006a-49f8-a645-439a92c4a236",
+        "a0748a09-b218-403d-a794-563c0c1e7757",
+        "6f285860-78ec-409e-aa26-175987eb4878",
+        "1de2e5ec-7707-46ff-a047-953228e4786e",
+        "78249b77-62cd-4204-a277-c904996899ae",
+        "ef1cc5d1-77aa-471c-a8bf-52d75417d8b3",
+        "1faccfe9-6e47-4975-a790-c0a597ab6b71",
+        "d6665edf-8a6b-4701-a909-f410f11ff66b",
+        "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "efaeded9-02a7-4f7d-a530-7db49b47b239",
+        "20c0f051-2456-4251-ac8e-815db773be12",
+        "38400e04-a1df-49f6-a1ce-e4122436078f",
+        "cfd3a179-b1ca-4e96-a3b5-346f849d2c75",
+        "90071fa0-5dbd-4afe-a8ae-2237d06d458f",
+        "dcddacef-87ef-4fc5-afbe-37b04b0e3f42",
+        "948518b8-8704-4bd0-ac14-96ad3a3ac430",
+        "82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+        "c341eec8-2f88-4001-abd6-ed5bfa6767b7",
+        "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "fa9e849f-2a34-4e91-ad78-e76460afd088",
+        "21ca41be-5ddf-4789-a67c-29db60a8d8c4",
+        "6cbb3566-eaa8-4725-a8de-40cf532a3973",
+        "46022384-3f4e-4ffd-a6de-0ff4dd460b61",
+        "75915e85-5575-476d-af87-e05d05f20248",
+        "d686786b-4ca9-497d-a488-604b9fe202e2",
+        "321cf8ac-329d-49d2-a28b-e60a6adc8693",
+        "4d3c9f06-1428-4c1d-a11c-e1c22a2f673d",
+        "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+        "0087925c-e1c5-4e65-a612-22be4041ab7f",
+        "2e9e7d39-afb2-4b96-a071-84085a828dad",
+        "1dac136d-978a-454d-a545-220ffbcfb7fe",
+        "2334d228-ac3b-4119-ad73-c7ba1245f7f1",
+        "835f85a3-6e9c-452e-a186-98a78921f368",
+        "279111b9-184c-4ae7-ab39-a082e1d559d8",
+        "cd7b97ec-4c2a-46b4-ad52-cd64d02fe7d0",
+        "6e4cb21b-0758-4b0b-a448-321225e19c18",
+        "8f13d18a-a100-45ea-ad08-8fb88abb3da0",
+        "f17aaa7b-62ec-490b-af90-c8889646e133",
+        "94270d92-c9a3-4770-a37b-230f9a5e8dd0",
+        "11ab0cd8-bf59-437a-aa7e-78633330315b",
+        "f71d5d23-8d30-4cb5-ab60-9d3531c8a91f",
+        "06da4d2a-ea85-4443-a152-687415d0b63c",
+        "5355c313-924c-4f6a-a19c-41fa9315b59d",
+        "2755f318-be80-4ac4-a77b-cc49e16cbcc2",
+        "a7fbd443-0d26-4b5f-af7f-1adda6a8ab9f",
+        "aa3a77bd-a264-4357-a5e7-17bf0467559d",
+        "64c00fad-9112-4073-ae02-8521a5a45e48",
+        "291c8de9-cb50-4f3d-a4cc-d5ba0db1c378",
+        "b426a0dc-00e7-4f3d-aeba-39245bd3b6be",
+        "bee52c5c-62f6-4c2f-a696-5d5797e7f79c",
+        "e3e14b74-9c0c-4e2a-a5ad-bfd80c22b50e",
+        "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+        "09c857b0-e5eb-42af-a532-fe3c60d15947",
+        "a580572d-cd17-4dae-acf4-e82a4c834e04",
+        "349ad106-b51b-4c4f-aeba-d04f48589730",
+        "a55f51f0-0c2c-4a7d-adac-92f0cc02592a",
+        "a9d4e392-64e8-49be-a266-305f9668fc3a",
+        "5a100068-6e80-41b0-a6a9-76f6a1c74de4",
+        "811d94fd-b9fe-4452-a37b-1d4692a86cf3",
+        "19e5dfdc-6723-42e0-a4b1-95cd72f2e157",
+        "54700050-d617-4cda-a823-0292b1dc6f84",
+        "01870408-c283-49f5-a59b-a9cb81fb5ac2",
+        "2b8bc2bf-77d0-4fbd-a27a-e5d26c5989c6",
+        "4bb5f56e-819d-419a-a405-991a6edf8b8c",
+        "f41ac669-92bd-4c18-aee2-d08bcd861930",
+        "ed39f9e0-3b21-486c-ae9b-d5cc9e77742e",
+        "53f95424-f1bb-41ad-abe6-f98b1afccecf",
+        "20e72a57-696a-4f36-ae32-b3dc0cbf4e68",
+        "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+        "cab2aea6-0aad-4326-a06d-231c1a479409",
+        "54e641c8-a66c-4972-a395-ceaf5e4aa894",
+        "9aff6df6-3446-4495-ad12-4ccc4499a247",
+        "7b9dad11-b846-43b6-a75a-d7fb9216e87f",
+        "48bbc27d-7112-4f71-a905-4de0d62e05b4",
+        "86efb20b-5135-47c8-a23c-b8f5dfb4a29d",
+        "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+        "eb3c38fa-7098-4865-a50f-b349c207d5c0",
+        "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "35c06ed9-50d2-4ac7-a752-32fa30ccd02c",
+        "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+        "b2881fb7-27a6-4ad7-a9da-fbaf97eae6d5",
+        "5c0dbada-82d4-4f78-a0aa-9b5fd6d7fb30",
+        "9d2dc0ba-5c10-4efb-a4a9-96914c20da75",
+        "c5ac438e-1be5-48b7-aa9a-6a743e72d6e6",
+        "55a8007b-a82f-49c1-a90f-e85c46426b34",
+        "86e471da-1452-4b5b-a236-ff49f9c455d7",
+        "4d5e3fae-2975-4939-a0cb-b082920b134f",
+        "829e1861-952c-428c-ab5b-c52a1e15b12f",
+        "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+        "98652ef5-c0b2-4498-a8ff-02d1d877fe2b",
+        "dd6f8e1a-bb91-44f7-ac33-1c3e7d4a61e2",
+        "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "88aeebcb-bf2b-47a0-a892-5829998597b3",
+        "b533c5bf-9fdf-400a-a28b-b1e99c0fad5c"
+      ],
+      "transaction": "COMMITTED",
+      "environment": "ISOLATED_TEST_FIXTURE",
+      "bulkApproval": {
+        "required": false,
+        "operationCount": 1
+      }
+    },
+    "rollback": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-ROLLBACK",
+      "sourcePlanId": "C20-FFD89505F25BAF76DF45",
+      "status": "FAILURE",
+      "transaction": "ROLLED_BACK",
+      "errorCode": "INJECTED_EXECUTION_FAILURE"
+    },
+    "retry": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-RETRY",
+      "sourcePlanId": "C20-FFD89505F25BAF76DF45",
+      "sourcePlanFingerprint": "c46b58f70da352be82d4441bfc6dacf797f14880478e863580e3c714f695a99a",
+      "status": "SUCCESS",
+      "counts": {
+        "created": 0,
+        "updated": 1,
+        "unchanged": 117,
+        "blocked": 504,
+        "notPublished": 13
+      },
+      "eventIds": [
+        "19a119e6-d73d-4ae5-ab6a-317e6799b813",
+        "b3194a86-0a33-43b3-aa83-c8b8103f5af5",
+        "7240a0b9-1ce0-4cee-aabf-f65df71365ef",
+        "857e7864-832b-43f0-a72d-c616096507c2",
+        "8410aef6-7ea3-4ff7-a785-a2754ba99094",
+        "86530710-9f7f-4425-a9e6-b5d7323309d9",
+        "e7414e1a-7d71-4642-a7ce-300901280baa",
+        "dcdc425a-c3d5-4db5-ab51-600cbac89a0c",
+        "c00701f7-20b9-48b5-a51a-4bd0263857b5",
+        "57d5f372-7b75-426b-ab61-7d6e2080b04e",
+        "2cd23045-e3f5-43ee-a5b8-e624be9f864e",
+        "c38406b2-77f4-4ed5-a03e-340d4efbd412",
+        "94ecf6ea-de9e-4ec3-a1e7-340863a13e99",
+        "655e588a-9ad8-416d-a19c-96a2092dd55b",
+        "cca551d5-93ef-43e6-a241-532df8932559",
+        "ddce6280-5d60-4f37-a821-6c56f245b406",
+        "4e38524d-87b8-47c9-ac01-2c0c1544fba3",
+        "81175e0e-cd2e-4024-a665-2b87d5420a88",
+        "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+        "80e928aa-5c6e-4b34-abb2-d096b983fb64",
+        "69748e94-149f-413e-a0e6-a2adbede725f",
+        "71cd21a6-5fae-4dba-aaba-9511e4367f14",
+        "91b999c7-5dc8-449a-a115-7e2d01255ad8",
+        "b426ba98-7486-4743-a8c6-68bc961ad36a",
+        "3e441c5f-006a-49f8-a645-439a92c4a236",
+        "a0748a09-b218-403d-a794-563c0c1e7757",
+        "6f285860-78ec-409e-aa26-175987eb4878",
+        "1de2e5ec-7707-46ff-a047-953228e4786e",
+        "78249b77-62cd-4204-a277-c904996899ae",
+        "ef1cc5d1-77aa-471c-a8bf-52d75417d8b3",
+        "1faccfe9-6e47-4975-a790-c0a597ab6b71",
+        "d6665edf-8a6b-4701-a909-f410f11ff66b",
+        "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "efaeded9-02a7-4f7d-a530-7db49b47b239",
+        "20c0f051-2456-4251-ac8e-815db773be12",
+        "38400e04-a1df-49f6-a1ce-e4122436078f",
+        "cfd3a179-b1ca-4e96-a3b5-346f849d2c75",
+        "90071fa0-5dbd-4afe-a8ae-2237d06d458f",
+        "dcddacef-87ef-4fc5-afbe-37b04b0e3f42",
+        "948518b8-8704-4bd0-ac14-96ad3a3ac430",
+        "82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+        "c341eec8-2f88-4001-abd6-ed5bfa6767b7",
+        "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "fa9e849f-2a34-4e91-ad78-e76460afd088",
+        "21ca41be-5ddf-4789-a67c-29db60a8d8c4",
+        "6cbb3566-eaa8-4725-a8de-40cf532a3973",
+        "46022384-3f4e-4ffd-a6de-0ff4dd460b61",
+        "75915e85-5575-476d-af87-e05d05f20248",
+        "d686786b-4ca9-497d-a488-604b9fe202e2",
+        "321cf8ac-329d-49d2-a28b-e60a6adc8693",
+        "4d3c9f06-1428-4c1d-a11c-e1c22a2f673d",
+        "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+        "0087925c-e1c5-4e65-a612-22be4041ab7f",
+        "2e9e7d39-afb2-4b96-a071-84085a828dad",
+        "1dac136d-978a-454d-a545-220ffbcfb7fe",
+        "2334d228-ac3b-4119-ad73-c7ba1245f7f1",
+        "835f85a3-6e9c-452e-a186-98a78921f368",
+        "279111b9-184c-4ae7-ab39-a082e1d559d8",
+        "cd7b97ec-4c2a-46b4-ad52-cd64d02fe7d0",
+        "6e4cb21b-0758-4b0b-a448-321225e19c18",
+        "8f13d18a-a100-45ea-ad08-8fb88abb3da0",
+        "f17aaa7b-62ec-490b-af90-c8889646e133",
+        "94270d92-c9a3-4770-a37b-230f9a5e8dd0",
+        "11ab0cd8-bf59-437a-aa7e-78633330315b",
+        "f71d5d23-8d30-4cb5-ab60-9d3531c8a91f",
+        "06da4d2a-ea85-4443-a152-687415d0b63c",
+        "5355c313-924c-4f6a-a19c-41fa9315b59d",
+        "2755f318-be80-4ac4-a77b-cc49e16cbcc2",
+        "a7fbd443-0d26-4b5f-af7f-1adda6a8ab9f",
+        "aa3a77bd-a264-4357-a5e7-17bf0467559d",
+        "64c00fad-9112-4073-ae02-8521a5a45e48",
+        "291c8de9-cb50-4f3d-a4cc-d5ba0db1c378",
+        "b426a0dc-00e7-4f3d-aeba-39245bd3b6be",
+        "bee52c5c-62f6-4c2f-a696-5d5797e7f79c",
+        "e3e14b74-9c0c-4e2a-a5ad-bfd80c22b50e",
+        "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+        "09c857b0-e5eb-42af-a532-fe3c60d15947",
+        "a580572d-cd17-4dae-acf4-e82a4c834e04",
+        "349ad106-b51b-4c4f-aeba-d04f48589730",
+        "a55f51f0-0c2c-4a7d-adac-92f0cc02592a",
+        "a9d4e392-64e8-49be-a266-305f9668fc3a",
+        "5a100068-6e80-41b0-a6a9-76f6a1c74de4",
+        "811d94fd-b9fe-4452-a37b-1d4692a86cf3",
+        "19e5dfdc-6723-42e0-a4b1-95cd72f2e157",
+        "54700050-d617-4cda-a823-0292b1dc6f84",
+        "01870408-c283-49f5-a59b-a9cb81fb5ac2",
+        "2b8bc2bf-77d0-4fbd-a27a-e5d26c5989c6",
+        "4bb5f56e-819d-419a-a405-991a6edf8b8c",
+        "f41ac669-92bd-4c18-aee2-d08bcd861930",
+        "ed39f9e0-3b21-486c-ae9b-d5cc9e77742e",
+        "53f95424-f1bb-41ad-abe6-f98b1afccecf",
+        "20e72a57-696a-4f36-ae32-b3dc0cbf4e68",
+        "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+        "cab2aea6-0aad-4326-a06d-231c1a479409",
+        "54e641c8-a66c-4972-a395-ceaf5e4aa894",
+        "9aff6df6-3446-4495-ad12-4ccc4499a247",
+        "7b9dad11-b846-43b6-a75a-d7fb9216e87f",
+        "48bbc27d-7112-4f71-a905-4de0d62e05b4",
+        "86efb20b-5135-47c8-a23c-b8f5dfb4a29d",
+        "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+        "eb3c38fa-7098-4865-a50f-b349c207d5c0",
+        "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "35c06ed9-50d2-4ac7-a752-32fa30ccd02c",
+        "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+        "b2881fb7-27a6-4ad7-a9da-fbaf97eae6d5",
+        "5c0dbada-82d4-4f78-a0aa-9b5fd6d7fb30",
+        "9d2dc0ba-5c10-4efb-a4a9-96914c20da75",
+        "c5ac438e-1be5-48b7-aa9a-6a743e72d6e6",
+        "55a8007b-a82f-49c1-a90f-e85c46426b34",
+        "86e471da-1452-4b5b-a236-ff49f9c455d7",
+        "4d5e3fae-2975-4939-a0cb-b082920b134f",
+        "829e1861-952c-428c-ab5b-c52a1e15b12f",
+        "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+        "98652ef5-c0b2-4498-a8ff-02d1d877fe2b",
+        "dd6f8e1a-bb91-44f7-ac33-1c3e7d4a61e2",
+        "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "88aeebcb-bf2b-47a0-a892-5829998597b3",
+        "b533c5bf-9fdf-400a-a28b-b1e99c0fad5c"
+      ],
+      "transaction": "COMMITTED",
+      "environment": "ISOLATED_TEST_FIXTURE",
+      "bulkApproval": {
+        "required": false,
+        "operationCount": 1
+      }
+    },
+    "retryNoOp": {
+      "kind": "PublicationExecutionResult",
+      "runId": "C22-RETRY-NOOP",
+      "sourcePlanId": "C20-FFD89505F25BAF76DF45",
+      "sourcePlanFingerprint": "c46b58f70da352be82d4441bfc6dacf797f14880478e863580e3c714f695a99a",
+      "status": "NO_OP",
+      "counts": {
+        "created": 0,
+        "updated": 0,
+        "unchanged": 118,
+        "blocked": 504,
+        "notPublished": 13
+      },
+      "eventIds": [
+        "19a119e6-d73d-4ae5-ab6a-317e6799b813",
+        "b3194a86-0a33-43b3-aa83-c8b8103f5af5",
+        "7240a0b9-1ce0-4cee-aabf-f65df71365ef",
+        "857e7864-832b-43f0-a72d-c616096507c2",
+        "8410aef6-7ea3-4ff7-a785-a2754ba99094",
+        "86530710-9f7f-4425-a9e6-b5d7323309d9",
+        "e7414e1a-7d71-4642-a7ce-300901280baa",
+        "dcdc425a-c3d5-4db5-ab51-600cbac89a0c",
+        "c00701f7-20b9-48b5-a51a-4bd0263857b5",
+        "57d5f372-7b75-426b-ab61-7d6e2080b04e",
+        "2cd23045-e3f5-43ee-a5b8-e624be9f864e",
+        "c38406b2-77f4-4ed5-a03e-340d4efbd412",
+        "94ecf6ea-de9e-4ec3-a1e7-340863a13e99",
+        "655e588a-9ad8-416d-a19c-96a2092dd55b",
+        "cca551d5-93ef-43e6-a241-532df8932559",
+        "ddce6280-5d60-4f37-a821-6c56f245b406",
+        "4e38524d-87b8-47c9-ac01-2c0c1544fba3",
+        "81175e0e-cd2e-4024-a665-2b87d5420a88",
+        "1cfbfe96-7f05-4936-adbb-a9b1e251fe2b",
+        "80e928aa-5c6e-4b34-abb2-d096b983fb64",
+        "69748e94-149f-413e-a0e6-a2adbede725f",
+        "71cd21a6-5fae-4dba-aaba-9511e4367f14",
+        "91b999c7-5dc8-449a-a115-7e2d01255ad8",
+        "b426ba98-7486-4743-a8c6-68bc961ad36a",
+        "3e441c5f-006a-49f8-a645-439a92c4a236",
+        "a0748a09-b218-403d-a794-563c0c1e7757",
+        "6f285860-78ec-409e-aa26-175987eb4878",
+        "1de2e5ec-7707-46ff-a047-953228e4786e",
+        "78249b77-62cd-4204-a277-c904996899ae",
+        "ef1cc5d1-77aa-471c-a8bf-52d75417d8b3",
+        "1faccfe9-6e47-4975-a790-c0a597ab6b71",
+        "d6665edf-8a6b-4701-a909-f410f11ff66b",
+        "25513aff-3f71-4870-a51c-3a4513b8b408",
+        "efaeded9-02a7-4f7d-a530-7db49b47b239",
+        "20c0f051-2456-4251-ac8e-815db773be12",
+        "38400e04-a1df-49f6-a1ce-e4122436078f",
+        "cfd3a179-b1ca-4e96-a3b5-346f849d2c75",
+        "90071fa0-5dbd-4afe-a8ae-2237d06d458f",
+        "dcddacef-87ef-4fc5-afbe-37b04b0e3f42",
+        "948518b8-8704-4bd0-ac14-96ad3a3ac430",
+        "82ed7ed5-f1b5-4d66-a74c-5f96f432e606",
+        "c341eec8-2f88-4001-abd6-ed5bfa6767b7",
+        "389b5f4a-cd38-48b3-ac3d-e40801e1b702",
+        "fa9e849f-2a34-4e91-ad78-e76460afd088",
+        "21ca41be-5ddf-4789-a67c-29db60a8d8c4",
+        "6cbb3566-eaa8-4725-a8de-40cf532a3973",
+        "46022384-3f4e-4ffd-a6de-0ff4dd460b61",
+        "75915e85-5575-476d-af87-e05d05f20248",
+        "d686786b-4ca9-497d-a488-604b9fe202e2",
+        "321cf8ac-329d-49d2-a28b-e60a6adc8693",
+        "4d3c9f06-1428-4c1d-a11c-e1c22a2f673d",
+        "7e6d9c59-4d07-4a4b-a1dc-617c2b2bbdda",
+        "0087925c-e1c5-4e65-a612-22be4041ab7f",
+        "2e9e7d39-afb2-4b96-a071-84085a828dad",
+        "1dac136d-978a-454d-a545-220ffbcfb7fe",
+        "2334d228-ac3b-4119-ad73-c7ba1245f7f1",
+        "835f85a3-6e9c-452e-a186-98a78921f368",
+        "279111b9-184c-4ae7-ab39-a082e1d559d8",
+        "cd7b97ec-4c2a-46b4-ad52-cd64d02fe7d0",
+        "6e4cb21b-0758-4b0b-a448-321225e19c18",
+        "8f13d18a-a100-45ea-ad08-8fb88abb3da0",
+        "f17aaa7b-62ec-490b-af90-c8889646e133",
+        "94270d92-c9a3-4770-a37b-230f9a5e8dd0",
+        "11ab0cd8-bf59-437a-aa7e-78633330315b",
+        "f71d5d23-8d30-4cb5-ab60-9d3531c8a91f",
+        "06da4d2a-ea85-4443-a152-687415d0b63c",
+        "5355c313-924c-4f6a-a19c-41fa9315b59d",
+        "2755f318-be80-4ac4-a77b-cc49e16cbcc2",
+        "a7fbd443-0d26-4b5f-af7f-1adda6a8ab9f",
+        "aa3a77bd-a264-4357-a5e7-17bf0467559d",
+        "64c00fad-9112-4073-ae02-8521a5a45e48",
+        "291c8de9-cb50-4f3d-a4cc-d5ba0db1c378",
+        "b426a0dc-00e7-4f3d-aeba-39245bd3b6be",
+        "bee52c5c-62f6-4c2f-a696-5d5797e7f79c",
+        "e3e14b74-9c0c-4e2a-a5ad-bfd80c22b50e",
+        "854cc5b3-ae5b-4ec4-a875-64d79722405d",
+        "09c857b0-e5eb-42af-a532-fe3c60d15947",
+        "a580572d-cd17-4dae-acf4-e82a4c834e04",
+        "349ad106-b51b-4c4f-aeba-d04f48589730",
+        "a55f51f0-0c2c-4a7d-adac-92f0cc02592a",
+        "a9d4e392-64e8-49be-a266-305f9668fc3a",
+        "5a100068-6e80-41b0-a6a9-76f6a1c74de4",
+        "811d94fd-b9fe-4452-a37b-1d4692a86cf3",
+        "19e5dfdc-6723-42e0-a4b1-95cd72f2e157",
+        "54700050-d617-4cda-a823-0292b1dc6f84",
+        "01870408-c283-49f5-a59b-a9cb81fb5ac2",
+        "2b8bc2bf-77d0-4fbd-a27a-e5d26c5989c6",
+        "4bb5f56e-819d-419a-a405-991a6edf8b8c",
+        "f41ac669-92bd-4c18-aee2-d08bcd861930",
+        "ed39f9e0-3b21-486c-ae9b-d5cc9e77742e",
+        "53f95424-f1bb-41ad-abe6-f98b1afccecf",
+        "20e72a57-696a-4f36-ae32-b3dc0cbf4e68",
+        "c59190d8-412a-4566-a30d-7b4ea4d6b4b1",
+        "cab2aea6-0aad-4326-a06d-231c1a479409",
+        "54e641c8-a66c-4972-a395-ceaf5e4aa894",
+        "9aff6df6-3446-4495-ad12-4ccc4499a247",
+        "7b9dad11-b846-43b6-a75a-d7fb9216e87f",
+        "48bbc27d-7112-4f71-a905-4de0d62e05b4",
+        "86efb20b-5135-47c8-a23c-b8f5dfb4a29d",
+        "a9d9c2c4-e7a9-400b-ab5f-57086cfa5497",
+        "eb3c38fa-7098-4865-a50f-b349c207d5c0",
+        "48d8e96c-73fa-4bc0-aef1-8c65c12bd44a",
+        "35c06ed9-50d2-4ac7-a752-32fa30ccd02c",
+        "63b7f0bf-79d4-4aa4-afae-9802368e117d",
+        "b2881fb7-27a6-4ad7-a9da-fbaf97eae6d5",
+        "5c0dbada-82d4-4f78-a0aa-9b5fd6d7fb30",
+        "9d2dc0ba-5c10-4efb-a4a9-96914c20da75",
+        "c5ac438e-1be5-48b7-aa9a-6a743e72d6e6",
+        "55a8007b-a82f-49c1-a90f-e85c46426b34",
+        "86e471da-1452-4b5b-a236-ff49f9c455d7",
+        "4d5e3fae-2975-4939-a0cb-b082920b134f",
+        "829e1861-952c-428c-ab5b-c52a1e15b12f",
+        "aa2dbc86-013d-47ee-ab11-eea763034a6c",
+        "98652ef5-c0b2-4498-a8ff-02d1d877fe2b",
+        "dd6f8e1a-bb91-44f7-ac33-1c3e7d4a61e2",
+        "ecb5b5af-1513-45fa-a103-abf4ad2d8165",
+        "88aeebcb-bf2b-47a0-a892-5829998597b3",
+        "b533c5bf-9fdf-400a-a28b-b1e99c0fad5c"
+      ],
+      "transaction": "COMMITTED",
+      "environment": "ISOLATED_TEST_FIXTURE",
+      "bulkApproval": {
+        "required": false,
+        "operationCount": 1
+      }
+    }
+  },
+  "reconciliation": {
+    "drift": {
+      "MATCHED": 117,
+      "MISSING": 0,
+      "DUPLICATE": 0,
+      "DRIFT": 1,
+      "PROTECTED_CHANGE": 0,
+      "UNEXPECTED": 0
+    },
+    "final": {
+      "MATCHED": 118,
+      "MISSING": 0,
+      "DUPLICATE": 0,
+      "DRIFT": 0,
+      "PROTECTED_CHANGE": 0,
+      "UNEXPECTED": 0
+    },
+    "readOnly": true
+  },
+  "persistence": {
+    "counts": {
+      "scope_activities": 46,
+      "scope_evenements": 118,
+      "scope_qv_publication_links": 118,
+      "scope_evenement_domaines": 118,
+      "scope_evenement_cibles": 180,
+      "scope_evenement_ois": 165,
+      "scope_evenement_publics": 28,
+      "scope_evenement_roles": 1,
+      "scope_evenement_ressources": 0,
+      "scope_session_groupes": 118,
+      "scope_session_evenements": 118,
+      "scope_donnees_operationnelles": 1
+    },
+    "activities": 46,
+    "events": 118
+  },
+  "invariants": {
+    "cta60Hours": 53,
+    "fobaMultiOi": 4,
+    "multiPublicRows": 2,
+    "multiSessionRows": 12,
+    "syntheticMultiSessionEvidence": {
+      "groups": [
+        {
+          "group_id": "C22-SYNTH-G1",
+          "session_count": 3
+        },
+        {
+          "group_id": "C22-SYNTH-G2",
+          "session_count": 2
+        },
+        {
+          "group_id": "C22-SYNTH-G3",
+          "session_count": 2
+        }
+      ],
+      "sessions": 7,
+      "rolledBack": true
+    },
+    "statCom": {
+      "pdf": 87,
+      "extensions": 4,
+      "operational": 91
+    },
+    "emseaStatCom": "Non applicable",
+    "externalCode": null
+  },
+  "schema": {
+    "fieldMapping": [
+      {
+        "qv": "Code",
+        "scope": "scope_qv_publication_activities.business_code",
+        "type": "text",
+        "nullable": "oui",
+        "fk": "UNIQUE annuel",
+        "rule": "STATCOM.xxx stable",
+        "risk": "collision / faux code"
+      },
+      {
+        "qv": "Stat.Com",
+        "scope": "scope_qv_publication_activities.stat_com_code",
+        "type": "text",
+        "nullable": "oui",
+        "fk": "référentiel 91 codes",
+        "rule": "nullable selon catégorie",
+        "risk": "code inventé"
+      },
+      {
+        "qv": "Libellé",
+        "scope": "scope_qv_publication_activities.label + scope_evenements.libelle",
+        "type": "text",
+        "nullable": "non",
+        "fk": "activité",
+        "rule": "activité canonique / matérialisation",
+        "risk": "confusion identité"
+      },
+      {
+        "qv": "Domaine",
+        "scope": "scope_evenements.domaine_code",
+        "type": "text",
+        "nullable": "non",
+        "fk": "référentiel domaine",
+        "rule": "domaine principal",
+        "risk": "transversal incomplet"
+      },
+      {
+        "qv": "Multi-domaines",
+        "scope": "scope_evenement_domaines.domaine_code",
+        "type": "text",
+        "nullable": "non",
+        "fk": "relation N:N additive",
+        "rule": "valeurs dédupliquées",
+        "risk": "migration requise"
+      },
+      {
+        "qv": "Famille",
+        "scope": "scope_evenements.famille (C22 additif)",
+        "type": "text",
+        "nullable": "oui",
+        "fk": "référentiel",
+        "rule": "héritage définition",
+        "risk": "valeur libre"
+      },
+      {
+        "qv": "Type",
+        "scope": "scope_evenements.type_evenement (C22 additif)",
+        "type": "text",
+        "nullable": "oui",
+        "fk": "référentiel",
+        "rule": "héritage définition",
+        "risk": "valeur libre"
+      },
+      {
+        "qv": "Occurrence",
+        "scope": "scope_qv_publication_links.source_occurrence_id",
+        "type": "text",
+        "nullable": "non",
+        "fk": "source QV",
+        "rule": "provenance, pas libellé",
+        "risk": "lien perdu"
+      },
+      {
+        "qv": "Session",
+        "scope": "scope_qv_session_events + source_session_id",
+        "type": "text/int",
+        "nullable": "non",
+        "fk": "groupe FK",
+        "rule": "1/N conservé",
+        "risk": "aplatissement"
+      },
+      {
+        "qv": "Cible",
+        "scope": "scope_evenement_cibles.cible_id",
+        "type": "uuid",
+        "nullable": "non",
+        "fk": "FK scope_cibles",
+        "rule": "FULL_OI distinct",
+        "risk": "cible concaténée"
+      },
+      {
+        "qv": "Publics",
+        "scope": "scope_evenement_public_rule_versions.public_rule_version_id",
+        "type": "uuid",
+        "nullable": "non",
+        "fk": "FK règles public",
+        "rule": "multi-public dédupliqué",
+        "risk": "perte multi-public"
+      },
+      {
+        "qv": "OI",
+        "scope": "scope_evenement_ois.oi_id",
+        "type": "uuid",
+        "nullable": "non",
+        "fk": "FK scope_ois",
+        "rule": "indépendance G1/C1/B1/B2",
+        "risk": "contamination OI"
+      },
+      {
+        "qv": "Lieu",
+        "scope": "scope_evenements.lieu_id (C22 additif)",
+        "type": "uuid",
+        "nullable": "oui",
+        "fk": "FK scope_lieux",
+        "rule": "valeur canonique",
+        "risk": "lieu exclu"
+      },
+      {
+        "qv": "Entrée en service",
+        "scope": "scope_evenements.entree_service",
+        "type": "text",
+        "nullable": "oui",
+        "fk": "aucune",
+        "rule": "max UX 60 caractères",
+        "risk": "troncature"
+      },
+      {
+        "qv": "Salle",
+        "scope": "scope_evenements.salle_theorie_id (C22 additif)",
+        "type": "uuid",
+        "nullable": "oui",
+        "fk": "FK scope_salles_theorie",
+        "rule": "cohérente avec lieu",
+        "risk": "salle orpheline"
+      },
+      {
+        "qv": "Date",
+        "scope": "scope_evenements.date + date_fin",
+        "type": "date",
+        "nullable": "non/oui",
+        "fk": "aucune",
+        "rule": "date source seulement",
+        "risk": "date inventée"
+      },
+      {
+        "qv": "Début",
+        "scope": "scope_evenements.heure_debut",
+        "type": "text HH:MM",
+        "nullable": "oui",
+        "fk": "aucune",
+        "rule": "heure locale validée",
+        "risk": "format invalide"
+      },
+      {
+        "qv": "Fin",
+        "scope": "scope_evenements.heure_fin",
+        "type": "text HH:MM",
+        "nullable": "oui",
+        "fk": "aucune",
+        "rule": "avec date_fin pour nuit CTA",
+        "risk": "nuit CTA aplatie"
+      },
+      {
+        "qv": "Durée",
+        "scope": "scope_evenements.duree_planifiee_minutes (C22 additif)",
+        "type": "integer",
+        "nullable": "oui",
+        "fk": "CHECK > 0",
+        "rule": "calculée, CTA 3600",
+        "risk": "incohérence"
+      },
+      {
+        "qv": "Rôles",
+        "scope": "scope_evenement_roles_qv.role_code (C22 additif)",
+        "type": "text",
+        "nullable": "non",
+        "fk": "relation N:N",
+        "rule": "conflits partagés",
+        "risk": "rôle concaténé"
+      },
+      {
+        "qv": "Ressources",
+        "scope": "scope_evenement_ressources_qv.ressource_code (C22 additif)",
+        "type": "text",
+        "nullable": "non",
+        "fk": "relation N:N",
+        "rule": "conflits partagés",
+        "risk": "ressource perdue"
+      },
+      {
+        "qv": "Responsable",
+        "scope": "scope_evenements.responsable",
+        "type": "text",
+        "nullable": "oui",
+        "fk": "personne/rôle futur",
+        "rule": "Chef FOBA canonique",
+        "risk": "C for figé"
+      },
+      {
+        "qv": "Priorité",
+        "scope": "scope_evenements.priorite",
+        "type": "integer",
+        "nullable": "oui",
+        "fk": "aucune",
+        "rule": "niveau, pas blocage absolu",
+        "risk": "surblocage"
+      },
+      {
+        "qv": "Provenance",
+        "scope": "scope_qv_publication_links",
+        "type": "jsonb/text/uuid",
+        "nullable": "non",
+        "fk": "FK événement",
+        "rule": "bidirectionnelle complète",
+        "risk": "reconstruction libellé"
+      },
+      {
+        "qv": "Statut publication",
+        "scope": "scope_publication_runs.status",
+        "type": "text",
+        "nullable": "non",
+        "fk": "CHECK",
+        "rule": "audit transactionnel",
+        "risk": "exécution muette"
+      }
+    ],
+    "columnCount": 91,
+    "constraintCount": 121,
+    "rlsTables": 13,
+    "rlsEnabled": 13,
+    "additiveRelations": [
+      "scope_evenement_domaines",
+      "scope_evenement_ois",
+      "scope_evenement_public_rule_versions",
+      "scope_evenement_roles_qv",
+      "scope_evenement_ressources_qv",
+      "scope_qv_session_events"
+    ]
+  },
+  "performance": {
+    "planGenerationMs": 112.63,
+    "execution118Ms": 196.96,
+    "reconciliation118Ms": 61.52
+  },
+  "browser": {
+    "scope": "C22-QUO-VADIS-PREPROD-INTEGRATION-GATE-1",
+    "generatedAt": "2026-09-29T13:43:10.020Z",
+    "url": "http://127.0.0.1:4186/?preprod=1&closure=final",
+    "viewports": [
+      1500,
+      1150,
+      960,
+      800
+    ],
+    "screens": [
+      "catalogue",
+      "definition",
+      "automations",
+      "annual",
+      "occurrences",
+      "placement",
+      "proposals",
+      "known",
+      "conflicts",
+      "activities",
+      "agenda",
+      "move"
+    ],
+    "summary": {
+      "total": 48,
+      "pass": 48,
+      "nok": 0
+    },
+    "checks": [
+      {
+        "controlCount": 2,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Catalogue annuel",
+        "pass": true,
+        "screen": "catalogue",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 18,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Définition permanente",
+        "pass": true,
+        "screen": "definition",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Automatismes",
+        "pass": true,
+        "screen": "automations",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 14,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Besoin annuel 2027",
+        "pass": true,
+        "screen": "annual",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 9,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Nouvelle activité — besoin 2027",
+        "pass": true,
+        "screen": "occurrences",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Placement automatique",
+        "pass": true,
+        "screen": "placement",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Propositions",
+        "pass": true,
+        "screen": "proposals",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Ajouter un événement connu",
+        "pass": true,
+        "screen": "known",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Compatibilités et conflits",
+        "pass": true,
+        "screen": "conflicts",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 8,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Toutes les activités",
+        "pass": true,
+        "screen": "activities",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "QUO VADIS '27",
+        "pass": true,
+        "screen": "agenda",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 1,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1500,
+        "globalOverflow": false,
+        "heading": "Déplacement chronologique",
+        "pass": true,
+        "screen": "move",
+        "truncatedActions": [],
+        "viewportWidth": 1500,
+        "width": 1500
+      },
+      {
+        "controlCount": 2,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Catalogue annuel",
+        "pass": true,
+        "screen": "catalogue",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 18,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Définition permanente",
+        "pass": true,
+        "screen": "definition",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Automatismes",
+        "pass": true,
+        "screen": "automations",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 14,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Besoin annuel 2027",
+        "pass": true,
+        "screen": "annual",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 9,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Nouvelle activité — besoin 2027",
+        "pass": true,
+        "screen": "occurrences",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Placement automatique",
+        "pass": true,
+        "screen": "placement",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Propositions",
+        "pass": true,
+        "screen": "proposals",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Ajouter un événement connu",
+        "pass": true,
+        "screen": "known",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Compatibilités et conflits",
+        "pass": true,
+        "screen": "conflicts",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 8,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Toutes les activités",
+        "pass": true,
+        "screen": "activities",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "QUO VADIS '27",
+        "pass": true,
+        "screen": "agenda",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 1,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 1150,
+        "globalOverflow": false,
+        "heading": "Déplacement chronologique",
+        "pass": true,
+        "screen": "move",
+        "truncatedActions": [],
+        "viewportWidth": 1150,
+        "width": 1150
+      },
+      {
+        "controlCount": 2,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Catalogue annuel",
+        "pass": true,
+        "screen": "catalogue",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 18,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Définition permanente",
+        "pass": true,
+        "screen": "definition",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Automatismes",
+        "pass": true,
+        "screen": "automations",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 14,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Besoin annuel 2027",
+        "pass": true,
+        "screen": "annual",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 9,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Nouvelle activité — besoin 2027",
+        "pass": true,
+        "screen": "occurrences",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Placement automatique",
+        "pass": true,
+        "screen": "placement",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Propositions",
+        "pass": true,
+        "screen": "proposals",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Ajouter un événement connu",
+        "pass": true,
+        "screen": "known",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Compatibilités et conflits",
+        "pass": true,
+        "screen": "conflicts",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 8,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Toutes les activités",
+        "pass": true,
+        "screen": "activities",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "QUO VADIS '27",
+        "pass": true,
+        "screen": "agenda",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 1,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 960,
+        "globalOverflow": false,
+        "heading": "Déplacement chronologique",
+        "pass": true,
+        "screen": "move",
+        "truncatedActions": [],
+        "viewportWidth": 960,
+        "width": 960
+      },
+      {
+        "controlCount": 2,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Catalogue annuel",
+        "pass": true,
+        "screen": "catalogue",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 18,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Définition permanente",
+        "pass": true,
+        "screen": "definition",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Automatismes",
+        "pass": true,
+        "screen": "automations",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 14,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Besoin annuel 2027",
+        "pass": true,
+        "screen": "annual",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 9,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Nouvelle activité — besoin 2027",
+        "pass": true,
+        "screen": "occurrences",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Placement automatique",
+        "pass": true,
+        "screen": "placement",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Propositions",
+        "pass": true,
+        "screen": "proposals",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 13,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Ajouter un événement connu",
+        "pass": true,
+        "screen": "known",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Compatibilités et conflits",
+        "pass": true,
+        "screen": "conflicts",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 8,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Toutes les activités",
+        "pass": true,
+        "screen": "activities",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 0,
+        "controlHeights": [],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "QUO VADIS '27",
+        "pass": true,
+        "screen": "agenda",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      },
+      {
+        "controlCount": 1,
+        "controlHeights": [
+          36
+        ],
+        "documentWidth": 800,
+        "globalOverflow": false,
+        "heading": "Déplacement chronologique",
+        "pass": true,
+        "screen": "move",
+        "truncatedActions": [],
+        "viewportWidth": 800,
+        "width": 800
+      }
+    ],
+    "controlHeights": [
+      {
+        "screen": "catalogue",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "catalogue",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "catalogue",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "catalogue",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      }
+    ],
+    "navigation": {
+      "steps": [
+        {
+          "context": null,
+          "heading": "Catalogue annuel",
+          "index": 1
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Définition permanente",
+          "index": 2
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Automatismes",
+          "index": 3
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Besoin annuel 2027",
+          "index": 4
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Nouvelle activité — besoin 2027",
+          "index": 5
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Placement automatique",
+          "index": 6
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Propositions",
+          "index": 7
+        },
+        {
+          "context": null,
+          "heading": "Ajouter un événement connu",
+          "index": 8
+        },
+        {
+          "context": null,
+          "heading": "Compatibilités et conflits",
+          "index": 9
+        },
+        {
+          "context": null,
+          "heading": "Toutes les activités",
+          "index": 10
+        },
+        {
+          "context": null,
+          "heading": "QUO VADIS '27",
+          "index": 11
+        },
+        {
+          "context": null,
+          "heading": "Déplacement chronologique",
+          "index": 12
+        }
+      ],
+      "contextPreservedScreens2to7": true,
+      "conflictRecheck": 1,
+      "openedActivityEditor": 1,
+      "returnedToConflictContext": true
+    },
+    "interactions": {
+      "programmeSearch": {
+        "query": "Permanence CTA",
+        "result": "53 ligne(s) affichée(s) · 622 objets au programme 2027 + 13 traces historiques/non reconduites = 635 lignes de cycle de vie.",
+        "durationMs": 96
+      },
+      "agenda": {
+        "heading": "QUO VADIS '27",
+        "eventDays": 229,
+        "specialDots": 77,
+        "renderMs": 41
+      },
+      "move": {
+        "rows": 125,
+        "fixedRows": 53,
+        "renderMs": 43
+      }
+    },
+    "consoleErrors": [],
+    "captures": [
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/01-catalogue.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/02-activite.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/03-automatismes.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/04-besoin-annuel.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/05-occurrences-sessions.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/06-placement.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/07-propositions.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/08-evenement-connu.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/09-conflits.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/10-programme.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/11-quo-vadis-27.png",
+      "/Users/thierrygrunig/Projects/Monitoring F7/docs/captures/c22/12-deplacement.png"
+    ]
+  },
+  "tests": {
+    "passed": 26,
+    "failed": 0,
+    "results": [
+      {
+        "name": "canonical lifecycle volume",
+        "status": "PASS"
+      },
+      {
+        "name": "C19 canonical inputs",
+        "status": "PASS"
+      },
+      {
+        "name": "no invented dates",
+        "status": "PASS"
+      },
+      {
+        "name": "technical production guard",
+        "status": "PASS"
+      },
+      {
+        "name": "bulk plan approval guard",
+        "status": "PASS"
+      },
+      {
+        "name": "negative guards wrote no business data",
+        "status": "PASS"
+      },
+      {
+        "name": "full PostgreSQL execution A",
+        "status": "PASS"
+      },
+      {
+        "name": "idempotent Plan B",
+        "status": "PASS"
+      },
+      {
+        "name": "idempotent execution B",
+        "status": "PASS"
+      },
+      {
+        "name": "Plan C one update",
+        "status": "PASS"
+      },
+      {
+        "name": "C updates same event identity",
+        "status": "PASS"
+      },
+      {
+        "name": "D returns original value with same identity",
+        "status": "PASS"
+      },
+      {
+        "name": "mid-transaction failure rolls back all business tables",
+        "status": "PASS"
+      },
+      {
+        "name": "retry then repeated retry",
+        "status": "PASS"
+      },
+      {
+        "name": "operational data prevents silent overwrite",
+        "status": "PASS"
+      },
+      {
+        "name": "read-only reconciliation detects drift",
+        "status": "PASS"
+      },
+      {
+        "name": "final strict reconciliation",
+        "status": "PASS"
+      },
+      {
+        "name": "bidirectional provenance",
+        "status": "PASS"
+      },
+      {
+        "name": "PostgreSQL unique key blocks duplicate publication",
+        "status": "PASS"
+      },
+      {
+        "name": "CTA has 53 continuous 60-hour events",
+        "status": "PASS"
+      },
+      {
+        "name": "FOBA 070F1.005 is one activity and four OI materializations",
+        "status": "PASS"
+      },
+      {
+        "name": "multi-public remains structured",
+        "status": "PASS"
+      },
+      {
+        "name": "canonical multi-session remains blocked without invented dates",
+        "status": "PASS"
+      },
+      {
+        "name": "PostgreSQL preserves 1/N and N/N synthetic session structures",
+        "status": "PASS"
+      },
+      {
+        "name": "all visible business codes use three-digit suffix",
+        "status": "PASS"
+      },
+      {
+        "name": "external history remains unmaterialized and uncoded",
+        "status": "PASS"
+      }
+    ],
+    "c22Targeted": {
+      "passed": 48,
+      "failed": 0
+    },
+    "regressions": {
+      "C18": "18/18",
+      "C19_CORE": "9/9",
+      "C19_UX": "67/67",
+      "C20": "30/30",
+      "C21": "60/60"
+    },
+    "global": {
+      "command": "npm run test:scope",
+      "status": "KNOWN_FAILURE",
+      "failure": "scope-login-visual-alignment-orion-1-tests.js - cache-bust SCOPE visuel uniquement",
+      "relatedToC22": false
+    }
+  },
+  "findings": {
+    "P1": [],
+    "P2": [],
+    "P3": []
+  },
+  "arbitrationsMOA": [
+    "Le Gate production suivant devra appliquer la migration additive validée ici avant toute publication réelle."
+  ],
+  "indeterminate": [],
+  "files": [
+    "database/fixtures/scope_qv_publication_c22_postgres.sql",
+    "database/migrations/20260929_scope_qv_publication_c22_preprod_gate.sql",
+    "scripts/lib/scope-c22-canonical-dataset.js",
+    "scripts/lib/scope-c22-postgres-fixture-db.js",
+    "scripts/scope-c22-quo-vadis-preprod-integration-gate-1.js",
+    "scripts/scope-c22-quo-vadis-preprod-integration-gate-1-tests.js",
+    "netlify/lib/_scope-qv-publication-plan.js",
+    "netlify/lib/_scope-qv-publication-executor.js",
+    "netlify/lib/_scope-qv-publication-reconciliation.js",
+    "scripts/scope-c19-ux-recette/app.js",
+    "scripts/scope-c19-ux-recette/styles.css"
+  ],
+  "sections": {
+    "A. Verdict": "PASS",
+    "B. Git initial/final": {
+      "initial": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+      "final": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+      "unchanged": true
+    },
+    "C. Environnement réellement utilisé": {
+      "target": {
+        "host": "127.0.0.1",
+        "port": 55432,
+        "database": "scope_c22_preprod"
+      },
+      "server": {
+        "database": "scope_c22_preprod",
+        "host": "127.0.0.1/32",
+        "port": 55432,
+        "version": "18.6 (Homebrew)"
+      },
+      "schema": "c22_gate",
+      "productionTouched": false
+    },
+    "D. Protection production": {
+      "productionRefused": true,
+      "bulkThreshold": 50,
+      "bulkApprovalBoundToExactPlan": true
+    },
+    "E. Schéma SCOPE": "91 colonnes inspectées par information_schema; 121 contraintes; 13/13 tables RLS.",
+    "F. Compatibilité SQL C20/C21": "Planificateur C20, exécuteur et réconciliation C21 réutilisés sans moteur parallèle.",
+    "G. Migrations locales éventuelles": "Fixture additive exécutée dans c22_gate et draft 20260929_scope_qv_publication_c22_preprod_gate.sql terminé par ROLLBACK; aucune migration production.",
+    "H. Dataset QV 27": {
+      "definitions": 345,
+      "quoVadisObjects": 622,
+      "externalHistorical": 13,
+      "lifecycle": 635,
+      "explicitSourceDates": 72,
+      "cta": 53,
+      "dated": 125,
+      "underdetermined": 479,
+      "emseaChoices": 9,
+      "arbitrations": 3,
+      "insufficient": 6,
+      "sourceConflicts": 4,
+      "equation": "118 READY + 19 HUMAN_REVIEW + 485 BLOCKED + 13 NOT_PUBLISHED = 635; the 7 objects in 4 source-conflict pairs are excluded from the 125 dated objects."
+    },
+    "I. Volumes": {
+      "TOTAL": 635,
+      "READY_TO_PUBLISH": 118,
+      "CREATE": 118,
+      "UPDATE": 0,
+      "UNCHANGED": 0,
+      "BLOCKED": 485,
+      "HUMAN_REVIEW_REQUIRED": 19,
+      "NOT_PUBLISHED": 13
+    },
+    "J. READY_TO_PUBLISH": 118,
+    "K. BLOCKED": 485,
+    "L. HUMAN_REVIEW": 19,
+    "M. NOT_PUBLISHED": 13,
+    "N. Stat.Com": {
+      "pdf": 87,
+      "extensions": 4,
+      "operational": 91
+    },
+    "O. Codes STATCOM.xxx": "63 matérialisations codées; suffixes à trois chiffres vérifiés.",
+    "P. Externes": "13 traces historiques, aucun événement 2027, aucun code artificiel.",
+    "Q. EMSEA": "11 occurrences; 2 datées conservées, 9 choix mensuels en revue humaine; Stat.Com non applicable.",
+    "R. CTA structure": "G1 N01-N06; C1/B1/B2 N01-N03; demi-sections structurées; N06 G1 reste une réserve.",
+    "S. CTA capacités": "15/8 uniquement sur G1; aucune propagation aux autres sites.",
+    "T. CTA tournus": "Provenance C19 conservée; aucun ordre C22 parallèle.",
+    "U. CTA 60 h": "53 événements continus de 3600 minutes.",
+    "V. CTA calendrier protégé": "SERVICE_CONTINUITY conserve week-ends, fériés, veilles et vacances.",
+    "W. FOBA progression": "Progression C19 réutilisée; aucune cohorte recalculée.",
+    "X. FOBA responsable": "Chef FOBA / C FOBA canonique; C for seulement historique.",
+    "Y. FOBA multi-OI": "4 matérialisations pour une activité 070F1.005.",
+    "Z. OI": "Relations structurées et indépendantes.",
+    "AA. FULL_OI": "Portée OI distincte des sections/demi-sections.",
+    "AB. JSP/DPS": "Dépendance même OI conservée dans le moteur partagé.",
+    "AC. PR/DPS": "AVOID/dérogeable, non transformé en blocage absolu.",
+    "AD. Formation groupée": "ATTENTION, blocage seulement sur ressource/rôle fort partagé.",
+    "AE. Calendrier": "Référentiel officiel C19 réutilisé sans recherche ni reconstruction.",
+    "AF. Vacances": "Règles héritées et exception CTA testées.",
+    "AG. Fériés": "Règles héritées et exception CTA testées.",
+    "AH. Veilles": "Règles héritées et exception CTA testées.",
+    "AI. Multi-public": "2 objets READY à plusieurs publics, relations dédupliquées.",
+    "AJ. Multi-session": "12 lignes canoniques restent BLOCKED sans date inventée; preuve PostgreSQL synthétique 1/N et N/N sur 7 sessions, entièrement rollbackée.",
+    "AK. Provenance": "Événement ↔ unité QV ↔ session ↔ occurrence ↔ définition démontré dans les deux sens.",
+    "AL. Idempotence": "A=118 CREATE; B=118 UNCHANGED; C/D=1 UPDATE avec même UUID.",
+    "AM. Transaction": "BEGIN/COMMIT PostgreSQL réels.",
+    "AN. Rollback": "Échec AFTER_EVENT: ROLLBACK complet, comptes identiques.",
+    "AO. Retry": "SUCCESS puis NO_OP/UNCHANGED.",
+    "AP. Données opérationnelles": "PARTICIPATION ajoutée; modification QV classée HUMAN_REVIEW_REQUIRED.",
+    "AQ. Drift": "Mutation directe salle détectée DRIFT; aucune autocorrection par reconcile.",
+    "AR. Réconciliation": {
+      "MATCHED": 118,
+      "MISSING": 0,
+      "DUPLICATE": 0,
+      "DRIFT": 0,
+      "PROTECTED_CHANGE": 0,
+      "UNEXPECTED": 0
+    },
+    "AS. Écran 1": "Catalogue annuel recetté avec codes métier et zébrage.",
+    "AT. Écran 2": "Identité compacte, multi-public, lieux exclus retirés.",
+    "AU. Écran 3": "Rôles, ressources, calendriers et priorité recettés.",
+    "AV. Écran 4": "Contexte persistant et année dynamique.",
+    "AW. Écran 5": "Héritage activité/occurrence/session contrôlé.",
+    "AX. Écran 6": "Contexte de session à placer persistant.",
+    "AY. Écran 7": "Propositions et choix vers programme contrôlés.",
+    "AZ. Écran 8": "Grille date/début/fin/durée et multi-public contrôlés.",
+    "BA. Écran 9": "Moteur partagé, ouverture A/B et revérification.",
+    "BB. Écran 10": "635 lignes de cycle de vie, programme/historique séparés.",
+    "BC. Écran 11": "Titre dynamique QUO VADIS '27 et marqueurs canoniques.",
+    "BD. Écran 12": "Déplacement compatible/attention/dérogeable/bloquant et trace.",
+    "BE. Date/heure": "Primitive commune --control-height:36px.",
+    "BF. Hauteurs champs": [
+      {
+        "screen": "catalogue",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 1500,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "catalogue",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 1150,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "catalogue",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 960,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "catalogue",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "definition",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "automations",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "annual",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "occurrences",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "known",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "activities",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      },
+      {
+        "screen": "move",
+        "width": 800,
+        "height": 36,
+        "expected": 36,
+        "status": "PASS"
+      }
+    ],
+    "BG. Zébrage": "Catalogue et programme gris/blanc.",
+    "BH. Actions": "Aucune action textuelle soulignée.",
+    "BI. Navigation": {
+      "steps": [
+        {
+          "context": null,
+          "heading": "Catalogue annuel",
+          "index": 1
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Définition permanente",
+          "index": 2
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Automatismes",
+          "index": 3
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Besoin annuel 2027",
+          "index": 4
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Nouvelle activité — besoin 2027",
+          "index": 5
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Placement automatique",
+          "index": 6
+        },
+        {
+          "context": "Nouvelle activité",
+          "heading": "Propositions",
+          "index": 7
+        },
+        {
+          "context": null,
+          "heading": "Ajouter un événement connu",
+          "index": 8
+        },
+        {
+          "context": null,
+          "heading": "Compatibilités et conflits",
+          "index": 9
+        },
+        {
+          "context": null,
+          "heading": "Toutes les activités",
+          "index": 10
+        },
+        {
+          "context": null,
+          "heading": "QUO VADIS '27",
+          "index": 11
+        },
+        {
+          "context": null,
+          "heading": "Déplacement chronologique",
+          "index": 12
+        }
+      ],
+      "contextPreservedScreens2to7": true,
+      "conflictRecheck": 1,
+      "openedActivityEditor": 1,
+      "returnedToConflictContext": true
+    },
+    "BJ. Responsive": {
+      "total": 48,
+      "pass": 48,
+      "nok": 0
+    },
+    "BK. Performance": {
+      "planGenerationMs": 112.63,
+      "execution118Ms": 196.96,
+      "reconciliation118Ms": 61.52
+    },
+    "BL. Tests C22": "26/26 preuves backend + 48/48 assertions ciblées PASS.",
+    "BM. Régressions C18-C21": "C18 18/18; C19 core 9/9; C19 UX 67/67; C20 30/30; C21 60/60.",
+    "BN. npm run test:scope": "Exécuté une seule fois: arrêt sur le known failure cache-bust ORION (scope-login-visual-alignment-orion-1-tests.js, test 06), sans lien C22; aucun chantier parasite ouvert.",
+    "BO. P1": [],
+    "BP. P2": [],
+    "BQ. P3": [],
+    "BR. Arbitrages MOA": [
+      "Le Gate production suivant devra appliquer la migration additive validée ici avant toute publication réelle."
+    ],
+    "BS. Éléments indémontrables": [],
+    "BT. Fichiers modifiés": [
+      "database/fixtures/scope_qv_publication_c22_postgres.sql",
+      "database/migrations/20260929_scope_qv_publication_c22_preprod_gate.sql",
+      "scripts/lib/scope-c22-canonical-dataset.js",
+      "scripts/lib/scope-c22-postgres-fixture-db.js",
+      "scripts/scope-c22-quo-vadis-preprod-integration-gate-1.js",
+      "scripts/scope-c22-quo-vadis-preprod-integration-gate-1-tests.js",
+      "netlify/lib/_scope-qv-publication-plan.js",
+      "netlify/lib/_scope-qv-publication-executor.js",
+      "netlify/lib/_scope-qv-publication-reconciliation.js",
+      "scripts/scope-c19-ux-recette/app.js",
+      "scripts/scope-c19-ux-recette/styles.css"
+    ],
+    "BU. Recommandation Gate suivant": "GO GATE PRODUCTION"
+  }
+}

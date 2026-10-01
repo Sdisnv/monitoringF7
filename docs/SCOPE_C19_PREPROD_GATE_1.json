@@ -1,0 +1,5418 @@
+{
+  "contractVersion": 1,
+  "mode": "DRY_RUN",
+  "generatedAt": "2026-09-29",
+  "source": {
+    "path": "/Users/thierrygrunig/Documents/Professionel/SDIS Nord vaudois/3-Opérationnel/3.0 Organisation/2026/2026 QUO VADIS SDIS Nord vaudois.xlsx",
+    "fileName": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+    "sheetName": "QUO VADIS '26",
+    "sha256": "58ef7c358e44cd7ddc0d6ecbf6a386b06df2029f000a8c12b041538e72066742",
+    "physicalRows": 929,
+    "eventRows": 925,
+    "headers": [
+      "HD",
+      "CODE COURS",
+      "SEMAINE",
+      "JOUR",
+      "DATE",
+      "DÉBUT",
+      "FIN",
+      "ÉVÉNEMENT",
+      "INACTIF",
+      "LIEU",
+      "ADRESSE CONVOCATION",
+      "PERSONNEL CONCERNÉ",
+      "DOMAINE",
+      "SOUS-DOMAINE",
+      "QUI",
+      "RESPONSABLE",
+      "SALLE",
+      "COURS CADRES",
+      "CODE ACTIVITÉS",
+      "STAT.COM.",
+      "INDISPONIBILITÉ BLOQUANTE",
+      "PARTICIPANTS RESTENT ALARMABLE",
+      "PAYER LES PERMANENTS",
+      "HORS SDIS",
+      "F5/6",
+      "ÉTAT-MAJOR",
+      "DPS",
+      "DAP",
+      "FOBA",
+      "JSP",
+      "EM",
+      "DPS G1",
+      "DPS C1",
+      "DPS B1",
+      "DPS B2",
+      "PAPR",
+      "AUTO PL",
+      "AUTO VL",
+      "DAP Y1",
+      "DAP Y2",
+      "DAP Y3",
+      "DAP Y4",
+      "FOBA 1",
+      "FOBA 2",
+      "FOBA 3",
+      "JSP G1",
+      "JSP C1",
+      "JSP B1"
+    ]
+  },
+  "inventory": {
+    "workbook2026": true,
+    "existing2027Rows": 72,
+    "statComReferential": "netlify/lib/_scope-statcom-referential.js",
+    "functionalCatalog": "netlify/lib/_scope-functional-catalog.js",
+    "canonicalFoundations": "netlify/lib/_scope-canonical-foundations.js",
+    "publicReferential": "netlify/lib/_scope-public-foundations.js",
+    "locationsAndRooms": "netlify/lib/_scope-quo-vadis-referentials.js",
+    "ctaTurnSource": null,
+    "rolesResources2027Source": null,
+    "announcedDatesSource": "Local preview only; not canonical SCOPE data"
+  },
+  "truthMatrix": [
+    {
+      "domain": "QUO VADIS 2026",
+      "data": "Classeur source",
+      "source": "/Users/thierrygrunig/Documents/Professionel/SDIS Nord vaudois/3-Opérationnel/3.0 Organisation/2026/2026 QUO VADIS SDIS Nord vaudois.xlsx",
+      "value": "58ef7c358e44cd7ddc0d6ecbf6a386b06df2029f000a8c12b041538e72066742",
+      "evidence": "Empreinte SHA-256 recalculée",
+      "use": "Analyse et réconciliation",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Stat.Com",
+      "data": "Référentiel initial et successions",
+      "source": "netlify/lib/_scope-statcom-referential.js",
+      "value": "91 codes; 1 succession(s)",
+      "evidence": "Exports exécutables",
+      "use": "Validation par date",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Domaines",
+      "data": "Domaines canoniques",
+      "source": "netlify/lib/_scope-canonical-foundations.js",
+      "value": "DPS, DAP, JSP, FOBA, FOCO, FOCA, FOSPEC, AUTO, PR",
+      "evidence": "Constante exportée",
+      "use": "Classification C19",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "OI",
+      "data": "Unités organisationnelles",
+      "source": "netlify/lib/_scope-canonical-foundations.js",
+      "value": "8 OI",
+      "evidence": "Constante exportée",
+      "use": "Cibles/OI",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Publics",
+      "data": "Publics canoniques",
+      "source": "netlify/lib/_scope-public-foundations.js",
+      "value": "21 publics; 12 candidats non résolus",
+      "evidence": "Constantes exportées",
+      "use": "Résolution public",
+      "confidence": "MOYEN",
+      "arbitrationRequired": "OUI"
+    },
+    {
+      "domain": "Lieux",
+      "data": "Lieux officiels SCOPE",
+      "source": "netlify/lib/_scope-quo-vadis-referentials.js",
+      "value": "8 lieux",
+      "evidence": "Constante exportée",
+      "use": "Placement",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Salles",
+      "data": "Salles de théorie",
+      "source": "netlify/lib/_scope-quo-vadis-referentials.js",
+      "value": "11 salles",
+      "evidence": "Constante exportée",
+      "use": "Placement/conflits",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Calendrier 2026",
+      "data": "Fériés et vacances",
+      "source": "État de Vaud",
+      "value": "https://www.vd.ch/formation/jours-feries-et-vacances-scolaires/jours-feries-et-vacances-scolaires-2026",
+      "evidence": "Page officielle consultée le 2026-09-29",
+      "use": "Marqueurs calendaires",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Calendrier 2027",
+      "data": "Fériés et vacances",
+      "source": "État de Vaud",
+      "value": "https://www.vd.ch/formation/jours-feries-et-vacances-scolaires/jours-feries-et-vacances-scolaires-2027",
+      "evidence": "Page officielle consultée le 2026-09-29",
+      "use": "Marqueurs calendaires",
+      "confidence": "HAUT",
+      "arbitrationRequired": "NON"
+    },
+    {
+      "domain": "Veilles",
+      "data": "Règle métier",
+      "source": "Aucune source canonique trouvée",
+      "value": "MANQUANTE",
+      "evidence": "Recherche code/docs",
+      "use": "Aucune règle appliquée",
+      "confidence": "FAIBLE",
+      "arbitrationRequired": "OUI"
+    },
+    {
+      "domain": "Tournus CTA",
+      "data": "Ordre/périodicité sections et demi-sections",
+      "source": "Aucune source canonique trouvée",
+      "value": "MANQUANTE",
+      "evidence": "Recherche code/docs et historique 2026",
+      "use": "Aucune génération CTA",
+      "confidence": "FAIBLE",
+      "arbitrationRequired": "OUI"
+    },
+    {
+      "domain": "Rôles/Ressources",
+      "data": "Affectations 2027 par activité",
+      "source": "Aucune règle complète trouvée",
+      "value": "PARTIEL",
+      "evidence": "Référentiels UX seulement",
+      "use": "Non inventés dans le dry-run",
+      "confidence": "FAIBLE",
+      "arbitrationRequired": "OUI"
+    }
+  ],
+  "calendar": {
+    "officialSources": {
+      "2026": "https://www.vd.ch/formation/jours-feries-et-vacances-scolaires/jours-feries-et-vacances-scolaires-2026",
+      "2027": "https://www.vd.ch/formation/jours-feries-et-vacances-scolaires/jours-feries-et-vacances-scolaires-2027"
+    },
+    "data": {
+      "2026": {
+        "holidays": [
+          "2026-01-01",
+          "2026-01-02",
+          "2026-04-03",
+          "2026-04-06",
+          "2026-05-14",
+          "2026-05-25",
+          "2026-08-01",
+          "2026-09-21",
+          "2026-12-25"
+        ],
+        "vacations": [
+          [
+            "2025-12-20",
+            "2026-01-04",
+            "Vacances d’hiver"
+          ],
+          [
+            "2026-02-14",
+            "2026-02-22",
+            "Relâches"
+          ],
+          [
+            "2026-04-03",
+            "2026-04-19",
+            "Vacances de Pâques"
+          ],
+          [
+            "2026-05-14",
+            "2026-05-17",
+            "Pont de l’Ascension"
+          ],
+          [
+            "2026-05-25",
+            "2026-05-25",
+            "Lundi de Pentecôte"
+          ],
+          [
+            "2026-06-27",
+            "2026-08-16",
+            "Vacances d’été"
+          ],
+          [
+            "2026-09-21",
+            "2026-09-21",
+            "Jeûne fédéral"
+          ],
+          [
+            "2026-10-10",
+            "2026-10-25",
+            "Vacances d’automne"
+          ],
+          [
+            "2026-12-24",
+            "2027-01-10",
+            "Vacances d’hiver"
+          ]
+        ]
+      },
+      "2027": {
+        "holidays": [
+          "2027-01-01",
+          "2027-01-02",
+          "2027-03-26",
+          "2027-03-29",
+          "2027-05-06",
+          "2027-05-17",
+          "2027-08-01",
+          "2027-09-20",
+          "2027-12-25"
+        ],
+        "vacations": [
+          [
+            "2026-12-24",
+            "2027-01-10",
+            "Vacances d’hiver"
+          ],
+          [
+            "2027-02-06",
+            "2027-02-14",
+            "Relâches"
+          ],
+          [
+            "2027-03-26",
+            "2027-04-11",
+            "Vacances de Pâques"
+          ],
+          [
+            "2027-05-06",
+            "2027-05-09",
+            "Pont de l’Ascension"
+          ],
+          [
+            "2027-05-17",
+            "2027-05-17",
+            "Lundi de Pentecôte"
+          ],
+          [
+            "2027-07-03",
+            "2027-08-22",
+            "Vacances d’été"
+          ],
+          [
+            "2027-09-20",
+            "2027-09-20",
+            "Jeûne fédéral"
+          ],
+          [
+            "2027-10-09",
+            "2027-10-24",
+            "Vacances d’automne"
+          ],
+          [
+            "2027-12-24",
+            "2028-01-09",
+            "Vacances d’hiver"
+          ]
+        ]
+      }
+    },
+    "factRuleSeparation": true,
+    "businessRules": {
+      "publicHolidayEve": "À ARBITRER",
+      "schoolVacationEve": "À ARBITRER",
+      "aroundVacations": "À ARBITRER"
+    }
+  },
+  "gate1": {
+    "status": "PASS",
+    "sourceRows2026": 847,
+    "analyzedRows": 847,
+    "activityDefinitions": 318,
+    "occurrences": 689,
+    "sessions": 847,
+    "dates": 225,
+    "classification": {
+      "UNRESOLVED": 16,
+      "AUTO_IMPORT": 269,
+      "IGNORED": 31,
+      "REVIEW_REQUIRED": 2
+    },
+    "rowDisposition": {
+      "UNRESOLVED": 48,
+      "AUTO_IMPORT": 750,
+      "IGNORED": 42,
+      "REVIEW_REQUIRED": 7
+    },
+    "domains": {
+      "DPS": 87,
+      "DAP": 50,
+      "JSP": 49,
+      "FOBA": 28,
+      "FOSPEC": 31,
+      "AUTO": 62,
+      "PR": 39
+    },
+    "missing": {
+      "date": 0,
+      "startTime": 0,
+      "endTime": 0,
+      "location": 0,
+      "room": 669,
+      "responsible": 0,
+      "sourceStatCom": 39
+    },
+    "duplicates": {
+      "groups": 5,
+      "rows": 10,
+      "evidence": [
+        {
+          "key": "2026-03-05|19:00|21:30|Séance chefs de section DPS C1 | B2|Caserne C1|Salle de théorie|C site | C sct",
+          "sourceRows": [
+            91,
+            92
+          ]
+        },
+        {
+          "key": "2026-04-01|19:00|21:30|Cours de cadres exercice DPS-DAP 1|Caserne G1|Salle Vulcain|C for | C site | C sct | R C sct",
+          "sourceRows": [
+            214,
+            215
+          ]
+        },
+        {
+          "key": "2026-04-21|19:00|21:30|Exercice TRUCK 1.1|Caserne C1||Moniteurs conduite DPS | Cond PL",
+          "sourceRows": [
+            244,
+            245
+          ]
+        },
+        {
+          "key": "2026-04-30|19:00|21:30|Exercice TRUCK 1.2|Caserne C1||Moniteurs conduite DPS | Cond PL",
+          "sourceRows": [
+            270,
+            271
+          ]
+        },
+        {
+          "key": "2026-05-21|19:00|21:30|Exercice TRUCK 1.3|Caserne C1||Moniteurs conduite DPS | Cond PL",
+          "sourceRows": [
+            332,
+            333
+          ]
+        }
+      ]
+    },
+    "uninterpretedRows": 0,
+    "silentLoss": 0
+  },
+  "gate2": {
+    "status": "NOK",
+    "calendar": "PASS",
+    "statCom": "PARTIAL",
+    "ctaTurn": "MANQUANT",
+    "businessEveRules": "MANQUANT",
+    "rolesResources": "PARTIEL"
+  },
+  "gate3": {
+    "status": "NOK",
+    "explicitSourceRows2027": 72,
+    "explicitDefinitions2027": 42,
+    "generatedSessions": 72,
+    "firstDate": "2027-01-05",
+    "lastDate": "2027-03-04",
+    "provenance": {
+      "SOURCE_WORKBOOK_DATE": 72
+    },
+    "automaticPlacements": 0,
+    "ctaPlacements": 0,
+    "fixedDates": 0,
+    "announcedDates": 0,
+    "arbitrations": 308,
+    "impossibilities": 0,
+    "silentLoss": 0,
+    "missing": {
+      "date": 0,
+      "startTime": 0,
+      "endTime": 0,
+      "location": 0,
+      "room": 27,
+      "responsible": 0,
+      "sourceStatCom": 0
+    },
+    "duplicates": {
+      "groups": 0,
+      "rows": 0,
+      "evidence": []
+    },
+    "fullYear": false,
+    "reason": "La source explicite 2027 s’arrête au 4 mars; aucune règle ne prouve la reconduction annuelle complète."
+  },
+  "gate4": {
+    "status": "BLOCKED",
+    "reason": "La génération 2027 grandeur nature n’est pas démontrable. La preview charge uniquement les 72 lignes 2027 explicites.",
+    "screens": [
+      {
+        "screen": 1,
+        "name": "Catalogue annuel",
+        "status": "NOK",
+        "data": "Catalogue de démonstration; catalogue 2027 complet non démontré",
+        "ux": "PASS"
+      },
+      {
+        "screen": 2,
+        "name": "Définition activité",
+        "status": "NOK",
+        "data": "Définitions de démonstration, pas les 42 définitions source 2027",
+        "ux": "PASS"
+      },
+      {
+        "screen": 3,
+        "name": "Automatismes",
+        "status": "NOK",
+        "data": "Règles de démonstration; tournus CTA absent",
+        "ux": "PASS"
+      },
+      {
+        "screen": 4,
+        "name": "Besoin annuel",
+        "status": "NOK",
+        "data": "Besoin complet 2027 non arbitré",
+        "ux": "PASS"
+      },
+      {
+        "screen": 5,
+        "name": "Occurrences/sessions",
+        "status": "NOK",
+        "data": "Génération annuelle complète indisponible",
+        "ux": "PASS"
+      },
+      {
+        "screen": 6,
+        "name": "Placement",
+        "status": "NOK",
+        "data": "Aucun placement automatique 2027 prouvé",
+        "ux": "PASS"
+      },
+      {
+        "screen": 7,
+        "name": "Propositions",
+        "status": "NOK",
+        "data": "Propositions non exécutables sur programme complet",
+        "ux": "PASS"
+      },
+      {
+        "screen": 8,
+        "name": "Événement connu",
+        "status": "NOK",
+        "data": "Écran fonctionnel mais non alimenté par un référentiel 2027 complet",
+        "ux": "PASS"
+      },
+      {
+        "screen": 9,
+        "name": "Conflits",
+        "status": "NOK",
+        "data": "Rôles et ressources 2027 non structurés; scénarios réels incomplets",
+        "ux": "PASS"
+      },
+      {
+        "screen": 10,
+        "name": "Toutes les activités",
+        "status": "PASS",
+        "data": "72 lignes 2027 explicites, tableau et filtres réels",
+        "ux": "PASS"
+      },
+      {
+        "screen": 11,
+        "name": "Agenda annuel",
+        "status": "PASS",
+        "data": "72 lignes explicites et calendrier officiel 2027",
+        "ux": "PASS"
+      },
+      {
+        "screen": 12,
+        "name": "Déplacement",
+        "status": "PASS",
+        "data": "72 lignes explicites affichées et déplaçables localement",
+        "ux": "PASS"
+      }
+    ],
+    "responsive": {
+      "widths": [
+        1500,
+        1150,
+        960,
+        800
+      ],
+      "checks": 48,
+      "globalOverflowFailures": 0,
+      "internalTableScroll": true
+    },
+    "performance": {
+      "datasetSize": 72,
+      "activitiesOpenMs": 300,
+      "moveOpenMs": 302,
+      "search": [
+        {
+          "value": "i",
+          "ms": 18,
+          "visible": 66
+        },
+        {
+          "value": "in",
+          "ms": 13,
+          "visible": 38
+        },
+        {
+          "value": "int",
+          "ms": 13,
+          "visible": 6
+        }
+      ],
+      "limitation": "Mesures indicatives sur 72 événements, pas sur une volumétrie annuelle proche de 1 000."
+    }
+  },
+  "undatedRows": [
+    {
+      "sourceRow": 924,
+      "label": "Groupe de travail FOCA",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "reason": "DATE MANQUANTE"
+    },
+    {
+      "sourceRow": 925,
+      "label": "Groupe de travail FOCA",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "reason": "DATE MANQUANTE"
+    },
+    {
+      "sourceRow": 926,
+      "label": "Groupe de travail FOCA",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "reason": "DATE MANQUANTE"
+    },
+    {
+      "sourceRow": 927,
+      "label": "Groupe de travail FOCA",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "reason": "DATE MANQUANTE"
+    },
+    {
+      "sourceRow": 928,
+      "label": "Groupe de travail FOCA",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "reason": "DATE MANQUANTE"
+    },
+    {
+      "sourceRow": 929,
+      "label": "Groupe de travail FOCA",
+      "startTime": "16:00",
+      "endTime": "19:00",
+      "reason": "DATE MANQUANTE"
+    }
+  ],
+  "unexpectedYearRows": [],
+  "statCom": {
+    "referentialCount": 91,
+    "successions": [
+      {
+        "sourceCode": "010JY3",
+        "canonicalCode": "010JC1",
+        "effectiveFrom": "2026-01-01"
+      }
+    ],
+    "sourceRowsWithCode": 886,
+    "sourceRowsWithoutCode": 39,
+    "unknownCodes": [
+      "EMSEA"
+    ]
+  },
+  "comparison": {
+    "definitions2026": 318,
+    "definitionsPresentInExplicit2027": 42,
+    "absentFromExplicit2027": [
+      {
+        "label": "Assemblée CI",
+        "definitionCode": "QV26-ASSEMBLEE-CI-FCF435B1",
+        "domain": null,
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Assemblée des délégués de la FVSP",
+        "definitionCode": "QV26-ASSEMBLEE-DES-DELEGUES-DE-LA-FVSP-662AE3DD",
+        "domain": null,
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Assemblée générale de la SIC",
+        "definitionCode": "QV26-ASSEMBLEE-GENERALE-DE-LA-SIC-8D1D7C8F",
+        "domain": null,
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conférence des Commandants",
+        "definitionCode": "QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769",
+        "domain": null,
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours ECA SP19 - ventilation opérationnelle",
+        "definitionCode": "QV26-COURS-ECA-SP19-VENTILATION-OPERATIONNELLE-53ED2027",
+        "domain": null,
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation continue OACP CarPostal",
+        "definitionCode": "QV26-FORMATION-CONTINUE-OACP-CARPOSTAL-EA90C59F",
+        "domain": null,
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation personnel CFF",
+        "definitionCode": "QV26-FORMATION-PERSONNEL-CFF-358CBEA6",
+        "domain": null,
+        "sourceRows": 7,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Journée « Oser tous les métiers » (JOM)",
+        "definitionCode": "QV26-JOURNEE-OSER-TOUS-LES-METIERS-JOM-55EDEBFB",
+        "domain": null,
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance Codir + repas",
+        "definitionCode": "QV26-SEANCE-CODIR-REPAS-81897EA7",
+        "domain": null,
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance COSEC",
+        "definitionCode": "QV26-SEANCE-COSEC-B710F41E",
+        "domain": null,
+        "sourceRows": 5,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance CRDIS",
+        "definitionCode": "QV26-SEANCE-CRDIS-B8654449",
+        "domain": null,
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance interSDIS",
+        "definitionCode": "QV26-SEANCE-INTERSDIS-4B877B98",
+        "domain": null,
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Table ouverte avec le Commandant",
+        "definitionCode": "QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54",
+        "domain": null,
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Visite du Conseil d'État",
+        "definitionCode": "QV26-VISITE-DU-CONSEIL-D-ETAT-49AC4722",
+        "domain": null,
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "8 km du SDIS",
+        "definitionCode": "QV26-8-KM-DU-SDIS-D2C38C47",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cérémonie de promotion et nomination",
+        "definitionCode": "QV26-CEREMONIE-DE-PROMOTION-ET-NOMINATION-70010353",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Concours de la FVSP",
+        "definitionCode": "QV26-CONCOURS-DE-LA-FVSP-B2CCD55A",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DPS 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DPS 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DPS 3",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DPS-DAP 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres Formation groupée DPS",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres interSDIS",
+        "definitionCode": "QV26-COURS-DE-CADRES-INTERSDIS-50C39DFD",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres SDIS Nord vaudois",
+        "definitionCode": "QV26-COURS-DE-CADRES-SDIS-NORD-VAUDOIS-865AE6FF",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus « Notions d'administration publique »",
+        "definitionCode": "QV26-CURSUS-NOTIONS-D-ADMINISTRATION-PUBLIQUE-4CEA871D",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus c groupe - module 1",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-1-3E17590D",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus c groupe - module 2",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-2-A1379DBB",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus c groupe - module 3",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-3-24F5F741",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus c groupe - module 4",
+        "definitionCode": "QV26-CURSUS-C-GROUPE-MODULE-4-9E2411FE",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - cours de cadres pour évaluateurs",
+        "definitionCode": "QV26-CURSUS-CI-DPS-COURS-DE-CADRES-POUR-EVALUATEURS-14F3F6CD",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 1",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-1-E5FE8296",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 10",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-10-1E0103E4",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 2",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-2-CDB3F9CB",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 3",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-3-82B182F9",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 4",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-4-4249F631",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 5",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-5-E051011F",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 6",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-6-28B8DB4B",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 7",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-7-ACA6B242",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 8",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-8-68719C42",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DPS - module 9",
+        "definitionCode": "QV26-CURSUS-CI-DPS-MODULE-9-231F815C",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Entretien postulant échelons I et II",
+        "definitionCode": "QV26-ENTRETIEN-POSTULANT-ECHELONS-I-ET-II-8B706B77",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DPS 1",
+        "definitionCode": "QV26-EXERCICE-DPS-1-6A16603D",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DPS 2",
+        "definitionCode": "QV26-EXERCICE-DPS-2-54E09232",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DPS 3",
+        "definitionCode": "QV26-EXERCICE-DPS-3-29F948D1",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DPS-DAP 1",
+        "definitionCode": "QV26-EXERCICE-DPS-DAP-1-7F1E9444",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DPS-DAP 2",
+        "definitionCode": "QV26-EXERCICE-DPS-DAP-2-668A88B6",
+        "domain": "DPS",
+        "sourceRows": 16,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice engagement Incyte Biosciences",
+        "definitionCode": "QV26-EXERCICE-ENGAGEMENT-INCYTE-BIOSCIENCES-1E54BDD9",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Fête Eau Lac",
+        "definitionCode": "QV26-FETE-EAU-LAC-4EDEF9EF",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation BIKABLO",
+        "definitionCode": "QV26-FORMATION-BIKABLO-AA5C6437",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée 1.1",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée 1.2",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-2-9B1FEFA5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée 1.3",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-3-FA3DE5E5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée 1.4",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-4-7B861481",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée 1.5",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-5-42EFC15A",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée 1.6",
+        "definitionCode": "QV26-FORMATION-GROUPEE-1-6-A72C88FD",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation permanents",
+        "definitionCode": "QV26-FORMATION-PERMANENTS-4F48A9D0",
+        "domain": "DPS",
+        "sourceRows": 7,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation relation avec la presse",
+        "definitionCode": "QV26-FORMATION-RELATION-AVEC-LA-PRESSE-63E476BF",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr demi-sct - FEU",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-FEU-8D0C9417",
+        "domain": "DPS",
+        "sourceRows": 18,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr demi-sct - VARIA",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-VARIA-D51E6F19",
+        "domain": "DPS",
+        "sourceRows": 28,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr sct - FEU",
+        "definitionCode": "QV26-INSTR-SCT-FEU-2495DFDB",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr sct - KICK-OFF",
+        "definitionCode": "QV26-INSTR-SCT-KICK-OFF-5DBF1193",
+        "domain": "DPS",
+        "sourceRows": 13,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr sct - VARIA",
+        "definitionCode": "QV26-INSTR-SCT-VARIA-D13856BA",
+        "domain": "DPS",
+        "sourceRows": 13,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Journée des familles",
+        "definitionCode": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB",
+        "domain": "DPS",
+        "sourceRows": 6,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Journée des nouveaux habitants",
+        "definitionCode": "QV26-JOURNEE-DES-NOUVEAUX-HABITANTS-E7CDB734",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Mise à niveau annuelle OSR",
+        "definitionCode": "QV26-MISE-A-NIVEAU-ANNUELLE-OSR-9977BB10",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Nettoyage annuel caserne",
+        "definitionCode": "QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Noël des familles",
+        "definitionCode": "QV26-NOEL-DES-FAMILLES-F3E5E4E3",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Passeport-Vacances",
+        "definitionCode": "QV26-PASSEPORT-VACANCES-55E662D2",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Préparation concours de la FVSP",
+        "definitionCode": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Préparation cours de cadres SDIS Nord vaudois",
+        "definitionCode": "QV26-PREPARATION-COURS-DE-CADRES-SDIS-NORD-VAUDOIS-B96ED2B5",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Préparation Revue Quinquennale",
+        "definitionCode": "QV26-PREPARATION-REVUE-QUINQUENNALE-51010471",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Préparation Xmas",
+        "definitionCode": "QV26-PREPARATION-XMAS-39727CE7",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Reconnaissance DPS",
+        "definitionCode": "QV26-RECONNAISSANCE-DPS-C5EFD73F",
+        "domain": "DPS",
+        "sourceRows": 7,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Recrutement cantonal",
+        "definitionCode": "QV26-RECRUTEMENT-CANTONAL-62C39398",
+        "domain": "DPS",
+        "sourceRows": 8,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Refresh CI",
+        "definitionCode": "QV26-REFRESH-CI-1A3A4D1F",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Repas du Permanent",
+        "definitionCode": "QV26-REPAS-DU-PERMANENT-73FAEE93",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Revue Quinquennale SDIS Nord vaudois",
+        "definitionCode": "QV26-REVUE-QUINQUENNALE-SDIS-NORD-VAUDOIS-D4687112",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance commission d'instruction",
+        "definitionCode": "QV26-SEANCE-COMMISSION-D-INSTRUCTION-C422B338",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance de préparation Téléthon",
+        "definitionCode": "QV26-SEANCE-DE-PREPARATION-TELETHON-566F5A97",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance OSR",
+        "definitionCode": "QV26-SEANCE-OSR-69425BF1",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo du personnel DPS",
+        "definitionCode": "QV26-SEANCE-PHOTO-DU-PERSONNEL-DPS-B724AB97",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo personnel DPS B1",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-B1-BA4C9FBB",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo personnel DPS B2",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-B2-C4D907C6",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo personnel DPS C1",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-C1-D4083E20",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Sécurité feu · Fête Médiévale",
+        "definitionCode": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5",
+        "domain": "DPS",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Sécurité feu・Fête Nationale",
+        "definitionCode": "QV26-SECURITE-FEU-FETE-NATIONALE-C29B7F0B",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Sécurité feu・les Zôtres Brandons",
+        "definitionCode": "QV26-SECURITE-FEU-LES-ZOTRES-BRANDONS-D97AC03D",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Souper annuel",
+        "definitionCode": "QV26-SOUPER-ANNUEL-31E8AC57",
+        "domain": "DPS",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Téléthon",
+        "definitionCode": "QV26-TELETHON-BA07D05D",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test de sélection échelons I, II N'26",
+        "definitionCode": "QV26-TEST-DE-SELECTION-ECHELONS-I-II-N-26-782AA084",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test de sélection NUOVO",
+        "definitionCode": "QV26-TEST-DE-SELECTION-NUOVO-F2DFA988",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Tir inter-unités",
+        "definitionCode": "QV26-TIR-INTER-UNITES-E27F621E",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Tour de France Femmes '26",
+        "definitionCode": "QV26-TOUR-DE-FRANCE-FEMMES-26-4BF12176",
+        "domain": "DPS",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Vision locale DPS",
+        "definitionCode": "QV26-VISION-LOCALE-DPS-EA8354D4",
+        "domain": "DPS",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DAP 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DAP 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DAP 3",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice DAP 4",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DAP - module 1",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-1-00AE593E",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DAP - module 2",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-2-A9F30492",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DAP - module 3",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-3-F98571DB",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DAP - module 4",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-4-027EBCA6",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus CI DAP - module 5",
+        "definitionCode": "QV26-CURSUS-CI-DAP-MODULE-5-0E5FEF66",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DAP 1",
+        "definitionCode": "QV26-EXERCICE-DAP-1-9890D687",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DAP 2",
+        "definitionCode": "QV26-EXERCICE-DAP-2-6285EF74",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DAP 3",
+        "definitionCode": "QV26-EXERCICE-DAP-3-618B0715",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DAP 4",
+        "definitionCode": "QV26-EXERCICE-DAP-4-46753B3A",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice DAP 5",
+        "definitionCode": "QV26-EXERCICE-DAP-5-195CBA90",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation cadres DAP",
+        "definitionCode": "QV26-FORMATION-CADRES-DAP-2B042598",
+        "domain": "DAP",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Reconnaissance DAP",
+        "definitionCode": "QV26-RECONNAISSANCE-DAP-BAA3FFE5",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance cadres",
+        "definitionCode": "QV26-SEANCE-CADRES-0972877C",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo du personnel DAP",
+        "definitionCode": "QV26-SEANCE-PHOTO-DU-PERSONNEL-DAP-E17BA848",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo personnel DAP",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DAP-A0F7204B",
+        "domain": "DAP",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance photo personnel DAP Y1",
+        "definitionCode": "QV26-SEANCE-PHOTO-PERSONNEL-DAP-Y1-40B161E2",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Soirée information DAP Y1",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y1-9C1AF689",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Soirée information DAP Y2",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y2-5AAA8CF4",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Soirée information DAP Y3",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y3-594760FB",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Soirée information DAP Y4",
+        "definitionCode": "QV26-SOIREE-INFORMATION-DAP-Y4-728FEE44",
+        "domain": "DAP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Vision locale DAP",
+        "definitionCode": "QV26-VISION-LOCALE-DAP-F8783089",
+        "domain": "DAP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Assemblée GVJSP",
+        "definitionCode": "QV26-ASSEMBLEE-GVJSP-8BBE58A9",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Championnat suisses JSP",
+        "definitionCode": "QV26-CHAMPIONNAT-SUISSES-JSP-2156FD86",
+        "domain": "JSP",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres formation groupée JSP",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-JSP-C9F22B73",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS03 - flamme 3 JSP",
+        "definitionCode": "QV26-COURS-JSP-JS03-FLAMME-3-JSP-FF520D88",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS11 - Journée d'instruction JSP (après-midi)",
+        "definitionCode": "QV26-COURS-JSP-JS11-JOURNEE-D-INSTRUCTION-JSP-APRES-MIDI-953A1740",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS11 - Journée d'instruction JSP (matin)",
+        "definitionCode": "QV26-COURS-JSP-JS11-JOURNEE-D-INSTRUCTION-JSP-MATIN-B29F2187",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS12 - Journée d'instruction des Moniteurs Cadets",
+        "definitionCode": "QV26-COURS-JSP-JS12-JOURNEE-D-INSTRUCTION-DES-MONITEURS-C-86DB0273",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS21 - valorisation moniteurs - module I",
+        "definitionCode": "QV26-COURS-JSP-JS21-VALORISATION-MONITEURS-MODULE-I-C4F05BC3",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS22 - valorisation moniteurs - module II",
+        "definitionCode": "QV26-COURS-JSP-JS22-VALORISATION-MONITEURS-MODULE-II-ACAC9F4D",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS23 - formation moniteurs - simulateur (après-midi)",
+        "definitionCode": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-APRES--A4FA0328",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS23 - formation moniteurs - simulateur (matin)",
+        "definitionCode": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-MATIN-8E3AD201",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours JSP JS24 - valorisation moniteurs - module III",
+        "definitionCode": "QV26-COURS-JSP-JS24-VALORISATION-MONITEURS-MODULE-III-D8DEC6A2",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 10",
+        "definitionCode": "QV26-EXERCICE-JSP-10-8D3FE965",
+        "domain": "JSP",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 3",
+        "definitionCode": "QV26-EXERCICE-JSP-3-0AFB4398",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 4",
+        "definitionCode": "QV26-EXERCICE-JSP-4-E8680A47",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 5",
+        "definitionCode": "QV26-EXERCICE-JSP-5-AFD39D59",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 6",
+        "definitionCode": "QV26-EXERCICE-JSP-6-0F4137C4",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 7",
+        "definitionCode": "QV26-EXERCICE-JSP-7-FDFC679C",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 8",
+        "definitionCode": "QV26-EXERCICE-JSP-8-1A631BAF",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP 9",
+        "definitionCode": "QV26-EXERCICE-JSP-9-4C059910",
+        "domain": "JSP",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP Cadets 1",
+        "definitionCode": "QV26-EXERCICE-JSP-CADETS-1-0B869038",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice JSP Cadets 2",
+        "definitionCode": "QV26-EXERCICE-JSP-CADETS-2-DE49BBCD",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation CEMEA, module 1",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-1-345181CE",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation CEMEA, module 2",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-2-E7D2BFB8",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation CEMEA, module 3",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-3-4425518E",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation CEMEA, module 4",
+        "definitionCode": "QV26-FORMATION-CEMEA-MODULE-4-F7E51360",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation groupée JSP",
+        "definitionCode": "QV26-FORMATION-GROUPEE-JSP-9B5BDE99",
+        "domain": "JSP",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Grillades des JSP Nord vaudois",
+        "definitionCode": "QV26-GRILLADES-DES-JSP-NORD-VAUDOIS-FAB9001B",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Groupe de travail JSP",
+        "definitionCode": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E",
+        "domain": "JSP",
+        "sourceRows": 6,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance d'information JSP '26",
+        "definitionCode": "QV26-SEANCE-D-INFORMATION-JSP-26-8AF725E5",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance instruction JSP",
+        "definitionCode": "QV26-SEANCE-INSTRUCTION-JSP-49B17B96",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance interne cadres JSP",
+        "definitionCode": "QV26-SEANCE-INTERNE-CADRES-JSP-21EF2225",
+        "domain": "JSP",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Soirée des présidents JSP",
+        "definitionCode": "QV26-SOIREE-DES-PRESIDENTS-JSP-94AEF2C2",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test flammes 1",
+        "definitionCode": "QV26-TEST-FLAMMES-1-620C8786",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test flammes 2",
+        "definitionCode": "QV26-TEST-FLAMMES-2-2A7A6665",
+        "domain": "JSP",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours ECA FB01 - formation de base recrues",
+        "definitionCode": "QV26-COURS-ECA-FB01-FORMATION-DE-BASE-RECRUES-20723C97",
+        "domain": "FOBA",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Entretien de collaboration avec Commandant",
+        "definitionCode": "QV26-ENTRETIEN-DE-COLLABORATION-AVEC-COMMANDANT-B80CFF32",
+        "domain": "FOBA",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Équipement personnel DPS + photo individuelle",
+        "definitionCode": "QV26-EQUIPEMENT-PERSONNEL-DPS-PHOTO-INDIVIDUELLE-1204623F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA",
+        "definitionCode": "QV26-EXERCICE-FOBA-2ED42E4A",
+        "domain": "FOBA",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 1",
+        "definitionCode": "QV26-EXERCICE-FOBA-1-F0BC308F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 10",
+        "definitionCode": "QV26-EXERCICE-FOBA-10-B13BB01B",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 2",
+        "definitionCode": "QV26-EXERCICE-FOBA-2-86E92B65",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 3",
+        "definitionCode": "QV26-EXERCICE-FOBA-3-F2E05A2F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 4",
+        "definitionCode": "QV26-EXERCICE-FOBA-4-FEF301C5",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 5",
+        "definitionCode": "QV26-EXERCICE-FOBA-5-63606E72",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 6",
+        "definitionCode": "QV26-EXERCICE-FOBA-6-2B762B67",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 7",
+        "definitionCode": "QV26-EXERCICE-FOBA-7-8157833F",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 8",
+        "definitionCode": "QV26-EXERCICE-FOBA-8-AE81E3A7",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice FOBA 9",
+        "definitionCode": "QV26-EXERCICE-FOBA-9-9A33FAE7",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Introduction PIONNIER",
+        "definitionCode": "QV26-INTRODUCTION-PIONNIER-999BBC8C",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Remise équipement des recrues FOBA 1",
+        "definitionCode": "QV26-REMISE-EQUIPEMENT-DES-RECRUES-FOBA-1-65C22FF6",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test annuel FOBA",
+        "definitionCode": "QV26-TEST-ANNUEL-FOBA-7BE50D02",
+        "domain": "FOBA",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "BLS",
+        "definitionCode": "QV26-BLS-34715DC9",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres Formation ABC",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-ABC-308D766F",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres Formation cadres ABC",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-CADRES-ABC-4688CD68",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres recyclage BLS",
+        "definitionCode": "QV26-COURS-DE-CADRES-RECYCLAGE-BLS-5AA9AC4A",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours ECA SA10 - cours de cadres - répondant de la formation antichute",
+        "definitionCode": "QV26-COURS-ECA-SA10-COURS-DE-CADRES-REPONDANT-DE-LA-FORMA-5E614096",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours ECA SA10 - répondant de la formation antichute",
+        "definitionCode": "QV26-COURS-ECA-SA10-REPONDANT-DE-LA-FORMATION-ANTICHUTE-7F8EFFD8",
+        "domain": "FOSPEC",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours ECA SA11 - recyclage répondant de la formation antichute",
+        "definitionCode": "QV26-COURS-ECA-SA11-RECYCLAGE-REPONDANT-DE-LA-FORMATION-A-2354EFF8",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus OFSI - formation de base",
+        "definitionCode": "QV26-CURSUS-OFSI-FORMATION-DE-BASE-E06A786F",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus opérateur VPC - module 1",
+        "definitionCode": "QV26-CURSUS-OPERATEUR-VPC-MODULE-1-ECEE563E",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice OFSI・infrastructures CFF",
+        "definitionCode": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574",
+        "domain": "FOSPEC",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation ABC",
+        "definitionCode": "QV26-FORMATION-ABC-A2DC927B",
+        "domain": "FOSPEC",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation antichute",
+        "definitionCode": "QV26-FORMATION-ANTICHUTE-4D06A7F8",
+        "domain": "FOSPEC",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation cadres ABC",
+        "definitionCode": "QV26-FORMATION-CADRES-ABC-1829EE30",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation NAC 1.1",
+        "definitionCode": "QV26-FORMATION-NAC-1-1-53CE66B7",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation NAC 1.2",
+        "definitionCode": "QV26-FORMATION-NAC-1-2-5A7F1A12",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 1.1",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-1-659BBC90",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 1.2",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-2-44AAB164",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 1.3",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-3-2CD0B182",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 1.4",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-1-4-C69575A3",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 2.1",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-1-94666EC6",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 2.2",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-2-8C4B05CB",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 2.3",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-3-8EFB3C59",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation opérateur VPC 2.4",
+        "definitionCode": "QV26-FORMATION-OPERATEUR-VPC-2-4-C93ABF2A",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation Travail en hauteur et antichute",
+        "definitionCode": "QV26-FORMATION-TRAVAIL-EN-HAUTEUR-ET-ANTICHUTE-07B1FB7F",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr demi-sct - ABC",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-ABC-C49C7121",
+        "domain": "FOSPEC",
+        "sourceRows": 10,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr demi-sct - PIONNIER",
+        "definitionCode": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59",
+        "domain": "FOSPEC",
+        "sourceRows": 10,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr sct - ABC",
+        "definitionCode": "QV26-INSTR-SCT-ABC-6026BBEC",
+        "domain": "FOSPEC",
+        "sourceRows": 5,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Instr sct - PIONNIER CSU-nvb",
+        "definitionCode": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1",
+        "domain": "FOSPEC",
+        "sourceRows": 5,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Journée des Commandants ABC",
+        "definitionCode": "QV26-JOURNEE-DES-COMMANDANTS-ABC-E74C5612",
+        "domain": "FOSPEC",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Recyclage BLS",
+        "definitionCode": "QV26-RECYCLAGE-BLS-3A2ED7C4",
+        "domain": "FOSPEC",
+        "sourceRows": 6,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conduite TP9000, formation continue 1.0",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-0-E4E9FC21",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conduite TP9000, formation continue 1.1",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-1-47FCC17A",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conduite TP9000, formation continue 1.2",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90",
+        "domain": "AUTO",
+        "sourceRows": 7,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conduite TP9000, formation continue 2.0",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-0-E3E851DD",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conduite TP9000, formation continue 2.1",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-1-695292DE",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Conduite TP9000, formation continue 2.2",
+        "definitionCode": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E",
+        "domain": "AUTO",
+        "sourceRows": 8,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice CAR",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-CAR-FB6A81CD",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres exercice TRUCK",
+        "definitionCode": "QV26-COURS-DE-CADRES-EXERCICE-TRUCK-220DF695",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres Formateurs MEA 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-2-40EAD3D2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres formation pilote BAT 1",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-PILOTE-BAT-1-61D567E4",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cours de cadres formation pilote BAT 2",
+        "definitionCode": "QV26-COURS-DE-CADRES-FORMATION-PILOTE-BAT-2-E52B954F",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus cond VL - module 2.0",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-2-0-3115D5A1",
+        "domain": "AUTO",
+        "sourceRows": 7,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus cond VL - module 3.1",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-3-1-D3CE2E10",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus cond VL - module 3.2",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-3-2-D54F7BB2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus cond VL - module 4.1",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-4-1-D3FF03EE",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus cond VL - module 4.2",
+        "definitionCode": "QV26-CURSUS-COND-VL-MODULE-4-2-CB5286E9",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus élévateur à timon S2 - module 1",
+        "definitionCode": "QV26-CURSUS-ELEVATEUR-A-TIMON-S2-MODULE-1-5D474C4F",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 2.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-2-1-E0ED946A",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 2.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-2-2-EEB4B060",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 3.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-3-1-C05FC618",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 3.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-3-2-D333D87D",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 4.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-4-1-9BBB5C5B",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 4.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-4-2-15869F61",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 5.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-5-1-9DB3C5FC",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 5.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-5-2-6FD93D00",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 6.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-6-1-3DA3F9CF",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 6.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-6-2-015FCFEE",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 7.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-7-1-07AD39A2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 7.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-7-2-C6EB0687",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 8.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-8-1-FCB57273",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 8.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-8-2-206599E2",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 9.1",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-9-1-F3816B0D",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus MEA - module 9.2",
+        "definitionCode": "QV26-CURSUS-MEA-MODULE-9-2-83347F5E",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus TP9 - conduite libre",
+        "definitionCode": "QV26-CURSUS-TP9-CONDUITE-LIBRE-5FE77FE2",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus TP9 - module 1",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-1-198A1A31",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus TP9 - module 2",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-2-6ACECBE7",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus TP9 - module 3.1",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-3-1-A485728E",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus TP9 - module 3.2",
+        "definitionCode": "QV26-CURSUS-TP9-MODULE-3-2-56F3C734",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice CAR 1.1",
+        "definitionCode": "QV26-EXERCICE-CAR-1-1-B757E011",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice CAR 1.2",
+        "definitionCode": "QV26-EXERCICE-CAR-1-2-0B60C469",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice CAR 1.3",
+        "definitionCode": "QV26-EXERCICE-CAR-1-3-27A2CDBA",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice CAR 1.4",
+        "definitionCode": "QV26-EXERCICE-CAR-1-4-7289BE09",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice CAR 1.5",
+        "definitionCode": "QV26-EXERCICE-CAR-1-5-5D540753",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice TRUCK 1.1",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-1-202AC9BA",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice TRUCK 1.2",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-2-B2637E39",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice TRUCK 1.3",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-3-94F967E5",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice TRUCK 1.4",
+        "definitionCode": "QV26-EXERCICE-TRUCK-1-4-6B104BDE",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation grutier 1.0",
+        "definitionCode": "QV26-FORMATION-GRUTIER-1-0-035858B9",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation grutier 1.2",
+        "definitionCode": "QV26-FORMATION-GRUTIER-1-2-DA4AD8FE",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation grutier 2.0",
+        "definitionCode": "QV26-FORMATION-GRUTIER-2-0-1FD0227E",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation grutier 2.2",
+        "definitionCode": "QV26-FORMATION-GRUTIER-2-2-9B0CC0FE",
+        "domain": "AUTO",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation MEA 1.0",
+        "definitionCode": "QV26-FORMATION-MEA-1-0-7408CDDA",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation MEA 1.1",
+        "definitionCode": "QV26-FORMATION-MEA-1-1-5CB7E5CE",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation MEA 1.2",
+        "definitionCode": "QV26-FORMATION-MEA-1-2-7A5BA540",
+        "domain": "AUTO",
+        "sourceRows": 9,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation MEA 2.0",
+        "definitionCode": "QV26-FORMATION-MEA-2-0-E0CF962E",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation MEA 2.1",
+        "definitionCode": "QV26-FORMATION-MEA-2-1-AEA25DC7",
+        "domain": "AUTO",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation MEA 2.2",
+        "definitionCode": "QV26-FORMATION-MEA-2-2-83EDC4A8",
+        "domain": "AUTO",
+        "sourceRows": 9,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation pilote BAT 1",
+        "definitionCode": "QV26-FORMATION-PILOTE-BAT-1-27197BC2",
+        "domain": "AUTO",
+        "sourceRows": 6,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation pilote BAT 2",
+        "definitionCode": "QV26-FORMATION-PILOTE-BAT-2-F69F375C",
+        "domain": "AUTO",
+        "sourceRows": 6,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation véhicule d'urgence",
+        "definitionCode": "QV26-FORMATION-VEHICULE-D-URGENCE-867B1995",
+        "domain": "AUTO",
+        "sourceRows": 4,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test de sélection cond PL N'26",
+        "definitionCode": "QV26-TEST-DE-SELECTION-COND-PL-N-26-EE280D9B",
+        "domain": "AUTO",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus PAPR - module 2",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-2-9A012A39",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus PAPR - module 3",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-3-88F70409",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus PAPR - module 4",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-4-5EC1568A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus PAPR - module 5",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-5-298B150A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus PAPR - module 6",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-6-CBCCBFD9",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Cursus PAPR - module 7",
+        "definitionCode": "QV26-CURSUS-PAPR-MODULE-7-E2FEB769",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 1.1",
+        "definitionCode": "QV26-EXERCICE-PR-1-1-30B1E01A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 1.2",
+        "definitionCode": "QV26-EXERCICE-PR-1-2-A4FDA43C",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 1.3",
+        "definitionCode": "QV26-EXERCICE-PR-1-3-391FD1A4",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 1.4",
+        "definitionCode": "QV26-EXERCICE-PR-1-4-05672DF4",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 1.5",
+        "definitionCode": "QV26-EXERCICE-PR-1-5-9E9A60D0",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 1.6",
+        "definitionCode": "QV26-EXERCICE-PR-1-6-09414D98",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 2.1",
+        "definitionCode": "QV26-EXERCICE-PR-2-1-45588F47",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 2.2",
+        "definitionCode": "QV26-EXERCICE-PR-2-2-4CAB2E94",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 2.3",
+        "definitionCode": "QV26-EXERCICE-PR-2-3-5B63EA54",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 2.4",
+        "definitionCode": "QV26-EXERCICE-PR-2-4-68D0B0F1",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 2.5",
+        "definitionCode": "QV26-EXERCICE-PR-2-5-10E2D2B9",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 2.6",
+        "definitionCode": "QV26-EXERCICE-PR-2-6-38AAE638",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 3.1",
+        "definitionCode": "QV26-EXERCICE-PR-3-1-D96B09DB",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 3.2",
+        "definitionCode": "QV26-EXERCICE-PR-3-2-9759EEEC",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 3.3",
+        "definitionCode": "QV26-EXERCICE-PR-3-3-9A2F199A",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 3.4",
+        "definitionCode": "QV26-EXERCICE-PR-3-4-E1C6C663",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 3.5",
+        "definitionCode": "QV26-EXERCICE-PR-3-5-DB2C8980",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 3.6",
+        "definitionCode": "QV26-EXERCICE-PR-3-6-ECD69510",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 4.1",
+        "definitionCode": "QV26-EXERCICE-PR-4-1-C882C1EA",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 4.2",
+        "definitionCode": "QV26-EXERCICE-PR-4-2-3E5EE567",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 4.3",
+        "definitionCode": "QV26-EXERCICE-PR-4-3-E71C19DA",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 4.4",
+        "definitionCode": "QV26-EXERCICE-PR-4-4-C4008BC3",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 4.5",
+        "definitionCode": "QV26-EXERCICE-PR-4-5-7CF12C15",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR 4.6",
+        "definitionCode": "QV26-EXERCICE-PR-4-6-BBE76EDB",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Exercice PR-ABC",
+        "definitionCode": "QV26-EXERCICE-PR-ABC-75229C6D",
+        "domain": "PR",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Formation engagement pratique PR",
+        "definitionCode": "QV26-FORMATION-ENGAGEMENT-PRATIQUE-PR-98965239",
+        "domain": "PR",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Piste entraînement PAPR 1",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-1-F7485257",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Piste entraînement PAPR 2",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-2-694EA573",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Piste entraînement PAPR 3",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-3-20D2082F",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Piste entraînement PAPR 4",
+        "definitionCode": "QV26-PISTE-ENTRAINEMENT-PAPR-4-CB7628F6",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Séance préposés APR",
+        "definitionCode": "QV26-SEANCE-PREPOSES-APR-1BD9CB6F",
+        "domain": "PR",
+        "sourceRows": 3,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Sortie des formateurs PR",
+        "definitionCode": "QV26-SORTIE-DES-FORMATEURS-PR-5C9DE16E",
+        "domain": "PR",
+        "sourceRows": 1,
+        "status": "À ARBITRER"
+      },
+      {
+        "label": "Test de sélection PAPR N'27",
+        "definitionCode": "QV26-TEST-DE-SELECTION-PAPR-N-27-A9E7D22D",
+        "domain": "PR",
+        "sourceRows": 2,
+        "status": "À ARBITRER"
+      }
+    ],
+    "warning": "L’absence porte sur une source 2027 partielle et ne prouve pas une suppression métier."
+  },
+  "arbitrations": [
+    {
+      "code": "CTA-TURN",
+      "count": 1,
+      "issue": "Source canonique du tournus CTA introuvable",
+      "impact": "Génération sections/demi-sections impossible sans invention"
+    },
+    {
+      "code": "QV27-COVERAGE",
+      "count": 1,
+      "issue": "Source 2027 limitée au 4 mars",
+      "impact": "Programme annuel complet indisponible"
+    },
+    {
+      "code": "UNDATED-FOCA",
+      "count": 6,
+      "issue": "Lignes FOCA sans date",
+      "impact": "Non chargeables dans l’agenda"
+    },
+    {
+      "code": "HISTORY-RECONDUCTION",
+      "count": 302,
+      "issue": "Activités 2026 absentes de la source 2027 partielle",
+      "impact": "Décision de reconduction requise"
+    },
+    {
+      "code": "CALENDAR-BUSINESS-RULES",
+      "count": 3,
+      "issue": "Règles veilles/vacances non administrées",
+      "impact": "Contraintes de placement non applicables automatiquement"
+    },
+    {
+      "code": "STATCOM-MISSING",
+      "count": 39,
+      "issue": "Stat.Com source manquant",
+      "impact": "Export ECAwin impossible pour ces lignes"
+    }
+  ],
+  "findings": {
+    "p1": [],
+    "p2": [
+      {
+        "code": "P2-CTA-SOURCE",
+        "finding": "Source canonique du tournus CTA absente",
+        "impact": "Gate 2 et génération CTA bloqués"
+      },
+      {
+        "code": "P2-QV27-COVERAGE",
+        "finding": "Données 2027 limitées au 4 mars",
+        "impact": "Gate 3 et recette grandeur nature bloqués"
+      },
+      {
+        "code": "P2-STATCOM",
+        "finding": "39 lignes sans Stat.Com et code EMSEA absent du référentiel",
+        "impact": "Export ECAwin non fiable sans arbitrage"
+      },
+      {
+        "code": "P2-C15-BASELINE",
+        "finding": "Suite C15 préexistante à 37/41",
+        "impact": "Contrôle CSS et trois validations de publics canoniques restent rouges"
+      }
+    ]
+  },
+  "preview": {
+    "events": [
+      {
+        "id": "qv-source-852",
+        "label": "Intégration personnel DPS, phase I",
+        "date": "05.01.2027",
+        "start": "18:00",
+        "end": "22:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DPS-B2",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DPS B2",
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C for",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 852
+        }
+      },
+      {
+        "id": "qv-source-853",
+        "label": "Échange tenue · équipement nouveaux JSP",
+        "date": "06.01.2027",
+        "start": "17:00",
+        "end": "19:00",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Compactus équipement",
+        "responsible": "Resp mat JSP",
+        "status": "PROPOSED",
+        "statCom": "010JSP",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 853
+        }
+      },
+      {
+        "id": "qv-source-854",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "06.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 854
+        }
+      },
+      {
+        "id": "qv-source-855",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "06.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 855
+        }
+      },
+      {
+        "id": "qv-source-856",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "06.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 856
+        }
+      },
+      {
+        "id": "qv-source-857",
+        "label": "Intégration personnel DPS, phase II",
+        "date": "06.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-B2",
+        "sourceLocation": "Caserne B2",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 857
+        }
+      },
+      {
+        "id": "qv-source-858",
+        "label": "Échange tenue · équipement nouveaux JSP",
+        "date": "07.01.2027",
+        "start": "17:00",
+        "end": "19:00",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Compactus équipement",
+        "responsible": "Resp mat JSP",
+        "status": "PROPOSED",
+        "statCom": "010JSP",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 858
+        }
+      },
+      {
+        "id": "qv-source-859",
+        "label": "Répétition garde drapeau RA'25",
+        "date": "07.01.2027",
+        "start": "18:30",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DAP-Y3",
+        "targetLabel": "DPS G1 + DPS C1 + DAP Y3",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DAP:Y3"
+        ],
+        "location": "",
+        "sourceLocation": "Salle de la Marive",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C op",
+        "status": "PROPOSED",
+        "statCom": "071F3",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 859
+        }
+      },
+      {
+        "id": "qv-source-860",
+        "label": "Exercice JSP 1",
+        "date": "11.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "JSP-C1",
+        "targetLabel": null,
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JC1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 860
+        }
+      },
+      {
+        "id": "qv-source-861",
+        "label": "Intégration personnel DAP",
+        "date": "11.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DAP",
+        "target": "SOURCE-OI-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C DAP",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 861
+        }
+      },
+      {
+        "id": "qv-source-862",
+        "label": "Séance EM",
+        "date": "12.01.2027",
+        "start": "18:00",
+        "end": "21:00",
+        "domain": "À ARBITRER",
+        "target": "SDIS-EM",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "Cdt",
+        "status": "PROPOSED",
+        "statCom": "EMSEA",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 862
+        }
+      },
+      {
+        "id": "qv-source-863",
+        "label": "Séance cadres F5/6",
+        "date": "13.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-B1",
+        "targetLabel": "DPS G1 + DPS B1",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "Of spéc",
+        "status": "PROPOSED",
+        "statCom": "070F56",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 863
+        }
+      },
+      {
+        "id": "qv-source-864",
+        "label": "Séance Direction JSP",
+        "date": "13.01.2027",
+        "start": "18:30",
+        "end": "20:30",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "C JSP",
+        "status": "PROPOSED",
+        "statCom": "010JSP",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 864
+        }
+      },
+      {
+        "id": "qv-source-865",
+        "label": "Séance échelons II, III et IV",
+        "date": "14.01.2027",
+        "start": "18:30",
+        "end": "21:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DPS-B2-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DPS B2 + DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4 + JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4",
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "Cdt",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 865
+        }
+      },
+      {
+        "id": "qv-source-866",
+        "label": "Séance de préparation concours de la FVSP",
+        "date": "18.01.2027",
+        "start": "18:00",
+        "end": "19:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DPS-B2-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DPS B2 + DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4 + JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1",
+          "FOBA:2"
+        ],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4",
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C op",
+        "status": "PROPOSED",
+        "statCom": "CONCOUR",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 866
+        }
+      },
+      {
+        "id": "qv-source-867",
+        "label": "Cours de cadres moniteurs AUTO",
+        "date": "18.01.2027",
+        "start": "18:30",
+        "end": "20:00",
+        "domain": "AUTO",
+        "target": "SOURCE-OI-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [
+          "AUTO:1"
+        ],
+        "oiCodes": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "0152F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 867
+        }
+      },
+      {
+        "id": "qv-source-868",
+        "label": "Cours de cadres moniteurs AUTO",
+        "date": "18.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "AUTO",
+        "target": "SOURCE-OI-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [
+          "AUTO:1"
+        ],
+        "oiCodes": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "0152F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 868
+        }
+      },
+      {
+        "id": "qv-source-869",
+        "label": "Séance audiovisuel et communication F5/6",
+        "date": "19.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DAP-Y1-DAP-Y4",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DAP Y1 + DAP Y4",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DAP:Y1",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "Of spéc",
+        "status": "PROPOSED",
+        "statCom": "070F56",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 869
+        }
+      },
+      {
+        "id": "qv-source-870",
+        "label": "Séance instruction DAP",
+        "date": "19.01.2027",
+        "start": "19:00",
+        "end": "21:00",
+        "domain": "DAP",
+        "target": "DAP-Y2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DAP:Y2"
+        ],
+        "location": "L-Y2",
+        "sourceLocation": "Local Y2",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "013Y2",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 870
+        }
+      },
+      {
+        "id": "qv-source-871",
+        "label": "Séance personnel DPS · Kick-off",
+        "date": "20.01.2027",
+        "start": "18:30",
+        "end": "21:00",
+        "domain": "DPS",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 871
+        }
+      },
+      {
+        "id": "qv-source-872",
+        "label": "Séance personnel DPS · Kick-off",
+        "date": "20.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 872
+        }
+      },
+      {
+        "id": "qv-source-873",
+        "label": "Séance personnel DPS · Kick-off",
+        "date": "20.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 873
+        }
+      },
+      {
+        "id": "qv-source-874",
+        "label": "Séance personnel DPS · Kick-off",
+        "date": "20.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-B2",
+        "sourceLocation": "Caserne B2",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 874
+        }
+      },
+      {
+        "id": "qv-source-875",
+        "label": "Séance instruction DAP",
+        "date": "20.01.2027",
+        "start": "19:00",
+        "end": "21:00",
+        "domain": "DAP",
+        "target": "DAP-Y4",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DAP:Y4"
+        ],
+        "location": "L-Y4",
+        "sourceLocation": "Local Y4",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "013Y4",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 875
+        }
+      },
+      {
+        "id": "qv-source-876",
+        "label": "Séance cadres JSP · Kick-off",
+        "date": "21.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C JSP",
+        "status": "PROPOSED",
+        "statCom": "010JG1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 876
+        }
+      },
+      {
+        "id": "qv-source-877",
+        "label": "Cours de cadres Formateurs cursus MEA",
+        "date": "25.01.2027",
+        "start": "17:00",
+        "end": "19:00",
+        "domain": "AUTO",
+        "target": "AUTO",
+        "targetLabel": null,
+        "publics": [
+          "AUTO:1",
+          "AUTO:5"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "0151F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 877
+        }
+      },
+      {
+        "id": "qv-source-878",
+        "label": "Séance Fourriers DPS",
+        "date": "25.01.2027",
+        "start": "17:00",
+        "end": "19:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DPS-B2",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DPS B2",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "QM",
+        "status": "PROPOSED",
+        "statCom": "070F8",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 878
+        }
+      },
+      {
+        "id": "qv-source-879",
+        "label": "Séance responsables MAT SDIS",
+        "date": "25.01.2027",
+        "start": "18:30",
+        "end": "21:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DPS-B2-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DPS B2 + DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C log",
+        "status": "PROPOSED",
+        "statCom": "070F4",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 879
+        }
+      },
+      {
+        "id": "qv-source-880",
+        "label": "Séance Fourriers DAP",
+        "date": "25.01.2027",
+        "start": "19:00",
+        "end": "21:00",
+        "domain": "DAP",
+        "target": "SOURCE-OI-DPS-G1-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DPS G1 + DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "QM",
+        "status": "PROPOSED",
+        "statCom": "070F8",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 880
+        }
+      },
+      {
+        "id": "qv-source-881",
+        "label": "Séance chefs de section DPS",
+        "date": "26.01.2027",
+        "start": "18:00",
+        "end": "20:30",
+        "domain": "DPS",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F23",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 881
+        }
+      },
+      {
+        "id": "qv-source-882",
+        "label": "Exercice JSP 1",
+        "date": "26.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "JSP-B1",
+        "targetLabel": null,
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JB1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 882
+        }
+      },
+      {
+        "id": "qv-source-883",
+        "label": "Séance chefs de section DPS C1 · B2",
+        "date": "26.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F23",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 883
+        }
+      },
+      {
+        "id": "qv-source-884",
+        "label": "Séance chefs de section DPS",
+        "date": "26.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F23",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 884
+        }
+      },
+      {
+        "id": "qv-source-885",
+        "label": "Séance chefs de section DPS C1 · B2",
+        "date": "26.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-B2",
+        "sourceLocation": "Caserne B2",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F23",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 885
+        }
+      },
+      {
+        "id": "qv-source-886",
+        "label": "Cursus JSP - module 1 · Petzi découvre les pin-pon",
+        "date": "27.01.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JSP",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 886
+        }
+      },
+      {
+        "id": "qv-source-887",
+        "label": "Séance instruction DPS",
+        "date": "27.01.2027",
+        "start": "18:30",
+        "end": "21:00",
+        "domain": "DPS",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 887
+        }
+      },
+      {
+        "id": "qv-source-888",
+        "label": "Séance personnel DAP · Kick-off",
+        "date": "27.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DAP",
+        "target": "SOURCE-OI-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [],
+        "oiCodes": [
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-OXYGENE",
+        "sourceRoom": "Salle Oxygène",
+        "responsible": "C DAP",
+        "status": "PROPOSED",
+        "statCom": "070F1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 888
+        }
+      },
+      {
+        "id": "qv-source-889",
+        "label": "Séance instruction DPS",
+        "date": "27.01.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 889
+        }
+      },
+      {
+        "id": "qv-source-890",
+        "label": "Cursus MEA - module 1.0",
+        "date": "28.01.2027",
+        "start": "18:00",
+        "end": "21:00",
+        "domain": "AUTO",
+        "target": "AUTO",
+        "targetLabel": null,
+        "publics": [
+          "AUTO:1",
+          "AUTO:5"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-O2",
+        "sourceRoom": "Salle O2",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "0151F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 890
+        }
+      },
+      {
+        "id": "qv-source-891",
+        "label": "Séance instruction DAP",
+        "date": "28.01.2027",
+        "start": "19:00",
+        "end": "21:00",
+        "domain": "DAP",
+        "target": "DAP-Y1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DAP:Y1"
+        ],
+        "location": "L-Y1",
+        "sourceLocation": "Local Y1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "013Y1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 891
+        }
+      },
+      {
+        "id": "qv-source-892",
+        "label": "Séance instruction DAP",
+        "date": "28.01.2027",
+        "start": "19:00",
+        "end": "21:00",
+        "domain": "DAP",
+        "target": "DAP-Y3",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DAP:Y3"
+        ],
+        "location": "L-Y3",
+        "sourceLocation": "Local Y3",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "013Y3",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 892
+        }
+      },
+      {
+        "id": "qv-source-893",
+        "label": "Séance Codir",
+        "date": "29.01.2027",
+        "start": "08:00",
+        "end": "09:30",
+        "domain": "À ARBITRER",
+        "target": "SDIS-EM",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "PrésidentE Codir",
+        "status": "PROPOSED",
+        "statCom": "070F0",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 893
+        }
+      },
+      {
+        "id": "qv-source-894",
+        "label": "Équipement des recrues FOBA 1 · Séance photo individuelle",
+        "date": "30.01.2027",
+        "start": "07:00",
+        "end": "15:00",
+        "domain": "FOBA",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [
+          "FOBA:1"
+        ],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Compactus équipement",
+        "responsible": "C log",
+        "status": "PROPOSED",
+        "statCom": "010FOBA",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 894
+        }
+      },
+      {
+        "id": "qv-source-895",
+        "label": "Cours de cadres FOBA",
+        "date": "30.01.2027",
+        "start": "07:30",
+        "end": "12:00",
+        "domain": "FOBA",
+        "target": "FOBA",
+        "targetLabel": null,
+        "publics": [
+          "FOBA:1",
+          "FOBA:2",
+          "FOBA:3"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C FOBA",
+        "status": "PROPOSED",
+        "statCom": "010FOBC",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 895
+        }
+      },
+      {
+        "id": "qv-source-896",
+        "label": "Cours de cadres Formateurs MEA 1",
+        "date": "01.02.2027",
+        "start": "17:30",
+        "end": "20:00",
+        "domain": "AUTO",
+        "target": "AUTO",
+        "targetLabel": null,
+        "publics": [
+          "AUTO:1",
+          "AUTO:5"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "0151F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 896
+        }
+      },
+      {
+        "id": "qv-source-897",
+        "label": "Exercice JSP 2",
+        "date": "01.02.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "JSP-C1",
+        "targetLabel": null,
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JC1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 897
+        }
+      },
+      {
+        "id": "qv-source-898",
+        "label": "Séance des chefs de section DAP",
+        "date": "01.02.2027",
+        "start": "19:00",
+        "end": "22:00",
+        "domain": "DAP",
+        "target": "SOURCE-OI-DPS-G1-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4",
+        "targetLabel": "DPS G1 + DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "C DAP",
+        "status": "PROPOSED",
+        "statCom": "070F23",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 898
+        }
+      },
+      {
+        "id": "qv-source-899",
+        "label": "Cursus PAPR - module 1 · Petzi découvre l'APR",
+        "date": "02.02.2027",
+        "start": "18:00",
+        "end": "21:00",
+        "domain": "PR",
+        "target": "PR",
+        "targetLabel": null,
+        "publics": [
+          "PR:2"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C PR",
+        "status": "PROPOSED",
+        "statCom": "011PR",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 899
+        }
+      },
+      {
+        "id": "qv-source-900",
+        "label": "Séance instruction DPS",
+        "date": "02.02.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 900
+        }
+      },
+      {
+        "id": "qv-source-901",
+        "label": "Séance instruction DPS",
+        "date": "02.02.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-B2",
+        "sourceLocation": "Caserne B2",
+        "room": "",
+        "sourceRoom": "Salle de théorie",
+        "responsible": "C site",
+        "status": "PROPOSED",
+        "statCom": "070F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 901
+        }
+      },
+      {
+        "id": "qv-source-902",
+        "label": "Cursus cond VL - module 1.0 · théorie",
+        "date": "03.02.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "AUTO",
+        "target": "AUTO",
+        "targetLabel": null,
+        "publics": [
+          "AUTO:3"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-OXYGENE",
+        "sourceRoom": "Salle Oxygène",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "01522F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 902
+        }
+      },
+      {
+        "id": "qv-source-903",
+        "label": "Cursus JSP - module 2 · Petzi apprend les bases",
+        "date": "03.02.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JSP",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 903
+        }
+      },
+      {
+        "id": "qv-source-904",
+        "label": "Séance communication F5/6",
+        "date": "03.02.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DAP-Y1",
+        "targetLabel": "DPS G1 + DAP Y1",
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1",
+          "DAP:Y1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "Of spéc",
+        "status": "PROPOSED",
+        "statCom": "070F56",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 904
+        }
+      },
+      {
+        "id": "qv-source-905",
+        "label": "Cours de cadres PR",
+        "date": "03.02.2027",
+        "start": "18:30",
+        "end": "21:00",
+        "domain": "PR",
+        "target": "PR",
+        "targetLabel": null,
+        "publics": [
+          "PR:2"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C PR",
+        "status": "PROPOSED",
+        "statCom": "011PR",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 905
+        }
+      },
+      {
+        "id": "qv-source-906",
+        "label": "Séance Préposés mat DPS",
+        "date": "04.02.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-VULCAIN",
+        "sourceRoom": "Salle Vulcain",
+        "responsible": "C log",
+        "status": "PROPOSED",
+        "statCom": "070F4",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 906
+        }
+      },
+      {
+        "id": "qv-source-907",
+        "label": "Séance Préposés mat DPS",
+        "date": "04.02.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": "Salle Théorie",
+        "responsible": "Resp mat",
+        "status": "PROPOSED",
+        "statCom": "070F4",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 907
+        }
+      },
+      {
+        "id": "qv-source-908",
+        "label": "Séance Préposés mat DPS",
+        "date": "04.02.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": "Salle Théorie",
+        "responsible": "Resp mat",
+        "status": "PROPOSED",
+        "statCom": "070F4",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 908
+        }
+      },
+      {
+        "id": "qv-source-909",
+        "label": "Séance Préposés mat DPS",
+        "date": "04.02.2027",
+        "start": "19:00",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-B2",
+        "sourceLocation": "Caserne B2",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp mat",
+        "status": "PROPOSED",
+        "statCom": "070F4",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 909
+        }
+      },
+      {
+        "id": "qv-source-910",
+        "label": "Instr demi-sct - KICK-OFF",
+        "date": "06.02.2027",
+        "start": "07:30",
+        "end": "10:30",
+        "domain": "DPS",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "012G1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 910
+        }
+      },
+      {
+        "id": "qv-source-911",
+        "label": "Instr demi-sct - KICK-OFF",
+        "date": "06.02.2027",
+        "start": "07:30",
+        "end": "10:30",
+        "domain": "DPS",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "012C1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 911
+        }
+      },
+      {
+        "id": "qv-source-912",
+        "label": "Instr demi-sct - KICK-OFF",
+        "date": "06.02.2027",
+        "start": "07:30",
+        "end": "10:30",
+        "domain": "DPS",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "012B2",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 912
+        }
+      },
+      {
+        "id": "qv-source-913",
+        "label": "Instr demi-sct - KICK-OFF",
+        "date": "06.02.2027",
+        "start": "07:30",
+        "end": "10:30",
+        "domain": "DPS",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "012B1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 913
+        }
+      },
+      {
+        "id": "qv-source-914",
+        "label": "Conduite, formation continue",
+        "date": "06.02.2027",
+        "start": "10:30",
+        "end": "11:30",
+        "domain": "AUTO",
+        "target": "DPS-G1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "0152F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 914
+        }
+      },
+      {
+        "id": "qv-source-915",
+        "label": "Conduite, formation continue",
+        "date": "06.02.2027",
+        "start": "10:30",
+        "end": "11:30",
+        "domain": "AUTO",
+        "target": "DPS-C1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:C1"
+        ],
+        "location": "L-C1",
+        "sourceLocation": "Caserne C1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "0152F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 915
+        }
+      },
+      {
+        "id": "qv-source-916",
+        "label": "Conduite, formation continue",
+        "date": "06.02.2027",
+        "start": "10:30",
+        "end": "11:30",
+        "domain": "AUTO",
+        "target": "DPS-B1",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "0152F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 916
+        }
+      },
+      {
+        "id": "qv-source-917",
+        "label": "Conduite, formation continue",
+        "date": "06.02.2027",
+        "start": "10:30",
+        "end": "11:30",
+        "domain": "AUTO",
+        "target": "DPS-B2",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [
+          "DPS:B2"
+        ],
+        "location": "L-B2",
+        "sourceLocation": "Caserne B2",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "C sct",
+        "status": "PROPOSED",
+        "statCom": "0152F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 917
+        }
+      },
+      {
+        "id": "qv-source-918",
+        "label": "Séance Direction JSP",
+        "date": "16.02.2027",
+        "start": "18:30",
+        "end": "20:30",
+        "domain": "JSP",
+        "target": "SOURCE-OI-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "C JSP",
+        "status": "PROPOSED",
+        "statCom": "010JSP",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 918
+        }
+      },
+      {
+        "id": "qv-source-919",
+        "label": "Cours de cadres formation annuelle Grutiers",
+        "date": "17.02.2027",
+        "start": "17:30",
+        "end": "20:00",
+        "domain": "AUTO",
+        "target": "AUTO",
+        "targetLabel": null,
+        "publics": [
+          "AUTO:1"
+        ],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "R-G1-OXYGENE",
+        "sourceRoom": "Salle Oxygène",
+        "responsible": "Of auto",
+        "status": "PROPOSED",
+        "statCom": "0154F7",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 919
+        }
+      },
+      {
+        "id": "qv-source-920",
+        "label": "Exercice JSP 1",
+        "date": "20.02.2027",
+        "start": "08:00",
+        "end": "11:30",
+        "domain": "JSP",
+        "target": "JSP-G1",
+        "targetLabel": null,
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:G1"
+        ],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JG1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 920
+        }
+      },
+      {
+        "id": "qv-source-921",
+        "label": "Séance EM",
+        "date": "24.02.2027",
+        "start": "18:00",
+        "end": "21:00",
+        "domain": "À ARBITRER",
+        "target": "SDIS-EM",
+        "targetLabel": null,
+        "publics": [],
+        "oiCodes": [],
+        "location": "L-G1",
+        "sourceLocation": "Caserne G1",
+        "room": "",
+        "sourceRoom": "Salle EM",
+        "responsible": "Cdt",
+        "status": "PROPOSED",
+        "statCom": "EMSEA",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 921
+        }
+      },
+      {
+        "id": "qv-source-922",
+        "label": "Exercice JSP 2",
+        "date": "25.02.2027",
+        "start": "18:00",
+        "end": "20:00",
+        "domain": "JSP",
+        "target": "JSP-B1",
+        "targetLabel": null,
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "JSP:B1"
+        ],
+        "location": "L-B1",
+        "sourceLocation": "Caserne B1",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Resp for JSP",
+        "status": "PROPOSED",
+        "statCom": "010JB1",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 922
+        }
+      },
+      {
+        "id": "qv-source-923",
+        "label": "Rapport annuel",
+        "date": "04.03.2027",
+        "start": "18:45",
+        "end": "21:30",
+        "domain": "DPS",
+        "target": "SOURCE-OI-DPS-G1-DPS-C1-DPS-B1-DPS-B2-DAP-Y1-DAP-Y2-DAP-Y3-DAP-Y4-JSP-G1-JSP-C1-JSP-B1",
+        "targetLabel": "DPS G1 + DPS C1 + DPS B1 + DPS B2 + DAP Y1 + DAP Y2 + DAP Y3 + DAP Y4 + JSP G1 + JSP C1 + JSP B1",
+        "publics": [
+          "JSP:1"
+        ],
+        "oiCodes": [
+          "DPS:G1",
+          "DPS:C1",
+          "DPS:B1",
+          "DPS:B2",
+          "DAP:Y1",
+          "DAP:Y2",
+          "DAP:Y3",
+          "DAP:Y4",
+          "JSP:G1",
+          "JSP:C1",
+          "JSP:B1"
+        ],
+        "location": "",
+        "sourceLocation": "Salle de la Marive",
+        "room": "",
+        "sourceRoom": null,
+        "responsible": "Cdt",
+        "status": "PROPOSED",
+        "statCom": "071F3",
+        "roles": [],
+        "resources": [],
+        "dayExclusive": false,
+        "fixedDate": false,
+        "permutationAllowed": false,
+        "sessionCount": 1,
+        "priority": 70,
+        "provenance": "SOURCE_WORKBOOK_DATE",
+        "sourceEvidence": {
+          "file": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+          "sheet": "QUO VADIS '26",
+          "row": 923
+        }
+      }
+    ]
+  },
+  "gates": {
+    "gate1": "PASS",
+    "gate2": "NOK",
+    "gate3": "NOK",
+    "gate4": "BLOCKED",
+    "global": "NOK"
+  },
+  "operationalWrites": false,
+  "eventPublication": false,
+  "databaseWrites": false
+}

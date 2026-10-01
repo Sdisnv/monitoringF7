@@ -1,0 +1,43 @@
+{
+  "scope": "C19-PREPROD-GATE-3",
+  "url": "http://127.0.0.1:4186/?preprod=1",
+  "httpStatus": 200,
+  "viewports": [1500, 1150, 960, 800],
+  "screensPerViewport": 12,
+  "screenViewportChecks": 48,
+  "bodyOverflowFailures": 0,
+  "mainOverflowFailures": 0,
+  "consoleErrors": 0,
+  "activitiesAt800": "Wide table remains inside its explicit horizontal scroll container.",
+  "workflow": {
+    "persistentSteps": 6,
+    "statComDisplayed": "010JB1",
+    "entryServicePropagated": true,
+    "publicPropagated": "JSP:1",
+    "proposalDates": ["2027-01-11", "2027-01-12", "2027-01-13"],
+    "programmedActivityId": "program-QV26-EXERCICE-JSP-1-7F24A973-1-1"
+  },
+  "foba": {
+    "eventId": "qv-source-852",
+    "public": "FOBA:2",
+    "responsible": "C FOBA",
+    "role": "CHEF-FOBA",
+    "historicalResponsible": "C for"
+  },
+  "conflicts": {
+    "scenarios": 8,
+    "openActivityLinks": 16,
+    "editReturnRecheck": true
+  },
+  "agenda": {
+    "heading": "QUO VADIS '27",
+    "protectedDate": "2027-01-01",
+    "permanenceVisible": true
+  },
+  "captures": [
+    "/private/tmp/c19-gate3-definition-1500.png",
+    "/private/tmp/c19-gate3-definition-800-full.png",
+    "/private/tmp/c19-gate3-conflicts-1150.png",
+    "/private/tmp/c19-gate3-agenda-1150.png"
+  ]
+}

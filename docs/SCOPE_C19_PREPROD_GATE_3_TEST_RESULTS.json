@@ -1,0 +1,20 @@
+{
+  "scope": "C19-PREPROD-GATE-3",
+  "targeted": [
+    {"suite": "Gate 3", "passed": 15, "total": 15},
+    {"suite": "Gate 2", "passed": 17, "total": 17},
+    {"suite": "C18", "passed": 18, "total": 18},
+    {"suite": "C19", "passed": 9, "total": 9},
+    {"suite": "C19 UX", "passed": 67, "total": 67},
+    {"suite": "Impl 1A", "passed": 10, "total": 10},
+    {"suite": "Impl 1B", "passed": 8, "total": 8}
+  ],
+  "global": {
+    "command": "npm run test:scope",
+    "runs": 1,
+    "exitCode": 1,
+    "firstFailure": "scope-login-visual-alignment-orion-1-tests.js - cache-bust SCOPE visuel uniquement",
+    "knownPreExistingFailure": true,
+    "gate3RegressionBeforeFailure": false
+  }
+}

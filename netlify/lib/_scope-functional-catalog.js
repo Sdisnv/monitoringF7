@@ -57,6 +57,76 @@ function numberedActivityLabel(baseLabel,occurrenceNumber,sessionNumber,sessionC
 function scheduledActivityLabel(baseLabel,occurrenceNumber,sessionNumber,sessionCount,complement){
   return finalActivityLabel(numberedActivityLabel(baseLabel,occurrenceNumber,sessionNumber,sessionCount),complement);
 }
+function programmeActivityPresentation(rows = []){
+  const source = Array.isArray(rows) ? rows : [];
+  const normalized = source.map((row) => {
+    const label = text(row.label || row.eventLabel);
+    const numbered = numberedLabel(label);
+    const sessionCount = Math.max(1,Number(row.sessionCount || 1));
+    const sessionIndex = Math.max(1,Number(row.sessionIndex || row.sessionSequence || 1));
+    const eventNumbered = numberedLabel(text(row.eventLabel));
+    const collapsedOccurrences = numbered && numbered.minor === 1 && sessionCount > 1
+      && eventNumbered && eventNumbered.major === numbered.major && eventNumbered.minor === sessionIndex;
+    if(!collapsedOccurrences) return { ...row,_numbered:numbered,_operationalLabel:label };
+    const occurrenceId = `${text(row.definitionId)}:O${sessionIndex}`;
+    const operationalLabel = label.replace(/\d+[.]\d+$/,`${numbered.major}.${sessionIndex}`);
+    return {
+      ...row,
+      occurrenceId,
+      sessionId:`${occurrenceId}:S1`,
+      sessionIndex:1,
+      sessionCount:1,
+      _operationalLabel:operationalLabel,
+      _numbered:{ ...numbered,minor:sessionIndex },
+      _collapsedOccurrenceCount:sessionCount
+    };
+  });
+  const byDefinition = new Map();
+  normalized.forEach((row) => {
+    const numbered = row._numbered;
+    const exerciseSeries = numbered && numbered.minor != null && /^Exercice\b/i.test(text(row.label));
+    const collapsedSeries = Number(row._collapsedOccurrenceCount || 0) > 1;
+    const key = exerciseSeries || collapsedSeries
+      ? `${upper(row.domain)}|${numbered.stem}|${numbered.major}`
+      : text(row.definitionId || row.definitionCode || row.code || row.id);
+    row._presentationKey = key;
+    if(!byDefinition.has(key)) byDefinition.set(key,[]);
+    byDefinition.get(key).push(row);
+  });
+  return normalized.map((row) => {
+    const siblings = byDefinition.get(row._presentationKey) || [row];
+    const sessionCount = Math.max(1,Number(row.sessionCount || 1));
+    const sessionIndex = Math.max(1,Number(row.sessionIndex || row.sessionSequence || 1));
+    const occurrenceMatch = text(row.occurrenceId).match(/:O0*(\d+)$/i);
+    const numbered = row._numbered;
+    const occurrenceIndex = Number(row.seriesOccurrenceIndex || 0) || (numbered && numbered.minor != null ? numbered.minor : (occurrenceMatch ? Number(occurrenceMatch[1]) : 1));
+    const occurrenceNumbers = new Set(siblings.map((item) => item._numbered && item._numbered.minor != null
+      ? Number(item._numbered.minor) : text(item.occurrenceId || item.id)));
+    const occurrenceCount = Math.max(Number(row.seriesOccurrenceCount || 0),Number(row._collapsedOccurrenceCount || 0),occurrenceNumbers.size);
+    const rawLabel = text(row.label || row.eventLabel);
+    const operationalLabel = text(row._operationalLabel) || rawLabel;
+    const activityLabel = numbered && numbered.minor != null && (occurrenceCount > 1 || Number(row._collapsedOccurrenceCount || 0) > 1)
+      ? `${numbered.stem} ${numbered.major}` : rawLabel;
+    const result = {
+      ...row,
+      activityLabel,
+      eventDisplayLabel:operationalLabel,
+      definitionCode:text(row.code) || null,
+      eventCode:null,
+      occurrenceIndex,
+      occurrenceCount,
+      occurrenceLabel:occurrenceCount > 1
+        ? `Occurrence ${numbered && numbered.minor != null ? `${numbered.major}.${occurrenceIndex}` : occurrenceIndex} (${occurrenceIndex}/${occurrenceCount})`
+        : 'Occurrence unique',
+      sessionLabel:sessionCount > 1 ? `Session ${sessionIndex}/${sessionCount}` : 'Aucune session distincte'
+    };
+    delete result._numbered;
+    delete result._presentationKey;
+    delete result._collapsedOccurrenceCount;
+    delete result._operationalLabel;
+    return result;
+  });
+}
 function allocateActivityCode(statCom,issuedCodes = []){
   const prefix = upper(statCom).replace(/\s+/g,'');
   if(!prefix) return null;
@@ -106,12 +176,12 @@ function buildConvergenceMatrix(proposals = []){
     const formationGroupee = items[0].numbered.stem === 'Formation groupée' && items.length === 6 && strongEvidence;
     const exercicePr1 = items[0].domain === 'PR' && items[0].numbered.stem === 'Exercice PR' && items[0].numbered.major === 1 && items.length === 6 && strongEvidence;
     append(items,{
-      proposedType:formationGroupee || exercicePr1 ? 'MULTI_SESSION' : 'UNRESOLVED_SERIES',
+      proposedType:formationGroupee ? 'MULTI_SESSION' : exercicePr1 ? 'RECURRENT_OCCURRENCES' : 'UNRESOLVED_SERIES',
       targetDefinition:formationGroupee ? 'DPS-FORMATION-GROUPEE' : exercicePr1 ? 'PR-EXERCICE-1' : null,
-      sessions:formationGroupee || exercicePr1 ? items.map((row) => row.numbered.suffix) : [],realizations:formationGroupee || exercicePr1 ? 1 : null,
+      sessions:formationGroupee ? items.map((row) => row.numbered.suffix) : exercicePr1 ? ['S1'] : [],realizations:formationGroupee ? 1 : exercicePr1 ? items.length : null,
       confidence:formationGroupee || exercicePr1 ? 'HIGH' : 'MEDIUM',action:formationGroupee || exercicePr1 ? 'MERGE_SAFE' : 'REVIEW_REQUIRED',
       evidence:formationGroupee ? ['suffixes 1.1 à 1.6 continus','domaine, publics, Stat.Com, spécialisation et thème identiques']
-        : exercicePr1 ? ['PR 1.1 à 1.6 continus','domaine PR, publics canoniques, Stat.Com, spécialisation PAPR et thème Base identiques','relation multi-séances démontrée C15/C16']
+        : exercicePr1 ? ['PR 1.1 à 1.6 continus','domaine PR, publics canoniques, Stat.Com, spécialisation PAPR et thème Base identiques','six occurrences métier distinctes']
           : ['suffixe numérique insuffisant sans décision métier']
     });
   }
@@ -483,6 +553,6 @@ function detectPublicConflicts(slots = []){
 }
 
 module.exports={ CONVERGENCE_ACTIONS,PROGRAM_STATES,SLOT_STATES,fingerprint,numberedLabel,durationMinutes,durationLabel,finalActivityLabel,
-  numberedActivityLabel,scheduledActivityLabel,allocateActivityCode,buildConvergenceMatrix,normalizeFunctionalProfile,annualConfiguration,proposeAnnualSchedule,
+  numberedActivityLabel,scheduledActivityLabel,programmeActivityPresentation,allocateActivityCode,buildConvergenceMatrix,normalizeFunctionalProfile,annualConfiguration,proposeAnnualSchedule,
   normalizeCalendarRules,evaluateCalendarDate,compatibilityBetween,detectCompatibilityConflicts,explainConflict,proposeBestDates,
   detectPublicConflicts,validateMove,presentConstraintCause,progressFobaLevel,canonicalFobaResponsibility,COMPATIBILITY_STATES };

@@ -36,10 +36,11 @@ test('05 autorise le Stat.Com vide externe et détecte le manque SDIS', () => {
   assert.equal(report.missingStatCom.sdisMissing, 12);
   assert.match(report.missingStatCom.rule, /extérieure/);
 });
-test('06 canonise EMSEA sans inventer de Stat.Com', () => {
+test('06 canonise le Stat.Com EMSEA démontré par le classeur source', () => {
   assert.equal(report.emsea.businessCode, 'EMSEA');
   assert.equal(report.emsea.canonicalLabel, 'Séance État-major');
-  assert.equal(report.emsea.statCom, null);
+  assert.equal(report.emsea.statCom, 'EMSEA');
+  assert.match(report.emsea.statComConclusion, /11 lignes du classeur/);
   assert.equal(report.findings.trueMoaArbitrations.some((row) => /EMSEA/i.test(JSON.stringify(row))), false);
 });
 test('07 démontre onze occurrences historiques et le mardi prioritaire', () => {
@@ -53,7 +54,7 @@ test('08 complète les onze occurrences 2027 sans date inventée', () => {
   assert.equal(rows.length, 11);
   assert.equal(rows.filter((row) => row.isoDate).length, 2);
   assert.equal(rows.filter((row) => row.status === 'A_POSITIONNER').length, 9);
-  assert(rows.every((row) => row.businessCode === 'EMSEA' && !row.statCom));
+  assert(rows.every((row) => row.businessCode === 'EMSEA' && row.statCom === 'EMSEA' && row.domain === 'CMDT' && row.family === '' && row.ois.includes('SDIS')));
 });
 test('09 retrouve et vérifie les sources CTA multi-années', () => {
   assert.deepEqual(report.cta.search.yearsFound, [2021, 2023, 2024, 2025, 2027]);

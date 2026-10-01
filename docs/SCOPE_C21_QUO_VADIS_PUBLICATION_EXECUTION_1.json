@@ -1,0 +1,1700 @@
+{
+  "scope": "C21-QUO-VADIS-PUBLICATION-EXECUTION-1",
+  "verdict": "PASS",
+  "generatedAt": "2026-09-29T15:00:00.000Z",
+  "git": {
+    "initialHead": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "finalHead": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "commit": false,
+    "push": false,
+    "deploy": false,
+    "productionMigration": false,
+    "finalStatus": "M assets/css/scope.css\n M assets/js/scope-api.js\n M assets/js/scope-ui.js\n M netlify/functions/scope.js\n M netlify/lib/_rbac.js\n M netlify/lib/_scope-annual-catalog-import.js\n M netlify/lib/_scope-annual-catalog-service.js\n M netlify/lib/_scope-schema.js\n M package.json\n M scripts/scope-impl-1a-tests.js\n M scripts/scope-impl-1b-tests.js\n?? database/fixtures/\n?? database/migrations/20260925_scope_functional_catalog_c18.sql\n?? database/migrations/20260929_scope_qv_publication_c20.sql\n?? database/migrations/20260929_scope_qv_publication_c21.sql\n?? docs/SCOPE_C18_CONVERGENCE_MATRIX.json\n?? docs/SCOPE_C18_CONVERGENCE_MATRIX.md\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.json\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.md\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_GATE_1.json\n?? docs/SCOPE_C19_PREPROD_GATE_1.md\n?? docs/SCOPE_C19_PREPROD_GATE_1_R1.json\n?? docs/SCOPE_C19_PREPROD_GATE_1_R1.md\n?? docs/SCOPE_C19_PREPROD_GATE_2.json\n?? docs/SCOPE_C19_PREPROD_GATE_2.md\n?? docs/SCOPE_C19_PREPROD_GATE_2_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_GATE_2_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_GATE_3.json\n?? docs/SCOPE_C19_PREPROD_GATE_3.md\n?? docs/SCOPE_C19_PREPROD_GATE_3_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_GATE_3_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.json\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.md\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.json\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.md\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1.md\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_ARBITRATIONS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_AUTO_PLACEMENTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_CONFLICTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_CTA_2027.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_MATRIX_2026_2027.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_PROGRAM_2027.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_TEST_RESULTS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1_TO_POSITION.json\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1.json\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1.md\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1_BROWSER_METRICS.json\n?? docs/SCOPE_C19_QUO_VADIS_27_MOA_CLOSURE_1_TEST_RESULTS.json\n?? docs/SCOPE_C20_QUO_VADIS_INTEGRATION_ARCHITECTURE_1.json\n?? docs/SCOPE_C20_QUO_VADIS_INTEGRATION_ARCHITECTURE_1.md\n?? docs/SCOPE_C21_QUO_VADIS_PUBLICATION_EXECUTION_1.json\n?? docs/SCOPE_C21_QUO_VADIS_PUBLICATION_EXECUTION_1.md\n?? docs/captures/\n?? netlify/lib/_scope-functional-catalog-ddl.js\n?? netlify/lib/_scope-functional-catalog.js\n?? netlify/lib/_scope-qv-publication-executor.js\n?? netlify/lib/_scope-qv-publication-plan.js\n?? netlify/lib/_scope-qv-publication-reconciliation.js\n?? scripts/lib/\n?? scripts/scope-c19-preprod-canonical-truth-1-tests.js\n?? scripts/scope-c19-preprod-canonical-truth-1.js\n?? scripts/scope-c19-preprod-gate-1-r1-tests.js\n?? scripts/scope-c19-preprod-gate-1-r1.js\n?? scripts/scope-c19-preprod-gate-1-tests.js\n?? scripts/scope-c19-preprod-gate-1.js\n?? scripts/scope-c19-preprod-gate-2-tests.js\n?? scripts/scope-c19-preprod-gate-2.js\n?? scripts/scope-c19-preprod-gate-3-tests.js\n?? scripts/scope-c19-preprod-gate-3.js\n?? scripts/scope-c19-preprod-moa-final-1-tests.js\n?? scripts/scope-c19-preprod-moa-final-1.js\n?? scripts/scope-c19-preprod-moa-ux-code-final-1-tests.js\n?? scripts/scope-c19-preprod-moa-ux-code-final-1.js\n?? scripts/scope-c19-quo-vadis-27-full-dress-rehearsal-1-tests.js\n?? scripts/scope-c19-quo-vadis-27-full-dress-rehearsal-1.js\n?? scripts/scope-c19-quo-vadis-27-moa-closure-1-tests.js\n?? scripts/scope-c19-quo-vadis-27-moa-closure-1.js\n?? scripts/scope-c19-ux-recette/\n?? scripts/scope-c20-quo-vadis-integration-architecture-1-tests.js\n?? scripts/scope-c20-quo-vadis-integration-architecture-1.js\n?? scripts/scope-c21-quo-vadis-publication-execution-1-tests.js\n?? scripts/scope-c21-quo-vadis-publication-execution-1.js\n?? scripts/scope-functional-catalog-c18-diagnostic.js\n?? scripts/scope-functional-catalog-c18-preview-server.js\n?? scripts/scope-functional-catalog-c18-preview.js\n?? scripts/scope-functional-catalog-c18-tests.js\n?? scripts/scope-functional-catalog-c19-preview.js\n?? scripts/scope-functional-catalog-c19-tests.js\n?? scripts/scope-functional-catalog-c19-ux-preview-server.js\n?? scripts/scope-functional-catalog-c19-ux-tests.js"
+  },
+  "c20ArchitecturePreserved": {
+    "planner": "buildPublicationPlan remains the only business decision engine.",
+    "executor": "executePublicationPlan consumes and validates the immutable plan; it never rebuilds decisions.",
+    "planA": {
+      "CREATE": 10,
+      "UPDATE": 0,
+      "UNCHANGED": 0,
+      "BLOCKED": 8,
+      "NOT_PUBLISHED": 1
+    },
+    "planB": {
+      "CREATE": 0,
+      "UPDATE": 0,
+      "UNCHANGED": 10,
+      "BLOCKED": 8,
+      "NOT_PUBLISHED": 1
+    },
+    "planC": {
+      "CREATE": 0,
+      "UPDATE": 1,
+      "UNCHANGED": 9,
+      "BLOCKED": 8,
+      "NOT_PUBLISHED": 1
+    },
+    "planD": {
+      "CREATE": 0,
+      "UPDATE": 1,
+      "UNCHANGED": 9,
+      "BLOCKED": 8,
+      "NOT_PUBLISHED": 1
+    }
+  },
+  "sqlCompatibility": {
+    "c20Compatible": [
+      "stable publication_key",
+      "QV provenance",
+      "event uniqueness",
+      "OI/public relations",
+      "RLS deny-by-default"
+    ],
+    "adaptation": "C21 adds a canonical publication activity because scope_evenements.code_cours is event-unique and cannot represent one 070F1.005 activity with four FOBA materializations. It also adds publication run audit.",
+    "localExecution": "database/fixtures/scope_qv_publication_c21_fixture.sql",
+    "postgresDrafts": [
+      "database/migrations/20260929_scope_qv_publication_c20.sql",
+      "database/migrations/20260929_scope_qv_publication_c21.sql"
+    ],
+    "applied": false,
+    "reason": "Both PostgreSQL drafts end in ROLLBACK and were only inspected statically."
+  },
+  "executionContract": {
+    "target": "C21_SQLITE_ISOLATED_FIXTURE only",
+    "transaction": "BEGIN IMMEDIATE / COMMIT / full ROLLBACK",
+    "stalePlan": "Fingerprint, event id and version optimistic locks; result STALE_PLAN.",
+    "retry": "The exact same plan succeeds after rollback and becomes NO_OP after commit.",
+    "dbIdempotence": "UNIQUE publication_key, UNIQUE source identity, FK relations, serialized fixture transaction.",
+    "cancellation": "UPDATE status to ANNULE; never DELETE by default.",
+    "productionGuard": "Adapter identity + isIsolated + isProduction=false + environment=test + explicit allow flag."
+  },
+  "modificationPolicy": [
+    {
+      "field": "date",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "start",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "end",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "duration",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "location",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "room",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "responsible",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "target",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "public",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "field": "oi",
+      "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+      "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+    }
+  ],
+  "evidence": {
+    "plans": {
+      "A": {
+        "planId": "C20-7CB1BDD81A97A01A53A8",
+        "fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+        "summary": {
+          "CREATE": 10,
+          "UPDATE": 0,
+          "UNCHANGED": 0,
+          "BLOCKED": 8,
+          "NOT_PUBLISHED": 1
+        }
+      },
+      "B": {
+        "planId": "C20-1EA7E4CA416E589D1A26",
+        "fingerprint": "e144dc4c96bdaceeb8f3070def8dd308b96678403dd1ae7b1e88d622822e4fb1",
+        "summary": {
+          "CREATE": 0,
+          "UPDATE": 0,
+          "UNCHANGED": 10,
+          "BLOCKED": 8,
+          "NOT_PUBLISHED": 1
+        }
+      },
+      "C": {
+        "planId": "C20-2CC93FB36310D623CC9C",
+        "fingerprint": "514986355af26580255f5a8f4731c671c7d808be1ee8c7b772fad0ca220c4609",
+        "summary": {
+          "CREATE": 0,
+          "UPDATE": 1,
+          "UNCHANGED": 9,
+          "BLOCKED": 8,
+          "NOT_PUBLISHED": 1
+        }
+      },
+      "D": {
+        "planId": "C20-50ABBCD19D03ED0E866F",
+        "fingerprint": "8ec5bd9f02b1c04b7f53d146593f8009dd20dafe31ea0bc9cc3aec9cfd3027bf",
+        "summary": {
+          "CREATE": 0,
+          "UPDATE": 1,
+          "UNCHANGED": 9,
+          "BLOCKED": 8,
+          "NOT_PUBLISHED": 1
+        }
+      }
+    },
+    "publication": {
+      "executeA": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-PROOF-A",
+        "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+        "sourcePlanFingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 10,
+          "updated": 0,
+          "unchanged": 0,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3",
+          "EVT-F6A16D73976FE2E03098"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "reconcileA": {
+        "status": "MATCH",
+        "summary": {
+          "MATCHED": 10,
+          "MISSING": 0,
+          "DUPLICATE": 0,
+          "DRIFT": 0,
+          "PROTECTED_CHANGE": 0,
+          "UNEXPECTED": 0
+        }
+      },
+      "executeB": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-PROOF-B",
+        "sourcePlanId": "C20-1EA7E4CA416E589D1A26",
+        "sourcePlanFingerprint": "e144dc4c96bdaceeb8f3070def8dd308b96678403dd1ae7b1e88d622822e4fb1",
+        "status": "NO_OP",
+        "counts": {
+          "created": 0,
+          "updated": 0,
+          "unchanged": 10,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3",
+          "EVT-F6A16D73976FE2E03098"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "executeC": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-PROOF-C",
+        "sourcePlanId": "C20-2CC93FB36310D623CC9C",
+        "sourcePlanFingerprint": "514986355af26580255f5a8f4731c671c7d808be1ee8c7b772fad0ca220c4609",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 0,
+          "updated": 1,
+          "unchanged": 9,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-F6A16D73976FE2E03098",
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "reconcileC": {
+        "status": "MATCH",
+        "summary": {
+          "MATCHED": 10,
+          "MISSING": 0,
+          "DUPLICATE": 0,
+          "DRIFT": 0,
+          "PROTECTED_CHANGE": 0,
+          "UNEXPECTED": 0
+        }
+      },
+      "executeD": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-PROOF-D",
+        "sourcePlanId": "C20-50ABBCD19D03ED0E866F",
+        "sourcePlanFingerprint": "8ec5bd9f02b1c04b7f53d146593f8009dd20dafe31ea0bc9cc3aec9cfd3027bf",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 0,
+          "updated": 1,
+          "unchanged": 9,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-F6A16D73976FE2E03098",
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "reconcileD": {
+        "status": "MATCH",
+        "summary": {
+          "MATCHED": 10,
+          "MISSING": 0,
+          "DUPLICATE": 0,
+          "DRIFT": 0,
+          "PROTECTED_CHANGE": 0,
+          "UNEXPECTED": 0
+        }
+      }
+    },
+    "identity": {
+      "publicationKey": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+      "eventIdBefore": "EVT-F6A16D73976FE2E03098",
+      "eventIdAfter": "EVT-F6A16D73976FE2E03098",
+      "eventIdAfterReturn": "EVT-F6A16D73976FE2E03098",
+      "businessCodeBefore": "070F1.004",
+      "businessCodeAfter": "070F1.004",
+      "businessCodeAfterReturn": "070F1.004"
+    },
+    "domainCases": {
+      "cta": {
+        "eventCount": 1,
+        "startsAt": "2027-01-01T18:00",
+        "endsAt": "2027-01-04T06:00",
+        "durationMinutes": 3600
+      },
+      "foba": {
+        "activityIds": [
+          "ACT-497D7D93966905112745"
+        ],
+        "eventIds": [
+          "EVT-85D656031E07432B946B",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294"
+        ],
+        "oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "businessCode": "070F1.005",
+        "g1UpdateCount": 1,
+        "otherUnitsStable": true,
+        "activityIdAfterG1Update": "ACT-497D7D93966905112745"
+      },
+      "jsp": {
+        "businessCode": "010JC1.001",
+        "publicCodes": [
+          "JSP:1"
+        ]
+      },
+      "emsea": {
+        "statComCode": null,
+        "businessCode": null,
+        "domain": "INSTITUTIONNEL"
+      },
+      "multiSession": {
+        "planSummary": {
+          "CREATE": 6,
+          "UPDATE": 0,
+          "UNCHANGED": 0,
+          "BLOCKED": 0,
+          "NOT_PUBLISHED": 0
+        },
+        "execution": {
+          "kind": "PublicationExecutionResult",
+          "runId": "C21-MULTI",
+          "sourcePlanId": "C20-0550EA87A3E8B5C7969C",
+          "sourcePlanFingerprint": "6b108c89fca43bded55c48895fb62e52a730533d3d414075ea85c95fc90acce2",
+          "status": "SUCCESS",
+          "counts": {
+            "created": 6,
+            "updated": 0,
+            "unchanged": 0,
+            "blocked": 0,
+            "notPublished": 0
+          },
+          "eventIds": [
+            "EVT-7C4353E9248F5FD416ED",
+            "EVT-1EB8211C67818DE5AA90",
+            "EVT-733A99A42077B84DA0DD",
+            "EVT-2E4B3B6BBEB64C002174",
+            "EVT-55D8AA660A2E44FDB90F",
+            "EVT-9D38AF197EB75530368D"
+          ],
+          "transaction": "COMMITTED",
+          "environment": "ISOLATED_TEST_FIXTURE"
+        },
+        "activityCount": 1,
+        "eventCount": 6,
+        "sessionCount": 6,
+        "groupId": "QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1"
+      }
+    },
+    "provenance": {
+      "forward": {
+        "provenance_id": "PRV-F6A16D73976FE2E03098",
+        "event_id": "EVT-F6A16D73976FE2E03098",
+        "publication_key": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+        "source_year": 2027,
+        "definition_id": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+        "occurrence_id": "qv-source-852:O1",
+        "session_id": "qv-source-852:S1",
+        "publication_unit_id": "DEFAULT",
+        "source_record_ids": "[\"qv-source-852\"]",
+        "last_synced_fingerprint": "0da1b78fa1246d30a7fcc1ee651f7926cd83b2c5f7afa7e8ee8f803f73077587",
+        "last_synced_at": "2026-09-29T15:00:00.000Z"
+      },
+      "reverse": {
+        "provenance_id": "PRV-F6A16D73976FE2E03098",
+        "event_id": "EVT-F6A16D73976FE2E03098",
+        "publication_key": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+        "source_year": 2027,
+        "definition_id": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+        "occurrence_id": "qv-source-852:O1",
+        "session_id": "qv-source-852:S1",
+        "publication_unit_id": "DEFAULT",
+        "source_record_ids": "[\"qv-source-852\"]",
+        "last_synced_fingerprint": "0da1b78fa1246d30a7fcc1ee651f7926cd83b2c5f7afa7e8ee8f803f73077587",
+        "last_synced_at": "2026-09-29T15:00:00.000Z"
+      },
+      "bidirectional": true
+    },
+    "rollback": {
+      "failure": {
+        "caught": true,
+        "code": "INJECTED_EXECUTION_FAILURE",
+        "message": "Injected failure at AFTER_PROVENANCE.",
+        "executionResult": {
+          "kind": "PublicationExecutionResult",
+          "runId": "C21-ROLLBACK-FAIL",
+          "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+          "status": "FAILURE",
+          "transaction": "ROLLED_BACK",
+          "errorCode": "INJECTED_EXECUTION_FAILURE"
+        }
+      },
+      "before": {
+        "c21_publication_activities": 0,
+        "c21_events": 0,
+        "c21_qv_publication_links": 0,
+        "c21_event_domains": 0,
+        "c21_event_targets": 0,
+        "c21_event_ois": 0,
+        "c21_event_publics": 0,
+        "c21_session_groups": 0,
+        "c21_session_events": 0,
+        "c21_operational_data": 0
+      },
+      "after": {
+        "c21_publication_activities": 0,
+        "c21_events": 0,
+        "c21_qv_publication_links": 0,
+        "c21_event_domains": 0,
+        "c21_event_targets": 0,
+        "c21_event_ois": 0,
+        "c21_event_publics": 0,
+        "c21_session_groups": 0,
+        "c21_session_events": 0,
+        "c21_operational_data": 0
+      },
+      "retry": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-ROLLBACK-RETRY",
+        "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+        "sourcePlanFingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 10,
+          "updated": 0,
+          "unchanged": 0,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3",
+          "EVT-F6A16D73976FE2E03098"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "finalRetry": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-ROLLBACK-NOOP",
+        "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+        "sourcePlanFingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+        "status": "NO_OP",
+        "counts": {
+          "created": 0,
+          "updated": 0,
+          "unchanged": 10,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3",
+          "EVT-F6A16D73976FE2E03098"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "runs": [
+        {
+          "run_id": "C21-ROLLBACK-FAIL",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "FAILURE",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 0,
+          "unchanged_count": 0,
+          "blocked_count": 0,
+          "not_published_count": 0,
+          "error_code": "INJECTED_EXECUTION_FAILURE",
+          "rolled_back": 1
+        },
+        {
+          "run_id": "C21-ROLLBACK-NOOP",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "NO_OP",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 0,
+          "unchanged_count": 10,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        },
+        {
+          "run_id": "C21-ROLLBACK-RETRY",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "SUCCESS",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 10,
+          "update_count": 0,
+          "unchanged_count": 0,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        }
+      ]
+    },
+    "concurrency": {
+      "results": [
+        {
+          "kind": "PublicationExecutionResult",
+          "runId": "C21-CONCURRENT-1",
+          "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+          "sourcePlanFingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "status": "SUCCESS",
+          "counts": {
+            "created": 10,
+            "updated": 0,
+            "unchanged": 0,
+            "blocked": 8,
+            "notPublished": 1
+          },
+          "eventIds": [
+            "EVT-D266428335364F8101D8",
+            "EVT-CADD250BF2DF47BB6F8C",
+            "EVT-85D656031E07432B946B",
+            "EVT-17FEC1506DBE32742BCF",
+            "EVT-6971653F6C9964E09091",
+            "EVT-08688E0F1E7A3A575E52",
+            "EVT-F8AC5AF5F82D2EE8BA16",
+            "EVT-ED55DE9F759AF3273294",
+            "EVT-A0A9C7966E7B99F697B3",
+            "EVT-F6A16D73976FE2E03098"
+          ],
+          "transaction": "COMMITTED",
+          "environment": "ISOLATED_TEST_FIXTURE"
+        },
+        {
+          "kind": "PublicationExecutionResult",
+          "runId": "C21-CONCURRENT-2",
+          "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+          "sourcePlanFingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "status": "NO_OP",
+          "counts": {
+            "created": 0,
+            "updated": 0,
+            "unchanged": 10,
+            "blocked": 8,
+            "notPublished": 1
+          },
+          "eventIds": [
+            "EVT-D266428335364F8101D8",
+            "EVT-CADD250BF2DF47BB6F8C",
+            "EVT-85D656031E07432B946B",
+            "EVT-17FEC1506DBE32742BCF",
+            "EVT-6971653F6C9964E09091",
+            "EVT-08688E0F1E7A3A575E52",
+            "EVT-F8AC5AF5F82D2EE8BA16",
+            "EVT-ED55DE9F759AF3273294",
+            "EVT-A0A9C7966E7B99F697B3",
+            "EVT-F6A16D73976FE2E03098"
+          ],
+          "transaction": "COMMITTED",
+          "environment": "ISOLATED_TEST_FIXTURE"
+        }
+      ],
+      "counts": {
+        "c21_publication_activities": 6,
+        "c21_events": 10,
+        "c21_qv_publication_links": 10,
+        "c21_event_domains": 15,
+        "c21_event_targets": 17,
+        "c21_event_ois": 16,
+        "c21_event_publics": 9,
+        "c21_session_groups": 7,
+        "c21_session_events": 10,
+        "c21_operational_data": 0
+      },
+      "duplicateConstraintError": "UNIQUE constraint failed: c21_events.publication_key"
+    },
+    "stalePlan": {
+      "failure": {
+        "caught": true,
+        "code": "STALE_PLAN",
+        "message": "UPDATE target QV-2027-F2E5138105171189DCC7CDDC73D2A46B changed after planning.",
+        "executionResult": {
+          "kind": "PublicationExecutionResult",
+          "runId": "C21-STALE-EXECUTE",
+          "sourcePlanId": "C20-2CC93FB36310D623CC9C",
+          "status": "STALE_PLAN",
+          "transaction": "ROLLED_BACK",
+          "errorCode": "STALE_PLAN"
+        }
+      },
+      "before": {
+        "c21_publication_activities": 6,
+        "c21_events": 10,
+        "c21_qv_publication_links": 10,
+        "c21_event_domains": 15,
+        "c21_event_targets": 17,
+        "c21_event_ois": 16,
+        "c21_event_publics": 9,
+        "c21_session_groups": 7,
+        "c21_session_events": 10,
+        "c21_operational_data": 0
+      },
+      "after": {
+        "c21_publication_activities": 6,
+        "c21_events": 10,
+        "c21_qv_publication_links": 10,
+        "c21_event_domains": 15,
+        "c21_event_targets": 17,
+        "c21_event_ois": 16,
+        "c21_event_publics": 9,
+        "c21_session_groups": 7,
+        "c21_session_events": 10,
+        "c21_operational_data": 0
+      }
+    },
+    "operationalProtection": {
+      "decision": {
+        "caseId": "SIMPLE-VULCAIN",
+        "source": {
+          "year": 2027,
+          "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+          "occurrenceId": "qv-source-852:O1",
+          "sessionId": "qv-source-852:S1",
+          "publicationUnitId": "DEFAULT",
+          "sourceRecordIds": [
+            "qv-source-852"
+          ]
+        },
+        "publicationKey": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+        "label": "Intégration personnel DPS, phase I",
+        "statComCode": "070F1",
+        "businessCode": "070F1.004",
+        "schedule": {
+          "startsAt": "2027-01-05T18:00",
+          "endsAt": "2027-01-05T22:00"
+        },
+        "session": {
+          "groupId": "qv-source-852:O1",
+          "index": 1,
+          "count": 1,
+          "label": null
+        },
+        "classification": {
+          "primaryDomain": "DPS",
+          "domainCodes": [
+            "FOBA"
+          ],
+          "targetCodes": [
+            "DPS-B1",
+            "DPS-B2",
+            "DPS-C1",
+            "DPS-G1"
+          ],
+          "publicCodes": [
+            "FOBA:2"
+          ],
+          "oiCodes": [
+            "B1",
+            "B2",
+            "C1",
+            "G1"
+          ],
+          "locationCode": "L-G1",
+          "roomCode": "R-G1-JURA"
+        },
+        "action": "BLOCKED",
+        "reason": "HUMAN_REVIEW_OPERATIONAL_DATA_PRESENT",
+        "eventId": "EVT-F6A16D73976FE2E03098",
+        "target": {
+          "publicationKey": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+          "sourceType": "QUO_VADIS",
+          "sourceYear": 2027,
+          "source": {
+            "year": 2027,
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+            "occurrenceId": "qv-source-852:O1",
+            "sessionId": "qv-source-852:S1",
+            "publicationUnitId": "DEFAULT",
+            "sourceRecordIds": [
+              "qv-source-852"
+            ]
+          },
+          "activity": {
+            "definitionId": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+            "label": "Intégration personnel DPS, phase I",
+            "statComCode": "070F1",
+            "businessCode": "070F1.004"
+          },
+          "occurrence": {
+            "occurrenceId": "qv-source-852:O1",
+            "sessionId": "qv-source-852:S1",
+            "publicationUnitId": "DEFAULT"
+          },
+          "session": {
+            "groupId": "qv-source-852:O1",
+            "index": 1,
+            "count": 1,
+            "label": null
+          },
+          "event": {
+            "status": "PLANIFIE",
+            "label": "Intégration personnel DPS, phase I",
+            "primaryDomain": "DPS",
+            "startsAt": "2027-01-05T18:00",
+            "endsAt": "2027-01-05T22:00",
+            "startDate": "2027-01-05",
+            "endDate": "2027-01-05",
+            "startTime": "18:00",
+            "endTime": "22:00",
+            "durationMinutes": 240,
+            "crossesMidnight": false,
+            "locationCode": "L-G1",
+            "roomCode": "R-G1-JURA",
+            "responsibleId": null,
+            "businessException": null
+          },
+          "relations": {
+            "domainCodes": [
+              "DPS",
+              "FOBA"
+            ],
+            "targetCodes": [
+              "DPS-B1",
+              "DPS-B2",
+              "DPS-C1",
+              "DPS-G1"
+            ],
+            "publicCodes": [
+              "FOBA:2"
+            ],
+            "oiCodes": [
+              "B1",
+              "B2",
+              "C1",
+              "G1"
+            ]
+          },
+          "fingerprint": "19069a10b3c90bfe5b229d9db5e82dbc3da3249193927438c83854914237c1f7"
+        },
+        "expectedFingerprint": "0da1b78fa1246d30a7fcc1ee651f7926cd83b2c5f7afa7e8ee8f803f73077587",
+        "expectedVersion": 1,
+        "changedFields": [
+          "event.roomCode",
+          "fingerprint"
+        ],
+        "humanReview": true
+      },
+      "execution": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-OP-PROTECTED",
+        "sourcePlanId": "C20-0CBE83AA0A0B4800DC20",
+        "sourcePlanFingerprint": "bdc6e2822c2a5f890636c3fed8eb3d7b09248fc01f6e4b5dcb39fb8b974cd164",
+        "status": "NO_OP",
+        "counts": {
+          "created": 0,
+          "updated": 0,
+          "unchanged": 9,
+          "blocked": 9,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "reconciliation": {
+        "kind": "PublicationReconciliationResult",
+        "sourcePlanId": "C20-0CBE83AA0A0B4800DC20",
+        "sourcePlanFingerprint": "bdc6e2822c2a5f890636c3fed8eb3d7b09248fc01f6e4b5dcb39fb8b974cd164",
+        "year": 2027,
+        "status": "MISMATCH",
+        "readOnly": true,
+        "summary": {
+          "MATCHED": 9,
+          "MISSING": 0,
+          "DUPLICATE": 0,
+          "DRIFT": 0,
+          "PROTECTED_CHANGE": 1,
+          "UNEXPECTED": 0
+        },
+        "entries": [
+          {
+            "publicationKey": "QV-2027-319BA728684780FFA1C995EC025C3C1B",
+            "eventId": "EVT-D266428335364F8101D8",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-36C915AF659F5E05C9F3232AC8A7F356",
+            "eventId": "EVT-CADD250BF2DF47BB6F8C",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-50345023DFB0D03B1D3907585538A5B1",
+            "eventId": "EVT-85D656031E07432B946B",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-50E6C4314D0B35FE976A2C43194B1E39",
+            "eventId": "EVT-17FEC1506DBE32742BCF",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-5A64EBB8E93D43AB50B97819046501FB",
+            "eventId": "EVT-6971653F6C9964E09091",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-67DECE42B12066E9FCBD90D49446C401",
+            "eventId": "EVT-08688E0F1E7A3A575E52",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-688D2F3987BE1BE39F82F7F9E8499FDC",
+            "eventId": "EVT-F8AC5AF5F82D2EE8BA16",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-B722D39978526393CF01B8262193E56F",
+            "eventId": "EVT-ED55DE9F759AF3273294",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-C4A5076403417636D9AFA4ED67D0A12C",
+            "eventId": "EVT-A0A9C7966E7B99F697B3",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+            "eventId": "EVT-F6A16D73976FE2E03098",
+            "status": "PROTECTED_CHANGE",
+            "reason": "HUMAN_REVIEW_OPERATIONAL_DATA_PRESENT",
+            "expectedFingerprint": "19069a10b3c90bfe5b229d9db5e82dbc3da3249193927438c83854914237c1f7",
+            "actualFingerprint": "0da1b78fa1246d30a7fcc1ee651f7926cd83b2c5f7afa7e8ee8f803f73077587"
+          }
+        ]
+      },
+      "unchangedFingerprint": true
+    },
+    "safetyMatrix": [
+      {
+        "field": "date",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "start",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "end",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "duration",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "location",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "room",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "responsible",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "target",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "public",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      },
+      {
+        "field": "oi",
+        "beforeOperationalUse": "AUTO_UPDATE_ALLOWED",
+        "afterOperationalUse": "HUMAN_REVIEW_REQUIRED"
+      }
+    ],
+    "cancellation": {
+      "decision": {
+        "caseId": "JSP-C1",
+        "source": {
+          "year": 2027,
+          "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+          "occurrenceId": "QV27:JSP-C1:O1",
+          "sessionId": "QV27:JSP-C1:S1",
+          "publicationUnitId": "DEFAULT",
+          "sourceRecordIds": [
+            "qv-source-860"
+          ]
+        },
+        "publicationKey": "QV-2027-C4A5076403417636D9AFA4ED67D0A12C",
+        "label": "Exercice JSP 1",
+        "statComCode": "010JC1",
+        "businessCode": "010JC1.001",
+        "schedule": {
+          "startsAt": "2027-01-11T18:00",
+          "endsAt": "2027-01-11T20:00"
+        },
+        "session": {
+          "groupId": "QV27:JSP-C1:O1",
+          "index": 1,
+          "count": 1,
+          "label": null
+        },
+        "classification": {
+          "primaryDomain": "JSP",
+          "domainCodes": [],
+          "targetCodes": [
+            "JSP-C1"
+          ],
+          "publicCodes": [
+            "JSP:1"
+          ],
+          "oiCodes": [
+            "C1"
+          ],
+          "locationCode": "L-C1",
+          "roomCode": null
+        },
+        "action": "UPDATE",
+        "reason": "SOURCE_CANCELLED_CANCEL_SCOPE_EVENT",
+        "eventId": "EVT-A0A9C7966E7B99F697B3",
+        "target": {
+          "activity": {
+            "businessCode": "010JC1.001",
+            "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+            "label": "Exercice JSP 1",
+            "statComCode": "010JC1"
+          },
+          "event": {
+            "businessException": null,
+            "crossesMidnight": false,
+            "durationMinutes": 120,
+            "endDate": "2027-01-11",
+            "endTime": "20:00",
+            "endsAt": "2027-01-11T20:00",
+            "label": "Exercice JSP 1",
+            "locationCode": "L-C1",
+            "primaryDomain": "JSP",
+            "responsibleId": null,
+            "roomCode": null,
+            "startDate": "2027-01-11",
+            "startTime": "18:00",
+            "startsAt": "2027-01-11T18:00",
+            "status": "ANNULE"
+          },
+          "fingerprint": "ab10e70db033519bef778e3d7b479596b628f7d4b373a6fcaf1c33eeb93f09f2",
+          "occurrence": {
+            "occurrenceId": "QV27:JSP-C1:O1",
+            "publicationUnitId": "DEFAULT",
+            "sessionId": "QV27:JSP-C1:S1"
+          },
+          "publicationKey": "QV-2027-C4A5076403417636D9AFA4ED67D0A12C",
+          "relations": {
+            "domainCodes": [
+              "JSP"
+            ],
+            "oiCodes": [
+              "C1"
+            ],
+            "publicCodes": [
+              "JSP:1"
+            ],
+            "targetCodes": [
+              "JSP-C1"
+            ]
+          },
+          "session": {
+            "count": 1,
+            "groupId": "QV27:JSP-C1:O1",
+            "index": 1,
+            "label": null
+          },
+          "source": {
+            "definitionId": "QV26-EXERCICE-JSP-1-7F24A973",
+            "occurrenceId": "QV27:JSP-C1:O1",
+            "publicationUnitId": "DEFAULT",
+            "sessionId": "QV27:JSP-C1:S1",
+            "sourceRecordIds": [
+              "qv-source-860"
+            ],
+            "year": 2027
+          },
+          "sourceType": "QUO_VADIS",
+          "sourceYear": 2027
+        },
+        "expectedFingerprint": "6cd6e609bb173c9ac597395bdfdc5577138ffb4eee471fc22502628441b24bcf",
+        "expectedVersion": 1,
+        "changedFields": [
+          "event.status"
+        ]
+      },
+      "execution": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-CANCEL",
+        "sourcePlanId": "C20-1266D7F9EDEEE1D4ACF7",
+        "sourcePlanFingerprint": "64fc3a5ac0641a4ca5bdc61fea4f985ec6199c067180ffec09f9dcefd54a57fe",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 0,
+          "updated": 1,
+          "unchanged": 9,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-A0A9C7966E7B99F697B3",
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-F6A16D73976FE2E03098"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "finalStatus": "ANNULE",
+      "provenanceRetained": true
+    },
+    "sourceRemoved": {
+      "decision": {
+        "caseId": null,
+        "source": {
+          "year": 2027,
+          "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+          "occurrenceId": "qv-source-853:O1",
+          "sessionId": "qv-source-853:S1",
+          "publicationUnitId": "DEFAULT",
+          "sourceRecordIds": [
+            "qv-source-853"
+          ]
+        },
+        "publicationKey": "QV-2027-319BA728684780FFA1C995EC025C3C1B",
+        "eventId": "EVT-D266428335364F8101D8",
+        "label": "Échange tenue · équipement nouveaux JSP",
+        "statComCode": "010JSP",
+        "businessCode": "010JSP.010",
+        "target": {
+          "activity": {
+            "businessCode": "010JSP.010",
+            "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+            "label": "Échange tenue · équipement nouveaux JSP",
+            "statComCode": "010JSP"
+          },
+          "event": {
+            "businessException": null,
+            "crossesMidnight": false,
+            "durationMinutes": 120,
+            "endDate": "2027-01-06",
+            "endTime": "19:00",
+            "endsAt": "2027-01-06T19:00",
+            "label": "Échange tenue · équipement nouveaux JSP",
+            "locationCode": "L-G1",
+            "primaryDomain": "JSP",
+            "responsibleId": null,
+            "roomCode": null,
+            "startDate": "2027-01-06",
+            "startTime": "17:00",
+            "startsAt": "2027-01-06T17:00",
+            "status": "ANNULE"
+          },
+          "fingerprint": "8e22170c69ec8031565b4341cf217d72e7b322e56731446ba8ccb8d94df3f7d5",
+          "occurrence": {
+            "occurrenceId": "qv-source-853:O1",
+            "publicationUnitId": "DEFAULT",
+            "sessionId": "qv-source-853:S1"
+          },
+          "publicationKey": "QV-2027-319BA728684780FFA1C995EC025C3C1B",
+          "relations": {
+            "domainCodes": [
+              "JSP"
+            ],
+            "oiCodes": [
+              "B1",
+              "C1",
+              "G1"
+            ],
+            "publicCodes": [
+              "JSP:1"
+            ],
+            "targetCodes": [
+              "JSP-B1",
+              "JSP-C1",
+              "JSP-G1"
+            ]
+          },
+          "session": {
+            "count": 1,
+            "groupId": "qv-source-853:O1",
+            "index": 1,
+            "label": null
+          },
+          "source": {
+            "definitionId": "QV26-ECHANGE-TENUE-3AD66FD0",
+            "occurrenceId": "qv-source-853:O1",
+            "publicationUnitId": "DEFAULT",
+            "sessionId": "qv-source-853:S1",
+            "sourceRecordIds": [
+              "qv-source-853"
+            ],
+            "year": 2027
+          },
+          "sourceType": "QUO_VADIS",
+          "sourceYear": 2027
+        },
+        "action": "UPDATE",
+        "reason": "SOURCE_REMOVED_CANCEL_SCOPE_EVENT",
+        "expectedFingerprint": "9b2126cfe9cf6d1c2507832a51f6961de5b35aeb1cf4fe37759f8ddba2dccdcb",
+        "expectedVersion": 1,
+        "changedFields": [
+          "event.status"
+        ]
+      },
+      "execution": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-SOURCE-REMOVED",
+        "sourcePlanId": "C20-C67B3D3710D88B8A4C7D",
+        "sourcePlanFingerprint": "c92ab67db8b78fbab833666b7eadde1d9236c8cd5731bce91c4d1e312028cc20",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 0,
+          "updated": 1,
+          "unchanged": 9,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3",
+          "EVT-F6A16D73976FE2E03098"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      },
+      "finalStatus": "ANNULE"
+    },
+    "drift": {
+      "reconciliation": {
+        "kind": "PublicationReconciliationResult",
+        "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+        "sourcePlanFingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+        "year": 2027,
+        "status": "MISMATCH",
+        "readOnly": true,
+        "summary": {
+          "MATCHED": 9,
+          "MISSING": 0,
+          "DUPLICATE": 0,
+          "DRIFT": 1,
+          "PROTECTED_CHANGE": 0,
+          "UNEXPECTED": 0
+        },
+        "entries": [
+          {
+            "publicationKey": "QV-2027-319BA728684780FFA1C995EC025C3C1B",
+            "eventId": "EVT-D266428335364F8101D8",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-36C915AF659F5E05C9F3232AC8A7F356",
+            "eventId": "EVT-CADD250BF2DF47BB6F8C",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-50345023DFB0D03B1D3907585538A5B1",
+            "eventId": "EVT-85D656031E07432B946B",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-50E6C4314D0B35FE976A2C43194B1E39",
+            "eventId": "EVT-17FEC1506DBE32742BCF",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-5A64EBB8E93D43AB50B97819046501FB",
+            "eventId": "EVT-6971653F6C9964E09091",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-67DECE42B12066E9FCBD90D49446C401",
+            "eventId": "EVT-08688E0F1E7A3A575E52",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-688D2F3987BE1BE39F82F7F9E8499FDC",
+            "eventId": "EVT-F8AC5AF5F82D2EE8BA16",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-B722D39978526393CF01B8262193E56F",
+            "eventId": "EVT-ED55DE9F759AF3273294",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-C4A5076403417636D9AFA4ED67D0A12C",
+            "eventId": "EVT-A0A9C7966E7B99F697B3",
+            "status": "MATCHED",
+            "reason": "STRICT_MATCH"
+          },
+          {
+            "publicationKey": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+            "eventId": "EVT-F6A16D73976FE2E03098",
+            "status": "DRIFT",
+            "reason": "TARGET_SNAPSHOT",
+            "expectedFingerprint": "0da1b78fa1246d30a7fcc1ee651f7926cd83b2c5f7afa7e8ee8f803f73077587",
+            "actualFingerprint": "19069a10b3c90bfe5b229d9db5e82dbc3da3249193927438c83854914237c1f7"
+          }
+        ]
+      },
+      "detected": {
+        "publicationKey": "QV-2027-F2E5138105171189DCC7CDDC73D2A46B",
+        "eventId": "EVT-F6A16D73976FE2E03098",
+        "status": "DRIFT",
+        "reason": "TARGET_SNAPSHOT",
+        "expectedFingerprint": "0da1b78fa1246d30a7fcc1ee651f7926cd83b2c5f7afa7e8ee8f803f73077587",
+        "actualFingerprint": "19069a10b3c90bfe5b229d9db5e82dbc3da3249193927438c83854914237c1f7"
+      },
+      "before": {
+        "c21_publication_activities": 6,
+        "c21_events": 10,
+        "c21_qv_publication_links": 10,
+        "c21_event_domains": 15,
+        "c21_event_targets": 17,
+        "c21_event_ois": 16,
+        "c21_event_publics": 9,
+        "c21_session_groups": 7,
+        "c21_session_events": 10,
+        "c21_operational_data": 0
+      },
+      "after": {
+        "c21_publication_activities": 6,
+        "c21_events": 10,
+        "c21_qv_publication_links": 10,
+        "c21_event_domains": 15,
+        "c21_event_targets": 17,
+        "c21_event_ois": 16,
+        "c21_event_publics": 9,
+        "c21_session_groups": 7,
+        "c21_session_events": 10,
+        "c21_operational_data": 0
+      }
+    },
+    "codeStability": {
+      "before": "070F1.004",
+      "after": "070F1.004",
+      "eventIdBefore": "EVT-F6A16D73976FE2E03098",
+      "eventIdAfter": "EVT-F6A16D73976FE2E03098",
+      "execution": {
+        "kind": "PublicationExecutionResult",
+        "runId": "C21-CODE-TIME",
+        "sourcePlanId": "C20-24BFE0E841EFB62686D1",
+        "sourcePlanFingerprint": "c6a65b56994097bc7a113c52ded581ac735507b330ee24253476fd0cc9acf4e0",
+        "status": "SUCCESS",
+        "counts": {
+          "created": 0,
+          "updated": 1,
+          "unchanged": 9,
+          "blocked": 8,
+          "notPublished": 1
+        },
+        "eventIds": [
+          "EVT-F6A16D73976FE2E03098",
+          "EVT-D266428335364F8101D8",
+          "EVT-CADD250BF2DF47BB6F8C",
+          "EVT-85D656031E07432B946B",
+          "EVT-17FEC1506DBE32742BCF",
+          "EVT-6971653F6C9964E09091",
+          "EVT-08688E0F1E7A3A575E52",
+          "EVT-F8AC5AF5F82D2EE8BA16",
+          "EVT-ED55DE9F759AF3273294",
+          "EVT-A0A9C7966E7B99F697B3"
+        ],
+        "transaction": "COMMITTED",
+        "environment": "ISOLATED_TEST_FIXTURE"
+      }
+    },
+    "security": {
+      "authorizedRole": "GESTIONNAIRE",
+      "deniedRole": "UTILISATEUR",
+      "forbidden": {
+        "caught": true,
+        "code": "PUBLICATION_FORBIDDEN",
+        "message": "The actor does not have events:publish.",
+        "executionResult": {
+          "kind": "PublicationExecutionResult",
+          "runId": "C21-RBAC-DENIED",
+          "sourcePlanId": "C20-7CB1BDD81A97A01A53A8",
+          "status": "FORBIDDEN",
+          "transaction": "NOT_STARTED",
+          "errorCode": "PUBLICATION_FORBIDDEN"
+        }
+      },
+      "productionGuard": {
+        "caught": true,
+        "code": "PRODUCTION_EXECUTION_FORBIDDEN",
+        "message": "C21 execution is restricted to the explicit isolated test fixture.",
+        "executionResult": null
+      },
+      "tamperGuard": {
+        "caught": true,
+        "code": "PLAN_FINGERPRINT_MISMATCH",
+        "message": "The publication plan was modified after generation.",
+        "executionResult": null
+      },
+      "rlsStatic": true,
+      "rollbackOnlySql": true,
+      "fixtureForeignKeys": true
+    },
+    "audit": {
+      "main": [
+        {
+          "run_id": "C21-FOBA-G1",
+          "plan_id": "C20-EEE6D4F88395CF4F08E1",
+          "plan_fingerprint": "cac22fff9814ba7507df55787a320754feb9904673565456b8490ba8189b4c28",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "SUCCESS",
+          "planned_create_count": 0,
+          "planned_update_count": 1,
+          "planned_unchanged_count": 9,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 1,
+          "unchanged_count": 9,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        },
+        {
+          "run_id": "C21-PROOF-A",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "SUCCESS",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 10,
+          "update_count": 0,
+          "unchanged_count": 0,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        },
+        {
+          "run_id": "C21-PROOF-B",
+          "plan_id": "C20-1EA7E4CA416E589D1A26",
+          "plan_fingerprint": "e144dc4c96bdaceeb8f3070def8dd308b96678403dd1ae7b1e88d622822e4fb1",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "NO_OP",
+          "planned_create_count": 0,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 10,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 0,
+          "unchanged_count": 10,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        },
+        {
+          "run_id": "C21-PROOF-C",
+          "plan_id": "C20-2CC93FB36310D623CC9C",
+          "plan_fingerprint": "514986355af26580255f5a8f4731c671c7d808be1ee8c7b772fad0ca220c4609",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "SUCCESS",
+          "planned_create_count": 0,
+          "planned_update_count": 1,
+          "planned_unchanged_count": 9,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 1,
+          "unchanged_count": 9,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        },
+        {
+          "run_id": "C21-PROOF-D",
+          "plan_id": "C20-50ABBCD19D03ED0E866F",
+          "plan_fingerprint": "8ec5bd9f02b1c04b7f53d146593f8009dd20dafe31ea0bc9cc3aec9cfd3027bf",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "SUCCESS",
+          "planned_create_count": 0,
+          "planned_update_count": 1,
+          "planned_unchanged_count": 9,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 1,
+          "unchanged_count": 9,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        }
+      ],
+      "rollback": [
+        {
+          "run_id": "C21-ROLLBACK-FAIL",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "FAILURE",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 0,
+          "unchanged_count": 0,
+          "blocked_count": 0,
+          "not_published_count": 0,
+          "error_code": "INJECTED_EXECUTION_FAILURE",
+          "rolled_back": 1
+        },
+        {
+          "run_id": "C21-ROLLBACK-NOOP",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "NO_OP",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 0,
+          "update_count": 0,
+          "unchanged_count": 10,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        },
+        {
+          "run_id": "C21-ROLLBACK-RETRY",
+          "plan_id": "C20-7CB1BDD81A97A01A53A8",
+          "plan_fingerprint": "dd02a0dd14196b0cb3a7ac148e000da5e4191733560f6a40393218a77c1658b8",
+          "source_year": 2027,
+          "actor_id": "moa-c21",
+          "process_id": "C21-PROOF-HARNESS",
+          "started_at": "2026-09-29T15:00:00.000Z",
+          "completed_at": "2026-09-29T15:00:00.000Z",
+          "status": "SUCCESS",
+          "planned_create_count": 10,
+          "planned_update_count": 0,
+          "planned_unchanged_count": 0,
+          "planned_blocked_count": 8,
+          "planned_not_published_count": 1,
+          "create_count": 10,
+          "update_count": 0,
+          "unchanged_count": 0,
+          "blocked_count": 8,
+          "not_published_count": 1,
+          "error_code": null,
+          "rolled_back": 0
+        }
+      ],
+      "secretFieldsPresent": false
+    },
+    "sql": {
+      "fixture": "database/fixtures/scope_qv_publication_c21_fixture.sql",
+      "c20Contract": "database/migrations/20260929_scope_qv_publication_c20.sql",
+      "c21AdditiveContract": "database/migrations/20260929_scope_qv_publication_c21.sql",
+      "appliedToProduction": false
+    }
+  },
+  "tests": {
+    "targetedC21": {
+      "passed": 60,
+      "failed": 0
+    },
+    "relatedRegression": {
+      "passed": 137,
+      "failed": 0,
+      "detail": {
+        "c18": 18,
+        "c19Engine": 9,
+        "c19Ux": 67,
+        "c19Closure": 13,
+        "c20": 30
+      }
+    },
+    "global": {
+      "runInC21": false,
+      "reason": "The optional global suite was not repeated. C20 already recorded its sole known unrelated ORION cache-bust failure; C21 uses focused and related regression suites."
+    }
+  },
+  "security": {
+    "permission": "events:publish",
+    "allowedRoles": [
+      "GESTIONNAIRE",
+      "ADMINISTRATEUR"
+    ],
+    "deniedRole": "UTILISATEUR",
+    "rls": "C20/C21 PostgreSQL drafts enable RLS and revoke anon/authenticated on new publication tables.",
+    "tokensLogged": false,
+    "productionExecutionPossible": false
+  },
+  "filesChangedC21": [
+    "database/fixtures/scope_qv_publication_c21_fixture.sql",
+    "database/migrations/20260929_scope_qv_publication_c21.sql",
+    "docs/SCOPE_C21_QUO_VADIS_PUBLICATION_EXECUTION_1.json",
+    "docs/SCOPE_C21_QUO_VADIS_PUBLICATION_EXECUTION_1.md",
+    "netlify/lib/_scope-qv-publication-executor.js",
+    "netlify/lib/_scope-qv-publication-plan.js",
+    "netlify/lib/_scope-qv-publication-reconciliation.js",
+    "netlify/lib/_rbac.js",
+    "package.json",
+    "scripts/lib/scope-c21-publication-fixture-db.js",
+    "scripts/lib/scope-c21-publication-scenarios.js",
+    "scripts/scope-c21-quo-vadis-publication-execution-1-tests.js",
+    "scripts/scope-c21-quo-vadis-publication-execution-1.js"
+  ],
+  "recommendationC22": "STOP C21. Keep production publication forbidden. A separate MOA gate may authorize C22 to design a real PostgreSQL adapter, rehearse the additive migration on a disposable preproduction clone, and define recovery/observability before any production decision."
+}

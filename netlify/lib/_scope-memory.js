@@ -3,6 +3,7 @@ const { DOMAINES, CIBLES, SOUS_DOMAINES, DOMAINES_MODEL_2 } = require('./_scope-
 const { isoDate } = require('./_scope-rules');
 const { periodFromPersonneRow } = require('./_scope-personnel');
 const statcomReferential = require('./_scope-statcom-referential');
+const eventCodes = require('./_scope-event-code');
 
 function now(){ return new Date().toISOString(); }
 
@@ -41,6 +42,8 @@ function createMemoryRepo(){
   const personnes = new Map();
   const affectations = new Map();
   const evenements = new Map();
+  const eventCodeAllocations = new Map();
+  const eventCodeSequences = new Map();
   const evenementCibles = new Map();
   const attendus = new Map();
   const participations = new Map();
@@ -225,6 +228,8 @@ function createMemoryRepo(){
       personnes: cloneMap(personnes),
       affectations: cloneMap(affectations),
       evenements: cloneMap(evenements),
+      eventCodeAllocations: cloneMap(eventCodeAllocations),
+      eventCodeSequences: cloneMap(eventCodeSequences),
       evenementCibles: new Map([...evenementCibles.entries()].map(([k, v]) => [k, [...v]])),
       attendus: cloneMap(attendus),
       participations: cloneMap(participations),
@@ -258,6 +263,8 @@ function createMemoryRepo(){
     personnes.clear(); snap.personnes.forEach((v, k) => personnes.set(k, v));
     affectations.clear(); snap.affectations.forEach((v, k) => affectations.set(k, v));
     evenements.clear(); snap.evenements.forEach((v, k) => evenements.set(k, v));
+    eventCodeAllocations.clear(); (snap.eventCodeAllocations || new Map()).forEach((v, k) => eventCodeAllocations.set(k, v));
+    eventCodeSequences.clear(); (snap.eventCodeSequences || new Map()).forEach((v, k) => eventCodeSequences.set(k, v));
     evenementCibles.clear(); snap.evenementCibles.forEach((v, k) => evenementCibles.set(k, v));
     attendus.clear(); snap.attendus.forEach((v, k) => attendus.set(k, v));
     participations.clear(); snap.participations.forEach((v, k) => participations.set(k, v));
@@ -300,6 +307,17 @@ function createMemoryRepo(){
         txLevel -= 1;
         throw error;
       }
+    },
+    async allocateEventCode(input = {}){
+      const eventId=String(input.eventId || input.evenementId || '').trim();
+      const statCom=String(input.statCom || input.statcomCode || '').trim().toUpperCase();
+      if(!eventId || !statCom) return null;
+      if(eventCodeAllocations.has(eventId)) return eventCodeAllocations.get(eventId);
+      const sequence=(eventCodeSequences.get(statCom) || 0) + 1;
+      const eventCode=eventCodes.formatEventCode(statCom,sequence);
+      eventCodeSequences.set(statCom,sequence);
+      eventCodeAllocations.set(eventId,eventCode);
+      return eventCode;
     },
     async listDomaines(){ return domaines.filter(d => d.actif !== false); },
     async listSousDomaines(){ return sousDomaines.filter(d => d.actif !== false); },

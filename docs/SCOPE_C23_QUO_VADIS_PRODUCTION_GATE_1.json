@@ -1,0 +1,136 @@
+{
+  "scope": "C23-QUO-VADIS-PRODUCTION-GATE-1",
+  "generatedAt": "2026-09-29T14:55:00.000Z",
+  "verdict": "FAIL",
+  "productionReady": false,
+  "stopApplied": true,
+  "git": {
+    "branch": "main",
+    "headBefore": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "headAfter": "362d6c41381ae106c318d9c9081cb83fc23588f4",
+    "originMainAhead": 0,
+    "originMainBehind": 0,
+    "workingTreeClean": false,
+    "candidateRepresentedByHead": false,
+    "commitCreated": false,
+    "pushPerformed": false
+  },
+  "deployment": {
+    "performed": false,
+    "deployId": null,
+    "deployedSha": null,
+    "currentProductionDeployId": "6ab6456005eca30094be19ae",
+    "currentProductionTitle": "C17 deploy 883dd660bf34123e67b41f3ce106948cde7ec38d",
+    "currentProductionCommitRef": null,
+    "site": "scope-sdisnv",
+    "url": "https://scope-sdisnv.netlify.app",
+    "localBuild": "PASS"
+  },
+  "database": {
+    "engine": "PostgreSQL 17.6",
+    "productionMutated": false,
+    "migrationsApplied": [],
+    "qvPublicationTablesBefore": 0,
+    "qvPublicationColumnsBefore": 0,
+    "existingEvents2027": 3,
+    "existingEvents2027Preserved": 3,
+    "publicationEventsCreated": 0,
+    "publicationEventsUpdated": 0,
+    "publicationEventsDeleted": 0,
+    "backup": {
+      "path": "/private/tmp/scope-c23-production-preflight-20260929.dump",
+      "format": "PostgreSQL custom",
+      "bytesApprox": 1258291,
+      "tocEntries": 788,
+      "sha256": "12f02fe337cc22fc42d7e67668821da5da4dbece21082a5ab233abe6a46d715a",
+      "restoreValidated": true,
+      "restoreTarget": "local ephemeral scope_c23_clone"
+    },
+    "migrationRehearsal": {
+      "target": "restored local production clone",
+      "order": [
+        "20260929_scope_qv_publication_c20.sql",
+        "20260929_scope_qv_publication_c21.sql",
+        "20260929_scope_qv_publication_c22_preprod_gate.sql"
+      ],
+      "firstPass": "PASS",
+      "secondPass": "PASS",
+      "transactional": true,
+      "productionApplicableAsStored": false,
+      "reason": "All three repository drafts end in ROLLBACK and contain no production migration marker."
+    }
+  },
+  "tests": {
+    "globalSuiteRun": false,
+    "scopeOnly": true,
+    "C18": { "passed": 18, "failed": 0 },
+    "C19Business": { "passed": 9, "failed": 0 },
+    "C19UX": { "passed": 67, "failed": 0 },
+    "C20": { "passed": 30, "failed": 0 },
+    "C21": { "passed": 60, "failed": 0 },
+    "C22": { "passed": 48, "failed": 0 }
+  },
+  "dryRun": {
+    "strictlyReadOnly": true,
+    "planId": "C20-199BC690AD09CA181545",
+    "planFingerprint": "71f3705192c53e7e82238a13756e5f5ff75515c6f93cc7dd58f7571f1602c220",
+    "objectsAnalyzed": 635,
+    "ready": 118,
+    "humanReview": 19,
+    "blocked": 485,
+    "notPublished": 13,
+    "plannedCreates": 118,
+    "plannedUpdates": 0,
+    "unchanged": 0,
+    "drifts": 0,
+    "sourceConflictPairs": 4,
+    "errors": 0,
+    "existingUnmanagedEvents2027": 3,
+    "existingHumanDecisionsChanged": 0,
+    "comparisonWithC22": "Exact lifecycle and publication counts; production additionally contains three existing 2027 events outside publication provenance, all preserved."
+  },
+  "publication": {
+    "performed": false,
+    "firstPass": null,
+    "secondPass": null,
+    "uuidChecks": null,
+    "reason": "Mandatory production checkpoint returned NO."
+  },
+  "smokeTests": {
+    "preDeploymentHttpRoot": 200,
+    "preDeploymentUnauthenticatedScopeFunction": 401,
+    "postDeployment": "NOT_RUN_NO_DEPLOYMENT",
+    "browserReportCreated": false
+  },
+  "blockingFindings": [
+    {
+      "code": "UNTRACEABLE_DEPLOYMENT_CANDIDATE",
+      "detail": "The C18-C22 candidate is an uncommitted working tree; HEAD only identifies the older base commit."
+    },
+    {
+      "code": "ROLLBACK_ONLY_MIGRATIONS",
+      "detail": "The C20, C21 and C22 SQL files explicitly roll back and cannot be recorded as production migrations."
+    },
+    {
+      "code": "PRODUCTION_EXECUTOR_FORBIDDEN",
+      "detail": "The executor accepts only isolated C21/C22 fixture adapters and rejects every production context."
+    },
+    {
+      "code": "NO_PRODUCTION_POSTGRES_ADAPTER",
+      "detail": "No production store implements transaction, snapshot, audit, optimistic locking, relations and reconciliation against the SCOPE schema."
+    }
+  ],
+  "rollback": {
+    "backupAvailable": true,
+    "applicationRollback": "Keep current deploy 6ab6456005eca30094be19ae; no new deployment was published.",
+    "databaseRollback": "No production mutation occurred. The preflight dump was restored successfully to the local clone.",
+    "publicationRollback": "Not applicable because publication did not start."
+  },
+  "minimalCorrectiveProposal": [
+    "Commit the validated C18-C22 candidate so one immutable SHA represents the deployable artifact.",
+    "Create one reviewed, persistent and version-marked additive production migration plus an explicit rollback procedure.",
+    "Implement and test a dedicated PostgreSQL production store using the existing C20 planner and C21 executor contract.",
+    "Replace the fixture-only execution guard with an explicit production gate bound to environment, actor, exact plan fingerprint and bulk approval.",
+    "Repeat C23 from the initial checkpoint; do not reuse this FAIL as production authorization."
+  ]
+}

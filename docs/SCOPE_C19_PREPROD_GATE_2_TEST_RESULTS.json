@@ -1,0 +1,18 @@
+{
+  "measuredAt": "2026-09-29",
+  "targeted": [
+    { "suite": "Gate 2", "result": "17/17 PASS" },
+    { "suite": "Gate R1", "result": "PASS" },
+    { "suite": "Catalogue C18", "result": "18/18 PASS" },
+    { "suite": "Moteur C19", "result": "9/9 PASS" },
+    { "suite": "UX C19", "result": "67/67 PASS" }
+  ],
+  "global": {
+    "command": "npm run test:scope",
+    "result": "NOK_PREEXISTING",
+    "exitCode": 1,
+    "firstFailure": "scope-login-visual-alignment-orion-1-tests.js — assertion cache-bust obsolète",
+    "gate2Regression": false,
+    "statComPdfKnownFailure": "Défaut textuel préexistant documenté; non atteint car la chaîne globale s'arrête au premier échec."
+  }
+}

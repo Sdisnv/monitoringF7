@@ -1,0 +1,6565 @@
+{
+  "weeks": 53,
+  "rows": [
+    {
+      "week": 1,
+      "friday": "2027-01-01",
+      "permanenceStart": "2027-01-01T18:00",
+      "permanenceEnd": "2027-01-04T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-01-01",
+        "2027-01-02",
+        "2027-01-03",
+        "2027-01-04"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 1,
+      "friday": "2027-01-01",
+      "permanenceStart": "2027-01-01T18:00",
+      "permanenceEnd": "2027-01-04T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-01-01",
+        "2027-01-02",
+        "2027-01-03",
+        "2027-01-04"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 1,
+      "friday": "2027-01-01",
+      "permanenceStart": "2027-01-01T18:00",
+      "permanenceEnd": "2027-01-04T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-01-01",
+        "2027-01-02",
+        "2027-01-03",
+        "2027-01-04"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 1,
+      "friday": "2027-01-01",
+      "permanenceStart": "2027-01-01T18:00",
+      "permanenceEnd": "2027-01-04T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-01-01",
+        "2027-01-02",
+        "2027-01-03",
+        "2027-01-04"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 2,
+      "friday": "2027-01-08",
+      "permanenceStart": "2027-01-08T18:00",
+      "permanenceEnd": "2027-01-11T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-01-08",
+        "2027-01-09",
+        "2027-01-10"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 2,
+      "friday": "2027-01-08",
+      "permanenceStart": "2027-01-08T18:00",
+      "permanenceEnd": "2027-01-11T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-01-08",
+        "2027-01-09",
+        "2027-01-10"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 2,
+      "friday": "2027-01-08",
+      "permanenceStart": "2027-01-08T18:00",
+      "permanenceEnd": "2027-01-11T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-01-08",
+        "2027-01-09",
+        "2027-01-10"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 2,
+      "friday": "2027-01-08",
+      "permanenceStart": "2027-01-08T18:00",
+      "permanenceEnd": "2027-01-11T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-01-08",
+        "2027-01-09",
+        "2027-01-10"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 3,
+      "friday": "2027-01-15",
+      "permanenceStart": "2027-01-15T18:00",
+      "permanenceEnd": "2027-01-18T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 3,
+      "friday": "2027-01-15",
+      "permanenceStart": "2027-01-15T18:00",
+      "permanenceEnd": "2027-01-18T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 3,
+      "friday": "2027-01-15",
+      "permanenceStart": "2027-01-15T18:00",
+      "permanenceEnd": "2027-01-18T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 3,
+      "friday": "2027-01-15",
+      "permanenceStart": "2027-01-15T18:00",
+      "permanenceEnd": "2027-01-18T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 4,
+      "friday": "2027-01-22",
+      "permanenceStart": "2027-01-22T18:00",
+      "permanenceEnd": "2027-01-25T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 4,
+      "friday": "2027-01-22",
+      "permanenceStart": "2027-01-22T18:00",
+      "permanenceEnd": "2027-01-25T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 4,
+      "friday": "2027-01-22",
+      "permanenceStart": "2027-01-22T18:00",
+      "permanenceEnd": "2027-01-25T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 4,
+      "friday": "2027-01-22",
+      "permanenceStart": "2027-01-22T18:00",
+      "permanenceEnd": "2027-01-25T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 5,
+      "friday": "2027-01-29",
+      "permanenceStart": "2027-01-29T18:00",
+      "permanenceEnd": "2027-02-01T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 5,
+      "friday": "2027-01-29",
+      "permanenceStart": "2027-01-29T18:00",
+      "permanenceEnd": "2027-02-01T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 5,
+      "friday": "2027-01-29",
+      "permanenceStart": "2027-01-29T18:00",
+      "permanenceEnd": "2027-02-01T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 5,
+      "friday": "2027-01-29",
+      "permanenceStart": "2027-01-29T18:00",
+      "permanenceEnd": "2027-02-01T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 6,
+      "friday": "2027-02-05",
+      "permanenceStart": "2027-02-05T18:00",
+      "permanenceEnd": "2027-02-08T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-02-06",
+        "2027-02-07",
+        "2027-02-08"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 6,
+      "friday": "2027-02-05",
+      "permanenceStart": "2027-02-05T18:00",
+      "permanenceEnd": "2027-02-08T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-02-06",
+        "2027-02-07",
+        "2027-02-08"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 6,
+      "friday": "2027-02-05",
+      "permanenceStart": "2027-02-05T18:00",
+      "permanenceEnd": "2027-02-08T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-02-06",
+        "2027-02-07",
+        "2027-02-08"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 6,
+      "friday": "2027-02-05",
+      "permanenceStart": "2027-02-05T18:00",
+      "permanenceEnd": "2027-02-08T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-02-06",
+        "2027-02-07",
+        "2027-02-08"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 7,
+      "friday": "2027-02-12",
+      "permanenceStart": "2027-02-12T18:00",
+      "permanenceEnd": "2027-02-15T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-02-12",
+        "2027-02-13",
+        "2027-02-14"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 7,
+      "friday": "2027-02-12",
+      "permanenceStart": "2027-02-12T18:00",
+      "permanenceEnd": "2027-02-15T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-02-12",
+        "2027-02-13",
+        "2027-02-14"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 7,
+      "friday": "2027-02-12",
+      "permanenceStart": "2027-02-12T18:00",
+      "permanenceEnd": "2027-02-15T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-02-12",
+        "2027-02-13",
+        "2027-02-14"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 7,
+      "friday": "2027-02-12",
+      "permanenceStart": "2027-02-12T18:00",
+      "permanenceEnd": "2027-02-15T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-02-12",
+        "2027-02-13",
+        "2027-02-14"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 8,
+      "friday": "2027-02-19",
+      "permanenceStart": "2027-02-19T18:00",
+      "permanenceEnd": "2027-02-22T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 8,
+      "friday": "2027-02-19",
+      "permanenceStart": "2027-02-19T18:00",
+      "permanenceEnd": "2027-02-22T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 8,
+      "friday": "2027-02-19",
+      "permanenceStart": "2027-02-19T18:00",
+      "permanenceEnd": "2027-02-22T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 8,
+      "friday": "2027-02-19",
+      "permanenceStart": "2027-02-19T18:00",
+      "permanenceEnd": "2027-02-22T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 9,
+      "friday": "2027-02-26",
+      "permanenceStart": "2027-02-26T18:00",
+      "permanenceEnd": "2027-03-01T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 9,
+      "friday": "2027-02-26",
+      "permanenceStart": "2027-02-26T18:00",
+      "permanenceEnd": "2027-03-01T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 9,
+      "friday": "2027-02-26",
+      "permanenceStart": "2027-02-26T18:00",
+      "permanenceEnd": "2027-03-01T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 9,
+      "friday": "2027-02-26",
+      "permanenceStart": "2027-02-26T18:00",
+      "permanenceEnd": "2027-03-01T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 10,
+      "friday": "2027-03-05",
+      "permanenceStart": "2027-03-05T18:00",
+      "permanenceEnd": "2027-03-08T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 10,
+      "friday": "2027-03-05",
+      "permanenceStart": "2027-03-05T18:00",
+      "permanenceEnd": "2027-03-08T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 10,
+      "friday": "2027-03-05",
+      "permanenceStart": "2027-03-05T18:00",
+      "permanenceEnd": "2027-03-08T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 10,
+      "friday": "2027-03-05",
+      "permanenceStart": "2027-03-05T18:00",
+      "permanenceEnd": "2027-03-08T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 11,
+      "friday": "2027-03-12",
+      "permanenceStart": "2027-03-12T18:00",
+      "permanenceEnd": "2027-03-15T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 11,
+      "friday": "2027-03-12",
+      "permanenceStart": "2027-03-12T18:00",
+      "permanenceEnd": "2027-03-15T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 11,
+      "friday": "2027-03-12",
+      "permanenceStart": "2027-03-12T18:00",
+      "permanenceEnd": "2027-03-15T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 11,
+      "friday": "2027-03-12",
+      "permanenceStart": "2027-03-12T18:00",
+      "permanenceEnd": "2027-03-15T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 12,
+      "friday": "2027-03-19",
+      "permanenceStart": "2027-03-19T18:00",
+      "permanenceEnd": "2027-03-22T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 12,
+      "friday": "2027-03-19",
+      "permanenceStart": "2027-03-19T18:00",
+      "permanenceEnd": "2027-03-22T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 12,
+      "friday": "2027-03-19",
+      "permanenceStart": "2027-03-19T18:00",
+      "permanenceEnd": "2027-03-22T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 12,
+      "friday": "2027-03-19",
+      "permanenceStart": "2027-03-19T18:00",
+      "permanenceEnd": "2027-03-22T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 13,
+      "friday": "2027-03-26",
+      "permanenceStart": "2027-03-26T18:00",
+      "permanenceEnd": "2027-03-29T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-03-26",
+        "2027-03-27",
+        "2027-03-28",
+        "2027-03-29"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 13,
+      "friday": "2027-03-26",
+      "permanenceStart": "2027-03-26T18:00",
+      "permanenceEnd": "2027-03-29T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-03-26",
+        "2027-03-27",
+        "2027-03-28",
+        "2027-03-29"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 13,
+      "friday": "2027-03-26",
+      "permanenceStart": "2027-03-26T18:00",
+      "permanenceEnd": "2027-03-29T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-03-26",
+        "2027-03-27",
+        "2027-03-28",
+        "2027-03-29"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 13,
+      "friday": "2027-03-26",
+      "permanenceStart": "2027-03-26T18:00",
+      "permanenceEnd": "2027-03-29T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-03-26",
+        "2027-03-27",
+        "2027-03-28",
+        "2027-03-29"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 14,
+      "friday": "2027-04-02",
+      "permanenceStart": "2027-04-02T18:00",
+      "permanenceEnd": "2027-04-05T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-04-02",
+        "2027-04-03",
+        "2027-04-04",
+        "2027-04-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 14,
+      "friday": "2027-04-02",
+      "permanenceStart": "2027-04-02T18:00",
+      "permanenceEnd": "2027-04-05T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-04-02",
+        "2027-04-03",
+        "2027-04-04",
+        "2027-04-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 14,
+      "friday": "2027-04-02",
+      "permanenceStart": "2027-04-02T18:00",
+      "permanenceEnd": "2027-04-05T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-04-02",
+        "2027-04-03",
+        "2027-04-04",
+        "2027-04-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 14,
+      "friday": "2027-04-02",
+      "permanenceStart": "2027-04-02T18:00",
+      "permanenceEnd": "2027-04-05T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-04-02",
+        "2027-04-03",
+        "2027-04-04",
+        "2027-04-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 15,
+      "friday": "2027-04-09",
+      "permanenceStart": "2027-04-09T18:00",
+      "permanenceEnd": "2027-04-12T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-04-09",
+        "2027-04-10",
+        "2027-04-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 15,
+      "friday": "2027-04-09",
+      "permanenceStart": "2027-04-09T18:00",
+      "permanenceEnd": "2027-04-12T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-04-09",
+        "2027-04-10",
+        "2027-04-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 15,
+      "friday": "2027-04-09",
+      "permanenceStart": "2027-04-09T18:00",
+      "permanenceEnd": "2027-04-12T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-04-09",
+        "2027-04-10",
+        "2027-04-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 15,
+      "friday": "2027-04-09",
+      "permanenceStart": "2027-04-09T18:00",
+      "permanenceEnd": "2027-04-12T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-04-09",
+        "2027-04-10",
+        "2027-04-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 16,
+      "friday": "2027-04-16",
+      "permanenceStart": "2027-04-16T18:00",
+      "permanenceEnd": "2027-04-19T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 16,
+      "friday": "2027-04-16",
+      "permanenceStart": "2027-04-16T18:00",
+      "permanenceEnd": "2027-04-19T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 16,
+      "friday": "2027-04-16",
+      "permanenceStart": "2027-04-16T18:00",
+      "permanenceEnd": "2027-04-19T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 16,
+      "friday": "2027-04-16",
+      "permanenceStart": "2027-04-16T18:00",
+      "permanenceEnd": "2027-04-19T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 17,
+      "friday": "2027-04-23",
+      "permanenceStart": "2027-04-23T18:00",
+      "permanenceEnd": "2027-04-26T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 17,
+      "friday": "2027-04-23",
+      "permanenceStart": "2027-04-23T18:00",
+      "permanenceEnd": "2027-04-26T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 17,
+      "friday": "2027-04-23",
+      "permanenceStart": "2027-04-23T18:00",
+      "permanenceEnd": "2027-04-26T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 17,
+      "friday": "2027-04-23",
+      "permanenceStart": "2027-04-23T18:00",
+      "permanenceEnd": "2027-04-26T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 18,
+      "friday": "2027-04-30",
+      "permanenceStart": "2027-04-30T18:00",
+      "permanenceEnd": "2027-05-03T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 18,
+      "friday": "2027-04-30",
+      "permanenceStart": "2027-04-30T18:00",
+      "permanenceEnd": "2027-05-03T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 18,
+      "friday": "2027-04-30",
+      "permanenceStart": "2027-04-30T18:00",
+      "permanenceEnd": "2027-05-03T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 18,
+      "friday": "2027-04-30",
+      "permanenceStart": "2027-04-30T18:00",
+      "permanenceEnd": "2027-05-03T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 19,
+      "friday": "2027-05-07",
+      "permanenceStart": "2027-05-07T18:00",
+      "permanenceEnd": "2027-05-10T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-05-07",
+        "2027-05-08",
+        "2027-05-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 19,
+      "friday": "2027-05-07",
+      "permanenceStart": "2027-05-07T18:00",
+      "permanenceEnd": "2027-05-10T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-05-07",
+        "2027-05-08",
+        "2027-05-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 19,
+      "friday": "2027-05-07",
+      "permanenceStart": "2027-05-07T18:00",
+      "permanenceEnd": "2027-05-10T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-05-07",
+        "2027-05-08",
+        "2027-05-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 19,
+      "friday": "2027-05-07",
+      "permanenceStart": "2027-05-07T18:00",
+      "permanenceEnd": "2027-05-10T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-05-07",
+        "2027-05-08",
+        "2027-05-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 20,
+      "friday": "2027-05-14",
+      "permanenceStart": "2027-05-14T18:00",
+      "permanenceEnd": "2027-05-17T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-05-17"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 20,
+      "friday": "2027-05-14",
+      "permanenceStart": "2027-05-14T18:00",
+      "permanenceEnd": "2027-05-17T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-05-17"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 20,
+      "friday": "2027-05-14",
+      "permanenceStart": "2027-05-14T18:00",
+      "permanenceEnd": "2027-05-17T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-05-17"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 20,
+      "friday": "2027-05-14",
+      "permanenceStart": "2027-05-14T18:00",
+      "permanenceEnd": "2027-05-17T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-05-17"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 21,
+      "friday": "2027-05-21",
+      "permanenceStart": "2027-05-21T18:00",
+      "permanenceEnd": "2027-05-24T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 21,
+      "friday": "2027-05-21",
+      "permanenceStart": "2027-05-21T18:00",
+      "permanenceEnd": "2027-05-24T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 21,
+      "friday": "2027-05-21",
+      "permanenceStart": "2027-05-21T18:00",
+      "permanenceEnd": "2027-05-24T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 21,
+      "friday": "2027-05-21",
+      "permanenceStart": "2027-05-21T18:00",
+      "permanenceEnd": "2027-05-24T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 22,
+      "friday": "2027-05-28",
+      "permanenceStart": "2027-05-28T18:00",
+      "permanenceEnd": "2027-05-31T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 22,
+      "friday": "2027-05-28",
+      "permanenceStart": "2027-05-28T18:00",
+      "permanenceEnd": "2027-05-31T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 22,
+      "friday": "2027-05-28",
+      "permanenceStart": "2027-05-28T18:00",
+      "permanenceEnd": "2027-05-31T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 22,
+      "friday": "2027-05-28",
+      "permanenceStart": "2027-05-28T18:00",
+      "permanenceEnd": "2027-05-31T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 23,
+      "friday": "2027-06-04",
+      "permanenceStart": "2027-06-04T18:00",
+      "permanenceEnd": "2027-06-07T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 23,
+      "friday": "2027-06-04",
+      "permanenceStart": "2027-06-04T18:00",
+      "permanenceEnd": "2027-06-07T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 23,
+      "friday": "2027-06-04",
+      "permanenceStart": "2027-06-04T18:00",
+      "permanenceEnd": "2027-06-07T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 23,
+      "friday": "2027-06-04",
+      "permanenceStart": "2027-06-04T18:00",
+      "permanenceEnd": "2027-06-07T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 24,
+      "friday": "2027-06-11",
+      "permanenceStart": "2027-06-11T18:00",
+      "permanenceEnd": "2027-06-14T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 24,
+      "friday": "2027-06-11",
+      "permanenceStart": "2027-06-11T18:00",
+      "permanenceEnd": "2027-06-14T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 24,
+      "friday": "2027-06-11",
+      "permanenceStart": "2027-06-11T18:00",
+      "permanenceEnd": "2027-06-14T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 24,
+      "friday": "2027-06-11",
+      "permanenceStart": "2027-06-11T18:00",
+      "permanenceEnd": "2027-06-14T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 25,
+      "friday": "2027-06-18",
+      "permanenceStart": "2027-06-18T18:00",
+      "permanenceEnd": "2027-06-21T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 25,
+      "friday": "2027-06-18",
+      "permanenceStart": "2027-06-18T18:00",
+      "permanenceEnd": "2027-06-21T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 25,
+      "friday": "2027-06-18",
+      "permanenceStart": "2027-06-18T18:00",
+      "permanenceEnd": "2027-06-21T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 25,
+      "friday": "2027-06-18",
+      "permanenceStart": "2027-06-18T18:00",
+      "permanenceEnd": "2027-06-21T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 26,
+      "friday": "2027-06-25",
+      "permanenceStart": "2027-06-25T18:00",
+      "permanenceEnd": "2027-06-28T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 26,
+      "friday": "2027-06-25",
+      "permanenceStart": "2027-06-25T18:00",
+      "permanenceEnd": "2027-06-28T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 26,
+      "friday": "2027-06-25",
+      "permanenceStart": "2027-06-25T18:00",
+      "permanenceEnd": "2027-06-28T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 26,
+      "friday": "2027-06-25",
+      "permanenceStart": "2027-06-25T18:00",
+      "permanenceEnd": "2027-06-28T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 27,
+      "friday": "2027-07-02",
+      "permanenceStart": "2027-07-02T18:00",
+      "permanenceEnd": "2027-07-05T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-03",
+        "2027-07-04",
+        "2027-07-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 27,
+      "friday": "2027-07-02",
+      "permanenceStart": "2027-07-02T18:00",
+      "permanenceEnd": "2027-07-05T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-03",
+        "2027-07-04",
+        "2027-07-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 27,
+      "friday": "2027-07-02",
+      "permanenceStart": "2027-07-02T18:00",
+      "permanenceEnd": "2027-07-05T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-03",
+        "2027-07-04",
+        "2027-07-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 27,
+      "friday": "2027-07-02",
+      "permanenceStart": "2027-07-02T18:00",
+      "permanenceEnd": "2027-07-05T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-07-03",
+        "2027-07-04",
+        "2027-07-05"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 28,
+      "friday": "2027-07-09",
+      "permanenceStart": "2027-07-09T18:00",
+      "permanenceEnd": "2027-07-12T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-09",
+        "2027-07-10",
+        "2027-07-11",
+        "2027-07-12"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 28,
+      "friday": "2027-07-09",
+      "permanenceStart": "2027-07-09T18:00",
+      "permanenceEnd": "2027-07-12T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-09",
+        "2027-07-10",
+        "2027-07-11",
+        "2027-07-12"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 28,
+      "friday": "2027-07-09",
+      "permanenceStart": "2027-07-09T18:00",
+      "permanenceEnd": "2027-07-12T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-09",
+        "2027-07-10",
+        "2027-07-11",
+        "2027-07-12"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 28,
+      "friday": "2027-07-09",
+      "permanenceStart": "2027-07-09T18:00",
+      "permanenceEnd": "2027-07-12T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-07-09",
+        "2027-07-10",
+        "2027-07-11",
+        "2027-07-12"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 29,
+      "friday": "2027-07-16",
+      "permanenceStart": "2027-07-16T18:00",
+      "permanenceEnd": "2027-07-19T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-16",
+        "2027-07-17",
+        "2027-07-18",
+        "2027-07-19"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 29,
+      "friday": "2027-07-16",
+      "permanenceStart": "2027-07-16T18:00",
+      "permanenceEnd": "2027-07-19T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-16",
+        "2027-07-17",
+        "2027-07-18",
+        "2027-07-19"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 29,
+      "friday": "2027-07-16",
+      "permanenceStart": "2027-07-16T18:00",
+      "permanenceEnd": "2027-07-19T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-16",
+        "2027-07-17",
+        "2027-07-18",
+        "2027-07-19"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 29,
+      "friday": "2027-07-16",
+      "permanenceStart": "2027-07-16T18:00",
+      "permanenceEnd": "2027-07-19T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-07-16",
+        "2027-07-17",
+        "2027-07-18",
+        "2027-07-19"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 30,
+      "friday": "2027-07-23",
+      "permanenceStart": "2027-07-23T18:00",
+      "permanenceEnd": "2027-07-26T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-23",
+        "2027-07-24",
+        "2027-07-25",
+        "2027-07-26"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 30,
+      "friday": "2027-07-23",
+      "permanenceStart": "2027-07-23T18:00",
+      "permanenceEnd": "2027-07-26T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-23",
+        "2027-07-24",
+        "2027-07-25",
+        "2027-07-26"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 30,
+      "friday": "2027-07-23",
+      "permanenceStart": "2027-07-23T18:00",
+      "permanenceEnd": "2027-07-26T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-23",
+        "2027-07-24",
+        "2027-07-25",
+        "2027-07-26"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 30,
+      "friday": "2027-07-23",
+      "permanenceStart": "2027-07-23T18:00",
+      "permanenceEnd": "2027-07-26T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-07-23",
+        "2027-07-24",
+        "2027-07-25",
+        "2027-07-26"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 31,
+      "friday": "2027-07-30",
+      "permanenceStart": "2027-07-30T18:00",
+      "permanenceEnd": "2027-08-02T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-30",
+        "2027-07-31",
+        "2027-08-01",
+        "2027-08-02"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 31,
+      "friday": "2027-07-30",
+      "permanenceStart": "2027-07-30T18:00",
+      "permanenceEnd": "2027-08-02T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-30",
+        "2027-07-31",
+        "2027-08-01",
+        "2027-08-02"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 31,
+      "friday": "2027-07-30",
+      "permanenceStart": "2027-07-30T18:00",
+      "permanenceEnd": "2027-08-02T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-07-30",
+        "2027-07-31",
+        "2027-08-01",
+        "2027-08-02"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 31,
+      "friday": "2027-07-30",
+      "permanenceStart": "2027-07-30T18:00",
+      "permanenceEnd": "2027-08-02T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-07-30",
+        "2027-07-31",
+        "2027-08-01",
+        "2027-08-02"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 32,
+      "friday": "2027-08-06",
+      "permanenceStart": "2027-08-06T18:00",
+      "permanenceEnd": "2027-08-09T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-06",
+        "2027-08-07",
+        "2027-08-08",
+        "2027-08-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 32,
+      "friday": "2027-08-06",
+      "permanenceStart": "2027-08-06T18:00",
+      "permanenceEnd": "2027-08-09T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-06",
+        "2027-08-07",
+        "2027-08-08",
+        "2027-08-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 32,
+      "friday": "2027-08-06",
+      "permanenceStart": "2027-08-06T18:00",
+      "permanenceEnd": "2027-08-09T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-06",
+        "2027-08-07",
+        "2027-08-08",
+        "2027-08-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 32,
+      "friday": "2027-08-06",
+      "permanenceStart": "2027-08-06T18:00",
+      "permanenceEnd": "2027-08-09T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-08-06",
+        "2027-08-07",
+        "2027-08-08",
+        "2027-08-09"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 33,
+      "friday": "2027-08-13",
+      "permanenceStart": "2027-08-13T18:00",
+      "permanenceEnd": "2027-08-16T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-13",
+        "2027-08-14",
+        "2027-08-15",
+        "2027-08-16"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 33,
+      "friday": "2027-08-13",
+      "permanenceStart": "2027-08-13T18:00",
+      "permanenceEnd": "2027-08-16T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-13",
+        "2027-08-14",
+        "2027-08-15",
+        "2027-08-16"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 33,
+      "friday": "2027-08-13",
+      "permanenceStart": "2027-08-13T18:00",
+      "permanenceEnd": "2027-08-16T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-13",
+        "2027-08-14",
+        "2027-08-15",
+        "2027-08-16"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 33,
+      "friday": "2027-08-13",
+      "permanenceStart": "2027-08-13T18:00",
+      "permanenceEnd": "2027-08-16T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-08-13",
+        "2027-08-14",
+        "2027-08-15",
+        "2027-08-16"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 34,
+      "friday": "2027-08-20",
+      "permanenceStart": "2027-08-20T18:00",
+      "permanenceEnd": "2027-08-23T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-20",
+        "2027-08-21",
+        "2027-08-22"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 34,
+      "friday": "2027-08-20",
+      "permanenceStart": "2027-08-20T18:00",
+      "permanenceEnd": "2027-08-23T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-20",
+        "2027-08-21",
+        "2027-08-22"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 34,
+      "friday": "2027-08-20",
+      "permanenceStart": "2027-08-20T18:00",
+      "permanenceEnd": "2027-08-23T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-08-20",
+        "2027-08-21",
+        "2027-08-22"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 34,
+      "friday": "2027-08-20",
+      "permanenceStart": "2027-08-20T18:00",
+      "permanenceEnd": "2027-08-23T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-08-20",
+        "2027-08-21",
+        "2027-08-22"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 35,
+      "friday": "2027-08-27",
+      "permanenceStart": "2027-08-27T18:00",
+      "permanenceEnd": "2027-08-30T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 35,
+      "friday": "2027-08-27",
+      "permanenceStart": "2027-08-27T18:00",
+      "permanenceEnd": "2027-08-30T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 35,
+      "friday": "2027-08-27",
+      "permanenceStart": "2027-08-27T18:00",
+      "permanenceEnd": "2027-08-30T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 35,
+      "friday": "2027-08-27",
+      "permanenceStart": "2027-08-27T18:00",
+      "permanenceEnd": "2027-08-30T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 36,
+      "friday": "2027-09-03",
+      "permanenceStart": "2027-09-03T18:00",
+      "permanenceEnd": "2027-09-06T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 36,
+      "friday": "2027-09-03",
+      "permanenceStart": "2027-09-03T18:00",
+      "permanenceEnd": "2027-09-06T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 36,
+      "friday": "2027-09-03",
+      "permanenceStart": "2027-09-03T18:00",
+      "permanenceEnd": "2027-09-06T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 36,
+      "friday": "2027-09-03",
+      "permanenceStart": "2027-09-03T18:00",
+      "permanenceEnd": "2027-09-06T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 37,
+      "friday": "2027-09-10",
+      "permanenceStart": "2027-09-10T18:00",
+      "permanenceEnd": "2027-09-13T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 37,
+      "friday": "2027-09-10",
+      "permanenceStart": "2027-09-10T18:00",
+      "permanenceEnd": "2027-09-13T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 37,
+      "friday": "2027-09-10",
+      "permanenceStart": "2027-09-10T18:00",
+      "permanenceEnd": "2027-09-13T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 37,
+      "friday": "2027-09-10",
+      "permanenceStart": "2027-09-10T18:00",
+      "permanenceEnd": "2027-09-13T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 38,
+      "friday": "2027-09-17",
+      "permanenceStart": "2027-09-17T18:00",
+      "permanenceEnd": "2027-09-20T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-09-20"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 38,
+      "friday": "2027-09-17",
+      "permanenceStart": "2027-09-17T18:00",
+      "permanenceEnd": "2027-09-20T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-09-20"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 38,
+      "friday": "2027-09-17",
+      "permanenceStart": "2027-09-17T18:00",
+      "permanenceEnd": "2027-09-20T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-09-20"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 38,
+      "friday": "2027-09-17",
+      "permanenceStart": "2027-09-17T18:00",
+      "permanenceEnd": "2027-09-20T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-09-20"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 39,
+      "friday": "2027-09-24",
+      "permanenceStart": "2027-09-24T18:00",
+      "permanenceEnd": "2027-09-27T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 39,
+      "friday": "2027-09-24",
+      "permanenceStart": "2027-09-24T18:00",
+      "permanenceEnd": "2027-09-27T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 39,
+      "friday": "2027-09-24",
+      "permanenceStart": "2027-09-24T18:00",
+      "permanenceEnd": "2027-09-27T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 39,
+      "friday": "2027-09-24",
+      "permanenceStart": "2027-09-24T18:00",
+      "permanenceEnd": "2027-09-27T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 40,
+      "friday": "2027-10-01",
+      "permanenceStart": "2027-10-01T18:00",
+      "permanenceEnd": "2027-10-04T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 40,
+      "friday": "2027-10-01",
+      "permanenceStart": "2027-10-01T18:00",
+      "permanenceEnd": "2027-10-04T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 40,
+      "friday": "2027-10-01",
+      "permanenceStart": "2027-10-01T18:00",
+      "permanenceEnd": "2027-10-04T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 40,
+      "friday": "2027-10-01",
+      "permanenceStart": "2027-10-01T18:00",
+      "permanenceEnd": "2027-10-04T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 41,
+      "friday": "2027-10-08",
+      "permanenceStart": "2027-10-08T18:00",
+      "permanenceEnd": "2027-10-11T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-09",
+        "2027-10-10",
+        "2027-10-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 41,
+      "friday": "2027-10-08",
+      "permanenceStart": "2027-10-08T18:00",
+      "permanenceEnd": "2027-10-11T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-09",
+        "2027-10-10",
+        "2027-10-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 41,
+      "friday": "2027-10-08",
+      "permanenceStart": "2027-10-08T18:00",
+      "permanenceEnd": "2027-10-11T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-09",
+        "2027-10-10",
+        "2027-10-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 41,
+      "friday": "2027-10-08",
+      "permanenceStart": "2027-10-08T18:00",
+      "permanenceEnd": "2027-10-11T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-10-09",
+        "2027-10-10",
+        "2027-10-11"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 42,
+      "friday": "2027-10-15",
+      "permanenceStart": "2027-10-15T18:00",
+      "permanenceEnd": "2027-10-18T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-15",
+        "2027-10-16",
+        "2027-10-17",
+        "2027-10-18"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 42,
+      "friday": "2027-10-15",
+      "permanenceStart": "2027-10-15T18:00",
+      "permanenceEnd": "2027-10-18T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-15",
+        "2027-10-16",
+        "2027-10-17",
+        "2027-10-18"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 42,
+      "friday": "2027-10-15",
+      "permanenceStart": "2027-10-15T18:00",
+      "permanenceEnd": "2027-10-18T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-15",
+        "2027-10-16",
+        "2027-10-17",
+        "2027-10-18"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 42,
+      "friday": "2027-10-15",
+      "permanenceStart": "2027-10-15T18:00",
+      "permanenceEnd": "2027-10-18T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-10-15",
+        "2027-10-16",
+        "2027-10-17",
+        "2027-10-18"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 43,
+      "friday": "2027-10-22",
+      "permanenceStart": "2027-10-22T18:00",
+      "permanenceEnd": "2027-10-25T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-22",
+        "2027-10-23",
+        "2027-10-24"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 43,
+      "friday": "2027-10-22",
+      "permanenceStart": "2027-10-22T18:00",
+      "permanenceEnd": "2027-10-25T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-22",
+        "2027-10-23",
+        "2027-10-24"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 43,
+      "friday": "2027-10-22",
+      "permanenceStart": "2027-10-22T18:00",
+      "permanenceEnd": "2027-10-25T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-10-22",
+        "2027-10-23",
+        "2027-10-24"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 43,
+      "friday": "2027-10-22",
+      "permanenceStart": "2027-10-22T18:00",
+      "permanenceEnd": "2027-10-25T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-10-22",
+        "2027-10-23",
+        "2027-10-24"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 44,
+      "friday": "2027-10-29",
+      "permanenceStart": "2027-10-29T18:00",
+      "permanenceEnd": "2027-11-01T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 44,
+      "friday": "2027-10-29",
+      "permanenceStart": "2027-10-29T18:00",
+      "permanenceEnd": "2027-11-01T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 44,
+      "friday": "2027-10-29",
+      "permanenceStart": "2027-10-29T18:00",
+      "permanenceEnd": "2027-11-01T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 44,
+      "friday": "2027-10-29",
+      "permanenceStart": "2027-10-29T18:00",
+      "permanenceEnd": "2027-11-01T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 45,
+      "friday": "2027-11-05",
+      "permanenceStart": "2027-11-05T18:00",
+      "permanenceEnd": "2027-11-08T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 45,
+      "friday": "2027-11-05",
+      "permanenceStart": "2027-11-05T18:00",
+      "permanenceEnd": "2027-11-08T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 45,
+      "friday": "2027-11-05",
+      "permanenceStart": "2027-11-05T18:00",
+      "permanenceEnd": "2027-11-08T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 45,
+      "friday": "2027-11-05",
+      "permanenceStart": "2027-11-05T18:00",
+      "permanenceEnd": "2027-11-08T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 46,
+      "friday": "2027-11-12",
+      "permanenceStart": "2027-11-12T18:00",
+      "permanenceEnd": "2027-11-15T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 46,
+      "friday": "2027-11-12",
+      "permanenceStart": "2027-11-12T18:00",
+      "permanenceEnd": "2027-11-15T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 46,
+      "friday": "2027-11-12",
+      "permanenceStart": "2027-11-12T18:00",
+      "permanenceEnd": "2027-11-15T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 46,
+      "friday": "2027-11-12",
+      "permanenceStart": "2027-11-12T18:00",
+      "permanenceEnd": "2027-11-15T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 47,
+      "friday": "2027-11-19",
+      "permanenceStart": "2027-11-19T18:00",
+      "permanenceEnd": "2027-11-22T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 47,
+      "friday": "2027-11-19",
+      "permanenceStart": "2027-11-19T18:00",
+      "permanenceEnd": "2027-11-22T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 47,
+      "friday": "2027-11-19",
+      "permanenceStart": "2027-11-19T18:00",
+      "permanenceEnd": "2027-11-22T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 47,
+      "friday": "2027-11-19",
+      "permanenceStart": "2027-11-19T18:00",
+      "permanenceEnd": "2027-11-22T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 48,
+      "friday": "2027-11-26",
+      "permanenceStart": "2027-11-26T18:00",
+      "permanenceEnd": "2027-11-29T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 48,
+      "friday": "2027-11-26",
+      "permanenceStart": "2027-11-26T18:00",
+      "permanenceEnd": "2027-11-29T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 48,
+      "friday": "2027-11-26",
+      "permanenceStart": "2027-11-26T18:00",
+      "permanenceEnd": "2027-11-29T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 48,
+      "friday": "2027-11-26",
+      "permanenceStart": "2027-11-26T18:00",
+      "permanenceEnd": "2027-11-29T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 49,
+      "friday": "2027-12-03",
+      "permanenceStart": "2027-12-03T18:00",
+      "permanenceEnd": "2027-12-06T06:00",
+      "site": "G1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03",
+        "N04"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 49,
+      "friday": "2027-12-03",
+      "permanenceStart": "2027-12-03T18:00",
+      "permanenceEnd": "2027-12-06T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 49,
+      "friday": "2027-12-03",
+      "permanenceStart": "2027-12-03T18:00",
+      "permanenceEnd": "2027-12-06T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 49,
+      "friday": "2027-12-03",
+      "permanenceStart": "2027-12-03T18:00",
+      "permanenceEnd": "2027-12-06T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 50,
+      "friday": "2027-12-10",
+      "permanenceStart": "2027-12-10T18:00",
+      "permanenceEnd": "2027-12-13T06:00",
+      "site": "G1",
+      "service": "N05",
+      "reinforcements": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 50,
+      "friday": "2027-12-10",
+      "permanenceStart": "2027-12-10T18:00",
+      "permanenceEnd": "2027-12-13T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 50,
+      "friday": "2027-12-10",
+      "permanenceStart": "2027-12-10T18:00",
+      "permanenceEnd": "2027-12-13T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 50,
+      "friday": "2027-12-10",
+      "permanenceStart": "2027-12-10T18:00",
+      "permanenceEnd": "2027-12-13T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 51,
+      "friday": "2027-12-17",
+      "permanenceStart": "2027-12-17T18:00",
+      "permanenceEnd": "2027-12-20T06:00",
+      "site": "G1",
+      "service": "N04",
+      "reinforcements": [
+        "N05",
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 51,
+      "friday": "2027-12-17",
+      "permanenceStart": "2027-12-17T18:00",
+      "permanenceEnd": "2027-12-20T06:00",
+      "site": "C1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 51,
+      "friday": "2027-12-17",
+      "permanenceStart": "2027-12-17T18:00",
+      "permanenceEnd": "2027-12-20T06:00",
+      "site": "B1",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 51,
+      "friday": "2027-12-17",
+      "permanenceStart": "2027-12-17T18:00",
+      "permanenceEnd": "2027-12-20T06:00",
+      "site": "B2",
+      "service": "N01",
+      "reinforcements": [
+        "N02",
+        "N03"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [],
+      "calendarExceptionApplied": false,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 52,
+      "friday": "2027-12-24",
+      "permanenceStart": "2027-12-24T18:00",
+      "permanenceEnd": "2027-12-27T06:00",
+      "site": "G1",
+      "service": "N03",
+      "reinforcements": [
+        "N04",
+        "N05",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-12-24",
+        "2027-12-25",
+        "2027-12-26",
+        "2027-12-27"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 52,
+      "friday": "2027-12-24",
+      "permanenceStart": "2027-12-24T18:00",
+      "permanenceEnd": "2027-12-27T06:00",
+      "site": "C1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-12-24",
+        "2027-12-25",
+        "2027-12-26",
+        "2027-12-27"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 52,
+      "friday": "2027-12-24",
+      "permanenceStart": "2027-12-24T18:00",
+      "permanenceEnd": "2027-12-27T06:00",
+      "site": "B1",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-12-24",
+        "2027-12-25",
+        "2027-12-26",
+        "2027-12-27"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 52,
+      "friday": "2027-12-24",
+      "permanenceStart": "2027-12-24T18:00",
+      "permanenceEnd": "2027-12-27T06:00",
+      "site": "B2",
+      "service": "N03",
+      "reinforcements": [
+        "N01",
+        "N02"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-12-24",
+        "2027-12-25",
+        "2027-12-26",
+        "2027-12-27"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 53,
+      "friday": "2027-12-31",
+      "permanenceStart": "2027-12-31T18:00",
+      "permanenceEnd": "2028-01-03T06:00",
+      "site": "G1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05"
+      ],
+      "reserve": "N06",
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 G1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-12-31",
+        "2028-01-01",
+        "2028-01-02",
+        "2028-01-03"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": 15,
+        "halfSectionMaximum": 8
+      }
+    },
+    {
+      "week": 53,
+      "friday": "2027-12-31",
+      "permanenceStart": "2027-12-31T18:00",
+      "permanenceEnd": "2028-01-03T06:00",
+      "site": "C1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-12-31",
+        "2028-01-01",
+        "2028-01-02",
+        "2028-01-03"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 53,
+      "friday": "2027-12-31",
+      "permanenceStart": "2027-12-31T18:00",
+      "permanenceEnd": "2028-01-03T06:00",
+      "site": "B1",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "2027 C1 et B1 Tournus alarme CTA.xlsx",
+      "protectedDates": [
+        "2027-12-31",
+        "2028-01-01",
+        "2028-01-02",
+        "2028-01-03"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    },
+    {
+      "week": 53,
+      "friday": "2027-12-31",
+      "permanenceStart": "2027-12-31T18:00",
+      "permanenceEnd": "2028-01-03T06:00",
+      "site": "B2",
+      "service": "N02",
+      "reinforcements": [
+        "N03",
+        "N01"
+      ],
+      "activeSections": [
+        "N01",
+        "N02",
+        "N03"
+      ],
+      "reserve": null,
+      "halfSection": null,
+      "halfSectionStatus": "INDETERMINABLE_SANS_AFFECTATION_EXACTE",
+      "provenance": "CTA_FORMULA_2004_ANCHOR+CANONICAL_B2_3_GROUPS",
+      "protectedDates": [
+        "2027-12-31",
+        "2028-01-01",
+        "2028-01-02",
+        "2028-01-03"
+      ],
+      "calendarExceptionApplied": true,
+      "businessException": "SERVICE_CONTINUITY",
+      "capacity": {
+        "sectionMaximum": null,
+        "halfSectionMaximum": null
+      }
+    }
+  ],
+  "capacities": [
+    {
+      "site": "G1",
+      "scope": "SECTION",
+      "count": 15,
+      "maximum": 15,
+      "limited": true,
+      "accepted": true,
+      "code": "CTA_CAPACITY_ACCEPTED"
+    },
+    {
+      "site": "G1",
+      "scope": "SECTION",
+      "count": 16,
+      "maximum": 15,
+      "limited": true,
+      "accepted": false,
+      "code": "CTA_CAPACITY_EXCEEDED"
+    },
+    {
+      "site": "G1",
+      "scope": "HALF_SECTION",
+      "count": 8,
+      "maximum": 8,
+      "limited": true,
+      "accepted": true,
+      "code": "CTA_CAPACITY_ACCEPTED"
+    },
+    {
+      "site": "G1",
+      "scope": "HALF_SECTION",
+      "count": 9,
+      "maximum": 8,
+      "limited": true,
+      "accepted": false,
+      "code": "CTA_CAPACITY_EXCEEDED"
+    },
+    {
+      "site": "C1",
+      "scope": "SECTION",
+      "count": 16,
+      "maximum": null,
+      "limited": false,
+      "accepted": true,
+      "code": "CTA_CAPACITY_ACCEPTED"
+    },
+    {
+      "site": "B1",
+      "scope": "SECTION",
+      "count": 20,
+      "maximum": null,
+      "limited": false,
+      "accepted": true,
+      "code": "CTA_CAPACITY_ACCEPTED"
+    },
+    {
+      "site": "B2",
+      "scope": "SECTION",
+      "count": 24,
+      "maximum": null,
+      "limited": false,
+      "accepted": true,
+      "code": "CTA_CAPACITY_ACCEPTED"
+    }
+  ]
+}

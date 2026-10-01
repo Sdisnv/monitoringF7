@@ -7,6 +7,7 @@ const annualCatalogCore = require('./_scope-annual-catalog');
 const { prepareAnnualRequirementReady,generateAnnualProgram,projectToQuoVadis,validateThemeAssignments } = annualCatalogCore;
 const catalogImport = require('./_scope-annual-catalog-import');
 const functionalCatalog = require('./_scope-functional-catalog');
+const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
 
 const INITIAL_ACTIVITY_CODES = Object.freeze([
   'DPS-EXERCICE','DPS-INSTRUCTION-SECTION','DPS-INSTRUCTION-DEMI-SECTION','DPS-DAP-EXERCICE',
@@ -21,6 +22,27 @@ function dateOnly(value){
   if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0,10);
   return String(value).slice(0,10);
 }
+function dateForYear(value,year){
+  const result = dateOnly(value);
+  return result && Number(result.slice(0,4)) === Number(year) ? result : null;
+}
+const canonicalCatalog2027 = (() => {
+  const rows = functionalCatalog.programmeActivityPresentation(canonicalProgramme2027.rows.filter((row) => !row.external));
+  const grouped = new Map();
+  rows.forEach((row) => {
+    if(!grouped.has(row.definitionId)) grouped.set(row.definitionId,[]);
+    grouped.get(row.definitionId).push(row);
+  });
+  return new Map([...grouped].map(([definitionId,items]) => [definitionId,{
+    displayLabel:items[0].activityLabel || items[0].label,
+    canonicalOccurrenceCount:new Set(items.map((row) => row.occurrenceId)).size,
+    canonicalSessionCount:Math.max(...items.map((row) => Number(row.sessionCount || 1))),
+    exerciseCode:null,
+    statComCodes:[...new Set(items.map((row) => row.statCom).filter(Boolean))],
+    canonicalOis:[...new Set(items.flatMap((row) => row.ois || []))],
+    canonicalPublics:[...new Set(items.flatMap((row) => row.publics || []))]
+  }]));
+})();
 function integer(value){ const parsed = Number(value); return Number.isInteger(parsed) ? parsed : null; }
 function actorId(actor){ return text(actor && (actor.sub || actor.subject || actor.email)) || 'scope-user'; }
 function rows(result){ return result && Array.isArray(result.rows) ? result.rows : []; }
@@ -33,6 +55,37 @@ function strictTime(value){
 }
 
 function upperList(value){ return [...new Set((Array.isArray(value) ? value : []).map((item) => text(item).toUpperCase()).filter(Boolean))]; }
+function groupExerciseOccurrences(activities = []){
+  const groups = new Map();
+  for(const row of activities){
+    const match = text(row.label || row.displayLabel).match(/^(Exercice\b.*\s\d+)[.](\d+)$/i);
+    const key = match ? `${row.domain}|${match[1]}` : `ROW|${row.code}`;
+    if(!groups.has(key)) groups.set(key,[]);
+    groups.get(key).push({ row,match });
+  }
+  return [...groups.values()].map((items) => {
+    if(items.length === 1 || !items[0].match) return items[0].row;
+    items.sort((a,b) => Number(a.match[2])-Number(b.match[2]));
+    const rows = items.map((item) => item.row);
+    const first = rows[0];
+    return {
+      ...first,
+      label:items[0].match[1],
+      displayLabel:items[0].match[1],
+      definitionCodes:rows.map((row) => row.code),
+      occurrenceLabels:items.map((item) => `${item.match[1]}.${item.match[2]}`),
+      canonicalOccurrenceCount:items.length,
+      requiredOccurrences:items.length,
+      canonicalSessionCount:Math.max(...rows.map((row) => Number(row.sessionCount || 1))),
+      sessionCount:Math.max(...rows.map((row) => Number(row.sessionCount || 1))),
+      statComCodes:[...new Set(rows.flatMap((row) => row.statComCodes || []))],
+      publicCodes:[...new Set(rows.flatMap((row) => row.publicCodes || []))],
+      defaultSites:[...new Set(rows.flatMap((row) => row.defaultSites || []))],
+      siteCodes:[...new Set(rows.flatMap((row) => row.siteCodes || []))],
+      exerciseCode:null
+    };
+  }).sort((a,b) => domainRank(a.domain)-domainRank(b.domain) || text(a.displayLabel || a.label).localeCompare(text(b.displayLabel || b.label),'fr',{ numeric:true }));
+}
 function slug(value){
   return text(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,56);
 }
@@ -512,6 +565,8 @@ function createScopeAnnualCatalogService(options = {}){
                 r.annual_requirement_id,r.required_occurrences,r.variant_code,r.window_start,r.window_end,r.status as requirement_status,
                 fp.recurrence_kind,fp.default_occurrences,fp.default_sites,ape.program_state,ape.extraordinary,ape.site_codes,
                 (select count(*)::integer from scope_activity_session_templates st where st.definition_version_id=v.definition_version_id) as template_session_count,
+                (select sum(st.duration_minutes)::integer from scope_activity_session_templates st where st.definition_version_id=v.definition_version_id) as total_duration_minutes,
+                (select string_agg(distinct c.statcom_code,', ' order by c.statcom_code) from scope_activity_statistical_contributions c where c.definition_version_id=v.definition_version_id) as statcom_codes,
                 (select string_agg(p.code,', ' order by p.code) from scope_activity_public_bindings pb join scope_public_definitions p on p.public_definition_id=pb.public_definition_id where pb.definition_version_id=v.definition_version_id) as public_codes,
                 coalesce(o.occurrence_count,0)::integer as occurrence_count,coalesce(o.session_count,0)::integer as generated_session_count,
                 coalesce(t.themed_occurrence_count,0)::integer as themed_occurrence_count,coalesce(q.prepared_occurrence_count,0)::integer as prepared_occurrence_count
@@ -535,19 +590,21 @@ function createScopeAnnualCatalogService(options = {}){
       const domain = text(filters.domain).toUpperCase();
       const site = text(filters.site).toUpperCase();
       const status = text(filters.status).toUpperCase();
-      const activities = rows(result).filter((row) => !query || `${row.code} ${row.label}`.toLocaleLowerCase('fr').includes(query))
+      const mappedActivities = rows(result).filter((row) => !query || `${row.code} ${row.label}`.toLocaleLowerCase('fr').includes(query))
         .filter((row) => !domain || domain === 'TOUS' || row.domain === domain)
         .filter((row) => !site || site === 'TOUS' || (row.site_codes && row.site_codes.length ? row.site_codes : row.default_sites || []).map((value) => text(value).toUpperCase()).includes(site))
         .filter((row) => !status || status === 'TOUS' || (row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR') === status)
         .sort((a,b) => domainRank(a.domain) - domainRank(b.domain) || a.label.localeCompare(b.label,'fr'))
-        .map((row) => ({ code: row.code,label: row.label,domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,archived: row.status === 'ARCHIVE',
+        .map((row) => ({ code: row.code,label: row.label,...(year === 2027 ? canonicalCatalog2027.get(row.code) || {} : {}),domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,archived: row.status === 'ARCHIVE',
           definitionVersionId: row.definition_version_id,versionCode: row.version_code,annualRequirementId: row.annual_requirement_id || null,
-          requiredOccurrences: row.required_occurrences || null,variantCode: row.variant_code || null,windowStart: dateOnly(row.window_start),windowEnd: dateOnly(row.window_end),
+          requiredOccurrences: row.required_occurrences || null,variantCode: row.variant_code || null,windowStart: dateForYear(row.window_start,year),windowEnd: dateForYear(row.window_end,year),
           status: row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR',occurrenceCount: row.occurrence_count,sessionCount: row.template_session_count,
-          generatedSessionCount: row.generated_session_count,publicCodes: row.public_codes || '',themedOccurrenceCount: row.themed_occurrence_count,
+          durationMinutes:row.total_duration_minutes || null,statComCodes:text(row.statcom_codes).split(',').map((value) => text(value)).filter(Boolean),
+          generatedSessionCount: row.generated_session_count,publicCodes:text(row.public_codes).split(',').map((value) => text(value)).filter(Boolean),themedOccurrenceCount: row.themed_occurrence_count,
           unthemedOccurrenceCount: row.required_occurrences == null ? null : Math.max(0,row.required_occurrences - row.themed_occurrence_count),
           preparedOccurrenceCount: row.prepared_occurrence_count,recurrenceKind:row.recurrence_kind || 'NON_RECURRENT',defaultOccurrences:row.default_occurrences || 1,
           defaultSites:row.default_sites || [],programState:row.program_state || null,extraordinary:Boolean(row.extraordinary),siteCodes:row.site_codes || [] }));
+      const activities = groupExerciseOccurrences(mappedActivities);
       return { readiness,year,activities,references:await loadCatalogReferences(database) };
     },
 
@@ -1040,4 +1097,4 @@ function createScopeAnnualCatalogService(options = {}){
   };
 }
 
-module.exports = { INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,validateDraftInput,readyErrorMessage,readyTransitionMessage,toPublicReadyTransition,readinessForClient,inspectReadyTransition,createScopeAnnualCatalogService,loadContext };
+module.exports = { INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,groupExerciseOccurrences,validateDraftInput,readyErrorMessage,readyTransitionMessage,toPublicReadyTransition,readinessForClient,inspectReadyTransition,createScopeAnnualCatalogService,loadContext };

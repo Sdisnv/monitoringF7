@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const L = require('../assets/js/scope-ui-logic');
+const functionalCatalog = require('../netlify/lib/_scope-functional-catalog');
 const programme = require('../netlify/lib/data/scope-qv-programme-2027.json');
 
 const ROOT = path.join(__dirname, '..');
@@ -44,7 +45,7 @@ test('02 - les niveaux 2027 sont explicites et stables', () => {
 });
 
 test('03 - la route Programme et sa fiche sont canoniques', () => {
-  assert.strictEqual(L.parseHash('#/quo-vadis').qvView, 'programme');
+  assert.strictEqual(L.parseHash('#/quo-vadis').qvView, 'agenda-annuel');
   assert.strictEqual(L.parseHash('#/quo-vadis/programme').qvView, 'programme');
   const id = programme.rows[0].id;
   const parsed = L.parseHash(`#/quo-vadis/programme/${encodeURIComponent(id)}`);
@@ -53,9 +54,26 @@ test('03 - la route Programme et sa fiche sont canoniques', () => {
 });
 
 test('04 - le tableau Programme expose filtres, niveaux et action MOA exacte', () => {
-  const html = hooks().renderQuoVadisProgrammeHtml({ canonicalProgramme:programme });
-  ['Activités','Occurrences','Sessions','Matérialisations OI','À contrôler','qv-filter-statcom','Résultats : 622','Consulter la fiche ›'].forEach((needle) => assert.ok(html.includes(needle), needle));
+  const canonicalProgramme = { ...programme,rows:functionalCatalog.programmeActivityPresentation(programme.rows) };
+  const html = hooks().renderQuoVadisProgrammeHtml({ canonicalProgramme });
+  ['Activités','Réalisations','Sessions','Couverture OI','À traiter','qv-filter-statcom','Résultats : 622','Consulter','la fiche ›'].forEach((needle) => assert.ok(html.includes(needle), needle));
   assert.ok(html.includes('302 désigne la matrice de définitions source'));
+  assert.ok(html.includes('Afficher'));
+  assert.ok(html.includes('1–20 sur 622'));
+  assert.ok(html.includes('Code'));
+  assert.ok(html.includes('événement'));
+  assert.ok(!html.includes('>Occurrence<'));
+  assert.ok(!html.includes('>Session<'));
+  const datedRow = { ...canonicalProgramme.rows.find((row) => row.definitionId === 'CTA-PERMANENCE'),publishedEventDate:'2026-12-31' };
+  const datedHtml = hooks().renderQuoVadisProgrammeHtml({ canonicalProgramme:{ ...programme,rows:[datedRow] } });
+  assert.ok(datedHtml.includes('31.12.26'));
+  assert.ok(html.includes('FOBA 2'));
+  assert.ok(!/>(?:FOBA|JSP|PR|AUTO|FOSPEC):\d</.test(html));
+  assert.ok(html.includes('Auto'));
+  assert.ok(!html.includes('À la publication'));
+  assert.ok(!html.includes('011PR.009-S01'));
+  assert.ok(!html.includes('-O01'));
+  assert.ok(!html.includes('Exercice PR 1.1 1.1'));
 });
 
 test('05 - les 118 unités publiables de référence restent présentes', () => {
@@ -74,4 +92,22 @@ test('07 - la saisie présente l’action seulement avec les permissions nominat
   assert.ok(uiSource.includes("client.exportEventPersonnel(eventId)"));
 });
 
-console.log(`SCOPE FINAL PRODUCT INTEGRATION V1: ${passed}/7 tests PASS`);
+test('08 - le Programme affiche le code attribué plutôt que le mode Auto', () => {
+  const row = { ...functionalCatalog.programmeActivityPresentation([programme.rows.find((item) => item.statCom === '070F1')])[0],publishedEventId:'event-code-proof',publishedEventCode:'070F1.001',publishedEventCodeState:'PERSISTED' };
+  const html = hooks().renderQuoVadisProgrammeHtml({ canonicalProgramme:{ ...programme,rows:[row] } });
+  assert.ok(html.includes('070F1.001'));
+  assert.ok(!html.includes('<strong>Auto</strong>'));
+});
+
+test('09 - la recherche État-major ignore casse et diacritiques', () => {
+  const canonicalProgramme = { ...programme,rows:functionalCatalog.programmeActivityPresentation(programme.rows) };
+  const api = hooks();
+  const variants = ['État-major', 'Etat-major', 'état-major', 'etat-major', 'ETAT-MAJOR'];
+  for (const query of variants) {
+    const rows = api.filterQuoVadisProgrammeRows({ canonicalProgramme }, query);
+    assert.strictEqual(rows.length, 11, query);
+    assert.ok(rows.every((row) => (row.activityLabel || row.label) === 'Séance État-major'), query);
+  }
+});
+
+console.log(`SCOPE FINAL PRODUCT INTEGRATION V1: ${passed}/9 tests PASS`);

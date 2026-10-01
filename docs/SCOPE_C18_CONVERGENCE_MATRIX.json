@@ -1,0 +1,5843 @@
+{
+  "source": {
+    "fileName": "2026 QUO VADIS SDIS Nord vaudois.xlsx",
+    "sheetName": "QUO VADIS '26",
+    "sha256": "58ef7c358e44cd7ddc0d6ecbf6a386b06df2029f000a8c12b041538e72066742",
+    "headers": [
+      "HD",
+      "CODE COURS",
+      "SEMAINE",
+      "JOUR",
+      "DATE",
+      "DÉBUT",
+      "FIN",
+      "ÉVÉNEMENT",
+      "INACTIF",
+      "LIEU",
+      "ADRESSE CONVOCATION",
+      "PERSONNEL CONCERNÉ",
+      "DOMAINE",
+      "SOUS-DOMAINE",
+      "QUI",
+      "RESPONSABLE",
+      "SALLE",
+      "COURS CADRES",
+      "CODE ACTIVITÉS",
+      "STAT.COM.",
+      "INDISPONIBILITÉ BLOQUANTE",
+      "PARTICIPANTS RESTENT ALARMABLE",
+      "PAYER LES PERMANENTS",
+      "HORS SDIS",
+      "F5/6",
+      "ÉTAT-MAJOR",
+      "DPS",
+      "DAP",
+      "FOBA",
+      "JSP",
+      "EM",
+      "DPS G1",
+      "DPS C1",
+      "DPS B1",
+      "DPS B2",
+      "PAPR",
+      "AUTO PL",
+      "AUTO VL",
+      "DAP Y1",
+      "DAP Y2",
+      "DAP Y3",
+      "DAP Y4",
+      "FOBA 1",
+      "FOBA 2",
+      "FOBA 3",
+      "JSP G1",
+      "JSP C1",
+      "JSP B1"
+    ]
+  },
+  "summary": {
+    "sourceProposals": 345,
+    "matrixRows": 276,
+    "coveredProposals": 345,
+    "actions": {
+      "MERGE_SAFE": 3,
+      "KEEP_DISTINCT": 248,
+      "REVIEW_REQUIRED": 25
+    },
+    "safeTargets": [
+      {
+        "targetDefinition": "JSP-EXERCICE",
+        "sourceCount": 10,
+        "type": "RECURRENT_OCCURRENCES"
+      },
+      {
+        "targetDefinition": "PR-EXERCICE-1",
+        "sourceCount": 6,
+        "type": "MULTI_SESSION"
+      },
+      {
+        "targetDefinition": "DPS-FORMATION-GROUPEE",
+        "sourceCount": 6,
+        "type": "MULTI_SESSION"
+      }
+    ]
+  },
+  "matrix": [
+    {
+      "source": [
+        "8 km du SDIS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-8-KM-DU-SDIS-D2C38C47",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Assemblée CI"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ASSEMBLEE-CI-FCF435B1",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "À définir",
+        "Donneloye"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Assemblée des délégués de la FVSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ASSEMBLEE-DES-DELEGUES-DE-LA-FVSP-662AE3DD",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Assemblée générale de la SIC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ASSEMBLEE-GENERALE-DE-LA-SIC-8D1D7C8F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Assemblée GVJSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ASSEMBLEE-GVJSP-8BBE58A9",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "BLS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-BLS-34715DC9",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cérémonie de promotion et nomination"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CEREMONIE-DE-PROMOTION-ET-NOMINATION-70010353",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Championnat suisses JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CHAMPIONNAT-SUISSES-JSP-2156FD86",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Concours de la FVSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CONCOURS-DE-LA-FVSP-B2CCD55A",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Conduite, formation continue"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CONDUITE-FORMATION-CONTINUE-2990E6C6",
+      "sessions": [],
+      "realizations": 36,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1",
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Conférence des Commandants"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CONFERENCE-DES-COMMANDANTS-A2DEA769",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "À définir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice CAR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-CAR-FB6A81CD",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DAP 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DAP 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DAP 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DAP 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DPS 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DPS 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DPS 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DPS-DAP 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres exercice TRUCK"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-EXERCICE-TRUCK-220DF695",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres FOBA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FOBA-FD15AA5A",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres Formateurs cursus MEA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATEURS-CURSUS-MEA-A1F7E361",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres Formateurs MEA 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-1-72F66684",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres Formateurs MEA 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-2-40EAD3D2",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres Formation ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-ABC-308D766F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres formation annuelle Grutiers"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-ANNUELLE-GRUTIERS-5152ABB1",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres Formation cadres ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-CADRES-ABC-4688CD68",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres Formation groupée DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres formation groupée JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-GROUPEE-JSP-C9F22B73",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres formation pilote BAT 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-PILOTE-BAT-1-61D567E4",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres formation pilote BAT 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-FORMATION-PILOTE-BAT-2-E52B954F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres interSDIS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-INTERSDIS-50C39DFD",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres moniteurs AUTO"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-MONITEURS-AUTO-B76239E8",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres PR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-PR-3817D3C2",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres recyclage BLS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-RECYCLAGE-BLS-5AA9AC4A",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne B1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours de cadres SDIS Nord vaudois"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-DE-CADRES-SDIS-NORD-VAUDOIS-865AE6FF",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours ECA FB01 - formation de base recrues"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-ECA-FB01-FORMATION-DE-BASE-RECRUES-20723C97",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours ECA SA10 - cours de cadres - répondant de la formation antichute"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-ECA-SA10-COURS-DE-CADRES-REPONDANT-DE-LA-FORMA-5E614096",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours ECA SA10 - répondant de la formation antichute"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-ECA-SA10-REPONDANT-DE-LA-FORMATION-ANTICHUTE-7F8EFFD8",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours ECA SA11 - recyclage répondant de la formation antichute"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-ECA-SA11-RECYCLAGE-REPONDANT-DE-LA-FORMATION-A-2354EFF8",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours ECA SP19 - ventilation opérationnelle"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-ECA-SP19-VENTILATION-OPERATIONNELLE-53ED2027",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS03 - flamme 3 JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS03-FLAMME-3-JSP-FF520D88",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "La Rama"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS11 - Journée d'instruction JSP (après-midi)"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS11-JOURNEE-D-INSTRUCTION-JSP-APRES-MIDI-953A1740",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS11 - Journée d'instruction JSP (matin)"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS11-JOURNEE-D-INSTRUCTION-JSP-MATIN-B29F2187",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS12 - Journée d'instruction des Moniteurs Cadets"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS12-JOURNEE-D-INSTRUCTION-DES-MONITEURS-C-86DB0273",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS21 - valorisation moniteurs - module I"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS21-VALORISATION-MONITEURS-MODULE-I-C4F05BC3",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS22 - valorisation moniteurs - module II"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS22-VALORISATION-MONITEURS-MODULE-II-ACAC9F4D",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS23 - formation moniteurs - simulateur (après-midi)"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-APRES--A4FA0328",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "ECAvenir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS23 - formation moniteurs - simulateur (matin)"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS23-FORMATION-MONITEURS-SIMULATEUR-MATIN-8E3AD201",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "ECAvenir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cours JSP JS24 - valorisation moniteurs - module III"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-COURS-JSP-JS24-VALORISATION-MONITEURS-MODULE-III-D8DEC6A2",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus « Notions d'administration publique »"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-NOTIONS-D-ADMINISTRATION-PUBLIQUE-4CEA871D",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus c groupe - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-C-GROUPE-MODULE-1-3E17590D",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus c groupe - module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-C-GROUPE-MODULE-2-A1379DBB",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus c groupe - module 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-C-GROUPE-MODULE-3-24F5F741",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus c groupe - module 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-C-GROUPE-MODULE-4-9E2411FE",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DAP - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DAP-MODULE-1-00AE593E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DAP - module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DAP-MODULE-2-A9F30492",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DAP - module 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DAP-MODULE-3-F98571DB",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DAP - module 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DAP-MODULE-4-027EBCA6",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DAP - module 5"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DAP-MODULE-5-0E5FEF66",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - cours de cadres pour évaluateurs"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-COURS-DE-CADRES-POUR-EVALUATEURS-14F3F6CD",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-1-E5FE8296",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 10"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-10-1E0103E4",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-2-CDB3F9CB",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-3-82B182F9",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-4-4249F631",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 5"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-5-E051011F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 6"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-6-28B8DB4B",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 7"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-7-ACA6B242",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 8"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-8-68719C42",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus CI DPS - module 9"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-CI-DPS-MODULE-9-231F815C",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus cond VL - module 1.0"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-COND-VL-MODULE-1-0-1E178351",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus cond VL - module 2.0"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-COND-VL-MODULE-2-0-3115D5A1",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1",
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus élévateur à timon S2 - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-ELEVATEUR-A-TIMON-S2-MODULE-1-5D474C4F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus JSP - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-JSP-MODULE-1-418B11F9",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus JSP - module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-JSP-MODULE-2-B519D633",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 1.0"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-MEA-MODULE-1-0-2C365A4D",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus OFSI - formation de base"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-OFSI-FORMATION-DE-BASE-E06A786F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Ligne CFF Yverdon-Vallorbe"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus opérateur VPC - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-OPERATEUR-VPC-MODULE-1-ECEE563E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-1-336731A0",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-2-9A012A39",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-3-88F70409",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "La Rama"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-4-5EC1568A",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 5"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-5-298B150A",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 6"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-6-CBCCBFD9",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus PAPR - module 7"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-PAPR-MODULE-7-E2FEB769",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Centre ECAP"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus TP9 - conduite libre"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-TP9-CONDUITE-LIBRE-5FE77FE2",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus TP9 - module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-TP9-MODULE-1-198A1A31",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Cursus TP9 - module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-CURSUS-TP9-MODULE-2-6ACECBE7",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Échange tenue"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ECHANGE-TENUE-3AD66FD0",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Entretien de collaboration avec Commandant"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ENTRETIEN-DE-COLLABORATION-AVEC-COMMANDANT-B80CFF32",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Entretien postulant échelons I et II"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-ENTRETIEN-POSTULANT-ECHELONS-I-ET-II-8B706B77",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Équipement des recrues FOBA 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EQUIPEMENT-DES-RECRUES-FOBA-1-8E6D45E0",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Équipement personnel DPS + photo individuelle"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EQUIPEMENT-PERSONNEL-DPS-PHOTO-INDIVIDUELLE-1204623F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DAP 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DAP-1-9890D687",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DAP 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DAP-2-6285EF74",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DAP 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DAP-3-618B0715",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DAP 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DAP-4-46753B3A",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DAP 5"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DAP-5-195CBA90",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DPS 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DPS-1-6A16603D",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DPS 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DPS-2-54E09232",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DPS 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DPS-3-29F948D1",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DPS-DAP 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DPS-DAP-1-7F1E9444",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice DPS-DAP 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-DPS-DAP-2-668A88B6",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "À définir",
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice engagement Incyte Biosciences"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-ENGAGEMENT-INCYTE-BIOSCIENCES-1E54BDD9",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-2ED42E4A",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-1-F0BC308F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 10"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-10-B13BB01B",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-2-86E92B65",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-3-F2E05A2F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-4-FEF301C5",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Place d'Armes"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 5"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-5-63606E72",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 6"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-6-2B762B67",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 7"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-7-8157833F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 8"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-8-AE81E3A7",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice FOBA 9"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-FOBA-9-9A33FAE7",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice JSP Cadets 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-JSP-CADETS-1-0B869038",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice JSP Cadets 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-JSP-CADETS-2-DE49BBCD",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Place d'Armes"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice OFSI・infrastructures CFF"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-OFSI-INFRASTRUCTURES-CFF-F0835574",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice PR-ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-EXERCICE-PR-ABC-75229C6D",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Fête Eau Lac"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FETE-EAU-LAC-4EDEF9EF",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-ABC-A2DC927B",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation antichute"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-ANTICHUTE-4D06A7F8",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation BIKABLO"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-BIKABLO-AA5C6437",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation cadres ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CADRES-ABC-1829EE30",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation cadres DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CADRES-DAP-2B042598",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation CEMEA, module 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CEMEA-MODULE-1-345181CE",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation CEMEA, module 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CEMEA-MODULE-2-E7D2BFB8",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation CEMEA, module 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CEMEA-MODULE-3-4425518E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation CEMEA, module 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CEMEA-MODULE-4-F7E51360",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation continue OACP CarPostal"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-CONTINUE-OACP-CARPOSTAL-EA90C59F",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation engagement pratique PR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-ENGAGEMENT-PRATIQUE-PR-98965239",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Centre ECAP"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation groupée JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-GROUPEE-JSP-9B5BDE99",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation permanents"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-PERMANENTS-4F48A9D0",
+      "sessions": [],
+      "realizations": 7,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation personnel CFF"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-PERSONNEL-CFF-358CBEA6",
+      "sessions": [],
+      "realizations": 7,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation pilote BAT 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-PILOTE-BAT-1-27197BC2",
+      "sessions": [],
+      "realizations": 6,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation pilote BAT 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-PILOTE-BAT-2-F69F375C",
+      "sessions": [],
+      "realizations": 6,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation relation avec la presse"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-RELATION-AVEC-LA-PRESSE-63E476BF",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation Travail en hauteur et antichute"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-TRAVAIL-EN-HAUTEUR-ET-ANTICHUTE-07B1FB7F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Sécurité-Industrie"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Formation véhicule d'urgence"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-FORMATION-VEHICULE-D-URGENCE-867B1995",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Centre TCS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Grillades des JSP Nord vaudois"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-GRILLADES-DES-JSP-NORD-VAUDOIS-FAB9001B",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Groupe de travail FOCA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOCA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Groupe de travail JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-GROUPE-DE-TRAVAIL-JSP-2A45EC4E",
+      "sessions": [],
+      "realizations": 6,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr demi-sct - ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-DEMI-SCT-ABC-C49C7121",
+      "sessions": [],
+      "realizations": 10,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr demi-sct - FEU"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-DEMI-SCT-FEU-8D0C9417",
+      "sessions": [],
+      "realizations": 6,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr demi-sct - KICK-OFF"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-DEMI-SCT-KICK-OFF-4582E6AF",
+      "sessions": [],
+      "realizations": 11,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr demi-sct - PIONNIER"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-DEMI-SCT-PIONNIER-06F40C59",
+      "sessions": [],
+      "realizations": 10,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr demi-sct - VARIA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-DEMI-SCT-VARIA-D51E6F19",
+      "sessions": [],
+      "realizations": 16,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr sct - ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-SCT-ABC-6026BBEC",
+      "sessions": [],
+      "realizations": 5,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr sct - FEU"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-SCT-FEU-2495DFDB",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr sct - KICK-OFF"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-SCT-KICK-OFF-5DBF1193",
+      "sessions": [],
+      "realizations": 9,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr sct - PIONNIER CSU-nvb"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-SCT-PIONNIER-CSU-NVB-57A4BDE1",
+      "sessions": [],
+      "realizations": 5,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Instr sct - VARIA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INSTR-SCT-VARIA-D13856BA",
+      "sessions": [],
+      "realizations": 8,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Intégration personnel DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INTEGRATION-PERSONNEL-DAP-1C109BCD",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Intégration personnel DPS, phase I"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-I-62BE4A9E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Intégration personnel DPS, phase II"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INTEGRATION-PERSONNEL-DPS-PHASE-II-DED387B5",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Introduction PIONNIER"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-INTRODUCTION-PIONNIER-999BBC8C",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Journée « Oser tous les métiers » (JOM)"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-JOURNEE-OSER-TOUS-LES-METIERS-JOM-55EDEBFB",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Journée des Commandants ABC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-JOURNEE-DES-COMMANDANTS-ABC-E74C5612",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Journée des familles"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB",
+      "sessions": [],
+      "realizations": 5,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1",
+        "Local Y1",
+        "Local Y2",
+        "Local Y3"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Journée des nouveaux habitants"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-JOURNEE-DES-NOUVEAUX-HABITANTS-E7CDB734",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Mise à niveau annuelle OSR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-MISE-A-NIVEAU-ANNUELLE-OSR-9977BB10",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Nettoyage annuel caserne"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Noël des familles"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-NOEL-DES-FAMILLES-F3E5E4E3",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Passeport-Vacances"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PASSEPORT-VACANCES-55E662D2",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Piste entraînement PAPR 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PISTE-ENTRAINEMENT-PAPR-1-F7485257",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "La Rama"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Piste entraînement PAPR 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PISTE-ENTRAINEMENT-PAPR-2-694EA573",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "La Rama"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Piste entraînement PAPR 3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PISTE-ENTRAINEMENT-PAPR-3-20D2082F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "La Rama"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Piste entraînement PAPR 4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PISTE-ENTRAINEMENT-PAPR-4-CB7628F6",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "La Rama"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Préparation concours de la FVSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1",
+      "sessions": [],
+      "realizations": 8,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Préparation cours de cadres SDIS Nord vaudois"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PREPARATION-COURS-DE-CADRES-SDIS-NORD-VAUDOIS-B96ED2B5",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Préparation Revue Quinquennale"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PREPARATION-REVUE-QUINQUENNALE-51010471",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Préparation Xmas"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-PREPARATION-XMAS-39727CE7",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Rapport annuel"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-RAPPORT-ANNUEL-FF60DF89",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Salle de la Marive"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Reconnaissance DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-RECONNAISSANCE-DAP-BAA3FFE5",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Reconnaissance DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-RECONNAISSANCE-DPS-C5EFD73F",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Recrutement cantonal"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-RECRUTEMENT-CANTONAL-62C39398",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1",
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Recyclage BLS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-RECYCLAGE-BLS-3A2ED7C4",
+      "sessions": [],
+      "realizations": 6,
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Refresh CI"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-REFRESH-CI-1A3A4D1F",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Remise équipement des recrues FOBA 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-REMISE-EQUIPEMENT-DES-RECRUES-FOBA-1-65C22FF6",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Repas du Permanent"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-REPAS-DU-PERMANENT-73FAEE93",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "À définir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Répétition garde drapeau RA'25"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-REPETITION-GARDE-DRAPEAU-RA-25-AE629FBF",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Salle de la Marive"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Revue Quinquennale SDIS Nord vaudois"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-REVUE-QUINQUENNALE-SDIS-NORD-VAUDOIS-D4687112",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "SDIS NV"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance audiovisuel et communication F5/6"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-AUDIOVISUEL-ET-COMMUNICATION-F5-6-BB9DCFE0",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance cadres"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CADRES-0972877C",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance cadres F5/6"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CADRES-F5-6-A6B9A14F",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance cadres JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CADRES-JSP-1591AA8A",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance chefs de section DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C8C3DCAB",
+      "sessions": [],
+      "realizations": 6,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance chefs de section DPS C1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance Codir"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CODIR-92921E7C",
+      "sessions": [],
+      "realizations": 8,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Belmont-sur-Yverdon",
+        "Caserne G1",
+        "Ursins"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance Codir + repas"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CODIR-REPAS-81897EA7",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance commission d'instruction"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-COMMISSION-D-INSTRUCTION-C422B338",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance communication F5/6"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC",
+      "sessions": [],
+      "realizations": 9,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance COSEC"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-COSEC-B710F41E",
+      "sessions": [],
+      "realizations": 5,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1",
+        "SSP"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance CRDIS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-CRDIS-B8654449",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1",
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance d'information JSP '26"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-D-INFORMATION-JSP-26-8AF725E5",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance de préparation concours de la FVSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-DE-PREPARATION-CONCOURS-DE-LA-FVSP-F1E4A8D4",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance de préparation Téléthon"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-DE-PREPARATION-TELETHON-566F5A97",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance des chefs de section DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-DES-CHEFS-DE-SECTION-DAP-B47254AE",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance Direction JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-DIRECTION-JSP-32B2ACA4",
+      "sessions": [],
+      "realizations": 11,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance échelons II, III et IV"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-ECHELONS-II-III-ET-IV-CF4E7AAB",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance EM"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-EM-ED042EBD",
+      "sessions": [],
+      "realizations": 11,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance Fourriers DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-FOURRIERS-DAP-997F4819",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance Fourriers DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-FOURRIERS-DPS-A39F1CE0",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance instruction DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-INSTRUCTION-DAP-7B5FA127",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance instruction DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-INSTRUCTION-DPS-DF85402C",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance instruction JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-INSTRUCTION-JSP-49B17B96",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance interne cadres JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-INTERNE-CADRES-JSP-21EF2225",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance interSDIS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-INTERSDIS-4B877B98",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne SDIS"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance OSR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-OSR-69425BF1",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance personnel DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PERSONNEL-DAP-CCA3AF32",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance personnel DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PERSONNEL-DPS-9D512A49",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo du personnel DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-DU-PERSONNEL-DAP-E17BA848",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y3"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo du personnel DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-DU-PERSONNEL-DPS-B724AB97",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo personnel DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-PERSONNEL-DAP-A0F7204B",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y2",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo personnel DAP Y1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-PERSONNEL-DAP-Y1-40B161E2",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo personnel DPS B1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-B1-BA4C9FBB",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo personnel DPS B2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-B2-C4D907C6",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B2"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance photo personnel DPS C1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PHOTO-PERSONNEL-DPS-C1-D4083E20",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance préposés APR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PREPOSES-APR-1BD9CB6F",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance Préposés mat DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-PREPOSES-MAT-DPS-B35B8829",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Séance responsables MAT SDIS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SEANCE-RESPONSABLES-MAT-SDIS-604E1EF6",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Sécurité feu · Fête Médiévale"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Sécurité feu・Fête Nationale"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SECURITE-FEU-FETE-NATIONALE-C29B7F0B",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Sécurité feu・les Zôtres Brandons"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SECURITE-FEU-LES-ZOTRES-BRANDONS-D97AC03D",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Soirée des présidents JSP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SOIREE-DES-PRESIDENTS-JSP-94AEF2C2",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "À définir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Soirée information DAP Y1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SOIREE-INFORMATION-DAP-Y1-9C1AF689",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Salle du Casino"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Soirée information DAP Y2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SOIREE-INFORMATION-DAP-Y2-5AAA8CF4",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Salle Communale"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Soirée information DAP Y3"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SOIREE-INFORMATION-DAP-Y3-594760FB",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Salle du Conseil"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Soirée information DAP Y4"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SOIREE-INFORMATION-DAP-Y4-728FEE44",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Grande salle Communale"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Sortie des formateurs PR"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SORTIE-DES-FORMATEURS-PR-5C9DE16E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "À définir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Souper annuel"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-SOUPER-ANNUEL-31E8AC57",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B2",
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Table ouverte avec le Commandant"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TABLE-OUVERTE-AVEC-LE-COMMANDANT-23F40B54",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Téléthon"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TELETHON-BA07D05D",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "SDIS NV"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test annuel FOBA"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-ANNUEL-FOBA-7BE50D02",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "FOBA"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test de sélection cond PL N'26"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-DE-SELECTION-COND-PL-N-26-EE280D9B",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test de sélection échelons I, II N'26"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-DE-SELECTION-ECHELONS-I-II-N-26-782AA084",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test de sélection NUOVO"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-DE-SELECTION-NUOVO-F2DFA988",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test de sélection PAPR N'27"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-DE-SELECTION-PAPR-N-27-A9E7D22D",
+      "sessions": [],
+      "realizations": 2,
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test flammes 1"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-FLAMMES-1-620C8786",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Test flammes 2"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TEST-FLAMMES-2-2A7A6665",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Tir inter-unités"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TIR-INTER-UNITES-E27F621E",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Stand de tir"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Tour de France Femmes '26"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-TOUR-DE-FRANCE-FEMMES-26-4BF12176",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "SDIS NV"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Vision locale DAP"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-VISION-LOCALE-DAP-F8783089",
+      "sessions": [],
+      "realizations": 4,
+      "domains": [
+        "DAP"
+      ],
+      "sites": [
+        "Local Y1",
+        "Local Y2",
+        "Local Y3",
+        "Local Y4"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Vision locale DPS"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-VISION-LOCALE-DPS-EA8354D4",
+      "sessions": [],
+      "realizations": 3,
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne B2",
+        "Caserne C1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Visite du Conseil d'État"
+      ],
+      "proposedType": "DISTINCT_ACTIVITY",
+      "targetDefinition": "QV26-VISITE-DU-CONSEIL-D-ETAT-49AC4722",
+      "sessions": [],
+      "realizations": 1,
+      "domains": [
+        ""
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "confidence": "HIGH",
+      "action": "KEEP_DISTINCT",
+      "evidence": [
+        "aucun regroupement sûr démontré"
+      ]
+    },
+    {
+      "source": [
+        "Exercice JSP 1",
+        "Exercice JSP 10",
+        "Exercice JSP 2",
+        "Exercice JSP 3",
+        "Exercice JSP 4",
+        "Exercice JSP 5",
+        "Exercice JSP 6",
+        "Exercice JSP 7",
+        "Exercice JSP 8",
+        "Exercice JSP 9"
+      ],
+      "domains": [
+        "JSP"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "proposedType": "RECURRENT_OCCURRENCES",
+      "targetDefinition": "JSP-EXERCICE",
+      "sessions": [
+        "S1"
+      ],
+      "realizations": 10,
+      "confidence": "HIGH",
+      "action": "MERGE_SAFE",
+      "evidence": [
+        "10 numéros continus",
+        "domaine JSP identique",
+        "publics canoniques identiques",
+        "déclinaisons par site"
+      ]
+    },
+    {
+      "source": [
+        "Exercice PR 1.1",
+        "Exercice PR 1.2",
+        "Exercice PR 1.3",
+        "Exercice PR 1.4",
+        "Exercice PR 1.5",
+        "Exercice PR 1.6"
+      ],
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "MULTI_SESSION",
+      "targetDefinition": "PR-EXERCICE-1",
+      "sessions": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "1.6"
+      ],
+      "realizations": 1,
+      "confidence": "HIGH",
+      "action": "MERGE_SAFE",
+      "evidence": [
+        "PR 1.1 à 1.6 continus",
+        "domaine PR, publics canoniques, Stat.Com, spécialisation PAPR et thème Base identiques",
+        "relation multi-séances démontrée C15/C16"
+      ]
+    },
+    {
+      "source": [
+        "Formation groupée 1.1",
+        "Formation groupée 1.2",
+        "Formation groupée 1.3",
+        "Formation groupée 1.4",
+        "Formation groupée 1.5",
+        "Formation groupée 1.6"
+      ],
+      "domains": [
+        "DPS"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "MULTI_SESSION",
+      "targetDefinition": "DPS-FORMATION-GROUPEE",
+      "sessions": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "1.6"
+      ],
+      "realizations": 1,
+      "confidence": "HIGH",
+      "action": "MERGE_SAFE",
+      "evidence": [
+        "suffixes 1.1 à 1.6 continus",
+        "domaine, publics, Stat.Com, spécialisation et thème identiques"
+      ]
+    },
+    {
+      "source": [
+        "Conduite TP9000, formation continue 1.0",
+        "Conduite TP9000, formation continue 1.1",
+        "Conduite TP9000, formation continue 1.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Conduite TP9000, formation continue 2.0",
+        "Conduite TP9000, formation continue 2.1",
+        "Conduite TP9000, formation continue 2.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus cond VL - module 3.1",
+        "Cursus cond VL - module 3.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus cond VL - module 4.1",
+        "Cursus cond VL - module 4.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 2.1",
+        "Cursus MEA - module 2.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 3.1",
+        "Cursus MEA - module 3.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 4.1",
+        "Cursus MEA - module 4.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 5.1",
+        "Cursus MEA - module 5.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 6.1",
+        "Cursus MEA - module 6.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 7.1",
+        "Cursus MEA - module 7.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 8.1",
+        "Cursus MEA - module 8.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus MEA - module 9.1",
+        "Cursus MEA - module 9.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Cursus TP9 - module 3.1",
+        "Cursus TP9 - module 3.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Exercice CAR 1.1",
+        "Exercice CAR 1.2",
+        "Exercice CAR 1.3",
+        "Exercice CAR 1.4",
+        "Exercice CAR 1.5"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne militaire"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Exercice PR 2.1",
+        "Exercice PR 2.2",
+        "Exercice PR 2.3",
+        "Exercice PR 2.4",
+        "Exercice PR 2.5",
+        "Exercice PR 2.6"
+      ],
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Exercice PR 3.1",
+        "Exercice PR 3.2",
+        "Exercice PR 3.3",
+        "Exercice PR 3.4",
+        "Exercice PR 3.5",
+        "Exercice PR 3.6"
+      ],
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Exercice PR 4.1",
+        "Exercice PR 4.2",
+        "Exercice PR 4.3",
+        "Exercice PR 4.4",
+        "Exercice PR 4.5",
+        "Exercice PR 4.6"
+      ],
+      "domains": [
+        "PR"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Exercice TRUCK 1.1",
+        "Exercice TRUCK 1.2",
+        "Exercice TRUCK 1.3",
+        "Exercice TRUCK 1.4"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne B1",
+        "Caserne C1",
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation grutier 1.0",
+        "Formation grutier 1.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation grutier 2.0",
+        "Formation grutier 2.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation MEA 1.0",
+        "Formation MEA 1.1",
+        "Formation MEA 1.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation MEA 2.0",
+        "Formation MEA 2.1",
+        "Formation MEA 2.2"
+      ],
+      "domains": [
+        "AUTO"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation NAC 1.1",
+        "Formation NAC 1.2"
+      ],
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation opérateur VPC 1.1",
+        "Formation opérateur VPC 1.2",
+        "Formation opérateur VPC 1.3",
+        "Formation opérateur VPC 1.4"
+      ],
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    },
+    {
+      "source": [
+        "Formation opérateur VPC 2.1",
+        "Formation opérateur VPC 2.2",
+        "Formation opérateur VPC 2.3",
+        "Formation opérateur VPC 2.4"
+      ],
+      "domains": [
+        "FOSPEC"
+      ],
+      "sites": [
+        "Caserne G1"
+      ],
+      "proposedType": "UNRESOLVED_SERIES",
+      "targetDefinition": null,
+      "sessions": [],
+      "realizations": null,
+      "confidence": "MEDIUM",
+      "action": "REVIEW_REQUIRED",
+      "evidence": [
+        "suffixe numérique insuffisant sans décision métier"
+      ]
+    }
+  ]
+}

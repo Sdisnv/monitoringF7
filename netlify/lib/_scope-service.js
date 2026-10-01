@@ -128,23 +128,9 @@ function exerciseKeyFromParts(source, code, date, libelle){
   return `${source}:${year}:${base || 'exercice'}`;
 }
 
-function compactCodePart(value, fallback){
-  const text = String(value || fallback || '')
-    .trim()
-    .toUpperCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Z0-9]+/g, '');
-  return text || String(fallback || 'SCOPE');
-}
-
-async function nextManualCode(repo, body, cibleIds){
-  if(body.codeCours || body.code_cours) return String(body.codeCours || body.code_cours).trim();
-  const seq = repo.nextManualEventSequence ? await repo.nextManualEventSequence() : 1;
-  const suffix = `S${String(seq).padStart(3, '0')}`;
-  const stat = body.statCom || body.stat_com || body.codeSource || body.code_source || 'SCOPE';
-  const qui = body.qui || body.publicCible || body.public_cible || compactCodePart((cibleIds || []).length, 'GEN');
-  return importContract.buildCodeCours(stat, qui, suffix);
+function isExternalEventInput(body = {}){
+  const kind=String(body.typeEvenement || body.type_evenement || body.eventType || body.sourceType || body.source_type || '').trim().toUpperCase();
+  return body.external === true || body.externe === true || ['EXTERNE','EXTERNAL','EXTERNE_HORS_SUIVI'].includes(kind);
 }
 
 function isQuantitatif(evenement){
@@ -1606,7 +1592,8 @@ function createScopeService(repo){
       if(domaine === 'FOSPEC' && (leaf === 'PR' || leaf === 'AUTO')) domaine = leaf;
       else throw new HttpError(400, 'cible_invalide', 'Cible inconnue ou hors domaine.');
     }
-    const origine = body.origine === 'LEGACY_AGGREGATED' ? 'LEGACY_AGGREGATED' : 'NOMINATIF';
+    const externalEvent = isExternalEventInput(body);
+    const origine = externalEvent ? 'EXTERNE' : (body.origine === 'LEGACY_AGGREGATED' ? 'LEGACY_AGGREGATED' : 'NOMINATIF');
     let modeSuivi = inferModeSuivi({ origine, mode_suivi: body.modeSuivi || body.mode_suivi });
     if(origine === 'LEGACY_AGGREGATED') modeSuivi = MODES.LEGACY;
     else {
@@ -1630,7 +1617,9 @@ function createScopeService(repo){
         throw new HttpError(422, 'nominatif_non_autorise', 'Le suivi nominatif n’est pas autorisé pour ce périmètre à cette date.');
       }
     }
-    const codeCours = await nextManualCode(repo, body, cibleIds);
+    if(body.codeCours !== undefined || body.code_cours !== undefined){
+      throw new HttpError(422, 'code_evenement_automatique', 'Le code événement est attribué automatiquement par SCOPE.');
+    }
     const requestedDefinitionVersionId = body.definitionVersionId || body.definition_version_id || null;
     const definitionVersion = requestedDefinitionVersionId && repo.getEventDefinitionVersion
       ? await repo.getEventDefinitionVersion(requestedDefinitionVersionId)
@@ -1643,11 +1632,15 @@ function createScopeService(repo){
       : null;
     const configuredStatComCode = definitionVersion && (definitionVersion.statcom_code || definitionVersion.statComCode);
     const configuredStatComSnapshot = definitionVersion && (definitionVersion.statcom_snapshot || definitionVersion.statComSnapshot);
-    const eventStatCom = configuredStatComCode
-      ? {
-        code: configuredStatComCode,
-        snapshot: configuredStatComSnapshot || (await resolveStatComSnapshot(configuredStatComCode, { domain: domaine, date })).snapshot
-      }
+    const requestedStatComCode = configuredStatComCode || body.statComCode || body.statCom || body.statcom_code || body.stat_com || null;
+    if(externalEvent && requestedStatComCode){
+      throw new HttpError(422, 'evenement_externe_statcom_interdit', 'Un événement externe ne possède ni Stat.Com ni code événement SCOPE.');
+    }
+    const statComResolution = !externalEvent && requestedStatComCode
+      ? await assertWritableStatCom(requestedStatComCode, { domain: domaine, date })
+      : null;
+    const eventStatCom = statComResolution
+      ? { code: statComResolution.code,snapshot: configuredStatComSnapshot || statComResolution.snapshot }
       : { code: null, snapshot: null };
     const definitionMode = definitionVersion && (definitionVersion.mode_organisation || definitionVersion.modeOrganisation);
     const isGenericMulti = definitionMode === genericCatalog.ORGANISATION_MODES.MULTI_SESSION;
@@ -1658,6 +1651,13 @@ function createScopeService(repo){
     const temporal = normalizeEventTemporal(body);
     return repo.withTransaction(async (tx) => {
       cibleIds = await expandDapGroupedCibles(tx, domaine, libelle, cibleIds);
+      const eventId = randomUUID();
+      const codeCours = eventStatCom.code && tx.allocateEventCode
+        ? await tx.allocateEventCode({
+          eventId,statCom:eventStatCom.code,
+          metadata:{ allocation:'APPEND_AFTER_VALIDATION',source:'SCOPE_EVENT_CREATION' }
+        })
+        : null;
       const snapshot = definitionVersion
         ? await policySnapshotFromDefinitionVersion(tx, definitionVersion)
         : await capturePolicySnapshot(tx, domaine);
@@ -1684,6 +1684,7 @@ function createScopeService(repo){
         });
       }
       const evenement = await tx.insertEvenement({
+        evenement_id: eventId,
         date,
         domaine_code: domaine,
         sous_domaine_code: null,
@@ -1692,8 +1693,8 @@ function createScopeService(repo){
         origine,
         mode_suivi: modeSuivi,
         code_cours: codeCours,
-        code_source: codeCours,
-        source_type: origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL',
+        code_source: body.codeSource || body.code_source || null,
+        source_type: externalEvent ? 'EXTERNE' : (origine === 'IMPORT_CSV' ? 'CSV' : 'MANUEL'),
         heure_debut: temporal.plannedStart,
         heure_fin: temporal.plannedEnd,
         heure_debut_prevue: temporal.plannedStart,
@@ -5829,10 +5830,22 @@ function createScopeService(repo){
           continue;
         }
         const genericBinding = await importDefinitionBinding(tx, group);
+        const importStatComCode = genericBinding && genericBinding.statComCode || group.statCom || null;
+        const importStatCom = importStatComCode
+          ? await assertWritableStatCom(importStatComCode, { domain: group.domaineStockage,date: group.date })
+          : null;
+        const eventId = randomUUID();
+        const eventCode = importStatCom && tx.allocateEventCode
+          ? await tx.allocateEventCode({
+            eventId,statCom:importStatCom.code,
+            metadata:{ allocation:'APPEND_AFTER_VALIDATION',source:'SCOPE_STANDARD_IMPORT',sourceCode:group.codeCours }
+          })
+          : null;
         const targetPolicy = genericBinding
           ? await policySnapshotFromDefinitionVersion(tx, genericBinding.version)
           : await capturePolicySnapshot(tx, group.domaineStockage);
         const event = await tx.insertEvenement({
+          evenement_id: eventId,
           date: group.date,
           domaine_code: group.domaineStockage,
           sous_domaine_code: group.sousDomaine || null,
@@ -5840,7 +5853,7 @@ function createScopeService(repo){
           statut: 'PLANIFIE',
           origine: 'IMPORT_CSV',
           mode_suivi: 'NOMINATIF',
-          code_cours: group.codeCours,
+          code_cours: eventCode,
           code_source: group.codeCours,
           source_type: 'CSV',
           heure_debut: group.heureDebut || null,
@@ -5851,8 +5864,8 @@ function createScopeService(repo){
           policy_version_id: genericBinding && genericBinding.policyVersionId,
           engine_route: genericBinding && genericBinding.engineRoute,
           engine_snapshot: genericBinding && genericBinding.snapshot,
-          statcom_code: genericBinding && genericBinding.statComCode,
-          statcom_snapshot: genericBinding && genericBinding.statComSnapshot,
+          statcom_code: importStatCom && importStatCom.code,
+          statcom_snapshot: genericBinding && genericBinding.statComSnapshot || importStatCom && importStatCom.snapshot,
           participation_policy_version: targetPolicy.policyVersion,
           participation_policy_snapshot: targetPolicy,
           cible_ids: (group.cibles || []).map((c) => c.cibleId),

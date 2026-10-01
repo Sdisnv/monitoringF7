@@ -1,0 +1,83 @@
+{
+  "engine": "netlify/lib/_scope-functional-catalog.js",
+  "examinedSourceOverlapPairs": 80,
+  "totals": {
+    "BLOQUANT": 4,
+    "DEROGEABLE": 0,
+    "ATTENTION": 0,
+    "COMPATIBLE_PERTINENT": 76
+  },
+  "causes": {
+    "ROOM_CONFLICT": 3,
+    "PUBLIC_CONFLICT": 1,
+    "WHO_CONFLICT": 2
+  },
+  "sourceConflicts": [
+    {
+      "activityAId": "qv-source-866",
+      "activityBId": "qv-source-867",
+      "activityA": "Séance de préparation concours de la FVSP",
+      "activityB": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "cause": [
+        "ROOM_CONFLICT"
+      ],
+      "level": "CONFLICT",
+      "provenanceA": "SOURCE_2027_EXPLICIT",
+      "provenanceB": "SOURCE_2027_EXPLICIT",
+      "action": "Replanifier ou lever la contrainte"
+    },
+    {
+      "activityAId": "qv-source-867",
+      "activityBId": "qv-source-868",
+      "activityA": "Cours de cadres moniteurs AUTO",
+      "activityB": "Cours de cadres moniteurs AUTO",
+      "date": "2027-01-18",
+      "cause": [
+        "PUBLIC_CONFLICT",
+        "WHO_CONFLICT",
+        "ROOM_CONFLICT"
+      ],
+      "level": "CONFLICT",
+      "provenanceA": "SOURCE_2027_EXPLICIT",
+      "provenanceB": "SOURCE_2027_EXPLICIT",
+      "action": "Replanifier ou lever la contrainte"
+    },
+    {
+      "activityAId": "qv-source-877",
+      "activityBId": "qv-source-879",
+      "activityA": "Cours de cadres Formateurs cursus MEA",
+      "activityB": "Séance responsables MAT SDIS",
+      "date": "2027-01-25",
+      "cause": [
+        "ROOM_CONFLICT"
+      ],
+      "level": "CONFLICT",
+      "provenanceA": "SOURCE_2027_EXPLICIT",
+      "provenanceB": "SOURCE_2027_EXPLICIT",
+      "action": "Replanifier ou lever la contrainte"
+    },
+    {
+      "activityAId": "qv-source-894",
+      "activityBId": "qv-source-895",
+      "activityA": "Équipement des recrues FOBA 1 · Séance photo individuelle",
+      "activityB": "Cours de cadres FOBA",
+      "date": "2027-01-30",
+      "cause": [
+        "WHO_CONFLICT"
+      ],
+      "level": "CONFLICT",
+      "provenanceA": "SOURCE_2027_EXPLICIT",
+      "provenanceB": "SOURCE_2027_EXPLICIT",
+      "action": "Replanifier ou lever la contrainte"
+    }
+  ],
+  "engineProposalConflicts": [],
+  "engineCreatedConflicts": 0,
+  "engineResolvedByExclusion": 0,
+  "proposalCompatibility": {
+    "COMPATIBLE": 25
+  },
+  "humanArbitrationRequired": 4,
+  "note": "Les quatre blocages sont portés par des dates source. Les propositions EMSEA incompatibles sont exclues avant restitution."
+}

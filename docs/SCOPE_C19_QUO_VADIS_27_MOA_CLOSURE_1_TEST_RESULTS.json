@@ -1,0 +1,34 @@
+{
+  "scope": "C19-QUO-VADIS-27-MOA-CLOSURE-1",
+  "targeted": {
+    "result": "PASS",
+    "passed": 13,
+    "checks": 13,
+    "suite": "scripts/scope-c19-quo-vadis-27-moa-closure-1-tests.js"
+  },
+  "related": {
+    "result": "PASS",
+    "passed": 140,
+    "checks": 140,
+    "suites": [
+      { "suite": "scope-c19-quo-vadis-27-full-dress-rehearsal-1-tests.js", "passed": 15, "checks": 15 },
+      { "suite": "scope-c19-preprod-moa-ux-code-final-1-tests.js", "passed": 31, "checks": 31 },
+      { "suite": "scope-functional-catalog-c19-tests.js", "passed": 9, "checks": 9 },
+      { "suite": "scope-functional-catalog-c19-ux-tests.js", "passed": 67, "checks": 67 },
+      { "suite": "scope-functional-catalog-c18-tests.js", "passed": 18, "checks": 18 }
+    ]
+  },
+  "global": {
+    "command": "npm run test:scope",
+    "executions": 1,
+    "result": "KNOWN_FAILURE",
+    "exitCode": 1,
+    "firstFailure": "scope-login-visual-alignment-orion-1-tests.js — cache-bust SCOPE visuel uniquement",
+    "newC19Regression": false,
+    "repeated": false
+  },
+  "totals": {
+    "directPassed": 153,
+    "directChecks": 153
+  }
+}

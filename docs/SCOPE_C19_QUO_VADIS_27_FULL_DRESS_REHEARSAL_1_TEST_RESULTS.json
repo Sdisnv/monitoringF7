@@ -1,0 +1,28 @@
+{
+  "scope": "C19-QUO-VADIS-27-FULL-DRESS-REHEARSAL-1",
+  "executedAt": "2026-09-29T09:15:00.000Z",
+  "verdict": "PASS_WITH_KNOWN_GLOBAL_EXCEPTION",
+  "targeted": "PASS — 9 suites pertinentes, 217 contrôles réussis, 0 échec.",
+  "newLot": "PASS — 15/15 contrôles de répétition générale.",
+  "related": {
+    "scope-functional-catalog-c18-tests.js": "18/18 PASS",
+    "scope-functional-catalog-c19-tests.js": "9/9 PASS",
+    "scope-functional-catalog-c19-ux-tests.js": "67/67 PASS",
+    "scope-c19-preprod-gate-2-tests.js": "17/17 PASS",
+    "scope-c19-preprod-gate-3-tests.js": "15/15 PASS",
+    "scope-c19-preprod-moa-final-1-tests.js": "20/20 PASS",
+    "scope-c19-preprod-canonical-truth-1-tests.js": "25/25 PASS",
+    "scope-c19-preprod-moa-ux-code-final-1-tests.js": "31/31 PASS",
+    "scope-c19-quo-vadis-27-full-dress-rehearsal-1-tests.js": "15/15 PASS"
+  },
+  "global": "NOK attendu uniquement sur scope-login-visual-alignment-orion-1-tests.js — cache-bust SCOPE visuel préexistant; 37 contrôles précédents réussis; arrêt de la chaîne au premier échec; aucune nouvelle régression observée.",
+  "globalRunCount": 1,
+  "globalExitCode": 1,
+  "knownFailure": {
+    "suite": "scope-login-visual-alignment-orion-1-tests.js",
+    "test": "06 — cache-bust SCOPE visuel uniquement",
+    "classification": "PREEXISTING_KNOWN_FAILURE",
+    "fixedInThisLot": false
+  },
+  "log": "/private/tmp/c19-full-dress-test-scope.log"
+}

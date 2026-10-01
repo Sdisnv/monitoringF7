@@ -208,6 +208,9 @@
     quoVadisHistoryError: null,
     quoVadisHistoryId: '',
     quoVadisSort: { key: 'date', dir: 'asc' },
+    quoVadisProgrammeMode: 'tableau',
+    quoVadisProgrammePage: 1,
+    quoVadisProgrammePageSize: 20,
     quoVadisFilters: {
       q: '',
       domain: 'tous',
@@ -3279,6 +3282,14 @@
 
   const EVENT_LIST_PAGE_SIZES = [12, 24, 48, 60];
 
+  function canonicalScopeEventCode(event) {
+    const code = String(event && event.code_cours || '').trim();
+    const statCom = String(event && (event.statcom_code || event.statComCode) || '').trim().toUpperCase();
+    if (!code || !statCom) return '';
+    const prefix = `${statCom}.`;
+    return code.toUpperCase().startsWith(prefix) && /^\d{3}[a-z]?$/i.test(code.slice(prefix.length)) ? code : '';
+  }
+
   function eventListPageSize() {
     const n = Number(state.eventListPageSize);
     return EVENT_LIST_PAGE_SIZES.indexOf(n) >= 0 ? n : 12;
@@ -3782,7 +3793,7 @@
     ]) : (pilotage.individualRows || []);
     const evenements = L.sortRows ? L.sortRows(detail.evenements || [], state.cycleEventSort, [
       { key: 'date', type: 'date', value: (row) => row && row.date },
-      { key: 'code', type: 'text', value: (row) => row && (row.code_cours || row.identifiant_externe) },
+      { key: 'code', type: 'text', value: (row) => canonicalScopeEventCode(row) },
       { key: 'event', type: 'text', value: (row) => row && row.libelle },
       { key: 'etat', type: 'status', value: (row) => row && row.statut }
     ]) : (detail.evenements || []);
@@ -3807,7 +3818,7 @@
     const eventsById = new Map((detail.evenements || []).map((event) => [cycleEventId(event), event]));
     const eventRows = evenements.length ? evenements.map((ev) => `<tr>
       <td data-label="Date">${escapeHtml(L.formatDate(ev.date))}</td>
-      <td data-label="Code">${escapeHtml(ev.code_cours || ev.identifiant_externe || '—')}</td>
+      <td data-label="Code événement">${escapeHtml(canonicalScopeEventCode(ev) || '—')}</td>
       <td data-label="Événement"><a href="#/exercices/${escapeHtml(ev.evenement_id)}">${escapeHtml(L.formatActivityThemeLabel(ev.libelle))}</a></td>
       <td data-label="État">${statutBadge(ev.statut)}</td>
     </tr>`).join('') : '<tr><td colspan="4"><div class="scope-empty">Aucune session rattachée.</div></td></tr>';
@@ -7529,7 +7540,7 @@
     return `<div class="scope-modal"><div class="scope-card scope-edit-event-modal">
       <h3>Modifier l’événement</h3>
       <p>L’identité de l’événement (code) ne change pas. Les présences déjà saisies sont conservées.</p>
-      <p class="scope-mode-hint">Code : ${escapeHtml(ev.code_cours || '—')}</p>
+      <p class="scope-mode-hint">Code événement : ${escapeHtml(canonicalScopeEventCode(ev) || '—')}</p>
       <section class="scope-form-section">
         <h4>Identification</h4>
         <div class="scope-form-two">
@@ -7570,7 +7581,7 @@
     return `<div class="scope-modal"><div class="scope-card">
       <h3>Reporter</h3>
       <p>L’événement reste le même. Le code est conservé et la nouvelle date sera utilisée par les statistiques.</p>
-      <p class="scope-mode-hint">Code : ${escapeHtml(ev.code_cours || '—')}</p>
+      <p class="scope-mode-hint">Code événement : ${escapeHtml(canonicalScopeEventCode(ev) || '—')}</p>
       <div class="scope-field"><label>Nouvelle date</label><input id="edit-event-date" type="date" value="${escapeHtml(form.date || '')}"></div>
       <div class="scope-field"><label>Heure de début</label><input id="edit-event-debut" type="time" value="${escapeHtml(form.heureDebut || '')}"></div>
       <div class="scope-field"><label>Heure de fin</label><input id="edit-event-fin" type="time" value="${escapeHtml(form.heureFin || '')}"></div>
@@ -10063,7 +10074,7 @@
   }
 
   function qvView() {
-    return route().qvView || 'programme';
+    return route().qvView || 'agenda-annuel';
   }
 
   function qvHref(view, options) {
@@ -10080,6 +10091,7 @@
     if (opts.domaine) params.push(`domaine=${encodeURIComponent(opts.domaine)}`);
     if (opts.famille) params.push(`famille=${encodeURIComponent(opts.famille)}`);
     if (opts.mois) params.push(`mois=${encodeURIComponent(opts.mois)}`);
+    if (opts.mode) params.push(`mode=${encodeURIComponent(opts.mode)}`);
     if (opts.seances) params.push(`seances=${encodeURIComponent(opts.seances)}`);
     return params.length ? `${path}?${params.join('&')}` : path;
   }
@@ -10176,6 +10188,28 @@
       filters.sessions = r.qvSeances || 'tous';
     }
     if (r.qvView === 'agenda' && r.qvMois) state.quoVadisAgendaMonth = r.qvMois;
+    if (r.qvView === 'programme') {
+      Object.assign(filters, {
+        q: '', domain: 'tous', family: 'tous', sessions: 'tous', cible: 'tous', oi: 'tous', statcom: 'tous',
+        type: 'tous', gravity: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', period: 'tous',
+        month: 'tous', quarter: 'tous', semester: 'tous', lieu: 'tous', attention: false, day: ''
+      });
+      state.quoVadisProgrammeMode = r.qvMode === 'mensuelle' ? 'mensuelle' : 'tableau';
+      if (r.qvMois) {
+        filters.period = 'mois';
+        filters.month = r.qvMois;
+      } else {
+        filters.period = 'tous';
+        filters.month = 'tous';
+      }
+      if (r.qvJour) {
+        filters.period = 'mois';
+        filters.month = String(r.qvJour).slice(0, 7);
+        filters.day = r.qvJour;
+      } else {
+        filters.day = '';
+      }
+    }
     state.quoVadisFilters = filters;
   }
 
@@ -10589,6 +10623,12 @@
     return `<button type="button" class="scope-table-sort-control qv-sort-header" data-qv-sort="${escapeHtml(key)}">${escapeHtml(label + mark)}</button>`;
   }
 
+  function qvSortHeaderLines(key, lines) {
+    const sort = state.quoVadisSort || {};
+    const mark = sort.key === key ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : '';
+    return `<button type="button" class="scope-table-sort-control qv-sort-header qv-sort-header-lines" data-qv-sort="${escapeHtml(key)}">${lines.map((line, index) => `<span>${escapeHtml(line + (index === lines.length - 1 ? mark : ''))}</span>`).join('')}</button>`;
+  }
+
   function qvFilterBar(qv, options) {
     const opts = options || {};
     const filters = state.quoVadisFilters || {};
@@ -10776,21 +10816,18 @@
   function renderQuoVadisNav(qv) {
     const view = qvView();
     const summary = qv.summary || {};
-    const items = [
-      ['programme', 'Programme', (qv.canonicalProgramme && qv.canonicalProgramme.target && qv.canonicalProgramme.target.programmeItems) || null],
-      ['synthese', 'Synthèse', null],
-      ['catalogue-annuel', 'Catalogue annuel', null],
-      ['agenda-annuel', 'Agenda annuel', null],
-      ['agenda', 'Agenda', summary.datesProposees || null],
-      ['activites', 'Toutes les activités', summary.totalActivites || 0],
-      ['a-arbitrer', 'À arbitrer', summary.aArbitrer || 0],
-      ['alertes', 'Alertes', (qv.alerts || []).length],
-      ['cursus', 'Cursus', summary.cursusRetenus || null],
-      ['regles', 'Règles', null],
-      ['dates-connues', 'Dates annoncées', summary.datesFutures || 0]
+    const groups = [
+      ['Programme', [
+        ['agenda-annuel', 'Agenda annuel', null],
+        ['programme', 'Programme annuel', (qv.canonicalProgramme && qv.canonicalProgramme.target && qv.canonicalProgramme.target.programmeItems) || null],
+        ['synthese', 'Synthèse', null]
+      ]],
+      ['À traiter', [['a-arbitrer', 'À arbitrer', summary.aArbitrer || 0], ['alertes', 'Alertes', (qv.alerts || []).length]]],
+      ['Préparation', [['catalogue-annuel', 'Catalogue', null], ['dates-connues', 'Dates annoncées', summary.datesFutures || 0]]],
+      ['Paramétrage', [['cursus', 'Cursus', summary.cursusRetenus || null], ['regles', 'Règles', null]]]
     ];
     const current = view === 'activite' ? (route().qvFrom || 'activites') : view === 'programme-fiche' ? 'programme' : view === 'catalogue-activite' ? 'catalogue-annuel' : view;
-    return `<nav class="qv-subnav" aria-label="Navigation QUO VADIS">${items.map(([id, label, count]) => `<a class="qv-subnav-link${current === id ? ' is-active' : ''}" href="${qvHref(id)}">${escapeHtml(label)}${count == null ? '' : ` <span>${escapeHtml(String(count))}</span>`}</a>`).join('')}</nav>`;
+    return `<nav class="qv-subnav" aria-label="Navigation QUO VADIS">${groups.map(([label,items]) => `<div class="qv-subnav-group"><span class="qv-subnav-group-label">${escapeHtml(label)}</span><div>${items.map(([id,itemLabel,count]) => `<a class="qv-subnav-link${current === id ? ' is-active' : ''}" href="${qvHref(id)}">${escapeHtml(itemLabel)}${count == null ? '' : ` <span>${escapeHtml(String(count))}</span>`}</a>`).join('')}</div></div>`).join('')}</nav>`;
   }
 
   function renderQuoVadisShell(content) {
@@ -10811,11 +10848,11 @@
       regles: 'Règles',
       'dates-connues': 'Dates annoncées'
     };
-    return `<div class="scope-crumb"><a href="#/quo-vadis/programme">QUO VADIS 2027</a> / ${escapeHtml(titles[view] || 'Programme 2027')}</div>
+    return `<div class="scope-crumb"><a href="#/quo-vadis/agenda-annuel">QUO VADIS 2027</a> / ${escapeHtml(titles[view] || 'Agenda annuel 2027')}</div>
       <div class="scope-main">
         ${pageHeaderHtml({
           eyebrow: 'Activité',
-          titleHtml: '<a class="qv-home-link" href="#/quo-vadis/programme">QUO VADIS 2027</a>',
+          titleHtml: '<a class="qv-home-link" href="#/quo-vadis/agenda-annuel">QUO VADIS 2027</a>',
           context: titles[view] || 'Programme 2027',
           description: 'Préparation annuelle du programme de formation et d’activités.',
           logo: true,
@@ -11035,8 +11072,10 @@
     const byDate = {};
     const known = new Set();
     const calendar = qvCalendarIndex(qv);
-    qvActivities(qv).forEach((row) => {
-      const date = qvDateKey(row.startsAt);
+    const programmeRows = (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => !row.external);
+    const calendarRows = programmeRows.length ? programmeRows : qvActivities(qv);
+    calendarRows.forEach((row) => {
+      const date = programmeRows.length ? qvProgrammeDate(row) : qvDateKey(row.startsAt);
       if (!date.startsWith(`${year}-`)) return;
       (byDate[date] = byDate[date] || []).push(row);
     });
@@ -11054,7 +11093,7 @@
       cells.push({
         date,
         day,
-        items: qvSortActivities(byDate[date] || [], qv),
+        items: (byDate[date] || []).slice().sort((a, b) => String(a.eventDisplayLabel || a.title || a.label || '').localeCompare(String(b.eventDisplayLabel || b.title || b.label || ''), 'fr', { numeric: true })),
         known: known.has(date),
         holiday: marks.some((row) => qvCalendarKind(row) === 'FERIE'),
         vacation: marks.some((row) => qvCalendarKind(row) === 'VACANCES_SCOLAIRES'),
@@ -11088,9 +11127,16 @@
     return Array.from({ length: 12 }, (_, index) => qvBuildMonth(qv, 2027, index + 1));
   }
 
+  function qvAgendaProjection(qv) {
+    const rows = ((((qv || {}).canonicalProgramme || {}).rows) || []).filter((row) => !row.external);
+    const dated = rows.filter((row) => qvProgrammeDate(row));
+    const undated = rows.filter((row) => !qvProgrammeDate(row));
+    return { total: rows.length, dated: dated.length, undated: undated.length };
+  }
+
   function qvRenderMiniMonth(month, today) {
     const count = qvMonthActivityCount(month);
-    const monthHref = qvHref('agenda', { mois: month.key });
+    const monthHref = qvHref('programme', { mode: 'mensuelle', mois: month.key });
     return `<article class="qv-year-month qv-mini-month">
         <a class="qv-year-month-head" href="${monthHref}">
           <h3>${escapeHtml(month.label)}</h3>
@@ -11132,7 +11178,7 @@
                 const extra = cell.calendarLabel ? ` ${cell.calendarLabel}` : '';
                 const label = escapeHtml(qvDateLong(cell.date) + extra);
                 if (activityCount) {
-                  rows.push(`<a class="${classes.join(' ')}" href="${qvHref('agenda', { mois: month.key, jour: cell.date })}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></a>`);
+                  rows.push(`<a class="${classes.join(' ')}" href="${qvHref('programme', { mode: 'mensuelle', mois: month.key, jour: cell.date })}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></a>`);
                   return;
                 }
                 rows.push(`<span class="${classes.join(' ')}" aria-label="${label}"><span>${escapeHtml(String(cell.day))}</span></span>`);
@@ -11148,10 +11194,16 @@
     const months = qvYearMonths(qv);
     const q1 = [qvBuildMonth(qv, 2028, 1), qvBuildMonth(qv, 2028, 2), qvBuildMonth(qv, 2028, 3)];
     const today = qvTodayKey();
+    const projection = qvAgendaProjection(qv);
     return `<div class="qv-year-view">
       <section class="qv-year-intro">
         ${qvSectionHead('calendar', 'Agenda annuel 2027', 'Vue d’ensemble du programme préparatoire jusqu’au rapport annuel de mars 2028.')}
-        ${qvYearHint(['Cliquez sur un mois pour ouvrir l’agenda mensuel.', 'Cliquez sur un jour avec une activité pour accéder directement à la journée.'])}
+        ${qvYearHint(['Cliquez sur un mois pour ouvrir la vue mensuelle du Programme.', 'Cliquez sur un jour avec une activité pour filtrer directement cette journée.'])}
+        <div class="qv-agenda-projection" aria-label="Projection du Programme dans l’Agenda">
+          <div><span>Programme</span><strong>${escapeHtml(String(projection.total))}</strong><small>séances représentées</small></div>
+          <div><span>Dans le calendrier</span><strong>${escapeHtml(String(projection.dated))}</strong><small>séances avec date</small></div>
+          <div><span>À positionner</span><strong>${escapeHtml(String(projection.undated))}</strong><small>séances sans date inventée</small></div>
+        </div>
       </section>
       <ul class="qv-year-legend">
         <li><span class="qv-legend-swatch is-activity"></span><span><strong>Activité proposée</strong><small>Date à planifier / à confirmer</small></span></li>
@@ -11164,7 +11216,7 @@
       <section class="qv-year-close">
         <div class="qv-year-intro">
           ${qvSectionHead('flag', 'Clôture du programme — janvier à mars 2028', 'Période de clôture annuelle incluse dans QUO VADIS.')}
-          ${qvYearHint(['Janvier – mars 2028 font partie du périmètre QUO VADIS et peuvent également être ouverts dans l’agenda mensuel.'])}
+          ${qvYearHint(['Janvier – mars 2028 font partie du périmètre QUO VADIS et peuvent également être ouverts dans la vue mensuelle du Programme.'])}
         </div>
         <div class="qv-year-grid">${q1.map((month) => qvRenderMiniMonth(month, today)).join('')}</div>
       </section>
@@ -11373,10 +11425,11 @@
 
   function qvProgrammeFamily(row) {
     const domain = String(row && row.domain || '').toUpperCase();
+    if (domain === 'CMDT') return '—';
     if (domain === 'PR' || domain === 'AUTO') return domain;
     if (['FOBA', 'FOCO', 'FOCA', 'FOSPEC'].includes(domain)) return domain;
     if (['DPS', 'DAP', 'JSP'].includes(domain)) return 'FOCO';
-    return row && row.family || 'Autre';
+    return row && row.family || '—';
   }
 
   function qvProgrammeProvenance(row) {
@@ -11390,8 +11443,9 @@
   }
 
   function qvProgrammeVisualState(row) {
+    if (row.review || row.publicReviewRequired) return { tone: 'attention', label: 'À contrôler' };
     if (row.publishedEventId) return { tone: 'positive', label: 'Publié' };
-    if (row.review || row.status !== 'VALIDATED') return { tone: row.status === 'A_POSITIONNER' ? 'info' : 'attention', label: 'À contrôler' };
+    if (row.status !== 'VALIDATED') return { tone: row.status === 'A_POSITIONNER' ? 'info' : 'attention', label: 'À contrôler' };
     return { tone: 'positive', label: 'Validé' };
   }
 
@@ -11401,26 +11455,139 @@
 
   function qvProgrammeTime(row) {
     const start = row.publishedEventStart || qvTime(row.startsAt);
+    if (row && row.definitionId === 'CTA-PERMANENCE') return start;
     const end = row.publishedEventEnd || qvTime(row.endsAt);
     return [start, end].filter(Boolean).join(' – ');
   }
 
-  function qvProgrammeFilteredRows(qv) {
+  function qvProgrammeActivityLabel(row) {
+    if (row && row.definitionId === 'CTA-PERMANENCE') {
+      const day = (value) => qvWeekdayLong(value).slice(0, 2).toUpperCase();
+      const hour = (value) => qvTime(value).replace(':00', 'h');
+      return `Permanence ${day(row.startsAt)} ${hour(row.startsAt)} à ${day(row.endsAt)} ${hour(row.endsAt)}`;
+    }
+    return row.eventDisplayLabel || row.activityLabel || row.label || '—';
+  }
+
+  function qvProgrammeActivityHtml(row) {
+    if (row && row.definitionId === 'CTA-PERMANENCE') {
+      const period = qvProgrammeActivityLabel(row).replace(/^Permanence\s+/, '');
+      return `<span class="qv-programme-activity is-cta"><span>Permanence</span><span>${escapeHtml(period)}</span></span>`;
+    }
+    return escapeHtml(qvProgrammeActivityLabel(row));
+  }
+
+  function qvProgrammeLocationLabel(row) {
+    if (row && row.definitionId === 'CTA-PERMANENCE') return '—';
+    return String(row && row.location || '').replace(/^L-(G1|C1|B1|B2|Y1|Y2|Y3|Y4)$/i, '$1') || 'À définir';
+  }
+
+  function qvProgrammePublicCodeLabel(code) {
+    const labels = {
+      'FOBA:1': 'FOBA 1', 'FOBA:2': 'FOBA 2', 'FOBA:3': 'FOBA 3',
+      'JSP:1': 'JSP', 'PR:2': 'PAPR', 'PR:3': 'PABC',
+      'FOSPEC:1': 'Antichute', 'FOSPEC:2': 'NAC', 'FOSPEC:3': 'OFSI', 'FOSPEC:4': 'VPC',
+      'AUTO:1': 'Cond PL', 'AUTO:2': 'Cond TP9', 'AUTO:3': 'Cond VL',
+      'AUTO:4': 'Grutier', 'AUTO:5': 'MEA', 'AUTO:6': 'Pilote bat'
+    };
+    const value = String(code || '').trim();
+    if (!value) return '';
+    if (labels[value]) return labels[value];
+    return value.includes(':') ? 'À définir' : value;
+  }
+
+  function qvProgrammePublicLabels(row) {
+    return [...new Set((row.publics || []).map(qvProgrammePublicCodeLabel).filter(Boolean))];
+  }
+
+  function qvProgrammePublicLabel(row) {
+    return qvProgrammePublicLabels(row).join(', ') || 'À définir';
+  }
+
+  function qvProgrammeCtaLines(row) {
+    const assignments = Array.isArray(row && row.ctaAssignments) ? row.ctaAssignments : [];
+    const line = (oi) => {
+      const assignment = assignments.find((item) => item.oi === oi);
+      return { oi, public: assignment && (assignment.halfSection || assignment.section) || 'À définir' };
+    };
+    const g1 = line('G1');
+    const other = ['C1', 'B1', 'B2'].map(line);
+    if (other.every((item) => item.public === other[0].public)) {
+      return [g1, { oi: 'C1, B1, B2', public: other[0].public }];
+    }
+    return [g1, ...other];
+  }
+
+  function qvProgrammePublicHtml(row) {
+    if (row && row.definitionId === 'CTA-PERMANENCE') {
+      return `<span class="qv-programme-public-list">${qvProgrammeCtaLines(row).map((item) => `<span>${escapeHtml(item.public)}</span>`).join('')}</span>`;
+    }
+    return escapeHtml(qvProgrammePublicLabel(row));
+  }
+
+  function qvProgrammeOiHtml(row) {
+    const values = L.qvSortOiCodes((row.ois || []).slice());
+    if (!values.length) return '—';
+    if (row && row.definitionId === 'CTA-PERMANENCE') {
+      return `<span class="qv-programme-oi is-cta">${qvProgrammeCtaLines(row).map((item) => `<span>${escapeHtml(item.oi)}</span>`).join('')}</span>`;
+    }
+    const lines = [];
+    for (let index = 0; index < values.length; index += 4) lines.push(values.slice(index, index + 4));
+    return `<span class="qv-programme-oi">${lines.map((line) => `<span>${escapeHtml(line.join(', '))}</span>`).join('')}</span>`;
+  }
+
+  function qvProgrammeSortValue(row, key) {
+    const values = {
+      eventCode: qvProgrammeEventCodeLabel(row), activity: qvProgrammeActivityLabel(row),
+      statcom: row.statCom || '', domain: row.domain || '', family: qvProgrammeFamily(row), oi: L.qvSortOiCodes(row.ois || []).join(' '),
+      occurrence: Number(row.occurrenceIndex || 1), session: Number(row.sessionIndex || 1), date: qvProgrammeDate(row) || '9999-12-31',
+      time: qvProgrammeTime(row) || '', public: (row.publics || []).join(' '), responsible: row.responsible || '',
+      location: qvProgrammeLocationLabel(row), status: qvProgrammeVisualState(row).label
+    };
+    return values[key] == null ? '' : values[key];
+  }
+
+  function qvNormalizeSearch(value) {
+    return String(value == null ? '' : value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  function qvProgrammeCompareRows(a, b) {
+    const sort = state.quoVadisSort || { key: 'date', dir: 'asc' };
+    const dir = sort.dir === 'desc' ? -1 : 1;
+    const cmp = String(qvProgrammeSortValue(a, sort.key)).localeCompare(String(qvProgrammeSortValue(b, sort.key)), 'fr', { numeric: true });
+    return cmp ? cmp * dir : String(a.id || '').localeCompare(String(b.id || ''), 'fr', { numeric: true });
+  }
+
+  function qvProgrammeFilteredRows(qv, options = {}) {
     const programme = qv.canonicalProgramme || {};
     const filters = state.quoVadisFilters || {};
-    const query = String(filters.q || '').trim().toLowerCase();
+    const query = qvNormalizeSearch(filters.q).trim();
     return (programme.rows || []).filter((row) => !row.external).filter((row) => {
       const visual = qvProgrammeVisualState(row);
       const family = qvProgrammeFamily(row);
-      const haystack = [row.code, row.label, row.eventLabel, row.statCom, row.domain, family, (row.ois || []).join(' '), (row.publics || []).join(' '), row.responsible, row.location, visual.label, qvProgrammeProvenance(row)].join(' ').toLowerCase();
+      const date = qvProgrammeDate(row);
+      const haystack = qvNormalizeSearch([qvProgrammeEventCodeLabel(row), row.activityLabel, row.eventDisplayLabel, row.label, row.eventLabel, row.occurrenceLabel, row.sessionLabel, row.statCom, row.domain, family, (row.ois || []).join(' '), (row.publics || []).join(' '), row.specialisation, row.cursus, row.responsible, row.location, visual.label, qvProgrammeProvenance(row)].join(' '));
       if (query && !haystack.includes(query)) return false;
       if (filters.domain && filters.domain !== 'tous' && row.domain !== filters.domain) return false;
       if (filters.family && filters.family !== 'tous' && family !== filters.family) return false;
       if (filters.oi && filters.oi !== 'tous' && !(row.ois || []).includes(filters.oi)) return false;
       if (filters.statcom && filters.statcom !== 'tous' && row.statCom !== filters.statcom) return false;
       if (filters.status && filters.status !== 'tous' && visual.label !== filters.status) return false;
+      if (filters.cible && filters.cible !== 'tous' && !(row.publics || []).includes(filters.cible)) return false;
+      if (filters.specialisation && filters.specialisation !== 'tous' && row.specialisation !== filters.specialisation) return false;
+      if (filters.cursus && filters.cursus !== 'tous' && row.cursus !== filters.cursus) return false;
+      if (filters.lieu && filters.lieu !== 'tous' && row.location !== filters.lieu) return false;
+      if (filters.sessions === 'oui' && Number(row.sessionCount || 1) <= 1) return false;
+      if (filters.attention && !(row.review || visual.tone === 'attention')) return false;
+      if (!options.ignoreDay && filters.day && date !== filters.day) return false;
+      const monthlyMode = state.quoVadisProgrammeMode === 'mensuelle';
+      const monthFilter = filters.month && filters.month !== 'tous' ? filters.month : (monthlyMode ? '2027-01' : '');
+      if ((!filters.day || options.ignoreDay) && (filters.period === 'mois' || monthlyMode) && monthFilter && !String(date).startsWith(monthFilter)) return false;
       return true;
-    }).sort((a, b) => String(qvProgrammeDate(a) || '9999').localeCompare(String(qvProgrammeDate(b) || '9999')) || String(a.label).localeCompare(String(b.label), 'fr', { numeric: true }));
+    }).sort(qvProgrammeCompareRows);
   }
 
   function qvProgrammeFilterBar(qv) {
@@ -11431,6 +11598,10 @@
     const ois = L.qvSortOiCodes(qvFilterOptions(all.flatMap((row) => row.ois || []), (value) => value));
     const statcom = qvFilterOptions(all, (row) => row.statCom);
     const states = qvFilterOptions(all, (row) => qvProgrammeVisualState(row).label);
+    const publics = qvFilterOptions(all.flatMap((row) => row.publics || []), (value) => value);
+    const locations = qvFilterOptions(all, (row) => row.location);
+    const specs = qvFilterOptions(all, (row) => row.specialisation);
+    const cursus = qvFilterOptions(all, (row) => row.cursus);
     const field = (id, label, options) => `<div class="scope-field"><label for="${id}">${escapeHtml(label)}</label><select id="${id}">${options}</select></div>`;
     return `<div class="qv-agenda-filters qv-programme-filters">
       <div class="scope-field qv-filter-search"><label for="qv-filter-q">Recherche</label><div class="qv-filter-search-control"><span class="qv-filter-search-icon">${qvCockpitIcon('search')}</span><input id="qv-filter-q" type="search" value="${escapeHtml(filters.q || '')}" placeholder="Code, activité, Stat.Com, public…"></div></div>
@@ -11439,8 +11610,171 @@
       ${field('qv-filter-family', 'Famille', `<option value="tous">Toutes</option>${families.map((v) => `<option value="${escapeHtml(v)}" ${filters.family === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-oi', 'OI', `<option value="tous">Tous</option>${ois.map((v) => `<option value="${escapeHtml(v)}" ${filters.oi === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
       ${field('qv-filter-statcom', 'Stat.Com', `<option value="tous">Tous</option>${statcom.map((v) => `<option value="${escapeHtml(v)}" ${filters.statcom === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
+      ${field('qv-filter-cible', 'Public cible', `<option value="tous">Tous</option>${publics.map((v) => `<option value="${escapeHtml(v)}" ${filters.cible === v ? 'selected' : ''}>${escapeHtml(qvProgrammePublicCodeLabel(v))}</option>`).join('')}`)}
+      ${locations.length ? field('qv-filter-lieu', 'Lieu', `<option value="tous">Tous</option>${locations.map((v) => `<option value="${escapeHtml(v)}" ${filters.lieu === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`) : ''}
+      ${specs.length ? field('qv-filter-specialisation', 'Spécialisation', `<option value="tous">Toutes</option>${specs.map((v) => `<option value="${escapeHtml(v)}" ${filters.specialisation === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`) : ''}
+      ${cursus.length ? field('qv-filter-cursus', 'Cursus', `<option value="tous">Tous</option>${cursus.map((v) => `<option value="${escapeHtml(v)}" ${filters.cursus === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`) : ''}
       ${field('qv-filter-status', 'État', `<option value="tous">Tous</option>${states.map((v) => `<option value="${escapeHtml(v)}" ${filters.status === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}`)}
-      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">${qvCockpitIcon('refresh')}</button>
+      ${field('qv-filter-month', 'Période', `<option value="tous">Toute l’année</option>${qvMonthChoices().map((row) => `<option value="${escapeHtml(row.value)}" ${filters.month === row.value ? 'selected' : ''}>${escapeHtml(row.label)}</option>`).join('')}`)}
+      <label class="qv-agenda-check" for="qv-filter-sessions"><input id="qv-filter-sessions" type="checkbox" ${filters.sessions === 'oui' ? 'checked' : ''}><span class="qv-agenda-check-box" aria-hidden="true"></span><span>Séances multiples</span></label>
+      <label class="qv-agenda-check" for="qv-filter-attention"><input id="qv-filter-attention" type="checkbox" ${filters.attention ? 'checked' : ''}><span class="qv-agenda-check-box" aria-hidden="true"></span><span>Points d’attention</span></label>
+      <button type="button" class="scope-btn qv-filter-reset" id="qv-filter-reset">Réinitialiser</button>
+    </div>`;
+  }
+
+  function qvProgrammeEventCodeLabel(row) {
+    if (row.publishedEventCode) return row.publishedEventCode;
+    if (row.external || row.externalHistorical) return '—';
+    return row.statCom ? 'Auto' : '—';
+  }
+
+  function qvProgrammeActionLabel(row) {
+    return 'Consulter la fiche ›';
+  }
+
+  function qvProgrammeOccurrenceLabel(row) {
+    return Number(row.occurrenceCount || 1) > 1 ? `${Number(row.occurrenceIndex || 1)}/${Number(row.occurrenceCount)}` : '—';
+  }
+
+  function qvProgrammeSessionLabel(row) {
+    return Number(row.sessionCount || 1) > 1 ? `${Number(row.sessionIndex || 1)}/${Number(row.sessionCount)}` : '—';
+  }
+
+  function qvProgrammeTimeHtml(row) {
+    const value = qvProgrammeTime(row) || 'À définir';
+    const parts = value.split(' – ');
+    if (parts.length !== 2) return escapeHtml(value);
+    return `<span class="qv-programme-time"><span>${escapeHtml(parts[0])}</span><span>${escapeHtml(parts[1])}</span></span>`;
+  }
+
+  function qvProgrammeShortDate(row) {
+    const value = qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner';
+    return value.replace(/^(\d{2}\.\d{2}\.)\d{2}(\d{2})$/, '$1$2');
+  }
+
+  function qvProgrammeActionHtml(row) {
+    return `<span>Consulter</span><span>la fiche ›</span>`;
+  }
+
+  function qvProgrammeRoomLabel(row) {
+    const labels = {
+      'R-G1-VULCAIN': 'Salle Vulcain',
+      'R-G1-EM': 'Salle EM',
+      'R-G1-OXYGENE': 'Salle Oxygène',
+      'R-G1-JURA': 'Salle Jura',
+      'R-G1-O2': 'Salle O2'
+    };
+    const value = String(row && row.room || '');
+    const reference = (((state.quoVadis || {}).sallesTheorie) || []).find((item) => String(item.salleId || '') === value || String(item.code || '') === value);
+    return String(reference && reference.libelle || labels[value] || '—');
+  }
+
+  function qvProgrammeStatComLabel(row) {
+    const code = String(row && row.statCom || '').trim();
+    if (!code) return '';
+    const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
+    const match = (catalog.statComCodes || []).find((item) => String(item.code || '').trim() === code);
+    return String(match && (match.label || match.libelle) || '').trim();
+  }
+
+  function qvProgrammeFicheOccurrenceLabel(row) {
+    if (Number(row.seriesOccurrenceCount || 0) > 1) {
+      return `Occurrence ${Number(row.seriesOccurrenceIndex || 1)} sur ${Number(row.seriesOccurrenceCount)}`;
+    }
+    return row.occurrenceLabel || '';
+  }
+
+  function qvProgrammeAppliedRule(row) {
+    const activity = qvProgrammeActivityLabel(row);
+    const statComLabel = qvProgrammeStatComLabel(row);
+    const statCom = row.statCom ? ` Stat.Com ${row.statCom}${statComLabel ? ` — ${statComLabel}` : ''}.` : '';
+    const publicLabel = qvProgrammePublicLabel(row);
+    const occurrence = Number(row.occurrenceCount || 1) > 1
+      ? ` Occurrence ${Number(row.occurrenceIndex || 1)} sur ${Number(row.occurrenceCount)}.`
+      : '';
+    if (row.definitionId === 'CTA-PERMANENCE') {
+      const lines = qvProgrammeCtaLines(row);
+      const turn = lines.map((line) => `${line.oi.replace(/, /g, '/')} ${line.public}`).join(' ; ');
+      const windows = (row.ctaHolidayWindows || []).map((window) => `${window.holidayLabel} : ${qvProgrammeActivityLabel({ definitionId: 'CTA-PERMANENCE', startsAt: window.startsAt, endsAt: window.endsAt })}`).join(' ; ');
+      return `Permanence CTA hebdomadaire. Tournus continu : ${turn}. Période appliquée : ${qvProgrammeActivityLabel(row)}. Période déterminée selon le calendrier CTA et les règles de jours fériés.${windows ? ` Période fériée associée : ${windows}.` : ''}`;
+    }
+    if (row.label === 'Séance État-major') {
+      return 'Séance État-major rattachée au domaine CMDT. Stat.Com EMSEA démontré par la source QUO VADIS.';
+    }
+    if (/Intégration personnel DPS/i.test(activity) && (row.publics || []).some((value) => /^FOBA:/.test(value))) {
+      return `Intégration DPS issue du programme FOBA. Public cible ${publicLabel} selon le référentiel de formation.`;
+    }
+    if (row.domain === 'JSP' && String(row.provenance || '').trim()) {
+      const site = String(row.seriesSite || (row.ois || [])[0] || '').trim();
+      const exercise = Number(row.seriesOccurrenceIndex || 0);
+      const series = Number(row.seriesOccurrenceCount || 0);
+      const seriesText = exercise && series ? ` Exercice ${exercise} sur ${series}.` : occurrence;
+      return `Activité JSP issue du Programme 2027.${statCom}${site ? ` Site ${site}.` : ''} Public cible ${publicLabel}.${seriesText}`.replace(/\.\s*\./g, '.').trim();
+    }
+    if (String(row.provenance || '').trim()) {
+      return `${activity} issue du Programme 2027.${statCom} Public cible ${publicLabel}.${occurrence}`.replace(/\.\s*\./g, '.').trim();
+    }
+    return 'Règle à définir';
+  }
+
+  function qvProgrammePagination(rows) {
+    const total = rows.length;
+    const requested = state.quoVadisProgrammePageSize === 'all' ? 'all' : Number(state.quoVadisProgrammePageSize || 20);
+    const size = requested === 'all' ? Math.max(1, total) : [20, 40, 60].includes(requested) ? requested : 20;
+    const pageCount = requested === 'all' ? 1 : Math.max(1, Math.ceil(total / size));
+    const page = Math.min(pageCount, Math.max(1, Number(state.quoVadisProgrammePage || 1)));
+    const start = requested === 'all' ? 0 : (page - 1) * size;
+    const visible = requested === 'all' ? rows : rows.slice(start, start + size);
+    const label = total ? `${start + 1}–${Math.min(total, start + visible.length)} sur ${total}` : '0 résultat';
+    const controls = `<div class="qv-programme-pagination" aria-label="Pagination du programme">
+      <label for="qv-programme-page-size">Afficher <select id="qv-programme-page-size"><option value="20"${requested === 20 ? ' selected' : ''}>20</option><option value="40"${requested === 40 ? ' selected' : ''}>40</option><option value="60"${requested === 60 ? ' selected' : ''}>60</option><option value="all"${requested === 'all' ? ' selected' : ''}>Tous</option></select></label>
+      <span>${escapeHtml(label)}</span>
+      <div><button type="button" class="scope-btn" data-qv-programme-page="${page - 1}" ${page <= 1 ? 'disabled' : ''} aria-label="Page précédente">‹</button><strong>Page ${page} / ${pageCount}</strong><button type="button" class="scope-btn" data-qv-programme-page="${page + 1}" ${page >= pageCount ? 'disabled' : ''} aria-label="Page suivante">›</button></div>
+    </div>`;
+    return { rows: visible, controls, page, pageCount, total };
+  }
+
+  function qvProgrammeModeControl() {
+    const mode = state.quoVadisProgrammeMode === 'mensuelle' ? 'mensuelle' : 'tableau';
+    return `<div class="qv-programme-mode" role="group" aria-label="Mode d’affichage du programme">
+      <button type="button" data-qv-programme-mode="tableau" class="${mode === 'tableau' ? 'is-active' : ''}" aria-pressed="${mode === 'tableau'}">Vue tableau</button>
+      <button type="button" data-qv-programme-mode="mensuelle" class="${mode === 'mensuelle' ? 'is-active' : ''}" aria-pressed="${mode === 'mensuelle'}">Vue mensuelle</button>
+    </div>`;
+  }
+
+  function qvProgrammeMonthlyView(qv, rows, monthTotal) {
+    const filters = state.quoVadisFilters || {};
+    const monthKey = filters.month && filters.month !== 'tous' ? filters.month : '2027-01';
+    const prev = qvShiftAgendaMonth(monthKey, -1);
+    const next = qvShiftAgendaMonth(monthKey, 1);
+    const byDate = new Map();
+    const calendar = qvCalendarIndex(qv);
+    rows.forEach((row) => {
+      const date = qvProgrammeDate(row) || 'sans-date';
+      if (!byDate.has(date)) byDate.set(date, []);
+      byDate.get(date).push(row);
+    });
+    const dateDirection = (state.quoVadisSort || {}).key === 'date' && (state.quoVadisSort || {}).dir === 'desc' ? -1 : 1;
+    const groups = [...byDate].sort(([a], [b]) => a.localeCompare(b) * dateDirection).map(([date, dateRows]) => ({ date, rows: dateRows }));
+    const body = groups.map((group) => {
+      const marks = L.qvCalendarMarksForDate(calendar, group.date);
+      const dayClass = marks.holiday ? 'is-holiday' : marks.vacation ? 'is-vacation' : 'is-normal';
+      const dayRows = group.rows.slice().sort(qvProgrammeCompareRows).map((row) => {
+        const visual = qvProgrammeVisualState(row);
+        return `<tr><td>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</td><td><strong>${escapeHtml(qvProgrammeEventCodeLabel(row))}</strong></td><td><strong>${qvProgrammeActivityHtml(row)}</strong></td><td>${escapeHtml(row.statCom || '—')}</td><td>${qvProgrammeOiHtml(row)}</td><td>${qvProgrammePublicHtml(row)}</td><td>${escapeHtml(qvProgrammeLocationLabel(row))}</td><td>${scopeStateHtml(visual.tone, visual.label)}</td><td><a class="scope-text-action qv-programme-action" href="#/quo-vadis/programme/${encodeURIComponent(row.id)}">${qvProgrammeActionHtml(row)}</a></td></tr>`;
+      }).join('');
+      return `<tr class="qv-agenda-day qv-agenda-date-row ${dayClass}"><th colspan="9"><div class="qv-agenda-day-bar"><span class="qv-agenda-day-main">${escapeHtml(qvAgendaDayTitle(group.date))}</span></div></th></tr>${dayRows}`;
+    }).join('');
+    return `<div class="qv-programme-monthly">
+      <nav class="qv-agenda-nav" aria-label="Mois du programme">
+        <button type="button" class="scope-btn qv-agenda-nav-side" data-qv-programme-month="${escapeHtml(prev)}" ${prev === monthKey ? 'disabled' : ''}><span class="qv-agenda-nav-chevron" aria-hidden="true">‹</span> ${prev === monthKey ? 'Mois précédent' : escapeHtml(qvMonthTitle(Number(prev.slice(5, 7)), Number(prev.slice(0, 4))))}</button>
+        <div class="qv-agenda-nav-current"><strong>${escapeHtml(qvMonthTitle(Number(monthKey.slice(5, 7)), Number(monthKey.slice(0, 4))))}</strong><p class="qv-agenda-nav-meta">${escapeHtml(String(monthTotal))} événement${monthTotal > 1 ? 's' : ''} dans le mois</p></div>
+        <button type="button" class="scope-btn qv-agenda-nav-side" data-qv-programme-month="${escapeHtml(next)}" ${next === monthKey ? 'disabled' : ''}>${next === monthKey ? 'Mois suivant' : escapeHtml(qvMonthTitle(Number(next.slice(5, 7)), Number(next.slice(0, 4))))} <span class="qv-agenda-nav-chevron" aria-hidden="true">›</span></button>
+      </nav>
+      ${filters.day ? `<div class="qv-programme-day-filter"><span>Sous-ensemble du mois : ${escapeHtml(qvDateLong(filters.day))} · ${rows.length} événement${rows.length > 1 ? 's' : ''} affiché${rows.length > 1 ? 's' : ''} sur ${monthTotal}</span><button type="button" class="scope-text-action" id="qv-programme-clear-day">Afficher tout le mois</button></div>` : ''}
+      <div class="scope-table-wrap qv-programme-month-wrap"><table class="scope-table qv-programme-month-table"><colgroup>${Array.from({ length: 9 }, (_, index) => `<col class="qv-programme-month-col-${index + 1}">`).join('')}</colgroup><thead><tr><th>${qvSortHeader('time', 'Horaire')}</th><th>${qvSortHeaderLines('eventCode', ['Code', 'cours'])}</th><th>${qvSortHeader('activity', 'Activité')}</th><th>${qvSortHeader('statcom', 'Stat.Com')}</th><th>${qvSortHeader('oi', 'OI')}</th><th>${qvSortHeader('public', 'Public cible')}</th><th>${qvSortHeader('location', 'Lieu')}</th><th>${qvSortHeader('status', 'État')}</th><th>Action</th></tr></thead><tbody>
+        ${body || '<tr><td colspan="9"><div class="scope-empty">Aucun événement positionné ne correspond aux filtres pour ce mois.</div></td></tr>'}
+      </tbody></table></div>
     </div>`;
   }
 
@@ -11448,25 +11782,29 @@
     const programme = qv.canonicalProgramme || {};
     const target = programme.target || {};
     const source = programme.source || {};
+    const mode = state.quoVadisProgrammeMode === 'mensuelle' ? 'mensuelle' : 'tableau';
     const rows = qvProgrammeFilteredRows(qv);
+    const monthlyRows = mode === 'mensuelle' ? qvProgrammeFilteredRows(qv, { ignoreDay: true }) : rows;
     const metrics = [
-      ['Activités', target.models, 'Modèles métier distincts'],
-      ['Occurrences', target.occurrences, 'Répétitions annuelles distinctes'],
-      ['Sessions', target.sessions, 'Séances 1/N à N/N'],
-      ['Matérialisations OI', target.oiMaterializations, 'Associations session × OI'],
-      ['À contrôler', target.toReview, 'Placement ou décision humaine requis']
+      ['Activités', target.models, 'Activités métier distinctes'],
+      ['Réalisations', target.occurrences, 'Occurrences prévues dans l’année'],
+      ['Sessions', target.sessions, 'Séances à organiser'],
+      ['Couverture OI', target.oiMaterializations, 'OI concernées par les séances'],
+      ['À traiter', target.toReview, 'Placement ou décision requis']
     ];
+    const pagination = qvProgrammePagination(rows);
     return `<section class="scope-card qv-programme-view">
-      <div class="scope-section-head"><div><h2>Programme 2027</h2><p class="scope-muted">${escapeHtml(String(target.programmeItems || 0))} objets de programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} traces historiques non reconduites.</p></div></div>
+      <div class="scope-section-head"><div><h2>Programme 2027</h2><p class="scope-muted">${escapeHtml(String(target.programmeItems || 0))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div>${qvProgrammeModeControl()}</div>
       <div class="qv-programme-kpis" aria-label="Niveaux du programme">${metrics.map(([label, value, detail]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>
       <details class="qv-programme-lineage"><summary>Comprendre 2026 → 2027</summary><p>2026 : ${escapeHtml(String(source.sourceRows || 0))} lignes source, ${escapeHtml(String(source.models || 0))} modèles, ${escapeHtml(String(source.occurrences || 0))} occurrences, ${escapeHtml(String(source.sessions || 0))} sessions. 2027 : ${escapeHtml(String(target.models || 0))} modèles actifs, ${escapeHtml(String(target.occurrences || 0))} occurrences et ${escapeHtml(String(target.sessions || 0))} sessions. Le chiffre historique 302 désigne la matrice de définitions source réconciliées, pas un nombre d’événements.</p></details>
       ${qvProgrammeFilterBar(qv)}
       <p class="qv-agenda-info">Résultats : ${escapeHtml(String(rows.length))}</p>
-      <div class="scope-table-wrap qv-programme-table-wrap"><table class="scope-table qv-programme-table"><thead><tr><th>Code cours</th><th>Activité</th><th>Stat.Com</th><th>Domaine</th><th>Famille</th><th>OI</th><th>Session</th><th>Date</th><th>Horaire</th><th>Public cible</th><th>Responsable</th><th>Lieu</th><th>État</th><th>Action</th></tr></thead><tbody>
-        ${rows.map((row) => { const visual = qvProgrammeVisualState(row); const href = `#/quo-vadis/programme/${encodeURIComponent(row.id)}`; return `<tr>
-          <td>${escapeHtml(row.code || '—')}</td><td><strong>${escapeHtml(row.eventLabel || row.label || '—')}</strong><span class="qv-programme-origin">${escapeHtml(qvProgrammeProvenance(row))}</span></td><td>${escapeHtml(row.statCom || '—')}</td><td>${escapeHtml(row.domain || '—')}</td><td>${escapeHtml(qvProgrammeFamily(row))}</td><td>${escapeHtml((row.ois || []).join(', ') || '—')}</td><td>${escapeHtml(`${row.sessionIndex || 1}/${row.sessionCount || 1}`)}</td><td>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</td><td>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</td><td>${escapeHtml((row.publics || []).join(', ') || 'Selon référentiel')}</td><td>${escapeHtml(row.responsible || 'À affecter')}</td><td>${escapeHtml(row.location || 'À définir')}</td><td>${scopeStateHtml(visual.tone, visual.label)}</td><td><a class="scope-text-action" href="${href}">Consulter la fiche ›</a></td>
-        </tr>`; }).join('') || '<tr><td colspan="14"><div class="scope-empty">Aucun objet ne correspond aux filtres.</div></td></tr>'}
-      </tbody></table></div>
+      ${mode === 'mensuelle' ? qvProgrammeMonthlyView(qv, pagination.rows, monthlyRows.length) : `<div class="scope-table-wrap qv-programme-table-wrap"><table class="scope-table qv-programme-table"><colgroup>${Array.from({ length: 13 }, (_, index) => `<col class="qv-programme-col-${index + 1}">`).join('')}</colgroup><thead><tr><th>${qvSortHeaderLines('eventCode', ['Code', 'événement'])}</th><th>${qvSortHeader('date', 'Date')}</th><th>${qvSortHeader('time', 'Horaire')}</th><th>${qvSortHeader('activity', 'Activité')}</th><th>${qvSortHeader('statcom', 'Stat.Com')}</th><th>${qvSortHeader('domain', 'Domaine')}</th><th>${qvSortHeader('family', 'Famille')}</th><th>${qvSortHeader('oi', 'OI')}</th><th>${qvSortHeader('public', 'Public cible')}</th><th>${qvSortHeader('responsible', 'Responsable')}</th><th>${qvSortHeader('location', 'Lieu')}</th><th>${qvSortHeader('status', 'État')}</th><th>Action</th></tr></thead><tbody>
+        ${pagination.rows.map((row) => { const visual = qvProgrammeVisualState(row); const href = `#/quo-vadis/programme/${encodeURIComponent(row.id)}`; const eventCode = qvProgrammeEventCodeLabel(row); return `<tr>
+          <td>${escapeHtml(eventCode)}</td><td><strong class="qv-programme-date">${escapeHtml(qvProgrammeShortDate(row))}</strong></td><td>${qvProgrammeTimeHtml(row)}</td><td><strong>${qvProgrammeActivityHtml(row)}</strong></td><td>${escapeHtml(row.statCom || '—')}</td><td>${escapeHtml(row.domain || '—')}</td><td>${escapeHtml(qvProgrammeFamily(row))}</td><td>${qvProgrammeOiHtml(row)}</td><td>${qvProgrammePublicHtml(row)}</td><td>${escapeHtml(row.responsible || 'À affecter')}</td><td>${escapeHtml(qvProgrammeLocationLabel(row))}</td><td>${scopeStateHtml(visual.tone, visual.label)}</td><td><a class="scope-text-action qv-programme-action" href="${href}">${qvProgrammeActionHtml(row)}</a></td>
+        </tr>`; }).join('') || '<tr><td colspan="13"><div class="scope-empty">Aucun résultat ne correspond aux filtres.</div></td></tr>'}
+      </tbody></table></div>`}
+      ${pagination.controls}
     </section>`;
   }
 
@@ -11476,11 +11814,12 @@
     if (!row) return `<section class="scope-card"><p class="scope-empty">Cette occurrence n’est pas disponible.</p>${contextReturnHtml(qvHref('programme'), 'Retour au programme')}</section>`;
     const visual = qvProgrammeVisualState(row);
     return `<section class="scope-card qv-activity-detail qv-programme-detail">
-      <div class="scope-section-head"><div><h2>${escapeHtml(row.eventLabel || row.label)}</h2><p class="scope-muted">${escapeHtml([row.domain, qvProgrammeFamily(row), (row.ois || []).join(', ')].filter(Boolean).join(' · '))}</p></div>${contextReturnHtml(qvHref('programme'), 'Retour au programme')}</div>
-      <div class="scope-grid scope-grid-2"><section class="scope-form-section"><h3>Occurrence</h3><dl class="qv-definition-list"><dt>Code cours</dt><dd>${escapeHtml(row.code || '—')}</dd><dt>Stat.Com</dt><dd>${escapeHtml(row.statCom || '—')}</dd><dt>Domaine</dt><dd>${escapeHtml(row.domain || '—')}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${escapeHtml((row.ois || []).join(', ') || '—')}</dd><dt>Public cible</dt><dd>${escapeHtml((row.publics || []).join(', ') || 'Selon référentiel')}</dd><dt>Session</dt><dd>${escapeHtml(`${row.sessionIndex || 1}/${row.sessionCount || 1}`)}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
-      <section class="scope-form-section"><h3>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(row.location || 'À définir')}</dd><dt>Salle</dt><dd>${escapeHtml(row.room || '—')}</dd><dt>Responsable</dt><dd>${escapeHtml(row.responsible || 'À affecter')}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
+      <div class="scope-section-head"><div><h2>${escapeHtml(row.eventDisplayLabel || row.activityLabel || row.label)}</h2><p class="scope-muted">${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div>${contextReturnHtml(qvHref('programme'), 'Retour au programme')}</div>
+      <div class="scope-grid scope-grid-2"><section class="scope-form-section"><h3>Événement</h3><dl class="qv-definition-list"><dt>Code cours</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(row.statCom || '—')}</dd><dt>Domaine</dt><dd>${escapeHtml(row.domain || '—')}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
+      <section class="scope-form-section"><h3>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(qvProgrammeLocationLabel(row))}</dd><dt>Salle</dt><dd>${escapeHtml(qvProgrammeRoomLabel(row))}</dd><dt>Responsable</dt><dd>${escapeHtml(row.responsible || 'À affecter')}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
+      <section class="scope-form-section"><h3>Règle appliquée</h3><p>${escapeHtml(qvProgrammeAppliedRule(row))}</p></section>
       ${row.reason ? `<section class="scope-form-section"><h3>Décision attendue</h3><p>${escapeHtml(row.reason)}</p></section>` : ''}
-      <section class="scope-form-section"><h3>Continuer le workflow</h3>${row.publishedEventId ? `<p>L’occurrence est publiée et reliée à son événement SCOPE.</p><a class="scope-btn scope-btn-primary" href="#/exercices/${escapeHtml(row.publishedEventId)}">Ouvrir l’événement opérationnel</a>` : '<p class="scope-muted">Cette occurrence reste dans QUO VADIS. Sa date ou sa décision doit être traitée dans les écrans d’arbitrage avant publication.</p><a class="scope-btn" href="#/quo-vadis/a-arbitrer">Ouvrir À arbitrer</a>'}</section>
+      <section class="scope-form-section"><h3>Workflow</h3>${row.publishedEventId ? `<p>L’occurrence est publiée et reliée à son événement SCOPE.</p><a class="scope-btn scope-btn-primary" href="#/exercices/${escapeHtml(row.publishedEventId)}">Ouvrir l'événement</a>` : '<p class="scope-muted">Cette occurrence reste dans QUO VADIS. Sa date ou sa décision doit être traitée dans les écrans d’arbitrage avant publication.</p><a class="scope-btn" href="#/quo-vadis/a-arbitrer">Ouvrir À arbitrer</a>'}</section>
     </section>`;
   }
 
@@ -12361,16 +12700,22 @@
         <button id="annual-filter-reset" class="scope-button annual-button-quiet" type="button">Réinitialiser</button>
       </div>
       ${renderAnnualCatalogCreate()}${renderAnnualCatalogImport()}
-      <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Récurrence</th><th>Réalisations</th><th>Sites</th><th>État ${escapeHtml(String(catalog.year || filters.year))}</th><th>Action</th></tr></thead>
+      <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Stat.Com</th><th>Cadence</th><th>Réalisations / sessions</th><th>Période</th><th>Sites / OI</th><th>Public cible</th><th>État ${escapeHtml(String(catalog.year || filters.year))}</th><th>Action</th></tr></thead>
         <tbody>${activities.map((row) => {
           const required = Number(row.requiredOccurrences || 0);
           const defined = Number(row.themedOccurrenceCount || 0);
           const missing = row.unthemedOccurrenceCount == null ? 0 : Number(row.unthemedOccurrenceCount);
           const usual = Number(row.defaultOccurrences || 1);
-          const annual = required || usual;
-          const sites = row.siteCodes && row.siteCodes.length ? row.siteCodes : row.defaultSites || [];
-          return `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.label)}</strong><span>${escapeHtml(annualActivityTypeLabel(row.activityType))}</span></td><td>${row.recurrenceKind === 'RECURRENT' ? 'Récurrente' : 'Non récurrente'}</td><td>${escapeHtml(String(annual))}${required && required !== usual ? ` <span class="annual-muted">(${usual} habituellement)</span>` : ''}</td><td>${escapeHtml(sites.join(', ') || 'À définir')}</td><td>${annualStatusHtml(row.programState === 'INACTIVE' ? 'CANCELLED' : row.status)}</td><td><a class="annual-row-action" href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Configurer <span aria-hidden="true">›</span></a></td></tr>`;
-        }).join('') || '<tr><td colspan="7" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
+          const annual = Number(row.canonicalOccurrenceCount || 0) || required || usual;
+          const sites = row.siteCodes && row.siteCodes.length ? row.siteCodes : row.defaultSites && row.defaultSites.length ? row.defaultSites : row.canonicalOis || [];
+          const sessions = Math.max(1,Number(row.canonicalSessionCount || row.sessionCount || 1));
+          const duration = Number(row.durationMinutes || 0);
+          const durationText = duration ? `${Math.floor(duration / 60)} h${duration % 60 ? ` ${String(duration % 60).padStart(2,'0')}` : ''}` : '';
+          const period = [row.windowStart && qvFormatDate(row.windowStart,'—'),row.windowEnd && qvFormatDate(row.windowEnd,'—')].filter(Boolean).join(' – ') || 'Toute l’année';
+          const publics = row.canonicalPublics && row.canonicalPublics.length ? row.canonicalPublics : Array.isArray(row.publicCodes) ? row.publicCodes : String(row.publicCodes || '').split(',').map((value) => value.trim()).filter(Boolean);
+          const statComCodes = row.statComCodes && row.statComCodes.length ? row.statComCodes : [];
+          return `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.displayLabel || row.label)}</strong><span class="annual-activity-kind">${escapeHtml(annualActivityTypeLabel(row.activityType))}${row.exerciseCode ? ` · ${escapeHtml(row.exerciseCode)}` : ''}${durationText ? ` · ${escapeHtml(durationText)}` : ''}</span></td><td>${escapeHtml(statComCodes.join(', ') || '—')}</td><td>${row.recurrenceKind === 'RECURRENT' ? 'Récurrente' : 'Ponctuelle'}</td><td><strong>${escapeHtml(String(annual))} réalisation${annual > 1 ? 's' : ''}</strong><span>${escapeHtml(String(sessions))} session${sessions > 1 ? 's' : ''}</span></td><td>${escapeHtml(period)}</td><td>${escapeHtml(sites.join(', ') || 'À définir')}</td><td>${escapeHtml(publics.join(', ') || 'Selon référentiel')}</td><td>${annualStatusHtml(row.programState === 'INACTIVE' ? 'CANCELLED' : row.status)}</td><td><a class="annual-row-action" href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Consulter la fiche ›</a></td></tr>`;
+        }).join('') || '<tr><td colspan="10" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
       </table></div>
     </section>`;
   }
@@ -12837,6 +13182,7 @@
       reloadPeriod();
     });
     const readQvFilters = () => {
+      const selectedMonth = document.getElementById('qv-filter-month')?.value || state.quoVadisFilters.month || 'tous';
       state.quoVadisFilters = {
         q: document.getElementById('qv-filter-q')?.value || '',
         domain: document.getElementById('qv-filter-domain')?.value || 'tous',
@@ -12846,8 +13192,8 @@
         specialisation: document.getElementById('qv-filter-specialisation')?.value || 'tous',
         cursus: document.getElementById('qv-filter-cursus')?.value || 'tous',
         status: document.getElementById('qv-filter-status')?.value || 'tous',
-        period: document.getElementById('qv-filter-period')?.value || state.quoVadisFilters.period || 'tous',
-        month: document.getElementById('qv-filter-month')?.value || state.quoVadisFilters.month || 'tous',
+        period: document.getElementById('qv-filter-period')?.value || (document.getElementById('qv-filter-month') ? (selectedMonth === 'tous' ? 'tous' : 'mois') : state.quoVadisFilters.period || 'tous'),
+        month: selectedMonth,
         quarter: document.getElementById('qv-filter-quarter')?.value || state.quoVadisFilters.quarter || 'tous',
         semester: document.getElementById('qv-filter-semester')?.value || state.quoVadisFilters.semester || 'tous',
         lieu: document.getElementById('qv-filter-lieu')?.value || 'tous',
@@ -12861,10 +13207,12 @@
     const syncQvFilters = () => {
       readQvFilters();
       state.quoVadisAlertPage = 1;
+      state.quoVadisProgrammePage = 1;
       render();
     };
     document.getElementById('qv-filter-q')?.addEventListener('input', () => {
       readQvFilters();
+      state.quoVadisProgrammePage = 1;
       renderPreservingInput('qv-filter-q');
     });
     ['qv-filter-domain', 'qv-filter-family', 'qv-filter-cible', 'qv-filter-oi', 'qv-filter-statcom', 'qv-filter-specialisation', 'qv-filter-cursus', 'qv-filter-status', 'qv-filter-type', 'qv-filter-gravity', 'qv-filter-period', 'qv-filter-month', 'qv-filter-quarter', 'qv-filter-semester', 'qv-filter-lieu', 'qv-filter-attention', 'qv-filter-sessions'].forEach((id) => {
@@ -12877,6 +13225,44 @@
         if (hidden) hidden.value = period;
         readQvFilters();
         state.quoVadisFilters.period = period;
+        render();
+      });
+    });
+    document.querySelectorAll('[data-qv-programme-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.quoVadisProgrammeMode = btn.getAttribute('data-qv-programme-mode') === 'mensuelle' ? 'mensuelle' : 'tableau';
+        state.quoVadisProgrammePage = 1;
+        if (state.quoVadisProgrammeMode === 'mensuelle' && (!state.quoVadisFilters.month || state.quoVadisFilters.month === 'tous')) {
+          state.quoVadisFilters.period = 'mois';
+          state.quoVadisFilters.month = '2027-01';
+        }
+        state.quoVadisFilters.day = '';
+        state.quoVadisProgrammePage = 1;
+        render();
+      });
+    });
+    document.querySelectorAll('[data-qv-programme-month]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.quoVadisFilters.period = 'mois';
+        state.quoVadisFilters.month = btn.getAttribute('data-qv-programme-month') || '2027-01';
+        state.quoVadisFilters.day = '';
+        render();
+      });
+    });
+    document.getElementById('qv-programme-clear-day')?.addEventListener('click', () => {
+      state.quoVadisFilters.day = '';
+      state.quoVadisProgrammePage = 1;
+      render();
+    });
+    document.getElementById('qv-programme-page-size')?.addEventListener('change', (event) => {
+      state.quoVadisProgrammePageSize = event.target.value === 'all' ? 'all' : Number(event.target.value || 20);
+      state.quoVadisProgrammePage = 1;
+      render();
+    });
+    document.querySelectorAll('[data-qv-programme-page]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        state.quoVadisProgrammePage = Math.max(1, Number(btn.getAttribute('data-qv-programme-page') || 1));
         render();
       });
     });
@@ -12905,7 +13291,14 @@
     });
     document.getElementById('qv-filter-reset')?.addEventListener('click', () => {
       state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', sessions: 'tous', cible: 'tous', oi: 'tous', statcom: 'tous', type: 'tous', gravity: 'tous', specialisation: 'tous', cursus: 'tous', status: 'tous', period: 'tous', month: 'tous', quarter: 'tous', semester: 'tous', lieu: 'tous', attention: false };
+      if (qvView() === 'programme' && state.quoVadisProgrammeMode === 'mensuelle') {
+        state.quoVadisFilters.period = 'mois';
+        state.quoVadisFilters.month = '2027-01';
+      }
       state.quoVadisAlertPage = 1;
+      state.quoVadisProgrammePage = 1;
+      state.quoVadisProgrammePageSize = 20;
+      state.quoVadisSort = { key: 'date', dir: 'asc' };
       state.quoVadisArbitrerTouched = false;
       state.quoVadisArbitrerOpenDomains = null;
       render();
@@ -12995,6 +13388,7 @@
         const key = btn.getAttribute('data-qv-sort') || 'date';
         const current = state.quoVadisSort || {};
         state.quoVadisSort = { key, dir: current.key === key && current.dir === 'asc' ? 'desc' : 'asc' };
+        state.quoVadisProgrammePage = 1;
         render();
       });
     });
@@ -17372,6 +17766,16 @@
         state.quoVadisError = null;
         state.quoVadisFilters = { q: '', domain: 'tous', family: 'tous', oi: 'tous', statcom: 'tous', status: 'tous' };
         return renderQuoVadisProgramme(state.quoVadis);
+      },
+      filterQuoVadisProgrammeRows(payload, query) {
+        const previousQv = state.quoVadis;
+        const previousFilters = state.quoVadisFilters;
+        state.quoVadis = payload || {};
+        state.quoVadisFilters = { q: query || '', domain: 'tous', family: 'tous', oi: 'tous', statcom: 'tous', status: 'tous' };
+        const rows = qvProgrammeFilteredRows(state.quoVadis);
+        state.quoVadis = previousQv;
+        state.quoVadisFilters = previousFilters;
+        return rows;
       },
       mountFormationCatalogHtml(payload, selectedVersionId) {
         this.renderFormationCatalogHtml(payload, selectedVersionId);
