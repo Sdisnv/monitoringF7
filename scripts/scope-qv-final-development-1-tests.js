@@ -45,10 +45,10 @@ test('conduite derivee uniquement depuis une instruction demi-section datee et j
   // désormais remplacée par 3 séances par demi-section opérationnelle.
   assert.equal(derived.expected, 84);
   assert.equal(derived.matched.length, 4);
-  assert.equal(derived.added.length, 56);
+  assert.equal(derived.added.length, 80);
   assert.equal(derived.orphans.length, 0);
-  assert.equal(derived.materialized, 60);
-  assert.equal(derived.insufficient.length, 24);
+  assert.equal(derived.materialized, 84);
+  assert.equal(derived.insufficient.length, 0);
   assert.ok(!businessRows.some((row) => row.conduiteEvidence && /PIONNIER/.test(row.conduiteEvidence.theme)));
   assert.ok(!L.qvConduiteSources(sourceRows, cta.instructionPublicForDate).some((item) => item.theme === 'PIONNIER'));
 });
@@ -78,23 +78,23 @@ test('conduite B2 suit le lieu operationnel de son instruction source sans depla
   assert.equal(L.qvDpsDefaultLieuCode('G1'), 'G1');
 });
 
-test('apres correction de la rotation, les conduites sont materialisees sans invention de source', () => {
+test('apres correction de la rotation, les conduites sont materialisees pour chaque demi-section operationnelle', () => {
   assert.equal(derived.expected, 84);
-  assert.equal(derived.insufficient.length, 24);
-  assert.equal(businessRows.filter((row) => row.label === 'Conduite, formation continue').length, 60);
+  assert.equal(derived.insufficient.length, 0);
+  assert.equal(businessRows.filter((row) => row.label === 'Conduite, formation continue').length, 84);
   const parSite = {};
   for (const row of derived.matched.concat(derived.added)) {
     const site = L.qvDpsSitesOf(row)[0];
     parSite[site] = (parSite[site] || 0) + 1;
   }
-  assert.deepEqual(parSite, { G1: 21, C1: 13, B1: 13, B2: 13 });
+  assert.deepEqual(parSite, { G1: 30, C1: 18, B1: 18, B2: 18 });
 });
 
 test('derivation conduite idempotente', () => {
   const again = L.qvApplyConduiteContinue(businessRows);
   assert.equal(again.rows.length, businessRows.length);
   assert.equal(again.derived.added.length, 0);
-  assert.equal(again.derived.matched.length, 60);
+  assert.equal(again.derived.matched.length, 84);
 });
 
 // ---------------------------------------------------------------- §5 Public cible derive du cycle CTA
@@ -356,8 +356,8 @@ test('le compteur a arbitrer compte exactement les obligations A_PLANIFIER et PR
 
 test('le fichier source canonique reste intact : 622 seances demontrees', () => {
   assert.equal(sourceRows.filter((row) => !row.external).length, 622);
-  assert.equal(businessRows.filter((row) => !row.external).length, 719);
-  assert.equal(businessRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length, 56);
+  assert.equal(businessRows.filter((row) => !row.external).length, 767);
+  assert.equal(businessRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length, 80);
 });
 
 test('2028 et 2029 ne sont pas generes par ce lot', () => {

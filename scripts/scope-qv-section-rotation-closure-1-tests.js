@@ -29,7 +29,7 @@ const applied = L.qvApplyConduiteContinue(family.rows, cta.conduiteEngineOptions
 const rows = applied.rows;
 
 const occurrences = (label) => rows
-  .filter((row) => (row.label || row.title) === label)
+  .filter((row) => (row.label || row.title) === label && row.provenance !== 'MOA_RULE_ANNUAL_PROGRAMMING')
   .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)) || String((a.ois || [])[0]).localeCompare(String((b.ois || [])[0])));
 const dates = (label) => occurrences(label).map((row) => String(row.startsAt).slice(0, 10));
 const sections = (label) => occurrences(label).flatMap((row) => (row.publics || []).filter((code) => /^N0[1-6][ab]?$/.test(code)));
@@ -179,11 +179,11 @@ test('KICK-OFF du 06.02.2027 reste strictement identique au résultat recetté P
 test('les conduites 0152F7 sont matérialisées après correction des sources, sans invention', () => {
   const derived = applied.derived;
   assert.equal(derived.expected, 84);
-  assert.equal(derived.materialized, 60);
-  assert.equal(derived.insufficient.length, 24);
+  assert.equal(derived.materialized, 84);
+  assert.equal(derived.insufficient.length, 0);
   assert.equal(derived.orphans.length, 0);
   const conduites = rows.filter((row) => row.label === L.QV_CONDUITE_LABEL || row.label === 'Conduite, formation continue');
-  assert.equal(conduites.length, 60);
+  assert.equal(conduites.length, 84);
   conduites.forEach((row) => {
     assert.equal(row.statCom, L.QV_CONDUITE_STATCOM);
     const minutes = (Number(String(row.endsAt).slice(11, 13)) * 60 + Number(String(row.endsAt).slice(14, 16)))
@@ -202,7 +202,7 @@ test('la matrice des conduites vise trois séances par demi-section opérationne
     assert.ok(!cta.isReserveHalfSection(site, half), key);
   }
   assert.equal(Object.keys(parHalf).length, 28);
-  Object.values(parHalf).forEach((count) => assert.ok(count >= 2 && count <= 3));
+  Object.values(parHalf).forEach((count) => assert.equal(count, 3));
 });
 
 test('aucune conduite n’est jamais ajoutée après une instruction PIONNIER', () => {
@@ -214,7 +214,7 @@ test('aucune conduite n’est jamais ajoutée après une instruction PIONNIER', 
 
 test('les conduites B2 se tiennent à la Caserne C1 sans transformation automatique du lieu', () => {
   const b2 = applied.derived.matched.concat(applied.derived.added).filter((row) => L.qvDpsSitesOf(row)[0] === 'B2');
-  assert.equal(b2.length, 13);
+  assert.equal(b2.length, 18);
   b2.forEach((row) => assert.ok(!/B2/.test(String(row.location)), `lieu inattendu ${row.location}`));
   const b1 = applied.derived.added.filter((row) => L.qvDpsSitesOf(row)[0] === 'B1');
   b1.forEach((row) => assert.equal(row.location, 'Caserne B1'));

@@ -1,0 +1,28 @@
+{
+  "version": "2027.2",
+  "campaign": "2027",
+  "source": "docs/business-rules/quo-vadis-canonical-rules.md",
+  "engine": "netlify/lib/_scope-cta-rules.js + assets/js/scope-ui-logic.js",
+  "persistence": {
+    "implemented": "Référentiel versionné dans le dépôt, overlay de lecture annuel, identifiants QV-*.",
+    "remainingMigration": "seed scope_quo_vadis_planning_rules (code, version_code, valid_from/to, active, metadata.ruleId) pour activer/désactiver une campagne depuis l’UI Règles sans toucher au code."
+  },
+  "rules": [
+    { "id": "QV-CTA-001", "active": true, "domain": "DPS", "family": "Permanence", "campaignScoped": true },
+    { "id": "QV-CTA-002", "active": true, "domain": "DPS", "family": "Permanence" },
+    { "id": "QV-CTA-003", "active": true, "domain": "DPS", "family": "Permanence" },
+    { "id": "QV-CTA-004", "active": true, "domain": "DPS", "family": "Permanence" },
+    { "id": "QV-CONDUITE-001", "active": true, "domain": "AUTO", "family": "Conduite", "campaignScoped": true },
+    { "id": "QV-CONDUITE-002", "active": true, "domain": "AUTO", "family": "Conduite" },
+    { "id": "QV-CONDUITE-003", "active": true, "domain": "AUTO", "family": "Conduite" },
+    { "id": "QV-CONDUITE-005", "active": true, "domain": "AUTO", "family": "Conduite" },
+    { "id": "QV-CONDUITE-006", "active": true, "domain": "AUTO", "family": "Conduite" },
+    { "id": "QV-CONDUITE-007", "active": true, "domain": "AUTO", "family": "Conduite" },
+    { "id": "QV-CONDUITE-008", "active": true, "domain": "DPS", "family": "Instruction", "campaignScoped": true, "summary": "Si les Instr demi-sct datées sont < 3, programmer les occurrences manquantes par CTA, sans veto 2026." },
+    { "id": "QV-DPS-001", "active": true, "domain": "DPS", "family": "Instruction" },
+    { "id": "QV-DPS-002", "active": true, "domain": "DPS", "family": "Instruction" },
+    { "id": "QV-DPS-003", "active": true, "domain": "DPS", "family": "Instruction" },
+    { "id": "QV-PRABC-001", "active": true, "domain": "PR", "family": "Exercice", "campaignScoped": true },
+    { "id": "QV-PIONNIER-001", "active": true, "domain": "FOSPEC", "family": "Instruction" }
+  ]
+}

@@ -56,9 +56,9 @@ async function main() {
     assert.ok(qv.calendarDays.some(row => row.jour === '2028-02-12' && row.metadata.dateFin === '2028-02-20'));
     assert.ok(qv.calendarDays.some(row => row.jour === '2028-12-23' && row.metadata.dateFin === '2029-01-07'));
   });
-  // 719 = 622 séances démontrées + 38 réalisations OI distinctes + 56 conduites dérivées + 3 séances PR-ABC.
-  await test('719 seances preservees', () => assert.equal(rows.length, 719));
-  await test('598 dates preservees', () => assert.equal(rows.filter(row => row.startsAt).length, 598));
+  // 767 = 622 + 38 clones OI + 24 Instr demi-sct CTA + 80 conduites + 3 PR-ABC.
+  await test('767 seances preservees', () => assert.equal(rows.length, 767));
+  await test('646 dates preservees', () => assert.equal(rows.filter(row => row.startsAt).length, 646));
   await test('417 propositions historiques preservees', () => assert.equal(rows.filter(row => row.historicalProposal).length, 417));
   await test('121 sans date dont 112 sans periode et 9 avec mois', () => {
     const undated = rows.filter(row => !row.startsAt);
@@ -75,7 +75,7 @@ async function main() {
     const row = L.qvEnrichSectionPublic({ domain: 'DPS', label: 'Instr demi-sct - KICK-OFF', ois: ['G1'], publics: ['ECH:I'], historicalProposal: { sourceLine: 11 } }, reference.rows);
     assert.deepEqual(row.publics, ['ECH:I', 'N05a']);
     // Rotation retablie : chaque occurrence section/demi-section porte desormais sa propre section demontree.
-    assert.equal(qv.sectionPublicSummary.demonstrated, 114);
+    assert.equal(qv.sectionPublicSummary.demonstrated, 138);
   });
   await test('ambiguite conservee sans section deduite de la permanence', () => {
     const row = L.qvEnrichSectionPublic({ domain: 'DPS', label: 'Instr demi-sct - KICK-OFF', ois: ['B2'], publics: [], historicalProposal: { sourceLine: 13 } }, reference.rows);
@@ -83,7 +83,7 @@ async function main() {
     // Apres correction de la rotation il ne subsiste qu'une seule ambiguite reelle de section.
     const summary = qv.sectionPublicSummary;
     assert.equal(summary.ambiguous, 0); assert.equal(summary.moaRequired, 0);
-    assert.equal(summary.demonstrated, 114);
+    assert.equal(summary.demonstrated, 138);
     assert.ok(!rows.some(row => row.sectionPublicRule === 'SHARED_HISTORICAL_REFERENCE'));
   });
   await test('resume des sections et contraction des echelons', () => assert.equal(L.qvFormatPublicLabels(['N03a', 'ECH:I', 'ECH:II']), 'N03a, Échelon I et II'));

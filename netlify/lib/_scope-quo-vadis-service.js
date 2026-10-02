@@ -11,6 +11,7 @@ const { isStatComValidForDate, STATCOM_SUCCESSIONS } = require('./_scope-statcom
 const historicalReference2026 = require('./data/scope-qv-history-2026.json');
 const ctaRules = require('./_scope-cta-rules');
 const uiLogic = require('../../assets/js/scope-ui-logic');
+const canonicalAnnualRules = require('./data/scope-qv-canonical-annual-rules.json');
 
 let canonicalBusinessCache = null;
 
@@ -28,6 +29,11 @@ function canonicalBusinessProgramme2027(){
   const family = uiLogic.qvApplyDpsInstructionFamilyRules(pionnier.rows, ctaRules.instructionPublicForDate);
   const conduite = uiLogic.qvApplyConduiteContinue(family.rows, ctaRules.conduiteEngineOptions());
   const prAbc = uiLogic.qvApplyPrAbcStructure(conduite.rows, historicalReference2026.rows || []);
+  const overlayRows = (prAbc.rows || []).filter((row) => row && !row.external);
+  const sourceCount = (canonicalProgramme2027.rows || []).filter((row) => row && !row.external).length;
+  const rotationClones = overlayRows.filter((row) => row.rotationAdded).length;
+  const programmedInstructions = overlayRows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
+  const conduitesAdded = overlayRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length;
   canonicalBusinessCache = {
     rows: prAbc.rows,
     summary: {
@@ -39,11 +45,22 @@ function canonicalBusinessProgramme2027(){
         materialized: conduite.derived.materialized,
         matched: conduite.derived.matched.map((row) => row.id),
         added: conduite.derived.added.map((row) => row.id),
+        programmedInstructions: (conduite.derived.programmedInstructions || []).map((row) => row.id),
         missing: conduite.derived.missing,
         insufficient: conduite.derived.insufficient,
-        orphans: conduite.derived.orphans.map((row) => row.id)
+        orphans: conduite.derived.orphans.map((row) => row.id),
+        coherence: uiLogic.qvConduiteCoherenceControl(prAbc.rows, ctaRules.conduiteEngineOptions())
       },
-      prAbc: prAbc.report
+      prAbc: prAbc.report,
+      reconciliation: {
+        canonical2027: sourceCount,
+        rotationClones,
+        programmedInstructions,
+        conduitesAdded,
+        prAbcAdded: prAbc.report.added,
+        overlay: overlayRows.length,
+        equation: `${sourceCount} + ${rotationClones} (clones OI) + ${programmedInstructions} (Instr demi-sct CTA) + ${conduitesAdded} (conduites) + ${prAbc.report.added} (PR-ABC) = ${overlayRows.length}`
+      }
     }
   };
   return canonicalBusinessCache;
@@ -1400,7 +1417,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         },
         conduitesAttendues: ctaRules.expectedAnnualConduites(),
         reinitialisationAnnuelle: false,
-        reservesIncluses: false
+        reservesIncluses: false,
+        annualRules: canonicalAnnualRules
       };
       result.sectionPublicSummary = {
         demonstrated: result.canonicalProgramme.rows.filter(row => row.sectionPublicStatus === 'DEMONSTRATED').length,

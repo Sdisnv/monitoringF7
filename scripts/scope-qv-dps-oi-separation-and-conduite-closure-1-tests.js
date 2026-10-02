@@ -31,7 +31,7 @@ const prAbc = L.qvApplyPrAbcStructure(applied.rows, history.rows);
 const rows = prAbc.rows;
 
 const of = (label) => rows
-  .filter((row) => (row.label || row.title) === label)
+  .filter((row) => (row.label || row.title) === label && row.provenance !== 'MOA_RULE_ANNUAL_PROGRAMMING')
   .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt))
     || String((a.ois || [])[0]).localeCompare(String((b.ois || [])[0])));
 
@@ -140,11 +140,11 @@ test('KICK-OFF du 06.02.2027 reste inchangé', () => {
   });
 });
 
-test('cible 84 conduites, 60 matérialisées, chacune rattachée à une demi-section source', () => {
+test('cible 84 conduites, 84 matérialisées, chacune rattachée à une demi-section source', () => {
   const conduites = applied.derived.matched.concat(applied.derived.added);
   assert.equal(applied.derived.expected, 84);
-  assert.equal(conduites.length, 60);
-  assert.equal(applied.derived.insufficient.length, 24);
+  assert.equal(conduites.length, 84);
+  assert.equal(applied.derived.insufficient.length, 0);
   const parSite = {};
   for (const row of conduites) {
     const site = L.qvDpsSitesOf(row)[0];
@@ -166,7 +166,7 @@ test('cible 84 conduites, 60 matérialisées, chacune rattachée à une demi-sec
       - (Number(String(row.startsAt).slice(11, 13)) * 60 + Number(String(row.startsAt).slice(14, 16)));
     assert.ok(minutes > 0 && minutes <= 60);
   }
-  assert.deepEqual(parSite, { G1: 21, C1: 13, B1: 13, B2: 13 });
+  assert.deepEqual(parSite, { G1: 30, C1: 18, B1: 18, B2: 18 });
 });
 
 test('PR-ABC : deux séries T1/T4 de trois séances, séance 2 en matinée, sans date inventée', () => {
@@ -219,7 +219,7 @@ test('filtres au retour de fiche et DnD CTA inchangés', () => {
 
 test('le fichier source 2027 reste à 622 séances', () => {
   assert.equal(canonical.rows.filter((row) => !row.external).length, 622);
-  assert.equal(rows.filter((row) => !row.external).length, 719);
+  assert.equal(rows.filter((row) => !row.external).length, 767);
 });
 
 console.log(`\nQV DPS-OI-SEPARATION-AND-CONDUITE-CLOSURE-1: ${passed}/${passed + failures.length} PASS`);

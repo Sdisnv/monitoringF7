@@ -29,12 +29,12 @@ async function main() {
   });
   const fixture = createFixture();
   const qv = await fixture.service.listProgramme(2027);
-  // 719 = 622 seances demontrees + 38 realisations OI distinctes + 56 conduites + 3 seances PR-ABC.
-  await test('719 seances 598 dates 417 historiques 121 sans date et TP9000 preserves', () => {
+  // 767 = 622 + 38 clones OI + 24 Instr demi-sct CTA + 80 conduites + 3 PR-ABC.
+  await test('767 seances 646 dates 417 historiques 121 sans date et TP9000 preserves', () => {
     const rows = qv.canonicalProgramme.rows.filter((r) => !r.external);
-    assert.equal(rows.length, 719);
-    assert.equal(rows.filter((r) => r.provenance === 'MOA_RULE_CONDUITE_2027').length, 56);
-    assert.equal(rows.filter((r) => r.startsAt).length, 598);
+    assert.equal(rows.length, 767);
+    assert.equal(rows.filter((r) => r.provenance === 'MOA_RULE_CONDUITE_2027').length, 80);
+    assert.equal(rows.filter((r) => r.startsAt).length, 646);
     assert.equal(rows.filter((r) => r.historicalProposal).length, 417);
     assert.equal(rows.filter((r) => !r.startsAt).length, 121);
     const tp = rows.filter((r) => r.tp9000Rule);

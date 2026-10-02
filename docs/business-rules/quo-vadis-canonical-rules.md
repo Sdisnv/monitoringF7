@@ -66,8 +66,17 @@ Un tour sans source 2026 reste `MOA_REQUIRED`. Cardinalité B2 section VARIA/FEU
 ### QV-CONDUITE-001 — 3 conduites annuelles par demi-section opérationnelle
 Remplace l’ancienne matrice 3 thèmes × 4 OI = 12 (lots FINAL-DEVELOPMENT / DPS-OI-SEPARATION).
 
-### QV-CONDUITE-002 — Cible 28 × 3 = 84
-Si une demi-section n’a pas 3 `Instr demi-sct` éligibles : anomalie `CONDUITE_SOURCE_INSUFFISANTE` (OI, demi-section, attendu 3, trouvé, sources candidates). Pas d’invention silencieuse.
+### QV-CONDUITE-002 — Cible = demi-sections opérationnelles × 3
+Calculée depuis `operationalHalfSections` (10+6+6+6=28) × 3 = **84**.
+Pas un total magique. Une absence de 3 sources historiques 2026 n’est plus un veto :
+QV-CONDUITE-008 programme les Instr demi-sct manquantes.
+
+### QV-CONDUITE-008 — Compléter les Instr demi-sct par le cycle CTA
+Si une demi-section opérationnelle a moins de 3 `Instr demi-sct` éligibles (hors PIONNIER),
+le moteur pose les occurrences manquantes le samedi de permanence CTA, hors jours fériés
+et hors dates déjà occupées. Thème : premier thème éligible non KICK-OFF encore absent
+(ABC/VARIA pour G1, VARIA/FEU pour C1/B1/B2), sinon second tour du dernier thème.
+Provenance `MOA_RULE_ANNUAL_PROGRAMMING`. Pas de hasard. Idempotent.
 
 ### QV-CONDUITE-003 — Adossée à une Instr demi-sct réelle
 Début de la conduite = fin de la source. Même jour. Même OI. Même lieu opérationnel.

@@ -65,7 +65,7 @@ test('QV-CONDUITE-002 : cible annuelle 84', () => {
 });
 
 test('QV-CONDUITE-001 / QV-CONDUITE-003 : chaque conduite a une Instr demi-sct source', () => {
-  assert.equal(conduites.length, 60);
+  assert.equal(conduites.length, 84);
   for (const row of conduites) {
     const source = rows.find((item) => item.id === row.conduiteEvidence.sourceId);
     assert.ok(source);
@@ -104,22 +104,19 @@ test('QV-CONDUITE-007 : répartition déterministe, sans hasard, identique au 2e
   assert.deepEqual(L.qvSelectSpreadIndices(10, 3), [0, 5, 9]);
   const again = L.qvApplyConduiteContinue(applied.rows, cta.conduiteEngineOptions());
   assert.equal(again.derived.added.length, 0);
-  assert.equal(again.derived.matched.length, 60);
+  assert.equal(again.derived.matched.length, 84);
+  assert.equal((again.derived.programmedInstructions || []).length, 0);
 });
 
-test('QV-CONDUITE-002 insuffisance : 24 demi-sections n’ont que 2 sources, sans invention', () => {
-  assert.equal(applied.derived.insufficient.length, 24);
-  applied.derived.insufficient.forEach((item) => {
-    assert.equal(item.code, 'CONDUITE_SOURCE_INSUFFISANTE');
-    assert.equal(item.expected, 3);
-    assert.equal(item.found, 2);
-    assert.ok(['G1', 'C1', 'B1', 'B2'].includes(item.oi));
+test('QV-CONDUITE-008 : 24 instructions CTA comblent les sources, 0 insuffisance, 84 conduites', () => {
+  assert.equal((applied.derived.programmedInstructions || []).length, 24);
+  assert.equal(applied.derived.insufficient.length, 0);
+  assert.equal(applied.derived.materialized, 84);
+  const complete = ['G1', 'C1', 'B1', 'B2'].flatMap((oi) => cta.operationalHalfSections(oi).map((half) => `${oi}|${half}`));
+  complete.forEach((key) => {
+    const n = conduites.filter((row) => `${L.qvDpsSitesOf(row)[0]}|${row.conduiteEvidence.halfSection}` === key).length;
+    assert.equal(n, 3, key);
   });
-  const complete = conduites.filter((row) => {
-    const key = `${L.qvDpsSitesOf(row)[0]}|${row.conduiteEvidence.halfSection}`;
-    return ['G1|N04a', 'C1|N01b', 'B1|N01b', 'B2|N01b'].includes(key);
-  });
-  assert.equal(complete.length, 12);
 });
 
 test('QV-DPS-001 : aucune fusion C1/B1/B2 sur VARIA et FEU', () => {
@@ -201,13 +198,13 @@ test('aucune réserve utilisée, aucun doublon de conduite, source 2027 intacte'
   const keys = conduites.map((row) => `${row.ois[0]}|${row.startsAt}|${row.conduiteEvidence.halfSection}`);
   assert.equal(new Set(keys).size, keys.length);
   assert.equal(canonical.rows.filter((row) => !row.external).length, 622);
-  assert.equal(rows.filter((row) => !row.external).length, 719);
+  assert.equal(rows.filter((row) => !row.external).length, 767);
 });
 
 test('le référentiel canonique documente les identifiants de règles', () => {
   ['QV-CTA-001', 'QV-CTA-002', 'QV-CTA-003', 'QV-CTA-004', 'QV-DPS-001', 'QV-DPS-002', 'QV-DPS-003',
     'QV-CONDUITE-001', 'QV-CONDUITE-002', 'QV-CONDUITE-003', 'QV-CONDUITE-004', 'QV-CONDUITE-005',
-    'QV-CONDUITE-006', 'QV-CONDUITE-007', 'QV-PRABC-001', 'QV-PIONNIER-001', 'QV-UI-001'].forEach((id) => {
+    'QV-CONDUITE-006', 'QV-CONDUITE-007', 'QV-CONDUITE-008', 'QV-PRABC-001', 'QV-PIONNIER-001', 'QV-UI-001'].forEach((id) => {
     assert.ok(rulesDoc.includes(id), id);
   });
   assert.match(ui, /const roundTrip = state\.quoVadisProgrammeContextActive === true;/);
