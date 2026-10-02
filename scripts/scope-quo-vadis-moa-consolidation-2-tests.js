@@ -69,13 +69,15 @@ class MemoryDatabase {
     if(q.startsWith('insert into scope_quo_vadis_cursus_programmes') || q.startsWith('insert into scope_quo_vadis_cursus_step_programmes') || q.startsWith('insert into scope_quo_vadis_calendar_days')) return result();
     if(q.includes('from scope_evenements e')) return result(this.events);
     if(q.includes('from scope_event_definitions d')) return result(this.catalogue);
-    if(q.includes('from scope_cibles c')) return result();
+    if(q.includes('from scope_cibles c') || q.includes('from scope_cibles where')) return result();
+    if(q.includes('from scope_statcom_referentiel') || q.includes('from scope_domaine_ois')) return result();
+    if(q.startsWith('select o.*,p.annee')) return result();
     if(q.includes('from scope_lieux')) return result([{ lieu_id: 'lieu-c1', nom_court: 'Caserne C1', oi_code: 'C1', actif: true }]);
     if(q.includes('from scope_quo_vadis_dps_organisation_versions')) return result(this.dps);
     if(q.includes('from scope_quo_vadis_planning_rules') || q.includes('from scope_quo_vadis_calendar_days')) return result();
-    if(q.includes('from scope_quo_vadis_cursus_steps s')) return result(this.steps);
+    if(q.includes('from scope_quo_vadis_cursus_steps s')) return result(q.includes("d.code <> 'ci-dps'") ? this.steps.filter(row => row.cursus_code && row.cursus_code !== 'CI-DPS') : this.steps);
     if(q.includes('from scope_quo_vadis_cursus_definitions d')) return result();
-    if(q.startsWith('select * from scope_quo_vadis_future_dates')) return result(this.futureDates);
+    if(q.startsWith('select * from scope_quo_vadis_future_dates') || q.includes('from scope_quo_vadis_future_dates f')) return result(this.futureDates);
     if(q.startsWith('select p.*')) return result(this.proposals);
     if(q.startsWith('select o.*') || q.startsWith('select * from scope_quo_vadis_obligations where programme_id')) return result(this.obligations);
     if(q.startsWith('insert into scope_quo_vadis_obligations')){

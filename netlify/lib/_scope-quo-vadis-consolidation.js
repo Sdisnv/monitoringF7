@@ -25,6 +25,9 @@ function identity(row){
 }
 
 function equivalent(a, b){
+  const lineageA = (a.metadata || {}).lineage;
+  const lineageB = (b.metadata || {}).lineage;
+  if(lineageA || lineageB) return Boolean(lineageA && lineageB && lineageA.key === lineageB.key);
   const left = identity(a);
   const right = identity(b);
   if(left.domain !== right.domain || left.title !== right.title) return false;
@@ -39,7 +42,7 @@ function equivalent(a, b){
 
 function hasHumanDecision(row, proposals){
   const metadata = row.metadata || {};
-  return Boolean(row.source_type === 'MANUAL' || row.scope_evenement_id || metadata.arbitrage || metadata.userSelection || metadata.manualDecision
+  return Boolean(row.source_type === 'MANUAL' || row.scope_evenement_id || metadata.humanDecision || metadata.arbitrage || metadata.userSelection || metadata.manualDecision
     || (row.selected_proposal_id && metadata.autoPositioned !== true)
     || ((proposals || []).some((proposal) => ['RETENU', 'ECARTE'].includes(proposal.status)) && metadata.autoPositioned !== true));
 }
@@ -59,4 +62,33 @@ function activePopulation(obligations, proposals){
   return { obligations: active.map((row) => ({ ...row, proposalCount: currentProposals.filter((proposal) => proposal.obligationId === row.obligationId).length })), proposals: currentProposals };
 }
 
-module.exports = { GENERATED_SOURCES, identity, equivalent, hasHumanDecision, programmeRequirement, activePopulation };
+const RECONDUCTIBLE_FIELDS = ['activityLabel','statCom','domain','family','oiCodes','publicCodes','responsibleLabel',
+  'responsableFonctionCode','locationLabel','lieuId','lieuLibre','roomLabel','salleTheorieId','sessionStructure'];
+
+function businessSnapshot(fields){
+  return Object.fromEntries(RECONDUCTIBLE_FIELDS.filter(key => Object.prototype.hasOwnProperty.call(fields,key))
+    .map(key => [key,structuredClone(fields[key])]));
+}
+
+function latestValidatedReferences(rows, targetYear){
+  const byLineage = new Map();
+  const disabledLineages = new Set();
+  for(const row of rows){
+    const metadata = row.metadata || {};
+    const validation = metadata.businessValidation;
+    const lineage = metadata.lineage;
+    if(!lineage || !lineage.key || Number(row.annee) >= Number(targetYear)) continue;
+    if((metadata.lifecycleDecision || {}).futureGenerationDisabled) disabledLineages.add(lineage.key);
+    if(!validation || !validation.validatedAt) continue;
+    // Disabling production is durable; cancelling an occurrence is annual only.
+    const current = byLineage.get(lineage.key);
+    if(!current || Number(row.annee) > Number(current.annee)
+      || Number(row.annee) === Number(current.annee) && validation.validatedAt > current.metadata.businessValidation.validatedAt){
+      byLineage.set(lineage.key,row);
+    }
+  }
+  return [...byLineage.values()].filter(row => !disabledLineages.has(row.metadata.lineage.key));
+}
+
+module.exports = { GENERATED_SOURCES, identity, equivalent, hasHumanDecision, programmeRequirement, activePopulation,
+  RECONDUCTIBLE_FIELDS, businessSnapshot, latestValidatedReferences };

@@ -1100,6 +1100,67 @@
     return Array.from(new Set((codes || []).filter(Boolean))).sort(compareScopeSites);
   }
 
+  function qvProgrammeDragLock(row) {
+    const item = row || {};
+    if (item.definitionId === 'CTA-PERMANENCE') return 'CTA_PERMANENCE';
+    if (item.publishedEventId) return 'EVENEMENT_PUBLIE';
+    if (item.external || item.externalHistorical) return 'REFERENCE_EXTERNE';
+    if (item.locked === true || item.fixedDate === true) return 'DATE_VERROUILLEE';
+    return '';
+  }
+
+  function qvProgrammeDragReason(code) {
+    const labels = {
+      CTA_PERMANENCE: 'Permanence CTA calculée par le moteur',
+      EVENEMENT_PUBLIE: 'Occurrence déjà publiée dans SCOPE',
+      REFERENCE_EXTERNE: 'Référence historique externe',
+      DATE_VERROUILLEE: 'Date verrouillée'
+    };
+    return labels[String(code || '')] || '';
+  }
+
+  function qvSiteGroupRank(codes) {
+    const ranks = (codes || []).map(scopeSiteRank).filter((rank) => rank < SCOPE_SITE_ORDER.length);
+    return ranks.length ? Math.min(...ranks) : SCOPE_SITE_ORDER.length;
+  }
+
+  function qvProgrammeOrderKey(row) {
+    const item = row || {};
+    const preparatory = item.definitionId === 'CTA-PERMANENCE' || item.preparation;
+    const stamp = String(item.startsAt || '');
+    const slicedDate = stamp.slice(0, 10);
+    const slicedTime = stamp.length >= 16 ? stamp.slice(11, 16) : '';
+    return {
+      date: preparatory ? slicedDate : (item.publishedEventDate || slicedDate),
+      startTime: preparatory ? slicedTime : (item.publishedEventStart || slicedTime),
+      domain: item.domain || '',
+      ois: (item.ois && item.ois.length) ? item.ois : qvCollectOiCodes(item),
+      label: item.eventDisplayLabel || item.label || item.title || '',
+      id: item.id || ''
+    };
+  }
+
+  function compareQvProgrammeRows(a, b) {
+    return compareQvBusinessOrder(qvProgrammeOrderKey(a), qvProgrammeOrderKey(b));
+  }
+
+  function compareQvBusinessOrder(a, b) {
+    const left = a || {};
+    const right = b || {};
+    const text = (value) => String(value == null ? '' : value);
+    const date = text(left.date).localeCompare(text(right.date));
+    if (date) return date;
+    const time = text(left.startTime).localeCompare(text(right.startTime));
+    if (time) return time;
+    const domain = compareScopeDomains(left.domain, right.domain);
+    if (domain) return domain;
+    const site = qvSiteGroupRank(left.ois) - qvSiteGroupRank(right.ois);
+    if (site) return site;
+    const label = text(left.label).localeCompare(text(right.label), 'fr', { numeric: true });
+    if (label) return label;
+    return text(left.id).localeCompare(text(right.id), 'fr', { numeric: true });
+  }
+
   function qvCibleCodesOf(row) {
     return Array.from(new Set(((row && row.cibleCodes) || []).map((code) => String(code || '').trim()).filter(Boolean)));
   }
@@ -1921,7 +1982,9 @@
         qvDomaine: query.domaine || '',
         qvFamille: query.famille || '',
         qvMois: query.mois || '',
+        qvAnnee: ['2026', '2027', '2028'].includes(query.annee) ? Number(query.annee) : 2027,
         qvMode: query.mode || '',
+        qvPlacement: query.placement || '',
         qvSeances: query.seances || ''
       };
     }
@@ -3162,6 +3225,1109 @@
   function splitActivityThemeLabel(value){ return ActivityLabel.splitActivityThemeLabel(value); }
   function formatActivityThemeLabel(activityOrLabel,theme){ return ActivityLabel.formatActivityThemeLabel(activityOrLabel,theme); }
 
+  function qvResponsableGroups() {
+    return [
+      ['Commandant', 'Quartier-maître', 'Chef OP', 'Chef logistique', 'Chef formation', 'Of communication', 'Chef site DPS', 'Chef DAP'],
+      ['Of auto', 'Chef PR', 'Chef FOBA', 'Chef FOCA', 'Chef FOSPEC', 'Réf. Sanitaire', 'Resp. VPC'],
+      ['Chef section DAP', 'Chef section DPS'],
+      ['Chef site JSP', 'Resp. formation JSP']
+    ];
+  }
+
+  function qvResponsableKey(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  function qvResponsableCanonique(value, context) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const key = qvResponsableKey(raw);
+    const direct = {
+      'c foba': 'Chef FOBA',
+      'c dap': 'Chef DAP',
+      cdt: 'Commandant',
+      'c log': 'Chef logistique',
+      'c op': 'Chef OP',
+      qm: 'Quartier-maître',
+      'c pr': 'Chef PR',
+      'of auto': 'Of auto',
+      'resp for jsp': 'Resp. formation JSP'
+    };
+    if (direct[key]) return direct[key];
+    const domain = String((context && context.domain) || '').trim().toUpperCase();
+    if ((key === 'c site' || key === 'chef site') && domain === 'DPS') return 'Chef site DPS';
+    if (key === 'c jsp' && domain === 'JSP') return 'Chef site JSP';
+    if (key === 'c sct' && domain === 'DAP') return 'Chef section DAP';
+    if (key === 'c sct' && domain === 'DPS') return 'Chef section DPS';
+    const canonical = qvResponsableGroups().flat().find((label) => qvResponsableKey(label) === key);
+    return canonical || raw;
+  }
+
+  function qvProgrammePublicCatalogue() {
+    return [
+      { group: 'Général', items: [['GEN:RECRUE', 'Recrue'], ['GEN:SAPEUR', 'Sapeur'], ['GEN:SAPEUR-DPS', 'Sapeur DPS'], ['GEN:SAPEUR-DAP', 'Sapeur DAP']] },
+      { group: 'Échelons', items: [['ECH:I', 'Échelon I'], ['ECH:II', 'Échelon II'], ['ECH:III', 'Échelon III'], ['ECH:IV', 'Échelon IV']] },
+      { group: 'Sections DPS', items: ['N01', 'N01a', 'N01b', 'N02', 'N02a', 'N02b', 'N03', 'N03a', 'N03b', 'N04', 'N04a', 'N04b', 'N05', 'N05a', 'N05b', 'N06'].map(code => [code, code]) },
+      { group: 'Encadrement', items: [['ENC:C-SECTION', 'C section'], ['ENC:C-GROUPE', 'C groupe'], ['ENC:CAND-C-GROUPE', 'Candidats C groupe'], ['ENC:CI-DPS', 'CI DPS'], ['ENC:CAND-CI-DPS', 'Candidats CI DPS'], ['ENC:CI-DAP', 'CI DAP'], ['ENC:CAND-CI-DAP', 'Candidats CI DAP']] },
+      { group: 'Formation', items: [['FOBA:1', 'FOBA 1'], ['FOBA:2', 'FOBA 2'], ['FOBA:3', 'FOBA 3']] },
+      { group: 'PR', items: [['PR:2', 'PAPR'], ['PR:CAND-PAPR', 'Candidats PAPR'], ['PR:3', 'PABC'], ['PR:FORMATEURS', 'Formateurs PR'], ['PR:FMF', 'Formateur maison Feu (FMF)'], ['PR:CHEF-PISTE', 'Chef piste']] },
+      { group: 'AUTO', items: [['AUTO:1', 'cond PL'], ['AUTO:CAND-PL', 'Candidats cond PL'], ['AUTO:3', 'cond VL'], ['AUTO:5', 'Machiniste EA'], ['AUTO:CAND-EA', 'Candidats machiniste EA'], ['AUTO:6', 'Pilote BAT'], ['AUTO:2', 'cond TP9'], ['AUTO:CAND-TP9', 'Candidats cond TP9'], ['AUTO:4', 'Grutier'], ['AUTO:MONITEURS', 'Moniteurs conduite'], ['AUTO:FORM-C1', 'Formateurs C1/118'], ['AUTO:FORM-EA', 'Formateurs EA'], ['AUTO:FORM-GRUTIER', 'Formateurs Grutier']] },
+      { group: 'FOSPEC', items: [['FOSPEC:1', 'Antichute'], ['FOSPEC:2', 'NAC'], ['FOSPEC:3', 'OFSI'], ['FOSPEC:4', 'OP VPC']] },
+      { group: 'JSP', items: [['JSP:1', 'JSP']] }
+    ];
+  }
+
+  function qvProgrammePublicLabel(code) {
+    const value = String(code || '').trim();
+    for (const group of qvProgrammePublicCatalogue()) {
+      const found = group.items.find((item) => item[0] === value);
+      if (found) return found[1];
+    }
+    return value.includes(':') ? 'À définir' : value;
+  }
+
+  function qvProgrammeOiCatalogue() {
+    return [
+      { group: 'SDIS', items: [['SDIS', 'SDIS']] },
+      { group: 'DPS', items: ['G1', 'C1', 'B1', 'B2'].map(code => [`DPS:${code}`, code]) },
+      { group: 'DAP', items: ['Y1', 'Y2', 'Y3', 'Y4'].map(code => [`DAP:${code}`, code]) },
+      { group: 'JSP', items: ['G1', 'C1', 'B1'].map(code => [`JSP:${code}`, `JSP ${code}`]) }
+    ];
+  }
+
+  function qvProgrammeFamily(row) {
+    const domain = String(row && row.domain || '').toUpperCase();
+    if(domain === 'CMDT') return '';
+    if(['PR','AUTO','FOBA','FOCO','FOCA','FOSPEC'].includes(domain)) return domain;
+    if(['DPS','DAP','JSP'].includes(domain)) return 'FOCO';
+    return row && row.family || '';
+  }
+
+  function qvIsJspActivity(row) {
+    const item = row || {};
+    if (String(item.domain || '').toUpperCase() === 'JSP') return true;
+    if (/^010J/.test(String(item.statCom || ''))) return true;
+    return /\bJSP\b/i.test(String(item.label || item.title || ''));
+  }
+
+  function qvNormalizeOiSelections(row, values) {
+    const original = [...new Set(values || row.oiSelections || row.ois || [])];
+    const known = new Set(qvProgrammeOiCatalogue().flatMap(group => group.items.map(item => item[0])));
+    const ambiguous = [];
+    let changed = false;
+    const codes = original.map(value => {
+      const code = String(value || '').trim().toUpperCase();
+      if (known.has(code)) return code;
+      let domain = ['DPS', 'DAP', 'JSP'].includes(row.domain) ? row.domain : '';
+      if (/^Y[1-4]$/.test(code)) domain = 'DAP';
+      // G1/C1/B1/B2 sont les casernes DPS du référentiel : seules les activités JSP les lisent comme sites JSP.
+      if (!domain && /^(G1|C1|B1|B2)$/.test(code)) domain = qvIsJspActivity(row) && code !== 'B2' ? 'JSP' : 'DPS';
+      const qualified = domain && `${domain}:${code}`;
+      if (known.has(qualified)) { changed = true; return qualified; }
+      ambiguous.push(code);
+      return code;
+    });
+    return { codes: [...new Set(codes)], ambiguous, status: ambiguous.length ? 'AMBIGUOUS' : changed ? 'NORMALIZED' : 'UNCHANGED' };
+  }
+
+  function qvOiSites(codes) {
+    return [...new Set((codes || []).map(code => String(code).replace(/^(DPS|DAP|JSP):/, '')))];
+  }
+
+  function qvFormatOiSelections(codes) {
+    const parts = [];
+    for (const group of qvProgrammeOiCatalogue()) {
+      const labels = group.items.filter(item => (codes || []).includes(item[0])).map(item => item[1]);
+      if (labels.length) parts.push(labels.join(', '));
+    }
+    const known = new Set(qvProgrammeOiCatalogue().flatMap(group => group.items.map(item => item[0])));
+    const legacy = (codes || []).filter(code => !known.has(code));
+    if (legacy.length) parts.push(`À qualifier : ${legacy.join(', ')}`);
+    return parts.join(' ; ');
+  }
+
+  function qvEnrichBusinessReference(row, context = {}) {
+    const key = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const label = row.title || row.label || row.libelle || '';
+    const date = String(row.date || row.startsAt || '').slice(0, 10);
+    const sourceStatCom = row.statCom || row.statcom_code || '';
+    const succession = (context.statComSuccessions || []).find(item => item.sourceCode === sourceStatCom && date >= item.effectiveFrom);
+    const statCom = succession ? succession.canonicalCode : sourceStatCom;
+    const stat = (context.statComCodes || []).find(item => item.code === statCom && item.active !== false &&
+      (!item.validFrom || !date || item.validFrom <= date) && (!item.validTo || !date || item.validTo >= date));
+    const explicitDomain = row.domain || row.domaine_code || row.qui || '';
+    const domain = explicitDomain || (stat && ['DPS', 'DAP', 'JSP', 'AUTO', 'PR', 'FOBA', 'FOCA', 'FOSPEC'].includes(stat.domain) ? stat.domain : '');
+    const evidence = [];
+    if(succession) evidence.push({field:'statCom',rule:'CANONICAL_DATED_STATCOM_SUCCESSION',source:sourceStatCom,effectiveFrom:succession.effectiveFrom});
+    if (!explicitDomain && domain) evidence.push({ field: 'domain', rule: 'CANONICAL_STATCOM_DOMAIN', source: statCom });
+    const oi = qvNormalizeOiSelections({ ...row, domain, ois: row.ois || row.oi_codes || [] });
+    const targets = row.business_targets || [];
+    const knownOis = new Set(qvProgrammeOiCatalogue().flatMap(group => group.items.map(item => item[0])));
+    if(!oi.codes.length && stat && stat.oi_code && knownOis.has(`${domain}:${stat.oi_code}`)){
+      oi.codes.push(`${domain}:${stat.oi_code}`);evidence.push({field:'oiSelections',rule:'CANONICAL_STATCOM_OI',source:statCom});
+    }
+    for(const target of targets){
+      const code = `${target.domain}:${target.code}`;
+      if(knownOis.has(code) && !oi.codes.includes(code)){
+        oi.codes.push(code);evidence.push({field:'oiSelections',rule:'CANONICAL_EVENT_TARGET_OI',source:code});
+      }
+    }
+    if (oi.status === 'NORMALIZED') evidence.push({ field: 'oiSelections', rule: 'CANONICAL_DOMAIN_OI', source: explicitDomain || statCom });
+    const personnel = row.personnel || '';
+    const segments = personnel.split(/[|+]/).map(key).filter(Boolean);
+    const publics = [...new Set(row.publics || row.publicCodes || row.public_codes || [])];
+    const catalogue = qvProgrammePublicCatalogue().flatMap(group => group.items);
+    for(const target of targets){
+      const exact = `${target.domain}:${target.code}`;
+      const alias = target.domain === 'AUTO' ? ({PL:'AUTO:1',VL:'AUTO:3'})[target.code]
+        : target.domain === 'JSP' && ['G1','C1','B1','GEN'].includes(target.code) ? 'JSP:1' : '';
+      const code = catalogue.some(item => item[0] === exact) ? exact : alias;
+      if(code && !publics.includes(code)){
+        publics.push(code);evidence.push({field:'publicCodes',rule:'CANONICAL_EVENT_TARGET_PUBLIC',source:exact});
+      }
+    }
+    const targetPublicCount = publics.length;
+    for (const segment of segments) {
+      const exact = catalogue.filter(item => key(item[1]) === segment);
+      if (exact.length === 1 && !publics.includes(exact[0][0])) publics.push(exact[0][0]);
+    }
+    if (domain === 'DPS') publics.push(...qvSectionCodes(personnel));
+    const publicCodes = [...new Set(publics)];
+    if (publicCodes.length > targetPublicCount) evidence.push({ field: 'publicCodes', rule: 'EXPLICIT_PERSONNEL_PUBLIC', source: personnel });
+    const responsibleRaw = row.responsible || row.responsable || '';
+    const responsible = qvResponsableCanonique(responsibleRaw, { domain });
+    if (responsible && responsible !== responsibleRaw) evidence.push({ field: 'responsible', rule: 'CANONICAL_RESPONSABLE_ALIAS', source: responsibleRaw });
+    const location = row.location || '';
+    const locations = (context.lieux || []).filter(item => item.actif !== false && (String(item.lieuId) === String(row.lieuId || row.lieu_id || '') ||
+      [item.code, item.nomCourt, `L-${item.siteCode || item.oiCode}`].some(value => key(value) === key(location) && key(location))));
+    const lieu = locations.length === 1 ? locations[0] : null;
+    const room = row.room || row.salle || '';
+    const rooms = lieu ? (context.sallesTheorie || []).filter(item => item.actif !== false && item.lieuId === lieu.lieuId &&
+      (item.salleId === (row.salleTheorieId || row.salle_theorie_id) || key(item.code) === key(room) || key(item.libelle) === key(room.replace(/^salle\s+/i, '')))) : [];
+    const salle = rooms.length === 1 ? rooms[0] : null;
+    if (lieu && !row.lieuId && !row.lieu_id) evidence.push({ field: 'lieuId', rule: 'EXACT_CANONICAL_LOCATION', source: location });
+    if (salle && !row.salleTheorieId && !row.salle_theorie_id) evidence.push({ field: 'salleTheorieId', rule: 'EXACT_COMPATIBLE_ROOM', source: room });
+    const explicitFamily = row.family || row.famille || row.subDomain || row.sous_domaine_code || '';
+    const family = explicitFamily || (['DPS', 'DAP', 'JSP'].includes(domain) && /instr|exercice/i.test(label) ? 'FOCO' : ['AUTO', 'FOBA', 'FOCA', 'FOSPEC', 'PR'].includes(domain) ? domain : '');
+    if (family && !row.family && !row.famille) evidence.push({ field: 'family', rule: 'EXPLICIT_ACTIVITY_FAMILY', source: statCom || label });
+    const missing = [];
+    if (!domain) missing.push('Domaine non démontré');
+    if (!oi.codes.length || oi.ambiguous.length) missing.push('OI à qualifier');
+    if (!publicCodes.length) missing.push('Public cible non démontré');
+    if (statCom && !stat) missing.push('Stat.Com absent du référentiel');
+    const unmappedPublicLabels = personnel.split(/[|+]/).map(value => value.trim()).filter(value => value && !qvSectionCodes(value).length &&
+      !catalogue.some(([,label]) => key(label) === key(value)));
+    if(unmappedPublicLabels.length) missing.push('Public historique complémentaire à qualifier');
+    if (domain === 'DPS' && /instr.*(?:sct|section)/i.test(label) && !publicCodes.some(code => /^N0/.test(code))) missing.push('Section non démontrée');
+    const classification = missing.length ? 'AMBIGU' : evidence.length ? 'REGLE_GENERALISABLE' : 'CERTAIN';
+    return { activityLabel: label, statCom, domain, family, oiSelections: oi.codes,oiQualification:oi.status, publicCodes, responsible,
+      location: lieu ? lieu.nomCourt : location, lieuId: lieu && lieu.lieuId || row.lieuId || row.lieu_id || null,
+      room: salle ? salle.libelle : room, salleTheorieId: salle && salle.salleId || row.salleTheorieId || row.salle_theorie_id || null,
+      date,sourceStatCom, startTime: row.start || row.heure_debut || row.heure_debut_prevue || '', endTime: row.end || row.heure_fin || row.heure_fin_prevue || '',
+      classification, evidence, missing,unmappedPublicLabels,sourcePersonnel:personnel, sourceLine: row.sourceLine || null, sourceEventId: row.evenement_id || row.eventId || null };
+  }
+
+  function qvSectionCodes(value) {
+    const codes = [...String(value || '').matchAll(/\b(?:N0?|section\s+)([1-6])\s*([ab])?\b/gi)]
+      .map(match => `N0${match[1]}${(match[2] || '').toLowerCase()}`);
+    return [...new Set(codes)].filter(code => qvProgrammePublicCatalogue().find(group => group.group === 'Sections DPS').items.some(item => item[0] === code));
+  }
+
+  // Décalage 2026 → 2027 : 52 semaines exactes, ce qui préserve le jour de la semaine.
+  // C'est la règle déjà appliquée pour produire chaque historicalProposal.proposedDate2027.
+  const QV_HISTORICAL_SHIFT_DAYS = 364;
+
+  function qvShiftHistoricalDate(date2026, days = QV_HISTORICAL_SHIFT_DAYS) {
+    const key = String(date2026 || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return '';
+    const base = new Date(`${key}T00:00:00Z`);
+    base.setUTCDate(base.getUTCDate() + Number(days || 0));
+    return base.toISOString().slice(0, 10);
+  }
+
+  const QV_DPS_SITES = Object.freeze(['G1', 'C1', 'B1', 'B2']);
+
+  function qvRewriteDpsSiteToken(value, site) {
+    const next = String(site || '').toUpperCase();
+    if (!QV_DPS_SITES.includes(next)) return String(value || '');
+    return String(value || '').replace(/(012)(G1|C1|B1|B2)/g, `$1${next}`);
+  }
+
+  // Une activité organisée par section/demi-section occupe autant de dates que l'historique en démontre.
+  // Chaque tour est une réalisation propre à un OI : date + horaire + OI, jamais un OI fusionné.
+  function qvRotationBuckets(historicalRows, title) {
+    const wanted = String(title || '').trim().toLowerCase();
+    if (!wanted) return [];
+    const byKey = new Map();
+    for (const row of historicalRows || []) {
+      if (String(row.title || '').trim().toLowerCase() !== wanted) continue;
+      const date = String(row.date || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      const start = String(row.start || '').slice(0, 5);
+      const lineOis = qvSortOiCodes([...(row.ois || [])]).filter((code) => QV_DPS_SITES.includes(code));
+      const targets = lineOis.length ? lineOis : [''];
+      for (const oi of targets) {
+        const key = `${date}\t${start}\t${oi}`;
+        if (!byKey.has(key)) byKey.set(key, []);
+        byKey.get(key).push(row);
+      }
+    }
+    return [...byKey.entries()].sort((a, b) => {
+      const [dateA, startA, oiA] = a[0].split('\t');
+      const [dateB, startB, oiB] = b[0].split('\t');
+      return dateA.localeCompare(dateB) || startA.localeCompare(startB) || (scopeSiteRank(oiA) - scopeSiteRank(oiB));
+    }).map(([key, lines]) => {
+      const [date2026, startKey, oi] = key.split('\t');
+      const ois = oi ? [oi] : qvSortOiCodes([...new Set(lines.flatMap((line) => line.ois || []))]);
+      const site = ois[0] || '';
+      const locationBySite = {};
+      let statCom = '';
+      for (const line of lines) {
+        for (const code of (line.ois || [])) {
+          if (line.location && !locationBySite[code]) locationBySite[code] = line.location;
+        }
+        if (!statCom && line.statCom) statCom = String(line.statCom);
+      }
+      const location = site ? `Caserne ${qvDpsDefaultLieuCode(site)}` : String((lines.find((line) => line.location) || {}).location || '');
+      return {
+        date2026,
+        date2027: qvShiftHistoricalDate(date2026),
+        oi: site,
+        ois,
+        sections: [...new Set(lines.flatMap((line) => qvSectionCodes(line.personnel)))],
+        locationBySite,
+        location,
+        locationHistorical: locationBySite[site] || '',
+        start: startKey || String((lines.find((line) => line.start) || {}).start || '').slice(0, 5),
+        end: String((lines.find((line) => line.end) || {}).end || '').slice(0, 5),
+        statCom,
+        sourceLines: lines.map((line) => line.sourceLine).filter((value) => value != null)
+      };
+    });
+  }
+
+  function qvRotationProtected(row) {
+    const item = row || {};
+    const metadata = item.metadata || {};
+    return Boolean(item.publishedEventId) || item.locked === true || item.fixedDate === true
+      || metadata.humanDecision === true || metadata.preserveDecision === true
+      || item.humanDecision === true || item.preserveDecision === true;
+  }
+
+  function qvOccurrenceRank(row) {
+    const match = String((row && (row.occurrenceId || row.id)) || '').match(/:O(\d+)/);
+    return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+  }
+
+  function qvInstructionSectionPublic(row, bucket, ctaResolver) {
+    const kind = qvDpsInstructionKind(row);
+    const site = bucket.oi || (bucket.ois || [])[0];
+    if (typeof ctaResolver === 'function' && bucket.date2027 && site && kind) {
+      const derived = ctaResolver(bucket.date2027, site, kind, qvIsPionnierRow(row));
+      if (derived) return derived;
+    }
+    return (bucket.sections || [])[0] || '';
+  }
+
+  function qvApplyRotationBucket(row, bucket, ctaResolver) {
+    const start = bucket.start || String(row.startsAt || '').slice(11, 16);
+    const end = bucket.end || String(row.endsAt || '').slice(11, 16);
+    const site = bucket.oi || (bucket.ois || [])[0];
+    const ois = site ? [site] : (bucket.ois && bucket.ois.length ? bucket.ois : [...(row.ois || [])]);
+    const section = qvInstructionSectionPublic(row, { ...bucket, oi: site || ois[0] }, ctaResolver);
+    const publics = section
+      ? [...new Set((row.publics || []).filter((code) => !/^N0[1-6][ab]?$/.test(code)).concat([section]))]
+      : [...(row.publics || [])];
+    const location = site ? `Caserne ${qvDpsDefaultLieuCode(site)}` : (bucket.location || row.location || '');
+    const statCom = qvRewriteDpsSiteToken(row.statCom || bucket.statCom || '', site);
+    const code = qvRewriteDpsSiteToken(row.code || '', site);
+    return {
+      ...row,
+      startsAt: start && bucket.date2027 ? `${bucket.date2027}T${start}` : row.startsAt,
+      endsAt: end && bucket.date2027 ? `${bucket.date2027}T${end}` : row.endsAt,
+      publics,
+      ois,
+      location,
+      statCom: statCom || row.statCom,
+      code: code || row.code,
+      rotationStatus: 'DISTRIBUTED',
+      rotationRule: 'ROTATION_HISTORIQUE_2026_DEMONTREE',
+      sectionPublicStatus: section ? 'DEMONSTRATED' : row.sectionPublicStatus,
+      sectionPublicRule: section && typeof ctaResolver === 'function' ? 'CTA_PERMANENCE_CYCLE' : (section ? 'EXCEL_PERSONNEL_SECTION_EXPLICIT' : row.sectionPublicRule),
+      sectionPublicOi: site || '',
+      sectionPublicDerived: section || '',
+      rotationEvidence: {
+        date2026: bucket.date2026,
+        shiftDays: QV_HISTORICAL_SHIFT_DAYS,
+        oi: site,
+        sections: bucket.sections,
+        sectionCta: section,
+        locationBySite: bucket.locationBySite,
+        locationDivergence: bucket.locationHistorical && bucket.locationHistorical !== location
+          ? { historique: bucket.locationHistorical, referentiel: location } : null,
+        sourceLines: bucket.sourceLines
+      },
+      historicalProposal: {
+        ...(row.historicalProposal || {}),
+        source: 'HISTORICAL_2026',
+        sourceLine: bucket.sourceLines[0],
+        date2026: bucket.date2026,
+        proposedDate2027: bucket.date2027,
+        start,
+        end
+      }
+    };
+  }
+
+  function qvFindRowForRotationBucket(remaining, bucket) {
+    const date = bucket.date2027;
+    const start = bucket.start;
+    const oi = bucket.oi;
+    const exact = remaining.find((row) => {
+      const sites = qvDpsSitesOf(row);
+      return sites.length === 1 && sites[0] === oi
+        && String(row.startsAt || '').slice(0, 10) === date
+        && String(row.startsAt || '').slice(11, 16) === start;
+    });
+    if (exact) return exact;
+    const sameOi = remaining.find((row) => {
+      const sites = qvDpsSitesOf(row);
+      return sites.length === 1 && sites[0] === oi;
+    });
+    if (sameOi) return sameOi;
+    const fusedWithOi = remaining.find((row) => {
+      const sites = qvDpsSitesOf(row);
+      return sites.length !== 1 && (!oi || sites.includes(oi));
+    });
+    if (fusedWithOi) return fusedWithOi;
+    return remaining[0] || null;
+  }
+
+  function qvCloneInstructionForOi(template, bucket, ctaResolver) {
+    const applied = qvApplyRotationBucket(template, bucket, ctaResolver);
+    const startKey = String(bucket.start || '').replace(':', '');
+    const id = `QV27:OI:${template.definitionId}:${bucket.oi}:${bucket.date2027}:${startKey}`;
+    return {
+      ...applied,
+      id,
+      occurrenceId: `QV27:OI:${template.definitionId}:${bucket.oi}:${bucket.date2027}`,
+      sessionId: `${id}:S1`,
+      eventLabel: `${applied.label || template.label} ${bucket.oi}`,
+      rotationAdded: true,
+      rotationRule: 'ROTATION_OI_DISTINCT_2026_DEMONTREE'
+    };
+  }
+
+  // Les N tours historiques (date + horaire + OI) deviennent N réalisations distinctes.
+  // Si le canonique 2027 a fusionné C1/B1/B2 sur une seule ligne, les OI manquants sont ajoutés.
+  function qvDistributeRotationOccurrences(rows, historicalRows, ctaResolver) {
+    const groups = new Map();
+    for (const row of rows || []) {
+      if (!row || row.external) continue;
+      if (!qvDpsInstructionKind(row)) continue;
+      if (row.provenance === 'SOURCE_2027_EXPLICIT') continue;
+      const key = String(row.definitionId || row.label || '');
+      if (!key) continue;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    }
+    const patches = new Map();
+    const additions = [];
+    const addedIds = new Set();
+    const report = [];
+    for (const [key, group] of groups) {
+      const ordered = group.slice().sort((a, b) => qvOccurrenceRank(a) - qvOccurrenceRank(b));
+      const buckets = qvRotationBuckets(historicalRows, ordered[0].label || ordered[0].title);
+      const entry = {
+        definitionId: key,
+        label: ordered[0].label || ordered[0].title || '',
+        occurrences: ordered.length,
+        buckets: buckets.length,
+        distributed: 0,
+        added: 0,
+        protected: 0,
+        unmapped: [],
+        changes: []
+      };
+      if (!buckets.length) { entry.reason = 'AUCUNE_SOURCE_HISTORIQUE'; report.push(entry); continue; }
+      const remaining = ordered.filter((row) => {
+        if (!qvRotationProtected(row)) return true;
+        entry.protected += 1;
+        patches.set(String(row.id), { ...row, rotationStatus: 'HUMAN_DECISION', rotationRule: 'DECISION_HUMAINE_PRESERVEE' });
+        return false;
+      });
+      const template = ordered[0];
+      for (const bucket of buckets) {
+        if (!bucket || !bucket.date2027) continue;
+        const existingCloneId = `QV27:OI:${template.definitionId}:${bucket.oi}:${bucket.date2027}:${String(bucket.start || '').replace(':', '')}`;
+        const already = remaining.find((row) => String(row.id) === existingCloneId)
+          || (rows || []).find((row) => String(row && row.id) === existingCloneId && !patches.has(existingCloneId)
+            && !addedIds.has(existingCloneId));
+        let row = already && remaining.includes(already) ? already : qvFindRowForRotationBucket(remaining, bucket);
+        if (already && !remaining.includes(already) && !patches.has(String(already.id))) {
+          row = already;
+        }
+        if (row && remaining.includes(row)) remaining.splice(remaining.indexOf(row), 1);
+        if (!row) {
+          const cloned = qvCloneInstructionForOi(template, bucket, ctaResolver);
+          if (!addedIds.has(cloned.id) && !patches.has(cloned.id)) {
+            additions.push(cloned);
+            addedIds.add(cloned.id);
+            entry.added += 1;
+            entry.distributed += 1;
+            entry.changes.push({ id: cloned.id, from: null, to: { date: bucket.date2027, publics: cloned.publics, ois: cloned.ois, location: cloned.location } });
+          }
+          continue;
+        }
+        const previous = { date: String(row.startsAt || '').slice(0, 10), publics: [...(row.publics || [])], ois: [...(row.ois || [])], location: row.location || '', statCom: row.statCom || '' };
+        const next = qvApplyRotationBucket(row, bucket, ctaResolver);
+        entry.distributed += 1;
+        if (previous.date !== bucket.date2027 || String(previous.publics) !== String(next.publics)
+          || String(previous.ois) !== String(next.ois) || previous.location !== next.location
+          || previous.statCom !== next.statCom) {
+          entry.changes.push({ id: row.id, from: previous, to: { date: bucket.date2027, publics: next.publics, ois: next.ois, location: next.location, statCom: next.statCom } });
+        }
+        patches.set(String(row.id), next);
+      }
+      for (const leftover of remaining) {
+        entry.unmapped.push(leftover.id);
+        patches.set(String(leftover.id), { ...leftover, rotationStatus: 'MOA_REQUIRED', rotationRule: 'ROTATION_TOUR_NON_DEMONTRE' });
+      }
+      report.push(entry);
+    }
+    const nextRows = (rows || []).map((row) => patches.get(String(row && row.id)) || row);
+    return { rows: nextRows.concat(additions.filter((row) => !nextRows.some((item) => item && item.id === row.id))), report };
+  }
+
+  const QV_CONDUITE_LABEL = 'Conduite, formation continue';
+  const QV_CONDUITE_STATCOM = '0152F7';
+  const QV_CONDUITE_PUBLICS = Object.freeze(['AUTO:1', 'AUTO:3']);
+  const QV_CONDUITE_MAX_MINUTES = 60;
+  const QV_CONDUITE_PER_HALF = 3;
+  const QV_DPS_INSTRUCTION_RESPONSABLE = 'Chef section DPS';
+  // Ancienne matrice 3 thèmes × 4 OI = 12. Conservée uniquement comme trace de la règle
+  // MOA désormais remplacée par QV-CONDUITE-001 (3 séances par demi-section opérationnelle).
+  const QV_CONDUITE_THEMES = Object.freeze({
+    G1: Object.freeze(['KICK-OFF', 'ABC', 'VARIA']),
+    C1: Object.freeze(['KICK-OFF', 'VARIA', 'FEU']),
+    B1: Object.freeze(['KICK-OFF', 'VARIA', 'FEU']),
+    B2: Object.freeze(['KICK-OFF', 'VARIA', 'FEU'])
+  });
+  let qvCtaRulesModule = null;
+  try {
+    if (typeof require === 'function') qvCtaRulesModule = require('../../netlify/lib/_scope-cta-rules');
+  } catch (error) {
+    qvCtaRulesModule = null;
+  }
+
+  function qvDpsInstructionKind(row) {
+    const label = String((row && (row.label || row.title)) || '');
+    if (/instr(?:uction)?\s+demi[-\s]*(?:sct|section)/i.test(label)) return 'demi-section';
+    if (/instr(?:uction)?\s+(?:sct|section)/i.test(label)) return 'section';
+    return '';
+  }
+
+  function qvIsPionnierRow(row) {
+    return /\bPIONNIER\b/i.test(String((row && (row.label || row.title)) || ''));
+  }
+
+  function qvDpsSitesOf(row) {
+    return qvSortOiCodes(((row && row.ois) || []).map((code) => String(code || '').replace(/^(DPS|DAP|JSP):/, '')))
+      .filter((code) => QV_DPS_SITES.includes(code));
+  }
+
+  function qvDpsDefaultLieuCode(site) {
+    // Règle MOA : instructions et exercices DPS B2 se déroulent par défaut sur le site C1.
+    return String(site || '').toUpperCase() === 'B2' ? 'C1' : String(site || '').toUpperCase();
+  }
+
+  function qvInstructionTheme(row) {
+    const parts = String((row && (row.label || row.title)) || '').split(/\s+-\s+/);
+    if (parts.length < 2) return '';
+    return parts.slice(1).join(' - ').trim().toUpperCase().replace(/\s+CSU-NVB$/, '');
+  }
+
+  function qvAddMinutes(stamp, minutes) {
+    const text = String(stamp || '');
+    if (text.length < 16) return '';
+    const base = new Date(`${text.slice(0, 16)}:00Z`);
+    base.setUTCMinutes(base.getUTCMinutes() + Number(minutes || 0));
+    return base.toISOString().slice(0, 16);
+  }
+
+  function qvConduiteEngineOptions(options) {
+    if (options && typeof options.ctaResolver === 'function' && typeof options.operationalHalvesForOi === 'function') {
+      return options;
+    }
+    if (qvCtaRulesModule) {
+      return {
+        ...(options || {}),
+        ctaResolver: (options && options.ctaResolver) || qvCtaRulesModule.instructionPublicForDate,
+        operationalHalvesForOi: (options && options.operationalHalvesForOi) || qvCtaRulesModule.operationalHalfSections
+      };
+    }
+    return options || {};
+  }
+
+  function qvHalfSectionOf(row, site, ctaResolver) {
+    const existing = (row && row.publics || []).find((code) => /^N0[1-6][ab]$/.test(code));
+    if (existing) return existing;
+    if (typeof ctaResolver === 'function' && row && row.startsAt && site) {
+      return ctaResolver(String(row.startsAt).slice(0, 10), site, 'demi-section', qvIsPionnierRow(row)) || '';
+    }
+    return '';
+  }
+
+  function qvConduitePublics(halfSection) {
+    return [halfSection, ...QV_CONDUITE_PUBLICS].filter(Boolean);
+  }
+
+  // QV-CONDUITE-007 : k indices également répartis sur n sources chronologiques.
+  // n <= k → toutes les sources. Sinon premier, quantiles, dernier. Déterministe, sans hasard.
+  function qvSelectSpreadIndices(n, k) {
+    const count = Math.max(0, Number(n) || 0);
+    const want = Math.max(0, Number(k) || 0);
+    if (!count || !want) return [];
+    if (count <= want) return [...Array(count).keys()];
+    const picked = [];
+    for (let i = 0; i < want; i += 1) {
+      let index = Math.round(i * (count - 1) / (want - 1));
+      while (picked.includes(index) && index < count - 1) index += 1;
+      while (picked.includes(index) && index > 0) index -= 1;
+      if (!picked.includes(index)) picked.push(index);
+    }
+    return picked.sort((a, b) => a - b);
+  }
+
+  function qvConduiteSources(rows, ctaResolver) {
+    const eligible = [];
+    for (const row of rows || []) {
+      if (!row || row.external || !row.startsAt || !row.endsAt) continue;
+      if (qvDpsInstructionKind(row) !== 'demi-section') continue;
+      if (qvIsPionnierRow(row)) continue;
+      const theme = qvInstructionTheme(row);
+      const sites = qvDpsSitesOf(row);
+      for (const site of sites) {
+        const halfSection = qvHalfSectionOf(row, site, ctaResolver);
+        if (!halfSection) continue;
+        if (qvCtaRulesModule && qvCtaRulesModule.isReserveHalfSection(site, halfSection)) continue;
+        const location = sites.length === 1 ? (row.location || '') : `Caserne ${qvDpsDefaultLieuCode(site)}`;
+        eligible.push({ site, theme, halfSection, row, location });
+      }
+    }
+    return eligible.sort((a, b) => String(a.row.startsAt).localeCompare(String(b.row.startsAt))
+      || (scopeSiteRank(a.site) - scopeSiteRank(b.site))
+      || String(a.halfSection).localeCompare(String(b.halfSection)));
+  }
+
+  function qvNextStatComSerials(existing, statCom, count) {
+    const prefix = `${statCom}.`;
+    const used = new Set((existing || []).map((row) => String(row.code || ''))
+      .filter((code) => code.startsWith(prefix))
+      .map((code) => Number(code.slice(prefix.length)))
+      .filter((value) => Number.isFinite(value)));
+    const serials = [];
+    let cursor = 1;
+    while (serials.length < count) {
+      if (!used.has(cursor)) serials.push(cursor);
+      cursor += 1;
+    }
+    return serials;
+  }
+
+  function qvBuildConduiteRow(item, serial, existing) {
+    const startsAt = String(item.row.endsAt).slice(0, 16);
+    const endsAt = qvAddMinutes(startsAt, QV_CONDUITE_MAX_MINUTES);
+    const dateKey = startsAt.slice(0, 10);
+    const startKey = startsAt.slice(11, 16).replace(':', '');
+    const id = `QV27:CONDUITE:${item.site}:${item.halfSection}:${dateKey}:${startKey}`;
+    const evidence = {
+      rule: 'QV-CONDUITE-001',
+      site: item.site,
+      theme: item.theme,
+      halfSection: item.halfSection,
+      sourceId: item.row.id,
+      spread: 'QV-CONDUITE-007'
+    };
+    const publics = qvConduitePublics(item.halfSection);
+    const sourceLocation = item.location || item.row.location || '';
+    if (existing) {
+      const realigned = sourceLocation && String(existing.location || '') !== sourceLocation;
+      return {
+        ...existing,
+        endsAt: String(existing.endsAt).slice(0, 16) || endsAt,
+        location: sourceLocation || existing.location || '',
+        ois: [item.site],
+        publics,
+        statCom: QV_CONDUITE_STATCOM,
+        conduiteEvidence: realigned
+          ? { ...evidence, locationRealignedFrom: String(existing.location || ''), locationRule: 'MOA_CONDUITE_FOLLOWS_SOURCE_LOCATION' }
+          : evidence
+      };
+    }
+    return {
+      id,
+      definitionId: 'QV26-CONDUITE-FORMATION-CONTINUE-2990E6C6',
+      occurrenceId: `QV27:CONDUITE:${item.site}:${item.halfSection}:O1`,
+      sessionId: `${id}:S1`,
+      label: QV_CONDUITE_LABEL,
+      eventLabel: QV_CONDUITE_LABEL,
+      status: item.row.status === 'VALIDATED' ? 'VALIDATED' : 'A_POSITIONNER',
+      code: `${QV_CONDUITE_STATCOM}.${String(serial).padStart(3, '0')}`,
+      statCom: QV_CONDUITE_STATCOM,
+      domain: 'AUTO',
+      family: 'Formation',
+      ois: [item.site],
+      publics,
+      sessionIndex: 1,
+      sessionCount: 1,
+      startsAt,
+      endsAt,
+      location: sourceLocation,
+      room: '',
+      responsible: item.row.responsible || '',
+      provenance: 'MOA_RULE_CONDUITE_2027',
+      reason: `Conduite positionnée après ${item.row.label} (${item.site} ${item.halfSection}).`,
+      review: false,
+      external: false,
+      conduiteEvidence: evidence
+    };
+  }
+
+  function qvDeriveConduiteContinue(rows, options) {
+    const engine = qvConduiteEngineOptions(options);
+    const sources = qvConduiteSources(rows, engine.ctaResolver);
+    const existing = (rows || []).filter((row) => row && !row.external
+      && String(row.statCom || '') === QV_CONDUITE_STATCOM && String(row.label || '') === QV_CONDUITE_LABEL);
+    const grouped = new Map();
+    for (const item of sources) {
+      const key = `${item.site}|${item.halfSection}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(item);
+    }
+    const slots = [];
+    const insufficient = [];
+    const halvesFor = typeof engine.operationalHalvesForOi === 'function'
+      ? engine.operationalHalvesForOi
+      : () => [];
+    for (const site of QV_DPS_SITES) {
+      const halves = halvesFor(site);
+      for (const halfSection of halves) {
+        const list = (grouped.get(`${site}|${halfSection}`) || [])
+          .slice()
+          .sort((a, b) => String(a.row.startsAt).localeCompare(String(b.row.startsAt)));
+        const picked = qvSelectSpreadIndices(list.length, QV_CONDUITE_PER_HALF).map((index) => list[index]);
+        slots.push(...picked);
+        if (picked.length < QV_CONDUITE_PER_HALF) {
+          insufficient.push({
+            code: 'CONDUITE_SOURCE_INSUFFISANTE',
+            oi: site,
+            halfSection,
+            expected: QV_CONDUITE_PER_HALF,
+            found: picked.length,
+            candidates: list.map((item) => ({
+              id: item.row.id,
+              date: String(item.row.startsAt).slice(0, 10),
+              theme: item.theme
+            }))
+          });
+        }
+      }
+    }
+    const taken = new Set();
+    const matched = [];
+    const toAdd = [];
+    for (const item of slots) {
+      const startsAt = String(item.row.endsAt).slice(0, 16);
+      const found = existing.find((row) => !taken.has(row.id)
+        && qvDpsSitesOf(row)[0] === item.site && String(row.startsAt).slice(0, 16) === startsAt);
+      if (found) {
+        taken.add(found.id);
+        matched.push(qvBuildConduiteRow(item, 0, found));
+      } else {
+        toAdd.push(item);
+      }
+    }
+    const serials = qvNextStatComSerials(existing, QV_CONDUITE_STATCOM, toAdd.length);
+    const added = toAdd.map((item, index) => qvBuildConduiteRow(item, serials[index], null));
+    const orphans = existing.filter((row) => !taken.has(row.id));
+    const expected = QV_DPS_SITES.reduce((total, site) => total + halvesFor(site).length, 0) * QV_CONDUITE_PER_HALF;
+    return {
+      matched,
+      added,
+      missing: insufficient,
+      insufficient,
+      orphans,
+      expected,
+      materialized: matched.length + added.length
+    };
+  }
+
+  function qvApplyConduiteContinue(rows, options) {
+    const derived = qvDeriveConduiteContinue(rows, options);
+    const replaced = new Map(derived.matched.map((row) => [String(row.id), row]));
+    const next = (rows || []).map((row) => replaced.get(String(row && row.id)) || row);
+    return { rows: next.concat(derived.added), derived };
+  }
+
+  const QV_PIONNIER_RULES = Object.freeze({
+    sectionCsuNvb: Object.freeze({ start: '19:15', end: '22:00' }),
+    demiSectionMinutes: 240,
+    site: 'G1',
+    fobaPublic: 'FOBA:2'
+  });
+
+  function qvApplyPionnierRules(rows) {
+    const changes = [];
+    const next = (rows || []).map((row) => {
+      if (!row || row.external || !qvIsPionnierRow(row)) return row;
+      const label = String(row.label || row.title || '');
+      const kind = qvDpsInstructionKind(row);
+      const date = String(row.startsAt || '').slice(0, 10);
+      const patch = {};
+      const evidence = [];
+      if (/^Introduction\s+PIONNIER/i.test(label) && !(row.publics || []).includes(QV_PIONNIER_RULES.fobaPublic)) {
+        patch.publics = [QV_PIONNIER_RULES.fobaPublic];
+        evidence.push({ field: 'publics', rule: 'MOA_PIONNIER_FOBA_2', from: (row.publics || []).join(',') });
+      }
+      if (/CSU-nvb/i.test(label) && kind === 'section' && date) {
+        const { start, end } = QV_PIONNIER_RULES.sectionCsuNvb;
+        if (String(row.startsAt).slice(11, 16) !== start || String(row.endsAt || '').slice(11, 16) !== end) {
+          patch.startsAt = `${date}T${start}`;
+          patch.endsAt = `${date}T${end}`;
+          evidence.push({ field: 'horaire', rule: 'MOA_PIONNIER_CSU_NVB_19_15_22_00',
+            from: `${String(row.startsAt).slice(11, 16)}-${String(row.endsAt || '').slice(11, 16)}` });
+        }
+      }
+      if (kind === 'demi-section' && date && row.endsAt) {
+        const expected = qvAddMinutes(String(row.startsAt).slice(0, 16), QV_PIONNIER_RULES.demiSectionMinutes);
+        if (expected && String(row.endsAt).slice(0, 16) !== expected) {
+          patch.endsAt = expected;
+          evidence.push({ field: 'duree', rule: 'MOA_PIONNIER_DEMI_SECTION_4H', from: String(row.endsAt).slice(11, 16) });
+        }
+      }
+      if (!evidence.length) return { ...row, pionnierRule: 'MOA_PIONNIER_CONFORME' };
+      changes.push({ id: row.id, label, evidence });
+      return { ...row, ...patch, pionnierRule: 'MOA_PIONNIER_APPLIED', pionnierEvidence: evidence };
+    });
+    return { rows: next, changes };
+  }
+
+  const QV_PR_ABC_LABEL = 'Exercice PR-ABC';
+  const QV_PR_ABC_DEFINITION = 'QV26-EXERCICE-PR-ABC-75229C6D';
+
+  function qvCalendarQuarter(date) {
+    const month = Number(String(date || '').slice(5, 7));
+    if (month >= 1 && month <= 3) return 'T1';
+    if (month >= 4 && month <= 6) return 'T2';
+    if (month >= 7 && month <= 9) return 'T3';
+    if (month >= 10 && month <= 12) return 'T4';
+    return '';
+  }
+
+  function qvPrAbcHistoricalRefresh(historicalRows) {
+    return (historicalRows || [])
+      .filter((row) => /Exercice PR-ABC/i.test(String(row.title || row.label || '')))
+      .map((row) => {
+        const date2026 = String(row.date || '').slice(0, 10);
+        const utc = /^\d{4}-\d{2}-\d{2}$/.test(date2026) ? new Date(`${date2026}T00:00:00Z`) : null;
+        const weekday = utc ? ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'][utc.getUTCDay()] : '';
+        return {
+          sourceLine: row.sourceLine,
+          date2026,
+          date2027: qvShiftHistoricalDate(date2026),
+          start: String(row.start || '').slice(0, 5),
+          end: String(row.end || '').slice(0, 5),
+          weekday,
+          quarter: qvCalendarQuarter(date2026),
+          location: row.location || '',
+          statCom: row.statCom || '0164F7',
+          personnel: row.personnel || ''
+        };
+      });
+  }
+
+  function qvPrAbcSessionPlan() {
+    return [
+      { occurrence: 1, quarter: 'T1', session: 1, morning: false },
+      { occurrence: 1, quarter: 'T1', session: 2, morning: true },
+      { occurrence: 1, quarter: 'T1', session: 3, morning: false },
+      { occurrence: 2, quarter: 'T4', session: 1, morning: false },
+      { occurrence: 2, quarter: 'T4', session: 2, morning: true },
+      { occurrence: 2, quarter: 'T4', session: 3, morning: false }
+    ];
+  }
+
+  function qvApplyPrAbcStructure(rows, historicalRows) {
+    const historical = qvPrAbcHistoricalRefresh(historicalRows);
+    const t1Dates = historical.filter((item) => item.quarter === 'T1');
+    const t4Dates = historical.filter((item) => item.quarter === 'T4');
+    const morningPattern = historical.find((item) => item.start && Number(item.start.slice(0, 2)) < 12) || {
+      start: '08:00', end: '11:00', weekday: 'mercredi', date2026: '', quarter: ''
+    };
+    const eveningPattern = historical.find((item) => item.start && Number(item.start.slice(0, 2)) >= 12) || {
+      start: '18:30', end: '21:30', weekday: '', date2026: '', quarter: ''
+    };
+    const datingStatus = (!t1Dates.length || t4Dates.length < 3)
+      ? 'MOA_PROPOSAL_NO_DEMONSTRATED_T1_T4_CALENDAR'
+      : 'HISTORICAL_T1_T4_DATES';
+    const existing = (rows || []).filter((row) => row && !row.external && String(row.label || row.title || '') === QV_PR_ABC_LABEL);
+    const template = existing[0];
+    if (!template) {
+      return { rows: rows || [], report: { expected: 6, existing: 0, added: 0, datingStatus, historical, reason: 'AUCUNE_OCCURRENCE_SOURCE' } };
+    }
+    const plan = qvPrAbcSessionPlan();
+    const patches = new Map();
+    const additions = [];
+    const takenSlots = new Set();
+    const usedIds = new Set();
+    const applySlot = (slot, row, cloned) => {
+      const morning = slot.morning;
+      const start = morning ? morningPattern.start : eveningPattern.start;
+      const end = morning ? morningPattern.end : eveningPattern.end;
+      const proposal = {
+        rule: 'MOA_PR_ABC_T1_T4',
+        quarter: slot.quarter,
+        sessionIndex: slot.session,
+        sessionCount: 3,
+        session2Morning: morning,
+        preferredWeekday: morning ? 'mercredi' : '',
+        proposedStart: start,
+        proposedEnd: end,
+        datingStatus,
+        historical2026: historical,
+        t1HistoricalDates: t1Dates.map((item) => item.date2026),
+        t4HistoricalDates: t4Dates.map((item) => item.date2026),
+        morningPatternSource: morningPattern.date2026 || '08:00-11:00',
+        note: 'Aucune date T1 2026 démontrée ; 2026 montre T2 (21.04 soir, 10.06 matin mercredi) et T4 (06.10 soir). Les dates civiles 2027 ne sont pas inventées.'
+      };
+      const occurrenceId = `${QV_PR_ABC_DEFINITION}:O${slot.occurrence}`;
+      const sessionId = `${QV_PR_ABC_DEFINITION}:O${slot.occurrence}:S${slot.session}`;
+      return {
+        ...row,
+        id: cloned ? sessionId : row.id,
+        definitionId: QV_PR_ABC_DEFINITION,
+        occurrenceId,
+        sessionId: cloned ? sessionId : (row.sessionId || sessionId),
+        label: QV_PR_ABC_LABEL,
+        eventLabel: `Exercice PR-ABC ${slot.quarter} — séance ${slot.session}`,
+        sessionIndex: slot.session,
+        sessionCount: 3,
+        domain: row.domain || 'PR',
+        family: row.family || 'Exercice',
+        statCom: row.statCom || '0164F7',
+        publics: (row.publics && row.publics.length) ? row.publics : ['JSP:1', 'PR:3'],
+        startsAt: row.startsAt || null,
+        endsAt: row.endsAt || null,
+        provenance: 'MOA_RULE_PR_ABC_T1_T4',
+        reason: `Série ${slot.quarter}, séance ${slot.session}/3.${morning ? ' Matinée, mercredi de préférence.' : ''} ${proposal.note}`,
+        prAbcProposal: proposal,
+        prAbcStatus: datingStatus
+      };
+    };
+    const slotKey = (slot) => `${slot.quarter}:${slot.session}`;
+    const slotFromRow = (row) => {
+      if (row.prAbcProposal && row.prAbcProposal.quarter && row.sessionIndex) {
+        return plan.find((slot) => slot.quarter === row.prAbcProposal.quarter && slot.session === row.sessionIndex) || null;
+      }
+      const marker = `${row.occurrenceId || ''} ${row.sessionId || ''} ${row.id || ''}`;
+      if (/:O1(?::S1)?(?:\s|$)/.test(marker) && /S1/.test(marker)) return plan.find((slot) => slot.occurrence === 1 && slot.session === 1);
+      if (/:O2(?::S1)?(?:\s|$)/.test(marker) && /S1/.test(marker) && !/:O2:S[23]/.test(marker)) {
+        return plan.find((slot) => slot.occurrence === 2 && slot.session === 1);
+      }
+      if (/:O3/.test(marker)) return plan.find((slot) => slot.occurrence === 1 && slot.session === 3);
+      const wanted = plan.find((slot) => String(row.id) === `${QV_PR_ABC_DEFINITION}:O${slot.occurrence}:S${slot.session}`);
+      return wanted || null;
+    };
+    for (const row of existing) {
+      const slot = slotFromRow(row);
+      if (!slot || takenSlots.has(slotKey(slot))) continue;
+      takenSlots.add(slotKey(slot));
+      usedIds.add(row.id);
+      patches.set(String(row.id), applySlot(slot, row, false));
+    }
+    for (const slot of plan) {
+      if (takenSlots.has(slotKey(slot))) continue;
+      const cloned = applySlot(slot, template, true);
+      if (usedIds.has(cloned.id) || (rows || []).some((item) => item && item.id === cloned.id && patches.has(String(item.id)))) continue;
+      additions.push(cloned);
+      takenSlots.add(slotKey(slot));
+      usedIds.add(cloned.id);
+    }
+    const next = (rows || []).map((row) => patches.get(String(row && row.id)) || row).concat(additions);
+    return {
+      rows: next,
+      report: {
+        expected: 6,
+        existing: existing.length,
+        added: additions.length,
+        datingStatus,
+        historical,
+        t1Historical: t1Dates.length,
+        t4Historical: t4Dates.length
+      }
+    };
+  }
+
+  function qvSalleTree(rooms) {
+    const active = (rooms || []).filter((room) => room && room.actif !== false);
+    const byId = new Map(active.map((room) => [String(room.salleId), room]));
+    const byCode = new Map(active.map((room) => [String(room.code || ''), room]));
+    const parentOf = (room) => {
+      const direct = room.parentSalleId && byId.get(String(room.parentSalleId));
+      return direct || (room.parentCode && byCode.get(String(room.parentCode))) || null;
+    };
+    const label = (room) => String((room && room.libelle) || '');
+    const sorted = (list) => list.slice().sort((a, b) => label(a).localeCompare(label(b), 'fr', { sensitivity: 'base' }));
+    const tree = [];
+    for (const room of sorted(active.filter((room) => !parentOf(room)))) {
+      tree.push({ room, depth: 0, parent: null });
+      for (const child of sorted(active.filter((item) => parentOf(item) === room))) {
+        tree.push({ room: child, depth: 1, parent: room });
+      }
+    }
+    for (const room of sorted(active.filter((room) => parentOf(room) && !byId.has(String(parentOf(room).salleId))))) {
+      if (!tree.some((node) => node.room === room)) tree.push({ room, depth: 0, parent: null });
+    }
+    return tree;
+  }
+
+  // Repli CTA : n'intervient que si l'analyse historique n'a pas déjà démontré ou qualifié le public.
+  function qvApplyCtaSectionPublic(row, ctaResolver) {
+    if (typeof ctaResolver !== 'function') return row;
+    if (row.sectionPublicStatus === 'DEMONSTRATED' || row.sectionPublicRule === 'SHARED_HISTORICAL_REFERENCE') return row;
+    if ((row.publics || []).some((code) => /^N0[1-6][ab]?$/.test(code))) return row;
+    const kind = qvDpsInstructionKind(row);
+    if (!kind || !row.startsAt) return row;
+    const sites = qvDpsSitesOf(row);
+    if (sites.length !== 1) {
+      return { ...row, sectionPublicStatus: 'MOA_REQUIRED', sectionPublicRule: 'CTA_MULTI_OI_NON_REPARTI' };
+    }
+    if (row.provenance !== 'SOURCE_2027_EXPLICIT') {
+      return { ...row, sectionPublicStatus: 'MOA_REQUIRED', sectionPublicRule: 'CTA_DATE_NON_DEMONTREE' };
+    }
+    const derived = ctaResolver(String(row.startsAt).slice(0, 10), sites[0], kind, qvIsPionnierRow(row));
+    if (!derived) return row;
+    return { ...row, publics: [...new Set((row.publics || []).concat([derived]))],
+      sectionPublicStatus: 'DEMONSTRATED', sectionPublicRule: 'CTA_PERMANENCE_CYCLE',
+      sectionPublicOi: sites[0], sectionPublicDerived: derived };
+  }
+
+  function qvEnrichSectionPublic(row, references, programmeRows = [], ctaResolver = null) {
+    return qvApplyCtaSectionPublic(qvEnrichSectionPublicHistorical(row, references, programmeRows), ctaResolver);
+  }
+
+  function qvIsDpsInstructionFamily(row) {
+    return Boolean(qvDpsInstructionKind(row));
+  }
+
+  function qvApplyDpsInstructionFamilyRules(rows, ctaResolver) {
+    const changes = [];
+    const next = (rows || []).map((row) => {
+      if (!row || row.external) return row;
+      let current = row;
+      if (qvIsDpsInstructionFamily(current) && !qvRotationProtected(current)) {
+        const displayed = qvResponsableCanonique(current.responsible, { domain: current.domain });
+        if (displayed !== QV_DPS_INSTRUCTION_RESPONSABLE || String(current.responsible || '').trim() !== QV_DPS_INSTRUCTION_RESPONSABLE) {
+          changes.push({ id: current.id, from: current.responsible || '', to: QV_DPS_INSTRUCTION_RESPONSABLE, rule: 'QV-DPS-003' });
+          current = {
+            ...current,
+            responsible: QV_DPS_INSTRUCTION_RESPONSABLE,
+            responsableFonctionCode: QV_DPS_INSTRUCTION_RESPONSABLE,
+            instructionFamilyRule: 'QV-DPS-003'
+          };
+        }
+      }
+      return typeof ctaResolver === 'function' ? qvApplyCtaSectionPublic(current, ctaResolver) : current;
+    });
+    return { rows: next, changes };
+  }
+
+  function qvEnrichSectionPublicHistorical(row, references, programmeRows = []) {
+    if (row.domain !== 'DPS' || !/instr(?:uction)?\s+(?:demi[-\s]*)?(?:sct|section)/i.test(row.label || row.title || '')) return row;
+    // La rotation a déjà posé le public CTA : l'Excel ne doit pas le remplacer, surtout pas par un personnel
+    // multi-OI ou « Perm B2 » qui fusionnerait visuellement des réalisations distinctes.
+    if (row.sectionPublicRule === 'CTA_PERMANENCE_CYCLE' || row.rotationStatus === 'DISTRIBUTED') return row;
+    const sourceLine = row.historicalProposal && row.historicalProposal.sourceLine;
+    const reference = (references || []).find(item => item.sourceLine === sourceLine);
+    const demonstrated = reference && reference.domain === 'DPS' && (row.ois || []).some(oi => reference.ois.includes(oi))
+      ? qvSectionCodes(reference.personnel) : qvSectionCodes(row.label);
+    const existing = (row.publics || []).filter(code => /^N0[1-6][ab]?$/.test(code));
+    const shared = sourceLine && programmeRows.filter(item => item.historicalProposal && item.historicalProposal.sourceLine === sourceLine).length > 1;
+    if (shared && !existing.length) return { ...row, sectionPublicStatus: 'AMBIGUOUS', sectionPublicRule: 'SHARED_HISTORICAL_REFERENCE' };
+    if (shared && existing.length) return { ...row, sectionPublicStatus: 'EXISTING' };
+    if (!demonstrated.length) return { ...row, sectionPublicStatus: existing.length ? 'EXISTING' : 'AMBIGUOUS' };
+    return { ...row, publics: [...new Set((row.publics || []).filter(code => !/^N0[1-6][ab]?$/.test(code)).concat(demonstrated))],
+      sectionPublicStatus: 'DEMONSTRATED', sectionPublicRule: 'EXCEL_PERSONNEL_SECTION_EXPLICIT', sectionPublicSourceLine: reference && reference.sourceLine };
+  }
+
+  function qvHistoricalAgenda(events, references) {
+    const visible = (events || []).filter(row => !row.hidden_at && String(row.date || '').slice(0, 4) === '2026');
+    const matched = new Map();
+    const normalized = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    for (const reference of references || []) {
+      const candidates = visible.filter(event => String(event.date).slice(0, 10) === reference.date &&
+        ((reference.code && [event.code_cours, event.code_source].includes(reference.code)) ||
+          (normalized(event.libelle) === normalized(reference.title) && String(event.heure_debut || event.heure_debut_prevue || '').slice(0, 5) === reference.start &&
+            (!reference.statCom || event.statcom_code === reference.statCom))));
+      if (candidates.length === 1) matched.set(reference.sourceLine, candidates[0].evenement_id);
+    }
+    return {
+      events: visible.map(event => ({ id: event.evenement_id, eventId: event.evenement_id, date: String(event.date).slice(0, 10),
+        startsAt: `${String(event.date).slice(0, 10)}T${String(event.heure_debut || event.heure_debut_prevue || '00:00').slice(0, 5)}`,
+        label: event.libelle, start: String(event.heure_debut || event.heure_debut_prevue || '').slice(0, 5), end: String(event.heure_fin || event.heure_fin_prevue || '').slice(0, 5),
+        status: event.statut, kind: 'SCOPE_EVENT', referenceLines: [...matched].filter(([, id]) => id === event.evenement_id).map(([line]) => line) })),
+      references: (references || []).filter(row => !matched.has(row.sourceLine)).map(row => ({ ...row, kind: 'EXCEL_REFERENCE' })),
+      counts: { events: visible.length, matchedReferences: matched.size, unmatchedReferences: (references || []).length - matched.size }
+    };
+  }
+
+  function qvFormatEchelons(labels) {
+    const rank = { I: 1, II: 2, III: 3, IV: 4 };
+    const numeral = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+    const ranks = [...new Set((labels || []).map((label) => {
+      const match = String(label || '').match(/^Échelon\s+(IV|I{1,3})$/);
+      return match ? rank[match[1]] : 0;
+    }).filter(Boolean))].sort((a, b) => a - b);
+    if (!ranks.length) return '';
+    const runs = [];
+    let start = ranks[0];
+    let previous = ranks[0];
+    for (let index = 1; index <= ranks.length; index += 1) {
+      const current = ranks[index];
+      if (current === previous + 1) {
+        previous = current;
+        continue;
+      }
+      runs.push([start, previous]);
+      start = current;
+      previous = current;
+    }
+    const phrase = (run) => {
+      const [from, to] = run;
+      if (from === to) return numeral[from];
+      if (runs.length === 1 && to === from + 1) return `${numeral[from]} et ${numeral[to]}`;
+      return `${numeral[from]} à ${numeral[to]}`;
+    };
+    return `Échelon ${runs.map(phrase).join(' et ')}`;
+  }
+
+  function qvFormatPublicLabels(codes) {
+    const labels = [...new Set((codes || []).map((code) => qvProgrammePublicLabel(code)).filter((label) => label && label !== 'À définir'))];
+    const contraction = qvFormatEchelons(labels.filter((label) => /^Échelon\s+/.test(label)));
+    let placed = false;
+    const rendered = [];
+    labels.forEach((label) => {
+      if (/^Échelon\s+/.test(label)) {
+        if (!placed && contraction) rendered.push(contraction);
+        placed = true;
+        return;
+      }
+      rendered.push(label);
+    });
+    return rendered.join(', ');
+  }
+
   return {
     MOTIFS,
     MOTIFS_JSP,
@@ -3255,6 +4421,41 @@
     qvCodeCoursValue,
     qvCollectOiCodes,
     qvSortOiCodes,
+    qvSiteGroupRank,
+    compareQvBusinessOrder,
+    qvProgrammeOrderKey,
+    compareQvProgrammeRows,
+    QV_DPS_SITES,
+    QV_CONDUITE_LABEL,
+    QV_CONDUITE_STATCOM,
+    QV_CONDUITE_THEMES,
+    qvIsJspActivity,
+    qvDpsInstructionKind,
+    qvIsPionnierRow,
+    QV_HISTORICAL_SHIFT_DAYS,
+    qvShiftHistoricalDate,
+    qvRotationBuckets,
+    qvDistributeRotationOccurrences,
+    qvRewriteDpsSiteToken,
+    qvDpsSitesOf,
+    qvDpsDefaultLieuCode,
+    qvInstructionTheme,
+    qvConduiteSources,
+    qvDeriveConduiteContinue,
+    qvApplyConduiteContinue,
+    qvSelectSpreadIndices,
+    qvConduitePublics,
+    qvApplyDpsInstructionFamilyRules,
+    QV_DPS_INSTRUCTION_RESPONSABLE,
+    QV_CONDUITE_PER_HALF,
+    QV_PIONNIER_RULES,
+    qvApplyPionnierRules,
+    qvApplyPrAbcStructure,
+    qvPrAbcHistoricalRefresh,
+    QV_PR_ABC_LABEL,
+    qvSalleTree,
+    qvProgrammeDragLock,
+    qvProgrammeDragReason,
     qvPublicCibleLabel,
     qvIsStructuredMultiSession,
     qvIsMultiSessionRow,
@@ -3405,6 +4606,21 @@
     planSaisieLeave,
     orchestrateClosePresence,
     orchestrateLeaveSaisie,
-    PRESENCE_SAVE_FAILED_CLOSE_MESSAGE
+    PRESENCE_SAVE_FAILED_CLOSE_MESSAGE,
+    qvResponsableGroups,
+    qvResponsableCanonique,
+    qvProgrammePublicCatalogue,
+    qvProgrammeOiCatalogue,
+    qvProgrammeFamily,
+    qvNormalizeOiSelections,
+    qvOiSites,
+    qvFormatOiSelections,
+    qvEnrichBusinessReference,
+    qvSectionCodes,
+    qvEnrichSectionPublic,
+    qvHistoricalAgenda,
+    qvProgrammePublicLabel,
+    qvFormatEchelons,
+    qvFormatPublicLabels
   };
 });

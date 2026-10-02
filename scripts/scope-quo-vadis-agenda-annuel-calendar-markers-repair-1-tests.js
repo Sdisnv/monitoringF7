@@ -34,7 +34,7 @@ assert.ok(/qvCalendarKind\(row\) === 'VACANCES_SCOLAIRES'/.test(annual));
 assert.ok(/VACANCES_SCOLAIRES/.test(annual) && /FERIE/.test(annual));
 
 assert.ok(/has-activity/.test(annual));
-assert.ok(/\.qv-mini-day\.has-activity span\s*\{[^}]*background:\s*var\(--scope-red\)/.test(css.replace(/\s+/g, ' ')));
+assert.ok(/\.qv-mini-day\.has-activity span,[^{]*\.qv-mini-day\.has-proposed span\s*\{[^}]*background:\s*#e11a23/.test(css.replace(/\s+/g, ' ')));
 assert.ok(/qvMonthActivityCount\(month\)/.test(annual));
 
 assert.ok(/has-holiday/.test(annual) && /is-holiday/.test(annual));
@@ -46,9 +46,10 @@ assert.ok(/\.qv-mini-day\.has-activity\.has-holiday/.test(css));
 assert.ok(/\.qv-mini-day\.has-activity\.has-vacation/.test(css));
 assert.ok(/#eceaf6/.test(css) && /#dce3f7/.test(css));
 
-assert.ok(/if \(activityCount\) \{/.test(annual));
-assert.ok(/qvHref\('agenda', \{ mois: month\.key, jour: cell\.date \}\)/.test(annual));
-assert.ok(/qvHref\('agenda', \{ mois: month\.key \}\)/.test(annual));
+assert.ok(/if \(activityCount \|\| cell\.ctaHolidayCoverage\.some\(row => row\.holidayDate\)\) \{/.test(annual));
+assert.ok(/qvHref\('programme', \{ mode: 'mensuelle', mois: month\.key, jour: cell\.date \}\)/.test(annual));
+assert.ok(/qvHref\('programme', \{ mode: 'mensuelle', mois: month\.key \}\)/.test(annual));
+assert.ok(/month.year === 2027/.test(annual), 'les references 2026/2028 ne doivent pas ouvrir le Programme');
 assert.ok(!/qvHref\('agenda-annuel', \{ jour:/.test(annual));
 
 assert.ok(!/Nouvel An/.test(annual));

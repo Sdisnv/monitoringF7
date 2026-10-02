@@ -82,12 +82,13 @@ assert.strictEqual(logic.qvAgendaDayAnchorId(route.qvJour), 'qv-agenda-day-2027-
 const ui = read('assets/js/scope-ui.js');
 const agenda = ui.slice(ui.indexOf('function renderQuoVadisAgenda('), ui.indexOf('function renderQuoVadisActivites('));
 const binding = ui.slice(ui.indexOf('const agendaDay = route().qvJour'), ui.indexOf("root.querySelectorAll('[data-qv-open]')"));
-assert.ok(/qvHref\('agenda', \{ mois: month\.key, jour: cell\.date \}\)/.test(ui));
+assert.ok(/qvHref\('programme', \{ mode: 'mensuelle', mois: month\.key, jour: cell\.date \}\)/.test(ui));
+assert.ok(/month.year === 2027/.test(ui));
 assert.ok(/id="\$\{escapeHtml\(L\.qvAgendaDayAnchorId\(group\.date\)\)\}"/.test(agenda));
 assert.ok(/requestAnimationFrame/.test(binding) && /scrollIntoView/.test(binding));
 assert.ok(binding.indexOf('requestAnimationFrame') < binding.indexOf('scrollIntoView'));
 assert.ok(!/qvJour/.test(ui.slice(ui.indexOf('function qvFilteredActivities'), ui.indexOf('function qvActivitySortValue'))), 'jour utilisé comme filtre du mois');
-assert.ok(/scope-quo-vadis-calendar-vd-final-4/.test(read('scope.html')) || /scope-quo-vadis-agenda-ux-[123]/.test(read('scope.html')) || /scope-quo-vadis-toutes-activites-ux-[1234]/.test(read('scope.html')) || /scope-quo-vadis-a-arbitrer-redesign-1|scope-quo-vadis-a-arbitrer-ux-[23]/.test(read('scope.html')));
+assert.ok(/src="assets\/js\/scope-ui\.js\?v=[^"]+"/.test(read('scope.html')), 'le bundle UI versionne doit etre charge');
 
 const frames = [];
 const scrolls = [];
