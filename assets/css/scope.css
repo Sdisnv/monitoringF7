@@ -11573,6 +11573,7 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-table td:nth-child(11){vertical-align:middle}.qv-programme-table td:nth-child(11) .scope-state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.qv-programme-table td:nth-child(11) .scope-state-label{white-space:nowrap}
 .qv-programme-time,.qv-programme-action,.qv-programme-public-list{display:grid;gap:2px}.qv-programme-time>span,.qv-programme-action>span,.qv-programme-public-list>span{display:block;white-space:nowrap}
 .qv-programme-activity.is-cta{display:grid;gap:2px}.qv-programme-activity.is-cta>span{display:block;white-space:nowrap}
+.qv-programme-theme{display:block;color:var(--muted,#52606d);font-weight:400;line-height:1.35;white-space:normal}
 .qv-programme-action{align-content:start;text-decoration:none!important}.qv-programme-action:hover{text-decoration:none!important}
 .qv-programme-origin{display:block;margin-top:4px;color:#6b737d;font-size:11px}
 .qv-programme-edit-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
@@ -11606,6 +11607,11 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-agenda-years a[aria-current]{color:#17202b;border-bottom-color:#1769aa;font-weight:600}
 .qv-agenda-reference{padding:16px 0;border-top:1px solid #d7dfe7}
 .qv-agenda-reference p{overflow-wrap:anywhere}
+.qv-agenda-reference-months{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 14px}
+.qv-agenda-reference-months a{display:inline-flex;gap:6px;align-items:baseline;padding:5px 9px;border:1px solid #cbd3db;border-radius:3px;background:#fff;color:#4a5661;text-decoration:none;font-size:.78rem;font-weight:700}
+.qv-agenda-reference-months a[aria-current]{border-color:#1769aa;background:#e9eff5;color:#17202b}
+.qv-agenda-reference-months a span{color:#59616b;font-weight:400}
+.qv-agenda-reference-months a:focus-visible{outline:2px solid #1769aa;outline-offset:1px}
 .qv-programme-table td:nth-child(11) .scope-state-label{white-space:nowrap}
 .qv-programme-lifecycle{margin-top:14px;padding-top:12px;border-top:1px solid #d7dfe7}
 .qv-programme-lifecycle h4{margin:0 0 8px;font-size:.86rem}

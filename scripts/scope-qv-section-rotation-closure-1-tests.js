@@ -178,12 +178,12 @@ test('KICK-OFF du 06.02.2027 reste strictement identique au résultat recetté P
 
 test('les conduites 0152F7 sont matérialisées après correction des sources, sans invention', () => {
   const derived = applied.derived;
-  assert.equal(derived.expected, 84);
-  assert.equal(derived.materialized, 84);
+  assert.equal(derived.expected, 56);
+  assert.equal(derived.materialized, 56);
   assert.equal(derived.insufficient.length, 0);
   assert.equal(derived.orphans.length, 0);
   const conduites = rows.filter((row) => row.label === L.QV_CONDUITE_LABEL || row.label === 'Conduite, formation continue');
-  assert.equal(conduites.length, 84);
+  assert.equal(conduites.length, 56);
   conduites.forEach((row) => {
     assert.equal(row.statCom, L.QV_CONDUITE_STATCOM);
     const minutes = (Number(String(row.endsAt).slice(11, 13)) * 60 + Number(String(row.endsAt).slice(14, 16)))
@@ -192,7 +192,7 @@ test('les conduites 0152F7 sont matérialisées après correction des sources, s
   });
 });
 
-test('la matrice des conduites vise trois séances par demi-section opérationnelle', () => {
+test('la matrice des conduites vise deux séances par demi-section opérationnelle', () => {
   const parHalf = {};
   for (const row of applied.derived.matched.concat(applied.derived.added)) {
     const site = L.qvDpsSitesOf(row)[0];
@@ -202,7 +202,7 @@ test('la matrice des conduites vise trois séances par demi-section opérationne
     assert.ok(!cta.isReserveHalfSection(site, half), key);
   }
   assert.equal(Object.keys(parHalf).length, 28);
-  Object.values(parHalf).forEach((count) => assert.equal(count, 3));
+  Object.values(parHalf).forEach((count) => assert.equal(count, 2));
 });
 
 test('aucune conduite n’est jamais ajoutée après une instruction PIONNIER', () => {
@@ -214,7 +214,7 @@ test('aucune conduite n’est jamais ajoutée après une instruction PIONNIER', 
 
 test('les conduites B2 se tiennent à la Caserne C1 sans transformation automatique du lieu', () => {
   const b2 = applied.derived.matched.concat(applied.derived.added).filter((row) => L.qvDpsSitesOf(row)[0] === 'B2');
-  assert.equal(b2.length, 18);
+  assert.equal(b2.length, 12);
   b2.forEach((row) => assert.ok(!/B2/.test(String(row.location)), `lieu inattendu ${row.location}`));
   const b1 = applied.derived.added.filter((row) => L.qvDpsSitesOf(row)[0] === 'B1');
   b1.forEach((row) => assert.equal(row.location, 'Caserne B1'));

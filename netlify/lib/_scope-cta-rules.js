@@ -4,7 +4,7 @@ const G1_CYCLE = Object.freeze(['N04b', 'N03b', 'N02b', 'N01b', 'N05a', 'N04a', 
 const OTHER_CYCLE = Object.freeze(['N03b', 'N02b', 'N01b', 'N03a', 'N02a', 'N01a']);
 const ANCHOR_DATE = '2026-02-13';
 const DAY_MS = 86400000;
-const CONDUITE_PER_OPERATIONAL_HALF = 3;
+const CONDUITE_PER_OPERATIONAL_HALF = 2;
 const DPS_SITES = Object.freeze(['G1', 'C1', 'B1', 'B2']);
 
 function operationalHalfSections(oi) {

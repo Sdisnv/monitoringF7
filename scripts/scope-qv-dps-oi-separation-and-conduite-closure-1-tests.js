@@ -26,8 +26,15 @@ function test(name, fn) {
 const rotation = L.qvDistributeRotationOccurrences(canonical.rows, history.rows, cta.instructionPublicForDate);
 const pionnier = L.qvApplyPionnierRules(rotation.rows);
 const family = L.qvApplyDpsInstructionFamilyRules(pionnier.rows, cta.instructionPublicForDate);
-const applied = L.qvApplyConduiteContinue(family.rows, cta.conduiteEngineOptions());
-const prAbc = L.qvApplyPrAbcStructure(applied.rows, history.rows);
+const periodic = L.qvApplyPeriodicActivityRules(family.rows, { year: 2027 });
+const projection = L.qvMaterializeHistoricalOccurrences(periodic.rows, history.rows, { year: 2027 });
+const dapAnnual = L.qvApplyDapAnnualExercisePlan(projection.rows, history.rows);
+const foba = L.qvApplyFobaOccurrenceThemes(dapAnnual.rows, history.rows);
+const prSeries = L.qvApplyPrSeriesContinuity(foba.rows, history.rows);
+const conduiteOptions = { ...cta.conduiteEngineOptions(), season: L.qvInstructionSeasonBounds(history.rows, 2027) };
+const applied = L.qvApplyConduiteContinue(prSeries.rows, conduiteOptions);
+const dapConduite = L.qvApplyDapConduite(applied.rows, history.rows, { year: 2027 });
+const prAbc = L.qvApplyPrAbcStructure(dapConduite.rows, history.rows);
 const rows = prAbc.rows;
 
 const of = (label) => rows
@@ -140,10 +147,10 @@ test('KICK-OFF du 06.02.2027 reste inchangé', () => {
   });
 });
 
-test('cible 84 conduites, 84 matérialisées, chacune rattachée à une demi-section source', () => {
+test('cible 56 conduites, 56 matérialisées, chacune rattachée à une demi-section source', () => {
   const conduites = applied.derived.matched.concat(applied.derived.added);
-  assert.equal(applied.derived.expected, 84);
-  assert.equal(conduites.length, 84);
+  assert.equal(applied.derived.expected, 56);
+  assert.equal(conduites.length, 56);
   assert.equal(applied.derived.insufficient.length, 0);
   const parSite = {};
   for (const row of conduites) {
@@ -166,34 +173,25 @@ test('cible 84 conduites, 84 matérialisées, chacune rattachée à une demi-sec
       - (Number(String(row.startsAt).slice(11, 13)) * 60 + Number(String(row.startsAt).slice(14, 16)));
     assert.ok(minutes > 0 && minutes <= 60);
   }
-  assert.deepEqual(parSite, { G1: 30, C1: 18, B1: 18, B2: 18 });
+  assert.deepEqual(parSite, { G1: 20, C1: 12, B1: 12, B2: 12 });
 });
 
-test('PR-ABC : deux séries T1/T4 de trois séances, séance 2 en matinée, sans date inventée', () => {
+// Correctif MOA : une séance = une ligne. 2026 démontre 3 séances, pas deux séries de trois.
+test('PR-ABC : 3 séances datées depuis 2026, une seule ligne par séance', () => {
   const list = rows.filter((row) => row.label === 'Exercice PR-ABC');
-  assert.equal(list.length, 6);
-  const t1 = list.filter((row) => row.prAbcProposal.quarter === 'T1');
-  const t4 = list.filter((row) => row.prAbcProposal.quarter === 'T4');
-  assert.equal(t1.length, 3);
-  assert.equal(t4.length, 3);
-  for (const series of [t1, t4]) {
-    const sessions = series.map((row) => row.sessionIndex).sort();
-    assert.deepEqual(sessions, [1, 2, 3]);
-    series.forEach((row) => {
-      assert.equal(row.sessionCount, 3);
-      assert.equal(row.domain, 'PR');
-      assert.ok((row.publics || []).includes('PR:3'));
-      assert.equal(row.statCom, '0164F7');
-      assert.equal(row.startsAt, null);
-      assert.equal(row.prAbcStatus, 'MOA_PROPOSAL_NO_DEMONSTRATED_T1_T4_CALENDAR');
-    });
-    const session2 = series.find((row) => row.sessionIndex === 2);
-    assert.equal(session2.prAbcProposal.session2Morning, true);
-    assert.equal(session2.prAbcProposal.preferredWeekday, 'mercredi');
-    assert.equal(session2.prAbcProposal.proposedStart, '08:00');
-  }
-  assert.equal(prAbc.report.t1Historical, 0);
-  assert.equal(prAbc.report.t4Historical, 1);
+  assert.equal(list.length, 3);
+  assert.equal(new Set(list.map((row) => row.occurrenceId)).size, 3);
+  list.forEach((row) => {
+    assert.equal(row.sessionCount, 1);
+    assert.equal(row.domain, 'PR');
+    assert.deepEqual(row.publics, ['PR:3']);
+    assert.equal(row.statCom, '0164F7');
+    assert.ok(row.startsAt);
+    assert.equal(row.prAbcStatus, 'HISTORICAL_2026_DATES');
+  });
+  assert.equal(prAbc.report.expected, 3);
+  assert.equal(prAbc.report.surplus, 0);
+  assert.deepEqual(prAbc.report.dates2027, ['2027-04-20', '2027-06-09', '2027-10-05']);
 });
 
 test('colonne État : carré canonique 8×8, inline-flex, sans badge ni capsule', () => {
@@ -219,7 +217,7 @@ test('filtres au retour de fiche et DnD CTA inchangés', () => {
 
 test('le fichier source 2027 reste à 622 séances', () => {
   assert.equal(canonical.rows.filter((row) => !row.external).length, 622);
-  assert.equal(rows.filter((row) => !row.external).length, 767);
+  assert.equal(rows.filter((row) => !row.external).length, 829);
 });
 
 console.log(`\nQV DPS-OI-SEPARATION-AND-CONDUITE-CLOSURE-1: ${passed}/${passed + failures.length} PASS`);

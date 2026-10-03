@@ -29,14 +29,15 @@ async function main() {
   });
   const fixture = createFixture();
   const qv = await fixture.service.listProgramme(2027);
-  // 767 = 622 + 38 clones OI + 24 Instr demi-sct CTA + 80 conduites + 3 PR-ABC.
-  await test('767 seances 646 dates 417 historiques 121 sans date et TP9000 preserves', () => {
+  // 829 = 622 − 3 (périodicité) + 38 clones OI + 108 projections − 4 DAP 5
+  //       + 52 conduites DPS + 16 conduites DAP.
+  await test('829 seances 817 dates 637 historiques 12 sans date et TP9000 preserves', () => {
     const rows = qv.canonicalProgramme.rows.filter((r) => !r.external);
-    assert.equal(rows.length, 767);
-    assert.equal(rows.filter((r) => r.provenance === 'MOA_RULE_CONDUITE_2027').length, 80);
-    assert.equal(rows.filter((r) => r.startsAt).length, 646);
-    assert.equal(rows.filter((r) => r.historicalProposal).length, 417);
-    assert.equal(rows.filter((r) => !r.startsAt).length, 121);
+    assert.equal(rows.length, 829);
+    assert.equal(rows.filter((r) => r.provenance === 'MOA_RULE_CONDUITE_2027').length, 52);
+    assert.equal(rows.filter((r) => r.startsAt).length, 817);
+    assert.equal(rows.filter((r) => r.historicalProposal).length, 637);
+    assert.equal(rows.filter((r) => !r.startsAt).length, 12);
     const tp = rows.filter((r) => r.tp9000Rule);
     assert.equal(tp.length, 30);
     tp.forEach((r) => { assert.deepEqual(r.ois, ['G1']); assert.deepEqual(r.publics, ['AUTO:2']); });
@@ -46,12 +47,12 @@ async function main() {
   const context = { L, qvActivities: () => [], qvDateKey: (v) => String(v || '').slice(0, 10), qvProgrammeDate: (r) => String(r.startsAt || '').slice(0, 10), qvCalendarKind: L.qvCalendarKind, qvMonthLabel: (m) => String(m) };
   vm.createContext(context);
   vm.runInContext(['qvCalendarIndex', 'qvProgrammeProposedMonthKey', 'qvBuildMonth', 'qvYearMonths'].map(extract).join('\n'), context);
-  await test('grilles calculees 12 mois par an et 109 sans periode plus 9 avec mois', () => {
+  await test('grilles calculees 12 mois par an et 12 restes sans periode', () => {
     for (const year of [2026, 2027, 2028]) assert.equal(context.qvYearMonths(qv, year).length, 12);
     for (const month of [1, 2, 12]) assert.ok(context.qvBuildMonth(qv, 2028, month).cells.some((c) => c && c.items.length));
     const undated = qv.canonicalProgramme.rows.filter((r) => !r.external && !r.startsAt);
-    assert.equal(undated.filter((r) => context.qvProgrammeProposedMonthKey(r)).length, 9);
-    assert.equal(undated.filter((r) => !context.qvProgrammeProposedMonthKey(r)).length, 112);
+    assert.equal(undated.filter((r) => context.qvProgrammeProposedMonthKey(r)).length, 0);
+    assert.equal(undated.filter((r) => !context.qvProgrammeProposedMonthKey(r)).length, 12);
   });
   await test('navigation annee isolee et references hors Programme', () => {
     for (const year of [2026, 2027, 2028]) assert.equal(L.parseHash(`#/quo-vadis/agenda-annuel?annee=${year}`).qvAnnee, year);

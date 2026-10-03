@@ -20,9 +20,10 @@ async function main() {
   const css = fs.readFileSync(require.resolve('../assets/css/scope.css'), 'utf8');
   const extract = name => ui.slice(ui.indexOf(`  function ${name}(`), ui.indexOf('\n  function ', ui.indexOf(`  function ${name}(`) + 1));
   const ctx = { L, qvActivities: () => [], qvDateKey: v => String(v || '').slice(0, 10), qvProgrammeDate: row => String(row.startsAt || '').slice(0, 10), qvCalendarKind: L.qvCalendarKind, qvMonthLabel: String,
-    escapeHtml: value => String(value), qvFormatDate: String, route: () => ({ qvMois: event.date.slice(0, 7), qvJour: event.date }) };
+    escapeHtml: value => String(value), qvFormatDate: String, route: () => ({ qvMois: event.date.slice(0, 7), qvJour: event.date }),
+    qvHref: (view, params) => `#/quo-vadis/${view}?${new URLSearchParams(params || {}).toString()}` };
   vm.createContext(ctx);
-  vm.runInContext(['qvCalendarIndex', 'qvProgrammeProposedMonthKey', 'qvBuildMonth', 'qvYearMonths', 'qvAgendaReference'].map(extract).join('\n'), ctx);
+  vm.runInContext(['qvCalendarIndex', 'qvProgrammeProposedMonthKey', 'qvBuildMonth', 'qvMonthActivityCount', 'qvYearMonths', 'qvAgendaReference'].map(extract).join('\n'), ctx);
   const rows = qv.canonicalProgramme.rows.filter(row => !row.external);
   await test('une seule grille annuelle', () => assert.equal((extract('renderQuoVadisAgendaAnnuel').match(/class="qv-year-grid"/g) || []).length, 1));
   await test('navigation directe des trois annees', () => [2026, 2027, 2028].forEach(year => assert.equal(L.parseHash(`#/quo-vadis/agenda-annuel?annee=${year}`).qvAnnee, year)));
@@ -56,14 +57,17 @@ async function main() {
     assert.ok(qv.calendarDays.some(row => row.jour === '2028-02-12' && row.metadata.dateFin === '2028-02-20'));
     assert.ok(qv.calendarDays.some(row => row.jour === '2028-12-23' && row.metadata.dateFin === '2029-01-07'));
   });
-  // 767 = 622 + 38 clones OI + 24 Instr demi-sct CTA + 80 conduites + 3 PR-ABC.
-  await test('767 seances preservees', () => assert.equal(rows.length, 767));
-  await test('646 dates preservees', () => assert.equal(rows.filter(row => row.startsAt).length, 646));
-  await test('417 propositions historiques preservees', () => assert.equal(rows.filter(row => row.historicalProposal).length, 417));
-  await test('121 sans date dont 112 sans periode et 9 avec mois', () => {
+  // 829 = 622 − 3 (périodicité) + 38 clones OI + 108 projections − 4 DAP 5
+  //       + 52 conduites DPS + 16 conduites DAP.
+  await test('829 seances preservees', () => assert.equal(rows.length, 829));
+  await test('817 dates materialisees depuis 2026', () => assert.equal(rows.filter(row => row.startsAt).length, 817));
+  await test('637 propositions historiques preservees', () => assert.equal(rows.filter(row => row.historicalProposal).length, 637));
+  await test('12 sans date, aucune date inventee', () => {
     const undated = rows.filter(row => !row.startsAt);
-    assert.equal(undated.length, 121);
-    assert.equal(undated.filter(row => ctx.qvProgrammeProposedMonthKey(row)).length, 9);
+    assert.equal(undated.length, 12);
+    // Restes assumés : sessions non datées du modèle multi-session et activité sans source 2026.
+    assert.deepEqual([...new Set(undated.map(row => row.label))].sort(),
+      ['Formation groupée 1.1', 'Groupe de travail FOCA']);
   });
   await test('TP9000 G1 seul', () => rows.filter(row => row.tp9000Rule).forEach(row => assert.deepEqual(row.ois, ['G1'])));
   await test('30 TP9000 cond TP9 seul', () => { const tp = rows.filter(row => row.tp9000Rule); assert.equal(tp.length, 30); tp.forEach(row => assert.deepEqual(row.publics, ['AUTO:2'])); });
@@ -75,7 +79,7 @@ async function main() {
     const row = L.qvEnrichSectionPublic({ domain: 'DPS', label: 'Instr demi-sct - KICK-OFF', ois: ['G1'], publics: ['ECH:I'], historicalProposal: { sourceLine: 11 } }, reference.rows);
     assert.deepEqual(row.publics, ['ECH:I', 'N05a']);
     // Rotation retablie : chaque occurrence section/demi-section porte desormais sa propre section demontree.
-    assert.equal(qv.sectionPublicSummary.demonstrated, 138);
+    assert.equal(qv.sectionPublicSummary.demonstrated, 114);
   });
   await test('ambiguite conservee sans section deduite de la permanence', () => {
     const row = L.qvEnrichSectionPublic({ domain: 'DPS', label: 'Instr demi-sct - KICK-OFF', ois: ['B2'], publics: [], historicalProposal: { sourceLine: 13 } }, reference.rows);
@@ -83,7 +87,7 @@ async function main() {
     // Apres correction de la rotation il ne subsiste qu'une seule ambiguite reelle de section.
     const summary = qv.sectionPublicSummary;
     assert.equal(summary.ambiguous, 0); assert.equal(summary.moaRequired, 0);
-    assert.equal(summary.demonstrated, 138);
+    assert.equal(summary.demonstrated, 114);
     assert.ok(!rows.some(row => row.sectionPublicRule === 'SHARED_HISTORICAL_REFERENCE'));
   });
   await test('resume des sections et contraction des echelons', () => assert.equal(L.qvFormatPublicLabels(['N03a', 'ECH:I', 'ECH:II']), 'N03a, Échelon I et II'));

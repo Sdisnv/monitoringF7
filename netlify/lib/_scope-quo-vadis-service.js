@@ -27,11 +27,24 @@ function canonicalBusinessProgramme2027(){
   );
   const pionnier = uiLogic.qvApplyPionnierRules(rotation.rows);
   const family = uiLogic.qvApplyDpsInstructionFamilyRules(pionnier.rows, ctaRules.instructionPublicForDate);
-  const conduite = uiLogic.qvApplyConduiteContinue(family.rows, ctaRules.conduiteEngineOptions());
-  const prAbc = uiLogic.qvApplyPrAbcStructure(conduite.rows, historicalReference2026.rows || []);
+  // QV-PERIOD-001 avant la matérialisation : une activité non reconduite cette année n'a pas
+  // à recevoir de date. QV-PROJ-001 rétablit ensuite la réalisation historique de chaque occurrence.
+  const periodic = uiLogic.qvApplyPeriodicActivityRules(family.rows, { year: 2027 });
+  const projection = uiLogic.qvMaterializeHistoricalOccurrences(periodic.rows, historicalReference2026.rows || [], { year: 2027 });
+  const dapAnnual = uiLogic.qvApplyDapAnnualExercisePlan(projection.rows, historicalReference2026.rows || []);
+  const foba = uiLogic.qvApplyFobaOccurrenceThemes(dapAnnual.rows, historicalReference2026.rows || []);
+  const prSeries = uiLogic.qvApplyPrSeriesContinuity(foba.rows, historicalReference2026.rows || []);
+  const conduiteOptions = {
+    ...ctaRules.conduiteEngineOptions(),
+    season: uiLogic.qvInstructionSeasonBounds(historicalReference2026.rows || [], 2027)
+  };
+  const conduite = uiLogic.qvApplyConduiteContinue(prSeries.rows, conduiteOptions);
+  const dapConduite = uiLogic.qvApplyDapConduite(conduite.rows, historicalReference2026.rows || [], { year: 2027 });
+  const prAbc = uiLogic.qvApplyPrAbcStructure(dapConduite.rows, historicalReference2026.rows || []);
   const overlayRows = (prAbc.rows || []).filter((row) => row && !row.external);
   const sourceCount = (canonicalProgramme2027.rows || []).filter((row) => row && !row.external).length;
   const rotationClones = overlayRows.filter((row) => row.rotationAdded).length;
+  const projectionAdded = overlayRows.filter((row) => row.projectionAdded).length;
   const programmedInstructions = overlayRows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
   const conduitesAdded = overlayRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length;
   canonicalBusinessCache = {
@@ -40,6 +53,19 @@ function canonicalBusinessProgramme2027(){
       rotation: rotation.report,
       pionnierChanges: pionnier.changes,
       instructionFamily: family.changes,
+      periodic: periodic.report,
+      projection: {
+        definitions: projection.report.filter((entry) => !entry.reason).length,
+        dated: projection.report.reduce((total, entry) => total + (entry.dated || 0), 0),
+        added: projection.report.reduce((total, entry) => total + (entry.added || 0), 0),
+        protected: projection.report.reduce((total, entry) => total + (entry.protected || 0), 0),
+        unmapped: projection.report.flatMap((entry) => entry.unmapped || []),
+        detail: projection.report
+      },
+      dapAnnual: dapAnnual.report,
+      foba: foba.report,
+      prSeries: prSeries.report,
+      dapConduite: dapConduite.report,
       conduite: {
         expected: conduite.derived.expected,
         materialized: conduite.derived.materialized,
@@ -49,17 +75,21 @@ function canonicalBusinessProgramme2027(){
         missing: conduite.derived.missing,
         insufficient: conduite.derived.insufficient,
         orphans: conduite.derived.orphans.map((row) => row.id),
-        coherence: uiLogic.qvConduiteCoherenceControl(prAbc.rows, ctaRules.conduiteEngineOptions())
+        season: conduite.derived.season,
+        coherence: uiLogic.qvConduiteCoherenceControl(prAbc.rows, conduiteOptions)
       },
       prAbc: prAbc.report,
       reconciliation: {
         canonical2027: sourceCount,
+        periodicRemoved: periodic.report.removed,
         rotationClones,
+        projectionAdded,
         programmedInstructions,
         conduitesAdded,
+        dapConduitesAdded: dapConduite.report.added,
         prAbcAdded: prAbc.report.added,
         overlay: overlayRows.length,
-        equation: `${sourceCount} + ${rotationClones} (clones OI) + ${programmedInstructions} (Instr demi-sct CTA) + ${conduitesAdded} (conduites) + ${prAbc.report.added} (PR-ABC) = ${overlayRows.length}`
+        equation: `${sourceCount} − ${periodic.report.removed} (QV-PERIOD-001) + ${rotationClones} (clones OI) + ${projectionAdded} (QV-PROJ-001) + ${programmedInstructions} (Instr demi-sct CTA) + ${conduitesAdded} (conduites DPS) + ${dapConduite.report.added} (conduites DAP) + ${prAbc.report.added} (PR-ABC) = ${overlayRows.length}`
       }
     }
   };
@@ -1337,6 +1367,7 @@ function createScopeQuoVadisService({ database = db } = {}){
               label:fields.activityLabel,activityLabel:fields.activityLabel,eventDisplayLabel:fields.activityLabel,eventLabel:fields.activityLabel
             } : {}),
             ...(Object.prototype.hasOwnProperty.call(fields,'statCom') ? { statCom:fields.statCom } : {}),
+            ...(Array.isArray(fields.themes) ? { themes:fields.themes } : {}),
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
             startsAt:Object.prototype.hasOwnProperty.call(fields,'date')
@@ -1356,7 +1387,8 @@ function createScopeQuoVadisService({ database = db } = {}){
             salleTheorieId:preparation.salle_theorie_id || null,
             status:preparation.statut || row.status
           } : { preparation:null };
-          return Object.assign({}, row, sourceFields, prepared, event ? {
+          return Object.assign({}, row, sourceFields, prepared, row.dapAnnualStatus === 'REMPLACE_PAR_FORMATION_GROUPEE' && (preparation || event)
+            ? { external: false, dapAnnualStatus: 'DECISION_EXISTANTE_PRESERVEE' } : {}, event ? {
             publishedEventId: event.evenement_id,
             publishedEventStatus: event.statut,
             publishedEventVersion: Number(event.version || 0),
@@ -1375,7 +1407,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         const fields = row.metadata.planningFields || row.metadata.reconductedBusiness || {};
         const proposal = result.proposals.find(item => item.obligationId === row.obligationId && item.status !== 'ECARTE');
         return { id:row.sourceRef,label:row.title,activityLabel:row.title,eventDisplayLabel:row.title,
-          domain:row.domain,family:fields.family,statCom:row.statcomCode,ois:fields.oiCodes || [],publics:row.cibleCodes,
+          domain:row.domain,family:fields.family,statCom:row.statcomCode,ois:fields.oiCodes || [],publics:row.cibleCodes,themes:fields.themes || [],
           startsAt:row.imposedStartAt || proposal && proposal.startsAt || null,endsAt:row.imposedEndAt || proposal && proposal.endsAt || null,
           responsible:fields.responsibleLabel,location:fields.locationLabel,room:fields.roomLabel,lieuId:row.lieuId,
           lieuLibre:row.lieuLibre,salleTheorieId:row.salleTheorieId,responsableFonctionCode:row.responsableFonctionCode,
@@ -1393,6 +1425,18 @@ function createScopeQuoVadisService({ database = db } = {}){
         return {...row,oiSelections:oi.codes,oiQualification:oi.status,ambiguousOis:oi.ambiguous,ois:uiLogic.qvOiSites(oi.codes),
           business:uiLogic.qvEnrichBusinessReference(row,result)};
       });
+      const programmeRows = result.canonicalProgramme.rows.filter((row) => !row.external);
+      result.canonicalProgramme.target = {
+        ...(result.canonicalProgramme.target || {}),
+        year: ctaYear,
+        models: new Set(programmeRows.map((row) => row.definitionId || row.activityLabel || row.label)).size,
+        occurrences: new Set(programmeRows.map((row) => row.occurrenceId || row.id)).size,
+        sessions: programmeRows.length,
+        oiMaterializations: programmeRows.reduce((total, row) => total + (row.ois || []).length, 0),
+        programmeItems: programmeRows.length,
+        toReview: programmeRows.filter((row) => !row.publishedEventId
+          && !['VALIDATED', 'ANNULE', 'PLANIFIE', 'RETENU', 'PUBLIE'].includes(String(row.status || ''))).length
+      };
       result.agendaYears = { 2026: ctaRules.generateYear(2026, template), 2028: ctaRules.generateYear(2028, template) };
       result.historicalAgenda2026 = { ...uiLogic.qvHistoricalAgenda(historicalRows2026, historicalReference2026.rows), available: historicalAvailable };
       result.historicalAgenda2026.events = result.historicalAgenda2026.events.map(row => ({...row,
@@ -2624,9 +2668,11 @@ function createScopeQuoVadisService({ database = db } = {}){
     const inherited = existing && (existing.metadata.planningFields || existing.metadata.reconductedBusiness) || {};
     const source = year === 2027 ? canonicalRows.find((row) => String(row.id) === String(itemId)) : existing && existing.metadata.lineage ? {
       id:itemId,label:existing.title,activityLabel:existing.title,domain:existing.domain,family:inherited.family,
-      statCom:existing.statcom_code,ois:inherited.oiCodes,publics:existing.cible_codes,sessionStructure:inherited.sessionStructure
+          statCom:existing.statcom_code,ois:inherited.oiCodes,publics:existing.cible_codes,sessionStructure:inherited.sessionStructure,
+          themes:inherited.themes
     } : null;
-    if(!source || source.external) return { updated:false,reason:'PROGRAMME_ITEM_NOT_FOUND' };
+    const existingPreparation = existing && existing.metadata && existing.metadata.source === 'QV_PROGRAMME_PREPARATION';
+    if(!source || (source.external && !existingPreparation)) return { updated:false,reason:'PROGRAMME_ITEM_NOT_FOUND' };
     if(source.definitionId === 'CTA-PERMANENCE') throw new HttpError(422,'programme_cta_calculée','La permanence dépend du moteur CTA.');
     const lifecycleAction = String(body.lifecycleAction || '').toUpperCase();
     if(lifecycleAction){
@@ -2689,6 +2735,11 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     const activityLabel = String(body.activityLabel ?? inherited.activityLabel ?? source.activityLabel ?? source.label ?? '').replace(/\s+/g,' ').trim();
     if(!activityLabel || activityLabel.length > 240) throw new HttpError(422,'programme_activite_invalide','L’activité doit contenir entre 1 et 240 caractères.');
+    const rawThemes = body.themes ?? inherited.themes ?? source.themes ?? [];
+    if(!Array.isArray(rawThemes) || rawThemes.length > 8 || rawThemes.some((theme) => typeof theme !== 'string' || theme.trim().length > 160)){
+      throw new HttpError(422,'programme_themes_invalides','Les thèmes doivent être une liste de huit libellés de 160 caractères au maximum.');
+    }
+    const themes = [...new Set(rawThemes.map((theme) => theme.replace(/\s+/g,' ').trim()).filter(Boolean))];
     const statCom = String(body.statCom ?? inherited.statCom ?? source.statCom ?? '').trim();
     const statcomResult = statCom ? await db.query(`select * from scope_statcom_referentiel where code=$1`,[statCom]) : {rows:[]};
     if(statCom && (!statcomResult.rows[0] || !isStatComValidForDate(statcomResult.rows[0],date || `${year}-01-01`))){
@@ -2741,7 +2792,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     const locationLabel = lieuLibre || catalogueLabel || (lieu ? String(lieu.nom_court || '').trim() : '');
     const planningFields = {
-      date,startTime,endTime,oiCodes,publicCodes,activityLabel,statCom,
+      date,startTime,endTime,oiCodes,publicCodes,activityLabel,statCom,themes,
       domain:source.domain,family:uiLogic.qvProgrammeFamily(source),
       lieuId:lieu && lieu.lieu_id || null,salleTheorieId:salle && salle.salle_id || null,
       responsableFonctionCode:responsable && responsable.code || null,

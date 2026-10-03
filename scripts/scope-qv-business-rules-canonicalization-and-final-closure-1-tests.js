@@ -27,8 +27,15 @@ function test(name, fn) {
 const rotation = L.qvDistributeRotationOccurrences(canonical.rows, history.rows, cta.instructionPublicForDate);
 const pionnier = L.qvApplyPionnierRules(rotation.rows);
 const family = L.qvApplyDpsInstructionFamilyRules(pionnier.rows, cta.instructionPublicForDate);
-const applied = L.qvApplyConduiteContinue(family.rows, cta.conduiteEngineOptions());
-const prAbc = L.qvApplyPrAbcStructure(applied.rows, history.rows);
+const periodic = L.qvApplyPeriodicActivityRules(family.rows, { year: 2027 });
+const projection = L.qvMaterializeHistoricalOccurrences(periodic.rows, history.rows, { year: 2027 });
+const dapAnnual = L.qvApplyDapAnnualExercisePlan(projection.rows, history.rows);
+const foba = L.qvApplyFobaOccurrenceThemes(dapAnnual.rows, history.rows);
+const prSeries = L.qvApplyPrSeriesContinuity(foba.rows, history.rows);
+const conduiteOptions = { ...cta.conduiteEngineOptions(), season: L.qvInstructionSeasonBounds(history.rows, 2027) };
+const applied = L.qvApplyConduiteContinue(prSeries.rows, conduiteOptions);
+const dapConduite = L.qvApplyDapConduite(applied.rows, history.rows, { year: 2027 });
+const prAbc = L.qvApplyPrAbcStructure(dapConduite.rows, history.rows);
 const rows = prAbc.rows;
 const conduites = applied.derived.matched.concat(applied.derived.added);
 
@@ -58,14 +65,14 @@ test('QV-CTA-001 : le cycle CTA est perpétuel et unique', () => {
   assert.notEqual(jan, 'N06a');
 });
 
-test('QV-CONDUITE-002 : cible annuelle 84', () => {
-  assert.equal(cta.expectedAnnualConduites(), 84);
-  assert.equal(applied.derived.expected, 84);
+test('QV-CONDUITE-002 : cible annuelle 56', () => {
+  assert.equal(cta.expectedAnnualConduites(), 56);
+  assert.equal(applied.derived.expected, 56);
   assert.equal(10 + 6 + 6 + 6, 28);
 });
 
 test('QV-CONDUITE-001 / QV-CONDUITE-003 : chaque conduite a une Instr demi-sct source', () => {
-  assert.equal(conduites.length, 84);
+  assert.equal(conduites.length, 56);
   for (const row of conduites) {
     const source = rows.find((item) => item.id === row.conduiteEvidence.sourceId);
     assert.ok(source);
@@ -102,20 +109,21 @@ test('QV-CONDUITE-007 : répartition déterministe, sans hasard, identique au 2e
   assert.deepEqual(L.qvSelectSpreadIndices(2, 3), [0, 1]);
   assert.deepEqual(L.qvSelectSpreadIndices(3, 3), [0, 1, 2]);
   assert.deepEqual(L.qvSelectSpreadIndices(10, 3), [0, 5, 9]);
+  assert.deepEqual(L.qvSelectSpreadIndices(10, 2), [0, 9]);
   const again = L.qvApplyConduiteContinue(applied.rows, cta.conduiteEngineOptions());
   assert.equal(again.derived.added.length, 0);
-  assert.equal(again.derived.matched.length, 84);
+  assert.equal(again.derived.matched.length, 56);
   assert.equal((again.derived.programmedInstructions || []).length, 0);
 });
 
-test('QV-CONDUITE-008 : 24 instructions CTA comblent les sources, 0 insuffisance, 84 conduites', () => {
-  assert.equal((applied.derived.programmedInstructions || []).length, 24);
+test('QV-CONDUITE-008 : historique suffisant, 0 instruction ajoutée, 56 conduites', () => {
+  assert.equal((applied.derived.programmedInstructions || []).length, 0);
   assert.equal(applied.derived.insufficient.length, 0);
-  assert.equal(applied.derived.materialized, 84);
+  assert.equal(applied.derived.materialized, 56);
   const complete = ['G1', 'C1', 'B1', 'B2'].flatMap((oi) => cta.operationalHalfSections(oi).map((half) => `${oi}|${half}`));
   complete.forEach((key) => {
     const n = conduites.filter((row) => `${L.qvDpsSitesOf(row)[0]}|${row.conduiteEvidence.halfSection}` === key).length;
-    assert.equal(n, 3, key);
+    assert.equal(n, 2, key);
   });
 });
 
@@ -168,15 +176,20 @@ test('QV-PIONNIER-001/002/003 : FOBA 2, 4 h, 19:15–22:00, pas de régression',
   sct.forEach((row) => assert.deepEqual([String(row.startsAt).slice(11, 16), String(row.endsAt).slice(11, 16)], ['19:15', '22:00']));
 });
 
-test('QV-PRABC-001/002 : 3 T1 + 3 T4, séance 2 mercredi matin, sans date inventée', () => {
+// QV-PRABC-001 (3 T1 + 3 T4) est abrogée : elle dédoublait chaque séance. 2026 démontre 3 séances.
+test('QV-PRABC-003 : 3 séances PR-ABC datées depuis 2026, public PABC, Chef PR', () => {
   const list = rows.filter((row) => row.label === 'Exercice PR-ABC');
-  assert.equal(list.length, 6);
-  assert.equal(list.filter((row) => row.prAbcProposal.quarter === 'T1').length, 3);
-  assert.equal(list.filter((row) => row.prAbcProposal.quarter === 'T4').length, 3);
-  list.filter((row) => row.sessionIndex === 2).forEach((row) => {
-    assert.equal(row.prAbcProposal.session2Morning, true);
-    assert.equal(row.prAbcProposal.preferredWeekday, 'mercredi');
-    assert.equal(row.startsAt, null);
+  assert.equal(list.length, 3);
+  assert.deepEqual(list.map((row) => String(row.startsAt).slice(0, 10)).sort(), ['2027-04-20', '2027-06-09', '2027-10-05']);
+  assert.deepEqual(list.map((row) => row.prAbcProposal.quarter).sort(), ['T2', 'T2', 'T4']);
+  const morning = list.filter((row) => row.prAbcProposal.morning);
+  assert.equal(morning.length, 1);
+  assert.equal(morning[0].prAbcProposal.weekday, 'mercredi');
+  assert.equal(String(morning[0].startsAt).slice(11, 16), '08:00');
+  list.forEach((row) => {
+    assert.deepEqual(row.publics, ['PR:3']);
+    assert.equal(row.responsible, 'C PR');
+    assert.equal(row.sessionCount, 1);
   });
 });
 
@@ -198,13 +211,14 @@ test('aucune réserve utilisée, aucun doublon de conduite, source 2027 intacte'
   const keys = conduites.map((row) => `${row.ois[0]}|${row.startsAt}|${row.conduiteEvidence.halfSection}`);
   assert.equal(new Set(keys).size, keys.length);
   assert.equal(canonical.rows.filter((row) => !row.external).length, 622);
-  assert.equal(rows.filter((row) => !row.external).length, 767);
+  assert.equal(rows.filter((row) => !row.external).length, 829);
 });
 
 test('le référentiel canonique documente les identifiants de règles', () => {
   ['QV-CTA-001', 'QV-CTA-002', 'QV-CTA-003', 'QV-CTA-004', 'QV-DPS-001', 'QV-DPS-002', 'QV-DPS-003',
     'QV-CONDUITE-001', 'QV-CONDUITE-002', 'QV-CONDUITE-003', 'QV-CONDUITE-004', 'QV-CONDUITE-005',
-    'QV-CONDUITE-006', 'QV-CONDUITE-007', 'QV-CONDUITE-008', 'QV-PRABC-001', 'QV-PIONNIER-001', 'QV-UI-001'].forEach((id) => {
+    'QV-CONDUITE-006', 'QV-CONDUITE-007', 'QV-CONDUITE-008', 'QV-DPS-006', 'QV-PRABC-003',
+    'QV-PROJ-001', 'QV-PERIOD-001', 'QV-DAP-001', 'QV-PIONNIER-001', 'QV-UI-001', 'QV-UI-005', 'QV-UI-006'].forEach((id) => {
     assert.ok(rulesDoc.includes(id), id);
   });
   assert.match(ui, /const roundTrip = state\.quoVadisProgrammeContextActive === true;/);

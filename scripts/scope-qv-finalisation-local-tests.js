@@ -90,7 +90,7 @@ test('les filtres métier et la recherche globale sont reliés', () => {
   for (const id of ['qv-filter-q', 'qv-filter-domain', 'qv-filter-family', 'qv-filter-oi', 'qv-filter-statcom', 'qv-filter-cible', 'qv-filter-lieu', 'qv-filter-status', 'qv-filter-period', 'qv-filter-sessions', 'qv-filter-attention']) {
     assert.match(ui, new RegExp(id), id);
   }
-  assert.match(ui, /row\.occurrenceLabel, row\.sessionLabel, row\.statCom/);
+  assert.match(ui, /row\.occurrenceLabel, row\.sessionLabel, \(row\.themes \|\| \[\]\)\.join\(' '\), row\.statCom/);
   assert.match(ui, /normalize\('NFD'\)/);
   assert.match(ui, /replace\(\/\[\\u0300-\\u036f\]\/g, ''\)/);
 });

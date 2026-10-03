@@ -31,8 +31,15 @@ const sourceRows = canonical.rows;
 const rotation = L.qvDistributeRotationOccurrences(sourceRows, history.rows, cta.instructionPublicForDate);
 const pionnier = L.qvApplyPionnierRules(rotation.rows);
 const family = L.qvApplyDpsInstructionFamilyRules(pionnier.rows, cta.instructionPublicForDate);
-const applied = L.qvApplyConduiteContinue(family.rows, cta.conduiteEngineOptions());
-const prAbc = L.qvApplyPrAbcStructure(applied.rows, history.rows);
+const periodic = L.qvApplyPeriodicActivityRules(family.rows, { year: 2027 });
+const projection = L.qvMaterializeHistoricalOccurrences(periodic.rows, history.rows, { year: 2027 });
+const dapAnnual = L.qvApplyDapAnnualExercisePlan(projection.rows, history.rows);
+const foba = L.qvApplyFobaOccurrenceThemes(dapAnnual.rows, history.rows);
+const prSeries = L.qvApplyPrSeriesContinuity(foba.rows, history.rows);
+const conduiteOptions = { ...cta.conduiteEngineOptions(), season: L.qvInstructionSeasonBounds(history.rows, 2027) };
+const applied = L.qvApplyConduiteContinue(prSeries.rows, conduiteOptions);
+const dapConduite = L.qvApplyDapConduite(applied.rows, history.rows, { year: 2027 });
+const prAbc = L.qvApplyPrAbcStructure(dapConduite.rows, history.rows);
 const businessRows = prAbc.rows;
 const derived = applied.derived;
 const byId = new Map(businessRows.map((row) => [String(row.id), row]));
@@ -41,13 +48,12 @@ const enrich = (row) => L.qvEnrichSectionPublic(row, [], businessRows, cta.instr
 // ---------------------------------------------------------------- §4 Conduite, formation continue
 
 test('conduite derivee uniquement depuis une instruction demi-section datee et jamais apres PIONNIER', () => {
-  // QV-CONDUITE-002 : cible 84. Les 12 occurrences du lot précédent étaient une matrice 3 thèmes × 4 OI,
-  // désormais remplacée par 3 séances par demi-section opérationnelle.
-  assert.equal(derived.expected, 84);
+  // QV-CONDUITE-002 : deux séances d'une heure par demi-section, démontrées par 2026.
+  assert.equal(derived.expected, 56);
   assert.equal(derived.matched.length, 4);
-  assert.equal(derived.added.length, 80);
+  assert.equal(derived.added.length, 52);
   assert.equal(derived.orphans.length, 0);
-  assert.equal(derived.materialized, 84);
+  assert.equal(derived.materialized, 56);
   assert.equal(derived.insufficient.length, 0);
   assert.ok(!businessRows.some((row) => row.conduiteEvidence && /PIONNIER/.test(row.conduiteEvidence.theme)));
   assert.ok(!L.qvConduiteSources(sourceRows, cta.instructionPublicForDate).some((item) => item.theme === 'PIONNIER'));
@@ -79,22 +85,24 @@ test('conduite B2 suit le lieu operationnel de son instruction source sans depla
 });
 
 test('apres correction de la rotation, les conduites sont materialisees pour chaque demi-section operationnelle', () => {
-  assert.equal(derived.expected, 84);
+  assert.equal(derived.expected, 56);
   assert.equal(derived.insufficient.length, 0);
-  assert.equal(businessRows.filter((row) => row.label === 'Conduite, formation continue').length, 84);
+  // Les conduites DAP (Stat.Com 01522F7, QV-DAP-001) sont comptées séparément.
+  assert.equal(businessRows.filter((row) => row.label === 'Conduite, formation continue' && row.statCom === '0152F7').length, 56);
+  assert.equal(businessRows.filter((row) => row.label === 'Conduite, formation continue' && row.statCom === '01522F7').length, 16);
   const parSite = {};
   for (const row of derived.matched.concat(derived.added)) {
     const site = L.qvDpsSitesOf(row)[0];
     parSite[site] = (parSite[site] || 0) + 1;
   }
-  assert.deepEqual(parSite, { G1: 30, C1: 18, B1: 18, B2: 18 });
+  assert.deepEqual(parSite, { G1: 20, C1: 12, B1: 12, B2: 12 });
 });
 
 test('derivation conduite idempotente', () => {
   const again = L.qvApplyConduiteContinue(businessRows);
   assert.equal(again.rows.length, businessRows.length);
   assert.equal(again.derived.added.length, 0);
-  assert.equal(again.derived.matched.length, 84);
+  assert.equal(again.derived.matched.length, 56);
 });
 
 // ---------------------------------------------------------------- §5 Public cible derive du cycle CTA
@@ -295,9 +303,12 @@ test('un OI determine n apparait plus comme a qualifier, une ambiguite reelle re
   assert.match(L.qvFormatOiSelections(real.codes), /^À qualifier : G1$/);
 });
 
-test('les seules ambiguites OI restantes sont les quatre activites DAP portant G1', () => {
+// QV-PROJ-001 rétablit deux réalisations 2026 de « Séance des chefs de section DAP » : la même
+// ambiguïté métier porte donc sur 6 occurrences, toujours sur les 3 mêmes activités DAP.
+test('les seules ambiguites OI restantes sont des activites DAP portant G1', () => {
   const ambiguous = businessRows.filter((row) => L.qvNormalizeOiSelections(row, row.ois || []).ambiguous.length);
-  assert.equal(ambiguous.length, 4);
+  assert.equal(ambiguous.length, 6);
+  assert.equal(new Set(ambiguous.map((row) => row.label)).size, 3);
   assert.ok(ambiguous.every((row) => row.domain === 'DAP'));
   assert.ok(ambiguous.every((row) => (row.ois || []).includes('G1')));
 });
@@ -356,8 +367,8 @@ test('le compteur a arbitrer compte exactement les obligations A_PLANIFIER et PR
 
 test('le fichier source canonique reste intact : 622 seances demontrees', () => {
   assert.equal(sourceRows.filter((row) => !row.external).length, 622);
-  assert.equal(businessRows.filter((row) => !row.external).length, 767);
-  assert.equal(businessRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length, 80);
+  assert.equal(businessRows.filter((row) => !row.external).length, 829);
+  assert.equal(businessRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length, 52);
 });
 
 test('2028 et 2029 ne sont pas generes par ce lot', () => {

@@ -1,5 +1,5 @@
 {
-  "version": "2027.2",
+  "version": "2027.4",
   "campaign": "2027",
   "source": "docs/business-rules/quo-vadis-canonical-rules.md",
   "engine": "netlify/lib/_scope-cta-rules.js + assets/js/scope-ui-logic.js",
@@ -8,21 +8,178 @@
     "remainingMigration": "seed scope_quo_vadis_planning_rules (code, version_code, valid_from/to, active, metadata.ruleId) pour activer/désactiver une campagne depuis l’UI Règles sans toucher au code."
   },
   "rules": [
-    { "id": "QV-CTA-001", "active": true, "domain": "DPS", "family": "Permanence", "campaignScoped": true },
-    { "id": "QV-CTA-002", "active": true, "domain": "DPS", "family": "Permanence" },
-    { "id": "QV-CTA-003", "active": true, "domain": "DPS", "family": "Permanence" },
-    { "id": "QV-CTA-004", "active": true, "domain": "DPS", "family": "Permanence" },
-    { "id": "QV-CONDUITE-001", "active": true, "domain": "AUTO", "family": "Conduite", "campaignScoped": true },
-    { "id": "QV-CONDUITE-002", "active": true, "domain": "AUTO", "family": "Conduite" },
-    { "id": "QV-CONDUITE-003", "active": true, "domain": "AUTO", "family": "Conduite" },
-    { "id": "QV-CONDUITE-005", "active": true, "domain": "AUTO", "family": "Conduite" },
-    { "id": "QV-CONDUITE-006", "active": true, "domain": "AUTO", "family": "Conduite" },
-    { "id": "QV-CONDUITE-007", "active": true, "domain": "AUTO", "family": "Conduite" },
-    { "id": "QV-CONDUITE-008", "active": true, "domain": "DPS", "family": "Instruction", "campaignScoped": true, "summary": "Si les Instr demi-sct datées sont < 3, programmer les occurrences manquantes par CTA, sans veto 2026." },
-    { "id": "QV-DPS-001", "active": true, "domain": "DPS", "family": "Instruction" },
-    { "id": "QV-DPS-002", "active": true, "domain": "DPS", "family": "Instruction" },
-    { "id": "QV-DPS-003", "active": true, "domain": "DPS", "family": "Instruction" },
-    { "id": "QV-PRABC-001", "active": true, "domain": "PR", "family": "Exercice", "campaignScoped": true },
-    { "id": "QV-PIONNIER-001", "active": true, "domain": "FOSPEC", "family": "Instruction" }
+    {
+      "id": "QV-CTA-001",
+      "active": true,
+      "domain": "DPS",
+      "family": "Permanence",
+      "campaignScoped": true
+    },
+    {
+      "id": "QV-CTA-002",
+      "active": true,
+      "domain": "DPS",
+      "family": "Permanence"
+    },
+    {
+      "id": "QV-CTA-003",
+      "active": true,
+      "domain": "DPS",
+      "family": "Permanence"
+    },
+    {
+      "id": "QV-CTA-004",
+      "active": true,
+      "domain": "DPS",
+      "family": "Permanence"
+    },
+    {
+      "id": "QV-CONDUITE-001",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite",
+      "campaignScoped": true
+    },
+    {
+      "id": "QV-CONDUITE-002",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite"
+    },
+    {
+      "id": "QV-CONDUITE-003",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite"
+    },
+    {
+      "id": "QV-CONDUITE-005",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite"
+    },
+    {
+      "id": "QV-CONDUITE-006",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite"
+    },
+    {
+      "id": "QV-CONDUITE-007",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite"
+    },
+    {
+      "id": "QV-CONDUITE-008",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction",
+      "campaignScoped": true,
+      "summary": "Deux conduites annuelles par demi-section DPS ; si les instructions datées sont insuffisantes, programmer les occurrences manquantes par CTA, sans modifier la durée d'une heure."
+    },
+    {
+      "id": "QV-DPS-001",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction"
+    },
+    {
+      "id": "QV-DPS-002",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction"
+    },
+    {
+      "id": "QV-DPS-003",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction"
+    },
+    {
+      "id": "QV-DPS-006",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction",
+      "campaignScoped": true,
+      "summary": "Saison d’instruction bornée : premier samedi de février → dernière date 2026 projetée, jamais janvier, jamais après Noël."
+    },
+    {
+      "id": "QV-PRABC-001",
+      "active": false,
+      "domain": "PR",
+      "family": "Exercice",
+      "campaignScoped": true,
+      "supersededBy": "QV-PRABC-003",
+      "summary": "Structure 3 T1 + 3 T4 invalidée par la recette MOA 2027."
+    },
+    {
+      "id": "QV-PRABC-003",
+      "active": true,
+      "domain": "PR",
+      "family": "Exercice",
+      "campaignScoped": true,
+      "summary": "Exercice PR-ABC = exactement 3 séances (T2 soir, T2 mercredi matin, T4 soir), public PABC, responsable Chef PR."
+    },
+    {
+      "id": "QV-PIONNIER-001",
+      "active": true,
+      "domain": "FOSPEC",
+      "family": "Instruction"
+    },
+    {
+      "id": "QV-PROJ-001",
+      "active": true,
+      "domain": "*",
+      "family": "*",
+      "campaignScoped": true,
+      "summary": "Chaque occurrence reprend sa propre réalisation 2026 (date, horaire, OI, lieu, responsable). Une ligne multi-OI reste un événement unique ; K réalisations distinctes restent K occurrences."
+    },
+    {
+      "id": "QV-PERIOD-001",
+      "active": true,
+      "domain": "*",
+      "family": "*",
+      "summary": "Revue quinquennale et sa préparation : cycle de 5 ans, édition de référence 2026, prochaine échéance 2031. Non reconduite en 2027, conservée au catalogue."
+    },
+    {
+      "id": "QV-DAP-001",
+      "active": true,
+      "domain": "AUTO",
+      "family": "Conduite",
+      "campaignScoped": true,
+      "summary": "Quatre soirées de conduite DAP par section Y1–Y4 entre mars et mai, public cond VL, 18h30–21h30, quatre créneaux individuels chevauchés de 30 min de conduite et 30 min de connaissance véhicule."
+    },
+    {
+      "id": "QV-DAP-002",
+      "active": true,
+      "domain": "DAP",
+      "family": "Exercice",
+      "campaignScoped": true,
+      "summary": "Quatre exercices DAP par section ; la formation groupée remplace le cinquième. Le dernier reprend la période vendredi/samedi historique, après son cours de cadres."
+    },
+    {
+      "id": "QV-FOBA-001",
+      "active": true,
+      "domain": "FOBA",
+      "family": "Exercice",
+      "campaignScoped": true,
+      "summary": "Dix exercices FOBA 1/2 et trois FOBA 3 ; occurrence et thèmes issus des lignes historiques exactes, sans fusion de libellés similaires."
+    },
+    {
+      "id": "QV-PR-001",
+      "active": true,
+      "domain": "PR",
+      "family": "Exercice",
+      "campaignScoped": true,
+      "summary": "La série PR 1.x projette ses séances historiques manquantes en début 2027, sans recréer les séances déjà planifiées fin 2026 ; thèmes propres à chaque occurrence."
+    },
+    {
+      "id": "QV-UI-005",
+      "active": true,
+      "domain": "*",
+      "family": "*",
+      "summary": "Le filtre Domaine du Programme annuel expose la taxonomie métier canonique (FOCO inclus), dans l’ordre métier global ; FOCO, jamais porté comme domaine, est résolu sur l’axe famille et rend les séances DPS, DAP et JSP."
+    }
   ]
 }
