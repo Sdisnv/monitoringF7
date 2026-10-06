@@ -63,7 +63,7 @@ class MemoryDatabase {
   async query(sql, params = []){
     const q = sql.replace(/\s+/g, ' ').trim().toLowerCase();
     const result = (rows = []) => ({ rows: copy(rows), rowCount: rows.length });
-    assert.ok(!/\b(insert into|update|delete from) scope_(evenements|attendus|participations|personnes)\b/.test(q), 'operational write forbidden');
+    assert.ok(!/\b(insert into|update|delete from) scope_(evenements|attendus|participations|affectations|personnes|qv_publication_links)\b/.test(q), 'operational write forbidden');
     if(q.startsWith('select pg_advisory_xact_lock')) return result();
     if(q.startsWith('select * from scope_quo_vadis_programmes')) return result([this.programme]);
     if(q.startsWith('insert into scope_quo_vadis_cursus_programmes') || q.startsWith('insert into scope_quo_vadis_cursus_step_programmes') || q.startsWith('insert into scope_quo_vadis_calendar_days')) return result();
@@ -241,6 +241,36 @@ async function run(){
   assert.deepStrictEqual(enriched.futureDates.map(({ converted_obligation_id, ...row }) => row), announcedBefore);
   const again = await createScopeQuoVadisService({ database: enriched }).generateProgramme();
   assert.deepStrictEqual(snapshot(again), snapshot(withSupplements));
+
+  const protectedPreparations = new MemoryDatabase();
+  const automaticMetadata = { source: 'QV_PROGRAMME_PREPARATION', automatedSnapshot: true, humanDecision: false };
+  const matchingSnapshot = protectedPreparations.addObligation({ source_type: 'MANUAL', source_ref: 'snapshot-matching',
+    title: protectedPreparations.obligations[0].title, domain: protectedPreparations.obligations[0].domain,
+    cible_codes: protectedPreparations.obligations[0].cible_codes, include_in_programme: false, metadata: copy(automaticMetadata) });
+  const isolatedSnapshot = protectedPreparations.addObligation({ source_type: 'MANUAL', source_ref: 'snapshot-isolated',
+    title: 'Snapshot technique isolé', domain: 'SDIS', include_in_programme: false, metadata: copy(automaticMetadata) });
+  const userFields = { activityLabel: 'Repas du Permanent [MOA]', date: null, oiCodes: ['DPS:G1'] };
+  const humanPreparation = protectedPreparations.addObligation({ source_type: 'MANUAL', source_ref: 'repas-du-permanent',
+    title: userFields.activityLabel, domain: 'SDIS', include_in_programme: false,
+    metadata: { ...copy(automaticMetadata), humanDecision: true, planningFields: copy(userFields) } });
+  const ordinaryManual = protectedPreparations.addObligation({ source_type: 'MANUAL', source_ref: 'manual-standalone',
+    title: 'Décision manuelle ordinaire', domain: 'SDIS', include_in_programme: false, metadata: {} });
+  const technicalBefore = copy([matchingSnapshot, isolatedSnapshot]);
+  assert.strictEqual(consolidation.hasHumanDecision(matchingSnapshot, []), false);
+  assert.strictEqual(consolidation.hasHumanDecision(isolatedSnapshot, []), false);
+  assert.strictEqual(consolidation.hasHumanDecision(humanPreparation, []), true);
+  assert.strictEqual(consolidation.hasHumanDecision(ordinaryManual, []), true);
+  const protectedResult = await createScopeQuoVadisService({ database: protectedPreparations }).generateProgramme();
+  assert.deepStrictEqual([matchingSnapshot, isolatedSnapshot], technicalBefore,
+    'automatic snapshots remain excluded and unchanged, even when one matches a generated activity');
+  assert.ok(!protectedResult.generation.consolidation.activities.some((item) =>
+    [matchingSnapshot.obligation_id, isolatedSnapshot.obligation_id].includes(item.obligationId)));
+  assert.strictEqual(humanPreparation.metadata.humanDecision, true);
+  assert.strictEqual(humanPreparation.title, userFields.activityLabel);
+  assert.deepStrictEqual(humanPreparation.metadata.planningFields, userFields);
+  assert.strictEqual(humanPreparation.include_in_programme, true);
+  assert.ok(protectedResult.generation.consolidation.preservedDecisionIds.includes(humanPreparation.obligation_id));
+  assert.strictEqual(ordinaryManual.include_in_programme, true, 'ordinary MANUAL decisions remain protected');
 
   const failing = new MemoryDatabase();
   const beforeFailure = copy({ obligations: failing.obligations, proposals: failing.proposals });

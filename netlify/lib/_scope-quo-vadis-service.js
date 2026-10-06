@@ -1816,6 +1816,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         return payload.sourceType === 'FUTURE_DATE' ? duplicate.row : null;
       }
       const matches = reconciliation.rows.filter((row) => !reconciliation.active.some((entry) => entry.row.obligation_id === row.obligation_id)
+        && !consolidation.isAutomaticPreparationSnapshot(row)
         && (consolidation.equivalent(row, payload) || (row.source_type === payload.sourceType && row.source_ref === payload.sourceRef)));
       matches.sort((a, b) => Number(b.preserveDecision) - Number(a.preserveDecision)
         || Number(b.source_type === payload.sourceType && b.source_ref === payload.sourceRef) - Number(a.source_type === payload.sourceType && a.source_ref === payload.sourceRef));
@@ -1916,6 +1917,7 @@ function createScopeQuoVadisService({ database = db } = {}){
 
   async function finishConsolidation(){
     for(const row of reconciliation.rows){
+      if(consolidation.isAutomaticPreparationSnapshot(row)) continue;
       const claimed = reconciliation.active.find((entry) => entry.row.obligation_id === row.obligation_id);
       if(claimed){
         if(row.preserveDecision) reconciliation.preserved.push(row.obligation_id);
