@@ -132,6 +132,40 @@ function applyProvenInstitutionalDomains(rows){
   });
 }
 
+function reconcileValidatedCursusModules(rows) {
+  const validated = new Map();
+  for (const row of rows) {
+    if (row.activityKind !== 'CURSUS' || !row.cursusCode || !row.cursusStepCode
+      || row.provenance !== 'SOURCE_2027_EXPLICIT' || row.status !== 'VALIDATED') continue;
+    const key = `${row.definitionId}|${row.cursusCode}|${row.cursusStepCode}`;
+    const group = validated.get(key) || [];
+    group.push(row);
+    validated.set(key, group);
+  }
+  const sameCodes = (left, right) => JSON.stringify((left || []).slice().sort()) === JSON.stringify((right || []).slice().sort());
+  return rows.map((row) => {
+    if (!row.projectionAdded || row.activityKind !== 'CURSUS' || !row.cursusCode || !row.cursusStepCode) return row;
+    const sourceLine = Number(row.historicalProposal && row.historicalProposal.sourceLine);
+    const historical = (historicalReference2026.rows || []).find((item) => item.sourceLine === sourceLine);
+    const sameHistoricalModule = (item) => String(item.title) === row.label || String(item.title).startsWith(`${row.label} |`);
+    const historicalSessions = (historicalReference2026.rows || []).filter((item) => item.date.startsWith('2026-')
+      && sameHistoricalModule(item) && item.statCom === row.statCom);
+    const key = `${row.definitionId}|${row.cursusCode}|${row.cursusStepCode}`;
+    const peers = validated.get(key) || [];
+    if (!historical || historical.date.slice(0, 4) !== '2026' || !sameHistoricalModule(historical)
+      || historical.statCom !== row.statCom || historicalSessions.length !== 1 || peers.length !== 1
+      || Number(row.sessionCount || 1) !== 1 || Number(row.sessionIndex || 1) !== 1) return row;
+    const peer = peers[0];
+    if (Number(peer.sessionCount || 1) !== 1 || Number(peer.sessionIndex || 1) !== 1
+      || peer.statCom !== row.statCom || !sameCodes(peer.ois, row.ois) || !sameCodes(peer.publics, row.publics)
+      || String(peer.startsAt || '').slice(11) !== String(row.startsAt || '').slice(11)
+      || String(peer.endsAt || '').slice(11) !== String(row.endsAt || '').slice(11)) return row;
+    return { ...row, cursusReconciliation: {
+      status: 'SUPERSEDED_BY_VALIDATED_MODULE', supersededBy: peer.id, historicalSourceLine: sourceLine
+    } };
+  });
+}
+
 // Applique les règles métier MOA du 02.10.2026 au programme canonique 2027, de façon déterministe et idempotente.
 function canonicalBusinessProgramme2027(){
   if(canonicalBusinessCache) return canonicalBusinessCache;
@@ -202,7 +236,7 @@ function canonicalBusinessProgramme2027(){
   const projectionAdded = overlayRows.filter((row) => row.projectionAdded).length;
   const programmedInstructions = overlayRows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
   const conduitesAdded = overlayRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_ANNUAL').length;
-  const previousDomainRows = applyProvenInstitutionalDomains(arbitratedRows);
+  const previousDomainRows = applyProvenInstitutionalDomains(reconcileValidatedCursusModules(arbitratedRows));
   const canonicalDomainRows = applyMoaInstitutionalDomains(previousDomainRows);
   canonicalBusinessCache = {
     rows: canonicalDomainRows,
@@ -1169,6 +1203,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       return {
         activityId: obligation.obligationId,
         obligationId: obligation.obligationId,
+        sourceRef: obligation.sourceRef,
         title: metadata.displayLabel || obligation.title,
         domain: obligation.domain || '',
         domainLabel: domainLabel(obligation.domain),
@@ -1520,6 +1555,8 @@ function createScopeQuoVadisService({ database = db } = {}){
       preparationByUnit = new Map((preparationRows.rows || []).map((row) => [String(row.source_ref),row]));
       const canonicalBusinessRows = canonicalBusinessProgramme2027().rows;
       const canonicalSourceById = new Map((canonicalBusinessRows || []).map((row) => [String(row.id), row]));
+      const cursusSteps = new Map(result.cursus.filter((row) => row.stepId)
+        .map((row) => [`${row.code}|${row.stepCode}`, row]));
       result.canonicalProgramme = {
         source: canonicalProgramme2027.source,
         target: canonicalProgramme2027.target,
@@ -1567,7 +1604,16 @@ function createScopeQuoVadisService({ database = db } = {}){
             salleTheorieId:preparation.salle_theorie_id || null,
             status:preparation.statut || row.status
           } : { preparation:null };
-          const presented = Object.assign({}, row, sourceFields, prepared, row.dapAnnualStatus === 'REMPLACE_PAR_FORMATION_GROUPEE' && (preparation || event)
+          const cursusStep = row.activityKind === 'CURSUS'
+            ? cursusSteps.get(`${row.cursusCode}|${row.cursusStepCode}`) : null;
+          const protectedDecision = Boolean(event || (preparation && preparation.metadata && (
+            preparation.metadata.humanDecision === true || preparation.metadata.decisionHumaine === true
+            || preparation.metadata.validatedBy || preparation.metadata.planningFields)));
+          const presented = Object.assign({}, row, sourceFields, prepared,
+            cursusStep ? { cursus: cursusStep.libelle, cursusId: cursusStep.cursusId,
+              cursusStepId: cursusStep.stepId } : {},
+            protectedDecision ? { cursusReconciliation: null } : {},
+            row.dapAnnualStatus === 'REMPLACE_PAR_FORMATION_GROUPEE' && (preparation || event)
             ? { external: false, dapAnnualStatus: 'DECISION_EXISTANTE_PRESERVEE' } : {}, event ? {
             publishedEventId: event.evenement_id,
             publishedEventStatus: event.statut,
@@ -1591,6 +1637,10 @@ function createScopeQuoVadisService({ database = db } = {}){
           return presented;
         })
       };
+      const superseded = new Set(result.canonicalProgramme.rows
+        .filter((row) => row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')
+        .map((row) => String(row.id)));
+      result.activities = result.activities.filter((row) => !superseded.has(String(row.sourceRef)));
     }
     if(Number(programme.annee) !== 2027){
       result.canonicalProgramme = { rows: result.obligations.filter(row => row.metadata.lineage).map(row => {
@@ -1666,7 +1716,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         } : {}),oiSelections:oi.codes,oiQualification:oi.status,ambiguousOis:oi.ambiguous,ois:uiLogic.qvOiSites(oi.codes),
           business:uiLogic.qvEnrichBusinessReference(row,result)};
       });
-      const programmeRows = result.canonicalProgramme.rows.filter((row) => !row.external);
+      const programmeRows = result.canonicalProgramme.rows.filter((row) => !row.external
+        && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
       result.canonicalProgramme.target = {
         ...(result.canonicalProgramme.target || {}),
         year: ctaYear,
@@ -2914,6 +2965,10 @@ function createScopeQuoVadisService({ database = db } = {}){
     } : null;
     const existingPreparation = existing && existing.metadata && existing.metadata.source === 'QV_PROGRAMME_PREPARATION';
     if(!source || (source.external && !existingPreparation)) return { updated:false,reason:'PROGRAMME_ITEM_NOT_FOUND' };
+    if(source.cursusReconciliation && source.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'
+      && !(existing && existing.metadata && (existing.metadata.humanDecision === true
+        || existing.metadata.decisionHumaine === true || existing.metadata.validatedBy || existing.metadata.planningFields)))
+      throw new HttpError(422,'programme_cursus_projection_superseded','Ce module est déjà validé dans le programme.');
     if(source.definitionId === 'CTA-PERMANENCE') throw new HttpError(422,'programme_cta_calculée','La permanence dépend du moteur CTA.');
     const lifecycleAction = String(body.lifecycleAction || '').toUpperCase();
     if(lifecycleAction){

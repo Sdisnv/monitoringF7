@@ -3308,9 +3308,11 @@
   }
 
   function qvProgrammeFilterType(row) {
+    if (row && (row.sourceType === 'CURSUS' || row.activityKind === 'CURSUS'
+      || (row.cursusCode && row.cursusStepCode))) return 'Cursus';
     if (String(row && (row.label || row.title) || '').trim() === 'Conduite, formation continue') return 'Conduite';
     const value = String(row && (row.activityType || row.type || row.family) || '').trim();
-    if (['Cours', 'Événement', 'Exercice', 'Formation', 'Instruction', 'Représentation', 'Séance', 'Conduite'].includes(value)) return value;
+    if (['Cours', 'Cursus', 'Événement', 'Exercice', 'Formation', 'Instruction', 'Représentation', 'Séance', 'Conduite'].includes(value)) return value;
     if (/^Séance\b/i.test(String(row && row.label || ''))) return 'Séance';
     if (String(row && row.label || '') === 'Permanence') return 'Permanence';
     return '';
