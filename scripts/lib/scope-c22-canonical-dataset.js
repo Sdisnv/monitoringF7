@@ -71,6 +71,13 @@ function sessionIndex(row){
   return match ? Number(match[1]) : 1;
 }
 
+function voluntaryTransversalWithoutOi(row){
+  return row.family === 'Formation'
+    && !(row.oiSelections || []).length && !(row.ois || []).length
+    && (row.publics || []).length > 0
+    && (row.business && row.business.missing || []).includes('OI à qualifier');
+}
+
 function buildCanonicalDataset(){
   const source = readJson(PROGRAM_PATH);
   const dress = readJson(DRESS_PATH);
@@ -171,6 +178,155 @@ function buildCanonicalDataset(){
   };
 }
 
+async function buildCurrentCandidateDataset(){
+  const { createFixture } = require('../scope-qv-local-fixture');
+  const { buildExtraction } = require('../scope-qv-2027-no-go-final-extraction');
+  const { _qvPersistenceDomain } = require('../../netlify/lib/_scope-quo-vadis-service');
+  const references = readJson(path.join(ROOT, 'scripts/fixtures/scope-qv-business-references.json'));
+  const locationById = new Map((references.lieux || []).map((row) => [row.lieu_id, row]));
+  const roomById = new Map((references.salles || []).map((row) => [row.salle_id, row]));
+  const roomByCode = new Map((references.salles || []).map((row) => [row.code, row]));
+  const candidate = await createFixture(null).service.listProgramme(2027);
+  const extraction = await buildExtraction();
+  const localIds = new Set(extraction.reviews.filter((row) => row.Groupe === 'INSTRUCTION_LOCALE')
+    .map((row) => row.Occurrence));
+  const rows = candidate.canonicalProgramme.rows.filter((row) => !row.external);
+  const programme = rows.map((row) => {
+    const location = locationById.get(row.business && row.business.lieuId);
+    const roomCandidate = roomById.get(row.business && row.business.salleTheorieId)
+      || (/^R-[A-Z0-9-]+$/.test(row.room || '') ? roomByCode.get(row.room.slice(2)) : null)
+      || (row.room === 'R-G1-EM' ? roomByCode.get('G1-ETAT-MAJOR') : null)
+      || (row.room === 'Salle de théorie' && location
+        ? roomByCode.get(`${location.site_code}-THEORIE`) : null);
+    const room = roomCandidate && location && roomCandidate.lieu_id === location.lieu_id ? roomCandidate : null;
+    const source = {
+      definitionId: row.definitionId,
+      occurrenceId: row.occurrenceId,
+      sessionId: row.sessionId,
+      publicationUnitId: row.id,
+      sourceRecordIds: [row.id]
+    };
+    return {
+      caseId: row.id,
+      year: 2027,
+      source,
+      label: row.activityLabel || row.label,
+      eventLabel: row.eventLabel || row.label,
+      status: row.status,
+      externalHistorical: false,
+      referencesValidated: row.status === 'VALIDATED' && !(row.business && row.business.missing || [])
+        .some((reason) => reason !== 'Public cible non démontré'
+          && !(reason === 'OI à qualifier' && voluntaryTransversalWithoutOi(row))
+          && !(row.statCom === 'EMSEA' && reason === 'Stat.Com absent du référentiel'))
+        && (!row.location || Boolean(location)),
+      humanReviewRequired: false,
+      business: { statComCode: row.statCom === 'EMSEA' ? null : row.statCom || null, businessCode: row.code || null },
+      schedule: { startsAt: row.startsAt, endsAt: row.endsAt },
+      classification: {
+        primaryDomain: _qvPersistenceDomain(row.persistenceDomain || row.domain),
+        domainCodes: [_qvPersistenceDomain(row.persistenceDomain || row.domain)],
+        targetCodes: unique((row.oiSelections || []).map((value) => value.replace(':', '-'))),
+        publicCodes: unique(row.publics),
+        oiCodes: unique((row.oiSelections || []).map((value) =>
+          value.match(/^(?:DPS|DAP|JSP):(G1|C1|B1|B2|Y[1-4])$/)?.[1]).filter(Boolean)),
+        locationCode: location ? `L-${location.site_code}` : null,
+        roomCode: room ? `R-${room.code}` : null,
+        responsibleId: row.responsible || null
+      },
+      session: { groupId: row.occurrenceId, index: Number(row.sessionIndex || 1),
+        count: Number(row.sessionCount || 1), label: row.sessionLabel || null },
+      family: row.family || null,
+      eventType: null,
+      entryService: null,
+      roles: [],
+      resources: [],
+      priority: 0,
+      fixedDate: false,
+      dayExclusive: false,
+      permutationAllowed: false,
+      businessException: null,
+      provenance: row.provenance,
+      conflicts: [],
+      localDecision: localIds.has(row.id),
+      raw: { domain: row.domain, statCom:row.statCom || null, oiSelections: row.oiSelections || [], ois: row.ois || [],
+        publics: row.publics || [], location: row.location || null, room: row.room || null,
+        lieuId: row.business && row.business.lieuId || null,
+        salleTheorieId: row.business && row.business.salleTheorieId || null,
+        conduiteEvidence: row.conduiteEvidence || null }
+    };
+  });
+  return {
+    scope: 'QUO_VADIS_2027_CURRENT_CANDIDATE',
+    programme,
+    referentials: {
+      domains: unique(programme.flatMap((row) => row.classification.domainCodes)),
+      targets: unique(programme.flatMap((row) => row.classification.targetCodes)),
+      publics: unique(programme.flatMap((row) => row.classification.publicCodes)),
+      ois: unique(programme.flatMap((row) => row.classification.oiCodes)),
+      locations: unique(programme.map((row) => row.classification.locationCode)),
+      rooms: unique(programme.map((row) => row.classification.roomCode)),
+      statComCodes: unique((references.statcoms || []).map((row) => row.code))
+    },
+    candidateRows: rows,
+    localIds,
+    extractionCounts: extraction.counts,
+    workbookSha256: extraction.workbookSha256
+  };
+}
+
+function preserveUnspecifiedPublicationFields(programme, snapshot){
+  const { canonicalPublicationKey } = require('../../netlify/lib/_scope-qv-publication-plan');
+  const { qvResponsableCanonique } = require('../../assets/js/scope-ui-logic');
+  const byKey = new Map((snapshot || []).map((row) => [row.publicationKey,row]));
+  return programme.map((item) => {
+    const previous = byKey.get(canonicalPublicationKey(item));
+    const target = previous && previous.desired;
+    if(!target || item.status !== 'VALIDATED') return item;
+    const event = target.event || {};
+    const relations = target.relations || {};
+    const isCta = item.source.definitionId === 'CTA-PERMANENCE';
+    const next = { ...item,classification:{ ...item.classification },session:{ ...item.session } };
+    if(!next.eventType) next.eventType = event.eventType || null;
+    if(!next.entryService) next.entryService = event.entryService || null;
+    if(!next.family) next.family = event.family || null;
+    if(!next.priority) next.priority = event.priority;
+    if(!next.businessException) next.businessException = event.businessException || null;
+    if(next.fixedDate !== true) next.fixedDate = event.fixedDate === true;
+    if(next.dayExclusive !== true) next.dayExclusive = event.dayExclusive === true;
+    if(next.permutationAllowed !== true) next.permutationAllowed = event.permutationAllowed === true;
+    if(next.session.count === 1 && next.session.label === 'Aucune session distincte')
+      next.session.label = target.session && target.session.label || null;
+    if(!next.classification.locationCode) next.classification.locationCode = event.locationCode || null;
+    if(!next.classification.roomCode) next.classification.roomCode = event.roomCode || null;
+    if(!next.classification.responsibleId) next.classification.responsibleId = event.responsibleId || null;
+    if(!next.classification.publicCodes.length) next.classification.publicCodes = relations.publicCodes || [];
+    const oldTargets = relations.targetCodes || [];
+    const newTargets = next.classification.targetCodes;
+    if((!newTargets.length && oldTargets.length)
+      || (newTargets.length === 1 && newTargets[0] === 'SDIS' && oldTargets.some((code) => code.startsWith('SDIS-')))
+      || (newTargets.length && newTargets.every((code) => oldTargets.includes(code)) && oldTargets.length > newTargets.length)){
+      next.classification.targetCodes = oldTargets;
+    }
+    const responsibleDomain = next.raw && next.raw.domain;
+    if(event.responsibleId && next.classification.responsibleId
+      && qvResponsableCanonique(event.responsibleId,{ domain:responsibleDomain })
+        === qvResponsableCanonique(next.classification.responsibleId,{ domain:responsibleDomain })){
+      next.classification.responsibleId = event.responsibleId;
+    }
+    if(!next.roles.length) next.roles = relations.roleCodes || [];
+    if(!next.resources.length) next.resources = relations.resourceCodes || [];
+    if(isCta){
+      next.label = target.activity && target.activity.label || next.label;
+      next.eventLabel = event.label || next.eventLabel;
+      next.classification.locationCode = event.locationCode || null;
+      next.classification.responsibleId = event.responsibleId || null;
+      next.classification.targetCodes = relations.targetCodes || [];
+      next.classification.oiCodes = relations.oiCodes || [];
+    }
+    return next;
+  });
+}
+
 module.exports = {
   PROGRAM_PATH,
   DRESS_PATH,
@@ -179,5 +335,8 @@ module.exports = {
   normalizedTargets,
   oiCodes,
   localSchedule,
-  buildCanonicalDataset
+  buildCanonicalDataset,
+  buildCurrentCandidateDataset,
+  preserveUnspecifiedPublicationFields,
+  voluntaryTransversalWithoutOi
 };

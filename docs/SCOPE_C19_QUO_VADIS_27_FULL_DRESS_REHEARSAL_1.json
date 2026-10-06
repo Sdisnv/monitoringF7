@@ -1,6 +1,6 @@
 {
   "scope": "C19-QUO-VADIS-27-FULL-DRESS-REHEARSAL-1",
-  "generatedAt": "2026-09-29T09:43:41.593Z",
+  "generatedAt": "2026-10-03T06:58:33.332Z",
   "verdict": "PASS_WITH_EXPLICIT_RESERVATIONS",
   "restrictions": {
     "commit": false,
@@ -242684,35 +242684,35 @@
     "datasetObjects": 635,
     "primaryProofSynthetic": false,
     "catalogueBuild": {
-      "elapsedMs": 0.07,
+      "elapsedMs": 0.051,
       "resultCount": 635
     },
     "search": {
-      "elapsedMs": 2.1,
+      "elapsedMs": 1.392,
       "resultCount": 98
     },
     "filters": {
-      "elapsedMs": 0.083,
+      "elapsedMs": 0.03,
       "resultCount": 145
     },
     "sort": {
-      "elapsedMs": 7.414,
+      "elapsedMs": 5.436,
       "resultCount": 635
     },
     "screen10": {
-      "elapsedMs": 0.129,
+      "elapsedMs": 0.069,
       "resultCount": 635
     },
     "agenda": {
-      "elapsedMs": 0.122,
+      "elapsedMs": 0.068,
       "resultCount": 80
     },
     "conflicts": {
-      "elapsedMs": 0.018,
+      "elapsedMs": 0.009,
       "resultCount": 4
     },
     "moveCandidates": {
-      "elapsedMs": 0.032,
+      "elapsedMs": 0.019,
       "resultCount": 72
     }
   },
@@ -246789,7 +246789,7 @@
     },
     "log": "/private/tmp/c19-full-dress-test-scope.log"
   },
-  "buildMs": 168.125,
+  "buildMs": 128.839,
   "preview": {
     "gate": {
       "scope": "C19-QUO-VADIS-27-FULL-DRESS-REHEARSAL-1",

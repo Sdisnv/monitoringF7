@@ -1,0 +1,2517 @@
+{
+  "source": "SCOPE read-only canonical references",
+  "capturedAt": "2026-10-02T03:43:59.439Z",
+  "domainOis": [
+    {
+      "domaine_code": "DPS",
+      "code": "G1"
+    },
+    {
+      "domaine_code": "DPS",
+      "code": "C1"
+    },
+    {
+      "domaine_code": "DPS",
+      "code": "B1"
+    },
+    {
+      "domaine_code": "DPS",
+      "code": "B2"
+    },
+    {
+      "domaine_code": "DAP",
+      "code": "Y1"
+    },
+    {
+      "domaine_code": "DAP",
+      "code": "Y2"
+    },
+    {
+      "domaine_code": "DAP",
+      "code": "Y3"
+    },
+    {
+      "domaine_code": "DAP",
+      "code": "Y4"
+    },
+    {
+      "domaine_code": "JSP",
+      "code": "G1"
+    },
+    {
+      "domaine_code": "JSP",
+      "code": "C1"
+    },
+    {
+      "domaine_code": "JSP",
+      "code": "B1"
+    }
+  ],
+  "lieux": [
+    {
+      "lieu_id": "4cf1c7eb-7a31-40b1-82b4-a5d7053a1ab3",
+      "code": "B1-CASERNE",
+      "nom_court": "Caserne B1",
+      "nom_complet": null,
+      "adresse_ligne1": "Petite-Amérique 2",
+      "npa": null,
+      "localite": "Yvonand",
+      "oi_code": "B1",
+      "site_code": "B1",
+      "actif": true,
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-16T09:42:16.449Z",
+      "updated_at": "2026-09-18T10:54:01.872Z"
+    },
+    {
+      "lieu_id": "febd0319-c8ac-4281-8c1e-6c0c60e47a09",
+      "code": "B2-CASERNE",
+      "nom_court": "Caserne B2",
+      "nom_complet": null,
+      "adresse_ligne1": "En Chenaux",
+      "npa": null,
+      "localite": "Concise",
+      "oi_code": "B2",
+      "site_code": "B2",
+      "actif": true,
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-16T09:42:16.472Z",
+      "updated_at": "2026-09-18T10:54:01.884Z"
+    },
+    {
+      "lieu_id": "8af6e717-1c67-439d-b411-cce5870e1722",
+      "code": "C1-CASERNE",
+      "nom_court": "Caserne C1",
+      "nom_complet": null,
+      "adresse_ligne1": "Chemin du Borné-nau",
+      "npa": null,
+      "localite": "Grandson",
+      "oi_code": "C1",
+      "site_code": "C1",
+      "actif": true,
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-16T09:42:16.463Z",
+      "updated_at": "2026-09-18T10:54:01.859Z"
+    },
+    {
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "code": "G1-CASERNE",
+      "nom_court": "Caserne G1",
+      "nom_complet": null,
+      "adresse_ligne1": "Arsenal 8",
+      "npa": null,
+      "localite": "Yverdon-les-Bains",
+      "oi_code": "G1",
+      "site_code": "G1",
+      "actif": true,
+      "metadata": {
+        "kind": "CASERNE",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-16T09:42:16.440Z",
+      "updated_at": "2026-09-18T10:54:01.850Z"
+    },
+    {
+      "lieu_id": "57c9e32d-d161-4af2-9f3a-131dbcd3a7bd",
+      "code": "Y1-LOCAL",
+      "nom_court": "Local Y1",
+      "nom_complet": null,
+      "adresse_ligne1": "Chemin du Grassis 1",
+      "npa": null,
+      "localite": "Chavannes-le-Chêne",
+      "oi_code": "Y1",
+      "site_code": "Y1",
+      "actif": true,
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-18T10:54:01.898Z",
+      "updated_at": "2026-09-18T10:54:01.898Z"
+    },
+    {
+      "lieu_id": "7e47fed3-fc96-4df2-b8c7-2fa660b3b704",
+      "code": "Y2-LOCAL",
+      "nom_court": "Local Y2",
+      "nom_complet": null,
+      "adresse_ligne1": "Chemin des Pâquis 4",
+      "npa": null,
+      "localite": "Belmont-sur-Yverdon",
+      "oi_code": "Y2",
+      "site_code": "Y2",
+      "actif": true,
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-18T10:54:01.908Z",
+      "updated_at": "2026-09-18T10:54:01.908Z"
+    },
+    {
+      "lieu_id": "d54c3bf7-161e-4332-b51f-1b3d4748ecc1",
+      "code": "Y3-LOCAL",
+      "nom_court": "Local Y3",
+      "nom_complet": null,
+      "adresse_ligne1": "Grand'rue 1",
+      "npa": null,
+      "localite": "Montagny-près-Yverdon",
+      "oi_code": "Y3",
+      "site_code": "Y3",
+      "actif": true,
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-18T10:54:01.917Z",
+      "updated_at": "2026-09-18T10:54:01.917Z"
+    },
+    {
+      "lieu_id": "39ea8b98-317e-4645-a8c0-d49b9e2870f4",
+      "code": "Y4-LOCAL",
+      "nom_court": "Local Y4",
+      "nom_complet": null,
+      "adresse_ligne1": "Route de la Cour 2",
+      "npa": null,
+      "localite": "Bonvillars",
+      "oi_code": "Y4",
+      "site_code": "Y4",
+      "actif": true,
+      "metadata": {
+        "kind": "LOCAL",
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "addressKnown": true
+      },
+      "created_at": "2026-09-18T10:54:01.943Z",
+      "updated_at": "2026-09-18T10:54:01.943Z"
+    }
+  ],
+  "salles": [
+    {
+      "salle_id": "d509349e-1fd7-48f5-8734-1d02dcee6961",
+      "code": "G1-ALPES",
+      "libelle": "Alpes",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": "237fad73-7078-44ce-ab55-0f8011b85889",
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-VULCAIN"
+      },
+      "created_at": "2026-09-18T10:54:02.338Z",
+      "updated_at": "2026-09-18T10:54:02.447Z"
+    },
+    {
+      "salle_id": "0ef8e194-59dc-4581-8376-76193b8ec96a",
+      "code": "G1-BACKDRAFT",
+      "libelle": "Backdraft",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.397Z",
+      "updated_at": "2026-09-18T10:54:02.397Z"
+    },
+    {
+      "salle_id": "1dec6678-53f4-4e11-82bd-9d93218b32b1",
+      "code": "G1-ETAT-MAJOR",
+      "libelle": "État-major",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.406Z",
+      "updated_at": "2026-09-18T10:54:02.406Z"
+    },
+    {
+      "salle_id": "ec1f98aa-bf7f-4724-ad51-6708bef358ab",
+      "code": "G1-FLASHOVER",
+      "libelle": "Flashover",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.388Z",
+      "updated_at": "2026-09-18T10:54:02.388Z"
+    },
+    {
+      "salle_id": "5561d988-468a-404a-9d50-954d548744b5",
+      "code": "G1-JURA",
+      "libelle": "Jura",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": "237fad73-7078-44ce-ab55-0f8011b85889",
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-VULCAIN"
+      },
+      "created_at": "2026-09-18T10:54:02.327Z",
+      "updated_at": "2026-09-18T10:54:02.436Z"
+    },
+    {
+      "salle_id": "4b587afc-6665-4e54-8d7a-18d328722d29",
+      "code": "G1-O2",
+      "libelle": "O2",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-OXYGENE"
+      },
+      "created_at": "2026-09-18T10:54:02.368Z",
+      "updated_at": "2026-09-18T10:54:02.456Z"
+    },
+    {
+      "salle_id": "bbee4269-3de6-45af-a925-12e699eb2919",
+      "code": "G1-O3",
+      "libelle": "O3",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": "G1-OXYGENE"
+      },
+      "created_at": "2026-09-18T10:54:02.378Z",
+      "updated_at": "2026-09-18T10:54:02.465Z"
+    },
+    {
+      "salle_id": "40e43f31-34bf-439b-a960-fb56ff06ad1a",
+      "code": "G1-OXYGENE",
+      "libelle": "Oxygène",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.356Z",
+      "updated_at": "2026-09-18T10:54:02.356Z"
+    },
+    {
+      "salle_id": "875db4c2-d3a7-47dd-ba1e-157a2deceee3",
+      "code": "B1-THEORIE",
+      "libelle": "Théorie B1",
+      "lieu_id": "4cf1c7eb-7a31-40b1-82b4-a5d7053a1ab3",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "B1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.426Z",
+      "updated_at": "2026-09-18T10:54:02.426Z"
+    },
+    {
+      "salle_id": "841262b4-ca0c-4f59-b2eb-957c50727d81",
+      "code": "C1-THEORIE",
+      "libelle": "Théorie C1",
+      "lieu_id": "8af6e717-1c67-439d-b411-cce5870e1722",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "C1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.415Z",
+      "updated_at": "2026-09-18T10:54:02.415Z"
+    },
+    {
+      "salle_id": "237fad73-7078-44ce-ab55-0f8011b85889",
+      "code": "G1-VULCAIN",
+      "libelle": "Vulcain",
+      "lieu_id": "1aeebc04-d594-47e1-aa89-944423e00b03",
+      "parent_salle_id": null,
+      "actif": true,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1",
+        "lieuCode": "G1-CASERNE",
+        "parentCode": null
+      },
+      "created_at": "2026-09-18T10:54:02.315Z",
+      "updated_at": "2026-09-18T10:54:02.315Z"
+    }
+  ],
+  "responsables": [
+    {
+      "code": "C audiovisuel",
+      "libelle": "C audiovisuel",
+      "actif": true,
+      "sort_order": 1,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:01.988Z",
+      "updated_at": "2026-09-18T10:54:01.988Z"
+    },
+    {
+      "code": "C DAP",
+      "libelle": "C DAP",
+      "actif": true,
+      "sort_order": 2,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.001Z",
+      "updated_at": "2026-09-18T10:54:02.001Z"
+    },
+    {
+      "code": "C FOBA",
+      "libelle": "C FOBA",
+      "actif": true,
+      "sort_order": 3,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.019Z",
+      "updated_at": "2026-09-18T10:54:02.019Z"
+    },
+    {
+      "code": "C for",
+      "libelle": "C for",
+      "actif": true,
+      "sort_order": 4,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.029Z",
+      "updated_at": "2026-09-18T10:54:02.029Z"
+    },
+    {
+      "code": "C FOSPEC",
+      "libelle": "C FOSPEC",
+      "actif": true,
+      "sort_order": 5,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.039Z",
+      "updated_at": "2026-09-18T10:54:02.039Z"
+    },
+    {
+      "code": "C JSP",
+      "libelle": "C JSP",
+      "actif": true,
+      "sort_order": 6,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.051Z",
+      "updated_at": "2026-09-18T10:54:02.051Z"
+    },
+    {
+      "code": "C log",
+      "libelle": "C log",
+      "actif": true,
+      "sort_order": 7,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.060Z",
+      "updated_at": "2026-09-18T10:54:02.060Z"
+    },
+    {
+      "code": "C op",
+      "libelle": "C op",
+      "actif": true,
+      "sort_order": 8,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.068Z",
+      "updated_at": "2026-09-18T10:54:02.068Z"
+    },
+    {
+      "code": "C PR",
+      "libelle": "C PR",
+      "actif": true,
+      "sort_order": 9,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.079Z",
+      "updated_at": "2026-09-18T10:54:02.079Z"
+    },
+    {
+      "code": "C scrt",
+      "libelle": "C scrt",
+      "actif": true,
+      "sort_order": 10,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.088Z",
+      "updated_at": "2026-09-18T10:54:02.088Z"
+    },
+    {
+      "code": "C site",
+      "libelle": "C site",
+      "actif": true,
+      "sort_order": 11,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.099Z",
+      "updated_at": "2026-09-18T10:54:02.099Z"
+    },
+    {
+      "code": "C site JSP",
+      "libelle": "C site JSP",
+      "actif": true,
+      "sort_order": 12,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.109Z",
+      "updated_at": "2026-09-18T10:54:02.109Z"
+    },
+    {
+      "code": "Cdt",
+      "libelle": "Cdt",
+      "actif": true,
+      "sort_order": 13,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.120Z",
+      "updated_at": "2026-09-18T10:54:02.120Z"
+    },
+    {
+      "code": "Of auto",
+      "libelle": "Of auto",
+      "actif": true,
+      "sort_order": 14,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.131Z",
+      "updated_at": "2026-09-18T10:54:02.131Z"
+    },
+    {
+      "code": "Of spéc",
+      "libelle": "Of spéc",
+      "actif": true,
+      "sort_order": 15,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.153Z",
+      "updated_at": "2026-09-18T10:54:02.153Z"
+    },
+    {
+      "code": "Présidente CI",
+      "libelle": "Présidente CI",
+      "actif": true,
+      "sort_order": 16,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.162Z",
+      "updated_at": "2026-09-18T10:54:02.162Z"
+    },
+    {
+      "code": "Présidente Codir",
+      "libelle": "Présidente Codir",
+      "actif": true,
+      "sort_order": 17,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.171Z",
+      "updated_at": "2026-09-18T10:54:02.171Z"
+    },
+    {
+      "code": "QM",
+      "libelle": "QM",
+      "actif": true,
+      "sort_order": 18,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.181Z",
+      "updated_at": "2026-09-18T10:54:02.181Z"
+    },
+    {
+      "code": "Réf sanitaire",
+      "libelle": "Réf sanitaire",
+      "actif": true,
+      "sort_order": 19,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.191Z",
+      "updated_at": "2026-09-18T10:54:02.191Z"
+    },
+    {
+      "code": "Répondant sport",
+      "libelle": "Répondant sport",
+      "actif": true,
+      "sort_order": 20,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.199Z",
+      "updated_at": "2026-09-18T10:54:02.199Z"
+    },
+    {
+      "code": "Resp ABC",
+      "libelle": "Resp ABC",
+      "actif": true,
+      "sort_order": 21,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.208Z",
+      "updated_at": "2026-09-18T10:54:02.208Z"
+    },
+    {
+      "code": "Resp APR",
+      "libelle": "Resp APR",
+      "actif": true,
+      "sort_order": 22,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.221Z",
+      "updated_at": "2026-09-18T10:54:02.221Z"
+    },
+    {
+      "code": "Resp for JSP",
+      "libelle": "Resp for JSP",
+      "actif": true,
+      "sort_order": 23,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.231Z",
+      "updated_at": "2026-09-18T10:54:02.231Z"
+    },
+    {
+      "code": "Resp mat",
+      "libelle": "Resp mat",
+      "actif": true,
+      "sort_order": 24,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.240Z",
+      "updated_at": "2026-09-18T10:54:02.240Z"
+    },
+    {
+      "code": "Resp mat JSP",
+      "libelle": "Resp mat JSP",
+      "actif": true,
+      "sort_order": 25,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.249Z",
+      "updated_at": "2026-09-18T10:54:02.249Z"
+    },
+    {
+      "code": "Resp OFSI",
+      "libelle": "Resp OFSI",
+      "actif": true,
+      "sort_order": 26,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.258Z",
+      "updated_at": "2026-09-18T10:54:02.258Z"
+    },
+    {
+      "code": "Resp Sports",
+      "libelle": "Resp Sports",
+      "actif": true,
+      "sort_order": 27,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.267Z",
+      "updated_at": "2026-09-18T10:54:02.267Z"
+    },
+    {
+      "code": "Resp VPC",
+      "libelle": "Resp VPC",
+      "actif": true,
+      "sort_order": 28,
+      "metadata": {
+        "source": "QUO-VADIS-TOUTES-ACTIVITES-UX-1"
+      },
+      "created_at": "2026-09-18T10:54:02.277Z",
+      "updated_at": "2026-09-18T10:54:02.277Z"
+    }
+  ],
+  "statcoms": [
+    {
+      "statcom_id": "055dfda3-4276-48a1-835b-e55d4afef154",
+      "code": "010FOBA",
+      "label": "Exercices FOBA",
+      "domain": "FOBA",
+      "category": "EXERCI",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 33
+      },
+      "created_at": "2026-09-16T04:02:39.448Z",
+      "updated_at": "2026-09-16T04:02:39.448Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "55cf7657-4052-4762-85e8-1f37d3d1405f",
+      "code": "010FOBC",
+      "label": "Cours de cadres FOBA",
+      "domain": "FOBA",
+      "category": "EXERCI",
+      "oi_code": null,
+      "specialization": "CADRES",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 31
+      },
+      "created_at": "2026-09-16T04:02:39.428Z",
+      "updated_at": "2026-09-16T05:06:58.331Z",
+      "specialization_label": "CADRES"
+    },
+    {
+      "statcom_id": "905afff9-3878-4b74-860c-06a48f6456e7",
+      "code": "010JB1",
+      "label": "Exercices JSP B1",
+      "domain": "JSP",
+      "category": "EXERCI",
+      "oi_code": "B1",
+      "specialization": null,
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "QUO VADIS '26",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 88
+      },
+      "created_at": "2026-09-25T08:47:38.493Z",
+      "updated_at": "2026-09-25T08:47:38.493Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "e387d613-e982-4e2d-a1a0-ff5ed0dcc4ab",
+      "code": "010JC1",
+      "label": "Exercices JSP C1",
+      "domain": "JSP",
+      "category": "EXERCI",
+      "oi_code": "C1",
+      "specialization": null,
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "QUO VADIS '26",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 89
+      },
+      "created_at": "2026-09-25T08:47:38.493Z",
+      "updated_at": "2026-09-25T08:47:38.493Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "a94a5c8a-0c8a-471e-8abb-1ad345067415",
+      "code": "010JG1",
+      "label": "Exercices JSP G1",
+      "domain": "JSP",
+      "category": "EXERCI",
+      "oi_code": "G1",
+      "specialization": null,
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "QUO VADIS '26",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 90
+      },
+      "created_at": "2026-09-25T08:47:38.493Z",
+      "updated_at": "2026-09-25T08:47:38.493Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "fb527d0c-352e-4bc1-8adb-c452e1884506",
+      "code": "010JSP",
+      "label": "Exercices JSP",
+      "domain": "JSP",
+      "category": "EXERCI",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 34
+      },
+      "created_at": "2026-09-16T04:02:39.458Z",
+      "updated_at": "2026-09-16T04:02:39.458Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "08cde330-a63a-47c7-9ae3-6e7487c6a8c6",
+      "code": "011PR",
+      "label": "PR",
+      "domain": "PR",
+      "category": "EXERCI",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 35
+      },
+      "created_at": "2026-09-16T04:02:39.468Z",
+      "updated_at": "2026-09-16T04:04:02.595Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "b17ecbc4-190d-4984-9fc2-8f57eb4a23d2",
+      "code": "0120F7",
+      "label": "Solde instruction FOCO DPS (4 DPS)",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "FOCO_DPS_4",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 66
+      },
+      "created_at": "2026-09-16T04:02:39.775Z",
+      "updated_at": "2026-09-16T07:14:36.475Z",
+      "specialization_label": "FOCO 4 DPS"
+    },
+    {
+      "statcom_id": "ed88840e-3946-42ee-8577-9a1d57b1ba4c",
+      "code": "012B1",
+      "label": "FOCO DPS B1",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "B1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 10
+      },
+      "created_at": "2026-09-16T04:02:39.220Z",
+      "updated_at": "2026-09-16T04:02:39.220Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "4785f7ff-823f-430b-a225-f701377680a6",
+      "code": "012B2",
+      "label": "FOCO DPS B2",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "B2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 16
+      },
+      "created_at": "2026-09-16T04:02:39.281Z",
+      "updated_at": "2026-09-16T04:02:39.281Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "0d552b4f-ad12-4e71-8499-b303b12f7297",
+      "code": "012C1",
+      "label": "FOCO DPS C1",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "C1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 22
+      },
+      "created_at": "2026-09-16T04:02:39.340Z",
+      "updated_at": "2026-09-16T04:02:39.340Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "f2339244-c4b8-41e8-9de7-c6d8c9414449",
+      "code": "012G1",
+      "label": "FOCO DPS G1",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "G1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 37
+      },
+      "created_at": "2026-09-16T04:02:39.488Z",
+      "updated_at": "2026-09-16T04:02:39.488Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "1b3a5a1a-8e10-40cc-bb7a-33a5d79bf7f1",
+      "code": "0130F7",
+      "label": "Solde instruction FOCO DAP (4 DAP)",
+      "domain": "DAP",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "FOCO_DAP_4",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 67
+      },
+      "created_at": "2026-09-16T04:02:39.784Z",
+      "updated_at": "2026-09-16T07:19:05.103Z",
+      "specialization_label": "FOCO 4 DAP"
+    },
+    {
+      "statcom_id": "215def5f-eb2d-417a-acc5-305e4976d35b",
+      "code": "013Y1",
+      "label": "FOCO DAP Y1",
+      "domain": "DAP",
+      "category": "EXERCI",
+      "oi_code": "Y1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 69
+      },
+      "created_at": "2026-09-16T04:02:39.804Z",
+      "updated_at": "2026-09-16T04:02:39.804Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "f9779ce8-3493-4844-b52b-308e6bce4500",
+      "code": "013Y2",
+      "label": "FOCO DAP Y2",
+      "domain": "DAP",
+      "category": "EXERCI",
+      "oi_code": "Y2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 72
+      },
+      "created_at": "2026-09-16T04:02:39.834Z",
+      "updated_at": "2026-09-16T04:02:39.834Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "2329a87d-9f50-4069-acd7-edb40fbcbfa8",
+      "code": "013Y3",
+      "label": "FOCO DAP Y3",
+      "domain": "DAP",
+      "category": "EXERCI",
+      "oi_code": "Y3",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 75
+      },
+      "created_at": "2026-09-16T04:02:39.864Z",
+      "updated_at": "2026-09-16T04:02:39.864Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "313dec10-5251-42c0-b6f9-5e7d41db7751",
+      "code": "013Y4",
+      "label": "FOCO DAP Y4",
+      "domain": "DAP",
+      "category": "EXERCI",
+      "oi_code": "Y4",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 78
+      },
+      "created_at": "2026-09-16T04:02:39.894Z",
+      "updated_at": "2026-09-16T04:02:39.894Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "f372994b-b89c-4113-ad36-7375565d32be",
+      "code": "014B1",
+      "label": "Exercice divers B1",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "B1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 9
+      },
+      "created_at": "2026-09-16T04:02:39.210Z",
+      "updated_at": "2026-09-16T04:02:39.210Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "ad4263b8-a4de-4284-b26e-4fc4f1c23e17",
+      "code": "014B2",
+      "label": "Exercice divers B2",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "B2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 15
+      },
+      "created_at": "2026-09-16T04:02:39.270Z",
+      "updated_at": "2026-09-16T04:02:39.270Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "f9618ef8-4e9d-4e13-a7af-d420729a6d2a",
+      "code": "014C1",
+      "label": "Exercice divers C1",
+      "domain": "DPS",
+      "category": "EXERCI",
+      "oi_code": "C1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 21
+      },
+      "created_at": "2026-09-16T04:02:39.330Z",
+      "updated_at": "2026-09-16T04:02:39.330Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "5099da87-24ea-4fdc-aecd-bcd8e98ff527",
+      "code": "014G1",
+      "label": "Exercice divers G1",
+      "domain": "DAP",
+      "category": "EXERCI",
+      "oi_code": "G1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 36
+      },
+      "created_at": "2026-09-16T04:02:39.478Z",
+      "updated_at": "2026-09-16T04:02:39.478Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "bf43fa4a-53b8-412a-853c-f5358d3c5f2a",
+      "code": "0151F7",
+      "label": "Solde instruction AUTO EA",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "EA",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 45
+      },
+      "created_at": "2026-09-16T04:02:39.567Z",
+      "updated_at": "2026-09-16T04:02:39.567Z",
+      "specialization_label": "EA"
+    },
+    {
+      "statcom_id": "3a04ed5f-bfdb-4953-aa96-3c62726c275a",
+      "code": "01521F7",
+      "label": "Solde instruction AUTO PL",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "PL",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 47
+      },
+      "created_at": "2026-09-16T04:02:39.587Z",
+      "updated_at": "2026-09-16T04:02:39.587Z",
+      "specialization_label": "PL"
+    },
+    {
+      "statcom_id": "06f22a69-887a-4eff-8a6c-f8d9fc54c641",
+      "code": "01522F7",
+      "label": "Solde instruction AUTO VL",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "VL",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 48
+      },
+      "created_at": "2026-09-16T04:02:39.597Z",
+      "updated_at": "2026-09-16T07:16:16.150Z",
+      "specialization_label": "cond VL"
+    },
+    {
+      "statcom_id": "dedc71b1-4e6d-486b-af10-95716e43c357",
+      "code": "0152F7",
+      "label": "Solde instruction AUTO PL/VL",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "PL_VL",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 46
+      },
+      "created_at": "2026-09-16T04:02:39.577Z",
+      "updated_at": "2026-09-16T07:18:52.738Z",
+      "specialization_label": "cond PL et VL"
+    },
+    {
+      "statcom_id": "7206beeb-2ee7-48d9-b400-1dd2ffbd21dc",
+      "code": "0153F7",
+      "label": "Solde instruction AUTO BAT",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "BAT",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 49
+      },
+      "created_at": "2026-09-16T04:02:39.607Z",
+      "updated_at": "2026-09-16T04:02:39.607Z",
+      "specialization_label": "BAT"
+    },
+    {
+      "statcom_id": "390e01d0-276f-44fa-a4a8-e3aacab65d72",
+      "code": "0154F7",
+      "label": "Solde instruction AUTO GRUE",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "GRUE",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 50
+      },
+      "created_at": "2026-09-16T04:02:39.617Z",
+      "updated_at": "2026-09-16T04:02:39.617Z",
+      "specialization_label": "GRUE"
+    },
+    {
+      "statcom_id": "1b11b89b-5fdc-453e-b951-e0e5d29db51f",
+      "code": "0155F7",
+      "label": "Solde instruction AUTO DIVERS",
+      "domain": "AUTO",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "DIVERS",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 51
+      },
+      "created_at": "2026-09-16T04:02:39.626Z",
+      "updated_at": "2026-09-16T04:02:39.626Z",
+      "specialization_label": "DIVERS"
+    },
+    {
+      "statcom_id": "50a06825-bd53-4ae7-99a8-bac111eac4dd",
+      "code": "0161F7",
+      "label": "Solde instruction FOSPEC PIO",
+      "domain": "FOSPEC",
+      "category": "EXERSR",
+      "oi_code": "F7",
+      "specialization": "PIO",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 52
+      },
+      "created_at": "2026-09-16T04:02:39.636Z",
+      "updated_at": "2026-09-16T04:02:39.636Z",
+      "specialization_label": "PIO"
+    },
+    {
+      "statcom_id": "5eee3ea9-b5b3-4d95-bd91-0047baba4ff4",
+      "code": "0162F7",
+      "label": "Solde instruction FOSPEC OFSI",
+      "domain": "FOSPEC",
+      "category": "EXOFSI",
+      "oi_code": "F7",
+      "specialization": "OFSI",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 53
+      },
+      "created_at": "2026-09-16T04:02:39.646Z",
+      "updated_at": "2026-09-16T04:02:39.646Z",
+      "specialization_label": "OFSI"
+    },
+    {
+      "statcom_id": "32f39875-e3fe-4978-a9ec-51379884edd2",
+      "code": "0163F7",
+      "label": "Solde instruction FOSPEC VPC",
+      "domain": "FOSPEC",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "VPC",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 54
+      },
+      "created_at": "2026-09-16T04:02:39.656Z",
+      "updated_at": "2026-09-16T04:02:39.656Z",
+      "specialization_label": "VPC"
+    },
+    {
+      "statcom_id": "7ea0171c-6c7e-4fbe-a405-40833e957d38",
+      "code": "0164F7",
+      "label": "Solde instruction FOSPEC ABC",
+      "domain": "FOSPEC",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "ABC",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 55
+      },
+      "created_at": "2026-09-16T04:02:39.666Z",
+      "updated_at": "2026-09-16T04:02:39.666Z",
+      "specialization_label": "ABC"
+    },
+    {
+      "statcom_id": "4be12e09-fcf8-454c-a9c7-fe9b2482b906",
+      "code": "0165F7",
+      "label": "Solde instruction FOSPEC NAC",
+      "domain": "FOSPEC",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "NAC",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 56
+      },
+      "created_at": "2026-09-16T04:02:39.676Z",
+      "updated_at": "2026-09-16T04:02:39.676Z",
+      "specialization_label": "NAC"
+    },
+    {
+      "statcom_id": "c4d44e4a-72b9-4b2c-82fb-31055baed703",
+      "code": "0166F7",
+      "label": "Solde instruction FOSPEC ANTICHUTE",
+      "domain": "FOSPEC",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "ANTICHUTE",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 57
+      },
+      "created_at": "2026-09-16T04:02:39.686Z",
+      "updated_at": "2026-09-16T04:02:39.686Z",
+      "specialization_label": "ANTICHUTE"
+    },
+    {
+      "statcom_id": "bfd9ce6b-6623-47b2-ab6a-ef27debab0fc",
+      "code": "0167F7",
+      "label": "Solde instruction FOSPEC SANITAIRE",
+      "domain": "FOSPEC",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "SANITAIRE",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 58
+      },
+      "created_at": "2026-09-16T04:02:39.695Z",
+      "updated_at": "2026-09-16T07:16:23.349Z",
+      "specialization_label": "Sanitaire"
+    },
+    {
+      "statcom_id": "b6ffd869-4773-4a16-8c8b-10e2d8fe4bf9",
+      "code": "0168F7",
+      "label": "Solde instruction FOSPEC DIVERS",
+      "domain": "FOSPEC",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "DIVERS",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 59
+      },
+      "created_at": "2026-09-16T04:02:39.706Z",
+      "updated_at": "2026-09-16T04:02:39.706Z",
+      "specialization_label": "DIVERS"
+    },
+    {
+      "statcom_id": "60d87755-8dee-47c4-826a-8c2ca2695827",
+      "code": "0170F7",
+      "label": "Solde instruction FOCA (tous les cadres)",
+      "domain": "FOCA",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "TOUS_CADRES",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 60
+      },
+      "created_at": "2026-09-16T04:02:39.715Z",
+      "updated_at": "2026-09-16T07:16:04.088Z",
+      "specialization_label": "Tous les cadres"
+    },
+    {
+      "statcom_id": "a36a6a36-ab82-48e3-9b7c-086834d31257",
+      "code": "0171F7",
+      "label": "Solde instruction FOCA DPS",
+      "domain": "FOCA",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "DPS",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 61
+      },
+      "created_at": "2026-09-16T04:02:39.725Z",
+      "updated_at": "2026-09-16T04:02:39.725Z",
+      "specialization_label": "DPS"
+    },
+    {
+      "statcom_id": "19b863d3-2192-4476-b9c9-833323846ed7",
+      "code": "0172F7",
+      "label": "Solde instruction FOCA DAP",
+      "domain": "FOCA",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "DAP",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 62
+      },
+      "created_at": "2026-09-16T04:02:39.735Z",
+      "updated_at": "2026-09-16T04:02:39.735Z",
+      "specialization_label": "DAP"
+    },
+    {
+      "statcom_id": "1cbbf90c-1ed7-4627-ac25-02a2de8ba955",
+      "code": "0173F7",
+      "label": "Solde instruction FOCA RECO DPS",
+      "domain": "FOCA",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "RECO_DPS",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 63
+      },
+      "created_at": "2026-09-16T04:02:39.745Z",
+      "updated_at": "2026-09-16T07:17:20.924Z",
+      "specialization_label": "Reco DPS"
+    },
+    {
+      "statcom_id": "a0af85ae-6e95-4e31-83e0-fa9b4406c3b3",
+      "code": "0174F7",
+      "label": "Solde instruction FOCA RECO DAP",
+      "domain": "FOCA",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "RECO_DAP",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 64
+      },
+      "created_at": "2026-09-16T04:02:39.755Z",
+      "updated_at": "2026-09-16T07:17:28.025Z",
+      "specialization_label": "Reco DAP"
+    },
+    {
+      "statcom_id": "ed864941-fcbc-491f-8c82-b2875e72fe59",
+      "code": "0175F7",
+      "label": "Solde instruction FOCA DIVERS",
+      "domain": "FOCA",
+      "category": "EXERCI",
+      "oi_code": "F7",
+      "specialization": "DIVERS",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 65
+      },
+      "created_at": "2026-09-16T04:02:39.765Z",
+      "updated_at": "2026-09-16T04:02:39.765Z",
+      "specialization_label": "DIVERS"
+    },
+    {
+      "statcom_id": "b08445fd-6a26-44e6-9243-b773cac489e4",
+      "code": "020B1",
+      "label": "Permanence week-end B1",
+      "domain": "DPS",
+      "category": "PERM",
+      "oi_code": "B1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 13
+      },
+      "created_at": "2026-09-16T04:02:39.250Z",
+      "updated_at": "2026-09-16T04:02:39.250Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "8333acff-2f23-486e-8aa7-c6b14e97e682",
+      "code": "020B2",
+      "label": "Permanence week-end B2",
+      "domain": "DPS",
+      "category": "PERM",
+      "oi_code": "B2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 19
+      },
+      "created_at": "2026-09-16T04:02:39.311Z",
+      "updated_at": "2026-09-16T04:02:39.311Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "f23a2c42-1e9f-4b3c-9a9e-383a73b11181",
+      "code": "020C1",
+      "label": "Permanence week-end C1",
+      "domain": "DPS",
+      "category": "PERM",
+      "oi_code": "C1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 25
+      },
+      "created_at": "2026-09-16T04:02:39.369Z",
+      "updated_at": "2026-09-16T04:02:39.369Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "86ca9b4d-7a2e-4d31-8123-3100f16c0975",
+      "code": "020G1",
+      "label": "Permanence week-end G1",
+      "domain": "DAP",
+      "category": "PERM",
+      "oi_code": "G1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 40
+      },
+      "created_at": "2026-09-16T04:02:39.518Z",
+      "updated_at": "2026-09-16T04:02:39.518Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "9cb96afe-e4d0-4af0-91c1-95c6aab54fa8",
+      "code": "030B1",
+      "label": "Autres prestations de garde B1",
+      "domain": "DPS",
+      "category": "PISECU",
+      "oi_code": "B1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 14
+      },
+      "created_at": "2026-09-16T04:02:39.260Z",
+      "updated_at": "2026-09-16T04:02:39.260Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "94019cfd-aa5b-4f0e-aa7e-a533c9edc3ff",
+      "code": "030B2",
+      "label": "Autres prestations de garde B2",
+      "domain": "DPS",
+      "category": "PISECU",
+      "oi_code": "B2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 20
+      },
+      "created_at": "2026-09-16T04:02:39.320Z",
+      "updated_at": "2026-09-16T04:02:39.320Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "dd6cef9c-c885-4bd5-968e-0931df98c4a5",
+      "code": "030C1",
+      "label": "Autres prestations de garde C1",
+      "domain": "DPS",
+      "category": "PISECU",
+      "oi_code": "C1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 26
+      },
+      "created_at": "2026-09-16T04:02:39.379Z",
+      "updated_at": "2026-09-16T04:02:39.379Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "07088ab5-02e7-43b1-b7ff-3729526db213",
+      "code": "030G1",
+      "label": "Autres prestations de garde G1",
+      "domain": "DAP",
+      "category": "PISECU",
+      "oi_code": "G1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 41
+      },
+      "created_at": "2026-09-16T04:02:39.528Z",
+      "updated_at": "2026-09-16T04:02:39.528Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "76949741-38f4-4c86-899a-f86fd49376dd",
+      "code": "030Y1",
+      "label": "Autres prestations de garde Y1",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 71
+      },
+      "created_at": "2026-09-16T04:02:39.824Z",
+      "updated_at": "2026-09-16T04:02:39.824Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "d876e952-65a1-4e43-b885-33bab28fc7d1",
+      "code": "030Y2",
+      "label": "Autres prestations de garde Y2",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 74
+      },
+      "created_at": "2026-09-16T04:02:39.854Z",
+      "updated_at": "2026-09-16T04:02:39.854Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "cec797bf-7aa8-4492-bd76-5922a4df5525",
+      "code": "030Y3",
+      "label": "Autres prestations de garde Y3",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y3",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 77
+      },
+      "created_at": "2026-09-16T04:02:39.884Z",
+      "updated_at": "2026-09-16T04:02:39.884Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "b7087ad4-8d75-4d88-82c6-e3088eb2e212",
+      "code": "030Y4",
+      "label": "Autres prestations de garde Y4",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y4",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 80
+      },
+      "created_at": "2026-09-16T04:02:39.914Z",
+      "updated_at": "2026-09-16T04:02:39.914Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "a06e05ae-d061-4cb4-bd4e-7cc4b97061e2",
+      "code": "040B1",
+      "label": "Solde heures matériel B1",
+      "domain": "DPS",
+      "category": "ENTRET",
+      "oi_code": "B1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 11
+      },
+      "created_at": "2026-09-16T04:02:39.230Z",
+      "updated_at": "2026-09-16T04:02:39.230Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "c1dd3fbd-33fc-4e5e-89b8-0509bb8c6b2e",
+      "code": "040B1P",
+      "label": "Solde matériel / préposé gaz B1",
+      "domain": "DPS",
+      "category": "ENTRET",
+      "oi_code": "B1",
+      "specialization": "PREPOSE_GAZ",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 12
+      },
+      "created_at": "2026-09-16T04:02:39.240Z",
+      "updated_at": "2026-09-16T07:17:52.623Z",
+      "specialization_label": "Préposé APR"
+    },
+    {
+      "statcom_id": "9adda5ba-e116-4b73-952e-0dcb1b007b38",
+      "code": "040B2",
+      "label": "Solde heures matériel B2",
+      "domain": "DPS",
+      "category": "ENTRET",
+      "oi_code": "B2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 17
+      },
+      "created_at": "2026-09-16T04:02:39.291Z",
+      "updated_at": "2026-09-16T04:02:39.291Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "8eb9ce44-cf1a-4499-8331-dafcd45cf9b3",
+      "code": "040B2P",
+      "label": "Solde matériel / préposé gaz B2",
+      "domain": "DPS",
+      "category": "ENTRET",
+      "oi_code": "B2",
+      "specialization": "PREPOSE_GAZ",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 18
+      },
+      "created_at": "2026-09-16T04:02:39.301Z",
+      "updated_at": "2026-09-16T07:17:57.857Z",
+      "specialization_label": "Préposé APR"
+    },
+    {
+      "statcom_id": "bba4006b-2ace-4476-b2c6-275a329483ff",
+      "code": "040C1",
+      "label": "Solde heures matériel C1",
+      "domain": "DPS",
+      "category": "ENTRET",
+      "oi_code": "C1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 23
+      },
+      "created_at": "2026-09-16T04:02:39.350Z",
+      "updated_at": "2026-09-16T04:02:39.350Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "7427306c-f5c9-4a01-afb8-db3b03e5599e",
+      "code": "040C1P",
+      "label": "Solde matériel / préposé gaz C1",
+      "domain": "DPS",
+      "category": "ENTRET",
+      "oi_code": "C1",
+      "specialization": "PREPOSE_GAZ",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 24
+      },
+      "created_at": "2026-09-16T04:02:39.359Z",
+      "updated_at": "2026-09-16T07:18:30.603Z",
+      "specialization_label": "Préposé APR"
+    },
+    {
+      "statcom_id": "ffeeb385-6573-4032-876b-e7ede385d503",
+      "code": "040G1",
+      "label": "Solde heures matériel G1",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "G1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 38
+      },
+      "created_at": "2026-09-16T04:02:39.498Z",
+      "updated_at": "2026-09-16T04:02:39.498Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "111a7112-723a-416b-a5a5-1d726776c536",
+      "code": "040G1P",
+      "label": "Solde matériel / préposé gaz G1",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "G1",
+      "specialization": "PREPOSE_GAZ",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "admin_update",
+        "updatedBy": "thierry.grunig@sdisnv.ch",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 39
+      },
+      "created_at": "2026-09-16T04:02:39.508Z",
+      "updated_at": "2026-09-16T07:17:47.733Z",
+      "specialization_label": "Préposé APR"
+    },
+    {
+      "statcom_id": "14c0223e-9b3d-445a-8cd8-c1b53722ccbb",
+      "code": "040Y1",
+      "label": "Solde matériel Y1",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 70
+      },
+      "created_at": "2026-09-16T04:02:39.814Z",
+      "updated_at": "2026-09-16T04:02:39.814Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "8666bf00-8e06-4d51-86e3-84119ffb3a5a",
+      "code": "040Y2",
+      "label": "Solde matériel Y2",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y2",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 73
+      },
+      "created_at": "2026-09-16T04:02:39.844Z",
+      "updated_at": "2026-09-16T04:02:39.844Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "7d0eb637-5d1b-457f-99d9-1b10864610d2",
+      "code": "040Y3",
+      "label": "Solde matériel Y3",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y3",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 76
+      },
+      "created_at": "2026-09-16T04:02:39.874Z",
+      "updated_at": "2026-09-16T04:02:39.874Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "a33a4f48-5498-4bd9-a28c-55439259cdd5",
+      "code": "040Y4",
+      "label": "Solde matériel Y4",
+      "domain": "DAP",
+      "category": "ENTRET",
+      "oi_code": "Y4",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 79
+      },
+      "created_at": "2026-09-16T04:02:39.905Z",
+      "updated_at": "2026-09-16T04:02:39.905Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "a040fe19-5dd1-418d-aa12-bc62b339f1c5",
+      "code": "050F0",
+      "label": "Heure administrative",
+      "domain": "ADMIN",
+      "category": "ADMIN",
+      "oi_code": "F0",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 1
+      },
+      "created_at": "2026-09-16T04:02:39.130Z",
+      "updated_at": "2026-09-16T04:02:39.130Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "5e2ab665-cdc4-4b9c-b226-915d6f2cbfa8",
+      "code": "050F23",
+      "label": "Heure administrative renseignements F2/3",
+      "domain": "ADMIN",
+      "category": "ADMIN",
+      "oi_code": "F23",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 68
+      },
+      "created_at": "2026-09-16T04:02:39.794Z",
+      "updated_at": "2026-09-16T04:02:39.794Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "c6c48e20-0bfe-4d34-8b70-3e73bd434d8d",
+      "code": "050F56",
+      "label": "Heure administrative Informations F5/6",
+      "domain": "ADMIN",
+      "category": "ADMIN",
+      "oi_code": "F56",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 81
+      },
+      "created_at": "2026-09-16T04:02:39.925Z",
+      "updated_at": "2026-09-16T04:02:39.925Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "8d71a3b1-329c-4bf2-b9ef-41ea04ed1f68",
+      "code": "050F7",
+      "label": "Heure administrative Formation F7",
+      "domain": "ADMIN",
+      "category": "ADMIN",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 82
+      },
+      "created_at": "2026-09-16T04:02:39.935Z",
+      "updated_at": "2026-09-16T04:02:39.935Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "1a44b9a0-d4b6-4c2c-bd6b-6c79c5be56f9",
+      "code": "050F70",
+      "label": "Heure administrative Formation FOBA",
+      "domain": "FOBA",
+      "category": "ADMIN",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 83
+      },
+      "created_at": "2026-09-16T04:02:39.945Z",
+      "updated_at": "2026-09-16T04:02:39.945Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "a7e8ebd0-412c-424a-97b7-191d317ec669",
+      "code": "050F71",
+      "label": "Heure administrative Formation PR",
+      "domain": "PR",
+      "category": "ADMIN",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 84
+      },
+      "created_at": "2026-09-16T04:02:39.955Z",
+      "updated_at": "2026-09-16T04:02:39.955Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "0ff65aca-3d36-4d0b-93e8-2011ed878fa7",
+      "code": "050F75",
+      "label": "Heure administrative Formation AUTO",
+      "domain": "AUTO",
+      "category": "ADMIN",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 85
+      },
+      "created_at": "2026-09-16T04:02:39.967Z",
+      "updated_at": "2026-09-16T04:02:39.967Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "36a912dd-bfb5-48b7-94c1-57c71aa028da",
+      "code": "050F76",
+      "label": "Heure administrative Formation FOSPEC",
+      "domain": "FOSPEC",
+      "category": "ADMIN",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 86
+      },
+      "created_at": "2026-09-16T04:02:39.977Z",
+      "updated_at": "2026-09-16T04:02:39.977Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "524a1a66-918a-4430-ab1f-2e2fbe8fe487",
+      "code": "050F77",
+      "label": "Heure administrative Formation FOCA",
+      "domain": "FOCA",
+      "category": "ADMIN",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 87
+      },
+      "created_at": "2026-09-16T04:02:39.988Z",
+      "updated_at": "2026-09-16T04:02:39.988Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "2db9ea84-4733-4c36-a1d2-a97d6fc0f57d",
+      "code": "070F0",
+      "label": "Séance Commandement F0",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F0",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 2
+      },
+      "created_at": "2026-09-16T04:02:39.140Z",
+      "updated_at": "2026-09-16T04:02:39.140Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "37d72a06-76cc-402b-bd9f-0a2189cc246c",
+      "code": "070F1",
+      "label": "Séance Personnel F1",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F1",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 3
+      },
+      "created_at": "2026-09-16T04:02:39.150Z",
+      "updated_at": "2026-09-16T04:02:39.150Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "7efef3a7-28c7-4f16-aaca-2079d6d073fc",
+      "code": "070F23",
+      "label": "Séance Renseignements F2/3",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F23",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 4
+      },
+      "created_at": "2026-09-16T04:02:39.161Z",
+      "updated_at": "2026-09-16T04:02:39.161Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "d981841e-5d6e-4884-8206-ea59b621441c",
+      "code": "070F4",
+      "label": "Séance Logistique F4",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F4",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 5
+      },
+      "created_at": "2026-09-16T04:02:39.171Z",
+      "updated_at": "2026-09-16T04:02:39.171Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "6fbf3e15-6dad-44cb-b728-a6e660b0050f",
+      "code": "070F56",
+      "label": "Séance SIC F5/6",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F56",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 6
+      },
+      "created_at": "2026-09-16T04:02:39.181Z",
+      "updated_at": "2026-09-16T04:02:39.181Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "19537c59-f05d-425b-bed9-013ba4477289",
+      "code": "070F7",
+      "label": "Séance Formation F7",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F7",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 7
+      },
+      "created_at": "2026-09-16T04:02:39.191Z",
+      "updated_at": "2026-09-16T04:02:39.191Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "7ad952ad-c50f-4aa6-8743-0bb1ff5cb811",
+      "code": "070F8",
+      "label": "Séance Finances F8",
+      "domain": "SEANCE",
+      "category": "SEANCE",
+      "oi_code": "F8",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 8
+      },
+      "created_at": "2026-09-16T04:02:39.201Z",
+      "updated_at": "2026-09-16T04:02:39.201Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "969be213-cc21-4aad-9eba-abf116860cde",
+      "code": "071F3",
+      "label": "Rapport annuel du SDIS NV",
+      "domain": "ADMIN",
+      "category": "EXERCI",
+      "oi_code": "F3",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 42
+      },
+      "created_at": "2026-09-16T04:02:39.538Z",
+      "updated_at": "2026-09-16T04:02:39.538Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "e51a9966-4291-420b-ae3b-aa32f0738a6c",
+      "code": "072F3",
+      "label": "Revue quinquennale SDIS NV",
+      "domain": "ADMIN",
+      "category": "EXERCI",
+      "oi_code": "F3",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 43
+      },
+      "created_at": "2026-09-16T04:02:39.547Z",
+      "updated_at": "2026-09-16T04:02:39.547Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "d253a394-e6cf-4eab-a42d-31c67ef79ded",
+      "code": "073F56",
+      "label": "Représentation externe",
+      "domain": "ADMIN",
+      "category": "EXERCI",
+      "oi_code": "F56",
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 44
+      },
+      "created_at": "2026-09-16T04:02:39.557Z",
+      "updated_at": "2026-09-16T04:02:39.557Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "b8167809-1660-4356-b00f-a73337bf8daf",
+      "code": "CDIV",
+      "label": "Cours divers",
+      "domain": "COURS",
+      "category": "COURS",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 29
+      },
+      "created_at": "2026-09-16T04:02:39.408Z",
+      "updated_at": "2026-09-16T04:02:39.408Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "4a4736d9-a602-4107-9c26-5e6fae59b8ed",
+      "code": "CECA",
+      "label": "Cours ECA",
+      "domain": "COURS",
+      "category": "COURS",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 27
+      },
+      "created_at": "2026-09-16T04:02:39.389Z",
+      "updated_at": "2026-09-16T04:02:39.389Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "c482bac4-95a8-4030-812a-3bdfaf7cd2c7",
+      "code": "CFSSP",
+      "label": "Cours FSSP",
+      "domain": "COURS",
+      "category": "COURS",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 28
+      },
+      "created_at": "2026-09-16T04:02:39.398Z",
+      "updated_at": "2026-09-16T04:02:39.398Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "aa70659d-2098-4caa-a8fc-95425b7039b1",
+      "code": "CONCOUR",
+      "label": "Concours",
+      "domain": "EXERCICE",
+      "category": "EXERCI",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 30
+      },
+      "created_at": "2026-09-16T04:02:39.418Z",
+      "updated_at": "2026-09-16T04:02:39.418Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "64fa5886-1413-45b6-bf5b-d84e6e1eaedc",
+      "code": "COURJSP",
+      "label": "Cours JSP",
+      "domain": "JSP",
+      "category": "COURS",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "QUO VADIS '26",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 91
+      },
+      "created_at": "2026-09-25T08:47:38.493Z",
+      "updated_at": "2026-09-25T08:47:38.493Z",
+      "specialization_label": null
+    },
+    {
+      "statcom_id": "bf88d98d-2ff6-4089-9f70-5fbdde60bc75",
+      "code": "EXDIV",
+      "label": "Instruction sur demande ECA",
+      "domain": "EXERCICE",
+      "category": "EXERCI",
+      "oi_code": null,
+      "specialization": null,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "active": true,
+      "metadata": {
+        "source": "Plan comptable - StatCOM QuoVadis'23.pdf",
+        "sourceList": "Liste des activités et Stat COMM pour saisie dans ECAWIN",
+        "sourceOrder": 32
+      },
+      "created_at": "2026-09-16T04:02:39.438Z",
+      "updated_at": "2026-09-16T04:02:39.438Z",
+      "specialization_label": null
+    }
+  ]
+}

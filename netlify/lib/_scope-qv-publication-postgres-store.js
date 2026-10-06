@@ -131,10 +131,13 @@ class ScopeQvPostgresStore {
     finally { release(); }
   }
 
-  async transaction(task){
+  async transaction(task, options = {}){
     const client = await this.pool.connect();
     try{
-      await client.query(this.readOnly ? 'begin read only' : 'begin');
+      const begin = options.repeatableRead === true
+        ? this.readOnly ? 'begin isolation level repeatable read read only' : 'begin isolation level repeatable read'
+        : this.readOnly ? 'begin read only' : 'begin';
+      await client.query(begin);
       await client.query(`set local statement_timeout = '${this.statementTimeoutMs}ms'`);
       await client.query(`set local lock_timeout = '${this.lockTimeoutMs}ms'`);
       if(!this.readOnly) await client.query('select pg_advisory_xact_lock($1)', [671902323]);

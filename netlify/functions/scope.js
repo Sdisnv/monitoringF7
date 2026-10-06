@@ -304,7 +304,13 @@ async function scopeHandler(event){
     }
     params = match(path, '/quo-vadis/programmes/:annee/generate');
     if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
       return response(200, { ok:true, quoVadis: await quoVadis.generateProgramme(params.annee) });
+    }
+    params = match(path, '/quo-vadis/programmes/:annee/preview');
+    if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      return response(200, { ok:true, ...(await quoVadis.previewProgramme(params.annee)) });
     }
     params = match(path, '/quo-vadis/programmes/:annee/cursus');
     if(method === 'POST' && params){
@@ -322,6 +328,7 @@ async function scopeHandler(event){
     }
     params = match(path, '/quo-vadis/programmes/:annee/statut');
     if(method === 'POST' && params){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
       return response(200, { ok:true, ...(await quoVadis.setProgrammeStatus(params.annee, body)) });
     }
     params = match(path, '/quo-vadis/proposals/:id/retain');
@@ -335,6 +342,12 @@ async function scopeHandler(event){
     params = match(path, '/quo-vadis/activities/:id');
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await quoVadis.updateActivityPlanning(params.id, body)) });
+    }
+    params = match(path, '/quo-vadis/programme-items/:id');
+    if(method === 'PATCH' && params){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      const result = await quoVadis.updateProgrammePreparation(params.id, body);
+      return response(result.updated ? 200 : 404, { ok:result.updated, ...result });
     }
     params = match(path, '/quo-vadis/activities/:id/references');
     if(method === 'GET' && params){

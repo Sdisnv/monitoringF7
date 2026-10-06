@@ -560,13 +560,26 @@ function summarizeCoverage(rows, targetYear){
   return interpretHistoricalProgramme(rows, targetYear);
 }
 
-function dayPolicyForActivity(domain, activity, rulesByDomain){
+function applicablePlanningRule(domain, activity, rulesByDomain, date){
+  const d = String(domain || '').toUpperCase();
+  const cible = String(activity && ((activity.cibleCodes || [])[0] || activity.cibleCode || activity.oi || activity.publicCible) || '').toUpperCase();
+  for(const key of [cible && `${d}:${cible}`,d,'*'].filter(Boolean)){
+    const candidates = rulesByDomain && rulesByDomain[key];
+    const versions = Array.isArray(candidates) ? candidates : candidates ? [candidates] : [];
+    const applicable = versions.filter(rule => !date || (!rule.validFrom || rule.validFrom <= date) && (!rule.validTo || rule.validTo >= date));
+    if(applicable.length) return applicable.sort((a,b) => Number(b.priority || 0) - Number(a.priority || 0)
+      || String(b.validFrom || '').localeCompare(String(a.validFrom || ''))
+      || String(b.createdAt || '').localeCompare(String(a.createdAt || '')))[0];
+  }
+  return null;
+}
+
+function dayPolicyForActivity(domain, activity, rulesByDomain, date){
   const base = Object.assign({}, DEFAULT_DAY_POLICY);
   const d = String(domain || '').toUpperCase();
   if(d === 'DAP') base.FRIDAY = 'AUTORISE';
   if(d === 'FOBA' || d === 'FOCA') base.FRIDAY = 'INTERDIT';
-  const cible = String(activity && ((activity.cibleCodes || [])[0] || activity.cibleCode || activity.oi || activity.publicCible) || '').toUpperCase();
-  const rule = rulesByDomain && ((cible && rulesByDomain[`${d}:${cible}`]) || rulesByDomain[d] || rulesByDomain['*']);
+  const rule = applicablePlanningRule(domain, activity, rulesByDomain, date);
   const fromRule = rule && (rule.dayPolicy || rule.day_policy);
   const policy = fromRule ? Object.assign({}, DEFAULT_DAY_POLICY, fromRule) : base;
   if(activity && activity.instructionKind === 'section' && SECTION_SITES.has(String(activity.oi || '').toUpperCase())){
@@ -574,6 +587,7 @@ function dayPolicyForActivity(domain, activity, rulesByDomain){
     policy.THURSDAY = 'AUTORISE';
     policy.SUNDAY = 'DECONSEILLE';
   }
+  if(activity && ['section','kick-off'].includes(activity.instructionKind) && String(activity.oi || '').toUpperCase() === 'G1') policy.MONDAY = 'PREFERE';
   return policy;
 }
 
@@ -603,8 +617,7 @@ function classifyCandidateDate(date, policy, calendarRows){
   return { date: dateOnly(date), weekday: day, dayClass, reasons, rank: DAY_RANK[dayClass] == null ? 9 : DAY_RANK[dayClass] };
 }
 
-function pickProposalSlot({ year, month, domain, activity, calendarRows, rulesByDomain, preferredWeekday, blockedDates }){
-  const policy = dayPolicyForActivity(domain, activity, rulesByDomain);
+function pickProposalSlot({ year, month, domain, activity, calendarRows, rulesByDomain, preferredWeekday, requiredWeekday, blockedDates }){
   const wantedMonth = Math.min(12, Math.max(1, Number(month || 2)));
   const blocked = blockedDates instanceof Set ? blockedDates : new Set(blockedDates || []);
   const candidates = [];
@@ -612,7 +625,9 @@ function pickProposalSlot({ year, month, domain, activity, calendarRows, rulesBy
   for(let day = 1; day <= last; day += 1){
     const date = `${year}-${pad2(wantedMonth)}-${pad2(day)}`;
     if(blocked.has(date)) continue;
+    const policy = dayPolicyForActivity(domain, activity, rulesByDomain, date);
     const classified = classifyCandidateDate(date, policy, calendarRows);
+    if(requiredWeekday && classified.weekday !== requiredWeekday) continue;
     if(classified.dayClass === 'INTERDIT') continue;
     let rank = classified.rank;
     if(preferredWeekday && classified.weekday === preferredWeekday && rank <= 1) rank -= 0.2;
@@ -625,7 +640,11 @@ function pickProposalSlot({ year, month, domain, activity, calendarRows, rulesBy
 function usualTime(domain, activity){
   const d = String(domain || '').toUpperCase();
   if(activity && activity.startsAt && /^\d{2}:\d{2}/.test(activity.startsAt)){
-    return { start: String(activity.startsAt).slice(0, 5), end: String(activity.endsAt || '').slice(0, 5) || '21:30', minutes: 120 };
+    const start = String(activity.startsAt).slice(0, 5);
+    const end = String(activity.endsAt || '').slice(0, 5);
+    const asMinutes = (value) => Number(value.slice(0,2)) * 60 + Number(value.slice(3,5));
+    const duration = /^\d{2}:\d{2}$/.test(end) ? asMinutes(end) - asMinutes(start) : 0;
+    return { start, end: end || '21:30', minutes: duration > 0 ? duration : 120 };
   }
   if(d === 'JSP') return { start: '18:30', end: '20:30', minutes: 120 };
   if(d === 'FOBA' || d === 'FOCA') return { start: '19:00', end: '21:30', minutes: 150 };
@@ -654,6 +673,7 @@ module.exports = {
   WEEKDAY_LABELS,
   DAY_CLASS_LABELS,
   DEFAULT_DAY_POLICY,
+  applicablePlanningRule,
   SECTION_SITES,
   dateOnly,
   weekdayName,

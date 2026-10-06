@@ -1,0 +1,1256 @@
+{
+  "workbookSha256": "58ef7c358e44cd7ddc0d6ecbf6a386b06df2029f000a8c12b041538e72066742",
+  "historicalPhysicalRows": 847,
+  "programmePhysicalRows": 856,
+  "dated2027": 844,
+  "occurrences2027": 856,
+  "sessions2027": 856,
+  "oiAssociations2026": 774,
+  "oiAssociations2027": 1244,
+  "byOi2026": {
+    "DAP:Y1": 66,
+    "DAP:Y2": 50,
+    "DAP:Y3": 50,
+    "DAP:Y4": 46,
+    "DPS:B1": 119,
+    "DPS:B2": 112,
+    "DPS:C1": 121,
+    "DPS:G1": 210
+  },
+  "byOi2027": {
+    "DAP:Y1": 65,
+    "DAP:Y2": 48,
+    "DAP:Y3": 49,
+    "DAP:Y4": 45,
+    "DPS:B1": 177,
+    "DPS:B2": 168,
+    "DPS:C1": 180,
+    "DPS:G1": 300,
+    "JSP:B1": 59,
+    "JSP:C1": 59,
+    "JSP:G1": 60,
+    "SDIS": 34
+  },
+  "byDomain2026": {
+    "F0": 44,
+    "F1/8": 28,
+    "F2/3": 41,
+    "F3": 6,
+    "F4": 19,
+    "F5/6": 33,
+    "F7": 676
+  },
+  "byDomain2027": {
+    "F0": 48,
+    "F1": 28,
+    "F3": 30,
+    "F4": 24,
+    "F6": 21,
+    "F7": 581,
+    "NON_DOCUMENTE_F0_F8": 124
+  },
+  "byMonth2026": {
+    "2026-01": 3,
+    "2026-02": 56,
+    "2026-03": 146,
+    "2026-04": 63,
+    "2026-05": 89,
+    "2026-06": 112,
+    "2026-07": 12,
+    "2026-08": 72,
+    "2026-09": 134,
+    "2026-10": 66,
+    "2026-11": 68,
+    "2026-12": 26
+  },
+  "byMonth2027": {
+    "2026-12": 1,
+    "2027-01": 49,
+    "2027-02": 72,
+    "2027-03": 136,
+    "2027-04": 48,
+    "2027-05": 81,
+    "2027-06": 94,
+    "2027-07": 21,
+    "2027-08": 72,
+    "2027-09": 116,
+    "2027-10": 59,
+    "2027-11": 66,
+    "2027-12": 29,
+    "SANS_DATE": 12
+  },
+  "multiOiPhysical2027": 178,
+  "multiOiAssociations2027": 698,
+  "datedDuplicateKeys2027": 0,
+  "oiUndocumented2026": 355,
+  "oiUndocumented2027": 132,
+  "linkedHistoricalLines": 633,
+  "classificationCounts": {
+    "2026:HUMAN_REVIEW": 136,
+    "2026:RECONDUIT": 633,
+    "2026:MODIFIÉ_VOLONTAIREMENT": 77,
+    "2026:NON_RECONDUIT_VOLONTAIREMENT": 1,
+    "2027:RECONDUIT": 439,
+    "calendar:HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES": 47,
+    "2027:HUMAN_REVIEW": 212,
+    "calendar:HUMAN_REVIEW_CALENDAR:VEILLE_FERIE": 8,
+    "calendar:HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES": 6,
+    "calendar:HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT": 9,
+    "calendar:HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT": 3,
+    "calendar:HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE|VEILLE_FERIE|VACANCES_SCOLAIRES": 2,
+    "calendar:HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE|VACANCES_SCOLAIRES": 2,
+    "2027:NOUVEAU_2027": 53,
+    "2027:MODIFIÉ_VOLONTAIREMENT": 152,
+    "calendar:HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES": 20,
+    "calendar:HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE": 6,
+    "calendar:HUMAN_REVIEW_CALENDAR:FERIE": 2,
+    "calendar:HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE": 3
+  },
+  "holidayDates2027": [
+    "2027-01-01",
+    "2027-01-02",
+    "2027-03-26",
+    "2027-03-29",
+    "2027-05-06",
+    "2027-05-17",
+    "2027-08-01",
+    "2027-09-20",
+    "2027-12-25"
+  ],
+  "vacationPeriods2027": [
+    {
+      "debut": "2026-12-24",
+      "fin": "2027-01-10",
+      "libelle": "Vacances scolaires vaudoises - hiver"
+    },
+    {
+      "debut": "2027-02-06",
+      "fin": "2027-02-14",
+      "libelle": "Vacances scolaires vaudoises - sport"
+    },
+    {
+      "debut": "2027-03-26",
+      "fin": "2027-04-11",
+      "libelle": "Vacances scolaires vaudoises - printemps"
+    },
+    {
+      "debut": "2027-05-06",
+      "fin": "2027-05-09",
+      "libelle": "Vacances scolaires vaudoises - Ascension"
+    },
+    {
+      "debut": "2027-07-03",
+      "fin": "2027-08-22",
+      "libelle": "Vacances scolaires vaudoises - ete"
+    },
+    {
+      "debut": "2027-10-09",
+      "fin": "2027-10-24",
+      "libelle": "Vacances scolaires vaudoises - automne"
+    },
+    {
+      "debut": "2027-12-24",
+      "fin": "2028-01-09",
+      "libelle": "Vacances scolaires vaudoises - hiver"
+    }
+  ],
+  "calendarReview2027": [
+    {
+      "annee": 2027,
+      "identifiant": "QV26-8-KM-DU-SDIS-D2C38C47:O1:S1",
+      "activite": "8 km du SDIS",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4",
+      "date": "2027-08-13",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 499",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:O1:S1",
+      "activite": "Cours de cadres exercice DPS 2",
+      "oi": "DPS:C1",
+      "date": "2027-08-18",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 509",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:O2:S1",
+      "activite": "Cours de cadres exercice DPS 2",
+      "oi": "DPS:B1",
+      "date": "2027-08-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 510",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1:S1",
+      "activite": "Cours de cadres exercice DPS-DAP 1",
+      "oi": "DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-03-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 214",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O1:S1",
+      "activite": "Exercice DPS-DAP 1",
+      "oi": "DPS:B2",
+      "date": "2027-05-05",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 292",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O2:S1",
+      "activite": "Exercice DPS-DAP 1",
+      "oi": "DAP:Y4",
+      "date": "2027-05-05",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 293",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-FORMATION-PERMANENTS-4F48A9D0:O2:S1",
+      "activite": "Formation permanents",
+      "oi": "DPS:G1",
+      "date": "2027-03-29",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 202",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-FORMATION-PERMANENTS-4F48A9D0:O3:S1",
+      "activite": "Formation permanents",
+      "oi": "DPS:G1",
+      "date": "2027-05-05",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 288",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-FORMATION-RELATION-AVEC-LA-PRESSE-63E476BF:O4:S1",
+      "activite": "Formation relation avec la presse",
+      "oi": "DPS:G1",
+      "date": "2027-08-20",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 515",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:O7:S1",
+      "activite": "Instr demi-sct - VARIA",
+      "oi": "DPS:C1",
+      "date": "2027-05-15",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 313",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:O8:S1",
+      "activite": "Instr demi-sct - VARIA",
+      "oi": "DPS:B1",
+      "date": "2027-05-15",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 315",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:O9:S1",
+      "activite": "Instr demi-sct - VARIA",
+      "oi": "DPS:B2",
+      "date": "2027-05-15",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 314",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-SCT-KICK-OFF-5DBF1193:O5:S1",
+      "activite": "Instr sct - KICK-OFF",
+      "oi": "DPS:B2",
+      "date": "2027-03-27",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT",
+      "source": "classeur ligne 197",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-SCT-KICK-OFF-5DBF1193:O6:S1",
+      "activite": "Instr sct - KICK-OFF",
+      "oi": "DPS:C1",
+      "date": "2027-03-27",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT",
+      "source": "classeur ligne 200",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-SCT-KICK-OFF-5DBF1193:O7:S1",
+      "activite": "Instr sct - KICK-OFF",
+      "oi": "DPS:B1",
+      "date": "2027-03-27",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT",
+      "source": "classeur ligne 201",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O5:S1",
+      "activite": "Journée des familles",
+      "oi": "DPS:C1",
+      "date": "2027-08-14",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 502",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-PASSEPORT-VACANCES-55E662D2:O1:S1",
+      "activite": "Passeport-Vacances",
+      "oi": "DPS:G1",
+      "date": "2027-10-15",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 727",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O5:S1",
+      "activite": "Préparation concours de la FVSP",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-03-25",
+      "motif": "HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 193",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O6:S1",
+      "activite": "Préparation concours de la FVSP",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-04-01",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 218",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O7:S1",
+      "activite": "Préparation concours de la FVSP",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-04-08",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 228",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O8:S1",
+      "activite": "Préparation concours de la FVSP",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-05-06",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 296",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O1:S1",
+      "activite": "Sécurité feu · Fête Médiévale",
+      "oi": "DPS:C1",
+      "date": "2027-08-07",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 493",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O2:S1",
+      "activite": "Sécurité feu · Fête Médiévale",
+      "oi": "DPS:C1",
+      "date": "2027-08-07",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 494",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O3:S1",
+      "activite": "Sécurité feu · Fête Médiévale",
+      "oi": "DPS:C1",
+      "date": "2027-08-08",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 495",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O4:S1",
+      "activite": "Sécurité feu · Fête Médiévale",
+      "oi": "DPS:C1",
+      "date": "2027-08-08",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 496",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-SECURITE-FEU-FETE-NATIONALE-C29B7F0B:O1:S1",
+      "activite": "Sécurité feu・Fête Nationale",
+      "oi": "DPS:C1",
+      "date": "2027-07-30",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 485",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-TOUR-DE-FRANCE-FEMMES-26-4BF12176:O1:S1",
+      "activite": "Tour de France Femmes '26",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-07-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE|VEILLE_FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 487",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-VISION-LOCALE-DPS-EA8354D4:O3:S1",
+      "activite": "Vision locale DPS",
+      "oi": "DPS:C1",
+      "date": "2027-03-30",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 208",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O1:S1",
+      "activite": "Cours de cadres exercice DAP 3",
+      "oi": "DAP:Y2",
+      "date": "2027-04-10",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 231",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O1:S1",
+      "activite": "Cours de cadres exercice DAP 4",
+      "oi": "DAP:Y1",
+      "date": "2027-08-05",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 489",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O2:S1",
+      "activite": "Cours de cadres exercice DAP 4",
+      "oi": "DAP:Y2",
+      "date": "2027-08-05",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 490",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DAP-1-9890D687:O4:S1",
+      "activite": "Exercice DAP 1",
+      "oi": "DAP:Y4",
+      "date": "2027-03-30",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 209",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DAP-2-6285EF74:O1:S1",
+      "activite": "Exercice DAP 2",
+      "oi": "DAP:Y2",
+      "date": "2027-04-07",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 226",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1",
+      "activite": "Exercice DAP 2",
+      "oi": "DAP:Y4",
+      "date": "2027-05-06",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 298",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DAP-3-618B0715:O1:S1",
+      "activite": "Exercice DAP 3",
+      "oi": "DAP:Y2",
+      "date": "2027-05-06",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 297",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-DAP-4-46753B3A:O2:S1",
+      "activite": "Exercice DAP 4",
+      "oi": "DAP:Y2",
+      "date": "2027-10-16",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 729",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-SEANCE-CADRES-0972877C:O1:S1",
+      "activite": "Séance cadres",
+      "oi": "DAP:Y2",
+      "date": "2027-08-10",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 498",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-JSP-3-0AFB4398:O3:S1",
+      "activite": "Exercice JSP 3",
+      "oi": "JSP:G1",
+      "date": "2027-03-27",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 198",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-JSP-4-E8680A47:O1:S1",
+      "activite": "Exercice JSP 4",
+      "oi": "JSP:C1",
+      "date": "2027-03-29",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 203",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-FOBA-2ED42E4A:O1:S1",
+      "activite": "Exercice FOBA",
+      "oi": "",
+      "date": "2027-03-31",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 213",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INTRODUCTION-PIONNIER-999BBC8C:O1:S1",
+      "activite": "Introduction PIONNIER",
+      "oi": "DPS:G1",
+      "date": "2027-05-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:FERIE|VACANCES_SCOLAIRES",
+      "source": "classeur ligne 295",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-FORMATION-OPERATEUR-VPC-1-4-C69575A3:O1:S1",
+      "activite": "Formation opérateur VPC 1.4",
+      "oi": "DPS:G1",
+      "date": "2027-03-25",
+      "motif": "HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 192",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-INSTR-DEMI-SCT-ABC-C49C7121:O4:S1",
+      "activite": "Instr demi-sct - ABC",
+      "oi": "DPS:G1",
+      "date": "2027-05-15",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 312",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90:O6:S1",
+      "activite": "Conduite TP9000, formation continue 1.2",
+      "oi": "DPS:G1",
+      "date": "2027-03-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 211",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90:O7:S1",
+      "activite": "Conduite TP9000, formation continue 1.2",
+      "oi": "DPS:G1",
+      "date": "2027-04-01",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 216",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E:O2:S1",
+      "activite": "Conduite TP9000, formation continue 2.2",
+      "oi": "DPS:G1",
+      "date": "2027-10-13",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 726",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E:O3:S1",
+      "activite": "Conduite TP9000, formation continue 2.2",
+      "oi": "DPS:G1",
+      "date": "2027-10-20",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 731",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-EXERCICE-CAR-FB6A81CD:O1:S1",
+      "activite": "Cours de cadres exercice CAR",
+      "oi": "",
+      "date": "2027-08-19",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 512",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-COURS-DE-CADRES-FORMATEURS-MEA-2-40EAD3D2:O1:S1",
+      "activite": "Cours de cadres Formateurs MEA 2",
+      "oi": "",
+      "date": "2027-08-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 506",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-FORMATION-MEA-1-0-7408CDDA:O4:S1",
+      "activite": "Formation MEA 1.0",
+      "oi": "",
+      "date": "2027-03-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 210",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV26-EXERCICE-PR-3-1-D96B09DB:O1:S1",
+      "activite": "Exercice PR 3.1",
+      "oi": "",
+      "date": "2027-08-19",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 513",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-852",
+      "activite": "Intégration personnel DPS, phase I",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-01-05",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-853",
+      "activite": "Échange tenue",
+      "oi": "JSP:G1,JSP:C1,JSP:B1",
+      "date": "2027-01-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-854",
+      "activite": "Intégration personnel DPS, phase II",
+      "oi": "DPS:G1",
+      "date": "2027-01-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-855",
+      "activite": "Intégration personnel DPS, phase II",
+      "oi": "DPS:C1",
+      "date": "2027-01-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-856",
+      "activite": "Intégration personnel DPS, phase II",
+      "oi": "DPS:B1",
+      "date": "2027-01-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-857",
+      "activite": "Intégration personnel DPS, phase II",
+      "oi": "DPS:B2",
+      "date": "2027-01-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-858",
+      "activite": "Échange tenue",
+      "oi": "JSP:G1,JSP:C1,JSP:B1",
+      "date": "2027-01-07",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-859",
+      "activite": "Répétition garde drapeau RA'25",
+      "oi": "DPS:G1,DPS:C1,DAP:Y3",
+      "date": "2027-01-07",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-914",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-02-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-915",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:C1",
+      "date": "2027-02-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-916",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B1",
+      "date": "2027-02-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "qv-source-917",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B2",
+      "date": "2027-02-06",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "SOURCE_2027_EXPLICIT",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "CTA-PERM-2027-01-01",
+      "activite": "Permanence",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2026-12-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE",
+      "source": "CTA_RULE+CTA_TURNUS_SOURCE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "CTA-PERM-2027-03-26",
+      "activite": "Permanence",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-03-25",
+      "motif": "HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE",
+      "source": "CTA_RULE+CTA_TURNUS_SOURCE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "CTA-PERM-2027-05-14",
+      "activite": "Permanence",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-05-14",
+      "motif": "HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE",
+      "source": "CTA_RULE+CTA_TURNUS_SOURCE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "CTA-PERM-2027-07-30",
+      "activite": "Permanence",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-07-30",
+      "motif": "HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE",
+      "source": "CTA_RULE+CTA_TURNUS_SOURCE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "CTA-PERM-2027-09-17",
+      "activite": "Permanence",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-09-17",
+      "motif": "HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE",
+      "source": "CTA_RULE+CTA_TURNUS_SOURCE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "CTA-PERM-2027-12-24",
+      "activite": "Permanence",
+      "oi": "DPS:G1,DPS:C1,DPS:B1,DPS:B2",
+      "date": "2027-12-24",
+      "motif": "HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE",
+      "source": "CTA_RULE+CTA_TURNUS_SOURCE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:EMSEA:SESSION:04",
+      "activite": "Séance État-major",
+      "oi": "SDIS",
+      "date": "2027-03-30",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 207",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:EMSEA:SESSION:05",
+      "activite": "Séance État-major",
+      "oi": "SDIS",
+      "date": "2027-05-05",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 291",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:EMSEA:SESSION:07",
+      "activite": "Séance État-major",
+      "oi": "SDIS",
+      "date": "2027-08-17",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 505",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:OI:QV26-INSTR-DEMI-SCT-FEU-8D0C9417:C1:2027-09-18:0730",
+      "activite": "Instr demi-sct - FEU",
+      "oi": "DPS:C1",
+      "date": "2027-09-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 640",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:OI:QV26-INSTR-DEMI-SCT-FEU-8D0C9417:B1:2027-09-18:0730",
+      "activite": "Instr demi-sct - FEU",
+      "oi": "DPS:B1",
+      "date": "2027-09-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 642",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:OI:QV26-INSTR-DEMI-SCT-FEU-8D0C9417:B2:2027-09-18:0730",
+      "activite": "Instr demi-sct - FEU",
+      "oi": "DPS:B2",
+      "date": "2027-09-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 641",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:OI:QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:G1:2027-07-31:0730",
+      "activite": "Instr demi-sct - VARIA",
+      "oi": "DPS:G1",
+      "date": "2027-07-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "classeur ligne 486",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:COVERAGE:G1:KICK-OFF:demi-section:N02b",
+      "activite": "Instr demi-sct - KICK-OFF",
+      "oi": "DPS:G1",
+      "date": "2027-03-27",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT",
+      "source": "MOA_RULE_INSTRUCTION_COVERAGE",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:2027-04-01:1830:G1",
+      "activite": "Cours de cadres exercice DPS 1",
+      "oi": "DPS:G1",
+      "date": "2027-04-01",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 217",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:2027-08-18:1900:B2",
+      "activite": "Cours de cadres exercice DPS 2",
+      "oi": "DPS:B2",
+      "date": "2027-08-18",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 511",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4",
+      "activite": "Cours de cadres exercice DPS-DAP 1",
+      "oi": "DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4",
+      "date": "2027-03-31",
+      "motif": "CORRESPONDANCE_2026_NON_PROUVEE|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 215",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-05-17:1830:Caserne-G1",
+      "activite": "Séance Direction JSP",
+      "oi": "JSP:G1,JSP:C1,JSP:B1",
+      "date": "2027-05-17",
+      "motif": "HUMAN_REVIEW_CALENDAR:FERIE",
+      "source": "classeur ligne 316",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-08-19:1830:Caserne-G1",
+      "activite": "Séance Direction JSP",
+      "oi": "JSP:G1,JSP:C1,JSP:B1",
+      "date": "2027-08-19",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 514",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-03-31:1800:G1-Y1",
+      "activite": "Séance communication F5/6",
+      "oi": "DPS:G1,DAP:Y1",
+      "date": "2027-03-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 212",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-05-05:1800:G1-Y1",
+      "activite": "Séance communication F5/6",
+      "oi": "DPS:G1,DAP:Y1",
+      "date": "2027-05-05",
+      "motif": "HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 290",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-08-18:1800:G1-Y1",
+      "activite": "Séance communication F5/6",
+      "oi": "DPS:G1,DAP:Y1",
+      "date": "2027-08-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES",
+      "source": "classeur ligne 508",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N04b:2027-07-31:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-07-31",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE|VEILLE_FERIE|VACANCES_SCOLAIRES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N03b:2027-08-07:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-08-07",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N02b:2027-03-27:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-03-27",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE|VACANCES_SCOLAIRES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N02b:2027-08-14:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-08-14",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N01b:2027-04-03:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-04-03",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N01b:2027-08-21:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-08-21",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N05a:2027-04-10:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-04-10",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N03a:2027-02-13:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-02-13",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N03a:2027-07-03:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-07-03",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N02a:2027-07-10:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-07-10",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N01a:2027-07-17:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-07-17",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:G1:N05b:2027-07-24:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:G1",
+      "date": "2027-07-24",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:C1:N03b:2027-08-21:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:C1",
+      "date": "2027-08-21",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:C1:N03a:2027-02-13:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:C1",
+      "date": "2027-02-13",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:C1:N02a:2027-09-18:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:C1",
+      "date": "2027-09-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:B1:N03b:2027-08-21:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B1",
+      "date": "2027-08-21",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:B1:N03a:2027-02-13:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B1",
+      "date": "2027-02-13",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:B1:N02a:2027-09-18:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B1",
+      "date": "2027-09-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:B2:N03b:2027-08-21:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B2",
+      "date": "2027-08-21",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:B2:N03a:2027-02-13:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B2",
+      "date": "2027-02-13",
+      "motif": "HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:CONDUITE:B2:N02a:2027-09-18:1030",
+      "activite": "Conduite, formation continue",
+      "oi": "DPS:B2",
+      "date": "2027-09-18",
+      "motif": "HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE",
+      "source": "MOA_RULE_CONDUITE_ANNUAL",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:DAPCOND:2027-03-25:Y3:1830",
+      "activite": "Conduite, formation continue",
+      "oi": "DAP:Y3",
+      "date": "2027-03-25",
+      "motif": "HUMAN_REVIEW_CALENDAR:VEILLE_FERIE",
+      "source": "classeur ligne 194",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    },
+    {
+      "annee": 2027,
+      "identifiant": "QV27:DAPCOND:2027-05-17:Y1:1830",
+      "activite": "Conduite, formation continue",
+      "oi": "DAP:Y1",
+      "date": "2027-05-17",
+      "motif": "HUMAN_REVIEW_CALENDAR:FERIE",
+      "source": "classeur ligne 317",
+      "decision_attendue": "Valider ou corriger la date au regard du calendrier"
+    }
+  ],
+  "reviewPhysicalRows": 433,
+  "detailOiRows": 2505,
+  "summaryRows": 1028,
+  "dpsDrives": 56,
+  "dapDrives": 16,
+  "dpsByOi": {
+    "G1": 20,
+    "C1": 12,
+    "B1": 12,
+    "B2": 12
+  },
+  "dapByOi": {
+    "Y1": 4,
+    "Y2": 4,
+    "Y3": 4,
+    "Y4": 4
+  }
+}

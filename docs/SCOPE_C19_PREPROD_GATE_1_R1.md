@@ -6,70 +6,36 @@
 
 ## B. Git initial/final
 
-Branche : `main`. HEAD : `362d6c41381ae106c318d9c9081cb83fc23588f4` (référence attendue identique). Worktree préexistant préservé :
+Branche : `scope-qv-canonical-rules-checkpoint-20261002`. HEAD : `9c19979de51f32d64ca8a313fc792174d12a1731` (référence attendue identique). Worktree préexistant préservé :
 
 ```text
     M assets/css/scope.css
-     M assets/js/scope-api.js
+     M assets/js/scope-ui-logic.js
      M assets/js/scope-ui.js
-     M netlify/functions/scope.js
-     M netlify/lib/_scope-annual-catalog-import.js
-     M netlify/lib/_scope-annual-catalog-service.js
-     M netlify/lib/_scope-schema.js
-     M package.json
-     M scripts/scope-impl-1a-tests.js
-     M scripts/scope-impl-1b-tests.js
-    ?? database/migrations/20260925_scope_functional_catalog_c18.sql
-    ?? docs/SCOPE_C18_CONVERGENCE_MATRIX.json
-    ?? docs/SCOPE_C18_CONVERGENCE_MATRIX.md
-    ?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.json
-    ?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1.md
-    ?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_BROWSER_METRICS.json
-    ?? docs/SCOPE_C19_PREPROD_CANONICAL_TRUTH_1_TEST_RESULTS.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_1.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_1.md
-    ?? docs/SCOPE_C19_PREPROD_GATE_1_R1.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_1_R1.md
-    ?? docs/SCOPE_C19_PREPROD_GATE_2.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_2.md
-    ?? docs/SCOPE_C19_PREPROD_GATE_2_BROWSER_METRICS.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_2_TEST_RESULTS.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_3.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_3.md
-    ?? docs/SCOPE_C19_PREPROD_GATE_3_BROWSER_METRICS.json
-    ?? docs/SCOPE_C19_PREPROD_GATE_3_TEST_RESULTS.json
-    ?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.json
-    ?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1.md
-    ?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_BROWSER_METRICS.json
-    ?? docs/SCOPE_C19_PREPROD_MOA_FINAL_1_TEST_RESULTS.json
-    ?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.json
-    ?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1.md
-    ?? docs/SCOPE_C19_PREPROD_MOA_UX_CODE_FINAL_1_BROWSER_METRICS.json
-    ?? netlify/lib/_scope-functional-catalog-ddl.js
-    ?? netlify/lib/_scope-functional-catalog.js
-    ?? scripts/scope-c19-preprod-canonical-truth-1-tests.js
-    ?? scripts/scope-c19-preprod-canonical-truth-1.js
-    ?? scripts/scope-c19-preprod-gate-1-r1-tests.js
-    ?? scripts/scope-c19-preprod-gate-1-r1.js
-    ?? scripts/scope-c19-preprod-gate-1-tests.js
-    ?? scripts/scope-c19-preprod-gate-1.js
-    ?? scripts/scope-c19-preprod-gate-2-tests.js
-    ?? scripts/scope-c19-preprod-gate-2.js
-    ?? scripts/scope-c19-preprod-gate-3-tests.js
-    ?? scripts/scope-c19-preprod-gate-3.js
-    ?? scripts/scope-c19-preprod-moa-final-1-tests.js
-    ?? scripts/scope-c19-preprod-moa-final-1.js
-    ?? scripts/scope-c19-preprod-moa-ux-code-final-1-tests.js
-    ?? scripts/scope-c19-preprod-moa-ux-code-final-1.js
-    ?? scripts/scope-c19-ux-recette/
-    ?? scripts/scope-functional-catalog-c18-diagnostic.js
-    ?? scripts/scope-functional-catalog-c18-preview-server.js
-    ?? scripts/scope-functional-catalog-c18-preview.js
-    ?? scripts/scope-functional-catalog-c18-tests.js
-    ?? scripts/scope-functional-catalog-c19-preview.js
-    ?? scripts/scope-functional-catalog-c19-tests.js
-    ?? scripts/scope-functional-catalog-c19-ux-preview-server.js
-    ?? scripts/scope-functional-catalog-c19-ux-tests.js
+     M docs/SCOPE_C19_PREPROD_GATE_1_R1.json
+     M docs/SCOPE_C19_PREPROD_GATE_1_R1.md
+     M docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1.json
+     M docs/SCOPE_C19_QUO_VADIS_27_FULL_DRESS_REHEARSAL_1.md
+     M docs/business-rules/quo-vadis-canonical-rules.md
+     M netlify/lib/_scope-quo-vadis-service.js
+     M netlify/lib/data/scope-qv-canonical-annual-rules.json
+     M scripts/scope-qv-agenda-programme-ux-final-1-tests.js
+     M scripts/scope-qv-business-rules-canonicalization-and-final-closure-1-tests.js
+     M scripts/scope-qv-conduites-canonical-closure-1-tests.js
+     M scripts/scope-qv-dps-oi-separation-and-conduite-closure-1-tests.js
+     M scripts/scope-qv-final-development-1-tests.js
+     M scripts/scope-qv-history-sections-ux-tests.js
+     M tmp-scope-r3-pdfs/SCOPE_Exercice_PR_GEN_2026-03-19.pdf
+     M tmp-scope-r3-pdfs/SCOPE_Rapport_participation_PR_1_2026.pdf
+     M tmp-scope-r4-pdfs/SCOPE_Exercice_PR_GEN_2026-03-19.pdf
+     M tmp-scope-r4-pdfs/SCOPE_Rapport_participation_PR_1_2026.pdf
+     M tmp-scope-r5-pdfs/SCOPE_Exercice_JSP_B1_2026-01-13.pdf
+     M tmp-scope-r5-pdfs/SCOPE_Exercice_JSP_C1_2026-01-12.pdf
+     M tmp-scope-r5-pdfs/SCOPE_Exercice_PR_GEN_2026-03-19.pdf
+     M tmp-scope-r5-pdfs/SCOPE_Rapport_participation_PR_1_2026.pdf
+    ?? .qv-api.json
+    ?? scripts/scope-qv-2027-moa-recette-analysis.js
+    ?? scripts/scope-qv-2027-moa-recette-correctif-1-tests.js
 ```
 
 ## C. Méthode de recherche SCOPE

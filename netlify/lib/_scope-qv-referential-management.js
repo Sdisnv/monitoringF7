@@ -9,6 +9,8 @@ const bad = (message) => ({ ok: false, error: message });
 const codeOf = (value) => clean(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '');
 const validTime = (value) => !value || /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 const validDate = (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value);
+const dateOnly = (value) => value ? String(value instanceof Date ? value.toISOString() : value).slice(0,10) : null;
+const previousDate = (value) => new Date(Date.parse(`${value}T12:00:00Z`) - 86400000).toISOString().slice(0,10);
 
 function createQvReferentialManagement(db){
   const transact = (callback) => typeof db.transaction === 'function' ? db.transaction(callback) : callback(db);
@@ -225,6 +227,7 @@ function createQvReferentialManagement(db){
     if(!validTime(start) || !validTime(end) || !start || !end) return bad('Horaire habituel invalide.');
     if(!validDate(body.validFrom) || !validDate(body.validTo) || (body.validFrom && body.validTo && body.validFrom > body.validTo)) return bad('Période de validité invalide.');
     if(body.durationMinutes != null && body.durationMinutes !== '' && (!Number.isInteger(Number(body.durationMinutes)) || Number(body.durationMinutes) < 1 || Number(body.durationMinutes) > 10080)) return bad('Durée de règle invalide.');
+    if(body.priority != null && body.priority !== '' && (!Number.isInteger(Number(body.priority)) || Number(body.priority) < 0 || Number(body.priority) > 100)) return bad('Priorité de règle invalide.');
     const preferredDay = clean(body.preferredDay).toUpperCase();
     if(preferredDay && (!DAYS.includes(preferredDay) || policy[preferredDay] === 'INTERDIT')) return bad('Jour principal invalide.');
     return { ok: true, domain: target.domain, policy, start, end, preferredDay };
@@ -253,13 +256,19 @@ function createQvReferentialManagement(db){
         validTo: body.validTo === undefined ? old.valid_to && new Date(old.valid_to).toISOString().slice(0, 10) : body.validTo,
         preferredDay: body.preferredDay === undefined ? (old.metadata || {}).preferredDay : body.preferredDay,
         constraints: body.constraints === undefined ? (old.metadata || {}).constraints : body.constraints,
+        name: body.name === undefined ? (old.metadata || {}).name : body.name,
+        description: body.description === undefined ? (old.metadata || {}).description : body.description,
+        priority: body.priority === undefined ? (old.metadata || {}).priority : body.priority,
         derogationAllowed: body.derogationAllowed === undefined ? old.derogation_allowed : body.derogationAllowed
       };
       const valid = await validateRule(client, merged);
       if(!valid.ok) return valid;
-      await client.query(`update scope_quo_vadis_planning_rules set active = false, updated_at = now() where rule_id = $1`, [id]);
+      if(dateOnly(old.valid_from) && dateOnly(old.valid_from) <= new Date().toISOString().slice(0,10)
+        && (!body.validFrom || body.validFrom <= new Date().toISOString().slice(0,10))){
+        return bad('Choisir une nouvelle date d’effet future pour préserver l’historique de cette règle.');
+      }
       const next = await createRuleWithClient(client, Object.assign({}, merged, { domain: valid.domain }));
-      return Object.assign({ updated: true }, next);
+      return next.ok ? Object.assign({ updated: true }, next) : next;
     });
   }
 
@@ -267,9 +276,32 @@ function createQvReferentialManagement(db){
     const valid = await validateRule(client, body);
     if(!valid.ok) return valid;
     const cibleId = body.cibleId || null;
-    await client.query(`update scope_quo_vadis_planning_rules set active = false, updated_at = now()
+    const previous = await client.query(`select rule_id,valid_from,valid_to from scope_quo_vadis_planning_rules
       where active is true and definition_version_id is null and (domain = $1 or (domain is null and metadata->>'family' = $1))
-        and cible_id is not distinct from $2`, [valid.domain, cibleId]);
+        and cible_id is not distinct from $2 for update`, [valid.domain,cibleId]);
+    const newStart = dateOnly(body.validFrom);
+    const newEnd = dateOnly(body.validTo);
+    if(previous.rows.length && (!newStart || newStart <= new Date().toISOString().slice(0,10))){
+      return bad('Une nouvelle version exige une date d’effet future pour préserver l’historique.');
+    }
+    const changes = [];
+    for(const row of previous.rows){
+      const oldStart = dateOnly(row.valid_from);
+      const oldEnd = dateOnly(row.valid_to);
+      if(newStart && oldEnd && oldEnd < newStart || newEnd && oldStart && oldStart > newEnd) continue;
+      if(newStart && (!oldStart || oldStart < newStart)){
+        if(newEnd && (!oldEnd || oldEnd > newEnd)) return bad('La nouvelle période couperait une règle existante en deux. Définir une règle de reprise.');
+        changes.push({ type:'close', id:row.rule_id });
+      } else if(oldStart && newStart && oldStart > newStart) {
+        return bad('Une règle future chevauche déjà cette période.');
+      } else {
+        changes.push({ type:'archive', id:row.rule_id });
+      }
+    }
+    for(const change of changes){
+      if(change.type === 'close') await client.query(`update scope_quo_vadis_planning_rules set valid_to=$2,updated_at=now() where rule_id=$1`,[change.id,previousDate(newStart)]);
+      else await client.query(`update scope_quo_vadis_planning_rules set active=false,updated_at=now() where rule_id=$1`,[change.id]);
+    }
     const code = cibleId ? `PLANIF-${valid.domain}-${codeOf(body.cibleCode || cibleId)}` : `PLANIF-${valid.domain}`;
     const result = await client.query(`insert into scope_quo_vadis_planning_rules
       (code, version_code, domain, cible_id, day_policy, time_policy, duration_minutes,
@@ -279,7 +311,8 @@ function createQvReferentialManagement(db){
         JSON.stringify(valid.policy), JSON.stringify({ usualStart: valid.start, usualEnd: valid.end }),
         Number(body.durationMinutes) || null, body.validFrom || null, body.validTo || null,
         body.derogationAllowed !== false,
-        JSON.stringify({ source: 'QUO-VADIS-REFERENTIAL-MANAGEMENT-4', preferredDay: valid.preferredDay, constraints: clean(body.constraints) })]);
+        JSON.stringify({ source: 'QUO-VADIS-REFERENTIAL-MANAGEMENT-4', preferredDay: valid.preferredDay, constraints: clean(body.constraints),
+          name:clean(body.name),description:clean(body.description),priority:Number(body.priority || 0) })]);
     return { ok: true, ruleId: result.rows[0].rule_id };
   }
 
