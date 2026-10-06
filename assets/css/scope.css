@@ -393,7 +393,7 @@ html, body {
 }
 .qv-agenda-projection {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   flex: 1 1 100%;
   gap: 1px;
   border: 1px solid var(--scope-line);
@@ -410,6 +410,7 @@ html, body {
 }
 .qv-agenda-projection > a:hover,
 .qv-agenda-projection > a:focus-visible { background: #f3f6f8; }
+.qv-agenda-projection > * { min-width: 0; }
 .qv-agenda-projection span,
 .qv-agenda-projection small {
   color: var(--scope-muted);
@@ -2865,7 +2866,7 @@ a.qv-mini-day.has-validated:not(.has-proposed):focus-visible span {
 
 @media (max-width: 720px) {
   .qv-agenda-projection {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .qv-arbitrer-kpi {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -11557,6 +11558,22 @@ body.scope-pdf-open { overflow: hidden; }
 .scope-content:has(.qv-programme-view){max-width:1474px}
 .qv-programme-view{min-width:0;max-width:100%;overflow:hidden}
 .qv-programme-filters{grid-template-columns:minmax(240px,2fr) repeat(5,minmax(112px,1fr));align-items:end;padding:14px;background:#f1f3f5;border:1px solid #d8dde3}
+.qv-programme-filters option.qv-oi-parent,.qv-programme-filters option.qv-option-group-start{font-weight:700;border-top:1px solid #d8dde3}
+.qv-programme-filters option.qv-oi-child{padding-left:18px}
+.qv-programme-filters .qv-statcom-field{min-width:0;position:relative}
+.qv-statcom-field .qv-filter-label{display:block;margin-bottom:6px;color:var(--scope-muted);font-size:var(--scope-type-label);font-weight:650;text-transform:uppercase}
+.qv-statcom-menu{position:relative}
+.qv-statcom-menu summary{display:flex;align-items:center;gap:6px;min-height:38px;max-width:100%;overflow:hidden;padding:7px 28px 7px 10px;border:1px solid #aeb7c1;border-radius:3px;background:#fff;white-space:nowrap;cursor:pointer}
+.qv-statcom-menu summary::marker{content:''}
+.qv-statcom-menu summary::after{content:'⌄';position:absolute;right:10px;color:#59616b}
+.qv-statcom-choices{position:absolute;z-index:20;top:100%;right:0;min-width:max(100%,290px);max-width:min(460px,90vw);max-height:320px;overflow-y:auto;border:1px solid #aeb7c1;background:#fff;box-shadow:0 8px 22px #0002}
+.qv-statcom-choices button{display:grid;grid-template-columns:9ch minmax(0,1fr);gap:10px;width:100%;padding:7px 10px;border:0;background:#fff;color:#20262d;text-align:left;cursor:pointer}
+.qv-statcom-choices button:first-child{display:block}
+.qv-statcom-choices button:hover,.qv-statcom-choices button:focus-visible,.qv-statcom-choices button[aria-current="true"]{background:#edf3f7}
+.qv-statcom-code{display:inline-block;min-width:9ch;white-space:nowrap}
+.qv-statcom-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qv-statcom-menu summary .qv-statcom-code{flex:0 0 9ch}
+@media(max-width:800px){.qv-statcom-choices{left:0;right:auto;min-width:min(290px,90vw)}}
 .qv-programme-filters .qv-filter-reset{width:auto;min-width:112px;padding:0 16px;justify-self:start;white-space:nowrap;font-size:var(--scope-type-body)}
 .qv-programme-table-wrap{width:100%;min-width:0;max-width:100%;overflow-x:hidden}
 .qv-programme-table{width:100%;min-width:0;table-layout:fixed;font-size:var(--scope-type-body);line-height:1.35}
@@ -11585,6 +11602,7 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-choice-list fieldset+fieldset{margin-top:26px}
 .qv-programme-choice-list legend{padding:0;margin-bottom:5px;font-size:.82rem;font-weight:600}
 .qv-programme-edit-grid .qv-programme-choice-list label{display:flex;align-items:center;gap:8px;margin:0;padding:2px 0 2px 10px;font-size:.82rem;font-weight:400}
+.qv-programme-edit-grid .qv-programme-public-field .qv-public-half-section{padding-left:30px}
 .qv-programme-choice-list label:nth-of-type(even){background:#f4f5f6}
 .qv-programme-choice-list label:hover{background:#e9edf0}
 .qv-programme-choice-list label:focus-within{outline:1px solid #1769aa;outline-offset:-1px}

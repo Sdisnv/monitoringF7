@@ -1,5 +1,5 @@
 {
-  "version": "2027.4",
+  "version": "2027.6",
   "campaign": "2027",
   "source": "docs/business-rules/quo-vadis-canonical-rules.md",
   "engine": "netlify/lib/_scope-cta-rules.js + assets/js/scope-ui-logic.js",
@@ -7,6 +7,25 @@
     "implemented": "Référentiel versionné dans le dépôt, overlay de lecture annuel, identifiants QV-*.",
     "remainingMigration": "seed scope_quo_vadis_planning_rules (code, version_code, valid_from/to, active, metadata.ruleId) pour activer/désactiver une campagne depuis l’UI Règles sans toucher au code."
   },
+  "annualDpsInstructionVersions": [
+    {
+      "effectiveFromYear": 2027,
+      "sections": {
+        "G1": ["N01", "N02", "N03", "N04", "N05"],
+        "C1": ["N01", "N02", "N03"],
+        "B1": ["N01", "N02", "N03"],
+        "B2": ["N01", "N02", "N03"]
+      },
+      "themeOrder": {
+        "G1": ["KICK-OFF", "ABC", "VARIA", "PIONNIER"],
+        "C1": ["KICK-OFF", "VARIA", "FEU"],
+        "B1": ["KICK-OFF", "VARIA", "FEU"],
+        "B2": ["KICK-OFF", "VARIA", "FEU"]
+      },
+      "instructionCoverage": "ALL_ACTIVE_HALF_SECTIONS_AND_SECTIONS",
+      "conduitesPerSite": 2
+    }
+  ],
   "rules": [
     {
       "id": "QV-CTA-001",
@@ -72,11 +91,12 @@
     },
     {
       "id": "QV-CONDUITE-008",
-      "active": true,
+      "active": false,
       "domain": "DPS",
       "family": "Instruction",
       "campaignScoped": true,
-      "summary": "Deux conduites annuelles par demi-section DPS ; si les instructions datées sont insuffisantes, programmer les occurrences manquantes par CTA, sans modifier la durée d'une heure."
+      "supersededBy": "QV-CONDUITE-001",
+      "summary": "Ancienne fabrication d'instructions pour deux conduites par demi-section, abandonnée par décision MOA."
     },
     {
       "id": "QV-DPS-001",
@@ -102,7 +122,28 @@
       "domain": "DPS",
       "family": "Instruction",
       "campaignScoped": true,
-      "summary": "Saison d’instruction bornée : premier samedi de février → dernière date 2026 projetée, jamais janvier, jamais après Noël."
+      "summary": "Saison d’instruction bornée : jamais janvier ni après Noël ; PIONNIER respecte sa période historique jusqu'en décembre."
+    },
+    {
+      "id": "QV-DPS-ANNUAL-001",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction",
+      "summary": "Chaque thème d'instruction couvre toutes les demi-sections et sections actives de l'année d'effet ; la cadence vient de 2026 et les publics du CTA continu."
+    },
+    {
+      "id": "QV-DPS-COVERAGE-001",
+      "active": true,
+      "domain": "DPS",
+      "family": "Instruction",
+      "summary": "Couverture complète par thème : section Nxx après Nxxa et Nxxb, sans étendre cette cardinalité aux autres activités."
+    },
+    {
+      "id": "QV-PIONNIER-004",
+      "active": true,
+      "domain": "FOSPEC",
+      "family": "Instruction",
+      "summary": "Section hors astreinte CTA pendant la semaine de l'instruction et la semaine précédente."
     },
     {
       "id": "QV-PRABC-001",

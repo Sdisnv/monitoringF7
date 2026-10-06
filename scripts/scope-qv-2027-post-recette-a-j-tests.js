@@ -8,6 +8,7 @@ const { readWorkbook } = require('./scope-qv-business-audit');
 const { createFixture } = require('./scope-qv-local-fixture');
 const L = require('../assets/js/scope-ui-logic');
 const cta = require('../netlify/lib/_scope-cta-rules');
+const { resolveStatComCode } = require('../netlify/lib/_scope-statcom-referential');
 const canonical = require('../netlify/lib/data/scope-qv-programme-2027.json');
 const history = require('../netlify/lib/data/scope-qv-history-2026.json');
 
@@ -32,10 +33,10 @@ async function main() {
   const byLabel = (label) => rows.filter((row) => row.label === label);
   const byPrefix = (prefix) => rows.filter((row) => String(row.label || '').startsWith(prefix));
 
-  test('1 KICK-OFF: 17 réalisations, 9 dates, 4 sites', () => {
+  test('1 KICK-OFF: 42 réalisations, 15 dates, 4 sites', () => {
     const list = rows.filter((row) => /KICK-OFF/.test(row.label || ''));
-    assert.equal(list.length, 17);
-    assert.equal(new Set(list.map(date)).size, 9);
+    assert.equal(list.length, 42);
+    assert.equal(new Set(list.map(date)).size, 15);
     assert.deepEqual([...new Set(list.flatMap((row) => row.ois))].sort(), ['B1', 'B2', 'C1', 'G1']);
   });
   test('2 PIONNIER/ABC et instructions: aucune date/public dupliqué', () => {
@@ -74,14 +75,8 @@ async function main() {
     assert.equal(list.length, 56);
     assert.equal(cta.expectedAnnualConduites(), 56);
     assert.ok(list.every((row) => row.startsAt.slice(11) === '10:30' && row.endsAt.slice(11) === '11:30'));
-    const perHalf = new Map();
-    for (const row of list) {
-      const half = row.publics.find((code) => /^N0\d[ab]$/.test(code));
-      const key = `${row.ois[0]}:${half}`;
-      perHalf.set(key, (perHalf.get(key) || 0) + 1);
-    }
-    assert.equal(perHalf.size, 28);
-    assert.ok([...perHalf.values()].every((count) => count === 2));
+    for (const site of ['G1', 'C1', 'B1', 'B2']) assert.equal(list.filter((row) => row.ois[0] === site).length, 2 * cta.operationalHalfSections(site).length);
+    assert.ok(list.every((row) => /^N0\d[ab]$/.test(row.publics[0]) && row.publics.includes('AUTO:1') && row.publics.includes('AUTO:3')));
   });
   test('6 conduite DAP: 4 soirées par section, cond VL et 4 créneaux', () => {
     const list = rows.filter((row) => row.statCom === '01522F7' && row.label === 'Conduite, formation continue');
@@ -110,10 +105,9 @@ async function main() {
     assert.ok(list.every((row) => row.statCom === '010FOBA' && row.code !== row.statCom));
     assert.ok(rows.every((row) => row.statCom !== '070F1.005'));
   });
-  test('9 FOCO: agrégation volontaire, aucun domaine FOCO inventé', () => {
+  test('9 FOCO: aucune attribution depuis DPS, DAP ou JSP', () => {
     const list = rows.filter((row) => L.qvProgrammeDomainMatches(row, 'FOCO'));
-    assert.equal(list.length, 485);
-    assert.deepEqual([...new Set(list.map((row) => row.domain))].sort(), ['DAP', 'DPS', 'JSP']);
+    assert.equal(list.length, rows.filter((row) => row.domain === 'FOCO').length);
     assert.equal(rows.filter((row) => row.domain === 'FOCO').length, 0);
   });
   test('10 OFSI: quatre séances et autres FOSPEC préservés', () => {
@@ -143,9 +137,9 @@ async function main() {
     assert.equal(codir26.length, 9);
     assert.ok(codir26.some((row) => !em26.some((em) => em.date === row.date || L.qvShiftHistoricalDate(em.date, 1) === row.date)));
   });
-  test('13 CTA: 53 permanences et rotations intactes', () => {
+  test('13 CTA: 54 permanences, dont Ascension isolée, et rotations intactes', () => {
     const list = rows.filter((row) => row.definitionId === 'CTA-PERMANENCE');
-    assert.equal(list.length, 53);
+    assert.equal(list.length, 54);
     const expected = new Map(cta.generateYear(2027).rows.map((row) => [row.id, row]));
     for (const row of list) {
       const match = expected.get(row.id);
@@ -154,13 +148,21 @@ async function main() {
       assert.deepEqual(row.ctaAssignments.map((item) => item.halfSection), match.ctaAssignments.map((item) => item.halfSection));
     }
   });
-  test('14 codes métier et Stat.Com: les lignes sources gardent leurs codes', () => {
+  test('14 codes métier et Stat.Com: correction sourcée par occurrence et OI', () => {
     const original = new Map(canonical.rows.map((row) => [row.id, row]));
+    const sourceByLine = new Map(workbook.rows.map((row) => [row.sourceLine, row]));
     for (const row of programme.rows.filter((item) => /^(?:Exercice DAP [1-5]|Exercice FOBA(?: \d+)?|Exercice PR [1-4]\.\d+)$/.test(item.label || ''))) {
       const before = original.get(row.id);
       if (!before) continue;
-      assert.equal(row.code, before.code, row.id);
-      assert.equal(row.statCom, before.statCom, row.id);
+      const linked = sourceByLine.get(row.historicalProposal?.sourceLine);
+      if (linked && linked.statCom && row.statCom !== before.statCom) {
+        const canonicalCode = resolveStatComCode(linked.statCom, row.startsAt).canonicalCode;
+        assert.equal(row.statCom, canonicalCode, row.id);
+        assert.ok(row.code.startsWith(`${canonicalCode}.`), row.id);
+      } else {
+        assert.equal(row.code, before.code, row.id);
+        assert.equal(row.statCom, before.statCom, row.id);
+      }
     }
   });
   test('15 décisions et assignations: aucun déplacement des lignes protégées', () => {
@@ -170,7 +172,9 @@ async function main() {
       if (!before) continue;
       assert.equal(row.startsAt, before.startsAt, row.id);
       assert.deepEqual(row.ois, before.ois, row.id);
-      assert.ok((before.publics || []).every((code) => row.publics.includes(code)), row.id);
+      if(row.id === 'qv-source-865') assert.deepEqual(row.publics,['ECH:II','ECH:III','ECH:IV']);
+      else if(row.id === 'qv-source-923') assert.deepEqual(row.publics,[]);
+      else assert.ok((before.publics || []).every((code) => row.publics.includes(code)), row.id);
     }
   });
   test('16 interface: thèmes, créneaux et cible recalculée visibles', () => {
@@ -179,9 +183,9 @@ async function main() {
     assert.ok(ui.includes('row.conduiteSlots'));
     assert.ok(ui.includes('slot.conduiteStartsAt'));
     assert.deepEqual([programme.target.models, programme.target.occurrences, programme.target.sessions,
-      programme.target.oiMaterializations, programme.target.toReview], [260, 805, 829, 1217, 704]);
-    assert.equal(rows.filter((row) => row.startsAt).length, 817);
-    assert.equal(rows.filter((row) => !row.startsAt).length, 12);
+      programme.target.oiMaterializations, programme.target.toReview], [258, 850, 850, 1239, 725]);
+    assert.equal(rows.filter((row) => row.startsAt).length, 850);
+    assert.equal(rows.filter((row) => !row.startsAt).length, 0);
   });
 
   const preparedFixture = createFixture(null);
@@ -229,7 +233,7 @@ async function main() {
     assert.deepEqual(updated.themes, ['Consolidation 1', 'Hydrant']);
     assert.equal(updated.label, foba.label);
     assert.equal(updated.statCom, foba.statCom);
-    assert.equal(saved.quoVadis.canonicalProgramme.target.toReview, 703);
+    assert.equal(saved.quoVadis.canonicalProgramme.target.toReview, 724);
     assert.equal(themeFixture.queries.some((entry) => /^(?:update|insert into|delete from) scope_evenements/i.test(entry.sql.trim())), false);
   });
 

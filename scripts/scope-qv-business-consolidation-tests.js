@@ -27,8 +27,8 @@ async function main(){
     assert.equal(first.startsAt,'2026-02-13T18:00');assert.equal(first.endsAt,'2026-02-16T06:00');
     assert.deepEqual(first.ctaAssignments.map(row=>row.halfSection),['N05a','N01a','N01a','N01a']);
   });
-  await test('47/53/53 fenêtres couvrantes, aucun redémarrage annuel',()=>{
-    for(const [year,count] of [[2026,47],[2027,53],[2028,53]]) assert.equal(cta.generateYear(year).rows.length,count);
+  await test('fenêtres couvrantes avec fériés isolés, aucun redémarrage annuel',()=>{
+    for(const [year,count] of [[2026,47],[2027,54],[2028,53]]) assert.equal(cta.generateYear(year).rows.length,count);
     for(const [year,date] of [[2026,'2027-01-01'],[2027,'2027-12-31']]){
       const a=cta.generateYear(year).rows.find(row=>row.id===`CTA-PERM-${date}`);
       const b=cta.generateYear(year+1).rows.find(row=>row.id===`CTA-PERM-${date}`);
@@ -114,14 +114,14 @@ async function main(){
     assert.deepEqual(L.qvNormalizeOiSelections({domain:'AUTO'},['G1']).codes,['DPS:G1']);
     assert.equal(L.qvNormalizeOiSelections({domain:'AUTO'},['G1']).status,'NORMALIZED');
     assert.equal(L.qvFormatOiSelections(L.qvNormalizeOiSelections({domain:'AUTO'},['G1']).codes),'G1');
-    // Une ambiguïté réelle reste visible : G1 n'est pas un site DAP du référentiel (DAP = Y1..Y4).
-    assert.equal(L.qvNormalizeOiSelections({domain:'DAP'},['G1']).status,'AMBIGUOUS');
-    assert.deepEqual(L.qvNormalizeOiSelections({domain:'DAP'},['G1']).codes,['G1']);
+    // Un G1 explicitement coche reste un OI DPS, meme sur une activite de domaine DAP.
+    assert.equal(L.qvNormalizeOiSelections({domain:'DAP'},['G1']).status,'NORMALIZED');
+    assert.deepEqual(L.qvNormalizeOiSelections({domain:'DAP'},['G1']).codes,['DPS:G1']);
     assert.equal(L.qvNormalizeOiSelections({domain:'AUTO'},['Z9']).status,'AMBIGUOUS');
   });
-  await test('validation métier refuse un OI historique non qualifié',async()=>{
-    const ambiguous=rows.find(row=>row.ambiguousOis.includes('G1'));
-    await assert.rejects(fixture.service.updateProgrammePreparation(ambiguous.id,{...payload,oiCodes:['G1'],statCom:''}),/Qualifier les anciens OI/);
+  await test('validation métier accepte G1 explicite et refuse un OI inconnu',async()=>{
+    assert.deepEqual(L.qvNormalizeOiSelections({domain:'DAP'},['G1']).codes,['DPS:G1']);
+    await assert.rejects(fixture.service.updateProgrammePreparation(source.id,{...payload,oiCodes:['Z9'],statCom:''}),/OI sont inconnus/);
   });
   await test('Candidats machiniste EA atomique distinct de Machiniste EA',()=>{
     assert.equal(L.qvProgrammePublicLabel('AUTO:CAND-EA'),'Candidats machiniste EA');
@@ -150,7 +150,7 @@ async function main(){
   await test('API annuelle conserve les prolongations CTA à la frontière de janvier suivant',()=>{
     const expected=cta.generateYear(2028).rows.at(-1);
     const actual=generated.canonicalProgramme.rows.find(row=>row.id===expected.id);
-    assert.equal(actual.startsAt,expected.startsAt);assert.equal(actual.endsAt,'2029-01-02T06:00');
+    assert.equal(actual.startsAt,expected.startsAt);assert.equal(actual.endsAt,'2029-01-03T06:00');
   });
   await test('N+1 reprend dernière version validée libellé, Stat.Com, OI, public, responsable, lieu, salle',()=>{
     assert.ok(next);assert.equal(next.activityLabel,payload.activityLabel);assert.equal(next.statCom,payload.statCom);
@@ -231,13 +231,13 @@ async function main(){
     ctx.state.quoVadisFilters.q='Référence validée';ctx.state.quoVadisFilters.cible='AUTO:CAND-EA';
     ctx.applyQuoVadisRouteContext(route);assert.equal(ctx.state.quoVadisFilters.q,'Référence validée');assert.equal(ctx.state.quoVadisFilters.cible,'AUTO:CAND-EA');
     ctx.applyQuoVadisRouteContext({...route,qvMode:'mensuelle',qvMois:'2027-02'});assert.equal(ctx.state.quoVadisFilters.month,'2027-02');
-    assert.equal(L.qvProgrammeFamily({domain:'DPS',family:'Événement'}),'FOCO');
+    assert.equal(L.qvProgrammeFamily({domain:'DPS',family:'Événement'}),'Événement');
   });
   await test('recherche par libellé du nouveau public et par OI qualifié',()=>{
     const ctx={L,state:{quoVadisFilters:{q:'Candidats machiniste EA'}},qvProgrammeVisualState:()=>({label:'Validé'}),
       qvProgrammeFamily:L.qvProgrammeFamily,qvProgrammeDate:()=>'',qvProgrammeEventCodeLabel:()=>'',
       qvProgrammePublicLabel:row=>L.qvFormatPublicLabels(row.publics),qvProgrammeProvenance:()=>'',qvProgrammeCompareRows:()=>0};
-    vm.createContext(ctx);vm.runInContext(extract('qvNormalizeSearch')+extract('qvProgrammeFilteredRows'),ctx);
+    vm.createContext(ctx);vm.runInContext(extract('qvProgrammePublicCodes')+extract('qvNormalizeSearch')+extract('qvProgrammeFilteredRows'),ctx);
     const qv={canonicalProgramme:{rows:[{id:'candidate',publics:['AUTO:CAND-EA'],oiSelections:['JSP:G1']},{id:'machinist',publics:['AUTO:5']}]}};
     assert.deepEqual(Array.from(ctx.qvProgrammeFilteredRows(qv),row=>row.id),['candidate']);
     ctx.state.quoVadisFilters.q='JSP G1';

@@ -1,0 +1,409 @@
+{
+  "database": "postgres",
+  "host": "aws-0-eu-central-2.pooler.supabase.com",
+  "port": 5432,
+  "readOnly": true,
+  "scopeTables": 110,
+  "migrations": [
+    "scope-qv-publication-c23-repair-1"
+  ],
+  "baseline": {
+    "events": 250,
+    "qv_links": 118,
+    "obligations_2027": 109,
+    "participations": 6160,
+    "attendus": 5952,
+    "affectations": 636,
+    "journal": 2296
+  },
+  "calendarAscension": [
+    "FERIE"
+  ],
+  "candidate": 850,
+  "validated": 125,
+  "waitingValidation": 725,
+  "localDecisions": 15,
+  "sourceCollisions": 0,
+  "duplicates": 0,
+  "plan": {
+    "CREATE": 7,
+    "UPDATE": 34,
+    "UNCHANGED": 84,
+    "BLOCKED": 725,
+    "NOT_PUBLISHED": 0
+  },
+  "planFingerprint": "c7d769ef165a5b03480800ed45b2b7446055ec3e7054ebd2145b83b1e24b64f0",
+  "changed": [
+    {
+      "id": "qv-source-895",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-866",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-879",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-868",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-894",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-877",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-867",
+      "action": "CREATE",
+      "fields": []
+    },
+    {
+      "id": "qv-source-881",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-916",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "qv-source-912",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "qv-source-865",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "CTA-PERM-2027-05-14",
+      "action": "UPDATE",
+      "fields": [
+        "event.durationMinutes",
+        "event.endDate",
+        "event.endsAt",
+        "fingerprint"
+      ]
+    },
+    {
+      "id": "qv-source-857",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-884",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "CTA-PERM-2027-09-17",
+      "action": "UPDATE",
+      "fields": [
+        "event.durationMinutes",
+        "event.endDate",
+        "event.endsAt",
+        "fingerprint"
+      ]
+    },
+    {
+      "id": "qv-source-915",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "qv-source-854",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-904",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-914",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "qv-source-909",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-861",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-863",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-898",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-908",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-917",
+      "action": "UPDATE",
+      "fields": [
+        "event.locationCode",
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "qv-source-869",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-883",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-906",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-855",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-907",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-856",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-911",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "CTA-PERM-2027-01-01",
+      "action": "UPDATE",
+      "fields": [
+        "event.durationMinutes",
+        "event.startDate",
+        "event.startsAt",
+        "fingerprint"
+      ]
+    },
+    {
+      "id": "CTA-PERM-2027-03-26",
+      "action": "UPDATE",
+      "fields": [
+        "event.durationMinutes",
+        "event.endDate",
+        "event.endsAt",
+        "event.startDate",
+        "event.startsAt",
+        "fingerprint"
+      ]
+    },
+    {
+      "id": "qv-source-910",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    },
+    {
+      "id": "qv-source-852",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-880",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-878",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-923",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-885",
+      "action": "UPDATE",
+      "fields": [
+        "event.primaryDomain",
+        "fingerprint",
+        "relations.domainCodes"
+      ]
+    },
+    {
+      "id": "qv-source-913",
+      "action": "UPDATE",
+      "fields": [
+        "fingerprint",
+        "relations.publicCodes"
+      ]
+    }
+  ],
+  "protectedBefore": {
+    "scope_quo_vadis_obligations": {
+      "count": 109,
+      "hash": "361a60b10ac3b703e265f29dcc958d3e"
+    },
+    "scope_quo_vadis_proposals": {
+      "count": 159,
+      "hash": "1d3d086ee1ec7bc3be490579ff2beec2"
+    },
+    "scope_participations": {
+      "count": 6160,
+      "hash": "3aeb4a4e51d38441df164c41aec1d413"
+    },
+    "scope_attendus": {
+      "count": 5952,
+      "hash": "3b20b494a18db85af8f7f4ba41745d34"
+    },
+    "scope_affectations": {
+      "count": 636,
+      "hash": "a25cf27b765a3ce9eb56ec739a7a90d7"
+    },
+    "scope_journal_metier": {
+      "count": 2296,
+      "hash": "c452d316dc1276088d8aa3598fe3c4bc"
+    },
+    "nonQvEvents": {
+      "count": 132,
+      "hash": "016a346f9934bc2e6c696c4015853b7d"
+    }
+  }
+}

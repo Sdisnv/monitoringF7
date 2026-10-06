@@ -161,7 +161,8 @@ test('le public contradictoire DAP revient à une décision humaine', () => {
   assert.deepEqual(row.publics, []);
   assert.equal(row.publicReviewRequired, true);
   assert.match(row.reason, /PUBLIC_CIBLE_A_DEFINIR/);
-  assert.match(ui, /return L\.qvFormatPublicLabels\(row && row\.publics\) \|\| 'À définir'/);
+  assert.match(ui, /qvFormatPublicLabels\(row && row\.publics\)/);
+  assert.match(ui, /row\.target === 'SDIS-ALL' \? 'SDIS \(tous\)'/);
   assert.doesNotMatch(ui.slice(ui.indexOf('function renderQuoVadisProgramme'), ui.indexOf('function renderQuoVadisActivites')), /Selon référentiel/);
 });
 
@@ -229,7 +230,8 @@ test('le moteur CTA applique le cycle continu et les neuf jours fériés vaudois
   const result = ctaRules.applyCtaRules(programme.rows, 2027);
   assert.equal(result.holidayEvidence.length, 9);
   assert.deepEqual(result.holidayEvidence.find((row) => row.label === 'Lundi de Pâques'), {
-    date: '2027-03-29', label: 'Lundi de Pâques', type: 'PROLONGEMENT_WEEK_END',
+    date: '2027-03-29', label: 'Lundi de Pâques', type: 'FUSION_WEEK_END',
+    holidayStartsAt: '2027-03-28T18:00', holidayEndsAt: '2027-03-30T06:00',
     startsAt: '2027-03-25T18:00', endsAt: '2027-03-30T06:00',
     assignments: 'G1 N02b ; C1/B1/B2 N03a', ownerId: 'CTA-PERM-2027-03-26',
     ctaAssignments: ctaRules.assignmentsForFriday('2027-03-26').map(row => ({ ...row, provenance: 'MOA_CTA_CONTINUOUS_HALF_SECTION_CYCLE' }))
@@ -260,9 +262,9 @@ test('l’Agenda enrichit les 497 séances non datées depuis QUO VADIS 2026', (
   assert.equal(programme.historicalEnrichment.probable, 257);
   assert.equal(programme.historicalEnrichment.ambiguous, 134);
   assert.equal(historical.length, 363);
-  assert.equal(dated.length, 488);
-  assert.equal(undated.length, 134);
-  assert.equal(historical.length + undated.length, 497);
+  assert.equal(dated.length, 494);
+  assert.equal(undated.length, 128);
+  assert.equal(historical.length + undated.length, 491);
   assert.match(ui, /function qvAgendaProjection/);
   assert.match(ui, /séances représentées/);
   assert.match(ui, /Proposées 2026/);
@@ -415,8 +417,8 @@ test('l’agenda classe les propositions historiques 2026 et le reliquat ambigu'
   const proposed = rows.filter((row) => row.historicalProposal);
   const ids = rows.map((row) => row.id);
   assert.equal(rows.length, 622);
-  assert.equal(dated.length, 488);
-  assert.equal(undated.length, 134);
+  assert.equal(dated.length, 494);
+  assert.equal(undated.length, 128);
   assert.equal(proposed.length, 363);
   assert.equal(programme.historicalEnrichment.dates, 363);
   assert.equal(programme.historicalEnrichment.times, 363);

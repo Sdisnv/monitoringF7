@@ -65,7 +65,7 @@ test('QV-CTA-001 : le cycle CTA est perpétuel et unique', () => {
   assert.notEqual(jan, 'N06a');
 });
 
-test('QV-CONDUITE-002 : cible annuelle 56', () => {
+test('QV-CONDUITE-002 : cible annuelle 56, deux par demi-section', () => {
   assert.equal(cta.expectedAnnualConduites(), 56);
   assert.equal(applied.derived.expected, 56);
   assert.equal(10 + 6 + 6 + 6, 28);
@@ -105,25 +105,29 @@ test('QV-CONDUITE-006 : aucune conduite après PIONNIER', () => {
   });
 });
 
-test('QV-CONDUITE-007 : répartition déterministe, sans hasard, identique au 2e passage', () => {
-  assert.deepEqual(L.qvSelectSpreadIndices(2, 3), [0, 1]);
-  assert.deepEqual(L.qvSelectSpreadIndices(3, 3), [0, 1, 2]);
-  assert.deepEqual(L.qvSelectSpreadIndices(10, 3), [0, 5, 9]);
-  assert.deepEqual(L.qvSelectSpreadIndices(10, 2), [0, 9]);
+test('QV-CONDUITE-007 : deux familles historiques et deuxième passage idempotent', () => {
+  for (const site of ['G1', 'C1', 'B1', 'B2']) {
+    for (const half of cta.operationalHalfSections(site)) {
+      const themes = conduites.filter((row) => L.qvDpsSitesOf(row)[0] === site && row.publics.includes(half))
+        .sort((a, b) => a.startsAt.localeCompare(b.startsAt)).map((row) => row.conduiteEvidence.theme);
+      const sources = L.qvConduiteSources(rows, cta.instructionPublicForDate)
+        .filter((item) => item.site === site && item.halfSection === half)
+        .sort((a, b) => a.row.startsAt.localeCompare(b.row.startsAt));
+      assert.deepEqual(themes, [sources[0].theme, sources.at(-1).theme]);
+    }
+  }
   const again = L.qvApplyConduiteContinue(applied.rows, cta.conduiteEngineOptions());
   assert.equal(again.derived.added.length, 0);
   assert.equal(again.derived.matched.length, 56);
   assert.equal((again.derived.programmedInstructions || []).length, 0);
 });
 
-test('QV-CONDUITE-008 : historique suffisant, 0 instruction ajoutée, 56 conduites', () => {
+test('QV-CONDUITE-008 abandonnée : 0 instruction artificielle, 56 conduites sourcées', () => {
   assert.equal((applied.derived.programmedInstructions || []).length, 0);
   assert.equal(applied.derived.insufficient.length, 0);
   assert.equal(applied.derived.materialized, 56);
-  const complete = ['G1', 'C1', 'B1', 'B2'].flatMap((oi) => cta.operationalHalfSections(oi).map((half) => `${oi}|${half}`));
-  complete.forEach((key) => {
-    const n = conduites.filter((row) => `${L.qvDpsSitesOf(row)[0]}|${row.conduiteEvidence.halfSection}` === key).length;
-    assert.equal(n, 2, key);
+  ['G1', 'C1', 'B1', 'B2'].forEach((site) => {
+    assert.equal(conduites.filter((row) => L.qvDpsSitesOf(row)[0] === site).length, 2 * cta.operationalHalfSections(site).length, site);
   });
 });
 

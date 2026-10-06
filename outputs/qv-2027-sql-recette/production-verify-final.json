@@ -1,0 +1,30 @@
+{
+  "mode": "PRODUCTION_READ_ONLY_VERIFICATION",
+  "candidate": 850,
+  "validated": 125,
+  "waitingValidation": 725,
+  "published": 125,
+  "localDecisions": 15,
+  "tourDeFrance": 0,
+  "plan": {
+    "CREATE": 0,
+    "UPDATE": 0,
+    "UNCHANGED": 125,
+    "BLOCKED": 725,
+    "NOT_PUBLISHED": 0
+  },
+  "reconciliation": {
+    "MATCHED": 125,
+    "MISSING": 0,
+    "DUPLICATE": 0,
+    "DRIFT": 0,
+    "PROTECTED_CHANGE": 0,
+    "UNEXPECTED": 0
+  },
+  "duplicates": 0,
+  "protected": true,
+  "roomLocationMismatch": 0,
+  "foba": 4,
+  "missingEventCodes": 0,
+  "completedHistoricalCodes": 33
+}

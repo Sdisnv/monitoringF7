@@ -1,0 +1,27 @@
+{
+  "moves": [
+    { "id": "QV27:DAPCOND:2027-03-25:Y3:1830", "from": "2027-03-25", "to": "2027-03-24" },
+    { "id": "QV26-FORMATION-OPERATEUR-VPC-1-4-C69575A3:O1:S1", "from": "2027-03-25", "to": "2027-04-02" },
+    { "id": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O5:S1", "from": "2027-03-25", "to": "2027-03-19" },
+    { "id": "QV27:CONDUITE:G1:N02b:2027-03-27:1030", "from": "2027-03-27", "to": "2027-06-05", "sourceId": "QV26-INSTR-DEMI-SCT-ABC-C49C7121:O7:S1" },
+    { "id": "QV26-EXERCICE-JSP-3-0AFB4398:O3:S1", "from": "2027-03-27", "to": "2027-04-17" },
+    { "id": "QV26-FORMATION-PERMANENTS-4F48A9D0:O2:S1", "from": "2027-03-29", "to": "2027-04-05" },
+    { "id": "QV26-EXERCICE-JSP-4-E8680A47:O1:S1", "from": "2027-03-29", "to": "2027-04-05" },
+    { "id": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O2:S1", "from": "2027-05-05", "to": "2027-05-19" },
+    { "id": "QV26-EXERCICE-DPS-DAP-1-7F1E9444:O1:S1", "from": "2027-05-05", "to": "2027-05-19" },
+    { "id": "QV26-FORMATION-PERMANENTS-4F48A9D0:O3:S1", "from": "2027-05-05", "to": "2027-05-12" },
+    { "id": "QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-05-05:1800:G1-Y1", "from": "2027-05-05", "to": "2027-05-14" },
+    { "id": "QV27:EMSEA:SESSION:05", "from": "2027-05-05", "to": "2027-05-11" },
+    { "id": "QV26-EXERCICE-DAP-3-618B0715:O1:S1", "from": "2027-05-06", "to": "2027-05-13" },
+    { "id": "QV26-EXERCICE-DAP-2-6285EF74:O4:S1", "from": "2027-05-06", "to": "2027-05-13" },
+    { "id": "QV26-INTRODUCTION-PIONNIER-999BBC8C:O1:S1", "from": "2027-05-06", "to": "2027-05-13" },
+    { "id": "QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O8:S1", "from": "2027-05-06", "to": "2027-05-10" },
+    { "id": "QV27:DAPCOND:2027-05-17:Y1:1830", "from": "2027-05-17", "to": "2027-05-24" },
+    { "id": "QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-05-17:1830:Caserne-G1", "from": "2027-05-17", "to": "2027-05-28" },
+    { "id": "QV27:CONDUITE:G1:N04b:2027-07-31:1030", "from": "2027-07-31", "to": "2027-05-22", "sourceId": "QV26-INSTR-DEMI-SCT-ABC-C49C7121:O5:S1" }
+  ],
+  "excludedNonRecurring": [
+    { "definitionId": "QV26-TOUR-DE-FRANCE-FEMMES-26-4BF12176", "sourceLine2026": 487, "reason": "Événement extraordinaire non récurrent ; aucune décision métier d'intégration en 2027." }
+  ],
+  "humanReview": []
+}

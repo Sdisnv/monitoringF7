@@ -48,7 +48,7 @@ const enrich = (row) => L.qvEnrichSectionPublic(row, [], businessRows, cta.instr
 // ---------------------------------------------------------------- §4 Conduite, formation continue
 
 test('conduite derivee uniquement depuis une instruction demi-section datee et jamais apres PIONNIER', () => {
-  // QV-CONDUITE-002 : deux séances d'une heure par demi-section, démontrées par 2026.
+  // Décision MOA : deux séances d'une heure par demi-section opérationnelle.
   assert.equal(derived.expected, 56);
   assert.equal(derived.matched.length, 4);
   assert.equal(derived.added.length, 52);
@@ -84,7 +84,7 @@ test('conduite B2 suit le lieu operationnel de son instruction source sans depla
   assert.equal(L.qvDpsDefaultLieuCode('G1'), 'G1');
 });
 
-test('apres correction de la rotation, les conduites sont materialisees pour chaque demi-section operationnelle', () => {
+test('apres correction de la rotation, deux conduites sont materialisees par demi-section', () => {
   assert.equal(derived.expected, 56);
   assert.equal(derived.insufficient.length, 0);
   // Les conduites DAP (Stat.Com 01522F7, QV-DAP-001) sont comptées séparément.
@@ -291,7 +291,7 @@ test('le retour depuis une fiche conserve le contexte de consultation', () => {
 
 // ---------------------------------------------------------------- §10 « À qualifier »
 
-test('un OI determine n apparait plus comme a qualifier, une ambiguite reelle reste visible', () => {
+test('un OI determine n apparait plus comme a qualifier, meme hors de son domaine', () => {
   for (const [domain, code] of [['AUTO', 'G1'], ['FOSPEC', 'C1'], ['PR', 'B2'], ['FOBA', 'B1']]) {
     const normalized = L.qvNormalizeOiSelections({ domain }, [code]);
     assert.deepEqual(normalized.codes, [`DPS:${code}`], `${domain}/${code}`);
@@ -299,18 +299,16 @@ test('un OI determine n apparait plus comme a qualifier, une ambiguite reelle re
   }
   assert.equal(L.qvNormalizeOiSelections({ domain: 'AUTO', label: 'Séance JSP G1' }, ['G1']).codes[0], 'JSP:G1');
   const real = L.qvNormalizeOiSelections({ domain: 'DAP' }, ['G1']);
-  assert.equal(real.status, 'AMBIGUOUS');
-  assert.match(L.qvFormatOiSelections(real.codes), /^À qualifier : G1$/);
+  assert.equal(real.status, 'NORMALIZED');
+  assert.deepEqual(real.codes, ['DPS:G1']);
+  assert.equal(L.qvProgrammeOiLabel({ domain:'DAP', oiSelections:real.codes }), 'G1');
 });
 
-// QV-PROJ-001 rétablit deux réalisations 2026 de « Séance des chefs de section DAP » : la même
-// ambiguïté métier porte donc sur 6 occurrences, toujours sur les 3 mêmes activités DAP.
-test('les seules ambiguites OI restantes sont des activites DAP portant G1', () => {
+// Seules cinq occurrences DAP portent G1 explicitement ; le lieu G1 de la ligne 152 ne vaut pas OI.
+test('les occurrences DAP portant G1 n ont plus d OI ambigu', () => {
   const ambiguous = businessRows.filter((row) => L.qvNormalizeOiSelections(row, row.ois || []).ambiguous.length);
-  assert.equal(ambiguous.length, 6);
-  assert.equal(new Set(ambiguous.map((row) => row.label)).size, 3);
-  assert.ok(ambiguous.every((row) => row.domain === 'DAP'));
-  assert.ok(ambiguous.every((row) => (row.ois || []).includes('G1')));
+  assert.equal(ambiguous.length, 0);
+  assert.equal(businessRows.filter((row) => row.domain === 'DAP' && (row.ois || []).includes('G1')).length, 5);
 });
 
 // ---------------------------------------------------------------- §11 qv-source-912
@@ -368,7 +366,7 @@ test('le compteur a arbitrer compte exactement les obligations A_PLANIFIER et PR
 test('le fichier source canonique reste intact : 622 seances demontrees', () => {
   assert.equal(sourceRows.filter((row) => !row.external).length, 622);
   assert.equal(businessRows.filter((row) => !row.external).length, 829);
-  assert.equal(businessRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length, 52);
+  assert.equal(businessRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_ANNUAL').length, 52);
 });
 
 test('2028 et 2029 ne sont pas generes par ce lot', () => {

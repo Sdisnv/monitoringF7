@@ -193,16 +193,19 @@ test('les conduites 0152F7 sont matérialisées après correction des sources, s
 });
 
 test('la matrice des conduites vise deux séances par demi-section opérationnelle', () => {
-  const parHalf = {};
+  const parSite = {};
+  const parDemi = {};
   for (const row of applied.derived.matched.concat(applied.derived.added)) {
     const site = L.qvDpsSitesOf(row)[0];
     const half = row.conduiteEvidence.halfSection;
-    const key = `${site}|${half}`;
-    parHalf[key] = (parHalf[key] || 0) + 1;
-    assert.ok(!cta.isReserveHalfSection(site, half), key);
+    parSite[site] = (parSite[site] || 0) + 1;
+    parDemi[`${site}|${half}`] = (parDemi[`${site}|${half}`] || 0) + 1;
+    assert.ok(!cta.isReserveHalfSection(site, half), `${site}|${half}`);
   }
-  assert.equal(Object.keys(parHalf).length, 28);
-  Object.values(parHalf).forEach((count) => assert.equal(count, 2));
+  assert.equal(Object.keys(parSite).length, 4);
+  assert.deepEqual(parSite, { G1: 20, C1: 12, B1: 12, B2: 12 });
+  assert.equal(Object.keys(parDemi).length, 28);
+  Object.values(parDemi).forEach((count) => assert.equal(count, 2));
 });
 
 test('aucune conduite n’est jamais ajoutée après une instruction PIONNIER', () => {

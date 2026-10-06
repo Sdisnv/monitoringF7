@@ -4,7 +4,7 @@ const G1_CYCLE = Object.freeze(['N04b', 'N03b', 'N02b', 'N01b', 'N05a', 'N04a', 
 const OTHER_CYCLE = Object.freeze(['N03b', 'N02b', 'N01b', 'N03a', 'N02a', 'N01a']);
 const ANCHOR_DATE = '2026-02-13';
 const DAY_MS = 86400000;
-const CONDUITE_PER_OPERATIONAL_HALF = 2;
+const CONDUITE_PER_HALF = 2;
 const DPS_SITES = Object.freeze(['G1', 'C1', 'B1', 'B2']);
 
 function operationalHalfSections(oi) {
@@ -23,7 +23,7 @@ function isReserveHalfSection(oi, code) {
 }
 
 function expectedAnnualConduites() {
-  return DPS_SITES.reduce((total, site) => total + operationalHalfSections(site).length, 0) * CONDUITE_PER_OPERATIONAL_HALF;
+  return DPS_SITES.reduce((count, site) => count + operationalHalfSections(site).length * CONDUITE_PER_HALF, 0);
 }
 
 function conduiteEngineOptions() {
@@ -133,9 +133,11 @@ function compactAssignments(assignments) {
 
 function applyCtaRules(rows, year = 2027, holidays = vaudHolidays(year)) {
   const fridayOf = row => String(row.id || '').match(/CTA-PERM-(\d{4}-\d{2}-\d{2})$/)?.[1] || dateKey(row.startsAt);
-  const source = (rows || []).filter(row => row.definitionId !== 'CTA-PERMANENCE' || fridayOf(row) >= ANCHOR_DATE).map((row) => ({ ...row }));
-  const cta = source.filter((row) => row.definitionId === 'CTA-PERMANENCE').sort((a, b) => dateKey(a.startsAt).localeCompare(dateKey(b.startsAt)));
-  const byStart = new Map(cta.map((row) => [dateKey(row.startsAt), row]));
+  const source = (rows || []).filter(row => row.definitionId !== 'CTA-PERMANENCE'
+    || (!row.ctaHolidayOnly && fridayOf(row) >= ANCHOR_DATE)).map((row) => ({ ...row }));
+  const cta = source.filter((row) => row.definitionId === 'CTA-PERMANENCE')
+    .sort((a, b) => fridayOf(a).localeCompare(fridayOf(b)));
+  if (!cta.length) return { rows: source, holidayEvidence: [] };
   for (const row of cta) {
     const scheduledFriday = fridayOf(row);
     const assignments = assignmentsForFriday(scheduledFriday).map((assignment) => ({ ...assignment, provenance: 'MOA_CTA_CONTINUOUS_HALF_SECTION_CYCLE' }));
@@ -150,58 +152,80 @@ function applyCtaRules(rows, year = 2027, holidays = vaudHolidays(year)) {
       ctaHolidayWindows: []
     });
   }
-  byStart.clear();
-  cta.forEach((row) => byStart.set(dateKey(row.startsAt), row));
-
-  const coverage = [];
+  const intervals = cta.map((row) => ({ start: row.startsAt, end: row.endsAt, row }));
   for (const holiday of holidays) {
     if (holiday.date < ANCHOR_DATE) continue;
-    const weekday = utcDate(holiday.date).getUTCDay();
-    let type = 'JOUR_FERIE_ISOLE';
-    let startsAt;
-    let endsAt;
-    let owner;
-    let assignments;
-    if (weekday === 1) {
-      type = 'PROLONGEMENT_WEEK_END';
-      owner = cta.filter((row) => dateKey(row.startsAt) < holiday.date).at(-1);
-      if (!owner) continue;
-      owner.endsAt = `${addDays(holiday.date, 1)}T06:00`;
-      assignments = owner.ctaAssignments;
-    } else if (weekday === 5) {
-      type = 'FERIE_AVANT_WEEK_END';
-      owner = byStart.get(holiday.date) || cta.find((row) => dateKey(row.startsAt) > holiday.date);
-      if (!owner) continue;
-      owner.startsAt = `${addDays(holiday.date, -1)}T18:00`;
-      assignments = owner.ctaAssignments;
-    } else if (weekday === 0 || weekday === 6) {
-      type = 'COUVERT_PAR_WEEK_END';
-      owner = cta.find((row) => dateKey(row.startsAt) <= holiday.date && dateKey(row.endsAt) >= holiday.date);
-      if (!owner) continue;
-      startsAt = owner.startsAt;
-      endsAt = owner.endsAt;
-      assignments = owner.ctaAssignments;
-    } else {
-      owner = cta.filter((row) => dateKey(row.startsAt) < holiday.date).at(-1);
-      if (!owner) continue;
-      startsAt = `${addDays(holiday.date, -1)}T18:00`;
-      endsAt = `${addDays(holiday.date, 1)}T06:00`;
-      assignments = owner.ctaAssignments;
-      owner.ctaHolidayWindows.push({ startsAt, endsAt, assignments, holidayDate: holiday.date, holidayLabel: holiday.label });
-    }
-    coverage.push({ holiday, type, owner, startsAt, endsAt, assignments });
+    intervals.push({ start: `${addDays(holiday.date, -1)}T18:00`,
+      end: `${addDays(holiday.date, 1)}T06:00`, holiday });
   }
-  const evidence = coverage.map(({ holiday, type, owner, startsAt, endsAt, assignments }) => ({
-    ...holiday,
-    type,
-    startsAt: type === 'JOUR_FERIE_ISOLE' ? startsAt : owner.startsAt,
-    endsAt: type === 'JOUR_FERIE_ISOLE' ? endsAt : owner.endsAt,
-    assignments: compactAssignments(assignments),
-    ctaAssignments: assignments,
-    ownerId: owner.id
-  }));
-  const replacements = new Map(cta.map((row) => [row.id, row]));
-  return { rows: source.map((row) => replacements.get(row.id) || row), holidayEvidence: evidence };
+  intervals.sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
+  const groups = [];
+  for (const interval of intervals) {
+    const group = groups[groups.length - 1];
+    if (group && interval.start <= group.end) {
+      group.end = group.end > interval.end ? group.end : interval.end;
+      group.intervals.push(interval);
+    } else groups.push({ start: interval.start, end: interval.end, intervals: [interval] });
+  }
+  const replacements = new Map();
+  const omitted = new Set();
+  const added = [];
+  const evidence = [];
+  for (const group of groups) {
+    const standards = group.intervals.filter((interval) => interval.row).map((interval) => interval.row);
+    const holidayIntervals = group.intervals.filter((interval) => interval.holiday);
+    if (!standards.length && year !== 2027) {
+      const prior = cta.filter((row) => row.startsAt < group.start).at(-1);
+      if (prior) for (const interval of holidayIntervals) evidence.push({
+        ...interval.holiday, type: 'JOUR_FERIE_ISOLE',
+        holidayStartsAt: interval.start, holidayEndsAt: interval.end,
+        startsAt: interval.start, endsAt: interval.end,
+        assignments: compactAssignments(prior.ctaAssignments),
+        ctaAssignments: prior.ctaAssignments, ownerId: prior.id
+      });
+      continue;
+    }
+    let owner = standards[0];
+    if (!owner) {
+      const firstHoliday = holidayIntervals[0].holiday.date;
+      const weekday = utcDate(firstHoliday).getUTCDay();
+      const referenceFriday = addDays(firstHoliday, -((weekday + 2) % 7));
+      const assignments = assignmentsForFriday(referenceFriday)
+        .map((assignment) => ({ ...assignment, provenance: 'MOA_CTA_CONTINUOUS_HALF_SECTION_CYCLE' }));
+      owner = { id: `CTA-PERM-FERIE-${firstHoliday}`, definitionId: 'CTA-PERMANENCE',
+        occurrenceId: `CTA-PERM-FERIE-${firstHoliday}:O1`, sessionId: `CTA-PERM-FERIE-${firstHoliday}:S1`,
+        label: 'Permanence', eventLabel: 'Permanence', status: 'CALCULE', kind: 'RECURRENCE',
+        domain: 'DPS', family: 'Permanence', ois: [...DPS_SITES], publics: [], external: false,
+        ctaHolidayOnly: true, ctaReferenceFriday: referenceFriday, ctaAssignments: assignments,
+        ctaPublicStatus: 'HALF_SECTION_ROTATION_MOA_DEMONSTRATED' };
+      added.push(owner);
+    }
+    owner.startsAt = group.start;
+    owner.endsAt = group.end;
+    owner.ctaHolidayWindows = holidayIntervals.map((interval) => ({
+      startsAt: interval.start, endsAt: interval.end,
+      holidayDate: interval.holiday.date, holidayLabel: interval.holiday.label,
+      assignments: owner.ctaAssignments
+    }));
+    for (const row of standards) {
+      if (row !== owner) omitted.add(row.id);
+      replacements.set(row.id, owner);
+    }
+    for (const interval of holidayIntervals) evidence.push({
+      ...interval.holiday, type: standards.length ? 'FUSION_WEEK_END' : 'JOUR_FERIE_ISOLE',
+      holidayStartsAt: interval.start, holidayEndsAt: interval.end,
+      startsAt: group.start, endsAt: group.end,
+      assignments: compactAssignments(owner.ctaAssignments),
+      ctaAssignments: owner.ctaAssignments, ownerId: owner.id
+    });
+  }
+  const resultRows = source.filter((row) => !omitted.has(row.id))
+    .map((row) => replacements.get(row.id) || row);
+  for (const holidayRow of added) {
+    const next = resultRows.findIndex((row) => row.definitionId === 'CTA-PERMANENCE' && row.startsAt > holidayRow.startsAt);
+    resultRows.splice(next < 0 ? resultRows.length : next, 0, holidayRow);
+  }
+  return { rows: resultRows, holidayEvidence: evidence };
 }
 
 function generateYear(year, template = {}) {
@@ -225,7 +249,7 @@ module.exports = {
   ANCHOR_DATE,
   G1_CYCLE,
   OTHER_CYCLE,
-  CONDUITE_PER_OPERATIONAL_HALF,
+  CONDUITE_PER_HALF,
   DPS_SITES,
   addDays,
   applyCtaRules,

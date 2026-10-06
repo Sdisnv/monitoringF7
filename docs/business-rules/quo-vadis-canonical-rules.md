@@ -5,7 +5,7 @@ Aucune règle nouvelle n’est inventée ici : chaque identifiant pointe vers du
 
 Source de vérité CTA : `netlify/lib/_scope-cta-rules.js` (`instructionPublicForDate`).
 Application programme 2027 : overlay de lecture dans `canonicalBusinessProgramme2027()`
-(`netlify/lib/_scope-quo-vadis-service.js`) — rotation → PIONNIER → famille d’instructions →
+(`netlify/lib/_scope-quo-vadis-service.js`) — rotation → PIONNIER → contrôle CTA N/N−1 → famille d’instructions →
 périodicité pluriannuelle → matérialisation historique → conduites DPS → conduite DAP → PR-ABC.
 Le JSON canonique `netlify/lib/data/scope-qv-programme-2027.json` (622 séances) n’est pas patché.
 
@@ -35,7 +35,7 @@ N01–N03, a/b. Réserve N04 exclue. Total opérationnel 10+6+6+6 = **28** (une 
 Preuve : test « le moteur CTA existant est reutilise ».
 
 ### QV-CTA-006 — Public d’instruction dérivé de la permanence du vendredi de référence
-Section = 3 caractères `N0x`, demi-section = `N0xa`/`N0xb`. Exception PIONNIER section G1 : vendredi précédent (CSU-nvb).
+Section = 3 caractères `N0x`, demi-section = `N0xa`/`N0xb`. Le public PIONNIER initial est projeté depuis le vendredi de référence historique, puis son créneau est recherché hors astreinte N/N−1.
 
 ---
 
@@ -57,15 +57,21 @@ Implémentation : `qvApplyDpsInstructionFamilyRules`.
 ### QV-DPS-004 — L’Excel 2026 n’écrase pas un public CTA déjà posé
 `qvEnrichSectionPublicHistorical` ignore `DISTRIBUTED` et `CTA_PERMANENCE_CYCLE`.
 
-### QV-DPS-005 — Dates de rotation = tours historiques démontrés, jamais inventées
-Un tour sans source 2026 reste `MOA_REQUIRED`. Cardinalité B2 section VARIA/FEU : 2 tours historiques, pas 3.
+### QV-DPS-005 — Rotation historique des activités hors couverture d'instruction
+Les réalisations 2026 démontrent les tours historiques des activités ordinaires ; un tour sans source reste `MOA_REQUIRED`. Les instructions de section et demi-section suivent désormais la règle de couverture spécifique QV-DPS-COVERAGE-001 : les deux sections B2 VARIA/FEU observées en 2026 ne limitent plus leur couverture 2027 à deux.
 
 ### QV-DPS-006 — Saison d’instruction bornée par l’historique
 Aucune instruction de section ou de demi-section en janvier, ni entre Noël et la fin d’année.
 Borne basse : premier samedi de février (06.02.2027, confirmé par la ligne 2027 du classeur).
 Borne haute : dernière instruction 2026 projetée (07.12.2026 + 364 = 06.12.2027), plafonnée au 23 décembre.
 Preuve 2026 : 62 dates d’instruction du 14.02.2026 au 07.12.2026, zéro en janvier.
-Implémentation : `qvInstructionSeasonBounds`, appliquée aux candidats de QV-CONDUITE-008.
+Implémentation : `qvInstructionSeasonBounds` pour les propositions historiques ; PIONNIER peut rester jusqu'au 23 décembre si le CTA l'exige.
+
+### QV-DPS-ANNUAL-001 — Structure et ordre versionnés
+`annualDpsInstructionVersions` définit par année d'effet les sections actives et l'ordre des thèmes. Pour les seules instructions de section et demi-section, la cardinalité est calculée sur ces sections actives. À partir de 2028, les profils horaires et la cadence proviennent directement des lignes 2026 ; 2027 n'est pas la source de l'année suivante. La projection conserve les écarts exacts entre séances d'un thème, y compris les années bissextiles. Le CTA existant attribue les publics sans remise à zéro annuelle.
+
+### QV-DPS-COVERAGE-001 — Couverture complète de chaque thème d'instruction
+Pour chaque thème prévu sur un site, produire une instruction par demi-section active et une par section active. Une séance de section Nxx suit ses propres Nxxa et Nxxb ; elle peut s'entrelacer avec les autres demi-sections du même thème, conformément au rythme 2026 confirmé par la MOA. Le thème suivant ne commence qu'après la dernière séance du précédent sur ce site. Une réserve n'est jamais créée. Les quatre KICK-OFF explicites du 06.02.2027 et toute décision humaine sont préservés ; le générateur ajoute seulement les publics manquants. Cette cardinalité ne s'applique ni aux conduites (toujours deux par site), ni aux autres activités QUO VADIS.
 
 ---
 
@@ -99,20 +105,14 @@ par le moteur (`qvPeriodicActivityDecision`) et l’activité reste au catalogue
 
 ## Conduite, formation continue
 
-### QV-CONDUITE-001 — 2 conduites annuelles par demi-section opérationnelle
-Remplace l’ancienne matrice 3 thèmes × 4 OI = 12 (lots FINAL-DEVELOPMENT / DPS-OI-SEPARATION).
+### QV-CONDUITE-001 — 2 conduites annuelles par site DPS
+G1, C1, B1 et B2 : huit séances au total. La demi-section reste affichée dans le public de chaque conduite.
 
-### QV-CONDUITE-002 — Cible = demi-sections opérationnelles × 2
-Calculée depuis `operationalHalfSections` (10+6+6+6=28) × 2 = **56**.
-Le classeur 2026 démontre deux conduites d'une heure par demi-section, pas trois. Une absence de 2 sources historiques 2026 n’est plus un veto :
-QV-CONDUITE-008 programme les Instr demi-sct manquantes.
+### QV-CONDUITE-002 — Cible = sites opérationnels × 2
+Quatre sites × deux séances = **8**. Les 53 conduites 2026 sont un constat historique, pas un quota reconduit par demi-section.
 
-### QV-CONDUITE-008 — Compléter les Instr demi-sct par le cycle CTA
-Si une demi-section opérationnelle a moins de 2 `Instr demi-sct` éligibles (hors PIONNIER),
-le moteur pose les occurrences manquantes le samedi de permanence CTA, hors jours fériés
-et hors dates déjà occupées. Thème : premier thème éligible non KICK-OFF encore absent
-(ABC/VARIA pour G1, VARIA/FEU pour C1/B1/B2), sinon second tour du dernier thème.
-Provenance `MOA_RULE_ANNUAL_PROGRAMMING`. Pas de hasard. Idempotent.
+### QV-CONDUITE-008 — Désactivée
+L'ancienne fabrication d'instructions pour atteindre 56 conduites est abandonnée par décision MOA. Aucune instruction n'est créée pour supporter une conduite.
 
 ### QV-CONDUITE-003 — Adossée à une Instr demi-sct réelle
 Début de la conduite = fin de la source. Même jour. Même OI. Même lieu opérationnel.
@@ -128,15 +128,9 @@ La demi-section est lue sur la source, pas recalculée indépendamment si la sou
 Les `Instr demi-sct - PIONNIER` sont exclues des sources.
 
 ### QV-CONDUITE-007 — Répartition annuelle déterministe
-Pour chaque OI + demi-section :
+Pour chaque site, sélectionner la première instruction demi-section admissible de chacune des deux fenêtres historiques 2026 : KICK-OFF puis VARIA à G1 ; KICK-OFF puis FEU à C1/B1/B2. Les deux séances restent espacées, avant PIONNIER à G1. Cet arbitrage algorithmique minimal n'invente pas de périodicité métier.
 
-1. collecter les Instr demi-sct éligibles, ordre chronologique ;
-2. exclure PIONNIER et les réserves ;
-3. si n ≤ 2, prendre toutes ; sinon indices `round(i × (n−1))` pour i = 0,1 (premier et dernier) ;
-4. collision d’indice → prochain index libre ;
-5. pas de hasard. Mêmes sources ⇒ même résultat.
-
-Implémentation : `qvSelectSpreadIndices`, `qvDeriveConduiteContinue`.
+Implémentation : `qvDeriveConduiteContinue`.
 
 ### QV-DAP-001 — Conduite / formation continue DAP
 Activité propre au DAP : Stat.Com `01522F7`, sections Y1–Y4, 18:30–21:30, local de section,
@@ -186,6 +180,9 @@ Implémentation : `qvApplyPrAbcStructure`, `qvPrAbcSessionPlan`.
 ### QV-PIONNIER-002 — Demi-section = 4 heures (07:30–11:30)
 ### QV-PIONNIER-003 — CSU-nvb = 19:15–22:00
 G1, Caserne G1. Implémentation : `qvApplyPionnierRules`.
+
+### QV-PIONNIER-004 — Hors astreinte N et N−1
+`qvSchedulePionnierOffDuty` recherche le premier créneau hebdomadaire compatible avec le CTA, les demi-sections préalables de la section et la période de septembre à décembre. Identifiants et décisions humaines sont préservés ; aucun créneau sûr donne `MOA_REQUIRED`.
 
 ---
 

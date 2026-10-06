@@ -1,0 +1,130 @@
+{
+  "mode": "LOCAL_CLONE_PUBLICATION",
+  "database": "scope_qv_2027_recipe_20261006",
+  "plan": {
+    "CREATE": 0,
+    "UPDATE": 0,
+    "UNCHANGED": 125,
+    "BLOCKED": 725,
+    "NOT_PUBLISHED": 0
+  },
+  "first": {
+    "status": "SUCCESS",
+    "counts": {
+      "created": 7,
+      "updated": 34,
+      "unchanged": 84,
+      "blocked": 725,
+      "notPublished": 0
+    }
+  },
+  "codeCompletion": {
+    "allocated": 0,
+    "existingCodesPreserved": 70,
+    "totalWithCode": 70,
+    "remainingMissing": 0
+  },
+  "reconciliation": {
+    "status": "MATCH",
+    "summary": {
+      "MATCHED": 125,
+      "MISSING": 0,
+      "DUPLICATE": 0,
+      "DRIFT": 0,
+      "PROTECTED_CHANGE": 0,
+      "UNEXPECTED": 0
+    }
+  },
+  "replay": {
+    "status": "NO_OP",
+    "counts": {
+      "created": 0,
+      "updated": 0,
+      "unchanged": 125,
+      "blocked": 725,
+      "notPublished": 0
+    }
+  },
+  "proof": {
+    "published": 125,
+    "stableExistingIds": 125,
+    "newEvents": 0,
+    "protected": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "65662562fc4553216eb68e758af55c97"
+      },
+      "scope_quo_vadis_proposals": {
+        "count": 159,
+        "hash": "8311de7912a41a8250dc802490327d65"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "nonQvEvents": {
+        "count": 132,
+        "hash": "88bd8b025b0209bf4b659e8ff206e568"
+      }
+    },
+    "foba": 4,
+    "roomLocationMismatch": 0,
+    "missingEventCodes": 0,
+    "completedHistoricalCodes": 33
+  },
+  "replayProof": {
+    "published": 125,
+    "stableExistingIds": 125,
+    "newEvents": 0,
+    "protected": {
+      "scope_quo_vadis_obligations": {
+        "count": 959,
+        "hash": "65662562fc4553216eb68e758af55c97"
+      },
+      "scope_quo_vadis_proposals": {
+        "count": 159,
+        "hash": "8311de7912a41a8250dc802490327d65"
+      },
+      "scope_participations": {
+        "count": 6156,
+        "hash": "acfa527effe1d04d435c82536dc75e06"
+      },
+      "scope_attendus": {
+        "count": 5952,
+        "hash": "3fe24cb0abc074300e41fec163b7fd81"
+      },
+      "scope_affectations": {
+        "count": 636,
+        "hash": "fd3bb8539413835af3221dd86cbbc497"
+      },
+      "scope_journal_metier": {
+        "count": 2290,
+        "hash": "26d8643de3d6f733306b96f8e699912d"
+      },
+      "nonQvEvents": {
+        "count": 132,
+        "hash": "88bd8b025b0209bf4b659e8ff206e568"
+      }
+    },
+    "foba": 4,
+    "roomLocationMismatch": 0,
+    "missingEventCodes": 0,
+    "completedHistoricalCodes": 33
+  },
+  "preparations": 850,
+  "waitingValidation": 725,
+  "localDecisions": 15,
+  "tourDeFrance": 0
+}

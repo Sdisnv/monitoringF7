@@ -1,0 +1,43 @@
+{
+  "mode": "PRODUCTION_PUBLICATION",
+  "execution": {
+    "status": "SUCCESS",
+    "counts": {
+      "created": 7,
+      "updated": 34,
+      "unchanged": 84,
+      "blocked": 725,
+      "notPublished": 0
+    }
+  },
+  "codeCompletion": {
+    "allocated": 33,
+    "existingCodesPreserved": 37,
+    "totalWithCode": 70,
+    "remainingMissing": 0
+  },
+  "reconciliation": {
+    "MATCHED": 125,
+    "MISSING": 0,
+    "DUPLICATE": 0,
+    "DRIFT": 0,
+    "PROTECTED_CHANGE": 0,
+    "UNEXPECTED": 0
+  },
+  "proof": {
+    "published": 125,
+    "stableExistingIds": 118,
+    "newEvents": 7,
+    "foba": 4,
+    "roomLocationMismatch": 0,
+    "missingEventCodes": 0,
+    "completedHistoricalCodes": 33
+  },
+  "nextPlan": {
+    "CREATE": 0,
+    "UPDATE": 0,
+    "UNCHANGED": 125,
+    "BLOCKED": 725,
+    "NOT_PUBLISHED": 0
+  }
+}

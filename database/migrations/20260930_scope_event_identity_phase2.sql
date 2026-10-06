@@ -50,8 +50,17 @@ create index if not exists scope_event_code_allocations_statcom_sort_idx
 
 alter table scope_event_code_sequences enable row level security;
 alter table scope_event_code_allocations enable row level security;
-revoke all on scope_event_code_sequences from anon,authenticated;
-revoke all on scope_event_code_allocations from anon,authenticated;
+do $$
+begin
+  if exists(select 1 from pg_roles where rolname='anon') then
+    revoke all on scope_event_code_sequences from anon;
+    revoke all on scope_event_code_allocations from anon;
+  end if;
+  if exists(select 1 from pg_roles where rolname='authenticated') then
+    revoke all on scope_event_code_sequences from authenticated;
+    revoke all on scope_event_code_allocations from authenticated;
+  end if;
+end $$;
 
 insert into monitoring_f7_schema_migrations(version)
 values ('scope-event-identity-phase2')

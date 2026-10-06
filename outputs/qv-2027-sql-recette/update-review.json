@@ -1,0 +1,5677 @@
+{
+  "kind": "QV_2027_INITIAL_110_UPDATE_REVIEW",
+  "counts": {
+    "SAFE_UPDATE": 3,
+    "NO_CHANGE_REQUIRED": 75,
+    "BLOCKED_REAL_CONFLICT": 32
+  },
+  "rows": [
+    {
+      "id": "qv-source-881",
+      "label": "Séance chefs de section DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-916",
+      "label": "Conduite, formation continue",
+      "category": "SAFE_UPDATE",
+      "reason": "CANONICAL_PUBLIC_ADDITION_AFTER_PRESERVING_UNSPECIFIED_FIELDS",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "relations.publicCodes": [
+          "AUTO:1",
+          "AUTO:3",
+          "N01B"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "AUTO",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-08-27",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-12-17",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-901",
+      "label": "Séance instruction DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-B2",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-912",
+      "label": "Instr demi-sct - KICK-OFF",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_RESPONSIBLE_DIFFERS_FROM_PREPARATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "event.responsibleId": "C sct",
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef section DPS",
+        "relations.publicCodes": [
+          "N01B"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-865",
+      "label": "Séance échelons II, III et IV",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "relations.publicCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "relations.publicCodes": [
+          "JSP:1"
+        ],
+        "relations.targetCodes": [
+          "DAP-Y1",
+          "DAP-Y2",
+          "DAP-Y3",
+          "DAP-Y4",
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1",
+          "JSP-B1",
+          "JSP-C1",
+          "JSP-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "relations.publicCodes": [
+          "ECH:II",
+          "ECH:III",
+          "ECH:IV"
+        ],
+        "relations.targetCodes": [
+          "DAP-Y1",
+          "DAP-Y2",
+          "DAP-Y3",
+          "DAP-Y4",
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1/8",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1",
+        "DAP:Y1",
+        "DAP:Y2",
+        "DAP:Y3",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-09-24",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-05-28",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-10-08",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-875",
+      "label": "Séance instruction DAP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DAP",
+      "sourceLocation": "L-Y4",
+      "sourceOiSelections": [
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-07-23",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-07-09",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-05-14",
+      "label": "Permanence",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "CTA_PUBLISHED_DATE_DIFFERS_FROM_CANONICAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.durationMinutes",
+        "event.endDate",
+        "event.endsAt",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.durationMinutes": 3600,
+        "event.endDate": "2027-05-17",
+        "event.endsAt": "2027-05-17T06:00",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.durationMinutes": 5040,
+        "event.endDate": "2027-05-18",
+        "event.endsAt": "2027-05-18T06:00",
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-857",
+      "label": "Intégration personnel DPS, phase II",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-B2",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION"
+    },
+    {
+      "id": "CTA-PERM-2027-09-03",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-05-21",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-893",
+      "label": "Séance Codir",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_TARGET_OR_FAMILY_DIFFERS_FROM_PREPARATION",
+      "changedFields": [
+        "event.eventType",
+        "event.family",
+        "event.priority",
+        "fingerprint",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.family": "Événement",
+        "event.priority": 70,
+        "relations.targetCodes": [
+          "SDIS-EM"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.family": null,
+        "event.priority": 0,
+        "relations.targetCodes": [
+          "SDIS"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F0",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "SDIS"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-884",
+      "label": "Séance chefs de section DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-09-17",
+      "label": "Permanence",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "CTA_PUBLISHED_DATE_DIFFERS_FROM_CANONICAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.durationMinutes",
+        "event.endDate",
+        "event.endsAt",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.durationMinutes": 3600,
+        "event.endDate": "2027-09-20",
+        "event.endsAt": "2027-09-20T06:00",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.durationMinutes": 5040,
+        "event.endDate": "2027-09-21",
+        "event.endsAt": "2027-09-21T06:00",
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-04-02",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-882",
+      "label": "Exercice JSP 1",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "JSP:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-11-19",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-10-01",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-06-18",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-915",
+      "label": "Conduite, formation continue",
+      "category": "SAFE_UPDATE",
+      "reason": "CANONICAL_PUBLIC_ADDITION_AFTER_PRESERVING_UNSPECIFIED_FIELDS",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "relations.publicCodes": [
+          "AUTO:1",
+          "AUTO:3",
+          "N01B"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "AUTO",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-854",
+      "label": "Intégration personnel DPS, phase II",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION"
+    },
+    {
+      "id": "qv-source-887",
+      "label": "Séance instruction DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-904",
+      "label": "Séance communication F5/6",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F6",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DAP:Y1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-914",
+      "label": "Conduite, formation continue",
+      "category": "SAFE_UPDATE",
+      "reason": "CANONICAL_PUBLIC_ADDITION_AFTER_PRESERVING_UNSPECIFIED_FIELDS",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "relations.publicCodes": [
+          "AUTO:1",
+          "AUTO:3",
+          "N04A"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "AUTO",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-872",
+      "label": "Séance personnel DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-918",
+      "label": "Séance Direction JSP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-09-10",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-11-05",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-909",
+      "label": "Séance Préposés mat DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F4",
+      "sourceLocation": "L-B2",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-922",
+      "label": "Exercice JSP 2",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "JSP:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-10-15",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-01-15",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-860",
+      "label": "Exercice JSP 1",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "JSP:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-08-20",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-888",
+      "label": "Séance personnel DAP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DAP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DAP:Y1",
+        "DAP:Y2",
+        "DAP:Y3",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-861",
+      "label": "Intégration personnel DAP",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DAP",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DAP"
+        ],
+        "relations.publicCodes": [
+          "FOBA:1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "relations.publicCodes": [],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DAP:Y1",
+        "DAP:Y2",
+        "DAP:Y3",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-12-31",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-853",
+      "label": "Échange tenue",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-01-22",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-903",
+      "label": "Cursus JSP - module 2",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-900",
+      "label": "Séance instruction DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-12-24",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-876",
+      "label": "Séance cadres JSP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-863",
+      "label": "Séance cadres F5/6",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F6",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:B1",
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-898",
+      "label": "Séance des chefs de section DAP",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DAP",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DAP"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DAP:Y1",
+        "DAP:Y2",
+        "DAP:Y3",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-874",
+      "label": "Séance personnel DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-B2",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-12-03",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-01-29",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-06-04",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-02-12",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-908",
+      "label": "Séance Préposés mat DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F4",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-917",
+      "label": "Conduite, formation continue",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_LOCATION_DIFFERS_FROM_PREPARATION",
+      "changedFields": [
+        "event.eventType",
+        "event.locationCode",
+        "event.priority",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.locationCode": "L-B2",
+        "event.priority": 70,
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.locationCode": "L-C1",
+        "event.priority": 0,
+        "relations.publicCodes": [
+          "AUTO:1",
+          "AUTO:3",
+          "N01B"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "AUTO",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-11-12",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-08-13",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-869",
+      "label": "Séance audiovisuel et communication F5/6",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F6",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:B1",
+        "DPS:C1",
+        "DPS:G1",
+        "DAP:Y1",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-10-22",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-883",
+      "label": "Séance chefs de section DPS C1",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-906",
+      "label": "Séance Préposés mat DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F4",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-08-06",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-859",
+      "label": "Répétition garde drapeau RA'25",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:C1",
+        "DPS:G1",
+        "DAP:Y3"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-855",
+      "label": "Intégration personnel DPS, phase II",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION"
+    },
+    {
+      "id": "qv-source-873",
+      "label": "Séance personnel DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-886",
+      "label": "Cursus JSP - module 1",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-02-05",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-05-07",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-864",
+      "label": "Séance Direction JSP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-04-09",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-907",
+      "label": "Séance Préposés mat DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F4",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-03-12",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-01-08",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-11-26",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-897",
+      "label": "Exercice JSP 2",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "JSP:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-04-16",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-889",
+      "label": "Séance instruction DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-06-11",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-03-05",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-856",
+      "label": "Intégration personnel DPS, phase II",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION"
+    },
+    {
+      "id": "qv-source-911",
+      "label": "Instr demi-sct - KICK-OFF",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_RESPONSIBLE_DIFFERS_FROM_PREPARATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "event.responsibleId": "C sct",
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef section DPS",
+        "relations.publicCodes": [
+          "N01B"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-C1",
+      "sourceOiSelections": [
+        "DPS:C1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-12-10",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-01-01",
+      "label": "Permanence",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "CTA_PUBLISHED_DATE_DIFFERS_FROM_CANONICAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.durationMinutes",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "event.startDate",
+        "event.startsAt",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.durationMinutes": 3600,
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "event.startDate": "2027-01-01",
+        "event.startsAt": "2027-01-01T18:00",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.durationMinutes": 5040,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "event.startDate": "2026-12-31",
+        "event.startsAt": "2026-12-31T18:00",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-07-02",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-03-26",
+      "label": "Permanence",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "CTA_PUBLISHED_DATE_DIFFERS_FROM_CANONICAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.durationMinutes",
+        "event.endDate",
+        "event.endsAt",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "event.startDate",
+        "event.startsAt",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.durationMinutes": 3600,
+        "event.endDate": "2027-03-29",
+        "event.endsAt": "2027-03-29T06:00",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "event.startDate": "2027-03-26",
+        "event.startsAt": "2027-03-26T18:00",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.durationMinutes": 6480,
+        "event.endDate": "2027-03-30",
+        "event.endsAt": "2027-03-30T06:00",
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "event.startDate": "2027-03-25",
+        "event.startsAt": "2027-03-25T18:00",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-04-23",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-910",
+      "label": "Instr demi-sct - KICK-OFF",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_RESPONSIBLE_DIFFERS_FROM_PREPARATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "event.responsibleId": "C sct",
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef section DPS",
+        "relations.publicCodes": [
+          "N04A"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-892",
+      "label": "Séance instruction DAP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DAP",
+      "sourceLocation": "L-Y3",
+      "sourceOiSelections": [
+        "DAP:Y3"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-04-30",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-920",
+      "label": "Exercice JSP 1",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-858",
+      "label": "Échange tenue",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "JSP",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "JSP:B1",
+        "JSP:C1",
+        "JSP:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-852",
+      "label": "Intégration personnel DPS, phase I",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "relations.roleCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "relations.roleCodes": [
+          "CHEF-FOBA"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "relations.roleCodes": [],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT+FOBA_TRANSITION"
+    },
+    {
+      "id": "CTA-PERM-2027-06-25",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-870",
+      "label": "Séance instruction DAP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DAP",
+      "sourceLocation": "L-Y2",
+      "sourceOiSelections": [
+        "DAP:Y2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-02-19",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-880",
+      "label": "Séance Fourriers DAP",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DAP",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DAP"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1/8",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DAP:Y1",
+        "DAP:Y2",
+        "DAP:Y3",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-878",
+      "label": "Séance Fourriers DPS",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1/8",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-03-19",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "CTA-PERM-2027-10-29",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-923",
+      "label": "Rapport annuel",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "relations.publicCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "relations.publicCodes": [
+          "JSP:1"
+        ],
+        "relations.targetCodes": [
+          "DAP-Y1",
+          "DAP-Y2",
+          "DAP-Y3",
+          "DAP-Y4",
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1",
+          "JSP-B1",
+          "JSP-C1",
+          "JSP-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "relations.publicCodes": [],
+        "relations.targetCodes": [
+          "DAP-Y1",
+          "DAP-Y2",
+          "DAP-Y3",
+          "DAP-Y4",
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F3",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:B1",
+        "DPS:B2",
+        "DPS:C1",
+        "DPS:G1",
+        "DAP:Y1",
+        "DAP:Y2",
+        "DAP:Y3",
+        "DAP:Y4"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-07-30",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-885",
+      "label": "Séance chefs de section DPS C1",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_SQL_DOMAIN_DIFFERS_FROM_CURRENT_BUSINESS_MAPPING",
+      "changedFields": [
+        "event.eventType",
+        "event.primaryDomain",
+        "event.priority",
+        "fingerprint",
+        "relations.domainCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.primaryDomain": "DPS",
+        "event.priority": 70,
+        "relations.domainCodes": [
+          "DPS"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.primaryDomain": "INSTITUTIONNEL",
+        "event.priority": 0,
+        "relations.domainCodes": [
+          "INSTITUTIONNEL"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "F1",
+      "sourceLocation": "L-B2",
+      "sourceOiSelections": [
+        "DPS:B2"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-891",
+      "label": "Séance instruction DAP",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DAP",
+      "sourceLocation": "L-Y1",
+      "sourceOiSelections": [
+        "DAP:Y1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "qv-source-871",
+      "label": "Séance personnel DPS",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "ADAPTER_DEFAULT_OR_ABSENT_SOURCE_FIELD_MUST_PRESERVE_PUBLICATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "fingerprint",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-G1",
+      "sourceOiSelections": [
+        "DPS:G1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-07-16",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    },
+    {
+      "id": "qv-source-913",
+      "label": "Instr demi-sct - KICK-OFF",
+      "category": "BLOCKED_REAL_CONFLICT",
+      "reason": "PUBLISHED_RESPONSIBLE_DIFFERS_FROM_PREPARATION",
+      "changedFields": [
+        "event.eventType",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.publicCodes",
+        "session.label"
+      ],
+      "before": {
+        "event.eventType": "Ponctuel",
+        "event.priority": 70,
+        "event.responsibleId": "C sct",
+        "relations.publicCodes": [],
+        "session.label": null
+      },
+      "after": {
+        "event.eventType": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef section DPS",
+        "relations.publicCodes": [
+          "N01B"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": "L-B1",
+      "sourceOiSelections": [
+        "DPS:B1"
+      ],
+      "provenance": "SOURCE_2027_EXPLICIT"
+    },
+    {
+      "id": "CTA-PERM-2027-02-26",
+      "label": "Permanence",
+      "category": "NO_CHANGE_REQUIRED",
+      "reason": "CTA_PUBLISHED_SITE_ASSIGNMENT_MUST_NOT_BE_REPLACED_BY_GLOBAL_PREPARATION",
+      "changedFields": [
+        "activity.label",
+        "event.businessException",
+        "event.fixedDate",
+        "event.label",
+        "event.locationCode",
+        "event.priority",
+        "event.responsibleId",
+        "fingerprint",
+        "relations.oiCodes",
+        "relations.targetCodes",
+        "session.label"
+      ],
+      "before": {
+        "activity.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.businessException": "SERVICE_CONTINUITY",
+        "event.fixedDate": true,
+        "event.label": "Permanence CTA · vendredi 18:00 au lundi 06:00",
+        "event.locationCode": "L-G1",
+        "event.priority": 100,
+        "event.responsibleId": "À affecter",
+        "relations.oiCodes": [
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-G1"
+        ],
+        "session.label": null
+      },
+      "after": {
+        "activity.label": "Permanence",
+        "event.businessException": null,
+        "event.fixedDate": false,
+        "event.label": "Permanence",
+        "event.locationCode": null,
+        "event.priority": 0,
+        "event.responsibleId": "Chef site",
+        "relations.oiCodes": [
+          "B1",
+          "B2",
+          "C1",
+          "G1"
+        ],
+        "relations.targetCodes": [
+          "DPS-B1",
+          "DPS-B2",
+          "DPS-C1",
+          "DPS-G1"
+        ],
+        "session.label": "Aucune session distincte"
+      },
+      "canonicalStatus": "VALIDATED",
+      "sourceDomain": "DPS",
+      "sourceLocation": null,
+      "sourceOiSelections": [
+        "DPS:G1",
+        "DPS:C1",
+        "DPS:B1",
+        "DPS:B2"
+      ],
+      "provenance": "CTA_RULE+CTA_TURNUS_SOURCE"
+    }
+  ]
+}

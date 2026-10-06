@@ -7,30 +7,162 @@ const functionalCatalog = require('./_scope-functional-catalog');
 const eventCodes = require('./_scope-event-code');
 const { HttpError } = require('./_scope-rules');
 const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
-const { isStatComValidForDate, STATCOM_SUCCESSIONS } = require('./_scope-statcom-referential');
+const { initialStatComCodes, isStatComValidForDate, resolveStatComCode, STATCOM_SUCCESSIONS } = require('./_scope-statcom-referential');
 const historicalReference2026 = require('./data/scope-qv-history-2026.json');
 const ctaRules = require('./_scope-cta-rules');
 const uiLogic = require('../../assets/js/scope-ui-logic');
 const canonicalAnnualRules = require('./data/scope-qv-canonical-annual-rules.json');
+const calendarArbitrages2027 = require('./data/scope-qv-2027-calendar-arbitrages.json');
 
 let canonicalBusinessCache = null;
+const canonicalStatComByCode = new Map(initialStatComCodes().map((row) => [row.code, row]));
+const cancelledFocaDefinition = 'QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38';
+const excludedNonRecurring2027 = new Set(calendarArbitrages2027.excludedNonRecurring.map((item) => item.definitionId));
+
+function applyMoaCalendarArbitrages2027(rows) {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const moves = new Map(calendarArbitrages2027.moves.map((item) => [item.id, item]));
+  const reviews = new Map(calendarArbitrages2027.humanReview.map((item) => [item.id, item]));
+  const editable = (row) => row.status !== 'VALIDATED' && !row.publishedEventId
+    && !(row.metadata && row.metadata.humanDecision);
+  return rows.map((row) => {
+    const move = moves.get(row.id);
+    const review = reviews.get(row.id);
+    if (!editable(row)) return row;
+    if (review && String(row.startsAt || '').slice(0, 10) === review.from)
+      return { ...row, review: true, calendarReview: { status: 'HUMAN_REVIEW', reason: review.reason },
+        reason: [row.reason, review.reason].filter(Boolean).join(' ') };
+    if (!move || String(row.startsAt || '').slice(0, 10) !== move.from) return row;
+    const source = move.sourceId && byId.get(move.sourceId);
+    if (move.sourceId) {
+      const half = (row.publics || []).find((code) => /^N\d\d[ab]$/.test(code));
+      if (!source || source.endsAt !== `${move.to}T10:30` || !source.ois.includes(row.ois[0])
+        || !source.publics.includes(half) || uiLogic.qvDpsInstructionKind(source) !== 'demi-section')
+        return { ...row, review: true, calendarReview: { status: 'HUMAN_REVIEW', reason: 'Instruction de rattachement non conforme ou absente.' } };
+    }
+    const shift = (value) => value && `${move.to}${String(value).slice(10)}`;
+    const conduiteEvidence = source ? { ...row.conduiteEvidence,
+      sourceId: source.id, theme: String(source.label || '').split(' - ').pop() } : row.conduiteEvidence;
+    const conduiteSlots = (row.conduiteSlots || []).map((slot) => Object.fromEntries(
+      Object.entries(slot).map(([key, value]) => [key, typeof value === 'string' && value.startsWith(move.from)
+        ? `${move.to}${value.slice(10)}` : value])));
+    return { ...row, startsAt: shift(row.startsAt), endsAt: shift(row.endsAt),
+      ...(source ? { conduiteEvidence } : {}), ...(row.conduiteSlots ? { conduiteSlots } : {}),
+      calendarAdjustment: { rule: 'MOA_CALENDAR_FINAL_2027', theoreticalDate: move.from,
+        resultingDate: move.to, ...(source ? { sourceId: source.id } : {}) },
+      reason: [row.reason, `Repositionnement calendrier MOA ${move.from} vers ${move.to}${source ? ` après ${source.label}` : ''}.`]
+        .filter(Boolean).join(' ') };
+  });
+}
+
+function historicalStatComForOccurrence(bucket) {
+  const resolved = resolveStatComCode(bucket.statCom, bucket.date2027);
+  const reference = canonicalStatComByCode.get(resolved.canonicalCode);
+  if (!reference || !isStatComValidForDate(reference, bucket.date2027)) return '';
+  const site = String(reference.oi || '');
+  if (/^(?:G1|C1|B1|B2|Y[1-4])$/.test(site)
+    && (bucket.ois.length !== 1 || bucket.ois[0] !== site)) return '';
+  return resolved.canonicalCode;
+}
+
+const INSTITUTIONAL_SOURCE_RULES = Object.freeze([
+  { title:'Séance communication F5/6',statCom:'070F56',functionCode:'F5/6',subDomain:'SIC',domain:'F5/6' },
+  { title:'Séance cadres F5/6',statCom:'070F56',functionCode:'F5/6',subDomain:'SIC',domain:'F5/6' },
+  { title:'Séance audiovisuel et communication F5/6',statCom:'070F56',functionCode:'F5/6',subDomain:'SIC',domain:'F5/6' },
+  { title:'Séance responsables MAT SDIS',statCom:'070F4',functionCode:'F4',subDomain:'LOG',domain:'F4' },
+  { title:'Séance Fourriers DPS',statCom:'070F8',functionCode:'F1/8',subDomain:'DPS',domain:'F1/8' },
+  { title:'Séance Fourriers DAP',statCom:'070F8',functionCode:'F1/8',subDomain:'DAP',domain:'F1/8' },
+  { title:'Séance échelons II, III et IV',statCom:'070F1',functionCode:'F1/8',subDomain:'SDIS',domain:'F1/8',publics:['ECH:II','ECH:III','ECH:IV'] },
+  { title:'Rapport annuel',statCom:'071F3',functionCode:'F3',subDomain:'',domain:'F3',target:'SDIS-ALL',publics:[] }
+]);
+const INSTITUTIONAL_PROGRAMME_DOMAINS = new Set(['Gouvernance','F0','F1','F1/8','F2','F2/3','F3','F4','F5','F5/6','F6','F7','F8']);
+const qvPersistenceDomain = (domain) => INSTITUTIONAL_PROGRAMME_DOMAINS.has(domain) ? 'INSTITUTIONNEL' : domain;
+
+const MOA_INSTITUTIONAL_DOMAINS = new Map([
+  ...['Séance Codir','Séance Codir + repas','Séance EM','Séance État-major','Séance COSEC','Assemblée CI',
+    'Séance CRDIS','Séance OSR','Séance interSDIS','Conférence des Commandants',
+    'Visite du Conseil d\'État','Table ouverte avec le Commandant'].map(title => [title,'F0']),
+  ...['Séance chefs de section DPS','Séance chefs de section DPS C1','Séance des chefs de section DAP',
+    'Intégration personnel DPS, phase I','Intégration personnel DPS, phase II',
+    'Intégration personnel DAP'].map(title => [title,'F1']),
+  ...['Journée des familles','Noël des familles','Repas du Permanent','Souper annuel',
+    'Fête Eau Lac','Tir inter-unités','Passeport-Vacances','Préparation concours de la FVSP',
+    'Séance de préparation concours de la FVSP','Concours de la FVSP',
+    'Séance de préparation Téléthon','Téléthon'].map(title => [title,'F3']),
+  ...['Nettoyage annuel caserne','Préparation Xmas','Séance Préposés mat DPS',
+    'Vision locale DPS','Vision locale DAP','Séance responsables MAT SDIS',
+    'Équipement personnel DPS + photo individuelle'].map(title => [title,'F4']),
+  ...['Séance communication F5/6','Séance audiovisuel et communication F5/6',
+    'Séance cadres F5/6'].map(title => [title,'F6'])
+]);
+
+function applyMoaInstitutionalDomains(rows){
+  return (rows || []).map(row => {
+    if(row.external || row.businessValidation || row.humanDecision) return row;
+    const title = String(row.label || row.title || '');
+    const domain = /^Séance photo (?:du )?personnel (DPS|DAP)(?:\s|$)/.test(title) ? 'F6' : MOA_INSTITUTIONAL_DOMAINS.get(title);
+    if(!domain) return row;
+    if(title === 'Séance cadres F5/6' && !(historicalReference2026.rows || []).some(source =>
+      source.title === title && source.subDomain === 'SIC')) return row;
+    return { ...row,domain,persistenceDomain:qvPersistenceDomain(domain) };
+  });
+}
+
+function applyProvenInstitutionalDomains(rows){
+  const historicalByLine = new Map((historicalReference2026.rows || []).map(row => [row.sourceLine,row]));
+  const rulesByDefinition = new Map();
+  for(const source of canonicalProgramme2027.rows || []){
+    const match = String(source.id || '').match(/^qv-source-(\d+)$/);
+    if(!match || !source.definitionId) continue;
+    const evidence = historicalByLine.get(Number(match[1]));
+    if(!evidence) continue;
+    const rule = INSTITUTIONAL_SOURCE_RULES.find(item => item.title === evidence.title && item.statCom === evidence.statCom
+      && item.functionCode === evidence.domainF7 && item.subDomain === evidence.subDomain);
+    if(!rule) continue;
+    const sameActivity = (historicalReference2026.rows || []).filter(row => row.title === rule.title && row.statCom === rule.statCom);
+    if(!sameActivity.length || sameActivity.some(row => row.domainF7 !== rule.functionCode || row.subDomain !== rule.subDomain)) continue;
+    rulesByDefinition.set(source.definitionId,rule);
+  }
+  return (rows || []).map(row => {
+    const rule = !row.external && rulesByDefinition.get(row.definitionId);
+    if(!rule) return row;
+    return { ...row,domain:rule.domain,persistenceDomain:'INSTITUTIONNEL',
+      ...Object.prototype.hasOwnProperty.call(rule,'publics') ? {publics:rule.publics} : {},
+      ...rule.target ? {target:rule.target} : {} };
+  });
+}
 
 // Applique les règles métier MOA du 02.10.2026 au programme canonique 2027, de façon déterministe et idempotente.
 function canonicalBusinessProgramme2027(){
   if(canonicalBusinessCache) return canonicalBusinessCache;
+  const sourceRows = (canonicalProgramme2027.rows || []).filter((row) =>
+    row.definitionId !== cancelledFocaDefinition && !excludedNonRecurring2027.has(row.definitionId));
   // L'ordre compte : la rotation rétablit d'abord les dates et sections réelles, les conduites
   // sont ensuite dérivées des instructions sources corrigées.
   const rotation = uiLogic.qvDistributeRotationOccurrences(
-    canonicalProgramme2027.rows || [],
+    sourceRows,
     historicalReference2026.rows || [],
     ctaRules.instructionPublicForDate
   );
-  const pionnier = uiLogic.qvApplyPionnierRules(rotation.rows);
-  const family = uiLogic.qvApplyDpsInstructionFamilyRules(pionnier.rows, ctaRules.instructionPublicForDate);
+  const instructionCoverage = uiLogic.qvCompleteDpsInstructionCoverage(
+    rotation.rows, historicalReference2026.rows || [], {
+      year: 2027, versions: canonicalAnnualRules.annualDpsInstructionVersions,
+      ctaResolver: ctaRules.instructionPublicForDate,
+      operationalHalvesForOi: ctaRules.operationalHalfSections
+    }
+  );
+  const pionnier = uiLogic.qvApplyPionnierRules(instructionCoverage.rows);
+  const pionnierCta = uiLogic.qvSchedulePionnierOffDuty(pionnier.rows,
+    { year: 2027, ctaResolver: ctaRules.instructionPublicForDate });
+  const family = uiLogic.qvApplyDpsInstructionFamilyRules(pionnierCta.rows, ctaRules.instructionPublicForDate);
   // QV-PERIOD-001 avant la matérialisation : une activité non reconduite cette année n'a pas
   // à recevoir de date. QV-PROJ-001 rétablit ensuite la réalisation historique de chaque occurrence.
   const periodic = uiLogic.qvApplyPeriodicActivityRules(family.rows, { year: 2027 });
-  const projection = uiLogic.qvMaterializeHistoricalOccurrences(periodic.rows, historicalReference2026.rows || [], { year: 2027 });
+  const projection = uiLogic.qvMaterializeHistoricalOccurrences(periodic.rows, historicalReference2026.rows || [], {
+    year: 2027, statComResolver: historicalStatComForOccurrence,
+    ownedLabels: ['Formation groupée 1.1', 'Formation groupée 1.2', 'Formation groupée 1.3',
+      'Formation groupée 1.4', 'Formation groupée 1.5', 'Formation groupée 1.6']
+  });
   const dapAnnual = uiLogic.qvApplyDapAnnualExercisePlan(projection.rows, historicalReference2026.rows || []);
   const foba = uiLogic.qvApplyFobaOccurrenceThemes(dapAnnual.rows, historicalReference2026.rows || []);
   const prSeries = uiLogic.qvApplyPrSeriesContinuity(foba.rows, historicalReference2026.rows || []);
@@ -41,17 +173,54 @@ function canonicalBusinessProgramme2027(){
   const conduite = uiLogic.qvApplyConduiteContinue(prSeries.rows, conduiteOptions);
   const dapConduite = uiLogic.qvApplyDapConduite(conduite.rows, historicalReference2026.rows || [], { year: 2027 });
   const prAbc = uiLogic.qvApplyPrAbcStructure(dapConduite.rows, historicalReference2026.rows || []);
-  const overlayRows = (prAbc.rows || []).filter((row) => row && !row.external);
-  const sourceCount = (canonicalProgramme2027.rows || []).filter((row) => row && !row.external).length;
+  const mondayHolidays = new Map(ctaRules.vaudHolidays(2027)
+    .filter((holiday) => new Date(`${holiday.date}T12:00:00Z`).getUTCDay() === 1)
+    .map((holiday) => [holiday.date, holiday.label]));
+  const calendarAdjustedRows = prAbc.rows.map((row) => {
+    const date = String(row && row.startsAt || '').slice(0, 10);
+    if (!row || row.external || !mondayHolidays.has(date)
+      || uiLogic.qvDpsInstructionKind(row) !== 'section' || uiLogic.qvDpsSitesOf(row)[0] !== 'G1'
+      || row.status === 'VALIDATED' || row.publishedEventId || (row.metadata && row.metadata.humanDecision)) return row;
+    const nextDate = ctaRules.addDays(date, 1);
+    const collision = prAbc.rows.some((other) => other !== row && !other.external
+      && String(other.startsAt || '').slice(0, 10) === nextDate
+      && uiLogic.qvDpsInstructionKind(other) === 'section' && uiLogic.qvDpsSitesOf(other)[0] === 'G1'
+      && (other.publics || []).some((code) => (row.publics || []).includes(code)));
+    if (collision) return row;
+    return { ...row,
+      startsAt: `${nextDate}${String(row.startsAt).slice(10)}`,
+      endsAt: `${nextDate}${String(row.endsAt).slice(10)}`,
+      calendarAdjustment: { rule: 'G1_LUNDI_FERIE_DEPLACE_MARDI', theoreticalDate: date,
+        holiday: mondayHolidays.get(date), resultingDate: nextDate },
+      reason: [row.reason, `Lundi férié ${date} (${mondayHolidays.get(date)}) déplacé au mardi ${nextDate}, règle MOA G1.`].filter(Boolean).join(' ')
+    };
+  });
+  const arbitratedRows = applyMoaCalendarArbitrages2027(calendarAdjustedRows);
+  const overlayRows = arbitratedRows.filter((row) => row && !row.external);
+  const sourceCount = sourceRows.filter((row) => row && !row.external).length;
   const rotationClones = overlayRows.filter((row) => row.rotationAdded).length;
   const projectionAdded = overlayRows.filter((row) => row.projectionAdded).length;
   const programmedInstructions = overlayRows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
-  const conduitesAdded = overlayRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length;
+  const conduitesAdded = overlayRows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_ANNUAL').length;
+  const previousDomainRows = applyProvenInstitutionalDomains(arbitratedRows);
+  const canonicalDomainRows = applyMoaInstitutionalDomains(previousDomainRows);
   canonicalBusinessCache = {
-    rows: prAbc.rows,
+    rows: canonicalDomainRows,
     summary: {
+      institutionalDomains: canonicalDomainRows.flatMap((row, index) => row.domain !== previousDomainRows[index].domain
+        ? [{ id:row.id,label:row.label,before:previousDomainRows[index].domain,after:row.domain }] : []),
       rotation: rotation.report,
+      instructionCoverage: {
+        added: instructionCoverage.added.map((row) => row.id),
+        planned: instructionCoverage.planned,
+        control: uiLogic.qvDpsInstructionCoverageControl(prAbc.rows, {
+          year: 2027, versions: canonicalAnnualRules.annualDpsInstructionVersions,
+          ctaResolver: ctaRules.instructionPublicForDate,
+          operationalHalvesForOi: ctaRules.operationalHalfSections
+        })
+      },
       pionnierChanges: pionnier.changes,
+      pionnierCta: pionnierCta.report,
       instructionFamily: family.changes,
       periodic: periodic.report,
       projection: {
@@ -83,13 +252,14 @@ function canonicalBusinessProgramme2027(){
         canonical2027: sourceCount,
         periodicRemoved: periodic.report.removed,
         rotationClones,
+        instructionCoverageAdded: instructionCoverage.added.length,
         projectionAdded,
         programmedInstructions,
         conduitesAdded,
         dapConduitesAdded: dapConduite.report.added,
         prAbcAdded: prAbc.report.added,
         overlay: overlayRows.length,
-        equation: `${sourceCount} − ${periodic.report.removed} (QV-PERIOD-001) + ${rotationClones} (clones OI) + ${projectionAdded} (QV-PROJ-001) + ${programmedInstructions} (Instr demi-sct CTA) + ${conduitesAdded} (conduites DPS) + ${dapConduite.report.added} (conduites DAP) + ${prAbc.report.added} (PR-ABC) = ${overlayRows.length}`
+        equation: `${sourceCount} − ${periodic.report.removed} (QV-PERIOD-001) + ${rotationClones} (clones OI) + ${instructionCoverage.added.length} (couverture instructions) + ${projectionAdded} (QV-PROJ-001) + ${programmedInstructions} (Instr demi-sct CTA) + ${conduitesAdded} (conduites DPS) + ${dapConduite.report.added} (conduites DAP) + ${prAbc.report.added} (PR-ABC) = ${overlayRows.length}`
       }
     }
   };
@@ -216,8 +386,9 @@ function isHolidayCalendarRow(row){
 }
 
 function isBlockingCalendarRow(row){
-  return ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE', 'VACANCES_SCOLAIRES', 'NEUTRALISATION_INTERNE'].includes(calendarType(row))
-    && row && row.neutralise !== false;
+  const kind = calendarType(row);
+  if(kind === 'FERIE' || kind === 'WEEKEND_FERIE') return true;
+  return ['VEILLE_FERIE', 'NEUTRALISATION_INTERNE'].includes(kind) && row && row.neutralise !== false;
 }
 
 function deriveHolidayEves(calendarRows){
@@ -352,10 +523,13 @@ function hasHolidayWeekend(calendarRows, date){
   if(day !== 'SATURDAY' && day !== 'SUNDAY') return false;
   const saturday = day === 'SATURDAY' ? dateOnly(date) : addDays(date, -1);
   const sunday = day === 'SUNDAY' ? dateOnly(date) : addDays(date, 1);
+  const friday = addDays(saturday, -1);
+  const monday = addDays(sunday, 1);
   return enrichCalendarRows(calendarRows).some((row) => {
     const kind = calendarType(row);
     const d = calendarDate(row);
-    return (kind === 'FERIE' || kind === 'WEEKEND_FERIE') && (d === saturday || d === sunday);
+    return (kind === 'FERIE' || kind === 'WEEKEND_FERIE')
+      && [friday, saturday, sunday, monday].includes(d);
   });
 }
 
@@ -367,20 +541,19 @@ function classifyDate(date, domain, calendarRows){
   const special = calendarRowsForDate(calendarRows, date);
   const blocking = special.filter(isBlockingCalendarRow);
   const hasFerie = blocking.some((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(calendarType(row)));
-  const hasVacances = blocking.some((row) => calendarType(row) === 'VACANCES_SCOLAIRES');
+  const hasVacances = special.some((row) => calendarType(row) === 'VACANCES_SCOLAIRES');
   if(hasFerie){
     dayClass = 'INTERDIT';
     reasons.push(`Contrainte fériée: ${blocking.filter((row) => ['FERIE', 'VEILLE_FERIE', 'WEEKEND_FERIE'].includes(calendarType(row))).map((row) => row.libelle).join(', ')}. Dérogation nécessaire.`);
   } else if(hasVacances){
-    dayClass = 'INTERDIT';
-    reasons.push(`Vacances scolaires: ${special.map((row) => row.libelle).join(', ')}.`);
+    reasons.push(`Information vacances scolaires: ${special.filter((row) => calendarType(row) === 'VACANCES_SCOLAIRES').map((row) => row.libelle).join(', ')}.`);
   } else if(blocking.length){
     dayClass = 'INTERDIT';
     reasons.push(`Contrainte de planification: ${blocking.map((row) => row.libelle).join(', ')}.`);
   }
   if(hasHolidayWeekend(calendarRows, date)){
-    dayClass = dayClass === 'INTERDIT' ? 'INTERDIT' : 'DECONSEILLE';
-    reasons.push('Week-end lié à un jour férié: dérogation nécessaire pour une instruction de section.');
+    dayClass = 'INTERDIT';
+    reasons.push('Week-end lié à un jour férié: validation locale nécessaire pour une instruction de section.');
   } else if(isWeekend(date) && dayClass === 'AUTORISE'){
     reasons.push('Week-end autorisé si compatible avec les contraintes métier.');
   }
@@ -1300,6 +1473,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     result.personnelView = {
       hideInternalPrep: String(programme.statut || '').toUpperCase() === 'VALIDE'
     };
+    let preparationByUnit = new Map();
     if(Number(programme.annee) === 2027){
       const published = await db.query(`
         select l.publication_unit_id, l.evenement_id, e.libelle, e.date, e.heure_debut,
@@ -1343,7 +1517,7 @@ function createScopeQuoVadisService({ database = db } = {}){
            and source_type='MANUAL'
            and metadata->>'source'='QV_PROGRAMME_PREPARATION'
       `,[programme.programmeId]).catch(() => ({ rows: [] }));
-      const preparationByUnit = new Map((preparationRows.rows || []).map((row) => [String(row.source_ref),row]));
+      preparationByUnit = new Map((preparationRows.rows || []).map((row) => [String(row.source_ref),row]));
       const canonicalBusinessRows = canonicalBusinessProgramme2027().rows;
       const canonicalSourceById = new Map((canonicalBusinessRows || []).map((row) => [String(row.id), row]));
       result.canonicalProgramme = {
@@ -1361,7 +1535,13 @@ function createScopeQuoVadisService({ database = db } = {}){
            'historicalProposal','historicalMatchStatus','tp9000Rule','sectionPublicRule','sectionPublicStatus','sectionPublicSourceLine'].forEach((key) => {
             if(Object.prototype.hasOwnProperty.call(canonicalSource, key)) sourceFields[key] = canonicalSource[key];
           });
-          const prepared = preparation ? {
+          const prepared = preparation && preparation.metadata && preparation.metadata.automatedSnapshot === true
+            && preparation.metadata.humanDecision !== true ? {
+            preparation:{ type:'OBLIGATION',id:preparation.obligation_id,updatedAt:preparation.updated_at },
+            lieuId:preparation.lieu_id || null,
+            lieuLibre:preparation.lieu_libre || '',
+            salleTheorieId:preparation.salle_theorie_id || null
+          } : preparation ? {
             preparation:{ type:'OBLIGATION',id:preparation.obligation_id,updatedAt:preparation.updated_at },
             ...(Object.prototype.hasOwnProperty.call(fields,'activityLabel') ? {
               label:fields.activityLabel,activityLabel:fields.activityLabel,eventDisplayLabel:fields.activityLabel,eventLabel:fields.activityLabel
@@ -1387,7 +1567,7 @@ function createScopeQuoVadisService({ database = db } = {}){
             salleTheorieId:preparation.salle_theorie_id || null,
             status:preparation.statut || row.status
           } : { preparation:null };
-          return Object.assign({}, row, sourceFields, prepared, row.dapAnnualStatus === 'REMPLACE_PAR_FORMATION_GROUPEE' && (preparation || event)
+          const presented = Object.assign({}, row, sourceFields, prepared, row.dapAnnualStatus === 'REMPLACE_PAR_FORMATION_GROUPEE' && (preparation || event)
             ? { external: false, dapAnnualStatus: 'DECISION_EXISTANTE_PRESERVEE' } : {}, event ? {
             publishedEventId: event.evenement_id,
             publishedEventStatus: event.statut,
@@ -1399,6 +1579,16 @@ function createScopeQuoVadisService({ database = db } = {}){
             publishedEventCode: event.code_cours || allocatedByEvent.get(String(event.evenement_id)) || previewByEvent.get(String(event.evenement_id)) || null,
             publishedEventCodeState: event.code_cours || allocatedByEvent.has(String(event.evenement_id)) ? 'PERSISTED' : (previewByEvent.has(String(event.evenement_id)) ? 'LOCAL_BACKFILL_PREVIEW' : 'NOT_DEMONSTRATED')
           } : {});
+          const humanDate = preparation && Object.prototype.hasOwnProperty.call(fields, 'date')
+            ? dateOnly(fields.date) : event && dateOnly(event.date);
+          if (humanDate && uiLogic.qvIsPionnierRow(presented) && uiLogic.qvDpsInstructionKind(presented)) {
+            const check = uiLogic.qvPionnierCtaCheck({ ...presented,
+              startsAt: isoLocalDateTime(humanDate, String(presented.startsAt || '').slice(11, 16) || '07:30') },
+            ctaRules.instructionPublicForDate);
+            presented.pionnierCtaHumanCheck = check;
+            presented.pionnierCtaStatus = check.pass ? 'HUMAN_DATE_COMPATIBLE' : 'MOA_REQUIRED';
+          }
+          return presented;
         })
       };
     }
@@ -1407,13 +1597,60 @@ function createScopeQuoVadisService({ database = db } = {}){
         const fields = row.metadata.planningFields || row.metadata.reconductedBusiness || {};
         const proposal = result.proposals.find(item => item.obligationId === row.obligationId && item.status !== 'ECARTE');
         return { id:row.sourceRef,label:row.title,activityLabel:row.title,eventDisplayLabel:row.title,
-          domain:row.domain,family:fields.family,statCom:row.statcomCode,ois:fields.oiCodes || [],publics:row.cibleCodes,themes:fields.themes || [],
+          domain:fields.domain || row.domain,persistenceDomain:row.domain,family:fields.family,statCom:row.statcomCode,ois:fields.oiCodes || [],publics:row.cibleCodes,themes:fields.themes || [],
           startsAt:row.imposedStartAt || proposal && proposal.startsAt || null,endsAt:row.imposedEndAt || proposal && proposal.endsAt || null,
           responsible:fields.responsibleLabel,location:fields.locationLabel,room:fields.roomLabel,lieuId:row.lieuId,
           lieuLibre:row.lieuLibre,salleTheorieId:row.salleTheorieId,responsableFonctionCode:row.responsableFonctionCode,
           sessionStructure:fields.sessionStructure,lineage:row.metadata.lineage,businessValidation:row.metadata.businessValidation,
           preparation:{type:'OBLIGATION',id:row.obligationId},status:row.statut,external:false };
       }) };
+      const year = Number(programme.annee);
+      const annualVersion = uiLogic.qvAnnualDpsInstructionVersion(year, canonicalAnnualRules.annualDpsInstructionVersions);
+      const activeSections = Object.fromEntries(ctaRules.DPS_SITES.map((site) => {
+        const organisation = (result.dpsOrganisation || []).filter((row) => row.oiCode === site
+          && row.validFrom <= `${year}-12-31` && (!row.validTo || row.validTo >= `${year}-01-01`))
+          .sort((a, b) => b.validFrom.localeCompare(a.validFrom))[0];
+        return [site, organisation
+          ? (organisation.sections || []).filter((section) => section && section.reserve !== true).map((section) => section.section)
+          : (annualVersion && annualVersion.sections[site]) || []];
+      }));
+      const annual = uiLogic.qvBuildAnnualDpsInstructions(historicalReference2026.rows || [], {
+        year, versions: canonicalAnnualRules.annualDpsInstructionVersions,
+        sections: activeSections, ctaResolver: ctaRules.instructionPublicForDate,
+        operationalHalvesForOi: ctaRules.operationalHalfSections
+      });
+      const pionnier = uiLogic.qvApplyPionnierRules(annual.rows);
+      const scheduled = uiLogic.qvSchedulePionnierOffDuty(pionnier.rows,
+        { year, ctaResolver: ctaRules.instructionPublicForDate });
+      const family = uiLogic.qvApplyDpsInstructionFamilyRules(scheduled.rows, ctaRules.instructionPublicForDate);
+      const prior = result.canonicalProgramme.rows;
+      const instructionTheme = (row) => uiLogic.qvInstructionTheme(row).startsWith('PIONNIER')
+        ? 'PIONNIER' : uiLogic.qvInstructionTheme(row);
+      const sameInstruction = (a, b) => uiLogic.qvDpsInstructionKind(a) === uiLogic.qvDpsInstructionKind(b)
+        && instructionTheme(a) === instructionTheme(b)
+        && uiLogic.qvDpsSitesOf(a)[0] === uiLogic.qvDpsSitesOf(b)[0]
+        && (a.publics || []).find((code) => /^N0[1-6][ab]?$/.test(code))
+          === (b.publics || []).find((code) => /^N0[1-6][ab]?$/.test(code));
+      const unmatched = family.rows.slice();
+      for (const existing of prior.filter((row) => uiLogic.qvDpsInstructionKind(row))) {
+        const candidates = unmatched.filter((row) => sameInstruction(row, existing));
+        const nearest = candidates.sort((a, b) => Math.abs(Date.parse(a.startsAt) - Date.parse(existing.startsAt || a.startsAt))
+          - Math.abs(Date.parse(b.startsAt) - Date.parse(existing.startsAt || b.startsAt)))[0];
+        if (nearest) unmatched.splice(unmatched.indexOf(nearest), 1);
+      }
+      const conduite = uiLogic.qvApplyConduiteContinue(prior.concat(unmatched),
+        { ...ctaRules.conduiteEngineOptions(), year });
+      result.canonicalProgramme.rows = conduite.rows;
+      result.canonicalProgramme.annualInstructionRules = {
+        ...annual.report, pionnierCta: scheduled.report,
+        coverage: uiLogic.qvDpsInstructionCoverageControl(conduite.rows, {
+          year, versions: canonicalAnnualRules.annualDpsInstructionVersions,
+          sections: activeSections, ctaResolver: ctaRules.instructionPublicForDate,
+          operationalHalvesForOi: ctaRules.operationalHalfSections
+        }),
+        conduites: { expected: conduite.derived.expected, materialized: conduite.derived.materialized,
+          missing: conduite.derived.missing, orphans: conduite.derived.orphans.map((row) => row.id) }
+      };
     }
     if (result.canonicalProgramme) {
       const template = result.canonicalProgramme.rows.find((row) => row.definitionId === 'CTA-PERMANENCE') || {};
@@ -1422,7 +1659,11 @@ function createScopeQuoVadisService({ database = db } = {}){
       const boundaryHolidays = ctaRules.vaudHolidays(ctaYear).concat(ctaRules.vaudHolidays(ctaYear + 1).filter(holiday => holiday.date <= `${ctaYear + 1}-01-02`));
       result.canonicalProgramme.rows = ctaRules.applyCtaRules(result.canonicalProgramme.rows, ctaYear, boundaryHolidays).rows.map(row => {
         const oi = uiLogic.qvNormalizeOiSelections(row,row.ois || []);
-        return {...row,oiSelections:oi.codes,oiQualification:oi.status,ambiguousOis:oi.ambiguous,ois:uiLogic.qvOiSites(oi.codes),
+        const latePreparation = Number(programme.annee) === 2027 && !row.preparation
+          ? preparationByUnit.get(String(row.id)) : null;
+        return {...row,...(latePreparation ? {
+          preparation:{ type:'OBLIGATION',id:latePreparation.obligation_id,updatedAt:latePreparation.updated_at }
+        } : {}),oiSelections:oi.codes,oiQualification:oi.status,ambiguousOis:oi.ambiguous,ois:uiLogic.qvOiSites(oi.codes),
           business:uiLogic.qvEnrichBusinessReference(row,result)};
       });
       const programmeRows = result.canonicalProgramme.rows.filter((row) => !row.external);
@@ -2247,7 +2488,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       const lineage = { ...reference.metadata.lineage, parentYear:Number(reference.annee),parentOccurrence:reference.source_ref,
         referenceValidatedAt:reference.metadata.businessValidation.validatedAt };
       const obligation = await upsertObligation(programme,{
-        sourceType:'HISTORIQUE',sourceRef:`LINEAGE:${lineage.key}`,title:fields.activityLabel,domain:fields.domain,
+        sourceType:'HISTORIQUE',sourceRef:`LINEAGE:${lineage.key}`,title:fields.activityLabel,domain:qvPersistenceDomain(fields.domain),
         cibleCodes:fields.publicCodes,lieuId:fields.lieuId,lieuLibre:fields.lieuLibre,statut:'A_PLANIFIER',
         metadata:{ lineage,reconductedBusiness:fields,businessJustification:'Dernière version métier validée de cette lignée',
           statcomCode:fields.statCom,sessionStructure:fields.sessionStructure }
@@ -2262,7 +2503,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         const sessions = structure.sessionIndex ? 1 : Math.max(1,Math.min(100,Number(structure.sessionCount || 1)));
         const usedDates = new Set();
         for(let sessionIndex=1;sessionIndex<=sessions;sessionIndex++) await insertRankedProposal(obligation,{
-          year:programme.annee,month:2,domain:fields.domain,activity:{title:fields.activityLabel},calendarRows,rulesByDomain,
+          year:programme.annee,month:2,domain:qvPersistenceDomain(fields.domain),activity:{title:fields.activityLabel},calendarRows,rulesByDomain,
           usedDates,sessionIndex:Number(structure.sessionIndex || sessionIndex),sessionLabel:structure.sessionLabel || '',lieuId:fields.lieuId,lieuLibre:fields.lieuLibre,
           reasons:['Référence métier validée conservée ; date et horaire recalculés selon les règles annuelles.'],source:'VALIDATED_LINEAGE'
         });
@@ -2667,7 +2908,7 @@ function createScopeQuoVadisService({ database = db } = {}){
     const existing = saved.rows[0];
     const inherited = existing && (existing.metadata.planningFields || existing.metadata.reconductedBusiness) || {};
     const source = year === 2027 ? canonicalRows.find((row) => String(row.id) === String(itemId)) : existing && existing.metadata.lineage ? {
-      id:itemId,label:existing.title,activityLabel:existing.title,domain:existing.domain,family:inherited.family,
+      id:itemId,label:existing.title,activityLabel:existing.title,domain:inherited.domain || existing.domain,persistenceDomain:existing.domain,family:inherited.family,
           statCom:existing.statcom_code,ois:inherited.oiCodes,publics:existing.cible_codes,sessionStructure:inherited.sessionStructure,
           themes:inherited.themes
     } : null;
@@ -2699,7 +2940,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         const current = await client.query(`select obligation_id from scope_quo_vadis_obligations
           where programme_id=$1 and source_ref=$2
           order by created_at limit 1`,[programme.programme_id,String(itemId)]);
-        const params = [programme.programme_id,String(itemId),source.eventDisplayLabel || source.activityLabel || source.label,source.domain || null,source.publics || [],source.statCom || null,JSON.stringify(metadata)];
+        const params = [programme.programme_id,String(itemId),source.eventDisplayLabel || source.activityLabel || source.label,qvPersistenceDomain(source.persistenceDomain || source.domain) || null,source.publics || [],source.statCom || null,JSON.stringify(metadata)];
         if(current.rows[0]){
           await client.query(`update scope_quo_vadis_obligations
              set statut=$2,metadata=coalesce(metadata,'{}'::jsonb) || $3::jsonb,updated_at=now()
@@ -2831,7 +3072,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         where programme_id=$1 and source_ref=$2
         order by created_at limit 1`,[programme.programme_id,String(itemId)]);
       const params = [
-        programme.programme_id,String(itemId),activityLabel,source.domain || null,
+        programme.programme_id,String(itemId),activityLabel,qvPersistenceDomain(source.persistenceDomain || source.domain) || null,
         publicCodes,date ? isoLocalDateTime(date,startTime) : null,date ? isoLocalDateTime(date,endTime) : null,
         statCom || null,lieu && lieu.lieu_id || null,lieuLibre || null,salle && salle.salle_id || null,responsable && responsable.code || null,
         JSON.stringify(metadata)
@@ -2857,6 +3098,7 @@ function createScopeQuoVadisService({ database = db } = {}){
 module.exports = {
   createScopeQuoVadisService,
   _dateOnly: dateOnly,
+  _qvPersistenceDomain: qvPersistenceDomain,
   _effectivePlanningRules: effectivePlanningRules,
   _calendar: {
     addDays,

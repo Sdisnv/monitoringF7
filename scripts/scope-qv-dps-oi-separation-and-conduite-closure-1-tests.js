@@ -147,7 +147,7 @@ test('KICK-OFF du 06.02.2027 reste inchangé', () => {
   });
 });
 
-test('cible 56 conduites, 56 matérialisées, chacune rattachée à une demi-section source', () => {
+test('cible 56 conduites, chacune rattachée à une demi-section source', () => {
   const conduites = applied.derived.matched.concat(applied.derived.added);
   assert.equal(applied.derived.expected, 56);
   assert.equal(conduites.length, 56);

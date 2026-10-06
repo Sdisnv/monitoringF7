@@ -174,7 +174,7 @@ Date, Début, Fin et Durée mesurent 36 px sur les écrans 2, 4, 8 et dans l’�
 
 ## AR. Performance
 
-Dataset réel 635 lignes; opérations: catalogueBuild 0.049 ms, search 1.382 ms, filters 0.026 ms, sort 5.296 ms, screen10 0.081 ms, agenda 0.075 ms, conflicts 0.011 ms, moveCandidates 0.02 ms.
+Dataset réel 635 lignes; opérations: catalogueBuild 0.051 ms, search 1.392 ms, filters 0.03 ms, sort 5.436 ms, screen10 0.069 ms, agenda 0.068 ms, conflicts 0.009 ms, moveCandidates 0.019 ms.
 
 ## AS. Cas 05.01.2027
 

@@ -1,0 +1,559 @@
+# SCOPE - QUO VADIS 2027 - Gate consolidation 2026-2027, calendrier et OI
+
+## 1. Préflight et sources
+
+- Branche initiale et finale : `scope-qv-canonical-rules-checkpoint-20261002` ; HEAD `a186bbee530cb40217034b2d27d5d08641703305` ; `origin/main` `55667a79012e976d54f5c90cc183628f8897cec9`. Worktree déjà modifié avant ce gate, préservé ; aucun reset, restore, stash, commit ou push.
+- Classeur ouvert directement : `2026 QUO VADIS SDIS Nord vaudois.xlsx`, onglet `QUO VADIS '26`, 919 lignes du parseur, dont **847 datées 2026**, SHA-256 `58ef7c358e44cd7ddc0d6ecbf6a386b06df2029f000a8c12b041538e72066742`. Les données JSON historiques correspondent bit à bit aux lignes parsées. Les 72 autres lignes sont datées 2027 dans le classeur historique et ne sont pas comptées comme réalisations 2026.
+- 2027 : vraie projection `listProgramme(2027)` du service SCOPE, exécutée dans un fixture SQL isolé. Les rapports QUO VADIS récents et les règles CTA, DAP et domaines ont été conservés.
+- Calendrier : `scope_quo_vadis_calendar_days` est lu/semé par le service ; le fixture expose les jours issus de `_scope-cta-rules.js` et des règles calendrier vaudoises déjà intégrées. **La table SQL persistée distante n'a pas pu être lue** : une tentative sandbox sans DNS et deux lectures seules autorisées ont échoué (timeout réseau). Les constats calendaires ci-dessous portent sur le calendrier local du moteur, pas sur une validation de l'état de production.
+
+## 2. Programme et unités de comptage
+
+| Mesure | 2026 | 2027 | Lecture |
+| --- | ---: | ---: | --- |
+| Lignes physiques du classeur / occurrences du Programme | 847 | 856 | unités annuelles distinctes ; aucun écart brut déclaré anomalie |
+| Occurrences datées 2027 | n.a. | 844 | dont une permanence débutant le 31.12.2026 |
+| Occurrences sans date | n.a. | 12 | à positionner |
+| Associations OI explicites | 774 | 1244 | pas des événements physiques |
+| Occurrences sans OI explicite | 355 | 132 | ne pas inventer l'OI historique |
+| Événements multi-OI physiques 2027 | n.a. | 178 | couvrent 698 associations OI |
+| Doublons exacts parmi les datées 2027 | n.a. | 0 | clé activité/date/horaire/OI/public/Stat.Com |
+
+Les 856 identifiants de séance, d'occurrence et de session 2027 sont uniques. Une FOBA ou autre activité multi-OI apparaît une fois physiquement, et autant de fois que nécessaire dans le **détail par association OI**, avec le même identifiant stable. Le filtre « séances multiples » antérieur reste à 48 lignes ; cela n'est pas une multiplication par OI. Les 12 lignes sans date ne sont pas dupliquées par le contrôle des doublons datés.
+
+## 3. Comparaison et classification
+
+La classification est **conservatrice** : un lien explicite `historicalProposal.sourceLine` et un titre/Stat.Com cohérents prouvent une reconduction ; les règles MOA DPS/DAP/CTA/couverture prouvent une modification volontaire ; une ligne explicite datée 2027 sans titre homologue 2026 est nouvelle. L'absence de lien ne prouve jamais une non-reconduction. Les dates projetées restent des propositions tant qu'elles ne sont pas validées.
+
+| Classe | Lignes source 2026 | Occurrences 2027 |
+| --- | ---: | ---: |
+| RECONDUIT | 633 | 439 |
+| MODIFIÉ_VOLONTAIREMENT | 77 | 152 |
+| NON_RECONDUIT_VOLONTAIREMENT | 1 | 0 |
+| NOUVEAU_2027 | n.a. | 53 |
+| HUMAN_REVIEW | 136 | 212 |
+| ANOMALIE certaine hors calendrier | 0 démontrée | 0 démontrée |
+
+La ligne source DAP Y1 du 27.05.2026 est le cinquième soir non reconduit selon la règle MOA de quatre/Y. Les **136** autres sources sans correspondance prouvée ne sont pas qualifiées de disparition volontaire. Les **212** occurrences 2027 non reliées de façon suffisante ne sont pas qualifiées de nouveautés certaines. Les champs détaillés domaine, famille, type, code cours, Stat.Com, OI, public, date, horaire, lieu, responsable et session figurent dans l'extraction, y compris leurs divergences. Une égalité de libellé ne suffit pas à résoudre une divergence.
+
+### Domaines source et fonctionnels
+
+| Domaine tel que constaté 2026 / domaine fonctionnel 2027 | 2026 | 2027 |
+| --- | --- | --- |
+| F0 | 44 | 48 |
+| F1 | 0 | 28 |
+| F1/8 | 28 | 0 |
+| F2/3 | 41 | 0 |
+| F3 | 6 | 30 |
+| F4 | 19 | 24 |
+| F5/6 | 33 | 0 |
+| F6 | 0 | 21 |
+| F7 | 676 | 581 |
+| NON_DOCUMENTE_F0_F8 | 0 | 124 |
+
+Les valeurs 2026 `F1/8`, `F2/3`, `F5/6` sont des regroupements historiques, pas des domaines simples à ventiler automatiquement. Les **124** lignes 2027 sans F0-F8 prouvé restent non qualifiées. Les totaux par domaine ne forment donc pas une comparaison strictement homogène.
+
+### Couverture par OI
+
+| OI | 2026 coché | 2027 associations | Réserve de preuve |
+| --- | --- | --- | --- |
+| DPS:G1 | 210 OI cochés | 300 | partiel : 355 lignes 2026 sans OI coché |
+| DPS:C1 | 121 OI cochés | 180 | partiel : 355 lignes 2026 sans OI coché |
+| DPS:B1 | 119 OI cochés | 177 | partiel : 355 lignes 2026 sans OI coché |
+| DPS:B2 | 112 OI cochés | 168 | partiel : 355 lignes 2026 sans OI coché |
+| DAP:Y1 | 66 OI cochés | 65 | partiel : 355 lignes 2026 sans OI coché |
+| DAP:Y2 | 50 OI cochés | 48 | partiel : 355 lignes 2026 sans OI coché |
+| DAP:Y3 | 50 OI cochés | 49 | partiel : 355 lignes 2026 sans OI coché |
+| DAP:Y4 | 46 OI cochés | 45 | partiel : 355 lignes 2026 sans OI coché |
+| JSP:G1 | non documenté | 60 | indéterminable |
+| JSP:C1 | non documenté | 59 | indéterminable |
+| JSP:B1 | non documenté | 59 | indéterminable |
+| SDIS | non documenté | 34 | indéterminable |
+
+Ces colonnes 2027 sont des **associations séance×OI**, pas des événements physiques. Les 355 lignes 2026 sans OI coché rendent les écarts par OI partiels ; JSP/SDIS 2026 ne sont pas présentés comme zéro. La synthèse CSV/XLSX laisse vides les écarts par activité quand le titre 2026 existe sans OI déterminable.
+
+## 4. Calendrier 2027
+
+Le calendrier local contient **9 jours fériés** 2027 (2027-01-01, 2027-01-02, 2027-03-26, 2027-03-29, 2027-05-06, 2027-05-17, 2027-08-01, 2027-09-20, 2027-12-25) et **7 périodes de vacances** touchant 2027. Les veilles, pont d'Ascension et week-ends rattachés à un férié sont contrôlés sans créer de calendrier parallèle. Les instructions de section/demi-section pendant les seules vacances sont `AUTORISABLE_VACANCES_INSTRUCTION` ; un jour ou week-end férié reste `HUMAN_REVIEW_CALENDAR`. Les conduites qui suivent une instruction pendant les vacances sont laissées visibles à la MOA, sans déduction automatique de l'exception.
+
+| Décision/contrainte calendrier | Occurrences 2027 |
+| --- | --- |
+| HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | 47 |
+| HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | 20 |
+| HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | 9 |
+| HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | 8 |
+| HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | 6 |
+| HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | 6 |
+| HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT | 3 |
+| HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE | 3 |
+| HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE\|VEILLE_FERIE\|VACANCES_SCOLAIRES | 2 |
+| HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE\|VACANCES_SCOLAIRES | 2 |
+| HUMAN_REVIEW_CALENDAR:FERIE | 2 |
+
+**108 occurrences physiques** demandent une revue calendrier locale, dont **6 fenêtres CTA touchant un férié**. Les permanences CTA ne sont pas traitées comme des événements ordinaires à déplacer ; seul leur traitement autour des fériés reste à confirmer. Les journées vacances/fériés éventuelles sont listées avec motif, sans suppression ni déplacement silencieux.
+
+### G1 lundi férié
+
+`Instr sct - KICK-OFF` G1, id `QV26-INSTR-SCT-KICK-OFF-5DBF1193:O8:S1`, source 2026 ligne **204** : date théorique lundi **29.03.2027** (Lundi de Pâques), date résultante mardi **30.03.2027**, 18:30-21:30. Code `012G1.013`, Stat.Com `012G1`, OI `G1`, public `N02`, identifiant et nombre d'occurrences conservés ; aucun doublon G1/N02 sur le mardi. Le champ `calendarAdjustment` porte `G1_LUNDI_FERIE_DEPLACE_MARDI` et la date théorique. Aucun autre OI ni type n'est déplacé par cette règle.
+
+## 5. Conduite et versions 1.0/1.1/1.2
+
+- DPS : **56** séances, G1 20, C1 12, B1 12, B2 12. Les 28 demi-sections opérationnelles ont deux conduites 10:30-11:30 après deux instructions réelles ; aucun N06/N04 de réserve ni instruction fictive. Stat.Com `0152F7`, public demi-section + cond PL/VL.
+- DAP : **16** soirées, Y1-Y4 quatre chacune, Stat.Com `01522F7`, 18:30-21:30, cond VL. Le classeur 2026 en montre 17 (Y1 cinq, Y2-Y4 quatre) ; la cinquième Y1 est la seule non-reconduction volontaire identifiée explicitement.
+- Le type `Conduite` renvoie 72 occurrences DPS+DAP ; le filtre multi-séance n'assimile pas ces conduites à des sessions multiples.
+- Hors PR, les suffixes ne décrivent **pas une règle universelle**. Dans 2026 : Formation MEA 1.0 = 4 lignes `Permanent`, 1.1 = 2 `Réguliers`, 1.2 = 9 par sections ; TP9000 1.0 = 4 `Cond TP9 | Permanent`, 1.1 = 3 `Cond TP9 | Réguliers`, 1.2 = 7 par sections. Grutier 1.0 = 2 `Permanent`, 1.2 = 3 spécialistes ; TRUCK/CAR utilisent 1.1/1.2 comme séquences d'exercice. Aucun nouveau moteur Personnel ou d'affectation n'est créé dans ce gate.
+
+## 6. Extractions et recette
+
+- `SCOPE_QV_2027_GATE_CONSOLIDATION_SYNTHESE_OI.csv` : 1028 lignes, par OI/activité, avec 2026, 2027, sessions, couverture, classe et preuve.
+- `SCOPE_QV_2027_GATE_CONSOLIDATION_DETAIL_OCCURRENCES_OI.csv` : 2505 lignes, une par association OI ou OI non documenté, avec identifiant physique et toutes les colonnes demandées.
+- `SCOPE_QV_2027_GATE_CONSOLIDATION_HUMAN_REVIEW.csv` : 433 lignes distinctes, liste exhaustive et filtrable des décisions à examiner.
+- `outputs/qv-2027-gate/SCOPE_QV_2027_GATE_CONSOLIDATION_OI.xlsx` : les trois vues ci-dessus en onglets filtrables, exportées et prévisualisées sans nouvelle dépendance du dépôt.
+
+Tests : `node scripts/scope-qv-2027-gate-consolidation-tests.js` **8/8 PASS** ; les **19 suites** `scripts/scope-qv-*-tests.js` (incluant ce gate) passent, soit **396/396** tests. `npm run check` : PASS ; `git diff --check` : PASS. `npm run test:scope` : NON PASS global, bloqué par l'assertion de cache-bust CSS login `scope-login-visual-alignment-orion-1-tests.js:138`, sans rapport avec ce gate. Aucune recette navigateur réelle n'est revendiquée.
+
+## 7. Anomalies restantes et verdict
+
+**NO_GO_TECHNIQUE. MOA_REVIEW_REQUIRED = YES.** Ce verdict ne contredit pas les 856 séances et les 72 conduites recettées : il indique que la cohérence complète 2026→2027 et la compatibilité calendrier ne sont pas encore démontrées pour ouvrir la planification réelle sans revue. Causes précises : table calendrier persistée non vérifiable à distance ; 136 sources 2026 et 212 occurrences 2027 sans correspondance certaine ; 108 contraintes calendrier à valider ; 355 lignes 2026 sans OI coché et 124 domaines 2027 sans F0-F8 simple prouvé. L'absence de doublon daté ne résout pas ces incertitudes. Aucun GO production n'est donné : la MOA tranche à partir des extractions.
+
+Fichiers de ce gate : `netlify/lib/_scope-quo-vadis-service.js` (seul déplacement déterministe G1), `scripts/scope-qv-2027-gate-consolidation.js`, `scripts/scope-qv-2027-gate-consolidation-tests.js`, trois CSV, un JSON de métriques, un XLSX et ce rapport. Les autres modifications du worktree précédaient le gate et restent intactes. Aucun travail 2028, import Personnel, migration, événement de production, commit, push, PR, merge ou déploiement.
+
+## 8. HUMAN_REVIEW exhaustif
+
+Les 433 lignes suivantes sont **des occurrences physiques / sources**, non des associations OI répétées. La colonne OI liste toutes les associations de l'occurrence. Le CSV et l'onglet XLSX permettent le filtrage ; cette annexe rend la liste exhaustive dans le rapport même.
+
+| Année | Identifiant | Activité | OI | Date | Motif | Source | Décision attendue |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026 | QV26:L5 | Formation personnel CFF |  | 2026-01-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 5 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L7 | Séance personnel DAP \| Kick-off | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-01-28 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 7 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L10 | Cursus PAPR - module 2 \| Matériel PR |  | 2026-02-10 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 10 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L19 | Cursus MEA - module 2.1 |  | 2026-02-17 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 19 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L21 | Cursus MEA - module 2.2 |  | 2026-02-19 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 21 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L30 | Formation personnel CFF |  | 2026-02-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 30 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L33 | Formation personnel CFF |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 33 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L34 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 34 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L36 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 36 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L37 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 37 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L38 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 38 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L39 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 39 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L40 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 40 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L41 | Cursus cond VL - module 2.0 \| Connaissance véhicule |  | 2026-02-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 41 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L44 | Formation personnel CFF |  | 2026-02-25 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 44 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L47 | Formation personnel CFF |  | 2026-02-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 47 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L48 | Cursus c groupe - module 1 \| Conduite et leadership | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-02-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 48 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L49 | Cursus opérateur VPC - module 1 | DPS:G1 | 2026-02-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 49 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L70 | Cursus MEA - module 3.1 |  | 2026-03-03 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 70 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L72 | Formation cadres DAP | DPS:G1,DAP:Y2,DAP:Y3 | 2026-03-03 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 72 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L77 | Cursus TP9 - module 1 \| Discovery |  | 2026-03-04 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 77 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L86 | Cursus MEA - module 3.2 |  | 2026-03-05 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 86 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L111 | Cursus MEA - module 4.1 |  | 2026-03-10 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 111 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L113 | Cursus CI DPS - module 1 \| Le rôle et les valeurs du chef | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-03-10 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 113 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L114 | Cursus élévateur à timon S2 - module 1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-03-10 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 114 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L122 | Cursus TP9 - module 2 \| Practice |  | 2026-03-11 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 122 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L127 | Cursus MEA - module 4.2 |  | 2026-03-12 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 127 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L132 | Cours ECA FB01 - formation de base recrues |  | 2026-03-13 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 132 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L138 | Cours ECA FB01 - formation de base recrues |  | 2026-03-14 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 138 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L146 | Cursus CI DPS - module 6 \| Tactique II | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-03-16 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 146 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L149 | Cursus MEA - module 5.1 |  | 2026-03-17 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 149 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L150 | Cursus TP9 - module 3.1 \| Drive |  | 2026-03-17 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 150 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L152 | Formation cadres DAP | DAP:Y1,DAP:Y4 | 2026-03-17 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 152 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L154 | Cursus « Notions d'administration publique » \| module 4 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-03-18 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 154 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L156 | Cursus MEA - module 5.2 |  | 2026-03-18 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 156 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L164 | Cursus TP9 - module 3.1 \| Drive |  | 2026-03-19 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 164 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L190 | Cursus CI DAP - module 1 \| Leadership et bases légales | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-03-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 190 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L191 | Cursus TP9 - module 3.1 \| Drive |  | 2026-03-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 191 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L195 | Assemblée générale de la SIC |  | 2026-03-27 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 195 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L205 | BLS \| AED \| Modules complémentaires SP 1 à 4 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-03-30 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 205 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L206 | Cursus TP9 - module 3.1 \| Drive |  | 2026-03-31 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 206 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L223 | Formation continue OACP CarPostal |  | 2026-04-07 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 223 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L225 | Formation continue OACP CarPostal |  | 2026-04-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 225 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L227 | Formation continue OACP CarPostal |  | 2026-04-09 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 227 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L233 | Cursus MEA - module 6.1 |  | 2026-04-14 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 233 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L236 | Cursus MEA - module 6.2 |  | 2026-04-16 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 236 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L237 | Instr demi-sct - KICK-OFF | DPS:G1 | 2026-04-18 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 237 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L240 | Cursus MEA - module 7.1 |  | 2026-04-21 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 240 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L241 | Exercice PR-ABC \| Refresh |  | 2026-04-21 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 241 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L245 | Exercice TRUCK 1.1 |  | 2026-04-21 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 245 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L249 | Cursus MEA - module 7.2 |  | 2026-04-22 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 249 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L258 | Cursus TP9 - module 3.2 \| Drive |  | 2026-04-27 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 258 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L261 | Cursus CI DPS - module 7 \| Spécificités des interventions I | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-04-28 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 261 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L266 | Cursus OFSI - formation de base | DPS:G1 | 2026-04-29 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 266 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L268 | Cursus CI DAP - module 2 \| Activités de conduite | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-04-30 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 268 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L271 | Exercice TRUCK 1.2 |  | 2026-04-30 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 271 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L279 | Cursus CI DPS - module 2 \| Bases légales et responsabilités | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-05-04 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 279 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L286 | BLS \| AED \| Modules complémentaires SP 1 à 4 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-05-05 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 286 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L289 | Cursus TP9 - module 3.2 \| Drive |  | 2026-05-06 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 289 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L294 | Formation personnel CFF |  | 2026-05-07 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 294 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L299 | Assemblée des délégués de la FVSP |  | 2026-05-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 299 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L300 | Concours de la FVSP | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-05-09 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 300 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L306 | Cursus MEA - module 8.1 |  | 2026-05-11 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 306 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L309 | Formation groupée 1.1 \| DPS \| OFSI \| ABC | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-05-12 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 309 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L311 | Cursus MEA - module 8.2 |  | 2026-05-14 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 311 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L318 | Cursus TP9 - module 3.2 \| Drive |  | 2026-05-19 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 318 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L324 | Cursus TP9 - module 3.2 \| Drive |  | 2026-05-20 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 324 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L328 | Visite du Conseil d'État |  | 2026-05-21 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 328 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L333 | Exercice TRUCK 1.3 |  | 2026-05-21 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 333 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L347 | Formation groupée 1.2 \| DPS \| OFSI \| ABC | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-05-27 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 347 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L350 | Formation groupée 1.3 \| DPS \| OFSI \| ABC | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-05-28 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 350 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L366 | Cours ECA SP19 - ventilation opérationnelle |  | 2026-06-02 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 366 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L367 | Formation personnel CFF |  | 2026-06-02 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 367 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L373 | Cursus PAPR - module 3 \| AO Simulateur |  | 2026-06-04 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 373 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L385 | Cursus MEA - module 9.1 |  | 2026-06-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 385 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L386 | Cursus CI DAP - module 3 \| Interventions, aspects tactico-techniques | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-06-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 386 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L388 | Cours ECA SA10 - cours de cadres - répondant de la formation antichute |  | 2026-06-09 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 388 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L389 | Formation groupée 1.4 \| DPS \| OFSI \| ABC | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-06-09 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 389 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L390 | Cours ECA SA10 - répondant de la formation antichute |  | 2026-06-10 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 390 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L391 | Exercice PR-ABC \| Refresh |  | 2026-06-10 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 391 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L394 | Cours ECA SA10 - répondant de la formation antichute |  | 2026-06-11 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 394 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L396 | Cursus MEA - module 9.2 |  | 2026-06-11 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 396 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L397 | Cursus TP9 - conduite libre |  | 2026-06-11 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 397 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L406 | Cours ECA SA11 - recyclage répondant de la formation antichute |  | 2026-06-12 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 406 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L413 | Exercice JSP Cadets 2 \| FOBA 1 |  | 2026-06-13 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 413 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L421 | Formation groupée 1.5 \| DPS \| OFSI \| ABC | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-06-16 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 421 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L426 | Cursus CI DPS - module 3 \| Activités de conduite | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-06-17 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 426 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L430 | Cursus TP9 - conduite libre |  | 2026-06-18 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 430 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L433 | Formation groupée 1.6 \| DPS \| OFSI \| ABC | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-06-18 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 433 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L458 | Cursus CI DPS - module 8 \| Spécificités des interventions II | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-06-25 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 458 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L504 | Cursus cond VL - module 3.1 \| remorques |  | 2026-08-18 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 504 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L507 | Cursus c groupe - module 2 \| Méthodologie didactique | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-08-19 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 507 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L528 | Cursus CI DPS - cours de cadres pour évaluateurs | DPS:G1 | 2026-08-25 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 528 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L529 | Cursus CI DPS - module 9 \| Rétablissement et débriefing | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-08-25 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 529 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L536 | Cursus cond VL - module 3.2 \| remorques |  | 2026-08-27 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 536 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L563 | Cursus CI DPS - module 4 \| Tactique I | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-09-02 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 563 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L570 | Exercice DAP 4 | DAP:Y1 | 2026-09-03 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 570 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L580 | Cursus c groupe - module 3 \| Consolidation théorique et pratique | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-09-05 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 580 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L594 | Exercice DAP 4 | DAP:Y2 | 2026-09-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 594 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L646 | Cours ECA SA10 - cours de cadres - répondant de la formation antichute |  | 2026-09-22 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 646 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L647 | Entretien postulant échelons I et II |  | 2026-09-22 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 647 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L653 | Cours ECA SA10 - répondant de la formation antichute |  | 2026-09-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 653 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L654 | Cours ECA SP19 - ventilation opérationnelle |  | 2026-09-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 654 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L656 | Préparation Revue Quinquennale \| École de section |  | 2026-09-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 656 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L657 | Entretien postulant échelons I et II |  | 2026-09-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 657 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L661 | Cours ECA SA10 - répondant de la formation antichute |  | 2026-09-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 661 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L663 | Préparation Revue Quinquennale \| École de section | DPS:G1,DPS:B1,DAP:Y1,DAP:Y2 | 2026-09-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 663 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L664 | Préparation Revue Quinquennale \| École de section | DPS:C1,DPS:B2,DAP:Y3,DAP:Y4 | 2026-09-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 664 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L665 | Cours ECA SA11 - recyclage répondant de la formation antichute |  | 2026-09-25 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 665 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L670 | Cours JSP JS03 - flamme 3 JSP |  | 2026-09-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 670 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L671 | Revue Quinquennale SDIS Nord vaudois | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-09-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 671 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L675 | Cursus CI DPS - module 10 \| Tests théoriques et pratiques | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-09-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 675 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L676 | Cursus CI DPS - module 10 \| Tests théoriques et pratiques | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-09-27 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 676 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L677 | Entretien postulant échelons I et II |  | 2026-09-28 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 677 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L686 | Cursus CI DAP - module 4 \| Interventions varia | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-09-30 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 686 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L687 | Cursus PAPR - module 4 \| Surveillance PR |  | 2026-09-30 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 687 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L695 | Cursus « Notions d'administration publique » \| module 4 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-10-02 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 695 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L704 | Cours de cadres Formation ABC | DPS:G1,DPS:B2 | 2026-10-05 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 704 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L708 | Exercice DAP 4 | DAP:Y4 | 2026-10-05 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 708 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L711 | Exercice PR-ABC \| Refresh |  | 2026-10-06 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 711 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L719 | Séance photo du personnel DAP | DAP:Y3 | 2026-10-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 719 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L721 | Exercice DAP 4 | DAP:Y3 | 2026-10-08 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 721 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L730 | Formation continue OACP CarPostal |  | 2026-10-21 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 730 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L736 | Test de sélection échelons I, II N'26 |  | 2026-10-27 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 736 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L756 | Cursus c groupe - module 4 \| Consolidation théorique et pratique | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-10-31 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 756 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L759 | Cursus CI DAP - module 5 \| Rapport d'intervention et fin d'engagement | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2026-11-02 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 759 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L761 | Cursus CI DPS - module 5 \| Rédaction de rapports | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-11-03 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 761 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L785 | Formation ABC | DPS:G1,DPS:B2 | 2026-11-09 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 785 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L792 | Journée « Oser tous les métiers » (JOM) | DPS:G1 | 2026-11-12 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 792 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L803 | Cursus PAPR - module 5 \| R&S grand volume |  | 2026-11-17 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 803 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L809 | Formation ABC | DPS:G1,DPS:B1 | 2026-11-23 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 809 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L811 | Cursus cond VL - module 4.1 \| validation moyens prioritaires |  | 2026-11-24 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 811 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L819 | Cursus cond VL - module 4.2 \| validation moyens prioritaires |  | 2026-11-26 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 819 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L824 | Formation ABC | DPS:G1,DPS:C1 | 2026-11-30 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 824 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L826 | Cursus PAPR - module 6 \| Cobra |  | 2026-12-01 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 826 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2026 | QV26:L845 | Cursus PAPR - module 7 \| Engagement pratique |  | 2026-12-12 | SOURCE_2026_SANS_LIEN_PROUVE | classeur ligne 845 | Confirmer reconduction, non-reconduction ou correspondance |
+| 2027 | QV26-8-KM-DU-SDIS-D2C38C47:O1:S1 | 8 km du SDIS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-08-13 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 499 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:O1:S1 | Cours de cadres exercice DPS 1 | DPS:C1 | 2027-03-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 73 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:O1:S1 | Cours de cadres exercice DPS 2 | DPS:C1 | 2027-08-18 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 509 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:O2:S1 | Cours de cadres exercice DPS 2 | DPS:B1 | 2027-08-18 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 510 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84:O1:S1 | Cours de cadres exercice DPS 3 | DPS:C1 | 2027-09-21 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 648 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:O1:S1 | Cours de cadres exercice DPS-DAP 1 | DPS:C1,DPS:B1,DPS:B2 | 2027-03-31 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 214 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-FORMATION-GROUPEE-DPS-87729EC5:O1:S1 | Cours de cadres Formation groupée DPS | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-03-15 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 145 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-1-6A16603D:O1:S1 | Exercice DPS 1 | DPS:C1 | 2027-03-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 186 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-2-54E09232:O1:S1 | Exercice DPS 2 | DPS:C1 | 2027-09-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 635 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-3-29F948D1:O1:S1 | Exercice DPS 3 | DPS:C1 | 2027-10-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 737 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-DAP-1-7F1E9444:O1:S1 | Exercice DPS-DAP 1 | DPS:B2 | 2027-05-05 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 292 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DPS-DAP-1-7F1E9444:O2:S1 | Exercice DPS-DAP 1 | DAP:Y4 | 2027-05-05 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 293 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DPS-DAP-1-7F1E9444:O4:S1 | Exercice DPS-DAP 1 | DAP:Y1 | 2027-05-19 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 327 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-DAP-2-668A88B6:O1:S1 | Exercice DPS-DAP 2 | DPS:C1 | 2027-08-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 538 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-DAP-2-668A88B6:O3:S1 | Exercice DPS-DAP 2 | DPS:B2 | 2027-08-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 540 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DPS-DAP-2-668A88B6:O4:S1 | Exercice DPS-DAP 2 | DAP:Y2 | 2027-08-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 542 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-BIKABLO-AA5C6437:O1:S1 | Formation BIKABLO | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-06-21 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 448 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-BIKABLO-AA5C6437:O2:S1 | Formation BIKABLO | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-06-22 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 451 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-BIKABLO-AA5C6437:O3:S1 | Formation BIKABLO | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-06-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 457 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-BIKABLO-AA5C6437:O4:S1 | Formation BIKABLO | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-06-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 464 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S1 | Formation groupée 1.1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S2 | Formation groupée 1.1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S3 | Formation groupée 1.1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S4 | Formation groupée 1.1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S5 | Formation groupée 1.1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-1-1-3D8CCE58:O1:S6 | Formation groupée 1.1 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O1:S1 | Formation permanents | DPS:G1 | 2027-03-12 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 133 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O2:S1 | Formation permanents | DPS:G1 | 2027-03-29 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | classeur ligne 202 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O3:S1 | Formation permanents | DPS:G1 | 2027-05-05 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 288 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O4:S1 | Formation permanents | DPS:G1 | 2027-06-14 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 416 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O5:S1 | Formation permanents | DPS:G1 | 2027-08-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 524 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O6:S1 | Formation permanents | DPS:G1 | 2027-09-15 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 625 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PERMANENTS-4F48A9D0:O7:S1 | Formation permanents | DPS:G1 | 2027-11-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 764 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-RELATION-AVEC-LA-PRESSE-63E476BF:O4:S1 | Formation relation avec la presse | DPS:G1 | 2027-08-20 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 515 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:O7:S1 | Instr demi-sct - VARIA | DPS:C1 | 2027-05-15 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 313 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:O8:S1 | Instr demi-sct - VARIA | DPS:B1 | 2027-05-15 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 315 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:O9:S1 | Instr demi-sct - VARIA | DPS:B2 | 2027-05-15 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 314 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-SCT-KICK-OFF-5DBF1193:O5:S1 | Instr sct - KICK-OFF | DPS:B2 | 2027-03-27 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT | classeur ligne 197 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-SCT-KICK-OFF-5DBF1193:O6:S1 | Instr sct - KICK-OFF | DPS:C1 | 2027-03-27 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT | classeur ligne 200 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-SCT-KICK-OFF-5DBF1193:O7:S1 | Instr sct - KICK-OFF | DPS:B1 | 2027-03-27 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_SCT | classeur ligne 201 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-JOURNEE-DES-FAMILLES-20BDA6AB:O5:S1 | Journée des familles | DPS:C1 | 2027-08-14 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 502 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:O1:S1 | Nettoyage annuel caserne | DPS:G1 | 2027-06-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 459 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-PASSEPORT-VACANCES-55E662D2:O1:S1 | Passeport-Vacances | DPS:G1 | 2027-10-15 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 727 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O5:S1 | Préparation concours de la FVSP | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-03-25 | HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 193 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O6:S1 | Préparation concours de la FVSP | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-04-01 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 218 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O7:S1 | Préparation concours de la FVSP | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-04-08 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 228 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-PREPARATION-CONCOURS-DE-LA-FVSP-B8EB26E1:O8:S1 | Préparation concours de la FVSP | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-05-06 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | classeur ligne 296 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-PREPARATION-XMAS-39727CE7:O1:S1 | Préparation Xmas | DPS:G1 | 2027-11-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 814 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-REFRESH-CI-1A3A4D1F:O1:S1 | Refresh CI | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-11-30 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 828 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-SEANCE-COMMISSION-D-INSTRUCTION-C422B338:O2:S1 | Séance commission d'instruction | DPS:G1 | 2027-11-01 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 758 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O1:S1 | Sécurité feu · Fête Médiévale | DPS:C1 | 2027-08-07 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 493 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O2:S1 | Sécurité feu · Fête Médiévale | DPS:C1 | 2027-08-07 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 494 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O3:S1 | Sécurité feu · Fête Médiévale | DPS:C1 | 2027-08-08 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 495 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-SECURITE-FEU-FETE-MEDIEVALE-5917D3F5:O4:S1 | Sécurité feu · Fête Médiévale | DPS:C1 | 2027-08-08 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 496 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-SECURITE-FEU-FETE-NATIONALE-C29B7F0B:O1:S1 | Sécurité feu・Fête Nationale | DPS:C1 | 2027-07-30 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 485 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-TOUR-DE-FRANCE-FEMMES-26-4BF12176:O1:S1 | Tour de France Femmes '26 | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-07-31 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE\|VEILLE_FERIE\|VACANCES_SCOLAIRES | classeur ligne 487 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-VISION-LOCALE-DPS-EA8354D4:O3:S1 | Vision locale DPS | DPS:C1 | 2027-03-30 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 208 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O2:S1 | Cours de cadres exercice DAP 1 | DAP:Y2 | 2027-02-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 20 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O3:S1 | Cours de cadres exercice DAP 1 | DAP:Y3 | 2027-03-08 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 108 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-1-871DAD30:O4:S1 | Cours de cadres exercice DAP 1 | DAP:Y4 | 2027-03-10 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 126 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O1:S1 | Cours de cadres exercice DAP 2 | DAP:Y2 | 2027-03-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 83 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O3:S1 | Cours de cadres exercice DAP 2 | DAP:Y3 | 2027-04-14 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 235 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-2-1E456232:O4:S1 | Cours de cadres exercice DAP 2 | DAP:Y4 | 2027-04-20 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 248 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O1:S1 | Cours de cadres exercice DAP 3 | DAP:Y2 | 2027-04-10 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 231 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O2:S1 | Cours de cadres exercice DAP 3 | DAP:Y3 | 2027-05-10 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 308 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-3-8C02654D:O4:S1 | Cours de cadres exercice DAP 3 | DAP:Y4 | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 571 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O1:S1 | Cours de cadres exercice DAP 4 | DAP:Y1 | 2027-08-05 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 489 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O2:S1 | Cours de cadres exercice DAP 4 | DAP:Y2 | 2027-08-05 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 490 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:O3:S1 | Cours de cadres exercice DAP 4 | DAP:Y4 | 2027-09-15 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 628 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-1-9890D687:O2:S1 | Exercice DAP 1 | DAP:Y2 | 2027-03-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 153 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-1-9890D687:O3:S1 | Exercice DAP 1 | DAP:Y3 | 2027-03-18 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 168 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-1-9890D687:O4:S1 | Exercice DAP 1 | DAP:Y4 | 2027-03-30 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 209 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DAP-2-6285EF74:O1:S1 | Exercice DAP 2 | DAP:Y2 | 2027-04-07 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 226 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DAP-2-6285EF74:O2:S1 | Exercice DAP 2 | DAP:Y3 | 2027-04-20 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 247 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-2-6285EF74:O4:S1 | Exercice DAP 2 | DAP:Y4 | 2027-05-06 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | classeur ligne 298 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DAP-3-618B0715:O1:S1 | Exercice DAP 3 | DAP:Y2 | 2027-05-06 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | classeur ligne 297 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DAP-3-618B0715:O2:S1 | Exercice DAP 3 | DAP:Y3 | 2027-05-20 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 335 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-3-618B0715:O4:S1 | Exercice DAP 3 | DAP:Y4 | 2027-09-21 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 651 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-4-46753B3A:O1:S1 | Exercice DAP 4 | DAP:Y1 | 2027-11-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 783 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-4-46753B3A:O2:S1 | Exercice DAP 4 | DAP:Y2 | 2027-10-16 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 729 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-DAP-4-46753B3A:O3:S1 | Exercice DAP 4 | DAP:Y4 | 2027-11-05 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 777 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-DAP-4-46753B3A:O4:S1 | Exercice DAP 4 | DAP:Y3 | 2027-11-12 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 795 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-CADRES-DAP-2B042598:O1:S1 | Formation cadres DAP | DPS:G1,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-02-04 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 9 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-CADRES-DAP-2B042598:O2:S1 | Formation cadres DAP | DPS:G1,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-03-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 83 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-SEANCE-CADRES-0972877C:O1:S1 | Séance cadres | DAP:Y2 | 2027-08-10 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 498 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-SEANCE-PHOTO-DU-PERSONNEL-DAP-E17BA848:O1:S1 | Séance photo du personnel DAP | DAP:Y3 | 2027-09-07 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 593 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-10-8D3FE965:O1:S1 | Exercice JSP 10 | JSP:C1 | 2027-11-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 823 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-3-0AFB4398:O1:S1 | Exercice JSP 3 | JSP:C1 | 2027-03-01 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 66 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-3-0AFB4398:O3:S1 | Exercice JSP 3 | JSP:G1 | 2027-03-27 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE\|VACANCES_SCOLAIRES | classeur ligne 198 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-JSP-4-E8680A47:O1:S1 | Exercice JSP 4 | JSP:C1 | 2027-03-29 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | classeur ligne 203 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-JSP-4-E8680A47:O3:S1 | Exercice JSP 4 | JSP:G1 | 2027-05-01 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 278 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-5-AFD39D59:O1:S1 | Exercice JSP 5 | JSP:C1 | 2027-05-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 281 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-5-AFD39D59:O3:S1 | Exercice JSP 5 | JSP:G1 | 2027-08-28 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 552 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-6-0F4137C4:O1:S1 | Exercice JSP 6 | JSP:C1 | 2027-05-31 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 363 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-6-0F4137C4:O3:S1 | Exercice JSP 6 | JSP:G1 | 2027-09-11 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 611 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-7-FDFC679C:O1:S1 | Exercice JSP 7 | JSP:C1 | 2027-09-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 587 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-7-FDFC679C:O3:S1 | Exercice JSP 7 | JSP:G1 | 2027-11-13 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 799 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-8-1A631BAF:O1:S1 | Exercice JSP 8 | JSP:C1 | 2027-10-04 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 706 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-8-1A631BAF:O3:S1 | Exercice JSP 8 | JSP:G1 | 2027-11-27 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 822 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-9-4C059910:O1:S1 | Exercice JSP 9 | JSP:C1 | 2027-11-01 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 760 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-JSP-CADETS-2-DE49BBCD:O1:S1 | Exercice JSP Cadets 2 | JSP:G1,JSP:C1,JSP:B1 | 2027-03-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 100 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-CEMEA-MODULE-1-345181CE:O1:S1 | Formation CEMEA, module 1 | JSP:G1,JSP:C1,JSP:B1 | 2027-03-13 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 139 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-CEMEA-MODULE-2-E7D2BFB8:O1:S1 | Formation CEMEA, module 2 | JSP:G1,JSP:C1,JSP:B1 | 2027-03-13 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 144 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-CEMEA-MODULE-3-4425518E:O1:S1 | Formation CEMEA, module 3 | JSP:G1,JSP:C1,JSP:B1 | 2027-06-12 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 414 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-CEMEA-MODULE-4-F7E51360:O1:S1 | Formation CEMEA, module 4 | JSP:G1,JSP:C1,JSP:B1 | 2027-06-12 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 415 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-JSP-9B5BDE99:O1:S1 | Formation groupée JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-05-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 357 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-JSP-9B5BDE99:O2:S1 | Formation groupée JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-05-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 358 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-JSP-9B5BDE99:O3:S1 | Formation groupée JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-05-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 359 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-GROUPEE-JSP-9B5BDE99:O4:S1 | Formation groupée JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-05-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 361 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-SEANCE-INTERNE-CADRES-JSP-21EF2225:O1:S1 | Séance interne cadres JSP | JSP:G1 | 2027-09-13 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 617 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-SEANCE-INTERNE-CADRES-JSP-21EF2225:O2:S1 | Séance interne cadres JSP | JSP:C1 | 2027-09-13 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 619 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-FOBA-2ED42E4A:O1:S1 | Exercice FOBA |  | 2027-03-31 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 213 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-FOBA-2ED42E4A:O2:S1 | Exercice FOBA |  | 2027-05-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 342 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-FOBA-2ED42E4A:O3:S1 | Exercice FOBA |  | 2027-09-08 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 600 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-FOBA-1-F0BC308F:O1:S1 | Exercice FOBA 1 |  | 2027-02-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 45 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-FOBA-10-B13BB01B:O1:S1 | Exercice FOBA 10 |  | 2027-12-08 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 838 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-INTRODUCTION-PIONNIER-999BBC8C:O1:S1 | Introduction PIONNIER | DPS:G1 | 2027-05-06 | HUMAN_REVIEW_CALENDAR:FERIE\|VACANCES_SCOLAIRES | classeur ligne 295 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-RECYCLAGE-BLS-5AA9AC4A:O1:S1 | Cours de cadres recyclage BLS | DPS:G1,DPS:B1,DAP:Y1 | 2027-02-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 46 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-OPERATEUR-VPC-1-4-C69575A3:O1:S1 | Formation opérateur VPC 1.4 | DPS:G1 | 2027-03-25 | HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 192 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-INSTR-DEMI-SCT-ABC-C49C7121:O4:S1 | Instr demi-sct - ABC | DPS:G1 | 2027-05-15 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 312 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-RECYCLAGE-BLS-3A2ED7C4:O1:S1 | Recyclage BLS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1 | 2027-03-22 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 178 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-RECYCLAGE-BLS-3A2ED7C4:O2:S1 | Recyclage BLS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1 | 2027-05-18 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 319 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-RECYCLAGE-BLS-3A2ED7C4:O3:S1 | Recyclage BLS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1 | 2027-09-07 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 592 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-RECYCLAGE-BLS-3A2ED7C4:O4:S1 | Recyclage BLS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1 | 2027-09-30 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 694 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-RECYCLAGE-BLS-3A2ED7C4:O5:S1 | Recyclage BLS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1 | 2027-10-28 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 746 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-RECYCLAGE-BLS-3A2ED7C4:O6:S1 | Recyclage BLS | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1 | 2027-11-22 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 808 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90:O6:S1 | Conduite TP9000, formation continue 1.2 | DPS:G1 | 2027-03-31 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 211 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-CONDUITE-TP9000-FORMATION-CONTINUE-1-2-5D809A90:O7:S1 | Conduite TP9000, formation continue 1.2 | DPS:G1 | 2027-04-01 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 216 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E:O2:S1 | Conduite TP9000, formation continue 2.2 | DPS:G1 | 2027-10-13 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 726 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-CONDUITE-TP9000-FORMATION-CONTINUE-2-2-CC09656E:O3:S1 | Conduite TP9000, formation continue 2.2 | DPS:G1 | 2027-10-20 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 731 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-EXERCICE-CAR-FB6A81CD:O1:S1 | Cours de cadres exercice CAR |  | 2027-08-19 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 512 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-COURS-DE-CADRES-FORMATEURS-MEA-2-40EAD3D2:O1:S1 | Cours de cadres Formateurs MEA 2 |  | 2027-08-18 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 506 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-FORMATION-MEA-1-0-7408CDDA:O4:S1 | Formation MEA 1.0 |  | 2027-03-31 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 210 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-FORMATION-PILOTE-BAT-1-27197BC2:O4:S1 | Formation pilote BAT 1 |  | 2027-06-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 422 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PILOTE-BAT-1-27197BC2:O5:S1 | Formation pilote BAT 1 |  | 2027-06-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 423 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PILOTE-BAT-1-27197BC2:O6:S1 | Formation pilote BAT 1 |  | 2027-06-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 424 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PILOTE-BAT-2-F69F375C:O4:S1 | Formation pilote BAT 2 |  | 2027-10-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 713 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PILOTE-BAT-2-F69F375C:O5:S1 | Formation pilote BAT 2 |  | 2027-10-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 714 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-PILOTE-BAT-2-F69F375C:O6:S1 | Formation pilote BAT 2 |  | 2027-10-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 715 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-VEHICULE-D-URGENCE-867B1995:O1:S1 | Formation véhicule d'urgence |  | 2027-03-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 95 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-VEHICULE-D-URGENCE-867B1995:O2:S1 | Formation véhicule d'urgence |  | 2027-05-01 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 273 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-VEHICULE-D-URGENCE-867B1995:O3:S1 | Formation véhicule d'urgence |  | 2027-06-19 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 438 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-FORMATION-VEHICULE-D-URGENCE-867B1995:O4:S1 | Formation véhicule d'urgence |  | 2027-10-30 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 749 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-1-1-30B1E01A:O1:S1 | Exercice PR 1.1 |  | 2027-03-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 71 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-1-1-30B1E01A:O1:S2 | Exercice PR 1.1 |  | 2027-03-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 76 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-1-1-30B1E01A:O1:S3 | Exercice PR 1.1 |  | 2027-03-09 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 117 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-1-1-30B1E01A:O1:S4 | Exercice PR 1.1 |  | 2027-03-11 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 130 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-1-1-30B1E01A:O1:S5 | Exercice PR 1.1 |  | 2027-03-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 151 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-1-1-30B1E01A:O1:S6 | Exercice PR 1.1 |  | 2027-03-18 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 166 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-2-1-45588F47:O1:S1 | Exercice PR 2.1 |  | 2027-05-18 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 321 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-2-2-4CAB2E94:O1:S1 | Exercice PR 2.2 |  | 2027-05-19 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 322 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-2-3-5B63EA54:O1:S1 | Exercice PR 2.3 |  | 2027-05-20 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 330 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-2-4-68D0B0F1:O1:S1 | Exercice PR 2.4 |  | 2027-05-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 343 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-2-5-10E2D2B9:O1:S1 | Exercice PR 2.5 |  | 2027-05-27 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 351 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-2-6-38AAE638:O1:S1 | Exercice PR 2.6 |  | 2027-06-01 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 368 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-3-1-D96B09DB:O1:S1 | Exercice PR 3.1 |  | 2027-08-19 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 513 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV26-EXERCICE-PR-3-2-9759EEEC:O1:S1 | Exercice PR 3.2 |  | 2027-08-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 531 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-3-3-9A2F199A:O1:S1 | Exercice PR 3.3 |  | 2027-08-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 537 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-3-4-E1C6C663:O1:S1 | Exercice PR 3.4 |  | 2027-08-31 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 560 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-3-5-DB2C8980:O1:S1 | Exercice PR 3.5 |  | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 565 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-3-6-ECD69510:O1:S1 | Exercice PR 3.6 |  | 2027-09-09 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 605 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-4-1-C882C1EA:O1:S1 | Exercice PR 4.1 |  | 2027-11-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 763 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-4-2-3E5EE567:O1:S1 | Exercice PR 4.2 |  | 2027-11-09 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 790 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-4-3-E71C19DA:O1:S1 | Exercice PR 4.3 |  | 2027-11-11 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 794 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-4-4-C4008BC3:O1:S1 | Exercice PR 4.4 |  | 2027-11-18 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 805 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-4-5-7CF12C15:O1:S1 | Exercice PR 4.5 |  | 2027-11-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 813 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-4-6-BBE76EDB:O1:S1 | Exercice PR 4.6 |  | 2027-11-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 820 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-ABC-75229C6D:O1:S1 | Exercice PR-ABC | DPS:G1 | 2027-04-20 | CORRESPONDANCE_2026_NON_PROUVEE | MOA_RULE_PR_ABC_3_SEANCES | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-ABC-75229C6D:O2:S1 | Exercice PR-ABC | DPS:G1 | 2027-06-09 | CORRESPONDANCE_2026_NON_PROUVEE | MOA_RULE_PR_ABC_3_SEANCES | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-EXERCICE-PR-ABC-75229C6D:O3:S1 | Exercice PR-ABC | DPS:G1 | 2027-10-05 | CORRESPONDANCE_2026_NON_PROUVEE | MOA_RULE_PR_ABC_3_SEANCES | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-TEST-DE-SELECTION-PAPR-N-27-A9E7D22D:O1:S1 | Test de sélection PAPR N'27 |  | 2027-09-14 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 622 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-TEST-DE-SELECTION-PAPR-N-27-A9E7D22D:O2:S1 | Test de sélection PAPR N'27 |  | 2027-10-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 734 | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-852 | Intégration personnel DPS, phase I | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-01-05 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT+FOBA_TRANSITION | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-853 | Échange tenue | JSP:G1,JSP:C1,JSP:B1 | 2027-01-06 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-854 | Intégration personnel DPS, phase II | DPS:G1 | 2027-01-06 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT+FOBA_TRANSITION | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-855 | Intégration personnel DPS, phase II | DPS:C1 | 2027-01-06 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT+FOBA_TRANSITION | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-856 | Intégration personnel DPS, phase II | DPS:B1 | 2027-01-06 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT+FOBA_TRANSITION | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-857 | Intégration personnel DPS, phase II | DPS:B2 | 2027-01-06 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT+FOBA_TRANSITION | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-858 | Échange tenue | JSP:G1,JSP:C1,JSP:B1 | 2027-01-07 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-859 | Répétition garde drapeau RA'25 | DPS:G1,DPS:C1,DAP:Y3 | 2027-01-07 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-863 | Séance cadres F5/6 | DPS:G1,DPS:B1 | 2027-01-13 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-864 | Séance Direction JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-01-13 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-865 | Séance échelons II, III et IV | DPS:G1,DPS:C1,DPS:B1,DPS:B2,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-01-14 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-881 | Séance chefs de section DPS | DPS:G1 | 2027-01-26 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-884 | Séance chefs de section DPS | DPS:B1 | 2027-01-26 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-893 | Séance Codir | SDIS | 2027-01-29 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-897 | Exercice JSP 2 | JSP:C1 | 2027-02-01 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-898 | Séance des chefs de section DAP | DPS:G1,DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-02-01 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-904 | Séance communication F5/6 | DPS:G1,DAP:Y1 | 2027-02-03 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-910 | Instr demi-sct - KICK-OFF | DPS:G1 | 2027-02-06 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-911 | Instr demi-sct - KICK-OFF | DPS:C1 | 2027-02-06 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-912 | Instr demi-sct - KICK-OFF | DPS:B2 | 2027-02-06 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-913 | Instr demi-sct - KICK-OFF | DPS:B1 | 2027-02-06 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-914 | Conduite, formation continue | DPS:G1 | 2027-02-06 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-915 | Conduite, formation continue | DPS:C1 | 2027-02-06 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-916 | Conduite, formation continue | DPS:B1 | 2027-02-06 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-917 | Conduite, formation continue | DPS:B2 | 2027-02-06 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | SOURCE_2027_EXPLICIT | Valider ou corriger la date au regard du calendrier |
+| 2027 | qv-source-918 | Séance Direction JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-02-16 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | qv-source-922 | Exercice JSP 2 | JSP:B1 | 2027-02-25 | CORRESPONDANCE_2026_NON_PROUVEE | SOURCE_2027_EXPLICIT | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38:FOCA1:S1 | Groupe de travail FOCA |  |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38:FOCA2:S1 | Groupe de travail FOCA |  |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38:FOCA3:S1 | Groupe de travail FOCA |  |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38:FOCA4:S1 | Groupe de travail FOCA |  |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38:FOCA5:S1 | Groupe de travail FOCA |  |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | QV26-GROUPE-DE-TRAVAIL-FOCA-1E076C38:FOCA6:S1 | Groupe de travail FOCA |  |  | CORRESPONDANCE_2026_NON_PROUVEE | RECURRENCE_RULE | Confirmer la correspondance ou la règle métier |
+| 2027 | CTA-PERM-2027-01-01 | Permanence | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2026-12-31 | HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | CTA_RULE+CTA_TURNUS_SOURCE | Valider ou corriger la date au regard du calendrier |
+| 2027 | CTA-PERM-2027-03-26 | Permanence | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-03-25 | HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | CTA_RULE+CTA_TURNUS_SOURCE | Valider ou corriger la date au regard du calendrier |
+| 2027 | CTA-PERM-2027-05-14 | Permanence | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-05-14 | HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | CTA_RULE+CTA_TURNUS_SOURCE | Valider ou corriger la date au regard du calendrier |
+| 2027 | CTA-PERM-2027-07-30 | Permanence | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-07-30 | HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | CTA_RULE+CTA_TURNUS_SOURCE | Valider ou corriger la date au regard du calendrier |
+| 2027 | CTA-PERM-2027-09-17 | Permanence | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-09-17 | HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | CTA_RULE+CTA_TURNUS_SOURCE | Valider ou corriger la date au regard du calendrier |
+| 2027 | CTA-PERM-2027-12-24 | Permanence | DPS:G1,DPS:C1,DPS:B1,DPS:B2 | 2027-12-24 | HUMAN_REVIEW_CALENDAR:CTA_FENETRE_FERIEE | CTA_RULE+CTA_TURNUS_SOURCE | Valider ou corriger la date au regard du calendrier |
+| 2027 | FINAL:INSUFFICIENT_INFORMATION:QV26-SEANCE-COSEC-B710F41E | Séance COSEC | SDIS | 2027-02-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 42 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:EMSEA:SESSION:03 | Séance État-major | SDIS | 2027-02-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 51 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:EMSEA:SESSION:04 | Séance État-major | SDIS | 2027-03-30 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 207 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:EMSEA:SESSION:05 | Séance État-major | SDIS | 2027-05-05 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 291 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:EMSEA:SESSION:06 | Séance État-major | SDIS | 2027-06-09 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 393 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:EMSEA:SESSION:07 | Séance État-major | SDIS | 2027-08-17 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 505 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:EMSEA:SESSION:08 | Séance État-major | SDIS | 2027-08-31 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 559 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:EMSEA:SESSION:09 | Séance État-major | SDIS | 2027-09-28 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 680 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:EMSEA:SESSION:10 | Séance État-major | SDIS | 2027-11-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 767 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:EMSEA:SESSION:11 | Séance État-major | SDIS | 2027-12-07 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 837 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:OI:QV26-INSTR-DEMI-SCT-FEU-8D0C9417:C1:2027-09-18:0730 | Instr demi-sct - FEU | DPS:C1 | 2027-09-18 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 640 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:OI:QV26-INSTR-DEMI-SCT-FEU-8D0C9417:B1:2027-09-18:0730 | Instr demi-sct - FEU | DPS:B1 | 2027-09-18 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 642 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:OI:QV26-INSTR-DEMI-SCT-FEU-8D0C9417:B2:2027-09-18:0730 | Instr demi-sct - FEU | DPS:B2 | 2027-09-18 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 641 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:OI:QV26-INSTR-DEMI-SCT-VARIA-D51E6F19:G1:2027-07-31:0730 | Instr demi-sct - VARIA | DPS:G1 | 2027-07-31 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | classeur ligne 486 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:COVERAGE:G1:KICK-OFF:demi-section:N02b | Instr demi-sct - KICK-OFF | DPS:G1 | 2027-03-27 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE_INSTR_DEMI_SCT | MOA_RULE_INSTRUCTION_COVERAGE | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:2027-03-02:1900:B2 | Cours de cadres exercice DPS 1 | DPS:B2 | 2027-03-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 75 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-1-EC74513E:2027-04-01:1830:G1 | Cours de cadres exercice DPS 1 | DPS:G1 | 2027-04-01 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 217 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:2027-08-18:1900:B2 | Cours de cadres exercice DPS 2 | DPS:B2 | 2027-08-18 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 511 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-2-D7F0BFF7:2027-09-29:1830:G1 | Cours de cadres exercice DPS 2 | DPS:G1 | 2027-09-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 689 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-3-D4DA4C84:2027-09-21:1900:B2 | Cours de cadres exercice DPS 3 | DPS:B2 | 2027-09-21 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 650 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-1-8AF88C67:2027-03-31:1900:Y1-Y2-Y3-Y4 | Cours de cadres exercice DPS-DAP 1 | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-03-31 | CORRESPONDANCE_2026_NON_PROUVEE\|HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 215 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DPS-DAP-2-RECONNAISSANCE-LI-94E8317E:2027-06-22:1900:Y1-Y2-Y3-Y4 | Cours de cadres exercice DPS-DAP 2 - reconnaissance lieux | DAP:Y1,DAP:Y2,DAP:Y3,DAP:Y4 | 2027-06-22 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 455 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-1-6A16603D:2027-03-23:1900:B2 | Exercice DPS 1 | DPS:B2 | 2027-03-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 188 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-1-6A16603D:2027-04-21:1900:G1 | Exercice DPS 1 | DPS:G1 | 2027-04-21 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 252 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-2-54E09232:2027-09-16:1900:B2 | Exercice DPS 2 | DPS:B2 | 2027-09-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 637 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-2-54E09232:2027-11-17:1900:G1 | Exercice DPS 2 | DPS:G1 | 2027-11-17 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 804 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-3-29F948D1:2027-10-26:1900:B2 | Exercice DPS 3 | DPS:B2 | 2027-10-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 739 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-03:1900:Y2 | Exercice DPS-DAP 1 | DAP:Y2 | 2027-06-03 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 376 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-16:1900:C1 | Exercice DPS-DAP 1 | DPS:C1 | 2027-06-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 427 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-1-7F1E9444:2027-06-16:1900:Y3 | Exercice DPS-DAP 1 | DAP:Y3 | 2027-06-16 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 428 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-08-26:1900:Y3 | Exercice DPS-DAP 2 | DAP:Y3 | 2027-08-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 543 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-08-26:1900:Y4 | Exercice DPS-DAP 2 | DAP:Y4 | 2027-08-26 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 544 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:C1 | Exercice DPS-DAP 2 | DPS:C1 | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 567 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:B2 | Exercice DPS-DAP 2 | DPS:B2 | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 569 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y2 | Exercice DPS-DAP 2 | DAP:Y2 | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 572 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y3 | Exercice DPS-DAP 2 | DAP:Y3 | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 573 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-02:1900:Y4 | Exercice DPS-DAP 2 | DAP:Y4 | 2027-09-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 574 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-09-29:1900:Y1 | Exercice DPS-DAP 2 | DAP:Y1 | 2027-09-29 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 691 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-DPS-DAP-2-668A88B6:2027-10-07:1900:Y1 | Exercice DPS-DAP 2 | DAP:Y1 | 2027-10-07 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 722 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:2027-06-24:1800:C1 | Nettoyage annuel caserne | DPS:C1 | 2027-06-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 460 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-NETTOYAGE-ANNUEL-CASERNE-0350F0E0:2027-06-24:1800:B2 | Nettoyage annuel caserne | DPS:B2 | 2027-06-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 463 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-PREPARATION-XMAS-39727CE7:2027-11-24:1800:C1 | Préparation Xmas | DPS:C1 | 2027-11-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 815 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-PREPARATION-XMAS-39727CE7:2027-11-24:1800:B2 | Préparation Xmas | DPS:B2 | 2027-11-24 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 817 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-COURS-DE-CADRES-EXERCICE-DAP-4-CF22E79B:2027-09-28:1900:Y3 | Cours de cadres exercice DAP 4 | DAP:Y3 | 2027-09-28 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 681 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-05-17:1830:Caserne-G1 | Séance Direction JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-05-17 | HUMAN_REVIEW_CALENDAR:FERIE | classeur ligne 316 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-SEANCE-DIRECTION-JSP-32B2ACA4:2027-08-19:1830:Caserne-G1 | Séance Direction JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-08-19 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 514 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CADRES-JSP-1591AA8A:2027-12-06:1800:Caserne-G1 | Séance cadres JSP | JSP:G1,JSP:C1,JSP:B1 | 2027-12-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 835 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:2027-03-04:1900:C1 | Séance chefs de section DPS C1 | DPS:C1 | 2027-03-04 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 91 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:2027-03-04:1900:B2 | Séance chefs de section DPS C1 | DPS:B2 | 2027-03-04 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 92 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:2027-06-10:1900:C1 | Séance chefs de section DPS C1 | DPS:C1 | 2027-06-10 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 399 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:2027-06-10:1900:B2 | Séance chefs de section DPS C1 | DPS:B2 | 2027-06-10 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 401 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:2027-09-08:1900:C1 | Séance chefs de section DPS C1 | DPS:C1 | 2027-09-08 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 601 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-CHEFS-DE-SECTION-DPS-C1-CF8F657A:2027-09-08:1900:B2 | Séance chefs de section DPS C1 | DPS:B2 | 2027-09-08 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 603 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-CURSUS-JSP-MODULE-1-418B11F9:2027-01-25:1800:Caserne-G1 | Cursus JSP - module 1 | JSP:G1,JSP:C1,JSP:B1 | 2027-01-25 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 6 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-EXERCICE-JSP-2-0DDB59DA:2027-03-06:0800:G1 | Exercice JSP 2 | JSP:G1 | 2027-03-06 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 100 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-CURSUS-JSP-MODULE-2-B519D633:2027-02-02:1800:Caserne-G1 | Cursus JSP - module 2 | JSP:G1,JSP:C1,JSP:B1 | 2027-02-02 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 8 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-03-31:1800:G1-Y1 | Séance communication F5/6 | DPS:G1,DAP:Y1 | 2027-03-31 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 212 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-05-05:1800:G1-Y1 | Séance communication F5/6 | DPS:G1,DAP:Y1 | 2027-05-05 | HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 290 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COMMUNICATION-F5-6-EC40FEBC:2027-08-18:1800:G1-Y1 | Séance communication F5/6 | DPS:G1,DAP:Y1 | 2027-08-18 | HUMAN_REVIEW_CALENDAR:VACANCES_SCOLAIRES | classeur ligne 508 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-03-23:1830:SSP | Séance COSEC | SDIS | 2027-03-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 185 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-05-20:1830:Caserne-G1 | Séance COSEC | SDIS | 2027-05-20 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 329 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-09-14:1830:SSP | Séance COSEC | SDIS | 2027-09-14 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 624 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:PROJ:QV26-SEANCE-COSEC-B710F41E:2027-11-23:1830:Caserne-G1 | Séance COSEC | SDIS | 2027-11-23 | CORRESPONDANCE_2026_NON_PROUVEE | classeur ligne 812 | Confirmer la correspondance ou la règle métier |
+| 2027 | QV27:CONDUITE:G1:N04b:2027-07-31:1030 | Conduite, formation continue | DPS:G1 | 2027-07-31 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE\|VEILLE_FERIE\|VACANCES_SCOLAIRES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N03b:2027-08-07:1030 | Conduite, formation continue | DPS:G1 | 2027-08-07 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N02b:2027-03-27:1030 | Conduite, formation continue | DPS:G1 | 2027-03-27 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE\|VACANCES_SCOLAIRES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N02b:2027-08-14:1030 | Conduite, formation continue | DPS:G1 | 2027-08-14 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N01b:2027-04-03:1030 | Conduite, formation continue | DPS:G1 | 2027-04-03 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N01b:2027-08-21:1030 | Conduite, formation continue | DPS:G1 | 2027-08-21 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N05a:2027-04-10:1030 | Conduite, formation continue | DPS:G1 | 2027-04-10 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N03a:2027-02-13:1030 | Conduite, formation continue | DPS:G1 | 2027-02-13 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N03a:2027-07-03:1030 | Conduite, formation continue | DPS:G1 | 2027-07-03 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N02a:2027-07-10:1030 | Conduite, formation continue | DPS:G1 | 2027-07-10 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N01a:2027-07-17:1030 | Conduite, formation continue | DPS:G1 | 2027-07-17 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:G1:N05b:2027-07-24:1030 | Conduite, formation continue | DPS:G1 | 2027-07-24 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:C1:N03b:2027-08-21:1030 | Conduite, formation continue | DPS:C1 | 2027-08-21 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:C1:N03a:2027-02-13:1030 | Conduite, formation continue | DPS:C1 | 2027-02-13 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:C1:N02a:2027-09-18:1030 | Conduite, formation continue | DPS:C1 | 2027-09-18 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:B1:N03b:2027-08-21:1030 | Conduite, formation continue | DPS:B1 | 2027-08-21 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:B1:N03a:2027-02-13:1030 | Conduite, formation continue | DPS:B1 | 2027-02-13 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:B1:N02a:2027-09-18:1030 | Conduite, formation continue | DPS:B1 | 2027-09-18 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:B2:N03b:2027-08-21:1030 | Conduite, formation continue | DPS:B2 | 2027-08-21 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:B2:N03a:2027-02-13:1030 | Conduite, formation continue | DPS:B2 | 2027-02-13 | HUMAN_REVIEW_CALENDAR:CONDUITE_APRES_INSTRUCTION_VACANCES | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:CONDUITE:B2:N02a:2027-09-18:1030 | Conduite, formation continue | DPS:B2 | 2027-09-18 | HUMAN_REVIEW_CALENDAR:WEEKEND_FERIE | MOA_RULE_CONDUITE_ANNUAL | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:DAPCOND:2027-03-25:Y3:1830 | Conduite, formation continue | DAP:Y3 | 2027-03-25 | HUMAN_REVIEW_CALENDAR:VEILLE_FERIE | classeur ligne 194 | Valider ou corriger la date au regard du calendrier |
+| 2027 | QV27:DAPCOND:2027-05-17:Y1:1830 | Conduite, formation continue | DAP:Y1 | 2027-05-17 | HUMAN_REVIEW_CALENDAR:FERIE | classeur ligne 317 | Valider ou corriger la date au regard du calendrier |

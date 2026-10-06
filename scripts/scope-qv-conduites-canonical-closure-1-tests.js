@@ -2,7 +2,7 @@
 'use strict';
 
 // SCOPE — QUO VADIS — CONDUITES-CANONICAL-CLOSURE-1
-// 2 conduites par demi-section opérationnelle, sources CTA si l'historique 2026 est insuffisant.
+// Deux conduites par demi-section DPS, corrélées à des instructions historiques et au CTA.
 
 const assert = require('assert');
 const fs = require('fs');
@@ -24,7 +24,8 @@ function test(name, fn) {
 
 const rotation = L.qvDistributeRotationOccurrences(canonical.rows, history.rows, cta.instructionPublicForDate);
 const pionnier = L.qvApplyPionnierRules(rotation.rows);
-const family = L.qvApplyDpsInstructionFamilyRules(pionnier.rows, cta.instructionPublicForDate);
+const pionnierCta = L.qvSchedulePionnierOffDuty(pionnier.rows, { year: 2027, ctaResolver: cta.instructionPublicForDate });
+const family = L.qvApplyDpsInstructionFamilyRules(pionnierCta.rows, cta.instructionPublicForDate);
 const periodic = L.qvApplyPeriodicActivityRules(family.rows, { year: 2027 });
 const projection = L.qvMaterializeHistoricalOccurrences(periodic.rows, history.rows, { year: 2027 });
 const dapAnnual = L.qvApplyDapAnnualExercisePlan(projection.rows, history.rows);
@@ -39,7 +40,7 @@ const ctrl = L.qvConduiteCoherenceControl(rows, conduiteOptions);
 const conduites = applied.derived.matched.concat(applied.derived.added);
 const programmed = applied.derived.programmedInstructions || [];
 
-test('référentiel CTA : G1=10 C1=B1=B2=6, cible calculée 56', () => {
+test('référentiel CTA : G1=10 C1=B1=B2=6, cible conduite calculée 56', () => {
   assert.deepEqual(ctrl.halves, { G1: 10, C1: 6, B1: 6, B2: 6 });
   assert.equal(cta.expectedAnnualConduites(), 56);
   assert.equal(ctrl.target, 56);
@@ -54,10 +55,12 @@ test('56 conduites matérialisées, 0 insuffisance, 0 instruction CTA ajoutée',
 });
 
 test('exactement 2 conduites par demi-section opérationnelle, 0 réserve', () => {
+  assert.equal(ctrl.perSite.length, 4);
+  ctrl.perSite.forEach((item) => assert.equal(item.n, 2 * cta.operationalHalfSections(item.oi).length, item.oi));
   assert.equal(ctrl.perHalf.length, 28);
-  ctrl.perHalf.forEach((item) => assert.equal(item.n, 2, `${item.oi} ${item.halfSection}`));
+  ctrl.perHalf.forEach((item) => assert.equal(item.n, 2, `${item.oi}|${item.half}`));
   assert.equal(ctrl.reserveConduites, 0);
-  assert.equal(ctrl.incompleteHalves.length, 0);
+  assert.equal(ctrl.incompleteSites.length, 0);
 });
 
 test('aucune conduite orpheline ; OI et Nxx identiques à la source ; immédiat après ; 1 h', () => {
@@ -134,7 +137,7 @@ test('réconciliation overlay 829', () => {
   const clones = rows.filter((row) => row.rotationAdded).length;
   const projected = rows.filter((row) => row.projectionAdded).length;
   const prog = rows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
-  const addedCond = rows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length;
+  const addedCond = rows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_ANNUAL').length;
   const addedDap = rows.filter((row) => row.conduiteRule === 'QV-DAP-001').length;
   assert.equal(source, 622);
   assert.equal(periodic.report.removed, 3);
@@ -147,9 +150,9 @@ test('réconciliation overlay 829', () => {
   assert.equal(rows.filter((row) => !row.external).length, 622 - 3 + 38 + 108 - 4 + 52 + 16);
 });
 
-test('catalogue annuel versionné, QV-CONDUITE-008 active', () => {
+test('catalogue annuel versionné, QV-CONDUITE-008 désactivée', () => {
   assert.equal(catalog.campaign, '2027');
-  assert.ok(catalog.rules.some((rule) => rule.id === 'QV-CONDUITE-008' && rule.active === true));
+  assert.ok(catalog.rules.some((rule) => rule.id === 'QV-CONDUITE-008' && rule.active === false));
   assert.ok(catalog.persistence.remainingMigration.includes('scope_quo_vadis_planning_rules'));
 });
 

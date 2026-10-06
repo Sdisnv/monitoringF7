@@ -362,12 +362,11 @@ test('§10 aucune déduplication textuelle : rien n’est retiré par QV-PROJ-00
   assert.equal(acted.reduce((total, entry) => total + entry.unmapped.length, 0), 0);
   // Les familles régies par une autre règle ne sont pas traitées ici.
   const skipped = run.projection.report.filter((entry) => entry.reason === 'MODELE_MULTI_SESSION');
-  assert.ok(skipped.length >= 2);
+  assert.ok(skipped.length >= 1);
   assert.equal(run.projection.report.some((entry) => entry.label === 'Exercice PR-ABC'), false);
 });
 
-test('doublons techniques : 10 lignes en excès, toutes justifiées', () => {
-  // Les six séances PR 1.x sont désormais datées ; les dix restes sont non datés.
+test('doublons techniques : cinq lignes FOCA en excès dans cette projection historique', () => {
   const counts = new Map();
   rows.forEach((row) => {
     const key = [row.label, String(row.startsAt || 'ND'), (row.ois || []).slice().sort().join('+'),
@@ -375,46 +374,32 @@ test('doublons techniques : 10 lignes en excès, toutes justifiées', () => {
     counts.set(key, (counts.get(key) || 0) + 1);
   });
   const repeated = [...counts.entries()].filter(([, value]) => value > 1);
-  assert.equal(repeated.reduce((total, [, value]) => total + value - 1, 0), 10);
-  assert.equal(repeated.length, 2);
+  assert.equal(repeated.reduce((total, [, value]) => total + value - 1, 0), 5);
+  assert.equal(repeated.length, 1);
   repeated.forEach(([key]) => assert.ok(key.includes('|ND|'), `répétition datée restante : ${key}`));
-  // Sessions non datées du modèle multi-session déjà validé, et une activité sans source 2026.
+  // Ce pipeline historique précède l'annulation FOCA ; les six modules groupés sont désormais datés.
   assert.deepEqual([...new Set(rows.filter((row) => !row.startsAt).map((row) => row.label))].sort(),
-    ['Formation groupée 1.1', 'Groupe de travail FOCA']);
-  assert.ok(rows.filter((row) => row.label === 'Formation groupée 1.1').every((row) => Number(row.sessionCount || 1) > 1));
+    ['Groupe de travail FOCA']);
+  assert.equal(rows.filter((row) => /^Formation groupée 1\.[1-6]$/.test(row.label) && row.startsAt).length, 6);
   assert.equal(historyTitled(/^Groupe de travail FOCA/).length, 0);
 });
 
 // ---------------------------------------------------------------- §8 et §9 interface
 
-test('§8 QV-UI-005 : FOCO disponible dans le filtre Domaine, ordre métier', () => {
-  const extract = (name) => ui.slice(ui.indexOf(`  function ${name}(`), ui.indexOf('\n  function ', ui.indexOf(`  function ${name}(`) + 1));
-  const context = {
-    L, escapeHtml: (value) => String(value), state: { quoVadisFilters: {} },
-    qvFilterOptions: (list, getter) => [...new Set(list.map(getter).filter(Boolean))],
-    qvProgrammeFamily: L.qvProgrammeFamily, qvProgrammeVisualState: () => ({ label: 'À positionner' }),
-    qvProgrammePublicCodeLabel: (value) => value, qvCockpitIcon: () => '', qvProgrammeYearChoices: () => [2027, 2028],
-    qvProgrammeYear: () => 2027, qvProgrammeMonthChoices: () => [], qvHref: () => '#'
-  };
-  vm.createContext(context);
-  vm.runInContext(extract('qvProgrammeFilterBar'), context);
-  const html = context.qvProgrammeFilterBar({ canonicalProgramme: { rows } });
-  const options = [...html.matchAll(/<option value="([A-Z0-9]+)"/g)].map((match) => match[1]);
-  assert.ok(options.includes('FOCO'), 'FOCO absent du filtre Domaine');
-  ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].forEach((code) => assert.ok(options.includes(code), code));
-  // Ordre métier global, pas alphabétique.
-  const order = ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCO', 'FOCA', 'FOSPEC', 'AUTO', 'PR'].map((code) => options.indexOf(code));
-  assert.deepEqual(order, order.slice().sort((a, b) => a - b));
+test('§8 QV-UI-005 : FOCO reste une famille, distincte des domaines F0-F8', () => {
+  const filterBar = ui.slice(ui.indexOf('  function qvProgrammeFilterBar('), ui.indexOf('\n  function ', ui.indexOf('  function qvProgrammeFilterBar(') + 1));
+  assert.ok(filterBar.includes("['FOBA','FOCO','FOCA','FOSPEC']"));
+  assert.ok(filterBar.includes("field('qv-filter-family', 'Famille'"));
+  assert.ok(filterBar.includes("field('qv-filter-domain', 'Domaine'"));
+  assert.ok(!/domainLabels\s*=\s*\{[^}]*FOCO/.test(filterBar));
   assert.ok(catalog.rules.some((rule) => rule.id === 'QV-UI-005' && rule.active === true));
 });
 
-test('§8 QV-UI-005 : choisir FOCO rend bien les activités DPS, DAP et JSP', () => {
-  // FOCO n'est jamais le domaine d'une ligne : c'est la famille des activités DPS, DAP et JSP.
+test('§8 QV-UI-005 : FOCO ne se deduit plus du domaine DPS, DAP ou JSP', () => {
   assert.equal(rows.filter((row) => row.domain === 'FOCO').length, 0);
   const foco = rows.filter((row) => L.qvProgrammeDomainMatches(row, 'FOCO'));
-  assert.equal(foco.length, 485);
-  assert.deepEqual([...new Set(foco.map((row) => row.domain))].sort(), ['DAP', 'DPS', 'JSP']);
-  foco.forEach((row) => assert.equal(L.qvProgrammeFamily(row), 'FOCO'));
+  assert.equal(foco.length, 0);
+  assert.equal(L.qvProgrammeFamily({domain:'DPS',family:'Événement'}), 'Événement');
   // Les autres valeurs restent de vrais domaines : correspondance stricte, aucun élargissement.
   for (const domain of ['DPS', 'DAP', 'JSP', 'FOBA', 'FOCA', 'FOSPEC', 'AUTO', 'PR', 'CMDT']) {
     const selected = rows.filter((row) => L.qvProgrammeDomainMatches(row, domain));
@@ -492,15 +477,15 @@ test('réconciliation 829 et source 2027 intacte à 622', () => {
   const clones = rows.filter((row) => row.rotationAdded).length;
   const projected = rows.filter((row) => row.projectionAdded).length;
   const programmed = rows.filter((row) => row.provenance === 'MOA_RULE_ANNUAL_PROGRAMMING').length;
-  const conduites = rows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_2027').length;
+  const conduites = rows.filter((row) => row.provenance === 'MOA_RULE_CONDUITE_ANNUAL').length;
   const dap = rows.filter((row) => row.conduiteRule === 'QV-DAP-001').length;
   assert.deepEqual([run.periodic.report.removed, clones, projected, programmed, conduites, dap, run.prAbc.report.added],
     [3, 38, 108, 0, 52, 16, 0]);
   assert.equal(run.dapAnnual.report.replacedFifth, 4);
   assert.equal(rows.length, 622 - 3 + 38 + 108 - 4 + 52 + 16);
   assert.equal(rows.length, 829);
-  assert.equal(rows.filter((row) => row.startsAt).length, 817);
-  assert.equal(rows.filter((row) => !row.startsAt).length, 12);
+  assert.equal(rows.filter((row) => row.startsAt).length, 823);
+  assert.equal(rows.filter((row) => !row.startsAt).length, 6);
   assert.equal(new Set(rows.map((row) => row.id)).size, rows.length);
 });
 
