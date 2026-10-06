@@ -10886,7 +10886,8 @@
     const groups = [
       ['Programme', [
         ['agenda-annuel', 'Agenda annuel', null],
-        ['programme', 'Programme annuel', ((qv.canonicalProgramme && qv.canonicalProgramme.rows) || []).filter((row) => !row.external).length
+        ['programme', 'Programme annuel', ((qv.canonicalProgramme && qv.canonicalProgramme.rows) || []).filter((row) => !row.external
+          && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length
           || (qv.canonicalProgramme && qv.canonicalProgramme.target && qv.canonicalProgramme.target.programmeItems) || null],
         ['synthese', 'Synthèse', null]
       ]],
@@ -11169,7 +11170,8 @@
     const ctaHolidayCoverage = new Map();
     const calendar = qvCalendarIndex(qv);
     const holidayDates = Object.keys(calendar).filter((date) => (calendar[date] || []).some((mark) => qvCalendarKind(mark) === 'FERIE'));
-    const programmeRows = (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => !row.external);
+    const programmeRows = (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => !row.external
+      && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
     const recurrenceRows = (((qv.agendaYears || {})[year] || {}).rows || []);
     const history = qv.historicalAgenda2026;
     const historicalRows = history ? [...history.events, ...history.references] : programmeRows.filter(row => row.historicalProposal).map(row => ({ ...row, kind: 'EXCEL_REFERENCE', date: row.historicalProposal.date2026, title: row.historicalProposal.title2026, start: row.historicalProposal.start, end: row.historicalProposal.end }));
@@ -11254,7 +11256,8 @@
   }
 
   function qvAgendaProjection(qv) {
-    const rows = ((((qv || {}).canonicalProgramme || {}).rows) || []).filter((row) => !row.external);
+    const rows = ((((qv || {}).canonicalProgramme || {}).rows) || []).filter((row) => !row.external
+      && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
     const dated = rows.filter((row) => qvProgrammeDate(row));
     const undated = rows.filter((row) => !qvProgrammeDate(row));
     return { total: rows.length, dated: dated.length, undated: undated.length, historical: rows.filter((row) => row.historicalProposal).length };
@@ -11328,7 +11331,9 @@
   }
 
   function qvAgendaProposedPool(qv) {
-    const rows = ((((qv || {}).canonicalProgramme || {}).rows) || []).filter((row) => !row.external && !qvProgrammeDate(row) && !qvProgrammeProposedMonthKey(row));
+    const rows = ((((qv || {}).canonicalProgramme || {}).rows) || []).filter((row) => !row.external
+      && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')
+      && !qvProgrammeDate(row) && !qvProgrammeProposedMonthKey(row));
     if (!rows.length) return '';
     const byDomain = new Map();
     rows.forEach((row) => {
@@ -11834,11 +11839,11 @@
   }
 
   function qvProgrammeFilteredRows(qv, options = {}) {
-    const programme = qv.canonicalProgramme || {};
     const filters = state.quoVadisFilters || {};
     const query = qvNormalizeSearch(filters.q).trim();
     const history = new Map((((qv.historicalAgenda2026 || {}).references) || []).map((reference) => [reference.sourceLine, reference]));
-    return (programme.rows || []).filter((row) => !row.external).filter((row) => {
+    return (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => !row.external
+      && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).filter((row) => {
       const visual = qvProgrammeVisualState(row);
       const family = L.qvProgrammeFilterFamily(row);
       const type = L.qvProgrammeFilterType(row);
@@ -11900,7 +11905,8 @@
   }
 
   function qvProgrammeFilterBar(qv) {
-    const all = ((qv.canonicalProgramme || {}).rows || []).filter((row) => !row.external);
+    const all = ((qv.canonicalProgramme || {}).rows || []).filter((row) => !row.external
+      && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
     const filters = state.quoVadisFilters || {};
     const domainLabels = { F0:'Gouvernance',F1:'Personnel',F2:'Renseignements',F3:'Prestations',F4:'Matériel',F5:'Partenaires',F6:'SIC',F7:'Formation',F8:'Finances' };
     const familyGroups = [['DPS','DAP','JSP'],['FOBA','FOCO','FOCA','FOSPEC'],['AUTO','PR']];
@@ -11916,7 +11922,7 @@
     const statcomChoice = (code, label) => `<span class="qv-statcom-code">${escapeHtml(code)}</span><span class="qv-statcom-label">${escapeHtml(label)}</span>`;
     const statcomOptions = `<div class="scope-field qv-statcom-field"><span class="qv-filter-label" id="qv-filter-statcom-label">Stat.Com</span><input id="qv-filter-statcom" type="hidden" value="${escapeHtml(filters.statcom || 'tous')}"><details class="qv-statcom-menu" aria-labelledby="qv-filter-statcom-label"><summary>${filters.statcom && filters.statcom !== 'tous' ? statcomChoice(filters.statcom, statcomLabel(selectedStatcom)) : 'Tous'}</summary><div class="qv-statcom-choices" role="group" aria-label="Stat.Com"><button type="button" data-qv-statcom="tous">Tous</button>${statcom.map((code) => { const match = (qv.statComCodes || []).find((item) => item.code === code); return `<button type="button" data-qv-statcom="${escapeHtml(code)}" ${filters.statcom === code ? 'aria-current="true"' : ''}>${statcomChoice(code, statcomLabel(match))}</button>`; }).join('')}</div></details></div>`;
     const typeGroups = [
-      ['FORMATION', ['Cours', 'Formation', 'Instruction', 'Séance']],
+      ['FORMATION', ['Cours', 'Cursus', 'Formation', 'Instruction', 'Séance']],
       ['OPÉRATIONNEL', ['Exercice', 'Conduite', 'Permanence']],
       ['ÉVÉNEMENTIEL', ['Événement', 'Représentation']]
     ];
@@ -12179,7 +12185,8 @@
   }
 
   function qvProgrammePlacementControl(qv) {
-    const rows = (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => !row.external);
+    const rows = (((qv || {}).canonicalProgramme || {}).rows || []).filter((row) => !row.external
+      && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
     const dated = rows.filter((row) => qvProgrammeDate(row)).length;
     const undated = rows.length - dated;
     const historical = rows.filter((row) => row.historicalProposal).length;
@@ -12321,7 +12328,8 @@
     ];
     const pagination = qvProgrammePagination(rows);
     return `<section class="scope-card qv-programme-view">
-      <div class="scope-section-head"><div><h2>Programme ${escapeHtml(String(qvProgrammeYear()))}</h2><p class="scope-muted">${escapeHtml(String((programme.rows || []).filter((row) => !row.external).length || target.programmeItems || 0))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div>${qvProgrammeModeControl()}</div>
+      <div class="scope-section-head"><div><h2>Programme ${escapeHtml(String(qvProgrammeYear()))}</h2><p class="scope-muted">${escapeHtml(String((programme.rows || []).filter((row) => !row.external
+        && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length || target.programmeItems || 0))} séances au programme · ${escapeHtml(String(target.historicalNotRenewed || 0))} activités historiques non reconduites.</p></div>${qvProgrammeModeControl()}</div>
       <div class="qv-programme-kpis" aria-label="Niveaux du programme">${metrics.map(([label, value, detail]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value == null ? '—' : value))}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>
       ${qvProgrammeYear() !== 2027 ? `<p class="qv-programme-workflow-note">Programme ${escapeHtml(String(qvProgrammeYear()))} en préparation : seules les lignées validées et les permanences CTA calculées sont consultables. Le référentiel 2026 → 2027 reste la source de la reconduction.</p>` : ''}
       <details class="qv-programme-lineage"${qvProgrammeYear() !== 2027 ? ' hidden' : ''}><summary>Comprendre 2026 → 2027</summary><p>2026 : ${escapeHtml(String(source.sourceRows || 0))} lignes source, ${escapeHtml(String(source.models || 0))} modèles, ${escapeHtml(String(source.occurrences || 0))} occurrences, ${escapeHtml(String(source.sessions || 0))} sessions. 2027 : ${escapeHtml(String(target.models || 0))} modèles actifs, ${escapeHtml(String(target.occurrences || 0))} occurrences et ${escapeHtml(String(target.sessions || 0))} sessions. Le chiffre historique 302 désigne la matrice de définitions source réconciliées, pas un nombre d’événements.</p></details>
@@ -12347,10 +12355,13 @@
     const id = route().qvProgrammeItemId;
     const row = (((qv.canonicalProgramme || {}).rows) || []).find((item) => String(item.id) === String(id));
     if (!row) return `<section class="scope-card"><p class="scope-empty">Cette occurrence n’est pas disponible.</p>${contextReturnHtml(qvHref('programme', { annee: qvProgrammeYear() }), 'Retour au programme')}</section>`;
+    if (row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')
+      return `<section class="scope-card"><p class="scope-empty">Ce module est déjà validé dans le programme.</p>${contextReturnHtml(qvProgrammeFicheHref(row.cursusReconciliation.supersededBy), 'Voir le module validé')}</section>`;
     const visual = qvProgrammeVisualState(row);
     const lieuId = qvProgrammeLieuId(qv, row);
     const salleId = row.salleTheorieId || (((qv.sallesTheorie || []).find((item) => String(item.code || '') === String(row.room || ''))) || {}).salleId || '';
-    const allRows = ((qv.canonicalProgramme || {}).rows || []).filter((item) => !item.external);
+    const allRows = ((qv.canonicalProgramme || {}).rows || []).filter((item) => !item.external
+      && !(item.cursusReconciliation && item.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'));
     const publicCodes = [...new Set(allRows.flatMap((item) => item.publics || []))];
     const lieuChoices = qvProgrammeLieuCatalogue().map((entry) => qvProgrammeLieuChoice(qv, entry)).filter(entry => (qv.lieux || []).some(lieu => lieu.actif !== false && lieu.lieuId === entry.lieuId));
     const matchedLieu = lieuChoices.find((entry) => entry.lieuId === lieuId) || lieuChoices.find((entry) => entry.label === qvProgrammeLocationLabel(row));
@@ -14148,7 +14159,8 @@
       const qv = quoVadisData();
       ScopeFeedback.confirm({
         title: 'Préparer QUO VADIS 2028',
-        message: `Source : 2027. Cible : 2028. ${((qv.canonicalProgramme || {}).rows || []).filter(row => !row.external).length} séances source et ${(qv.rules || []).length} règles de planification disponibles. Le calcul affiche une prévisualisation sans enregistrer de programme.`,
+        message: `Source : 2027. Cible : 2028. ${((qv.canonicalProgramme || {}).rows || []).filter(row => !row.external
+          && !(row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')).length} séances source et ${(qv.rules || []).length} règles de planification disponibles. Le calcul affiche une prévisualisation sans enregistrer de programme.`,
         confirmText: 'Prévisualiser',cancelText: 'Annuler'
       }, async () => {
         if(state.quoVadisBusy || typeof client.previewQuoVadisProgramme !== 'function') return;

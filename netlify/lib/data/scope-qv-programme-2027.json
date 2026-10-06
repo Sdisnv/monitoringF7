@@ -20266,6 +20266,9 @@
     {
       "id": "qv-source-886",
       "definitionId": "QV26-CURSUS-JSP-MODULE-1-418B11F9",
+      "activityKind": "CURSUS",
+      "cursusCode": "JSP",
+      "cursusStepCode": "M01",
       "occurrenceId": "qv-source-886:O1",
       "sessionId": "qv-source-886:S1",
       "label": "Cursus JSP - module 1",
@@ -20385,6 +20388,9 @@
     {
       "id": "qv-source-890",
       "definitionId": "QV26-CURSUS-MEA-MODULE-1-0-2C365A4D",
+      "activityKind": "CURSUS",
+      "cursusCode": "MEA",
+      "cursusStepCode": "M01.0",
       "occurrenceId": "qv-source-890:O1",
       "sessionId": "qv-source-890:S1",
       "label": "Cursus MEA - module 1.0",
@@ -20655,6 +20661,9 @@
     {
       "id": "qv-source-899",
       "definitionId": "QV26-CURSUS-PAPR-MODULE-1-336731A0",
+      "activityKind": "CURSUS",
+      "cursusCode": "PAPR",
+      "cursusStepCode": "M01",
       "occurrenceId": "qv-source-899:O1",
       "sessionId": "qv-source-899:S1",
       "label": "Cursus PAPR - module 1",
@@ -20739,6 +20748,9 @@
     {
       "id": "qv-source-902",
       "definitionId": "QV26-CURSUS-COND-VL-MODULE-1-0-1E178351",
+      "activityKind": "CURSUS",
+      "cursusCode": "COND-VL",
+      "cursusStepCode": "M01.0",
       "occurrenceId": "qv-source-902:O1",
       "sessionId": "qv-source-902:S1",
       "label": "Cursus cond VL - module 1.0",
@@ -20767,6 +20779,9 @@
     {
       "id": "qv-source-903",
       "definitionId": "QV26-CURSUS-JSP-MODULE-2-B519D633",
+      "activityKind": "CURSUS",
+      "cursusCode": "JSP",
+      "cursusStepCode": "M02",
       "occurrenceId": "qv-source-903:O1",
       "sessionId": "qv-source-903:S1",
       "label": "Cursus JSP - module 2",

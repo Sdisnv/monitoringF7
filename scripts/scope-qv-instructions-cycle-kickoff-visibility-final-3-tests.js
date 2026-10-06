@@ -188,7 +188,8 @@ async function main() {
     harness.context.location.hash = '#/quo-vadis/agenda-annuel';
     harness.hooks.render();
     assert.ok(harness.root.innerHTML.includes('Séance personnel DPS · Kick-off'));
-    assert.ok(harness.root.innerHTML.includes('Programme</span><strong>850'));
+    assert.ok(harness.root.innerHTML.includes('Programme</span><strong>848'));
+    assert.equal(payload.canonicalProgramme.rows.filter((row) => !row.external).length, 850);
   });
   test('conduite DPS = 56 occurrences, deux par demi-section', () => {
     for (const year of [2027, 2028, 2029]) {
