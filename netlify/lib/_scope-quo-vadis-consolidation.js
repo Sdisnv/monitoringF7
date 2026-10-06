@@ -40,9 +40,15 @@ function equivalent(a, b){
     || ['DEFINITION', 'RECURRENT'].includes(b.sourceType || b.source_type);
 }
 
+function isAutomaticPreparationSnapshot(row){
+  const metadata = row.metadata || {};
+  return row.source_type === 'MANUAL' && metadata.source === 'QV_PROGRAMME_PREPARATION'
+    && metadata.automatedSnapshot === true && metadata.humanDecision === false;
+}
+
 function hasHumanDecision(row, proposals){
   const metadata = row.metadata || {};
-  return Boolean(row.source_type === 'MANUAL' || row.scope_evenement_id || metadata.humanDecision || metadata.arbitrage || metadata.userSelection || metadata.manualDecision
+  return Boolean((row.source_type === 'MANUAL' && !isAutomaticPreparationSnapshot(row)) || row.scope_evenement_id || metadata.humanDecision || metadata.arbitrage || metadata.userSelection || metadata.manualDecision
     || (row.selected_proposal_id && metadata.autoPositioned !== true)
     || ((proposals || []).some((proposal) => ['RETENU', 'ECARTE'].includes(proposal.status)) && metadata.autoPositioned !== true));
 }
@@ -90,5 +96,5 @@ function latestValidatedReferences(rows, targetYear){
   return [...byLineage.values()].filter(row => !disabledLineages.has(row.metadata.lineage.key));
 }
 
-module.exports = { GENERATED_SOURCES, identity, equivalent, hasHumanDecision, programmeRequirement, activePopulation,
+module.exports = { GENERATED_SOURCES, identity, equivalent, isAutomaticPreparationSnapshot, hasHumanDecision, programmeRequirement, activePopulation,
   RECONDUCTIBLE_FIELDS, businessSnapshot, latestValidatedReferences };
