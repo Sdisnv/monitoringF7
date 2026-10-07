@@ -39,7 +39,7 @@ const test = (name,fn) => tests.push({ name,fn });
 test('01 list renders the validated programme-facing Catalogue columns',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogHtml(catalogPayload()));
   const headers = tree.find('thead')[0].children[0].children.map(tree.text);
-  assert.deepEqual(headers,['Domaine','Activité','Stat.Com','Cadence','Réalisations / sessions','Période','Sites / OI','Public cible','État 2027','Action']);
+  assert.deepEqual(headers,['Domaine','Activité','Stat.Com','Cadence','Réalisations / sessions','Période','Sites / OI','Public cible','Participation','État 2027','Action']);
 });
 test('02 list keeps business domain order and unknown domains last',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogHtml(catalogPayload()));

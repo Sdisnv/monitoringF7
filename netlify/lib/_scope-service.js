@@ -66,6 +66,9 @@ const statcomReferential = require('./_scope-statcom-referential');
 const display = require('../../assets/js/scope-personnel-display.js');
 const referentialDisplay = require('../../assets/js/scope-personnel-referentials.js');
 const { evaluateAssignmentConstraints, intervalForEvent, overlap } = require('./_scope-assignment-constraints');
+const { evaluatePublicRule } = require('./_scope-public-engine');
+const canonicalQualifications = require('./_scope-person-qualifications');
+const { PUBLIC_DEFINITIONS: foundationalPublics } = require('./_scope-public-foundations');
 
 function requireBaseVersion(body){
   const value = body?.baseVersion ?? body?.base_version;
@@ -2304,6 +2307,66 @@ function createScopeService(repo){
     return { count: personnes.length, personnes };
   }
 
+  async function catalogueParticipationForEvent(store, event){
+    if(event.source_type !== 'QUO_VADIS') return null;
+    const rule = store.getCatalogueParticipationRule
+      ? await store.getCatalogueParticipationRule(event)
+      : event.catalogue_participation_rule || null;
+    if(!rule || rule.tracking !== true){
+      throw new HttpError(422,'participation_catalogue_non_suivie',
+        'Cette activité QUO VADIS n’est pas qualifiée pour le suivi des participations.');
+    }
+    return rule;
+  }
+
+  async function resolveCataloguePublic(store,event,kind,code){
+    const incomplete = { count:0,personnes:[],resolutionStatus:'INCOMPLETE',
+      note:'Les faits nominatifs nécessaires à ce public ne sont pas disponibles.' };
+    let publicCode = code;
+    if(kind === 'QUALIFICATION'){
+      const definitions = [...canonicalQualifications.PUBLIC_DEFINITIONS_C3,...foundationalPublics];
+      const matches = definitions.filter((definition) => {
+        const predicates = [];
+        const walk = (node) => {
+          if(node.predicate && node.predicate !== 'PERSON_ELIGIBLE_AT') predicates.push(node);
+          for(const child of node.children || []) walk(child);
+        };
+        walk(definition.version.expression);
+        return predicates.length === 1 && predicates[0].predicate === 'HAS_COMPETENCE'
+          && predicates[0].competenceCodes.length === 1 && predicates[0].competenceCodes[0] === code;
+      });
+      if(matches.length !== 1) return incomplete;
+      publicCode = matches[0].code;
+    }
+    if(!store.getPublicRuleVersion || !store.listConfirmedQualifications) return incomplete;
+    const ruleVersion = await store.getPublicRuleVersion(publicCode);
+    if(!ruleVersion) return incomplete;
+    const [persons,periods,assignments,qualifications] = await Promise.all([
+      store.listPersonnes(),store.listAllPeriodes(),store.listAffectations({}),store.listConfirmedQualifications()
+    ]);
+    const competencies = canonicalQualifications.toCanonicalCompetenceFacts(qualifications);
+    const requiredCompetences = [];
+    const collectCompetences = (node) => {
+      if(node.predicate === 'HAS_COMPETENCE') requiredCompetences.push(...node.competenceCodes);
+      for(const child of node.children || []) collectCompetences(child);
+    };
+    collectCompetences(ruleVersion.expression);
+    if(requiredCompetences.length && !competencies.some((row) => requiredCompetences.includes(row.competenceCode))){
+      return incomplete;
+    }
+    const evaluated = evaluatePublicRule({ ruleVersion,evaluationDate:event.date,persons,periods,
+      assignments:assignments.map((row) => ({ ...row,domainCode:row.domaine || row.domaine_code,
+        oiCode:row.cible || row.niveau_code })),competencies,
+      competenceCodes:canonicalQualifications.ALL_QUALIFICATION_CODES });
+    if(!evaluated.complete) return { ...incomplete,note:evaluated.warnings.join(', ') || incomplete.note };
+    const byId = new Map(persons.map((row) => [String(row.personne_id || row.id),row]));
+    const resolved = evaluated.personIds.map((id) => byId.get(String(id))).filter(Boolean).map((row) => ({
+      personneId:row.personne_id || row.id,nip:row.nip,nom:row.nom,prenom:row.prenom,grade:row.grade || '',
+      cibles:[],origine:'REGLE',motifInclusion:`public_canonique_${publicCode}`
+    }));
+    return { count:resolved.length,personnes:resolved,resolutionStatus:'COMPLETE',publicCode };
+  }
+
   function cibleMotifFromPopulationPerson(person){
     const parts = (person?.cibles || [])
       .map((c) => `${c.domaineCode || c.domaine_code}_${c.niveauCode || c.niveau_code}`)
@@ -3105,6 +3168,36 @@ function createScopeService(repo){
     const evenement = await repo.getEvent(eventId);
     if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
     throwIfEventHidden(evenement);
+    const catalogueRule = await catalogueParticipationForEvent(repo,evenement);
+    if(catalogueRule){
+      const kind = String(catalogueRule.population_kind || catalogueRule.populationKind);
+      const code = String(catalogueRule.population_code || catalogueRule.populationCode || '');
+      const mode = String(catalogueRule.evaluation_mode || catalogueRule.evaluationMode || '');
+      if(mode === 'CURSUS'){
+        return { count:0,personnes:[],resolutionStatus:'INCOMPLETE',
+          note:'Le cursus doit être lié au moteur opérationnel avant de créer des attendus.' };
+      }
+      if(mode === 'MULTI_SESSION'){
+        const series = describeEventSeries(evenement);
+        if(!series.persisted || !series.sessionKey){
+          return { count:0,personnes:[],resolutionStatus:'INCOMPLETE',
+            note:'La série et sa séance doivent être identifiées dans le moteur multi-séances.' };
+        }
+      }
+      if(kind === 'OI'){
+        const cibles = repo.listCibles ? await repo.listCibles() : [];
+        const matching = cibles.filter((row) => String(row.niveau_code || '').toUpperCase() === code);
+        if(matching.length === 1){
+          return { ...(await resolveEligiblePopulation({ eventDate:evenement.date,
+            domaineCode:matching[0].domaine_code,cibleIds:[matching[0].cible_id] })),resolutionStatus:'COMPLETE' };
+        }
+      }
+      if(['PUBLIC','QUALIFICATION','SDIS'].includes(kind)){
+        return resolveCataloguePublic(repo,evenement,kind,code);
+      }
+      return { count:0,personnes:[],resolutionStatus:'INCOMPLETE',
+        note:'Le public évalué est configuré, mais sa résolution nominative n’est pas prouvée par les données disponibles.' };
+    }
     if(isCancelledEvenement(evenement)){
       throw new HttpError(422, 'evenement_annule', 'Un événement annulé n’a pas de population à préparer.');
     }
@@ -3476,6 +3569,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      const catalogueRule = await catalogueParticipationForEvent(tx,evenement);
       throwIfEventHidden(evenement);
       if(isCancelledEvenement(evenement)){
         throw new HttpError(422, 'evenement_annule', 'Un événement annulé ne peut plus recevoir de population.');
@@ -3498,6 +3592,10 @@ function createScopeService(repo){
       const preview = evenement.population_figee
         ? await photographieFigee(eventId)
         : await previewAttendus(eventId);
+      if(catalogueRule && preview.resolutionStatus !== 'COMPLETE'){
+        throw new HttpError(422,'population_catalogue_incomplete',
+          'La population qualifiée doit être résolue avant de créer des attendus individuels.');
+      }
       const previewById = new Map((preview.personnes || []).map((personne) => [String(personne.personneId || personne.personne_id || ''), personne]));
       const hasSelectionBody = Array.isArray(body && body.selectedPersonIds) || Array.isArray(body && body.personneIds);
       const requestedIds = Array.isArray(body && body.selectedPersonIds)
@@ -4202,6 +4300,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      await catalogueParticipationForEvent(tx,evenement);
       if(isHiddenEvenement(evenement) || isCancelledEvenement(evenement)){
         throw new HttpError(422, 'statut_invalide', 'Saisie possible uniquement sur PLANIFIE.');
       }
@@ -4563,6 +4662,7 @@ function createScopeService(repo){
     return repo.withTransaction(async (tx) => {
       const evenement = await tx.getEventForUpdate(eventId);
       if(!evenement) throw new HttpError(404, 'evenement_introuvable', 'Événement introuvable.');
+      await catalogueParticipationForEvent(tx,evenement);
       if(isCancelledEvenement(evenement) || isHiddenEvenement(evenement)){
         throw new HttpError(422, 'statut_invalide', 'La clôture n’est pas possible sur un événement annulé.');
       }
@@ -5075,7 +5175,8 @@ function createScopeService(repo){
     let evenements = await repo.listEvenements({
       annee: annee ? Number(annee) : null,
       statut: statutFilter,
-      domaine: domaines.length === 1 ? domaines[0] : null
+      domaine: domaines.length === 1 ? domaines[0] : null,
+      participationOnly: true
     });
     if(domaines.length > 1){
       const allowedDomaines = new Set(domaines);

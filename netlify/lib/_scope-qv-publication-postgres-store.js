@@ -289,6 +289,32 @@ class ScopeQvPostgresStore {
       values ($1,$2,$3,$4)`, [target.session.groupId, eventId, target.session.index, target.session.label]);
   }
 
+  async attachParticipationSeries(eventId,target){
+    const relation = await this.query(`select to_regclass('scope_activity_participation_rules') as table_name`);
+    if(!relation.rows[0]?.table_name){
+      if(/^QV26-EXERCICE-PR-[1-4]-/.test(target.source.definitionId)){
+        throw storeError('PARTICIPATION_CATALOGUE_MIGRATION_REQUIRED',
+          'The PR participation rules migration must be applied before PR publication.');
+      }
+      return;
+    }
+    const result = await this.query(`select r.evaluation_group_code,r.evaluation_session_index
+      from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
+      where d.code=$1 and r.superseded_at is null and r.tracking=true
+        and r.evaluation_mode='MULTI_SESSION'`,
+    [target.source.definitionId]);
+    const rule = result.rows[0];
+    if(!rule || !rule.evaluation_group_code) return;
+    const index = Number(target.session.count) > 1
+      ? Number(target.session.index) : Number(rule.evaluation_session_index);
+    if(!Number.isInteger(index) || index < 1){
+      throw storeError('PARTICIPATION_SESSION_INDEX_REQUIRED','The canonical multi-session index is missing.');
+    }
+    const group = `QV:${target.source.year}:${rule.evaluation_group_code}`;
+    await this.query(`update scope_evenements set pr_exercise_group_key=$2,pr_session_key=$3,
+      session_index=$4 where evenement_id=$1`,[eventId,group,`${group}.${index}`,index]);
+  }
+
   async createTarget(target, checkpoint){
     const activityId = await this.ensureActivity(target);
     const references = await this.resolveReferences(target);
@@ -324,6 +350,7 @@ class ScopeQvPostgresStore {
     await this.replaceRelations(eventId, target, references);
     checkpoint('AFTER_RELATIONS');
     await this.attachSession(eventId, activityId, target);
+    await this.attachParticipationSeries(eventId,target);
     checkpoint('AFTER_SESSION');
     return eventId;
   }
@@ -357,6 +384,7 @@ class ScopeQvPostgresStore {
     ]);
     checkpoint('AFTER_PROVENANCE');
     await this.replaceRelations(existing.eventId, target, references);
+    await this.attachParticipationSeries(existing.eventId,target);
     checkpoint('AFTER_RELATIONS');
     checkpoint('AFTER_SESSION');
     return existing.eventId;

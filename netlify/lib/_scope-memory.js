@@ -42,6 +42,8 @@ function createMemoryRepo(){
   const personnes = new Map();
   const affectations = new Map();
   const evenements = new Map();
+  const catalogueParticipationRules = new Map();
+  const canonicalPersonQualifications = new Map();
   const eventCodeAllocations = new Map();
   const eventCodeSequences = new Map();
   const evenementCibles = new Map();
@@ -187,6 +189,8 @@ function createMemoryRepo(){
     return {
       ...item,
       date: dateOnly(item.date),
+      catalogue_participation_rule:item.source_type === 'QUO_VADIS'
+        ? catalogueParticipationRules.get(item.code_source) || null : null,
       exercice_key: exercice ? exercice.exercice_key : null,
       exercice_code: exercice ? exercice.code : null,
       exercice_libelle: exercice ? exercice.libelle : null,
@@ -226,6 +230,7 @@ function createMemoryRepo(){
   function snapshot(){
     return {
       personnes: cloneMap(personnes),
+      canonicalPersonQualifications: cloneMap(canonicalPersonQualifications),
       affectations: cloneMap(affectations),
       evenements: cloneMap(evenements),
       eventCodeAllocations: cloneMap(eventCodeAllocations),
@@ -261,6 +266,7 @@ function createMemoryRepo(){
 
   function restore(snap){
     personnes.clear(); snap.personnes.forEach((v, k) => personnes.set(k, v));
+    canonicalPersonQualifications.clear(); snap.canonicalPersonQualifications.forEach((v, k) => canonicalPersonQualifications.set(k, v));
     affectations.clear(); snap.affectations.forEach((v, k) => affectations.set(k, v));
     evenements.clear(); snap.evenements.forEach((v, k) => evenements.set(k, v));
     eventCodeAllocations.clear(); (snap.eventCodeAllocations || new Map()).forEach((v, k) => eventCodeAllocations.set(k, v));
@@ -557,9 +563,10 @@ function createMemoryRepo(){
       evenementCibles.set(item.evenement_id, [...(row.cible_ids || [])]);
       return { ...decorateEvent(item), already_exists: false };
     },
-    async listEvenements({ annee, statut, domaine, from, to, includeHidden } = {}){
+    async listEvenements({ annee, statut, domaine, from, to, includeHidden, participationOnly } = {}){
       return [...evenements.values()]
         .filter((item) => {
+          if(participationOnly && item.source_type === 'QUO_VADIS' && catalogueParticipationRules.get(item.code_source)?.tracking !== true) return false;
           if(!includeHidden && item.hidden_at) return false;
           if(annee && String(item.date).slice(0, 4) !== String(annee)) return false;
           if(statut && item.statut !== statut) return false;
@@ -578,6 +585,23 @@ function createMemoryRepo(){
       return decorateEvent(item);
     },
     async getEventForUpdate(id){ return api.getEvent(id); },
+    async getCatalogueParticipationRule(event){
+      return catalogueParticipationRules.get(event && event.code_source) || null;
+    },
+    setCatalogueParticipationRule(code,rule){ catalogueParticipationRules.set(String(code),rule); },
+    async getPublicRuleVersion(code){
+      const definitions = [
+        ...require('./_scope-person-qualifications').PUBLIC_DEFINITIONS_C3,
+        ...require('./_scope-public-foundations').PUBLIC_DEFINITIONS
+      ];
+      return definitions.find((row) => row.code === code)?.version || null;
+    },
+    async listConfirmedQualifications(){
+      return [...canonicalPersonQualifications.values()].filter((row) => row.status === 'CONFIRMED');
+    },
+    setPersonQualification(row){
+      canonicalPersonQualifications.set(String(row.personQualificationId || row.person_qualification_id),row);
+    },
     async listEventCibleIds(id){ return evenementCibles.get(id) || []; },
     async listEventConstraintRelations(ids){
       const selected = new Set((ids || []).map(String));

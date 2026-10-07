@@ -53,6 +53,7 @@ function mapEvent(row){
     code_cours: row.code_cours || null,
     code_source: row.code_source || null,
     source_type: row.source_type || null,
+    catalogue_participation_rule: row.catalogue_participation_rule || null,
     heure_debut: row.heure_debut || null,
     heure_fin: row.heure_fin || null,
     heure_debut_prevue: row.heure_debut_prevue || row.heure_debut || null,
@@ -326,6 +327,12 @@ const AFFECTATION_SELECT = `
 
 const EVENT_SELECT = `
   e.*,
+  (select jsonb_build_object('tracking', r.tracking, 'populationKind', r.population_kind,
+      'populationCode', r.population_code, 'evaluationMode', r.evaluation_mode,
+      'evaluationGroupCode', r.evaluation_group_code, 'evaluationSessionIndex', r.evaluation_session_index,
+      'versionNumber', r.version_number)
+    from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
+    where d.code=e.code_source and r.superseded_at is null limit 1) as catalogue_participation_rule,
   x.exercice_key,
   x.code as exercice_code,
   x.libelle as exercice_libelle,
@@ -850,13 +857,16 @@ function createPgRepo(client){
       }
       return mapEvent(result.rows[0]);
     },
-    async listEvenements({ annee, statut, domaine, from, to, includeHidden } = {}){
+    async listEvenements({ annee, statut, domaine, from, to, includeHidden, participationOnly } = {}){
       const clauses = [];
       const params = [];
       let i = 1;
       if(!includeHidden){
         clauses.push('e.hidden_at is null');
       }
+      if(participationOnly) clauses.push(`(e.source_type is distinct from 'QUO_VADIS' or exists (
+        select 1 from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
+        where d.code=e.code_source and r.superseded_at is null and r.tracking=true))`);
       if(annee){
         clauses.push(`extract(year from e.date) = $${i}`);
         params.push(Number(annee));
@@ -893,6 +903,30 @@ function createPgRepo(client){
     async getEventForUpdate(id){
       const result = await q('select * from scope_evenements where evenement_id = $1 for update', [id]);
       return mapEvent(result.rows[0] || null);
+    },
+    async getCatalogueParticipationRule(event){
+      if(!event || event.source_type !== 'QUO_VADIS') return null;
+      const result = await q(`select r.tracking,r.population_kind,r.population_code,r.evaluation_mode,
+          r.evaluation_group_code,r.evaluation_session_index,r.version_number
+        from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
+        where d.code=$1 and r.superseded_at is null`,[event.code_source]);
+      return result.rows[0] || null;
+    },
+    async getPublicRuleVersion(code){
+      const result = await q(`select v.* from scope_public_definitions d
+        join scope_public_rule_versions v on v.public_definition_id=d.public_definition_id
+        where d.code=$1 and d.status='ACTIVE' and v.status='ACTIVE'
+        order by v.version_number desc limit 1`,[code]);
+      const row = result.rows[0];
+      return row ? { ...row,valid_from:dateOnly(row.valid_from),valid_to:dateOnly(row.valid_to),
+        resolutionStatus:row.metadata?.resolutionStatus || 'COMPLETE' } : null;
+    },
+    async listConfirmedQualifications(){
+      const result = await q(`select pq.person_qualification_id,pq.personne_id,c.code as competence_code,
+          pq.valid_from,pq.valid_to,pq.status
+        from scope_person_qualifications pq join scope_competence_definitions c using(competence_id)
+        where pq.status='CONFIRMED'`);
+      return result.rows.map((row) => ({ ...row,valid_from:dateOnly(row.valid_from),valid_to:dateOnly(row.valid_to) }));
     },
     async listEventCibleIds(id){
       const result = await q('select cible_id from scope_evenement_cibles where evenement_id = $1', [id]);
@@ -2783,7 +2817,10 @@ function createPgRepo(client){
       await q('delete from scope_objectifs where objectif_id = $1', [id]);
     },
     async loadAnalyticsBundle({ from, to, domaineCode, cibleId, evenementId, personneId } = {}){
-      const clauses = ['e.date >= $1::date', 'e.date <= $2::date', 'e.hidden_at is null'];
+      const clauses = ['e.date >= $1::date', 'e.date <= $2::date', 'e.hidden_at is null',
+        `(e.source_type is distinct from 'QUO_VADIS' or exists (
+          select 1 from scope_event_definitions d join scope_activity_participation_rules r on r.definition_id=d.definition_id
+          where d.code=e.code_source and r.superseded_at is null and r.tracking=true))`];
       const params = [from, to];
       let i = 3;
       if(domaineCode){

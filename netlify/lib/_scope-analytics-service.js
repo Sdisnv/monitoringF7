@@ -331,9 +331,10 @@ function createScopeAnalyticsService(repo){
       const personneId = query.personneId || query.personne_id || null;
       const events = evenementId
         ? [await repo.getEvent(evenementId)].filter(Boolean)
-        : await repo.listEvenements({ domaine: domaineCode || undefined });
+        : await repo.listEvenements({ domaine: domaineCode || undefined, participationOnly:true });
       bundle = { events: [], attendusByEvent: {}, participationsByEvent: {}, cibleIdsByEvent: {}, legacyByEvent: {}, quantitatifByEvent: {} };
       for(const event of events){
+        if(event.source_type === 'QUO_VADIS' && event.catalogue_participation_rule?.tracking !== true) continue;
         if(isHiddenEvenement(event)) continue;
         if(!inPeriod(event.date, period)) continue;
         if(domaineCode && event.domaine_code !== domaineCode) continue;

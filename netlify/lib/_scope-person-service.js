@@ -231,7 +231,7 @@ function personIsConcernedByEvent(event, part, attendu){
 async function personOperationalHistoryEvents(repo, personneId, period, affectations, ciblesById, includedRows, query = {}){
   if(!repo.listEvenements) return [];
   const includeQualification = wantsQualification(query);
-  const events = (await repo.listEvenements({ from: period.from, to: period.to }) || []).filter((event) => {
+  const events = (await repo.listEvenements({ from: period.from, to: period.to, participationOnly: true }) || []).filter((event) => {
     if(!event || isHiddenEvenement(event)) return false;
     if(!includeQualification && isQualificationEvenement(event)) return false;
     if(event.origine === 'LEGACY_AGGREGATED') return false;

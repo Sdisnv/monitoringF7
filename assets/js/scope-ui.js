@@ -13366,7 +13366,7 @@
         <button id="annual-filter-reset" class="scope-button annual-button-quiet" type="button">Réinitialiser</button>
       </div>
       ${renderAnnualCatalogCreate()}${renderAnnualCatalogImport()}
-      <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Stat.Com</th><th>Cadence</th><th>Réalisations / sessions</th><th>Période</th><th>Sites / OI</th><th>Public cible</th><th>État ${escapeHtml(String(catalog.year || filters.year))}</th><th>Action</th></tr></thead>
+      <div class="annual-table-wrap"><table class="annual-table annual-catalog-table"><thead><tr><th>Domaine</th><th>Activité</th><th>Stat.Com</th><th>Cadence</th><th>Réalisations / sessions</th><th>Période</th><th>Sites / OI</th><th>Public cible</th><th>Participation</th><th>État ${escapeHtml(String(catalog.year || filters.year))}</th><th>Action</th></tr></thead>
         <tbody>${activities.map((row) => {
           const required = Number(row.requiredOccurrences || 0);
           const defined = Number(row.themedOccurrenceCount || 0);
@@ -13381,8 +13381,9 @@
           const persistedPublics = Array.isArray(row.publicCodes) ? row.publicCodes : String(row.publicCodes || '').split(',').map((value) => value.trim()).filter(Boolean);
           const publics = row.qualified && persistedPublics.length ? persistedPublics : row.canonicalPublics && row.canonicalPublics.length ? row.canonicalPublics : persistedPublics;
           const statComCodes = row.statComCodes && row.statComCodes.length ? row.statComCodes : [];
-          return `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.displayLabel || row.label)}</strong><span class="annual-activity-kind">${escapeHtml(annualActivityTypeLabel(row.activityType))}${row.exerciseCode ? ` · ${escapeHtml(row.exerciseCode)}` : ''}${durationText ? ` · ${escapeHtml(durationText)}` : ''}</span></td><td>${escapeHtml(statComCodes.join(', ') || 'À qualifier')}</td><td>${row.recurrenceKind === 'RECURRENT' ? 'Récurrente' : row.recurrenceKind === 'NON_RECURRENT' ? 'Ponctuelle' : 'À qualifier'}</td><td><strong>${escapeHtml(String(annual))} réalisation${annual > 1 ? 's' : ''}</strong><span>${escapeHtml(String(sessions))} session${sessions > 1 ? 's' : ''}</span></td><td>${escapeHtml(period)}</td><td>${escapeHtml(sites.join(', ') || 'À qualifier')}</td><td>${escapeHtml(publics.join(', ') || 'À qualifier')}</td><td>${annualStatusHtml(row.programState === 'INACTIVE' ? 'CANCELLED' : row.status)}</td><td><a class="annual-row-action" href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Consulter la fiche ›</a></td></tr>`;
-        }).join('') || '<tr><td colspan="10" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
+          const suivi = row.participation && row.participation.tracking;
+          return `<tr><td>${escapeHtml(row.domain)}</td><td><strong>${escapeHtml(row.displayLabel || row.label)}</strong><span class="annual-activity-kind">${escapeHtml(annualActivityTypeLabel(row.activityType))}${row.exerciseCode ? ` · ${escapeHtml(row.exerciseCode)}` : ''}${durationText ? ` · ${escapeHtml(durationText)}` : ''}</span></td><td>${escapeHtml(statComCodes.join(', ') || 'À qualifier')}</td><td>${row.recurrenceKind === 'RECURRENT' ? 'Récurrente' : row.recurrenceKind === 'NON_RECURRENT' ? 'Ponctuelle' : 'À qualifier'}</td><td><strong>${escapeHtml(String(annual))} réalisation${annual > 1 ? 's' : ''}</strong><span>${escapeHtml(String(sessions))} session${sessions > 1 ? 's' : ''}</span></td><td>${escapeHtml(period)}</td><td>${escapeHtml(sites.join(', ') || 'À qualifier')}</td><td>${escapeHtml(publics.join(', ') || 'À qualifier')}</td><td>${suivi === true ? 'Suivie' : suivi === false ? 'Non suivie' : 'À qualifier'}</td><td>${annualStatusHtml(row.programState === 'INACTIVE' ? 'CANCELLED' : row.status)}</td><td><a class="annual-row-action" href="#/quo-vadis/catalogue-annuel/${encodeURIComponent(row.code)}?annee=${encodeURIComponent(catalog.year || filters.year)}">Consulter la fiche ›</a></td></tr>`;
+        }).join('') || '<tr><td colspan="11" class="scope-empty">Aucune activité pour ces filtres.</td></tr>'}</tbody>
       </table></div>
     </section>`;
   }
@@ -13405,6 +13406,7 @@
     const config = payload.configuration || {};
     const requirement = payload.annualRequirement || null;
     const profile = config.functionalProfile || {};
+    const participation = payload.participation || { tracking:null,versionNumber:0 };
     const rule = profile.metadata && profile.metadata.canonicalRule || payload.approvedRule || {};
     const programEntry = payload.annualProgramEntry || null;
     const siteSlots = payload.siteSlots || [];
@@ -13492,6 +13494,14 @@
       <header><div class="annual-title"><span>${escapeHtml(activity.domain || '')}</span><div><h2>${escapeHtml(activity.label || activity.code || '')}</h2>${activity.version && activity.version.description ? `<p>${escapeHtml(activity.version.description)}</p>` : ''}</div></div><div class="annual-head-actions"><div class="annual-head-state"><span class="annual-year">Année ${escapeHtml(String(year))}</span>${annualStatusHtml(status)}</div>${canManage ? `<div class="annual-lifecycle-actions">${archived ? '<button id="annual-activity-restore" class="scope-button annual-button-primary" type="button">Restaurer</button>' : '<button id="annual-activity-edit" class="scope-button annual-button-secondary" type="button">Modifier</button><button id="annual-activity-archive" class="scope-button annual-button-quiet" type="button">Archiver</button>'}<button id="annual-activity-delete" class="scope-text-action annual-delete-action" type="button">Supprimer</button></div>` : ''}</div></header>
       ${payload.approvedRule ? '<p class="annual-muted">Règle Rapport annuel validée par la MOA, pas encore enregistrée comme profil versionné. La date 2027 reste une donnée annuelle distincte.</p>' : ''}
       <p class="annual-muted">Domaine métier : ${escapeHtml(rule.businessDomain || 'À qualifier')} · Mode : ${escapeHtml(planningModeLabels[rule.planningMode] || 'À qualifier')}</p>
+      <section class="annual-panel annual-participation-rule"><h3>Suivi de participation</h3>
+        <form id="annual-participation-form" class="annual-definition-form">
+          <label>Participation<select id="annual-participation-tracking"${canManage && !archived ? '' : ' disabled'}><option value=""${participation.tracking === null ? ' selected' : ''}>À qualifier</option><option value="yes"${participation.tracking === true ? ' selected' : ''}>Oui</option><option value="no"${participation.tracking === false ? ' selected' : ''}>Non</option></select></label>
+          <label>Population évaluée<select id="annual-participation-population-kind"${canManage && !archived ? '' : ' disabled'}><option value="">À qualifier</option>${[['QUALIFICATION','Qualification / spécialisation'],['PUBLIC','Public canonique'],['OI','OI'],['SDIS','Tout le SDIS']].map(([code,label]) => `<option value="${code}"${participation.populationKind === code ? ' selected' : ''}>${label}</option>`).join('')}</select></label>
+          <label>Code du public<input id="annual-participation-population-code" list="annual-participation-populations" value="${escapeHtml(participation.populationCode || '')}"${canManage && !archived ? '' : ' disabled'}><datalist id="annual-participation-populations">${[...(references.qualifications || []),...(references.publics || []),...(references.ois || [])].map((row) => `<option value="${escapeHtml(row.code)}">${escapeHtml(row.label || row.code)}</option>`).join('')}</datalist></label>
+          <label>Mode d’évaluation<select id="annual-participation-mode"${canManage && !archived ? '' : ' disabled'}><option value="">À qualifier</option>${[['EVENT','Événement simple'],['MULTI_SESSION','Exercice multi-séances'],['CURSUS','Cursus']].map(([code,label]) => `<option value="${code}"${participation.evaluationMode === code ? ' selected' : ''}>${label}</option>`).join('')}</select></label>
+          ${canManage && !archived ? '<div class="annual-form-actions"><button class="scope-button annual-button-secondary" type="submit">Enregistrer le suivi</button></div>' : ''}
+        </form><p class="annual-muted">${participation.tracking === true ? `Version ${escapeHtml(String(participation.versionNumber))} · ${participation.populationKind === 'QUALIFICATION' ? 'Résolution nominative incomplète sans qualification du personnel.' : 'Population à résoudre selon le référentiel.'}` : participation.tracking === false ? 'Aucun attendu ni saisie de présence.' : 'Aucune obligation individuelle tant que le suivi n’est pas qualifié.'}</p></section>
       ${state.annualCatalogDefinitionEdit && !archived ? `<section class="annual-catalog-workspace annual-definition-edit"><div class="annual-workspace-head"><div><h3>Modifier l’activité</h3><p>Une nouvelle version sera créée; les besoins déjà validés restent figés.</p></div><button class="scope-icon-button" id="annual-activity-edit-cancel" type="button" title="Fermer" aria-label="Fermer">×</button></div><form id="annual-activity-edit-form" class="annual-definition-form">
         <label>Libellé<input id="annual-edit-label" required maxlength="180" value="${escapeHtml(activity.label || '')}"></label>
         <label>Famille opérationnelle<select id="annual-edit-domain">${['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR'].map((value) => `<option value="${value}"${activity.domain === value ? ' selected' : ''}>${value}</option>`).join('')}</select></label>
@@ -13738,6 +13748,20 @@
       }
     };
     document.getElementById('annual-activity-edit')?.addEventListener('click',() => { state.annualCatalogDefinitionEdit = true;render(); });
+    document.getElementById('annual-participation-form')?.addEventListener('submit',async (event) => {
+      event.preventDefault();
+      const tracking = document.getElementById('annual-participation-tracking')?.value;
+      if(!tracking) return toast('error','Catalogue annuel','Choisissez Oui ou Non pour le suivi des participations.');
+      const current = state.annualCatalogActivity && state.annualCatalogActivity.participation || {};
+      await annualAction(() => client.updateAnnualCatalogParticipation(route().qvCatalogCode,{
+        baseVersion:Number(current.versionNumber || 0),tracking:tracking === 'yes',
+        populationKind:document.getElementById('annual-participation-population-kind')?.value || null,
+        populationCode:document.getElementById('annual-participation-population-code')?.value || null,
+        evaluationMode:document.getElementById('annual-participation-mode')?.value || null,
+        evaluationGroupCode:current.evaluationGroupCode || null,
+        evaluationSessionIndex:current.evaluationSessionIndex || null
+      }),'La règle de participation a été versionnée.');
+    });
     ['annual-activity-edit-cancel','annual-activity-edit-cancel-secondary'].forEach((id) => document.getElementById(id)?.addEventListener('click',() => { state.annualCatalogDefinitionEdit = false;render(); }));
     document.getElementById('annual-activity-edit-form')?.addEventListener('submit',async (event) => {
       event.preventDefault();
