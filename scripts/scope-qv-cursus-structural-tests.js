@@ -55,12 +55,13 @@ test('only proven 2027 modules get Cursus type; JSP projections are superseded, 
   assert.equal(rows.length, 850);
   assert.deepEqual(Object.fromEntries(['models','occurrences','sessions','oiMaterializations','programmeItems','toReview']
     .map((key) => [key,qv.canonicalProgramme.target[key]])),
-  { models:258,occurrences:848,sessions:848,oiMaterializations:1233,programmeItems:848,toReview:723 });
+  { models:258,occurrences:847,sessions:847,oiMaterializations:1230,programmeItems:847,toReview:722 });
   const modules = rows.filter((row) => row.activityKind === 'CURSUS');
   assert.equal(modules.length, 7);
   const superseded = modules.filter((row) => row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE');
   assert.deepEqual(superseded.map((row) => [row.cursusStepCode,row.cursusReconciliation.supersededBy,row.cursusReconciliation.historicalSourceLine]),
     [['M01','qv-source-886',6],['M02','qv-source-903',8]]);
+  assert.equal(rows.filter((row) => row.jspDirectionReconciliation).length, 1);
   assert.equal(rows.filter((row) => !row.cursusReconciliation).length, 848);
   assert.equal(rows.filter((row) => !row.cursusReconciliation && row.status === 'VALIDATED').length, 125);
   assert.equal(rows.filter((row) => !row.cursusReconciliation && row.status !== 'VALIDATED').length, 723);
@@ -92,7 +93,7 @@ test('only proven 2027 modules get Cursus type; JSP projections are superseded, 
     escapeHtml:(value) => String(value) };
   vm.createContext(navContext);
   vm.runInContext(extract('renderQuoVadisNav'),navContext);
-  assert.match(navContext.renderQuoVadisNav(qv), /Programme annuel <span>848<\/span>/);
+  assert.match(navContext.renderQuoVadisNav(qv), /Programme annuel <span>847<\/span>/);
   const preview = ui.slice(ui.indexOf("document.getElementById('qv-preview-2028')"),
     ui.indexOf("document.getElementById('qv-calculate-2028')"));
   assert.match(preview, /cursusReconciliation\.status === 'SUPERSEDED_BY_VALIDATED_MODULE'/);

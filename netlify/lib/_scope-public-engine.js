@@ -9,13 +9,14 @@ const LIMITS = Object.freeze({ maxDepth: 8, maxNodes: 64, maxCodesPerPredicate: 
 const OPERATORS = new Set(['ALL', 'ANY', 'NOT']);
 const PREDICATES = new Set([
   'PERSON_ELIGIBLE_AT', 'HAS_DOMAIN_ASSIGNMENT', 'HAS_OI',
-  'HAS_COMPETENCE', 'HAS_FOBA_LEVEL', 'HAS_JSP_ROLE'
+  'HAS_COMPETENCE', 'HAS_FOBA_LEVEL', 'HAS_JSP_ROLE', 'HAS_PERSON_FUNCTION'
 ]);
 const OI_CODES = new Set(canonical.ORGANISATIONAL_UNITS.map((row) => row.code));
 const COMPETENCE_CODES = new Set(canonical.COMPETENCE_DEFINITIONS.map((row) => row.code));
 const FOBA_CODES = new Set(canonical.FOBA_LEVELS.map((row) => row.code));
 const DOMAIN_CODES = new Set(canonical.CANONICAL_DOMAIN_CODES);
 const JSP_ROLES = new Set(['JEUNE', 'MONITEUR']);
+const PERSON_FUNCTIONS = new Set(['DPS_CHEF_SECTION','DPS_REMPLACANT_CHEF_SECTION']);
 
 function stableValue(value){
   if(Array.isArray(value)) return value.map(stableValue);
@@ -81,7 +82,8 @@ function normalizePublicRule(expression, options = {}){
       HAS_OI: { fields: ['domainCode', 'oiCodes'], arrays: [['oiCodes', OI_CODES]], scalar: ['domainCode', DOMAIN_CODES] },
       HAS_COMPETENCE: { fields: ['competenceCodes'], arrays: [['competenceCodes', competenceCatalog]] },
       HAS_FOBA_LEVEL: { fields: ['levelCodes'], arrays: [['levelCodes', FOBA_CODES]] },
-      HAS_JSP_ROLE: { fields: ['roles', 'oiCodes'], arrays: [['roles', JSP_ROLES], ['oiCodes', OI_CODES]] }
+      HAS_JSP_ROLE: { fields: ['roles', 'oiCodes'], arrays: [['roles', JSP_ROLES], ['oiCodes', OI_CODES]] },
+      HAS_PERSON_FUNCTION: { fields: ['functionCodes'], arrays: [['functionCodes', PERSON_FUNCTIONS]] }
     };
     const spec = specs[predicate];
     for(const key of keys) if(key !== 'predicate' && !spec.fields.includes(key)) throw validationError(`${path}.${key}`, 'unknown field');
@@ -197,6 +199,7 @@ function requiredInputs(expression){
     if(node.predicate === 'HAS_COMPETENCE') required.add('competencies');
     if(node.predicate === 'HAS_FOBA_LEVEL') required.add('fobaLevels');
     if(node.predicate === 'HAS_JSP_ROLE') required.add('jspRoles');
+    if(node.predicate === 'HAS_PERSON_FUNCTION') required.add('functions');
     for(const child of node.children || []) walk(child);
   })(expression);
   return [...required].sort();
@@ -234,6 +237,10 @@ function evaluatePredicate(node, person, context, path){
       node.roles.includes(upper(row.role)) && node.oiCodes.includes(upper(row.oiCode || row.oi_code))
     );
     matched = evidence.length > 0;
+  }else if(node.predicate === 'HAS_PERSON_FUNCTION'){
+    evidence = currentFacts(context.functions,id,context.date,{ requireStart:true }).filter((row) =>
+      node.functionCodes.includes(upper(row.functionCode || row.function_code)));
+    matched = evidence.length > 0;
   }
   return {
     path, kind: 'PREDICATE', predicate: node.predicate, matched,
@@ -246,6 +253,7 @@ function evaluatePredicate(node, person, context, path){
       legacyContext: upper(row.legacyContext || row.legacy_context) || null,
       levelCode: upper(row.levelCode || row.level_code || row.niveau_code) || null,
       role: upper(row.role) || null,
+      functionCode:upper(row.functionCode || row.function_code) || null,
       from: factDates(row).from || null, to: factDates(row).to || null
     }))
   };
@@ -292,7 +300,7 @@ function evaluatePublicRule(input){
   if(missing.length) return incompleteResult(ruleFingerprint, date, 'INCOMPLETE', missing.map((name) => `MISSING_INPUT_${name.toUpperCase()}`));
   const context = {
     date, periods: Array.isArray(args.periods) ? args.periods : [], assignments: args.assignments || [],
-    competencies: args.competencies || [], fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || []
+    competencies: args.competencies || [], fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || [],functions:args.functions || []
   };
   const uniquePersons = new Map();
   for(const person of args.persons){
@@ -338,7 +346,7 @@ function explainPersonExclusion(input){
   const expression = normalizePublicRule((args.ruleVersion || {}).expression, validationOptions);
   const trace = evaluateNode(expression, person, {
     date, periods: args.periods || [], assignments: args.assignments || [], competencies: args.competencies || [],
-    fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || []
+    fobaLevels: args.fobaLevels || [], jspRoles: args.jspRoles || [],functions:args.functions || []
   });
   return { personId: id, found: true, matched: trace.matched, complete: true, evaluationDate: date, trace };
 }

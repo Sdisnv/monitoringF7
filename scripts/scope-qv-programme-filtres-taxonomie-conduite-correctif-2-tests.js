@@ -171,7 +171,7 @@ async function main() {
   });
   const html = context.qvProgrammeFilterBar(qv);
   await test('domain, family and type controls have the requested ordering and labels', () => {
-    for (const [code, label] of Object.entries({ F0: 'Gouvernance', F1: 'Personnel', F2: 'Renseignements', F3: 'Prestations', F4: 'Matériel', F5: 'Partenaires', F6: 'SIC', F7: 'Formation', F8: 'Finances' })) assert.ok(html.includes(`>${code} ${label}</option>`));
+    for (const [code, label] of Object.entries({ F0: 'Gouvernance', F1: 'Personnel', F2: 'Renseignements', F3: 'Opérationnel', F4: 'Logistique', F5: 'Partenaires', F6: 'SIC', F7: 'Formation', F8: 'Finances' })) assert.ok(html.includes(`>${code} ${label}</option>`));
     assert.ok(!html.includes('F0 — Gouvernance'));
     assert.ok(!html.includes('Conduite / PR'));
     assert.ok(html.indexOf('id="qv-filter-type"') < html.indexOf('id="qv-filter-status"'));

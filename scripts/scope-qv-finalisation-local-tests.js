@@ -267,7 +267,7 @@ test('l’Agenda enrichit les 497 séances non datées depuis QUO VADIS 2026', (
   assert.equal(historical.length + undated.length, 491);
   assert.match(ui, /function qvAgendaProjection/);
   assert.match(ui, /séances représentées/);
-  assert.match(ui, /Proposées 2026/);
+  assert.match(ui, /Références 2026/);
   assert.match(ui, /séances sans date/);
 });
 
@@ -297,16 +297,16 @@ test('la fiche Programme expose les libellés métier sans UUID', () => {
   const start = ui.indexOf('function renderQuoVadisProgrammeFiche');
   const end = ui.indexOf('function renderQuoVadisActivites', start);
   const detail = ui.slice(start, end);
-  assert.match(detail, /<h3>Événement<\/h3>/);
+  assert.match(detail, /Informations de l’événement<\/h3>/);
   assert.match(detail, /<dt>Code cours<\/dt>/);
-  assert.match(detail, /<h3>Planification<\/h3>/);
-  assert.match(detail, /<summary>Règle appliquée/);
+  assert.match(detail, /Planification<\/h3>/);
+  assert.match(detail, /Règle appliquée ·/);
   assert.match(detail, /qvProgrammeAppliedRule\(row\)/);
   assert.match(detail, /qv-programme-workflow/);
   assert.match(detail, /Ouvrir l'événement/);
   assert.match(detail, />Arbitrage</);
-  assert.match(detail, /Annuler pour l’année/);
-  assert.match(detail, />Supprimer<\/button>/);
+  assert.match(detail, /Annuler l’événement pour l’année/);
+  assert.match(detail, />Supprimer l’événement<\/button>/);
   assert.match(detail, /qvProgrammeLocationLabel\(row\)/);
   assert.match(detail, /qvProgrammeRoomLabel\(row\)/);
   assert.match(ui, /function qvProgrammeStatComLabel/);
@@ -326,7 +326,7 @@ test('les 497 séances à positionner disposent d’une vue de travail partageab
   const parsed = L.parseHash('#/quo-vadis/programme?placement=undated');
   assert.equal(parsed.qvPlacement, 'undated');
   assert.match(ui, /À définir \(\$\{undated\}\)/);
-  assert.match(ui, /Proposées 2026 \(\$\{historical\}\)/);
+  assert.match(ui, /Références 2026 \(\$\{historical\}\)/);
   assert.match(ui, /quoVadisProgrammePlacement === 'undated' && date/);
   assert.match(ui, /quoVadisProgrammePlacement === 'proposed' && !row\.historicalProposal/);
   assert.match(ui, /qvHref\('programme', \{ placement: 'undated' \}\)/);
@@ -397,7 +397,7 @@ test('les responsables partagent un référentiel et normalisent les variantes n
   assert.equal(L.qvResponsableCanonique('Of auto'), 'Of auto');
   assert.equal(L.qvResponsableCanonique('C site', { domain: 'DPS' }), 'Chef site DPS');
   assert.equal(L.qvResponsableCanonique('Chef site', { domain: 'DPS' }), 'Chef site DPS');
-  assert.equal(L.qvResponsableCanonique('C JSP', { domain: 'JSP' }), 'Chef site JSP');
+  assert.equal(L.qvResponsableCanonique('C JSP', { domain: 'JSP' }), 'Chef JSP');
   assert.equal(L.qvResponsableCanonique('C sct', { domain: 'DAP' }), 'Chef section DAP');
   assert.equal(L.qvResponsableCanonique('C sct', { domain: 'DPS' }), 'Chef section DPS');
   assert.equal(L.qvResponsableCanonique('C sct', { domain: 'AUTO' }), 'C sct');
@@ -540,7 +540,7 @@ test('le Programme d’une année future est consultable dans la même interface
   assert.match(ui, /function qvProgrammeYearChoices\(\) \{\s*return \[2027, 2028\];/);
   assert.match(ui, /qvProgrammeYearChoices\(\)\.map\(\(year\) => `<option value="\$\{year\}" \$\{qvProgrammeYear\(\) === year \? 'selected' : ''\}/);
   assert.match(ui, /document\.getElementById\('qv-filter-year'\)\?\.addEventListener\('change'/);
-  assert.match(ui, /if \(\['programme', 'programme-fiche'\]\.includes\(r\.qvView\) && Number\(r\.qvAnnee\) !== 2027\) jobs\.push\(loadQuoVadisProgrammeYear\(r\.qvAnnee\)\)/);
+  assert.match(ui, /if \(\['programme', 'programme-fiche','agenda-annuel'\]\.includes\(r\.qvView\) && Number\(r\.qvAnnee\) === 2028\) jobs\.push\(loadQuoVadisProgrammeYear\(2028\)\)/);
   assert.match(ui, /<h2>Programme \$\{escapeHtml\(String\(qvProgrammeYear\(\)\)\)\}<\/h2>/);
   assert.doesNotMatch(ui, /<h2>Programme 2027<\/h2>/);
   assert.match(ui, /const monthKey = filters\.month && filters\.month !== 'tous' \? filters\.month : `\$\{qvProgrammeYear\(\)\}-01`/);

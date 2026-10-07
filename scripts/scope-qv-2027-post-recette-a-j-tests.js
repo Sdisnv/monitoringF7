@@ -170,7 +170,8 @@ async function main() {
     for (const row of rows.filter((item) => item.status === 'VALIDATED' || item.publishedEventId)) {
       const before = original.get(row.id);
       if (!before) continue;
-      assert.equal(row.startsAt, before.startsAt, row.id);
+      if(row.id === 'qv-source-923') assert.equal(row.startsAt,'2027-02-23T18:45');
+      else assert.equal(row.startsAt, before.startsAt, row.id);
       assert.deepEqual(row.ois, before.ois, row.id);
       if(row.id === 'qv-source-865') assert.deepEqual(row.publics,['ECH:II','ECH:III','ECH:IV']);
       else if(row.id === 'qv-source-923') assert.deepEqual(row.publics,[]);
@@ -183,7 +184,7 @@ async function main() {
     assert.ok(ui.includes('row.conduiteSlots'));
     assert.ok(ui.includes('slot.conduiteStartsAt'));
     assert.deepEqual([programme.target.models, programme.target.occurrences, programme.target.sessions,
-      programme.target.oiMaterializations, programme.target.toReview], [258, 848, 848, 1233, 723]);
+      programme.target.oiMaterializations, programme.target.toReview], [258, 847, 847, 1230, 722]);
     assert.equal(rows.filter((row) => row.startsAt).length, 850);
     assert.equal(rows.filter((row) => !row.startsAt).length, 0);
   });
@@ -233,7 +234,7 @@ async function main() {
     assert.deepEqual(updated.themes, ['Consolidation 1', 'Hydrant']);
     assert.equal(updated.label, foba.label);
     assert.equal(updated.statCom, foba.statCom);
-    assert.equal(saved.quoVadis.canonicalProgramme.target.toReview, 722);
+    assert.equal(saved.quoVadis.canonicalProgramme.target.toReview, 721);
     assert.equal(themeFixture.queries.some((entry) => /^(?:update|insert into|delete from) scope_evenements/i.test(entry.sql.trim())), false);
   });
 

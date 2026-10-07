@@ -151,16 +151,17 @@ async function main() {
     qvMonthLabel: (month) => String(month) };
   vm.createContext(context);
   vm.runInContext(['qvCalendarIndex', 'qvProgrammeProposedMonthKey', 'qvBuildMonth', 'qvAgendaProjection'].map(extract).join('\n'), context);
-  test(31, 'Programme et Agenda : 850 préparations, deux projections JSP rapprochées', () => {
+  test(31, 'Programme et Agenda : 850 préparations, trois projections JSP rapprochées', () => {
     assert.equal(rows.length, 850);
     assert.equal(rows.filter((row) => row.cursusReconciliation?.status === 'SUPERSEDED_BY_VALIDATED_MODULE').length, 2);
-    assert.equal(context.qvAgendaProjection(qv27).total, 848);
+    assert.equal(rows.filter((row) => row.jspDirectionReconciliation).length, 1);
+    assert.equal(context.qvAgendaProjection(qv27).total, 847);
   });
   test(32, 'Programme et Agenda : mêmes lignes à définir', () => assert.equal(
     context.qvAgendaProjection(qv27).undated, rows.filter((row) => !row.startsAt).length));
   test(33, 'KPI recalculé et non figé à 886', () => {
-    assert.equal(qv27.canonicalProgramme.target.sessions, 848);
-    assert.equal(context.qvAgendaProjection(qv27).dated, 848);
+    assert.equal(qv27.canonicalProgramme.target.sessions, 847);
+    assert.equal(context.qvAgendaProjection(qv27).dated, 847);
     assert.equal(context.qvAgendaProjection(qv27).undated, 0);
   });
   test(34, 'deux exécutions stables et conduite idempotente', () => {

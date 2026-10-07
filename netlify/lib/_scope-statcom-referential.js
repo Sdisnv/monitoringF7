@@ -133,10 +133,13 @@ function isStatComValidForDate(row, date){
   if(!row) return false;
   const day = date ? String(date).slice(0, 10) : null;
   if(row.active === false || row.actif === false) return false;
-  const validFrom = row.valid_from || row.validFrom || null;
-  const validTo = row.valid_to || row.validTo || null;
-  if(day && validFrom && day < String(validFrom).slice(0, 10)) return false;
-  if(day && validTo && day > String(validTo).slice(0, 10)) return false;
+  const dateKey = (value) => value instanceof Date
+    ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+    : String(value || '').slice(0, 10);
+  const validFrom = dateKey(row.valid_from || row.validFrom);
+  const validTo = dateKey(row.valid_to || row.validTo);
+  if(day && validFrom && day < validFrom) return false;
+  if(day && validTo && day > validTo) return false;
   return true;
 }
 

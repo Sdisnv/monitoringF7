@@ -9,7 +9,7 @@ function allWith(predicate){
 }
 
 function definition(code, label, ownerCode, predicate, domainHints){
-  const expression = allWith(predicate);
+  const expression = predicate.predicate === 'PERSON_ELIGIBLE_AT' ? personEligible : allWith(predicate);
   return Object.freeze({
     code, label, description: `Public canonique ${label}`,
     status: 'ACTIVE', ownerType: 'DOMAIN', ownerCode, domainHints: Object.freeze(domainHints || [ownerCode]),
@@ -18,6 +18,13 @@ function definition(code, label, ownerCode, predicate, domainHints){
 }
 
 const PUBLIC_DEFINITIONS = Object.freeze([
+  definition('SDIS-TOUS','Tout le SDIS','SDIS',personEligible,['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR']),
+  definition('DPS-CHEFS-SECTION-REMPLACANTS','Chefs de section DPS et remplaçants','DPS',{
+    op:'ALL',children:[
+      { predicate:'HAS_DOMAIN_ASSIGNMENT',domainCodes:['DPS'] },
+      { predicate:'HAS_PERSON_FUNCTION',functionCodes:['DPS_CHEF_SECTION','DPS_REMPLACANT_CHEF_SECTION'] }
+    ]
+  }),
   ...['G1', 'C1', 'B1', 'B2'].map((code) => definition(`DPS-${code}`, `DPS ${code}`, 'DPS', { predicate: 'HAS_OI', domainCode: 'DPS', oiCodes: [code] })),
   ...['Y1', 'Y2', 'Y3', 'Y4'].map((code) => definition(`DAP-${code}`, `DAP ${code}`, 'DAP', { predicate: 'HAS_OI', domainCode: 'DAP', oiCodes: [code] })),
   ...['1', '2', '3'].map((code) => definition(`FOBA-${code}`, `FOBA ${code}`, 'FOBA', { predicate: 'HAS_FOBA_LEVEL', levelCodes: [code] })),

@@ -1257,8 +1257,7 @@
   }
 
   function qvNeedsArbitrationRow(row) {
-    const status = String((row && (row.status || row.statut)) || '').toUpperCase();
-    return Boolean(row && row.needsArbitration) || status === 'A_PLANIFIER' || status === 'PROPOSE';
+    return Boolean(row && (row.needsArbitration === true || row.humanReviewRequired === true));
   }
 
   function qvBuildArbitrageGroups(activities) {
@@ -1383,9 +1382,9 @@
   }
 
   function qvArbitrageState(group) {
+    if (group && group.needsArbitration) return { key: 'arbitrate', tone: 'block', label: 'À arbitrer' };
     if (group && group.validated) return { key: 'validated', tone: 'positive', label: 'Validé' };
     if (group && group.attention) return { key: 'attention', tone: 'attention', label: 'Point d’attention' };
-    if (group && group.needsArbitration) return { key: 'arbitrate', tone: 'block', label: 'À arbitrer' };
     const status = String((group && group.status) || '').toUpperCase();
     if (status === 'ANNULE') return { key: 'cancelled', tone: 'inactive', label: 'Annulé' };
     return { key: 'planned', tone: 'info', label: 'Planifié' };
@@ -3230,7 +3229,7 @@
       ['Commandant', 'Quartier-maître', 'Chef OP', 'Chef logistique', 'Chef formation', 'Of communication', 'Chef site DPS', 'Chef DAP'],
       ['Of auto', 'Chef PR', 'Chef FOBA', 'Chef FOCA', 'Chef FOSPEC', 'Réf. Sanitaire', 'Resp. VPC'],
       ['Chef section DAP', 'Chef section DPS'],
-      ['Chef site JSP', 'Resp. formation JSP']
+      ['Chef JSP', 'Chef site JSP', 'Resp. formation JSP']
     ];
   }
 
@@ -3250,13 +3249,14 @@
       'c op': 'Chef OP',
       qm: 'Quartier-maître',
       'c pr': 'Chef PR',
+      'c jsp': 'Chef JSP',
+      'c site jsp': 'Chef site JSP',
       'of auto': 'Of auto',
       'resp for jsp': 'Resp. formation JSP'
     };
     if (direct[key]) return direct[key];
     const domain = String((context && context.domain) || '').trim().toUpperCase();
     if ((key === 'c site' || key === 'chef site') && domain === 'DPS') return 'Chef site DPS';
-    if (key === 'c jsp' && domain === 'JSP') return 'Chef site JSP';
     if (key === 'c sct' && domain === 'DAP') return 'Chef section DAP';
     if (key === 'c sct' && domain === 'DPS') return 'Chef section DPS';
     const canonical = qvResponsableGroups().flat().find((label) => qvResponsableKey(label) === key);
@@ -3319,6 +3319,8 @@
   }
 
   function qvProgrammeFunctionalDomain(row, historicalReference) {
+    const prepared = String(row && row.programmeDomain || '').toUpperCase();
+    if (/^F[0-8]$/.test(prepared)) return prepared;
     const direct = String(row && row.domain || '').toUpperCase();
     if (/^F[0-8]$/.test(direct)) return direct;
     const historical = String(historicalReference && historicalReference.domainF7 || '').toUpperCase();
@@ -3350,7 +3352,7 @@
 
   function qvProgrammeDomainMatches(row, value) {
     if (!value || value === 'tous') return true;
-    return String(row && row.domain || '') === value;
+    return String(row && (row.programmeDomain || row.domain) || '') === value;
   }
 
   function qvIsJspActivity(row) {

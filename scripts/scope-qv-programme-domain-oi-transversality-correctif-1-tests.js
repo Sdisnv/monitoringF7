@@ -105,7 +105,7 @@ async function main() {
     assert.ok(!html.includes('<option value="Gouvernance"'));
     assert.ok(html.includes('F0 Gouvernance'));
     assert.ok(html.includes('F1 Personnel'));
-    assert.ok(html.includes('F4 Matériel'));
+    assert.ok(html.includes('F4 Logistique'));
     assert.ok(html.includes('F8 Finances'));
     assert.ok(html.includes('<option class="qv-oi-parent" value="DPS"'));
     assert.ok(html.includes('<option class="qv-oi-child" value="DPS:G1"'));

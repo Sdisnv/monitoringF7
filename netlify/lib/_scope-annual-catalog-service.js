@@ -7,6 +7,7 @@ const annualCatalogCore = require('./_scope-annual-catalog');
 const { prepareAnnualRequirementReady,generateAnnualProgram,projectToQuoVadis,validateThemeAssignments } = annualCatalogCore;
 const catalogImport = require('./_scope-annual-catalog-import');
 const functionalCatalog = require('./_scope-functional-catalog');
+const annualReport = require('./_scope-annual-report-rule');
 const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
 
 const INITIAL_ACTIVITY_CODES = Object.freeze([
@@ -14,6 +15,9 @@ const INITIAL_ACTIVITY_CODES = Object.freeze([
   'DAP-EXERCICE','JSP-EXERCICE','PR-EXERCICE-PAPR','PR-PISTE-GAZ','PR-TEST-PHYSIQUE'
 ]);
 const DOMAIN_ORDER = Object.freeze(['DPS','DAP','JSP','FOBA','FOCO','FOCA','FOSPEC','AUTO','PR']);
+const PLANNING_MODES = Object.freeze(['AUTOMATIC','ANNUAL_DATE','ARBITRATION','NON_RENEWED']);
+const BUSINESS_DOMAINS = Object.freeze(['F0','F1','F2','F3','F4','F5','F6','F7','F8']);
+const WEEKDAYS = Object.freeze(['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY']);
 function domainRank(code){ const index = DOMAIN_ORDER.indexOf(text(code).toUpperCase()); return index < 0 ? DOMAIN_ORDER.length : index; }
 
 function text(value){ return String(value == null ? '' : value).trim(); }
@@ -55,6 +59,36 @@ function strictTime(value){
 }
 
 function upperList(value){ return [...new Set((Array.isArray(value) ? value : []).map((item) => text(item).toUpperCase()).filter(Boolean))]; }
+function optionalTime(value,allowMidnightEnd = false){
+  if(value == null || value === '') return null;
+  const candidate = text(value);
+  if(allowMidnightEnd && candidate === '24:00') return candidate;
+  if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(candidate)) throw new HttpError(422,'activite_horaire_invalide','L’horaire doit respecter HH:MM.');
+  return candidate;
+}
+function canonicalRule(body = {},previous = {}){
+  const value = (key) => Object.prototype.hasOwnProperty.call(body,key) ? body[key] : previous[key];
+  const planningMode = text(value('planningMode')).toUpperCase() || null;
+  const businessDomain = text(value('businessDomain')).toUpperCase() || null;
+  const priorityKind = text(value('priorityKind')).toUpperCase() || null;
+  const preferredWeekdays = upperList(value('preferredWeekdays'));
+  const allowedWeekdays = upperList(value('allowedWeekdays'));
+  const planningMonths = upperList(value('planningMonths'));
+  const usualStart = optionalTime(value('usualStart'));
+  const usualEnd = optionalTime(value('usualEnd'));
+  const blockStart = optionalTime(value('blockStart'));
+  const blockEnd = optionalTime(value('blockEnd'),true);
+  if(planningMode && !PLANNING_MODES.includes(planningMode)) throw new HttpError(422,'activite_mode_planification_invalide','Le mode de planification est invalide.');
+  if(businessDomain && !BUSINESS_DOMAINS.includes(businessDomain)) throw new HttpError(422,'activite_domaine_metier_invalide','Le domaine métier est invalide.');
+  if(priorityKind && !['NORMAL','ABSOLUTE'].includes(priorityKind)) throw new HttpError(422,'activite_priorite_invalide','La priorité est invalide.');
+  if([...preferredWeekdays,...allowedWeekdays].some((day) => !WEEKDAYS.includes(day))) throw new HttpError(422,'activite_jour_invalide','Le jour de planification est invalide.');
+  if(planningMonths.some((month) => !/^(?:[1-9]|1[0-2])$/.test(month))) throw new HttpError(422,'activite_periode_invalide','La période de planification est invalide.');
+  if(usualStart && usualEnd && usualStart >= usualEnd) throw new HttpError(422,'activite_horaire_invalide','L’horaire usuel doit avoir une fin postérieure au début.');
+  if(Boolean(blockStart) !== Boolean(blockEnd) || blockStart && blockEnd !== '24:00' && blockStart >= blockEnd){
+    throw new HttpError(422,'activite_blocage_invalide','La plage de blocage doit être complète et ordonnée.');
+  }
+  return { businessDomain,planningMode,priorityKind,preferredWeekdays,allowedWeekdays,planningMonths,usualStart,usualEnd,blockStart,blockEnd };
+}
 function groupExerciseOccurrences(activities = []){
   const groups = new Map();
   for(const row of activities){
@@ -121,10 +155,18 @@ function normalizeActivityInput(body = {},defaults = {}){
     defaultSites:body.defaultSites ?? defaults.defaultSites ?? [],ruleMode:body.ruleMode ?? defaults.ruleMode ?? 'GENERAL',customRule:body.customRule ?? defaults.customRule
   });
   if(!profile.valid) throw new HttpError(422,'activite_profil_invalide','La configuration permanente de l’activité est invalide.',{ errors:profile.errors });
+  const businessRule = canonicalRule(body.businessRule || {},defaults.businessRule || {});
+  const calendarRules = functionalCatalog.normalizeCalendarRules({
+    ...(defaults.calendarRules || {}),priorityWeekdays:businessRule.preferredWeekdays,allowedWeekdays:businessRule.allowedWeekdays
+  });
   return { label,description:text(body.description ?? defaults.description) || null,primaryDomain,domainCodes,activityType,periodicityType,
     durationMinutes,familyCode,publicCodes:upperList(body.publicCodes || defaults.publicCodes),statComCodes:upperList(body.statComCodes || defaults.statComCodes),
     qualificationCodes:upperList(body.qualificationCodes || defaults.qualificationCodes),themes:[...new Set((body.themes || defaults.themes || []).map(text).filter(Boolean))],
-    sessionTemplates:generatedSessions.length ? generatedSessions : [{ code:'S1',sequence:1,label,durationMinutes,mandatory:true }],...profile.value };
+    sessionTemplates:generatedSessions.length ? generatedSessions : [{ code:'S1',sequence:1,label,durationMinutes,mandatory:true }],
+    responsibleCode:text(body.responsibleCode ?? defaults.responsibleCode) || null,
+    usualLocationCode:text(body.usualLocationCode ?? defaults.usualLocationCode) || null,
+    usualRoomCode:text(body.usualRoomCode ?? defaults.usualRoomCode) || null,
+    businessRule,calendarRules,...profile.value };
 }
 
 async function insertRequiredReference(client,referenceType,code,sql,params){
@@ -139,6 +181,8 @@ async function insertRequiredReference(client,referenceType,code,sql,params){
 async function insertActivityVersion(client,definition,input,actor,metadata = {},options = {}){
   await requireCanonicalCodes(client,input.defaultSites,'SITE');
   await requireCanonicalCodes(client,input.publicCodes,'PUBLIC');
+  const profileMetadata = { ...(options.previousProfileMetadata || {}),...metadata,
+    canonicalRule:input.businessRule,calendarRules:input.calendarRules };
   const next = Number((one(await client.query(`select coalesce(max((regexp_match(version_code,'([0-9]+)$'))[1]::integer),0)+1 as value from scope_event_definition_versions where definition_id=$1`,[definition.definition_id])) || {}).value || 1);
   const versionCode = `C15-V${next}`;
   const contract = { definition:{ activityType:input.activityType },domainBindings:input.domainCodes.map((code) => ({ domainCode:code,bindingRole:code === input.primaryDomain ? 'PRIMARY' : 'SECONDARY' })),
@@ -160,6 +204,15 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
       `insert into scope_activity_session_templates(definition_version_id,code,sequence,label,mandatory,duration_minutes,public_continuity,location_continuity,metadata)
        values ($1,$2,$3,$4,$5,$6,'INHERIT','INHERIT',$7::jsonb)`,
       [versionId,session.code,session.sequence,session.label,session.mandatory,session.durationMinutes,JSON.stringify(metadata)]);
+    await client.query(`update scope_activity_session_templates child_new
+      set depends_on_session_template_id=parent_new.session_template_id,
+          min_offset_minutes=old_child.min_offset_minutes,max_offset_minutes=old_child.max_offset_minutes,
+          public_continuity=old_child.public_continuity,location_continuity=old_child.location_continuity
+      from scope_activity_session_templates old_child
+      join scope_activity_session_templates old_parent on old_parent.session_template_id=old_child.depends_on_session_template_id
+      join scope_activity_session_templates parent_new on parent_new.definition_version_id=$1 and parent_new.code=old_parent.code
+      where child_new.definition_version_id=$1 and child_new.code=old_child.code and old_child.definition_version_id=$2`,
+    [versionId,options.cloneFromVersionId]);
     await client.query(
       `insert into scope_activity_periodicities(definition_version_id,periodicity_type,occurrences_per_cycle,metadata)
        values ($1,$2,$3,$4::jsonb)`,[versionId,input.defaultOccurrences > 1 ? 'TIMES_PER_YEAR' : input.periodicityType,
@@ -197,10 +250,35 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
        from scope_activity_statistical_contributions c
        left join scope_activity_session_templates old_session on old_session.session_template_id=c.session_template_id
        left join scope_activity_session_templates new_session on new_session.definition_version_id=$1 and new_session.code=old_session.code
-       where c.definition_version_id=$2`,[versionId,options.cloneFromVersionId,JSON.stringify(metadata)]);
+       where c.definition_version_id=$2 and ($4::boolean=false or c.statcom_code=any($5::text[]))`,
+      [versionId,options.cloneFromVersionId,JSON.stringify(metadata),Boolean(options.replaceStatCom),input.statComCodes]);
+    if(options.replaceStatCom) for(const code of input.statComCodes){
+      const reference = one(await client.query(`select code from scope_statcom_referentiel where code=$1 and active=true`,[code]));
+      if(!reference) throw new HttpError(422,'reference_canonique_introuvable',`Stat.Com ${code} introuvable ou inactif.`);
+      await client.query(`insert into scope_activity_statistical_contributions(definition_version_id,statcom_code,mode,aggregation_rule,metadata)
+        select $1,$2,'FULL_DURATION','PER_PARTICIPANT',$3::jsonb
+        where not exists (select 1 from scope_activity_statistical_contributions where definition_version_id=$1 and statcom_code=$2)`,
+      [versionId,code,JSON.stringify(metadata)]);
+    }
+    if(options.replaceResponsible){
+      await client.query(`delete from scope_activity_responsible_requirements where definition_version_id=$1`,[versionId]);
+      if(input.responsibleCode) await insertRequiredReference(client,'RESPONSABLE',input.responsibleCode,
+        `insert into scope_activity_responsible_requirements(definition_version_id,responsable_fonction_code,metadata)
+         select $1,code,$3::jsonb from scope_responsable_fonctions where code=$2 and actif=true`,[versionId,input.responsibleCode,JSON.stringify(metadata)]);
+    }
+    if(options.replaceLocation){
+      await client.query(`delete from scope_activity_location_requirements where definition_version_id=$1`,[versionId]);
+      if(input.usualLocationCode) await insertRequiredReference(client,'LIEU',input.usualLocationCode,
+        `insert into scope_activity_location_requirements(definition_version_id,requirement_type,lieu_id,metadata)
+         select $1,'EXACT_LOCATION',lieu_id,$3::jsonb from scope_lieux where code=$2 and actif=true`,[versionId,input.usualLocationCode,JSON.stringify(metadata)]);
+      if(input.usualRoomCode) await insertRequiredReference(client,'SALLE',input.usualRoomCode,
+        `insert into scope_activity_location_requirements(definition_version_id,requirement_type,salle_id,alternative_group,metadata)
+         select $1,'EXACT_ROOM',salle_id,'ROOM',$3::jsonb from scope_salles_theorie where code=$2 and actif=true`,[versionId,input.usualRoomCode,JSON.stringify(metadata)]);
+    }
     if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
     await client.query(`insert into scope_activity_functional_profiles(definition_version_id,recurrence_kind,default_occurrences,default_sites,rule_mode,custom_rule,metadata)
-      values ($1,$2,$3,$4::text[],$5,$6::jsonb,$7::jsonb)`,[versionId,input.recurrenceKind,input.defaultOccurrences,input.defaultSites,input.ruleMode,JSON.stringify(input.customRule),JSON.stringify(metadata)]);
+      values ($1,$2,$3,$4::text[],$5,$6::jsonb,$7::jsonb)`,
+    [versionId,input.recurrenceKind,input.defaultOccurrences,input.defaultSites,input.ruleMode,JSON.stringify(input.customRule),JSON.stringify(profileMetadata)]);
     return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
   }
   for(const code of input.domainCodes) await client.query(
@@ -225,7 +303,8 @@ async function insertActivityVersion(client,definition,input,actor,metadata = {}
      select $1,code,'FULL_DURATION','PER_PARTICIPANT',$3::jsonb from scope_statcom_referentiel where code=$2 and active=true
      on conflict on constraint scope_activity_statistical_contributions_uk do nothing`,[versionId,code,JSON.stringify(metadata)]);
   await client.query(`insert into scope_activity_functional_profiles(definition_version_id,recurrence_kind,default_occurrences,default_sites,rule_mode,custom_rule,metadata)
-    values ($1,$2,$3,$4::text[],$5,$6::jsonb,$7::jsonb)`,[versionId,input.recurrenceKind,input.defaultOccurrences,input.defaultSites,input.ruleMode,JSON.stringify(input.customRule),JSON.stringify(metadata)]);
+    values ($1,$2,$3,$4::text[],$5,$6::jsonb,$7::jsonb)`,
+  [versionId,input.recurrenceKind,input.defaultOccurrences,input.defaultSites,input.ruleMode,JSON.stringify(input.customRule),JSON.stringify(profileMetadata)]);
   if(!options.deferActivation) await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[versionId]);
   return { definitionVersionId:versionId,versionCode,fingerprint:versionFingerprint };
 }
@@ -352,17 +431,23 @@ function publicRow(row){
 }
 
 async function loadCatalogReferences(database){
-  const [publicResult,siteResult] = await Promise.all([
+  const [publicResult,siteResult,statComResult,responsibleResult,locationResult,roomResult] = await Promise.all([
     database.query(`select p.code,p.label,p.owner_code from scope_public_definitions p
       where p.status='ACTIVE' and exists (select 1 from scope_public_rule_versions v where v.public_definition_id=p.public_definition_id and v.status='ACTIVE')
       order by p.owner_code,p.label,p.code`),
-    database.query(`select code,nom_court,localite,oi_code from scope_lieux where actif=true and nullif(btrim(oi_code),'') is not null order by code`)
+    database.query(`select code,nom_court,localite,oi_code from scope_lieux where actif=true and nullif(btrim(oi_code),'') is not null order by code`),
+    database.query(`select code,label,domain from scope_statcom_referentiel where active=true order by code`),
+    database.query(`select code,libelle from scope_responsable_fonctions where actif=true order by sort_order,libelle`),
+    database.query(`select code,nom_court as label from scope_lieux where actif=true order by nom_court,code`),
+    database.query(`select code,libelle as label from scope_salles_theorie where actif=true order by libelle,code`)
   ]);
   const siteOrder = ['G1','C1','B1','B2','Y1','Y2','Y3','Y4'];
   const sites = rows(siteResult).filter((row) => siteOrder.includes(text(row.oi_code).toUpperCase()))
     .sort((a,b) => siteOrder.indexOf(text(a.oi_code).toUpperCase()) - siteOrder.indexOf(text(b.oi_code).toUpperCase()))
     .map((row) => ({ code:text(row.oi_code).toUpperCase(),locationCode:row.code,label:[row.nom_court,row.localite].filter(Boolean).join(' – ') }));
-  return { publics:rows(publicResult).map((row) => ({ code:row.code,label:row.label,domain:row.owner_code })),sites };
+  return { publics:rows(publicResult).map((row) => ({ code:row.code,label:row.label,domain:row.owner_code })),sites,
+    statCom:rows(statComResult),responsibles:rows(responsibleResult).map((row) => ({ code:row.code,label:row.libelle })),
+    locations:rows(locationResult),rooms:rows(roomResult) };
 }
 
 async function requireCanonicalCodes(database,codes,kind){
@@ -456,9 +541,13 @@ async function loadContext(database,options = {}){
     `select r.*,d.code as role_code,d.label as role_label,c.code as competence_code from scope_activity_role_requirements r join scope_event_role_definitions d on d.event_role_definition_id=r.role_definition_id left join scope_competence_definitions c on c.competence_id=r.qualification_competence_id where r.definition_version_id=$1 order by d.code`
   );
   const locationRequirements = await query(
-    `select r.*,c.code as location_category_code,c.label as location_category_label from scope_activity_location_requirements r left join scope_location_categories c on c.location_category_id=r.location_category_id where r.definition_version_id=$1 order by r.alternative_group,r.requirement_type`
+    `select r.*,c.code as location_category_code,c.label as location_category_label,l.code as lieu_code,s.code as salle_code
+       from scope_activity_location_requirements r left join scope_location_categories c on c.location_category_id=r.location_category_id
+       left join scope_lieux l on l.lieu_id=r.lieu_id left join scope_salles_theorie s on s.salle_id=r.salle_id
+      where r.definition_version_id=$1 order by r.alternative_group,r.requirement_type`
   );
-  const responsibleRequirements = await query(`select * from scope_activity_responsible_requirements where definition_version_id=$1 order by created_at`);
+  const responsibleRequirements = await query(`select r.*,f.libelle as responsable_fonction_label from scope_activity_responsible_requirements r
+    left join scope_responsable_fonctions f on f.code=r.responsable_fonction_code where r.definition_version_id=$1 order by r.created_at`);
   const planningConstraints = await query(`select planning_constraint_id,session_template_id,code,constraint_type,severity,config,metadata from scope_activity_planning_constraints where definition_version_id=$1 order by code`);
   const statisticalContributions = await query(`select * from scope_activity_statistical_contributions where definition_version_id=$1 order by statcom_code`);
   const activityThemeBindings = await query(
@@ -520,6 +609,8 @@ async function loadContext(database,options = {}){
 
 function serializeContext(context,readiness,readyTransition,references){
   return { readiness,readyTransition,activity: { ...context.definition,version: context.version },annualRequirement: context.requirement,
+    approvedRule:context.definition.code === annualReport.DEFINITION_CODE && !context.functionalProfile
+      ? { ...annualReport.APPROVED_RULE,recurrenceKind:'RECURRENT',publicCode:'SDIS-TOUS',statCom:annualReport.STAT_COM } : null,
     references:references || { publics:[],sites:[] },
     configuration: { domains: context.domainBindings,sessions: context.sessionTemplates,periodicity: context.periodicity,publics: context.publicBindings,
       pinnedPublics: context.requirement && context.requirement.snapshot && context.requirement.snapshot.publicBindings || [],
@@ -590,19 +681,24 @@ function createScopeAnnualCatalogService(options = {}){
       const domain = text(filters.domain).toUpperCase();
       const site = text(filters.site).toUpperCase();
       const status = text(filters.status).toUpperCase();
+      const qualification = text(filters.qualification).toUpperCase();
       const mappedActivities = rows(result).filter((row) => !query || `${row.code} ${row.label}`.toLocaleLowerCase('fr').includes(query))
         .filter((row) => !domain || domain === 'TOUS' || row.domain === domain)
         .filter((row) => !site || site === 'TOUS' || (row.site_codes && row.site_codes.length ? row.site_codes : row.default_sites || []).map((value) => text(value).toUpperCase()).includes(site))
         .filter((row) => !status || status === 'TOUS' || (row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR') === status)
+        .filter((row) => !qualification || qualification === 'TOUS' || (qualification === 'QUALIFIED' ? Boolean(row.recurrence_kind) : !row.recurrence_kind))
         .sort((a,b) => domainRank(a.domain) - domainRank(b.domain) || a.label.localeCompare(b.label,'fr'))
-        .map((row) => ({ code: row.code,label: row.label,...(year === 2027 ? canonicalCatalog2027.get(row.code) || {} : {}),domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,archived: row.status === 'ARCHIVE',
+        .map((row) => ({ code: row.code,label: row.label,...(year === 2027 ? canonicalCatalog2027.get(row.code) || {} : {}),
+          ...(row.code === annualReport.DEFINITION_CODE && !row.recurrence_kind ? { canonicalPublics:['Tout le SDIS'] } : {}),
+          domain: row.domain,familyCode: row.family_code,activityType: row.activity_type,archived: row.status === 'ARCHIVE',
           definitionVersionId: row.definition_version_id,versionCode: row.version_code,annualRequirementId: row.annual_requirement_id || null,
           requiredOccurrences: row.required_occurrences || null,variantCode: row.variant_code || null,windowStart: dateForYear(row.window_start,year),windowEnd: dateForYear(row.window_end,year),
           status: row.status === 'ARCHIVE' ? 'ARCHIVE' : row.requirement_status || 'A_DEFINIR',occurrenceCount: row.occurrence_count,sessionCount: row.template_session_count,
           durationMinutes:row.total_duration_minutes || null,statComCodes:text(row.statcom_codes).split(',').map((value) => text(value)).filter(Boolean),
           generatedSessionCount: row.generated_session_count,publicCodes:text(row.public_codes).split(',').map((value) => text(value)).filter(Boolean),themedOccurrenceCount: row.themed_occurrence_count,
           unthemedOccurrenceCount: row.required_occurrences == null ? null : Math.max(0,row.required_occurrences - row.themed_occurrence_count),
-          preparedOccurrenceCount: row.prepared_occurrence_count,recurrenceKind:row.recurrence_kind || 'NON_RECURRENT',defaultOccurrences:row.default_occurrences || 1,
+          preparedOccurrenceCount: row.prepared_occurrence_count,recurrenceKind:row.recurrence_kind || null,defaultOccurrences:row.default_occurrences || 1,
+          qualified:Boolean(row.recurrence_kind),
           defaultSites:row.default_sites || [],programState:row.program_state || null,extraordinary:Boolean(row.extraordinary),siteCodes:row.site_codes || [] }));
       const activities = groupExerciseOccurrences(mappedActivities);
       return { readiness,year,activities,references:await loadCatalogReferences(database) };
@@ -729,6 +825,9 @@ function createScopeAnnualCatalogService(options = {}){
         const periodicity = one(await client.query(`select periodicity_type,occurrences_per_cycle from scope_activity_periodicities where definition_version_id=$1`,[current.definition_version_id]));
         const existingSessions = rows(await client.query(`select code,sequence,label,mandatory,duration_minutes from scope_activity_session_templates where definition_version_id=$1 order by sequence`,[current.definition_version_id]));
         const profile = one(await client.query(`select * from scope_activity_functional_profiles where definition_version_id=$1`,[current.definition_version_id]));
+        if(!profile && !['RECURRENT','NON_RECURRENT'].includes(text(body.recurrenceKind).toUpperCase())){
+          throw new HttpError(422,'activite_recurrence_a_qualifier','La récurrence de cette activité doit être qualifiée explicitement avant sa révision.');
+        }
         const publicRows = rows(await client.query(
           `select p.code from scope_activity_public_bindings b join scope_public_definitions p on p.public_definition_id=b.public_definition_id where b.definition_version_id=$1 order by p.code`,
           [current.definition_version_id]));
@@ -738,6 +837,12 @@ function createScopeAnnualCatalogService(options = {}){
         const statComRows = rows(await client.query(
           `select statcom_code as code from scope_activity_statistical_contributions where definition_version_id=$1 order by statcom_code`,
           [current.definition_version_id]));
+        const responsible = one(await client.query(`select responsable_fonction_code from scope_activity_responsible_requirements
+          where definition_version_id=$1 and responsable_fonction_code is not null order by created_at limit 1`,[current.definition_version_id]));
+        const location = one(await client.query(`select l.code from scope_activity_location_requirements r join scope_lieux l on l.lieu_id=r.lieu_id
+          where r.definition_version_id=$1 order by r.created_at limit 1`,[current.definition_version_id]));
+        const room = one(await client.query(`select s.code from scope_activity_location_requirements r join scope_salles_theorie s on s.salle_id=r.salle_id
+          where r.definition_version_id=$1 order by r.created_at limit 1`,[current.definition_version_id]));
         const themeRows = rows(await client.query(
           `select v.label from scope_activity_theme_bindings b join scope_theme_definitions d on d.theme_definition_id=b.theme_definition_id
              join scope_theme_versions v on v.theme_definition_id=d.theme_definition_id and v.status='ACTIVE'
@@ -747,9 +852,17 @@ function createScopeAnnualCatalogService(options = {}){
           sessionCount:existingSessions.length,
           periodicityType:periodicity && periodicity.periodicity_type,sessionTemplates:existingSessions,defaultOccurrences:profile && profile.default_occurrences || periodicity && periodicity.occurrences_per_cycle || 1,
           defaultSites:profile && profile.default_sites || [],recurrenceKind:profile && profile.recurrence_kind || 'RECURRENT',ruleMode:profile && profile.rule_mode || 'GENERAL',customRule:profile && profile.custom_rule,
+          businessRule:profile && profile.metadata && profile.metadata.canonicalRule || {},calendarRules:profile && profile.metadata && profile.metadata.calendarRules || {},
+          responsibleCode:responsible && responsible.responsable_fonction_code,usualLocationCode:location && location.code,usualRoomCode:room && room.code,
           publicCodes:publicRows.map((row) => row.code),qualificationCodes:qualificationRows.map((row) => row.code),
           statComCodes:statComRows.map((row) => row.code),themes:themeRows.map((row) => row.label) });
-        const version = await insertActivityVersion(client,current,input,actor,{ source:'C15_MANUAL_REVISION',supersedes:current.definition_version_id },{ deferActivation:true,cloneFromVersionId:current.definition_version_id });
+        const version = await insertActivityVersion(client,current,input,actor,{ source:'C15_MANUAL_REVISION',supersedes:current.definition_version_id },{
+          deferActivation:true,cloneFromVersionId:current.definition_version_id,
+          previousProfileMetadata:profile && profile.metadata,
+          replaceStatCom:Object.prototype.hasOwnProperty.call(body,'statComCodes'),
+          replaceResponsible:Object.prototype.hasOwnProperty.call(body,'responsibleCode'),
+          replaceLocation:Object.prototype.hasOwnProperty.call(body,'usualLocationCode') || Object.prototype.hasOwnProperty.call(body,'usualRoomCode')
+        });
         await client.query(`update scope_event_definition_versions set status='RETIRED',updated_at=now() where definition_version_id=$1 and status='ACTIVE'`,[current.definition_version_id]);
         await client.query(`update scope_event_definition_versions set status='ACTIVE',updated_at=now() where definition_version_id=$1 and status='DRAFT'`,[version.definitionVersionId]);
         await client.query(`update scope_event_definitions set label=$2,domain=$3,description=$4,family_code=$5,activity_type=$6,metadata=metadata || $7::jsonb,updated_at=now() where definition_id=$1`,
@@ -996,6 +1109,10 @@ function createScopeAnnualCatalogService(options = {}){
       return database.transaction(async (client) => {
         const context=await contextLoader(client,{ requirementId });
         if(!context || !context.requirement) throw new HttpError(404,'programmation_introuvable','Programmation annuelle introuvable.');
+        const planningMode=context.functionalProfile && context.functionalProfile.metadata &&
+          context.functionalProfile.metadata.canonicalRule && context.functionalProfile.metadata.canonicalRule.planningMode;
+        if(planningMode && planningMode !== 'AUTOMATIC') throw new HttpError(409,'planification_manuelle_requise',
+          'Cette activité ne peut pas recevoir une date automatique : date annuelle, arbitrage ou non-reconduction requis.');
         if(!context.occurrences.length || !context.sessions.length) throw new HttpError(409,'realisations_non_generees','Générez d’abord les réalisations et leurs séances.');
         const entry=context.programEntry || {};
         const existing=rows(await client.query(`select s.*,ps.sequence as session_sequence,d.label as activity_label,d.code as definition_code,r.year
@@ -1097,4 +1214,4 @@ function createScopeAnnualCatalogService(options = {}){
   };
 }
 
-module.exports = { INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,groupExerciseOccurrences,validateDraftInput,readyErrorMessage,readyTransitionMessage,toPublicReadyTransition,readinessForClient,inspectReadyTransition,createScopeAnnualCatalogService,loadContext };
+module.exports = { INITIAL_ACTIVITY_CODES,DOMAIN_ORDER,PLANNING_MODES,canonicalRule,groupExerciseOccurrences,validateDraftInput,readyErrorMessage,readyTransitionMessage,toPublicReadyTransition,readinessForClient,inspectReadyTransition,createScopeAnnualCatalogService,loadContext };

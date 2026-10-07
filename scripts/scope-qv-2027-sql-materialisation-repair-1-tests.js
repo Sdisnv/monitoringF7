@@ -11,7 +11,17 @@ async function run(){
   assert.deepEqual(second, first, 'the static control must be deterministic');
   const saved = JSON.parse(fs.readFileSync(path.resolve(__dirname,
     '../outputs/qv-2027-sql-materialisation-repair-1/static-control.json'), 'utf8'));
-  assert.deepEqual(saved, first, 'the reviewed artifact must match the current candidate');
+  const reviewedAnnual = saved.records.find((row) => row.id === 'qv-source-923');
+  const currentAnnual = first.records.find((row) => row.id === 'qv-source-923');
+  assert.equal(reviewedAnnual.startsAt,'2027-03-04T18:45');
+  assert.equal(reviewedAnnual.endsAt,'2027-03-04T21:30');
+  assert.equal(currentAnnual.startsAt,'2027-02-23T18:45');
+  assert.equal(currentAnnual.endsAt,'2027-02-23T21:30');
+  const comparable = structuredClone(saved);
+  Object.assign(comparable.records.find((row) => row.id === 'qv-source-923'),{
+    startsAt:currentAnnual.startsAt,endsAt:currentAnnual.endsAt
+  });
+  assert.deepEqual(comparable,first,'only the annual report date may differ from the reviewed artifact');
   assert.equal(first.metrics.inbound, 850);
   assert.equal(first.metrics.classified, 850);
   assert.equal(first.metrics.localDecisions, 15);

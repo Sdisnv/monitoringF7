@@ -27,6 +27,11 @@ function createFixture(file, options = {}) {
       if(normalized.startsWith('select') && normalized.includes('from scope_statcom_referentiel')) return {rows:(refs.statcoms || []).filter(row => !params.length || row.code === params[0])};
       if(normalized.startsWith('select') && normalized.includes('from scope_domaine_ois')) return {rows:refs.domainOis || ['DPS:G1','DPS:C1','DPS:B1','DPS:B2','DAP:Y1','DAP:Y2','DAP:Y3','DAP:Y4','JSP:G1','JSP:C1','JSP:B1'].map(value => {const [domaine_code,code] = value.split(':');return {domaine_code,code};})};
       if(normalized.startsWith('select') && normalized.includes('from scope_lieux')) return {rows:(refs.lieux || []).filter(row => !params.length || (normalized.includes('where oi_code=') ? row.oi_code === params[0] : row.lieu_id === params[0]))};
+      if(normalized.startsWith('insert into scope_lieux')){
+        const row = {lieu_id:`fixture-lieu-${refs.lieux.length + 1}`,code:`QV-LIEU-FIXTURE-${refs.lieux.length + 1}`,nom_court:params[0],actif:true,metadata:JSON.parse(params[1])};
+        refs.lieux.push(row);
+        return {rows:[row]};
+      }
       if(normalized.startsWith('select') && normalized.includes('from scope_salles_theorie')) return {rows:(refs.salles || []).filter(row => !params.length || row.salle_id === params[0]).map(row => ({...row,parent_code:((refs.salles || []).find(parent => parent.salle_id === row.parent_salle_id) || {}).code}))};
       if(normalized.startsWith('select') && normalized.includes('from scope_responsable_fonctions')) return {rows:(refs.responsables || []).filter(row => !params.length || row.code === params[0])};
       if(normalized.startsWith('select') && normalized.includes('from scope_quo_vadis_dps_organisation_versions')) return {rows:structuredClone(options.dpsOrganisation || [])};
@@ -89,11 +94,11 @@ function createFixture(file, options = {}) {
     },
     async transaction(fn) {
       const before = { preparations:structuredClone(preparations),programmes:structuredClone(programmes),
-        proposals:structuredClone(proposals),calendar:structuredClone(calendar) };
+        proposals:structuredClone(proposals),calendar:structuredClone(calendar),lieux:structuredClone(refs.lieux || []) };
       try { return await fn({query:database.query}); }
       catch(error){
         for(const [rows,saved] of [[preparations,before.preparations],[programmes,before.programmes],
-          [proposals,before.proposals],[calendar,before.calendar]]) rows.splice(0,rows.length,...saved);
+          [proposals,before.proposals],[calendar,before.calendar],[refs.lieux,before.lieux]]) rows.splice(0,rows.length,...saved);
         persist();
         throw error;
       }
