@@ -11724,7 +11724,7 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-lifecycle-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
 .qv-programme-lifecycle-actions .scope-btn{margin:0;min-height:38px;padding:7px 13px;white-space:nowrap}
 .qv-programme-lifecycle-actions .qv-programme-production-delete{border-color:#ff6969;background:transparent;color:#d00000!important}
-.qv-programme-workflow{padding:0;border:0}
+.qv-programme-summary .qv-programme-workflow{margin-top:14px;padding-top:12px;border-top:1px solid #d7dfe7}
 @media(max-width:1050px){.qv-programme-fiche-head{flex-direction:column}.qv-programme-head-actions{justify-content:flex-start}.qv-programme-preparation .qv-programme-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qv-programme-preparation .qv-programme-edit-half{grid-column:span 1}.qv-programme-lifecycle{flex-wrap:wrap}.qv-programme-lifecycle-actions{width:100%;justify-content:flex-start}}
 @media(max-width:650px){.qv-programme-info-grid,.qv-programme-preparation .qv-programme-edit-grid{grid-template-columns:1fr}.qv-programme-preparation .qv-programme-edit-half{grid-column:auto}.qv-programme-head-actions .scope-btn{white-space:normal}.qv-programme-reference{padding-right:15px}.qv-programme-reference-chevron{right:15px}.qv-programme-reference-body{padding-left:0;padding-top:8px}.qv-programme-reference-body>.scope-btn{position:static;margin-top:10px}.qv-programme-info-panel .qv-definition-list{grid-template-columns:minmax(96px,38%) minmax(0,1fr)}}
 .qv-programme-monthly .qv-agenda-nav-side:last-child{justify-self:end}

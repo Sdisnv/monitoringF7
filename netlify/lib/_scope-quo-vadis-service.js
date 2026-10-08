@@ -3154,6 +3154,10 @@ function createScopeQuoVadisService({ database = db } = {}){
       throw new HttpError(422,'programme_domaine_invalide','Le domaine doit provenir du référentiel canonique.');
     }
     const statCom = String(body.statCom ?? inherited.statCom ?? source.statCom ?? '').trim();
+    if(statCom === 'EMSEA' && (String(source.statCom || '').trim() !== 'EMSEA'
+      || String(source.activityLabel || source.label || '').trim() !== 'Séance État-major')){
+      throw new HttpError(422,'programme_statcom_invalide','EMSEA est réservé aux séances État-major.');
+    }
     const statcomResult = statCom ? await db.query(`select * from scope_statcom_referentiel where code=$1`,[statCom]) : {rows:[]};
     const retainedHistoricalCode = Boolean(body.validateBusiness !== true && existing && statCom && !statcomResult.rows[0]
       && statCom === String(existing.statcom_code || '').trim());
