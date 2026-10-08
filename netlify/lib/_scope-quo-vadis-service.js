@@ -3155,7 +3155,10 @@ function createScopeQuoVadisService({ database = db } = {}){
     }
     const statCom = String(body.statCom ?? inherited.statCom ?? source.statCom ?? '').trim();
     const statcomResult = statCom ? await db.query(`select * from scope_statcom_referentiel where code=$1`,[statCom]) : {rows:[]};
-    if(statCom && (!statcomResult.rows[0] || !isStatComValidForDate(statcomResult.rows[0],date || `${year}-01-01`))){
+    const retainedHistoricalCode = Boolean(body.validateBusiness !== true && existing && statCom && !statcomResult.rows[0]
+      && statCom === String(existing.statcom_code || '').trim());
+    if(statCom && !retainedHistoricalCode
+      && (!statcomResult.rows[0] || !isStatComValidForDate(statcomResult.rows[0],date || `${year}-01-01`))){
       throw new HttpError(422,'programme_statcom_invalide','Le Stat.Com doit provenir du référentiel canonique et être valide à cette date.');
     }
     const programmeLieuCatalogue = {
