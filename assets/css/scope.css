@@ -2658,6 +2658,11 @@ a.qv-mini-day.has-validated:not(.has-proposed):focus-visible span {
   padding: 7px 12px;
   vertical-align: middle;
 }
+.qv-arbitrer-references .qv-arbitrer-reference-id {
+  min-width: 140px;
+  max-width: 220px;
+  overflow-wrap: anywhere;
+}
 .qv-arbitrer-table .scope-table-sort-label {
   min-width: max-content;
   white-space: nowrap;

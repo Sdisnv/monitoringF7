@@ -4219,6 +4219,7 @@
         ois: [item.site],
         publics,
         statCom: QV_CONDUITE_STATCOM,
+        conduiteMinutesPerParticipant: QV_CONDUITE_MAX_MINUTES,
         conduiteEvidence: realigned
           ? { ...(existing.conduiteEvidence || {}), ...evidence, locationRealignedFrom: String(existing.location || ''), locationRule: 'MOA_CONDUITE_FOLLOWS_SOURCE_LOCATION' }
           : { ...(existing.conduiteEvidence || {}), ...evidence }
@@ -4238,6 +4239,7 @@
       family: 'Formation',
       ois: [item.site],
       publics,
+      conduiteMinutesPerParticipant: QV_CONDUITE_MAX_MINUTES,
       sessionIndex: 1,
       sessionCount: 1,
       startsAt,
@@ -5019,6 +5021,7 @@
           quarter: qvCalendarQuarter(date2026),
           location: row.location || '',
           statCom: row.statCom || '0164F7',
+          ois: [...(row.ois || [])],
           personnel: row.personnel || ''
         };
       });
@@ -5063,6 +5066,7 @@
         domain: row.domain || 'PR',
         family: row.family || 'Exercice',
         statCom: row.statCom || slot.statCom || '0164F7',
+        ois: !cloned && qvRotationProtected(row) ? row.ois : [...slot.ois],
         publics: [...QV_PR_ABC_PUBLICS],
         responsible: QV_PR_ABC_RESPONSABLE,
         responsableFonctionCode: QV_PR_ABC_RESPONSABLE,

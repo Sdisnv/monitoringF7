@@ -189,6 +189,7 @@ test('§3 QV-PRABC-003 : exactement 3 séances, T2 soir, T2 mercredi matin, T4',
 test('§3 PR-ABC : public PABC sans JSP, responsable Chef PR', () => {
   labelled('Exercice PR-ABC').forEach((row) => {
     assert.deepEqual(row.publics, ['PR:3']);
+    assert.deepEqual(row.ois, [], `${row.id} : aucun OI dans la source 2026`);
     assert.equal(row.publics.some((code) => code.startsWith('JSP')), false);
     assert.equal(row.responsible, 'C PR');
     assert.equal(row.domain, 'PR');
@@ -197,6 +198,13 @@ test('§3 PR-ABC : public PABC sans JSP, responsable Chef PR', () => {
   rows.filter((row) => /PR-?ABC/i.test(String(row.label || ''))).forEach((row) => {
     assert.equal((row.publics || []).some((code) => code.startsWith('JSP')), false, `${row.id}`);
   });
+});
+
+test('§3 PR-ABC : un OI fixé par décision humaine reste protégé', () => {
+  const source = canonical.rows.filter((row) => row.label === 'Exercice PR-ABC');
+  const protectedRow = { ...source[0], humanDecision: true, ois: ['G1'] };
+  const result = L.qvApplyPrAbcStructure([protectedRow, ...source.slice(1)], history.rows);
+  assert.deepEqual(result.rows.find((row) => row.id === protectedRow.id).ois, ['G1']);
 });
 
 // ---------------------------------------------------------------- §4 DAP

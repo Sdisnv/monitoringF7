@@ -23,7 +23,7 @@
         "B2": ["KICK-OFF", "VARIA", "FEU"]
       },
       "instructionCoverage": "ALL_ACTIVE_HALF_SECTIONS_AND_SECTIONS",
-      "conduitesPerSite": 2
+      "conduitesPerHalfSection": 2
     }
   ],
   "rules": [
@@ -96,7 +96,7 @@
       "family": "Instruction",
       "campaignScoped": true,
       "supersededBy": "QV-CONDUITE-001",
-      "summary": "Ancienne fabrication d'instructions pour deux conduites par demi-section, abandonnée par décision MOA."
+      "summary": "Ancienne fabrication d'instructions pour atteindre un quota de conduites, abandonnée par décision MOA."
     },
     {
       "id": "QV-DPS-001",

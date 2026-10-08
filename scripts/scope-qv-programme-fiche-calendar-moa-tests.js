@@ -14,6 +14,41 @@ const body = (row, extra = {}) => ({
   oiCodes:row.oiSelections || [],publicCodes:row.publics || [],...extra
 });
 
+test('PR-ABC reprend les OI 2026 sans effacer un événement publié ou une décision humaine', async () => {
+  const fixture = createFixture(null);
+  const id = 'QV26-EXERCICE-PR-ABC-75229C6D:O1:S1';
+  const initial = (await fixture.service.listProgramme(2027)).canonicalProgramme.rows.find((row) => row.id === id);
+  assert.deepEqual(initial.ois, []);
+  assert.deepEqual(L.qvProgrammeConfirmedOiCodes(initial), []);
+  const eventId = '00000000-0000-4000-8000-000000000001';
+  const originalQuery = fixture.database.query;
+  fixture.database.query = (sql, params) => /from scope_qv_publication_links l\s+join scope_evenements e/i.test(sql)
+    ? Promise.resolve({ rows: [{ publication_unit_id:id, evenement_id:eventId, oi_codes:['B2'],
+      libelle:'Exercice PR-ABC', date:'2027-04-20', heure_debut:'18:30', heure_fin:'21:30', statut:'PUBLIE', version:1 }] })
+    : originalQuery(sql, params);
+  const published = (await fixture.service.listProgramme(2027)).canonicalProgramme.rows.find((row) => row.id === id);
+  assert.equal(published.publishedEventId, eventId);
+  assert.deepEqual(published.ois, ['B2']);
+  fixture.preparations.push({ obligation_id:'local-prabc-human', programme_id:'local-qv-2027', source_type:'MANUAL',
+    source_ref:id, metadata:{ source:'QV_PROGRAMME_PREPARATION', humanDecision:true,
+      planningFields:{ oiCodes:['C1'] } } });
+  const decided = (await fixture.service.listProgramme(2027)).canonicalProgramme.rows.find((row) => row.id === id);
+  assert.equal(decided.publishedEventId, eventId);
+  assert.deepEqual(decided.ois, ['C1']);
+});
+
+test('PR-ABC reste enregistrable avec le public PABC et sans OI', async () => {
+  const fixture = createFixture(null);
+  const id = 'QV26-EXERCICE-PR-ABC-75229C6D:O1:S1';
+  const row = (await fixture.service.listProgramme(2027)).canonicalProgramme.rows.find((item) => item.id === id);
+  const saved = await fixture.service.updateProgrammePreparation(id, body(row, { oiCodes:[], publicCodes:['PR:3'] }));
+  assert.equal(saved.updated, true);
+  const reread = (await fixture.service.listProgramme(2027)).canonicalProgramme.rows.find((item) => item.id === id);
+  assert.deepEqual(reread.ois, []);
+  assert.deepEqual(reread.publics, ['PR:3']);
+  assert.equal(reread.humanDecision, true);
+});
+
 test('010JSP, G1/État-major, Chef JSP et domaine préparatoire persistent ensemble', async () => {
   const refs = references();
   refs.statcoms.find((row) => row.code === '010JSP').valid_from = new Date(2023,0,1);

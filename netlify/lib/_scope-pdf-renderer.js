@@ -1989,64 +1989,67 @@ class ScopePdfRenderer {
   renderQuoVadisProgramme(rows, exportMeta){
     const meta = exportMeta || {};
     const sourceRows = Array.isArray(rows) ? rows : [];
-    const headers = ['Date', 'Horaire', 'Domaine', 'OI', 'Public cible', 'Activité', 'Spécialisation · cursus', 'Stat.Com', 'Lieu', 'Salle théorie', 'Responsable', 'État'];
-    const widths = [50, 56, 44, 26, 50, 140, 88, 42, 80, 68, 76, 88];
-    const monthCounts = {};
-    sourceRows.forEach((row) => {
-      const key = row.monthKey || row.monthLabel || '';
-      monthCounts[key] = (monthCounts[key] || 0) + 1;
-    });
-    const items = [];
-    let currentMonth = null;
-    sourceRows.forEach((row) => {
-      const monthKey = row.monthKey || '';
-      if((monthKey || row.monthLabel) && monthKey !== currentMonth){
-        currentMonth = monthKey;
-        const count = monthCounts[monthKey] || monthCounts[row.monthLabel] || 0;
-        items.push({
-          type: 'month',
-          label: String(row.monthLabel || monthKey || 'DATE À PROPOSER').toUpperCase(),
-          countLabel: count <= 1 ? `${count} activité` : `${count} activités`
-        });
-      }
-      items.push({
-        type: 'row',
-        cells: [
-          String(row.date || ''),
-          String(row.horaire || ''),
-          String(row.domaine || ''),
-          String(row.oi || ''),
-          String(row.publicCible || ''),
-          String(row.activite || ''),
-          String(row.specCursus || ''),
-          String(row.statcom || ''),
-          String(row.lieu || ''),
-          String(row.salleTheorie || ''),
-          String(row.responsable || ''),
-          String(row.etat || '')
-        ],
-        highlight: row.calendarKind === 'is-holiday' ? '#dce3f7' : (row.calendarKind === 'is-vacation' ? '#eceaf6' : false)
-      });
-    });
-    if(!items.length){
-      items.push({ type: 'row', cells: ['Aucune activité à exporter.', '', '', '', '', '', '', '', '', '', '', ''], highlight: false });
-    }
     this.doc.y = HEADER_H + 12;
-    this.iconHeading('plain', 'QUO VADIS 2027', 13, { after: 1 });
-    this.para('Programme annuel préparatoire', { size: 9 });
-    this.para('Toutes les activités', { size: 10, bold: true });
+    this.iconHeading('plain', `QUO VADIS ${meta.year || 2027}`, 13, { after: 1 });
+    this.para(meta.mode === 'monthly' ? `Planning mensuel · ${meta.periodLabel || meta.monthKey}` : 'Planning annuel', { size: 10, bold: true });
     this.doc.y += 6;
     this.qvExportMeta([
       { label: 'Généré le', value: formatDisplayDateTime(this.meta.generatedAt || new Date().toISOString()) },
-      { label: 'Activités', value: String(sourceRows.length) },
-      { label: 'Période', value: meta.month || 'Tous' },
-      { label: 'Recherche', value: meta.search || 'Toutes' },
-      { label: 'Domaine', value: meta.domain || 'Tous' },
-      { label: 'OI', value: meta.oi || 'Tous' },
-      { label: 'État', value: meta.status || 'Tous' },
-      { label: 'Tri', value: meta.sort || 'Date — horaire — domaine — activité' }
+      { label: 'Séances', value: String(sourceRows.length) },
+      { label: 'Période', value: meta.periodLabel || meta.month || 'Toute l’année' },
+      { label: 'Année', value: String(meta.year || 2027) }
     ]);
+    this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7.5)
+      .text(`Filtres : ${meta.filterSummary || 'Aucun filtre'}`, MARGIN, this.doc.y, { width: this.pageW - 2 * MARGIN });
+    this.doc.y += 8;
+    if(meta.mode === 'monthly') return this.qvMonthlyRows(sourceRows);
+    const headers = ['Date', 'Horaire', 'Activité', 'Domaine', 'OI', 'Lieu', 'Salle', 'Responsable', 'État'];
+    const widths = [53, 53, 215, 53, 39, 105, 64, 92, 70];
+    const items = sourceRows.map((row) => ({ cells: [row.date, row.horaire, row.activite, row.domaine,
+      row.oi, row.lieu, row.salleTheorie, row.responsable, row.etat] }));
+    if(!items.length) items.push({ cells: ['Aucune séance à exporter.', '', '', '', '', '', '', '', ''] });
     this.qvProgrammeTable(headers, items, widths);
+  }
+
+  qvMonthlyRows(rows){
+    const doc = this.doc;
+    const width = this.pageW - 2 * MARGIN;
+    let lastDate = '';
+    if(!rows.length){
+      doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(9).text('Aucune séance pour cette sélection.');
+      return;
+    }
+    for(const row of rows){
+      const date = String(row.date || 'À positionner');
+      const title = String(row.activite || '—');
+      const details = [row.domaine, row.oi, row.lieu, row.salleTheorie, row.responsable].filter((value) => value && value !== '—').join(' · ');
+      doc.font('Helvetica-Bold').fontSize(9);
+      const titleH = doc.heightOfString(title, { width: width - 118 });
+      doc.font('Helvetica').fontSize(7.5);
+      const detailH = doc.heightOfString(details || '—', { width: width - 118 });
+      const rowH = Math.max(35, titleH + detailH + 12);
+      const dayH = date !== lastDate ? 22 : 0;
+      if(rowH > this.contentBottom - HEADER_H - 32) throw new Error('Une séance du planning mensuel dépasse une page A4.');
+      if(doc.y + dayH + rowH > this.contentBottom){
+        this.nextPage();
+        lastDate = '';
+      }
+      if(date !== lastDate){
+        lastDate = date;
+        const dayY = doc.y;
+        doc.rect(MARGIN, dayY, width, 17).fill(rgb('#f0f2f5'));
+        doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica-Bold').fontSize(9)
+          .text(date, MARGIN + 6, dayY + 4, { width: width - 12, lineBreak: false });
+        doc.y = dayY + 22;
+      }
+      const y = doc.y;
+      doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(8)
+        .text(String(row.horaire || 'À définir'), MARGIN + 4, y + 5, { width: 105 });
+      doc.font('Helvetica-Bold').fontSize(9).text(title, MARGIN + 118, y + 4, { width: width - 122 });
+      doc.font('Helvetica').fontSize(7.5).fillColor(rgb(INSTITUTION.muted))
+        .text(details || '—', MARGIN + 118, y + 6 + titleH, { width: width - 122 });
+      doc.y = y + rowH;
+    }
   }
 
   qvExportMeta(rows){
@@ -2066,24 +2069,14 @@ class ScopePdfRenderer {
 
   qvProgrammeTable(headers, items, widths){
     const width = this.pageW - 2 * MARGIN;
-    const raw = (widths && widths.length === headers.length) ? widths : [50, 56, 44, 26, 50, 140, 88, 42, 80, 68, 76, 88];
+    const raw = widths;
     const sum = raw.reduce((total, value) => total + value, 0) || 1;
     const cols = raw.map((value, index) => (index === raw.length - 1 ? 0 : Math.floor((width * value) / sum)));
     cols[cols.length - 1] = width - cols.reduce((total, value) => total + value, 0);
     const headerH = 28;
-    const monthH = 16;
-    const baseRowH = 15;
-    const rowFontSize = 7.4;
+    const baseRowH = 17;
+    const rowFontSize = 7.2;
     const headerFontSize = 6.8;
-    const wrap = [false, false, false, false, true, true, true, false, true, true, true, false];
-    const stateStyle = (label) => {
-      const key = String(label || '');
-      if(key === 'Validé') return { fill: '#e4f4ea', mark: '#2f9e5a', text: '#1f7a45' };
-      if(key === 'Point d’attention') return { fill: '#fff1d6', mark: '#e0a21a', text: '#9a6d0c' };
-      if(key === 'À arbitrer') return { fill: '#fdecee', mark: '#DE000A', text: '#DE000A' };
-      if(key === 'Annulé') return { fill: '#e6e8eb', mark: '#8b949e', text: '#6b7785' };
-      return { fill: '#eceff3', mark: '#4f84d6', text: '#4a5160' };
-    };
     const paintHeader = () => {
       const y = this.doc.y;
       this.doc.rect(MARGIN, y, width, headerH).fill(rgb('#f4f5f8'));
@@ -2099,62 +2092,27 @@ class ScopePdfRenderer {
     const measureRow = (cells) => {
       let h = baseRowH;
       cells.forEach((cell, i) => {
-        if(!wrap[i]) return;
         this.doc.font('Helvetica').fontSize(rowFontSize);
         const textH = this.doc.heightOfString(String(cell || ''), { width: cols[i] - 4 });
-        h = Math.max(h, Math.min(34, textH + 6));
+        h = Math.max(h, textH + 7);
       });
       return h;
     };
     paintHeader();
     let dataIndex = 0;
-    items.forEach((item, index) => {
-      if(item.type === 'month'){
-        const next = items[index + 1];
-        const nextH = next && next.type === 'row' ? measureRow(next.cells) : baseRowH;
-        if(this.doc.y + monthH + nextH > this.contentBottom){
-          this.nextPage();
-          paintHeader();
-        }
-        const y = this.doc.y;
-        this.doc.rect(MARGIN, y, width, monthH).fill(rgb('#5b6570'));
-        this.doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8)
-          .text(item.label, MARGIN + 5, y + 4, { width: width * 0.62, lineBreak: false });
-        this.doc.y = y;
-        this.doc.font('Helvetica').fontSize(7.5)
-          .text(item.countLabel || '', MARGIN + width * 0.62, y + 4, { width: width * 0.38 - 8, align: 'right', lineBreak: false });
-        this.doc.y = y + monthH;
-        return;
-      }
+    items.forEach((item) => {
       const rowH = measureRow(item.cells);
+      if(rowH > this.contentBottom - HEADER_H - headerH - 22) throw new Error('Une ligne du planning dépasse une page A4.');
       if(this.doc.y + rowH > this.contentBottom){
         this.nextPage();
         paintHeader();
       }
       const y = this.doc.y;
-      const style = stateStyle(item.cells[11]);
-      if(item.highlight) this.doc.rect(MARGIN, y, width, rowH).fill(rgb(item.highlight));
-      else if(dataIndex % 2 === 1) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
+      if(dataIndex % 2 === 1) this.doc.rect(MARGIN, y, width, rowH).fill(rgb('#f7f8fa'));
       let x = MARGIN;
       item.cells.forEach((cell, i) => {
-        if(i === 11){
-          const chipH = 12;
-          const box = typeof this.doc.roundedRect === 'function'
-            ? this.doc.roundedRect(x + 2, y + 2, cols[i] - 4, chipH, 2)
-            : this.doc.rect(x + 2, y + 2, cols[i] - 4, chipH);
-          box.fill(rgb(style.fill));
-          this.doc.rect(x + 5, y + 5, 6, 6).fill(rgb(style.mark));
-          this.doc.fillColor(rgb(style.text)).font('Helvetica').fontSize(rowFontSize)
-            .text(String(cell || ''), x + 14, y + 3, { width: cols[i] - 18, height: chipH, lineBreak: false });
-        } else {
-          this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(rowFontSize)
-            .text(String(cell || ''), x + 2, y + 3, {
-              width: cols[i] - 4,
-              height: rowH - 4,
-              ellipsis: !wrap[i],
-              lineBreak: Boolean(wrap[i])
-            });
-        }
+        this.doc.fillColor(rgb(INSTITUTION.ink)).font('Helvetica').fontSize(rowFontSize)
+          .text(String(cell || ''), x + 2, y + 3, { width: cols[i] - 4, lineBreak: true });
         this.doc.y = y;
         x += cols[i];
       });
@@ -2196,8 +2154,8 @@ function renderQuoVadisProgrammePdf(rows, exportMeta, meta){
   const renderer = new ScopePdfRenderer({
     kind: 'QUO_VADIS',
     title: 'QUO VADIS 2027',
-    subtitle: 'Programme annuel préparatoire',
-    landscape: true
+    subtitle: exportMeta && exportMeta.mode === 'monthly' ? 'Planning mensuel' : 'Programme annuel préparatoire',
+    landscape: !(exportMeta && exportMeta.mode === 'monthly')
   }, meta || {});
   return renderer.finalizeQuoVadisProgramme(rows, exportMeta);
 }

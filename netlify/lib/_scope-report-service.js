@@ -185,6 +185,8 @@ function sanitizeQuoVadisRows(rows){
   const source = Array.isArray(rows) ? rows : [];
   return source.map((row) => ({
     date: String(row && row.date || ''),
+    dateIso: String(row && row.dateIso || ''),
+    endDateIso: String(row && row.endDateIso || ''),
     monthKey: String(row && row.monthKey || ''),
     monthLabel: String(row && row.monthLabel || ''),
     horaire: String(row && row.horaire || ''),
@@ -210,6 +212,11 @@ function sanitizeQuoVadisExportMeta(meta){
     return text || fallback;
   };
   return {
+    mode: source.mode === 'monthly' ? 'monthly' : 'annual',
+    year: /^20\d{2}$/.test(String(source.year || '')) ? Number(source.year) : 2027,
+    monthKey: /^20\d{2}-(0[1-9]|1[0-2])$/.test(String(source.monthKey || '')) ? String(source.monthKey) : '',
+    periodLabel: clean(source.periodLabel, 'Toute l’année'),
+    filterSummary: clean(source.filterSummary, 'Aucun filtre'),
     search: clean(source.search, 'Toutes'),
     domain: clean(source.domain, 'Tous'),
     oi: clean(source.oi, 'Tous'),
@@ -226,6 +233,14 @@ async function generateQuoVadisProgrammeReport(repo, body, claims, options){
   const generatedAt = (options && options.generatedAt) || new Date().toISOString();
   const rows = sanitizeQuoVadisRows(body && body.rows);
   const exportMeta = sanitizeQuoVadisExportMeta(body && body.meta);
+  if(exportMeta.mode === 'monthly'){
+    if(!exportMeta.monthKey) throw new HttpError(400, 'invalid_month', 'Le mois à exporter est requis.');
+    const from = `${exportMeta.monthKey}-01`;
+    const to = new Date(Date.UTC(Number(exportMeta.monthKey.slice(0,4)), Number(exportMeta.monthKey.slice(5,7)), 0)).toISOString().slice(0,10);
+    if(rows.some((row) => !/^20\d{2}-\d{2}-\d{2}$/.test(row.dateIso)
+      || row.dateIso > to || (row.endDateIso || row.dateIso) < from))
+      throw new HttpError(400, 'month_mismatch', 'Le PDF mensuel ne peut contenir que le mois sélectionné.');
+  }
   const meta = {
     generatedAt,
     authorLabel: actorLabel(claims),
@@ -233,12 +248,14 @@ async function generateQuoVadisProgrammeReport(repo, body, claims, options){
   };
   const { buffer, pages } = await renderQuoVadisProgrammePdf(rows, exportMeta, meta);
   const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
-  const filename = `SCOPE_QUO_VADIS_2027_Programme.pdf`;
+  const filename = exportMeta.mode === 'monthly'
+    ? `SCOPE_QUO_VADIS_${exportMeta.monthKey}_Planning.pdf`
+    : `SCOPE_QUO_VADIS_${exportMeta.year}_Planning_annuel.pdf`;
   if(repo && typeof repo.appendJournal === 'function'){
     await repo.appendJournal({
       auteur_id: meta.authorId,
       entite: 'quo-vadis',
-      entite_id: 'programme-2027',
+      entite_id: `programme-${exportMeta.year}`,
       action: 'EXPORTER_QUO_VADIS_PDF',
       apres: {
         filename,

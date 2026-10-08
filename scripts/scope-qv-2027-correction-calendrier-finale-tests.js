@@ -84,7 +84,8 @@ async function main() {
     ['Formation groupée 1.1', 'Formation groupée 1.2', 'Formation groupée 1.3',
       'Formation groupée 1.4', 'Formation groupée 1.5', 'Formation groupée 1.6']);
   assert.equal(rows.find((row) => row.label === 'Souper annuel' && row.ois.includes('B2')).statCom, '070F1');
-  assert.equal(after.counts.oiAssociations, 1239);
+  // Les trois PR-ABC 2026 n'ont pas d'OI ; leurs G1 projetés ont été retirés.
+  assert.equal(after.counts.oiAssociations, 1236);
   assert.equal(rows.filter((row) => row.definitionId === decisions.excludedNonRecurring[0].definitionId).length, 0);
 
   const drives = rows.filter((row) => row.label === L.QV_CONDUITE_LABEL && row.statCom === '0152F7');

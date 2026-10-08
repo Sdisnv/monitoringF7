@@ -119,7 +119,7 @@ async function main() {
   });
   check('Multi-OI et identités physiques sans doublon', () => {
     assert.equal(extraction.counts.multiOiPhysical, 178);
-    assert.equal(extraction.counts.oiAssociations, 1239);
+    assert.equal(extraction.counts.oiAssociations, 1236);
     assert.equal(new Set(rows.map((row) => row.id)).size, rows.length);
     assert.equal(new Set(rows.map((row) => row.sessionId)).size, rows.length);
     assert.equal(extraction.detail.length, extraction.counts.oiAssociations

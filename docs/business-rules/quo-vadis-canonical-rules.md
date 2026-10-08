@@ -71,7 +71,7 @@ Implémentation : `qvInstructionSeasonBounds` pour les propositions historiques 
 `annualDpsInstructionVersions` définit par année d'effet les sections actives et l'ordre des thèmes. Pour les seules instructions de section et demi-section, la cardinalité est calculée sur ces sections actives. À partir de 2028, les profils horaires et la cadence proviennent directement des lignes 2026 ; 2027 n'est pas la source de l'année suivante. La projection conserve les écarts exacts entre séances d'un thème, y compris les années bissextiles. Le CTA existant attribue les publics sans remise à zéro annuelle.
 
 ### QV-DPS-COVERAGE-001 — Couverture complète de chaque thème d'instruction
-Pour chaque thème prévu sur un site, produire une instruction par demi-section active et une par section active. Une séance de section Nxx suit ses propres Nxxa et Nxxb ; elle peut s'entrelacer avec les autres demi-sections du même thème, conformément au rythme 2026 confirmé par la MOA. Le thème suivant ne commence qu'après la dernière séance du précédent sur ce site. Une réserve n'est jamais créée. Les quatre KICK-OFF explicites du 06.02.2027 et toute décision humaine sont préservés ; le générateur ajoute seulement les publics manquants. Cette cardinalité ne s'applique ni aux conduites (toujours deux par site), ni aux autres activités QUO VADIS.
+Pour chaque thème prévu sur un site, produire une instruction par demi-section active et une par section active. Une séance de section Nxx suit ses propres Nxxa et Nxxb ; elle peut s'entrelacer avec les autres demi-sections du même thème, conformément au rythme 2026 confirmé par la MOA. Le thème suivant ne commence qu'après la dernière séance du précédent sur ce site. Une réserve n'est jamais créée. Les quatre KICK-OFF explicites du 06.02.2027 et toute décision humaine sont préservés ; le générateur ajoute seulement les publics manquants. Cette cardinalité ne s'applique ni aux conduites (deux par demi-section active), ni aux autres activités QUO VADIS.
 
 ---
 
@@ -105,20 +105,20 @@ par le moteur (`qvPeriodicActivityDecision`) et l’activité reste au catalogue
 
 ## Conduite, formation continue
 
-### QV-CONDUITE-001 — 2 conduites annuelles par site DPS
-G1, C1, B1 et B2 : huit séances au total. La demi-section reste affichée dans le public de chaque conduite.
+### QV-CONDUITE-001 — 2 conduites annuelles par demi-section DPS active
+Chaque conduite est adossée à une instruction réelle de sa demi-section ; la demi-section reste affichée dans son public. La décision MOA du 08.10.2026 maintient les 56 conduites du candidat 2027, sans réduire la couverture à deux par site.
 
-### QV-CONDUITE-002 — Cible = sites opérationnels × 2
-Quatre sites × deux séances = **8**. Les 53 conduites 2026 sont un constat historique, pas un quota reconduit par demi-section.
+### QV-CONDUITE-002 — Cible = demi-sections opérationnelles actives × 2
+G1 : dix demi-sections × deux = 20 ; C1, B1 et B2 : six demi-sections × deux = 12 par site. Total DPS 2027 : **56**. Les 53 conduites constatées en 2026 sont la preuve historique, pas une obligation de recopier leurs dates.
 
 ### QV-CONDUITE-008 — Désactivée
-L'ancienne fabrication d'instructions pour atteindre 56 conduites est abandonnée par décision MOA. Aucune instruction n'est créée pour supporter une conduite.
+L'ancienne fabrication d'instructions pour atteindre un quota est abandonnée. Les 56 conduites 2027 sont adossées aux instructions réelles ; aucune instruction n'est créée pour supporter artificiellement une conduite.
 
 ### QV-CONDUITE-003 — Adossée à une Instr demi-sct réelle
 Début de la conduite = fin de la source. Même jour. Même OI. Même lieu opérationnel.
 
 ### QV-CONDUITE-004 — Durée maximale 1 heure
-`QV_CONDUITE_MAX_MINUTES = 60`. Stat.Com `0152F7`. Domaine AUTO.
+`QV_CONDUITE_MAX_MINUTES = 60`. La fiche porte 60 minutes de conduite pure par conducteur concerné, sans créer d'affectation individuelle avant la validation globale. Stat.Com `0152F7`. Domaine AUTO.
 
 ### QV-CONDUITE-005 — Public = `<demi-section source>, cond PL, cond VL`
 Ordre d’affichage obligatoire. Codes `N0xa`, `AUTO:1`, `AUTO:3`.
@@ -128,7 +128,7 @@ La demi-section est lue sur la source, pas recalculée indépendamment si la sou
 Les `Instr demi-sct - PIONNIER` sont exclues des sources.
 
 ### QV-CONDUITE-007 — Répartition annuelle déterministe
-Pour chaque site, sélectionner la première instruction demi-section admissible de chacune des deux fenêtres historiques 2026 : KICK-OFF puis VARIA à G1 ; KICK-OFF puis FEU à C1/B1/B2. Les deux séances restent espacées, avant PIONNIER à G1. Cet arbitrage algorithmique minimal n'invente pas de périodicité métier.
+Pour chaque demi-section active, sélectionner la première et la dernière instruction réelle admissible avant PIONNIER, sans créer de séance source. Conserver les repositionnements G1 décidés par la MOA ainsi que les conduites FEU B1/B2/C1 laissées en contrôle local ; ne pas les déplacer automatiquement. Cette sélection algorithmique n'invente pas de périodicité métier.
 
 Implémentation : `qvDeriveConduiteContinue`.
 
@@ -169,6 +169,8 @@ Conservée comme caractéristique de la 2ᵉ séance, démontrée par 2026 (10.0
 Preuve 2026 : 21.04 mardi 18:30–21:30 (T2), 10.06 mercredi 08:00–11:00 (T2), 06.10 mardi 18:30–21:30 (T4).
 Projection 2027 : 20.04, 09.06, 05.10. Une séance = une ligne, jamais deux.
 Public **PABC** (`PR:3`) uniquement : JSP n’est jamais public d’une activité PR-ABC.
+Les trois lignes 2026 (241, 391, 711) ne désignent aucun OI : la projection non protégée
+ne doit pas hériter de `G1` par défaut. Un OI fixé par décision humaine ou publication reste préservé.
 Responsable **Chef PR** (`C PR`), conformément à 2026 et au reste du domaine PR.
 Implémentation : `qvApplyPrAbcStructure`, `qvPrAbcSessionPlan`.
 
