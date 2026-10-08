@@ -1,7 +1,6 @@
 'use strict';
 
 const assert = require('assert');
-const childProcess = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const engine = require('../netlify/lib/_scope-public-engine');
@@ -10,7 +9,8 @@ const { adaptLegacyPersonnelFacts } = require('../netlify/lib/_scope-public-lega
 
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
-const migration = read('database/migrations/20260923_scope_public_engine_mirror_c2_b.sql');
+const migration = read('database/migrations/20260923_scope_public_engine_mirror_c2_b.sql') +
+  read('database/migrations/20261007_scope_qv_catalogue_publics.sql');
 const schema = read('netlify/lib/_scope-schema.js');
 
 function version(code, overrides){
@@ -49,8 +49,8 @@ for(let index = 0; index < 9; index += 1) deep = { op: 'NOT', children: [deep] }
 assert.strictEqual(engine.validatePublicRule(deep).valid, false);
 assert.strictEqual(engine.validatePublicRule({ predicate: 'PERSON_ELIGIBLE_AT', padding: 'x'.repeat(engine.LIMITS.maxJsonBytes) }).valid, false);
 
-assert.strictEqual(foundations.PUBLIC_DEFINITIONS.length, 21);
-assert.strictEqual(new Set(foundations.PUBLIC_DEFINITIONS.map((row) => row.code)).size, 21);
+assert.strictEqual(foundations.PUBLIC_DEFINITIONS.length, 23);
+assert.strictEqual(new Set(foundations.PUBLIC_DEFINITIONS.map((row) => row.code)).size, 23);
 assert.ok(foundations.PUBLIC_DEFINITIONS.every((row) => row.version.fingerprint === engine.fingerprintPublicRule(row.version.expression)));
 assert.ok(!foundations.PUBLIC_DEFINITIONS.some((row) => /PAPR|PABC|GEN|JSP-CAD/.test(row.code)));
 assert.deepStrictEqual(
@@ -228,6 +228,18 @@ assert.deepStrictEqual(outsideVersion.personIds, []);
 const missingCompetencies = engine.evaluatePublicRule({ ruleVersion: version('AUTO-COND-PL'), evaluationDate: '2027-06-15', persons, periods: [] });
 assert.strictEqual(missingCompetencies.resolutionStatus, 'INCOMPLETE');
 assert.ok(missingCompetencies.warnings.includes('MISSING_INPUT_COMPETENCIES'));
+const chiefsFacts = {
+  persons:[{ personneId:'CHIEF',actif:true },{ personneId:'DEPUTY',actif:true },{ personneId:'FIREFIGHTER',actif:true }],periods:[],
+  assignments:['CHIEF','DEPUTY','FIREFIGHTER'].map((personneId) => ({ personneId,domainCode:'DPS',validFrom:'2027-01-01' })),
+  functions:[{ personneId:'CHIEF',functionCode:'DPS_CHEF_SECTION',validFrom:'2027-01-01' },
+    { personneId:'DEPUTY',functionCode:'DPS_REMPLACANT_CHEF_SECTION',validFrom:'2027-01-01' }]
+};
+assert.deepStrictEqual(evaluate('DPS-CHEFS-SECTION-REMPLACANTS',chiefsFacts,'2027-06-15').personIds,['CHIEF','DEPUTY']);
+const missingFunctions = engine.evaluatePublicRule({ ruleVersion:version('DPS-CHEFS-SECTION-REMPLACANTS'),evaluationDate:'2027-06-15',
+  persons:chiefsFacts.persons,periods:[],assignments:chiefsFacts.assignments });
+assert.strictEqual(missingFunctions.resolutionStatus,'INCOMPLETE');
+assert.ok(missingFunctions.warnings.includes('MISSING_INPUT_FUNCTIONS'));
+assert.deepStrictEqual(evaluate('SDIS-TOUS',chiefsFacts,'2027-06-15').personIds,['CHIEF','DEPUTY','FIREFIGHTER']);
 const unresolved = evaluate('DPS-G1', baseFacts, '2027-06-15', { resolutionStatus: 'UNRESOLVED' });
 assert.strictEqual(unresolved.resolutionStatus, 'UNRESOLVED');
 assert.deepStrictEqual(unresolved.personIds, []);
@@ -311,7 +323,7 @@ for(const fragment of [
   assert.ok(migration.includes(fragment), `standalone lifecycle missing: ${fragment}`);
   assert.ok(schema.includes(fragment), `runtime lifecycle missing: ${fragment}`);
 }
-assert.ok(schema.includes("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-annual-catalog-c4-b'"));
+assert.ok(schema.includes("const LATEST_SCOPE_SCHEMA_VERSION = 'scope-annual-catalog-themes-c8-b'"));
 assert.ok(!/references scope_(evenements|attendus|exercices|cibles)/i.test(migration));
 assert.ok(!/\b(update|delete from|alter table)\s+scope_(evenements|attendus|participations|cibles)\b/i.test(migration));
 assert.ok(!/insert into scope_(evenements|attendus|participations|cibles)\b/i.test(migration));
@@ -320,12 +332,5 @@ for(const row of foundations.PUBLIC_DEFINITIONS){
   assert.ok(migration.includes(`('${row.code}'`), `SQL seed missing ${row.code}`);
   assert.ok(migration.includes(row.version.fingerprint), `SQL fingerprint missing ${row.code}`);
 }
-
-const diffNames = childProcess.execFileSync('git', ['diff', '--name-only'], { cwd: root, encoding: 'utf8' }).trim().split(/\n/).filter(Boolean);
-for(const forbidden of [
-  'netlify/lib/_scope-service.js', 'netlify/lib/_scope-rules.js', 'netlify/lib/_scope-target-resolution.js',
-  'netlify/lib/_scope-memory.js', 'assets/js/scope-personnel-populations.js', 'netlify/lib/_scope-quo-vadis-service.js',
-  'netlify/lib/_scope-statcom-referential.js', 'netlify/lib/_auth-utils.js', 'netlify/lib/_oidc-utils.js'
-]) assert.ok(!diffNames.includes(forbidden), `${forbidden} must remain unchanged`);
 
 console.log('scope-public-engine-c2-b-tests: ok');

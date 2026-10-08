@@ -36,10 +36,10 @@ function dom(html){
 const tests = [];
 const test = (name,fn) => tests.push({ name,fn });
 
-test('01 list renders exactly eight MOA columns',() => {
+test('01 list renders the validated programme-facing Catalogue columns',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogHtml(catalogPayload()));
   const headers = tree.find('thead')[0].children[0].children.map(tree.text);
-  assert.deepEqual(headers,['Domaine','Activité','Besoin 2027','Période','Contenus','État','QUO VADIS','Action']);
+  assert.deepEqual(headers,['Domaine','Activité','Stat.Com','Cadence','Réalisations / sessions','Période','Sites / OI','Public cible','Participation','État 2027','Action']);
 });
 test('02 list keeps business domain order and unknown domains last',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogHtml(catalogPayload()));
@@ -48,7 +48,7 @@ test('02 list keeps business domain order and unknown domains last',() => {
 });
 test('03 list hides technical identities and uses fiche action',() => {
   const { hooks } = createCatalogUiHarness(); const html = hooks.renderAnnualCatalogHtml(catalogPayload()); const text = visibleText(html);
-  assert.doesNotMatch(text,/DPS-EXERCICE|TECHNICAL-CODE|Sessions|Public/); assert.match(text,/Consulter la fiche ›/);
+  assert.doesNotMatch(text,/DPS-EXERCICE|TECHNICAL-CODE/); assert.match(text,/Public cible.*Consulter la fiche ›/);
 });
 test('04 detail has the three ordered desktop zones',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
@@ -58,11 +58,12 @@ test('04 detail has the three ordered desktop zones',() => {
 test('05 annual need retains operational form controls',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
   for(const id of ['annual-requirement-form','annual-required-occurrences','annual-window-start','annual-window-end','annual-priority','annual-ready']) assert.equal(tree.find(`#${id}`).length,1,id);
-  assert.match(tree.text(tree.find('.annual-need')[0]),/4 thèmes? définis|3 thèmes définis · 1 à préciser/);
+  assert.match(tree.text(tree.find('.annual-need')[0]),/Occurrences requises.*Préparer les créneaux/);
+  assert.match(tree.text(tree.find('.annual-themes')[0]),/Contenus de référence facultatifs/);
 });
 test('06 no annual requirement remains coherent and editable',() => {
   const { hooks } = createCatalogUiHarness(); const html = hooks.renderAnnualCatalogActivityHtml(activityPayload()); const tree = dom(html);
-  assert.equal(tree.find('#annual-required-occurrences').length,1); assert.match(tree.text(tree.find('.annual-need')[0]),/À définir/); assert.doesNotMatch(visibleText(html),/DEFAULT|0 occurrence à préciser/);
+  assert.equal(tree.find('#annual-required-occurrences').length,1); assert.match(tree.text(tree.find('.annual-need')[0]),/Enregistrer le brouillon/); assert.doesNotMatch(visibleText(html),/DEFAULT|0 occurrence à préciser/);
 });
 test('07 one-occurrence draft renders one occurrence row',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(activityPayload({ requirement:draftRequirement(),assignments:[{ occurrenceNumber:1,label:'FEU',themeVersionId:'theme-feu' }] })));
@@ -71,15 +72,15 @@ test('07 one-occurrence draft renders one occurrence row',() => {
 test('08 four-occurrence draft keeps canonical free and empty themes',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
   const rows = tree.find('.annual-theme-table')[0].children[1].children.map(tree.text);
-  assert.equal(rows.length,4); assert.match(rows[0],/FEU/); assert.match(rows[1],/PIONNIER.*ABC/); assert.match(rows[2],/À préciser/); assert.match(rows[3],/Manœuvre hydraulique.*thème libre/);
+  assert.equal(rows.length,4); assert.match(rows[0],/FEU/); assert.match(rows[1],/PIONNIER.*ABC/); assert.match(rows[2],/À préciser/); assert.match(rows[3],/Manœuvre hydraulique.*contenu libre/);
 });
 test('09 themes table exposes occurrence theme and action columns',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
-  assert.deepEqual(tree.find('.annual-theme-table')[0].children[0].children[0].children.map(tree.text),['Occurrence','Thème(s)','Action']);
+  assert.deepEqual(tree.find('.annual-theme-table')[0].children[0].children[0].children.map(tree.text),['Occurrence','Contenu(s)','Action']);
 });
 test('10 activity information excludes technical family',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
-  const text = tree.text(tree.find('.annual-activity-info')[0]); assert.match(text,/Domaine.*Type d’activité.*Périodicité.*Nombre de séances.*Public de référence.*Description/); assert.doesNotMatch(text,/FOCO|Famille/);
+  const text = tree.text(tree.find('.annual-activity-info')[0]); assert.match(text,/Domaine.*Type d’activité.*Récurrence.*Planification.*Nombre de séances.*Public de référence.*Description/); assert.doesNotMatch(text,/FOCO|Famille technique/);
 });
 test('11 requirements and Stat.Com are compact business rows',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
@@ -87,7 +88,7 @@ test('11 requirements and Stat.Com are compact business rows',() => {
 });
 test('12 public organisation uses only available values',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload()));
-  assert.match(tree.text(tree.find('.annual-organisation')[0]),/Sapeurs-pompiers \(DPS\).*Selon le scénario défini dans QUO VADIS.*Non précisé/);
+  assert.match(tree.text(tree.find('.annual-organisation')[0]),/Sapeurs-pompiers \(DPS\).*Lieux À qualifier.*Responsables À qualifier/);
 });
 test('13 technical details stay closed and carry internal identity',() => {
   const { hooks } = createCatalogUiHarness(); const tree = dom(hooks.renderAnnualCatalogActivityHtml(multiOccurrenceActivityPayload())); const details = tree.find('.annual-internal')[0];

@@ -46,6 +46,12 @@ function createImportCycleDatabase(){
       const definition = state.definitions.get(params[0]);
       return result(definition ? [definition] : []);
     }
+    if(/select code from scope_public_definitions where status='ACTIVE' and code=any/.test(query)){
+      return result((params[0] || []).map((code) => ({ code })));
+    }
+    if(/select distinct upper\(oi_code\) as code from scope_lieux/.test(query)){
+      return result((params[0] || []).map((code) => ({ code })));
+    }
     if(/^insert into scope_event_definitions/.test(query)){
       const definition = { definition_id:`definition-${++sequence}`,code:params[0] };
       state.definitions.set(definition.code,definition);
@@ -219,7 +225,8 @@ test('26 ne contient aucune écriture vers les structures opérationnelles',() =
 });
 test('27 modernise les contrôles sans modifier les primitives globales',() => {
   const css = read('assets/css/scope.css'); assert.match(css,/C15 — administration et import du Catalogue/);assert.match(css,/\.annual-button-primary/);
-  const block = css.slice(css.indexOf('/* C15')); assert.doesNotMatch(block,/gradient|border-radius:\s*(?:[1-9]\d|[4-9])px|box-shadow:(?!none)/);
+  const block = css.slice(css.indexOf('/* C15'),css.indexOf('/* C18 functional catalogue'));
+  assert.doesNotMatch(block,/gradient|border-radius:\s*(?:[1-9]\d|[4-9])px|box-shadow:(?!none)/);
 });
 test('28 couvre les largeurs 1500 1150 960 et 800 sans cartes mobiles',() => {
   const css = read('assets/css/scope.css'); for(const width of [1150,960,800]) assert(css.includes(`@media(max-width:${width}px)`),width);
@@ -258,6 +265,7 @@ test('32 crée une définition et active une version canonique',async () => {
 });
 test('32b crée les liaisons VPC canoniques et rejette une référence absente',async () => {
   const calls = []; const client = { async query(sql,params){ calls.push({ sql,params });
+    if(/select code from scope_public_definitions where status='ACTIVE' and code=any/.test(sql)) return { rows:params[0].map((code) => ({ code })) };
     if(/select definition_id from scope_event_definitions/.test(sql)) return { rows:[] };
     if(/insert into scope_event_definitions/.test(sql)) return { rows:[{ definition_id:'definition-vpc',code:'FOSPEC-FORMATION-VPC' }],rowCount:1 };
     if(/select coalesce\(max/.test(sql)) return { rows:[{ value:1 }] };
@@ -290,10 +298,12 @@ test('32b crée les liaisons VPC canoniques et rejette une référence absente',
 });
 test('33 versionne une modification et clone toute la configuration canonique',async () => {
   const calls = []; const client = { async query(sql){ calls.push(sql);
+    if(/insert into scope_activity_public_bindings/.test(sql)) return { rows:[],rowCount:1 };
     if(/from scope_event_definitions d/.test(sql)) return { rows:[{ definition_id:'definition-1',code:'DPS-TEST',label:'Avant',domain:'DPS',family_code:null,activity_type:'TRAINING',definition_version_id:'version-old',description:'Description' }] };
     if(/select domain_code,binding_role/.test(sql)) return { rows:[{ domain_code:'DPS',binding_role:'PRIMARY' },{ domain_code:'DAP',binding_role:'SECONDARY' }] };
     if(/select duration_minutes/.test(sql)) return { rows:[{ duration_minutes:120 }] };
     if(/select periodicity_type/.test(sql)) return { rows:[{ periodicity_type:'ANNUAL' }] };
+    if(/select code from scope_public_definitions where status='ACTIVE'/.test(sql)) return { rows:[{ code:'DPS-G1' }] };
     if(/join scope_public_definitions/.test(sql)) return { rows:[{ code:'DPS-G1' }] };
     if(/join scope_competence_definitions/.test(sql)) return { rows:[{ code:'COND_VL' }] };
     if(/select statcom_code as code/.test(sql)) return { rows:[{ code:'0120F7' }] };
@@ -304,7 +314,7 @@ test('33 versionne une modification et clone toute la configuration canonique',a
     return { rows:[] };
   } };
   const service = createScopeAnnualCatalogService({ database:{ transaction:async (fn) => fn(client),query:client.query },readinessInspector:async () => ({ ready:true,status:'SCHEMA_READY' }) });
-  const result = await service.updateActivity('DPS-TEST',{ label:'Après' },{ sub:'reviewer' });
+  const result = await service.updateActivity('DPS-TEST',{ label:'Après',recurrenceKind:'RECURRENT' },{ sub:'reviewer' });
   assert.equal(result.versioned,true); assert.equal(result.activity.versionCode,'C15-V2');
   assert(calls.some((sql) => /scope_activity_public_bindings/.test(sql) && /insert into/.test(sql)));
   assert(calls.some((sql) => /scope_activity_qualification_bindings/.test(sql) && /insert into/.test(sql)));

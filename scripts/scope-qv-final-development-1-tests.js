@@ -353,12 +353,11 @@ test('les parametres CTA sont consultables et traçables, sans second moteur ni 
 
 // ---------------------------------------------------------------- §14 Compteur « À arbitrer »
 
-test('le compteur a arbitrer compte exactement les obligations A_PLANIFIER et PROPOSE', () => {
-  assert.match(service, /aArbitrer: obligations\.filter\(\(row\) => \['A_PLANIFIER','PROPOSE'\]\.includes\(row\.statut\)\)\.length/);
-  const compte = (statuts) => statuts.filter((statut) => ['A_PLANIFIER', 'PROPOSE'].includes(statut)).length;
-  assert.equal(compte(['A_PLANIFIER', 'PROPOSE', 'PLANIFIE', 'VALIDE', 'ANNULE']), 2);
-  assert.equal(compte(['PLANIFIE', 'PLANIFIE', 'PLANIFIE']), 0);
-  assert.equal(compte([]), 0);
+test('le compteur a arbitrer exige une décision humaine explicite', () => {
+  assert.match(service, /aArbitrer: obligations\.filter\(\(row\) => row\.metadata\?\.needsArbitration === true\)\.length/);
+  assert.equal(L.qvNeedsArbitrationRow({status:'A_PLANIFIER'}),false);
+  assert.equal(L.qvNeedsArbitrationRow({status:'PROPOSE'}),false);
+  assert.equal(L.qvNeedsArbitrationRow({status:'PROPOSE',needsArbitration:true}),true);
 });
 
 // ---------------------------------------------------------------- Invariants globaux

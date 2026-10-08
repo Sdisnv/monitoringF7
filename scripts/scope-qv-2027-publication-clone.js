@@ -116,7 +116,12 @@ function assertSafePlan(plan, snapshot, dataset, expected){
       assert.equal(source.raw.conduiteEvidence?.locationRule,'MOA_CONDUITE_FOLLOWS_SOURCE_LOCATION');
     }
     if(decision.changedFields.some((field) => field === 'event.startsAt' || field === 'event.endsAt')){
-      assert.ok(decision.caseId.startsWith('CTA-PERM-'));
+      if(decision.caseId === 'qv-source-923'){
+        assert.equal(decision.target.activity.statComCode,'071F3');
+        assert.equal(decision.target.event.startDate,'2027-02-23');
+        assert.deepEqual(decision.changedFields.slice().sort(),
+          ['event.endDate','event.endsAt','event.startDate','event.startsAt','fingerprint']);
+      }else assert.ok(decision.caseId.startsWith('CTA-PERM-'));
     }
   }
   for(const id of ['qv-source-877','qv-source-890','qv-source-895','qv-source-896',
@@ -249,7 +254,7 @@ async function run({ execute = false } = {}){
     const { plan, snapshot } = await buildPlan(store,dataset);
     const expected = snapshot.length === 118
       ? { CREATE:7,UPDATE:34,UNCHANGED:84,BLOCKED:725,NOT_PUBLISHED:0 }
-      : { CREATE:0,UPDATE:0,UNCHANGED:125,BLOCKED:725,NOT_PUBLISHED:0 };
+      : { CREATE:0,UPDATE:1,UNCHANGED:124,BLOCKED:725,NOT_PUBLISHED:0 };
     assertSafePlan(plan,snapshot,dataset,expected);
     const context = { store,environment:'clone',allowCloneExecution:true,
       actor:{ id:'qv-2027-local-recipe',roles:['GESTIONNAIRE'] },

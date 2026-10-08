@@ -114,9 +114,9 @@ async function main() {
       && row.coverageEvidence.sourceLine2026 && !row.historicalProposal));
     assert.equal(rows.filter((row) => row.historicalProposal).length, 636);
   });
-  test('Programme et Agenda 2027 partagent 848 séances distinctes sur 850 lignes techniques', () => {
+  test('Programme et Agenda 2027 partagent 847 séances distinctes sur 850 lignes techniques', () => {
     assert.equal(rows.length, 850);
-    assert.equal(qv27.target.sessions, rows.filter((row) => row.cursusReconciliation?.status !== 'SUPERSEDED_BY_VALIDATED_MODULE').length);
+    assert.equal(qv27.target.sessions, rows.filter((row) => row.cursusReconciliation?.status !== 'SUPERSEDED_BY_VALIDATED_MODULE' && !row.jspDirectionReconciliation).length);
     assert.equal(rows.filter((row) => row.startsAt).length, 850);
     assert.equal(rows.filter((row) => !row.startsAt).length, 0);
   });

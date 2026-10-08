@@ -426,6 +426,7 @@
       applyAnnualCatalogImport(body) { return request('POST', '/annual-catalog/import/apply', body || {}); },
       createAnnualCatalogActivity(body) { return request('POST', '/annual-catalog/activities', body || {}); },
       updateAnnualCatalogActivity(code, body) { return request('PATCH', `/annual-catalog/activities/${encodeURIComponent(code)}`, body || {}); },
+      updateAnnualCatalogParticipation(code, body) { return request('PUT', `/annual-catalog/activities/${encodeURIComponent(code)}/participation`, body || {}); },
       archiveAnnualCatalogActivity(code) { return request('POST', `/annual-catalog/activities/${encodeURIComponent(code)}/archive`, {}); },
       restoreAnnualCatalogActivity(code) { return request('POST', `/annual-catalog/activities/${encodeURIComponent(code)}/restore`, {}); },
       deleteAnnualCatalogActivity(code) { return request('DELETE', `/annual-catalog/activities/${encodeURIComponent(code)}`); },

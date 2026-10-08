@@ -193,6 +193,12 @@ async function scopeHandler(event){
       return response(200, { ok:true,...(await annualCatalog.deleteUnusedActivity(params.code)) });
     }
     params = match(path, '/annual-catalog/activities/:code/archive');
+    // Participation is versioned independently of annual recurrence qualification.
+    const participationParams = match(path, '/annual-catalog/activities/:code/participation');
+    if(method === 'PUT' && participationParams){
+      if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
+      return response(200,{ ok:true,...(await annualCatalog.updateParticipationRule(participationParams.code,body,claims)) });
+    }
     if(method === 'POST' && params){
       if(!hasPermission(claims,'references:manage')) return response(403,{ ok:false,error:'forbidden' });
       return response(200, { ok:true,...(await annualCatalog.archiveActivity(params.code,claims)) });
