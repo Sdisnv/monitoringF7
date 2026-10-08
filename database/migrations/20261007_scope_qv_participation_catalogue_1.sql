@@ -22,6 +22,22 @@ create table if not exists scope_activity_participation_rules (
 create unique index if not exists scope_activity_participation_rules_active_uk
   on scope_activity_participation_rules(definition_id) where superseded_at is null;
 
+-- Catalogue configuration is backend-only, like its functional profiles and public bindings.
+-- RLS has no direct-user policy; the privileged backend role is the only non-owner grantee.
+alter table scope_activity_participation_rules enable row level security;
+revoke all on scope_activity_participation_rules from public;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on scope_activity_participation_rules from anon;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    revoke all on scope_activity_participation_rules from authenticated;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant select, insert, update, delete on scope_activity_participation_rules to service_role;
+  end if;
+end $$;
+
 -- MOA-confirmed PR 1-4 only. Each source definition is named explicitly;
 -- neither title similarity nor historical DPS markings qualify another activity.
 with confirmed(code, exercise, session_index) as (values
