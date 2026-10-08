@@ -7,6 +7,7 @@ const PDFDocument = require('pdfkit');
 const { INSTITUTION, CHART_TOKENS, hexToRgb, colorOf } = require('./_scope-chart-tokens');
 const { drawLineChart, drawBarChart, drawStackedBar, drawGroupedChart, drawDonutChart, chartHeight } = require('./_scope-pdf-charts');
 const { domaineLabel } = require('./_scope-report-data');
+const { vaudHolidays, vaudSchoolVacations } = require('./_scope-cta-rules');
 
 const LOGO_SCOPE = path.join(__dirname, '../../assets/img/logo-scope-blanc.png');
 const LOGO_SDIS = path.join(__dirname, '../../assets/img/LogoSDISblanc.png');
@@ -40,6 +41,49 @@ const PDF_SHIFT_08_CM = 22.68;
 const SIGNATURE_TEXT_LINE_COUNT = 3;
 const SIGNATURE_TEXT_TOP_GAP = TYPE.body * 1.2 * SIGNATURE_TEXT_LINE_COUNT;
 const SIGNATURE_IMAGE_RELATIVE_Y = 8;
+
+const QV_VACATION_LABELS = Object.freeze({
+  hiver: "Vacances d'hiver",
+  sport: 'Relâches',
+  printemps: 'Vacances de Pâques',
+  Ascension: "Pont de l'Ascension",
+  ete: "Vacances d'été",
+  automne: "Vacances d'automne"
+});
+const qvCalendarDate = (iso) => new Intl.DateTimeFormat('fr-CH', {
+  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+}).format(new Date(`${iso}T12:00:00Z`));
+const qvMonthTitle = (monthKey, count) => {
+  const month = new Intl.DateTimeFormat('fr-CH', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(`${monthKey}-01T12:00:00Z`)).toLocaleUpperCase('fr-CH');
+  return `${month} — ${count} ${count === 1 ? 'événement' : 'événements'}`;
+};
+
+function qvMonthCalendarLines(monthKey){
+  const year = Number(monthKey.slice(0, 4));
+  const monthEnd = new Date(Date.UTC(year, Number(monthKey.slice(5, 7)), 0)).toISOString().slice(0, 10);
+  const monthStart = `${monthKey}-01`;
+  const currentPeriods = vaudSchoolVacations(year);
+  const seen = new Set();
+  const periods = [...vaudSchoolVacations(year - 1), ...currentPeriods]
+    .filter((row) => row.jour <= monthEnd && row.metadata.dateFin >= monthStart)
+    .filter((row) => {
+      const key = `${row.jour}:${row.metadata.dateFin}`;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => a.jour.localeCompare(b.jour));
+  const holidays = vaudHolidays(year).filter((row) => row.date >= monthStart && row.date <= monthEnd);
+  const lines = [];
+  if(periods.length) lines.push(`Vacances scolaires : ${periods.map((row) => {
+    const kind = row.libelle.split(' - ').pop();
+    return `${QV_VACATION_LABELS[kind] || kind} (${qvCalendarDate(row.jour)} au ${qvCalendarDate(row.metadata.dateFin)})`;
+  }).join(' ; ')}`);
+  if(!currentPeriods.length) lines.push(`Calendrier scolaire vaudois ${year} non disponible dans le référentiel.`);
+  if(holidays.length) lines.push(`Jours fériés : ${holidays.map((row) => `${qvCalendarDate(row.date)} : ${row.label}`).join(' ; ')}`);
+  if(!lines.length) lines.push('Aucune vacance scolaire ni jour férié officiel ce mois.');
+  return lines;
+}
 const SIGNATURE_FUNCTION_RELATIVE_Y = 36;
 const SIGNATURE_FIT = Object.freeze([336, 96]);
 
@@ -2002,19 +2046,70 @@ class ScopePdfRenderer {
     this.doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(7.5)
       .text(`Filtres : ${meta.filterSummary || 'Aucun filtre'}`, MARGIN, this.doc.y, { width: this.pageW - 2 * MARGIN });
     this.doc.y += 8;
-    if(meta.mode === 'monthly') return this.qvMonthlyRows(sourceRows);
+    if(meta.mode === 'monthly') return this.qvMonthlyRows(sourceRows, meta.monthKey);
     const headers = ['Date', 'Horaire', 'Activité', 'Domaine', 'OI', 'Lieu', 'Salle', 'Responsable', 'État'];
     const widths = [53, 53, 215, 53, 39, 105, 64, 92, 70];
-    const items = sourceRows.map((row) => ({ cells: [row.date, row.horaire, row.activite, row.domaine,
-      row.oi, row.lieu, row.salleTheorie, row.responsable, row.etat] }));
+    const counts = new Map();
+    sourceRows.forEach((row) => {
+      const key = row.dateIso.slice(0, 7) || row.monthKey;
+      if(/^20\d{2}-(0[1-9]|1[0-2])$/.test(key)) counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    const items = [];
+    let lastMonth = '';
+    sourceRows.forEach((row) => {
+      const key = row.dateIso.slice(0, 7) || row.monthKey;
+      if(counts.has(key) && key !== lastMonth){
+        items.push({ type: 'month', monthKey: key, count: counts.get(key) });
+        lastMonth = key;
+      }
+      items.push({ type: 'row', cells: [row.date, row.horaire, row.activite, row.domaine,
+        row.oi, row.lieu, row.salleTheorie, row.responsable, row.etat] });
+    });
     if(!items.length) items.push({ cells: ['Aucune séance à exporter.', '', '', '', '', '', '', '', ''] });
     this.qvProgrammeTable(headers, items, widths);
   }
 
-  qvMonthlyRows(rows){
+  qvMonthPanel(monthKey, count, measureOnly = false){
+    const doc = this.doc;
+    const width = this.pageW - 2 * MARGIN;
+    const lines = qvMonthCalendarLines(monthKey);
+    doc.font('Helvetica').fontSize(7.5);
+    const lineHeights = lines.map((line) => doc.heightOfString(line, { width: width - 16 }) + 3);
+    const infoH = 10 + lineHeights.reduce((sum, height) => sum + height, 0);
+    const totalH = 22 + 3 + infoH + 8;
+    if(measureOnly) return totalH;
+    const y = doc.y;
+    doc.rect(MARGIN, y, width, 22).fill(rgb('#343A40'));
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9.5)
+      .text(qvMonthTitle(monthKey, count), MARGIN + 8, y + 6, { width: width - 16, lineBreak: false });
+    const infoY = y + 25;
+    doc.rect(MARGIN, infoY, width, infoH).fill(rgb('#EAF3FB'));
+    let lineY = infoY + 5;
+    lines.forEach((line, index) => {
+      doc.fillColor(rgb('#174A75')).font('Helvetica').fontSize(7.5)
+        .text(line, MARGIN + 8, lineY, { width: width - 16 });
+      lineY += lineHeights[index];
+    });
+    doc.y = y + totalH;
+    return totalH;
+  }
+
+  qvMonthlyRows(rows, monthKey){
     const doc = this.doc;
     const width = this.pageW - 2 * MARGIN;
     let lastDate = '';
+    const first = rows[0];
+    const firstTitle = String(first && first.activite || '—');
+    const firstDetails = first ? [first.domaine, first.oi, first.lieu, first.salleTheorie, first.responsable]
+      .filter((value) => value && value !== '—').join(' · ') : '';
+    doc.font('Helvetica-Bold').fontSize(9);
+    const firstTitleH = doc.heightOfString(firstTitle, { width: width - 118 });
+    doc.font('Helvetica').fontSize(7.5);
+    const firstDetailsH = doc.heightOfString(firstDetails || '—', { width: width - 118 });
+    const firstDayH = first ? 22 + Math.max(35, firstTitleH + firstDetailsH + 12) : 0;
+    const panelH = this.qvMonthPanel(monthKey, rows.length, true);
+    if(doc.y + panelH + firstDayH > this.contentBottom) this.nextPage();
+    this.qvMonthPanel(monthKey, rows.length);
     if(!rows.length){
       doc.fillColor(rgb(INSTITUTION.muted)).font('Helvetica').fontSize(9).text('Aucune séance pour cette sélection.');
       return;
@@ -2100,7 +2195,18 @@ class ScopePdfRenderer {
     };
     paintHeader();
     let dataIndex = 0;
-    items.forEach((item) => {
+    items.forEach((item, index) => {
+      if(item.type === 'month'){
+        const first = items[index + 1];
+        const panelH = this.qvMonthPanel(item.monthKey, item.count, true);
+        const firstRowH = first && first.cells ? measureRow(first.cells) : 0;
+        if(this.doc.y + panelH + firstRowH > this.contentBottom){
+          this.nextPage();
+          paintHeader();
+        }
+        this.qvMonthPanel(item.monthKey, item.count);
+        return;
+      }
       const rowH = measureRow(item.cells);
       if(rowH > this.contentBottom - HEADER_H - headerH - 22) throw new Error('Une ligne du planning dépasse une page A4.');
       if(this.doc.y + rowH > this.contentBottom){

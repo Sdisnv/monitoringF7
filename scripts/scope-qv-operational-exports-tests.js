@@ -29,7 +29,27 @@ test('l’export annuel reprend les séances distinctes et non la page courante'
   const result = await generateQuoVadisProgrammeReport(null, exported, claims);
   assert.match(pdfInfo(result.buffer), /Page size:\s+841\.89 x 595\.28 pts \(A4\)/);
   assert.ok(result.pages > 1);
-  assert.match(pdfText(result.buffer), /Planning annuel/);
+  const text = pdfText(result.buffer);
+  assert.match(text, /Planning annuel/);
+  const aprilCount = exported.rows.filter((row) => row.dateIso.startsWith('2027-04')).length;
+  assert.match(text, new RegExp(`AVRIL 2027 — ${aprilCount} événements`));
+  assert.match(text, /Vacances scolaires : Vacances de Pâques \(26 mars 2027 au 11 avril 2027\)/);
+  assert.match(text, /Jours fériés : 26 mars 2027 : Vendredi saint/);
+  assert.match(text, /MARS 2027 —/);
+  assert.match(text, /Jours fériés : 6 mai 2027 : Ascension ; 17 mai 2027 : Lundi de Pentecôte/);
+  const perMonth = new Map();
+  exported.rows.forEach((row) => {
+    const month = row.dateIso.slice(0, 7);
+    perMonth.set(month, (perMonth.get(month) || 0) + 1);
+  });
+  for (const [month, count] of perMonth) {
+    const title = new Intl.DateTimeFormat('fr-CH', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+      .format(new Date(`${month}-01T12:00:00Z`)).toLocaleUpperCase('fr-CH');
+    const label = `${title} — ${count} ${count === 1 ? 'événement' : 'événements'}`;
+    const pages = text.split('\f').filter((page) => page.includes(label));
+    assert.equal(pages.length, 1, `Bandeau unique pour ${month}`);
+    assert.match(pages[0].slice(pages[0].indexOf(label)), /\d{2}\.\d{2}\.20\d{2}/, `Première séance avec le bandeau ${month}`);
+  }
 });
 
 test('recherche métier et période sélectionnée bornent les lignes du PDF annuel', async () => {
@@ -42,6 +62,11 @@ test('recherche métier et période sélectionnée bornent les lignes du PDF ann
   assert.match(text, /Exercice PR-ABC/);
   assert.doesNotMatch(text, /Exercice JSP/);
   assert.match(text, /Recherche : Exercice PR-ABC/);
+  assert.match(text, /AVRIL 2027 — 1 événement/);
+  assert.match(text, /JUIN 2027 — 1 événement/);
+  assert.match(text, /OCTOBRE 2027 — 1 événement/);
+  assert.doesNotMatch(text, /FÉVRIER 2027 —/);
+  assert.match(text, /Vacances scolaires : Vacances de Pâques \(26 mars 2027 au 11 avril 2027\)/);
   const april = hooks.quoVadisProgrammeExport(programme, { month: '2027-04', period: 'mois' });
   assert.ok(april.rows.length > 0);
   assert.ok(april.rows.length < hooks.quoVadisProgrammeExport(programme).rows.length);
@@ -54,14 +79,21 @@ test('PDF mensuel portrait : mois et recherche actifs, pagination sans séance �
   const report = await generateQuoVadisProgrammeReport(null, april, claims);
   assert.match(pdfInfo(report.buffer), /Page size:\s+595\.28 x 841\.89 pts \(A4\)/);
   assert.ok(report.pages > 1);
-  assert.match(pdfText(report.buffer), /avril 2027/i);
+  const monthlyText = pdfText(report.buffer);
+  assert.match(monthlyText, /avril 2027/i);
+  assert.match(monthlyText, new RegExp(`AVRIL 2027 — ${april.rows.length} événements`));
+  assert.equal((monthlyText.match(/AVRIL 2027 —/g) || []).length, 1);
+  assert.match(monthlyText, /Vacances scolaires : Vacances de Pâques \(26 mars 2027 au 11 avril 2027\)/);
   const filtered = hooks.quoVadisProgrammeExport(programme, { month: '2027-04', period: 'mois', q: 'Exercice PR-ABC' }, 'mensuelle');
   assert.equal(filtered.rows.length, 1);
   assert.equal(filtered.rows[0].dateIso, '2027-04-20');
   const filteredReport = await generateQuoVadisProgrammeReport(null, filtered, claims);
   assert.equal(filteredReport.pages, 1);
-  assert.match(pdfText(filteredReport.buffer), /Exercice PR-ABC/);
-  assert.doesNotMatch(pdfText(filteredReport.buffer), /Exercice JSP/);
+  const filteredText = pdfText(filteredReport.buffer);
+  assert.match(filteredText, /Exercice PR-ABC/);
+  assert.doesNotMatch(filteredText, /Exercice JSP/);
+  assert.match(filteredText, /AVRIL 2027 — 1 événement/);
+  assert.match(filteredText, /Vacances scolaires : Vacances de Pâques \(26 mars 2027 au 11 avril 2027\)/);
 });
 
 test('le service refuse une séance hors du mois déclaré', async () => {
@@ -69,6 +101,22 @@ test('le service refuse une séance hors du mois déclaré', async () => {
   const exported = hooks.quoVadisProgrammeExport(programme, { month: '2027-04', period: 'mois' }, 'mensuelle');
   const foreign = { ...exported.rows[0], dateIso: '2027-05-01', endDateIso: '2027-05-01' };
   await assert.rejects(generateQuoVadisProgrammeReport(null, { ...exported, rows: [foreign] }, claims), /mois sélectionné/);
+});
+
+test('le calendrier PDF suit l’année exportée et signale les périodes scolaires inconnues', async () => {
+  const { programme, hooks } = await source();
+  const exported = hooks.quoVadisProgrammeExport(programme, { month: '2027-04', period: 'mois', q: 'Exercice PR-ABC' }, 'mensuelle');
+  const row = exported.rows[0];
+  const forYear = (year) => ({
+    meta: { ...exported.meta, year, monthKey: `${year}-04` },
+    rows: [{ ...row, dateIso: `${year}-04-20`, endDateIso: `${year}-04-20`, date: `20.04.${year}`, monthKey: `${year}-04` }]
+  });
+  const nextYear = pdfText((await generateQuoVadisProgrammeReport(null, forYear(2028), claims)).buffer);
+  assert.match(nextYear, /AVRIL 2028 — 1 événement/);
+  assert.match(nextYear, /Vacances scolaires : Vacances de Pâques \(14 avril 2028 au 30 avril 2028\)/);
+  const unknownYear = pdfText((await generateQuoVadisProgrammeReport(null, forYear(2029), claims)).buffer);
+  assert.match(unknownYear, /Calendrier scolaire vaudois 2029 non disponible dans le référentiel/);
+  assert.doesNotMatch(unknownYear, /Vacances de Pâques/);
 });
 
 test('les références historiques restent séparées des arbitrages opérationnels', async () => {

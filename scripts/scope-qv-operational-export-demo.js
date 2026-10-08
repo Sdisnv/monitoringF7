@@ -21,7 +21,6 @@ async function main() {
     ['SCOPE_QV_2027_avril_filtre_PR_ABC.pdf', { month: '2027-04', period: 'mois', q: 'Exercice PR-ABC' }, 'mensuelle']
   ];
   fs.mkdirSync(pdfDir, { recursive: true });
-  fs.mkdirSync(csvDir, { recursive: true });
   for (const [name, filters, mode] of samples) {
     const body = hooks.quoVadisProgrammeExport(programme, filters, mode);
     const report = await generateQuoVadisProgrammeReport(null, body, claims);
@@ -29,6 +28,8 @@ async function main() {
     fs.writeFileSync(filename, report.buffer);
     process.stdout.write(`${filename} | ${body.rows.length} seances | ${report.pages} pages\n`);
   }
+  if (process.argv.includes('--pdf-only')) return;
+  fs.mkdirSync(csvDir, { recursive: true });
   const filtered = hooks.quoVadisProgrammeExport(programme, { q: 'Exercice PR-ABC' });
   const csv = path.join(csvDir, 'SCOPE_QV_2027_filtre_PR_ABC.csv');
   fs.writeFileSync(csv, hooks.quoVadisProgrammeCsvText(filtered.rows));
