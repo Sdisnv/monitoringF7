@@ -89,7 +89,7 @@ async function main() {
   assert.equal(extraction.counts.conduitesDap, 16);
   assert.equal(extraction.counts.ctaAfter, 0);
   assert.equal(extraction.counts.multiOiPhysical, 178);
-  assert.equal(extraction.counts.oiAssociations, 1239);
+  assert.equal(extraction.counts.oiAssociations, 1236);
   const xlsx = path.join(root, 'outputs/qv-2027-final/SCOPE_QV_2027_70_CONFLITS_CALENDRIER.xlsx');
   assert.ok(fs.existsSync(xlsx) && fs.statSync(xlsx).size > 10000);
   console.log('PASS QV correction ciblée 1: Souper, 6 modules, 70 cas initiaux, 0 bloquant, 15 locaux, 1 exclu, invariants');

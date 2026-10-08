@@ -11,6 +11,7 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const L = require(path.join(root, 'assets/js/scope-ui-logic.js'));
 const cta = require(path.join(root, 'netlify/lib/_scope-cta-rules'));
+const annualRules = require(path.join(root, 'netlify/lib/data/scope-qv-canonical-annual-rules.json'));
 const canonical = require(path.join(root, 'netlify/lib/data/scope-qv-programme-2027.json'));
 const history = require(path.join(root, 'netlify/lib/data/scope-qv-history-2026.json'));
 const css = fs.readFileSync(path.join(root, 'assets/css/scope.css'), 'utf8');
@@ -69,6 +70,8 @@ test('QV-CONDUITE-002 : cible annuelle 56, deux par demi-section', () => {
   assert.equal(cta.expectedAnnualConduites(), 56);
   assert.equal(applied.derived.expected, 56);
   assert.equal(10 + 6 + 6 + 6, 28);
+  assert.equal(annualRules.annualDpsInstructionVersions[0].conduitesPerHalfSection, 2);
+  assert.ok(!Object.hasOwn(annualRules.annualDpsInstructionVersions[0], 'conduitesPerSite'));
 });
 
 test('QV-CONDUITE-001 / QV-CONDUITE-003 : chaque conduite a une Instr demi-sct source', () => {

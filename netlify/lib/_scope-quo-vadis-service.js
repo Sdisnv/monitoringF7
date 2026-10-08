@@ -1274,6 +1274,8 @@ function createScopeQuoVadisService({ database = db } = {}){
         status: obligation.statut,
         arbitrationReason: metadata.arbitrationReason || '',
         needsArbitration: metadata.needsArbitration === true,
+        historicalReferenceOnly: metadata.historicalReferenceOnly === true,
+        operationalEventCreated: Boolean(obligation.scopeEvenementId),
         sessionCount: Number(metadata.sessionCount || (obligation.numberingPattern ? 2 : 1) || 1),
         sessions: metadata.sessions || [],
         groupKey: metadata.historicalActivityKey || metadata.seriesKey || '',
@@ -1670,7 +1672,9 @@ function createScopeQuoVadisService({ database = db } = {}){
           const protectedDecision = Boolean(event || (preparation && preparation.metadata && (
             preparation.metadata.humanDecision === true || preparation.metadata.decisionHumaine === true
             || preparation.metadata.validatedBy || preparation.metadata.planningFields)));
-          const presented = Object.assign({}, row, sourceFields, prepared,
+          const publishedPrAbcOi = event && row.label === 'Exercice PR-ABC' && !Array.isArray(fields.oiCodes)
+            ? { ois: event.oi_codes || [] } : {};
+          const presented = Object.assign({}, row, sourceFields, prepared, publishedPrAbcOi,
             cursusStep ? { cursus: cursusStep.libelle, cursusId: cursusStep.cursusId,
               cursusStepId: cursusStep.stepId } : {},
             protectedDecision ? { cursusReconciliation: null } : {},
