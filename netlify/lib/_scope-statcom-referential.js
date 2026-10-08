@@ -89,7 +89,8 @@ const INITIAL_STATCOM_CODES = [
   ['010JB1', 'Exercices JSP B1', 'JSP', 'EXERCI', 'B1', null, '2026-01-01', "QUO VADIS '26"],
   ['010JC1', 'Exercices JSP C1', 'JSP', 'EXERCI', 'C1', null, '2026-01-01', "QUO VADIS '26"],
   ['010JG1', 'Exercices JSP G1', 'JSP', 'EXERCI', 'G1', null, '2026-01-01', "QUO VADIS '26"],
-  ['COURJSP', 'Cours JSP', 'JSP', 'COURS', null, null, '2026-01-01', "QUO VADIS '26"]
+  ['COURJSP', 'Cours JSP', 'JSP', 'COURS', null, null, '2026-01-01', "QUO VADIS '26"],
+  ['EMSEA', 'Séance État-major (forfait)', 'ADMIN', 'SEANCE', 'F0', null, '2026-01-01', 'Décision MOA 08.10.2026']
 ];
 
 function normalizeStatComCode(value){
@@ -109,8 +110,9 @@ function initialStatComCodes(){
     active: true,
     metadata: {
       source,
-      sourceList: 'Liste des activités et Stat COMM pour saisie dans ECAWIN',
-      sourceOrder: index + 1
+      sourceList: code === 'EMSEA' ? 'Séances État-major QUO VADIS' : 'Liste des activités et Stat COMM pour saisie dans ECAWIN',
+      sourceOrder: index + 1,
+      ...(code === 'EMSEA' ? { canonicalActivity:'Séance État-major',settlementMode:'FORFAIT',hourAccounting:false,notEquivalentTo:'EXEC' } : {})
     }
   }));
 }
