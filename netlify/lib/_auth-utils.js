@@ -159,16 +159,18 @@ function signToken(payload, ttlSeconds){
   return `${unsigned}.${signature}`;
 }
 
-function verifyToken(token, expectedType){
+function verifyToken(token, expectedType, options){
   const parts = String(token || '').split('.');
   if(parts.length !== 3) throw new Error('Token invalide.');
   const [header, payload, signature] = parts;
   const unsigned = `${header}.${payload}`;
   const expected = crypto.createHmac('sha256', getSecret()).update(unsigned).digest('base64url');
-  if(!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) throw new Error('Signature invalide.');
+  if(!timingEqualBuffers(Buffer.from(signature), Buffer.from(expected))) throw new Error('Signature invalide.');
+  const tokenHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
+  if(tokenHeader.alg !== 'HS256') throw new Error('Algorithme invalide.');
   const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
   if(expectedType && parsed.typ !== expectedType) throw new Error('Type de token invalide.');
-  if(Number(parsed.exp || 0) < Math.floor(Date.now() / 1000)) throw new Error('Token expiré.');
+  if(!Number.isFinite(parsed.exp) || (!options?.allowExpired && parsed.exp <= Math.floor(Date.now() / 1000))) throw new Error('Token expiré.');
   return parsed;
 }
 
@@ -247,6 +249,18 @@ async function resolveSessionUser(claims){
   return claims;
 }
 
+async function verifyAccess(event){
+  const claims = verifyToken(bearerToken(event), 'access');
+  if(claims.provider !== 'oidc'){
+    claims.provider = 'local';
+    if(!isAuthMethodEnabled('local')) throw new Error('auth_method_disabled');
+    await require('./_local-sessions').requireSession(event, claims);
+    const user = await resolveSessionUser(claims);
+    return Object.assign({}, claims, user, { sub:claims.sub, sid:claims.sid });
+  }
+  return claims;
+}
+
 module.exports = {
   response,
   parseBody,
@@ -258,6 +272,7 @@ module.exports = {
   isAuthMethodEnabled,
   signToken,
   verifyToken,
+  verifyAccess,
   bearerToken,
   publicUser,
   publicOidcUserFromClaims,

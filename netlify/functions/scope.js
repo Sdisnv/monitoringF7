@@ -1,4 +1,4 @@
-const { response, parseBody, verifyToken, bearerToken, resolveSessionUser } = require('../lib/_auth-utils');
+const { response, parseBody, verifyAccess, verifyToken, bearerToken, resolveSessionUser } = require('../lib/_auth-utils');
 const { canWriteRecords, hasPermission } = require('../lib/_rbac');
 const { HttpError } = require('../lib/_scope-rules');
 const { createScopeService } = require('../lib/_scope-service');
@@ -16,7 +16,7 @@ const { createScopeAnnualCatalogService } = require('../lib/_scope-annual-catalo
 const { withMetrics } = require('../lib/_postgres');
 
 async function requireAccess(event){
-  const claims = verifyToken(bearerToken(event), 'access');
+  const claims = await verifyAccess(event);
   return resolveSessionUser(claims);
 }
 

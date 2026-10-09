@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken, parseBody, resolveSessionUser } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody, resolveSessionUser } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
 const personnel = require('../lib/_scope-personnel-service');
 const { getPgRepo } = require('../lib/_scope-pg');
@@ -18,7 +18,7 @@ async function syncExpectedPopulationFromNips(nips, claims){
 exports.handler = async function(event){
   let claims;
   try{
-    claims = verifyToken(bearerToken(event), 'access');
+    claims = await verifyAccess(event);
     claims = await resolveSessionUser(claims);
     requirePermission(claims, 'personnel:manage');
   }

@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken } = require('./_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken } = require('./_auth-utils');
 const { canWriteRecords } = require('./_rbac');
 const audit = require('./_audit-store');
 const postgresStore = require('./_data-store-postgres');
@@ -21,8 +21,8 @@ function getBlobsStore(){
   }
 }
 
-function requireAccess(event){
-  const claims = verifyToken(bearerToken(event), 'access');
+async function requireAccess(event){
+  const claims = await verifyAccess(event);
   return claims;
 }
 
@@ -75,7 +75,7 @@ function storageUnavailablePayload(){
 
 async function handleCollection(event, options){
   let claims;
-  try{ claims = requireAccess(event); }
+  try{ claims = await requireAccess(event); }
   catch(error){ return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) }); }
 
   if(event.httpMethod === 'GET'){

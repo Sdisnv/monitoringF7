@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken } = require('../lib/_auth-utils');
 const db = require('../lib/_postgres');
 const { storageDriver } = require('../lib/_data-store');
 
@@ -9,7 +9,7 @@ async function count(table){
 
 exports.handler = async function(event){
   if(event.httpMethod !== 'GET') return response(405, { ok:false, error:'method_not_allowed' });
-  try{ verifyToken(bearerToken(event), 'access'); }
+  try{ await verifyAccess(event); }
   catch(error){ return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) }); }
 
   try{

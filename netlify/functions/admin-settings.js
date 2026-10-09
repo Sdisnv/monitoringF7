@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
 const db = require('../lib/_postgres');
 const audit = require('../lib/_audit-store');
@@ -6,8 +6,8 @@ const audit = require('../lib/_audit-store');
 const ADMIN_CODE_KEY = 'admin_code_hash';
 const DEFAULT_ADMIN_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
 
-function claimsFrom(event){
-  return verifyToken(bearerToken(event), 'access');
+async function claimsFrom(event){
+  return await verifyAccess(event);
 }
 
 function validHash(value){
@@ -41,7 +41,7 @@ async function saveAdminHash(hash, actor){
 
 exports.handler = async function(event){
   let claims;
-  try{ claims = claimsFrom(event); }
+  try{ claims = await claimsFrom(event); }
   catch(error){ return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) }); }
 
   try{

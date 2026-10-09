@@ -40,11 +40,6 @@
   force = true
 
 [[redirects]]
-  from = "/auth/login"
-  to = "/.netlify/functions/auth-login"
-  status = 200
-
-[[redirects]]
   from = "/auth/config"
   to = "/.netlify/functions/auth-config"
   status = 200

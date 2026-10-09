@@ -2,6 +2,16 @@
 'use strict';
 
 const assert = require('assert');
+const blobRows = new Map();
+const blobsId = require.resolve('@netlify/blobs');
+require.cache[blobsId] = { id:blobsId, filename:blobsId, loaded:true, exports:{
+  connectLambda(){},
+  getDeployStore(){ return {
+    async setJSON(key,value){blobRows.set(key,value);},
+    async get(key){return blobRows.get(key)||null;},
+    async delete(key){blobRows.delete(key);}
+  }; }
+} };
 
 process.env.MONITORING_F7_AUTH_SECRET = 'scope-prod-local-auth-1-secret-20261009';
 process.env.MONITORING_F7_AUTH_METHODS = 'local';
@@ -17,7 +27,7 @@ process.env.MONITORING_F7_AUTH_USERS = JSON.stringify([
   { nip:'disabled.local', displayName:'Disabled Local', roles:['GESTIONNAIRE'], active:false, passwordHash:authUtils.createPasswordHash('Disabled-Password-1!') }
 ]);
 
-const login = require('../netlify/functions/auth-login').handler;
+const login = require('../netlify/lib/_local-login').handler;
 const me = require('../netlify/functions/auth-me').handler;
 const refresh = require('../netlify/functions/auth-refresh').handler;
 const authConfig = require('../netlify/functions/auth-config').handler;

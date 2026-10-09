@@ -1,10 +1,10 @@
-const { response, verifyToken, bearerToken, parseBody, resolveSessionUser } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody, resolveSessionUser } = require('../lib/_auth-utils');
 const { requirePermission, KNOWN_ROLES, ROLE_PERMISSIONS, isAdminRole, normalizeRoles } = require('../lib/_rbac');
 const users = require('../lib/_user-store');
 const audit = require('../lib/_audit-store');
 
 async function claimsFrom(event){
-  const claims = verifyToken(bearerToken(event), 'access');
+  const claims = await verifyAccess(event);
   return resolveSessionUser(claims);
 }
 exports.handler = async function(event){
