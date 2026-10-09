@@ -1,11 +1,20 @@
 const { randomUUID } = require('crypto');
-const { connectLambda, getDeployStore } = require('@netlify/blobs');
+const { getDeployStore } = require('@netlify/blobs');
 
 const SESSION_TTL_SECONDS = 12 * 3600;
 
 function store(event){
-  if(event && event.blobs) connectLambda(event);
-  return getDeployStore({ name:'scope-local-auth-sessions', consistency:'strong' });
+  const options = { name:'scope-local-auth-sessions', consistency:'strong' };
+  if(event && event.blobs){
+    // Lambda's compatibility context omits the region and strong-read endpoint.
+    const legacy = JSON.parse(Buffer.from(event.blobs, 'base64').toString('utf8'));
+    const siteID = event.headers?.['x-nf-site-id'];
+    const deployID = event.headers?.['x-nf-deploy-id'];
+    const region = process.env.AWS_REGION;
+    if(!siteID || !deployID || !legacy.token || !region) throw new Error('local_session_environment_unavailable');
+    return getDeployStore({ ...options, siteID, deployID, region, token:legacy.token });
+  }
+  return getDeployStore(options);
 }
 
 async function createSession(event, sub){

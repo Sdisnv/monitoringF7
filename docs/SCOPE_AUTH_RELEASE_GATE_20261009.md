@@ -57,3 +57,11 @@ PostgreSQL remains unverified from Netlify: the private function found no runtim
 The three authentication variables are also absent from the unpublished candidate context. Production values are untouched and masked by the authorized Netlify API. A protected execution context actually supplied with the existing production configuration is therefore still required to validate PostgreSQL, the real account 7647 and business read access. The currently available CLI draft deployment path creates deploy-preview and cannot obtain those masked values. No secrets are requested, reset, or enabled globally for previews.
 
 This finalization changes only `netlify.toml`, the new artifact boot test `scripts/scope-auth-packaging-3-tests.js`, and this evidence document. Existing successful unit/UI/business suites are not rerun. PR #9 stays draft; PR #8, the 847 sessions, events, assignments, attendance, RLS and the published deployment are not modified by these operations.
+
+## Personal-session validation follow-up
+
+An unpublished production-context candidate on SCOPE, with the existing production deploy locked, confirmed PostgreSQL using `BEGIN READ ONLY`, `SELECT`, and `ROLLBACK`. LOCAL and the active administrator account were present. The personal password was accepted, but `auth-me` rejected the session.
+
+Runtime diagnostics on a separate protected, unpublished candidate confirmed that Lambda receives `event.blobs` without a modern Blobs environment context. `connectLambda` creates a context without `primaryRegion` or `uncachedEdgeURL`; deploy-store construction fails before any session read. The same defect was reproduced with the installed SDK and synthetic context. A real Lambda probe then confirmed persistence and immediate revocation using the SDK's documented explicit site/deploy/token/region parameters. Diagnostic candidates were deleted; no secrets were reported and the published deploy was unchanged.
+
+The correction is limited to `_local-sessions.js`: use those explicit parameters for Lambda, preserving automatic configuration for modern functions, deploy isolation and strong consistency. `scope-auth-lambda-blobs-4-tests.js` covers this bridge with the real SDK and synthetic transport. Personal authentication and session validation on the corrected candidate remain required before release.
