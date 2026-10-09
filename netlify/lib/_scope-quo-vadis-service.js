@@ -6,6 +6,7 @@ const { createQvReferentialManagement } = require('./_scope-qv-referential-manag
 const functionalCatalog = require('./_scope-functional-catalog');
 const annualReportCatalog = require('./_scope-annual-report-rule');
 const eventCodes = require('./_scope-event-code');
+const { randomUUID } = require('crypto');
 const { HttpError } = require('./_scope-rules');
 const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
 const { initialStatComCodes, isStatComValidForDate, resolveStatComCode, STATCOM_SUCCESSIONS } = require('./_scope-statcom-referential');
@@ -1619,6 +1620,38 @@ function createScopeQuoVadisService({ database = db } = {}){
       const canonicalSourceById = new Map((canonicalBusinessRows || []).map((row) => [String(row.id), row]));
       const cursusSteps = new Map(result.cursus.filter((row) => row.stepId)
         .map((row) => [`${row.code}|${row.stepCode}`, row]));
+      const manualRows = (preparationRows.rows || []).filter((preparation) =>
+        preparation.metadata && preparation.metadata.manualSource && !canonicalSourceById.has(String(preparation.source_ref)))
+        .map((preparation) => {
+          const source = preparation.metadata.manualSource;
+          const fields = preparation.metadata.planningFields || {};
+          const date = fields.date || dateOnly(preparation.imposed_start_at);
+          return {
+            ...source,id:String(preparation.source_ref),label:fields.activityLabel || preparation.title,
+            activityLabel:fields.activityLabel || preparation.title,
+            eventDisplayLabel:fields.activityLabel || preparation.title,
+            eventLabel:fields.activityLabel || preparation.title,
+            domain:fields.domain || source.domain,programmeDomain:fields.domain || source.domain,
+            statCom:fields.statCom || preparation.statcom_code || '',
+            businessCode:preparation.metadata.businessCode || '',
+            startsAt:date && fields.startTime ? isoLocalDateTime(date,fields.startTime) : null,
+            endsAt:date && fields.endTime ? isoLocalDateTime(date,fields.endTime) : null,
+            ois:Array.isArray(fields.oiCodes) ? fields.oiCodes : [],
+            publics:Array.isArray(fields.publicCodes) ? fields.publicCodes : preparation.cible_codes || [],
+            themes:Array.isArray(fields.themes) ? fields.themes : [],
+            specialisation:fields.specialisation || '',cursus:fields.cursus || '',
+            responsible:fields.responsibleLabel || '',location:fields.locationLabel || '',room:fields.roomLabel || '',
+            lieuId:preparation.lieu_id || null,lieuLibre:preparation.lieu_libre || '',
+            salleTheorieId:preparation.salle_theorie_id || null,
+            responsableFonctionCode:preparation.responsable_fonction_code || null,
+            preparation:{type:'OBLIGATION',id:preparation.obligation_id,updatedAt:preparation.updated_at},
+            status:preparation.statut,provenance:'MANUAL_2027',
+            lineage:preparation.metadata.lineage || null,
+            businessValidation:preparation.metadata.businessValidation || null,
+            humanDecision:preparation.metadata.humanDecision === true,
+            externalActivity:source.externalActivity === true,external:false
+          };
+        });
       result.canonicalProgramme = {
         source: canonicalProgramme2027.source,
         target: canonicalProgramme2027.target,
@@ -1702,7 +1735,7 @@ function createScopeQuoVadisService({ database = db } = {}){
             presented.pionnierCtaStatus = check.pass ? 'HUMAN_DATE_COMPATIBLE' : 'MOA_REQUIRED';
           }
           return presented;
-        }),annualReportRule)
+        }).concat(manualRows),annualReportRule)
       };
       const superseded = new Set(result.canonicalProgramme.rows
         .filter((row) => row.cursusReconciliation && row.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE')
@@ -3042,7 +3075,34 @@ function createScopeQuoVadisService({ database = db } = {}){
     return { updated: true, quoVadis: await listProgramme(programme.rows[0] && programme.rows[0].annee || 2027) };
   }
 
-  async function updateProgrammePreparation(itemId, body = {}){
+  async function createProgrammePreparation(body = {}){
+    const year = Number(body.year || 2027);
+    if(year !== 2027) throw new HttpError(422,'programme_annee_invalide','La création est disponible pour le programme 2027.');
+    const activityLabel = String(body.activityLabel || '').replace(/\s+/g,' ').trim();
+    const domain = String(body.domain || '').trim().toUpperCase();
+    if(!activityLabel || activityLabel.length > 240) throw new HttpError(422,'programme_activite_invalide','Saisissez un intitulé de 1 à 240 caractères.');
+    if(!/^F[0-8]$/.test(domain)) throw new HttpError(422,'programme_domaine_invalide','Choisissez un domaine du référentiel.');
+    if(body.externalActivity === true && String(body.statCom || '').trim())
+      throw new HttpError(422,'programme_externe_statcom','Une activité externe hors suivi SCOPE ne porte pas de Stat.Com.');
+    const itemId = `QV27:MANUAL:${randomUUID()}`;
+    const manualSource = {
+      id:itemId,label:activityLabel,activityLabel,domain,persistenceDomain:domain,
+      statCom:String(body.statCom || '').trim(),ois:[],publics:[],themes:[],
+      sessionStructure:{sessionCount:1,sessionIndex:1,sessionLabel:'',definitionId:null,occurrenceCount:1},
+      manualCreation:true,externalActivity:body.externalActivity === true,external:false,
+      provenance:'MANUAL_2027'
+    };
+    const saved = await updateProgrammePreparation(itemId,{
+      ...body,year,activityLabel,domain,status:'PROPOSE',validateBusiness:false
+    },{manualSource});
+    return {...saved,itemId};
+  }
+
+  async function updateProgrammePreparation(itemId, body = {}, options = {}){
+    const saveAction = String(body.saveAction || '').toUpperCase();
+    if(saveAction && !['SAVE','VALIDATE','PLAN'].includes(saveAction))
+      throw new HttpError(422,'programme_action_invalide','Action d’enregistrement invalide.');
+    if(saveAction) body = {...body,validateBusiness:saveAction !== 'SAVE'};
     const canonicalRows = functionalCatalog.programmeActivityPresentation(canonicalBusinessProgramme2027().rows);
     const year = Number(body.year || 2027);
     if(!Number.isInteger(year) || year < 2026 || year > 2100) throw new HttpError(422,'programme_annee_invalide','Année invalide.');
@@ -3052,11 +3112,13 @@ function createScopeQuoVadisService({ database = db } = {}){
     const saved = await db.query(`select * from scope_quo_vadis_obligations where programme_id=$1 and source_ref=$2 order by created_at limit 1`,[programme.programme_id,String(itemId)]);
     const existing = saved.rows[0];
     const inherited = existing && (existing.metadata.planningFields || existing.metadata.reconductedBusiness) || {};
-    const source = year === 2027 ? canonicalRows.find((row) => String(row.id) === String(itemId)) : existing && existing.metadata.lineage ? {
+    const source = options.manualSource || (year === 2027
+      ? canonicalRows.find((row) => String(row.id) === String(itemId)) || existing && existing.metadata && existing.metadata.manualSource
+      : existing && existing.metadata.lineage ? {
       id:itemId,label:existing.title,activityLabel:existing.title,domain:inherited.domain || existing.domain,persistenceDomain:existing.domain,family:inherited.family,
           statCom:existing.statcom_code,ois:inherited.oiCodes,publics:existing.cible_codes,sessionStructure:inherited.sessionStructure,
           themes:inherited.themes
-    } : null;
+    } : null);
     const existingPreparation = existing && existing.metadata && existing.metadata.source === 'QV_PROGRAMME_PREPARATION';
     if(!source || (source.external && !existingPreparation)) return { updated:false,reason:'PROGRAMME_ITEM_NOT_FOUND' };
     if(source.cursusReconciliation && source.cursusReconciliation.status === 'SUPERSEDED_BY_VALIDATED_MODULE'
@@ -3108,6 +3170,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       return { updated:true,preparation:{ type:'OBLIGATION',id:obligationId },quoVadis:await listProgramme(programme.annee) };
     }
     const date = strictProgrammeDate(body.date);
+    if(source.manualCreation && date && !date.startsWith(`${year}-`)){
+      throw new HttpError(422,'programme_date_annee_invalide','La date doit appartenir à l’année du programme.');
+    }
     const startTime = strictProgrammeTime(body.startTime);
     const endTime = strictProgrammeTime(body.endTime);
     if((date || startTime || endTime) && (!date || !startTime || !endTime)){
@@ -3133,8 +3198,12 @@ function createScopeQuoVadisService({ database = db } = {}){
         }
       }
     }
-    const planningStatus = String(body.status || (date ? 'PLANIFIE' : 'A_PLANIFIER')).toUpperCase();
-    if(!['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(planningStatus) || planningStatus === 'PLANIFIE' && !date || planningStatus === 'A_PLANIFIER' && date){
+    const retainedStatus = existing && (existing.metadata.planningStatus || existing.statut);
+    const originalPlanningStatus = ['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(retainedStatus) ? retainedStatus
+      : source.manualCreation || source.historicalProposal ? 'PROPOSE' : source.startsAt ? 'PLANIFIE' : 'A_PLANIFIER';
+    const planningStatus = saveAction === 'PLAN' ? 'PLANIFIE'
+      : saveAction ? originalPlanningStatus : String(body.status || (date ? 'PLANIFIE' : 'A_PLANIFIER')).toUpperCase();
+    if(!['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(planningStatus) || planningStatus === 'PLANIFIE' && !date || planningStatus === 'A_PLANIFIER' && date && !saveAction){
       throw new HttpError(422,'programme_statut_invalide','État de planification incompatible avec la date.');
     }
     const oiCodes = uiLogic.qvNormalizeOiSelections(source,[...new Set((Array.isArray(body.oiCodes) ? body.oiCodes : []).map((value) => String(value || '').trim().toUpperCase()).filter(Boolean))]).codes;
@@ -3158,6 +3227,12 @@ function createScopeQuoVadisService({ database = db } = {}){
       throw new HttpError(422,'programme_domaine_invalide','Le domaine doit provenir du référentiel canonique.');
     }
     const statCom = String(body.statCom ?? inherited.statCom ?? source.statCom ?? '').trim();
+    if(source.externalActivity && statCom) throw new HttpError(422,'programme_externe_statcom','Une activité externe hors suivi SCOPE ne porte pas de Stat.Com.');
+    if(source.manualCreation && existing && existing.metadata.businessValidation
+      && statCom !== String(existing.statcom_code || '').trim())
+      throw new HttpError(422,'programme_code_valide_immuable','Le Stat.Com d’une activité validée ne peut pas être modifié.');
+    if(source.manualCreation && body.validateBusiness === true && !source.externalActivity && !statCom)
+      throw new HttpError(422,'programme_statcom_manquant','Choisissez un Stat.Com avant la validation métier.');
     if(statCom === 'EMSEA' && (String(source.statCom || '').trim() !== 'EMSEA'
       || String(source.activityLabel || source.label || '').trim() !== 'Séance État-major')){
       throw new HttpError(422,'programme_statcom_invalide','EMSEA est réservé aux séances État-major.');
@@ -3243,6 +3318,14 @@ function createScopeQuoVadisService({ database = db } = {}){
       responsibleLabel:moaResponsable || (responsable ? responsable.libelle : ''),
       updatedAt:new Date().toISOString()
     };
+    if(source.manualCreation){
+      const specialisation = String(body.specialisation ?? inherited.specialisation ?? '').trim();
+      const cursus = String(body.cursus ?? inherited.cursus ?? '').trim();
+      if(specialisation.length > 160 || cursus.length > 160)
+        throw new HttpError(422,'programme_qualification_invalide','Qualification ou spécialisation trop longue.');
+      planningFields.specialisation = specialisation;
+      planningFields.cursus = cursus;
+    }
     if(body.validateBusiness === true && oiCodes.some(code => legacy.includes(code))){
       throw new HttpError(422,'programme_oi_ambigu','Qualifier les anciens OI avant la validation métier.');
     }
@@ -3250,6 +3333,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       statusDecision:{ status:planningStatus,decidedAt:new Date().toISOString() },
       lineage:existing && existing.metadata.lineage || {key:String(itemId),initialSource:source.historicalProposal ? 'QUO VADIS 2026' : 'Programme 2027',
         initialSourceLine:source.historicalProposal && source.historicalProposal.sourceLine || null,initialOccurrence:String(itemId)} };
+    if(source.manualCreation) metadata.manualSource = source;
     if(body.validateBusiness === true){
       const baselineFields = existing && existing.metadata.businessValidation && existing.metadata.businessValidation.baselineFields || consolidation.businessSnapshot({
         activityLabel:source.eventDisplayLabel || source.activityLabel || source.label,statCom:source.statCom || '',
@@ -3269,6 +3353,26 @@ function createScopeQuoVadisService({ database = db } = {}){
       let selectedLieu = lieu;
       let selectedLieuLibre = lieuLibre;
       let writeMetadata = metadata;
+      if(source.manualCreation){
+        let businessCode = String(existing && existing.metadata.businessCode || '');
+        if(statCom && !source.externalActivity && (!businessCode || !businessCode.startsWith(`${statCom}.`))){
+          const issued = await client.query(`select code from (
+            select code_cours as code from scope_evenements
+            union all select event_code as code from scope_event_code_allocations
+            union all select business_code as code from scope_qv_publication_activities
+            union all select metadata->>'businessCode' as code from scope_quo_vadis_obligations
+          ) codes where code is not null`);
+          const used = eventCodes.consumedByStatCom(issued.rows.map((row) => row.code)
+            .concat(canonicalBusinessProgramme2027().rows.map((row) => row.code)));
+          const floor = used.get(statCom) || 0;
+          const allocated = await client.query(`insert into scope_event_code_sequences(statcom_code,last_number,updated_at)
+            values ($1,$2,now()) on conflict(statcom_code) do update
+            set last_number=greatest(scope_event_code_sequences.last_number,$2 - 1) + 1,updated_at=now()
+            returning last_number`,[statCom,floor + 1]);
+          businessCode = eventCodes.formatEventCode(statCom,Number(allocated.rows[0].last_number));
+        }
+        writeMetadata = {...writeMetadata,businessCode:source.externalActivity ? '' : businessCode};
+      }
       if(keepLieu){
         await client.query(`select pg_advisory_xact_lock(hashtext($1))`,['SCOPE_LIEUX:CREATE']);
         const existing = await client.query(`select lieu_id,code,nom_court from scope_lieux where actif is true`);
@@ -3280,7 +3384,7 @@ function createScopeQuoVadisService({ database = db } = {}){
           returning lieu_id,code,nom_court`,[lieuLibre,JSON.stringify({source:'QV_PROGRAMME_PREPARATION',year})])).rows[0];
         selectedLieuLibre = '';
         const fields = { ...planningFields,lieuId:selectedLieu.lieu_id,lieuLibre:'',locationLabel:selectedLieu.nom_court };
-        writeMetadata = { ...metadata,planningFields:fields };
+        writeMetadata = { ...writeMetadata,planningFields:fields };
         if(metadata.businessValidation){
           const baseline = metadata.businessValidation.baselineFields;
           writeMetadata.businessValidation = { ...metadata.businessValidation,fields:consolidation.businessSnapshot(fields),
@@ -3304,14 +3408,14 @@ function createScopeQuoVadisService({ database = db } = {}){
       }
       const inserted = await client.query(`insert into scope_quo_vadis_obligations
         (programme_id,source_type,source_ref,title,domain,cible_codes,statut,imposed_start_at,imposed_end_at,statcom_policy,statcom_code,lieu_id,lieu_libre,salle_theorie_id,responsable_fonction_code,metadata)
-        values ($1,'MANUAL',$2,$3,$4,$5::text[],($13::jsonb->>'planningStatus'),$6,$7,case when $8 is null then 'A_CONFIRMER' else 'OBLIGATOIRE' end,$8,$9,$10,$11,$12,$13::jsonb)
+        values ($1,'MANUAL',$2,$3,$4,$5::text[],($13::jsonb->>'planningStatus'),$6,$7,case when $8::text is null then 'A_CONFIRMER' else 'OBLIGATOIRE' end,$8,$9,$10,$11,$12,$13::jsonb)
         returning obligation_id`,params);
       return inserted.rows[0].obligation_id;
     });
     return { updated:true,preparation:{ type:'OBLIGATION',id:obligationId },quoVadis:await listProgramme(programme.annee) };
   }
 
-  return { listProgramme, generateProgramme, previewProgramme, createFutureDate, ...management, setCursusSelection, setCursusStepSelection, setCursusStepSchedule, setProgrammeStatus, retainProposal, updateActivityPlanning, updateProgrammePreparation, listActivityReferences };
+  return { listProgramme, generateProgramme, previewProgramme, createFutureDate, ...management, setCursusSelection, setCursusStepSelection, setCursusStepSchedule, setProgrammeStatus, retainProposal, updateActivityPlanning, createProgrammePreparation, updateProgrammePreparation, listActivityReferences };
 }
 
 module.exports = {

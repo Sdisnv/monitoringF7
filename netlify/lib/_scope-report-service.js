@@ -212,7 +212,7 @@ function sanitizeQuoVadisExportMeta(meta){
     return text || fallback;
   };
   return {
-    mode: source.mode === 'monthly' ? 'monthly' : 'annual',
+    mode: ['monthly','compact'].includes(source.mode) ? source.mode : 'annual',
     year: /^20\d{2}$/.test(String(source.year || '')) ? Number(source.year) : 2027,
     monthKey: /^20\d{2}-(0[1-9]|1[0-2])$/.test(String(source.monthKey || '')) ? String(source.monthKey) : '',
     periodLabel: clean(source.periodLabel, 'Toute l’année'),
@@ -249,8 +249,9 @@ async function generateQuoVadisProgrammeReport(repo, body, claims, options){
   const { buffer, pages } = await renderQuoVadisProgrammePdf(rows, exportMeta, meta);
   const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
   const filename = exportMeta.mode === 'monthly'
-    ? `SCOPE_QUO_VADIS_${exportMeta.monthKey}_Planning.pdf`
-    : `SCOPE_QUO_VADIS_${exportMeta.year}_Planning_annuel.pdf`;
+    ? `SCOPE_QUO_VADIS_${exportMeta.monthKey}_Planning_mensuel.pdf`
+    : exportMeta.mode === 'compact' ? `SCOPE_QUO_VADIS_${exportMeta.year}_Liste_compacte.pdf`
+      : `SCOPE_QUO_VADIS_${exportMeta.year}_Planning_annuel.pdf`;
   if(repo && typeof repo.appendJournal === 'function'){
     await repo.appendJournal({
       auteur_id: meta.authorId,

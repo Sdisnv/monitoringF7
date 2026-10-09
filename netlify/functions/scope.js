@@ -348,6 +348,10 @@ async function scopeHandler(event){
     if(method === 'POST' && params){
       return response(200, { ok:true, ...(await quoVadis.updateActivityPlanning(params.id, body)) });
     }
+    if(method === 'POST' && path === '/quo-vadis/programme-items'){
+      if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
+      return response(201, { ok:true, ...(await quoVadis.createProgrammePreparation(body)) });
+    }
     params = match(path, '/quo-vadis/programme-items/:id');
     if(method === 'PATCH' && params){
       if(!hasPermission(claims, 'references:manage')) return response(403, { ok:false, error:'forbidden' });
