@@ -3129,6 +3129,29 @@ function createScopeQuoVadisService({ database = db } = {}){
       || existing.metadata.decisionHumaine === true || existing.metadata.validatedBy || existing.metadata.planningFields)))
       throw new HttpError(422,'programme_jsp_direction_projection_superseded','Une séance Direction JSP explicite est déjà prévue ce mois-ci.');
     if(source.definitionId === 'CTA-PERMANENCE') throw new HttpError(422,'programme_cta_calculée','La permanence dépend du moteur CTA.');
+    if (body.moveDate === true) {
+      const currentProgramme = await listProgramme(year);
+      const current = (currentProgramme.canonicalProgramme.rows || []).find(row => String(row.id) === String(itemId));
+      const lock = uiLogic.qvProgrammeDragLock(current || source);
+      if (lock) throw new HttpError(422,'programme_deplacement_verrouille',uiLogic.qvProgrammeDragReason(lock));
+      // A move changes the date only; the stored business decision remains authoritative.
+      body = { year, date: body.date, moveDate: true,
+        startTime: inherited.startTime ?? String(source.startsAt || '').slice(11,16),
+        endTime: inherited.endTime ?? String(source.endsAt || '').slice(11,16),
+        status: existing?.metadata?.planningStatus || (['PROPOSE','PLANIFIE'].includes(current?.status) ? current.status : undefined),
+        lieuId: inherited.lieuId ?? body.lieuId,
+        lieuLibre: inherited.lieuLibre ?? body.lieuLibre,
+        salleTheorieId: inherited.salleTheorieId ?? body.salleTheorieId,
+        responsableFonctionCode: inherited.responsibleLabel || inherited.responsableFonctionCode || body.responsableFonctionCode,
+        specialisation: inherited.specialisation, cursus: inherited.cursus,
+        activityLabel: inherited.activityLabel ?? source.activityLabel ?? source.label,
+        themes: inherited.themes ?? source.themes ?? [],
+        domain: inherited.domain || source.domain,
+        statCom: inherited.statCom ?? source.statCom ?? '',
+        oiCodes: uiLogic.qvNormalizeOiSelections(source,inherited.oiCodes || source.ois || []).codes,
+        publicCodes: inherited.publicCodes || source.publics || [] };
+      if (!/^F[0-8]$/.test(body.domain || '')) delete body.domain;
+    }
     const lifecycleAction = String(body.lifecycleAction || '').toUpperCase();
     if(lifecycleAction){
       if(!['CANCEL_YEAR','DISABLE_PRODUCTION'].includes(lifecycleAction)){

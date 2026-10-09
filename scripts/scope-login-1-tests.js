@@ -63,6 +63,7 @@ function hooks(sessionMe, options = {}) {
     sessionStorage,
     localStorage,
     console,
+    fetch:async () => ({ok:true,json:async () => ({ok:true,methods:['okta'],localEnabled:false,oktaEnabled:true})}),
     clearTimeout,
     setTimeout,
     URLSearchParams,

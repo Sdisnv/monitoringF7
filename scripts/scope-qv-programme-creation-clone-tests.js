@@ -90,6 +90,18 @@ async function run() {
       status:'PLANIFIE',validateBusiness:true});
     assert.ok(find(validated.quoVadis).businessValidation);
     assert.equal(find(validated.quoVadis).businessCode,createdRow.businessCode);
+    const beforeMove = find(await service.listProgramme(2027));
+    const movedOnlyDate = await service.updateProgrammePreparation(created.itemId,{year:2027,
+      moveDate:true,date:'2027-06-19',activityLabel:'UNWANTED CHANGE',oiCodes:['INVALID'],publicCodes:['INVALID']});
+    const afterMove = find(movedOnlyDate.quoVadis);
+    assert.equal(afterMove.startsAt.slice(0,16),'2027-06-19T15:00');
+    assert.equal(find(await service.listProgramme(2027)).startsAt.slice(0,16),'2027-06-19T15:00');
+    for(const field of ['activityLabel','ois','publics','businessCode','status','specialisation','cursus','businessValidation'])
+      assert.deepEqual(afterMove[field],beforeMove[field],`${field} changed during date move`);
+    const published = baseRows.find(row=>row.publishedEventId && row.definitionId !== 'CTA-PERMANENCE');
+    assert.ok(published);
+    await assert.rejects(service.updateProgrammePreparation(published.id,{year:2027,moveDate:true,date:'2027-06-19'}),
+      error=>error.error === 'programme_deplacement_verrouille');
     await assert.rejects(service.updateProgrammePreparation(created.itemId,{...input,statCom:'070F3',
       date:'2027-06-17',startTime:'15:00',endTime:'17:00'}),
       (error) => error.error === 'programme_code_valide_immuable');

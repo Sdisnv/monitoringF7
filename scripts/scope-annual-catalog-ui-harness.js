@@ -17,7 +17,7 @@ function makeNode(){
   };
 }
 
-function createCatalogUiHarness(){
+function createCatalogUiHarness(options = {}){
   const root = makeNode();
   const permissions = ['references:manage'];
   const allowed = new Set(permissions);
@@ -35,6 +35,7 @@ function createCatalogUiHarness(){
     window:{
       __SCOPE_UI_TEST_HOOKS__:true,ScopeUiLogic:logic,ScopeCharts:null,CurrentRoles:['ADMINISTRATEUR'],CurrentPermissions:permissions,
       MonitoringRBAC:{ has(permission){ return allowed.has(permission); } },location,history:{ replaceState(){} },
+      ScopeApi: options.client ? { createHttpClient:() => options.client } : undefined,
       addEventListener(){},scrollTo(){},document,localStorage:storage,sessionStorage:storage
     }
   };
