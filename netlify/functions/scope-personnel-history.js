@@ -1,10 +1,10 @@
-const { response, verifyToken, bearerToken } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
 const personnel = require('../lib/_scope-personnel-service');
 
 exports.handler = async function(event){
   let claims;
-  try{ claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, 'dashboard:read'); }
+  try{ claims = await verifyAccess(event); requirePermission(claims, 'dashboard:read'); }
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
   try{
     const params = event.queryStringParameters || {};

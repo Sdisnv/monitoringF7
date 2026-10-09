@@ -1,8 +1,9 @@
-const { response } = require('../lib/_auth-utils');
+const { response, isAuthMethodEnabled } = require('../lib/_auth-utils');
 const { oidcCallbackResponse, oidcErrorReason } = require('../lib/_oidc-utils');
 
 exports.handler = async function(event){
   if(event.httpMethod !== 'GET') return response(405, { ok:false, error:'method_not_allowed' });
+  if(!isAuthMethodEnabled('okta')) return response(403, { ok:false, error:'auth_method_disabled' });
   try{
     return await oidcCallbackResponse(event);
   }catch(error){

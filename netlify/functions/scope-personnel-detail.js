@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
 const personnel = require('../lib/_scope-personnel-service');
 const { getPgRepo } = require('../lib/_scope-pg');
@@ -19,7 +19,7 @@ exports.handler = async function(event){
     const perm = event.httpMethod === 'GET'
       ? ((params.nip && !params.id) ? 'personnel:read' : 'dashboard:read')
       : (event.httpMethod === 'POST' ? 'personnel:manage' : 'effectifs:manage');
-    claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, perm);
+    claims = await verifyAccess(event); requirePermission(claims, perm);
   } catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
   try{
     if(event.httpMethod === 'GET'){

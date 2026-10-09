@@ -1,5 +1,7 @@
 const { response, parseBody, verifyToken, signToken, bearerToken, publicUser, publicOidcUserFromClaims, findUser } = require('../lib/_auth-utils');
 const { ACCESS_COOKIE, ACCESS_TTL_SECONDS, secureCookie } = require('../lib/_oidc-utils');
+const { requireSession } = require('../lib/_local-sessions');
+const { isAuthMethodEnabled } = require('../lib/_auth-utils');
 
 function claimsForAccess(claims){
   const next = Object.assign({}, claims || {});
@@ -17,10 +19,13 @@ exports.handler = async function(event){
     let claims;
     if(body && body.refreshToken){
       claims = verifyToken(body.refreshToken, 'refresh');
+      if(claims.provider !== 'local' || !isAuthMethodEnabled('local')) throw new Error('auth_method_disabled');
+      await requireSession(event, claims);
+      const sid = claims.sid;
       const user = findUser(claims.sub);
       if(!user) return response(403, { ok:false, error:'user_disabled_or_unknown' });
       const safeUser = publicUser(user);
-      claims = { typ:'access', sub:safeUser.nip, roles:safeUser.roles };
+      claims = { typ:'access', sub:safeUser.nip, nip:safeUser.nip, roles:safeUser.roles, permissions:safeUser.permissions, provider:'local', displayName:safeUser.displayName, sid };
     } else {
       claims = verifyToken(bearerToken(event), 'access');
       if(claims.provider === 'oidc'){
@@ -33,6 +38,14 @@ exports.handler = async function(event){
         if(stored && stored.active === false) return response(403, { ok:false, error:'user_disabled' });
         const safeUser = stored || publicOidcUserFromClaims(claims);
         claims = { typ:'access', sub:safeUser.subject || safeUser.nip, email:safeUser.email, nip:safeUser.nip, roles:safeUser.roles, permissions:safeUser.permissions, provider:'oidc', displayName:safeUser.displayName };
+      } else {
+        if(!isAuthMethodEnabled('local')) throw new Error('auth_method_disabled');
+        await requireSession(event, claims);
+        const sid = claims.sid;
+        const user = findUser(claims.sub || claims.nip);
+        if(!user) return response(403, { ok:false, error:'user_disabled_or_unknown' });
+        const safeUser = publicUser(user);
+        claims = { typ:'access', sub:safeUser.nip, nip:safeUser.nip, roles:safeUser.roles, permissions:safeUser.permissions, provider:'local', displayName:safeUser.displayName, sid };
       }
     }
     const accessToken = signToken(claimsForAccess(claims), ACCESS_TTL_SECONDS);

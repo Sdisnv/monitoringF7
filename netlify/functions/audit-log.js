@@ -1,10 +1,10 @@
-const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
 const audit = require('../lib/_audit-store');
-function claimsFrom(event){ return verifyToken(bearerToken(event), 'access'); }
+async function claimsFrom(event){ return await verifyAccess(event); }
 exports.handler = async function(event){
   let claims;
-  try{ claims = claimsFrom(event); }
+  try{ claims = await claimsFrom(event); }
   catch(error){ return response(401, { ok:false, error:'unauthorized', message:String(error.message || error) }); }
   try{
     if(event.httpMethod === 'GET'){

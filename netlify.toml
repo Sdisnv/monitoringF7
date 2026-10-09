@@ -9,6 +9,12 @@
 
 [functions]
   node_bundler = "esbuild"
+  included_files = [
+    "node_modules/@netlify/blobs/**",
+    "node_modules/@netlify/otel/**",
+    "node_modules/@netlify/runtime-utils/**",
+    "node_modules/@opentelemetry/**"
+  ]
 
 [functions."scope"]
   external_node_modules = ["pdfkit"]
@@ -40,8 +46,8 @@
   force = true
 
 [[redirects]]
-  from = "/auth/login"
-  to = "/.netlify/functions/auth-login"
+  from = "/auth/config"
+  to = "/.netlify/functions/auth-config"
   status = 200
 
 [[redirects]]

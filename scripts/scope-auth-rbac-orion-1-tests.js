@@ -47,9 +47,9 @@ pass('04 — import Personnel contrôlé par personnel:manage', () => {
   const scopeRouter = fs.readFileSync(path.join(ROOT, 'netlify/functions/scope.js'), 'utf8');
   assert.ok(analyze.includes("requirePermission(claims, 'personnel:manage')"));
   assert.ok(commit.includes("requirePermission(claims, 'personnel:manage')"));
-  assert.ok(analyze.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
-  assert.ok(commit.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
-  assert.ok(scopeRouter.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
+  assert.ok(analyze.includes('resolveSessionUser(claims)'));
+  assert.ok(commit.includes('resolveSessionUser(claims)'));
+  assert.ok(scopeRouter.includes('resolveSessionUser(claims)'));
   assert.strictEqual(rbac.hasPermission({ roles:['UTILISATEUR'] }, 'personnel:manage'), false);
   assert.strictEqual(rbac.hasPermission({ roles:['GESTIONNAIRE'] }, 'personnel:manage'), true);
   assert.strictEqual(rbac.hasPermission({ roles:['ADMINISTRATEUR'] }, 'personnel:manage'), true);
@@ -85,7 +85,7 @@ pass('08 — administration utilisateurs limitée aux trois rôles', () => {
   assert.ok(adminUsers.includes("value:'ADMINISTRATEUR'"));
   assert.ok(!adminUsers.includes("value:'sdis-readonly'"));
   assert.ok(!adminUsers.includes("value:'sdis-chef-formation'"));
-  assert.ok(adminUsersFunction.includes('getUserByIdentity([claims.sub, claims.email, claims.nip])'));
+  assert.ok(adminUsersFunction.includes('resolveSessionUser(claims)'));
 });
 
 pass('09 — modèle utilisateur applicatif séparé du Personnel métier', () => {

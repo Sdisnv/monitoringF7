@@ -53,6 +53,69 @@ function hashPassword(password){
   return crypto.createHash('sha256').update(String(password || ''), 'utf8').digest('hex');
 }
 
+const SCRYPT_DEFAULTS = Object.freeze({ N: 16384, r: 8, p: 1, keylen: 64 });
+
+function scryptParams(){
+  const N = Number(process.env.MONITORING_F7_AUTH_SCRYPT_N || SCRYPT_DEFAULTS.N);
+  const r = Number(process.env.MONITORING_F7_AUTH_SCRYPT_R || SCRYPT_DEFAULTS.r);
+  const p = Number(process.env.MONITORING_F7_AUTH_SCRYPT_P || SCRYPT_DEFAULTS.p);
+  const keylen = Number(process.env.MONITORING_F7_AUTH_SCRYPT_KEYLEN || SCRYPT_DEFAULTS.keylen);
+  return {
+    N: Number.isFinite(N) && N >= 16384 ? N : SCRYPT_DEFAULTS.N,
+    r: Number.isFinite(r) && r >= 8 ? r : SCRYPT_DEFAULTS.r,
+    p: Number.isFinite(p) && p >= 1 ? p : SCRYPT_DEFAULTS.p,
+    keylen: Number.isFinite(keylen) && keylen >= 32 ? keylen : SCRYPT_DEFAULTS.keylen
+  };
+}
+
+function createPasswordHash(password, options){
+  const params = Object.assign({}, scryptParams(), options || {});
+  const salt = options && options.salt ? Buffer.from(options.salt, 'base64url') : crypto.randomBytes(16);
+  const hash = crypto.scryptSync(String(password || ''), salt, params.keylen, { N:params.N, r:params.r, p:params.p, maxmem:128 * 1024 * 1024 });
+  return `scrypt$v=1$N=${params.N}$r=${params.r}$p=${params.p}$${salt.toString('base64url')}$${hash.toString('base64url')}`;
+}
+
+function parseScryptHash(stored){
+  const parts = String(stored || '').split('$');
+  if(parts.length !== 7 || parts[0] !== 'scrypt' || parts[1] !== 'v=1') return null;
+  const params = {};
+  for(const part of parts.slice(2, 5)){
+    const [key, value] = part.split('=');
+    params[key] = Number(value);
+  }
+  if(!Number.isFinite(params.N) || !Number.isFinite(params.r) || !Number.isFinite(params.p)) return null;
+  return {
+    N: params.N,
+    r: params.r,
+    p: params.p,
+    salt: Buffer.from(parts[5], 'base64url'),
+    hash: Buffer.from(parts[6], 'base64url')
+  };
+}
+
+function timingEqualBuffers(a, b){
+  const left = Buffer.isBuffer(a) ? a : Buffer.from(String(a || ''));
+  const right = Buffer.isBuffer(b) ? b : Buffer.from(String(b || ''));
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+function verifyPassword(password, storedHash){
+  const parsed = parseScryptHash(storedHash);
+  if(parsed){
+    const derived = crypto.scryptSync(String(password || ''), parsed.salt, parsed.hash.length, {
+      N:parsed.N,
+      r:parsed.r,
+      p:parsed.p,
+      maxmem:128 * 1024 * 1024
+    });
+    return timingEqualBuffers(derived, parsed.hash);
+  }
+  if(process.env.MONITORING_F7_ALLOW_LEGACY_SHA256 === 'true' && /^[a-f0-9]{64}$/i.test(String(storedHash || ''))){
+    return timingEqualHex(hashPassword(password), storedHash);
+  }
+  return false;
+}
+
 function timingEqualHex(a, b){
   const left = Buffer.from(String(a || ''), 'hex');
   const right = Buffer.from(String(b || ''), 'hex');
@@ -72,6 +135,21 @@ function getUsers(){
   return parsed;
 }
 
+function getAuthMethods(){
+  const raw = String(process.env.MONITORING_F7_AUTH_METHODS || process.env.MONITORING_F7_AUTH_MODE || 'okta')
+    .split(/[,+\s]+/)
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean);
+  const aliases = { oidc:'okta', institutional:'okta', institutionnel:'okta', password:'local' };
+  const methods = raw.map(value => aliases[value] || value).filter(value => value === 'local' || value === 'okta');
+  const unique = Array.from(new Set(methods));
+  return unique.length ? unique : ['okta'];
+}
+
+function isAuthMethodEnabled(method){
+  return getAuthMethods().includes(String(method || '').toLowerCase());
+}
+
 function signToken(payload, ttlSeconds){
   const now = Math.floor(Date.now() / 1000);
   const header = { alg:'HS256', typ:'JWT' };
@@ -81,16 +159,18 @@ function signToken(payload, ttlSeconds){
   return `${unsigned}.${signature}`;
 }
 
-function verifyToken(token, expectedType){
+function verifyToken(token, expectedType, options){
   const parts = String(token || '').split('.');
   if(parts.length !== 3) throw new Error('Token invalide.');
   const [header, payload, signature] = parts;
   const unsigned = `${header}.${payload}`;
   const expected = crypto.createHmac('sha256', getSecret()).update(unsigned).digest('base64url');
-  if(!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) throw new Error('Signature invalide.');
+  if(!timingEqualBuffers(Buffer.from(signature), Buffer.from(expected))) throw new Error('Signature invalide.');
+  const tokenHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
+  if(tokenHeader.alg !== 'HS256') throw new Error('Algorithme invalide.');
   const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
   if(expectedType && parsed.typ !== expectedType) throw new Error('Type de token invalide.');
-  if(Number(parsed.exp || 0) < Math.floor(Date.now() / 1000)) throw new Error('Token expiré.');
+  if(!Number.isFinite(parsed.exp) || (!options?.allowExpired && parsed.exp <= Math.floor(Date.now() / 1000))) throw new Error('Token expiré.');
   return parsed;
 }
 
@@ -142,15 +222,60 @@ function findUser(nip){
   return getUsers().find(user => String(user.nip || '') === String(nip || '') && user.active !== false) || null;
 }
 
+async function resolveSessionUser(claims){
+  if(claims && claims.provider === 'local'){
+    const user = findUser(claims.sub || claims.nip);
+    if(!user){
+      const err = new Error('user_disabled_or_unknown');
+      err.statusCode = 403;
+      throw err;
+    }
+    return Object.assign({}, publicUser(user), { sub:user.nip, provider:'local' });
+  }
+  if(claims && claims.provider === 'oidc'){
+    let stored = null;
+    try{
+      stored = await require('./_user-store').getUserByIdentity([claims.sub, claims.email, claims.nip]);
+    }catch(_error){
+      stored = null;
+    }
+    if(stored && stored.active === false){
+      const err = new Error('user_disabled');
+      err.statusCode = 403;
+      throw err;
+    }
+    return stored || claims;
+  }
+  return claims;
+}
+
+async function verifyAccess(event){
+  const claims = verifyToken(bearerToken(event), 'access');
+  if(claims.provider !== 'oidc'){
+    claims.provider = 'local';
+    if(!isAuthMethodEnabled('local')) throw new Error('auth_method_disabled');
+    await require('./_local-sessions').requireSession(event, claims);
+    const user = await resolveSessionUser(claims);
+    return Object.assign({}, claims, user, { sub:claims.sub, sid:claims.sid });
+  }
+  return claims;
+}
+
 module.exports = {
   response,
   parseBody,
   hashPassword,
+  createPasswordHash,
+  verifyPassword,
   timingEqualHex,
+  getAuthMethods,
+  isAuthMethodEnabled,
   signToken,
   verifyToken,
+  verifyAccess,
   bearerToken,
   publicUser,
   publicOidcUserFromClaims,
-  findUser
+  findUser,
+  resolveSessionUser
 };

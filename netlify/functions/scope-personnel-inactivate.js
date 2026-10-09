@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
 const personnel = require('../lib/_scope-personnel-service');
 const { getPgRepo } = require('../lib/_scope-pg');
@@ -14,7 +14,7 @@ async function syncExpectedPopulationForPersonne(personne, claims, reason, windo
 
 exports.handler = async function(event){
   let claims;
-  try{ claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, 'personnel:manage'); }
+  try{ claims = await verifyAccess(event); requirePermission(claims, 'personnel:manage'); }
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
   if(event.httpMethod !== 'POST') return response(405, { ok:false, error:'method_not_allowed' });
   try{

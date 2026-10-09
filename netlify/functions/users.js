@@ -1,4 +1,4 @@
-const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { response, verifyAccess, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
 const { permissionsForRoles, requirePermission, normalizeRoles, KNOWN_ROLES, isAdminRole } = require('../lib/_rbac');
 const { auditEntry } = require('../lib/_audit-server');
 const db = require('../lib/_postgres');
@@ -28,7 +28,7 @@ async function listUsers(){
 }
 exports.handler = async function(event){
   let claims;
-  try{ claims = verifyToken(bearerToken(event), 'access'); requirePermission(claims, 'users:admin'); }
+  try{ claims = await verifyAccess(event); requirePermission(claims, 'users:admin'); }
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized', message:String(error.message || error) }); }
   try{
     if(event.httpMethod === 'GET') return response(200, { ok:true, users: await listUsers(), roles: KNOWN_ROLES });

@@ -3502,6 +3502,34 @@ a.qv-mini-day.has-validated:not(.has-proposed):focus-visible span {
   word-break: normal;
 }
 
+.scope-login-form {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.scope-login-form label {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scope-login-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--scope-ink);
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.scope-login-form input:focus {
+  outline: 2px solid rgba(222, 0, 10, 0.18);
+  border-color: var(--scope-red);
+}
+
 .scope-login-submit,
 .scope-login-status {
   width: 100%;
@@ -3525,15 +3553,39 @@ a.qv-mini-day.has-validated:not(.has-proposed):focus-visible span {
   box-shadow: 0 12px 24px rgba(222, 0, 10, 0.16);
 }
 
+.scope-login-submit:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.scope-login-submit-secondary {
+  margin-top: 10px;
+  border-color: #cfd8e3;
+  background: #ffffff;
+  color: var(--scope-ink);
+  box-shadow: none;
+}
+
 .scope-login-submit:hover {
   background: var(--scope-red-hover);
   border-color: var(--scope-red-hover);
   color: #ffffff;
 }
 
+.scope-login-submit-secondary:hover {
+  border-color: #9aa8ba;
+  background: #f8fafc;
+  color: var(--scope-ink);
+}
+
 .scope-app .scope-login-submit:link,
 .scope-app .scope-login-submit:visited {
   color: #ffffff;
+}
+
+.scope-app .scope-login-submit-secondary:link,
+.scope-app .scope-login-submit-secondary:visited {
+  color: var(--scope-ink);
 }
 
 .scope-login-status {
