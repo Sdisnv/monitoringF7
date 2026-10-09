@@ -10,7 +10,7 @@ async function run() {
   for (const [label,date] of [['RECETTE P0 Safari','2027-01-20'],['RECETTE P0 Cible','2027-01-21']]) {
     const response = await fetch(`${base}/api/scope/quo-vadis/programme-items`,{method:'POST',
       headers:{'content-type':'application/json',authorization:`Bearer ${session.accessToken}`},
-      body:JSON.stringify({year:2027,activityLabel:label,domain:'F7',statCom:'070F7',themes:['Controle isolé'],
+      body:JSON.stringify({year:2027,activityLabel:label,domain:'F7',statCom:'011PR',ecawinActivityCode:'EXERCI',themes:['Controle isolé'],
         oiCodes:['SDIS'],publicCodes:[],date,startTime:'18:00',endTime:'20:00',saveAction:'SAVE'})});
     const data = await response.json();
     if (!response.ok || !data.updated) throw new Error(data.message || 'Recipe creation failed');

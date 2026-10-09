@@ -10,6 +10,7 @@ const { randomUUID } = require('crypto');
 const { HttpError } = require('./_scope-rules');
 const canonicalProgramme2027 = require('./data/scope-qv-programme-2027.json');
 const { initialStatComCodes, isStatComValidForDate, resolveStatComCode, STATCOM_SUCCESSIONS } = require('./_scope-statcom-referential');
+const ecawin = require('../../assets/js/scope-ecawin');
 const historicalReference2026 = require('./data/scope-qv-history-2026.json');
 const ctaRules = require('./_scope-cta-rules');
 const uiLogic = require('../../assets/js/scope-ui-logic');
@@ -1437,6 +1438,8 @@ function createScopeQuoVadisService({ database = db } = {}){
     const population = consolidation.activePopulation(obligations.rows.map(mapObligation), proposals.rows.map(mapProposal));
     const statcoms = await db.query(`select * from scope_statcom_referentiel order by code`);
     const domainOis = await db.query(`select d.domaine_code,o.code from scope_domaine_ois d join scope_ois o using(oi_id) where o.actif is true`);
+    const qualifications = await db.query(`select competence_id,code,libelle,domaine_code,type
+      from scope_competence_definitions where actif is true order by sort_order,code`).catch(()=>({rows:[]}));
     const result = {
       programme,
       obligations: population.obligations,
@@ -1448,6 +1451,8 @@ function createScopeQuoVadisService({ database = db } = {}){
       cibles: (cibles.rows || []).map((row) => ({ cibleId: row.cible_id, domaineCode: row.domaine_code, niveauCode: row.niveau_code, libelle: row.libelle })),
       statComCodes: statcoms.rows.map(row => ({ ...row, label:row.libelle || row.label,validFrom:dateOnly(row.valid_from),validTo:dateOnly(row.valid_to) })),
       domainOis: domainOis.rows,
+      qualifications: qualifications.rows.map(row=>({id:row.competence_id,code:row.code,label:row.libelle,domainCode:row.domaine_code,type:row.type})),
+      ecawinReferential: {activityCodes:ecawin.activityCodes,associations:ecawin.associations,complete:ecawin.complete,source:ecawin.source},
       statComSuccessions:STATCOM_SUCCESSIONS,
       cursus: cursus.rows.map((row) => mapCursus(row, programme.annee)),
       cursusSelections: cursusSelections.rows.map((row) => ({
@@ -1640,6 +1645,8 @@ function createScopeQuoVadisService({ database = db } = {}){
             publics:Array.isArray(fields.publicCodes) ? fields.publicCodes : preparation.cible_codes || [],
             themes:Array.isArray(fields.themes) ? fields.themes : [],
             specialisation:fields.specialisation || '',cursus:fields.cursus || '',
+            qualificationCodes:fields.qualificationCodes || [],cursusId:fields.cursusId || null,
+            ecawinActivityCode:fields.ecawinActivityCode || '',
             responsible:fields.responsibleLabel || '',location:fields.locationLabel || '',room:fields.roomLabel || '',
             lieuId:preparation.lieu_id || null,lieuLibre:preparation.lieu_libre || '',
             salleTheorieId:preparation.salle_theorie_id || null,
@@ -1681,6 +1688,9 @@ function createScopeQuoVadisService({ database = db } = {}){
             ...(Object.prototype.hasOwnProperty.call(fields,'statCom') ? { statCom:fields.statCom } : {}),
             ...(Object.prototype.hasOwnProperty.call(fields,'domain') ? { programmeDomain:fields.domain } : {}),
             ...(Array.isArray(fields.themes) ? { themes:fields.themes } : {}),
+            ...(Array.isArray(fields.qualificationCodes) ? {qualificationCodes:fields.qualificationCodes,specialisation:fields.specialisation || ''} : {}),
+            ...(Object.prototype.hasOwnProperty.call(fields,'cursusId') ? {cursusId:fields.cursusId,cursus:fields.cursus || ''} : {}),
+            ecawinActivityCode:fields.ecawinActivityCode || '',
             lineage:preparation.metadata.lineage || null,
             businessValidation:preparation.metadata.businessValidation || null,
             startsAt:Object.prototype.hasOwnProperty.call(fields,'date')
@@ -1897,6 +1907,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         }
       }
     }
+    result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || []);
     return result;
   }
 
@@ -3250,10 +3261,19 @@ function createScopeQuoVadisService({ database = db } = {}){
       throw new HttpError(422,'programme_domaine_invalide','Le domaine doit provenir du référentiel canonique.');
     }
     const statCom = String(body.statCom ?? inherited.statCom ?? source.statCom ?? '').trim();
-    if(source.externalActivity && statCom) throw new HttpError(422,'programme_externe_statcom','Une activité externe hors suivi SCOPE ne porte pas de Stat.Com.');
     if(source.manualCreation && existing && existing.metadata.businessValidation
       && statCom !== String(existing.statcom_code || '').trim())
       throw new HttpError(422,'programme_code_valide_immuable','Le Stat.Com d’une activité validée ne peut pas être modifié.');
+    const ecawinActivityCode = String(body.ecawinActivityCode ?? inherited.ecawinActivityCode ?? '').trim();
+    if(ecawinActivityCode && !ecawin.activityCodes.includes(ecawinActivityCode))
+      throw new HttpError(422,'programme_ecawin_code_invalide','Choisissez un code activité ECAwin officiel.');
+    if(ecawinActivityCode && statCom && !ecawin.isCompatible(ecawinActivityCode,statCom))
+      throw new HttpError(422,'programme_ecawin_association_invalide','Le code activité ECAwin et le Stat.Com sont incompatibles.');
+    const previousStatCom = String(inherited.statCom ?? source.statCom ?? '').trim();
+    if(statCom && (options.manualSource || statCom !== previousStatCom)
+      && !ecawin.activityForStatCom(statCom) && statCom !== 'EMSEA')
+      throw new HttpError(422,'programme_ecawin_statcom_non_qualifie','Cette association ECAwin n’est pas confirmée dans le référentiel disponible.');
+    if(source.externalActivity && statCom) throw new HttpError(422,'programme_externe_statcom','Une activité externe hors suivi SCOPE ne porte pas de Stat.Com.');
     if(source.manualCreation && body.validateBusiness === true && !source.externalActivity && !statCom)
       throw new HttpError(422,'programme_statcom_manquant','Choisissez un Stat.Com avant la validation métier.');
     if(statCom === 'EMSEA' && (String(source.statCom || '').trim() !== 'EMSEA'
@@ -3341,13 +3361,36 @@ function createScopeQuoVadisService({ database = db } = {}){
       responsibleLabel:moaResponsable || (responsable ? responsable.libelle : ''),
       updatedAt:new Date().toISOString()
     };
-    if(source.manualCreation){
-      const specialisation = String(body.specialisation ?? inherited.specialisation ?? '').trim();
-      const cursus = String(body.cursus ?? inherited.cursus ?? '').trim();
-      if(specialisation.length > 160 || cursus.length > 160)
-        throw new HttpError(422,'programme_qualification_invalide','Qualification ou spécialisation trop longue.');
-      planningFields.specialisation = specialisation;
-      planningFields.cursus = cursus;
+    planningFields.ecawinActivityCode = ecawinActivityCode;
+    planningFields.qualificationCodes = inherited.qualificationCodes || [];
+    planningFields.specialisation = inherited.specialisation || source.specialisation || '';
+    planningFields.cursusId = inherited.cursusId || null;
+    planningFields.cursus = inherited.cursus || source.cursus || '';
+    if(body.specialisation && String(body.specialisation) !== planningFields.specialisation)
+      throw new HttpError(422,'programme_qualification_invalide','Sélectionnez une qualification dans le référentiel.');
+    if(body.cursus && String(body.cursus) !== planningFields.cursus)
+      throw new HttpError(422,'programme_cursus_invalide','Sélectionnez un cursus configuré.');
+    if(Object.prototype.hasOwnProperty.call(body,'qualificationCodes')){
+      if(!Array.isArray(body.qualificationCodes) || body.qualificationCodes.some(code=>typeof code !== 'string'))
+        throw new HttpError(422,'programme_qualification_invalide','Sélection de qualifications invalide.');
+      const codes = [...new Set(body.qualificationCodes)];
+      const selected = codes.length ? await db.query(`select code,libelle from scope_competence_definitions
+        where actif is true and code=any($1::text[])`,[codes]) : {rows:[]};
+      if(selected.rows.length !== codes.length)
+        throw new HttpError(422,'programme_qualification_invalide','La qualification doit provenir du référentiel actif.');
+      planningFields.qualificationCodes = codes;
+      planningFields.specialisation = codes.map(code=>selected.rows.find(row=>row.code === code).libelle).join(' ; ');
+    }
+    if(Object.prototype.hasOwnProperty.call(body,'cursusId')){
+      const id = body.cursusId || null;
+      if(id && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new HttpError(422,'programme_cursus_invalide','Cursus invalide.');
+      const selected = id ? await db.query(`select cursus_id,code,libelle from scope_quo_vadis_cursus_definitions
+        where cursus_id=$1 and statut not in ('INACTIF','ARCHIVE')`,[id]) : {rows:[]};
+      if(id && !selected.rows[0]) throw new HttpError(422,'programme_cursus_invalide','Sélectionnez un cursus configuré.');
+      if(source.cursusCode && selected.rows[0]?.code !== source.cursusCode)
+        throw new HttpError(422,'programme_cursus_module_verrouille','Le cursus lié à ce module doit être conservé.');
+      planningFields.cursusId = id;
+      planningFields.cursus = selected.rows[0]?.libelle || '';
     }
     if(body.validateBusiness === true && oiCodes.some(code => legacy.includes(code))){
       throw new HttpError(422,'programme_oi_ambigu','Qualifier les anciens OI avant la validation métier.');

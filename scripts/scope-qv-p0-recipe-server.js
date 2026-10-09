@@ -37,7 +37,10 @@ const user = {sub:'local-qv-create',nip:'local-qv-create',displayName:'Recette l
 const types = {'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml',
   '.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const protectedTables = ['scope_quo_vadis_obligations','scope_evenements','scope_participations',
-  'scope_affectations','scope_attendus','scope_qv_publication_links','scope_event_code_sequences','scope_event_code_allocations','scope_quo_vadis_calendar_days'];
+  'scope_affectations','scope_attendus','scope_qv_publication_links','scope_event_code_sequences','scope_event_code_allocations','scope_quo_vadis_calendar_days',
+  'scope_personnes','scope_person_qualifications','scope_competence_definitions',
+  'scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps',
+  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes'];
 const json = (response,status,body) => {
   response.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
   response.end(JSON.stringify(body));

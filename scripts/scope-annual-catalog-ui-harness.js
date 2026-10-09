@@ -36,6 +36,7 @@ function createCatalogUiHarness(options = {}){
       __SCOPE_UI_TEST_HOOKS__:true,ScopeUiLogic:logic,ScopeCharts:null,CurrentRoles:['ADMINISTRATEUR'],CurrentPermissions:permissions,
       MonitoringRBAC:{ has(permission){ return allowed.has(permission); } },location,history:{ replaceState(){} },
       ScopeApi: options.client ? { createHttpClient:() => options.client } : undefined,
+      ScopeEcawin:require('../assets/js/scope-ecawin'),
       addEventListener(){},scrollTo(){},document,localStorage:storage,sessionStorage:storage
     }
   };

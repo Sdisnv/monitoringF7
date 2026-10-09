@@ -107,7 +107,9 @@ function hooks(sessionMe, options = {}) {
     env.api.render();
     const html = env.root.innerHTML;
     assert.ok(html.includes('<h1>Connexion</h1>'));
-    assert.ok(html.includes('Accès réservé au personnel autorisé du<br>SDIS régional du Nord vaudois.'));
+    assert.ok(html.includes('Accédez à votre espace de travail avec vos identifiants personnels.'));
+    assert.ok(!html.includes('scope-login-lock'));
+    assert.ok(!html.includes('scope-login-security'));
     assert.ok(html.includes('Se connecter à SCOPE'));
     assert.ok(html.includes('mailto:info@sdisnv.ch'));
     assert.ok(html.includes('info@sdisnv.ch'));

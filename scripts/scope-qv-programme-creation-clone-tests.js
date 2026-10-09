@@ -8,7 +8,10 @@ const DATABASE = 'scope_qv_2027_recipe_20261006';
 const PORT = Number(process.env.SCOPE_QV_CLONE_PORT || 55432);
 const TABLES = ['scope_quo_vadis_obligations','scope_evenements','scope_participations',
   'scope_affectations','scope_attendus','scope_qv_publication_links',
-  'scope_event_code_allocations','scope_event_code_sequences','scope_quo_vadis_calendar_days'];
+  'scope_event_code_allocations','scope_event_code_sequences','scope_quo_vadis_calendar_days',
+  'scope_personnes','scope_person_qualifications','scope_competence_definitions',
+  'scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps',
+  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes'];
 
 async function fingerprint(client, table, where = '') {
   const { rows } = await client.query(`select count(*)::integer as count,
@@ -40,15 +43,34 @@ async function run() {
     const baseRows = first.canonicalProgramme.rows.filter((row) => !row.external && !row.jspDirectionReconciliation
       && row.cursusReconciliation?.status !== 'SUPERSEDED_BY_VALIDATED_MODULE');
     assert.equal(baseRows.length,847);
+    const moduleRow = baseRows.find(row=>row.cursusStepId && row.cursusCode);
+    assert.ok(moduleRow,'Configured cursus module required');
+    const otherCursus = first.cursusSelections.find(row=>row.statut === 'ACTIF' && row.cursusId !== moduleRow.cursusId);
+    assert.ok(otherCursus);
+    await assert.rejects(service.updateProgrammePreparation(moduleRow.id,{year:2027,
+      activityLabel:moduleRow.activityLabel || moduleRow.label,statCom:moduleRow.statCom,
+      oiCodes:require('../assets/js/scope-ui-logic').qvNormalizeOiSelections(moduleRow,moduleRow.oiSelections || moduleRow.ois || []).codes,
+      publicCodes:moduleRow.publics || [],status:'A_PLANIFIER',date:null,startTime:null,endTime:null,cursusId:otherCursus.cursusId}),
+      error=>error.error === 'programme_cursus_module_verrouille');
     const originalOthers = await fingerprint(client,'scope_quo_vadis_obligations');
     const label = 'TEST RECETTE QV CREATION PR SANS OI';
     const input = {year:2027,activityLabel:label,domain:'F3',statCom:'011PR',oiCodes:[],
-      publicCodes:['PR:2'],specialisation:'PR',cursus:'',date:'2027-06-15',
+      publicCodes:['PR:2'],qualificationCodes:['PAPR'],ecawinActivityCode:'EXERCI',date:'2027-06-15',
       startTime:'14:00',endTime:'16:00',status:'PROPOSE'};
     await assert.rejects(service.createProgrammePreparation({...input,endTime:'13:00'}),
       (error) => error.error === 'programme_horaire_invalide');
     await assert.rejects(service.createProgrammePreparation({...input,date:'2028-06-15'}),
       (error) => error.error === 'programme_date_annee_invalide');
+    await assert.rejects(service.createProgrammePreparation({...input,ecawinActivityCode:'COURS'}),
+      error=>error.error === 'programme_ecawin_association_invalide');
+    await assert.rejects(service.createProgrammePreparation({...input,ecawinActivityCode:'INVENTED'}),
+      error=>error.error === 'programme_ecawin_code_invalide');
+    await assert.rejects(service.createProgrammePreparation({...input,qualificationCodes:['INVENTED']}),
+      error=>error.error === 'programme_qualification_invalide');
+    await assert.rejects(service.createProgrammePreparation({...input,specialisation:'Saisie libre'}),
+      error=>error.error === 'programme_qualification_invalide');
+    await assert.rejects(service.createProgrammePreparation({...input,cursusId:'invented'}),
+      error=>error.error === 'programme_cursus_invalide');
     const created = await service.createProgrammePreparation(input);
     assert.equal(created.updated,true);
     assert.match(created.itemId,/^QV27:MANUAL:[0-9a-f-]{36}$/);

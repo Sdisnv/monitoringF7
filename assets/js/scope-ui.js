@@ -2282,7 +2282,8 @@
       state.authConfig = {
         methods: Array.isArray(payload.methods) ? payload.methods : [],
         localEnabled: payload.localEnabled === true,
-        oktaEnabled: payload.oktaEnabled === true
+        oktaEnabled: payload.oktaEnabled === true,
+        turnstile: payload.turnstile || {enabled:false}
       };
     } catch (_error) {
       state.authConfig = { methods: [], localEnabled: false, oktaEnabled: false, unavailable: true };
@@ -2301,6 +2302,11 @@
       render();
       return;
     }
+    const turnstileToken = state.turnstileToken || '';
+    if(authConfig().turnstile?.enabled && !turnstileToken){
+      state.authError = {title:'Connexion',message:'La vérification de connexion doit être renouvelée.'};
+      render();return;
+    }
     state.authLoginBusy = true;
     state.authError = null;
     render();
@@ -2309,12 +2315,14 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ nip, password }),
+        body: JSON.stringify({ nip, password, turnstileToken }),
         cache: 'no-store'
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload || payload.ok !== true) {
-        state.authError = { title: 'Connexion refusée', message: 'Identifiant ou mot de passe incorrect.' };
+        state.authError = { title: 'Connexion refusée', message: response.status === 429
+          ? 'Trop de tentatives de connexion. Réessayez dans quelques instants.' : String(payload?.error || '').startsWith('turnstile_')
+          ? (payload.message || 'La vérification de connexion doit être renouvelée.') : 'Identifiant ou mot de passe incorrect.' };
         return;
       }
       if (payload.accessToken && window.MonitoringApiClient && typeof window.MonitoringApiClient.setAccessToken === 'function') {
@@ -2339,11 +2347,12 @@
     const cfg = authConfig();
     const localForm = cfg.localEnabled ? `
       <form class="scope-login-form" id="scope-local-login" autocomplete="on">
-        <label for="scope-login-nip">Identifiant</label>
+        <label for="scope-login-nip">Identifiant (NIP)</label>
         <input id="scope-login-nip" name="nip" autocomplete="username" required>
         <label for="scope-login-password">Mot de passe</label>
         <input id="scope-login-password" name="password" type="password" autocomplete="current-password" required>
-        <button class="scope-login-submit" type="submit"${state.authLoginBusy ? ' disabled' : ''}>${state.authLoginBusy ? 'Connexion...' : 'Se connecter'}</button>
+        ${cfg.turnstile?.enabled ? '<div id="scope-turnstile-widget"></div>' : ''}
+        <button id="scope-local-login-submit" class="scope-login-submit" type="submit"${state.authLoginBusy || cfg.turnstile?.enabled ? ' disabled' : ''}>${state.authLoginBusy ? 'Connexion...' : 'Se connecter'}</button>
       </form>` : '';
     const oktaLabel = cfg.localEnabled ? 'Connexion Okta' : 'Se connecter à SCOPE';
     const oktaLink = cfg.oktaEnabled ? `<a class="scope-login-submit scope-login-submit-secondary" id="scope-okta-login" href="${escapeHtml(loginHref)}" data-auth-provider="okta">${oktaLabel}</a>` : '';
@@ -2415,14 +2424,8 @@
           <img class="scope-login-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
           <div class="scope-login-center">
             <div class="scope-login-card">
-              <div class="scope-login-lock" aria-hidden="true">${navIcon('lock')}</div>
               <h1>Connexion</h1>
-              <p class="scope-login-subtitle">SCOPE — Suivi et analyse de l’activité</p>
-              <div class="scope-login-divider" aria-hidden="true"></div>
-              <div class="scope-login-security">
-                <span aria-hidden="true">${navIcon('vigilance')}</span>
-                <p>Accès réservé au personnel autorisé du<br>SDIS régional du Nord vaudois.</p>
-              </div>
+              <p class="scope-login-subtitle">Accédez à votre espace de travail avec vos identifiants personnels.</p>
               ${alert}
               ${status}
             </div>
@@ -10787,6 +10790,7 @@
   }
 
   function qvSortHeaderLines(key, lines) {
+    if(key === 'eventCode') lines = ['Code','SCOPE'];
     const sort = state.quoVadisSort || {};
     const mark = sort.key === key ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : '';
     return `<button type="button" class="scope-table-sort-control qv-sort-header qv-sort-header-lines" data-qv-sort="${escapeHtml(key)}">${lines.map((line, index) => `<span>${escapeHtml(line + (index === lines.length - 1 ? mark : ''))}</span>`).join('')}</button>`;
@@ -12272,13 +12276,32 @@
     return code ? `${code}${label ? ` — ${label}` : ''}` : '—';
   }
 
-  function qvProgrammeStatComOptions(qv,row){
+  function qvProgrammeStatComOptions(qv,row,activityCode = row.ecawinActivityCode || ''){
     const date = qvProgrammeDate(row) || `${qv.programme.annee}-01-01`;
-    const values = (qv.statComCodes || []).filter(item => item.active !== false && (!item.validFrom || item.validFrom <= date) && (!item.validTo || item.validTo >= date));
+    const values = (qv.statComCodes || []).filter(item => item.active !== false && item.code !== '010JY3'
+      && (!item.validFrom || item.validFrom <= date) && (!item.validTo || item.validTo >= date)
+      && (window.ScopeEcawin?.activityForStatCom(item.code) || item.code === 'EMSEA')
+      && (!activityCode || window.ScopeEcawin?.isCompatible(activityCode,item.code)));
     const current = String(row.statCom || '');
     const unknown = current && !values.some(item => item.code === current);
     const codeLabel = (code, label) => `${escapeHtml(code)}${'&nbsp;'.repeat(Math.max(1, 9 - code.length))}${escapeHtml(label)}`;
-    return `<option value="">—</option>${unknown ? `<option value="${escapeHtml(current)}" selected disabled>${codeLabel(current, 'À contrôler')}</option>` : ''}${values.map(item => `<option value="${escapeHtml(item.code)}" ${item.code === current ? 'selected' : ''}>${codeLabel(item.code, item.label || '')}</option>`).join('')}`;
+    return `<option value="">—</option>${unknown ? `<option value="${escapeHtml(current)}" selected disabled>${codeLabel(current, 'Valeur conservée')}</option>` : ''}${values.map(item => `<option value="${escapeHtml(item.code)}" ${item.code === current ? 'selected' : ''}>${codeLabel(item.code, item.label || '')}</option>`).join('')}`;
+  }
+
+  function qvProgrammeQualificationControl(qv,row){
+    const selected = row.qualificationCodes || [];
+    const options = qv.qualifications || [];
+    const summary = selected.map(code=>options.find(item=>item.code === code)?.label || code).join(' ; ')
+      || row.specialisation || '—';
+    return `<div class="qv-programme-choice-field"><span id="qv-qualification-label">Qualification / spécialisation</span><details class="qv-programme-choice-menu"><summary id="qv-programme-qualification-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-qualification-search" type="search" aria-label="Rechercher une qualification" placeholder="Rechercher"><div id="qv-programme-specialisation" class="qv-programme-choice-list" role="group" aria-labelledby="qv-qualification-label"><fieldset>${options.map(item=>`<label><input type="checkbox" value="${escapeHtml(item.code)}" ${selected.includes(item.code) ? 'checked' : ''}><span>${escapeHtml(item.label)}</span></label>`).join('')}</fieldset></div></div></details></div>`;
+  }
+
+  function qvProgrammeCursusOptions(qv,row){
+    const choices = (qv.cursusSelections || []).filter(item=>!item.statut || item.statut === 'ACTIF');
+    const current = row.cursusId || '';
+    const historical = (!current && row.cursus) || (current && !choices.some(item=>item.cursusId === current))
+      ? `<option value="${escapeHtml(current)}" selected disabled>${escapeHtml(row.cursus || (qv.cursusSelections || []).find(item=>item.cursusId === current)?.libelle || 'Référence conservée')} · valeur conservée</option>` : '';
+    return `<option value="">—</option>${historical}${choices.map(item=>`<option value="${escapeHtml(item.cursusId)}" ${item.cursusId === current ? 'selected' : ''}>${escapeHtml(item.libelle)}</option>`).join('')}`;
   }
 
   function qvProgrammeFicheOccurrenceLabel(row) {
@@ -12611,7 +12634,10 @@
       <fieldset class="qv-programme-edit-grid" ${canPrepare ? '' : 'disabled'}>
         <label class="qv-programme-edit-half"><span>Activité</span><input id="qv-programme-activity" type="text" maxlength="240" value="${escapeHtml(row.activityLabel || row.label)}"></label>
         <label class="qv-programme-edit-half"><span>Thème</span><input id="qv-programme-themes" type="text" maxlength="1320" value="${escapeHtml((row.themes || []).join(' ; '))}"></label>
-        <label><span>Qualification / spécialisation</span><input id="qv-programme-specialisation" type="text" maxlength="160" value="${escapeHtml(row.specialisation || '')}" ${row.manualCreation ? '' : 'readonly'}></label><label><span>Cursus</span><input id="qv-programme-cursus" type="text" maxlength="160" value="${escapeHtml(row.cursus || '')}" ${row.manualCreation ? '' : 'readonly'}></label><label><span>Code d’activité</span><input type="text" value="${escapeHtml(creating ? 'Attribué à l’enregistrement' : qvProgrammeEventCodeLabel(row))}" readonly></label><label><span>Année du programme</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
+        ${qvProgrammeQualificationControl(qv,row)}
+        <label><span>Cursus</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
+        <label><span>Code activité ECAwin</span><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>
+        <label><span>Année du programme</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
         <label class="qv-programme-edit-full"><span>Suivi SCOPE</span><span class="qv-programme-keep-lieu"><input id="qv-programme-external" type="checkbox" ${row.externalActivity ? 'checked' : ''} ${creating ? '' : 'disabled'}>Activité externe hors suivi SCOPE</span></label>
         <div class="qv-programme-date-field"><label for="qv-programme-date">Date</label><div class="qv-programme-date-control"><button id="qv-programme-date-picker" type="button" aria-label="Ouvrir le calendrier" aria-expanded="false" aria-controls="qv-programme-calendar">${qvCockpitIcon('calendar')}</button><input id="qv-programme-date" type="text" inputmode="numeric" maxlength="10" pattern="[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}" placeholder="jj.mm.aaaa" value="${escapeHtml(qvProgrammeDateInputValue(row))}"></div><div id="qv-programme-calendar" class="qv-programme-calendar" data-month="${escapeHtml((qvProgrammeDate(row) || `${qvProgrammeYear()}-01-01`).slice(0,7))}" hidden>${qvProgrammeCalendarHtml(qvProgrammeDate(row))}</div></div>
         <label><span>Début</span><span class="qv-programme-time-control">${scopeInlineIcon('watch')}<input id="qv-programme-start" type="time" step="60" value="${escapeHtml(qvTime(row.startsAt))}"></span></label>
@@ -12634,7 +12660,7 @@
     return `<div class="qv-programme-detail${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}">
       <section class="scope-card qv-programme-summary">
         <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité 2027' : row.activityLabel || row.label)}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? '<button type="button" class="scope-btn" id="qv-programme-save">Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate">Enregistrer et valider</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan">Enregistrer et planifier</button>' : ''}</div></div>
-        <div class="qv-programme-info-grid"><section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('file')}</span>Informations de l’événement</h3><dl class="qv-definition-list"><dt>Code activité</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(qvProgrammeStatComDisplay(row))}</dd><dt>Domaine</dt><dd>${escapeHtml(qvProgrammeDomainDisplay(currentDomain))}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Thème / cycle</dt><dd>${escapeHtml(L.qvProgrammeVisibleThemes(row).join(' · ') || '—')}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
+        <div class="qv-programme-info-grid"><section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('file')}</span>Informations de l’événement</h3><dl class="qv-definition-list"><dt>Code SCOPE</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(qvProgrammeStatComDisplay(row))}</dd><dt>Domaine</dt><dd>${escapeHtml(qvProgrammeDomainDisplay(currentDomain))}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Thème / cycle</dt><dd>${escapeHtml(L.qvProgrammeVisibleThemes(row).join(' · ') || '—')}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
           <section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('calendar')}</span>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(qvProgrammeLocationLabel(row))}</dd><dt>Salle</dt><dd>${escapeHtml(qvProgrammeRoomLabel(row))}</dd><dt>Responsable</dt><dd>${escapeHtml(qvProgrammeResponsableLabel(row))}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
         <details class="qv-programme-reference" open><summary><span class="qv-programme-reference-icon">${qvCockpitIcon('info')}</span><strong>Règle appliquée · ${escapeHtml(qvProgrammeProvenance(row))}</strong><span class="qv-programme-reference-chevron" aria-hidden="true">⌄</span></summary><div class="qv-programme-reference-body"><p>${escapeHtml(qvProgrammeAppliedRule(row))}</p><button type="button" class="scope-btn" id="qv-programme-full-rule" aria-expanded="false" aria-controls="qv-programme-full-rule-content">Voir la règle complète</button><div id="qv-programme-full-rule-content" class="qv-programme-full-rule" hidden>${qvProgrammeFullRuleHtml(qv,row)}</div></div></details>
         ${row.conduiteMinutesPerParticipant ? `<p class="qv-programme-workflow-note">Conduite DPS : ${escapeHtml(String(row.conduiteMinutesPerParticipant))} minutes de conduite par conducteur concerné.</p>` : ''}
@@ -13783,6 +13809,11 @@
   }
 
   function render() {
+    if(state.turnstileWidgetId != null && window.turnstile){
+      window.turnstile.remove(state.turnstileWidgetId);
+      state.turnstileWidgetId = null;
+      state.turnstileToken = '';
+    }
     if (state.authChecking || state.needOkta) {
       root.classList.toggle('is-nav-open', false);
       root.innerHTML = renderLoginScreen();
@@ -13843,6 +13874,39 @@
 
   function bind() {
     document.getElementById('scope-local-login')?.addEventListener('submit', submitLocalLogin);
+    const turnstileConfig = authConfig().turnstile;
+    const turnstileHost = document.getElementById('scope-turnstile-widget');
+    if(turnstileHost && turnstileConfig?.enabled){
+      const mount = () => {
+        if(!turnstileHost.isConnected || !window.turnstile || state.turnstileWidgetId != null) return;
+        const receive = token => {
+          state.turnstileToken = token || '';
+          const button = document.getElementById('scope-local-login-submit');
+          if(button) button.disabled = state.authLoginBusy || !token;
+        };
+        const unavailable = () => {
+          receive('');ScopeFeedback.notify('error','Connexion','La vérification de connexion est indisponible.',{preserveForm:true});
+        };
+        try{
+          state.turnstileWidgetId = window.turnstile.render(turnstileHost,{
+            sitekey:turnstileConfig.siteKey,action:turnstileConfig.action || undefined,appearance:'interaction-only',
+            callback:receive,'expired-callback':()=>receive(''),'error-callback':unavailable
+          });
+        }catch(_error){unavailable();}
+      };
+      if(!turnstileConfig.configured){
+        ScopeFeedback.notify('error','Connexion','La vérification de connexion est indisponible.',{preserveForm:true});
+      }else if(window.turnstile) mount();
+      else {
+        let script = document.getElementById('scope-turnstile-script');
+        if(!script){
+          script = document.createElement('script');script.id = 'scope-turnstile-script';
+          script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';script.async = true;
+          script.addEventListener('load',mount);document.head.appendChild(script);
+          script.addEventListener('error',()=>ScopeFeedback.notify('error','Connexion','La vérification de connexion est indisponible.',{preserveForm:true}));
+        }else script.addEventListener('load',mount,{once:true});
+      }
+    }
     document.getElementById('scope-auth-config-retry')?.addEventListener('click',async () => {
       await loadAuthConfig();
       if (await ensureLiveSession()) await onRoute();
@@ -14441,12 +14505,32 @@
       if (event.currentTarget.checked) statCom.value = '';
       statCom.disabled = event.currentTarget.checked;
     });
+    document.getElementById('qv-programme-specialisation')?.addEventListener('change',event=>{
+      const field = event.currentTarget;
+      field.dataset.dirty = 'true';
+      const codes = [...field.querySelectorAll('input:checked')].map(input=>input.value);
+      const summary = document.getElementById('qv-programme-qualification-summary');
+      if(summary) summary.textContent = codes.map(code=>(quoVadisData().qualifications || []).find(item=>item.code === code)?.label || code).join(' ; ') || '—';
+    });
+    document.getElementById('qv-programme-cursus')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty = 'true';});
+    document.getElementById('qv-programme-ecawin')?.addEventListener('change',event=>{
+      event.currentTarget.dataset.dirty = 'true';
+      const statCom = document.getElementById('qv-programme-statcom');
+      if(!statCom) return;
+      const current = statCom.value;
+      statCom.innerHTML = qvProgrammeStatComOptions(quoVadisData(),{statCom:current},event.currentTarget.value);
+      if(event.currentTarget.value && !window.ScopeEcawin.isCompatible(event.currentTarget.value,current)) statCom.value = '';
+    });
+    document.getElementById('qv-programme-statcom')?.addEventListener('change',event=>{
+      const activity = document.getElementById('qv-programme-ecawin');
+      if(activity){activity.value = window.ScopeEcawin.activityForStatCom(event.currentTarget.value);activity.dataset.dirty = 'true';}
+    });
     document.querySelectorAll('.qv-programme-choice-menu').forEach((menu) => {
       menu.addEventListener('toggle',() => {
         if(menu.open) positionProgrammePopups();
       });
     });
-    [['qv-programme-oi-search','qv-programme-oi'],['qv-programme-public-search','qv-programme-public']].forEach(([searchId,listId]) => {
+    [['qv-programme-oi-search','qv-programme-oi'],['qv-programme-public-search','qv-programme-public'],['qv-programme-qualification-search','qv-programme-specialisation']].forEach(([searchId,listId]) => {
       document.getElementById(searchId)?.addEventListener('input',(event) => {
         const query = qvNormalizeSearch(event.target.value || '');
         document.getElementById(listId)?.querySelectorAll('fieldset').forEach((group) => {
@@ -14512,11 +14596,13 @@
         salleTheorieId: document.getElementById('qv-programme-salle')?.value || null,
         responsableFonctionCode: document.getElementById('qv-programme-responsable')?.value || null
       };
-      if (creating || document.getElementById('qv-programme-specialisation')) {
-        payload.specialisation = document.getElementById('qv-programme-specialisation')?.value || '';
-        payload.cursus = document.getElementById('qv-programme-cursus')?.value || '';
-        payload.externalActivity = document.getElementById('qv-programme-external')?.checked === true;
-      }
+      if(creating || document.getElementById('qv-programme-specialisation')?.dataset.dirty === 'true')
+        payload.qualificationCodes = selected('qv-programme-specialisation');
+      if(creating || document.getElementById('qv-programme-cursus')?.dataset.dirty === 'true')
+        payload.cursusId = document.getElementById('qv-programme-cursus')?.value || null;
+      if(creating || document.getElementById('qv-programme-ecawin')?.dataset.dirty === 'true')
+        payload.ecawinActivityCode = document.getElementById('qv-programme-ecawin')?.value || '';
+      if(creating) payload.externalActivity = document.getElementById('qv-programme-external')?.checked === true;
       state.quoVadisBusy = true;
       const saveButtons = ['qv-programme-save','qv-programme-validate','qv-programme-plan']
         .map((buttonId) => document.getElementById(buttonId)).filter(Boolean);
@@ -18797,6 +18883,7 @@
       const params = new URLSearchParams(location.search.replace(/^\?/, ''));
       if (params.get('idle') === '1') state.idleExpired = true;
     } catch (_err) { /* ignore */ }
+    const hadSession = Boolean(state.session || state.idleExpired || window.MonitoringApiClient?.getAccessToken?.());
     if (!state.authConfig) await loadAuthConfig();
     try {
       const data = await client.sessionMe();
@@ -18824,7 +18911,7 @@
     } catch (error) {
       const info = presentFriendlyError(L.friendlyError(error));
       clearLocalAuthState();
-      state.authError = info;
+      state.authError = !hadSession && Number(error.status) === 401 ? null : info;
       if (!state.authConfig) await loadAuthConfig();
       return false;
     }
