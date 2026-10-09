@@ -11764,3 +11764,28 @@ body.scope-pdf-open { overflow: hidden; }
 .annual-catalog-table th:nth-child(10){width:150px}
 .annual-catalog-table td:nth-child(2) strong,.annual-catalog-table td:nth-child(5) strong{display:block}
 .annual-activity-kind,.annual-catalog-table td:nth-child(5) span{display:block;margin-top:3px;color:#6b737d;font-size:11px}
+
+.qv-programme-detail{padding-bottom:min(35vh,240px)}
+.qv-programme-preparation .qv-programme-edit-full{grid-column:1/-1}
+.qv-programme-preparation :is(input,select,summary){scroll-margin-block:80px}
+.qv-programme-choice-menu .qv-programme-choice-list{max-height:min(280px,45vh);overscroll-behavior:contain}
+.qv-programme-head-actions{flex-wrap:wrap}
+.qv-pdf-variant{height:38px;max-width:210px;padding:0 10px;border:1px solid #cbd3dc;border-radius:3px;background:#fff;color:inherit;font:inherit;font-size:13px}
+
+/* ORION Feedback UI v1: centered success surface, shared by all notification types. */
+.scope-notification-layer{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(17,24,39,.22);pointer-events:none;animation:scopeNotificationIn 150ms ease-out both}
+.scope-notification-card{position:relative;box-sizing:border-box;width:min(400px,100%);max-height:calc(100vh - 48px);overflow:auto;padding:28px 28px 26px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;color:#22262a;box-shadow:0 4px 20px rgba(0,0,0,.06);text-align:center;pointer-events:auto}
+.scope-notification-card h3{margin:12px 0 8px;font-size:16px;font-weight:600;line-height:1.35;letter-spacing:0}
+.scope-notification-card p{margin:0;color:#5b6470;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.scope-notification-icon{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:50%;background:rgba(2,119,189,.12);color:#0277bd}
+.scope-notification-icon svg{display:block;width:26px;height:26px}
+.scope-notification-layer.is-success .scope-notification-icon{background:rgba(46,125,50,.12);color:#2e7d32}
+.scope-notification-layer.is-warning .scope-notification-icon{background:rgba(239,108,0,.12);color:#ef6c00}
+.scope-notification-layer.is-error .scope-notification-icon{background:rgba(198,40,40,.12);color:#c62828}
+.scope-notification-close{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;color:#9aa3af;font-size:20px;cursor:pointer}
+.scope-notification-close:hover{background:#f7f8fa;color:#22262a}
+.scope-notification-close:focus-visible{outline:2px solid #1565c0;outline-offset:2px}
+.scope-notification-card>.scope-btn{margin-top:18px}
+@keyframes scopeNotificationIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.scope-notification-layer{animation:none}}
+@media print{.scope-notification-layer{display:none}}

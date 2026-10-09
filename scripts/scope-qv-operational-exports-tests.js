@@ -103,6 +103,30 @@ test('le service refuse une séance hors du mois déclaré', async () => {
   await assert.rejects(generateQuoVadisProgrammeReport(null, { ...exported, rows: [foreign] }, claims), /mois sélectionné/);
 });
 
+test('la liste compacte contient dix séances CODIR sur une page sans panneaux mensuels', async () => {
+  const { programme, hooks } = await source();
+  const exported = hooks.quoVadisProgrammeExport(programme, {q:'Codir'});
+  const rows = exported.rows;
+  assert.equal(rows.length,10);
+  const report = await generateQuoVadisProgrammeReport(null,{rows:rows.slice().reverse(),meta:{...exported.meta,mode:'compact'}},claims);
+  assert.equal(report.filename,'SCOPE_QUO_VADIS_2027_Liste_compacte.pdf');
+  assert.equal(report.pages,1);
+  assert.match(pdfInfo(report.buffer),/841\.89 x 595\.28 pts \(A4\)/);
+  const text = pdfText(report.buffer);
+  assert.match(text,/Liste compacte/);
+  assert.equal((text.match(/Séance Codir/g) || []).length,10);
+  assert.doesNotMatch(text,/Vacances scolaires|Jours fériés|— \d+ événements/);
+  assert.ok(text.indexOf(rows[0].date) < text.indexOf(rows[9].date));
+});
+
+test('les noms des plannings annuels et mensuels suivent leur année et leur mois', async () => {
+  const { programme,hooks } = await source();
+  const annual = hooks.quoVadisProgrammeExport(programme,{q:'Exercice PR-ABC'});
+  assert.equal((await generateQuoVadisProgrammeReport(null,annual,claims)).filename,'SCOPE_QUO_VADIS_2027_Planning_annuel.pdf');
+  const monthly = hooks.quoVadisProgrammeExport(programme,{month:'2027-04',q:'Exercice PR-ABC'},'mensuelle');
+  assert.equal((await generateQuoVadisProgrammeReport(null,monthly,claims)).filename,'SCOPE_QUO_VADIS_2027-04_Planning_mensuel.pdf');
+});
+
 test('le calendrier PDF suit l’année exportée et signale les périodes scolaires inconnues', async () => {
   const { programme, hooks } = await source();
   const exported = hooks.quoVadisProgrammeExport(programme, { month: '2027-04', period: 'mois', q: 'Exercice PR-ABC' }, 'mensuelle');

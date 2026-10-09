@@ -2032,10 +2032,13 @@ class ScopePdfRenderer {
 
   renderQuoVadisProgramme(rows, exportMeta){
     const meta = exportMeta || {};
-    const sourceRows = Array.isArray(rows) ? rows : [];
+    const sourceRows = Array.isArray(rows) ? rows.slice() : [];
+    if(meta.mode === 'compact') sourceRows.sort((a,b) => String(a.dateIso).localeCompare(String(b.dateIso))
+      || String(a.horaire).localeCompare(String(b.horaire)) || String(a.activite).localeCompare(String(b.activite),'fr'));
     this.doc.y = HEADER_H + 12;
     this.iconHeading('plain', `QUO VADIS ${meta.year || 2027}`, 13, { after: 1 });
-    this.para(meta.mode === 'monthly' ? `Planning mensuel · ${meta.periodLabel || meta.monthKey}` : 'Planning annuel', { size: 10, bold: true });
+    this.para(meta.mode === 'monthly' ? `Planning mensuel · ${meta.periodLabel || meta.monthKey}`
+      : meta.mode === 'compact' ? 'Liste compacte' : 'Planning annuel', { size: 10, bold: true });
     this.doc.y += 6;
     this.qvExportMeta([
       { label: 'Généré le', value: formatDisplayDateTime(this.meta.generatedAt || new Date().toISOString()) },
@@ -2058,7 +2061,7 @@ class ScopePdfRenderer {
     let lastMonth = '';
     sourceRows.forEach((row) => {
       const key = row.dateIso.slice(0, 7) || row.monthKey;
-      if(counts.has(key) && key !== lastMonth){
+      if(meta.mode !== 'compact' && counts.has(key) && key !== lastMonth){
         items.push({ type: 'month', monthKey: key, count: counts.get(key) });
         lastMonth = key;
       }
