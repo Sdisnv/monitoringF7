@@ -121,6 +121,8 @@
     authChecking: true,
     authError: null,
     needOkta: true,
+    authConfig: null,
+    authLoginBusy: false,
     idleWarn: false,
     idleExpired: false,
     personCount: null,
@@ -2240,7 +2242,66 @@
     if (state.idleExpired) return 'Votre session a expiré après une période d’inactivité.';
     if (state.authError && state.authError.message) return state.authError.message;
     if (params.get('authError') === '1') return 'La session SCOPE n’a pas pu être ouverte. Réessayez de vous connecter.';
-    return 'Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.';
+    return 'Connectez-vous avec vos identifiants autorisés pour accéder à SCOPE.';
+  }
+
+  function authConfig() {
+    return state.authConfig || { localEnabled: false, oktaEnabled: true, methods: ['okta'] };
+  }
+
+  async function loadAuthConfig() {
+    try {
+      const response = await fetch('/auth/config', { method: 'GET', credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload || payload.ok !== true) throw new Error('auth_config_unavailable');
+      state.authConfig = {
+        methods: Array.isArray(payload.methods) ? payload.methods : [],
+        localEnabled: payload.localEnabled === true,
+        oktaEnabled: payload.oktaEnabled === true
+      };
+    } catch (_error) {
+      state.authConfig = { methods: ['okta'], localEnabled: false, oktaEnabled: true };
+    }
+    return state.authConfig;
+  }
+
+  async function submitLocalLogin(event) {
+    event.preventDefault();
+    if (state.authLoginBusy) return;
+    const form = event.currentTarget;
+    const nip = String(form.elements.nip && form.elements.nip.value || '').trim();
+    const password = String(form.elements.password && form.elements.password.value || '');
+    if (!nip || !password) {
+      state.authError = { title: 'Connexion refusée', message: 'Identifiant ou mot de passe incorrect.' };
+      render();
+      return;
+    }
+    state.authLoginBusy = true;
+    state.authError = null;
+    render();
+    try {
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ nip, password }),
+        cache: 'no-store'
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload || payload.ok !== true) {
+        state.authError = { title: 'Connexion refusée', message: 'Identifiant ou mot de passe incorrect.' };
+        return;
+      }
+      if (payload.accessToken && window.MonitoringApiClient && typeof window.MonitoringApiClient.setAccessToken === 'function') {
+        window.MonitoringApiClient.setAccessToken(payload.accessToken);
+      }
+      await ensureLiveSession();
+    } catch (_error) {
+      state.authError = { title: 'Connexion indisponible', message: 'La connexion n’a pas pu être validée. Réessayez dans quelques instants.' };
+    } finally {
+      state.authLoginBusy = false;
+      render();
+    }
   }
 
   function renderLoginScreen() {
@@ -2250,9 +2311,20 @@
     const loginHref = L.oktaLoginHref(requested);
     const params = new URLSearchParams(location.search.replace(/^\?/, ''));
     const reason = params.get('authError') === '1' ? params.get('reason') || 'callback' : '';
+    const cfg = authConfig();
+    const localForm = cfg.localEnabled ? `
+      <form class="scope-login-form" id="scope-local-login" autocomplete="on">
+        <label for="scope-login-nip">Identifiant</label>
+        <input id="scope-login-nip" name="nip" autocomplete="username" required>
+        <label for="scope-login-password">Mot de passe</label>
+        <input id="scope-login-password" name="password" type="password" autocomplete="current-password" required>
+        <button class="scope-login-submit" type="submit"${state.authLoginBusy ? ' disabled' : ''}>${state.authLoginBusy ? 'Connexion...' : 'Se connecter'}</button>
+      </form>` : '';
+    const oktaLabel = cfg.localEnabled ? 'Connexion Okta' : 'Se connecter à SCOPE';
+    const oktaLink = cfg.oktaEnabled ? `<a class="scope-login-submit scope-login-submit-secondary" id="scope-okta-login" href="${escapeHtml(loginHref)}" data-auth-provider="okta">${oktaLabel}</a>` : '';
     const status = state.authChecking
       ? `<div class="scope-login-status" role="status">Vérification de la session...</div>`
-      : `<a class="scope-login-submit" id="scope-okta-login" href="${escapeHtml(loginHref)}" data-auth-provider="okta">Se connecter à SCOPE</a>`;
+      : `${localForm}${oktaLink || (!localForm ? '<div class="scope-login-status" role="status">Aucune méthode de connexion n’est active.</div>' : '')}`;
     const alert = reason || state.authError
       ? `<div class="scope-login-alert" role="alert">${escapeHtml(reason ? `Connexion interrompue : ${reason}` : loginMessage())}</div>`
       : '';
@@ -13725,6 +13797,7 @@
   }
 
   function bind() {
+    document.getElementById('scope-local-login')?.addEventListener('submit', submitLocalLogin);
     document.getElementById('scope-feedback-close')?.addEventListener('click', () => ScopeFeedback.clear());
     document.getElementById('scope-feedback-cancel')?.addEventListener('click', () => {
       state.participantAssignmentBusy = false;
@@ -18605,6 +18678,7 @@
       const params = new URLSearchParams(location.search.replace(/^\?/, ''));
       if (params.get('idle') === '1') state.idleExpired = true;
     } catch (_err) { /* ignore */ }
+    if (!state.authConfig) await loadAuthConfig();
     try {
       const data = await client.sessionMe();
       normalizeAuthenticatedLocation();
@@ -18632,6 +18706,7 @@
       const info = presentFriendlyError(L.friendlyError(error));
       clearLocalAuthState();
       state.authError = info;
+      if (!state.authConfig) await loadAuthConfig();
       return false;
     }
   }

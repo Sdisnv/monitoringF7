@@ -1,4 +1,4 @@
-const { response, parseBody, verifyToken, bearerToken } = require('../lib/_auth-utils');
+const { response, parseBody, verifyToken, bearerToken, resolveSessionUser } = require('../lib/_auth-utils');
 const { canWriteRecords, hasPermission } = require('../lib/_rbac');
 const { HttpError } = require('../lib/_scope-rules');
 const { createScopeService } = require('../lib/_scope-service');
@@ -13,12 +13,11 @@ const { generateReport, generateStatComReferentialReport, generateQuoVadisProgra
 const { createScopePersonService } = require('../lib/_scope-person-service');
 const { createScopeQuoVadisService } = require('../lib/_scope-quo-vadis-service');
 const { createScopeAnnualCatalogService } = require('../lib/_scope-annual-catalog-service');
-const users = require('../lib/_user-store');
 const { withMetrics } = require('../lib/_postgres');
 
 async function requireAccess(event){
   const claims = verifyToken(bearerToken(event), 'access');
-  return await users.getUserByIdentity([claims.sub, claims.email, claims.nip]) || claims;
+  return resolveSessionUser(claims);
 }
 
 function scopePath(event){

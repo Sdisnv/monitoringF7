@@ -1,13 +1,12 @@
-const { response, verifyToken, bearerToken, parseBody } = require('../lib/_auth-utils');
+const { response, verifyToken, bearerToken, parseBody, resolveSessionUser } = require('../lib/_auth-utils');
 const { requirePermission } = require('../lib/_rbac');
-const users = require('../lib/_user-store');
 const personnel = require('../lib/_scope-personnel-service');
 
 exports.handler = async function(event){
   let claims;
   try{
     claims = verifyToken(bearerToken(event), 'access');
-    claims = await users.getUserByIdentity([claims.sub, claims.email, claims.nip]) || claims;
+    claims = await resolveSessionUser(claims);
     requirePermission(claims, 'personnel:manage');
   }
   catch(error){ return response(error.statusCode || 401, { ok:false, error:error.statusCode === 403 ? 'forbidden' : 'unauthorized' }); }
