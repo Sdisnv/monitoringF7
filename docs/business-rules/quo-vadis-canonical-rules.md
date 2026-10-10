@@ -236,3 +236,30 @@ Affichage programme : `qvProgrammeEventCodeLabel`.
 Une occurrence `metadata.humanDecision` / `preserveDecision` n’est pas réalignée par la rotation ni par QV-DPS-003.
 Les overlays rotation / conduite / PR-ABC sont idempotents au second passage.
 Le JSON 2027 source reste à 622 séances.
+
+## Décisions MOA du 10.10.2026
+
+### QV-SAVE-001 — Trois actions distinctes
+Enregistrer conserve les décisions et l'état de planification. Enregistrer et valider valide sans modifier cet état.
+Enregistrer et planifier valide et place l'occurrence dans l'état `PLANIFIE`, avec date et horaires requis.
+Ces actions ne créent pas d'événement opérationnel : cette création reste soumise à la validation complète du programme annuel.
+Une erreur doit conserver la saisie sans annoncer un succès ni laisser une écriture partielle.
+Implémentation : `updateProgrammePreparation` et fiche Programme commune. Preuve : recette MOA ciblée du 10.10.2026.
+
+### QV-RESP-001 — Responsables référencés et descriptifs
+Sélection multiple depuis le référentiel existant des fonctions et saisie libre d'une personne ou d'une fonction.
+`responsibleSelections` distingue `REFERENCE` (code existant) et `FREE` (libellé exact).
+Une valeur libre n'est pas transformée en personne, en NIP ou en affectation ; les valeurs historiques restent conservées.
+Le champ scalaire existant reste compatible, les sélections complètes sont conservées dans les métadonnées.
+
+### QV-PUBLIC-001 — Public libre uniquement descriptif
+Les publics référencés restent dans `publicCodes` et `cible_codes` ; eux seuls peuvent contribuer aux mécanismes existants de population.
+Les libellés `publicFreeLabels` peuvent être combinés avec ces codes mais ne deviennent ni public calculé, qualification,
+spécialisation, affectation, obligation individuelle ou contribution aux statistiques de participation.
+Aucun NIP fictif et aucune correspondance implicite avec le personnel ne sont créés.
+
+### QV-ECA-001 — Concours confirmé
+Association confirmée par la MOA le 10.10.2026 : `EXERCI / CONCOUR / Concours`.
+`CONCOUR` compte sept caractères, sans S final ; `CONCOU` dans la capture était tronqué.
+Les 60 associations précédentes restent identiques ; le registre fourni compte 61 associations, dont JSP Y3 historique uniquement.
+Cette décision ne renumérote aucune occurrence et ne modifie aucun événement historique.

@@ -1,0 +1,35 @@
+{
+  "verdict": "PASS",
+  "browser": "Chromium",
+  "safari": "NOT_COVERED",
+  "baseline": 847,
+  "manualCreated": 1,
+  "duplicated": 0,
+  "operationalEventsCreated": 0,
+  "results": [
+    {
+      "name": "nouvelle occurrence, selections multiples et libres, PLAN persistant",
+      "status": "PASS"
+    },
+    {
+      "name": "reouverture et deuxieme planification sans duplication",
+      "status": "PASS"
+    },
+    {
+      "name": "occurrence issue de 2026 puis version metier validee",
+      "status": "PASS"
+    },
+    {
+      "name": "erreur serveur apres ecriture: rollback et conservation des saisies",
+      "status": "PASS"
+    },
+    {
+      "name": "suppression individuelle et autres commandes preservees",
+      "status": "PASS"
+    },
+    {
+      "name": "menus accessibles desktop tablette mobile et CONCOUR confirme",
+      "status": "PASS"
+    }
+  ]
+}

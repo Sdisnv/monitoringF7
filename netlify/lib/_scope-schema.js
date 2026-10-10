@@ -12,6 +12,7 @@ const annualThemeDdl = require('./_scope-annual-theme-ddl');
 const annualCatalogImportDdl = require('./_scope-annual-catalog-import-ddl');
 const functionalCatalogDdl = require('./_scope-functional-catalog-ddl');
 const statComReferential = require('./_scope-statcom-referential');
+const { synchronizeEcawinReferential } = require('./_scope-ecawin-referential');
 
 const DOMAINES = [
   { code: 'DPS', libelle: 'Défense incendie et protection contre les sinistres' },
@@ -438,6 +439,7 @@ async function ensureScopeSchema(){
   await migrateCancelledEventSingleSourceOfTruth11();
   await migrateStatComReferentialConfig1();
   await migrateStatComSpecialisationPersistenceRepair2();
+  await migrateStatComEcawinMoa20261009();
   await migrateQuoVadisCore1();
   await migrateQuoVadisPilotage2();
   await migrateQuoVadisCoverage1();
@@ -921,6 +923,16 @@ async function migrateFunctionalCatalogC18(){
     await client.query(functionalCatalogDdl.PROTECTION_SQL);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-functional-catalog-c18') on conflict (version) do nothing`);
     await client.query(`insert into monitoring_f7_schema_migrations(version) values ('scope-functional-catalog-c19') on conflict (version) do nothing`);
+  });
+}
+
+async function migrateStatComEcawinMoa20261009(){
+  return db.transaction(async client=>{
+    await client.query('select pg_advisory_xact_lock($1)',[671902287]);
+    const done = await client.query("select 1 from monitoring_f7_schema_migrations where version='scope-statcom-ecawin-moa-20261010-2'");
+    if(done.rows[0]) return;
+    await synchronizeEcawinReferential(client);
+    await client.query("insert into monitoring_f7_schema_migrations(version) values('scope-statcom-ecawin-moa-20261010-2') on conflict(version) do nothing");
   });
 }
 

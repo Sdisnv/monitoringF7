@@ -27,6 +27,9 @@ exports.handler = async function(event){
   const nip = String(body.nip || '').trim();
   const password = String(body.password || '');
   if(!nip || !password) return response(400, { ok:false, error:'missing_credentials' });
+  const turnstile = await require('./_turnstile').verify(body.turnstileToken);
+  if(!turnstile.ok) return response(turnstile.status,{ok:false,error:turnstile.error,
+    message:turnstile.status === 503 ? 'La vérification de connexion est indisponible.' : 'La vérification de connexion doit être renouvelée.'});
 
   try{
     const user = findUser(nip);

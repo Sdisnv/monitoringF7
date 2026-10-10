@@ -7,6 +7,7 @@ exports.handler = async function(event){
     ok:true,
     methods,
     localEnabled: methods.includes('local'),
-    oktaEnabled: methods.includes('okta')
+    oktaEnabled: methods.includes('okta'),
+    turnstile:require('../lib/_turnstile').publicConfiguration()
   });
 };

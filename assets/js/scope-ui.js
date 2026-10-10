@@ -434,7 +434,7 @@
       host.innerHTML = `<div class="scope-notification-card"><button type="button" class="scope-notification-close" aria-label="Fermer la notification">×</button><span class="scope-notification-icon" aria-hidden="true">${scopeFeedbackIcon(kind)}</span><h3>${escapeHtml(title || '')}</h3><p>${escapeHtml(message || '')}</p>${extra.conflict ? '<button type="button" class="scope-btn" data-notification-reload>Recharger</button>' : ''}</div>`;
       host.querySelector('.scope-notification-close')?.addEventListener('click',clearToast);
       host.querySelector('[data-notification-reload]')?.addEventListener('click',() => window.location.reload());
-      if (kind !== 'error' && !extra.conflict) notificationTimer = setTimeout(clearToast,kind === 'success' ? 2500 : 5000);
+      if (kind !== 'error' && !extra.conflict) notificationTimer = setTimeout(clearToast,5000);
     },
     show(kind, title, message, extra) {
       clearToast();
@@ -502,10 +502,10 @@
   }
 
   function presentFriendlyError(info) {
-    if (info && info.okta) {
+    if (info && (info.okta || info.sessionRequired)) {
       return Object.assign({}, info, {
         title: 'Connexion requise',
-        message: 'Connectez-vous avec votre compte institutionnel pour accéder à SCOPE.'
+        message: 'Reconnectez-vous à SCOPE pour poursuivre votre travail.'
       });
     }
     return info;
@@ -514,7 +514,7 @@
   function friendlyActionError(error) {
     const info = presentFriendlyError(L.friendlyError(error));
     state.conflict = Boolean(info.conflict);
-    if (info.okta) {
+    if (info.okta || info.sessionRequired) {
       invalidateScopeSession('action-unauthorized');
       state.authError = info;
     }
@@ -564,15 +564,17 @@
     }
   }
 
-  async function withLoading(fn) {
+  async function withLoading(fn,navigationSeq) {
     state.loading = true;
-    renderAfterLoad();
+    if(route().qvView === 'programme-fiche') render();
+    else renderAfterLoad();
     try {
       await fn();
     } catch (error) {
+      if(navigationSeq != null && navigationSeq !== state.navigationSeq) return;
       const info = presentFriendlyError(L.friendlyError(error));
       state.conflict = Boolean(info.conflict);
-      if (info.okta) {
+      if (info.okta || info.sessionRequired) {
         invalidateScopeSession('loading-unauthorized');
         state.authError = info;
       }
@@ -587,8 +589,10 @@
         };
       }
     } finally {
-      state.loading = false;
-      renderAfterLoad();
+      if(navigationSeq == null || navigationSeq === state.navigationSeq){
+        state.loading = false;
+        renderAfterLoad();
+      }
     }
   }
 
@@ -642,7 +646,7 @@
   }
 
   function clearRouteScopedFeedback() {
-    clearToast();
+    if (!state.toast?.preserveRoute) clearToast();
     if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
     state.feedbackTimer = null;
     state.feedback = null;
@@ -1120,7 +1124,7 @@
     }
   }
 
-  async function loadQuoVadis() {
+  async function loadQuoVadis(navigationSeq) {
     if (typeof client.quoVadisProgramme !== 'function') {
       state.quoVadis = null;
       state.quoVadisReady = true;
@@ -1130,11 +1134,15 @@
     state.quoVadisReady = false;
     state.quoVadisError = null;
     try {
-      const data = await cached('quoVadis', { annee: 2027 }, () => client.quoVadisProgramme(2027));
+      const params={annee:2027};
+      const data=cacheGet('quoVadis',params) || await client.quoVadisProgramme(2027);
+      if(navigationSeq != null && navigationSeq !== state.navigationSeq) return null;
+      cacheSet('quoVadis',params,data);
       state.quoVadis = data.quoVadis || null;
       state.quoVadisReady = true;
       return state.quoVadis;
     } catch (error) {
+      if(navigationSeq != null && navigationSeq !== state.navigationSeq) return null;
       state.quoVadis = null;
       state.quoVadisReady = true;
       state.quoVadisError = L.friendlyError(error).message || 'Le programme QUO VADIS n’a pas pu être chargé.';
@@ -2271,7 +2279,7 @@
   }
 
   function authConfig() {
-    return state.authConfig || { localEnabled: false, oktaEnabled: true, methods: ['okta'] };
+    return state.authConfig || { localEnabled: false, oktaEnabled: false, methods: [], unavailable: true };
   }
 
   async function loadAuthConfig() {
@@ -2282,10 +2290,11 @@
       state.authConfig = {
         methods: Array.isArray(payload.methods) ? payload.methods : [],
         localEnabled: payload.localEnabled === true,
-        oktaEnabled: payload.oktaEnabled === true
+        oktaEnabled: payload.oktaEnabled === true,
+        turnstile: payload.turnstile || {enabled:false}
       };
     } catch (_error) {
-      state.authConfig = { methods: ['okta'], localEnabled: false, oktaEnabled: true };
+      state.authConfig = { methods: [], localEnabled: false, oktaEnabled: false, unavailable: true };
     }
     return state.authConfig;
   }
@@ -2301,6 +2310,11 @@
       render();
       return;
     }
+    const turnstileToken = state.turnstileToken || '';
+    if(authConfig().turnstile?.enabled && !turnstileToken){
+      state.authError = {title:'Connexion',message:'La vérification de connexion doit être renouvelée.'};
+      render();return;
+    }
     state.authLoginBusy = true;
     state.authError = null;
     render();
@@ -2309,18 +2323,20 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ nip, password }),
+        body: JSON.stringify({ nip, password, turnstileToken }),
         cache: 'no-store'
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload || payload.ok !== true) {
-        state.authError = { title: 'Connexion refusée', message: 'Identifiant ou mot de passe incorrect.' };
+        state.authError = { title: 'Connexion refusée', message: response.status === 429
+          ? 'Trop de tentatives de connexion. Réessayez dans quelques instants.' : String(payload?.error || '').startsWith('turnstile_')
+          ? (payload.message || 'La vérification de connexion doit être renouvelée.') : 'Identifiant ou mot de passe incorrect.' };
         return;
       }
       if (payload.accessToken && window.MonitoringApiClient && typeof window.MonitoringApiClient.setAccessToken === 'function') {
         window.MonitoringApiClient.setAccessToken(payload.accessToken);
       }
-      await ensureLiveSession();
+      if (await ensureLiveSession()) await onRoute();
     } catch (_error) {
       state.authError = { title: 'Connexion indisponible', message: 'La connexion n’a pas pu être validée. Réessayez dans quelques instants.' };
     } finally {
@@ -2339,16 +2355,18 @@
     const cfg = authConfig();
     const localForm = cfg.localEnabled ? `
       <form class="scope-login-form" id="scope-local-login" autocomplete="on">
-        <label for="scope-login-nip">Identifiant</label>
+        <label for="scope-login-nip">Identifiant (NIP)</label>
         <input id="scope-login-nip" name="nip" autocomplete="username" required>
         <label for="scope-login-password">Mot de passe</label>
         <input id="scope-login-password" name="password" type="password" autocomplete="current-password" required>
-        <button class="scope-login-submit" type="submit"${state.authLoginBusy ? ' disabled' : ''}>${state.authLoginBusy ? 'Connexion...' : 'Se connecter'}</button>
+        ${cfg.turnstile?.enabled ? '<div id="scope-turnstile-widget"></div>' : ''}
+        <button id="scope-local-login-submit" class="scope-login-submit" type="submit"${state.authLoginBusy || cfg.turnstile?.enabled ? ' disabled' : ''}>${state.authLoginBusy ? 'Connexion...' : 'Se connecter'}</button>
       </form>` : '';
     const oktaLabel = cfg.localEnabled ? 'Connexion Okta' : 'Se connecter à SCOPE';
     const oktaLink = cfg.oktaEnabled ? `<a class="scope-login-submit scope-login-submit-secondary" id="scope-okta-login" href="${escapeHtml(loginHref)}" data-auth-provider="okta">${oktaLabel}</a>` : '';
     const status = state.authChecking
       ? `<div class="scope-login-status" role="status">Vérification de la session...</div>`
+      : cfg.unavailable ? '<div class="scope-login-status" role="alert">Configuration de connexion indisponible.</div><button type="button" class="scope-login-submit" id="scope-auth-config-retry">Réessayer</button>'
       : `${localForm}${oktaLink || (!localForm ? '<div class="scope-login-status" role="status">Aucune méthode de connexion n’est active.</div>' : '')}`;
     const alert = reason || state.authError
       ? `<div class="scope-login-alert" role="alert">${escapeHtml(reason ? `Connexion interrompue : ${reason}` : loginMessage())}</div>`
@@ -2414,14 +2432,8 @@
           <img class="scope-login-sdis" src="assets/img/LogoSDISseulnoir.png" alt="SDIS régional du Nord vaudois" width="160" height="48">
           <div class="scope-login-center">
             <div class="scope-login-card">
-              <div class="scope-login-lock" aria-hidden="true">${navIcon('lock')}</div>
               <h1>Connexion</h1>
-              <p class="scope-login-subtitle">SCOPE — Suivi et analyse de l’activité</p>
-              <div class="scope-login-divider" aria-hidden="true"></div>
-              <div class="scope-login-security">
-                <span aria-hidden="true">${navIcon('vigilance')}</span>
-                <p>Accès réservé au personnel autorisé du<br>SDIS régional du Nord vaudois.</p>
-              </div>
+              <p class="scope-login-subtitle">Accédez à votre espace de travail avec vos identifiants personnels.</p>
               ${alert}
               ${status}
             </div>
@@ -10786,6 +10798,7 @@
   }
 
   function qvSortHeaderLines(key, lines) {
+    if(key === 'eventCode') lines = ['Code','SCOPE'];
     const sort = state.quoVadisSort || {};
     const mark = sort.key === key ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : '';
     return `<button type="button" class="scope-table-sort-control qv-sort-header qv-sort-header-lines" data-qv-sort="${escapeHtml(key)}">${lines.map((line, index) => `<span>${escapeHtml(line + (index === lines.length - 1 ? mark : ''))}</span>`).join('')}</button>`;
@@ -10921,10 +10934,11 @@
 
   function qvActivityCalendarClass(qv, row) {
     const date = qvDateKey(row && row.startsAt);
-    if (!date) return 'is-normal';
+    const permanence = L.qvProgrammeIsPermanence(row) ? ' is-permanence' : '';
+    if (!date) return `is-normal${permanence}`;
     const calendar = qvCalendarIndex(qv);
     const marks = L.qvCalendarMarksForDate(calendar, date);
-    return marks.holiday ? 'is-holiday' : marks.vacation ? 'is-vacation' : 'is-normal';
+    return (marks.holiday ? 'is-holiday' : marks.vacation ? 'is-vacation' : 'is-normal') + permanence;
   }
 
   function qvMonthSeparatorLabel(monthKey) {
@@ -11458,6 +11472,7 @@
                 if (cell.known) classes.push('has-known', 'has-announced-date');
                 if (cell.holiday) classes.push('has-holiday', 'is-holiday');
                 if (cell.ctaHolidayCoverage.length) classes.push('has-cta-holiday-coverage');
+                if (cell.items.some(L.qvProgrammeIsPermanence) || cell.ctaHolidayCoverage.length) classes.push('is-permanence');
                 if (cell.vacation) {
                   classes.push('has-vacation', 'is-school-break');
                   const col = index % 7;
@@ -11813,6 +11828,7 @@
     if (row.preparation && row.status === 'ANNULE') return { tone: 'inactive', label: 'Annulé' };
     if (row.preparation && row.status === 'NON_RETENU') return { tone: 'inactive', label: 'Écarté' };
     if ((row.review || row.publicReviewRequired) && !row.businessValidation) return { tone: 'attention', label: 'À contrôler' };
+    if ((row.preparation || row.manualCreation) && row.status === 'PLANIFIE') return { tone:'positive',label:'Planifié' };
     if (row.businessValidation) return { tone: 'positive', label: 'Validé' };
     if ((row.preparation || row.manualCreation) && row.status === 'PROPOSE') return { tone: 'info', label: 'Activité proposée' };
     if (row.preparation && row.status === 'A_PLANIFIER') return { tone: 'info', label: 'À planifier' };
@@ -11925,7 +11941,8 @@
   }
 
   function qvProgrammePublicLabel(row) {
-    return L.qvFormatPublicLabels(row && row.publics) || (row && row.target === 'SDIS-ALL' ? 'SDIS (tous)' : 'À définir');
+    return [L.qvFormatPublicLabels(row && row.publics),...(row?.publicFreeLabels || [])].filter(Boolean).join(' ; ')
+      || (row && row.target === 'SDIS-ALL' ? 'SDIS (tous)' : 'À définir');
   }
 
   function qvProgrammeCtaLines(row) {
@@ -12196,6 +12213,8 @@
   }
 
   function qvProgrammeResponsableLabel(row) {
+    if(Array.isArray(row?.responsibleSelections)) return row.responsibleSelections.map(value=>value.kind === 'REFERENCE'
+      ? L.qvResponsableCanonique(value.label,{domain:row.domain}) || value.label : value.label).join(' ; ') || 'À affecter';
     const raw = String((row && (row.responsible || row.responsable)) || '').trim();
     return L.qvResponsableCanonique(raw, { domain: row && (row.domain || row.domainLabel) }) || (raw ? raw : 'À affecter');
   }
@@ -12209,6 +12228,27 @@
   function qvProgrammeResponsableOptions(selected) {
     const current = String(selected || '');
     return `<option value="">À définir</option>${qvProgrammeResponsableGroups().map((group) => `<optgroup label="\u00a0">${group.map((label) => `<option value="${escapeHtml(label)}" ${label === current ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</optgroup>`).join('')}`;
+  }
+
+  function qvProgrammeFreeChoices(values){
+    return (values || []).map(value=>`<label><input type="checkbox" data-choice-kind="FREE" value="${escapeHtml(value)}" checked><span>${escapeHtml(value)}</span></label>`).join('');
+  }
+
+  function qvProgrammeDescriptiveControl(id,label,options,freeValues,summary){
+    return `<div class="qv-programme-choice-field"><span id="${id}-label">${label}</span><details class="qv-programme-choice-menu"><summary id="${id}-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="${id}-search" type="search" aria-label="Rechercher ${label.toLowerCase()}" placeholder="Rechercher"><div id="${id}" class="qv-programme-choice-list" role="group" aria-labelledby="${id}-label">${options}<fieldset data-free-choices><legend>Libellés libres</legend>${qvProgrammeFreeChoices(freeValues)}</fieldset></div><div class="qv-programme-choice-add"><input id="${id}-free" type="text" maxlength="160" aria-label="${label} libre" placeholder="Libellé libre"><button type="button" class="scope-btn" data-qv-add-free="${id}" aria-label="Ajouter ${label.toLowerCase()} libre" title="Ajouter ${label.toLowerCase()} libre">+</button></div></div></details></div>`;
+  }
+
+  function qvProgrammeResponsibleControl(qv,row){
+    const references=qv.responsableFonctions || [];
+    const legacyCode=qvProgrammeResponsableCode(qv,row);
+    const selections=row.responsibleSelections || (legacyCode ? [{kind:'REFERENCE',code:legacyCode}]
+      : row.responsible ? [{kind:'FREE',label:row.responsible}] : []);
+    const selected=selections.filter(value=>value.kind === 'REFERENCE');
+    const options=references.map(value=>`<label><input type="checkbox" data-choice-kind="REFERENCE" value="${escapeHtml(value.code)}" ${selected.some(item=>item.code === value.code) ? 'checked' : ''}><span>${escapeHtml(L.qvResponsableCanonique(value.libelle,{domain:row.domain}) || value.libelle)}</span></label>`).join('');
+    const historical=selected.filter(value=>!references.some(item=>item.code === value.code));
+    return qvProgrammeDescriptiveControl('qv-programme-responsable','Responsable',
+      `<fieldset><legend>Fonctions</legend>${options}</fieldset>${historical.length ? `<fieldset><legend>Valeurs conservées</legend>${historical.map(value=>`<label><input type="checkbox" data-choice-kind="REFERENCE" value="${escapeHtml(value.code)}" checked><span>${escapeHtml(value.label || value.code)}</span></label>`).join('')}</fieldset>` : ''}`,
+      selections.filter(value=>value.kind === 'FREE').map(value=>value.label),qvProgrammeResponsableLabel(row));
   }
 
   function qvProgrammeDateInputValue(row) {
@@ -12260,7 +12300,8 @@
     if (!code) return '';
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
     const match = ((quoVadisData() || {}).statComCodes || catalog.statComCodes || []).find((item) => String(item.code || '').trim() === code);
-    return String(match && (match.label || match.libelle) || '').trim();
+    const official = window.ScopeEcawin?.associations.find(item=>item.statCom === code);
+    return String(official?.description || match && (match.label || match.libelle) || '').trim();
   }
 
   function qvProgrammeStatComDisplay(row) {
@@ -12269,13 +12310,32 @@
     return code ? `${code}${label ? ` — ${label}` : ''}` : '—';
   }
 
-  function qvProgrammeStatComOptions(qv,row){
+  function qvProgrammeStatComOptions(qv,row,activityCode = row.ecawinActivityCode || ''){
     const date = qvProgrammeDate(row) || `${qv.programme.annee}-01-01`;
-    const values = (qv.statComCodes || []).filter(item => item.active !== false && (!item.validFrom || item.validFrom <= date) && (!item.validTo || item.validTo >= date));
+    const values = (qv.statComCodes || []).filter(item => item.active !== false && item.code !== '010JY3'
+      && (!item.validFrom || item.validFrom <= date) && (!item.validTo || item.validTo >= date)
+      && (window.ScopeEcawin?.activityForStatCom(item.code) || item.code === 'EMSEA')
+      && (!activityCode || window.ScopeEcawin?.isCompatible(activityCode,item.code)));
     const current = String(row.statCom || '');
     const unknown = current && !values.some(item => item.code === current);
     const codeLabel = (code, label) => `${escapeHtml(code)}${'&nbsp;'.repeat(Math.max(1, 9 - code.length))}${escapeHtml(label)}`;
-    return `<option value="">—</option>${unknown ? `<option value="${escapeHtml(current)}" selected disabled>${codeLabel(current, 'À contrôler')}</option>` : ''}${values.map(item => `<option value="${escapeHtml(item.code)}" ${item.code === current ? 'selected' : ''}>${codeLabel(item.code, item.label || '')}</option>`).join('')}`;
+    return `<option value="">—</option>${unknown ? `<option value="${escapeHtml(current)}" selected disabled>${codeLabel(current, 'Valeur conservée')}</option>` : ''}${values.map(item => `<option value="${escapeHtml(item.code)}" ${item.code === current ? 'selected' : ''}>${codeLabel(item.code, window.ScopeEcawin?.associations.find(reference=>reference.statCom === item.code)?.description || item.label || '')}</option>`).join('')}`;
+  }
+
+  function qvProgrammeQualificationControl(qv,row){
+    const selected = row.qualificationCodes || [];
+    const options = qv.qualifications || [];
+    const summary = selected.map(code=>options.find(item=>item.code === code)?.label || code).join(' ; ')
+      || row.specialisation || '—';
+    return `<div class="qv-programme-choice-field"><span id="qv-qualification-label">Qualification / spécialisation</span><details class="qv-programme-choice-menu"><summary id="qv-programme-qualification-summary">${escapeHtml(summary)}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-qualification-search" type="search" aria-label="Rechercher une qualification" placeholder="Rechercher"><div id="qv-programme-specialisation" class="qv-programme-choice-list" role="group" aria-labelledby="qv-qualification-label"><fieldset>${options.map(item=>`<label><input type="checkbox" value="${escapeHtml(item.code)}" ${selected.includes(item.code) ? 'checked' : ''}><span>${escapeHtml(item.label)}</span></label>`).join('')}</fieldset></div></div></details></div>`;
+  }
+
+  function qvProgrammeCursusOptions(qv,row){
+    const choices = (qv.cursusSelections || []).filter(item=>!item.statut || item.statut === 'ACTIF');
+    const current = row.cursusId || '';
+    const historical = (!current && row.cursus) || (current && !choices.some(item=>item.cursusId === current))
+      ? `<option value="${escapeHtml(current)}" selected disabled>${escapeHtml(row.cursus || (qv.cursusSelections || []).find(item=>item.cursusId === current)?.libelle || 'Référence conservée')} · valeur conservée</option>` : '';
+    return `<option value="">—</option>${historical}${choices.map(item=>`<option value="${escapeHtml(item.cursusId)}" ${item.cursusId === current ? 'selected' : ''}>${escapeHtml(item.libelle)}</option>`).join('')}`;
   }
 
   function qvProgrammeFicheOccurrenceLabel(row) {
@@ -12448,8 +12508,8 @@
         // Toute ligne datée est aussi une cible de dépôt : déposer sur une occurrence revient à reprendre sa date.
         const target = group.date === 'sans-date' ? '' : ` data-qv-drop-date="${escapeHtml(group.date)}"`;
         const drag = lock
-          ? ` class="is-drag-locked" data-qv-drag-locked="${escapeHtml(lock)}" title="${escapeHtml(`Déplacement impossible : ${L.qvProgrammeDragReason(lock)}`)}"${target}`
-          : ` class="is-draggable" draggable="true" data-qv-drag-item="${escapeHtml(row.id)}" title="Glissez cette occurrence sur un autre jour du mois"${target}`;
+            ? ` class="is-drag-locked${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}" data-qv-drag-locked="${escapeHtml(lock)}" title="${escapeHtml(`Déplacement impossible : ${L.qvProgrammeDragReason(lock)}`)}"${target}`
+            : ` class="is-draggable${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}" draggable="true" data-qv-drag-item="${escapeHtml(row.id)}" title="Glissez cette occurrence sur un autre jour du mois"${target}`;
         return `<tr${drag}><td>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</td><td class="qv-programme-course-code">${escapeHtml(qvProgrammeEventCodeLabel(row))}</td><td><strong>${qvProgrammeActivityHtml(row)}</strong></td><td>${escapeHtml(row.statCom || '—')}</td><td>${qvProgrammeOiHtml(row)}</td><td>${qvProgrammePublicHtml(row)}</td><td>${escapeHtml(qvProgrammeLocationLabel(row))}</td><td>${scopeStateHtml(visual.tone, visual.label)}</td><td><a class="scope-text-action qv-programme-action" href="${qvProgrammeFicheHref(row.id)}">${qvProgrammeActionHtml(row)}</a></td></tr>`;
       }).join('');
       const cta = group.rows.find((row) => row.definitionId === 'CTA-PERMANENCE');
@@ -12486,12 +12546,13 @@
       date: nextDate,
       startTime: qvTime(row.startsAt) || null,
       endTime: qvTime(row.endsAt) || null,
-      oiCodes: [...new Set(row.ois || [])],
+      oiCodes: L.qvNormalizeOiSelections(row, row.oiSelections || row.ois || []).codes,
       publicCodes: [...new Set(row.publics || [])],
       lieuId: row.lieuLibre ? null : ((matchedLieu && matchedLieu.lieuId) || currentLieuId || null),
       lieuLibre: row.lieuLibre || '',
       salleTheorieId: salleId,
-      responsableFonctionCode: qvProgrammeResponsableSelection(qv, row) || null
+      responsableFonctionCode: qvProgrammeResponsableSelection(qv, row) || null,
+      year: qvProgrammeYear(), moveDate: true
     };
   }
 
@@ -12510,6 +12571,7 @@
     state.quoVadisBusy = true;
     try {
       const data = await client.updateQuoVadisProgrammeItem(id, qvProgrammeDragPayload(qv, row, nextDate));
+      if (!data.updated) throw new Error('Cette occurrence ne peut pas être déplacée.');
       invalidateCache(['quoVadis']);
       state.quoVadis = data.quoVadis || state.quoVadis;
       toast('success', 'Programme', `Occurrence déplacée au ${qvFormatDate(nextDate, nextDate)}.`);
@@ -12557,8 +12619,8 @@
           // Vue tableau : déposer une occurrence sur une autre ligne lui fait reprendre la date de cette ligne.
           const target = rowDate ? ` data-qv-drop-date="${escapeHtml(rowDate)}"` : '';
           const drag = lock
-            ? ` class="is-drag-locked" data-qv-drag-locked="${escapeHtml(lock)}" title="${escapeHtml(`Déplacement impossible : ${L.qvProgrammeDragReason(lock)}`)}"${target}`
-            : ` class="is-draggable" draggable="true" data-qv-drag-item="${escapeHtml(row.id)}" title="Glissez cette occurrence sur la ligne d’une autre date"${target}`;
+            ? ` class="is-drag-locked${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}" data-qv-drag-locked="${escapeHtml(lock)}" title="${escapeHtml(`Déplacement impossible : ${L.qvProgrammeDragReason(lock)}`)}"${target}`
+            : ` class="is-draggable${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}" draggable="true" data-qv-drag-item="${escapeHtml(row.id)}" title="Glissez cette occurrence sur la ligne d’une autre date"${target}`;
           return `<tr${drag}>
           <td>${escapeHtml(eventCode)}</td><td><strong class="qv-programme-date">${escapeHtml(qvProgrammeShortDate(row))}</strong></td><td>${qvProgrammeTimeHtml(row)}</td><td><strong>${qvProgrammeActivityHtml(row)}</strong></td><td>${escapeHtml(row.statCom || '—')}</td><td>${qvProgrammeDomainFamilyHtml(row)}</td><td>${qvProgrammeOiHtml(row)}</td><td>${qvProgrammePublicHtml(row)}</td><td>${escapeHtml(qvProgrammeResponsableLabel(row))}</td><td>${escapeHtml(qvProgrammeLocationLabel(row))}</td><td>${scopeStateHtml(visual.tone, visual.label)}</td><td><a class="scope-text-action qv-programme-action" href="${href}">${qvProgrammeActionHtml(row)}</a></td>
         </tr>`; }).join('') || '<tr><td colspan="12"><div class="scope-empty">Aucun résultat ne correspond aux filtres.</div></td></tr>'}
@@ -12597,16 +12659,20 @@
     const currentPlanningStatus = creating ? 'PROPOSE' : row.preparation && ['A_PLANIFIER','PROPOSE','PLANIFIE'].includes(row.status)
       ? row.status : row.historicalProposal ? 'PROPOSE' : qvProgrammeDate(row) ? 'PLANIFIE' : 'A_PLANIFIER';
     const arbitrationActivity = row.preparation && qvActivityById(qv,row.preparation.id);
-    const canPrepare = row.definitionId !== 'CTA-PERMANENCE' && hasScopePermission('references:manage');
-    const preparationForm = !canPrepare ? '' : `<section class="scope-card qv-programme-preparation">
+    const canPrepare = (!row.external || row.preparation) && row.definitionId !== 'CTA-PERMANENCE' && hasScopePermission('references:manage');
+    const commandsDisabled=state.loading ? ' disabled' : '';
+    const preparationForm = `<section class="scope-card qv-programme-preparation">
       <h3 class="qv-programme-panel-title"><span class="qv-programme-panel-icon">${pencilIcon()}</span>Préparation QUO VADIS</h3>
       ${row.publishedEventId ? '<p class="qv-programme-workflow-note">Cette édition reste dans QUO VADIS et ne modifie pas l’événement publié.</p>' : ''}
       ${row.annualReportConstraint && row.annualReportConstraint.status === 'PUBLICATION_UPDATE_REQUIRED' ? `<p class="qv-programme-workflow-note">Rapport annuel prioritaire le ${escapeHtml(qvFormatDate(row.annualReportConstraint.date, '—'))}, après-midi et soir. L’événement lié reste au ${escapeHtml(qvFormatDate(row.publishedEventDate, '—'))} ; sa mise à jour doit être coordonnée sur le même événement.</p>` : ''}
       ${row.annualReportConstraint && row.annualReportConstraint.status === 'BLOCKED_BY_ANNUAL_REPORT' ? `<p class="qv-programme-workflow-note is-conflict">Le ${escapeHtml(qvFormatDate(row.annualReportConstraint.date, '—'))} après-midi et soir est réservé au Rapport annuel. Cette activité doit être repositionnée ou arbitrée selon sa décision existante.</p>` : ''}
-      <div class="qv-programme-edit-grid">
+      <fieldset class="qv-programme-edit-grid" ${canPrepare && !state.loading ? '' : 'disabled'}>
         <label class="qv-programme-edit-half"><span>Activité</span><input id="qv-programme-activity" type="text" maxlength="240" value="${escapeHtml(row.activityLabel || row.label)}"></label>
         <label class="qv-programme-edit-half"><span>Thème</span><input id="qv-programme-themes" type="text" maxlength="1320" value="${escapeHtml((row.themes || []).join(' ; '))}"></label>
-        <label><span>Qualification / spécialisation</span><input id="qv-programme-specialisation" type="text" maxlength="160" value="${escapeHtml(row.specialisation || '')}" ${row.manualCreation ? '' : 'readonly'}></label><label><span>Cursus</span><input id="qv-programme-cursus" type="text" maxlength="160" value="${escapeHtml(row.cursus || '')}" ${row.manualCreation ? '' : 'readonly'}></label><label><span>Code d’activité</span><input type="text" value="${escapeHtml(creating ? 'Attribué à l’enregistrement' : qvProgrammeEventCodeLabel(row))}" readonly></label><label><span>Année du programme</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
+        ${qvProgrammeQualificationControl(qv,row)}
+        <label><span>Cursus</span><select id="qv-programme-cursus" ${row.cursusStepId ? 'disabled' : ''}>${qvProgrammeCursusOptions(qv,row)}</select></label>
+        <label><span>Code activité ECAwin</span><select id="qv-programme-ecawin"><option value="">Non qualifié</option>${(window.ScopeEcawin?.activityCodes || []).map(code=>`<option value="${code}" ${row.ecawinActivityCode === code ? 'selected' : ''}>${code}</option>`).join('')}</select></label>
+        <label><span>Année du programme</span><input type="text" value="${qvProgrammeYear()}" readonly></label>
         <label class="qv-programme-edit-full"><span>Suivi SCOPE</span><span class="qv-programme-keep-lieu"><input id="qv-programme-external" type="checkbox" ${row.externalActivity ? 'checked' : ''} ${creating ? '' : 'disabled'}>Activité externe hors suivi SCOPE</span></label>
         <div class="qv-programme-date-field"><label for="qv-programme-date">Date</label><div class="qv-programme-date-control"><button id="qv-programme-date-picker" type="button" aria-label="Ouvrir le calendrier" aria-expanded="false" aria-controls="qv-programme-calendar">${qvCockpitIcon('calendar')}</button><input id="qv-programme-date" type="text" inputmode="numeric" maxlength="10" pattern="[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}" placeholder="jj.mm.aaaa" value="${escapeHtml(qvProgrammeDateInputValue(row))}"></div><div id="qv-programme-calendar" class="qv-programme-calendar" data-month="${escapeHtml((qvProgrammeDate(row) || `${qvProgrammeYear()}-01-01`).slice(0,7))}" hidden>${qvProgrammeCalendarHtml(qvProgrammeDate(row))}</div></div>
         <label><span>Début</span><span class="qv-programme-time-control">${scopeInlineIcon('watch')}<input id="qv-programme-start" type="time" step="60" value="${escapeHtml(qvTime(row.startsAt))}"></span></label>
@@ -12615,21 +12681,21 @@
         <label><span>Stat.Com</span>${row.externalActivity ? '<select id="qv-programme-statcom" disabled>' : '<select id="qv-programme-statcom">'}${qvProgrammeStatComOptions(qv,row)}</select></label>
         <label><span>Domaine</span><select id="qv-programme-domain"><option value="" ${!domainLabels[currentDomain] ? 'selected' : ''}>À qualifier</option>${Object.entries(domainLabels).map(([code, label]) => `<option value="${code}" ${currentDomain === code ? 'selected' : ''}>${code} ${escapeHtml(label)}</option>`).join('')}</select></label>
         <label><span>Famille</span><select id="qv-programme-family" disabled><option>${escapeHtml(qvProgrammeFamily(row))}</option></select></label>
-        <label><span>Responsable</span><select id="qv-programme-responsable" class="qv-programme-group-select">${qvProgrammeResponsableOptions(qvProgrammeResponsableSelection(qv, row))}</select></label>
+        ${qvProgrammeResponsibleControl(qv,row)}
         <div class="qv-programme-choice-field"><span id="qv-oi-label">OI</span><details class="qv-programme-choice-menu"><summary id="qv-programme-oi-summary">${escapeHtml(qvProgrammeOiSummary(row.oiSelections || row.ois || []))}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-oi-search" type="search" aria-label="Rechercher une OI" placeholder="Rechercher"><div id="qv-programme-oi" class="qv-programme-choice-list" role="group" aria-labelledby="qv-oi-label">${qvProgrammeOiOptions(row.oiSelections || row.ois || [])}</div></div></details></div>
         <label><span>Lieu</span><select id="qv-programme-lieu"><option value="">Lieu à définir</option>${lieuChoices.map((entry) => `<option value="${escapeHtml(entry.lieuId)}" ${entry.lieuId === lieuValue ? 'selected' : ''}>${escapeHtml(entry.label)}</option>`).join('')}<option value="autre" ${lieuValue === 'autre' ? 'selected' : ''}>Autre lieu</option></select></label>
         <label><span>Salle</span><select id="qv-programme-salle">${qvSalleOptions(qv, salleLieuId, salleId)}</select></label>
-        <div class="qv-programme-choice-field qv-programme-public-field"><span id="qv-public-label">Public cible</span><details class="qv-programme-choice-menu"><summary id="qv-programme-public-summary">${escapeHtml(qvProgrammePublicLabel(row))}</summary><div class="qv-programme-choice-popover"><input id="qv-programme-public-search" type="search" aria-label="Rechercher un public cible" placeholder="Rechercher"><div id="qv-programme-public" class="qv-programme-choice-list" role="group" aria-labelledby="qv-public-label">${qvProgrammePublicGroups(publicCodes, row.publics || [])}</div></div></details></div>
+        ${qvProgrammeDescriptiveControl('qv-programme-public','Public cible',qvProgrammePublicGroups(publicCodes,row.publics || []),row.publicFreeLabels,qvProgrammePublicLabel(row))}
         <label id="qv-programme-autre-field" ${lieuValue === 'autre' ? '' : 'hidden'}><span>Lieu existant</span><select id="qv-programme-autre"><option value="">Choisir un lieu</option>${autresLieux.map((item) => `<option value="${escapeHtml(item.lieuId)}" ${item.lieuId === autreValue ? 'selected' : ''}>${escapeHtml(item.nomCourt || item.code)}</option>`).join('')}<option value="__free" ${autreValue === '__free' ? 'selected' : ''}>Lieu absent du référentiel</option></select></label>
         <label id="qv-programme-lieu-libre-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Nouveau lieu</span><input id="qv-programme-lieu-libre" type="text" maxlength="28" value="${escapeHtml(row.lieuLibre || '')}"></label>
         <label id="qv-programme-lieu-keep-field" ${autreValue === '__free' ? '' : 'hidden'}><span>Référentiel</span><span class="qv-programme-keep-lieu"><input id="qv-programme-lieu-keep" type="checkbox">Conserver ce lieu dans le référentiel</span></label>
-      </div>
-      ${!creating && !row.publishedEventId ? `<div class="qv-programme-lifecycle"><span class="qv-programme-lifecycle-icon">${qvCockpitIcon('gear')}</span><div><strong>Gestion de l’événement dans le planning</strong><p>Annuler ou supprimer cet événement. Ces actions modifient le planning et doivent être utilisées avec précaution.</p></div><div class="qv-programme-lifecycle-actions"><button type="button" class="scope-btn" id="qv-programme-cancel-year">Annuler l’événement pour l’année</button><button type="button" class="scope-btn qv-programme-production-delete" id="qv-programme-delete-production">Supprimer l’événement</button></div></div>` : ''}
+      </fieldset>
+      ${canPrepare && !creating && !row.publishedEventId ? `<div class="qv-programme-lifecycle"><span class="qv-programme-lifecycle-icon">${qvCockpitIcon('gear')}</span><div><strong>Gestion de l’événement dans le planning</strong><p>Annuler ou supprimer cet événement. Ces actions modifient le planning et doivent être utilisées avec précaution.</p></div><div class="qv-programme-lifecycle-actions"><button type="button" class="scope-btn" id="qv-programme-cancel-year">Annuler l’événement pour l’année</button><button type="button" class="scope-btn qv-programme-production-delete" id="qv-programme-delete-production">Supprimer l’événement</button></div></div>` : ''}
     </section>`;
-    return `<div class="qv-programme-detail">
+    return `<div class="qv-programme-detail${L.qvProgrammeIsPermanence(row) ? ' is-permanence' : ''}">
       <section class="scope-card qv-programme-summary">
-        <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité 2027' : row.activityLabel || row.label)}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? '<button type="button" class="scope-btn" id="qv-programme-save">Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate">Enregistrer et valider</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan">Enregistrer et planifier</button>' : ''}</div></div>
-        <div class="qv-programme-info-grid"><section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('file')}</span>Informations de l’événement</h3><dl class="qv-definition-list"><dt>Code activité</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(qvProgrammeStatComDisplay(row))}</dd><dt>Domaine</dt><dd>${escapeHtml(qvProgrammeDomainDisplay(currentDomain))}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Thème / cycle</dt><dd>${escapeHtml(L.qvProgrammeVisibleThemes(row).join(' · ') || '—')}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
+        <div class="qv-programme-fiche-head"><div><h2>${escapeHtml(creating ? 'Nouvelle activité 2027' : row.activityLabel || row.label)}</h2><p>${escapeHtml([row.publishedEventCode, qvProgrammeFicheOccurrenceLabel(row), row.sessionLabel].filter(Boolean).join(' · '))}</p></div><div class="qv-programme-head-actions"><a class="scope-btn" href="${qvHref('programme', { annee: qvProgrammeYear() })}"><span aria-hidden="true">←</span> Retour au programme</a>${canPrepare ? `<button type="button" class="scope-btn" id="qv-programme-save"${commandsDisabled}>Enregistrer</button><button type="button" class="scope-btn" id="qv-programme-validate"${commandsDisabled}>Enregistrer et valider</button><button type="button" class="scope-btn scope-btn-primary" id="qv-programme-plan"${commandsDisabled}>Enregistrer et planifier</button>` : ''}</div></div>
+        <div class="qv-programme-info-grid"><section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('file')}</span>Informations de l’événement</h3><dl class="qv-definition-list"><dt>Code SCOPE</dt><dd>${escapeHtml(qvProgrammeEventCodeLabel(row))}</dd><dt>Stat.Com</dt><dd>${escapeHtml(qvProgrammeStatComDisplay(row))}</dd><dt>Domaine</dt><dd>${escapeHtml(qvProgrammeDomainDisplay(currentDomain))}</dd><dt>Famille</dt><dd>${escapeHtml(qvProgrammeFamily(row))}</dd><dt>OI</dt><dd>${qvProgrammeOiHtml(row)}</dd><dt>Public cible</dt><dd>${qvProgrammePublicHtml(row)}</dd><dt>Thème / cycle</dt><dd>${escapeHtml(L.qvProgrammeVisibleThemes(row).join(' · ') || '—')}</dd><dt>Provenance</dt><dd>${escapeHtml(qvProgrammeProvenance(row))}</dd></dl></section>
           <section class="qv-programme-info-panel"><h3><span class="qv-programme-panel-icon">${qvCockpitIcon('calendar')}</span>Planification</h3><dl class="qv-definition-list"><dt>Date</dt><dd>${escapeHtml(qvProgrammeDate(row) ? qvFormatDate(qvProgrammeDate(row), '—') : 'À positionner')}</dd><dt>Horaire</dt><dd>${escapeHtml(qvProgrammeTime(row) || 'À définir')}</dd><dt>Lieu</dt><dd>${escapeHtml(qvProgrammeLocationLabel(row))}</dd><dt>Salle</dt><dd>${escapeHtml(qvProgrammeRoomLabel(row))}</dd><dt>Responsable</dt><dd>${escapeHtml(qvProgrammeResponsableLabel(row))}</dd><dt>État</dt><dd>${scopeStateHtml(visual.tone, visual.label)}</dd></dl></section></div>
         <details class="qv-programme-reference" open><summary><span class="qv-programme-reference-icon">${qvCockpitIcon('info')}</span><strong>Règle appliquée · ${escapeHtml(qvProgrammeProvenance(row))}</strong><span class="qv-programme-reference-chevron" aria-hidden="true">⌄</span></summary><div class="qv-programme-reference-body"><p>${escapeHtml(qvProgrammeAppliedRule(row))}</p><button type="button" class="scope-btn" id="qv-programme-full-rule" aria-expanded="false" aria-controls="qv-programme-full-rule-content">Voir la règle complète</button><div id="qv-programme-full-rule-content" class="qv-programme-full-rule" hidden>${qvProgrammeFullRuleHtml(qv,row)}</div></div></details>
         ${row.conduiteMinutesPerParticipant ? `<p class="qv-programme-workflow-note">Conduite DPS : ${escapeHtml(String(row.conduiteMinutesPerParticipant))} minutes de conduite par conducteur concerné.</p>` : ''}
@@ -13778,6 +13844,11 @@
   }
 
   function render() {
+    if(state.turnstileWidgetId != null && window.turnstile){
+      window.turnstile.remove(state.turnstileWidgetId);
+      state.turnstileWidgetId = null;
+      state.turnstileToken = '';
+    }
     if (state.authChecking || state.needOkta) {
       root.classList.toggle('is-nav-open', false);
       root.innerHTML = renderLoginScreen();
@@ -13838,6 +13909,44 @@
 
   function bind() {
     document.getElementById('scope-local-login')?.addEventListener('submit', submitLocalLogin);
+    const turnstileConfig = authConfig().turnstile;
+    const turnstileHost = document.getElementById('scope-turnstile-widget');
+    if(turnstileHost && turnstileConfig?.enabled){
+      const mount = () => {
+        if(!turnstileHost.isConnected || !window.turnstile || state.turnstileWidgetId != null) return;
+        const receive = token => {
+          state.turnstileToken = token || '';
+          const button = document.getElementById('scope-local-login-submit');
+          if(button) button.disabled = state.authLoginBusy || !token;
+        };
+        const unavailable = () => {
+          receive('');ScopeFeedback.notify('error','Connexion','La vérification de connexion est indisponible.',{preserveForm:true});
+        };
+        try{
+          state.turnstileWidgetId = window.turnstile.render(turnstileHost,{
+            sitekey:turnstileConfig.siteKey,action:turnstileConfig.action || undefined,appearance:'interaction-only',
+            callback:receive,'expired-callback':()=>receive(''),'error-callback':unavailable
+          });
+        }catch(_error){unavailable();}
+      };
+      if(!turnstileConfig.configured){
+        ScopeFeedback.notify('error','Connexion','La vérification de connexion est indisponible.',{preserveForm:true});
+      }else if(window.turnstile) mount();
+      else {
+        let script = document.getElementById('scope-turnstile-script');
+        if(!script){
+          script = document.createElement('script');script.id = 'scope-turnstile-script';
+          script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';script.async = true;
+          script.addEventListener('load',mount);document.head.appendChild(script);
+          script.addEventListener('error',()=>ScopeFeedback.notify('error','Connexion','La vérification de connexion est indisponible.',{preserveForm:true}));
+        }else script.addEventListener('load',mount,{once:true});
+      }
+    }
+    document.getElementById('scope-auth-config-retry')?.addEventListener('click',async () => {
+      await loadAuthConfig();
+      if (await ensureLiveSession()) await onRoute();
+      render();
+    });
     document.getElementById('scope-feedback-close')?.addEventListener('click', () => ScopeFeedback.clear());
     document.getElementById('scope-feedback-cancel')?.addEventListener('click', () => {
       state.participantAssignmentBusy = false;
@@ -14337,15 +14446,61 @@
         }
       });
     });
-    document.getElementById('qv-programme-public')?.addEventListener('change', (event) => {
-      const summary = document.getElementById('qv-programme-public-summary');
-      if (!summary) return;
-      const codes = [...event.currentTarget.querySelectorAll('input:checked')].map((option) => option.value);
-      summary.textContent = L.qvFormatPublicLabels(codes) || 'À définir';
+    ['qv-programme-public','qv-programme-responsable'].forEach(id=>{
+      const list=document.getElementById(id);
+      const refresh=()=>{
+        if(!list) return;
+        list.dataset.dirty='true';
+        const labels=[...list.querySelectorAll('input:checked')].map(input=>id === 'qv-programme-public' && input.dataset.choiceKind !== 'FREE'
+          ? qvProgrammePublicCodeLabel(input.value) : input.closest('label').querySelector('span').textContent);
+        document.getElementById(id+'-summary').textContent=labels.join(' ; ') || 'À définir';
+        state.qvProgrammePopupPosition?.();
+      };
+      list?.addEventListener('change',refresh);
+      const add=()=>{
+        const input=document.getElementById(id+'-free');
+        const value=input?.value || '';
+        if(!value.trim()) return;
+        const existing=[...(list?.querySelectorAll('input[data-choice-kind="FREE"]') || [])].find(item=>item.value === value);
+        if(existing) existing.checked=true;
+        else {
+          const group=list.querySelector('[data-free-choices]');
+          group.insertAdjacentHTML('beforeend',qvProgrammeFreeChoices([value]));group.hidden=false;
+        }
+        input.value='';refresh();
+      };
+      root.querySelector(`[data-qv-add-free="${id}"]`)?.addEventListener('click',add);
+      document.getElementById(id+'-free')?.addEventListener('keydown',event=>{if(event.key === 'Enter'){event.preventDefault();add();}});
     });
     const calendar = document.getElementById('qv-programme-calendar');
     const dateField = document.getElementById('qv-programme-date');
     const calendarButton = document.getElementById('qv-programme-date-picker');
+    const positionProgrammePopup = (popup, anchor) => {
+      if (!popup || !anchor) return;
+      const margin = 12;
+      const bounds = anchor.getBoundingClientRect();
+      popup.style.position = 'fixed';
+      popup.style.width = `${Math.min(360, window.innerWidth - margin * 2)}px`;
+      popup.style.maxHeight = `${window.innerHeight - margin * 2}px`;
+      popup.style.left = `${Math.max(margin, Math.min(bounds.left, window.innerWidth - popup.offsetWidth - margin))}px`;
+      const height = popup.offsetHeight;
+      const below = window.innerHeight - bounds.bottom - margin;
+      const above = bounds.top - margin;
+      const top = below >= height || below >= above ? bounds.bottom + 6 : bounds.top - height - 6;
+      popup.style.top = `${Math.max(margin, Math.min(top, window.innerHeight - height - margin))}px`;
+    };
+    const positionProgrammePopups = () => {
+      if (calendar && !calendar.hidden) positionProgrammePopup(calendar, calendarButton);
+      root.querySelectorAll('.qv-programme-choice-menu[open]').forEach(menu =>
+        positionProgrammePopup(menu.querySelector('.qv-programme-choice-popover'), menu.querySelector('summary')));
+    };
+    if (state.qvProgrammePopupPosition) {
+      window.removeEventListener?.('resize',state.qvProgrammePopupPosition);
+      window.removeEventListener?.('scroll',state.qvProgrammePopupPosition,true);
+    }
+    state.qvProgrammePopupPosition = positionProgrammePopups;
+    window.addEventListener('resize',positionProgrammePopups);
+    window.addEventListener('scroll',positionProgrammePopups,true);
     const closeCalendar = () => { if(calendar) calendar.hidden = true; if(calendarButton) calendarButton.setAttribute('aria-expanded','false'); };
     calendarButton?.addEventListener('click',() => {
       if(!calendar) return;
@@ -14357,6 +14512,7 @@
       }
       calendar.hidden = !open;
       calendarButton.setAttribute('aria-expanded',String(open));
+      positionProgrammePopups();
     });
     calendar?.addEventListener('click',(event) => {
       const month = event.target.closest('[data-qv-calendar-month]');
@@ -14364,6 +14520,7 @@
       if(month){
         calendar.dataset.month = month.dataset.qvCalendarMonth;
         calendar.innerHTML = qvProgrammeCalendarHtml(qvProgrammeDatePayload(dateField?.value || ''),calendar.dataset.month);
+        positionProgrammePopups();
       } else if(day){
         if(dateField){ dateField.value = qvFormatDate(day.dataset.qvCalendarDate,''); dateField.dispatchEvent(new Event('change',{ bubbles:true })); }
         closeCalendar();
@@ -14373,8 +14530,11 @@
     if(state.qvProgrammeCalendarOutside && typeof document.removeEventListener === 'function') document.removeEventListener('pointerdown',state.qvProgrammeCalendarOutside);
     state.qvProgrammeCalendarOutside = (event) => {
       if(calendar && !calendar.hidden && !event.target.closest('.qv-programme-date-field')) closeCalendar();
+      root.querySelectorAll('.qv-programme-choice-menu[open]').forEach(menu => {
+        if (!menu.contains(event.target)) menu.open = false;
+      });
     };
-    if(calendar && typeof document.addEventListener === 'function') document.addEventListener('pointerdown',state.qvProgrammeCalendarOutside);
+    if(typeof document.addEventListener === 'function') document.addEventListener('pointerdown',state.qvProgrammeCalendarOutside);
     document.getElementById('qv-programme-full-rule')?.addEventListener('click',(event) => {
       const content = document.getElementById('qv-programme-full-rule-content');
       if(!content) return;
@@ -14400,22 +14560,43 @@
       if (event.currentTarget.checked) statCom.value = '';
       statCom.disabled = event.currentTarget.checked;
     });
+    document.getElementById('qv-programme-specialisation')?.addEventListener('change',event=>{
+      const field = event.currentTarget;
+      field.dataset.dirty = 'true';
+      const codes = [...field.querySelectorAll('input:checked')].map(input=>input.value);
+      const summary = document.getElementById('qv-programme-qualification-summary');
+      if(summary) summary.textContent = codes.map(code=>(quoVadisData().qualifications || []).find(item=>item.code === code)?.label || code).join(' ; ') || '—';
+    });
+    document.getElementById('qv-programme-cursus')?.addEventListener('change',event=>{event.currentTarget.dataset.dirty = 'true';});
+    document.getElementById('qv-programme-ecawin')?.addEventListener('change',event=>{
+      event.currentTarget.dataset.dirty = 'true';
+      const statCom = document.getElementById('qv-programme-statcom');
+      if(!statCom) return;
+      const current = statCom.value;
+      statCom.innerHTML = qvProgrammeStatComOptions(quoVadisData(),{statCom:current},event.currentTarget.value);
+      if(event.currentTarget.value && !window.ScopeEcawin.isCompatible(event.currentTarget.value,current)) statCom.value = '';
+    });
+    document.getElementById('qv-programme-statcom')?.addEventListener('change',event=>{
+      const activity = document.getElementById('qv-programme-ecawin');
+      if(activity){activity.value = window.ScopeEcawin.activityForStatCom(event.currentTarget.value);activity.dataset.dirty = 'true';}
+    });
     document.querySelectorAll('.qv-programme-choice-menu').forEach((menu) => {
       menu.addEventListener('toggle',() => {
-        if(menu.open) menu.scrollIntoView({block:'nearest',behavior:'auto'});
+        if(menu.open) positionProgrammePopups();
       });
     });
-    [['qv-programme-oi-search','qv-programme-oi'],['qv-programme-public-search','qv-programme-public']].forEach(([searchId,listId]) => {
+    [['qv-programme-oi-search','qv-programme-oi'],['qv-programme-public-search','qv-programme-public'],['qv-programme-responsable-search','qv-programme-responsable'],['qv-programme-qualification-search','qv-programme-specialisation']].forEach(([searchId,listId]) => {
       document.getElementById(searchId)?.addEventListener('input',(event) => {
         const query = qvNormalizeSearch(event.target.value || '');
         document.getElementById(listId)?.querySelectorAll('fieldset').forEach((group) => {
           let visible = 0;
           group.querySelectorAll('label').forEach((label) => {
-            label.hidden = Boolean(query) && !qvNormalizeSearch(label.textContent).includes(query);
+            label.hidden = Boolean(query) && !qvNormalizeSearch(`${label.textContent} ${label.querySelector('input')?.value || ''}`).includes(query);
             if(!label.hidden) visible += 1;
           });
           group.hidden = visible === 0;
         });
+        positionProgrammePopups();
       });
     });
     document.getElementById('qv-programme-lieu')?.addEventListener('change', (event) => {
@@ -14443,10 +14624,10 @@
     const saveProgrammePreparation = async (saveAction) => {
       const id = route().qvProgrammeItemId;
       const creating = id === 'nouveau';
-      if (!id || state.quoVadisBusy || (creating
+      if (!id || state.loading || state.quoVadisBusy || (creating
         ? typeof client.createQuoVadisProgrammeItem !== 'function'
         : typeof client.updateQuoVadisProgrammeItem !== 'function')) return;
-      const selected = (fieldId) => [...new Set(Array.from(document.getElementById(fieldId)?.querySelectorAll('input:checked') || []).map((option) => option.value).filter(Boolean))];
+      const selected = (fieldId) => [...new Set(Array.from(document.getElementById(fieldId)?.querySelectorAll('input:checked') || []).filter(input=>input.dataset.choiceKind !== 'FREE').map((option) => option.value).filter(Boolean))];
       const lieuRaw = document.getElementById('qv-programme-lieu')?.value || '';
       const autreRaw = lieuRaw === 'autre' ? (document.getElementById('qv-programme-autre')?.value || '') : '';
       if(lieuRaw === 'autre' && (!autreRaw || (autreRaw === '__free' && !document.getElementById('qv-programme-lieu-libre')?.value.trim()))){
@@ -14465,17 +14646,22 @@
         status: document.getElementById('qv-programme-occurrence-status')?.value || 'A_PLANIFIER',
         oiCodes: selected('qv-programme-oi'),
         publicCodes: selected('qv-programme-public'),
+        publicFreeLabels:[...(document.getElementById('qv-programme-public')?.querySelectorAll('input[data-choice-kind="FREE"]:checked') || [])].map(input=>input.value),
         lieuId: lieuRaw === 'autre' ? (autreRaw && autreRaw !== '__free' ? autreRaw : null) : (lieuRaw || null),
         lieuLibre: autreRaw === '__free' ? String(document.getElementById('qv-programme-lieu-libre')?.value || '').trim().slice(0, 28) : '',
         keepLieuInReferential: autreRaw === '__free' && document.getElementById('qv-programme-lieu-keep')?.checked === true,
-        salleTheorieId: document.getElementById('qv-programme-salle')?.value || null,
-        responsableFonctionCode: document.getElementById('qv-programme-responsable')?.value || null
+        salleTheorieId: document.getElementById('qv-programme-salle')?.value || null
       };
-      if (creating || document.getElementById('qv-programme-specialisation')) {
-        payload.specialisation = document.getElementById('qv-programme-specialisation')?.value || '';
-        payload.cursus = document.getElementById('qv-programme-cursus')?.value || '';
-        payload.externalActivity = document.getElementById('qv-programme-external')?.checked === true;
-      }
+      if(creating || document.getElementById('qv-programme-responsable')?.dataset.dirty === 'true')
+        payload.responsibleSelections=[...(document.getElementById('qv-programme-responsable')?.querySelectorAll('input:checked') || [])]
+          .map(input=>input.dataset.choiceKind === 'FREE' ? {kind:'FREE',label:input.value} : {kind:'REFERENCE',code:input.value});
+      if(creating || document.getElementById('qv-programme-specialisation')?.dataset.dirty === 'true')
+        payload.qualificationCodes = selected('qv-programme-specialisation');
+      if(creating || document.getElementById('qv-programme-cursus')?.dataset.dirty === 'true')
+        payload.cursusId = document.getElementById('qv-programme-cursus')?.value || null;
+      if(creating || document.getElementById('qv-programme-ecawin')?.dataset.dirty === 'true')
+        payload.ecawinActivityCode = document.getElementById('qv-programme-ecawin')?.value || '';
+      if(creating) payload.externalActivity = document.getElementById('qv-programme-external')?.checked === true;
       state.quoVadisBusy = true;
       const saveButtons = ['qv-programme-save','qv-programme-validate','qv-programme-plan']
         .map((buttonId) => document.getElementById(buttonId)).filter(Boolean);
@@ -14484,13 +14670,14 @@
       try {
         const data = creating ? await client.createQuoVadisProgrammeItem(payload)
           : await client.updateQuoVadisProgrammeItem(id, payload);
+        if (!(creating ? data.created || data.updated : data.updated)) throw new Error('Cette occurrence ne peut pas être enregistrée.');
         invalidateCache(['quoVadis']);
         state.quoVadis = data.quoVadis || state.quoVadis;
         saved = true;
         state.quoVadisProgrammeContextActive = true;
         window.location.hash = qvHref('programme', {annee:quoVadisData().programme.annee});
         toast('success', 'Programme', saveAction === 'PLAN' ? 'Activité validée et planifiée.'
-          : saveAction === 'VALIDATE' ? 'Activité validée.' : creating ? 'Activité créée dans le programme.' : 'Préparation enregistrée.', {preserveForm:true});
+          : saveAction === 'VALIDATE' ? 'Activité validée.' : creating ? 'Activité créée dans le programme.' : 'Préparation enregistrée.', {preserveForm:true,preserveRoute:true});
       } catch (error) {
         toast('error', 'Programme', L.friendlyError(error).message || 'L’enregistrement a échoué.', {preserveForm:true});
       } finally {
@@ -18755,6 +18942,7 @@
       const params = new URLSearchParams(location.search.replace(/^\?/, ''));
       if (params.get('idle') === '1') state.idleExpired = true;
     } catch (_err) { /* ignore */ }
+    const hadSession = Boolean(state.session || state.idleExpired || window.MonitoringApiClient?.getAccessToken?.());
     if (!state.authConfig) await loadAuthConfig();
     try {
       const data = await client.sessionMe();
@@ -18782,7 +18970,7 @@
     } catch (error) {
       const info = presentFriendlyError(L.friendlyError(error));
       clearLocalAuthState();
-      state.authError = info;
+      state.authError = !hadSession && Number(error.status) === 401 ? null : info;
       if (!state.authConfig) await loadAuthConfig();
       return false;
     }
@@ -18858,7 +19046,7 @@
     state.currentRoute = r;
     state.currentRouteKey = routeKey(r);
     applyQuoVadisRouteContext(r);
-    state.navigationSeq += 1;
+    const navigationSeq=++state.navigationSeq;
     if (r.screen === 'liste' || r.screen === 'rapports') {
       state.listReady = false;
       state.listError = null;
@@ -18918,7 +19106,7 @@
       if (r.screen === 'quo-vadis' && r.qvView === 'catalogue-annuel') jobs.push(loadAnnualCatalog());
       else if (r.screen === 'quo-vadis' && r.qvView === 'catalogue-activite' && r.qvCatalogCode) jobs.push(loadAnnualCatalogActivity(r.qvCatalogCode));
       else if (r.screen === 'quo-vadis') {
-        jobs.push(loadQuoVadis());
+        jobs.push(loadQuoVadis(navigationSeq));
         if (['programme', 'programme-fiche','agenda-annuel'].includes(r.qvView) && Number(r.qvAnnee) === 2028) jobs.push(loadQuoVadisProgrammeYear(2028));
       }
       if (r.screen === 'quo-vadis' && r.qvView === 'activite' && r.qvActivityId) jobs.push(loadQuoVadisHistory(r.qvActivityId));
@@ -18940,8 +19128,15 @@
       if (r.screen === 'personne' && r.personneId) jobs.push(loadPersonneFiche(r.personneId));
       if ((r.screen === 'fiche' || r.screen === 'saisie') && r.id) jobs.push(loadFiche(r.id));
       await Promise.all(jobs);
-    });
-    refreshAlertCounts().then(() => render()).catch(() => {});
+    },navigationSeq);
+    refreshAlertCounts().then(() => {
+      // A badge refresh must not rebuild an editable Programme form.
+      if(route().qvView !== 'programme-fiche') render();
+      else {
+        const link=root.querySelector('a.scope-btn[href="#/vigilance"]');
+        if(link) link.textContent=`À traiter · ${Number((state.alertCounts && (state.alertCounts.active ?? state.alertCounts.p0)) || 0)}`;
+      }
+    }).catch(() => {});
     if (r.screen === 'saisie' && r.id) {
       if (state.eventUnavailable) return;
       const ev = state.fiche && state.fiche.evenement;
@@ -18958,6 +19153,9 @@
   if (window.__SCOPE_UI_TEST_HOOKS__) {
     window.ScopeUiTestHooks = {
       state,
+      onRoute,
+      submitLocalLogin,
+      loadAuthConfig,
       renderSaisieHtml(fiche, rows = []) {
         state.fiche = fiche;
         state.ficheReady = true;

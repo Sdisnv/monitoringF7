@@ -69,7 +69,8 @@ function activePopulation(obligations, proposals){
 }
 
 const RECONDUCTIBLE_FIELDS = ['activityLabel','statCom','domain','family','oiCodes','publicCodes','responsibleLabel',
-  'responsableFonctionCode','locationLabel','lieuId','lieuLibre','roomLabel','salleTheorieId','sessionStructure'];
+  'responsableFonctionCode','locationLabel','lieuId','lieuLibre','roomLabel','salleTheorieId','sessionStructure',
+  'qualificationCodes','specialisation','cursusId','cursus','ecawinActivityCode','responsibleSelections','publicFreeLabels'];
 
 function businessSnapshot(fields){
   return Object.fromEntries(RECONDUCTIBLE_FIELDS.filter(key => Object.prototype.hasOwnProperty.call(fields,key))

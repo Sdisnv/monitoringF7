@@ -1,0 +1,27 @@
+{
+  "database": "scope_qv_2027_recipe_20261006",
+  "port": 5432,
+  "nonTargetTables": {
+    "scope_evenements": true,
+    "scope_participations": true,
+    "scope_affectations": true,
+    "scope_attendus": true,
+    "scope_qv_publication_links": true,
+    "scope_event_code_allocations": true,
+    "scope_personnes": true,
+    "scope_person_qualifications": true,
+    "scope_competence_definitions": true,
+    "scope_quo_vadis_cursus_definitions": true,
+    "scope_quo_vadis_cursus_steps": true,
+    "scope_quo_vadis_cursus_programmes": true,
+    "scope_quo_vadis_cursus_step_programmes": true,
+    "scope_lieux": true,
+    "scope_salles_theorie": true,
+    "scope_responsable_fonctions": true,
+    "scope_ois": true,
+    "scope_domaine_ois": true
+  },
+  "otherPreparationsUnchanged": true,
+  "rollback": true,
+  "verdict": "PASS"
+}

@@ -206,12 +206,13 @@ test('fiche Programme rend calendrier, heure, domaine, Stat.Com aligné et lieux
   }
   assert.ok(preparation.indexOf('Gestion de l’événement dans le planning') > preparation.indexOf('Public cible'));
   const statcom = html.match(/<select id="qv-programme-statcom">([\s\S]*?)<\/select>/)?.[1] || '';
-  assert.match(statcom,/010JSP(?:&nbsp;)+Exercices JSP/);
+  assert.match(statcom,/010JSP(?:&nbsp;)+Exercice JSP/);
   assert.doesNotMatch(statcom,/·/);
   assert.match(html,/id="qv-programme-autre"/);
   assert.match(html,/id="qv-programme-lieu-keep" type="checkbox"/);
   assert.match(html,/value="lieu-test-autre"[^>]*>Hôtel de Ville/);
-  assert.ok(html.indexOf('>Chef JSP</option>') < html.indexOf('>Chef site JSP</option>'));
+  assert.ok(html.indexOf('>Chef JSP</span>') < html.indexOf('>Chef site JSP</span>'));
+  assert.match(html,/data-choice-kind="REFERENCE" value="C JSP"/);
 });
 
 test('Programme, ancienne route agenda, Agenda annuel et Synthèse gardent la même source 2027', async () => {

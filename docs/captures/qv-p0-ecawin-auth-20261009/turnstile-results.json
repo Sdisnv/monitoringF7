@@ -1,0 +1,8 @@
+{
+  "browser": "Chromium",
+  "provider": "Cloudflare official public test keys",
+  "missingTokenRejected": true,
+  "widgetTokenAcceptedByServer": true,
+  "programmeAccessible": true,
+  "productionActivated": false
+}
