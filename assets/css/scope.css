@@ -11827,6 +11827,10 @@ body.scope-pdf-open { overflow: hidden; }
 .qv-programme-calendar,.qv-programme-choice-popover{z-index:50;overflow:auto;overscroll-behavior:contain}
 .qv-programme-choice-menu[open]>.qv-programme-choice-popover{box-sizing:border-box;border:1px solid #9bb9df;border-radius:5px;background:#fff;box-shadow:0 8px 24px #132d521f}
 .qv-programme-detail{padding-bottom:max(240px,35vh)}
+.qv-programme-choice-add{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:6px;padding:8px;border-top:1px solid #d7dfe7}
+.qv-programme-choice-add input{min-width:0;width:100%;box-sizing:border-box}
+.qv-programme-choice-add button{width:38px;height:38px;padding:0;font-size:20px;line-height:1}
+.qv-programme-choice-list label>span{min-width:0;overflow-wrap:anywhere}
 .qv-programme-view .qv-programme-table tr.is-permanence>td,.qv-programme-view .qv-programme-month-table tr.is-permanence>td,.qv-activities-table .qv-activites-row.is-permanence>td,.qv-programme-detail.is-permanence>.qv-programme-summary,.qv-mini-cal .qv-mini-day.is-permanence,.qv-mini-cal .qv-mini-day.is-permanence>span{background:#FFF3CD;color:#000}
 .qv-programme-view .qv-programme-table tr.is-permanence:hover>td,.qv-programme-view .qv-programme-month-table tr.is-permanence:hover>td,.qv-mini-cal .qv-mini-day.is-permanence:hover>span{background:#ffe69c;color:#000}
 .qv-programme-table tr.is-permanence.is-drop-target>td,.qv-programme-month-table tr.is-permanence.is-drop-target>td,.qv-mini-cal .is-permanence:focus-visible{box-shadow:inset 0 0 0 2px #1769aa}

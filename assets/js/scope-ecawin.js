@@ -69,12 +69,12 @@
     ['EXERCI','072F3','Revue quinquennale SDIS NV'],
     ['EXERCI','073F56','Représentations'],
     ['EXERCI','074F1','Test NUOVO'],
+    ['EXERCI','CONCOUR','Concours','MOA_CONCOUR_20261010'],
     ['EXERSR','0161F7','Instruction FOSPEC PIO'],
     ['EXOFSI','0162F7','Instruction FOSPEC OFSI']
-  ].map(([activityCode,statCom,description])=>Object.freeze({activityCode,statCom,description,
-    active:statCom !== '010JY3',source})));
-  const unresolvedAssociations = Object.freeze([{activityCode:'EXERCI',visibleStatCom:'CONCOU',description:'Concours',
-    reason:'CODE_COLUMN_CLIPPED'}]);
+  ].map(([activityCode,statCom,description,confirmationSource])=>Object.freeze({activityCode,statCom,description,
+    active:statCom !== '010JY3',source:confirmationSource || source})));
+  const unresolvedAssociations = Object.freeze([]);
   function activityForStatCom(statCom){
     const matches = associations.filter(row=>row.statCom === statCom && row.active);
     return matches.length === 1 ? matches[0].activityCode : '';
@@ -99,7 +99,7 @@
         associationConfirmed:qualified,
         status:statCom === '010JY3' ? 'HISTORICAL_ONLY' : statCom === 'EMSEA' ? 'SCOPE_ONLY'
           : qualified ? (!applicable ? 'REFERENCE_NOT_APPLICABLE' : descriptionKnown ? 'QUALIFIED' : 'DESCRIPTION_PENDING') : 'UNQUALIFIED',
-        exportable:qualified && descriptionKnown && applicable,source:association ? source : null};
+        exportable:qualified && descriptionKnown && applicable,source:association?.source || null};
     });
   }
   return {activityCodes,activityLabels,associations,sourceImage,unresolvedAssociations,

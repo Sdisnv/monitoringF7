@@ -13,7 +13,8 @@ const TABLES = ['scope_quo_vadis_obligations','scope_evenements','scope_particip
   'scope_event_code_allocations','scope_event_code_sequences','scope_quo_vadis_calendar_days',
   'scope_personnes','scope_person_qualifications','scope_competence_definitions',
   'scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps',
-  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes','scope_statcom_referentiel'];
+  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes','scope_statcom_referentiel',
+  'scope_lieux','scope_salles_theorie','scope_responsable_fonctions'];
 
 async function fingerprint(client, table, where = '') {
   const { rows } = await client.query(`select count(*)::integer as count,
@@ -78,9 +79,12 @@ async function run() {
     const label = 'TEST RECETTE QV CREATION PR SANS OI';
     const input = {year:2027,activityLabel:label,domain:'F3',statCom:'011PR',oiCodes:[],
       publicCodes:['PR:2'],qualificationCodes:['PAPR'],ecawinActivityCode:'EXERCI',date:'2027-06-15',
+      responsibleSelections:[{kind:'REFERENCE',code:'C PR'},{kind:'REFERENCE',code:'Cdt'},
+        {kind:'FREE',label:'PrésidentE  Codir'},{kind:'FREE',label:'Responsable externe'}],
+      publicFreeLabels:['Membres du Codir','Invités externes'],
       startTime:'14:00',endTime:'16:00',status:'PROPOSE'};
     await client.query('savepoint reference_cases');
-    for(const statCom of ['CECAFB','0180F7','074F1']){
+    for(const statCom of ['CECAFB','0180F7','074F1','CONCOUR']){
       const createdReference = await service.createProgrammePreparation({...input,domain:'F7',statCom,
         ecawinActivityCode:ecawin.activityForStatCom(statCom)});
       const current = createdReference.quoVadis.canonicalProgramme.rows.find(row=>row.id === createdReference.itemId);
@@ -129,6 +133,10 @@ async function run() {
     assert.ok(createdRow);
     assert.deepEqual(createdRow.ois,[]);
     assert.deepEqual(createdRow.publics,['PR:2']);
+    assert.deepEqual(createdRow.publicFreeLabels,input.publicFreeLabels);
+    assert.equal(createdRow.responsibleSelections.length,4);
+    assert.equal(createdRow.responsibleSelections[2].label,'PrésidentE  Codir');
+    assert.deepEqual(find(await service.listProgramme(2027)).responsibleSelections,createdRow.responsibleSelections);
     assert.equal(createdRow.status,'PROPOSE');
     assert.equal(createdRow.businessValidation,null);
     assert.equal(createdRow.publishedEventId,undefined);
@@ -151,6 +159,9 @@ async function run() {
     assert.equal(find(planned.quoVadis).status,'PLANIFIE');
     assert.ok(find(planned.quoVadis).businessValidation);
     assert.equal(find(planned.quoVadis).businessCode,createdRow.businessCode);
+    const plannedAgain=await service.updateProgrammePreparation(created.itemId,{...input,saveAction:'PLAN',status:'PROPOSE'});
+    assert.equal(find(plannedAgain.quoVadis).businessCode,createdRow.businessCode);
+    assert.equal((await client.query('select count(*)::integer as count from scope_quo_vadis_obligations where source_ref=$1',[created.itemId])).rows[0].count,1);
     await assert.rejects(service.updateProgrammePreparation(created.itemId,{...input,saveAction:'PLAN',date:null,startTime:null,endTime:null}),
       (error) => error.error === 'programme_statut_invalide');
     const moved = await service.updateProgrammePreparation(created.itemId,{...input,
@@ -168,7 +179,7 @@ async function run() {
     const afterMove = find(movedOnlyDate.quoVadis);
     assert.equal(afterMove.startsAt.slice(0,16),'2027-06-19T15:00');
     assert.equal(find(await service.listProgramme(2027)).startsAt.slice(0,16),'2027-06-19T15:00');
-    for(const field of ['activityLabel','ois','publics','businessCode','status','specialisation','cursus','businessValidation'])
+    for(const field of ['activityLabel','ois','publics','publicFreeLabels','responsibleSelections','businessCode','status','specialisation','cursus','businessValidation'])
       assert.deepEqual(afterMove[field],beforeMove[field],`${field} changed during date move`);
     const published = baseRows.find(row=>row.publishedEventId && row.definitionId !== 'CTA-PERMANENCE');
     assert.ok(published);
@@ -195,7 +206,8 @@ async function run() {
       businessCode:createdRow.businessCode,oi:createdRow.ois,publics:createdRow.publics,
       modified:true,moved:true,saveRetainsStates:true,validateRetainsPlanning:true,planValidatesAndPlans:true,validatedExplicitly:true,externalWithoutCode:true,
       officialReferences:ecawin.associations.length,referenceIdentitiesPreserved:true,referenceSyncIdempotent:true,
-      historicalJspSavePreserved:true,newJspHistoricalRefused:true,newOfficialCodes:['CECAFB','0180F7','074F1'],
+      historicalJspSavePreserved:true,newJspHistoricalRefused:true,newOfficialCodes:['CECAFB','0180F7','074F1','CONCOUR'],
+      responsibleSelectionsPersisted:true,publicFreeLabelsSeparate:true,secondPlanWithoutDuplication:true,
       operationalEventsCreated:0,otherPreparationsChanged:0,persistedAfterRollback:0,port:PORT},null,2));
   } finally {
     if(open) await client.query('rollback');

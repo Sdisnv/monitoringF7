@@ -5,13 +5,16 @@ const ecawin = require('../assets/js/scope-ecawin');
 const statCom = require('../netlify/lib/_scope-statcom-referential');
 
 test('seules les associations MOA explicites sont qualifiées',()=>{
-  assert.equal(ecawin.complete,false);
-  assert.equal(ecawin.associations.length,60);
-  assert.equal(ecawin.associations.filter(row=>row.active).length,59);
-  assert.equal(new Set(ecawin.associations.map(row=>row.statCom)).size,60);
+  assert.equal(ecawin.complete,true);
+  assert.equal(ecawin.associations.length,61);
+  assert.equal(ecawin.associations.filter(row=>row.active).length,60);
+  assert.equal(new Set(ecawin.associations.map(row=>row.statCom)).size,61);
   assert.equal(ecawin.associations.find(row=>row.statCom === '0153F7').description,'Instrcution AUTO BAT');
   assert.equal(ecawin.associations.some(row=>row.activityCode === 'EXERPO'),false);
-  assert.equal(ecawin.unresolvedAssociations[0].visibleStatCom,'CONCOU');
+  assert.deepEqual(ecawin.unresolvedAssociations,[]);
+  assert.equal(ecawin.activityForStatCom('CONCOUR'),'EXERCI');
+  assert.equal(ecawin.activityForStatCom('CONCOU'),'');
+  assert.equal(ecawin.activityForStatCom('CONCOURS'),'');
   assert.equal(ecawin.activityForStatCom('010JC1'),'EXERCI');
   assert.equal(ecawin.activityForStatCom('COURJSP'),'COURS');
   assert.equal(ecawin.activityForStatCom('COURJS'),'');
@@ -36,7 +39,7 @@ test('la capture conservee est la source exacte du registre',()=>{
   const path = require('node:path');
   const crypto = require('node:crypto');
   assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,'..',ecawin.sourceImage.path))).digest('hex'),ecawin.sourceImage.sha256);
-  assert.ok(ecawin.associations.every(row=>row.description && row.source === ecawin.source));
+  assert.ok(ecawin.associations.every(row=>row.description && row.source === (row.statCom === 'CONCOUR' ? 'MOA_CONCOUR_20261010' : ecawin.source)));
 });
 test('une reference suspendue, absente ou expiree ne devient pas exportable',()=>{
   const row = {statCom:'011PR',ecawinActivityCode:'EXERCI',startsAt:'2027-06-15T14:00:00'};

@@ -41,7 +41,8 @@ const protectedTables = ['scope_quo_vadis_obligations','scope_evenements','scope
   'scope_affectations','scope_attendus','scope_qv_publication_links','scope_event_code_sequences','scope_event_code_allocations','scope_quo_vadis_calendar_days',
   'scope_personnes','scope_person_qualifications','scope_competence_definitions',
   'scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps',
-  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes','scope_statcom_referentiel'];
+  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes','scope_statcom_referentiel',
+  'scope_lieux','scope_salles_theorie','scope_responsable_fonctions','scope_ois','scope_domaine_ois'];
 const json = (response,status,body) => {
   response.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
   response.end(JSON.stringify(body));
@@ -52,13 +53,33 @@ async function fingerprint(table) {
     from ${table} t`)).rows[0];
 }
 let baseline;
+let originalPreparations;
+const touchedReferences=new Set();
+let recipeFailureAfterWrite=false;
+let recipeWritten=false;
 let queue = Promise.resolve();
 const query = (...args) => {
+  if(recipeFailureAfterWrite && recipeWritten && /select .*from scope_quo_vadis_programmes/s.test(args[0])){
+    recipeFailureAfterWrite=false;
+    return Promise.reject(new Error('Enregistrement indisponible en recette (erreur serveur simulée).'));
+  }
+  if(/^(insert into|update) scope_quo_vadis_obligations/.test(args[0].trim())){
+    recipeWritten=true;touchedReferences.add(String(args[1]?.[1] || ''));
+  }
   const next = queue.then(() => client.query(...args));
   queue = next.catch(() => {});
   return next;
 };
-const service = createScopeQuoVadisService({database:{query,transaction:(work) => work({query})}});
+let transactionId=0;
+const service = createScopeQuoVadisService({database:{query,transaction:async work=>{
+  const name=`recipe_service_${++transactionId}`;
+  await query(`savepoint ${name}`);
+  try{
+    const result=await work({query});await query(`release savepoint ${name}`);return result;
+  }catch(error){
+    await query(`rollback to savepoint ${name}`);await query(`release savepoint ${name}`);throw error;
+  }
+}}});
 let requests = Promise.resolve();
 const server = http.createServer((request,response) => {
   const work = async () => {
@@ -87,6 +108,8 @@ const server = http.createServer((request,response) => {
     const api = url.pathname.startsWith('/api/scope/quo-vadis/');
     if(api){
       const body = request.method === 'GET' ? {} : JSON.parse((await Array.fromAsync(request)).map(chunk => chunk.toString()).join('') || '{}');
+      recipeFailureAfterWrite=body.__recipeFailureAfterWrite === true;
+      recipeWritten=false;
       const programme = url.pathname.match(/^\/api\/scope\/quo-vadis\/programmes\/(\d{4})$/);
       const item = url.pathname.match(/^\/api\/scope\/quo-vadis\/programme-items\/([^/]+)$/);
       await query('savepoint browser_request');
@@ -118,10 +141,24 @@ const server = http.createServer((request,response) => {
 async function stop() {
   server.close();
   await requests;
+  const allowed=new Set(['scope_quo_vadis_obligations','scope_statcom_referentiel','scope_quo_vadis_calendar_days','scope_event_code_sequences']);
+  const unchanged={};
+  for(const table of protectedTables.filter(table=>!allowed.has(table))) unchanged[table]=JSON.stringify(await fingerprint(table)) === JSON.stringify(baseline[table]);
+  const preparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
+  const othersUnchanged=JSON.stringify(preparations.filter(row=>!touchedReferences.has(row.source_ref)))
+    === JSON.stringify(originalPreparations.filter(row=>!touchedReferences.has(row.source_ref)));
   await client.query('rollback');
   const restored = {};
   for(const table of protectedTables) restored[table] = await fingerprint(table);
-  console.log(`ROLLBACK ${JSON.stringify(restored) === JSON.stringify(baseline) ? 'PASS' : 'NOK'}`);
+  const rollback=JSON.stringify(restored) === JSON.stringify(baseline);
+  const evidence={database,port:5432,nonTargetTables:unchanged,otherPreparationsUnchanged:othersUnchanged,rollback,
+    verdict:rollback && othersUnchanged && Object.values(unchanged).every(Boolean) ? 'PASS' : 'NOK'};
+  console.log(JSON.stringify(evidence));console.log(`ROLLBACK ${rollback ? 'PASS' : 'NOK'}`);
+  if(process.env.SCOPE_RECIPE_EVIDENCE_DIR){
+    const directory=path.resolve(root,process.env.SCOPE_RECIPE_EVIDENCE_DIR);
+    if(!directory.startsWith(path.join(root,'docs','captures')+path.sep)) throw new Error('Invalid evidence destination');
+    fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,'postgres-integrity.json'),JSON.stringify(evidence,null,2));
+  }
   await client.end();
   process.exit(0);
 }
@@ -132,6 +169,7 @@ async function start() {
     throw new Error('Unexpected database target');
   baseline = {};
   for(const table of protectedTables) baseline[table] = await fingerprint(table);
+  originalPreparations=(await client.query('select source_ref,md5(to_jsonb(t)::text) as hash from scope_quo_vadis_obligations t order by source_ref')).rows;
   await client.query('begin');
   await synchronizeEcawinReferential(client);
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));

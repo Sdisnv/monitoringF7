@@ -33,7 +33,7 @@ function createFixture(file, options = {}) {
         return {rows:[row]};
       }
       if(normalized.startsWith('select') && normalized.includes('from scope_salles_theorie')) return {rows:(refs.salles || []).filter(row => !params.length || row.salle_id === params[0]).map(row => ({...row,parent_code:((refs.salles || []).find(parent => parent.salle_id === row.parent_salle_id) || {}).code}))};
-      if(normalized.startsWith('select') && normalized.includes('from scope_responsable_fonctions')) return {rows:(refs.responsables || []).filter(row => !params.length || row.code === params[0])};
+      if(normalized.startsWith('select') && normalized.includes('from scope_responsable_fonctions')) return {rows:(refs.responsables || []).filter(row => !params.length || (Array.isArray(params[0]) ? params[0].includes(row.code) : row.code === params[0]))};
       if(normalized.startsWith('select') && normalized.includes('from scope_quo_vadis_dps_organisation_versions')) return {rows:structuredClone(options.dpsOrganisation || [])};
       if (normalized.startsWith('insert into scope_quo_vadis_calendar_days')) {
         const entry = { programme_id: params[0], jour: params[1], type_jour: normalized.includes("'vacances_scolaires'") ? 'VACANCES_SCOLAIRES' : 'FERIE', libelle: params[2], metadata: JSON.parse(params[3] || '{}') };

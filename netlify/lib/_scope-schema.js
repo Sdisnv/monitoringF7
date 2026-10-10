@@ -929,10 +929,10 @@ async function migrateFunctionalCatalogC18(){
 async function migrateStatComEcawinMoa20261009(){
   return db.transaction(async client=>{
     await client.query('select pg_advisory_xact_lock($1)',[671902287]);
-    const done = await client.query("select 1 from monitoring_f7_schema_migrations where version='scope-statcom-ecawin-moa-20261009-1'");
+    const done = await client.query("select 1 from monitoring_f7_schema_migrations where version='scope-statcom-ecawin-moa-20261010-2'");
     if(done.rows[0]) return;
     await synchronizeEcawinReferential(client);
-    await client.query("insert into monitoring_f7_schema_migrations(version) values('scope-statcom-ecawin-moa-20261009-1') on conflict(version) do nothing");
+    await client.query("insert into monitoring_f7_schema_migrations(version) values('scope-statcom-ecawin-moa-20261010-2') on conflict(version) do nothing");
   });
 }
 

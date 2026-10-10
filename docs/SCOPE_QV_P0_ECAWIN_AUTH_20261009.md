@@ -1,44 +1,74 @@
-# SCOPE - Finalisation P0, ECAwin et authentification
+# SCOPE QUO VADIS Corrections MOA consolidees
 
-Mise a jour du 10.10.2026 apres reception de la capture originale MOA.
+Lot du 10.10.2026. Ce rapport actualise la PR #10 apres la reprise controlee.
+Les observations retirees sur les lieux, salles et les deux captures ne font pas partie du lot.
 
-A. GitHub initial : main `985eb5779590d90b671a591a4edcb3a961b42a50`, branche `codex/scope-qv-p0-consolidated-20261009`, commit acquis `46a62c6b1dbbd9811e115ee37e87d921a59eac83`. Branche poursuivie, acquis conserves. Aucun merge.
+## A Etat initial
 
-B. P0 : corrections de session, route apres login, notifications, popovers, gabarit et workflow conservees. La priorite CSS des permanences est corrigee : le zebrage ne masque plus le jaune.
+Branche `codex/scope-qv-p0-consolidated-20261009`, HEAD initial `71677a69b97619a7d9dff9397186af32f95852fb`.
+PR #10 OPEN, DRAFT, MERGEABLE. Main controle : `985eb5779590d90b671a591a4edcb3a961b42a50`.
+Acquis reutilises : P0, LOCAL, gabarit commun, Drag & Drop, popovers, permanences jaunes, qualifications/cursus, exports et Turnstile.
+Le dossier initial et ses modifications preexistantes restent intacts.
 
-C. Navigateur : recette Chromium PASS, 11 scenarios consolides, dont les listes issues de la capture ECAwin. Couverture Safari non obtenue : controle natif `noWindowsAvailable`. Controle natif Chrome egalement indisponible via capture macOS ; recette automatisee Chromium dans un profil temporaire isole. Preuves dans `captures/qv-p0-ecawin-auth-20261009/recipe-results.json`.
+## B Enregistrer et planifier
 
-D. Drag & Drop : tableau PASS ; mensuel sur barre de date PASS ; ecriture sur clone, relecture et rechargement PASS. Horaires, codes, qualifications, cursus et decisions conserves. Les verrouillages publies et CTA restent actifs.
+Causes reproduites : une ancienne navigation achevait son chargement apres l'ouverture de la nouvelle fiche et remplacait sa saisie ; l'etat Planifie etait masque par Valide ; la relecture de reponse intervenait apres COMMIT et pouvait echouer alors que l'ecriture etait deja conservee.
 
-E. Fiches : quatre provenances comparees, meme structure et dimensions des composants. Code activite ECAwin place dans le champ valide ; code d'occurrence SCOPE maintenu dans les informations. Aucune reorganisation de la fiche.
+Correctifs : compteur de navigation existant utilise pour ignorer les chargements perimes et leur cache ; fiche bloquee pendant son propre chargement ; compteur d'alertes actualise sans reconstruire la fiche ; affichage Planifie distinct de la validation metier ; ecriture et hydratation de reponse dans la meme transaction PostgreSQL.
 
-F. Calendriers et listes : PASS sur 1440x1000, 960x900 et 390x844. Repositionnement et limites du viewport controles ; dernieres options accessibles par defilement interne.
+Fichiers principaux : `assets/js/scope-ui.js`, `netlify/lib/_scope-quo-vadis-service.js`.
+SAVE conserve les decisions ; VALIDATE valide sans changer la planification ; PLAN valide et planifie.
+Creation, occurrence 2026, version metier validee, reouverture rapide, deuxieme sauvegarde sans doublon et erreur serveur apres ecriture : PASS sur clone.
+Aucun evenement operationnel cree : publication toujours soumise a la validation complete du programme annuel.
 
-G. Permanences : jaune `#FFF3CD` verifie par couleur calculee dans tableau, mois, Agenda annuel et fiche. Aucun changement des dates ou rotations.
+## C Responsables
 
-H. Notifications : confirmation centrale visible PASS ; erreur centrale visible PASS ; saisies conservees apres refus ; confirmation conservee apres retour au Programme avec recherche.
+Selection multiple avec recherche dans `scope_responsable_fonctions`, ajout libre et suppression individuelle.
+`responsibleSelections` distingue REFERENCE (code existant) et FREE (libelle exact, sans conversion en personne).
+Le champ scalaire historique reste compatible ; les selections et la presentation complete sont conservees dans les metadonnees.
+FREE conserve casse et espaces, y compris `PrésidentE  Codir` dans le cas de recette.
+La fiche commune, le Programme, les donnees Agenda et les exports existants lisent les libelles conserves ; aucun format de rapport reconstruit.
+Aucun NIP fictif, aucune affectation individuelle creee.
 
-I. ECAwin : capture originale MOA recue et conservee avec empreinte SHA-256. Registre porte de 12 exemples a 60 associations avec descriptions exactes, dont 59 actives et JSP Y3 historique. Cinq codes activite officiels ; aucune association EXERPO fournie, donc aucune inventee. Seule la ligne Concours reste non qualifiee : CONCOU visible au bord de colonne, code complet a confirmer. `complete:false` signale cette limite. `ecawinCorrespondence` fournit la table exploitable du futur export, sans exporter une association non prouvee. Details et original dans `references/ECAwin_20261009.md`.
+## D Publics cibles
 
-J. Divergences : `COURJSP` conserve, aucun `COURJS` propose ; descriptions officielles et references manquantes CECAFB, 0180F7 et 074F1 raccordees ; association incompatible refusee au serveur ; code d'occurrence distinct du code ECAwin et du Stat.Com et stable meme lors d'une nouvelle qualification. Synchronisation preparee uniquement du referentiel ; codes non reconnus desactives sans suppression ni modification des occurrences.
+Selection multiple des codes existants et ajout de libelles libres, avec recherche et suppression individuelle.
+`publicCodes` et la colonne `cible_codes` contiennent uniquement les publics references.
+`publicFreeLabels` reste une information descriptive, jamais une qualification, un public calcule ou une obligation individuelle.
+Combinaison reference/libre, persistance et reouverture : PASS. Calculs DPS/DAP/JSP, qualifications, cursus et affectations datees inchanges.
 
-K. Historique : `010JY3` conserve sans conversion automatique vers `010JC1`, absent des nouvelles options actives ; `EMSEA` conserve sans association ECAwin inventee et sans remplacement par EXEC ou 070F0. Aucune renumerotation ni reecriture historique.
+## E ECAwin
 
-L. Qualifications et cursus : references existantes lues, identifiants metier reutilises, selection multiple des qualifications et champ vide possibles. Saisie libre refusee au serveur. Liens techniques des modules Cursus proteges. Aucune ecriture sur personnel, qualifications ou progressions individuelles.
+`EXERCI / CONCOUR / Concours` confirme par la MOA le 10.10.2026 : sept caracteres, sans S final.
+Les 60 associations precedentes sont identiques, verifiees contre le commit initial. Registre fourni : 61 associations, 60 actives et JSP Y3 historique ; `complete:true`.
+La completude porte sur les captures fournies et cette confirmation, pas sur un catalogue ECAwin mondial non fourni.
+Aucune association EXERPO inventee. EMSEA reste specifique SCOPE. 010JY3 reste historique, sans conversion.
+Synchronisation de referentiel version `scope-statcom-ecawin-moa-20261010-2` preparee et testee sur clone, jamais executee en production.
+Original et transcription : [reference ECAwin](references/ECAwin_20261009.md). Aucun code d'occurrence renumerote.
 
-M. Connexion : carte simplifiee, NIP et mot de passe, identite sombre SCOPE et logo SDIS conserves. Cadenas et encadre redondant retires. Aucun lien de recuperation ajoute.
+## F Tests et preuves
 
-N. Turnstile : prepare et desactive par defaut. Tests serveur PASS ; Siteverify reel avec cles publiques Cloudflare de test PASS (acceptation et refus) ; widget invisible et connexion LOCAL avec verification serveur PASS. Aucun secret de production ni parametre Netlify modifie. Preuve dans `captures/qv-p0-ecawin-auth-20261009/turnstile-results.json`.
+- Tests cibles : 41/41 PASS, dont atomicite, structures serveur, sauvegardes distinctes, chargement concurrent, champs libres et conservation des 60 associations.
+- PostgreSQL clone `scope_qv_2027_recipe_20261006` sur `127.0.0.1:5432` : baseline 847, selections multiples/libres persistantes, CONCOUR utilisable, deuxieme PLAN sans duplication, deplacement conservant les nouvelles decisions, rollback PASS.
+- Chromium : 6 parcours consolides PASS ; menus controles sur 1440x1000, 960x900 et 390x844. Erreur HTTP 500 apres ecriture : rollback et saisies conservees.
+- Empreintes avant rollback : 18 tables hors cible inchangees, dont personnes/NIP, affectations, qualifications, participations, evenements, lieux et salles ; autres preparations inchangees. Toutes les empreintes restaurees apres rollback.
+- Build Netlify du candidat PASS, sans deploiement. `git diff --check` PASS.
+- Preuves : [parcours navigateur](captures/qv-moa-correctifs-20261010/recipe-results.json), [integrite PostgreSQL](captures/qv-moa-correctifs-20261010/postgres-integrity.json), captures dans le meme dossier.
+- Limite : Safari non couvert. Preuves P0 et Turnstile anterieures conservees dans `captures/qv-p0-ecawin-auth-20261009/`, sans repetition des recettes non concernees.
 
-O. Tests : 40/40 tests cibles rejoues pour l'integration de la capture (ECAwin, P0, fiches, calendrier, consolidation et EMSEA), incluant les references suspendues, expirees et absentes non exportables. Preuves acquises conservees : historique JSP/XLSX 6/6 ; Turnstile 5/5 ; login 8/8 ; presentation login 6/6 ; LOCAL/RBAC 10 blocs et 31 assertions ; exports 8/8. Recette PostgreSQL clone PASS, baseline 847, synchronisation idempotente et identifiants du referentiel conserves ; nouveaux codes crees, historique JSP enregistrable mais non proposable, codes d'occurrence stables ; aucune autre preparation ou evenement operationnel modifie ; empreintes personnel, qualifications, cursus et referentiel restaurees apres rollback. Build et preflight Netlify PASS.
+## G Livraison
 
-P. PR : une seule PR #10 en brouillon vers main sur la branche existante, https://github.com/Sdisnv/monitoringF7/pull/10. Acquis 46a62c6 et finalisation 585a6f7 conserves dans l'historique. Aucune fusion ni publication ; nouveau GO MOA necessaire apres confirmation de la derniere ligne ECAwin.
+Un commit correctif explicite sur la branche existante ; SHA final indique dans la PR et le compte rendu de livraison.
+Une seule [PR #10](https://github.com/Sdisnv/monitoringF7/pull/10), maintenue en brouillon.
+Decisions MOA ajoutees au [referentiel versionne](business-rules/quo-vadis-canonical-rules.md).
+Production `scope-sdisnv`, site ID `6def8d4d-78c6-4112-bb76-6891df0e0a52`, deploiement de reference `6ac8d732e7e62259b75409ff` conserve.
+Aucune fusion, publication, ecriture en production, modification de secrets, RLS ou ORION.
+Gestion des lieux/salles et JSON canonique source inchanges. Nouvelle structure JSON compatible, aucune migration destructive.
 
-Q. Netlify : cible `scope-sdisnv`, ID `6def8d4d-78c6-4112-bb76-6891df0e0a52`. Deploiement de reference `6ac8d732e7e62259b75409ff` conserve. Aucun candidat publie.
+## H Verdict
 
-R. Donnees : aucune ecriture metier ni migration executee en production, aucun changement RLS, secrets ou ORION. Synchronisation du referentiel uniquement preparee pour le candidat et testee dans la transaction du clone. Modifications locales preexistantes preservees. Toutes les ecritures de recette annulees, empreintes restaurees.
-
-S. Verdict : BLOCKED pour publication du lot complet - code exact de la seule ligne Concours a confirmer. L'absence generale des captures est levee ; 60 associations sont maintenant transcrites et testees. P0 et authentification valides. Aucun PASS Safari ni association incertaine inventes. Ne pas fusionner ni publier sans nouveau GO MOA.
+**READY_FOR_MOA** : lot implemente et teste sur clone, pret pour recette fonctionnelle ciblee de la PR en brouillon.
+Ce verdict ne vaut pas GO de fusion, de publication ou d'activation Turnstile en production.
 
 ## Configuration Turnstile
 
