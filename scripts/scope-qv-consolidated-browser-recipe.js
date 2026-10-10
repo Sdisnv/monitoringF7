@@ -53,6 +53,32 @@ async function run(){
         && row.cursusReconciliation?.status !== 'SUPERSEDED_BY_VALIDATED_MODULE').length,process.env.SCOPE_RECIPE_VISUAL_ONLY === 'true' || process.env.SCOPE_RECIPE_AUTH_ONLY === 'true' ? 850 : 849);
     });
     if(process.env.SCOPE_RECIPE_AUTH_ONLY === 'true') return;
+    await record('référentiel ECAwin issu de la capture et filtres réciproques',async()=>{
+      const ecawin = require('../assets/js/scope-ecawin');
+      const data = await programme();
+      assert.equal(data.ecawinReferential.sourceImage.sha256,ecawin.sourceImage.sha256);
+      assert.equal(data.ecawinReferential.associations.length,ecawin.associations.length);
+      await page.getByRole('link',{name:'Créer une activité',exact:true}).click();
+      for(const activityCode of ecawin.activityCodes){
+        await page.locator('#qv-programme-ecawin').selectOption(activityCode);
+        const options = await page.locator('#qv-programme-statcom option').evaluateAll(items=>items
+          .filter(item=>item.value && !item.disabled).map(item=>({code:item.value,label:item.textContent.replace(/\s+/g,' ').trim()})));
+        const applicable = data.statComCodes.filter(item=>item.active !== false && item.code !== '010JY3'
+          && (!item.validFrom || item.validFrom <= '2027-01-01') && (!item.validTo || item.validTo >= '2027-01-01')
+          && ecawin.isCompatible(activityCode,item.code));
+        assert.deepEqual(options.map(item=>item.code).sort(),applicable.map(item=>item.code).sort());
+        for(const option of options) assert.ok(option.label.includes(ecawin.associations.find(item=>item.statCom === option.code).description));
+      }
+      for(const statCom of ['CECAFB','0180F7','074F1']){
+        await page.locator('#qv-programme-ecawin').selectOption('');
+        await page.locator('#qv-programme-statcom').selectOption(statCom);
+        assert.equal(await page.locator('#qv-programme-ecawin').inputValue(),ecawin.activityForStatCom(statCom));
+      }
+      await page.locator('#qv-programme-ecawin').selectOption('EXERCI');
+      await page.screenshot({path:path.join(output,'fiche-ecawin-reference-officielle.png')});
+      await page.goto(`${base}/scope.html#/quo-vadis/programme`);
+      await page.locator('.qv-programme-view').waitFor();
+    });
     await filter();
     let itemId = (await programme()).canonicalProgramme.rows.find(row=>row.activityLabel === 'RECETTE P0 Nouveau')?.id;
     if(process.env.SCOPE_RECIPE_VISUAL_ONLY !== 'true'){

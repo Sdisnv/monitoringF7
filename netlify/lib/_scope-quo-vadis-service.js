@@ -1452,7 +1452,9 @@ function createScopeQuoVadisService({ database = db } = {}){
       statComCodes: statcoms.rows.map(row => ({ ...row, label:row.libelle || row.label,validFrom:dateOnly(row.valid_from),validTo:dateOnly(row.valid_to) })),
       domainOis: domainOis.rows,
       qualifications: qualifications.rows.map(row=>({id:row.competence_id,code:row.code,label:row.libelle,domainCode:row.domaine_code,type:row.type})),
-      ecawinReferential: {activityCodes:ecawin.activityCodes,associations:ecawin.associations,complete:ecawin.complete,source:ecawin.source},
+      ecawinReferential: {activityCodes:ecawin.activityCodes,activityLabels:ecawin.activityLabels,
+        associations:ecawin.associations,complete:ecawin.complete,source:ecawin.source,
+        sourceImage:ecawin.sourceImage,unresolvedAssociations:ecawin.unresolvedAssociations},
       statComSuccessions:STATCOM_SUCCESSIONS,
       cursus: cursus.rows.map((row) => mapCursus(row, programme.annee)),
       cursusSelections: cursusSelections.rows.map((row) => ({
@@ -1907,7 +1909,7 @@ function createScopeQuoVadisService({ database = db } = {}){
         }
       }
     }
-    result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || []);
+    result.ecawinCorrespondence = ecawin.correspondenceRows(result.canonicalProgramme?.rows || [],result.statComCodes);
     return result;
   }
 
@@ -3281,8 +3283,10 @@ function createScopeQuoVadisService({ database = db } = {}){
       throw new HttpError(422,'programme_statcom_invalide','EMSEA est réservé aux séances État-major.');
     }
     const statcomResult = statCom ? await db.query(`select * from scope_statcom_referentiel where code=$1`,[statCom]) : {rows:[]};
-    const retainedHistoricalCode = Boolean(body.validateBusiness !== true && existing && statCom && !statcomResult.rows[0]
-      && statCom === String(existing.statcom_code || '').trim());
+    const retainedHistoricalCode = Boolean(body.validateBusiness !== true && !options.manualSource && statCom
+      && statCom === previousStatCom
+      && ((!ecawin.activityForStatCom(statCom) && statCom !== 'EMSEA') || statcomResult.rows[0]?.active === false
+        || (!statcomResult.rows[0] && existing)));
     if(statCom && !retainedHistoricalCode
       && (!statcomResult.rows[0] || !isStatComValidForDate(statcomResult.rows[0],date || `${year}-01-01`))){
       throw new HttpError(422,'programme_statcom_invalide','Le Stat.Com doit provenir du référentiel canonique et être valide à cette date.');
@@ -3421,7 +3425,7 @@ function createScopeQuoVadisService({ database = db } = {}){
       let writeMetadata = metadata;
       if(source.manualCreation){
         let businessCode = String(existing && existing.metadata.businessCode || '');
-        if(statCom && !source.externalActivity && (!businessCode || !businessCode.startsWith(`${statCom}.`))){
+        if(statCom && !source.externalActivity && !businessCode){
           const issued = await client.query(`select code from (
             select code_cours as code from scope_evenements
             union all select event_code as code from scope_event_code_allocations

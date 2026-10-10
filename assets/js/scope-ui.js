@@ -12267,7 +12267,8 @@
     if (!code) return '';
     const catalog = state.formationCatalog || (state.referentiels && state.referentiels.formationCatalog) || {};
     const match = ((quoVadisData() || {}).statComCodes || catalog.statComCodes || []).find((item) => String(item.code || '').trim() === code);
-    return String(match && (match.label || match.libelle) || '').trim();
+    const official = window.ScopeEcawin?.associations.find(item=>item.statCom === code);
+    return String(official?.description || match && (match.label || match.libelle) || '').trim();
   }
 
   function qvProgrammeStatComDisplay(row) {
@@ -12285,7 +12286,7 @@
     const current = String(row.statCom || '');
     const unknown = current && !values.some(item => item.code === current);
     const codeLabel = (code, label) => `${escapeHtml(code)}${'&nbsp;'.repeat(Math.max(1, 9 - code.length))}${escapeHtml(label)}`;
-    return `<option value="">—</option>${unknown ? `<option value="${escapeHtml(current)}" selected disabled>${codeLabel(current, 'Valeur conservée')}</option>` : ''}${values.map(item => `<option value="${escapeHtml(item.code)}" ${item.code === current ? 'selected' : ''}>${codeLabel(item.code, item.label || '')}</option>`).join('')}`;
+    return `<option value="">—</option>${unknown ? `<option value="${escapeHtml(current)}" selected disabled>${codeLabel(current, 'Valeur conservée')}</option>` : ''}${values.map(item => `<option value="${escapeHtml(item.code)}" ${item.code === current ? 'selected' : ''}>${codeLabel(item.code, window.ScopeEcawin?.associations.find(reference=>reference.statCom === item.code)?.description || item.label || '')}</option>`).join('')}`;
   }
 
   function qvProgrammeQualificationControl(qv,row){

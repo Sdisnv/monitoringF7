@@ -7,6 +7,10 @@
       "status": "PASS"
     },
     {
+      "name": "référentiel ECAwin issu de la capture et filtres réciproques",
+      "status": "PASS"
+    },
+    {
       "name": "création, ECAwin et sélection des référentiels",
       "status": "PASS"
     },

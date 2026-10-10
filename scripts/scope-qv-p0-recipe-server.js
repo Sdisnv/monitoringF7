@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client } = require('pg');
 const { createScopeQuoVadisService } = require('../netlify/lib/_scope-quo-vadis-service');
+const { synchronizeEcawinReferential } = require('../netlify/lib/_scope-ecawin-referential');
 const { permissionsForRoles } = require('../netlify/lib/_rbac');
 const { generateQuoVadisProgrammeReport } = require('../netlify/lib/_scope-report-service');
 
@@ -40,7 +41,7 @@ const protectedTables = ['scope_quo_vadis_obligations','scope_evenements','scope
   'scope_affectations','scope_attendus','scope_qv_publication_links','scope_event_code_sequences','scope_event_code_allocations','scope_quo_vadis_calendar_days',
   'scope_personnes','scope_person_qualifications','scope_competence_definitions',
   'scope_quo_vadis_cursus_definitions','scope_quo_vadis_cursus_steps',
-  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes'];
+  'scope_quo_vadis_cursus_programmes','scope_quo_vadis_cursus_step_programmes','scope_statcom_referentiel'];
 const json = (response,status,body) => {
   response.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
   response.end(JSON.stringify(body));
@@ -132,6 +133,7 @@ async function start() {
   baseline = {};
   for(const table of protectedTables) baseline[table] = await fingerprint(table);
   await client.query('begin');
+  await synchronizeEcawinReferential(client);
   server.listen(port,'127.0.0.1',() => console.log(`SCOPE CLONE BROWSER http://127.0.0.1:${port}/scope.html#/quo-vadis/programme`));
 }
 process.on('SIGINT',() => { stop().catch((error) => {console.error(error);process.exitCode=1;}); });
